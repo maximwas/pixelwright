@@ -86,6 +86,40 @@ describe("bridge protocol", () => {
     ).toBeNull();
   });
 
+  it("refuses plugin info with strings longer than a real file, page or plugin ever has", () => {
+    const hello = (overrides: Partial<PluginInfo>) =>
+      JSON.stringify({
+        type: "hello",
+        protocol: 1,
+        plugin: {
+          ...info,
+          ...overrides,
+        },
+      });
+
+    expect(
+      decodePluginToServer(
+        hello({
+          file: {
+            name: "x".repeat(10_000),
+            key: null,
+          },
+        }),
+      ),
+    ).toBeNull();
+    expect(decodePluginToServer(hello({ instanceId: "x".repeat(1_000) }))).toBeNull();
+    expect(
+      decodePluginToServer(
+        hello({
+          file: {
+            name: "x".repeat(1_000),
+            key: null,
+          },
+        }),
+      )?.type,
+    ).toBe("hello");
+  });
+
   it("carries errors across the bridge", () => {
     expect(toWireError(new BridgeError("TIMEOUT", "ping timed out"))).toEqual({
       code: "TIMEOUT",

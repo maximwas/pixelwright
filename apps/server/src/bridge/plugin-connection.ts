@@ -87,6 +87,12 @@ export class PluginConnection {
       return;
     }
 
+    if (!this.#options.admit(message.plugin)) {
+      this.#socket.close(CloseCode.TooManySessions, "too many plugin sessions");
+
+      return;
+    }
+
     const connected = this.#options.next();
     const session: PluginSession = {
       id: randomUUID(),

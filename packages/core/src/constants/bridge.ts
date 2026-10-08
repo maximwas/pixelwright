@@ -19,6 +19,7 @@ export const CloseCode = {
   HelloTimeout: 4408,
   Superseded: 4409,
   VersionMismatch: 4426,
+  TooManySessions: 4429,
 } as const;
 
 /** The plugin must NOT reconnect after these: another window of it took over, or a version needs an update. */

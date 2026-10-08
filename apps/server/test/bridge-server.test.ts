@@ -1,6 +1,7 @@
 import { once } from "node:events";
 import { afterEach, describe, expect, it } from "vitest";
 import { BridgeServer } from "../src/bridge/bridge-server.ts";
+import { MAX_PLUGIN_SESSIONS } from "../src/constants/bridge.ts";
 import { connectPlugin, pluginInfo } from "./helpers/fake-plugin.ts";
 
 const servers: BridgeServer[] = [];
@@ -130,6 +131,26 @@ describe("BridgeServer", () => {
     await connectPlugin(port, pluginInfo());
     expect(await first.closed).toBe(4409);
     expect(server.plugins()).toHaveLength(1);
+  });
+
+  it("refuses plugin sessions over the cap, so no page can flood status", async () => {
+    const { server, port } = await startServer();
+
+    for (let index = 0; index < MAX_PLUGIN_SESSIONS; index += 1) {
+      const changed = once(server, "changed");
+
+      await connectPlugin(port, pluginInfo({ instanceId: `window-${index}` }));
+      await changed;
+    }
+
+    const extra = await connectPlugin(port, pluginInfo({ instanceId: "one-too-many" }));
+    const outcome = await Promise.race([
+      extra.closed,
+      new Promise((resolve) => setTimeout(() => resolve("open"), 1_000)),
+    ]);
+
+    expect(outcome).toBe(4429);
+    expect(server.plugins()).toHaveLength(MAX_PLUGIN_SESSIONS);
   });
 
   it("fails a request when no plugin, or no such session, is connected", async () => {

@@ -69,6 +69,8 @@ export interface PluginConnectionOptions {
   readonly log: BridgeLog;
   /** The server's sequence: orders connections and windows coming to the front. */
   readonly next: () => number;
+  /** Whether a plugin that said hello may become a session (the cap on sessions). */
+  readonly admit: (info: PluginInfo) => boolean;
   /** The plugin said hello: the connection is a session now. */
   readonly onSession: (session: PluginSession) => void;
   /** The plugin sent new info: file, page, visibility or Allow edits. */

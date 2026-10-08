@@ -16,21 +16,24 @@ export const WireErrorSchema = z.object({
   data: z.unknown().optional(),
 });
 
-/** Who the plugin is and where it runs: sent in hello and again in every plugin.info event. */
+/**
+ * Who the plugin is and where it runs: sent in hello and again in every plugin.info event. Every string is bounded,
+ * far above what Figma produces, so whatever connects to the bridge cannot push megabytes into status.
+ */
 export const PluginInfoSchema = z.object({
   /** Random per plugin window, kept across reconnects: a second hello with it replaces the old socket. */
-  instanceId: z.string(),
-  pluginVersion: z.string(),
+  instanceId: z.string().max(64),
+  pluginVersion: z.string().max(32),
   /** figma.editorType: "figma", or "dev" in Dev Mode. */
-  editorType: z.string(),
+  editorType: z.string().max(32),
   /** figma.fileKey is given to private plugins only, so the key is often null. */
   file: z.object({
-    name: z.string(),
-    key: z.string().nullable(),
+    name: z.string().max(1_024),
+    key: z.string().max(128).nullable(),
   }),
   page: z.object({
-    id: z.string(),
-    name: z.string(),
+    id: z.string().max(64),
+    name: z.string().max(1_024),
   }),
   allowEdits: z.boolean(),
   /** The plugin window's document is visible: its file tab is in front. */

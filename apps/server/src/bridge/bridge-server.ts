@@ -5,7 +5,7 @@ import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { Duplex } from "node:stream";
 import { BridgeError, CloseCode, MAX_MESSAGE_BYTES } from "@pixelwright/core";
 import { type WebSocket, WebSocketServer } from "ws";
-import { CLOSE_GRACE_MS, HEARTBEAT_MS, REQUEST_TIMEOUT_MS } from "../constants/bridge.ts";
+import { CLOSE_GRACE_MS, HEARTBEAT_MS, MAX_PLUGIN_SESSIONS, REQUEST_TIMEOUT_MS } from "../constants/bridge.ts";
 import type {
   BridgeLog,
   BridgeServerOptions,
@@ -186,6 +186,9 @@ export class BridgeServer
       serverVersion: this.#options.serverVersion,
       log: this.#log,
       next: () => ++this.#sequence,
+      admit: (info) =>
+        this.#sessions.size < MAX_PLUGIN_SESSIONS ||
+        [...this.#sessions.values()].some((session) => session.info.instanceId === info.instanceId),
       onSession: (session) => this.#activate(session),
       onInfo: () => this.#changed(),
       onSessionClosed: (session, code) => this.#deactivate(session, code),

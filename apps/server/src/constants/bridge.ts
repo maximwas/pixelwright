@@ -19,6 +19,12 @@ export const REQUEST_TIMEOUT_MS = 30_000;
 /** How long close() lets clients answer the 1001 goodbye before cutting them off. */
 export const CLOSE_GRACE_MS = 1_000;
 
+/**
+ * How many plugin sessions (open files) the bridge keeps at once; a hello over it is closed 4429. Far above real use,
+ * low enough that nothing connecting to the port can flood status.
+ */
+export const MAX_PLUGIN_SESSIONS = 16;
+
 /** How long a new socket has to say hello before it is closed. */
 export const HELLO_TIMEOUT_MS = 5_000;
 
