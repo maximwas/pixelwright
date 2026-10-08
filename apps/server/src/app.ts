@@ -1,0 +1,78 @@
+import serverPackage from "../package.json" with { type: "json" };
+import { loadOrCreateBridgeConfig } from "./bridge/bridge-config.ts";
+import { BridgeServer } from "./bridge/bridge-server.ts";
+import { OwnerClient } from "./bridge/owner-client.ts";
+import { PluginBridge } from "./bridge/plugin-bridge.ts";
+import { readConfig } from "./config/config.ts";
+import { DEFAULT_BRIDGE_PORT } from "./constants/bridge.ts";
+import { createLogger } from "./logging/logger.ts";
+import { createMcpServer } from "./mcp/mcp-server.ts";
+import type { App } from "./types/app.ts";
+import type { BridgeConfig } from "./types/bridge.ts";
+import type { AppConfig } from "./types/config.ts";
+import type { Logger } from "./types/logging.ts";
+
+/** Wires the server together from its environment; the bridge starts trying to connect at once. */
+export async function createApp(): Promise<App> {
+  const config = readConfig(process.env);
+  const logger = createLogger(config.logLevel);
+  const bridge = await createBridge(config, logger);
+  const server = createMcpServer({
+    bridge,
+    version: serverPackage.version,
+  });
+
+  return {
+    server,
+    bridge,
+    logger,
+    close: async () => {
+      await Promise.allSettled([bridge.close(), server.close()]);
+    },
+  };
+}
+
+async function createBridge(config: AppConfig, logger: Logger): Promise<PluginBridge> {
+  if (!config.bridgeEnabled) {
+    return PluginBridge.disabled({
+      port: DEFAULT_BRIDGE_PORT,
+      logger,
+    });
+  }
+
+  let bridgeConfig: BridgeConfig;
+
+  try {
+    bridgeConfig = loadOrCreateBridgeConfig({ warn: (message) => logger.warn(message) });
+  } catch (error) {
+    logger.error({ err: error }, "The plugin bridge's config could not be read");
+
+    return PluginBridge.failed(error, {
+      port: DEFAULT_BRIDGE_PORT,
+      logger,
+    });
+  }
+
+  const { port, token } = bridgeConfig;
+  const log = (message: string, data: Record<string, unknown> = {}) => logger.debug(data, message);
+  const server = new BridgeServer({
+    port,
+    token,
+    pluginOrigins: config.pluginOrigins,
+    serverVersion: serverPackage.version,
+    log,
+  });
+
+  return PluginBridge.connect(
+    server,
+    new OwnerClient({
+      port,
+      token,
+      log,
+    }),
+    {
+      port,
+      logger,
+    },
+  );
+}
