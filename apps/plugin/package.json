@@ -1,0 +1,44 @@
+{
+  "name": "@pixelwright/plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "build-figma-plugin",
+    "dev": "build-figma-plugin --watch",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@create-figma-plugin/build": "4.0.3",
+    "@create-figma-plugin/utilities": "4.0.3",
+    "@figma/plugin-typings": "1.141.0",
+    "@pixelwright/core": "workspace:*",
+    "@typescript/native": "catalog:",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  },
+  "figma-plugin": {
+    "id": "pixelwright",
+    "name": "Pixelwright",
+    "editorType": [
+      "figma",
+      "dev"
+    ],
+    "capabilities": [
+      "inspect"
+    ],
+    "main": "src/main.ts",
+    "ui": "src/ui.ts",
+    "documentAccess": "dynamic-page",
+    "permissions": [
+      "teamlibrary"
+    ],
+    "networkAccess": {
+      "allowedDomains": [
+        "ws://localhost:18720"
+      ],
+      "reasoning": "Connects to the Pixelwright MCP server running on this computer."
+    }
+  }
+}
