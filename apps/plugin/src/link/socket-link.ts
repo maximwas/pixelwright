@@ -74,7 +74,7 @@ export class SocketLink {
     };
     socket.onmessage = (event) => {
       if (socket === this.#socket && typeof event.data === "string") {
-        this.#onMessage(event.data);
+        this.#onMessage(socket, event.data);
       }
     };
     socket.onclose = (event) => {
@@ -84,7 +84,7 @@ export class SocketLink {
     };
   }
 
-  #onMessage(raw: string): void {
+  #onMessage(socket: SocketLike, raw: string): void {
     const message = decodeServerToPlugin(raw);
 
     if (message?.type === "hello_ack") {
@@ -95,11 +95,15 @@ export class SocketLink {
         serverVersion: message.server.version,
       });
     } else if (message?.type === "request") {
-      void this.#answer(message);
+      void this.#answer(socket, message);
     }
   }
 
-  async #answer(request: RequestMessage): Promise<void> {
+  /**
+   * Answers on the connection the request came in on, never on a newer one: after a reconnect, the server on the other
+   * end may be another process whose own request ids start over, and the answer would settle its request instead.
+   */
+  async #answer(socket: SocketLike, request: RequestMessage): Promise<void> {
     let outcome: RequestOutcome;
 
     try {
@@ -129,20 +133,23 @@ export class SocketLink {
     const size = new TextEncoder().encode(text).byteLength;
 
     if (size <= MAX_MESSAGE_BYTES) {
-      this.#sendText(text);
+      sendOn(socket, text);
 
       return;
     }
 
-    this.#send({
-      type: "response",
-      id: request.id,
-      ok: false,
-      error: {
-        code: "RESULT_TOO_LARGE",
-        message: `The result of ${request.op} is ${size} bytes, over the bridge's limit of ${MAX_MESSAGE_BYTES}.`,
-      },
-    });
+    sendOn(
+      socket,
+      encode({
+        type: "response",
+        id: request.id,
+        ok: false,
+        error: {
+          code: "RESULT_TOO_LARGE",
+          message: `The result of ${request.op} is ${size} bytes, over the bridge's limit of ${MAX_MESSAGE_BYTES}.`,
+        },
+      }),
+    );
   }
 
   #onClose(code: number): void {
@@ -176,12 +183,15 @@ export class SocketLink {
   }
 
   #send(message: PluginToServer): void {
-    this.#sendText(encode(message));
-  }
-
-  #sendText(text: string): void {
-    if (this.#socket?.readyState === OPEN) {
-      this.#socket.send(text);
+    if (this.#socket !== null) {
+      sendOn(this.#socket, encode(message));
     }
+  }
+}
+
+/** Sends on one socket while it is open; a closed one drops the message, as the server has failed it already. */
+function sendOn(socket: SocketLike, text: string): void {
+  if (socket.readyState === OPEN) {
+    socket.send(text);
   }
 }

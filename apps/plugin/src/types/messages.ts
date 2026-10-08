@@ -2,8 +2,8 @@ import type { EventHandler } from "@create-figma-plugin/utilities";
 import type { RequestOutcome } from "./link.ts";
 
 /**
- * What only the main code knows: sent at start (as the UI's data) and on every change. A type, not an interface:
- * create-figma-plugin's showUI takes its data as Record<string, unknown>, which an interface does not satisfy.
+ * What only the main code knows: sent when the window is ready and on every change. A type alias, so it stays a plain
+ * serializable record.
  */
 export type PluginContext = {
   readonly pluginVersion: string;
@@ -12,6 +12,12 @@ export type PluginContext = {
   readonly page: { readonly id: string; readonly name: string };
   readonly allowEdits: boolean;
 };
+
+/** The window loaded and listens: the main code answers with the context. */
+export interface ReadyHandler extends EventHandler {
+  name: "READY";
+  handler: () => void;
+}
 
 export interface ContextHandler extends EventHandler {
   name: "CONTEXT";

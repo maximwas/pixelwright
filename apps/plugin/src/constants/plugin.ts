@@ -2,9 +2,6 @@ import { BRIDGE_PATH, BRIDGE_PORT } from "@pixelwright/core";
 
 export const BRIDGE_URL = `ws://localhost:${BRIDGE_PORT}${BRIDGE_PATH}`;
 
-/** figma.clientStorage key of the Allow edits switch (per user, per plugin, kept between runs). */
-export const ALLOW_EDITS_KEY = "pixelwright.allowEdits";
-
 /** Small and out of the way: it stays open the whole time the plugin works. */
 export const PLUGIN_WINDOW = {
   width: 280,

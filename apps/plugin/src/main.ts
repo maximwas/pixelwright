@@ -1,21 +1,31 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
 import { toWireError } from "@pixelwright/core";
-import { ALLOW_EDITS_KEY, PLUGIN_WINDOW } from "./constants/plugin.ts";
+import { PLUGIN_WINDOW } from "./constants/plugin.ts";
 import { readContext } from "./figma/context.ts";
 import { runOperation } from "./figma/operations.ts";
-import type { AllowEditsHandler, ContextHandler, RequestHandler, ResponseHandler } from "./types/messages.ts";
+import type {
+  AllowEditsHandler,
+  ContextHandler,
+  ReadyHandler,
+  RequestHandler,
+  ResponseHandler,
+} from "./types/messages.ts";
 
-/** The plugin's main code: answers the UI's requests with the Plugin API and keeps the Allow edits switch. */
-export default async function (): Promise<void> {
-  const stored: unknown = await figma.clientStorage.getAsync(ALLOW_EDITS_KEY);
-  let allowEdits = typeof stored === "boolean" ? stored : false;
+/**
+ * The plugin's main code: answers the window's requests with the Plugin API and keeps the Allow edits switch.
+ * The switch starts off on every run: figma.clientStorage is shared by every file, so a stored "on" would arm them all.
+ * The window's HTML carries no data: file and page names are the user's, and its inline script would run them, so the
+ * context goes by message once the window says it is ready.
+ */
+export default function (): void {
+  let allowEdits = false;
   const sendContext = () => emit<ContextHandler>("CONTEXT", readContext(allowEdits));
 
-  showUI(PLUGIN_WINDOW, readContext(allowEdits));
+  showUI(PLUGIN_WINDOW);
+  on<ReadyHandler>("READY", sendContext);
   on<RequestHandler>("REQUEST", (id, op, input) => void answer(id, op, input));
   on<AllowEditsHandler>("ALLOW_EDITS", (value) => {
     allowEdits = value;
-    void figma.clientStorage.setAsync(ALLOW_EDITS_KEY, value);
     sendContext();
   });
   figma.on("currentpagechange", sendContext);

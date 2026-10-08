@@ -41,7 +41,7 @@ export function createPluginWindow(
       statusText.textContent = line.text;
       toggle.checked = context.allowEdits;
       note.textContent = context.allowEdits
-        ? "On: Pixelwright may change this file. Every change is one undo step."
+        ? "On until this window closes: Pixelwright may change this file, one undo step per change."
         : "Off: Pixelwright only reads this file.";
       actions.replaceChildren(
         ...(recent.length === 0

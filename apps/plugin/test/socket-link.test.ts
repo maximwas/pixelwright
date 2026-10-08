@@ -180,6 +180,41 @@ describe("SocketLink", () => {
     expect(scheduled).toHaveLength(1);
   });
 
+  it("answers a request only on the connection it came in on", async () => {
+    let release: (outcome: RequestOutcome) => void = () => {};
+    const { sockets, scheduled } = setup(
+      () =>
+        new Promise<RequestOutcome>((resolve) => {
+          release = resolve;
+        }),
+    );
+
+    sockets[0]?.open();
+    sockets[0]?.receive(ack);
+    sockets[0]?.receive({
+      type: "request",
+      id: "1",
+      op: "slow",
+      input: null,
+      timeoutMs: 30_000,
+    });
+    sockets[0]?.drop(1006);
+    scheduled[0]?.run();
+    sockets[1]?.open();
+    sockets[1]?.receive(ack);
+    release({
+      ok: true,
+      result: "an answer for the server that went away",
+    });
+    await tick();
+    expect(sockets[1]?.sent).not.toContainEqual(
+      expect.objectContaining({
+        type: "response",
+        id: "1",
+      }),
+    );
+  });
+
   it("ignores a late close of a socket it already replaced", () => {
     const { sockets, states, scheduled } = setup();
 
