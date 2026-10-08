@@ -3,6 +3,7 @@ import type { WebSocket } from "ws";
 import type * as z from "zod";
 import type { PendingRequests } from "../bridge/pending-requests.ts";
 import type { BridgeConfigSchema } from "../schemas/bridge.ts";
+import type { OwnerToPeerSchema, PeerToOwnerSchema } from "../schemas/peer.ts";
 
 export type BridgeConfig = z.infer<typeof BridgeConfigSchema>;
 
@@ -95,3 +96,38 @@ export type UpgradeVerdict =
   | { readonly status: 101; readonly role: UpgradeRole }
   | { readonly status: 404 }
   | { readonly status: 403; readonly role: UpgradeRole; readonly rejection: UpgradeRejection };
+
+export type PeerToOwner = z.infer<typeof PeerToOwnerSchema>;
+
+export type OwnerToPeer = z.infer<typeof OwnerToPeerSchema>;
+
+export interface OwnerClientOptions {
+  readonly port: number;
+  readonly token: string;
+  readonly log: BridgeLog;
+}
+
+export interface PeerConnectionOptions {
+  readonly log: BridgeLog;
+  /** Hands a peer's operation to a plugin. */
+  readonly relay: (op: string, input: unknown, options: RequestOptions) => Promise<unknown>;
+  readonly plugins: () => readonly ConnectedPlugin[];
+  readonly onClose: () => void;
+}
+
+/** Where this process stands with the bridge port. */
+export type BridgeState =
+  | { readonly kind: "owner" }
+  | { readonly kind: "peer" }
+  | { readonly kind: "unavailable"; readonly closeCode: number | null }
+  | { readonly kind: "failed"; readonly reason: string }
+  | { readonly kind: "disabled" };
+
+export type BridgeRole = BridgeState["kind"];
+
+export interface BridgeStatus {
+  readonly role: BridgeRole;
+  readonly port: number;
+  /** What the user should do; null when a file is connected and nothing is wrong. */
+  readonly hint: string | null;
+}

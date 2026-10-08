@@ -49,4 +49,5 @@ export const DEFAULT_PLUGIN_ORIGINS: readonly string[] = ["null"];
 /** Who may upgrade on which path. */
 export const UPGRADE_ROLES: Readonly<Record<string, UpgradeRole>> = {
   [BRIDGE_PATH]: "plugin",
+  [PEER_PATH]: "peer",
 };

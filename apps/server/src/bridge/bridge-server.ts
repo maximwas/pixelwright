@@ -18,6 +18,7 @@ import type {
 } from "../types/bridge.ts";
 import { pickActive } from "../utils/active-session.ts";
 import { closeGracefully, listenOnLoopback } from "./http-lifecycle.ts";
+import { PeerConnection } from "./peer-connection.ts";
 import { PluginConnection, sendMessage } from "./plugin-connection.ts";
 import { checkUpgrade, rejectUpgrade } from "./upgrade-guard.ts";
 
@@ -47,6 +48,7 @@ export class BridgeServer
   });
   readonly #connections = new WeakMap<WebSocket, PluginConnection>();
   readonly #sessions = new Map<string, PluginSession>();
+  readonly #peers = new Set<PeerConnection>();
   #policy: UpgradePolicy;
   #sequence = 0;
   #requests = 0;
@@ -174,7 +176,9 @@ export class BridgeServer
     }
 
     socket.removeListener("error", onSocketError);
-    this.#sockets.handleUpgrade(request, socket, head, (webSocket) => this.#accept(webSocket));
+    this.#sockets.handleUpgrade(request, socket, head, (webSocket) =>
+      verdict.role === "plugin" ? this.#accept(webSocket) : this.#acceptPeer(webSocket),
+    );
   };
 
   #accept(socket: WebSocket): void {
@@ -188,6 +192,19 @@ export class BridgeServer
     });
 
     this.#connections.set(socket, connection);
+  }
+
+  /** Another pixelwright process joined: its operations go on to the plugins, and it hears when they change. */
+  #acceptPeer(socket: WebSocket): void {
+    const peer = new PeerConnection(socket, {
+      log: this.#log,
+      relay: (op, input, options) => this.request(op, input, options),
+      plugins: () => this.plugins(),
+      onClose: () => this.#peers.delete(peer),
+    });
+
+    this.#peers.add(peer);
+    this.#log("peer joined", { peers: this.#peers.size });
   }
 
   /** A plugin said hello. The same window reconnecting (after sleep, say) replaces its half-open old socket. */
@@ -222,6 +239,10 @@ export class BridgeServer
 
   #changed(): void {
     this.emit("changed");
+
+    for (const peer of this.#peers) {
+      peer.sendStatus();
+    }
   }
 
   #checkClients(): void {
