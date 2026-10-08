@@ -1,0 +1,51 @@
+{
+  "name": "pixelwright",
+  "version": "0.1.0",
+  "description": "MCP server that lets AI agents read and edit Figma files through a Figma plugin: no REST API, no token, no seat quota. Unofficial, not affiliated with Figma.",
+  "license": "FSL-1.1-MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maximwas/pixelwright.git",
+    "directory": "apps/server"
+  },
+  "type": "module",
+  "bin": {
+    "pixelwright": "./dist/bin.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24.11.0"
+  },
+  "keywords": [
+    "mcp",
+    "figma",
+    "claude",
+    "claude-code",
+    "cursor",
+    "ai",
+    "design-to-code"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.2.0",
+    "pino": "10.3.1",
+    "ws": "8.22.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.2.0",
+    "@pixelwright/core": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/ws": "8.18.2",
+    "@typescript/native": "catalog:",
+    "tsdown": "0.23.0",
+    "vitest": "catalog:"
+  }
+}
