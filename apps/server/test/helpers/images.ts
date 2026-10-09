@@ -1,3 +1,5 @@
+import { decode, encode } from "fast-png";
+
 /** A real 1x1 PNG, JPEG and GIF, and a PNG's header of any size: what image readers need to see a real image. */
 export const PNG = Buffer.from(
   "89504e470d0a1a0a0000000d4948445200000001000000010806000000" +
@@ -23,4 +25,22 @@ export function pngHeader(width: number, height: number): Buffer {
   header.set([8, 6, 0, 0, 0], 24);
 
   return header;
+}
+
+/** A transparent RGBA PNG of this size. */
+export function blankPng(width: number, height: number): Uint8Array {
+  return encode({
+    width,
+    height,
+    channels: 4,
+    data: new Uint8Array(width * height * 4),
+  });
+}
+
+/** One pixel of a PNG, by column and row: its channels as the PNG keeps them (RGB or RGBA). */
+export function pixel(png: Uint8Array, x: number, y: number): number[] {
+  const { width, channels, data } = decode(png);
+  const start = (y * width + x) * channels;
+
+  return [...data.subarray(start, start + channels)];
 }

@@ -48,6 +48,7 @@
     "@types/write-file-atomic": "4.0.3",
     "@types/ws": "8.18.2",
     "@typescript/native": "catalog:",
+    "fast-png": "8.0.0",
     "tsdown": "0.23.0",
     "vitest": "catalog:"
   }

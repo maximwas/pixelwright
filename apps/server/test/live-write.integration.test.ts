@@ -1,10 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { crc32, deflateSync, inflateSync } from "node:zlib";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { describe, expect, it } from "vitest";
+import { blankPng, pixel } from "./helpers/images.ts";
 
 const entry = fileURLToPath(new URL("../src/bin.ts", import.meta.url));
 const OUT = process.env.PIXELWRIGHT_LIVE ?? "";
@@ -593,76 +593,3 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
     120_000 + WAIT,
   );
 });
-
-/** A transparent RGBA PNG of this size. */
-function blankPng(width: number, height: number): Buffer {
-  const chunk = (type: string, data: Buffer) => {
-    const length = Buffer.alloc(4);
-    const sum = Buffer.alloc(4);
-
-    length.writeUInt32BE(data.length);
-    sum.writeUInt32BE(crc32(Buffer.concat([Buffer.from(type, "ascii"), data])));
-
-    return Buffer.concat([length, Buffer.from(type, "ascii"), data, sum]);
-  };
-  const header = Buffer.alloc(13);
-
-  header.writeUInt32BE(width, 0);
-  header.writeUInt32BE(height, 4);
-  header[8] = 8;
-  header[9] = 6;
-
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk("IHDR", header),
-    chunk("IDAT", deflateSync(Buffer.alloc((width * 4 + 1) * height))),
-    chunk("IEND", Buffer.alloc(0)),
-  ]);
-}
-
-/** One pixel of an 8-bit RGB or RGBA PNG: inflate the image data and undo each row's filter down to the row asked. */
-function pixel(png: Buffer, x: number, y: number): number[] {
-  const width = png.readUInt32BE(16);
-  const channels = png[25] === 6 ? 4 : 3;
-  const parts: Buffer[] = [];
-
-  for (let offset = 8; offset < png.length; ) {
-    const length = png.readUInt32BE(offset);
-
-    if (png.toString("ascii", offset + 4, offset + 8) === "IDAT") {
-      parts.push(png.subarray(offset + 8, offset + 8 + length));
-    }
-
-    offset += 12 + length;
-  }
-
-  const raw = inflateSync(Buffer.concat(parts));
-  const stride = width * channels;
-  let previous = Buffer.alloc(stride);
-
-  for (let row = 0; row <= y; row++) {
-    const start = row * (stride + 1);
-    const filter = raw[start] ?? 0;
-    const line = Buffer.from(raw.subarray(start + 1, start + 1 + stride));
-
-    for (let index = 0; index < stride; index++) {
-      const left = index >= channels ? (line[index - channels] ?? 0) : 0;
-      const up = previous[index] ?? 0;
-      const corner = index >= channels ? (previous[index - channels] ?? 0) : 0;
-      const guess = left + up - corner;
-      const paeth =
-        Math.abs(guess - left) <= Math.abs(guess - up) && Math.abs(guess - left) <= Math.abs(guess - corner)
-          ? left
-          : Math.abs(guess - up) <= Math.abs(guess - corner)
-            ? up
-            : corner;
-      const predicted = [0, left, up, (left + up) >> 1, paeth][filter] ?? 0;
-
-      line[index] = ((line[index] ?? 0) + predicted) & 255;
-    }
-
-    previous = line;
-  }
-
-  return [...previous.subarray(x * channels, x * channels + channels)];
-}
