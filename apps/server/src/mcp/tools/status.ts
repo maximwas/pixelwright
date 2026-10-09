@@ -9,7 +9,7 @@ export function registerStatusTool(server: McpServer, { bridge, version }: ToolC
     name: "status",
     title: "Connection status",
     description:
-      "Lists the Figma files whose Pixelwright plugin is connected (name, current page, editor, whether Allow edits is on) and marks the active one: the file whose plugin window was in front last, which every tool uses when no file is named. Call it first, and whenever a tool says no file is connected: hint says what to do. probe: true also pings the active file's plugin.",
+      "Lists the Figma files whose Pixelwright plugin is connected (name, current page, editor, whether Allow edits is on) and marks the active one: the file whose plugin window was in front last, which every tool uses when no file is named. Call it first, and whenever a tool says no file is connected: hint says what to do. While a plugin waits to be paired, pairing holds the code: tell the user to type it into the Pixelwright window, and never type or send it yourself. probe: true also pings the active file's plugin.",
     input: StatusInputSchema,
     output: StatusOutputSchema,
     annotations: {
@@ -34,6 +34,8 @@ export async function readStatus(bridge: BridgeView, version: string, probe: boo
     pluginVersion: info.pluginVersion,
   }));
 
+  const pairing = bridge.pairing();
+
   return {
     server: {
       version,
@@ -42,6 +44,14 @@ export async function readStatus(bridge: BridgeView, version: string, probe: boo
     },
     files,
     probe: probe ? await ping(bridge) : null,
+    pairing:
+      pairing === null
+        ? null
+        : {
+            code: pairing.code,
+            expiresInSeconds: Math.max(0, Math.ceil((pairing.expiresAt - Date.now()) / 1000)),
+            waiting: pairing.waiting,
+          },
     hint,
   };
 }

@@ -4,12 +4,6 @@ import type { UpgradeRole } from "../types/bridge.ts";
 /** The bridge port written to a new bridge.json when PIXELWRIGHT_BRIDGE_PORT is not set. */
 export const DEFAULT_BRIDGE_PORT = BRIDGE_PORT;
 
-/**
- * Another pixelwright process joining the owner sends bridge.json's token in this header. Browsers cannot set custom
- * WebSocket headers, so no page can send it.
- */
-export const BRIDGE_TOKEN_HEADER = "x-pixelwright-token";
-
 /** How often the server pings each plugin; a socket that missed the previous ping is dropped. */
 export const HEARTBEAT_MS = 15_000;
 
@@ -39,8 +33,11 @@ export const HELLO_TIMEOUT_MS = 5_000;
 /** Where other pixelwright processes (other Claude Code sessions) join the process that owns the bridge port. */
 export const PEER_PATH = `${BRIDGE_PATH}/peer`;
 
-/** Bumped on every breaking change of the peer messages; the owner closes a peer of another version (4426). */
-export const PEER_PROTOCOL_VERSION = 1;
+/**
+ * Bumped on every breaking change of the peer messages; the owner closes a peer of another version (4426).
+ * 2 (09.10.2026): challenge-response over the token instead of the token in a header.
+ */
+export const PEER_PROTOCOL_VERSION = 2;
 
 /** How soon a process without the bridge tries again, to take the port over or to join its owner (jittered). */
 export const PEER_RETRY_MS = 1_000;

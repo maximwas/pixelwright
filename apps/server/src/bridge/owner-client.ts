@@ -1,7 +1,6 @@
-import { BridgeError, CloseCode } from "@pixelwright/core";
+import { BridgeError, CloseCode, newNonce, proofEquals, proofFor } from "@pixelwright/core";
 import WebSocket, { type RawData } from "ws";
 import {
-  BRIDGE_TOKEN_HEADER,
   PEER_JOIN_TIMEOUT_MS,
   PEER_PATH,
   PEER_PROTOCOL_VERSION,
@@ -13,6 +12,7 @@ import type {
   ConnectedPlugin,
   OwnerClientOptions,
   OwnerToPeer,
+  PairingStatus,
   PeerToOwner,
   PluginLink,
   RequestOptions,
@@ -20,14 +20,17 @@ import type {
 import { PendingRequests } from "./pending-requests.ts";
 
 /**
- * This process's way to the plugins while another pixelwright process (another Claude Code session) owns the bridge
- * port: it joins the owner as a peer, and the owner hands its operations to the plugins.
+ * This process's way to the plugins while another pixelwright process (another MCP client session) owns the bridge
+ * port: it joins the owner as a peer, and the owner hands its operations to the plugins. The owner has to prove it
+ * knows bridge.json's token before this process answers with its own proof, so a program squatting on the port learns
+ * nothing.
  */
 export class OwnerClient implements PluginLink {
   readonly #options: OwnerClientOptions;
   readonly #pending = new PendingRequests();
   #socket: WebSocket | null = null;
   #plugins: readonly ConnectedPlugin[] = [];
+  #pairing: PairingStatus | null = null;
   #sequence = 0;
   #lastCloseCode: number | null = null;
 
@@ -41,18 +44,18 @@ export class OwnerClient implements PluginLink {
   }
 
   /**
-   * Joins the owner. Resolves true once it answered, false when it refused or was gone; `onLost` runs when a link that
-   * was up drops later (the owner's session ended), so the caller can take the port over or join the next owner.
+   * Joins the owner. Resolves true once it answered, false when it refused, could not prove the token or was gone;
+   * `onLost` runs when a link that was up drops later, so the caller can take the port over or join the next owner.
    */
   join(onLost: () => void): Promise<boolean> {
     const { port, token } = this.#options;
 
     return new Promise((resolve) => {
       const socket = new WebSocket(`ws://127.0.0.1:${port}${PEER_PATH}`, {
-        headers: { [BRIDGE_TOKEN_HEADER]: token },
         perMessageDeflate: false,
         handshakeTimeout: PEER_JOIN_TIMEOUT_MS,
       });
+      const peerNonce = newNonce();
       let joined = false;
       // An owner that never answers: dropping the socket closes it, and the close handler resolves false.
       const deadline = setTimeout(() => socket.terminate(), PEER_JOIN_TIMEOUT_MS);
@@ -61,13 +64,26 @@ export class OwnerClient implements PluginLink {
         this.#send(socket, {
           type: "peer_hello",
           protocol: PEER_PROTOCOL_VERSION,
+          nonce: peerNonce,
         }),
       );
       socket.on("message", (data: RawData) => {
         const message = parse(data);
 
-        if (message?.type === "plugin_status") {
+        if (message?.type === "peer_challenge") {
+          if (!proofEquals(message.proof, proofFor(token, "owner", peerNonce, message.nonce))) {
+            socket.close(CloseCode.Unauthorized, "the owner could not prove the token");
+
+            return;
+          }
+
+          this.#send(socket, {
+            type: "peer_auth",
+            proof: proofFor(token, "peer", message.nonce, peerNonce),
+          });
+        } else if (message?.type === "plugin_status") {
           this.#plugins = message.plugins;
+          this.#pairing = message.pairing;
 
           if (!joined) {
             joined = true;
@@ -85,6 +101,7 @@ export class OwnerClient implements PluginLink {
         clearTimeout(deadline);
         this.#lastCloseCode = code;
         this.#plugins = [];
+        this.#pairing = null;
         this.#pending.failAll(code);
 
         if (this.#socket === socket) {
@@ -102,6 +119,10 @@ export class OwnerClient implements PluginLink {
 
   plugins(): readonly ConnectedPlugin[] {
     return this.#plugins;
+  }
+
+  pairing(): PairingStatus | null {
+    return this.#pairing;
   }
 
   request(op: string, input: unknown, { session }: RequestOptions = {}): Promise<unknown> {

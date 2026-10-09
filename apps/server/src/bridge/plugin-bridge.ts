@@ -4,6 +4,7 @@ import type {
   BridgeState,
   BridgeStatus,
   ConnectedPlugin,
+  PairingStatus,
   PluginLink,
   RequestOptions,
   UpgradeRejection,
@@ -86,11 +87,25 @@ export class PluginBridge {
   }
 
   status(): BridgeStatus {
+    const pairing = this.pairing();
+
     return {
       role: this.#state.kind,
       port: this.#options.port,
-      hint: bridgeHint(this.#state, this.plugins().length, this.#lastRejection, this.#options.port),
+      hint: bridgeHint({
+        state: this.#state,
+        connectedFiles: this.plugins().length,
+        pairing,
+        rejection: this.#lastRejection,
+        port: this.#options.port,
+        now: Date.now(),
+      }),
     };
+  }
+
+  /** The code to show while an unpaired plugin waits, from whichever process owns the port. */
+  pairing(): PairingStatus | null {
+    return this.#link()?.pairing() ?? null;
   }
 
   plugins(): readonly ConnectedPlugin[] {

@@ -1,46 +1,57 @@
-import { CloseCode, toWireError } from "@pixelwright/core";
+import { CloseCode, newNonce, proofEquals, proofFor, toWireError } from "@pixelwright/core";
 import type { RawData, WebSocket } from "ws";
 import { HELLO_TIMEOUT_MS, PEER_PROTOCOL_VERSION } from "../constants/bridge.ts";
 import { PeerToOwnerSchema } from "../schemas/peer.ts";
 import type { OwnerToPeer, PeerConnectionOptions, PeerToOwner, RequestOptions } from "../types/bridge.ts";
 
+type Stage =
+  | { readonly kind: "hello" }
+  | { readonly kind: "challenged"; readonly peerNonce: string; readonly ownerNonce: string }
+  | { readonly kind: "joined" };
+
 /**
- * Another pixelwright process (another Claude Code session) that joined this bridge owner. Its operations go on to a
- * plugin and the answers come back; it hears which plugins are connected.
+ * Another pixelwright process (another MCP client session) joining this bridge owner. Both prove they know bridge.json's
+ * token by challenge-response, the owner first; then the peer's operations go on to a plugin and the answers come back,
+ * and it hears which plugins are connected and what code pairing waits for.
  */
 export class PeerConnection {
   readonly #socket: WebSocket;
   readonly #options: PeerConnectionOptions;
-  readonly #helloTimer: ReturnType<typeof setTimeout>;
-  #joined = false;
+  readonly #deadline: ReturnType<typeof setTimeout>;
+  #stage: Stage = { kind: "hello" };
 
   constructor(socket: WebSocket, options: PeerConnectionOptions) {
     this.#socket = socket;
     this.#options = options;
-    this.#helloTimer = setTimeout(() => socket.close(CloseCode.HelloTimeout, "hello timeout"), HELLO_TIMEOUT_MS);
+    this.#deadline = setTimeout(() => socket.close(CloseCode.HelloTimeout, "hello timeout"), HELLO_TIMEOUT_MS);
     socket.on("message", (data: RawData, isBinary: boolean) => this.#onMessage(isBinary ? null : parse(data)));
     socket.on("error", (error) => options.log("peer socket error", { error: String(error) }));
     socket.on("close", () => {
-      clearTimeout(this.#helloTimer);
+      clearTimeout(this.#deadline);
       options.onClose();
     });
   }
 
-  /** Tells the peer which plugins are connected now. */
+  /** Tells the peer which plugins are connected now and what code pairing waits for. */
   sendStatus(): void {
-    if (this.#joined) {
+    if (this.#stage.kind === "joined") {
       this.#send({
         type: "plugin_status",
         plugins: [...this.#options.plugins()],
+        pairing: this.#options.pairing(),
       });
     }
   }
 
   #onMessage(message: PeerToOwner | null): void {
+    const stage = this.#stage;
+
     if (message === null) {
       this.#socket.close(CloseCode.BadMessage, "invalid message");
-    } else if (!this.#joined) {
-      this.#join(message);
+    } else if (stage.kind === "hello") {
+      this.#onHello(message);
+    } else if (stage.kind === "challenged") {
+      this.#onAuth(stage, message);
     } else if (message.type === "request") {
       this.#relay(
         message.id,
@@ -49,13 +60,11 @@ export class PeerConnection {
         message.session === undefined ? {} : { session: message.session },
       );
     } else {
-      this.#socket.close(CloseCode.BadMessage, "duplicate hello");
+      this.#socket.close(CloseCode.BadMessage, `unexpected ${message.type}`);
     }
   }
 
-  #join(message: PeerToOwner): void {
-    clearTimeout(this.#helloTimer);
-
+  #onHello(message: PeerToOwner): void {
     if (message.type !== "peer_hello") {
       this.#socket.close(CloseCode.BadMessage, "expected hello");
 
@@ -68,7 +77,32 @@ export class PeerConnection {
       return;
     }
 
-    this.#joined = true;
+    const ownerNonce = newNonce();
+
+    this.#stage = {
+      kind: "challenged",
+      peerNonce: message.nonce,
+      ownerNonce,
+    };
+    this.#send({
+      type: "peer_challenge",
+      nonce: ownerNonce,
+      proof: proofFor(this.#options.token, "owner", message.nonce, ownerNonce),
+    });
+  }
+
+  #onAuth(stage: Extract<Stage, { kind: "challenged" }>, message: PeerToOwner): void {
+    clearTimeout(this.#deadline);
+
+    const expected = proofFor(this.#options.token, "peer", stage.ownerNonce, stage.peerNonce);
+
+    if (message.type !== "peer_auth" || !proofEquals(message.proof, expected)) {
+      this.#socket.close(CloseCode.Unauthorized, "the peer could not prove the token");
+
+      return;
+    }
+
+    this.#stage = { kind: "joined" };
     this.sendStatus();
   }
 

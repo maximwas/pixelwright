@@ -5,7 +5,6 @@ import { checkUpgrade } from "../src/bridge/upgrade-guard.ts";
 const policy = {
   allowedHosts: new Set(["127.0.0.1:18720", "localhost:18720"]),
   pluginOrigins: new Set(["null"]),
-  token: "t".repeat(43),
 };
 
 describe("checkUpgrade", () => {
@@ -91,6 +90,36 @@ describe("checkUpgrade", () => {
       ),
     ).toEqual({
       status: 404,
+    });
+  });
+
+  it("lets another pixelwright process in on the peer path with no Origin, and refuses a page there", () => {
+    expect(
+      checkUpgrade(
+        {
+          url: `${BRIDGE_PATH}/peer`,
+          headers: { host: "127.0.0.1:18720" },
+        },
+        policy,
+      ),
+    ).toEqual({
+      status: 101,
+      role: "peer",
+    });
+    expect(
+      checkUpgrade(
+        {
+          url: `${BRIDGE_PATH}/peer`,
+          headers: {
+            host: "127.0.0.1:18720",
+            origin: "null",
+          },
+        },
+        policy,
+      ),
+    ).toMatchObject({
+      status: 403,
+      rejection: { reason: "origin" },
     });
   });
 });

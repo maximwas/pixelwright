@@ -35,6 +35,7 @@ const view = (request: BridgeView["request"]): BridgeView => ({
     },
   ],
   request,
+  pairing: () => null,
 });
 
 describe("status", () => {
@@ -99,5 +100,23 @@ describe("status", () => {
     );
 
     expect(status.probe).toBeNull();
+  });
+
+  it("shows the pairing code with the seconds it has left", async () => {
+    const waiting: BridgeView = {
+      ...view(async () => ({ pong: true })),
+      pairing: () => ({
+        code: "123456",
+        expiresAt: Date.now() + 90_000,
+        waiting: 1,
+      }),
+    };
+    const status = await readStatus(waiting, "0.1.0", false);
+
+    expect(status.pairing).toEqual({
+      code: "123456",
+      expiresInSeconds: 90,
+      waiting: 1,
+    });
   });
 });

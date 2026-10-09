@@ -53,11 +53,13 @@ export interface RequestOptions {
 export interface PluginLink {
   request(op: string, input: unknown, options?: RequestOptions): Promise<unknown>;
   plugins(): readonly ConnectedPlugin[];
+  /** The pairing code to show while an unpaired plugin waits; null while none waits. */
+  pairing(): PairingStatus | null;
 }
 
 export interface BridgeServerOptions {
   readonly port: number; // 0 = ephemeral (tests)
-  readonly token: string; // from bridge.json; peers send it in the x-pixelwright-token upgrade header
+  readonly token: string; // from bridge.json; peers prove it by challenge-response
   readonly pluginOrigins: readonly string[];
   readonly serverVersion: string;
   readonly requestTimeoutMs?: number; // tests
@@ -109,14 +111,13 @@ export interface PluginConnectionOptions {
 
 /** Why an upgrade was refused. The origin is safe to surface; the token never is. */
 export interface UpgradeRejection {
-  readonly reason: "host" | "origin" | "token";
+  readonly reason: "host" | "origin";
   readonly origin: string | null;
 }
 
 export interface UpgradePolicy {
   readonly allowedHosts: ReadonlySet<string>;
   readonly pluginOrigins: ReadonlySet<string>;
-  readonly token: string;
 }
 
 /** Who is upgrading: a plugin's UI iframe, or another pixelwright process. */
@@ -143,6 +144,9 @@ export interface PeerConnectionOptions {
   readonly relay: (op: string, input: unknown, options: RequestOptions) => Promise<unknown>;
   readonly plugins: () => readonly ConnectedPlugin[];
   readonly onClose: () => void;
+  /** bridge.json's token, which owner and peer prove to each other. */
+  readonly token: string;
+  readonly pairing: () => PairingStatus | null;
 }
 
 /** Where this process stands with the bridge port. */
@@ -185,4 +189,14 @@ export interface PairingCodesOptions {
   readonly randomDigits?: () => string;
   readonly ttlMs?: number;
   readonly attempts?: number;
+}
+
+/** What bridgeHint weighs, most urgent first. */
+export interface HintInput {
+  readonly state: BridgeState;
+  readonly connectedFiles: number;
+  readonly pairing: PairingStatus | null;
+  readonly rejection: UpgradeRejection | null;
+  readonly port: number;
+  readonly now: number;
 }

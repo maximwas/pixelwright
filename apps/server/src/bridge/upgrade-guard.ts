@@ -1,12 +1,12 @@
 import { type IncomingHttpHeaders, type IncomingMessage, STATUS_CODES } from "node:http";
 import type { Duplex } from "node:stream";
-import { BRIDGE_TOKEN_HEADER, UPGRADE_ROLES } from "../constants/bridge.ts";
+import { UPGRADE_ROLES } from "../constants/bridge.ts";
 import type { UpgradePolicy, UpgradeRejection, UpgradeRole, UpgradeVerdict } from "../types/bridge.ts";
-import { tokenEquals } from "../utils/crypto.ts";
 
 /**
  * Decides a WebSocket upgrade. The plugin's UI iframe comes with one of the plugin origins; another pixelwright process
- * joins on PEER_PATH with no Origin at all, which no browser page can send, and with bridge.json's token. Every upgrade
+ * joins on PEER_PATH with no Origin at all, which no browser page can send, and proves bridge.json's token afterwards
+ * by challenge-response (PeerConnection). Every upgrade
  * needs this server's own Host. Another path is 404; anything else 403.
  */
 export function checkUpgrade(request: Pick<IncomingMessage, "url" | "headers">, policy: UpgradePolicy): UpgradeVerdict {
@@ -47,13 +47,8 @@ function rejectionReason(
   }
 
   if (role === "peer") {
-    if (headers.origin !== undefined) {
-      return "origin"; // a browser always sends Origin, so a page can never pass for a peer
-    }
-
-    const token = headers[BRIDGE_TOKEN_HEADER];
-
-    return typeof token === "string" && tokenEquals(token, policy.token) ? null : "token";
+    // A browser always sends Origin, so a page can never pass for a peer; the token is proven after the upgrade.
+    return headers.origin === undefined ? null : "origin";
   }
 
   // Cross-site WebSocket hijacking guard: only the plugin's iframe origins.

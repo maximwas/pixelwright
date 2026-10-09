@@ -75,7 +75,6 @@ export class BridgeServer
     this.#policy = {
       allowedHosts: new Set(),
       pluginOrigins: new Set(options.pluginOrigins),
-      token: options.token,
     };
     // Plain HTTP has nothing to serve: the port is for WebSocket upgrades only.
     this.#http = createServer((_request, response) => {
@@ -181,7 +180,7 @@ export class BridgeServer
     socket.on("error", onSocketError);
 
     const verdict = checkUpgrade(request, this.#policy);
-    // Never log request.headers wholesale: a peer's carry the token.
+    // Never log request.headers wholesale.
     const { origin, host } = request.headers;
     const reason = verdict.status === 403 ? verdict.rejection.reason : null;
 
@@ -249,6 +248,8 @@ export class BridgeServer
   #acceptPeer(socket: WebSocket): void {
     const peer = new PeerConnection(socket, {
       log: this.#log,
+      token: this.#options.token,
+      pairing: () => this.pairing(),
       relay: (op, input, options) => this.request(op, input, options),
       plugins: () => this.plugins(),
       onClose: () => this.#peers.delete(peer),
