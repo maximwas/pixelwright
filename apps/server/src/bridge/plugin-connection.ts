@@ -16,7 +16,7 @@ import {
   type ServerToPlugin,
 } from "@pixelwright/core";
 import type { RawData, WebSocket } from "ws";
-import { HELLO_TIMEOUT_MS } from "../constants/bridge.ts";
+import { HELLO_TIMEOUT_MS, PAIRING_ATTEMPTS } from "../constants/bridge.ts";
 import type { BridgeLog, PluginConnectionOptions, PluginSession } from "../types/bridge.ts";
 import { PendingRequests } from "./pending-requests.ts";
 
@@ -198,6 +198,9 @@ export class PluginConnection {
       case "expired":
         this.#askToPair("expired");
         break;
+      case "locked":
+        this.#askToPair("locked");
+        break;
     }
   }
 
@@ -212,14 +215,32 @@ export class PluginConnection {
   }
 
   /** Tells the plugin to show the code field, with the code in force (status shows the code itself). */
+  /**
+   * Tells the plugin to show the code field. Never makes a code (only status does, so a guesser cannot mint fresh
+   * ones); while pairing is locked, says so with the time left.
+   */
   #askToPair(reason: PairingReason): void {
-    const code = this.#options.code();
+    const lockedUntil = this.#options.lockedUntil();
+    const now = this.#options.now();
+
+    if (lockedUntil !== null) {
+      this.#send({
+        type: "pairing_required",
+        reason: "locked",
+        attemptsLeft: 0,
+        expiresInMs: Math.max(0, lockedUntil - now),
+      });
+
+      return;
+    }
+
+    const active = this.#options.activeCode();
 
     this.#send({
       type: "pairing_required",
       reason,
-      attemptsLeft: code.attemptsLeft,
-      expiresInMs: Math.max(0, code.expiresAt - this.#options.now()),
+      attemptsLeft: active?.attemptsLeft ?? PAIRING_ATTEMPTS,
+      expiresInMs: active === null ? 0 : Math.max(0, active.expiresAt - now),
     });
   }
 

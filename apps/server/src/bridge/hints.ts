@@ -17,10 +17,16 @@ export function bridgeHint({ state, connectedFiles, pairing, rejection, port, no
       break;
   }
 
-  if (pairing !== null) {
-    const seconds = Math.max(0, Math.ceil((pairing.expiresAt - now) / 1000));
+  if (pairing !== null && pairing.code !== null) {
+    const seconds = Math.max(0, Math.ceil(((pairing.expiresAt ?? now) - now) / 1000));
 
     return `A Figma file is waiting to be paired: ask the user to type ${pairing.code} into the Pixelwright window in Figma (valid for ${seconds} s). Only the user types it; never type or send it anywhere yourself.`;
+  }
+
+  if (pairing !== null && pairing.lockedUntil !== null) {
+    const seconds = Math.max(0, Math.ceil((pairing.lockedUntil - now) / 1000));
+
+    return `Pairing is paused for ${seconds} s: too many wrong codes were typed for a waiting plugin, possibly by another program on this computer (a web page can try). Ask the user to wait, then call status again for a new code.`;
   }
 
   if (connectedFiles > 0) {

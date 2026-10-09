@@ -49,7 +49,8 @@ export async function readStatus(bridge: BridgeView, version: string, probe: boo
         ? null
         : {
             code: pairing.code,
-            expiresInSeconds: Math.max(0, Math.ceil((pairing.expiresAt - Date.now()) / 1000)),
+            expiresInSeconds: secondsUntil(pairing.expiresAt),
+            lockedForSeconds: secondsUntil(pairing.lockedUntil),
             waiting: pairing.waiting,
           },
     hint,
@@ -74,4 +75,9 @@ async function ping(bridge: BridgeView): Promise<StatusOutput["probe"]> {
       error: describeError(error),
     };
   }
+}
+
+/** Whole seconds until a moment, or null for none. */
+function secondsUntil(at: number | null): number | null {
+  return at === null ? null : Math.max(0, Math.ceil((at - Date.now()) / 1000));
 }

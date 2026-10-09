@@ -54,7 +54,8 @@ export const PluginKeySchema = z.object({
   secret: z.string().regex(/^[0-9a-f]{64}$/),
 });
 
-export const PairingReasonSchema = z.enum(["no_key", "unknown_key", "wrong_code", "expired"]);
+/** Why the plugin must pair: locked means too many wrong codes, and pairing is paused for expiresInMs. */
+export const PairingReasonSchema = z.enum(["no_key", "unknown_key", "wrong_code", "expired", "locked"]);
 
 // plugin -> server, first frame; the server closes 4408 if it does not arrive in time
 const HelloMessageSchema = z.object({

@@ -124,17 +124,21 @@ export class BridgeServer
     }));
   }
 
-  /** The code to show while an unpaired plugin waits for it; null while none waits. */
+  /**
+   * For status: the code to show while an unpaired plugin waits, made here and only here (asking for status is what
+   * makes a code), or the end of the pause after too many wrong codes; null while none waits.
+   */
   pairing(): PairingStatus | null {
     if (this.#pending.size === 0) {
       return null;
     }
 
-    const { code, expiresAt } = this.#pairing.ensure();
+    const active = this.#pairing.ensure();
 
     return {
-      code,
-      expiresAt,
+      code: active?.code ?? null,
+      expiresAt: active?.expiresAt ?? null,
+      lockedUntil: this.#pairing.lockedUntil(),
       waiting: this.#pending.size,
     };
   }
@@ -217,10 +221,10 @@ export class BridgeServer
         this.#sessions.size < MAX_PLUGIN_SESSIONS ||
         [...this.#sessions.values()].some((session) => session.info.instanceId === info.instanceId),
       keys: this.#options.keys,
-      code: () => this.#pairing.ensure(),
       activeCode: () => this.#pairing.active(),
+      lockedUntil: () => this.#pairing.lockedUntil(),
       checkCode: (code) => this.#pairing.check(code),
-      now: Date.now,
+      now: () => this.#pairing.now(),
       onPending: (waiting) => {
         if (this.#pending.size >= MAX_PENDING_PLUGINS) {
           return false;

@@ -34,8 +34,9 @@ export const ConnectedPluginSchema = z.object({
 });
 
 export const PairingStatusSchema = z.object({
-  code: z.string(),
-  expiresAt: z.number(),
+  code: z.string().nullable(),
+  expiresAt: z.number().nullable(),
+  lockedUntil: z.number().nullable(),
   waiting: z.number().int(),
 });
 

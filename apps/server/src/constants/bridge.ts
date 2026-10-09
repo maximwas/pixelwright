@@ -24,6 +24,14 @@ export const PAIRING_CODE_TTL_MS = 120_000;
 
 export const PAIRING_ATTEMPTS = 5;
 
+/**
+ * After a code's tries run out, pairing pauses: first this long, twice as long after each further spent code, up to
+ * the maximum, back to the first after a successful pairing. Guessing 5 of a million per pause gets nowhere.
+ */
+export const PAIRING_COOLDOWN_MS = 30_000;
+
+export const PAIRING_MAX_COOLDOWN_MS = 3_600_000;
+
 /** How many unpaired plugins may wait for a code at once; one more is closed 4429. */
 export const MAX_PENDING_PLUGINS = 8;
 

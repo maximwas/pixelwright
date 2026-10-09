@@ -108,6 +108,7 @@ describe("status", () => {
       pairing: () => ({
         code: "123456",
         expiresAt: Date.now() + 90_000,
+        lockedUntil: null,
         waiting: 1,
       }),
     };
@@ -116,6 +117,27 @@ describe("status", () => {
     expect(status.pairing).toEqual({
       code: "123456",
       expiresInSeconds: 90,
+      lockedForSeconds: null,
+      waiting: 1,
+    });
+  });
+
+  it("says when pairing is locked, with no code", async () => {
+    const locked: BridgeView = {
+      ...view(async () => ({ pong: true })),
+      pairing: () => ({
+        code: null,
+        expiresAt: null,
+        lockedUntil: Date.now() + 30_000,
+        waiting: 1,
+      }),
+    };
+    const status = await readStatus(locked, "0.1.0", false);
+
+    expect(status.pairing).toEqual({
+      code: null,
+      expiresInSeconds: null,
+      lockedForSeconds: 30,
       waiting: 1,
     });
   });

@@ -72,15 +72,20 @@ export interface BridgeServerOptions {
 
 /** What the bridge needs from PairingCodes. */
 export interface PairingCodesLike {
+  now(): number;
   active(): ActiveCode | null;
-  ensure(): ActiveCode;
+  /** The code in force, made if there is none; null while pairing is locked. */
+  ensure(): ActiveCode | null;
+  lockedUntil(): number | null;
   check(code: string): CodeCheck;
 }
 
 /** For status: the code to show while an unpaired plugin waits, never anything about that plugin but the count. */
 export interface PairingStatus {
-  readonly code: string;
-  readonly expiresAt: number;
+  /** The code to type, or null while pairing is locked after too many wrong codes. */
+  readonly code: string | null;
+  readonly expiresAt: number | null;
+  readonly lockedUntil: number | null;
   readonly waiting: number;
 }
 
@@ -92,9 +97,9 @@ export interface PluginConnectionOptions {
   /** Whether a plugin that proved its key or typed the code may become a session (the cap on sessions). */
   readonly admit: (info: PluginInfo) => boolean;
   readonly keys: PluginKeys;
-  /** The pairing code in force, made if there is none; and without making one. */
-  readonly code: () => ActiveCode;
+  /** The pairing code in force, never made here (only status makes codes), and the end of a lock. */
   readonly activeCode: () => ActiveCode | null;
+  readonly lockedUntil: () => number | null;
   readonly checkCode: (code: string) => CodeCheck;
   readonly now: () => number;
   /** An unpaired plugin starts waiting for the code; false: too many wait already. */
@@ -182,13 +187,16 @@ export interface ActiveCode {
 export type CodeCheck =
   | { readonly outcome: "ok" }
   | { readonly outcome: "wrong"; readonly attemptsLeft: number }
-  | { readonly outcome: "expired" };
+  | { readonly outcome: "expired" }
+  | { readonly outcome: "locked"; readonly until: number };
 
 export interface PairingCodesOptions {
   readonly now?: () => number;
   readonly randomDigits?: () => string;
   readonly ttlMs?: number;
   readonly attempts?: number;
+  readonly cooldownMs?: number;
+  readonly maxCooldownMs?: number;
 }
 
 /** What bridgeHint weighs, most urgent first. */

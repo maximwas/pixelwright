@@ -32,8 +32,9 @@ export const StatusOutputSchema = z.object({
   /** While an unpaired plugin waits: the code the user types into the Pixelwright window, never typed by the model. */
   pairing: z
     .object({
-      code: z.string(),
-      expiresInSeconds: z.number().int(),
+      code: z.string().nullable(),
+      expiresInSeconds: z.number().int().nullable(),
+      lockedForSeconds: z.number().int().nullable(),
       waiting: z.number().int(),
     })
     .nullable(),

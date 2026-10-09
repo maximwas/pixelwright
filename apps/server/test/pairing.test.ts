@@ -85,14 +85,21 @@ describe("pairing", () => {
     expect(server.pairing()).toBeNull();
   });
 
-  it("rotates the code after five wrong tries and refuses the old one", async () => {
-    const { server, port } = await start(memoryKeys(), predictableCodes());
+  it("gives a guesser five tries, then locks pairing until a pause passes", async () => {
+    let now = 1_000;
+    let digit = 0;
+    const pairing = new PairingCodes({
+      now: () => now,
+      randomDigits: () => String(++digit).repeat(6),
+      cooldownMs: 60_000,
+    });
+    const { server, port } = await start(memoryKeys(), pairing);
     const plugin = await rawPlugin(port, null);
 
     await plugin.next("pairing_required");
     expect(server.pairing()?.code).toBe("111111");
 
-    for (let left = 4; left >= 0; left -= 1) {
+    for (let left = 4; left >= 1; left -= 1) {
       plugin.send({
         type: "pair",
         code: "999999",
@@ -105,14 +112,24 @@ describe("pairing", () => {
 
     plugin.send({
       type: "pair",
-      code: "111111",
+      code: "999999",
     });
     expect(await plugin.next("pairing_required")).toMatchObject({
-      reason: "expired",
-      attemptsLeft: 5,
+      reason: "locked",
+      expiresInMs: 60_000,
     });
-    expect(server.pairing()?.code).toBe("222222");
+    plugin.send({
+      type: "pair",
+      code: "111111",
+    });
+    expect(await plugin.next("pairing_required")).toMatchObject({ reason: "locked" });
+    expect(server.pairing()).toMatchObject({
+      code: null,
+      lockedUntil: 61_000,
+    });
     expect(server.plugins()).toEqual([]);
+    now = 61_000;
+    expect(server.pairing()?.code).toBe("222222");
   });
 
   it("lets a plugin with a known key in by challenge-response, after the server proves itself", async () => {

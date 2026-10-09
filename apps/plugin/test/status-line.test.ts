@@ -50,6 +50,15 @@ describe("the window's texts", () => {
     ).toBe("Pixelwright no longer knows this plugin: ask your assistant for a pairing code and type it here.");
     expect(
       pairingNote({
+        kind: "pairing",
+        reason: "locked",
+        attemptsLeft: 0,
+      }),
+    ).toBe(
+      "Too many wrong codes were typed, maybe by another program: pairing is paused. Ask your assistant again in a few minutes.",
+    );
+    expect(
+      pairingNote({
         kind: "connected",
         serverVersion: "0.1.0",
       }),

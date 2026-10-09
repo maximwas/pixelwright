@@ -48,6 +48,8 @@ export function pairingNote(link: LinkState): string | null {
       return "Pixelwright no longer knows this plugin: ask your assistant for a pairing code and type it here.";
     case "expired":
       return "That code expired: ask your assistant for the new one.";
+    case "locked":
+      return "Too many wrong codes were typed, maybe by another program: pairing is paused. Ask your assistant again in a few minutes.";
     case "wrong_code":
       return link.attemptsLeft > 0
         ? `Wrong code: ${link.attemptsLeft} ${link.attemptsLeft === 1 ? "try" : "tries"} left.`
