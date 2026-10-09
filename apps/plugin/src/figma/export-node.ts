@@ -55,11 +55,12 @@ async function render(
     throw new BridgeError("NODE_NOT_FOUND", `${id} is a ${node.type.toLowerCase()}, which cannot be exported.`);
   }
 
-  const scale = format === "SVG" || maxSide === undefined ? asked : fittedScale(node, asked, effects, maxSide);
+  const vector = format === "SVG" || format === "PDF";
+  const scale = vector || maxSide === undefined ? asked : fittedScale(node, asked, effects, maxSide);
 
   // useAbsoluteBounds: the layer's own box, without the shadows and outside strokes that make it bigger.
   const settings: ExportSettings =
-    format === "SVG"
+    format === "SVG" || format === "PDF"
       ? {
           format,
           useAbsoluteBounds: !effects,

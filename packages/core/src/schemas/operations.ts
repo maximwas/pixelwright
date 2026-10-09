@@ -87,7 +87,7 @@ export const OPERATION_SCHEMAS = {
   export: {
     input: z.object({
       node: NodeIdSchema,
-      format: z.enum(["PNG", "JPG", "SVG"]),
+      format: z.enum(["PNG", "JPG", "SVG", "PDF"]),
       scale: z.number().min(0.01).max(4).default(1),
       /** With effects off, the node's own box: no shadow or outside stroke around it. */
       effects: z.boolean().default(true),

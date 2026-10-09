@@ -40,6 +40,7 @@ describe("stdio server", () => {
       const { tools } = await client.listTools();
 
       expect(tools.map((tool) => tool.name).sort()).toEqual([
+        "design_read",
         "node_show",
         "nodes_find",
         "outline",
