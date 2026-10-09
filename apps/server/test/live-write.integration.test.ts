@@ -50,6 +50,9 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         version: "0.0.0",
       });
       const log: Record<string, unknown> = {};
+      // What the run made or changed, taken back in finally whatever failed: layers to delete, texts to restore.
+      const made: string[] = [];
+      const texts: [string, string][] = [];
       const call: Call = async (name, args) => {
         const result = await client.callTool({
           name,
@@ -132,6 +135,9 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         // S1: the probe exported as PNG at 1x and as SVG.
         const probe = (await call("design_apply", { xml: PROBE })).structured as { created: { id: string }[] };
         const probeId = probe.created[0]?.id ?? "";
+
+        made.push(probeId);
+
         const exported = (
           await call("assets_export", {
             nodes: [probeId],
@@ -171,6 +177,8 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         const boardId = boardLayer?.id ?? "";
         const cardId = cardLayer?.id ?? "";
 
+        made.push(boardId);
+
         log.card = board;
         expect(board.errors).toEqual([]);
         log.cardXml = (await call("design_read", { node: boardId })).text;
@@ -191,10 +199,15 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         expect(cardLine).toContain('width="560px"');
         expect(cardLine).not.toContain("height=");
 
-        // An instance's text by its I…;… id: only the characters change, its style stays; then the old text back.
+        // An instance's text by its I…;… id: the characters change and its style stays (an auto-width label's box
+        // follows them); the old text back reads exactly as before.
         const label = /<Text id="(I[^"]+)"[^>]*>([^<]+)<\/Text>/.exec(row);
         const [, labelId = "", labelText = ""] = label ?? [];
         const before = (await call("design_read", { node: labelId })).text;
+        const unsized = (xml: string) => xml.replace(/ (width|height)="[^"]*"/g, "");
+
+        texts.push([labelId, labelText]);
+
         const edited = (await call("design_apply", { xml: `<Text id="${labelId}">${labelText} now</Text>` }))
           .structured as { changed: string[]; errors: unknown[] };
         const after = (await call("design_read", { node: labelId })).text;
@@ -206,14 +219,23 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
           after,
         };
         expect(edited.changed).toEqual([labelId]);
-        expect(after).toBe(before.replace(`>${labelText}<`, `>${labelText} now<`));
+        expect(unsized(after)).toBe(unsized(before).replace(`>${labelText}<`, `>${labelText} now<`));
         await call("design_apply", { xml: `<Text id="${labelId}">${labelText}</Text>` });
+        texts.pop();
         expect((await call("design_read", { node: labelId })).text).toBe(before);
 
-        log.deleted = (await call("nodes_delete", { nodes: [boardId, probeId] })).structured;
+        log.deleted = (await call("nodes_delete", { nodes: made.splice(0) })).structured;
         // Taken back whole: the row reads as before.
         expect((await call("design_read", { node: "2:4869" })).text).toBe(row);
       } finally {
+        for (const [id, characters] of texts) {
+          await call("design_apply", { xml: `<Text id="${id}">${characters}</Text>` }).catch(() => undefined);
+        }
+
+        if (made.length > 0) {
+          log.cleanup = await call("nodes_delete", { nodes: made }).catch((error: unknown) => String(error));
+        }
+
         writeFileSync(join(OUT, "live-write.json"), JSON.stringify(log, null, 2));
         await client.close();
       }
