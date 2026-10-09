@@ -17,8 +17,25 @@ import {
   isTokenURL,
   tokenize,
 } from "@csstools/css-tokenizer";
-import { converter, parse } from "culori";
+import {
+  converter,
+  modeHsl,
+  modeHwb,
+  modeLab,
+  modeLch,
+  modeOklab,
+  modeOklch,
+  modeP3,
+  modeRgb,
+  parse,
+  useMode,
+} from "culori/fn";
 import type { ColorValue, LengthValue, PaintSpec, TokenRef } from "../types/apply.ts";
+
+// Only the colour spaces CSS writes, so the plugin bundle does not carry every space culori knows.
+for (const mode of [modeRgb, modeHsl, modeHwb, modeLab, modeLch, modeOklab, modeOklch, modeP3]) {
+  useMode(mode);
+}
 
 const toRgb = converter("rgb");
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changeOf, cleanOracle, splitTop, urlsOf } from "../src/index.ts";
+import { changeOf, cleanOracle, colorOf, splitTop, urlsOf } from "../src/index.ts";
 
 const props = (tag: string, attributes: Record<string, string>) =>
   changeOf({
@@ -58,5 +58,36 @@ describe("CSS values, read as CSS reads them", () => {
 
   it("lists every file a value names, quoted or not", () => {
     expect(urlsOf('url("a (1).png") center, url(b.png), linear-gradient(#000, #fff)')).toEqual(["a (1).png", "b.png"]);
+  });
+});
+
+describe("colours", () => {
+  it("reads every syntax it read before: hex, rgb, hsl, hwb, lab, lch, oklab, oklch, display-p3, names, transparent", () => {
+    const rgb = (value: string) => {
+      const color = colorOf(value);
+
+      return color === null ? null : [color.r, color.g, color.b, color.a].map((channel) => Math.round(channel * 255));
+    };
+
+    expect(
+      [
+        "#FFF",
+        "#0D99FF",
+        "#0D99FF80",
+        "rgb(13, 153, 255)",
+        "rgba(13, 153, 255, 0.5)",
+        "rgb(13 153 255 / 50%)",
+        "hsl(205, 100%, 53%)",
+        "hwb(205 5% 0%)",
+        "lab(60.5 7 -60)",
+        "lch(60.5 60 277)",
+        "oklab(0.65 -0.05 -0.15)",
+        "oklch(0.65 0.16 250)",
+        "color(display-p3 0.2 0.6 1)",
+        "rebeccapurple",
+        "transparent",
+        "not a colour",
+      ].map(rgb),
+    ).toMatchSnapshot();
   });
 });
