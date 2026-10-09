@@ -43,6 +43,7 @@ describe("stdio server", () => {
         "assets_export",
         "components_read",
         "design_read",
+        "guide",
         "node_show",
         "nodes_find",
         "outline",
@@ -57,6 +58,36 @@ describe("stdio server", () => {
         expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
         // A tool that returns an image has no outputSchema: Claude Code would show only structuredContent and drop it.
         expect(tool.outputSchema === undefined, tool.name).toBe(["design_read", "screenshot"].includes(tool.name));
+      }
+
+      // The guide teaches only tools that exist: every tool-like name in a topic is a registered tool.
+      const names = new Set(tools.map((tool) => tool.name));
+      const index = (
+        await client.callTool({
+          name: "guide",
+          arguments: {},
+        })
+      ).structuredContent as {
+        topics: { name: string }[];
+      };
+
+      expect(index.topics.map((topic) => topic.name)).toEqual(["workflow", "xml", "tokens", "assets", "email"]);
+
+      for (const { name } of index.topics) {
+        const topic = (
+          await client.callTool({
+            name: "guide",
+            arguments: { topic: name },
+          })
+        ).structuredContent as {
+          markdown: string;
+        };
+
+        expect(topic.markdown.length, name).toBeGreaterThan(500);
+
+        for (const [, mentioned] of topic.markdown.matchAll(/`([a-z]+(?:_[a-z]+)+)`/g)) {
+          expect(names.has(mentioned ?? ""), `${name} mentions ${mentioned}`).toBe(true);
+        }
       }
 
       const status = await client.callTool({

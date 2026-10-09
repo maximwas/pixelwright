@@ -4,6 +4,7 @@ import type { ToolContext } from "../types/mcp.ts";
 import { registerAssetsTool } from "./tools/assets.ts";
 import { registerComponentsTool } from "./tools/components.ts";
 import { registerDesignTool } from "./tools/design.ts";
+import { registerGuideTool } from "./tools/guide.ts";
 import { registerNodeTools } from "./tools/nodes.ts";
 import { registerScreenshotTool } from "./tools/screenshot.ts";
 import { registerStatusTool } from "./tools/status.ts";
@@ -25,6 +26,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTokensTool(server, context);
   registerComponentsTool(server, context);
   registerAssetsTool(server, context);
+  registerGuideTool(server);
 
   return server;
 }
