@@ -1,4 +1,4 @@
-import type { ColorValue } from "./apply.ts";
+import type { ColorValue, EffectSpec, FontSpec, PaintSpec } from "./apply.ts";
 
 /** The variable types tokens_apply writes. */
 export type WritableVariableType = "COLOR" | "FLOAT" | "STRING" | "BOOLEAN";
@@ -28,9 +28,29 @@ export interface CollectionPlan {
   readonly variables: readonly VariablePlan[];
 }
 
+export interface PaintStylePlan {
+  readonly name: string;
+  readonly paints: readonly PaintSpec[];
+}
+
+export interface TextStylePlan {
+  readonly name: string;
+  readonly font: FontSpec;
+}
+
+export interface EffectStylePlan {
+  readonly name: string;
+  readonly effects: readonly EffectSpec[];
+}
+
 /** What tokens_apply asks the plugin to write, in Figma's terms. */
 export interface TokensPlan {
   readonly collections: readonly CollectionPlan[];
+  readonly styles: {
+    readonly paint: readonly PaintStylePlan[];
+    readonly text: readonly TextStylePlan[];
+    readonly effect: readonly EffectStylePlan[];
+  };
 }
 
 export type TokenKind = "collection" | "mode" | "variable" | "paint" | "text" | "effect";

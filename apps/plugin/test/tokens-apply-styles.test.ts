@@ -1,0 +1,327 @@
+import { TokensApplyInputSchema, tokensPlan } from "@pixelwright/core";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setEditsAllowed } from "../src/figma/edits.ts";
+import { runOperation } from "../src/figma/operations.ts";
+import { installFigma, tree } from "./helpers/fake-figma.ts";
+
+interface Applied {
+  created: { kind: string; name: string }[];
+  updated: { kind: string; name: string }[];
+  errors: { kind: string; name: string; message: string }[];
+}
+
+const solid = (r: number, g: number, b: number) => ({
+  type: "SOLID",
+  visible: true,
+  opacity: 1,
+  blendMode: "NORMAL",
+  color: {
+    r,
+    g,
+    b,
+  },
+});
+
+const apply = async (styles: unknown) => {
+  const { plan, errors } = tokensPlan(TokensApplyInputSchema.parse({ styles }));
+
+  expect(errors).toEqual([]);
+
+  return (await runOperation("tokens_apply", {
+    plan,
+    dryRun: false,
+  })) as Applied;
+};
+
+let fake: ReturnType<typeof installFigma>;
+const local = async () => ({
+  paint: await figma.getLocalPaintStylesAsync(),
+  text: await figma.getLocalTextStylesAsync(),
+  effect: await figma.getLocalEffectStylesAsync(),
+});
+
+beforeEach(() => {
+  fake = installFigma(
+    tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "1:1",
+          name: "Swatch",
+          fillStyleId: "S:green",
+        },
+      ],
+    }),
+    {
+      fonts: [
+        {
+          family: "Inter",
+          style: "Regular",
+        },
+        {
+          family: "Inter",
+          style: "Medium",
+        },
+      ],
+      localStyles: {
+        paint: [
+          {
+            id: "S:dark",
+            type: "PAINT",
+            name: "Dark",
+            remote: false,
+            paints: [solid(0, 0, 0)],
+          },
+        ],
+        text: [
+          {
+            id: "S:h2",
+            type: "TEXT",
+            name: "h2",
+            remote: false,
+            fontName: {
+              family: "Inter",
+              style: "Regular",
+            },
+            fontSize: 40,
+            lineHeight: { unit: "AUTO" },
+            letterSpacing: {
+              unit: "PERCENT",
+              value: 0,
+            },
+            textCase: "ORIGINAL",
+            textDecoration: "NONE",
+          },
+        ],
+        effect: [],
+      },
+      // A library's colour style the page uses.
+      styles: {
+        "S:green": {
+          id: "S:green",
+          type: "PAINT",
+          name: "Green",
+          remote: true,
+          paints: [solid(0, 1, 0)],
+        },
+      },
+      localCollections: [
+        {
+          id: "C:brand",
+          name: "Brand",
+          remote: false,
+          defaultModeId: "M:light",
+          modes: [
+            {
+              modeId: "M:light",
+              name: "Light",
+            },
+          ],
+        },
+      ],
+      localVariables: [
+        {
+          id: "V:primary",
+          name: "color/primary",
+          variableCollectionId: "C:brand",
+          resolvedType: "COLOR",
+          description: "",
+          scopes: ["ALL_SCOPES"],
+          valuesByMode: {
+            "M:light": {
+              r: 0,
+              g: 0.6,
+              b: 1,
+              a: 1,
+            },
+          },
+        },
+      ],
+    },
+  );
+  setEditsAllowed(true);
+});
+
+afterEach(() => {
+  setEditsAllowed(false);
+});
+
+describe("tokens_apply: styles", () => {
+  it("makes the styles the file lacks and changes those that differ, leaving equal ones", async () => {
+    const result = await apply({
+      paint: [
+        {
+          name: "Dark",
+          value: "#000000",
+        },
+        {
+          name: "Brand",
+          value: "#0D99FF",
+        },
+      ],
+      text: [
+        {
+          name: "h2",
+          value: "500 40px/normal 'Inter'",
+        },
+      ],
+      effect: [
+        {
+          name: "Lift",
+          value: "0 5px 0 0 #191A23",
+        },
+      ],
+    });
+    const styles = await local();
+
+    expect(result).toEqual({
+      created: [
+        {
+          kind: "paint",
+          name: "Brand",
+        },
+        {
+          kind: "effect",
+          name: "Lift",
+        },
+      ],
+      updated: [
+        {
+          kind: "text",
+          name: "h2",
+        },
+      ],
+      errors: [],
+    });
+    expect(styles.paint.find(({ name }) => name === "Brand")?.paints).toMatchObject([
+      {
+        type: "SOLID",
+        color: {
+          r: 13 / 255,
+          g: 153 / 255,
+          b: 1,
+        },
+      },
+    ]);
+    expect(styles.text[0]?.fontName).toEqual({
+      family: "Inter",
+      style: "Medium",
+    });
+    expect(styles.effect[0]?.effects).toMatchObject([
+      {
+        type: "DROP_SHADOW",
+        offset: {
+          x: 0,
+          y: 5,
+        },
+      },
+    ]);
+    expect(fake.writes.undo).toBe(1);
+    expect(
+      await apply({
+        paint: [
+          {
+            name: "Brand",
+            value: "#0D99FF",
+          },
+        ],
+        text: [
+          {
+            name: "h2",
+            value: "500 40px/normal 'Inter'",
+          },
+        ],
+        effect: [
+          {
+            name: "Lift",
+            value: "0 5px 0 0 #191A23",
+          },
+        ],
+      }),
+    ).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+  });
+
+  it("binds a paint style to a colour variable", async () => {
+    await apply({
+      paint: [
+        {
+          name: "Link",
+          value: "var(--color-primary)",
+        },
+      ],
+    });
+
+    expect((await local()).paint.find(({ name }) => name === "Link")?.paints).toMatchObject([
+      {
+        boundVariables: {
+          color: {
+            type: "VARIABLE_ALIAS",
+            id: "V:primary",
+          },
+        },
+      },
+    ]);
+  });
+
+  it("leaves a library's style alone: the same value changes nothing, another is refused", async () => {
+    expect(
+      await apply({
+        paint: [
+          {
+            name: "Green",
+            value: "#00FF00",
+          },
+        ],
+      }),
+    ).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+    expect(
+      (
+        await apply({
+          paint: [
+            {
+              name: "Green",
+              value: "#00AA00",
+            },
+          ],
+        })
+      ).errors,
+    ).toEqual([
+      expect.objectContaining({
+        kind: "paint",
+        name: "Green",
+        message: expect.stringMatching(/library/),
+      }),
+    ]);
+    expect((await local()).paint.map(({ name }) => name)).toEqual(["Dark"]);
+  });
+
+  it("names the font a text style asks for that this Figma lacks", async () => {
+    expect(
+      (
+        await apply({
+          text: [
+            {
+              name: "Body",
+              value: "400 16px/24px 'Nope Sans'",
+            },
+          ],
+        })
+      ).errors,
+    ).toEqual([
+      expect.objectContaining({
+        kind: "text",
+        name: "Body",
+        message: expect.stringMatching(/Nope Sans/),
+      }),
+    ]);
+  });
+});

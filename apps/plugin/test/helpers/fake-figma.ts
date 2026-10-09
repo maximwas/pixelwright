@@ -762,6 +762,49 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     return variable;
   };
 
+  // The file's own styles, made and changed as Figma's: a text style takes a font only once it is loaded.
+  const localStyles: Record<"paint" | "text" | "effect", Record<string, unknown>[]> = {
+    paint: [...((library.localStyles?.paint ?? []) as Record<string, unknown>[])],
+    text: [...((library.localStyles?.text ?? []) as Record<string, unknown>[])],
+    effect: [...((library.localStyles?.effect ?? []) as Record<string, unknown>[])],
+  };
+  const createStyle = (kind: "paint" | "text" | "effect", type: string, values: Record<string, unknown>) => () => {
+    const style: Record<string, unknown> = {
+      id: `S:90:${localStyles.paint.length + localStyles.text.length + localStyles.effect.length + 1}`,
+      type,
+      name: "",
+      remote: false,
+      ...structuredClone(values),
+    };
+
+    if (kind === "text") {
+      let fontName = style.fontName as { family: string; style: string };
+
+      delete style.fontName;
+      Object.defineProperty(style, "fontName", {
+        get: () => fontName,
+        set: (value: { family: string; style: string }) => {
+          if (!writes.loaded.has(fontKey(value))) {
+            throw new Error(`Cannot use unloaded font "${fontKey(value)}"`);
+          }
+
+          fontName = value;
+        },
+        enumerable: true,
+        configurable: true,
+      });
+    }
+
+    localStyles[kind].push(style);
+    writes.calls.push({
+      node: style.id as string,
+      method: `create${type.charAt(0)}${type.slice(1).toLowerCase()}Style`,
+      args: [],
+    });
+
+    return style;
+  };
+
   for (const collection of library.localCollections ?? []) {
     collectionStore(collection as FakeCollection);
   }
@@ -848,9 +891,25 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
         },
       }),
     },
-    getLocalPaintStylesAsync: async () => library.localStyles?.paint ?? [],
-    getLocalTextStylesAsync: async () => library.localStyles?.text ?? [],
-    getLocalEffectStylesAsync: async () => library.localStyles?.effect ?? [],
+    getLocalPaintStylesAsync: async () => localStyles.paint,
+    getLocalTextStylesAsync: async () => localStyles.text,
+    getLocalEffectStylesAsync: async () => localStyles.effect,
+    createPaintStyle: createStyle("paint", "PAINT", { paints: [] }),
+    createTextStyle: createStyle("text", "TEXT", {
+      fontName: {
+        family: "Inter",
+        style: "Regular",
+      },
+      fontSize: 12,
+      lineHeight: { unit: "AUTO" },
+      letterSpacing: {
+        unit: "PERCENT",
+        value: 0,
+      },
+      textCase: "ORIGINAL",
+      textDecoration: "NONE",
+    }),
+    createEffectStyle: createStyle("effect", "EFFECT", { effects: [] }),
     teamLibrary: {
       getAvailableLibraryVariableCollectionsAsync: async () => {
         if (library.teamLibrary instanceof Error) {

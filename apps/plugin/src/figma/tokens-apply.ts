@@ -10,8 +10,12 @@ import {
   variableTokenName,
 } from "@pixelwright/core";
 import { errorMessage } from "../utils/error-message.ts";
+import { effectsOf, paintsOf } from "./apply-props.ts";
 import { requireEdits } from "./edits.ts";
+import { fontNameOf } from "./fonts.ts";
+import { type TokenIndex, tokenIndex } from "./token-index.ts";
 import { variables } from "./variables.ts";
+import { WriteError } from "./write-error.ts";
 
 /** A variable an alias may point at: by its CSS name. */
 interface Known {
@@ -149,6 +153,8 @@ export async function tokensApply({ plan, dryRun }: OperationInput<"tokens_apply
   for (const item of written) {
     await writeValues(item, dryRun, known, results);
   }
+
+  await writeStyles(plan.styles, raw, dryRun, results);
 
   if (!dryRun && (results.created.length > 0 || results.updated.length > 0)) {
     figma.commitUndo();
@@ -476,4 +482,211 @@ function fault(target: Target, plan: VariablePlan, message: string, mode?: strin
     ...(mode === undefined ? {} : { mode }),
     message,
   };
+}
+
+/** What a style holds, as tokens_apply compares and writes it. */
+type StyleValue =
+  | { readonly kind: "paint"; readonly paints: Paint[] }
+  | {
+      readonly kind: "text";
+      readonly fontName: FontName;
+      readonly fontSize: number;
+      readonly lineHeight: LineHeight;
+    }
+  | { readonly kind: "effect"; readonly effects: Effect[] };
+
+/**
+ * Paint, text and effect styles by name among the file's own: made when it has none, changed where they differ. A
+ * library's style of that name the page uses is left alone (a value it does not hold is an error), never copied.
+ */
+async function writeStyles(
+  plan: OperationInput<"tokens_apply">["plan"]["styles"],
+  raw: RawTokens,
+  dryRun: boolean,
+  results: Results,
+): Promise<void> {
+  let index: Promise<TokenIndex> | null = null;
+  const context = {
+    tokens: () => {
+      index ??= tokenIndex();
+
+      return index;
+    },
+  };
+  const wanted: { kind: "paint" | "text" | "effect"; name: string; value: () => Promise<StyleValue> }[] = [
+    ...plan.paint.map(({ name, paints }) => ({
+      kind: "paint" as const,
+      name,
+      value: async (): Promise<StyleValue> => {
+        const resolved = await paintsOf(paints, context);
+
+        if ("style" in resolved) {
+          throw new WriteError("A paint style holds paints: it cannot point at another paint style.");
+        }
+
+        return {
+          kind: "paint",
+          paints: resolved.paints,
+        };
+      },
+    })),
+    ...plan.text.map(({ name, font }) => ({
+      kind: "text" as const,
+      name,
+      value: async (): Promise<StyleValue> => {
+        const fontName = await fontNameOf(font);
+
+        if (!dryRun) {
+          await figma.loadFontAsync(fontName);
+        }
+
+        return {
+          kind: "text",
+          fontName,
+          fontSize: font.size,
+          lineHeight: font.lineHeight as LineHeight,
+        };
+      },
+    })),
+    ...plan.effect.map(({ name, effects }) => ({
+      kind: "effect" as const,
+      name,
+      value: async (): Promise<StyleValue> => ({
+        kind: "effect",
+        effects: effectsOf(effects),
+      }),
+    })),
+  ];
+  const locals: Record<"paint" | "text" | "effect", BaseStyle[]> = {
+    paint: await figma.getLocalPaintStylesAsync(),
+    text: await figma.getLocalTextStylesAsync(),
+    effect: await figma.getLocalEffectStylesAsync(),
+  };
+
+  for (const { kind, name, value } of wanted) {
+    try {
+      const next = await value();
+      const style = locals[kind].find((item) => item.name === name) ?? null;
+      const library = raw.styles.find((item) => item.remote && item.name === name && item.type === kind.toUpperCase());
+
+      if (style === null && library !== undefined) {
+        if (!holds(library as unknown as BaseStyle, next)) {
+          results.errors.push({
+            kind,
+            name,
+            message: `${name} comes from a library: change it there.`,
+          });
+        }
+
+        continue;
+      }
+
+      if (style !== null && holds(style, next)) {
+        continue;
+      }
+
+      if (!dryRun) {
+        write(style ?? made(kind, name), next);
+      }
+
+      (style === null ? results.created : results.updated).push({
+        kind,
+        name,
+      });
+    } catch (error) {
+      results.errors.push({
+        kind,
+        name,
+        message: errorMessage(error),
+      });
+    }
+  }
+}
+
+function made(kind: "paint" | "text" | "effect", name: string): BaseStyle {
+  const style =
+    kind === "paint" ? figma.createPaintStyle() : kind === "text" ? figma.createTextStyle() : figma.createEffectStyle();
+
+  style.name = name;
+
+  return style;
+}
+
+function write(style: BaseStyle, value: StyleValue): void {
+  if (value.kind === "paint") {
+    (style as PaintStyle).paints = value.paints;
+  } else if (value.kind === "text") {
+    const text = style as TextStyle;
+
+    text.fontName = value.fontName;
+    text.fontSize = value.fontSize;
+    text.lineHeight = value.lineHeight;
+  } else {
+    (style as EffectStyle).effects = value.effects;
+  }
+}
+
+/**
+ * Whether a style holds the value already, judged as CSS writes it (the values came through tokens_read's CSS): colours
+ * to 8 bits per channel, opacities to 0.005, a font by name and size.
+ */
+function holds(style: BaseStyle, value: StyleValue): boolean {
+  if (value.kind === "paint") {
+    return JSON.stringify(paintKeys((style as PaintStyle).paints ?? [])) === JSON.stringify(paintKeys(value.paints));
+  }
+
+  if (value.kind === "text") {
+    const text = style as TextStyle;
+
+    return (
+      text.fontName?.family === value.fontName.family &&
+      text.fontName.style === value.fontName.style &&
+      text.fontSize === value.fontSize &&
+      JSON.stringify(text.lineHeight) === JSON.stringify(value.lineHeight)
+    );
+  }
+
+  return JSON.stringify(effectKeys((style as EffectStyle).effects ?? [])) === JSON.stringify(effectKeys(value.effects));
+}
+
+/** The parts of paints that make them look as they do, rounded as CSS writes them. */
+function paintKeys(paints: readonly Paint[]): unknown[] {
+  return paints
+    .filter((paint) => paint.visible ?? true)
+    .map((paint) => {
+      const solid = paint as Partial<SolidPaint>;
+
+      return [
+        paint.type,
+        Math.round((paint.opacity ?? 1) * 200),
+        solid.color === undefined
+          ? null
+          : [solid.color.r, solid.color.g, solid.color.b].map((channel) => Math.round(channel * 255)),
+        solid.boundVariables?.color?.id ?? null,
+      ];
+    });
+}
+
+/** The parts of effects that make them look as they do, rounded as CSS writes them. */
+function effectKeys(effects: readonly Effect[]): unknown[] {
+  const round = (value: number | undefined) => Math.round((value ?? 0) * 1_000);
+
+  return effects
+    .filter((effect) => effect.visible ?? true)
+    .map((effect) => {
+      const shadow = effect as Partial<DropShadowEffect>;
+
+      return [
+        effect.type,
+        round((effect as { radius?: number }).radius),
+        round(shadow.spread),
+        round(shadow.offset?.x),
+        round(shadow.offset?.y),
+        shadow.color === undefined
+          ? null
+          : [shadow.color.r, shadow.color.g, shadow.color.b, shadow.color.a].map((channel) =>
+              Math.round(channel * 255),
+            ),
+      ];
+    });
 }

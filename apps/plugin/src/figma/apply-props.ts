@@ -537,7 +537,7 @@ async function radius(node: Layer, { cornerRadius }: FigmaProps, context: WriteC
 /** Paints as Figma takes them: one paint style alone, or layers of colours and colour variables. */
 export async function paintsOf(
   specs: readonly PaintSpec[],
-  context: WriteContext,
+  context: Pick<WriteContext, "tokens" | "uploads">,
 ): Promise<{ style: string } | { paints: Paint[] }> {
   const [only] = specs;
 
@@ -600,7 +600,7 @@ export async function paintsOf(
 }
 
 /** An image layer from its uploaded file (Task 2 sends the bytes; until then a background image cannot be written). */
-function imagePaint(spec: Extract<PaintSpec, { kind: "image" }>, context: WriteContext): ImagePaint {
+function imagePaint(spec: Extract<PaintSpec, { kind: "image" }>, context: Pick<WriteContext, "uploads">): ImagePaint {
   const bytes = spec.stream === undefined ? undefined : context.uploads?.(spec.stream);
 
   if (bytes === undefined) {
@@ -715,7 +715,12 @@ async function effects(node: Layer, { effects: spec }: FigmaProps, context: Writ
     return;
   }
 
-  const list = (spec as readonly EffectSpec[]).map((effect): Effect => {
+  set(node, "effects", effectsOf(spec as readonly EffectSpec[]));
+}
+
+/** Shadows and blurs as Figma holds them, in Figma's order. */
+export function effectsOf(specs: readonly EffectSpec[]): Effect[] {
+  return specs.map((effect): Effect => {
     if (!("color" in effect)) {
       return {
         type: effect.type,
@@ -739,8 +744,6 @@ async function effects(node: Layer, { effects: spec }: FigmaProps, context: Writ
       blendMode: "NORMAL",
     };
   });
-
-  set(node, "effects", list);
 }
 
 /**

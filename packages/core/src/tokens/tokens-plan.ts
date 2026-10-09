@@ -1,10 +1,16 @@
 import type * as z from "zod";
+import { changeOf } from "../apply/css-to-figma.ts";
 import { colorOf, lengthOf, numberOf, tokenOf } from "../apply/css-values.ts";
 import { tokenName } from "../css/tokens.ts";
 import type { TokensApplyInputSchema } from "../schemas/tokens-apply.ts";
+import type { FigmaProps } from "../types/apply.ts";
 import type {
   CollectionPlan,
+  EffectStylePlan,
+  PaintStylePlan,
+  TextStylePlan,
   TokenError,
+  TokenKind,
   TokensPlan,
   VariablePlan,
   VariableValueSpec,
@@ -89,8 +95,84 @@ export function tokensPlan(input: TokensApplyInput): { plan: TokensPlan; errors:
     };
   });
 
+  const styles = {
+    paint: [] as PaintStylePlan[],
+    text: [] as TextStylePlan[],
+    effect: [] as EffectStylePlan[],
+  };
+  const read = (kind: TokenKind, name: string, tag: "Frame" | "Text", attribute: string, value: string) => {
+    const { change, errors: refused } = changeOf({
+      line: 1,
+      column: 1,
+      tag,
+      id: null,
+      ref: "token",
+      parent: null,
+      index: 0,
+      attributes: { [attribute]: value },
+    });
+
+    for (const error of refused) {
+      errors.push({
+        kind,
+        name,
+        message: error.message,
+      });
+    }
+
+    return refused.length === 0 ? change.props : null;
+  };
+  const refuse = (kind: TokenKind, name: string, message: string) =>
+    errors.push({
+      kind,
+      name,
+      message,
+    });
+
+  for (const { name, value } of input.styles.paint) {
+    const paints = read("paint", name, "Frame", "background", value)?.fills;
+
+    if (paints?.some((paint) => paint.kind === "image") ?? false) {
+      refuse("paint", name, `${value} is an image: a paint style holds colours and colour variables.`);
+    } else if (paints !== undefined && paints.length > 0) {
+      styles.paint.push({
+        name,
+        paints,
+      });
+    } else if (paints !== undefined) {
+      refuse("paint", name, "A paint style holds at least one colour.");
+    }
+  }
+
+  for (const { name, value } of input.styles.text) {
+    const font = read("text", name, "Text", "font", value)?.font;
+
+    if (font !== undefined) {
+      styles.text.push({
+        name,
+        font,
+      });
+    }
+  }
+
+  for (const { name, value } of input.styles.effect) {
+    const effects: FigmaProps["effects"] = read("effect", name, "Frame", "box-shadow", value)?.effects;
+
+    if (effects !== undefined && !Array.isArray(effects)) {
+      refuse("effect", name, `${value} names another style: an effect style holds its shadows.`);
+    } else if (effects !== undefined) {
+      styles.effect.push({
+        name,
+        effects,
+      });
+    }
+  }
+
   return {
-    plan: { collections },
+    plan: {
+      collections,
+      styles,
+    },
     errors,
   };
 }

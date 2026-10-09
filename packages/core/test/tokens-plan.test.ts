@@ -288,3 +288,116 @@ describe("tokensPlan: variables", () => {
     expect(plan.collections[0]?.variables.map(({ name }) => name)).toEqual(["fine"]);
   });
 });
+
+describe("tokensPlan: styles", () => {
+  it("reads paint, text and effect styles as tokens_read writes them, by design_apply's rules", () => {
+    const { plan, errors } = planOf({
+      styles: {
+        paint: [
+          {
+            name: "Dark",
+            token: "--Dark",
+            value: "#191A23",
+          },
+          {
+            name: "Link",
+            token: "--Link",
+            value: "var(--color-primary)",
+          },
+        ],
+        text: [
+          {
+            name: "h2",
+            token: "--h2-font",
+            value: "500 40px/normal 'Space Grotesk'",
+          },
+        ],
+        effect: [
+          {
+            name: "Card",
+            token: "--Card",
+            value: "0 5px 0 0 #191A23, inset 0 0 0 1px #000",
+          },
+        ],
+      },
+    });
+
+    expect(errors).toEqual([]);
+    expect(plan.styles.paint).toEqual([
+      {
+        name: "Dark",
+        paints: [
+          {
+            kind: "color",
+            color: {
+              r: 25 / 255,
+              g: 26 / 255,
+              b: 35 / 255,
+              a: 1,
+            },
+          },
+        ],
+      },
+      {
+        name: "Link",
+        paints: [
+          {
+            kind: "token",
+            token: "--color-primary",
+            opacity: 1,
+          },
+        ],
+      },
+    ]);
+    expect(plan.styles.text).toEqual([
+      {
+        name: "h2",
+        font: {
+          family: "Space Grotesk",
+          weight: 500,
+          italic: false,
+          size: 40,
+          lineHeight: { unit: "AUTO" },
+        },
+      },
+    ]);
+    // In Figma's order, as design_apply writes a layer's: the last CSS shadow first.
+    expect(plan.styles.effect[0]?.effects.map(({ type }) => type)).toEqual(["INNER_SHADOW", "DROP_SHADOW"]);
+  });
+
+  it("refuses a style value that does not read as its kind, naming the style", () => {
+    const { plan, errors } = planOf({
+      styles: {
+        paint: [
+          {
+            name: "Photo",
+            value: "url(photo.png)",
+          },
+        ],
+        text: [
+          {
+            name: "Huge",
+            value: "huge",
+          },
+        ],
+        effect: [
+          {
+            name: "Alias",
+            value: "var(--Card)",
+          },
+        ],
+      },
+    });
+
+    expect(errors.map(({ kind, name }) => [kind, name])).toEqual([
+      ["paint", "Photo"],
+      ["text", "Huge"],
+      ["effect", "Alias"],
+    ]);
+    expect(plan.styles).toEqual({
+      paint: [],
+      text: [],
+      effect: [],
+    });
+  });
+});

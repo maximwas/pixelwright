@@ -20,6 +20,106 @@ beforeEach(() => {
       children: [],
     }),
     {
+      fonts: [
+        {
+          family: "Inter",
+          style: "Regular",
+        },
+        {
+          family: "Space Grotesk",
+          style: "Medium",
+        },
+      ],
+      localStyles: {
+        paint: [
+          {
+            id: "S:veil",
+            type: "PAINT",
+            name: "Veil",
+            remote: false,
+            paints: [
+              {
+                type: "SOLID",
+                visible: true,
+                opacity: 0.4,
+                blendMode: "NORMAL",
+                color: {
+                  r: 0.1,
+                  g: 0.1,
+                  b: 0.14,
+                },
+              },
+            ],
+          },
+        ],
+        text: [
+          {
+            id: "S:h2",
+            type: "TEXT",
+            name: "Heading/h2",
+            remote: false,
+            fontName: {
+              family: "Space Grotesk",
+              style: "Medium",
+            },
+            fontSize: 40,
+            lineHeight: {
+              unit: "PIXELS",
+              value: 51,
+            },
+            letterSpacing: {
+              unit: "PERCENT",
+              value: 0,
+            },
+            textCase: "ORIGINAL",
+            textDecoration: "NONE",
+          },
+        ],
+        effect: [
+          {
+            id: "S:card",
+            type: "EFFECT",
+            name: "Card",
+            remote: false,
+            effects: [
+              {
+                type: "DROP_SHADOW",
+                visible: true,
+                blendMode: "NORMAL",
+                color: {
+                  r: 0.098,
+                  g: 0.102,
+                  b: 0.137,
+                  a: 1,
+                },
+                offset: {
+                  x: 0,
+                  y: 5,
+                },
+                radius: 0,
+                spread: 0,
+              },
+              {
+                type: "INNER_SHADOW",
+                visible: true,
+                blendMode: "NORMAL",
+                color: {
+                  r: 0,
+                  g: 0,
+                  b: 0,
+                  a: 0.25,
+                },
+                offset: {
+                  x: 0,
+                  y: 0,
+                },
+                radius: 4,
+                spread: 1,
+              },
+            ],
+          },
+        ],
+      },
       localCollections: [
         {
           id: "C:brand",
@@ -136,10 +236,16 @@ afterEach(() => {
 });
 
 describe("tokens_apply end to end", () => {
-  it("writes nothing when given what tokens_read returned", async () => {
+  it("writes nothing when given what tokens_read returned, variables and styles", async () => {
     const bridge = pluginBridge();
     const read = await readTokens(bridge, TokensReadInputSchema.parse({ format: "json" }));
     const applied = await applyTokens(bridge, TokensApplyToolInputSchema.parse({ ...read.tokens }));
+
+    expect(read.tokens?.styles).toMatchObject({
+      paint: [{ name: "Veil" }],
+      text: [{ name: "Heading/h2" }],
+      effect: [{ name: "Card" }],
+    });
 
     expect(applied).toEqual({
       created: [],
