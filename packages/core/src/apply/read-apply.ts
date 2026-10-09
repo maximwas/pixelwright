@@ -65,8 +65,11 @@ interface Scope {
   readonly parentRef: string | null;
   /** A parent that was not applied: an existing one (with id) still holds layers, a new one holds nothing. */
   readonly skippedParent: XmlElementNode | null;
-  /** Inside a copy (copyOf): the source's layers named so far, each once; ids here are the source's layers. */
-  readonly copy: Set<string> | null;
+  /**
+   * Inside a copy (copyOf) or a new instance: its ref, and the layers named there so far, each once; ids there name
+   * the source's layers (or another instance's of the component), written onto their counterparts.
+   */
+  readonly copy: { readonly ref: string; readonly seen: Set<string> } | null;
   /** Inside a new Component: its layers may make properties (prop, visibleProp). */
   readonly inComponent: boolean;
 }
@@ -183,7 +186,7 @@ class ApplyReader {
       return;
     }
 
-    const seen = source === null ? this.#ids : (scope.copy ?? this.#ids);
+    const seen = scope.copy === null ? this.#ids : scope.copy.seen;
 
     if (named !== null && seen.has(named)) {
       skip(
@@ -254,14 +257,26 @@ class ApplyReader {
       index,
       attributes,
       ...(content.length > 0 ? { content } : {}),
-      ...(source === null ? {} : { source }),
+      ...(source === null || scope.copy === null
+        ? {}
+        : {
+            source,
+            copy: scope.copy.ref,
+          }),
     });
 
     if (!isText) {
       this.children(node.children, {
         parentRef: ref,
         skippedParent: null,
-        copy: attributes.copyOf === undefined ? scope.copy : new Set(),
+        // A copy's or a new instance's ids are its own layers' counterparts.
+        copy:
+          attributes.copyOf !== undefined || (creating && node.type === "Instance")
+            ? {
+                ref,
+                seen: new Set(),
+              }
+            : scope.copy,
         inComponent: scope.inComponent || (creating && node.type === "Component"),
       });
     }

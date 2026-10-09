@@ -433,6 +433,7 @@ export function changeOf(element: ApplyElement, now?: LayerNow): { change: Apply
       ...(text === undefined ? {} : { text }),
       ...(attributes.copyOf === undefined ? {} : { copyOf: attributes.copyOf }),
       ...(element.source === undefined ? {} : { source: element.source }),
+      ...(element.copy === undefined ? {} : { copy: element.copy }),
     },
     errors: errors.toSorted((a, b) => rank(a) - rank(b)),
   };

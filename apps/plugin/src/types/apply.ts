@@ -16,9 +16,11 @@ export interface WriteContext {
   /** Each font the changes ask for, found and loaded, by fontKey; or why it could not be. */
   readonly fonts: ReadonlyMap<string, FontName | WriteError>;
   /** Fonts a text uses now that this Figma could not load: its characters cannot change. */
-  readonly unloaded: ReadonlySet<string>;
+  readonly unloaded: Set<string>;
   /** The bytes an upload stream brought, if it is complete. */
   readonly uploads?: (stream: string) => Uint8Array | undefined;
+  /** The images made of the call's files, by upload stream: each file once. */
+  readonly images: Map<string, Image>;
   /** Components by name, looked up as needed. */
   readonly components: ComponentIndex;
   /** Properties new components' layers make, bound once their component (or its set) is complete. */

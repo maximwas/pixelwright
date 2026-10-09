@@ -19,27 +19,45 @@ export function svgOf(props: FigmaProps): string {
 }
 
 /**
- * An Image's file: its first image paint takes the new image, keeping how it fits and is cropped; a layer without one
- * gets one that fills it.
+ * The image an Image's file makes, made once per file: before its layer, so a file Figma refuses (too big, not PNG,
+ * JPEG or GIF) leaves no empty layer behind.
  */
-export function writeImage(node: Layer, props: FigmaProps, context: WriteContext): void {
+export function imageOf(props: FigmaProps, context: WriteContext): Image {
   const asset = props.asset;
 
-  if (asset === undefined) {
-    return;
+  if (asset?.kind !== "image") {
+    throw new WriteError("An icon's SVG makes new vector layers: delete the icon and create it again to replace it.");
   }
 
-  if (asset.kind === "icon") {
-    throw new WriteError("An icon's SVG makes new vector layers: delete the icon and create it again to replace it.");
+  const made = asset.stream === undefined ? undefined : context.images.get(asset.stream);
+
+  if (made !== undefined) {
+    return made;
   }
 
   const bytes = asset.stream === undefined ? undefined : context.uploads?.(asset.stream);
 
-  if (bytes === undefined) {
-    throw new WriteError(`${asset.src} did not reach the plugin.`);
+  if (asset.stream === undefined || bytes === undefined) {
+    throw new WriteError(`${asset.src} did not reach the plugin.`, "Send it again, or fewer files in one call.");
   }
 
-  const hash = figma.createImage(bytes).hash;
+  const image = figma.createImage(bytes);
+
+  context.images.set(asset.stream, image);
+
+  return image;
+}
+
+/**
+ * An Image's file: its first image paint takes the new image, keeping how it fits and is cropped; a layer without one
+ * gets one that fills it.
+ */
+export function writeImage(node: Layer, props: FigmaProps, context: WriteContext): void {
+  if (props.asset === undefined) {
+    return;
+  }
+
+  const hash = imageOf(props, context).hash;
   const fills = Array.isArray(node.fills) ? (node.fills as Paint[]) : [];
   const at = fills.findIndex((paint) => paint.type === "IMAGE");
 
@@ -72,6 +90,19 @@ export function fitIcon(node: Layer, props: FigmaProps): FigmaProps {
   }
 
   return rest;
+}
+
+/** A layer's id inside the instance holding it, I<instance>;<path>, as the same in every instance of the component. */
+export function pathOf(id: string): string {
+  return id.replace(/^I[^;]+;/, "");
+}
+
+/** A new instance's layers by their ids inside it: another instance's ids of the same component name the same ones. */
+export function pairInstance(instance: BaseNode, into: Map<string, BaseNode>, scope: string): void {
+  for (const layer of "children" in instance ? instance.children : []) {
+    into.set(`${scope} ${pathOf(layer.id)}`, layer);
+    pairInstance(layer, into, scope);
+  }
 }
 
 /** A copy's layers by the source's: walked side by side, as a clone has the source's structure. */

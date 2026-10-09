@@ -472,27 +472,39 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
       copyable(node);
     }
   };
-  /** A deep copy with fresh ids, as Figma's clone(): same structure, same properties, parented nowhere yet. */
-  const cloneOf = (source: FakeNode): FakeNode => {
-    const { children, parent: _parent, ...rest } = source;
+  /**
+   * A deep copy with fresh ids, as Figma's clone(): same structure, same properties, parented nowhere yet. A copy of an
+   * instance keeps its main component and holds its layers as I<copy>;<layer>, the way any instance does.
+   */
+  const cloneOf = (source: FakeNode, rename?: (id: string) => string): FakeNode => {
+    const { children, parent: _parent, mainComponent, defaultVariant: _default, ...rest } = source;
+    const id = rename?.(source.id) ?? `90:${writes.created.length + 1}`;
     const copy = tree({
       ...(structuredClone(
         Object.fromEntries(
           Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
         ),
       ) as Omit<FakeNode, "children" | "parent">),
-      id: `90:${writes.created.length + 1}`,
+      ...(mainComponent === undefined ? {} : { mainComponent }),
+      id,
     });
+    const inside =
+      source.type === "INSTANCE" ? (layer: string) => `I${id};${layer.replace(`I${source.id};`, "")}` : rename;
 
     writes.created.push(copy);
     register(copy);
     copy.children = (children ?? []).map((child) => {
-      const inner = cloneOf(child);
+      const inner = cloneOf(child, inside);
 
       inner.parent = copy;
 
       return inner;
     });
+
+    // A copied set's default is its own first variant.
+    if (source.type === "COMPONENT_SET") {
+      copy.defaultVariant = copy.children[0];
+    }
 
     return copy;
   };
@@ -596,11 +608,35 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
       string,
       { type: string; defaultValue: unknown }
     >;
+    const id = `90:${writes.created.length + 1}`;
+    // As Figma: an instance looks like its component (fills, sizing) and holds its layers as I<instance>;<layer> ids.
+    const sublayers = (layer: FakeNode): Record<string, unknown> => {
+      const { children, parent: _parent, id: own, ...rest } = layer;
+
+      return {
+        ...structuredClone(
+          Object.fromEntries(
+            Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
+          ),
+        ),
+        id: `I${id};${own}`,
+        children: (children ?? []).map(sublayers),
+      };
+    };
     const instance = tree({
-      id: `90:${writes.created.length + 1}`,
+      id,
       name: owner.name,
       type: "INSTANCE",
       layoutMode: component.layoutMode ?? "NONE",
+      ...(component.fills === undefined ? {} : { fills: structuredClone(component.fills) }),
+      ...(component.layoutSizingHorizontal === undefined
+        ? {}
+        : {
+            layoutSizingHorizontal: component.layoutSizingHorizontal,
+            layoutSizingVertical: component.layoutSizingVertical,
+          }),
+      width: component.width,
+      height: component.height,
       mainComponent: component,
       componentProperties: Object.fromEntries(
         Object.entries(definitions).map(([key, definition]) => [
@@ -611,11 +647,14 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
           },
         ]),
       ),
-      children: [],
+      children: (component.children ?? []).map((child) => sublayers(child) as never),
     });
 
     writes.created.push(instance);
-    register(instance);
+
+    for (const node of [instance, ...(instance.findAll?.(() => true) ?? [])]) {
+      register(node);
+    }
 
     return instance;
   };

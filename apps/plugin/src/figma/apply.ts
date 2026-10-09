@@ -10,7 +10,17 @@ import {
 } from "@pixelwright/core";
 import type { KnownFont, Layer, TextLayer, WriteContext } from "../types/apply.ts";
 import { errorMessage } from "../utils/error-message.ts";
-import { fileName, fitIcon, insideInstance, pairCopy, svgOf, writeImage } from "./apply-assets.ts";
+import {
+  fileName,
+  fitIcon,
+  imageOf,
+  insideInstance,
+  pairCopy,
+  pairInstance,
+  pathOf,
+  svgOf,
+  writeImage,
+} from "./apply-assets.ts";
 import {
   bindProperties,
   componentIndex,
@@ -53,6 +63,13 @@ const NEW_TEXT_FONT: FontName = {
 /** Room left between the page's layers and a new one placed beside them. */
 const PAGE_GAP = 100;
 
+/** A new set waiting for its variants: the frame holding them until they are combined. */
+interface Pending {
+  readonly change: ApplyChange;
+  readonly holder: Layer;
+  readonly fail: (error: unknown, attribute?: string) => void;
+}
+
 /**
  * design_apply's changes written in Figma: each element on its own, so one that fails leaves the others; creates go
  * parent first, after the element before them in the XML; one undo step for the call. Refused while Allow edits is
@@ -69,74 +86,70 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
   const created: OperationOutput<"apply">["created"] = [];
   const changed: string[] = [];
   const nodes = new Map<string, Layer | null>();
-  const sets: { change: ApplyChange; holder: Layer; fail: (error: unknown, attribute?: string) => void }[] = [];
-  /** New sets combined from their variants, laid out and written; then the properties new components' layers make. */
-  const settle = async () => {
-    for (const { change, holder, fail } of sets.splice(0)) {
+  const byRef = new Map(changes.map((change) => [change.ref, change]));
+  /** Each copy's and new instance's layers, by its ref and the layer an element inside it names. */
+  const copies = new Map<string, BaseNode>();
+  /** On a dry run, what the XML makes for the instances after it: components by name, a set with its variants. */
+  const planned = new Map<string, Record<string, string>[] | null>();
+  const sets: Pending[] = [];
+  /**
+   * New sets whose XML has ended (none holds `next`), combined from their variants, laid out and written; then the
+   * properties their components' layers make. A set still open waits, and the properties inside it with it.
+   */
+  const settle = async (next?: ApplyChange) => {
+    const open = new Set(next === undefined ? [] : ancestorsOf(next, byRef));
+    const ready = sets.filter(({ change }) => !open.has(change.ref));
+
+    sets.splice(0, sets.length, ...sets.filter(({ change }) => open.has(change.ref)));
+
+    for (const pending of ready) {
+      const made = combine(pending);
+
+      if (made === null) {
+        continue;
+      }
+
+      nodes.set(pending.change.ref, made);
+
       try {
-        const variants = (holder.children ?? []).filter((child) => child.type === "COMPONENT");
-
-        if (variants.length === 0 || holder.parent === null) {
-          holder.remove();
-
-          throw new WriteError("A <ComponentSet> is made of its <Component> variants: this one has none.");
-        }
-
-        const made = figma.combineAsVariants(
-          variants as unknown as ComponentNode[],
-          holder.parent as unknown as BaseNode & ChildrenMixin,
-          indexIn(holder.parent, holder),
-        );
-
-        holder.remove();
-        nodes.set(change.ref, made as unknown as Layer);
-        await write(made as unknown as Layer, change, context, fail);
-        layOut(made);
-        context.components.add(made);
+        await write(made, pending.change, context, pending.fail);
+        layOut(made as unknown as ComponentSetNode);
+        context.components.add(made as unknown as ComponentSetNode);
         created.push({
-          line: change.line,
-          ref: change.ref,
+          line: pending.change.line,
+          ref: pending.change.ref,
           id: made.id,
-          tag: change.tag,
+          tag: pending.change.tag,
         });
       } catch (error) {
-        fail(error);
+        pending.fail(error);
       }
     }
 
-    bindProperties(context.marks.splice(0));
+    const waiting = new Set(sets.map(({ holder }) => holder.id));
+    const marks = context.marks.splice(0);
+
+    context.marks.push(...marks.filter(({ node }) => within(node, waiting)));
+    bindProperties(marks.filter(({ node }) => !within(node, waiting)));
   };
-
-  /** Each copy's layers by the source's ids, scoped by the copy; and the copy each element is inside. */
-  const copies = new Map<string, BaseNode>();
-  const copyOf = new Map<string, string>();
-
-  for (const change of changes) {
-    const scope =
-      change.copyOf === undefined ? (change.parent === null ? undefined : copyOf.get(change.parent)) : change.ref;
-
-    if (scope !== undefined) {
-      copyOf.set(change.ref, scope);
-    }
-  }
 
   for (const change of changes) {
     const fail = (error: unknown, attribute?: string) => errors.push(errorOf(change, error, attribute));
 
     try {
       if (dryRun) {
-        await check(change, nodes, context, fail);
+        await check(change, nodes, planned, byRef, context, fail);
         continue;
       }
 
-      if (change.kind === "create" && change.tag === "Instance") {
+      if (change.kind === "create" && change.tag === "Instance" && change.copyOf === undefined) {
         // Components made earlier in the call are whole before an instance is made of one.
-        await settle();
+        await settle(change);
       }
 
       const node =
         change.source !== undefined
-          ? copied(change, copies, copyOf)
+          ? await counterpart(change, nodes, copies, byRef, context)
           : change.kind === "update"
             ? await existing(change)
             : await create(change, changes, nodes, top, context);
@@ -150,13 +163,23 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
           copies,
           change.ref,
         );
+      } else if (change.kind === "create" && change.tag === "Instance") {
+        pairInstance(node as unknown as BaseNode, copies, change.ref);
       }
 
-      if (change.move) {
-        await moveTo(node, change, changes, nodes, top);
+      let moved = false;
+
+      if (change.move ?? false) {
+        // A layer that cannot go there keeps its place; its attributes are still written.
+        try {
+          await moveTo(node, change, changes, nodes, top);
+          moved = true;
+        } catch (error) {
+          fail(error, change.before === undefined ? (change.after === undefined ? undefined : "after") : "before");
+        }
       }
 
-      if (change.kind === "create" && change.tag === "ComponentSet") {
+      if (change.kind === "create" && change.tag === "ComponentSet" && change.copyOf === undefined) {
         sets.push({
           change,
           holder: node,
@@ -168,14 +191,23 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
       const wrote = await write(node, change, context, fail);
 
       if (change.kind === "create") {
-        finish(node, change.props);
+        finish(node, change);
+
+        // A component or set made here is found by the instances after it; a variant is found through its set.
+        if (
+          node.type === "COMPONENT_SET" ||
+          (node.type === "COMPONENT" && byRef.get(change.parent ?? "")?.tag !== "ComponentSet")
+        ) {
+          context.components.add(node as unknown as ComponentNode);
+        }
+
         created.push({
           line: change.line,
           ref: change.ref,
           id: node.id,
           tag: change.tag,
         });
-      } else if (wrote && change.source === undefined) {
+      } else if ((wrote || moved) && change.source === undefined) {
         changed.push(node.id);
       }
     } catch (error) {
@@ -198,6 +230,58 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
     changed,
     errors,
   };
+}
+
+/** The refs of the elements holding a change, the nearest first. */
+function ancestorsOf(change: ApplyChange, byRef: ReadonlyMap<string, ApplyChange>): string[] {
+  const refs: string[] = [];
+
+  for (let ref = change.parent; ref !== null; ref = byRef.get(ref)?.parent ?? null) {
+    refs.push(ref);
+  }
+
+  return refs;
+}
+
+/** Whether a layer is inside one of these. */
+function within(node: Layer, ids: ReadonlySet<string>): boolean {
+  for (let up = node.parent; up !== null; up = up.parent) {
+    if (ids.has(up.id)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/** A new set's variants combined where their holder is; the holder goes, and with it a set that fails. */
+function combine({ holder, fail }: Pending): Layer | null {
+  const variants = (holder.children ?? []).filter((child) => child.type === "COMPONENT");
+
+  try {
+    if (variants.length === 0 || holder.parent === null) {
+      throw new WriteError("A <ComponentSet> is made of its <Component> variants: this one has none.");
+    }
+
+    const made = figma.combineAsVariants(
+      variants as unknown as ComponentNode[],
+      holder.parent as unknown as BaseNode & ChildrenMixin,
+      indexIn(holder.parent, holder),
+    );
+
+    holder.remove();
+
+    return made as unknown as Layer;
+  } catch (error) {
+    // Nothing half made stays: the holder goes, with the variants it holds.
+    if (holder.parent !== null) {
+      holder.remove();
+    }
+
+    fail(error);
+
+    return null;
+  }
 }
 
 function errorOf(change: ApplyChange, error: unknown, attribute?: string): ApplyError {
@@ -247,16 +331,15 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
   const known: KnownFont[] = [];
 
   // A text being changed has its fonts loaded whatever changes (sizing it needs them too), and the fonts it uses are
-  // the first choice for the weights design_read wrote.
+  // the first choice for the weights design_read wrote: a copy's are its source's.
   for (const change of changes) {
-    if (change.kind === "update" && change.id !== null) {
-      const node = await figma.getNodeByIdAsync(change.id);
+    const id = change.kind === "update" ? (change.id ?? change.source ?? null) : (change.copyOf ?? null);
+    const node = id === null ? null : await figma.getNodeByIdAsync(id);
 
-      if (node?.type === "TEXT") {
-        wanted.push(...currentFonts(node));
-        known.push(...knownFonts(node));
-      }
-    } else if (change.tag === "Text") {
+    if (node?.type === "TEXT") {
+      wanted.push(...currentFonts(node));
+      known.push(...knownFonts(node));
+    } else if (change.kind === "create" && change.copyOf === undefined && change.tag === "Text") {
       wanted.push(NEW_TEXT_FONT);
     }
   }
@@ -294,6 +377,7 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
     fonts,
     unloaded,
     uploads: uploaded,
+    images: new Map(),
     components: componentIndex(),
     marks: [],
   };
@@ -383,7 +467,7 @@ async function create(
     throw error;
   }
 
-  if (change.copyOf === undefined) {
+  if (bare(change)) {
     fresh(node, change.props);
   }
 
@@ -420,6 +504,13 @@ async function makeNode(change: ApplyChange, parent: Layer, context: WriteContex
     return figma.createNodeFromSvg(svgOf(change.props));
   }
 
+  if (change.tag === "Image") {
+    // Its file first: one that did not come, or that Figma refuses, leaves no empty rectangle.
+    imageOf(change.props, context);
+
+    return figma.createRectangle();
+  }
+
   if (change.tag === "Slot") {
     if (parent.type !== "COMPONENT") {
       throw new WriteError(
@@ -440,22 +531,43 @@ async function makeNode(change: ApplyChange, parent: Layer, context: WriteContex
   return make();
 }
 
-/** A layer inside a copy, by the source layer it was cloned from. */
-function copied(
+/** A layer inside a copy or a new instance: the counterpart there of the layer the element names. */
+async function counterpart(
   change: ApplyChange,
+  nodes: ReadonlyMap<string, Layer | null>,
   copies: ReadonlyMap<string, BaseNode>,
-  copyOf: ReadonlyMap<string, string>,
-): Layer {
-  const node = copies.get(`${copyOf.get(change.ref)} ${change.source}`);
+  byRef: ReadonlyMap<string, ApplyChange>,
+  context: WriteContext,
+): Promise<Layer> {
+  const scope = change.copy ?? "";
+  const inCopy = byRef.get(scope)?.copyOf !== undefined;
 
-  if (node === undefined) {
-    throw new WriteError(
-      `The copy has no layer for ${change.source}.`,
-      "Inside a copy, name only layers of the copied one, where they are in it.",
-    );
+  if ((nodes.get(scope) ?? null) === null) {
+    throw new WriteError(`The ${inCopy ? "copy" : "instance"} it is in was not made: fix that element's error first.`);
   }
 
-  return node as unknown as Layer;
+  const node = copies.get(`${scope} ${inCopy ? change.source : pathOf(change.source ?? "")}`) as Layer | undefined;
+
+  if (node === undefined) {
+    throw inCopy
+      ? new WriteError(
+          `The copy has no layer for ${change.source}.`,
+          "Inside a copy, name only layers of the copied one, where they are in it.",
+        )
+      : new WriteError(
+          `The new instance has no layer for ${change.source}.`,
+          "Inside a new instance, name its layers by another instance's ids of the same component and variant, or by the component's own.",
+        );
+  }
+
+  // A text there exists only now: its fonts (an instance's are its component's) load before it is written.
+  if (node.type === "TEXT") {
+    for (const font of currentFonts(node as unknown as TextNode)) {
+      await figma.loadFontAsync(font).catch(() => context.unloaded.add(`${font.family} ${font.style}`));
+    }
+  }
+
+  return node;
 }
 
 /** An existing layer placed again as a create would be: into another parent, next to a layer, in another order. */
@@ -499,13 +611,27 @@ async function whereTo(
   nodes: ReadonlyMap<string, Layer | null>,
   top: Layer | null,
 ): Promise<{ parent: Layer; index: number }> {
+  let parent: Layer | null = null;
+
+  if (change.parent !== null) {
+    parent = nodes.get(change.parent) ?? null;
+
+    if (parent === null) {
+      throw new WriteError("Its parent element was not written: fix the parent's error first.");
+    }
+  }
+
   const neighbour = change.before ?? change.after;
 
-  if (change.parent === null && neighbour !== undefined) {
+  if (neighbour !== undefined) {
     const sibling = (await figma.getNodeByIdAsync(neighbour)) as unknown as Layer | null;
 
     if (sibling?.parent === null || sibling === null) {
       throw new WriteError(`No layer ${neighbour} to put the new one next to.`);
+    }
+
+    if (parent !== null && sibling.parent.id !== parent.id) {
+      throw new WriteError(`${neighbour} is not in this element's parent: before and after name a layer beside it.`);
     }
 
     await loadPageOf(sibling as unknown as BaseNode);
@@ -518,15 +644,11 @@ async function whereTo(
     };
   }
 
-  const parent = change.parent === null ? (top ?? (figma.currentPage as unknown as Layer)) : nodes.get(change.parent);
-
-  if (parent === undefined || parent === null) {
-    throw new WriteError("Its parent element was not written: fix the parent's error first.");
-  }
+  const into = parent ?? top ?? (figma.currentPage as unknown as Layer);
 
   return {
-    parent,
-    index: await indexAmong(change, changes, nodes, parent),
+    parent: into,
+    index: await indexAmong(change, changes, nodes, into),
   };
 }
 
@@ -567,6 +689,11 @@ async function indexAmong(
   return parent.children?.length ?? 0;
 }
 
+/** A layer made from nothing; a copy, an instance or a slot starts as its source, component or component's slot. */
+function bare(change: ApplyChange): boolean {
+  return change.copyOf === undefined && change.tag !== "Instance" && change.tag !== "Slot";
+}
+
 /** What the XML leaves out a new layer does not have: no fill without a background, no clipping without overflow. */
 function fresh(node: Layer, props: FigmaProps): void {
   if (props.fills === undefined && node.type !== "TEXT" && node.type !== "LINE") {
@@ -586,12 +713,16 @@ function fresh(node: Layer, props: FigmaProps): void {
   }
 }
 
-/** A new auto layout frame hugs what the XML did not size; a new layer on the page goes beside what is there. */
-function finish(node: Layer, props: FigmaProps): void {
+/**
+ * A new auto layout frame hugs what the XML did not size (a copy or an instance keeps its own sizing); a new layer on
+ * the page goes beside what is there.
+ */
+function finish(node: Layer, change: ApplyChange): void {
+  const props = change.props;
   const parent = node.parent;
   const direction = parent?.layoutMode;
 
-  if (typeof node.layoutMode === "string" && node.layoutMode !== "NONE") {
+  if (bare(change) && typeof node.layoutMode === "string" && node.layoutMode !== "NONE") {
     const fills = (axis: "horizontal" | "vertical") =>
       ((props.grow ?? false) && direction === (axis === "horizontal" ? "HORIZONTAL" : "VERTICAL")) ||
       (props.alignSelf === "STRETCH" && direction === (axis === "horizontal" ? "VERTICAL" : "HORIZONTAL")) ||
@@ -639,12 +770,13 @@ async function write(
 
   // A new icon is sized by scaling it with its vectors; a resize would leave them as they are.
   const stepped = change.tag === "Icon" && change.kind === "create" ? fitIcon(node, change.props) : change.props;
-  // An instance is made of its component and variant; an existing one swaps them. Then its properties.
+  // A new instance is made of its component and variant; an existing one or a copy swaps them. Then its properties.
+  const made = change.kind === "create" && change.copyOf === undefined;
   const own: (readonly [keyof FigmaProps, () => Promise<void> | void])[] = [
-    ...(node.type === "INSTANCE" && change.kind === "update" && component !== undefined
+    ...(node.type === "INSTANCE" && !made && component !== undefined
       ? [["component", () => swapTo(node, component, variant, context.components)] as const]
       : []),
-    ...(node.type === "INSTANCE" && change.kind === "update" && component === undefined && variant !== undefined
+    ...(node.type === "INSTANCE" && !made && component === undefined && variant !== undefined
       ? [["variant", () => setVariant(node, variant)] as const]
       : []),
     ...(node.type === "COMPONENT" && variant !== undefined
@@ -715,21 +847,31 @@ async function write(
 async function check(
   change: ApplyChange,
   nodes: Map<string, Layer | null>,
+  planned: Map<string, Record<string, string>[] | null>,
+  byRef: ReadonlyMap<string, ApplyChange>,
   context: WriteContext,
   fail: (error: unknown, attribute?: string) => void,
 ): Promise<void> {
   if (change.source !== undefined) {
-    // A layer of a copy: the copy is made on a real run.
+    // A layer of a copy or a new instance: those are made on a real run.
     nodes.set(change.ref, null);
   } else if (change.kind === "update") {
     nodes.set(change.ref, await existing(change, false));
-  } else if (change.tag === "Instance") {
-    // The component and variant it names, found without making anything.
-    variantFor(await context.components.find(change.props.component ?? ""), change.props.variant ?? {});
-    nodes.set(change.ref, null);
   } else if (change.copyOf !== undefined) {
     if ((await figma.getNodeByIdAsync(change.copyOf)) === null) {
       throw new WriteError(`No layer ${change.copyOf} to copy.`);
+    }
+
+    nodes.set(change.ref, null);
+  } else if (change.tag === "Instance") {
+    const name = change.props.component ?? "";
+    const made = planned.get(name);
+
+    // The component and variant it names, found without making anything: one this XML makes, or the file's.
+    if (made === undefined) {
+      variantFor(await context.components.find(name), change.props.variant ?? {});
+    } else if (made !== null) {
+      plannedVariant(name, made, change.props.variant ?? {});
     }
 
     nodes.set(change.ref, null);
@@ -740,6 +882,8 @@ async function check(
   } else {
     nodes.set(change.ref, null);
   }
+
+  plan(change, byRef, planned);
 
   for (const props of [change.props, ...(change.text?.runs ?? []).map((run) => run.props)]) {
     const font = props.font === undefined ? undefined : context.fonts.get(fontKey(props.font));
@@ -755,6 +899,49 @@ async function check(
         fail(error, change.sources[key] ?? key);
       }
     }
+  }
+}
+
+/**
+ * On a dry run, what a create makes for the instances after it: a set by its name (its variants as they come), a lone
+ * component by its; a copied one is there, its variants unknown.
+ */
+function plan(
+  change: ApplyChange,
+  byRef: ReadonlyMap<string, ApplyChange>,
+  planned: Map<string, Record<string, string>[] | null>,
+): void {
+  const name = change.props.name;
+  const holder = byRef.get(change.parent ?? "");
+
+  if (change.kind !== "create") {
+    return;
+  }
+
+  if (change.tag === "Component" && holder?.tag === "ComponentSet") {
+    const set = holder.kind === "create" ? planned.get(holder.props.name ?? "") : undefined;
+
+    set?.push({ ...(change.props.variant ?? {}) });
+  } else if ((change.tag === "ComponentSet" || change.tag === "Component") && name !== undefined) {
+    planned.set(name, change.tag === "ComponentSet" && change.copyOf === undefined ? [] : null);
+  }
+}
+
+/** A variant of a set the XML makes: the one with these values, the rest its first variant's (the set's default). */
+function plannedVariant(
+  name: string,
+  variants: readonly Record<string, string>[],
+  wanted: Record<string, string>,
+): void {
+  const target = {
+    ...variants[0],
+    ...wanted,
+  };
+
+  if (!variants.some((values) => Object.entries(target).every(([key, value]) => values[key] === value))) {
+    throw new WriteError(
+      `${name} has no variant ${variantName(wanted)}: it has ${variants.map((values) => variantName(values)).join("; ")}.`,
+    );
   }
 }
 

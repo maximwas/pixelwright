@@ -1,9 +1,11 @@
+import { createHash } from "node:crypto";
 import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { PlannedAsset } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { writeAssets } from "../src/assets/write-assets.ts";
+import { memoryFiles } from "../src/assets/written-files.ts";
 import { readDesign } from "../src/mcp/tools/design.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
@@ -110,6 +112,33 @@ describe("design_read", () => {
     expect(meta.hints).toContainEqual(expect.stringContaining("equals --Dark"));
   });
 
+  it("remembers each file it writes as its layer's, so design_apply knows a render sent back", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-assets-"));
+    const files = memoryFiles();
+    const result = await readDesign(
+      positivus().bridge,
+      {
+        node: "2:4869",
+        assetsDir: dir,
+        screenshot: false,
+        maxChars: 80_000,
+      },
+      files,
+    );
+    const meta = JSON.parse(textOf(result, 1)) as { assets: { node: string; src: string }[] };
+    const known = await files.read();
+
+    for (const asset of meta.assets) {
+      expect(
+        known.get(
+          createHash("sha1")
+            .update(await readFile(asset.src))
+            .digest("hex"),
+        ),
+      ).toContain(asset.node);
+    }
+  });
+
   it("plans the assets without writing them when no folder is given, and says so", async () => {
     const { bridge, ops } = positivus();
     const result = await readDesign(bridge, {
@@ -176,7 +205,13 @@ describe("writeAssets", () => {
       "1:1": JPEG,
       "1:2": Buffer.concat([PNG, Buffer.from("other")]),
     };
-    const { written } = await writeAssets(assets, async (asset) => bytes[asset.node] ?? PNG, dir, "assets");
+    const { written } = await writeAssets(
+      assets,
+      async (asset) => bytes[asset.node] ?? PNG,
+      dir,
+      "assets",
+      memoryFiles(),
+    );
 
     expect(written.map((asset) => asset.src)).toEqual(["assets/hero-background.jpg", "assets/hero-background.png"]);
     expect((await readFile(join(dir, "hero-background.jpg"))).equals(JPEG)).toBe(true);
@@ -209,6 +244,7 @@ describe("writeAssets into a folder an earlier read wrote", () => {
       async (asset) => Buffer.from(asset.node === "1:1" ? "<svg>second read</svg>" : "<svg>logo</svg>"),
       dir,
       "assets",
+      memoryFiles(),
     );
 
     expect(written.map((asset) => asset.src)).toEqual(["assets/icon-2.svg", "assets/logo.svg"]);

@@ -13,6 +13,7 @@ import {
 import type * as z from "zod";
 import { fetchAsset } from "../../assets/fetch-asset.ts";
 import { writeAssets } from "../../assets/write-assets.ts";
+import { memoryFiles, type WrittenFiles } from "../../assets/written-files.ts";
 import { resolveTarget } from "../../bridge/target.ts";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
 import { AssetsExportInputSchema, AssetsExportOutputSchema } from "../../schemas/tools.ts";
@@ -24,7 +25,7 @@ type AssetsExportArgs = z.output<typeof AssetsExportInputSchema>;
 type AssetsExport = z.output<typeof AssetsExportOutputSchema>;
 type Target = { session: string };
 
-export function registerAssetsTool(server: McpServer, { bridge }: ToolContext): void {
+export function registerAssetsTool(server: McpServer, { bridge, files }: ToolContext): void {
   registerTool(server, {
     name: "assets_export",
     title: "Export assets",
@@ -33,11 +34,15 @@ export function registerAssetsTool(server: McpServer, { bridge }: ToolContext): 
     input: AssetsExportInputSchema,
     output: AssetsExportOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (args) => exportAssets(bridge, args),
+    run: (args) => exportAssets(bridge, args, files),
   });
 }
 
-export async function exportAssets(bridge: ToolContext["bridge"], args: AssetsExportArgs): Promise<AssetsExport> {
+export async function exportAssets(
+  bridge: ToolContext["bridge"],
+  args: AssetsExportArgs,
+  files: WrittenFiles = memoryFiles(),
+): Promise<AssetsExport> {
   const { nodes, from, dir, original, file } = args;
 
   if ((nodes === undefined) === (from === undefined)) {
@@ -70,6 +75,7 @@ export async function exportAssets(bridge: ToolContext["bridge"], args: AssetsEx
     async (asset) => fetched.get(asset) ?? Buffer.alloc(0),
     resolve(dir),
     dir,
+    files,
   );
 
   return {

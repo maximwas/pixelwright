@@ -45,3 +45,6 @@ export const MAX_SOURCE_BYTES = 32 * 1024 * 1024;
 
 /** The largest SVG an Icon carries inline on its change. */
 export const MAX_SVG_BYTES = 2 * 1024 * 1024;
+
+/** The most files written-files.json remembers: the oldest are forgotten first. */
+export const WRITTEN_FILES_LIMIT = 5_000;

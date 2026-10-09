@@ -1,5 +1,5 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
-import { UPLOAD_STREAMS, UPLOAD_TTL_MS } from "../constants/plugin.ts";
+import { UPLOAD_BYTES, UPLOAD_TTL_MS } from "../constants/plugin.ts";
 
 interface Upload {
   readonly bytes: Uint8Array;
@@ -34,13 +34,16 @@ export async function upload({
     };
     uploads.set(stream, held);
 
-    // The oldest go first past the limit.
-    for (const key of uploads.keys()) {
-      if (uploads.size <= UPLOAD_STREAMS) {
+    // Past the limit the oldest go first, never the file coming in: a call may send many files before its apply.
+    let waiting = [...uploads.values()].reduce((sum, upload) => sum + upload.bytes.length, 0);
+
+    for (const [key, upload] of uploads) {
+      if (waiting <= UPLOAD_BYTES || key === stream) {
         break;
       }
 
       uploads.delete(key);
+      waiting -= upload.bytes.length;
     }
   }
 

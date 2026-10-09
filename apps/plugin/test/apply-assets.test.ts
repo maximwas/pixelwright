@@ -62,6 +62,7 @@ let other: FakeNode;
 let fake: ReturnType<typeof installFigma>;
 const all = (from: FakeNode): FakeNode[] => [from, ...(from.children ?? []).flatMap(all)];
 const byId = (id: string) => [...all(root), ...all(other), ...fake.writes.created].find((node) => node.id === id);
+const made = (type: string) => fake.writes.created.filter((node) => node.type === type);
 
 beforeEach(() => {
   other = tree({
@@ -83,6 +84,8 @@ beforeEach(() => {
         id: "1:1",
         name: "Card",
         layoutMode: "VERTICAL",
+        layoutSizingHorizontal: "FIXED",
+        layoutSizingVertical: "HUG",
         children: [
           {
             id: "1:2",
@@ -184,6 +187,29 @@ describe("apply: images and icons", () => {
     expect(icon?.parent?.id).toBe("3:1");
   });
 
+  it("keeps every file of a call, however many, and makes no image whose file did not come", async () => {
+    for (let index = 1; index <= 9; index++) {
+      await send(`many-${index}`, index);
+    }
+
+    const { errors, created } = await apply(
+      changesOf('<Image src="1.png"/>\n<Image src="lost.png"/>', {
+        "new:1": withAsset({ stream: "many-1" }),
+        "new:2": withAsset({ stream: "never-sent" }),
+      }),
+      { parent: "3:1" },
+    );
+
+    expect(errors).toEqual([
+      expect.objectContaining({
+        line: 2,
+        message: expect.stringMatching(/lost\.png did not reach the plugin/),
+      }),
+    ]);
+    expect(created.map(({ line }) => line)).toEqual([1]);
+    expect(made("RECTANGLE")).toHaveLength(1);
+  });
+
   it("swaps an image by id and keeps how it fits", async () => {
     await send("img-2", 20);
     await apply(
@@ -215,6 +241,16 @@ describe("apply: copies, slots and moves", () => {
     expect(copy?.parent?.id).toBe("3:1");
     expect(copy?.children?.[0]?.characters).toBe("New title");
     expect(byId("1:2")?.characters).toBe("Hello");
+  });
+
+  it("keeps a copy's own sizing and fill: only a layer made from nothing starts bare", async () => {
+    const { errors, created } = await apply(changesOf('<Frame copyOf="1:1" name="Card 2"/>'), { parent: "3:1" });
+
+    expect(errors).toEqual([]);
+    expect(byId(created[0]?.id ?? "")).toMatchObject({
+      layoutSizingHorizontal: "FIXED",
+      layoutSizingVertical: "HUG",
+    });
   });
 
   it("checks a copy on a dry run without its own ids", async () => {

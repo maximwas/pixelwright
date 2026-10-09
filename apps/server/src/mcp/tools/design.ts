@@ -4,6 +4,7 @@ import { BridgeError, designHints, designXml, fitPlan, OPERATION_SCHEMAS } from 
 import type * as z from "zod";
 import { fetchAsset } from "../../assets/fetch-asset.ts";
 import { writeAssets } from "../../assets/write-assets.ts";
+import { memoryFiles, type WrittenFiles } from "../../assets/written-files.ts";
 import { resolveTarget } from "../../bridge/target.ts";
 import { DesignReadInputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
@@ -13,7 +14,7 @@ import { takeScreenshot } from "./screenshot.ts";
 type DesignReadArgs = z.output<typeof DesignReadInputSchema>;
 
 /** No outputSchema on purpose: the XML reads best as plain text, and an asked-for screenshot is an image block. */
-export function registerDesignTool(server: McpServer, { bridge }: ToolContext): void {
+export function registerDesignTool(server: McpServer, { bridge, files }: ToolContext): void {
   // The SDK's overloads take a plain ZodObject, not this one's exact type.
   const inputSchema: z.ZodObject = DesignReadInputSchema;
 
@@ -32,7 +33,7 @@ export function registerDesignTool(server: McpServer, { bridge }: ToolContext): 
     },
     async (args) => {
       try {
-        return await readDesign(bridge, DesignReadInputSchema.parse(args));
+        return await readDesign(bridge, DesignReadInputSchema.parse(args), files);
       } catch (error) {
         throw new Error(describeError(error), { cause: error });
       }
@@ -43,6 +44,7 @@ export function registerDesignTool(server: McpServer, { bridge }: ToolContext): 
 export async function readDesign(
   bridge: ToolContext["bridge"],
   { node: asked, depth, assetsDir, screenshot, maxChars, file }: DesignReadArgs,
+  files: WrittenFiles = memoryFiles(),
 ): Promise<CallToolResult> {
   // One file for the whole read: the snapshot and every asset come from the same session.
   const target = resolveTarget(bridge.plugins(), file);
@@ -86,6 +88,7 @@ export async function readDesign(
       (asset) => fetchAsset(bridge, asset, target),
       resolve(assetsDir),
       assetsDir,
+      files,
     );
 
     read = designXml(snapshot, {

@@ -37,6 +37,7 @@ export const ApplyChangeSchema: z.ZodType<ApplyChange, ApplyChange> = z.object({
     .exactOptional(),
   copyOf: RefSchema.exactOptional(),
   source: RefSchema.exactOptional(),
+  copy: RefSchema.exactOptional(),
   move: z.boolean().exactOptional(),
 });
 

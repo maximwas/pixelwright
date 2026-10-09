@@ -743,7 +743,11 @@ async function effects(node: Layer, { effects: spec }: FigmaProps, context: Writ
   set(node, "effects", list);
 }
 
-/** Dev Mode annotations, the whole list, each category found by its label (made when the file lacks it). */
+/**
+ * Dev Mode annotations, the whole list design_read shows, each category found by its label (made when the file lacks
+ * it). A note that comes back as it was keeps its formatting and pinned properties; notes without text, which
+ * design_read cannot show, stay.
+ */
 async function notesStep(node: Layer, { notes }: FigmaProps): Promise<void> {
   const categories = new Map(
     (await figma.annotations.getAnnotationCategoriesAsync()).map((category) => [
@@ -751,6 +755,9 @@ async function notesStep(node: Layer, { notes }: FigmaProps): Promise<void> {
       category.id,
     ]),
   );
+  const before = Array.isArray(node.annotations) ? (node.annotations as Annotation[]) : [];
+  const textOf = (annotation: Annotation) => annotation.label ?? annotation.labelMarkdown ?? "";
+  const unused = before.filter((annotation) => textOf(annotation) !== "");
   const annotations: Annotation[] = [];
 
   for (const { category, label } of notes ?? []) {
@@ -766,11 +773,15 @@ async function notesStep(node: Layer, { notes }: FigmaProps): Promise<void> {
       categories.set(category.toLowerCase(), id);
     }
 
+    const at = unused.findIndex((annotation) => textOf(annotation) === label);
+    const kept = at === -1 ? undefined : unused.splice(at, 1)[0];
+    const { categoryId: _category, ...rest } = kept ?? { label };
+
     annotations.push({
-      label,
+      ...rest,
       ...(id === undefined ? {} : { categoryId: id }),
     });
   }
 
-  node.annotations = annotations;
+  node.annotations = [...annotations, ...before.filter((annotation) => textOf(annotation) === "")];
 }

@@ -47,6 +47,11 @@ function heading(): FakeNode {
         id: "7:2",
         name: "Property 1=Default",
         type: "COMPONENT",
+        layoutMode: "VERTICAL",
+        layoutSizingHorizontal: "FIXED",
+        layoutSizingVertical: "FIXED",
+        width: 240,
+        fills: [GREEN],
       },
       {
         id: "7:3",
@@ -60,6 +65,18 @@ function heading(): FakeNode {
 
   return set;
 }
+
+const GREEN = {
+  type: "SOLID",
+  visible: true,
+  opacity: 1,
+  blendMode: "NORMAL",
+  color: {
+    r: 0.7,
+    g: 1,
+    b: 0.3,
+  },
+};
 
 let root: FakeNode;
 let library: FakeNode;
@@ -85,6 +102,30 @@ beforeEach(() => {
           height: 600,
         },
         children: [],
+      },
+      {
+        id: "8:1",
+        name: "Badge",
+        type: "COMPONENT",
+        componentPropertyDefinitions: {
+          "Label#1:0": {
+            type: "TEXT",
+            defaultValue: "New",
+          },
+        },
+        children: [
+          {
+            id: "8:2",
+            type: "TEXT",
+            name: "Label",
+            characters: "New",
+            fontName: {
+              family: "Inter",
+              style: "Regular",
+            },
+            componentPropertyReferences: { characters: "Label#1:0" },
+          },
+        ],
       },
       {
         id: "2:1",
@@ -133,6 +174,19 @@ describe("apply: instances", () => {
     expect((instance?.mainComponent as FakeNode | undefined)?.id).toBe("7:3");
     expect(instance?.parent?.id).toBe("3:1");
     expect((instance as FakeNode).componentProperties).toMatchObject({ "Label#1:0": { value: "Our work" } });
+  });
+
+  it("makes an instance look like its component: its fill and sizing stay", async () => {
+    const { errors, created } = await apply('<Instance component="Heading"/>', { parent: "3:1" });
+    const instance = byId(created[0]?.id ?? "");
+
+    expect(errors).toEqual([]);
+    expect(instance).toMatchObject({
+      fills: [GREEN],
+      layoutSizingHorizontal: "FIXED",
+      layoutSizingVertical: "FIXED",
+      width: 240,
+    });
   });
 
   it("switches an instance's variant and props by id, and names what it has when asked for what it lacks", async () => {
@@ -202,6 +256,46 @@ describe("apply: components and sets", () => {
     });
   });
 
+  it("combines a set only once its XML ends, though a variant holds an instance", async () => {
+    const { errors, created } = await apply(
+      '<ComponentSet name="Card"><Component variant="Size=S"><Text prop="Label">A</Text><Instance component="Heading"/></Component><Component variant="Size=L"><Text prop="Label">B</Text></Component></ComponentSet>',
+      { parent: "3:1" },
+    );
+    const set = byId(created.find(({ tag }) => tag === "ComponentSet")?.id ?? "");
+
+    expect(errors).toEqual([]);
+    expect(set?.children?.map(({ name, x }) => [name, x])).toEqual([
+      ["Size=S", 40],
+      ["Size=L", 180],
+    ]);
+    expect(Object.keys(set?.componentPropertyDefinitions as object)).toEqual(["Size", "Label#2:0"]);
+  });
+
+  it("copies a set as it is, its variants never combined again", async () => {
+    const { errors, created } = await apply('<ComponentSet copyOf="7:1" name="Heading 2"/>', { parent: "3:1" });
+    const copy = byId(created[0]?.id ?? "");
+
+    expect(errors).toEqual([]);
+    expect(copy).toMatchObject({
+      type: "COMPONENT_SET",
+      name: "Heading 2",
+    });
+    expect(copy?.parent?.id).toBe("3:1");
+    expect(fake.writes.calls.map(({ method }) => method)).not.toContain("combineAsVariants");
+  });
+
+  it("binds a copy's layers to the properties the copied component has, never a second one by the same name", async () => {
+    const { errors, created } = await apply(
+      '<Component copyOf="8:1" name="Badge 2"><Text id="8:2" prop="Label">Hot</Text></Component>',
+      { parent: "3:1" },
+    );
+    const copy = byId(created[0]?.id ?? "");
+
+    expect(errors).toEqual([]);
+    expect(Object.keys(copy?.componentPropertyDefinitions as object)).toEqual(["Label#1:0"]);
+    expect(copy?.children?.[0]?.componentPropertyReferences).toEqual({ characters: "Label#1:0" });
+  });
+
   it("combines new variants into one set laid out in a grid, its properties defined once on the set", async () => {
     const { errors, created } = await apply(
       '<ComponentSet name="Tag"><Component variant="Tone=Dark" width="80px" height="30px"><Text prop="Label">A</Text></Component><Component variant="Tone=Light" width="80px" height="30px"><Text prop="Label">B</Text></Component></ComponentSet>',
@@ -229,6 +323,31 @@ describe("apply: components and sets", () => {
 });
 
 describe("apply: notes", () => {
+  it("keeps a note's formatting and pinned properties when it comes back, and the notes design_read cannot show", async () => {
+    const board = byId("3:1") as FakeNode;
+
+    board.annotations = [
+      {
+        labelMarkdown: "**Build** it",
+        categoryId: "cat-dev",
+        properties: [{ type: "width" }],
+      },
+      { properties: [{ type: "fills" }] },
+    ];
+
+    await apply('<Frame id="3:1" note="Development: **Build** it | New one"/>');
+
+    expect(board.annotations).toEqual([
+      {
+        labelMarkdown: "**Build** it",
+        categoryId: "cat-dev",
+        properties: [{ type: "width" }],
+      },
+      { label: "New one" },
+      { properties: [{ type: "fills" }] },
+    ]);
+  });
+
   it("writes notes with their categories, making a category the file lacks", async () => {
     await apply('<Frame id="3:1" note="Development: build it | Behavior: opens the modal | Plain"/>');
 

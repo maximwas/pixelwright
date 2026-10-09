@@ -50,8 +50,8 @@ export const MAIN_COMPONENT_BATCH = 25;
  */
 export const NEAR_FONT_WEIGHT = 50;
 
-/** How many files may be on their way in at once before the oldest is dropped. */
-export const UPLOAD_STREAMS = 8;
+/** How many bytes of files may wait for their apply at once before the oldest go: four of the largest a call sends. */
+export const UPLOAD_BYTES = 128 * 1024 * 1024;
 
 /** How long a file sent for an apply waits for it. */
 export const UPLOAD_TTL_MS = 5 * 60 * 1000;

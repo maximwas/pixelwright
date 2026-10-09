@@ -166,6 +166,26 @@ describe("readApply", () => {
     expect(new Set(elements.map(({ ref }) => ref)).size).toBe(6);
   });
 
+  it("gives every element inside a copy or a new instance that scope's ref, however deep, the ids there being its layers", () => {
+    const { elements, errors } = readApply(
+      [
+        '<Frame copyOf="1:1"><Frame id="1:5"><Text id="1:2">Copied</Text></Frame></Frame>',
+        '<Instance component="Heading"><Frame id="I2:1;3:4"><Text id="I2:1;3:5">Our work</Text></Frame></Instance>',
+      ].join("\n"),
+    );
+    const [copy, frame, text, instance, label, labelText] = elements;
+
+    expect(errors).toEqual([]);
+    expect([frame, text].map((element) => [element?.source, element?.copy])).toEqual([
+      ["1:5", copy?.ref],
+      ["1:2", copy?.ref],
+    ]);
+    expect([label, labelText].map((element) => [element?.id, element?.source, element?.copy])).toEqual([
+      [null, "I2:1;3:4", instance?.ref],
+      [null, "I2:1;3:5", instance?.ref],
+    ]);
+  });
+
   it("refuses an id given twice and an id that is no Figma id, and skips their elements' new children", () => {
     const { elements, errors } = readApply(
       '<Frame id="2:4870" name="Card"/>\n<Frame id="2:4870" name="Copy"><Frame name="Badge"/></Frame>\n<Frame id="hero-title"/>',

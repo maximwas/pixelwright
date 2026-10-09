@@ -224,6 +224,9 @@ until then every call is refused (\`dryRun: true\` checks a call without writing
   instance by the names design_read and components_read write: the file's components, the ones its page uses from a
   library, or \`component="key:<key>"\` for a library one the file does not use yet. \`variant\` picks the variant
   (values left out are the set's default), \`props\` sets text and boolean properties (names without Figma's #id).
+- Inside a new instance, elements with another instance's ids (of the same component and variant) or the
+  component's own write the new instance's layers, as overrides; the other instance stays as it is.
+  \`<Instance copyOf="id">\` copies an instance with its overrides instead.
 - An existing instance: \`variant\` switches it, \`props\` changes its properties, \`component\` swaps it to
   another component. A comma or \`=\` inside a name or value is escaped with a backslash, as design_read writes it.
 - \`<Component name="Badge">…</Component>\` makes a component like a frame; inside it, \`prop="Label"\` on a
@@ -235,14 +238,16 @@ until then every call is refused (\`dryRun: true\` checks a call without writing
 
 ## Images, icons and notes
 
-- \`<Image src="photos/hero.jpg" width="600px" height="400px"/>\` makes an image from a file (PNG, JPG, GIF or
-  WebP, up to 32 MB), \`<Icon src="icons/arrow.svg" width="24px"/>\` an icon from an SVG; \`background:
-  url(…)\` fills a frame with one. Paths are on the server's machine, from its folder.
-- An existing \`Image\` with another file in \`src\` takes that image, keeping its fit. A file named as design_read
-  named the layer's (with assetsDir) is the one it wrote and changes nothing, so a read sent back keeps the
-  originals; give a new image another file name. An existing icon is replaced by deleting it and creating a new one.
+- \`<Image src="photos/hero.jpg" width="600px" height="400px"/>\` makes an image from a file (PNG, JPG or GIF, up
+  to 32 MB and 4096 px a side; convert WebP first), \`<Icon src="icons/arrow.svg" width="24px"/>\` an icon from an
+  SVG; \`background: url(…)\` fills a frame with one. Paths are on the server's machine, from its folder.
+- An existing \`Image\` with another file in \`src\` takes that image, keeping its fit. A file design_read or
+  assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
+  the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a
+  new one.
 - \`note="Behavior: opens the modal | Spacing: 8px"\` writes the layer's Dev Mode notes, the whole list (a
-  category the file lacks is made; \`note=""\` removes them).
+  category the file lacks is made; \`note=""\` removes them). A note sent back as it was keeps its formatting and
+  pinned properties; notes without text, which design_read does not show, stay.
 
 ## Values
 

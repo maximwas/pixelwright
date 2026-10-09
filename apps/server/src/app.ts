@@ -1,4 +1,5 @@
 import serverPackage from "../package.json" with { type: "json" };
+import { fileStore } from "./assets/written-files.ts";
 import { bridgeConfigFile, loadOrCreateBridgeConfig } from "./bridge/bridge-config.ts";
 import { BridgeServer } from "./bridge/bridge-server.ts";
 import { OwnerClient } from "./bridge/owner-client.ts";
@@ -21,6 +22,7 @@ export async function createApp(): Promise<App> {
   const server = createMcpServer({
     bridge,
     version: serverPackage.version,
+    files: fileStore(),
   });
 
   return {

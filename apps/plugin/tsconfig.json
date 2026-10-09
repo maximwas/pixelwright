@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2024", "DOM"],
-    "types": ["@figma/plugin-typings"]
+    "types": ["@figma/plugin-typings", "node"]
   },
   "include": ["src", "test"]
 }

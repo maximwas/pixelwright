@@ -293,6 +293,16 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         };
         expect(files.errors).toEqual([]);
 
+        // Figma's image hash is the SHA-1 of the file's bytes: the same file again changes nothing.
+        const sameFile = (await call("design_apply", { xml: `<Image id="${imageId}" src="${images[0]}"/>` }))
+          .structured;
+
+        log.sameFile = sameFile;
+        expect(sameFile).toMatchObject({
+          changed: [],
+          errors: [],
+        });
+
         if (images[1] !== undefined && images[1] !== images[0]) {
           const swapped = (await call("design_apply", { xml: `<Image id="${imageId}" src="${images[1]}"/>` }))
             .structured;
@@ -315,11 +325,28 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         expect((await call("design_read", { node: copyId })).text).toContain(">Copied title<");
         expect((await call("design_read", { node: "2:4870" })).text).toBe(sourceCard);
 
+        // (d2) A new Heading instance named by the card's instance's ids: its own label changes, the card's stays.
+        const cardHeading = (await call("design_read", { node: "2:4872" })).text;
+        const headingVariant = /variant="([^"]+)"/.exec(cardHeading)?.[1] ?? "";
+        const named = (
+          await call("design_apply", {
+            xml: `<Frame id="${boardId}"><Instance component="Heading" variant="${headingVariant}" position="absolute" left="500px" top="700px"><Frame id="I2:4872;330:291"><Text id="I2:4872;330:292">Named by another instance</Text></Frame></Instance></Frame>`,
+          })
+        ).structured as { created: { id: string }[]; errors: unknown[] };
+
+        log.named = named;
+        expect(named.errors).toEqual([]);
+        expect((await call("design_read", { node: named.created[0]?.id ?? "" })).text).toContain(
+          ">Named by another instance<",
+        );
+        expect((await call("design_read", { node: "2:4872" })).text).toBe(cardHeading);
+
         // (e) A note with a category the file lacks.
         await call("design_apply", { xml: `<Frame id="${cardId}" note="Pixelwright check: written live"/>` });
         expect((await call("design_read", { node: boardId })).text).toContain('note="Pixelwright check: written live"');
 
-        // (f) The Heading instance moved into the card, then first in it.
+        // (f) The Heading instance moved into the card, then first in it: the text before it moves forward, after it
+        // (how Figma counts insertChild's index for a layer already in that parent).
         const cardRead = (await call("design_read", { node: cardId })).text;
         const firstText = /<Text id="([^"]+)"/.exec(cardRead)?.[1] ?? "";
 

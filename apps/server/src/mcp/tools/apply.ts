@@ -13,6 +13,8 @@ import {
 } from "@pixelwright/core";
 import type * as z from "zod";
 import { readSource, type SourceFile } from "../../assets/read-source.ts";
+import { extensionOf } from "../../assets/write-assets.ts";
+import { memoryFiles, type WrittenFiles } from "../../assets/written-files.ts";
 import { resolveTarget } from "../../bridge/target.ts";
 import { UPLOAD_CHUNK_BYTES, WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
 import { DesignApplyInputSchema, DesignApplyOutputSchema } from "../../schemas/tools.ts";
@@ -24,7 +26,7 @@ type DesignApplyArgs = z.output<typeof DesignApplyInputSchema>;
 type Layer = { node: SnapshotNode; parent: SnapshotNode | null };
 type DesignApplied = z.input<typeof DesignApplyOutputSchema>;
 
-export function registerApplyTool(server: McpServer, { bridge }: ToolContext): void {
+export function registerApplyTool(server: McpServer, { bridge, files }: ToolContext): void {
   registerTool(server, {
     name: "design_apply",
     title: "Write a design",
@@ -33,7 +35,7 @@ export function registerApplyTool(server: McpServer, { bridge }: ToolContext): v
     input: DesignApplyInputSchema,
     output: DesignApplyOutputSchema,
     annotations: WRITE_ANNOTATIONS,
-    run: (args) => applyDesign(bridge, args),
+    run: (args) => applyDesign(bridge, args, { files }),
   });
 }
 
@@ -44,7 +46,11 @@ export function registerApplyTool(server: McpServer, { bridge }: ToolContext): v
 export async function applyDesign(
   bridge: ToolContext["bridge"],
   { xml, parent, dryRun, file }: DesignApplyArgs,
-  { cwd = process.cwd(), chunkBytes = UPLOAD_CHUNK_BYTES }: { cwd?: string; chunkBytes?: number } = {},
+  {
+    cwd = process.cwd(),
+    chunkBytes = UPLOAD_CHUNK_BYTES,
+    files = memoryFiles(),
+  }: { cwd?: string; chunkBytes?: number; files?: WrittenFiles } = {},
 ): Promise<DesignApplied> {
   const read = readApply(xml);
   const errors: ApplyError[] = [...read.errors];
@@ -62,11 +68,16 @@ export async function applyDesign(
   }
 
   const target = resolveTarget(bridge.plugins(), file);
+  const byRef = new Map(read.elements.map((element) => [element.ref, element]));
+  // Inside a new instance the layers are the component's at their defaults, whatever the instance named has: all its
+  // element gives is written. Inside a copy they start as the copied ones.
+  const compared = (element: ApplyElement) =>
+    element.copy === undefined || byRef.get(element.copy)?.attributes.copyOf !== undefined ? element.source : undefined;
   // The layers changed, and the sources copies are made of (a copy starts as its source).
   const ids = [
     ...new Set(
       read.elements.flatMap((element) =>
-        [element.id, element.source, element.attributes.copyOf].filter(
+        [element.id, compared(element), element.attributes.copyOf].filter(
           (id): id is string => id !== undefined && id !== null,
         ),
       ),
@@ -95,6 +106,13 @@ export async function applyDesign(
   }
 
   const changes: ApplyChange[] = [];
+  // Read once, and only when an element names a file.
+  let known: Promise<ReadonlyMap<string, readonly string[]>> | null = null;
+  const written = () => {
+    known ??= files.read();
+
+    return known;
+  };
   const refuse = (element: ApplyElement, message: string, hint: string) =>
     errors.push({
       line: element.line,
@@ -105,7 +123,7 @@ export async function applyDesign(
     });
 
   for (const element of read.elements) {
-    const named = element.id ?? element.source ?? element.attributes.copyOf ?? null;
+    const named = element.id ?? compared(element) ?? element.attributes.copyOf ?? null;
     const layer = named === null ? undefined : layers.get(named);
 
     if (named !== null && layer === undefined && !missing.has(named) && element.attributes.copyOf === undefined) {
@@ -121,24 +139,41 @@ export async function applyDesign(
     const now = layer === undefined ? undefined : unchangedAttributes(element, layer, tokens);
     // A file the layer's image is not: written again (src, a background's url).
     const differ =
-      layer === undefined || now === undefined ? [] : await filesChanged(element, layer.node, now.current, cwd);
+      layer === undefined || now === undefined
+        ? {
+            changed: [],
+            errors: [],
+          }
+        : await filesChanged(element, layer.node, now.current, {
+            cwd,
+            written,
+          });
     const { change, errors: translated } = changeOf(
       element,
       now === undefined
         ? undefined
         : {
             ...now,
-            attributes: new Set([...now.attributes].filter((name) => !differ.includes(name))),
+            attributes: new Set([...now.attributes].filter((name) => !differ.changed.includes(name))),
           },
     );
 
     changes.push(change);
-    errors.push(...translated);
+    errors.push(
+      ...translated,
+      ...differ.errors.map(({ attribute, message }) => ({
+        line: element.line,
+        column: element.column,
+        ...(element.id === null ? {} : { id: element.id }),
+        attribute,
+        message,
+      })),
+    );
   }
 
   const moving = moves(read.elements, layers);
 
-  const files = await attachFiles(
+  const attached = await attachFiles(
     changes.map((change) =>
       moving.has(change.ref)
         ? {
@@ -155,14 +190,14 @@ export async function applyDesign(
     },
   );
 
-  errors.push(...files.errors);
+  errors.push(...attached.errors);
 
   // What writes nothing stays here. A layer made or moved goes with its parent and the elements beside it, unchanged,
   // so the plugin finds where it goes.
-  const placed = files.changes.filter((change) => change.kind === "create" || (change.move ?? false));
+  const placed = attached.changes.filter((change) => change.kind === "create" || (change.move ?? false));
   const parents = new Set(placed.flatMap((change) => (change.parent === null ? [] : [change.parent])));
   const beside = new Set(placed.map((change) => change.parent ?? ""));
-  const sent = files.changes.filter(
+  const sent = attached.changes.filter(
     (change) =>
       change.kind === "create" ||
       (change.move ?? false) ||
@@ -253,59 +288,64 @@ function sorted(errors: readonly ApplyError[]): ApplyError[] {
 }
 
 /**
- * The files an element names that exist and hold another image than the layer's: their attributes. A file named as
- * design_read names this layer's (its -2 suffixes and folder aside) is the one it wrote, a render of the layer rather
- * than the original image, so it is never a new image.
+ * What the files an element names change: the attributes whose file holds another image than the layer's, and why a
+ * file cannot be used. A file design_read or assets_export wrote for this layer (a render of it, not the image inside)
+ * changes nothing wherever it went; a file that is not there is fine only as the path design_read writes, which it
+ * plans without writing when no assetsDir is given.
  */
 async function filesChanged(
   element: ApplyElement,
   node: SnapshotNode,
   current: Readonly<Record<string, string>>,
-  cwd: string,
-): Promise<string[]> {
-  const written = new Set(
-    [current.src, ...urlsIn(current.background ?? "")].flatMap((path) => (path === undefined ? [] : [stem(path)])),
-  );
+  { cwd, written }: { cwd: string; written: () => Promise<ReadonlyMap<string, readonly string[]>> },
+): Promise<{ changed: string[]; errors: { attribute: string; message: string }[] }> {
+  const planned = new Set([current.src, ...urlsIn(current.background ?? "")]);
   const hashes = new Set(
     (Array.isArray(node.fills) ? node.fills : []).flatMap((paint) =>
       paint.imageHash === undefined ? [] : [paint.imageHash],
     ),
   );
-  const differs = async (path: string) => {
-    if (written.has(stem(path))) {
+  const changed: string[] = [];
+  const errors: { attribute: string; message: string }[] = [];
+  const differs = async (attribute: string, path: string) => {
+    const file = await readSource(path, cwd, "image");
+
+    if (file === null || typeof file === "string") {
+      if (file !== null || !planned.has(path)) {
+        errors.push({
+          attribute,
+          message: file ?? `${path} is not a file the server can read (paths are from its folder: ${cwd}).`,
+        });
+      }
+
       return false;
     }
 
-    const file = await readSource(path, cwd, "image");
-
-    return typeof file === "object" && file !== null && !hashes.has(file.sha1);
+    return !hashes.has(file.sha1) && !((await written()).get(file.sha1) ?? []).includes(node.id);
   };
-  const changed: string[] = [];
   const src = element.attributes.src;
 
-  if (element.tag === "Image" && src !== undefined && (await differs(src))) {
+  if (element.tag === "Image" && src !== undefined && (await differs("src", src))) {
     changed.push("src");
   }
 
   for (const path of urlsIn(element.attributes.background ?? "")) {
-    if (await differs(path)) {
+    if (await differs("background", path)) {
       changed.push("background");
       break;
     }
   }
 
-  return changed;
+  return {
+    changed,
+    errors,
+  };
 }
 
 function urlsIn(css: string): string[] {
   return [...css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].flatMap(([, path]) =>
     path === undefined ? [] : [path],
   );
-}
-
-/** A file's name as design_read gives it: no folder, no extension, no -2 a second read with the same name adds. */
-function stem(path: string): string {
-  return (path.split(/[\\/]/).at(-1) ?? path).replace(/\.[^.]+$/, "").replace(/-\d+$/, "");
 }
 
 /**
@@ -430,6 +470,12 @@ async function holdFile(
 
   if (typeof file === "string") {
     return { error: file };
+  }
+
+  if (kind === "image" && extensionOf(file.bytes) === "webp") {
+    return {
+      error: `${path} is a WebP image: Figma makes images of PNG, JPG and GIF files only, so convert it first.`,
+    };
   }
 
   if (kind === "icon" || options.dryRun) {

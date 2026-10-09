@@ -7,9 +7,14 @@ import { DEFAULT_BRIDGE_PORT } from "../constants/bridge.ts";
 import { BridgeConfigSchema, PortSchema } from "../schemas/bridge.ts";
 import type { BridgeConfig, BridgeConfigOptions } from "../types/bridge.ts";
 
-/** Where bridge.json lives: PIXELWRIGHT_HOME, by default ~/.pixelwright. */
+/** Where pixelwright keeps what outlives a process: PIXELWRIGHT_HOME, by default ~/.pixelwright. */
+export function homeDir(env: Record<string, string | undefined> = process.env): string {
+  return env.PIXELWRIGHT_HOME?.trim() || join(homedir(), ".pixelwright");
+}
+
+/** Where bridge.json lives: in the home dir. */
 export function bridgeConfigFile(env: Record<string, string | undefined> = process.env): string {
-  return join(env.PIXELWRIGHT_HOME?.trim() || join(homedir(), ".pixelwright"), "bridge.json");
+  return join(homeDir(env), "bridge.json");
 }
 
 /**

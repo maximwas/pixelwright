@@ -13,6 +13,7 @@
     "@create-figma-plugin/utilities": "4.0.3",
     "@figma/plugin-typings": "1.141.0",
     "@pixelwright/core": "workspace:*",
+    "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "vitest": "catalog:",

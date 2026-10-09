@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type ApplyChange, designXml, type Snapshot, SnapshotSchema } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
+import { memoryFiles } from "../src/assets/written-files.ts";
 import { applyDesign } from "../src/mcp/tools/apply.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
@@ -315,25 +316,131 @@ describe("design_apply: files", () => {
     });
   });
 
-  it("keeps an image whose file is the one design_read wrote for it (a render, not the original)", async () => {
+  it("keeps an image whose file design_read wrote for it (a render, not the original), wherever the file went", async () => {
     const dir = folder();
     const snapshot = photoSnapshot(PNG);
+    const render = Buffer.concat([PNG, Buffer.from("render")]);
+    const files = memoryFiles();
 
-    // design_read named the photo's render photo.png; a second read of it wrote photo-2.png.
-    writeFileSync(join(dir, "photo-2.png"), Buffer.concat([PNG, Buffer.from("render")]));
+    mkdirSync(join(dir, "moved"));
+    writeFileSync(join(dir, "moved", "hero.png"), render);
+    await files.add([
+      {
+        sha1: createHash("sha1").update(render).digest("hex"),
+        node: "1:2",
+      },
+    ]);
 
     const { bridge, requests } = bridgeOver(snapshot);
     const result = await applyDesign(
       bridge,
       {
+        xml: designXml(snapshot).xml.replace(/src="[^"]+"/, 'src="moved/hero.png"'),
+        dryRun: false,
+      },
+      {
+        cwd: dir,
+        files,
+      },
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(requests.map(({ op }) => op)).toEqual(["entries"]);
+  });
+
+  it("swaps an image whose file design_read wrote once another picture is saved over it", async () => {
+    const dir = folder();
+    const snapshot = photoSnapshot(PNG);
+    const files = memoryFiles();
+
+    // design_read wrote the photo's render as photo-2.png; the user then saved a new picture under that name.
+    await files.add([
+      {
+        sha1: createHash("sha1")
+          .update(Buffer.concat([PNG, Buffer.from("render")]))
+          .digest("hex"),
+        node: "1:2",
+      },
+    ]);
+    writeFileSync(join(dir, "photo-2.png"), Buffer.concat([PNG, Buffer.from("new picture")]));
+
+    const { bridge, requests } = bridgeOver(snapshot);
+
+    await applyDesign(
+      bridge,
+      {
         xml: designXml(snapshot).xml.replace(/src="[^"]+"/, 'src="photo-2.png"'),
+        dryRun: false,
+      },
+      {
+        cwd: dir,
+        files,
+      },
+    );
+
+    expect(requests.map(({ op }) => op)).toEqual(["entries", "upload", "apply"]);
+  });
+
+  it("refuses an existing image's file that is not there, unless it is the one design_read only planned", async () => {
+    const dir = folder();
+    const snapshot = photoSnapshot(PNG);
+    const xml = designXml(snapshot).xml;
+    const planned = bridgeOver(snapshot);
+    const kept = await applyDesign(
+      planned.bridge,
+      {
+        xml,
         dryRun: false,
       },
       { cwd: dir },
     );
 
-    expect(result.errors).toEqual([]);
-    expect(requests.map(({ op }) => op)).toEqual(["entries"]);
+    expect(kept.errors).toEqual([]);
+
+    const { bridge } = bridgeOver(snapshot);
+    const result = await applyDesign(
+      bridge,
+      {
+        xml: xml.replace(/src="[^"]+"/, 'src="gone.png"'),
+        dryRun: false,
+      },
+      { cwd: dir },
+    );
+
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        id: "1:2",
+        attribute: "src",
+        message: expect.stringMatching(/gone\.png/),
+      }),
+    ]);
+  });
+
+  it("refuses a WebP file for a new image: Figma makes images of PNG, JPG and GIF", async () => {
+    const dir = folder();
+
+    writeFileSync(
+      join(dir, "photo.webp"),
+      Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WEBPVP8 "), Buffer.alloc(8)]),
+    );
+
+    const { bridge } = bridgeOver(photoSnapshot(PNG));
+    const result = await applyDesign(
+      bridge,
+      {
+        xml: '<Image src="photo.webp"/>',
+        parent: "1:1",
+        dryRun: false,
+      },
+      { cwd: dir },
+    );
+
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        attribute: "src",
+        message: expect.stringMatching(/WebP/),
+      }),
+    ]);
   });
 
   it("uploads a file in chunks once for every element naming it, and sends an icon's SVG inline", async () => {

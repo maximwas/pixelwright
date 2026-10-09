@@ -167,7 +167,7 @@ export async function swapTo(
 ): Promise<void> {
   const owner = await index.find(name);
   const { main } = await mainOf(node);
-  const keep = owner.type === "COMPONENT_SET" && main.parent === owner ? valuesOf(main) : {};
+  const keep = owner.type === "COMPONENT_SET" && main.parent?.id === owner.id ? valuesOf(main) : {};
 
   (node as unknown as InstanceNode).swapComponent(
     variantFor(owner, {
@@ -239,21 +239,20 @@ export async function setProps(
   node.setProperties(values);
 }
 
-/** Properties a new component's layers make, bound once the component (or the set it joined) is complete. */
+/**
+ * Properties a new component's layers make, bound once the component (or the set it joined) is complete: one the
+ * component or set has by that name and type already (a copy's, another variant's) is bound, never made twice.
+ */
 export function bindProperties(
   marks: readonly { node: Layer; property: NonNullable<FigmaProps["property"]>; fail: (error: unknown) => void }[],
 ): void {
-  const keys = new Map<string, string>();
   const keyFor = (owner: Owner, name: string, type: "TEXT" | "BOOLEAN", fallback: string | boolean) => {
-    const id = `${owner.id} ${type} ${name}`;
-    let key = keys.get(id);
+    const definitions = owner.componentPropertyDefinitions;
+    const found = Object.keys(definitions).find(
+      (key) => key.replace(/#[^#]*$/, "") === name && definitions[key]?.type === type,
+    );
 
-    if (key === undefined) {
-      key = owner.addComponentProperty(name, type, fallback);
-      keys.set(id, key);
-    }
-
-    return key;
+    return found ?? owner.addComponentProperty(name, type, fallback);
   };
 
   for (const { node, property, fail } of marks) {

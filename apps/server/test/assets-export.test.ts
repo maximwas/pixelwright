@@ -1,8 +1,10 @@
+import { createHash } from "node:crypto";
 import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BridgeError } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
+import { memoryFiles } from "../src/assets/written-files.ts";
 import { exportAssets } from "../src/mcp/tools/assets.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
@@ -129,6 +131,33 @@ describe("assets_export", () => {
       join(dir, "hero-photo-2.png"),
     ]);
     expect(await readdir(dir)).toHaveLength(27);
+  });
+
+  it("remembers each file it writes as its layer's, so design_apply knows a render sent back", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
+    const files = memoryFiles();
+    const result = await exportAssets(
+      file().bridge,
+      {
+        nodes: ["1:3", "1:4"],
+        dir,
+        original: false,
+      },
+      files,
+    );
+    const known = await files.read();
+
+    expect(result.files).toHaveLength(2);
+
+    for (const written of result.files) {
+      expect(
+        known.get(
+          createHash("sha1")
+            .update(await readFile(written.path))
+            .digest("hex"),
+        ),
+      ).toContain(written.node);
+    }
   });
 
   it("exports in the format asked for, at the scale asked for, rasters at 2x by default", async () => {

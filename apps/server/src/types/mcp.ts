@@ -1,5 +1,6 @@
 import type { ToolAnnotations } from "@modelcontextprotocol/server";
 import type * as z from "zod";
+import type { WrittenFiles } from "../assets/written-files.ts";
 import type { StatusOutputSchema } from "../schemas/status.ts";
 import type { BridgeStatus, ConnectedPlugin, PairingStatus, RequestOptions } from "./bridge.ts";
 
@@ -14,6 +15,8 @@ export interface BridgeView {
 export interface ToolContext {
   readonly bridge: BridgeView;
   readonly version: string;
+  /** The files design_read and assets_export wrote, which design_apply knows again. */
+  readonly files: WrittenFiles;
 }
 
 export interface ToolDefinition<I extends z.ZodObject, O extends z.ZodObject> {

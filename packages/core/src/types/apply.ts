@@ -16,8 +16,13 @@ export interface ApplyElement {
   readonly attributes: Readonly<Record<string, string>>;
   /** A Text's content: text and Span elements, as parsed. */
   readonly content?: readonly XmlChild[];
-  /** Inside a copy (copyOf): the source's layer this element stands for, written onto its copy. */
+  /**
+   * Inside a copy (copyOf) or a new instance: the layer this element stands for (the source's, or another instance's
+   * of the same component), written onto its counterpart in the copy or the new instance.
+   */
   readonly source?: string;
+  /** The ref of the copy or new instance the element is inside, however deep. */
+  readonly copy?: string;
 }
 
 /** An error design_apply returns: where in the XML, on which layer and attribute, and what to do. */
@@ -235,8 +240,10 @@ export interface ApplyChange {
   readonly text?: { readonly characters: string; readonly runs: readonly TextRunSpec[] };
   /** A create that starts as a clone of this layer. */
   readonly copyOf?: string;
-  /** Inside a copy: the source layer whose clone this change writes. */
+  /** Inside a copy or a new instance: the layer whose counterpart this change writes. */
   readonly source?: string;
+  /** The copy or new instance that counterpart is in. */
+  readonly copy?: string;
   /** An update placed again, as a create is: another parent, before/after, or another order. */
   readonly move?: boolean;
 }

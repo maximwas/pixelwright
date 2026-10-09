@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import type { PlannedAsset } from "@pixelwright/core";
+import type { WrittenFiles } from "./written-files.ts";
 
 /** A file design_read wrote, or the one it reused for the same bytes. */
 export interface WrittenAsset {
@@ -18,17 +19,20 @@ export function assetKey(asset: Pick<PlannedAsset, "node" | "imageHash">): strin
 
 /**
  * Fetches and writes the planned assets into `dir`: the same bytes once (a second layer gets the first file's path),
- * an original image with the extension of what it really is (Figma keeps JPEG, GIF and WebP as placed).
+ * an original image with the extension of what it really is (Figma keeps JPEG, GIF and WebP as placed). Each file is
+ * remembered as its layers' in `files`, so design_apply knows it when it comes back.
  */
 export async function writeAssets(
   assets: readonly PlannedAsset[],
   fetch: (asset: PlannedAsset) => Promise<Buffer>,
   dir: string,
   srcBase: string,
+  files: WrittenFiles,
 ): Promise<{ srcByKey: Map<string, string>; written: WrittenAsset[] }> {
   const srcByKey = new Map<string, string>();
   const written: WrittenAsset[] = [];
   const byDigest = new Map<string, string>();
+  const remembered: { sha1: string; node: string }[] = [];
   const names = new Set<string>();
   const base = srcBase.replace(/\/+$/, "");
 
@@ -53,6 +57,10 @@ export async function writeAssets(
     }
 
     srcByKey.set(assetKey(asset), src);
+    remembered.push({
+      sha1: createHash("sha1").update(bytes).digest("hex"),
+      node: asset.node,
+    });
     written.push({
       node: asset.node,
       kind: asset.kind,
@@ -60,6 +68,8 @@ export async function writeAssets(
       bytes: bytes.length,
     });
   }
+
+  await files.add(remembered);
 
   return {
     srcByKey,

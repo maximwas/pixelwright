@@ -59,6 +59,9 @@ importers:
       '@pixelwright/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.0
       '@typescript/native':
         specifier: 'catalog:'
         version: typescript@7.0.2
