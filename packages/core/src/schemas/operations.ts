@@ -2,6 +2,7 @@ import * as z from "zod";
 import { EXPORT_CHUNK_BYTES } from "../constants/bridge.ts";
 import type { OutlineNode } from "../types/operations.ts";
 import { SnapshotSchema } from "./snapshot.ts";
+import { RawTokensSchema } from "./tokens.ts";
 
 /** A node's box in page coordinates, whole pixels. */
 export const BoxSchema = z.object({
@@ -117,6 +118,13 @@ export const OPERATION_SCHEMAS = {
       totalBytes: z.number().int().min(0),
       bytes: z.string(),
     }),
+  },
+  variables: {
+    input: z.object({
+      /** Also list the enabled libraries' variables (by name: their values need an import). */
+      libraries: z.boolean().default(false),
+    }),
+    output: RawTokensSchema,
   },
   snapshot: {
     input: z.object({

@@ -8,7 +8,9 @@ import {
   type SnapshotVariable,
 } from "@pixelwright/core";
 import { SNAPSHOT_MAX_CHARS } from "../constants/plugin.ts";
+import { plain } from "../utils/plain.ts";
 import { requireNode } from "./nodes.ts";
+import { styleOf } from "./styles.ts";
 
 /** Styles and variables the snapshot's layers use, resolved once at the end; a variable keeps its first consumer. */
 interface References {
@@ -571,38 +573,8 @@ async function resolveStyles(ids: ReadonlySet<string>): Promise<Record<string, S
   for (const id of ids) {
     const style = await figma.getStyleByIdAsync(id);
 
-    if (style === null) {
-      continue;
-    }
-
-    const base = {
-      name: style.name,
-      type: style.type,
-      remote: style.remote,
-    };
-
-    if (style.type === "PAINT") {
-      styles[id] = {
-        ...base,
-        paints: plain<SnapshotStyle["paints"]>(style.paints),
-      };
-    } else if (style.type === "EFFECT") {
-      styles[id] = {
-        ...base,
-        effects: plain<SnapshotStyle["effects"]>(style.effects),
-      };
-    } else if (style.type === "TEXT") {
-      styles[id] = {
-        ...base,
-        fontName: { ...style.fontName },
-        fontSize: style.fontSize,
-        lineHeight: plain<SnapshotStyle["lineHeight"]>(style.lineHeight),
-        letterSpacing: plain<SnapshotStyle["letterSpacing"]>(style.letterSpacing),
-        textCase: style.textCase,
-        textDecoration: style.textDecoration,
-      };
-    } else {
-      styles[id] = base;
+    if (style !== null) {
+      styles[id] = styleOf(style);
     }
   }
 
@@ -643,11 +615,6 @@ async function resolveVariables(consumers: ReadonlyMap<string, SceneNode>): Prom
 
 function isFilled(value: unknown): value is object {
   return typeof value === "object" && value !== null && Object.keys(value).length > 0;
-}
-
-/** Plugin API values are frozen objects with readonly arrays: a JSON copy is what goes on the wire anyway. */
-function plain<T = unknown>(value: unknown): T {
-  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 /** Whether a layer draws past its own box by more than half a pixel (centred or outside strokes, shadows). */

@@ -96,6 +96,12 @@ export interface FakeLibrary {
   readonly styles?: Record<string, object>;
   readonly variables?: Record<string, Record<string, unknown> & { name: string; variableCollectionId: string }>;
   readonly collections?: Record<string, { name: string }>;
+  /** The file's own collections and variables (getLocal…Async), and its own styles by kind. */
+  readonly localCollections?: object[];
+  readonly localVariables?: object[];
+  readonly localStyles?: { paint?: object[]; text?: object[]; effect?: object[] };
+  /** figma.teamLibrary: the enabled libraries' collections and their variables by collection key, or a failure. */
+  readonly teamLibrary?: { collections: object[]; variables: Record<string, object[]> } | Error;
 }
 
 /** Installs a fake `figma` global over a page tree and returns what the operations changed. */
@@ -132,6 +138,22 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
             };
       },
       getVariableCollectionByIdAsync: async (id: string) => library.collections?.[id] ?? null,
+      getLocalVariableCollectionsAsync: async () => library.localCollections ?? [],
+      getLocalVariablesAsync: async () => library.localVariables ?? [],
+    },
+    getLocalPaintStylesAsync: async () => library.localStyles?.paint ?? [],
+    getLocalTextStylesAsync: async () => library.localStyles?.text ?? [],
+    getLocalEffectStylesAsync: async () => library.localStyles?.effect ?? [],
+    teamLibrary: {
+      getAvailableLibraryVariableCollectionsAsync: async () => {
+        if (library.teamLibrary instanceof Error) {
+          throw library.teamLibrary;
+        }
+
+        return library.teamLibrary?.collections ?? [];
+      },
+      getVariablesInLibraryCollectionAsync: async (key: string) =>
+        library.teamLibrary instanceof Error ? [] : (library.teamLibrary?.variables[key] ?? []),
     },
     setCurrentPageAsync: async (next: FakeNode) => {
       state.currentPage = next;
