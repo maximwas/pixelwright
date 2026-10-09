@@ -5,11 +5,19 @@ import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { Duplex } from "node:stream";
 import { BridgeError, CloseCode, MAX_MESSAGE_BYTES } from "@pixelwright/core";
 import { type WebSocket, WebSocketServer } from "ws";
-import { CLOSE_GRACE_MS, HEARTBEAT_MS, MAX_PLUGIN_SESSIONS, REQUEST_TIMEOUT_MS } from "../constants/bridge.ts";
+import {
+  CLOSE_GRACE_MS,
+  HEARTBEAT_MS,
+  MAX_PENDING_PLUGINS,
+  MAX_PLUGIN_SESSIONS,
+  REQUEST_TIMEOUT_MS,
+} from "../constants/bridge.ts";
 import type {
   BridgeLog,
   BridgeServerOptions,
   ConnectedPlugin,
+  PairingCodesLike,
+  PairingStatus,
   PluginLink,
   PluginSession,
   RequestOptions,
@@ -18,6 +26,7 @@ import type {
 } from "../types/bridge.ts";
 import { pickActive } from "../utils/active-session.ts";
 import { closeGracefully, listenOnLoopback } from "./http-lifecycle.ts";
+import { PairingCodes } from "./pairing-codes.ts";
 import { PeerConnection } from "./peer-connection.ts";
 import { PluginConnection, sendMessage } from "./plugin-connection.ts";
 import { checkUpgrade, rejectUpgrade } from "./upgrade-guard.ts";
@@ -49,6 +58,9 @@ export class BridgeServer
   readonly #connections = new WeakMap<WebSocket, PluginConnection>();
   readonly #sessions = new Map<string, PluginSession>();
   readonly #peers = new Set<PeerConnection>();
+  /** Unpaired plugins waiting for the user to type the code: never listed, never asked. */
+  readonly #pending = new Set<unknown>();
+  readonly #pairing: PairingCodesLike;
   #policy: UpgradePolicy;
   #sequence = 0;
   #requests = 0;
@@ -58,6 +70,7 @@ export class BridgeServer
   constructor(options: BridgeServerOptions) {
     super();
     this.#options = options;
+    this.#pairing = options.pairing ?? new PairingCodes();
     // No Host passes until listen() knows the port.
     this.#policy = {
       allowedHosts: new Set(),
@@ -110,6 +123,21 @@ export class BridgeServer
       info: session.info,
       active: session === active,
     }));
+  }
+
+  /** The code to show while an unpaired plugin waits for it; null while none waits. */
+  pairing(): PairingStatus | null {
+    if (this.#pending.size === 0) {
+      return null;
+    }
+
+    const { code, expiresAt } = this.#pairing.ensure();
+
+    return {
+      code,
+      expiresAt,
+      waiting: this.#pending.size,
+    };
   }
 
   /** Sends an operation to a plugin (the active one unless a session is named) and resolves with its result. */
@@ -189,6 +217,26 @@ export class BridgeServer
       admit: (info) =>
         this.#sessions.size < MAX_PLUGIN_SESSIONS ||
         [...this.#sessions.values()].some((session) => session.info.instanceId === info.instanceId),
+      keys: this.#options.keys,
+      code: () => this.#pairing.ensure(),
+      activeCode: () => this.#pairing.active(),
+      checkCode: (code) => this.#pairing.check(code),
+      now: Date.now,
+      onPending: (waiting) => {
+        if (this.#pending.size >= MAX_PENDING_PLUGINS) {
+          return false;
+        }
+
+        this.#pending.add(waiting);
+        this.#changed();
+
+        return true;
+      },
+      onPendingEnded: (waiting) => {
+        if (this.#pending.delete(waiting)) {
+          this.#changed();
+        }
+      },
       onSession: (session) => this.#activate(session),
       onInfo: () => this.#changed(),
       onSessionClosed: (session, code) => this.#deactivate(session, code),

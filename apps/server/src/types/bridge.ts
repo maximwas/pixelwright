@@ -62,6 +62,24 @@ export interface BridgeServerOptions {
   readonly serverVersion: string;
   readonly requestTimeoutMs?: number; // tests
   readonly log?: BridgeLog;
+  /** Paired plugins' keys (bridge.json in production). */
+  readonly keys: PluginKeys;
+  /** The pairing code in force; tests pass predictable codes. */
+  readonly pairing?: PairingCodesLike;
+}
+
+/** What the bridge needs from PairingCodes. */
+export interface PairingCodesLike {
+  active(): ActiveCode | null;
+  ensure(): ActiveCode;
+  check(code: string): CodeCheck;
+}
+
+/** For status: the code to show while an unpaired plugin waits, never anything about that plugin but the count. */
+export interface PairingStatus {
+  readonly code: string;
+  readonly expiresAt: number;
+  readonly waiting: number;
 }
 
 export interface PluginConnectionOptions {
@@ -69,8 +87,18 @@ export interface PluginConnectionOptions {
   readonly log: BridgeLog;
   /** The server's sequence: orders connections and windows coming to the front. */
   readonly next: () => number;
-  /** Whether a plugin that said hello may become a session (the cap on sessions). */
+  /** Whether a plugin that proved its key or typed the code may become a session (the cap on sessions). */
   readonly admit: (info: PluginInfo) => boolean;
+  readonly keys: PluginKeys;
+  /** The pairing code in force, made if there is none; and without making one. */
+  readonly code: () => ActiveCode;
+  readonly activeCode: () => ActiveCode | null;
+  readonly checkCode: (code: string) => CodeCheck;
+  readonly now: () => number;
+  /** An unpaired plugin starts waiting for the code; false: too many wait already. */
+  readonly onPending: (connection: unknown) => boolean;
+  /** It stopped waiting: paired, or gone. */
+  readonly onPendingEnded: (connection: unknown) => void;
   /** The plugin said hello: the connection is a session now. */
   readonly onSession: (session: PluginSession) => void;
   /** The plugin sent new info: file, page, visibility or Allow edits. */

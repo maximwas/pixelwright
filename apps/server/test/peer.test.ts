@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { BridgeServer } from "../src/bridge/bridge-server.ts";
 import { OwnerClient } from "../src/bridge/owner-client.ts";
 import { PluginBridge } from "../src/bridge/plugin-bridge.ts";
-import { connectPlugin, pluginInfo } from "./helpers/fake-plugin.ts";
+import { connectPlugin, memoryKeys, pluginInfo, TEST_KEY } from "./helpers/fake-plugin.ts";
 import { freePort } from "./helpers/free-port.ts";
 
 const token = "t".repeat(43);
@@ -19,6 +19,7 @@ const server = (port: number) =>
     token,
     pluginOrigins: ["null"],
     serverVersion: "test",
+    keys: memoryKeys(TEST_KEY),
   });
 
 async function bridgeOn(port: number): Promise<PluginBridge> {

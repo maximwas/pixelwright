@@ -4,9 +4,15 @@ import {
   CloseCode,
   decodePluginToServer,
   encode,
+  newNonce,
+  type PairingReason,
   PLUGIN_INFO_EVENT,
+  type PluginInfo,
   PluginInfoSchema,
+  type PluginKey,
   type PluginToServer,
+  proofEquals,
+  proofFor,
   type ServerToPlugin,
 } from "@pixelwright/core";
 import type { RawData, WebSocket } from "ws";
@@ -23,18 +29,35 @@ export function sendMessage(socket: WebSocket, message: ServerToPlugin, log: Bri
   });
 }
 
-/** One plugin WebSocket: the hello handshake and its deadline, responses, info events, and liveness for the heartbeat. */
+/** Where a connection stands: waiting for hello, for the answer to its challenge, for the pairing code, or in. */
+type Stage =
+  | { readonly kind: "hello" }
+  | {
+      readonly kind: "challenged";
+      readonly info: PluginInfo;
+      readonly key: PluginKey;
+      readonly pluginNonce: string;
+      readonly serverNonce: string;
+    }
+  | { readonly kind: "pairing"; readonly info: PluginInfo }
+  | { readonly kind: "session"; readonly session: PluginSession };
+
+/**
+ * One plugin WebSocket. A plugin with a key the server knows is challenged: the server proves the key first, then the
+ * plugin must prove it back. A plugin without one waits for the user to type the pairing code into its window. Only
+ * then is it a session: listed, asked, heard. Also liveness for the heartbeat.
+ */
 export class PluginConnection {
   readonly #socket: WebSocket;
   readonly #options: PluginConnectionOptions;
-  readonly #helloTimer: ReturnType<typeof setTimeout>;
+  #deadline: ReturnType<typeof setTimeout>;
   #alive = true;
-  #session: PluginSession | null = null;
+  #stage: Stage = { kind: "hello" };
 
   constructor(socket: WebSocket, options: PluginConnectionOptions) {
     this.#socket = socket;
     this.#options = options;
-    this.#helloTimer = setTimeout(() => socket.close(CloseCode.HelloTimeout, "hello timeout"), HELLO_TIMEOUT_MS);
+    this.#deadline = setTimeout(() => socket.close(CloseCode.HelloTimeout, "hello timeout"), HELLO_TIMEOUT_MS);
     socket.on("pong", () => {
       this.#alive = true;
     });
@@ -59,18 +82,30 @@ export class PluginConnection {
 
   #onMessage(message: PluginToServer | null): void {
     this.#alive = true;
-    clearTimeout(this.#helloTimer);
 
     if (message === null) {
       this.#socket.close(CloseCode.BadMessage, "invalid message");
-    } else if (this.#session === null) {
-      this.#onHello(message);
-    } else if (message.type === "response") {
-      this.#session.pending.settle(message);
-    } else if (message.type === "event") {
-      this.#onEvent(this.#session, message.name, message.data);
-    } else {
-      this.#socket.close(CloseCode.BadMessage, "duplicate hello");
+
+      return;
+    }
+
+    const stage = this.#stage;
+
+    switch (stage.kind) {
+      case "hello":
+        clearTimeout(this.#deadline);
+        this.#onHello(message);
+        break;
+      case "challenged":
+        clearTimeout(this.#deadline);
+        this.#onAuth(stage, message);
+        break;
+      case "pairing":
+        this.#onPair(stage, message);
+        break;
+      case "session":
+        this.#onSessionMessage(stage.session, message);
+        break;
     }
   }
 
@@ -87,7 +122,116 @@ export class PluginConnection {
       return;
     }
 
-    if (!this.#options.admit(message.plugin)) {
+    const key = message.keyId === null ? null : this.#options.keys.find(message.keyId);
+
+    if (key !== null) {
+      const serverNonce = newNonce();
+
+      this.#stage = {
+        kind: "challenged",
+        info: message.plugin,
+        key,
+        pluginNonce: message.nonce,
+        serverNonce,
+      };
+      this.#deadline = setTimeout(() => this.#socket.close(CloseCode.HelloTimeout, "auth timeout"), HELLO_TIMEOUT_MS);
+      this.#send({
+        type: "challenge",
+        nonce: serverNonce,
+        proof: proofFor(key.secret, "server", message.nonce, serverNonce),
+      });
+
+      return;
+    }
+
+    if (!this.#options.onPending(this)) {
+      this.#socket.close(CloseCode.TooManySessions, "too many plugins waiting to be paired");
+
+      return;
+    }
+
+    this.#stage = {
+      kind: "pairing",
+      info: message.plugin,
+    };
+    this.#askToPair(message.keyId === null ? "no_key" : "unknown_key");
+  }
+
+  #onAuth(stage: Extract<Stage, { kind: "challenged" }>, message: PluginToServer): void {
+    const expected = proofFor(stage.key.secret, "plugin", stage.serverNonce, stage.pluginNonce);
+
+    if (message.type !== "auth" || !proofEquals(message.proof, expected)) {
+      this.#socket.close(CloseCode.Unauthorized, "the plugin could not prove its key");
+
+      return;
+    }
+
+    this.#admit(stage.info);
+  }
+
+  #onPair(stage: Extract<Stage, { kind: "pairing" }>, message: PluginToServer): void {
+    if (message.type !== "pair") {
+      this.#socket.close(CloseCode.BadMessage, "expected the pairing code");
+
+      return;
+    }
+
+    const check = this.#options.checkCode(message.code);
+
+    switch (check.outcome) {
+      case "ok":
+        this.#options.onPendingEnded(this);
+        this.#send({
+          type: "paired",
+          key: this.#options.keys.add(),
+        });
+        this.#admit(stage.info);
+        break;
+      case "wrong":
+        this.#send({
+          type: "pairing_required",
+          reason: "wrong_code",
+          attemptsLeft: check.attemptsLeft,
+          expiresInMs: this.#expiresInMs(),
+        });
+        break;
+      case "expired":
+        this.#askToPair("expired");
+        break;
+    }
+  }
+
+  #onSessionMessage(session: PluginSession, message: PluginToServer): void {
+    if (message.type === "response") {
+      session.pending.settle(message);
+    } else if (message.type === "event") {
+      this.#onEvent(session, message.name, message.data);
+    } else {
+      this.#socket.close(CloseCode.BadMessage, `unexpected ${message.type}`);
+    }
+  }
+
+  /** Tells the plugin to show the code field, with the code in force (status shows the code itself). */
+  #askToPair(reason: PairingReason): void {
+    const code = this.#options.code();
+
+    this.#send({
+      type: "pairing_required",
+      reason,
+      attemptsLeft: code.attemptsLeft,
+      expiresInMs: Math.max(0, code.expiresAt - this.#options.now()),
+    });
+  }
+
+  #expiresInMs(): number {
+    const active = this.#options.activeCode();
+
+    return active === null ? 0 : Math.max(0, active.expiresAt - this.#options.now());
+  }
+
+  /** The plugin proved its key or typed the code: it becomes a session unless the server is full. */
+  #admit(info: PluginInfo): void {
+    if (!this.#options.admit(info)) {
       this.#socket.close(CloseCode.TooManySessions, "too many plugin sessions");
 
       return;
@@ -99,24 +243,23 @@ export class PluginConnection {
       socket: this.#socket,
       pending: new PendingRequests(),
       connected,
-      info: message.plugin,
-      lastVisible: message.plugin.visible ? connected : 0,
+      info,
+      lastVisible: info.visible ? connected : 0,
     };
 
-    this.#session = session;
-    sendMessage(
-      this.#socket,
-      {
-        type: "hello_ack",
-        protocol: BRIDGE_PROTOCOL_VERSION,
-        sessionId: session.id,
-        server: {
-          name: "pixelwright",
-          version: this.#options.serverVersion,
-        },
+    this.#stage = {
+      kind: "session",
+      session,
+    };
+    this.#send({
+      type: "hello_ack",
+      protocol: BRIDGE_PROTOCOL_VERSION,
+      sessionId: session.id,
+      server: {
+        name: "pixelwright",
+        version: this.#options.serverVersion,
       },
-      this.#options.log,
-    );
+    });
     this.#options.onSession(session);
   }
 
@@ -141,14 +284,20 @@ export class PluginConnection {
     this.#options.onInfo(session);
   }
 
+  #send(message: ServerToPlugin): void {
+    sendMessage(this.#socket, message, this.#options.log);
+  }
+
   #onClose(code: number): void {
-    clearTimeout(this.#helloTimer);
+    clearTimeout(this.#deadline);
 
-    if (this.#session === null) {
-      return;
+    const stage = this.#stage;
+
+    if (stage.kind === "pairing") {
+      this.#options.onPendingEnded(this);
+    } else if (stage.kind === "session") {
+      stage.session.pending.failAll(code);
+      this.#options.onSessionClosed(stage.session, code);
     }
-
-    this.#session.pending.failAll(code);
-    this.#options.onSessionClosed(this.#session, code);
   }
 }

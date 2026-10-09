@@ -1,8 +1,9 @@
 import serverPackage from "../package.json" with { type: "json" };
-import { loadOrCreateBridgeConfig } from "./bridge/bridge-config.ts";
+import { bridgeConfigFile, loadOrCreateBridgeConfig } from "./bridge/bridge-config.ts";
 import { BridgeServer } from "./bridge/bridge-server.ts";
 import { OwnerClient } from "./bridge/owner-client.ts";
 import { PluginBridge } from "./bridge/plugin-bridge.ts";
+import { FilePluginKeys } from "./bridge/plugin-keys.ts";
 import { readConfig } from "./config/config.ts";
 import { DEFAULT_BRIDGE_PORT } from "./constants/bridge.ts";
 import { createLogger } from "./logging/logger.ts";
@@ -61,6 +62,7 @@ async function createBridge(config: AppConfig, logger: Logger): Promise<PluginBr
     pluginOrigins: config.pluginOrigins,
     serverVersion: serverPackage.version,
     log,
+    keys: new FilePluginKeys(bridgeConfigFile()),
   });
 
   return PluginBridge.connect(

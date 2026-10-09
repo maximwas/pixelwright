@@ -2,7 +2,7 @@ import { once } from "node:events";
 import { afterEach, describe, expect, it } from "vitest";
 import { BridgeServer } from "../src/bridge/bridge-server.ts";
 import { MAX_PLUGIN_SESSIONS } from "../src/constants/bridge.ts";
-import { connectPlugin, pluginInfo } from "./helpers/fake-plugin.ts";
+import { connectPlugin, memoryKeys, pluginInfo, TEST_KEY } from "./helpers/fake-plugin.ts";
 
 const servers: BridgeServer[] = [];
 
@@ -12,6 +12,7 @@ async function startServer(requestTimeoutMs = 1_000) {
     token: "t".repeat(43),
     pluginOrigins: ["null"],
     serverVersion: "test",
+    keys: memoryKeys(TEST_KEY),
     requestTimeoutMs,
   });
   const port = await server.listen();
@@ -43,10 +44,7 @@ describe("BridgeServer", () => {
       },
     ]);
     await expect(server.request("ping", null)).resolves.toEqual({ op: "ping" });
-    expect(plugin.received[0]).toMatchObject({
-      type: "hello_ack",
-      server: { name: "pixelwright" },
-    });
+    expect(plugin.received).toContainEqual(expect.objectContaining({ type: "hello_ack" }));
   });
 
   it("closes a plugin of another protocol version with 4426", async () => {

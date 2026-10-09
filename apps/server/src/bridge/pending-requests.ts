@@ -1,4 +1,4 @@
-import { BridgeError } from "@pixelwright/core";
+import { BridgeError, fromWireError } from "@pixelwright/core";
 import type { PendingRequest, ResponseMessage } from "../types/bridge.ts";
 
 /** Requests sent to one plugin session and not answered yet. Each one fails on its own timer. */
@@ -36,7 +36,7 @@ export class PendingRequests {
     if (response.ok) {
       request.resolve(response.result ?? null);
     } else {
-      request.reject(new BridgeError(response.error.code, response.error.message, response.error.data));
+      request.reject(fromWireError(response.error));
     }
   }
 
