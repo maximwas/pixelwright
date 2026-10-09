@@ -20,5 +20,7 @@ export * from "./utils/slug.ts";
 export * from "./xml/classify.ts";
 export * from "./xml/design.ts";
 export * from "./xml/escape.ts";
+export * from "./xml/fit.ts";
+export * from "./xml/hints.ts";
 export * from "./xml/outline.ts";
 export * from "./xml/tags.ts";

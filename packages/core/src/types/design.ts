@@ -19,6 +19,8 @@ export interface DesignRead {
   /** The font families the texts use, with their weights (`"500 italic"` for italics). */
   readonly fonts: Record<string, string[]>;
   readonly assets: PlannedAsset[];
+  /** Layers shown without their children: cut to fit maxChars, or past the snapshot's size budget. */
+  readonly truncated: string[];
 }
 
 export interface DesignXmlOptions {
@@ -26,4 +28,14 @@ export interface DesignXmlOptions {
   readonly assetsPath?: string;
   /** Final asset paths by node, once files are written (same bytes share one file): replaces the planned ones. */
   readonly assetSrc?: ReadonlyMap<string, string>;
+  /** Layers to show without their children (`$truncated="true"`), to fit the read into maxChars. */
+  readonly cut?: ReadonlySet<string>;
+}
+
+/** Where a layer's element sits in the XML's lines, for measuring and cutting branches. */
+export interface DesignSpan {
+  readonly start: number;
+  readonly end: number;
+  readonly level: number;
+  readonly parent: string | null;
 }

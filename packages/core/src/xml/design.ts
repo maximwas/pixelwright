@@ -3,7 +3,7 @@ import { px } from "../css/format.ts";
 import { nodeCss } from "../css/node-css.ts";
 import { baseSegment, segmentCss, textStyleCss } from "../css/text.ts";
 import type { CssContext } from "../types/css.ts";
-import type { DesignRead, DesignXmlOptions, PlannedAsset } from "../types/design.ts";
+import type { DesignRead, DesignSpan, DesignXmlOptions, PlannedAsset } from "../types/design.ts";
 import type { Snapshot, SnapshotNode, SnapshotPaint, SnapshotStyle, TextSegment } from "../types/snapshot.ts";
 import { slug } from "../utils/slug.ts";
 import { type Classified, classify, visibleChildren } from "./classify.ts";
@@ -44,12 +44,29 @@ const SPAN_RESETS: Readonly<Record<string, string>> = {
  * CSS of the one mapping table; with the tokens, text styles and fonts it refers to and the assets it plans.
  */
 export function designXml(snapshot: Snapshot, options: DesignXmlOptions = {}): DesignRead {
-  return new DesignWriter(snapshot, options).read();
+  return renderDesign(snapshot, options).read;
+}
+
+/** The read with the lines it is made of and where each layer sits in them (fitDesign measures branches with it). */
+export function renderDesign(
+  snapshot: Snapshot,
+  options: DesignXmlOptions = {},
+): { read: DesignRead; lines: readonly string[]; spans: ReadonlyMap<string, DesignSpan> } {
+  const writer = new DesignWriter(snapshot, options);
+  const read = writer.read();
+
+  return {
+    read,
+    lines: writer.lines,
+    spans: writer.spans,
+  };
 }
 
 class DesignWriter {
   private readonly context: CssContext;
-  private readonly lines: string[] = [];
+  readonly lines: string[] = [];
+  readonly spans = new Map<string, DesignSpan>();
+  private readonly truncated: string[] = [];
   private readonly assets: PlannedAsset[] = [];
   private readonly fileNames = new Set<string>();
   private readonly backgrounds = new Map<string, string>();
@@ -86,6 +103,7 @@ class DesignWriter {
         ]),
       ),
       assets: this.assets,
+      truncated: this.truncated,
     };
   }
 
@@ -93,6 +111,20 @@ class DesignWriter {
     if (!node.visible || INVISIBLE_TYPES.has(node.type)) {
       return;
     }
+
+    const start = this.lines.length;
+
+    this.writeElement(node, parent, level);
+    this.spans.set(node.id, {
+      start,
+      end: this.lines.length - 1,
+      level,
+      parent: parent?.id ?? null,
+    });
+  }
+
+  private writeElement(node: SnapshotNode, parent: SnapshotNode | null, level: number): void {
+    const isCut = this.options.cut?.has(node.id) ?? false;
 
     const indent = INDENT.repeat(level);
     const asset = classify(node);
@@ -132,8 +164,14 @@ class DesignWriter {
       ["src", asset === null ? undefined : this.plan(node, asset)],
       ...properties,
       ["$css", readOnlyOf(css.readOnly, asset !== null)],
-      ["$children", asset === null ? cutCount(node) : undefined],
+      ["$children", asset === null && !isCut ? cutCount(node) : undefined],
+      ["$truncated", isCut ? "true" : undefined],
     ];
+
+    if (isCut || (asset === null && cutCount(node) !== undefined)) {
+      this.truncated.push(node.id);
+    }
+
     const open = `${indent}<${tag}${attributes
       .filter((pair): pair is [string, string] => pair[1] !== undefined)
       .map(([name, value]) => ` ${name}="${escapeAttribute(value)}"`)
@@ -145,7 +183,7 @@ class DesignWriter {
       return;
     }
 
-    const children = asset === null ? visibleChildren(node) : [];
+    const children = asset === null && !isCut ? visibleChildren(node) : [];
 
     if (children.length === 0) {
       this.lines.push(`${open}/>`);
