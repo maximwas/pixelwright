@@ -32,12 +32,16 @@ describe("bridge protocol", () => {
       type: "hello",
       protocol: BRIDGE_PROTOCOL_VERSION,
       plugin: info,
+      keyId: null,
+      nonce: "0".repeat(32),
     });
 
     expect(decodePluginToServer(hello)).toEqual({
       type: "hello",
-      protocol: 1,
+      protocol: 2,
       plugin: info,
+      keyId: null,
+      nonce: "0".repeat(32),
     });
     expect(
       decodePluginToServer(
@@ -90,11 +94,13 @@ describe("bridge protocol", () => {
     const hello = (overrides: Partial<PluginInfo>) =>
       JSON.stringify({
         type: "hello",
-        protocol: 1,
+        protocol: 2,
         plugin: {
           ...info,
           ...overrides,
         },
+        keyId: null,
+        nonce: "0".repeat(32),
       });
 
     expect(
@@ -118,6 +124,83 @@ describe("bridge protocol", () => {
         }),
       )?.type,
     ).toBe("hello");
+  });
+
+  it("decodes the pairing and challenge messages", () => {
+    const nonce = "a".repeat(32);
+    const proof = "b".repeat(64);
+
+    expect(
+      decodeServerToPlugin(
+        JSON.stringify({
+          type: "challenge",
+          nonce,
+          proof,
+        }),
+      )?.type,
+    ).toBe("challenge");
+    expect(
+      decodeServerToPlugin(
+        JSON.stringify({
+          type: "pairing_required",
+          reason: "no_key",
+          attemptsLeft: 5,
+          expiresInMs: 120_000,
+        }),
+      )?.type,
+    ).toBe("pairing_required");
+    expect(
+      decodeServerToPlugin(
+        JSON.stringify({
+          type: "paired",
+          key: {
+            id: "c".repeat(16),
+            secret: "d".repeat(64),
+          },
+        }),
+      )?.type,
+    ).toBe("paired");
+    expect(
+      decodePluginToServer(
+        JSON.stringify({
+          type: "pair",
+          code: "012345",
+        }),
+      )?.type,
+    ).toBe("pair");
+    expect(
+      decodePluginToServer(
+        JSON.stringify({
+          type: "pair",
+          code: "12345",
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      decodePluginToServer(
+        JSON.stringify({
+          type: "auth",
+          proof,
+        }),
+      )?.type,
+    ).toBe("auth");
+    expect(
+      decodePluginToServer(
+        JSON.stringify({
+          type: "auth",
+          proof: "zz",
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it("maps an error code it does not know to OP_FAILED", () => {
+    expect(
+      fromWireError({
+        code: "SOMETHING_NEW",
+        message: "from a newer plugin",
+      }).code,
+    ).toBe("OP_FAILED");
   });
 
   it("carries errors across the bridge", () => {

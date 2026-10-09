@@ -1,7 +1,9 @@
 import type * as z from "zod";
 import type {
   BridgeErrorCodeSchema,
+  PairingReasonSchema,
   PluginInfoSchema,
+  PluginKeySchema,
   PluginToServerSchema,
   RequestMessageSchema,
   ServerToPluginSchema,
@@ -19,3 +21,7 @@ export type RequestMessage = z.infer<typeof RequestMessageSchema>;
 export type PluginToServer = z.infer<typeof PluginToServerSchema>;
 
 export type ServerToPlugin = z.infer<typeof ServerToPluginSchema>;
+
+export type PluginKey = z.infer<typeof PluginKeySchema>;
+
+export type PairingReason = z.infer<typeof PairingReasonSchema>;

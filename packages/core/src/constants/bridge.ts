@@ -1,5 +1,8 @@
-/** Bumped on every breaking change of the bridge messages; the server closes a plugin of another version (4426). */
-export const BRIDGE_PROTOCOL_VERSION = 1;
+/**
+ * Bumped on every breaking change of the bridge messages; the server closes a plugin of another version (4426).
+ * 2 (09.10.2026): pairing and challenge-response; open error codes.
+ */
+export const BRIDGE_PROTOCOL_VERSION = 2;
 
 export const BRIDGE_PATH = "/pixelwright/v1";
 
@@ -16,6 +19,7 @@ export const MAX_MESSAGE_BYTES = 4 * 1024 * 1024;
 export const CloseCode = {
   GoingAway: 1001,
   BadMessage: 4400,
+  Unauthorized: 4401,
   HelloTimeout: 4408,
   Superseded: 4409,
   VersionMismatch: 4426,
@@ -27,3 +31,6 @@ export const NO_RECONNECT_CODES: ReadonlySet<number> = new Set([CloseCode.Supers
 
 /** The event the plugin sends whenever its file, page, window visibility or Allow edits changes. */
 export const PLUGIN_INFO_EVENT = "plugin.info";
+
+/** Digits of the pairing code the server shows and the user types into the plugin window. */
+export const PAIRING_CODE_LENGTH = 6;

@@ -1,6 +1,6 @@
 // Bridge protocol between the MCP server and the Figma plugin. Runtime-agnostic (Node + browser).
 import type * as z from "zod";
-import { PluginToServerSchema, ServerToPluginSchema } from "../schemas/bridge.ts";
+import { BridgeErrorCodeSchema, PluginToServerSchema, ServerToPluginSchema } from "../schemas/bridge.ts";
 import type { BridgeErrorCode, PluginToServer, ServerToPlugin, WireError } from "../types/bridge.ts";
 
 export class BridgeError extends Error {
@@ -52,7 +52,9 @@ export function toWireError(error: unknown): WireError {
   };
 }
 
-/** Restores a response's error on the receiving side. */
+/** Restores a response's error on the receiving side; a code this side does not know becomes OP_FAILED. */
 export function fromWireError(wire: WireError): BridgeError {
-  return new BridgeError(wire.code, wire.message, wire.data);
+  const code = BridgeErrorCodeSchema.safeParse(wire.code);
+
+  return new BridgeError(code.success ? code.data : "OP_FAILED", wire.message, wire.data);
 }
