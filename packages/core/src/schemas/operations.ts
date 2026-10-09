@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { EXPORT_CHUNK_BYTES } from "../constants/bridge.ts";
 import type { OutlineNode } from "../types/operations.ts";
+import { SnapshotSchema } from "./snapshot.ts";
 
 /** A node's box in page coordinates, whole pixels. */
 export const BoxSchema = z.object({
@@ -97,5 +98,14 @@ export const OPERATION_SCHEMAS = {
       /** Base64 of the export's bytes from `offset`, at most `length` of them. */
       bytes: z.string(),
     }),
+  },
+  snapshot: {
+    input: z.object({
+      node: NodeIdSchema,
+      /** Levels below the node to include; all of them when left out (the plugin's size budget still applies). */
+      depth: z.number().int().min(0).max(100).exactOptional(),
+      css: z.boolean().default(false),
+    }),
+    output: SnapshotSchema,
   },
 } as const;

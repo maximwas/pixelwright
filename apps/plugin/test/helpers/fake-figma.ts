@@ -8,10 +8,23 @@ export interface FakeNode {
   children?: FakeNode[];
   characters?: string;
   absoluteBoundingBox: { x: number; y: number; width: number; height: number };
-  mainComponent?: { name: string; parent: { type: string; name: string } | null };
+  absoluteTransform?: number[][];
+  width?: number;
+  height?: number;
+  mainComponent?: {
+    id?: string;
+    key?: string;
+    name: string;
+    parent: { type: string; id?: string; name: string } | null;
+  };
   getMainComponentAsync?: () => Promise<FakeNode["mainComponent"] | null>;
   findAll?: (predicate: (node: FakeNode) => boolean) => FakeNode[];
+  /** Whatever else a test gives a node: fills, layout, segments for getStyledTextSegments, css for getCSSAsync. */
+  [property: string]: unknown;
 }
+
+/** Figma's figma.mixed: a symbol, which the plugin must turn into "mixed" before it goes on the wire. */
+export const FAKE_MIXED = Symbol("figma.mixed");
 
 type Spec = Partial<Omit<FakeNode, "children" | "parent">> & { id: string; children?: Spec[] };
 
@@ -39,8 +52,25 @@ export function tree(spec: Spec, parent: FakeNode | null = null): FakeNode {
     parent,
   };
 
+  const box = node.absoluteBoundingBox;
+
+  node.absoluteTransform ??= [
+    [1, 0, box.x],
+    [0, 1, box.y],
+  ];
+  node.width ??= box.width;
+  node.height ??= box.height;
+
   if (children !== undefined) {
     node.children = children.map((child) => tree(child, node));
+  }
+
+  if (node.segments !== undefined) {
+    node.getStyledTextSegments = () => node.segments;
+  }
+
+  if (node.css !== undefined) {
+    node.getCSSAsync = async () => node.css;
   }
 
   node.findAll = (predicate) => {
@@ -58,8 +88,14 @@ export function tree(spec: Spec, parent: FakeNode | null = null): FakeNode {
   return node;
 }
 
+export interface FakeLibrary {
+  readonly styles?: Record<string, object>;
+  readonly variables?: Record<string, Record<string, unknown> & { name: string; variableCollectionId: string }>;
+  readonly collections?: Record<string, { name: string }>;
+}
+
 /** Installs a fake `figma` global over a page tree and returns what the operations changed. */
-export function installFigma(page: FakeNode) {
+export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
   const byId = new Map<string, FakeNode>();
   const all: FakeNode[] = [page];
 
@@ -75,7 +111,24 @@ export function installFigma(page: FakeNode) {
   };
   const figma = {
     currentPage: page as FakeNode & { selection?: FakeNode[] },
+    mixed: FAKE_MIXED,
     getNodeByIdAsync: async (id: string) => byId.get(id) ?? null,
+    getStyleByIdAsync: async (id: string) => library.styles?.[id] ?? null,
+    variables: {
+      getVariableByIdAsync: async (id: string) => {
+        const variable = library.variables?.[id];
+
+        return variable === undefined
+          ? null
+          : {
+              remote: false,
+              codeSyntax: {},
+              ...variable,
+              resolveForConsumer: () => ({ value: variable.value }),
+            };
+      },
+      getVariableCollectionByIdAsync: async (id: string) => library.collections?.[id] ?? null,
+    },
     setCurrentPageAsync: async (next: FakeNode) => {
       state.currentPage = next;
     },

@@ -25,3 +25,9 @@ export const RECONNECT = {
 
 /** The most nodes one outline lists, far below the bridge's message limit; children past it are counted, not listed. */
 export const OUTLINE_MAX_NODES = 2_000;
+
+/**
+ * The most JSON one snapshot builds before it stops adding layers: a third of the bridge's message limit, as text in
+ * other scripts takes up to three bytes a character. design_read shows far less than this anyway.
+ */
+export const SNAPSHOT_MAX_CHARS = 1_000_000;

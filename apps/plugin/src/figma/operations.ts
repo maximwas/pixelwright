@@ -8,6 +8,7 @@ import {
 
 import { exportNode } from "./export-node.ts";
 import { find, outline, selection, show } from "./read-ops.ts";
+import { snapshot } from "./snapshot.ts";
 
 type Handlers = { readonly [N in OperationName]: (input: OperationInput<N>) => Promise<OperationOutput<N>> };
 
@@ -19,6 +20,7 @@ const HANDLERS: Handlers = {
   find,
   outline,
   export: exportNode,
+  snapshot,
 };
 
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);

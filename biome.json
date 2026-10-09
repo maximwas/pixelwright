@@ -10,7 +10,8 @@
       "!research",
       "!docs",
       "!.claude",
-      "!.superpowers"
+      "!.superpowers",
+      "!packages/core/test/fixtures"
     ]
   },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },

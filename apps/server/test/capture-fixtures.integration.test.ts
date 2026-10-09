@@ -1,0 +1,106 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { OPERATION_SCHEMAS, type OperationInput } from "@pixelwright/core";
+import { describe, expect, it } from "vitest";
+import { createApp } from "../src/app.ts";
+import { resolveTarget } from "../src/bridge/target.ts";
+
+const FIXTURES = fileURLToPath(new URL("../../../packages/core/test/fixtures/", import.meta.url));
+const CODE_FILE = fileURLToPath(new URL("../../../.superpowers/live-pairing-code.txt", import.meta.url));
+const WAIT_MS = 300_000;
+
+/** The Positivus test file: read only, never changed. */
+const POSITIVUS = "Untitled";
+
+const SNAPSHOTS: readonly { file: string; input: OperationInput<"snapshot"> }[] = [
+  {
+    file: "positivus-services-row.json",
+    input: {
+      node: "2:4869",
+      css: true,
+    },
+  },
+  {
+    file: "positivus-services-block.json",
+    input: {
+      node: "2:4868",
+      css: true,
+    },
+  },
+  {
+    file: "positivus-hero.json",
+    input: {
+      node: "2:4785",
+      css: true,
+    },
+  },
+  {
+    file: "positivus-landing-top.json",
+    input: {
+      node: "2:4766",
+      depth: 1,
+      css: true,
+    },
+  },
+];
+
+/**
+ * Captures the snapshot fixtures core's CSS and XML tests run on, from the Positivus file open in Figma Desktop with
+ * the Pixelwright plugin running. Runs only when asked: PIXELWRIGHT_CAPTURE=1 pnpm vitest run --project integration
+ * test/capture-fixtures.integration.test.ts
+ */
+describe.skipIf(process.env.PIXELWRIGHT_CAPTURE === undefined)("Positivus fixtures", () => {
+  it(
+    "captures the snapshots and the landing's outline",
+    async () => {
+      const app = await createApp();
+
+      try {
+        const deadline = Date.now() + WAIT_MS;
+        let shownCode: string | null = null;
+
+        while (app.bridge.plugins().length === 0 && Date.now() < deadline) {
+          const code = app.bridge.pairing()?.code ?? null;
+
+          if (code !== null && code !== shownCode) {
+            shownCode = code;
+            writeFileSync(CODE_FILE, `${code}\n`);
+            process.stderr.write(`PAIRING CODE: ${code}\n`);
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 1_000));
+        }
+
+        expect(
+          app.bridge.plugins().length,
+          "no plugin connected: run Pixelwright in the Positivus file",
+        ).toBeGreaterThan(0);
+
+        const target = resolveTarget(app.bridge.plugins(), POSITIVUS);
+
+        mkdirSync(FIXTURES, { recursive: true });
+
+        for (const { file, input } of SNAPSHOTS) {
+          const snapshot = OPERATION_SCHEMAS.snapshot.output.parse(await app.bridge.request("snapshot", input, target));
+
+          writeFileSync(join(FIXTURES, file), `${JSON.stringify(snapshot, null, 2)}\n`);
+        }
+
+        const outline = await app.bridge.request(
+          "outline",
+          {
+            node: "2:4766",
+            depth: 2,
+          },
+          target,
+        );
+
+        writeFileSync(join(FIXTURES, "positivus-outline.json"), `${JSON.stringify(outline, null, 2)}\n`);
+      } finally {
+        await app.close();
+      }
+    },
+    WAIT_MS + 120_000,
+  );
+});
