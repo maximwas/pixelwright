@@ -25,7 +25,7 @@ export function registerTokensTool(server: McpServer, { bridge }: ToolContext): 
 
 export async function readTokens(
   bridge: ToolContext["bridge"],
-  { collections, libraries, used, within, format, file }: TokensReadArgs,
+  { collections, libraries, used, within, format, maxChars, file }: TokensReadArgs,
 ): Promise<TokensRead> {
   const raw = await runOp(
     bridge,
@@ -55,15 +55,42 @@ export async function readTokens(
     }
   }
 
-  const library = raw.library === undefined ? undefined : listed(raw.library, notes);
+  if (raw.library !== undefined && raw.library.length === 0 && raw.libraryError === undefined) {
+    notes.push("No library with variables is enabled in this file: libraries add nothing here.");
+  }
 
-  if (format === "json") {
+  const library = raw.library === undefined ? undefined : listed(raw.library, notes);
+  const summary = {
+    collections: model.collections.map((collection) => ({
+      name: collection.name,
+      modes: collection.modes,
+      variables: collection.variables.length,
+    })),
+    styles: {
+      paint: model.styles.paint.length,
+      text: model.styles.text.length,
+      effect: model.styles.effect.length,
+    },
+  };
+  const tokens = {
+    collections: model.collections,
+    styles: model.styles,
+  };
+  const css = format === "css" ? tokensCss(model) : null;
+  const size = css?.length ?? JSON.stringify(tokens).length;
+
+  if (size > maxChars) {
+    // A design system can be thousands of variables: past maxChars the model gets the map and asks for parts.
+    notes.push(
+      `The tokens are ${size} characters, past maxChars (${maxChars}): read them a part at a time, e.g. ${model.collections
+        .map((collection) => `collections: ${JSON.stringify([collection.name])}`)
+        .slice(0, 5)
+        .join(", ")}.`,
+    );
+
     return {
       format,
-      tokens: {
-        collections: model.collections,
-        styles: model.styles,
-      },
+      summary,
       ...(library === undefined ? {} : { library }),
       notes,
     };
@@ -71,19 +98,12 @@ export async function readTokens(
 
   return {
     format,
-    css: tokensCss(model),
-    summary: {
-      collections: model.collections.map((collection) => ({
-        name: collection.name,
-        modes: collection.modes,
-        variables: collection.variables.length,
-      })),
-      styles: {
-        paint: model.styles.paint.length,
-        text: model.styles.text.length,
-        effect: model.styles.effect.length,
-      },
-    },
+    ...(css === null
+      ? { tokens }
+      : {
+          css,
+          summary,
+        }),
     ...(library === undefined ? {} : { library }),
     notes,
   };

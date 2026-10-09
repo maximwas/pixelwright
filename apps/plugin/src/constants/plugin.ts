@@ -31,3 +31,15 @@ export const OUTLINE_MAX_NODES = 2_000;
  * other scripts takes up to three bytes a character. design_read shows far less than this anyway.
  */
 export const SNAPSHOT_MAX_CHARS = 1_000_000;
+
+/**
+ * How long one operation may walk a big file before it answers with what it has (and more: true): under the server's
+ * 30 s request timeout, which would lose everything.
+ */
+export const OP_BUDGET_MS = 20_000;
+
+/** How long tokens reading may spend on the libraries' catalogue: the local tokens must still come back in time. */
+export const LIBRARY_BUDGET_MS = 10_000;
+
+/** Main components looked up at once for components_read. */
+export const MAIN_COMPONENT_BATCH = 25;

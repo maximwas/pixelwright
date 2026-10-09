@@ -45,6 +45,7 @@ export function tokenModel(raw: RawTokens, filter: { collections?: readonly stri
         name: collection.name,
         modes: collection.modes.map(({ name }) => name),
         defaultMode: modeName.get(collection.defaultModeId) ?? collection.modes[0]?.name ?? "",
+        selectors: {},
         variables: raw.variables
           .filter((variable) => variable.collectionId === collection.id)
           .map((variable) => ({
@@ -64,6 +65,9 @@ export function tokenModel(raw: RawTokens, filter: { collections?: readonly stri
           })),
       };
     });
+
+  selectorsOf(collections, notes);
+  missingTargets(collections, raw, names, notes);
 
   return {
     collections,
@@ -125,10 +129,11 @@ function colorValue(value: unknown, variable: RawTokens["variables"][number], co
 
   if (typeof value === "object" && value !== null && "color" in value && "opacity" in value) {
     const color = isRgba(value.color) ? colorCss(value.color) : valueCss(value.color, variable, context);
+    // Figma keeps the opacity of a composed colour as a percentage; a value up to 1 is read as a fraction.
     const opacity =
       typeof value.opacity === "number"
-        ? `${Math.round(value.opacity * 100)}%`
-        : `calc(${valueCss(value.opacity, variable, context)} * 100%)`;
+        ? `${decimal(value.opacity > 1 ? value.opacity : value.opacity * 100)}%`
+        : `calc(${valueCss(value.opacity, variable, context)} * 1%)`;
 
     return `color-mix(in srgb, ${color} ${opacity}, transparent)`;
   }
@@ -138,8 +143,106 @@ function colorValue(value: unknown, variable: RawTokens["variables"][number], co
 
 function numberCss(value: number, scopes: readonly string[]): string {
   const unitless = scopes.length > 0 && scopes.every((scope) => UNITLESS_SCOPES.has(scope));
+  // An opacity is a percentage in Figma's opacity fields; CSS wants a fraction. A value up to 1 already is one.
+  const percent = scopes.some((scope) => scope === "OPACITY" || scope === "COLOR_OPACITY") && value > 1;
 
-  return unitless ? decimal(value) : value === 0 ? "0" : `${decimal(value)}px`;
+  if (unitless) {
+    return decimal(percent ? value / 100 : value);
+  }
+
+  return value === 0 ? "0" : `${decimal(value)}px`;
+}
+
+/**
+ * The selector of each mode block: `[data-<collection>="<mode>"]` with letters of any script kept; two modes (or two
+ * collections) that would share one get -2, and a note says so.
+ */
+function selectorsOf(collections: TokenCollection[], notes: string[]): void {
+  const attributes = new Set<string>();
+
+  for (const collection of collections) {
+    const attribute = unique(attributeSlug(collection.name), attributes);
+    const values = new Set<string>();
+
+    for (const mode of collection.modes.filter((name) => name !== collection.defaultMode)) {
+      const wanted = attributeSlug(mode);
+      const slug = unique(wanted, values);
+
+      if (slug !== wanted) {
+        notes.push(`Mode "${mode}" of ${collection.name} would share the selector value "${wanted}": it is "${slug}".`);
+      }
+
+      collection.selectors[mode] = `[data-${attribute}="${slug}"]`;
+    }
+  }
+}
+
+/** A name as an HTML attribute name or value: lower case, letters and digits of any script, the rest as "-". */
+function attributeSlug(name: string): string {
+  const cleaned = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return cleaned === "" ? "mode" : cleaned;
+}
+
+function unique(wanted: string, taken: Set<string>): string {
+  let candidate = wanted;
+
+  for (let index = 2; taken.has(candidate); index++) {
+    candidate = `${wanted}-${index}`;
+  }
+
+  taken.add(candidate);
+
+  return candidate;
+}
+
+/** Every var() the output uses but does not define: which collection holds it, so it can be asked for. */
+function missingTargets(
+  collections: readonly TokenCollection[],
+  raw: RawTokens,
+  names: ReadonlyMap<string, string>,
+  notes: string[],
+): void {
+  const defined = new Set(collections.flatMap((collection) => collection.variables.map((variable) => variable.token)));
+  const homes = new Map<string, string>();
+
+  for (const variable of raw.variables) {
+    const home = raw.collections.find((collection) => collection.id === variable.collectionId)?.name ?? "";
+
+    homes.set(names.get(variable.id) ?? "", home);
+  }
+
+  for (const [id, variable] of Object.entries(raw.external)) {
+    homes.set(names.get(id) ?? "", variable.collection === "" ? "a library" : `${variable.collection} (a library)`);
+  }
+
+  const missing = new Set<string>();
+
+  for (const collection of collections) {
+    for (const variable of collection.variables) {
+      for (const value of Object.values(variable.values)) {
+        for (const [, token] of value.matchAll(/var\((--[^)]+)\)/g)) {
+          if (token !== undefined && !defined.has(token)) {
+            missing.add(token);
+          }
+        }
+      }
+    }
+  }
+
+  for (const token of missing) {
+    const home = homes.get(token) ?? "";
+
+    notes.push(
+      home === ""
+        ? `${token} is used but defined nowhere in this output.`
+        : `${token} is used but not in this output: it is in ${home}; add that collection to collections.`,
+    );
+  }
 }
 
 function easingCss(value: unknown, variable: RawTokens["variables"][number], context: ValueContext): string {

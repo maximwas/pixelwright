@@ -118,7 +118,8 @@ async function planLayers(
 
       planned.push({
         node,
-        kind: chosen === "SVG" ? "icon" : "image",
+        // An icon stays an icon in any format: rendered with everything it draws, strokes outside its box included.
+        kind: asset?.kind ?? (chosen === "SVG" ? "icon" : "image"),
         format: chosen,
         src: `${dir}/${slug(root.name)}.${chosen.toLowerCase()}`,
         ...(scale === undefined || chosen === "SVG" || chosen === "PDF" ? {} : { scale }),

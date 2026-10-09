@@ -16,6 +16,8 @@ export interface TokenCollection {
   name: string;
   modes: string[];
   defaultMode: string;
+  /** Each mode but the default as the CSS selector of its block: `[data-brand="dark"]`, unique in the output. */
+  selectors: Record<string, string>;
   variables: TokenVariable[];
 }
 

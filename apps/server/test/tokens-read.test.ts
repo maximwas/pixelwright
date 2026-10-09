@@ -82,6 +82,7 @@ describe("tokens_read", () => {
       libraries: false,
       used: true,
       format: "css",
+      maxChars: 80_000,
     });
 
     expect(css.css).toContain('[data-brand="dark"] {\n  --Ink: #FFF;\n}');
@@ -104,6 +105,7 @@ describe("tokens_read", () => {
       libraries: false,
       used: true,
       format: "json",
+      maxChars: 80_000,
     });
 
     expect(json.tokens?.collections[0]?.variables[0]?.values).toEqual({
@@ -119,6 +121,7 @@ describe("tokens_read", () => {
       libraries: false,
       used: true,
       format: "css",
+      maxChars: 80_000,
       collections: ["Spacing"],
     });
 
@@ -135,6 +138,7 @@ describe("tokens_read", () => {
         libraries: true,
         used: true,
         format: "css",
+        maxChars: 80_000,
       },
     );
 
@@ -161,10 +165,57 @@ describe("tokens_read", () => {
         libraries: true,
         used: true,
         format: "css",
+        maxChars: 80_000,
       },
     );
 
     expect(big.library?.[0]?.variables).toHaveLength(500);
     expect(big.notes).toContainEqual(expect.stringMatching(/400 more library variables/));
+  });
+});
+
+describe("tokens_read review fixes", () => {
+  it("keeps to maxChars: past it, the summary and the collections to ask for instead of the CSS", async () => {
+    const many = {
+      ...RAW,
+      variables: Array.from({ length: 2_000 }, (_, index) => ({
+        ...RAW.variables[0],
+        id: `V:${index}`,
+        name: `color/${index}`,
+      })),
+    };
+    const read = await readTokens(bridgeAnswering(many).bridge, {
+      libraries: false,
+      used: true,
+      format: "css",
+      maxChars: 20_000,
+    });
+
+    expect(read).not.toHaveProperty("css");
+    expect(read.summary?.collections).toEqual([
+      {
+        name: "Brand",
+        modes: ["Light", "Dark"],
+        variables: 2_000,
+      },
+    ]);
+    expect(read.notes).toContainEqual(expect.stringMatching(/maxChars.*collections: \["Brand"\]/));
+  });
+
+  it("says when no library with variables is enabled", async () => {
+    const read = await readTokens(
+      bridgeAnswering({
+        ...RAW,
+        library: [],
+      }).bridge,
+      {
+        libraries: true,
+        used: true,
+        format: "css",
+        maxChars: 80_000,
+      },
+    );
+
+    expect(read.notes).toContainEqual(expect.stringMatching(/No library with variables is enabled/));
   });
 });

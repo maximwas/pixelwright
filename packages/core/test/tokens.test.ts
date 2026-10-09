@@ -106,6 +106,7 @@ describe("token model", () => {
       name: "Brand",
       modes: ["Light", "Dark"],
       defaultMode: "Light",
+      selectors: { Dark: '[data-brand="dark"]' },
       variables: [
         {
           name: "Surface",
@@ -331,5 +332,170 @@ describe("token model", () => {
     });
     expect(css).toContain("--Dark: #191A23;");
     expect(css).toContain("--h3-font: 500 30px/normal 'Space Grotesk';");
+  });
+});
+
+describe("stage-3 review fixes in the token model", () => {
+  it("keeps Cyrillic collection and mode names apart in the mode selectors, and splits colliding ones", () => {
+    const raw: RawTokens = {
+      collections: [
+        {
+          id: "C:ua",
+          name: "Кольори",
+          remote: false,
+          defaultModeId: "M:1",
+          modes: [
+            {
+              modeId: "M:1",
+              name: "Світла",
+            },
+            {
+              modeId: "M:2",
+              name: "Темна",
+            },
+            {
+              modeId: "M:3",
+              name: "Контраст",
+            },
+            {
+              modeId: "M:4",
+              name: "контраст ",
+            },
+          ],
+        },
+      ],
+      variables: [
+        variable({
+          id: "V:1",
+          name: "Фон",
+          collectionId: "C:ua",
+          valuesByMode: {
+            "M:1": WHITE,
+            "M:2": DARK,
+            "M:3": DARK,
+            "M:4": WHITE,
+          },
+        }),
+      ],
+      external: {},
+      styles: [],
+    };
+    const model = tokenModel(raw);
+    const css = tokensCss(model);
+
+    expect(css.match(/^\[data-[^\]]+\] \{$/gm)).toEqual([
+      '[data-кольори="темна"] {',
+      '[data-кольори="контраст"] {',
+      '[data-кольори="контраст-2"] {',
+    ]);
+    expect(model.notes).toContainEqual(expect.stringMatching(/контраст.*контраст-2/));
+  });
+
+  it("says when an alias points at a token the output leaves out, and which collection holds it", () => {
+    const raw: RawTokens = {
+      collections: [
+        {
+          id: "C:prim",
+          name: "Primitives",
+          remote: false,
+          defaultModeId: "M:p",
+          modes: [
+            {
+              modeId: "M:p",
+              name: "Value",
+            },
+          ],
+        },
+        {
+          id: "C:sem",
+          name: "Semantic",
+          remote: false,
+          defaultModeId: "M:s",
+          modes: [
+            {
+              modeId: "M:s",
+              name: "Light",
+            },
+          ],
+        },
+      ],
+      variables: [
+        variable({
+          id: "V:gray",
+          name: "gray/900",
+          collectionId: "C:prim",
+          valuesByMode: { "M:p": DARK },
+        }),
+        variable({
+          id: "V:bg",
+          name: "bg",
+          collectionId: "C:sem",
+          valuesByMode: {
+            "M:s": {
+              type: "VARIABLE_ALIAS",
+              id: "V:gray",
+            },
+          },
+        }),
+      ],
+      external: {},
+      styles: [],
+    };
+    const model = tokenModel(raw, { collections: ["Semantic"] });
+
+    expect(model.collections[0]?.variables[0]?.values).toEqual({ Light: "var(--gray-900)" });
+    expect(model.notes).toContainEqual(expect.stringMatching(/--gray-900.*Primitives/));
+  });
+
+  it("reads a composed colour's opacity and an opacity variable as percents when Figma gives them so", () => {
+    const model = tokenModel({
+      collections: [RAW.collections[1] as RawTokens["collections"][number]],
+      variables: [
+        variable({
+          id: "V:o",
+          name: "muted",
+          collectionId: "C:space",
+          resolvedType: "FLOAT",
+          scopes: ["OPACITY"],
+          valuesByMode: { "M:base": 40 },
+        }),
+        variable({
+          id: "V:f",
+          name: "faint",
+          collectionId: "C:space",
+          resolvedType: "FLOAT",
+          scopes: ["OPACITY"],
+          valuesByMode: { "M:base": 0.4 },
+        }),
+        variable({
+          id: "V:c",
+          name: "ink/50",
+          collectionId: "C:space",
+          valuesByMode: {
+            "M:base": {
+              color: {
+                type: "VARIABLE_ALIAS",
+                id: "V:ink",
+              },
+              opacity: 50,
+            },
+          },
+        }),
+      ],
+      external: {
+        "V:ink": {
+          name: "Ink",
+          collection: "Brand",
+          resolvedType: "COLOR",
+        },
+      },
+      styles: [],
+    });
+
+    expect(model.collections[0]?.variables.map((entry) => entry.values.Base)).toEqual([
+      "0.4",
+      "0.4",
+      "color-mix(in srgb, var(--Ink) 50%, transparent)",
+    ]);
   });
 });

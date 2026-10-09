@@ -69,6 +69,8 @@ export const ComponentEntrySchema = z.object({
   ),
   /** How many instances use it, for scope used. */
   instances: z.number().int().exactOptional(),
+  /** Why its properties could not be read (a set with variant conflicts, say): the rest of the list is still read. */
+  error: z.string().exactOptional(),
 });
 
 const QuerySchema = z.string().min(1).max(200);

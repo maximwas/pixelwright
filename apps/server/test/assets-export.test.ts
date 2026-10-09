@@ -215,3 +215,46 @@ describe("assets_export", () => {
     ).rejects.toThrow(/nodes or from/);
   });
 });
+
+describe("assets_export review fixes", () => {
+  it("renders an icon with its strokes whatever format it is asked in", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
+    const { bridge, exported } = file();
+    const request = bridge.request;
+
+    bridge.request = async (op, input, options) =>
+      op === "snapshot"
+        ? layer("7:1", "Arrow", {
+            type: "VECTOR",
+            strokes: [
+              {
+                type: "SOLID",
+                color: {
+                  r: 0,
+                  g: 0,
+                  b: 0,
+                },
+              },
+            ],
+            strokeWeight: 2,
+          })
+        : request(op, input, options);
+
+    const result = await exportAssets(bridge, {
+      nodes: ["7:1"],
+      dir,
+      format: "PNG",
+      original: false,
+    });
+
+    expect(exported[0]).toMatchObject({
+      node: "7:1",
+      format: "PNG",
+      effects: true,
+    });
+    expect(result.files[0]).toMatchObject({
+      kind: "icon",
+      format: "PNG",
+    });
+  });
+});

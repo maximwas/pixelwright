@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runOperation } from "../src/figma/operations.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
 
@@ -208,5 +208,89 @@ describe("components", () => {
     expect(byName.components.map(({ name }) => name)).toEqual(["Button"]);
     expect(limited).toMatchObject({ more: true });
     expect(limited.components).toHaveLength(1);
+  });
+});
+
+describe("components_read review fixes", () => {
+  it("counts the layer it looks in: a set read as within, an instance read as within", async () => {
+    const local = (await runOperation("components", {
+      scope: "local",
+      within: "9:0",
+    })) as {
+      components: { id: string }[];
+    };
+    const used = (await runOperation("components", {
+      scope: "used",
+      within: "3:2",
+    })) as {
+      components: { name: string; instances?: number }[];
+    };
+
+    expect(local.components.map(({ id }) => id)).toEqual(["9:0"]);
+    expect(used.components).toEqual([
+      expect.objectContaining({
+        name: "Button",
+        instances: 1,
+      }),
+    ]);
+  });
+
+  it("reports a set Figma cannot read the properties of on that set, and lists the rest", async () => {
+    Object.defineProperty(find(page, "9:0"), "componentPropertyDefinitions", {
+      get: () => {
+        throw new Error("Component set for node has existing errors");
+      },
+    });
+
+    const { components } = (await runOperation("components", { scope: "local" })) as {
+      components: { id: string; properties: object; error?: string }[];
+    };
+
+    expect(components.map(({ id }) => id)).toEqual(["9:0", "9:5"]);
+    expect(components[0]).toMatchObject({
+      properties: {},
+      error: expect.stringMatching(/existing errors/),
+    });
+  });
+
+  it("stops at its time budget on a page with many instances and says there is more", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+
+    try {
+      const screen = find(page, "3:1") as FakeNode;
+      const main = find(page, "9:1");
+
+      screen.children = Array.from({ length: 200 }, (_, index) => {
+        const instance = tree(
+          {
+            id: `4:${index}`,
+            type: "INSTANCE",
+            name: "Button",
+          },
+          screen,
+        );
+
+        instance.getMainComponentAsync = async () => {
+          vi.setSystemTime(Date.now() + 1_000);
+
+          return main as never;
+        };
+
+        return instance;
+      });
+
+      const { components, more } = (await runOperation("components", {
+        scope: "used",
+        within: "3:1",
+      })) as {
+        components: { instances?: number }[];
+        more: boolean;
+      };
+
+      expect(more).toBe(true);
+      expect(components[0]?.instances).toBeLessThan(200);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

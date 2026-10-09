@@ -83,6 +83,13 @@ export const TokensReadInputSchema = z.object({
     .enum(["css", "json"])
     .default("css")
     .describe("css: ready custom properties, a block per extra mode. json: the token model, per collection and mode."),
+  maxChars: z
+    .number()
+    .int()
+    .min(2_000)
+    .max(400_000)
+    .default(80_000)
+    .describe("Longest output; past it, only the summary comes back and you read collections one at a time."),
   file: FileSchema,
 });
 
@@ -133,6 +140,7 @@ export const TokensReadOutputSchema = z.object({
           name: z.string(),
           modes: z.array(z.string()),
           defaultMode: z.string(),
+          selectors: z.record(z.string(), z.string()),
           variables: z.array(
             z.object({
               name: z.string(),

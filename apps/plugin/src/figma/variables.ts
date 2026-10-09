@@ -1,12 +1,14 @@
 import type { OperationInput, OperationOutput, RawTokens } from "@pixelwright/core";
+import { LIBRARY_BUDGET_MS } from "../constants/plugin.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import { plain } from "../utils/plain.ts";
 import { requireNode } from "./nodes.ts";
 import { localStyles, styleOf } from "./styles.ts";
 
 /**
- * The file's tokens as Figma keeps them: every local collection with its modes, every variable's value per mode
- * (aliases kept, those pointing outside the file resolved by id), the local styles, and, when asked, the enabled
+ * The file's tokens as Figma keeps them: every local collection with its modes and every variable's value per mode,
+ * aliases kept; every variable an alias points at outside the file (a library's), with its collection; the local
+ * styles; the styles and variables the layers in `within` (or the current page) use; and, when asked, the enabled
  * libraries' variables by name (their values would need an import, which writes to the file).
  */
 export async function variables({
@@ -14,52 +16,17 @@ export async function variables({
   used,
   within,
 }: OperationInput<"variables">): Promise<OperationOutput<"variables">> {
-  const collections = await figma.variables.getLocalVariableCollectionsAsync();
-  const locals = await figma.variables.getLocalVariablesAsync();
-  const local = new Set(locals.map((variable) => variable.id));
-  const external: RawTokens["external"] = {};
-  const entries: RawTokens["variables"] = [];
-
-  for (const variable of locals) {
-    const valuesByMode = plain<Record<string, unknown>>(variable.valuesByMode);
-
-    for (const value of Object.values(valuesByMode)) {
-      const id = aliasOf(value);
-
-      if (id !== null && !local.has(id) && external[id] === undefined) {
-        const target = await figma.variables.getVariableByIdAsync(id);
-
-        if (target !== null) {
-          const collection = await figma.variables.getVariableCollectionByIdAsync(target.variableCollectionId);
-
-          external[id] = {
-            name: target.name,
-            collection: collection?.name ?? "",
-            resolvedType: target.resolvedType,
-            ...codeSyntaxOf(target),
-          };
-        }
-      }
-    }
-
-    entries.push({
-      id: variable.id,
-      name: variable.name,
-      collectionId: variable.variableCollectionId,
-      resolvedType: variable.resolvedType,
-      ...(variable.description === "" ? {} : { description: variable.description }),
-      scopes: [...variable.scopes],
-      ...codeSyntaxOf(variable),
-      valuesByMode,
-    });
-  }
-
   const raw: RawTokens = {
-    collections: collections.map(collectionOf),
-    variables: entries,
-    external,
+    collections: (await figma.variables.getLocalVariableCollectionsAsync()).map(collectionOf),
+    variables: (await figma.variables.getLocalVariablesAsync()).map(variableOf),
+    external: {},
     styles: await localStyles(),
   };
+
+  await addVariables(
+    raw,
+    raw.variables.flatMap((variable) => aliasesIn(variable.valuesByMode)),
+  );
 
   if (used) {
     await addUsed(raw, within === undefined ? figma.currentPage : await requireNode(within));
@@ -84,10 +51,68 @@ function collectionOf(collection: VariableCollection): RawTokens["collections"][
   };
 }
 
+function variableOf(variable: Variable): RawTokens["variables"][number] {
+  return {
+    id: variable.id,
+    name: variable.name,
+    collectionId: variable.variableCollectionId,
+    resolvedType: variable.resolvedType,
+    ...(variable.description === "" || variable.description === undefined ? {} : { description: variable.description }),
+    scopes: [...(variable.scopes ?? [])],
+    ...codeSyntaxOf(variable),
+    valuesByMode: plain<Record<string, unknown>>(variable.valuesByMode),
+  };
+}
+
 /**
- * The styles and variables the layers under `root` use and the file does not define (a team library's): each style,
- * and each variable with its collection and every variable its values point at, so the tokens are whole.
+ * Adds the variables with these ids that the tokens do not hold yet, each with its collection and every variable its
+ * values point at, so every var() the tokens write is defined. A variable whose collection cannot be read is named in
+ * `external` only.
  */
+async function addVariables(raw: RawTokens, ids: readonly string[]): Promise<void> {
+  const knownVariables = new Set(raw.variables.map((variable) => variable.id));
+  const knownCollections = new Set(raw.collections.map((collection) => collection.id));
+  const queue = [...ids];
+
+  for (let index = 0; index < queue.length; index++) {
+    const id = queue[index] as string;
+
+    if (knownVariables.has(id) || raw.external[id] !== undefined) {
+      continue;
+    }
+
+    const variable = await figma.variables.getVariableByIdAsync(id);
+
+    if (variable === null) {
+      continue;
+    }
+
+    if (!knownCollections.has(variable.variableCollectionId)) {
+      const collection = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId);
+
+      if (collection === null) {
+        raw.external[id] = {
+          name: variable.name,
+          collection: "",
+          resolvedType: variable.resolvedType,
+          ...codeSyntaxOf(variable),
+        };
+        continue;
+      }
+
+      raw.collections.push(collectionOf(collection));
+      knownCollections.add(collection.id);
+    }
+
+    const entry = variableOf(variable);
+
+    raw.variables.push(entry);
+    knownVariables.add(id);
+    queue.push(...aliasesIn(entry.valuesByMode));
+  }
+}
+
+/** The styles and variables the layers under `root` use and the file does not define (a team library's). */
 async function addUsed(raw: RawTokens, root: BaseNode): Promise<void> {
   if (root.type === "PAGE" && root !== figma.currentPage) {
     await root.loadAsync();
@@ -115,51 +140,7 @@ async function addUsed(raw: RawTokens, root: BaseNode): Promise<void> {
     }
   }
 
-  const knownVariables = new Set(raw.variables.map((variable) => variable.id));
-  const knownCollections = new Set(raw.collections.map((collection) => collection.id));
-
-  for (let index = 0; index < variableIds.length; index++) {
-    const id = variableIds[index] as string;
-    const variable = knownVariables.has(id) ? null : await figma.variables.getVariableByIdAsync(id);
-
-    if (variable === null) {
-      continue;
-    }
-
-    knownVariables.add(id);
-
-    if (!knownCollections.has(variable.variableCollectionId)) {
-      const collection = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId);
-
-      if (collection !== null) {
-        raw.collections.push(collectionOf(collection));
-        knownCollections.add(collection.id);
-      }
-    }
-
-    const valuesByMode = plain<Record<string, unknown>>(variable.valuesByMode);
-
-    raw.variables.push({
-      id,
-      name: variable.name,
-      collectionId: variable.variableCollectionId,
-      resolvedType: variable.resolvedType,
-      ...(variable.description === "" || variable.description === undefined
-        ? {}
-        : { description: variable.description }),
-      scopes: [...(variable.scopes ?? [])],
-      ...codeSyntaxOf(variable),
-      valuesByMode,
-    });
-
-    for (const value of Object.values(valuesByMode)) {
-      const alias = aliasOf(value);
-
-      if (alias !== null && !knownVariables.has(alias)) {
-        variableIds.push(alias);
-      }
-    }
-  }
+  await addVariables(raw, variableIds);
 }
 
 /** The style ids and variable aliases one layer uses: its own, its paints' and effects', its text runs'. */
@@ -184,29 +165,28 @@ function usedBy(layer: BaseNode, styleIds: Set<string>, variableIds: string[]): 
     }
   }
 
-  const scan = (value: unknown): void => {
-    if (Array.isArray(value)) {
-      value.forEach(scan);
-    } else if (typeof value === "object" && value !== null) {
-      const alias = aliasOf(value);
-
-      if (alias === null) {
-        Object.values(value).forEach(scan);
-      } else if (!variableIds.includes(alias)) {
-        variableIds.push(alias);
-      }
-    }
-  };
-
-  scan([record.boundVariables, record.fills, record.strokes, record.effects]);
+  variableIds.push(...aliasesIn([record.boundVariables, record.fills, record.strokes, record.effects]));
 }
 
-/** The enabled libraries' variable collections and their variables; a failure (offline, no access) is said, not thrown. */
+/**
+ * The enabled libraries' variable collections and their variables, within LIBRARY_BUDGET_MS so the local tokens still
+ * come back in time; a failure or the budget running out is said in libraryError, never thrown.
+ */
 async function libraryCatalogue(): Promise<Pick<RawTokens, "library" | "libraryError">> {
-  try {
-    const library: NonNullable<RawTokens["library"]> = [];
+  const library: NonNullable<RawTokens["library"]> = [];
+  const started = Date.now();
 
-    for (const collection of await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()) {
+  try {
+    const collections = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+
+    for (const collection of collections) {
+      if (Date.now() - started > LIBRARY_BUDGET_MS) {
+        return {
+          library,
+          libraryError: `The libraries took too long: read ${library.length} of ${collections.length} collections.`,
+        };
+      }
+
       const found = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(collection.key);
 
       library.push({
@@ -223,18 +203,31 @@ async function libraryCatalogue(): Promise<Pick<RawTokens, "library" | "libraryE
 
     return { library };
   } catch (error) {
-    return { libraryError: `The libraries could not be read: ${errorMessage(error)}` };
+    return {
+      ...(library.length === 0 ? {} : { library }),
+      libraryError: `The libraries could not be read: ${errorMessage(error)}`,
+    };
   }
 }
 
-function aliasOf(value: unknown): string | null {
-  return typeof value === "object" &&
-    value !== null &&
-    "type" in value &&
-    value.type === "VARIABLE_ALIAS" &&
-    "id" in value
-    ? String(value.id)
-    : null;
+/** Every variable alias inside a value, however deep (paints, effects, bound fields, composed colours). */
+function aliasesIn(value: unknown): string[] {
+  const found: string[] = [];
+  const scan = (item: unknown): void => {
+    if (Array.isArray(item)) {
+      item.forEach(scan);
+    } else if (typeof item === "object" && item !== null) {
+      if ("type" in item && item.type === "VARIABLE_ALIAS" && "id" in item) {
+        found.push(String(item.id));
+      } else {
+        Object.values(item).forEach(scan);
+      }
+    }
+  };
+
+  scan(value);
+
+  return found;
 }
 
 function codeSyntaxOf(variable: Pick<Variable, "codeSyntax">): { codeSyntax?: Record<string, string> } {

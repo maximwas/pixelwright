@@ -1,5 +1,4 @@
 import type { TokenModel } from "../types/tokens.ts";
-import { slug } from "../utils/slug.ts";
 
 const INDENT = "  ";
 
@@ -38,9 +37,10 @@ export function tokensCss(model: TokenModel): string {
   for (const collection of model.collections) {
     for (const mode of collection.modes.filter((name) => name !== collection.defaultMode)) {
       const lines = collection.variables.map((variable) => declaration(variable.token, variable.values[mode]));
+      const selector = collection.selectors[mode];
 
-      if (lines.length > 0) {
-        blocks.push(`[data-${slug(collection.name)}="${slug(mode)}"] {\n${lines.join("\n")}\n}`);
+      if (lines.length > 0 && selector !== undefined) {
+        blocks.push(`${selector} {\n${lines.join("\n")}\n}`);
       }
     }
   }

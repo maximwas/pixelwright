@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { runOperation } from "../src/figma/operations.ts";
 import { type FakeLibrary, installFigma, tree } from "./helpers/fake-figma.ts";
 
@@ -94,14 +94,30 @@ const LIBRARY: FakeLibrary = {
   // The library variable the dark Ink points at, as getVariableByIdAsync finds it.
   variables: {
     "V:lib-accent": {
+      id: "V:lib-accent",
       name: "Accent",
       variableCollectionId: "C:lib",
       resolvedType: "COLOR",
       remote: true,
-      value: WHITE,
+      description: "",
+      scopes: ["ALL_SCOPES"],
+      valuesByMode: { "M:core": WHITE },
     },
   },
-  collections: { "C:lib": { name: "Core" } },
+  collections: {
+    "C:lib": {
+      id: "C:lib",
+      name: "Core",
+      remote: true,
+      defaultModeId: "M:core",
+      modes: [
+        {
+          modeId: "M:core",
+          name: "Default",
+        },
+      ],
+    },
+  },
   localStyles: {
     paint: [
       {
@@ -174,7 +190,7 @@ describe("variables", () => {
 
     const tokens = (await runOperation("variables", {})) as Record<string, unknown>;
 
-    expect(tokens.collections).toEqual([
+    expect((tokens.collections as unknown[]).slice(0, 2)).toEqual([
       {
         id: "C:brand",
         name: "Brand",
@@ -220,13 +236,22 @@ describe("variables", () => {
         },
       },
     });
-    expect(tokens.external).toEqual({
-      "V:lib-accent": {
+    // A library variable a local alias points at comes whole, with its collection, so its token is defined.
+    expect(tokens.external).toEqual({});
+    expect(tokens.variables).toContainEqual(
+      expect.objectContaining({
+        id: "V:lib-accent",
         name: "Accent",
-        collection: "Core",
-        resolvedType: "COLOR",
-      },
-    });
+        valuesByMode: { "M:core": WHITE },
+      }),
+    );
+    expect(tokens.collections).toContainEqual(
+      expect.objectContaining({
+        id: "C:lib",
+        name: "Core",
+        remote: true,
+      }),
+    );
     expect(tokens.styles).toEqual([
       expect.objectContaining({
         id: "S:green",
@@ -271,7 +296,7 @@ describe("variables", () => {
     const offline = (await runOperation("variables", { libraries: true })) as Record<string, unknown>;
 
     expect(offline.libraryError).toMatch(/Offline/);
-    expect((offline.variables as unknown[]).length).toBe(3);
+    expect((offline.variables as unknown[]).length).toBe(4);
   });
 });
 
@@ -434,5 +459,46 @@ describe("variables the page uses from a library", () => {
       styles: [],
       variables: [],
     });
+  });
+});
+
+describe("a slow library catalogue", () => {
+  it("stops reading it at its time budget, keeps what it read and the local tokens, and says why", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+
+    try {
+      installFigma(page(), {
+        ...LIBRARY,
+        teamLibrary: {
+          collections: ["A", "B", "C"].map((name) => ({
+            key: `K:${name}`,
+            name,
+            libraryName: "DS",
+          })),
+          variables: {},
+        },
+      });
+      Object.assign((globalThis as unknown as { figma: { teamLibrary: object } }).figma.teamLibrary, {
+        getVariablesInLibraryCollectionAsync: async () => {
+          vi.setSystemTime(Date.now() + 15_000);
+
+          return [
+            {
+              key: "k",
+              name: "x",
+              resolvedType: "COLOR",
+            },
+          ];
+        },
+      });
+
+      const tokens = (await runOperation("variables", { libraries: true })) as Record<string, unknown>;
+
+      expect(tokens.library).toHaveLength(1);
+      expect(tokens.libraryError).toMatch(/1 of 3/);
+      expect((tokens.variables as unknown[]).length).toBe(4);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -117,10 +117,13 @@ text-decoration-thickness), text-align, text-wrap, color.
 - It takes the file's own styles and variables, and those the current page (or \`within\`) uses from a team library:
   a file built on a library has its tokens there. \`used: false\` keeps only the file's own.
 - format css (default): \`:root\` holds every collection's default mode and the styles; every other mode is a block
-  \`[data-<collection>="<mode>"]\` with that collection's variables. Put the attribute on the element the theme applies
-  to: \`<html data-brand="dark">\`.
+  \`[data-<collection>="<mode>"]\` with that collection's variables. Put the attribute on the html element,
+  \`<html data-brand="dark">\`: a token in \`:root\` that points at another collection's token is computed in \`:root\`
+  and does not follow a mode set lower in the page.
 - format json: per collection, its modes and each variable's value in every mode.
 - \`collections\` keeps only the named ones; \`libraries: true\` adds the enabled libraries' variables by name and type.
+- Past \`maxChars\` (80 000) only the summary comes back, with the collections to read one at a time.
+- An alias to a token the output leaves out (a collection you did not ask for) is named in \`notes\`.
 
 ## Values
 
@@ -133,7 +136,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 ## Not tokens yet
 
 Paint styles with gradients or images, blur effect styles, and library variables the file does not use (Figma gives
-their values only once they are imported into the file). \`notes\` names each.
+their values only once they are imported into the file: \`libraries: true\` lists them by name and type). Paint styles
+and effect styles that are left out are named in \`notes\`.
 `,
   },
   assets: {
@@ -149,7 +153,8 @@ Only true assets become files; everything else is CSS.
   everything it draws, strokes outside its box included, and sized by that box.
 - \`Image\` (PNG at 2x): a layer filled with an image, a mask group (its bottom layer is the mask), a layer with a
   video, pattern or shader fill or a noise, texture or glass effect. Exported as its own box: its corners, drop
-  shadows and outline stay CSS around it; its opacity, blur and inner shadows are in the file.
+  shadows and outline stay CSS around it, and the rest of its look (opacity, blur, inner shadows) is left to the
+  file, as Figma renders it.
 - A layer the designer marked for export (PNG, JPG or SVG; a PDF export is not a web asset), in that format, when it
   holds no text (an export on a section with text is a preview, read as layers). A frame with an image fill and children keeps its children: the image is its
   \`background\`, written as the original image.
