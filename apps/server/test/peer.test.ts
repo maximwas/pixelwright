@@ -186,6 +186,40 @@ describe("peers", () => {
     expect(seen.some((entry) => entry.includes("peer_auth"))).toBe(false);
   });
 
+  it("does not join a program on the port that skips the challenge and only claims a status", async () => {
+    const port = await freePort();
+    const squatter = new WebSocketServer({
+      port,
+      host: "127.0.0.1",
+    });
+
+    squatter.on("connection", (socket) => {
+      socket.send(
+        JSON.stringify({
+          type: "plugin_status",
+          plugins: [],
+          pairing: {
+            code: "424242",
+            expiresAt: Date.now() + 60_000,
+            lockedUntil: null,
+            waiting: 1,
+          },
+        }),
+      );
+    });
+    await once(squatter, "listening");
+    cleanup.push(() => new Promise((resolve) => squatter.close(resolve)));
+
+    const client = new OwnerClient({
+      port,
+      token,
+      log,
+    });
+
+    await expect(client.join(() => {})).resolves.toBe(false);
+    expect(client.pairing()).toBeNull();
+  });
+
   it("honours a key the previous owner stored", async () => {
     const port = await freePort();
     const file = await bridgeFile(port);

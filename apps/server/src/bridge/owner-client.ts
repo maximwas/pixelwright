@@ -56,6 +56,8 @@ export class OwnerClient implements PluginLink {
         handshakeTimeout: PEER_JOIN_TIMEOUT_MS,
       });
       const peerNonce = newNonce();
+      // Set once the owner proved the token: before that, nothing it says is believed.
+      let proven = false;
       let joined = false;
       // An owner that never answers: dropping the socket closes it, and the close handler resolves false.
       const deadline = setTimeout(() => socket.terminate(), PEER_JOIN_TIMEOUT_MS);
@@ -70,18 +72,25 @@ export class OwnerClient implements PluginLink {
       socket.on("message", (data: RawData) => {
         const message = parse(data);
 
-        if (message?.type === "peer_challenge") {
-          if (!proofEquals(message.proof, proofFor(token, "owner", peerNonce, message.nonce))) {
+        if (message === null) {
+          return;
+        }
+
+        if (message.type === "peer_challenge") {
+          if (proven || !proofEquals(message.proof, proofFor(token, "owner", peerNonce, message.nonce))) {
             socket.close(CloseCode.Unauthorized, "the owner could not prove the token");
 
             return;
           }
 
+          proven = true;
           this.#send(socket, {
             type: "peer_auth",
             proof: proofFor(token, "peer", message.nonce, peerNonce),
           });
-        } else if (message?.type === "plugin_status") {
+        } else if (!proven) {
+          socket.close(CloseCode.Unauthorized, "the owner spoke before proving the token");
+        } else if (message.type === "plugin_status") {
           this.#plugins = message.plugins;
           this.#pairing = message.pairing;
 
@@ -91,7 +100,7 @@ export class OwnerClient implements PluginLink {
             this.#socket = socket;
             resolve(true);
           }
-        } else if (message?.type === "response") {
+        } else if (message.type === "response") {
           this.#pending.settle(message);
         }
       });
