@@ -39,7 +39,12 @@ describe("stdio server", () => {
     try {
       const { tools } = await client.listTools();
 
-      expect(tools.map((tool) => tool.name)).toEqual(["status"]);
+      expect(tools.map((tool) => tool.name).sort()).toEqual(["node_show", "nodes_find", "selection_get", "status"]);
+
+      for (const tool of tools) {
+        // Every tool so far only reads the document (node_show moves the view and the selection, not the file).
+        expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
+      }
 
       const status = await client.callTool({
         name: "status",

@@ -6,11 +6,16 @@ import {
   type OperationOutput,
 } from "@pixelwright/core";
 
+import { find, selection, show } from "./read-ops.ts";
+
 type Handlers = { readonly [N in OperationName]: (input: OperationInput<N>) => Promise<OperationOutput<N>> };
 
 /** What the plugin does for each operation the server may ask for; inputs are checked against the shared schemas. */
 const HANDLERS: Handlers = {
   ping: async () => ({ pong: true }),
+  selection,
+  show,
+  find,
 };
 
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);

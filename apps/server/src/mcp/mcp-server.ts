@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import { SERVER_INSTRUCTIONS } from "../constants/mcp.ts";
 import type { ToolContext } from "../types/mcp.ts";
+import { registerNodeTools } from "./tools/nodes.ts";
 import { registerStatusTool } from "./tools/status.ts";
 
 export function createMcpServer(context: ToolContext): McpServer {
@@ -13,6 +14,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   );
 
   registerStatusTool(server, context);
+  registerNodeTools(server, context);
 
   return server;
 }
