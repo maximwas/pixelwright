@@ -285,6 +285,30 @@ async function entryOf(node: SceneNode, context: EntryContext): Promise<Snapshot
     entry.description = node.description;
   }
 
+  if (
+    layer.layoutMode === "NONE" &&
+    typeof layer.inferredAutoLayout === "object" &&
+    layer.inferredAutoLayout !== null
+  ) {
+    const inferred = layer.inferredAutoLayout as InferredAutoLayoutResult;
+
+    if (inferred.layoutMode !== "NONE") {
+      entry.inferredLayout = {
+        layoutMode: inferred.layoutMode,
+        itemSpacing: inferred.itemSpacing,
+        primaryAxisAlignItems: inferred.primaryAxisAlignItems,
+        counterAxisAlignItems: inferred.counterAxisAlignItems,
+        paddingTop: inferred.paddingTop,
+        paddingRight: inferred.paddingRight,
+        paddingBottom: inferred.paddingBottom,
+        paddingLeft: inferred.paddingLeft,
+      };
+    }
+  }
+
+  put("detached", layer.detachedInfo === null || layer.detachedInfo === undefined ? undefined : true);
+  put("missingFont", node.type === "TEXT" && node.hasMissingFont ? true : undefined);
+
   const notes = annotationsOf(node, context.categories);
 
   if (notes.length > 0) {

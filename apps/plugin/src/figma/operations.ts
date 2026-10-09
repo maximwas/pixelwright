@@ -6,7 +6,7 @@ import {
   type OperationOutput,
 } from "@pixelwright/core";
 
-import { exportNode } from "./export-node.ts";
+import { exportNode, originalImage } from "./export-node.ts";
 import { find, outline, selection, show } from "./read-ops.ts";
 import { snapshot } from "./snapshot.ts";
 
@@ -20,6 +20,7 @@ const HANDLERS: Handlers = {
   find,
   outline,
   export: exportNode,
+  image: originalImage,
   snapshot,
 };
 

@@ -1,35 +1,44 @@
 import { BridgeError, type OperationInput, type OperationOutput } from "@pixelwright/core";
+import { chunkSource } from "./chunks.ts";
 import { requireNode } from "./nodes.ts";
 
-/** The export the server is reading chunk by chunk; dropped once its last chunk is sent. */
-let current: { key: string; bytes: Uint8Array; scale: number } | null = null;
+const exports = chunkSource<{ bytes: Uint8Array; scale: number }>();
+const images = chunkSource<{ bytes: Uint8Array }>();
 
-/**
- * One chunk of a layer's export. The first chunk (offset 0) always renders afresh, so a layer changed since the last
- * export is never served stale; the later ones come from memory.
- */
+/** One chunk of a layer's export, rendered once per request. */
 export async function exportNode(input: OperationInput<"export">): Promise<OperationOutput<"export">> {
   const { node: id, format, effects, offset, length, maxSide } = input;
   const key = JSON.stringify([id, format, input.scale, effects, maxSide]);
-
-  if (offset === 0 || current?.key !== key) {
-    current = {
-      key,
-      ...(await render(id, format, input.scale, effects, maxSide)),
-    };
-  }
-
-  const { bytes, scale } = current;
-  const end = Math.min(offset + length, bytes.length);
-
-  if (end >= bytes.length) {
-    current = null;
-  }
+  const { result, totalBytes, chunk } = await exports(key, offset, length, () =>
+    render(id, format, input.scale, effects, maxSide),
+  );
 
   return {
-    scale,
-    totalBytes: bytes.length,
-    bytes: figma.base64Encode(bytes.subarray(offset, end)),
+    scale: result.scale,
+    totalBytes,
+    bytes: chunk,
+  };
+}
+
+/** One chunk of an image as it was placed, by its hash: not cropped, filtered or scaled. */
+export async function originalImage({
+  hash,
+  offset,
+  length,
+}: OperationInput<"image">): Promise<OperationOutput<"image">> {
+  const { totalBytes, chunk } = await images(hash, offset, length, async () => {
+    const image = figma.getImageByHash(hash);
+
+    if (image === null) {
+      throw new BridgeError("OP_FAILED", `No image with hash ${hash} in this file.`);
+    }
+
+    return { bytes: await image.getBytesAsync() };
+  });
+
+  return {
+    totalBytes,
+    bytes: chunk,
   };
 }
 

@@ -104,6 +104,17 @@ export const OPERATION_SCHEMAS = {
       bytes: z.string(),
     }),
   },
+  image: {
+    input: z.object({
+      hash: z.string().regex(/^[0-9a-f]{40}$/),
+      offset: z.number().int().min(0).default(0),
+      length: z.number().int().min(1).max(EXPORT_CHUNK_BYTES).default(EXPORT_CHUNK_BYTES),
+    }),
+    output: z.object({
+      totalBytes: z.number().int().min(0),
+      bytes: z.string(),
+    }),
+  },
   snapshot: {
     input: z.object({
       node: NodeIdSchema,

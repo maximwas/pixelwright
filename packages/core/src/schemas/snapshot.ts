@@ -260,6 +260,23 @@ export const SnapshotFieldsSchema = z.object({
       }),
     )
     .optional(),
+  /** For a frame without auto layout: the auto layout Figma guesses it has, for a hint. */
+  inferredLayout: z
+    .looseObject({
+      layoutMode: z.string(),
+      itemSpacing: z.number().optional(),
+      primaryAxisAlignItems: z.string().optional(),
+      counterAxisAlignItems: z.string().optional(),
+      paddingTop: z.number().optional(),
+      paddingRight: z.number().optional(),
+      paddingBottom: z.number().optional(),
+      paddingLeft: z.number().optional(),
+    })
+    .optional(),
+  /** A frame detached from a component (Figma keeps where from): the component may be worth using instead. */
+  detached: z.boolean().optional(),
+  /** A text whose font is not installed here: its metrics may be off. */
+  missingFont: z.boolean().optional(),
   /** The URL a prototype interaction opens. */
   href: z.string().optional(),
   /** Export settings the designer gave the layer: it is meant to be an asset, in this format and scale. */

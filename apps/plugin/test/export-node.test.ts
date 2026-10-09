@@ -95,3 +95,30 @@ describe("export", () => {
     expect(part).toMatchObject({ scale: 0.2 });
   });
 });
+
+describe("image", () => {
+  it("sends the image as placed, by its hash, in chunks", async () => {
+    const original = Uint8Array.from({ length: 6 }, (_, index) => 100 + index);
+
+    Object.assign(figma, {
+      getImageByHash: (hash: string) => (hash === "a".repeat(40) ? { getBytesAsync: async () => original } : null),
+    });
+
+    const first = (await runOperation("image", {
+      hash: "a".repeat(40),
+      length: 4,
+    })) as {
+      totalBytes: number;
+      bytes: string;
+    };
+    const second = (await runOperation("image", {
+      hash: "a".repeat(40),
+      offset: 4,
+      length: 4,
+    })) as { bytes: string };
+
+    expect(first.totalBytes).toBe(6);
+    expect(atob(first.bytes) + atob(second.bytes)).toBe(String.fromCharCode(...original));
+    await expect(runOperation("image", { hash: "b".repeat(40) })).rejects.toThrow(/No image/);
+  });
+});
