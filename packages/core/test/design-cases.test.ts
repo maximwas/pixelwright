@@ -445,3 +445,90 @@ describe("what designers tell developers", () => {
     expect(line(xml, "1:3")).toContain('name="Card" description="A product card."');
   });
 });
+
+describe("export settings and masks that do not make an asset", () => {
+  const copy = (id: string) =>
+    layer({
+      id,
+      type: "TEXT",
+      name: "Copy",
+      text: {
+        characters: "Copy",
+        textAutoResize: "WIDTH_AND_HEIGHT",
+        textAlignHorizontal: "LEFT",
+        textAlignVertical: "TOP",
+        segments: [],
+      },
+    });
+
+  it("reads a page or section with a PNG export (a preview) as layers, but a text-free one as an image", () => {
+    const png = [
+      {
+        format: "PNG",
+        constraint: {
+          type: "SCALE",
+          value: 1,
+        },
+      },
+    ];
+    const xml = xmlOf(
+      box(
+        [
+          layer({
+            id: "1:2",
+            type: "FRAME",
+            name: "Section",
+            exportSettings: png,
+            children: [copy("1:3")],
+          }),
+          layer({
+            id: "1:4",
+            type: "GROUP",
+            name: "Collage",
+            exportSettings: png,
+            children: [
+              layer({
+                id: "1:5",
+                type: "RECTANGLE",
+              }),
+              layer({
+                id: "1:6",
+                type: "ELLIPSE",
+              }),
+            ],
+          }),
+        ],
+        {
+          exportSettings: png,
+          name: "Home",
+        },
+      ),
+    );
+
+    expect(line(xml, "1:1")).toContain('<Frame id="1:1" name="Home"');
+    expect(line(xml, "1:2")).toContain('<Frame id="1:2" name="Section"');
+    expect(line(xml, "1:4")).toContain('<Image id="1:4" name="Collage"');
+  });
+
+  it("keeps a frame whose mask sits among other layers, and says what the mask clips", () => {
+    const xml = xmlOf(
+      box([
+        copy("1:2"),
+        layer({
+          id: "1:3",
+          type: "ELLIPSE",
+          name: "Mask",
+          isMask: true,
+        }),
+        layer({
+          id: "1:4",
+          type: "RECTANGLE",
+          name: "Photo",
+        }),
+      ]),
+    );
+
+    expect(line(xml, "1:1")).toContain("<Frame");
+    expect(line(xml, "1:3")).toContain('$css="mask: clips the layers above it"');
+  });
+});

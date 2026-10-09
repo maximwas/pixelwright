@@ -23,13 +23,15 @@ export interface Classified {
 }
 
 /**
- * Whether a layer is a true asset, exported whole: what the designer marked for export (in their format), a masked
- * group, a leaf whose fill is an image, a vector, or a group drawn only with vector shapes. Everything else is CSS.
+ * Whether a layer is a true asset, exported whole: what the designer marked for export as SVG, or as a raster when it
+ * holds no text (a raster export with text is a screen's preview, read as layers), a mask group, a leaf whose fill is
+ * an image or something CSS cannot draw, a vector, or a group drawn only with vector shapes. Everything else is CSS.
+ * The read's root is never an asset because of its export settings: reading it asks for what is inside.
  */
-export function classify(node: SnapshotNode): Classified | null {
+export function classify(node: SnapshotNode, root: SnapshotNode | null = null): Classified | null {
   const [setting] = node.exportSettings ?? [];
 
-  if (setting !== undefined) {
+  if (setting !== undefined && node !== root && (setting.format === "SVG" || !hasText(node))) {
     return {
       kind: setting.format === "SVG" ? "icon" : "image",
       format: setting.format,
@@ -41,7 +43,8 @@ export function classify(node: SnapshotNode): Classified | null {
 
   const children = visibleChildren(node);
 
-  if (children.some((child) => child.isMask)) {
+  // Figma's mask group: the mask at the bottom clips everything above it, so the group is one picture.
+  if (children[0]?.isMask) {
     return {
       kind: "image",
       format: "PNG",
@@ -63,6 +66,15 @@ export function classify(node: SnapshotNode): Classified | null {
   }
 
   return null;
+}
+
+/** Whether a layer holds text; a branch the snapshot cut may, so it counts as holding some. */
+function hasText(node: SnapshotNode): boolean {
+  if (node.type === "TEXT" || (node.children === undefined && node.childCount > 0)) {
+    return true;
+  }
+
+  return visibleChildren(node).some(hasText);
 }
 
 export function visibleChildren(node: SnapshotNode): SnapshotNode[] {

@@ -68,6 +68,11 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
     css.set("overflow", "hidden");
   }
 
+  if (node.isMask) {
+    // A mask among other layers clips the ones above it; a mask group as a whole is exported as one image.
+    readOnly.push(["mask", "clips the layers above it"]);
+  }
+
   if (node.blendMode !== undefined) {
     readOnly.push([
       "mix-blend-mode",

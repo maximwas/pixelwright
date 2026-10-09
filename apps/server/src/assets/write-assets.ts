@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import type { PlannedAsset } from "@pixelwright/core";
 
@@ -40,8 +40,10 @@ export async function writeAssets(
     let src = byDigest.get(digest);
 
     if (src === undefined) {
-      const name = uniqueName(
+      const name = await freeName(
         withExtension(basename(asset.src), asset.imageHash === undefined ? null : extensionOf(bytes)),
+        bytes,
+        dir,
         names,
       );
 
@@ -90,18 +92,30 @@ function withExtension(name: string, extension: string | null): string {
   return extension === null ? name : name.replace(/\.[^.]+$/, `.${extension}`);
 }
 
-/** A name not written yet in this read: `photo.jpg` after `photo.png` stays, a second `photo.png` becomes `photo-2.png`. */
-function uniqueName(name: string, names: Set<string>): string {
+/**
+ * A name for these bytes: not used yet in this read, and either free in the folder or holding the same bytes already
+ * (an earlier read's file is never overwritten: code may use it). `photo.jpg` after `photo.png` stays; a second,
+ * different `photo.png` becomes `photo-2.png`.
+ */
+async function freeName(name: string, bytes: Buffer, dir: string, names: Set<string>): Promise<string> {
   const dot = name.lastIndexOf(".");
   const stem = dot === -1 ? name : name.slice(0, dot);
   const extension = dot === -1 ? "" : name.slice(dot);
   let candidate = name;
 
-  for (let index = 2; names.has(candidate); index++) {
+  for (let index = 2; names.has(candidate) || !(await holdsOrFree(join(dir, candidate), bytes)); index++) {
     candidate = `${stem}-${index}${extension}`;
   }
 
   names.add(candidate);
 
   return candidate;
+}
+
+async function holdsOrFree(path: string, bytes: Buffer): Promise<boolean> {
+  try {
+    return (await readFile(path)).equals(bytes);
+  } catch {
+    return true;
+  }
 }

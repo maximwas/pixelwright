@@ -22,7 +22,7 @@ export function designHints(snapshot: Snapshot, xml = designXml(snapshot).xml): 
   const all: { node: SnapshotNode; parent: SnapshotNode | null }[] = [];
   const walk = (node: SnapshotNode, parent: SnapshotNode | null) => {
     // An asset is one file: how it is built inside does not reach the code.
-    if (!node.visible || classify(node) !== null) {
+    if (!node.visible || classify(node, snapshot.root) !== null) {
       return;
     }
 

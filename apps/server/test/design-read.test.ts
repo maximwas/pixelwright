@@ -170,3 +170,36 @@ describe("writeAssets", () => {
     expect((await readFile(join(dir, "hero-background.jpg"))).equals(JPEG)).toBe(true);
   });
 });
+
+describe("writeAssets into a folder an earlier read wrote", () => {
+  it("reuses a file with the same bytes and never overwrites one with other bytes", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-assets-"));
+    const { writeFile } = await import("node:fs/promises");
+
+    await writeFile(join(dir, "icon.svg"), "<svg>first read</svg>");
+    await writeFile(join(dir, "logo.svg"), "<svg>logo</svg>");
+
+    const { written } = await writeAssets(
+      [
+        {
+          node: "1:1",
+          kind: "icon",
+          format: "SVG",
+          src: "assets/icon.svg",
+        },
+        {
+          node: "1:2",
+          kind: "icon",
+          format: "SVG",
+          src: "assets/logo.svg",
+        },
+      ],
+      async (asset) => Buffer.from(asset.node === "1:1" ? "<svg>second read</svg>" : "<svg>logo</svg>"),
+      dir,
+      "assets",
+    );
+
+    expect(written.map((asset) => asset.src)).toEqual(["assets/icon-2.svg", "assets/logo.svg"]);
+    expect(await readFile(join(dir, "icon.svg"), "utf8")).toBe("<svg>first read</svg>");
+  });
+});
