@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -42,6 +42,21 @@ describe("FilePluginKeys", () => {
 
     await writeFile(broken, '{"version": 1, "port": 18720, "token": "t', { mode: 0o600 });
     expect(new FilePluginKeys(broken).find("0123456789abcdef")).toBeNull();
+  });
+
+  it("leaves no copy of the keys behind when the write fails", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-keys-"));
+
+    // A folder where bridge.json should be: the key is written aside, then cannot replace it.
+    await mkdir(join(dir, "bridge.json"));
+
+    expect(() =>
+      new FilePluginKeys(join(dir, "bridge.json"), () => ({
+        ...config,
+        pluginKeys: [],
+      })).add(),
+    ).toThrow();
+    expect(await readdir(dir)).toEqual(["bridge.json"]);
   });
 
   it("rebuilds a deleted bridge.json from the running config when it adds a key", async () => {

@@ -1,5 +1,6 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import writeFileAtomic from "write-file-atomic";
 import { homeDir } from "../bridge/bridge-config.ts";
 import { WRITTEN_FILES_LIMIT } from "../constants/mcp.ts";
 import { WrittenFilesFileSchema } from "../schemas/assets.ts";
@@ -47,29 +48,36 @@ export function fileStore(path = join(homeDir(), "written-files.json")): Written
     }
   };
 
+  const write = async (written: readonly WrittenFile[]) => {
+    const files = await load();
+
+    merge(files, written);
+    await mkdir(dirname(path), { recursive: true });
+    // Written aside and renamed over it: a process reading it meanwhile sees the old file or the new one, never half.
+    await writeFileAtomic(
+      path,
+      JSON.stringify({
+        version: 1,
+        files: Object.fromEntries([...files].slice(-WRITTEN_FILES_LIMIT)),
+      }),
+    );
+  };
+  // One add at a time, each reading what the one before it wrote: two adds at once would both start from the same file.
+  let queue = Promise.resolve();
+
   return {
     read: load,
-    add: async (written) => {
+    add: (written) => {
       if (written.length === 0) {
-        return;
+        return Promise.resolve();
       }
 
-      const files = await load();
+      const added = queue.then(() => write(written));
 
-      merge(files, written);
+      // A failed add is its caller's error; the next one still runs.
+      queue = added.catch(() => {});
 
-      // Written whole and then renamed: a process reading it meanwhile sees the old file or the new one, never half.
-      const temporary = `${path}.${process.pid}.tmp`;
-
-      await mkdir(dirname(path), { recursive: true });
-      await writeFile(
-        temporary,
-        JSON.stringify({
-          version: 1,
-          files: Object.fromEntries([...files].slice(-WRITTEN_FILES_LIMIT)),
-        }),
-      );
-      await rename(temporary, path);
+      return added;
     },
   };
 }

@@ -46,6 +46,31 @@ describe("written-files.json", () => {
     expect(later.get("c")).toEqual(["3:1"]);
   });
 
+  it("keeps both entries when two adds run at once", async () => {
+    const path = join(await mkdtemp(join(tmpdir(), "pixelwright-home-")), "written-files.json");
+    const store = fileStore(path);
+
+    await Promise.all([
+      store.add([
+        {
+          sha1: "a",
+          node: "1:1",
+        },
+      ]),
+      store.add([
+        {
+          sha1: "b",
+          node: "2:1",
+        },
+      ]),
+    ]);
+
+    const known = await fileStore(path).read();
+
+    expect(known.get("a")).toEqual(["1:1"]);
+    expect(known.get("b")).toEqual(["2:1"]);
+  });
+
   it("starts empty when the file is missing or not its own", async () => {
     expect((await fileStore(join(tmpdir(), "pixelwright-none", "written-files.json")).read()).size).toBe(0);
   });

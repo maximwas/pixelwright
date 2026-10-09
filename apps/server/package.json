@@ -37,6 +37,7 @@
     "@modelcontextprotocol/server": "2.2.0",
     "image-size": "2.0.4",
     "pino": "10.3.1",
+    "write-file-atomic": "7.0.1",
     "ws": "8.22.0",
     "zod": "catalog:"
   },
@@ -44,6 +45,7 @@
     "@modelcontextprotocol/client": "2.2.0",
     "@pixelwright/core": "workspace:*",
     "@types/node": "catalog:",
+    "@types/write-file-atomic": "4.0.3",
     "@types/ws": "8.18.2",
     "@typescript/native": "catalog:",
     "tsdown": "0.23.0",

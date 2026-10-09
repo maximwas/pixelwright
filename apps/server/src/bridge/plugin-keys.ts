@@ -1,5 +1,6 @@
-import { readFileSync, renameSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { newKeyId, newSecret, type PluginKey } from "@pixelwright/core";
+import writeFileAtomic from "write-file-atomic";
 import { BridgeConfigSchema } from "../schemas/bridge.ts";
 import type { BridgeConfig, PluginKeys } from "../types/bridge.ts";
 
@@ -52,10 +53,8 @@ export class FilePluginKeys implements PluginKeys {
         },
       ],
     };
-    const temp = `${this.#file}.${process.pid}.tmp`;
 
-    writeFileSync(temp, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
-    renameSync(temp, this.#file);
+    writeFileAtomic.sync(this.#file, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
 
     return key;
   }
