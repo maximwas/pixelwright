@@ -2,10 +2,7 @@ import { BridgeError } from "@pixelwright/core";
 
 let allowed = false;
 
-/**
- * The plugin window's Allow edits switch. It starts off on every run and is never stored: figma.clientStorage is shared
- * by every file, so a stored "on" would arm them all.
- */
+/** The plugin window's Allow edits switch, for this file: off until the user turns it on, or left it on (edits-store.ts). */
 export function setEditsAllowed(value: boolean): void {
   allowed = value;
 }

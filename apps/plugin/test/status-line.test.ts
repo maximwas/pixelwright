@@ -82,7 +82,7 @@ describe("the window's status", () => {
 
   it("says how long edits stay on and how to take them back, and asks for them after a refused write", () => {
     expect(editsNote(true, "⌘Z")).toBe(
-      "AI may change this file until you close this window. Each change is one undo step (⌘Z).",
+      "AI may change this file until you turn this off, also in later sessions on this computer. Each change is one undo step (⌘Z).",
     );
     expect(editsNote(false, "⌘Z")).toBe("AI only reads this file.");
     expect(editsNote(false, "⌘Z", true)).toBe(

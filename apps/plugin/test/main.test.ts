@@ -13,7 +13,7 @@ const NEW_KEY = {
 const posted: unknown[][] = [];
 let windowHtml = "";
 
-/** figma.clientStorage as an earlier run left it: Allow edits on (from stage 1) and a paired key. */
+/** figma.clientStorage as an earlier run left it: stage 1's Allow edits for every file, which arms none, and a key. */
 const stored = new Map<string, unknown>([
   ["pixelwright.allowEdits", true],
   ["pixelwright.pairing", STORED_KEY],
@@ -23,7 +23,10 @@ const fakeFigma = {
   editorType: "figma",
   fileKey: undefined,
   command: "",
-  root: { name: HOSTILE_NAME },
+  root: {
+    name: HOSTILE_NAME,
+    getPluginData: () => "",
+  },
   currentPage: {
     id: "0:1",
     name: "Page 1",

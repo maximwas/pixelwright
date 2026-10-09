@@ -15,6 +15,12 @@ export const PLUGIN_WINDOW = {
 /** figma.clientStorage key of the paired key: per user and plugin, shared by every file, so pairing is once a machine. */
 export const PAIRING_STORAGE_KEY = "pixelwright.pairing";
 
+/** figma.clientStorage key of a file where Allow edits is on, followed by the file's id: one key per file. */
+export const EDITS_STORAGE_PREFIX = "pixelwright.allowEdits.";
+
+/** Plugin data key on the document of the id Pixelwright gives a file where Figma gives no file key. */
+export const FILE_ID_KEY = "fileId";
+
 /** The window follows its content's height (the pairing field and the hint come and go), within these bounds. */
 export const WINDOW_HEIGHT = {
   min: 120,

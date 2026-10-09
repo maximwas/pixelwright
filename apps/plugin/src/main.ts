@@ -3,6 +3,7 @@ import { toWireError } from "@pixelwright/core";
 import { PLUGIN_WINDOW, WINDOW_HEIGHT } from "./constants/plugin.ts";
 import { readContext } from "./figma/context.ts";
 import { editsAllowed, setEditsAllowed } from "./figma/edits.ts";
+import { readEditsAllowed, saveEditsAllowed } from "./figma/edits-store.ts";
 import { runOperation } from "./figma/operations.ts";
 import { readPairing, savePairing } from "./figma/pairing-store.ts";
 import type {
@@ -18,9 +19,9 @@ import type {
 
 /**
  * The plugin's main code: answers the window's requests with the Plugin API, keeps the Allow edits switch and the
- * paired key. The switch starts off on every run: figma.clientStorage is shared by every file, so a stored "on" would
- * arm them all (the key is shared on purpose: pairing is once per machine). The window's HTML carries no data: file
- * and page names are the user's, and its inline script would run them, so everything goes by message after READY.
+ * paired key. The switch starts off and comes back on only in a file the user left it on in (edits-store.ts); the key
+ * is shared by every file on purpose: pairing is once per machine. The window's HTML carries no data: file and page
+ * names are the user's, and its inline script would run them, so everything goes by message after READY.
  */
 export default function (): void {
   setEditsAllowed(false);
@@ -33,6 +34,8 @@ export default function (): void {
   on<AllowEditsHandler>("ALLOW_EDITS", (value) => {
     setEditsAllowed(value);
     sendContext();
+    // A file Figma will not let it mark (a view-only one) keeps the switch for this run only.
+    void saveEditsAllowed(value).catch(() => {});
   });
   on<SavePairingHandler>("SAVE_PAIRING", (key) => void savePairing(key).catch(() => {}));
   on<ResizeHandler>("RESIZE", (height) =>
@@ -44,6 +47,7 @@ export default function (): void {
 /** The window is listening: first the stored key, then the context it starts the connection with. */
 async function start(sendContext: () => void): Promise<void> {
   emit<PairingHandler>("PAIRING", await readPairing().catch(() => null));
+  setEditsAllowed(await readEditsAllowed().catch(() => false));
   sendContext();
 }
 

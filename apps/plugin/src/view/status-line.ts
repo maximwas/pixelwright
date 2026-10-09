@@ -54,7 +54,7 @@ export function statusLine(link: LinkState, fileName: string): StatusLine {
  */
 export function editsNote(allowEdits: boolean, undo: string, ranCode = false): string {
   if (allowEdits) {
-    return `AI may change this file until you close this window. Each change is one undo step (${undo}).`;
+    return `AI may change this file until you turn this off, also in later sessions on this computer. Each change is one undo step (${undo}).`;
   }
 
   return ranCode
