@@ -113,6 +113,8 @@ export interface FakeLibrary {
   readonly components?: FakeNode[];
   /** The file's annotation categories. */
   readonly categories?: { id: string; label: string; color: string }[];
+  /** The file's other pages. */
+  readonly pages?: FakeNode[];
 }
 
 /** A variant's values from its name, "Size=Large, State=Default", as Figma names variants. */
@@ -467,8 +469,83 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
 
     if (Object.getOwnPropertyDescriptor(node, "resize") === undefined) {
       writable(node, writes, register);
+      copyable(node);
     }
   };
+  /** A deep copy with fresh ids, as Figma's clone(): same structure, same properties, parented nowhere yet. */
+  const cloneOf = (source: FakeNode): FakeNode => {
+    const { children, parent: _parent, ...rest } = source;
+    const copy = tree({
+      ...(structuredClone(
+        Object.fromEntries(
+          Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
+        ),
+      ) as Omit<FakeNode, "children" | "parent">),
+      id: `90:${writes.created.length + 1}`,
+    });
+
+    writes.created.push(copy);
+    register(copy);
+    copy.children = (children ?? []).map((child) => {
+      const inner = cloneOf(child);
+
+      inner.parent = copy;
+
+      return inner;
+    });
+
+    return copy;
+  };
+
+  function copyable(node: FakeNode): void {
+    Object.defineProperty(node, "clone", {
+      value: () => cloneOf(node),
+      enumerable: false,
+      configurable: true,
+    });
+    Object.defineProperty(node, "rescale", {
+      value: (factor: number) => {
+        node.width = (node.width ?? 0) * factor;
+        node.height = (node.height ?? 0) * factor;
+        writes.calls.push({
+          node: node.id,
+          method: "rescale",
+          args: [factor],
+        });
+      },
+      enumerable: false,
+      configurable: true,
+    });
+
+    if (node.type === "COMPONENT") {
+      Object.defineProperty(node, "createSlot", {
+        value: () => {
+          const slot = create("SLOT")();
+
+          (node as FakeNode & { appendChild: (child: FakeNode) => void }).appendChild(slot);
+
+          return slot;
+        },
+        enumerable: false,
+        configurable: true,
+      });
+    }
+
+    if (node.type === "PAGE") {
+      Object.defineProperty(node, "loadAsync", {
+        value: async () => {
+          writes.calls.push({
+            node: node.id,
+            method: "loadAsync",
+            args: [],
+          });
+        },
+        enumerable: false,
+        configurable: true,
+      });
+    }
+  }
+
   const create = (type: string) => () => {
     const node = tree({
       id: `90:${writes.created.length + 1}`,
@@ -488,6 +565,11 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
   }
 
   const lost: FakeNode[] = [];
+
+  for (const other of library.pages ?? []) {
+    walk(other, lost);
+    lost.push(other);
+  }
 
   for (const component of library.components ?? []) {
     walk(component, lost);
@@ -599,6 +681,18 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     createRectangle: create("RECTANGLE"),
     createEllipse: create("ELLIPSE"),
     createLine: create("LINE"),
+    createImage: (bytes: Uint8Array) => ({ hash: `hash-${bytes.length}` }),
+    createNodeFromSvg: (svg: string) => {
+      const frame = create("FRAME")();
+      const vector = create("VECTOR")();
+
+      frame.width = 24;
+      frame.height = 24;
+      frame.svg = svg;
+      (frame as FakeNode & { appendChild: (child: FakeNode) => void }).appendChild(vector);
+
+      return frame;
+    },
     createComponent: () => {
       const component = create("COMPONENT")();
 
@@ -647,7 +741,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     },
     root: {
       type: "DOCUMENT",
-      children: [page],
+      children: [page, ...(library.pages ?? [])],
       findAllWithCriteria: ({ types }: { types: string[] }) =>
         [...byId.values()].filter((node) => types.includes(node.type) && node.parent !== null),
     },

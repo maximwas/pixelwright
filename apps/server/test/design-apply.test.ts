@@ -167,7 +167,7 @@ describe("design_apply", () => {
     expect(result.dryRun).toBe(true);
   });
 
-  it("refuses moving a layer, into a new one, into another parent, next to another or in another order", async () => {
+  it("marks moves, into a new layer, into another parent, next to another, in another order, with their siblings", async () => {
     const { bridge, sent } = bridgeOver(ROW);
     const result = await applyDesign(bridge, {
       xml: [
@@ -178,24 +178,29 @@ describe("design_apply", () => {
       dryRun: false,
     });
 
-    expect(result.errors.map(({ line, id, message }) => [line, id, message])).toEqual([
-      [1, "2:4870", expect.stringMatching(/Moving a layer/)],
-      [2, "2:4877", expect.stringMatching(/Moving a layer/)],
-      [3, "2:4876", expect.stringMatching(/Moving a layer/)],
+    expect(result.errors).toEqual([]);
+    expect(sent().map((change) => [change.id ?? change.tag, change.move ?? false])).toEqual([
+      ["Frame", false],
+      ["2:4870", true],
+      ["2:4869", false],
+      ["2:4877", true],
+      ["2:4876", true],
     ]);
-    // What the layer itself was asked for still goes in.
+    // What the layer itself was asked for goes in with the move.
     expect(sent().find((change) => change.id === "2:4877")?.props).toEqual({ opacity: 0.5 });
 
-    const reordered = await applyDesign(bridgeOver(ROW).bridge, {
+    const reordered = bridgeOver(ROW);
+
+    await applyDesign(reordered.bridge, {
       xml: '<Frame id="2:4869"><Frame id="2:4876"/><Frame id="2:4870"/></Frame>',
       dryRun: false,
     });
 
-    expect(reordered.errors).toEqual([
-      expect.objectContaining({
-        id: "2:4870",
-        message: expect.stringMatching(/order/),
-      }),
+    // The layer before it in the XML goes along, so the plugin can place it after that one.
+    expect(reordered.sent().map((change) => [change.id, change.move ?? false])).toEqual([
+      ["2:4869", false],
+      ["2:4876", false],
+      ["2:4870", true],
     ]);
   });
 

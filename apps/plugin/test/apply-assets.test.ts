@@ -1,0 +1,269 @@
+import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setEditsAllowed } from "../src/figma/edits.ts";
+import { runOperation } from "../src/figma/operations.ts";
+import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+
+interface Applied {
+  created: { line: number; ref: string; id: string; tag: string }[];
+  changed: string[];
+  errors: ApplyError[];
+}
+
+/** The changes core makes of an XML; `extra` adds what the server would (streams, SVGs, moves) by element ref. */
+function changesOf(xml: string, extra: Record<string, (change: ApplyChange) => ApplyChange> = {}): ApplyChange[] {
+  const { elements, errors } = readApply(xml);
+
+  expect(errors).toEqual([]);
+
+  return elements.map((element) => {
+    const { change } = changeOf(element);
+
+    return extra[change.ref]?.(change) ?? change;
+  });
+}
+
+const apply = async (changes: ApplyChange[], options: { parent?: string } = {}) =>
+  (await runOperation("apply", {
+    changes,
+    ...options,
+  })) as Applied;
+
+/** A file's bytes sent the way the server sends them, in one chunk. */
+async function send(stream: string, length: number): Promise<void> {
+  await runOperation("upload", {
+    stream,
+    offset: 0,
+    chunk: btoa("x".repeat(length)),
+    total: length,
+  });
+}
+
+const withAsset = (patch: Record<string, string>) => (change: ApplyChange) => ({
+  ...change,
+  props: {
+    ...change.props,
+    asset: {
+      ...(change.props.asset ?? {
+        kind: "image" as const,
+        src: "",
+      }),
+      ...patch,
+    },
+  },
+});
+const moved = (change: ApplyChange) => ({
+  ...change,
+  move: true,
+});
+
+let root: FakeNode;
+let other: FakeNode;
+let fake: ReturnType<typeof installFigma>;
+const all = (from: FakeNode): FakeNode[] => [from, ...(from.children ?? []).flatMap(all)];
+const byId = (id: string) => [...all(root), ...all(other), ...fake.writes.created].find((node) => node.id === id);
+
+beforeEach(() => {
+  other = tree({
+    id: "5:0",
+    type: "PAGE",
+    name: "Other",
+    children: [
+      {
+        id: "5:2",
+        name: "Elsewhere",
+      },
+    ],
+  });
+  root = tree({
+    id: "0:1",
+    type: "PAGE",
+    children: [
+      {
+        id: "1:1",
+        name: "Card",
+        layoutMode: "VERTICAL",
+        children: [
+          {
+            id: "1:2",
+            type: "TEXT",
+            name: "Title",
+            characters: "Hello",
+            fontName: {
+              family: "Inter",
+              style: "Regular",
+            },
+          },
+          {
+            id: "1:3",
+            name: "Side",
+          },
+        ],
+      },
+      {
+        id: "3:1",
+        name: "Board",
+        layoutMode: "NONE",
+        children: [],
+      },
+      {
+        id: "4:1",
+        type: "RECTANGLE",
+        name: "Photo",
+        fills: [
+          {
+            type: "IMAGE",
+            imageHash: "old",
+            scaleMode: "FIT",
+          },
+        ],
+      },
+      {
+        id: "2:1",
+        type: "INSTANCE",
+        name: "Heading",
+        children: [
+          {
+            id: "I2:1;3:4",
+            name: "Label box",
+          },
+        ],
+      },
+    ],
+  });
+  fake = installFigma(root, {
+    pages: [other],
+    fonts: [
+      {
+        family: "Inter",
+        style: "Regular",
+      },
+    ],
+  });
+  setEditsAllowed(true);
+});
+
+afterEach(() => {
+  setEditsAllowed(false);
+});
+
+describe("apply: images and icons", () => {
+  it("makes an image from its uploaded file and an icon from its SVG, sized as the XML says", async () => {
+    await send("img-1", 12);
+
+    const changes = changesOf(
+      '<Image name="Photo" src="a.png" width="200px" height="100px"/>\n<Icon src="a.svg" width="48px"/>',
+      {
+        "new:1": withAsset({ stream: "img-1" }),
+        "new:2": withAsset({ svg: '<svg width="24" height="24"/>' }),
+      },
+    );
+    const { errors, created } = await apply(changes, { parent: "3:1" });
+    const [image, icon] = created.map(({ id }) => byId(id));
+
+    expect(errors).toEqual([]);
+    expect(image).toMatchObject({
+      type: "RECTANGLE",
+      name: "Photo",
+      width: 200,
+      height: 100,
+      fills: [
+        {
+          type: "IMAGE",
+          imageHash: "hash-12",
+          scaleMode: "FILL",
+        },
+      ],
+    });
+    expect(icon).toMatchObject({
+      type: "FRAME",
+      name: "a",
+      width: 48,
+      height: 48,
+    });
+    expect(icon?.parent?.id).toBe("3:1");
+  });
+
+  it("swaps an image by id and keeps how it fits", async () => {
+    await send("img-2", 20);
+    await apply(
+      changesOf('<Image id="4:1" src="b.png"/>', {
+        "4:1": withAsset({ stream: "img-2" }),
+      }),
+    );
+
+    expect(byId("4:1")?.fills).toEqual([
+      {
+        type: "IMAGE",
+        imageHash: "hash-20",
+        scaleMode: "FIT",
+      },
+    ]);
+  });
+});
+
+describe("apply: copies, slots and moves", () => {
+  it("copies a layer and writes the copy's layers by the source's ids, the source untouched", async () => {
+    const { errors, created } = await apply(
+      changesOf('<Frame copyOf="1:1" name="Card 2"><Text id="1:2">New title</Text></Frame>'),
+      { parent: "3:1" },
+    );
+    const copy = byId(created[0]?.id ?? "");
+
+    expect(errors).toEqual([]);
+    expect(copy?.name).toBe("Card 2");
+    expect(copy?.parent?.id).toBe("3:1");
+    expect(copy?.children?.[0]?.characters).toBe("New title");
+    expect(byId("1:2")?.characters).toBe("Hello");
+  });
+
+  it("checks a copy on a dry run without its own ids", async () => {
+    const result = (await runOperation("apply", {
+      changes: changesOf('<Frame copyOf="1:1" name="Card 2"><Text id="1:2">New title</Text></Frame>'),
+      parent: "3:1",
+      dryRun: true,
+    })) as Applied;
+
+    expect(result.errors).toEqual([]);
+  });
+
+  it("makes a slot in a new component, its content inside it", async () => {
+    const { errors } = await apply(
+      changesOf('<Component name="Card"><Slot name="Content"><Frame name="Inside"/></Slot></Component>'),
+      { parent: "3:1" },
+    );
+    const slot = fake.writes.created.find(({ type }) => type === "SLOT");
+
+    expect(errors).toEqual([]);
+    expect(slot?.parent?.type).toBe("COMPONENT");
+    expect(slot?.name).toBe("Content");
+    expect(slot?.children?.map(({ name }) => name)).toEqual(["Inside"]);
+  });
+
+  it("moves a layer into another frame and reorders one, keeping ids, and refuses moving out of an instance", async () => {
+    await apply(changesOf('<Frame id="3:1"><Frame id="1:3"/></Frame>', { "1:3": moved }));
+
+    expect(byId("3:1")?.children?.map(({ id }) => id)).toEqual(["1:3"]);
+
+    await apply(changesOf('<Frame id="1:1"><Frame id="3:1"/><Text id="1:2"/></Frame>', { "3:1": moved }));
+
+    expect(byId("1:1")?.children?.map(({ id }) => id)).toEqual(["3:1", "1:2"]);
+
+    const { errors } = await apply(changesOf('<Frame id="3:1"><Frame id="I2:1;3:4"/></Frame>', { "I2:1;3:4": moved }));
+
+    expect(errors).toEqual([expect.objectContaining({ message: expect.stringMatching(/instance/) })]);
+  });
+
+  it("loads the page of a layer a new one goes next to", async () => {
+    const { errors, created } = await apply(changesOf('<Frame name="Next" after="5:2"/>'));
+
+    expect(errors).toEqual([]);
+    expect(byId(created[0]?.id ?? "")?.parent?.id).toBe("5:0");
+    expect(fake.writes.calls).toContainEqual(
+      expect.objectContaining({
+        node: "5:0",
+        method: "loadAsync",
+      }),
+    );
+  });
+});

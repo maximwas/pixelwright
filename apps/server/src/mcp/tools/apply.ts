@@ -135,29 +135,40 @@ export async function applyDesign(
     errors.push(...translated);
   }
 
-  for (const [element, message] of moves(read.elements, layers)) {
-    refuse(element, message, "Change it where it is; move it in Figma for now (moving comes in a later version).");
-  }
+  const moving = moves(read.elements, layers);
 
-  const files = await attachFiles(changes, {
-    cwd,
-    dryRun,
-    chunkBytes,
-    send: (input) => bridge.request("upload", input, target),
-  });
+  const files = await attachFiles(
+    changes.map((change) =>
+      moving.has(change.ref)
+        ? {
+            ...change,
+            move: true,
+          }
+        : change,
+    ),
+    {
+      cwd,
+      dryRun,
+      chunkBytes,
+      send: (input) => bridge.request("upload", input, target),
+    },
+  );
 
   errors.push(...files.errors);
 
-  const parents = new Set(
-    files.changes.flatMap((change) => (change.kind === "create" && change.parent !== null ? [change.parent] : [])),
-  );
-  // What writes nothing stays here; an unchanged parent goes along so the layers made in it find it.
+  // What writes nothing stays here. A layer made or moved goes with its parent and the elements beside it, unchanged,
+  // so the plugin finds where it goes.
+  const placed = files.changes.filter((change) => change.kind === "create" || (change.move ?? false));
+  const parents = new Set(placed.flatMap((change) => (change.parent === null ? [] : [change.parent])));
+  const beside = new Set(placed.map((change) => change.parent ?? ""));
   const sent = files.changes.filter(
     (change) =>
       change.kind === "create" ||
+      (change.move ?? false) ||
       change.text !== undefined ||
       Object.keys(change.props).length > 0 ||
-      parents.has(change.ref),
+      parents.has(change.ref) ||
+      beside.has(change.parent ?? ""),
   );
 
   if (sent.length === 0) {
@@ -188,12 +199,12 @@ export async function applyDesign(
 }
 
 /**
- * Elements that would move their layer: into another parent element (a new one included), next to another layer, or
- * into another order among the layers listed with it. Writing moves comes later, and a silent no-op would mislead.
+ * Elements that move their layer, by ref: under another parent element (a new one included), with before or after, or
+ * out of the order of the layers listed with it.
  */
-function moves(elements: readonly ApplyElement[], layers: ReadonlyMap<string, Layer>): [ApplyElement, string][] {
+function moves(elements: readonly ApplyElement[], layers: ReadonlyMap<string, Layer>): Set<string> {
   const byRef = new Map(elements.map((element) => [element.ref, element]));
-  const found: [ApplyElement, string][] = [];
+  const found = new Set<string>();
   const last = new Map<string, number>();
 
   for (const element of elements) {
@@ -205,21 +216,17 @@ function moves(elements: readonly ApplyElement[], layers: ReadonlyMap<string, La
 
     const inside = element.parent === null ? undefined : byRef.get(element.parent);
     const parent = layer.parent?.id ?? null;
-    const where = parent === null ? "on its page" : `in ${parent}`;
 
     if (element.attributes.before !== undefined || element.attributes.after !== undefined) {
-      found.push([
-        element,
-        `Moving a layer is not written yet: before and after place new layers, ${element.id} stays ${where}.`,
-      ]);
+      found.add(element.ref);
     } else if (inside !== undefined && inside.id !== parent) {
-      found.push([element, `Moving a layer is not written yet: ${element.id} stays ${where}.`]);
+      found.add(element.ref);
     } else if (inside !== undefined && parent !== null) {
       const at = (layers.get(parent)?.node.children ?? []).findIndex((child) => child.id === element.id);
       const before = last.get(parent) ?? -1;
 
       if (at !== -1 && at < before) {
-        found.push([element, `Reordering layers is not written yet: ${element.id} keeps its place in the order.`]);
+        found.add(element.ref);
       }
 
       last.set(parent, Math.max(before, at));

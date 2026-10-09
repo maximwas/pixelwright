@@ -10,6 +10,7 @@ import {
 } from "@pixelwright/core";
 import type { KnownFont, Layer, TextLayer, WriteContext } from "../types/apply.ts";
 import { errorMessage } from "../utils/error-message.ts";
+import { fileName, fitIcon, insideInstance, pairCopy, svgOf, writeImage } from "./apply-assets.ts";
 import {
   bindProperties,
   componentIndex,
@@ -39,6 +40,8 @@ const MAKERS: Readonly<Record<string, () => SceneNode>> = {
   Component: () => figma.createComponent(),
   // A frame holds a new set's variants until they are combined into the set.
   ComponentSet: () => figma.createFrame(),
+  // An image fills a rectangle; its file is written as its fill.
+  Image: () => figma.createRectangle(),
 };
 
 /** The font a new text starts with: loaded before its characters are set. */
@@ -104,6 +107,19 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
     bindProperties(context.marks.splice(0));
   };
 
+  /** Each copy's layers by the source's ids, scoped by the copy; and the copy each element is inside. */
+  const copies = new Map<string, BaseNode>();
+  const copyOf = new Map<string, string>();
+
+  for (const change of changes) {
+    const scope =
+      change.copyOf === undefined ? (change.parent === null ? undefined : copyOf.get(change.parent)) : change.ref;
+
+    if (scope !== undefined) {
+      copyOf.set(change.ref, scope);
+    }
+  }
+
   for (const change of changes) {
     const fail = (error: unknown, attribute?: string) => errors.push(errorOf(change, error, attribute));
 
@@ -119,9 +135,26 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
       }
 
       const node =
-        change.kind === "update" ? await existing(change) : await create(change, changes, nodes, top, context);
+        change.source !== undefined
+          ? copied(change, copies, copyOf)
+          : change.kind === "update"
+            ? await existing(change)
+            : await create(change, changes, nodes, top, context);
 
       nodes.set(change.ref, node);
+
+      if (change.copyOf !== undefined) {
+        pairCopy(
+          (await figma.getNodeByIdAsync(change.copyOf)) as BaseNode,
+          node as unknown as BaseNode,
+          copies,
+          change.ref,
+        );
+      }
+
+      if (change.move) {
+        await moveTo(node, change, changes, nodes, top);
+      }
 
       if (change.kind === "create" && change.tag === "ComponentSet") {
         sets.push({
@@ -142,7 +175,7 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
           id: node.id,
           tag: change.tag,
         });
-      } else if (wrote) {
+      } else if (wrote && change.source === undefined) {
         changed.push(node.id);
       }
     } catch (error) {
@@ -187,7 +220,18 @@ async function layerOf(id: string): Promise<Layer> {
     throw new BridgeError("NODE_NOT_FOUND", `No layer ${id} in this file to put the new layers in.`);
   }
 
+  await loadPageOf(node);
+
   return node as unknown as Layer;
+}
+
+/** dynamic-page: a page the user is not on has its layers once loaded. */
+async function loadPageOf(node: BaseNode): Promise<void> {
+  const page = node.type === "PAGE" ? node : pageOf(node);
+
+  if (page !== null && page !== figma.currentPage) {
+    await page.loadAsync();
+  }
 }
 
 /** Every font the changes ask for, found and loaded up front, with the fonts of the texts they change. */
@@ -323,26 +367,13 @@ async function create(
   top: Layer | null,
   context: WriteContext,
 ): Promise<Layer> {
-  const make =
-    change.tag === "Instance"
-      ? async () =>
-          variantFor(
-            await context.components.find(change.props.component ?? ""),
-            change.props.variant ?? {},
-          ).createInstance()
-      : MAKERS[change.tag];
-
-  if (make === undefined) {
-    throw new WriteError(`Creating a ${change.tag} is not available yet.`);
-  }
-
   const { parent, index } = await whereTo(change, changes, nodes, top);
 
   if (typeof parent.insertChild !== "function") {
     throw new WriteError(`A ${parent.type.toLowerCase()} holds no layers: put the new one in a frame.`);
   }
 
-  const node = (await make()) as unknown as Layer;
+  const node = (await makeNode(change, parent, context)) as unknown as Layer;
 
   try {
     parent.insertChild(index, node);
@@ -352,9 +383,113 @@ async function create(
     throw error;
   }
 
-  fresh(node, change.props);
+  if (change.copyOf === undefined) {
+    fresh(node, change.props);
+  }
+
+  if (change.props.name === undefined && change.props.asset !== undefined) {
+    node.name = fileName(change.props.asset.src);
+  }
 
   return node;
+}
+
+/** A new layer: a copy of its source, an instance of its component, an icon from its SVG, a slot of its component. */
+async function makeNode(change: ApplyChange, parent: Layer, context: WriteContext): Promise<SceneNode> {
+  if (change.copyOf !== undefined) {
+    const source = await figma.getNodeByIdAsync(change.copyOf);
+
+    if (source === null || source.type === "PAGE" || source.type === "DOCUMENT") {
+      throw new WriteError(
+        `No layer ${change.copyOf} to copy.`,
+        "copyOf names a layer by its id, as design_read writes it.",
+      );
+    }
+
+    return (source as SceneNode).clone();
+  }
+
+  if (change.tag === "Instance") {
+    return variantFor(
+      await context.components.find(change.props.component ?? ""),
+      change.props.variant ?? {},
+    ).createInstance();
+  }
+
+  if (change.tag === "Icon") {
+    return figma.createNodeFromSvg(svgOf(change.props));
+  }
+
+  if (change.tag === "Slot") {
+    if (parent.type !== "COMPONENT") {
+      throw new WriteError(
+        "A slot is made in a component.",
+        'In an instance, fill the slot it has: give its <Slot id="…"> new layers.',
+      );
+    }
+
+    return (parent as unknown as ComponentNode).createSlot();
+  }
+
+  const make = MAKERS[change.tag];
+
+  if (make === undefined) {
+    throw new WriteError(`Creating a ${change.tag} is not available.`);
+  }
+
+  return make();
+}
+
+/** A layer inside a copy, by the source layer it was cloned from. */
+function copied(
+  change: ApplyChange,
+  copies: ReadonlyMap<string, BaseNode>,
+  copyOf: ReadonlyMap<string, string>,
+): Layer {
+  const node = copies.get(`${copyOf.get(change.ref)} ${change.source}`);
+
+  if (node === undefined) {
+    throw new WriteError(
+      `The copy has no layer for ${change.source}.`,
+      "Inside a copy, name only layers of the copied one, where they are in it.",
+    );
+  }
+
+  return node as unknown as Layer;
+}
+
+/** An existing layer placed again as a create would be: into another parent, next to a layer, in another order. */
+async function moveTo(
+  node: Layer,
+  change: ApplyChange,
+  changes: readonly ApplyChange[],
+  nodes: ReadonlyMap<string, Layer | null>,
+  top: Layer | null,
+): Promise<void> {
+  if (insideInstance(node)) {
+    throw new WriteError("A layer inside an instance comes from its component and stays where it is.");
+  }
+
+  const { parent, index } = await whereTo(change, changes, nodes, top);
+
+  if (typeof parent.insertChild !== "function" || parent.type === "TEXT") {
+    throw new WriteError(`A ${parent.type.toLowerCase()} holds no layers.`);
+  }
+
+  if (parent.type !== "SLOT" && (parent.type === "INSTANCE" || insideInstance(parent))) {
+    throw new WriteError("Layers go into an instance only through its slots.");
+  }
+
+  for (let up: Layer | null = parent; up !== null; up = up.parent) {
+    if (up.id === node.id) {
+      throw new WriteError("A layer cannot go inside itself.");
+    }
+  }
+
+  const at = node.parent?.id === parent.id ? indexIn(parent, node) : -1;
+
+  // A layer moved further along its own parent leaves a gap before the place it goes to.
+  parent.insertChild(at !== -1 && at < index ? index - 1 : index, node);
 }
 
 /** Where a create goes: next to the layer before/after names, else in its parent element, the call's, or the page. */
@@ -372,6 +507,8 @@ async function whereTo(
     if (sibling?.parent === null || sibling === null) {
       throw new WriteError(`No layer ${neighbour} to put the new one next to.`);
     }
+
+    await loadPageOf(sibling as unknown as BaseNode);
 
     const at = indexIn(sibling.parent, sibling);
 
@@ -490,6 +627,18 @@ async function write(
   const source = (keys: readonly (keyof FigmaProps)[]) =>
     keys.map((key) => change.sources[key]).find((attribute) => attribute !== undefined) ?? keys[0];
   const { component, variant, props, property } = change.props;
+
+  if (change.props.asset !== undefined && change.tag !== "Icon") {
+    try {
+      writeImage(node, change.props, context);
+      wrote = true;
+    } catch (error) {
+      fail(error, source(["asset"]));
+    }
+  }
+
+  // A new icon is sized by scaling it with its vectors; a resize would leave them as they are.
+  const stepped = change.tag === "Icon" && change.kind === "create" ? fitIcon(node, change.props) : change.props;
   // An instance is made of its component and variant; an existing one swaps them. Then its properties.
   const own: (readonly [keyof FigmaProps, () => Promise<void> | void])[] = [
     ...(node.type === "INSTANCE" && change.kind === "update" && component !== undefined
@@ -535,14 +684,14 @@ async function write(
 
   for (const step of STEPS) {
     if (
-      !step.keys.some((key) => change.props[key] !== undefined) ||
+      !step.keys.some((key) => stepped[key] !== undefined) ||
       (step.keys[0] === "hyperlink" && node.type === "TEXT")
     ) {
       continue;
     }
 
     try {
-      await step.write(node, change.props, context);
+      await step.write(node, stepped, context);
       wrote = true;
     } catch (error) {
       fail(error, source(step.keys));
@@ -569,14 +718,23 @@ async function check(
   context: WriteContext,
   fail: (error: unknown, attribute?: string) => void,
 ): Promise<void> {
-  if (change.kind === "update") {
+  if (change.source !== undefined) {
+    // A layer of a copy: the copy is made on a real run.
+    nodes.set(change.ref, null);
+  } else if (change.kind === "update") {
     nodes.set(change.ref, await existing(change, false));
   } else if (change.tag === "Instance") {
     // The component and variant it names, found without making anything.
     variantFor(await context.components.find(change.props.component ?? ""), change.props.variant ?? {});
     nodes.set(change.ref, null);
-  } else if (MAKERS[change.tag] === undefined) {
-    throw new WriteError(`Creating a ${change.tag} is not available yet.`);
+  } else if (change.copyOf !== undefined) {
+    if ((await figma.getNodeByIdAsync(change.copyOf)) === null) {
+      throw new WriteError(`No layer ${change.copyOf} to copy.`);
+    }
+
+    nodes.set(change.ref, null);
+  } else if (MAKERS[change.tag] === undefined && change.tag !== "Icon" && change.tag !== "Slot") {
+    throw new WriteError(`Creating a ${change.tag} is not available.`);
   } else if (change.parent !== null && !nodes.has(change.parent)) {
     throw new WriteError("Its parent element was not written: fix the parent's error first.");
   } else {
