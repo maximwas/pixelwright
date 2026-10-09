@@ -8,13 +8,13 @@ import { describe, expect, it } from "vitest";
 const entry = fileURLToPath(new URL("../src/bin.ts", import.meta.url));
 const OUT = process.env.PIXELWRIGHT_LIVE ?? "";
 
-/** The Positivus test file, read only. */
+/** The Positivus test file: Maxim's test file, anything may be done in it. */
 const FILE = "Untitled";
 
 /**
  * Calls the read tools through MCP against the plugin running in the Positivus file and writes every result under
  * PIXELWRIGHT_LIVE (a folder): PIXELWRIGHT_LIVE=/tmp/live pnpm vitest run --project integration test/live-tools.
- * Read only: no node_show (it moves the user's selection).
+ * Nothing in the file changes; node_show moves the selection and the view.
  */
 describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
   it("outline, nodes_find, design_read with assets and a screenshot", async () => {
@@ -113,6 +113,15 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
             file: FILE,
           },
         ],
+        [
+          "node_show",
+          "show.json",
+          {
+            node: "2:4875",
+            file: FILE,
+          },
+        ],
+        ["selection_get", "selection.json", { file: FILE }],
       ];
 
       for (const [name, out, args] of calls) {
