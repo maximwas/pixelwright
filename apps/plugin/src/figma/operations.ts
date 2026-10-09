@@ -9,6 +9,7 @@ import {
 import { apply } from "./apply.ts";
 import { components } from "./components.ts";
 import { deleteNodes } from "./delete.ts";
+import { execute } from "./execute.ts";
 import { exportNode, originalImage } from "./export-node.ts";
 import { find, outline, selection, show } from "./read-ops.ts";
 import { entries, snapshot } from "./snapshot.ts";
@@ -32,6 +33,7 @@ const HANDLERS: Handlers = {
   entries,
   apply,
   delete: deleteNodes,
+  execute,
   upload,
 };
 

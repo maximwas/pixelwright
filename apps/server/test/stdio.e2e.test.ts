@@ -44,6 +44,7 @@ describe("stdio server", () => {
         "components_read",
         "design_apply",
         "design_read",
+        "execute",
         "guide",
         "node_show",
         "nodes_delete",
@@ -57,7 +58,7 @@ describe("stdio server", () => {
 
       for (const tool of tools) {
         // The writing tools say so, so clients ask first (node_show moves the view, not the file).
-        const writes = ["design_apply", "nodes_delete"].includes(tool.name);
+        const writes = ["design_apply", "execute", "nodes_delete"].includes(tool.name);
 
         expect(tool.annotations?.readOnlyHint, tool.name).toBe(!writes);
         expect(tool.annotations?.destructiveHint ?? false, tool.name).toBe(writes);

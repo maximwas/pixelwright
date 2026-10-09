@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { EXPORT_CHUNK_BYTES } from "../constants/bridge.ts";
+import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
 import type { OutlineNode } from "../types/operations.ts";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "./apply.ts";
 import { SnapshotSchema } from "./snapshot.ts";
@@ -223,6 +224,18 @@ export const OPERATION_SCHEMAS = {
         .max(32 * 1024 * 1024),
     }),
     output: z.object({ received: z.number().int() }),
+  },
+  /** Code run in the plugin: its value made JSON-safe, what it printed, and what it threw or that it ran too long. */
+  execute: {
+    input: z.object({
+      code: z.string().min(1).max(EXECUTE_CODE_CHARS),
+      timeoutMs: z.number().int().min(1).max(EXECUTE_MAX_MS),
+    }),
+    output: z.object({
+      result: z.unknown(),
+      logs: z.array(z.string()),
+      error: z.string().exactOptional(),
+    }),
   },
   delete: {
     input: z.object({

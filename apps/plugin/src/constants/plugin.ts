@@ -37,6 +37,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   show: "Showed a layer",
   apply: "Changed the file",
   delete: "Deleted layers",
+  execute: "Ran code",
 };
 
 /** Steps of another action the activity leaves out: status probes, the reads before a write, files on their way in. */

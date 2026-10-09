@@ -7,6 +7,7 @@ export * from "./bridge/protocol.ts";
 export * from "./constants/apply.ts";
 export * from "./constants/bridge.ts";
 export * from "./constants/css.ts";
+export * from "./constants/execute.ts";
 export * from "./css/color.ts";
 export * from "./css/format.ts";
 export * from "./css/node-css.ts";

@@ -23,6 +23,15 @@ export function describeAction(op: string, input: unknown, outcome: RequestOutco
     };
   }
 
+  // Code that threw still answers: its error is in the result.
+  if (op === "execute" && typeof (outcome.result as { error?: unknown } | null)?.error === "string") {
+    return {
+      text: `${name} — failed`,
+      warning: true,
+      refused: false,
+    };
+  }
+
   return {
     text: op === "apply" ? applied(input, outcome.result) : op === "delete" ? deleted(outcome.result) : name,
     warning: false,

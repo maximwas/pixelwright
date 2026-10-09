@@ -88,6 +88,31 @@ describe("the window's activity", () => {
         }),
       ),
     ).toBe("Deleted 2 layers");
+    expect(
+      text(
+        "execute",
+        {},
+        ok({
+          result: 1,
+          logs: [],
+        }),
+      ),
+    ).toBe("Ran code");
+    expect(
+      describeAction(
+        "execute",
+        {},
+        ok({
+          result: null,
+          logs: [],
+          error: "Error: boom",
+        }),
+      ),
+    ).toEqual({
+      text: "Ran code — failed",
+      warning: true,
+      refused: false,
+    });
   });
 
   it("marks a write refused while Allow edits is off, and a request that failed", () => {
