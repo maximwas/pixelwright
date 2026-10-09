@@ -11,6 +11,8 @@ export const BridgeErrorCodeSchema = z.enum([
   "RESULT_NOT_SERIALIZABLE",
   "AMBIGUOUS_FILE",
   "NODE_NOT_FOUND",
+  "INVALID_XML",
+  "EDITS_DISABLED",
 ]);
 
 /** Any string on the wire: a newer plugin may send a code this side does not know (fromWireError maps it). */

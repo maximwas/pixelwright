@@ -8,6 +8,7 @@ import type { Snapshot, SnapshotNode, SnapshotPaint, SnapshotStyle, TextSegment 
 import { slug } from "../utils/slug.ts";
 import { type Classified, classify, visibleChildren } from "./classify.ts";
 import { escapeAttribute } from "./escape.ts";
+import { inlineText } from "./parse/entities.ts";
 import { tagFor } from "./tags.ts";
 
 const INDENT = "  ";
@@ -475,17 +476,9 @@ function cutCount(node: SnapshotNode, limit?: number): string | undefined {
   return listed < node.childCount ? String(node.childCount) : undefined;
 }
 
+/** Text content that reads back the same: escaped, line breaks as references, spaces-only text kept. */
 function escapeText(text: string): string {
-  return text.replace(
-    /[&<>\n]/g,
-    (char) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\n": "&#10;",
-      })[char] ?? char,
-  );
+  return inlineText(text);
 }
 
 function sorted(map: ReadonlyMap<string, string>): Record<string, string> {
