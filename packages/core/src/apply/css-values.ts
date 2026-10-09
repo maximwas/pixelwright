@@ -1,28 +1,145 @@
+import {
+  type ComponentValue,
+  isCommentNode,
+  isFunctionNode,
+  isTokenNode,
+  isWhiteSpaceOrCommentNode,
+  parseListOfComponentValues,
+  replaceComponentValues,
+  stringify,
+  walk,
+} from "@csstools/css-parser-algorithms";
+import {
+  isTokenBadURL,
+  isTokenComma,
+  isTokenDelim,
+  isTokenString,
+  isTokenURL,
+  tokenize,
+} from "@csstools/css-tokenizer";
 import { converter, parse } from "culori";
 import type { ColorValue, LengthValue, PaintSpec, TokenRef } from "../types/apply.ts";
 
 const toRgb = converter("rgb");
 
-/** A value split at a separator that is not inside parentheses: "a(1, 2), b" → ["a(1, 2)", "b"]. */
+/** A value as CSS parses it: its component values (functions with their arguments, strings, words, spaces). */
+function componentsOf(value: string): ComponentValue[] {
+  return parseListOfComponentValues(tokenize({ css: value }));
+}
+
+/**
+ * A value split at a separator CSS sees at its top level, never inside parentheses, quotes or comments:
+ * "a(1, 2), 'b, c'" → ["a(1, 2)", "'b, c'"]. Split at spaces, a comment counts as one.
+ */
 export function splitTop(value: string, separator: "," | " " | "/"): string[] {
-  const parts: string[] = [];
-  let depth = 0;
-  let current = "";
+  const parts: ComponentValue[][] = [[]];
 
-  for (const char of value) {
-    depth += char === "(" ? 1 : char === ")" ? -1 : 0;
+  for (const node of componentsOf(value)) {
+    const splits =
+      separator === " "
+        ? isWhiteSpaceOrCommentNode(node)
+        : isTokenNode(node) &&
+          (separator === "," ? isTokenComma(node.value) : isTokenDelim(node.value) && node.value[4].value === "/");
 
-    if (depth === 0 && (separator === " " ? /\s/.test(char) : char === separator)) {
-      parts.push(current);
-      current = "";
+    if (splits) {
+      parts.push([]);
     } else {
-      current += char;
+      parts[parts.length - 1]?.push(node);
     }
   }
 
-  parts.push(current);
+  return parts
+    .map((part) =>
+      part
+        .map((node) => node.toString())
+        .join("")
+        .trim(),
+    )
+    .filter((part) => part !== "");
+}
 
-  return parts.map((part) => part.trim()).filter((part) => part !== "");
+/**
+ * A background layer that starts with url(): the file it names and what follows (its position, size and repeat);
+ * "unquoted" when the name has spaces without quotes, which CSS cannot read; null for any other layer.
+ */
+export function imageOf(layer: string): { src: string; rest: string } | "unquoted" | null {
+  const nodes = componentsOf(layer.trim());
+  const [first, ...rest] = nodes;
+  const tail = () =>
+    rest
+      .map((node) => node.toString())
+      .join("")
+      .trim();
+
+  if (first !== undefined && isTokenNode(first)) {
+    if (isTokenURL(first.value)) {
+      return {
+        src: first.value[4].value,
+        rest: tail(),
+      };
+    }
+
+    return isTokenBadURL(first.value) ? "unquoted" : null;
+  }
+
+  if (first !== undefined && isFunctionNode(first) && first.getName().toLowerCase() === "url") {
+    const quoted = first.value.find((node) => isTokenNode(node) && isTokenString(node.value));
+
+    return quoted !== undefined && isTokenNode(quoted) && isTokenString(quoted.value)
+      ? {
+          src: quoted.value[4].value,
+          rest: tail(),
+        }
+      : null;
+  }
+
+  return null;
+}
+
+/** Every file a value names in url(), quoted or not, at any depth. */
+export function urlsOf(value: string): string[] {
+  const found: string[] = [];
+
+  walk(componentsOf(value), ({ node }) => {
+    if (isTokenNode(node) && isTokenURL(node.value)) {
+      found.push(node.value[4].value);
+    } else if (isFunctionNode(node) && node.getName().toLowerCase() === "url") {
+      for (const inner of node.value) {
+        if (isTokenNode(inner) && isTokenString(inner.value)) {
+          found.push(inner.value[4].value);
+        }
+      }
+    }
+  });
+
+  return found;
+}
+
+/** A value without comments and with every var() cut to its name: what a var() falls back to is left out. */
+export function withoutFallbacks(value: string): string {
+  const [nodes = []] = replaceComponentValues([componentsOf(value)], (node) => {
+    if (isCommentNode(node)) {
+      return [];
+    }
+
+    if (isFunctionNode(node) && node.getName().toLowerCase() === "var") {
+      const comma = node.value.findIndex((inner) => isTokenNode(inner) && isTokenComma(inner.value));
+
+      if (comma !== -1) {
+        node.value = node.value.slice(0, comma);
+
+        while (node.value.length > 0 && isWhiteSpaceOrCommentNode(node.value[node.value.length - 1])) {
+          node.value.pop();
+        }
+      }
+
+      return node;
+    }
+
+    return undefined;
+  });
+
+  return stringify([nodes]).replace(/\s+/g, " ").trim();
 }
 
 /** `var(--name)` → its token name (a fallback after it is left out), else null. */

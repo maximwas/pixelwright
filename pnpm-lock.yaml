@@ -114,6 +114,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@csstools/css-parser-algorithms':
+        specifier: 4.0.2
+        version: 4.0.2(@csstools/css-tokenizer@4.0.2)
+      '@csstools/css-tokenizer':
+        specifier: 4.0.2
+        version: 4.0.2
       '@noble/hashes':
         specifier: 2.4.0
         version: 2.4.0
@@ -214,6 +220,16 @@ packages:
   '@create-figma-plugin/utilities@4.0.3':
     resolution: {integrity: sha512-TfBq592yVejaKq/q8r4LdebAH0iw3r0tn1Qbqn+vlrneXZ8ADPOV2rWavviKh0kNIIwXtATneHrPSp06Bqf5Gw==}
     engines: {node: '>=22'}
+
+  '@csstools/css-parser-algorithms@4.0.2':
+    resolution: {integrity: sha512-40cSKyMvK+tq4qz6Awrlye2WGuOKt3FwPgtGg6KTfbHOWNw+Rk1rzbAtZnZ6IBhsY491HLRnDXwoyBAijmmILA==}
+    engines: {node: '>=20.19.0'}
+    peerDependencies:
+      '@csstools/css-tokenizer': ^4.0.2
+
+  '@csstools/css-tokenizer@4.0.2':
+    resolution: {integrity: sha512-OoKoR0f76dCY666JlcbhmVTs2drYj1GUXZTYTcbUgJjh9Nv41aFfZ21bPQTERm5+L5cBDo466NltB2lplS5GBw==}
+    engines: {node: '>=20.19.0'}
 
   '@esbuild/aix-ppc64@0.25.1':
     resolution: {integrity: sha512-kfYGy8IdzTGy+z0vFGvExZtxkFlA4zAxgKEahG9KE1ScBjpQnFsNOX8KTU5ojNru5ed5CVoJYXFtoxaq5nFbjQ==}
@@ -2458,6 +2474,12 @@ snapshots:
       hex-rgb: 5.0.0
       natural-compare-lite: 1.4.0
       rgb-hex: 4.1.0
+
+  '@csstools/css-parser-algorithms@4.0.2(@csstools/css-tokenizer@4.0.2)':
+    dependencies:
+      '@csstools/css-tokenizer': 4.0.2
+
+  '@csstools/css-tokenizer@4.0.2': {}
 
   '@esbuild/aix-ppc64@0.25.1':
     optional: true

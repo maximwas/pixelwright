@@ -16,7 +16,7 @@ import type {
   TextRunSpec,
 } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
-import { colorOf, lengthOf, numberOf, paintOf, percentOf, splitTop, tokenOf } from "./css-values.ts";
+import { colorOf, imageOf, lengthOf, numberOf, paintOf, percentOf, splitTop, tokenOf } from "./css-values.ts";
 
 type Read = (name: string) => string | undefined;
 
@@ -1012,17 +1012,21 @@ function layersOf(attribute: string, value: string, out: Output): PaintSpec[] | 
     const flat = stops === undefined ? null : splitTop(stops, ",");
     const paint = flat !== null && flat.length === 2 && flat[0] === flat[1] ? paintOf(flat[0] ?? "") : paintOf(layer);
 
-    const image = /^url\(\s*['"]?([^'")]+)['"]?\s*\)\s*(.*)$/s.exec(layer);
+    const image = paint === null ? imageOf(layer) : null;
 
     if (paint !== null) {
       layers.push(paint);
-    } else if (image?.[1] !== undefined && attribute === "background") {
+    } else if (image === "unquoted") {
+      out.fail(attribute, `${layer.slice(0, 40)}: a file name with spaces needs quotes.`, 'Write url("my photo.png").');
+
+      return null;
+    } else if (image !== null && attribute === "background") {
       // design_read's fits: cover is FILL, contain FIT, a repeat TILE.
-      const fit = image[2] ?? "";
+      const fit = image.rest;
 
       layers.push({
         kind: "image",
-        src: image[1],
+        src: image.src,
         scaleMode: fit.includes("contain") ? "FIT" : /(^|\s)repeat(\s|$)/.test(fit) ? "TILE" : "FILL",
       });
     } else if (image !== null) {

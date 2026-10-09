@@ -1,3 +1,4 @@
+import { splitTop } from "../apply/css-values.ts";
 import { INVISIBLE_TYPES } from "../constants/css.ts";
 import { px } from "../css/format.ts";
 import { nodeCss } from "../css/node-css.ts";
@@ -457,9 +458,9 @@ function assetPlacement(
     .map(([property]) => [property, placed.get(property) ?? ""]);
 }
 
-/** A box-shadow list split at the commas between shadows, not those inside rgba(). */
+/** A box-shadow list split at the commas between shadows, not those inside rgba() or a var() fallback. */
 function splitShadows(value: string): string[] {
-  return value.split(/,(?![^(]*\))/).map((shadow) => shadow.trim());
+  return splitTop(value, ",");
 }
 
 /** The read-only CSS of a layer; an asset keeps only its blend mode, which no exported file holds. */

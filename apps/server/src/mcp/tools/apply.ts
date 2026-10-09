@@ -10,6 +10,7 @@ import {
   readApply,
   type SnapshotNode,
   unchangedAttributes,
+  urlsOf,
 } from "@pixelwright/core";
 import type * as z from "zod";
 import { readSource, type SourceFile } from "../../assets/read-source.ts";
@@ -299,7 +300,7 @@ async function filesChanged(
   current: Readonly<Record<string, string>>,
   { cwd, written }: { cwd: string; written: () => Promise<ReadonlyMap<string, readonly string[]>> },
 ): Promise<{ changed: string[]; errors: { attribute: string; message: string }[] }> {
-  const planned = new Set([current.src, ...urlsIn(current.background ?? "")]);
+  const planned = new Set([current.src, ...urlsOf(current.background ?? "")]);
   const hashes = new Set(
     (Array.isArray(node.fills) ? node.fills : []).flatMap((paint) =>
       paint.imageHash === undefined ? [] : [paint.imageHash],
@@ -329,7 +330,7 @@ async function filesChanged(
     changed.push("src");
   }
 
-  for (const path of urlsIn(element.attributes.background ?? "")) {
+  for (const path of urlsOf(element.attributes.background ?? "")) {
     if (await differs("background", path)) {
       changed.push("background");
       break;
@@ -340,12 +341,6 @@ async function filesChanged(
     changed,
     errors,
   };
-}
-
-function urlsIn(css: string): string[] {
-  return [...css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].flatMap(([, path]) =>
-    path === undefined ? [] : [path],
-  );
 }
 
 /**

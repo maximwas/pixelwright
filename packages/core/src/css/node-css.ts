@@ -1,3 +1,4 @@
+import { withoutFallbacks } from "../apply/css-values.ts";
 import { CSS_ORDER, VECTOR_TYPES } from "../constants/css.ts";
 import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
@@ -664,9 +665,7 @@ function setLength(
 
 /** getCSSAsync's value made like ours: no fallbacks inside var(), no comments, whole pixels. */
 export function cleanOracle(value: string): string {
-  return value
-    .replace(/\/\*.*?\*\//g, "")
-    .replace(/var\((--[^,)]+),[^)]*\)/g, "var($1)")
+  return withoutFallbacks(value)
     .replace(/(-?\d+\.\d+)px/g, (_match, number: string) => px(Number(number)))
     .trim();
 }
