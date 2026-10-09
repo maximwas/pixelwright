@@ -18,8 +18,13 @@ nothing reaches api.figma.com.
 ```bash
 pnpm install && pnpm build
 pnpm lint && pnpm typecheck && pnpm test
-pnpm dev:plugin   # then in Figma Desktop: Plugins → Development → Import plugin from manifest → apps/plugin/manifest.json
+pnpm plugin:install   # builds the plugin into ~/.pixelwright/plugin
+# then in Figma Desktop: Plugins → Development → Import plugin from manifest → ~/.pixelwright/plugin/manifest.json
 ```
+
+Figma Desktop is not allowed to read the folders macOS protects (Desktop, Documents, Downloads) unless you grant it
+access, and it loads a development plugin's code from disk on every run. `plugin:install` puts the plugin outside them,
+so the repository can live anywhere. Run it again after every change to the plugin.
 
 ## License
 

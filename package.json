@@ -9,6 +9,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev:plugin": "pnpm --filter @pixelwright/plugin dev",
+    "plugin:install": "pnpm --filter @pixelwright/plugin build && mkdir -p ~/.pixelwright/plugin && rsync -a --delete apps/plugin/manifest.json apps/plugin/build ~/.pixelwright/plugin/",
     "test": "vitest run --project core --project server --project plugin",
     "test:integration": "vitest run --project integration",
     "lint": "biome check . && eslint .",
