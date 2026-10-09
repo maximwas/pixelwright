@@ -341,11 +341,19 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
     });
   }
 
-  define("getRangeAllFontNames", () => [node.fontName]);
+  define("getRangeAllFontNames", (start: number, end: number) => {
+    // As Figma: a range of no characters is refused, so an empty text is read through its own fontName.
+    if (end <= start) {
+      throw new Error("in getRangeAllFontNames: Empty range selected. 'end' must be greater than 'start'");
+    }
+
+    return [node.fontName];
+  });
   define(
     "getStyledTextSegments",
     (fields: string[]) =>
-      (node.segments as object[] | undefined) ?? [
+      (node.segments as object[] | undefined) ??
+      (characters === "" ? [] : undefined) ?? [
         {
           characters,
           start: 0,

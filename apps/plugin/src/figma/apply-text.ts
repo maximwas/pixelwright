@@ -69,9 +69,7 @@ export async function writeText(
       const retyped = node.characters !== change.text.characters;
 
       if (retyped) {
-        const unloaded = node
-          .getRangeAllFontNames(0, node.characters.length)
-          .find((font) => context.unloaded.has(`${font.family} ${font.style}`));
+        const unloaded = fontsOf(node).find((font) => context.unloaded.has(`${font.family} ${font.style}`));
 
         if (unloaded !== undefined) {
           throw new WriteError(
@@ -143,6 +141,15 @@ export async function writeText(
   }
 
   return wrote;
+}
+
+/** The fonts a text uses: an empty one through its own fontName, since Figma refuses a range of no characters. */
+function fontsOf(node: TextLayer): FontName[] {
+  if (node.characters.length > 0) {
+    return node.getRangeAllFontNames(0, node.characters.length);
+  }
+
+  return typeof node.fontName === "object" && node.fontName !== null ? [node.fontName as FontName] : [];
 }
 
 function longest<T extends { start: number; end: number }>(segments: readonly T[]): T | undefined {

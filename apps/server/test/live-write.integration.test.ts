@@ -9,6 +9,8 @@ import { describe, expect, it } from "vitest";
 const entry = fileURLToPath(new URL("../src/bin.ts", import.meta.url));
 const OUT = process.env.PIXELWRIGHT_LIVE ?? "";
 const WRITE = process.env.PIXELWRIGHT_LIVE_WRITE === "1";
+/** Seconds to wait for the user to switch Allow edits on before the writes (PIXELWRIGHT_LIVE_WAIT, default none). */
+const WAIT = Number(process.env.PIXELWRIGHT_LIVE_WAIT ?? "0") * 1_000;
 
 /** The Positivus test file: Maxim's test file, anything may be done in it. Writes go nowhere else. */
 const FILE = "Untitled";
@@ -32,178 +34,192 @@ type Call = (name: string, args: Record<string, unknown>) => Promise<{ structure
  * back (the card and probe deleted, the text restored).
  */
 describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () => {
-  it("round trip, dry run, then (with Allow edits) the export probe, a card and an instance text", async () => {
-    const transport = new StdioClientTransport({
-      command: process.execPath,
-      args: [entry],
-      env: Object.fromEntries(
-        Object.entries(process.env).filter((pair): pair is [string, string] => pair[1] !== undefined),
-      ),
-      stderr: "pipe",
-    });
-    const client = new Client({
-      name: "live-write",
-      version: "0.0.0",
-    });
-    const log: Record<string, unknown> = {};
-    const call: Call = async (name, args) => {
-      const result = await client.callTool({
-        name,
-        arguments: {
-          file: FILE,
-          ...args,
-        },
+  it(
+    "round trip, dry run, then (with Allow edits) the export probe, a card and an instance text",
+    async () => {
+      const transport = new StdioClientTransport({
+        command: process.execPath,
+        args: [entry],
+        env: Object.fromEntries(
+          Object.entries(process.env).filter((pair): pair is [string, string] => pair[1] !== undefined),
+        ),
+        stderr: "pipe",
       });
-      const text = (result.content as { type: string; text?: string }[])[0]?.text ?? "";
+      const client = new Client({
+        name: "live-write",
+        version: "0.0.0",
+      });
+      const log: Record<string, unknown> = {};
+      const call: Call = async (name, args) => {
+        const result = await client.callTool({
+          name,
+          arguments: {
+            file: FILE,
+            ...args,
+          },
+        });
+        const text = (result.content as { type: string; text?: string }[])[0]?.text ?? "";
 
-      if (result.isError) {
-        throw new Error(`${name}: ${text}`);
-      }
-
-      return {
-        structured: result.structuredContent,
-        text,
-      };
-    };
-
-    await client.connect(transport);
-    mkdirSync(OUT, { recursive: true });
-
-    try {
-      let allowEdits = false;
-
-      for (let tries = 0; tries < 30; tries++) {
-        const { structured } = await call("status", {});
-        const file = (structured as { files: { name: string; allowEdits: boolean }[] }).files.find(
-          ({ name }) => name === FILE,
-        );
-
-        if (file !== undefined) {
-          allowEdits = file.allowEdits;
-          break;
+        if (result.isError) {
+          throw new Error(`${name}: ${text}`);
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 1_000));
+        return {
+          structured: result.structuredContent,
+          text,
+        };
+      };
+
+      await client.connect(transport);
+      mkdirSync(OUT, { recursive: true });
+
+      try {
+        const editsOn = async () => {
+          const { structured } = await call("status", {});
+          const file = (structured as { files: { name: string; allowEdits: boolean }[] }).files.find(
+            ({ name }) => name === FILE,
+          );
+
+          return file?.allowEdits;
+        };
+        let allowEdits = false;
+
+        for (let tries = 0; tries < 30; tries++) {
+          const on = await editsOn();
+
+          if (on !== undefined) {
+            allowEdits = on;
+            break;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 1_000));
+        }
+
+        // The round trip: the Services row read and sent back writes nothing (it needs no Allow edits).
+        const row = (await call("design_read", { node: "2:4869" })).text;
+        const back = (await call("design_apply", { xml: row })).structured;
+
+        log.roundTrip = back;
+        expect(back).toEqual({
+          created: [],
+          changed: [],
+          errors: [],
+          dryRun: false,
+        });
+
+        // The card checked against the file's styles and fonts without writing.
+        const checked = (
+          await call("design_apply", {
+            xml: CARD,
+            dryRun: true,
+          })
+        ).structured as { errors: unknown[] };
+
+        log.dryRun = checked;
+        expect(checked.errors).toEqual([]);
+
+        for (const until = Date.now() + WAIT; !allowEdits && Date.now() < until; ) {
+          await new Promise((resolve) => setTimeout(resolve, 2_000));
+          allowEdits = (await editsOn()) ?? false;
+        }
+
+        log.allowEdits = allowEdits;
+
+        if (!allowEdits) {
+          return;
+        }
+
+        // S1: the probe exported as PNG at 1x and as SVG.
+        const probe = (await call("design_apply", { xml: PROBE })).structured as { created: { id: string }[] };
+        const probeId = probe.created[0]?.id ?? "";
+        const exported = (
+          await call("assets_export", {
+            nodes: [probeId],
+            format: "PNG",
+            scale: 1,
+            dir: join(OUT, "s1"),
+          })
+        ).structured as { files: { path: string }[] };
+        const svg = (
+          await call("assets_export", {
+            nodes: [probeId],
+            format: "SVG",
+            dir: join(OUT, "s1"),
+          })
+        ).structured as { files: { path: string }[] };
+        const png = readFileSync(exported.files[0]?.path ?? "");
+
+        log.s1 = {
+          centre: pixel(png, 20, 20),
+          rim: pixel(png, 1, 20),
+          svg: readFileSync(svg.files[0]?.path ?? "", "utf8").slice(0, 2_000),
+        };
+
+        // A card in a free-form board beside the page's layers: made, looked at, widened (its height still hugs).
+        const board = (
+          await call("design_apply", {
+            xml: `<Frame name="Pixelwright check" width="900px" height="600px" background="#FFF">${CARD.replace(
+              "<Frame name=",
+              '<Frame position="absolute" left="40px" top="40px" name=',
+            )}</Frame>`,
+          })
+        ).structured as {
+          created: { id: string; tag: string }[];
+          errors: unknown[];
+        };
+        const [boardLayer, cardLayer] = board.created;
+        const boardId = boardLayer?.id ?? "";
+        const cardId = cardLayer?.id ?? "";
+
+        log.card = board;
+        expect(board.errors).toEqual([]);
+        log.cardXml = (await call("design_read", { node: boardId })).text;
+        await call("screenshot", {
+          node: cardId,
+          save: join(OUT, "card.png"),
+        });
+
+        const widened = (await call("design_apply", { xml: `<Frame id="${cardId}" width="560px"/>` })).structured;
+        const cardLine = (await call("design_read", { node: boardId })).text
+          .split("\n")
+          .find((line) => line.includes(`id="${cardId}"`));
+
+        log.widened = {
+          widened,
+          cardLine,
+        };
+        expect(cardLine).toContain('width="560px"');
+        expect(cardLine).not.toContain("height=");
+
+        // An instance's text by its I…;… id: only the characters change, its style stays; then the old text back.
+        const label = /<Text id="(I[^"]+)"[^>]*>([^<]+)<\/Text>/.exec(row);
+        const [, labelId = "", labelText = ""] = label ?? [];
+        const before = (await call("design_read", { node: labelId })).text;
+        const edited = (await call("design_apply", { xml: `<Text id="${labelId}">${labelText} now</Text>` }))
+          .structured as { changed: string[]; errors: unknown[] };
+        const after = (await call("design_read", { node: labelId })).text;
+
+        log.instanceText = {
+          id: labelId,
+          edited,
+          before,
+          after,
+        };
+        expect(edited.changed).toEqual([labelId]);
+        expect(after).toBe(before.replace(`>${labelText}<`, `>${labelText} now<`));
+        await call("design_apply", { xml: `<Text id="${labelId}">${labelText}</Text>` });
+        expect((await call("design_read", { node: labelId })).text).toBe(before);
+
+        log.deleted = (await call("nodes_delete", { nodes: [boardId, probeId] })).structured;
+        // Taken back whole: the row reads as before.
+        expect((await call("design_read", { node: "2:4869" })).text).toBe(row);
+      } finally {
+        writeFileSync(join(OUT, "live-write.json"), JSON.stringify(log, null, 2));
+        await client.close();
       }
-
-      // The round trip: the Services row read and sent back writes nothing (it needs no Allow edits).
-      const row = (await call("design_read", { node: "2:4869" })).text;
-      const back = (await call("design_apply", { xml: row })).structured;
-
-      log.roundTrip = back;
-      expect(back).toEqual({
-        created: [],
-        changed: [],
-        errors: [],
-        dryRun: false,
-      });
-
-      // The card checked against the file's styles and fonts without writing.
-      const checked = (
-        await call("design_apply", {
-          xml: CARD,
-          dryRun: true,
-        })
-      ).structured as { errors: unknown[] };
-
-      log.dryRun = checked;
-      expect(checked.errors).toEqual([]);
-
-      log.allowEdits = allowEdits;
-
-      if (!allowEdits) {
-        return;
-      }
-
-      // S1: the probe exported as PNG at 1x and as SVG.
-      const probe = (await call("design_apply", { xml: PROBE })).structured as { created: { id: string }[] };
-      const probeId = probe.created[0]?.id ?? "";
-      const exported = (
-        await call("assets_export", {
-          nodes: [probeId],
-          format: "PNG",
-          scale: 1,
-          dir: join(OUT, "s1"),
-        })
-      ).structured as { files: { path: string }[] };
-      const svg = (
-        await call("assets_export", {
-          nodes: [probeId],
-          format: "SVG",
-          dir: join(OUT, "s1"),
-        })
-      ).structured as { files: { path: string }[] };
-      const png = readFileSync(exported.files[0]?.path ?? "");
-
-      log.s1 = {
-        centre: pixel(png, 20, 20),
-        rim: pixel(png, 1, 20),
-        svg: readFileSync(svg.files[0]?.path ?? "", "utf8").slice(0, 2_000),
-      };
-
-      // A card in a free-form board beside the page's layers: made, looked at, widened (its height still hugs).
-      const board = (
-        await call("design_apply", {
-          xml: `<Frame name="Pixelwright check" width="900px" height="600px" background="#FFF">${CARD.replace(
-            "<Frame name=",
-            '<Frame position="absolute" left="40px" top="40px" name=',
-          )}</Frame>`,
-        })
-      ).structured as {
-        created: { id: string; tag: string }[];
-        errors: unknown[];
-      };
-      const [boardLayer, cardLayer] = board.created;
-      const boardId = boardLayer?.id ?? "";
-      const cardId = cardLayer?.id ?? "";
-
-      log.card = board;
-      expect(board.errors).toEqual([]);
-      log.cardXml = (await call("design_read", { node: boardId })).text;
-      await call("screenshot", {
-        node: cardId,
-        save: join(OUT, "card.png"),
-      });
-
-      const widened = (await call("design_apply", { xml: `<Frame id="${cardId}" width="560px"/>` })).structured;
-      const cardLine = (await call("design_read", { node: boardId })).text
-        .split("\n")
-        .find((line) => line.includes(`id="${cardId}"`));
-
-      log.widened = {
-        widened,
-        cardLine,
-      };
-      expect(cardLine).toContain('width="560px"');
-      expect(cardLine).not.toContain("height=");
-
-      // An instance's text by its I…;… id: only the characters change, its style stays; then the old text back.
-      const label = /<Text id="(I[^"]+)"[^>]*>([^<]+)<\/Text>/.exec(row);
-      const [, labelId = "", labelText = ""] = label ?? [];
-      const before = (await call("design_read", { node: labelId })).text;
-      const edited = (await call("design_apply", { xml: `<Text id="${labelId}">${labelText} now</Text>` }))
-        .structured as { changed: string[]; errors: unknown[] };
-      const after = (await call("design_read", { node: labelId })).text;
-
-      log.instanceText = {
-        id: labelId,
-        edited,
-        before,
-        after,
-      };
-      expect(edited.changed).toEqual([labelId]);
-      expect(after).toBe(before.replace(`>${labelText}<`, `>${labelText} now<`));
-      await call("design_apply", { xml: `<Text id="${labelId}">${labelText}</Text>` });
-      expect((await call("design_read", { node: labelId })).text).toBe(before);
-
-      log.deleted = (await call("nodes_delete", { nodes: [boardId, probeId] })).structured;
-      // Taken back whole: the row reads as before.
-      expect((await call("design_read", { node: "2:4869" })).text).toBe(row);
-    } finally {
-      writeFileSync(join(OUT, "live-write.json"), JSON.stringify(log, null, 2));
-      await client.close();
-    }
-  }, 120_000);
+    },
+    120_000 + WAIT,
+  );
 });
 
 /** One pixel of an 8-bit RGB or RGBA PNG: inflate the image data and undo each row's filter down to the row asked. */
