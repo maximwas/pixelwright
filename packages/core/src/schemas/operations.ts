@@ -41,6 +41,36 @@ export const OutlineNodeSchema: z.ZodType<OutlineNode> = z.object({
 });
 
 const NodeIdSchema = z.string().min(1).max(200);
+
+/** A component or component set as components_read lists it: variants under their set, properties from the set. */
+export const ComponentEntrySchema = z.object({
+  id: z.string(),
+  key: z.string(),
+  type: z.enum(["COMPONENT", "COMPONENT_SET"]),
+  name: z.string(),
+  page: z.string().nullable(),
+  remote: z.boolean(),
+  description: z.string().exactOptional(),
+  variants: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+      }),
+    )
+    .exactOptional(),
+  properties: z.record(
+    z.string(),
+    z.object({
+      type: z.string(),
+      default: z.union([z.string(), z.boolean()]),
+      options: z.array(z.string()).exactOptional(),
+    }),
+  ),
+  /** How many instances use it, for scope used. */
+  instances: z.number().int().exactOptional(),
+});
+
 const QuerySchema = z.string().min(1).max(200);
 
 /**
@@ -117,6 +147,19 @@ export const OPERATION_SCHEMAS = {
     output: z.object({
       totalBytes: z.number().int().min(0),
       bytes: z.string(),
+    }),
+  },
+  components: {
+    input: z.object({
+      /** local: the file's own components; used: those the instances in `within` (or the current page) come from. */
+      scope: z.enum(["local", "used"]).default("used"),
+      within: NodeIdSchema.exactOptional(),
+      query: QuerySchema.exactOptional(),
+      limit: z.number().int().min(1).max(500).default(100),
+    }),
+    output: z.object({
+      components: z.array(ComponentEntrySchema),
+      more: z.boolean(),
     }),
   },
   variables: {

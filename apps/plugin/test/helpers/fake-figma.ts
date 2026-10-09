@@ -77,6 +77,8 @@ export function tree(spec: Spec, parent: FakeNode | null = null): FakeNode {
     node.getCSSAsync = async () => node.css;
   }
 
+  node.findAllWithCriteria = ({ types }: { types: string[] }) =>
+    node.findAll?.((child) => types.includes(child.type)) ?? [];
   node.findAll = (predicate) => {
     const all: FakeNode[] = [];
 

@@ -6,6 +6,7 @@ import {
   type OperationOutput,
 } from "@pixelwright/core";
 
+import { components } from "./components.ts";
 import { exportNode, originalImage } from "./export-node.ts";
 import { find, outline, selection, show } from "./read-ops.ts";
 import { snapshot } from "./snapshot.ts";
@@ -24,6 +25,7 @@ const HANDLERS: Handlers = {
   image: originalImage,
   snapshot,
   variables,
+  components,
 };
 
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);
