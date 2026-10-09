@@ -40,7 +40,9 @@ type Stage =
       readonly serverNonce: string;
     }
   | { readonly kind: "pairing"; readonly info: PluginInfo }
-  | { readonly kind: "session"; readonly session: PluginSession };
+  | { readonly kind: "session"; readonly session: PluginSession }
+  /** Closed by the server while it waited for the code: it has stopped waiting, the close handshake may still run. */
+  | { readonly kind: "closed" };
 
 /**
  * One plugin WebSocket. A plugin with a key the server knows is challenged: the server proves the key first, then the
@@ -84,7 +86,7 @@ export class PluginConnection {
     this.#alive = true;
 
     if (message === null) {
-      this.#socket.close(CloseCode.BadMessage, "invalid message");
+      this.#close(CloseCode.BadMessage, "invalid message");
 
       return;
     }
@@ -106,18 +108,33 @@ export class PluginConnection {
       case "session":
         this.#onSessionMessage(stage.session, message);
         break;
+      case "closed":
+        break;
     }
+  }
+
+  /**
+   * Closes the socket. A plugin waiting for the code stops waiting at once, not when the close handshake ends, so
+   * status never makes a code for a plugin that is already being turned away.
+   */
+  #close(code: number, reason: string): void {
+    if (this.#stage.kind === "pairing") {
+      this.#stage = { kind: "closed" };
+      this.#options.onPendingEnded(this);
+    }
+
+    this.#socket.close(code, reason);
   }
 
   #onHello(message: PluginToServer): void {
     if (message.type !== "hello") {
-      this.#socket.close(CloseCode.BadMessage, "expected hello");
+      this.#close(CloseCode.BadMessage, "expected hello");
 
       return;
     }
 
     if (message.protocol !== BRIDGE_PROTOCOL_VERSION) {
-      this.#socket.close(CloseCode.VersionMismatch, `protocol ${BRIDGE_PROTOCOL_VERSION} required`);
+      this.#close(CloseCode.VersionMismatch, `protocol ${BRIDGE_PROTOCOL_VERSION} required`);
 
       return;
     }
@@ -134,7 +151,7 @@ export class PluginConnection {
         pluginNonce: message.nonce,
         serverNonce,
       };
-      this.#deadline = setTimeout(() => this.#socket.close(CloseCode.HelloTimeout, "auth timeout"), HELLO_TIMEOUT_MS);
+      this.#deadline = setTimeout(() => this.#close(CloseCode.HelloTimeout, "auth timeout"), HELLO_TIMEOUT_MS);
       this.#send({
         type: "challenge",
         nonce: serverNonce,
@@ -145,7 +162,7 @@ export class PluginConnection {
     }
 
     if (!this.#options.onPending(this)) {
-      this.#socket.close(CloseCode.TooManySessions, "too many plugins waiting to be paired");
+      this.#close(CloseCode.TooManySessions, "too many plugins waiting to be paired");
 
       return;
     }
@@ -156,7 +173,7 @@ export class PluginConnection {
     };
     // Waiting lasts as long as a code does: a page cannot sit on the few waiting slots, and the real plugin reconnects.
     this.#deadline = setTimeout(
-      () => this.#socket.close(CloseCode.HelloTimeout, "waited too long for the pairing code"),
+      () => this.#close(CloseCode.HelloTimeout, "waited too long for the pairing code"),
       this.#options.pendingTimeoutMs,
     );
     this.#askToPair(message.keyId === null ? "no_key" : "unknown_key");
@@ -166,7 +183,7 @@ export class PluginConnection {
     const expected = proofFor(stage.key.secret, "plugin", stage.serverNonce, stage.pluginNonce);
 
     if (message.type !== "auth" || !proofEquals(message.proof, expected)) {
-      this.#socket.close(CloseCode.Unauthorized, "the plugin could not prove its key");
+      this.#close(CloseCode.Unauthorized, "the plugin could not prove its key");
 
       return;
     }
@@ -176,7 +193,7 @@ export class PluginConnection {
 
   #onPair(stage: Extract<Stage, { kind: "pairing" }>, message: PluginToServer): void {
     if (message.type !== "pair") {
-      this.#socket.close(CloseCode.BadMessage, "expected the pairing code");
+      this.#close(CloseCode.BadMessage, "expected the pairing code");
 
       return;
     }
@@ -188,7 +205,7 @@ export class PluginConnection {
         const key = this.#storeKey();
 
         if (key === null) {
-          this.#socket.close(CloseCode.InternalError, "the key could not be stored");
+          this.#close(CloseCode.InternalError, "the key could not be stored");
 
           return;
         }
@@ -246,7 +263,7 @@ export class PluginConnection {
     } else if (message.type === "event") {
       this.#onEvent(session, message.name, message.data);
     } else {
-      this.#socket.close(CloseCode.BadMessage, `unexpected ${message.type}`);
+      this.#close(CloseCode.BadMessage, `unexpected ${message.type}`);
     }
   }
 
@@ -289,7 +306,7 @@ export class PluginConnection {
   /** The plugin proved its key or typed the code: it becomes a session unless the server is full. */
   #admit(info: PluginInfo): void {
     if (!this.#options.admit(info)) {
-      this.#socket.close(CloseCode.TooManySessions, "too many plugin sessions");
+      this.#close(CloseCode.TooManySessions, "too many plugin sessions");
 
       return;
     }
