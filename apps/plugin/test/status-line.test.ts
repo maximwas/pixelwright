@@ -1,8 +1,56 @@
 import { describe, expect, it } from "vitest";
-import { pairingNote, statusLine } from "../src/view/status-line.ts";
+import { editsHint, editsNote, pairingNote, statusLine } from "../src/view/status-line.ts";
 
-describe("the window's texts", () => {
-  it("asks for the code while pairing, and says why a code did not work", () => {
+describe("the window's status", () => {
+  it("says what to do when no server is there, and why it waits when it knows", () => {
+    expect(
+      statusLine(
+        {
+          kind: "waiting",
+          retryInMs: 500,
+          reason: null,
+        },
+        "Positivus",
+      ),
+    ).toEqual({
+      tone: "wait",
+      title: "Not connected",
+      detail: "Start Claude Code, Cursor or another AI app with Pixelwright. This window connects by itself.",
+    });
+    expect(
+      statusLine(
+        {
+          kind: "waiting",
+          retryInMs: 500,
+          reason: "The program could not prove it.",
+        },
+        "x",
+      ).detail,
+    ).toBe("The program could not prove it.");
+  });
+
+  it("names the file the AI sees once connected; what it may do with it is the switch's", () => {
+    expect(
+      statusLine(
+        {
+          kind: "connected",
+          serverVersion: "0.1.0",
+        },
+        "Positivus",
+      ),
+    ).toEqual({
+      tone: "ok",
+      title: "Connected",
+      detail: "Your AI assistant sees “Positivus”.",
+    });
+  });
+
+  it("names the other states plainly", () => {
+    expect(statusLine({ kind: "connecting" }, "x")).toEqual({
+      tone: "wait",
+      title: "Connecting…",
+      detail: "Looking for Pixelwright on this computer.",
+    });
     expect(
       statusLine(
         {
@@ -10,16 +58,48 @@ describe("the window's texts", () => {
           reason: "no_key",
           attemptsLeft: 5,
         },
-        "Positivus",
-      ).text,
-    ).toBe("Pair this plugin with Pixelwright");
+        "x",
+      ),
+    ).toEqual({
+      tone: "wait",
+      title: "Pair this window",
+      detail: null,
+    });
+    expect(
+      statusLine(
+        {
+          kind: "stopped",
+          reason: "This plugin is older than the server: update it.",
+        },
+        "x",
+      ),
+    ).toEqual({
+      tone: "error",
+      title: "Stopped",
+      detail: "This plugin is older than the server: update it.",
+    });
+  });
+
+  it("says how long edits stay on and how to take them back, and asks for them after a refused write", () => {
+    expect(editsNote(true, "⌘Z")).toBe(
+      "AI may change this file until you close this window. Each change is one undo step (⌘Z).",
+    );
+    expect(editsNote(false, "⌘Z")).toBe("AI only reads this file.");
+    expect(editsHint(true, false)).toBe("Your AI tried to change this file: turn on Allow edits.");
+    expect(editsHint(true, true)).toBeNull();
+    expect(editsHint(false, false)).toBeNull();
+  });
+});
+
+describe("pairing", () => {
+  it("asks for the code, and says why a code did not work", () => {
     expect(
       pairingNote({
         kind: "pairing",
         reason: "no_key",
         attemptsLeft: 5,
       }),
-    ).toBe("Ask your AI assistant for the pairing code (it is in status) and type it here.");
+    ).toBe("Ask your AI assistant for the 6-digit pairing code and type it here.");
     expect(
       pairingNote({
         kind: "pairing",
@@ -47,7 +127,7 @@ describe("the window's texts", () => {
         reason: "unknown_key",
         attemptsLeft: 5,
       }),
-    ).toBe("Pixelwright no longer knows this plugin: ask your assistant for a pairing code and type it here.");
+    ).toBe("Pixelwright no longer knows this window: ask your assistant for a pairing code and type it here.");
     expect(
       pairingNote({
         kind: "pairing",
@@ -63,18 +143,5 @@ describe("the window's texts", () => {
         serverVersion: "0.1.0",
       }),
     ).toBeNull();
-  });
-
-  it("says why it is waiting when it knows", () => {
-    expect(
-      statusLine(
-        {
-          kind: "waiting",
-          retryInMs: 500,
-          reason: "The program could not prove it.",
-        },
-        "x",
-      ).text,
-    ).toBe("The program could not prove it.");
   });
 });

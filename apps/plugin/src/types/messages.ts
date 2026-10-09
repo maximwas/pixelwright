@@ -46,6 +46,12 @@ export interface PairingHandler extends EventHandler {
   handler: (key: PluginKey | null) => void;
 }
 
+/** window → main: the window's content is this tall now. */
+export interface ResizeHandler extends EventHandler {
+  name: "RESIZE";
+  handler: (height: number) => void;
+}
+
 /** window → main: keep this key, issued after the user typed the pairing code. */
 export interface SavePairingHandler extends EventHandler {
   name: "SAVE_PAIRING";

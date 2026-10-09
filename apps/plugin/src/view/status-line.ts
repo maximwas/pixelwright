@@ -2,37 +2,62 @@ import type { LinkState } from "../types/link.ts";
 
 export interface StatusLine {
   readonly tone: "ok" | "wait" | "error";
-  readonly text: string;
+  readonly title: string;
+  /** What it means for the file, or what to do next. */
+  readonly detail: string | null;
 }
 
+/**
+ * The connection in a word, and in one plain sentence the file the AI sees or what the user should do; what the AI may
+ * do with the file is the Allow edits switch's to say.
+ */
 export function statusLine(link: LinkState, fileName: string): StatusLine {
   switch (link.kind) {
     case "connected":
       return {
         tone: "ok",
-        text: `Connected · ${fileName}`,
+        title: "Connected",
+        detail: `Your AI assistant sees “${fileName}”.`,
       };
     case "connecting":
       return {
         tone: "wait",
-        text: "Connecting to Pixelwright…",
+        title: "Connecting…",
+        detail: "Looking for Pixelwright on this computer.",
       };
     case "pairing":
       return {
         tone: "wait",
-        text: "Pair this plugin with Pixelwright",
+        title: "Pair this window",
+        detail: null,
       };
     case "waiting":
       return {
         tone: "wait",
-        text: link.reason ?? "Waiting for the Pixelwright server: start your MCP client with Pixelwright.",
+        title: "Not connected",
+        detail:
+          link.reason ??
+          "Start Claude Code, Cursor or another AI app with Pixelwright. This window connects by itself.",
       };
     case "stopped":
       return {
         tone: "error",
-        text: link.reason,
+        title: "Stopped",
+        detail: link.reason,
       };
   }
+}
+
+/** Under the Allow edits switch: how long it stays on and how a change is taken back, or that the AI only reads. */
+export function editsNote(allowEdits: boolean, undo: string): string {
+  return allowEdits
+    ? `AI may change this file until you close this window. Each change is one undo step (${undo}).`
+    : "AI only reads this file.";
+}
+
+/** Above the switch after the AI tried to write while it was off; null otherwise. */
+export function editsHint(refused: boolean, allowEdits: boolean): string | null {
+  return refused && !allowEdits ? "Your AI tried to change this file: turn on Allow edits." : null;
 }
 
 /** The line under the code field while pairing; null in any other state. */
@@ -43,9 +68,9 @@ export function pairingNote(link: LinkState): string | null {
 
   switch (link.reason) {
     case "no_key":
-      return "Ask your AI assistant for the pairing code (it is in status) and type it here.";
+      return "Ask your AI assistant for the 6-digit pairing code and type it here.";
     case "unknown_key":
-      return "Pixelwright no longer knows this plugin: ask your assistant for a pairing code and type it here.";
+      return "Pixelwright no longer knows this window: ask your assistant for a pairing code and type it here.";
     case "expired":
       return "That code expired: ask your assistant for the new one.";
     case "locked":

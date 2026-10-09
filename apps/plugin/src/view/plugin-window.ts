@@ -1,5 +1,5 @@
 import type { WindowState } from "../types/window.ts";
-import { pairingNote, statusLine } from "./status-line.ts";
+import { editsHint, editsNote, pairingNote, statusLine } from "./status-line.ts";
 import { WINDOW_CSS } from "./styles.ts";
 
 interface WindowHandlers {
@@ -8,39 +8,37 @@ interface WindowHandlers {
   readonly onPair: (code: string) => void;
 }
 
+/** The undo shortcut of the system Figma runs on. */
+const UNDO = navigator.userAgent.includes("Mac") ? "⌘Z" : "Ctrl+Z";
+
 /**
- * The plugin's small window: connection, the pairing field while the server waits for the code, the Allow edits switch,
- * the last actions. Built once, re-rendered in place.
+ * The plugin's small window: the connection and what it lets the AI do, the pairing field while the server waits for
+ * the code, the Allow edits switch, what the AI did last. Built once, re-rendered in place.
  */
 export function createPluginWindow(
   root: HTMLElement,
   { onAllowEdits, onPair }: WindowHandlers,
 ): { render(state: WindowState): void } {
   const style = document.createElement("style");
-  const status = document.createElement("div");
-  const dot = document.createElement("span");
-  const statusText = document.createElement("span");
-  const toggleRow = document.createElement("label");
-  const toggle = document.createElement("input");
-  const note = document.createElement("p");
-  const actions = document.createElement("ul");
-  const pairing = document.createElement("form");
+  const status = element("div", "status");
+  const dot = element("span", "dot");
+  const title = element("strong", "title");
+  const detail = element("p", "detail");
+  const pairing = element("form", "pairing");
   const codeField = document.createElement("input");
   const pairButton = document.createElement("button");
-  const pairingText = document.createElement("p");
+  const pairingText = element("p", "note");
+  const hint = element("p", "hint");
+  const edits = element("section", "edits");
+  const toggleRow = element("label", "toggle");
+  const toggle = document.createElement("input");
+  const note = element("p", "note");
+  const activity = element("section", "activity");
+  const heading = element("h2", "heading");
+  const actions = element("ul", "actions");
 
   style.textContent = WINDOW_CSS;
-  status.className = "status";
-  dot.className = "dot";
-  status.append(dot, statusText);
-  toggle.type = "checkbox";
-  toggle.setAttribute("role", "switch");
-  toggle.addEventListener("change", () => onAllowEdits(toggle.checked));
-  toggleRow.className = "toggle";
-  toggleRow.append("Allow edits", toggle);
-  note.className = "note";
-  actions.className = "actions";
-  pairing.className = "pairing";
+  status.append(dot, element("div", "words", title, detail));
   codeField.inputMode = "numeric";
   codeField.maxLength = 6;
   codeField.autocomplete = "one-time-code";
@@ -48,7 +46,6 @@ export function createPluginWindow(
   codeField.setAttribute("aria-label", "Pairing code");
   pairButton.type = "submit";
   pairButton.textContent = "Pair";
-  pairingText.className = "note";
   pairing.append(codeField, pairButton);
   pairing.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -60,41 +57,68 @@ export function createPluginWindow(
       codeField.value = "";
     }
   });
-  root.append(style, status, pairing, pairingText, toggleRow, note, actions);
+  hint.setAttribute("role", "alert");
+  toggle.type = "checkbox";
+  toggle.setAttribute("role", "switch");
+  toggle.addEventListener("change", () => onAllowEdits(toggle.checked));
+  toggleRow.append("Allow edits", toggle);
+  edits.append(toggleRow, note);
+  heading.textContent = "Activity";
+  activity.append(heading, actions);
+  root.append(style, status, pairing, pairingText, hint, edits, activity);
 
   return {
-    render({ context, link, actions: recent }) {
+    render({ context, link, actions: recent, refused }) {
       const line = statusLine(link, context.file.name);
+      const pairingLine = pairingNote(link);
+      const hintLine = editsHint(refused, context.allowEdits);
 
       dot.dataset.tone = line.tone;
-      statusText.textContent = line.text;
-
-      const pairingLine = pairingNote(link);
-
+      title.textContent = line.title;
+      detail.textContent = line.detail ?? "";
+      detail.hidden = line.detail === null;
       pairing.hidden = pairingLine === null;
       pairingText.hidden = pairingLine === null;
       pairingText.textContent = pairingLine ?? "";
+      hint.hidden = hintLine === null;
+      hint.textContent = hintLine ?? "";
       toggle.checked = context.allowEdits;
-      note.textContent = context.allowEdits
-        ? "On until this window closes: Pixelwright may change this file, one undo step per change."
-        : "Off: Pixelwright only reads this file.";
+      note.textContent = editsNote(context.allowEdits, UNDO);
       actions.replaceChildren(
         ...(recent.length === 0
-          ? [item("No actions yet", "")]
-          : recent.map((action) => item(action.op, new Date(action.at).toLocaleTimeString()))),
+          ? [element("li", "empty", "Nothing yet")]
+          : recent.map((action) =>
+              element(
+                "li",
+                action.warning ? "warning" : "",
+                element("span", "what", action.text),
+                element(
+                  "span",
+                  "when",
+                  new Date(action.at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                ),
+              ),
+            )),
       );
     },
   };
 }
 
-function item(name: string, time: string): HTMLLIElement {
-  const row = document.createElement("li");
-  const label = document.createElement("span");
-  const when = document.createElement("span");
+function element<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  className: string,
+  ...content: (Node | string)[]
+): HTMLElementTagNameMap[K] {
+  const made = document.createElement(tag);
 
-  label.textContent = name;
-  when.textContent = time;
-  row.append(label, when);
+  if (className !== "") {
+    made.className = className;
+  }
 
-  return row;
+  made.append(...content);
+
+  return made;
 }

@@ -12,12 +12,13 @@ import type {
   PluginContext,
   ReadyHandler,
   RequestHandler,
+  ResizeHandler,
   ResponseHandler,
   SavePairingHandler,
 } from "./types/messages.ts";
 import type { RecentAction } from "./types/window.ts";
 import { createPluginWindow } from "./view/plugin-window.ts";
-import { withAction } from "./view/recent-actions.ts";
+import { describeAction, withAction } from "./view/recent-actions.ts";
 
 /**
  * The UI iframe: holds the bridge socket (only the iframe may use the network) and draws the window. It starts with no
@@ -30,6 +31,8 @@ export default function (root: HTMLElement): void {
   let context: PluginContext | null = null;
   let link: LinkState = { kind: "connecting" };
   let actions: readonly RecentAction[] = [];
+  // A write came while Allow edits was off: the window asks for it until it is on.
+  let refused = false;
   let socket: SocketLink | null = null;
   const view = createPluginWindow(root, {
     onAllowEdits: (value) => emit<AllowEditsHandler>("ALLOW_EDITS", value),
@@ -41,6 +44,7 @@ export default function (root: HTMLElement): void {
         context,
         link,
         actions,
+        refused,
       });
     }
   };
@@ -54,11 +58,22 @@ export default function (root: HTMLElement): void {
       url: BRIDGE_URL,
       info: () => info(context ?? current),
       key: storedKey,
-      onRequest: (request: RequestMessage): Promise<RequestOutcome> => {
-        actions = withAction(actions, request.op, Date.now());
-        render();
+      onRequest: async (request: RequestMessage): Promise<RequestOutcome> => {
+        const outcome = await relay.call(request.op, request.input ?? null);
+        const line = describeAction(request.op, request.input, outcome);
 
-        return relay.call(request.op, request.input ?? null);
+        // Listed once answered, with what it did.
+        if (line !== null) {
+          actions = withAction(actions, {
+            text: line.text,
+            at: Date.now(),
+            warning: line.warning,
+          });
+          refused ||= line.refused;
+          render();
+        }
+
+        return outcome;
       },
       onState: (state) => {
         link = state;
@@ -73,6 +88,7 @@ export default function (root: HTMLElement): void {
   });
   on<ContextHandler>("CONTEXT", (next) => {
     context = next;
+    refused &&= !next.allowEdits;
     render();
 
     if (socket === null) {
@@ -83,5 +99,7 @@ export default function (root: HTMLElement): void {
     }
   });
   document.addEventListener("visibilitychange", () => socket?.sendInfo());
+  // The window is as tall as what it shows: the pairing field and the hint come and go.
+  new ResizeObserver(() => emit<ResizeHandler>("RESIZE", root.getBoundingClientRect().height)).observe(root);
   emit<ReadyHandler>("READY");
 }

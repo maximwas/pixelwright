@@ -1,4 +1,4 @@
-import { BRIDGE_PATH, BRIDGE_PORT } from "@pixelwright/core";
+import { BRIDGE_PATH, BRIDGE_PORT, SILENT_OPERATIONS } from "@pixelwright/core";
 
 export const BRIDGE_URL = `ws://localhost:${BRIDGE_PORT}${BRIDGE_PATH}`;
 
@@ -15,8 +15,32 @@ export const PLUGIN_WINDOW = {
 /** figma.clientStorage key of the paired key: per user and plugin, shared by every file, so pairing is once a machine. */
 export const PAIRING_STORAGE_KEY = "pixelwright.pairing";
 
+/** The window follows its content's height (the pairing field and the hint come and go), within these bounds. */
+export const WINDOW_HEIGHT = {
+  min: 120,
+  max: 560,
+} as const;
+
 /** How many of the last actions the window shows. */
 export const RECENT_ACTIONS = 5;
+
+/** What the window's activity calls each request; a request not here goes by its operation's name. */
+export const ACTION_NAMES: Readonly<Record<string, string>> = {
+  snapshot: "Read a design",
+  outline: "Read the page outline",
+  export: "Exported an image",
+  image: "Exported an image",
+  components: "Read components",
+  variables: "Read styles and variables",
+  find: "Searched layers",
+  selection: "Read the selection",
+  show: "Showed a layer",
+  apply: "Changed the file",
+  delete: "Deleted layers",
+};
+
+/** Steps of another action the activity leaves out: status probes, the reads before a write, files on their way in. */
+export const QUIET_OPERATIONS: ReadonlySet<string> = new Set([...SILENT_OPERATIONS, "entries", "upload"]);
 
 export const RECONNECT = {
   firstMs: 500,
