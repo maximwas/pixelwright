@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changeOf, cleanOracle, colorOf, slug, splitTop, urlsOf } from "../src/index.ts";
+import { changeOf, cleanOracle, closest, colorOf, slug, splitTop, urlsOf } from "../src/index.ts";
 
 const props = (tag: string, attributes: Record<string, string>) =>
   changeOf({
@@ -115,5 +115,17 @@ describe("file names from layer names", () => {
       "asset",
       "asset",
     ]);
+  });
+});
+
+describe("Did you mean", () => {
+  it("names the closest candidate within a third of the name (at least 2 edits), ignoring case, the first on a tie", () => {
+    expect(closest("Headng", ["Header", "Heading"])).toBe("Heading");
+    expect(closest("HEADING", ["Heading"])).toBe("Heading");
+    expect(closest("abcdef", ["abcxyf"])).toBe("abcxyf");
+    expect(closest("abcdef", ["abxyzf"])).toBeNull();
+    expect(closest("Cat", ["Bat", "Hat"])).toBe("Bat");
+    expect(closest("Div", ["Frame", "Text"])).toBeNull();
+    expect(closest("Frame", [])).toBeNull();
   });
 });
