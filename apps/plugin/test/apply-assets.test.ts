@@ -290,6 +290,15 @@ describe("apply: copies, slots and moves", () => {
     expect(errors).toEqual([expect.objectContaining({ message: expect.stringMatching(/instance/) })]);
   });
 
+  it("still writes a layer's own attributes when it cannot move", async () => {
+    const { errors } = await apply(
+      changesOf('<Frame id="3:1"><Frame id="I2:1;3:4" name="Renamed"/></Frame>', { "I2:1;3:4": moved }),
+    );
+
+    expect(errors).toEqual([expect.objectContaining({ message: expect.stringMatching(/instance/) })]);
+    expect(byId("I2:1;3:4")?.name).toBe("Renamed");
+  });
+
   it("loads the page of a layer a new one goes next to", async () => {
     const { errors, created } = await apply(changesOf('<Frame name="Next" after="5:2"/>'));
 

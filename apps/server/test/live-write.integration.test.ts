@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { inflateSync } from "node:zlib";
+import { crc32, deflateSync, inflateSync } from "node:zlib";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { describe, expect, it } from "vitest";
@@ -257,7 +257,32 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
 
         log.set = set;
         expect(set.errors).toEqual([]);
-        expect((await call("design_read", { node: tagInstance })).text).toContain('props="Label=Made from XML"');
+
+        // The instance looks like its variant: its props, and the variant's own background.
+        const tagRead = (await call("design_read", { node: tagInstance })).text;
+
+        expect(tagRead).toContain('props="Label=Made from XML"');
+        expect(tagRead).toMatch(/^<Instance [^>]*background="var\(--Grey\)"/);
+
+        // (b2) A set whose variant holds an instance: combined once its XML ends, both variants in it.
+        const nested = (
+          await call("design_apply", {
+            xml: `<Frame id="${boardId}"><ComponentSet name="Pixelwright check nested" position="absolute" left="620px" top="300px"><Component variant="Kind=A" display="flex"><Instance component="Heading" variant="${firstVariant}"/></Component><Component variant="Kind=B" display="flex"><Text>B</Text></Component></ComponentSet></Frame>`,
+          })
+        ).structured as { created: { id: string; tag: string }[]; errors: unknown[] };
+        const nestedRead = (
+          await call("design_read", {
+            node: nested.created.find(({ tag: kind }) => kind === "ComponentSet")?.id ?? "",
+          })
+        ).text;
+
+        log.nested = {
+          nested,
+          nestedRead,
+        };
+        expect(nested.errors).toEqual([]);
+        expect(nestedRead).toContain("Kind=A");
+        expect(nestedRead).toContain("Kind=B");
 
         // (c) The row read with its files and sent back writes nothing; its image and icon made again from those files.
         const assets = join(OUT, "assets");
@@ -302,6 +327,21 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
           changed: [],
           errors: [],
         });
+
+        // (c2) An image wider than Figma takes (4096 px) is refused, and no empty rectangle is left.
+        const wide = join(OUT, "wide.png");
+
+        writeFileSync(wide, blankPng(4_100, 2));
+
+        const tooWide = (
+          await call("design_apply", {
+            xml: `<Frame id="${boardId}"><Image src="${wide}" width="410px" height="10px"/></Frame>`,
+          })
+        ).structured as { created: unknown[]; errors: unknown[] };
+
+        log.tooWide = tooWide;
+        expect(tooWide.created).toEqual([]);
+        expect(tooWide.errors).toHaveLength(1);
 
         if (images[1] !== undefined && images[1] !== images[0]) {
           const swapped = (await call("design_apply", { xml: `<Image id="${imageId}" src="${images[1]}"/>` }))
@@ -382,6 +422,32 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
     120_000 + WAIT,
   );
 });
+
+/** A transparent RGBA PNG of this size. */
+function blankPng(width: number, height: number): Buffer {
+  const chunk = (type: string, data: Buffer) => {
+    const length = Buffer.alloc(4);
+    const sum = Buffer.alloc(4);
+
+    length.writeUInt32BE(data.length);
+    sum.writeUInt32BE(crc32(Buffer.concat([Buffer.from(type, "ascii"), data])));
+
+    return Buffer.concat([length, Buffer.from(type, "ascii"), data, sum]);
+  };
+  const header = Buffer.alloc(13);
+
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk("IHDR", header),
+    chunk("IDAT", deflateSync(Buffer.alloc((width * 4 + 1) * height))),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
+}
 
 /** One pixel of an 8-bit RGB or RGBA PNG: inflate the image data and undo each row's filter down to the row asked. */
 function pixel(png: Buffer, x: number, y: number): number[] {
