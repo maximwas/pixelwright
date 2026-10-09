@@ -8,6 +8,7 @@ import { memoryFiles } from "../src/assets/written-files.ts";
 import { applyDesign } from "../src/mcp/tools/apply.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
+import { pngHeader } from "./helpers/images.ts";
 
 /** A bridge over one snapshot: entries come from it (cut below the root when asked), apply answers what it was given. */
 function bridgeOver(snapshot: Snapshot, { cut = false }: { cut?: boolean } = {}) {
@@ -414,6 +415,31 @@ describe("design_apply: files", () => {
         message: expect.stringMatching(/gone\.png/),
       }),
     ]);
+  });
+
+  it("refuses an image wider or taller than Figma takes (4096 px) before sending it", async () => {
+    const dir = folder();
+
+    writeFileSync(join(dir, "wide.png"), pngHeader(4_100, 2));
+
+    const { bridge, requests } = bridgeOver(photoSnapshot(PNG));
+    const result = await applyDesign(
+      bridge,
+      {
+        xml: '<Image src="wide.png"/>',
+        parent: "1:1",
+        dryRun: false,
+      },
+      { cwd: dir },
+    );
+
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        attribute: "src",
+        message: expect.stringMatching(/4100.*4096/),
+      }),
+    ]);
+    expect(requests.map(({ op }) => op)).not.toContain("upload");
   });
 
   it("refuses a WebP file for a new image: Figma makes images of PNG, JPG and GIF", async () => {

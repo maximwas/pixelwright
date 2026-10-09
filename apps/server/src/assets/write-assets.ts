@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import type { PlannedAsset } from "@pixelwright/core";
+import { imageInfo } from "./image-info.ts";
 import type { WrittenFiles } from "./written-files.ts";
 
 /** A file design_read wrote, or the one it reused for the same bytes. */
@@ -45,7 +46,7 @@ export async function writeAssets(
 
     if (src === undefined) {
       const name = await freeName(
-        withExtension(basename(asset.src), asset.imageHash === undefined ? null : extensionOf(bytes)),
+        withExtension(basename(asset.src), asset.imageHash === undefined ? null : (imageInfo(bytes)?.format ?? null)),
         bytes,
         dir,
         names,
@@ -75,27 +76,6 @@ export async function writeAssets(
     srcByKey,
     written,
   };
-}
-
-/** The format an image's bytes are in, by their signature. */
-export function extensionOf(bytes: Buffer): string | null {
-  if (bytes.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]))) {
-    return "png";
-  }
-
-  if (bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) {
-    return "jpg";
-  }
-
-  if (bytes.subarray(0, 4).toString("latin1") === "GIF8") {
-    return "gif";
-  }
-
-  if (bytes.subarray(0, 4).toString("latin1") === "RIFF" && bytes.subarray(8, 12).toString("latin1") === "WEBP") {
-    return "webp";
-  }
-
-  return null;
 }
 
 function withExtension(name: string, extension: string | null): string {

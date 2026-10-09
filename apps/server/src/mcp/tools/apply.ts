@@ -13,11 +13,11 @@ import {
   urlsOf,
 } from "@pixelwright/core";
 import type * as z from "zod";
+import { imageInfo } from "../../assets/image-info.ts";
 import { readSource, type SourceFile } from "../../assets/read-source.ts";
-import { extensionOf } from "../../assets/write-assets.ts";
 import { memoryFiles, type WrittenFiles } from "../../assets/written-files.ts";
 import { resolveTarget } from "../../bridge/target.ts";
-import { UPLOAD_CHUNK_BYTES, WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
+import { MAX_FIGMA_IMAGE_SIDE, UPLOAD_CHUNK_BYTES, WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
 import { DesignApplyInputSchema, DesignApplyOutputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
@@ -467,9 +467,17 @@ async function holdFile(
     return { error: file };
   }
 
-  if (kind === "image" && extensionOf(file.bytes) === "webp") {
+  const info = kind === "image" ? imageInfo(file.bytes) : null;
+
+  if (info?.format === "webp") {
     return {
       error: `${path} is a WebP image: Figma makes images of PNG, JPG and GIF files only, so convert it first.`,
+    };
+  }
+
+  if (info !== null && Math.max(info.width, info.height) > MAX_FIGMA_IMAGE_SIDE) {
+    return {
+      error: `${path} is ${info.width}×${info.height} px: Figma takes images up to ${MAX_FIGMA_IMAGE_SIDE} px a side, so scale it down first.`,
     };
   }
 

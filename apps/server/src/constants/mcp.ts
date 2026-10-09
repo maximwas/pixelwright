@@ -48,3 +48,6 @@ export const MAX_SVG_BYTES = 2 * 1024 * 1024;
 
 /** The most files written-files.json remembers: the oldest are forgotten first. */
 export const WRITTEN_FILES_LIMIT = 5_000;
+
+/** The longest side of an image figma.createImage takes (verified live: 4100 px is refused). */
+export const MAX_FIGMA_IMAGE_SIDE = 4_096;

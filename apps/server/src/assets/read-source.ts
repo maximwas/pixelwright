@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { MAX_SOURCE_BYTES, MAX_SVG_BYTES } from "../constants/mcp.ts";
-import { extensionOf } from "./write-assets.ts";
+import { imageInfo } from "./image-info.ts";
 
 /** A file design_apply writes from: its bytes and their SHA-1 (Figma's image hash). */
 export interface SourceFile {
@@ -35,7 +35,7 @@ export async function readSource(
 
   const bytes = await readFile(absolute);
 
-  if (kind === "icon" ? !/<svg[\s>]/i.test(bytes.subarray(0, 4096).toString("utf8")) : extensionOf(bytes) === null) {
+  if (kind === "icon" ? !/<svg[\s>]/i.test(bytes.subarray(0, 4096).toString("utf8")) : imageInfo(bytes) === null) {
     return kind === "icon"
       ? `${path} is not an SVG: an <Icon> is drawn from an SVG file.`
       : `${path} is not a PNG, JPG, GIF or WebP image.`;

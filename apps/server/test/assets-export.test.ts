@@ -8,13 +8,12 @@ import { memoryFiles } from "../src/assets/written-files.ts";
 import { exportAssets } from "../src/mcp/tools/assets.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
+import { JPEG, PNG } from "./helpers/images.ts";
 
 const ROW = JSON.parse(
   await readFile(new URL("../../../packages/core/test/fixtures/positivus-services-row.json", import.meta.url), "utf8"),
 ) as unknown;
 
-const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]);
 const HASH = "c".repeat(40);
 
 /** A layer as the snapshot op returns it, alone. */

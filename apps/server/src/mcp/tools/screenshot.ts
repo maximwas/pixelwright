@@ -3,10 +3,10 @@ import { dirname, extname, resolve } from "node:path";
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { BridgeError } from "@pixelwright/core";
 import type * as z from "zod";
+import { imageInfo } from "../../assets/image-info.ts";
 import { INLINE_ATTEMPTS, MAX_IMAGE_SIDE_PX, MAX_INLINE_IMAGE_BYTES } from "../../constants/mcp.ts";
 import { ScreenshotInputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
-import { readPngSize } from "../../utils/png-size.ts";
 import { describeError } from "../describe-error.ts";
 import { exportBytes } from "../export-bytes.ts";
 
@@ -173,7 +173,7 @@ async function pngPath(save: string): Promise<string> {
 
   const existing = await readFile(path).catch(() => null);
 
-  if (existing !== null && readPngSize(existing) === null) {
+  if (existing !== null && imageInfo(existing)?.format !== "png") {
     throw new BridgeError("OP_FAILED", `${path} exists and is not a PNG: choose another path, it is not overwritten.`);
   }
 
@@ -181,7 +181,8 @@ async function pngPath(save: string): Promise<string> {
 }
 
 function sizeOf(bytes: Uint8Array, node: string): { width: number; height: number } {
-  const size = readPngSize(bytes);
+  const info = imageInfo(bytes);
+  const size = info?.format === "png" ? info : null;
 
   if (size === null) {
     throw new BridgeError("OP_FAILED", `Figma's export of ${node} is not a PNG.`);
