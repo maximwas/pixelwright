@@ -52,3 +52,92 @@ export const DesignReadInputSchema = z.object({
     .describe("Longest XML to return; deeper branches past it come back empty with $truncated, to read on their own."),
   file: FileSchema,
 });
+
+export const TokensReadInputSchema = z.object({
+  collections: z
+    .array(z.string().min(1).max(200))
+    .min(1)
+    .max(50)
+    .exactOptional()
+    .describe("Only these variable collections, by name (case does not matter). Default: all of them."),
+  libraries: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Also list the enabled libraries' variables, by name and type: their values are read only once the file uses them.",
+    ),
+  format: z
+    .enum(["css", "json"])
+    .default("css")
+    .describe("css: ready custom properties, a block per extra mode. json: the token model, per collection and mode."),
+  file: FileSchema,
+});
+
+const StyleTokenSchema = z.object({
+  name: z.string(),
+  token: z.string(),
+  value: z.string(),
+});
+
+const LibrarySchema = z.array(
+  z.object({
+    libraryName: z.string(),
+    collection: z.string(),
+    key: z.string(),
+    variables: z.array(
+      z.object({
+        name: z.string(),
+        key: z.string(),
+        resolvedType: z.string(),
+      }),
+    ),
+  }),
+);
+
+export const TokensReadOutputSchema = z.object({
+  format: z.enum(["css", "json"]),
+  css: z.string().exactOptional(),
+  summary: z
+    .object({
+      collections: z.array(
+        z.object({
+          name: z.string(),
+          modes: z.array(z.string()),
+          variables: z.number(),
+        }),
+      ),
+      styles: z.object({
+        paint: z.number(),
+        text: z.number(),
+        effect: z.number(),
+      }),
+    })
+    .exactOptional(),
+  tokens: z
+    .object({
+      collections: z.array(
+        z.object({
+          name: z.string(),
+          modes: z.array(z.string()),
+          defaultMode: z.string(),
+          variables: z.array(
+            z.object({
+              name: z.string(),
+              token: z.string(),
+              type: z.string(),
+              values: z.record(z.string(), z.string()),
+              description: z.string().exactOptional(),
+            }),
+          ),
+        }),
+      ),
+      styles: z.object({
+        paint: z.array(StyleTokenSchema),
+        text: z.array(StyleTokenSchema),
+        effect: z.array(StyleTokenSchema),
+      }),
+    })
+    .exactOptional(),
+  library: LibrarySchema.exactOptional(),
+  notes: z.array(z.string()),
+});

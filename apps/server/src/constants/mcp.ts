@@ -12,3 +12,13 @@ export const MAX_INLINE_IMAGE_BYTES = 3.5 * 1024 * 1024;
 
 /** How many renders screenshot tries, each at a lower scale, to fit the inline limits. */
 export const INLINE_ATTEMPTS = 3;
+
+/** Tools that only read: they change nothing in Figma (node_show moves only the view and the selection). */
+export const READ_ONLY_ANNOTATIONS = {
+  readOnlyHint: true,
+  idempotentHint: true,
+  openWorldHint: false,
+} as const;
+
+/** The most library variables tokens_read lists by name; the rest are counted. */
+export const MAX_LIBRARY_VARIABLES = 500;

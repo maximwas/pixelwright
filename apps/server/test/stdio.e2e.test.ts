@@ -47,6 +47,7 @@ describe("stdio server", () => {
         "screenshot",
         "selection_get",
         "status",
+        "tokens_read",
       ]);
 
       for (const tool of tools) {

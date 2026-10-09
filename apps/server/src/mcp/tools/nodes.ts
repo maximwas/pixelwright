@@ -1,16 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { countOutline, OPERATION_SCHEMAS, outlineXml } from "@pixelwright/core";
 import * as z from "zod";
+import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
 import { FileSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
 import { runOp } from "../run-op.ts";
 
-const READ_ONLY = {
-  readOnlyHint: true,
-  idempotentHint: true,
-  openWorldHint: false,
-} as const;
+const READ_ONLY = READ_ONLY_ANNOTATIONS;
 
 export function registerNodeTools(server: McpServer, { bridge }: ToolContext): void {
   registerTool(server, {

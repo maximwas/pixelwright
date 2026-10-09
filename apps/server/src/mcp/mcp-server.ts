@@ -5,6 +5,7 @@ import { registerDesignTool } from "./tools/design.ts";
 import { registerNodeTools } from "./tools/nodes.ts";
 import { registerScreenshotTool } from "./tools/screenshot.ts";
 import { registerStatusTool } from "./tools/status.ts";
+import { registerTokensTool } from "./tools/tokens.ts";
 
 export function createMcpServer(context: ToolContext): McpServer {
   const server = new McpServer(
@@ -19,6 +20,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerNodeTools(server, context);
   registerScreenshotTool(server, context);
   registerDesignTool(server, context);
+  registerTokensTool(server, context);
 
   return server;
 }

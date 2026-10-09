@@ -494,6 +494,15 @@ function effectsCss(node: SnapshotNode, css: Map<string, string>, context: CssCo
   }
 }
 
+/** Shadows as a box-shadow list, top first (an effect style's value, for the tokens). */
+export function shadowListCss(effects: readonly SnapshotEffect[]): string {
+  return effects
+    .filter((effect) => effect.visible !== false && (effect.type === "DROP_SHADOW" || effect.type === "INNER_SHADOW"))
+    .toReversed()
+    .map((effect) => shadowCss(effect, false))
+    .join(", ");
+}
+
 function shadowCss(effect: SnapshotEffect, isText: boolean): string {
   const parts = [
     effect.type === "INNER_SHADOW" ? "inset" : null,

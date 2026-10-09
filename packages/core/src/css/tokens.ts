@@ -26,7 +26,7 @@ function hash(text: string): string {
 }
 
 /** A variable's custom property: the WEB code syntax its designer gave it, else its name. */
-export function variableTokenName(variable: SnapshotVariable): string {
+export function variableTokenName(variable: Pick<SnapshotVariable, "name" | "codeSyntax">): string {
   const web = variable.codeSyntax?.WEB?.trim();
 
   if (web === undefined || web === "") {
