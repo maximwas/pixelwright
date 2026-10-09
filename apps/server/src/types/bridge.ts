@@ -1,4 +1,4 @@
-import type { BridgeError, PluginInfo, PluginToServer } from "@pixelwright/core";
+import type { BridgeError, PluginInfo, PluginKey, PluginToServer } from "@pixelwright/core";
 import type { WebSocket } from "ws";
 import type * as z from "zod";
 import type { PendingRequests } from "../bridge/pending-requests.ts";
@@ -132,4 +132,29 @@ export interface BridgeStatus {
   readonly port: number;
   /** What the user should do; null when a file is connected and nothing is wrong. */
   readonly hint: string | null;
+}
+
+/** The keys of paired plugins (FilePluginKeys keeps them in bridge.json). */
+export interface PluginKeys {
+  find(id: string): PluginKey | null;
+  add(): PluginKey;
+}
+
+/** The pairing code in force: what the user types, until when, and how many wrong tries are left. */
+export interface ActiveCode {
+  readonly code: string;
+  readonly expiresAt: number;
+  readonly attemptsLeft: number;
+}
+
+export type CodeCheck =
+  | { readonly outcome: "ok" }
+  | { readonly outcome: "wrong"; readonly attemptsLeft: number }
+  | { readonly outcome: "expired" };
+
+export interface PairingCodesOptions {
+  readonly now?: () => number;
+  readonly randomDigits?: () => string;
+  readonly ttlMs?: number;
+  readonly attempts?: number;
 }

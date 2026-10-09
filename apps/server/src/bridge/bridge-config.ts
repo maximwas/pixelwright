@@ -2,10 +2,15 @@
 import { randomBytes } from "node:crypto";
 import { chmodSync, linkSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { DEFAULT_BRIDGE_PORT } from "../constants/bridge.ts";
 import { BridgeConfigSchema, PortSchema } from "../schemas/bridge.ts";
 import type { BridgeConfig, BridgeConfigOptions } from "../types/bridge.ts";
+
+/** Where bridge.json lives: PIXELWRIGHT_HOME, by default ~/.pixelwright. */
+export function bridgeConfigFile(env: Record<string, string | undefined> = process.env): string {
+  return join(env.PIXELWRIGHT_HOME?.trim() || join(homedir(), ".pixelwright"), "bridge.json");
+}
 
 /**
  * Reads `bridge.json` in PIXELWRIGHT_HOME (default ~/.pixelwright), creating it on first use. The first pixelwright process
@@ -15,14 +20,13 @@ import type { BridgeConfig, BridgeConfigOptions } from "../types/bridge.ts";
 export function loadOrCreateBridgeConfig(options: BridgeConfigOptions = {}): BridgeConfig {
   const env = options.env ?? process.env;
   const warn = options.warn ?? console.warn;
-  const dir = env.PIXELWRIGHT_HOME?.trim() || join(homedir(), ".pixelwright");
+  const file = bridgeConfigFile(env);
 
-  mkdirSync(dir, {
+  mkdirSync(dirname(file), {
     recursive: true,
     mode: 0o700,
   });
 
-  const file = join(dir, "bridge.json");
   const envPort = readEnvPort(env, warn);
   const created = createConfigFile(file, envPort ?? DEFAULT_BRIDGE_PORT);
 
@@ -39,15 +43,6 @@ export function loadOrCreateBridgeConfig(options: BridgeConfigOptions = {}): Bri
   }
 
   return existing;
-}
-
-/** The port the running processes agreed on, without creating bridge.json; null while there is none. */
-export function readBridgePort(file: string): number | null {
-  try {
-    return readConfigFile(file).port;
-  } catch {
-    return null;
-  }
 }
 
 function readEnvPort(env: Record<string, string | undefined>, warn: (message: string) => void): number | null {
@@ -74,6 +69,7 @@ function createConfigFile(file: string, port: number): BridgeConfig | null {
     version: 1,
     port,
     token: randomBytes(32).toString("base64url"),
+    pluginKeys: [],
   };
   const temp = `${file}.${process.pid}.${Date.now()}.tmp`;
 

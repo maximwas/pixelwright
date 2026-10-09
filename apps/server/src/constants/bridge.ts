@@ -25,6 +25,14 @@ export const CLOSE_GRACE_MS = 1_000;
  */
 export const MAX_PLUGIN_SESSIONS = 16;
 
+/** How long a pairing code stays valid, and how many wrong tries it takes before a new one replaces it. */
+export const PAIRING_CODE_TTL_MS = 120_000;
+
+export const PAIRING_ATTEMPTS = 5;
+
+/** How many unpaired plugins may wait for a code at once; one more is closed 4429. */
+export const MAX_PENDING_PLUGINS = 8;
+
 /** How long a new socket has to say hello before it is closed. */
 export const HELLO_TIMEOUT_MS = 5_000;
 
