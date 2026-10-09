@@ -1,15 +1,16 @@
+import { randomUUID } from "node:crypto";
 import { BridgeError, EXPORT_CHUNK_BYTES, OPERATION_SCHEMAS, type OperationInput } from "@pixelwright/core";
 import { resolveTarget } from "../bridge/target.ts";
 import type { BridgeView } from "../types/mcp.ts";
 
-export type ExportRequest = Omit<OperationInput<"export">, "offset" | "length">;
+export type ExportRequest = Omit<OperationInput<"export">, "offset" | "length" | "stream">;
 
 export interface ExportOptions {
   readonly file?: string | undefined;
   /** The plugin session to ask, when the caller resolved it already (several exports from one read). */
   readonly target?: { session: string } | undefined;
-  /** Sees the first chunk and the scale it was rendered at before the rest are asked for; throwing stops there. */
-  readonly onFirstChunk?: (first: Buffer, scale: number) => void;
+  /** Sees the first chunk, the scale it was rendered at and the export's size before the rest; throwing stops there. */
+  readonly onFirstChunk?: (first: Buffer, scale: number, totalBytes: number) => void;
 }
 
 /**
@@ -23,6 +24,8 @@ export async function exportBytes(
 ): Promise<{ bytes: Buffer; scale: number }> {
   // One target for every chunk: the user may switch the active file between two of them.
   const session = target ?? resolveTarget(bridge.plugins(), file);
+  // Its own stream: another export read at the same time never shares this one's render.
+  const stream = randomUUID();
   let scale = request.scale;
   const bytes = await readChunks(
     request.node,
@@ -34,6 +37,7 @@ export async function exportBytes(
             ...request,
             offset,
             length: EXPORT_CHUNK_BYTES,
+            stream,
           },
           session,
         ),
@@ -45,7 +49,7 @@ export async function exportBytes(
 
       return answer;
     },
-    (first) => onFirstChunk?.(first, scale),
+    (first, total) => onFirstChunk?.(first, scale, total),
   );
 
   return {
@@ -56,6 +60,8 @@ export async function exportBytes(
 
 /** An image as it was placed in the file, by its hash: not cropped, filtered or scaled. */
 export async function imageBytes(bridge: BridgeView, hash: string, target: { session: string }): Promise<Buffer> {
+  const stream = randomUUID();
+
   return readChunks(`image ${hash}`, async (offset) =>
     OPERATION_SCHEMAS.image.output.parse(
       await bridge.request(
@@ -64,6 +70,7 @@ export async function imageBytes(bridge: BridgeView, hash: string, target: { ses
           hash,
           offset,
           length: EXPORT_CHUNK_BYTES,
+          stream,
         },
         target,
       ),
@@ -75,7 +82,7 @@ export async function imageBytes(bridge: BridgeView, hash: string, target: { ses
 async function readChunks(
   what: string,
   ask: (offset: number) => Promise<{ totalBytes: number; bytes: string }>,
-  onFirst?: (first: Buffer) => void,
+  onFirst?: (first: Buffer, totalBytes: number) => void,
 ): Promise<Buffer> {
   const chunks: Buffer[] = [];
   let received = 0;
@@ -95,7 +102,7 @@ async function readChunks(
 
     if (total === null) {
       total = answer.totalBytes;
-      onFirst?.(bytes);
+      onFirst?.(bytes, total);
     }
 
     chunks.push(bytes);

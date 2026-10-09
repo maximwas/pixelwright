@@ -1,28 +1,44 @@
+/** How many exports may be read at once before the oldest is dropped (and rendered again if asked for). */
+const STREAMS = 4;
+
 /**
- * One result the server reads chunk by chunk. The first chunk (offset 0) always makes it afresh, so a layer changed
- * since is never served stale; later chunks of the same request come from memory, dropped after the last one.
+ * Results the server reads chunk by chunk, one per stream (an id the server gives each export). The first chunk
+ * (offset 0) always makes the result afresh, so a layer changed since is never served stale; later chunks of the same
+ * stream come from memory, dropped after the last one, and exports read at the same time never mix.
  */
 export function chunkSource<T extends { bytes: Uint8Array }>() {
-  let current: (T & { key: string }) | null = null;
+  const streams = new Map<string, T & { key: string }>();
 
   return async (
+    stream: string,
     key: string,
     offset: number,
     length: number,
     make: () => Promise<T>,
   ): Promise<{ result: T; totalBytes: number; chunk: string }> => {
-    if (offset === 0 || current?.key !== key) {
-      current = {
+    let result = streams.get(stream);
+
+    if (offset === 0 || result?.key !== key) {
+      result = {
         ...(await make()),
         key,
       };
+      streams.delete(stream);
+      streams.set(stream, result);
+
+      for (const oldest of streams.keys()) {
+        if (streams.size <= STREAMS) {
+          break;
+        }
+
+        streams.delete(oldest);
+      }
     }
 
-    const result = current;
     const end = Math.min(offset + length, result.bytes.length);
 
     if (end >= result.bytes.length) {
-      current = null;
+      streams.delete(stream);
     }
 
     return {

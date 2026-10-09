@@ -30,6 +30,11 @@ export interface DesignXmlOptions {
   readonly assetSrc?: ReadonlyMap<string, string>;
   /** Layers to show without their children (`$truncated="true"`), to fit the read into maxChars. */
   readonly cut?: ReadonlySet<string>;
+  /**
+   * To fit maxChars too: an element shows only its first N visible children (`$children` gives how many it has), a text
+   * only its first N characters (`$truncated="true"`).
+   */
+  readonly limits?: ReadonlyMap<string, number>;
 }
 
 /** Where a layer's element sits in the XML's lines, for measuring and cutting branches. */

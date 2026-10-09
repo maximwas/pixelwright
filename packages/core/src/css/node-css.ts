@@ -51,7 +51,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
   const readOnly: [string, string][] = [];
   let textStyle: string | undefined;
 
-  layoutCss(node, css, context);
+  layoutCss(node, css, readOnly, context);
 
   if (node.type === "LINE") {
     lineCss(node, parent, css, context);
@@ -118,7 +118,12 @@ function hasLayout(node: SnapshotNode | null): boolean {
   return isFlex(node) || node?.layoutMode === "GRID";
 }
 
-function layoutCss(node: SnapshotNode, css: Map<string, string>, context: CssContext): void {
+function layoutCss(
+  node: SnapshotNode,
+  css: Map<string, string>,
+  readOnly: [string, string][],
+  context: CssContext,
+): void {
   if (node.layoutMode === "GRID") {
     css.set("display", "grid");
 
@@ -178,11 +183,19 @@ function layoutCss(node: SnapshotNode, css: Map<string, string>, context: CssCon
 
   // Spreading spaces the children itself, and a gap with fewer than two children spaces nothing.
   if (!SPREAD.has(node.primaryAxisAlignItems ?? "MIN") && spaced >= 2) {
-    setLength(css, "gap", node, "itemSpacing", node.itemSpacing, context);
+    if ((node.itemSpacing ?? 0) < 0) {
+      // Figma lets children overlap by a negative spacing (avatar stacks); CSS gap cannot be negative.
+      readOnly.push(["gap", `${px(node.itemSpacing ?? 0)} (the children overlap)`]);
+    } else {
+      setLength(css, "gap", node, "itemSpacing", node.itemSpacing, context);
+    }
   }
 
   if (node.layoutWrap === "WRAP") {
-    setLength(css, "row-gap", node, "counterAxisSpacing", node.counterAxisSpacing ?? undefined, context);
+    // Between wrapped lines: rows of a horizontal wrap, columns of a vertical one.
+    const between = node.layoutMode === "VERTICAL" ? "column-gap" : "row-gap";
+
+    setLength(css, between, node, "counterAxisSpacing", node.counterAxisSpacing ?? undefined, context);
 
     if (node.counterAxisAlignContent === "SPACE_BETWEEN") {
       css.set("align-content", "space-between");
@@ -359,14 +372,25 @@ function transformCss(node: SnapshotNode): string | null {
   return rotation === 0 ? null : `rotate(${decimal(-rotation)}deg)`;
 }
 
-/** A line is a box with one border: across when it lies flat, down its left side when it stands. */
+/**
+ * A line is a box with one border: across when it lies flat, down its left side when it stands (within half a degree
+ * of a right angle); any other angle is a flat line turned about its centre.
+ */
 function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: Map<string, string>, context: CssContext): void {
-  const turns = Math.round(((((node.rotation ?? 0) % 360) + 360) % 360) / 90);
-  const standing = turns === 1 || turns === 3;
-  const flat = turns === 0 || turns === 2;
+  const angle = (((node.rotation ?? 0) % 180) + 180) % 180;
+  const standing = Math.abs(angle - 90) <= 0.5;
+  const flat = angle <= 0.5 || angle >= 179.5;
   const color = paintsCss(node.strokes, node.strokeStyleId, node, context);
   const weight = typeof node.strokeWeight === "number" ? node.strokeWeight : 1;
   const border = `${px(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${typeof color === "string" ? color : "currentColor"}`;
+
+  if (!standing && !flat) {
+    positionCss(node, parent, context, css);
+    css.set("width", px(node.width));
+    css.set("border-top", border);
+
+    return;
+  }
 
   if (parent !== null && node !== context.root && (node.layoutPositioning === "ABSOLUTE" || !hasLayout(parent))) {
     const box = node.bounds ?? node;
@@ -382,10 +406,6 @@ function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: Map<strin
   } else {
     css.set("width", px(node.width));
     css.set("border-top", border);
-
-    if (!flat) {
-      css.set("transform", `rotate(${decimal(-(node.rotation ?? 0))}deg)`);
-    }
   }
 }
 

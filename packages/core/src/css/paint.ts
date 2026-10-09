@@ -89,7 +89,12 @@ function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext)
         context.tokens.set(name, colorCss(variable.value));
       }
 
-      return `var(${name})`;
+      const opacity = paint.opacity ?? 1;
+
+      // The paint's own opacity on top of the variable's color: mixed with transparent, so it still names the token.
+      return opacity < 1
+        ? `color-mix(in srgb, var(${name}) ${Math.round(opacity * 100)}%, transparent)`
+        : `var(${name})`;
     }
 
     return colorCss(paint.color, paint.opacity ?? 1);

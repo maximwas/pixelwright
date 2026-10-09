@@ -31,7 +31,8 @@ export interface Classified {
 export function classify(node: SnapshotNode, root: SnapshotNode | null = null): Classified | null {
   const [setting] = node.exportSettings ?? [];
 
-  if (setting !== undefined && node !== root && (setting.format === "SVG" || !hasText(node))) {
+  // A PDF is no web asset; a layer with text is a screen or section someone exports a preview of.
+  if (setting !== undefined && setting.format !== "PDF" && node !== root && !hasText(node)) {
     return {
       kind: setting.format === "SVG" ? "icon" : "image",
       format: setting.format,
@@ -43,8 +44,9 @@ export function classify(node: SnapshotNode, root: SnapshotNode | null = null): 
 
   const children = visibleChildren(node);
 
-  // Figma's mask group: the mask at the bottom clips everything above it, so the group is one picture.
-  if (children[0]?.isMask) {
+  // Figma's mask group: the mask at the bottom clips everything above it, so the group is one picture; a frame or
+  // section with text over a mask is still a layout, and the read's root is always read inside.
+  if (children[0]?.isMask && node !== root && (node.type === "GROUP" || !hasText(node))) {
     return {
       kind: "image",
       format: "PNG",

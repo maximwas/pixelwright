@@ -8,6 +8,12 @@
     "y": 0,
     "width": 1440,
     "height": 310,
+    "renderBounds": {
+      "x": 0,
+      "y": 0,
+      "width": 1440,
+      "height": 315
+    },
     "layoutMode": "HORIZONTAL",
     "layoutWrap": "NO_WRAP",
     "primaryAxisAlignItems": "MIN",
@@ -40,6 +46,12 @@
         "y": 0,
         "width": 600,
         "height": 310,
+        "renderBounds": {
+          "x": 100,
+          "y": 0,
+          "width": 600,
+          "height": 315
+        },
         "clipsContent": true,
         "layoutMode": "HORIZONTAL",
         "layoutWrap": "NO_WRAP",
@@ -260,6 +272,12 @@
                         "y": 50,
                         "width": 207,
                         "height": 38,
+                        "renderBounds": {
+                          "x": 158.23,
+                          "y": 57.58,
+                          "width": 204.2,
+                          "height": 27.42
+                        },
                         "layoutSizingHorizontal": "HUG",
                         "layoutSizingVertical": "HUG",
                         "fills": [
@@ -411,6 +429,12 @@
                         "y": 88,
                         "width": 183,
                         "height": 38,
+                        "renderBounds": {
+                          "x": 158.56,
+                          "y": 96,
+                          "width": 178.35,
+                          "height": 27
+                        },
                         "layoutSizingHorizontal": "HUG",
                         "layoutSizingVertical": "HUG",
                         "fills": [
@@ -625,6 +649,12 @@
                           "width": 17.32,
                           "height": 10
                         },
+                        "renderBounds": {
+                          "x": 160.5,
+                          "y": 230.01,
+                          "width": 20.32,
+                          "height": 19.53
+                        },
                         "rotation": 30.00000044529205,
                         "layoutSizingHorizontal": "FIXED",
                         "layoutSizingVertical": "FIXED",
@@ -680,6 +710,12 @@
                     "y": 225.5,
                     "width": 108,
                     "height": 28,
+                    "renderBounds": {
+                      "x": 207.6,
+                      "y": 232.5,
+                      "width": 105.02,
+                      "height": 14.28
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "layoutSizingVertical": "HUG",
                     "fills": [
@@ -785,6 +821,16 @@
             "height": 170,
             "layoutSizingHorizontal": "FIXED",
             "layoutSizingVertical": "FIXED",
+            "inferredLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 2,
+              "paddingRight": 0,
+              "paddingBottom": 1.9534912109375,
+              "paddingLeft": 0
+            },
             "css": {
               "display": "flex",
               "width": "210px",
@@ -860,6 +906,12 @@
         "y": 0,
         "width": 600,
         "height": 310,
+        "renderBounds": {
+          "x": 740,
+          "y": 0,
+          "width": 600,
+          "height": 315
+        },
         "clipsContent": true,
         "layoutMode": "HORIZONTAL",
         "layoutWrap": "NO_WRAP",
@@ -1078,6 +1130,12 @@
                         "y": 50,
                         "width": 195,
                         "height": 38,
+                        "renderBounds": {
+                          "x": 799.19,
+                          "y": 58,
+                          "width": 192.25,
+                          "height": 27
+                        },
                         "layoutSizingHorizontal": "HUG",
                         "layoutSizingVertical": "HUG",
                         "fills": [
@@ -1228,6 +1286,12 @@
                         "y": 88,
                         "width": 164,
                         "height": 38,
+                        "renderBounds": {
+                          "x": 798.32,
+                          "y": 96,
+                          "width": 160,
+                          "height": 27
+                        },
                         "layoutSizingHorizontal": "HUG",
                         "layoutSizingVertical": "HUG",
                         "fills": [
@@ -1442,6 +1506,12 @@
                           "width": 17.32,
                           "height": 10
                         },
+                        "renderBounds": {
+                          "x": 800.5,
+                          "y": 230.01,
+                          "width": 20.32,
+                          "height": 19.53
+                        },
                         "rotation": 30.00000044529205,
                         "layoutSizingHorizontal": "FIXED",
                         "layoutSizingVertical": "FIXED",
@@ -1497,6 +1567,12 @@
                     "y": 225.5,
                     "width": 108,
                     "height": 28,
+                    "renderBounds": {
+                      "x": 847.6,
+                      "y": 232.5,
+                      "width": 105.02,
+                      "height": 14.28
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "layoutSizingVertical": "HUG",
                     "fills": [
@@ -1602,6 +1678,16 @@
             "height": 147.62,
             "layoutSizingHorizontal": "FIXED",
             "layoutSizingVertical": "FIXED",
+            "inferredLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0
+            },
             "css": {
               "display": "flex",
               "width": "210px",

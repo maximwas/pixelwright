@@ -95,6 +95,8 @@ export const OPERATION_SCHEMAS = {
       length: z.number().int().min(1).max(EXPORT_CHUNK_BYTES).default(EXPORT_CHUNK_BYTES),
       /** A raster export's longest side: the plugin lowers the scale to fit it. */
       maxSide: z.number().int().min(1).max(16_384).exactOptional(),
+      /** One id per export the server reads: its chunks come from one render, apart from other exports read at once. */
+      stream: z.string().min(1).max(64).exactOptional(),
     }),
     output: z.object({
       /** The scale the export was rendered at: lower than asked when it had to fit maxSide. */
@@ -107,6 +109,7 @@ export const OPERATION_SCHEMAS = {
   image: {
     input: z.object({
       hash: z.string().regex(/^[0-9a-f]{40}$/),
+      stream: z.string().min(1).max(64).exactOptional(),
       offset: z.number().int().min(0).default(0),
       length: z.number().int().min(1).max(EXPORT_CHUNK_BYTES).default(EXPORT_CHUNK_BYTES),
     }),

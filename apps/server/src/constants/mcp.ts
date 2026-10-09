@@ -3,3 +3,12 @@ export const SERVER_INSTRUCTIONS =
 
 /** The longest side of an image a tool returns inline: models read larger ones badly, and some clients refuse them. */
 export const MAX_IMAGE_SIDE_PX = 2_000;
+
+/**
+ * The most bytes of an image returned inline: base64 makes it a third bigger, a stdio MCP message breaks above 10 MiB,
+ * and model APIs refuse images of about 5 MB.
+ */
+export const MAX_INLINE_IMAGE_BYTES = 3.5 * 1024 * 1024;
+
+/** How many renders screenshot tries, each at a lower scale, to fit the inline limits. */
+export const INLINE_ATTEMPTS = 3;

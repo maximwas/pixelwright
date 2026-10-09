@@ -52,6 +52,8 @@ describe("stdio server", () => {
       for (const tool of tools) {
         // Every tool so far only reads the document (node_show moves the view and the selection, not the file).
         expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
+        // A tool that returns an image has no outputSchema: Claude Code would show only structuredContent and drop it.
+        expect(tool.outputSchema === undefined, tool.name).toBe(["design_read", "screenshot"].includes(tool.name));
       }
 
       const status = await client.callTool({

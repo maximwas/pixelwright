@@ -191,6 +191,18 @@ async function entryOf(node: SceneNode, context: EntryContext): Promise<Snapshot
     };
   }
 
+  const drawn = ("absoluteRenderBounds" in node ? node.absoluteRenderBounds : null) ?? null;
+  const own = node.absoluteBoundingBox;
+
+  if (drawn !== null && own !== null && reachesPast(drawn, own)) {
+    entry.renderBounds = {
+      x: round(drawn.x - context.x),
+      y: round(drawn.y - context.y),
+      width: round(drawn.width),
+      height: round(drawn.height),
+    };
+  }
+
   put("opacity", layer.opacity, 1);
 
   if (layer.blendMode !== "PASS_THROUGH" && layer.blendMode !== "NORMAL") {
@@ -636,6 +648,16 @@ function isFilled(value: unknown): value is object {
 /** Plugin API values are frozen objects with readonly arrays: a JSON copy is what goes on the wire anyway. */
 function plain<T = unknown>(value: unknown): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+/** Whether a layer draws past its own box by more than half a pixel (centred or outside strokes, shadows). */
+function reachesPast(drawn: Rect, own: Rect): boolean {
+  return (
+    Math.abs(drawn.x - own.x) > 0.5 ||
+    Math.abs(drawn.y - own.y) > 0.5 ||
+    Math.abs(drawn.width - own.width) > 0.5 ||
+    Math.abs(drawn.height - own.height) > 0.5
+  );
 }
 
 /** Two decimals: whole pixels are core's decision, not the snapshot's. */

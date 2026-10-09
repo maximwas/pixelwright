@@ -150,3 +150,90 @@ describe("screenshot", () => {
     ]);
   });
 });
+
+describe("screenshot review fixes", () => {
+  it("saves only to a .png path and never over a file that is not a PNG", async () => {
+    const { writeFile } = await import("node:fs/promises");
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-"));
+    const notes = join(dir, "notes.png");
+    const { bridge } = exportingBridge(fakePng(100, 100));
+
+    await writeFile(notes, "my notes");
+
+    await expect(
+      takeScreenshot(bridge, {
+        node: "1:1",
+        scale: 1,
+        effects: true,
+        save: join(dir, "shot.txt"),
+      }),
+    ).rejects.toThrow(/\.png/);
+    await expect(
+      takeScreenshot(bridge, {
+        node: "1:1",
+        scale: 1,
+        effects: true,
+        save: notes,
+      }),
+    ).rejects.toThrow(/not a PNG/);
+    expect(await readFile(notes, "utf8")).toBe("my notes");
+
+    const shot = join(dir, "shot.png");
+
+    await takeScreenshot(bridge, {
+      node: "1:1",
+      scale: 1,
+      effects: true,
+      save: shot,
+    });
+    await takeScreenshot(bridge, {
+      node: "1:1",
+      scale: 1,
+      effects: true,
+      save: shot,
+    });
+    expect((await readFile(shot)).equals(fakePng(100, 100))).toBe(true);
+  });
+
+  it("scales an image down again when its bytes are too many to return inline", async () => {
+    const scales: number[] = [];
+    const bridge: BridgeView = {
+      status: () => {
+        throw new Error("not used");
+      },
+      pairing: () => null,
+      plugins: () => [
+        {
+          session: "s1",
+          info: pluginInfo(),
+          active: true,
+        },
+      ],
+      request: async (_op, input) => {
+        const { offset, length, scale } = input as { offset: number; length: number; scale: number };
+
+        if (offset === 0) {
+          scales.push(scale);
+        }
+
+        // A photo-heavy render: about 5 MB at scale 1, a quarter of that at half the scale.
+        const image = scale >= 1 ? fakePng(2000, 1500, 5_000_000) : fakePng(1000, 750, 1_200_000);
+
+        return {
+          scale,
+          totalBytes: image.length,
+          bytes: image.subarray(offset, offset + length).toString("base64"),
+        };
+      },
+    };
+    const result = await takeScreenshot(bridge, {
+      node: "1:1",
+      scale: 1,
+      effects: true,
+    });
+
+    expect(scales[0]).toBe(1);
+    expect(scales.at(-1)).toBeLessThan(1);
+    expect((result.content[1] as { text: string }).text).toMatch(/1000×750 px/);
+  });
+});

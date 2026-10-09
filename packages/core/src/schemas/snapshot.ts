@@ -142,6 +142,18 @@ export const SnapshotFieldsSchema = z.object({
       height: z.number(),
     })
     .optional(),
+  /**
+   * The box the layer draws in, relative to the root, when it reaches past its own (centred or outside strokes,
+   * shadows): an icon is exported with all of it.
+   */
+  renderBounds: z
+    .object({
+      x: z.number(),
+      y: z.number(),
+      width: z.number(),
+      height: z.number(),
+    })
+    .optional(),
   rotation: z.number().optional(),
   /**
    * The relative transform's 2x2 part [a, b, c, d], only for a mirrored layer (negative determinant): Figma reports a

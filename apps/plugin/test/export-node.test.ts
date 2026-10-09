@@ -122,3 +122,38 @@ describe("image", () => {
     await expect(runOperation("image", { hash: "b".repeat(40) })).rejects.toThrow(/No image/);
   });
 });
+
+describe("exports read at the same time", () => {
+  it("serves each export's chunks from its own render, and renders afresh when a layer changed", async () => {
+    let version = 0;
+    const node = (
+      globalThis as unknown as { figma: { getNodeByIdAsync: (id: string) => Promise<Record<string, unknown>> } }
+    ).figma;
+    const layer = await node.getNodeByIdAsync("2:4869");
+
+    layer.exportAsync = async (settings: { format: string }) => {
+      version += 1;
+
+      return Uint8Array.from({ length: 8 }, () => (settings.format === "SVG" ? 200 : version));
+    };
+
+    const read = (stream: string, format: string, offset: number) =>
+      runOperation("export", {
+        node: "2:4869",
+        format,
+        offset,
+        length: 4,
+        stream,
+      }) as Promise<{ bytes: string }>;
+    const png = await read("a", "PNG", 0);
+    const svg = await read("b", "SVG", 0);
+    const pngRest = await read("a", "PNG", 4);
+
+    expect(atob(png.bytes) + atob(pngRest.bytes)).toBe(String.fromCharCode(...Array(8).fill(1)));
+    expect(atob(svg.bytes)).toBe(String.fromCharCode(...Array(4).fill(200)));
+
+    const again = await read("c", "PNG", 0);
+
+    expect(atob(again.bytes)).toBe(String.fromCharCode(...Array(4).fill(3)));
+  });
+});

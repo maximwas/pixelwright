@@ -8,6 +8,12 @@
     "y": 0,
     "width": 1440,
     "height": 8356,
+    "renderBounds": {
+      "x": 0,
+      "y": 0,
+      "width": 1441,
+      "height": 8356
+    },
     "layoutSizingHorizontal": "FIXED",
     "layoutSizingVertical": "FIXED",
     "fills": [
@@ -283,6 +289,12 @@
         "y": 1102,
         "width": 1440,
         "height": 1010,
+        "renderBounds": {
+          "x": 0,
+          "y": 1102,
+          "width": 1440,
+          "height": 1015
+        },
         "layoutMode": "VERTICAL",
         "layoutWrap": "NO_WRAP",
         "primaryAxisAlignItems": "MIN",
@@ -365,6 +377,12 @@
         "y": 3474,
         "width": 1434,
         "height": 1224,
+        "renderBounds": {
+          "x": 3,
+          "y": 3474,
+          "width": 1434,
+          "height": 1229
+        },
         "layoutMode": "VERTICAL",
         "layoutWrap": "NO_WRAP",
         "primaryAxisAlignItems": "MIN",
@@ -398,6 +416,12 @@
         "y": 4969,
         "width": 1441,
         "height": 725,
+        "renderBounds": {
+          "x": 0,
+          "y": 4969,
+          "width": 1441,
+          "height": 730
+        },
         "layoutMode": "VERTICAL",
         "layoutWrap": "NO_WRAP",
         "primaryAxisAlignItems": "MIN",
@@ -514,6 +538,16 @@
         ],
         "cornerRadius": 45,
         "fillStyleId": "S:4fd252e43efba2d8d2d75696ea8cf7744e655565,109:2",
+        "inferredLayout": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "paddingTop": 84,
+          "paddingRight": 0,
+          "paddingBottom": 68,
+          "paddingLeft": 0
+        },
         "css": {
           "display": "inline-flex",
           "padding": "84px 0 68px 0",

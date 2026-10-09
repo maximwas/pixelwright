@@ -488,3 +488,63 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     expect(root.children?.[1]).not.toHaveProperty("css");
   });
 });
+
+describe("snapshot of a layer that draws past its box", () => {
+  it("keeps the box it draws in, for an icon exported with its strokes", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:1",
+            children: [
+              {
+                id: "5:2",
+                type: "VECTOR",
+                absoluteBoundingBox: {
+                  x: 10,
+                  y: 10,
+                  width: 20,
+                  height: 0,
+                },
+                absoluteRenderBounds: {
+                  x: 9,
+                  y: 8.5,
+                  width: 22,
+                  height: 3,
+                },
+              },
+              {
+                id: "5:3",
+                type: "RECTANGLE",
+                absoluteBoundingBox: {
+                  x: 10,
+                  y: 10,
+                  width: 20,
+                  height: 20,
+                },
+                absoluteRenderBounds: {
+                  x: 10,
+                  y: 10,
+                  width: 20,
+                  height: 20,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", { node: "5:1" })) as Shot;
+
+    expect(root.children?.[0]?.renderBounds).toEqual({
+      x: 9,
+      y: 8.5,
+      width: 22,
+      height: 3,
+    });
+    expect(root.children?.[1]).not.toHaveProperty("renderBounds");
+  });
+});

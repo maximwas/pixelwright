@@ -15,6 +15,18 @@ const ROW = JSON.parse(
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]);
 
+/** A 100×100 PNG header: what a screenshot export returns in these tests. */
+const PNG_100 = (() => {
+  const png = Buffer.alloc(64, 7);
+
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]).copy(png, 0);
+  png.write("IHDR", 12, "ascii");
+  png.writeUInt32BE(100, 16);
+  png.writeUInt32BE(100, 20);
+
+  return png;
+})();
+
 /** A plugin in the Positivus file: the Services row snapshot, the same arrow icon twice, a different PNG per image. */
 function positivus(selected: string[] = []) {
   const ops: string[] = [];
@@ -201,5 +213,109 @@ describe("writeAssets into a folder an earlier read wrote", () => {
 
     expect(written.map((asset) => asset.src)).toEqual(["assets/icon-2.svg", "assets/logo.svg"]);
     expect(await readFile(join(dir, "icon.svg"), "utf8")).toBe("<svg>first read</svg>");
+  });
+});
+
+describe("design_read review fixes", () => {
+  it("exports icons with their strokes and images as their own box, each export its own stream", async () => {
+    const inputs: { node: string; effects: boolean; stream?: string; offset: number }[] = [];
+    const { bridge } = positivus();
+    const request = bridge.request;
+
+    bridge.request = async (op, input, options) => {
+      if (op === "export") {
+        inputs.push(input as (typeof inputs)[number]);
+      }
+
+      return request(op, input, options);
+    };
+
+    await readDesign(bridge, {
+      node: "2:4869",
+      assetsDir: await mkdtemp(join(tmpdir(), "pixelwright-assets-")),
+      screenshot: false,
+      maxChars: 80_000,
+    });
+
+    const first = inputs.filter((input) => input.offset === 0);
+
+    expect(first.map((input) => [input.node, input.effects])).toEqual([
+      ["I2:4873;334:1478", true],
+      ["2:4875", false],
+      ["I2:4879;334:1478", true],
+      ["2:4881", false],
+    ]);
+    expect(new Set(first.map((input) => input.stream)).size).toBe(4);
+  });
+
+  it("says a hidden layer cannot be read instead of returning nothing", async () => {
+    const { bridge } = positivus();
+    const request = bridge.request;
+
+    bridge.request = async (op, input, options) =>
+      op === "snapshot"
+        ? {
+            ...(ROW as object),
+            root: {
+              ...(ROW as { root: object }).root,
+              visible: false,
+            },
+          }
+        : request(op, input, options);
+
+    await expect(
+      readDesign(bridge, {
+        node: "2:4869",
+        screenshot: false,
+        maxChars: 80_000,
+      }),
+    ).rejects.toThrow(/hidden/);
+  });
+
+  it("takes the screenshot from the file the read came from", async () => {
+    const sessions: string[] = [];
+    const { bridge } = positivus();
+    const request = bridge.request;
+    let active = "s1";
+
+    bridge.plugins = () => [
+      {
+        session: "s1",
+        info: pluginInfo(),
+        active: active === "s1",
+      },
+      {
+        session: "s2",
+        info: pluginInfo({
+          instanceId: "other",
+          file: {
+            name: "Other",
+            key: null,
+          },
+        }),
+        active: active === "s2",
+      },
+    ];
+    bridge.request = async (op, input, options) => {
+      sessions.push(`${op}:${options?.session}`);
+      // The user switches files while the read runs.
+      active = "s2";
+
+      return op === "export"
+        ? {
+            scale: 1,
+            totalBytes: PNG_100.length,
+            bytes: PNG_100.toString("base64"),
+          }
+        : request(op, input, options);
+    };
+
+    await readDesign(bridge, {
+      node: "2:4869",
+      screenshot: true,
+      maxChars: 80_000,
+    });
+
+    expect(new Set(sessions.map((entry) => entry.split(":")[1]))).toEqual(new Set(["s1"]));
   });
 });

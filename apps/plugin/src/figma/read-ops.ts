@@ -43,6 +43,11 @@ export async function show({ node: id }: OperationInput<"show">): Promise<Operat
 export async function find(input: OperationInput<"find">): Promise<OperationOutput<"find">> {
   const root = input.within === undefined ? figma.currentPage : await requireNode(input.within);
 
+  if (root.type === "PAGE" && root !== figma.currentPage) {
+    // dynamic-page: a page the user is not on has no layers until it is loaded.
+    await root.loadAsync();
+  }
+
   if (!("findAll" in root)) {
     throw new BridgeError("NODE_NOT_FOUND", `${input.within ?? "this page"} has no layers inside to search.`);
   }

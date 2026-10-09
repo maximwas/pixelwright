@@ -12,7 +12,10 @@ import { tagFor } from "./tags.ts";
 
 const INDENT = "  ";
 
-/** What an exported asset keeps of its CSS: where it sits and how big it is; the file holds how it looks. */
+/**
+ * What an exported asset keeps of its CSS: where it sits and how big it is. The file holds how it looks, its opacity,
+ * blur and inner shadows included, so CSS must not apply them a second time.
+ */
 const PLACEMENT = new Set([
   "position",
   "left",
@@ -26,11 +29,10 @@ const PLACEMENT = new Set([
   "flex",
   "align-self",
   "transform",
-  "opacity",
 ]);
 
-/** An image render is clipped to its own box: corners, shadows, outlines and filters stay CSS around it. */
-const IMAGE_KEEPS = new Set([...PLACEMENT, "border-radius", "box-shadow", "outline", "filter"]);
+/** An image render is clipped to its own box: corners, drop shadows and outlines outside it stay CSS around it. */
+const IMAGE_KEEPS = new Set([...PLACEMENT, "border-radius", "box-shadow", "outline"]);
 
 /** What a span writes when the text it sits in has a property it lacks. */
 const SPAN_RESETS: Readonly<Record<string, string>> = {
@@ -125,6 +127,8 @@ class DesignWriter {
 
   private writeElement(node: SnapshotNode, parent: SnapshotNode | null, level: number): void {
     const isCut = this.options.cut?.has(node.id) ?? false;
+    const limit = this.options.limits?.get(node.id);
+    const clipped = node.type === "TEXT" && limit !== undefined;
 
     const indent = INDENT.repeat(level);
     const asset = classify(node, this.snapshot.root);
@@ -143,9 +147,10 @@ class DesignWriter {
     const properties =
       keeps === null
         ? css.properties
-        : turnedAsset(
+        : assetPlacement(
             node,
             parent,
+            asset?.kind ?? "image",
             css.properties.filter(([property]) => keeps.has(property)),
           );
 
@@ -164,11 +169,11 @@ class DesignWriter {
       ["src", asset === null ? undefined : this.plan(node, asset)],
       ...properties,
       ["$css", readOnlyOf(css.readOnly, asset !== null)],
-      ["$children", asset === null && !isCut ? cutCount(node) : undefined],
-      ["$truncated", isCut ? "true" : undefined],
+      ["$children", asset === null && !isCut && !clipped ? cutCount(node, limit) : undefined],
+      ["$truncated", isCut || clipped ? "true" : undefined],
     ];
 
-    if (isCut || (asset === null && cutCount(node) !== undefined)) {
+    if (isCut || clipped || (asset === null && cutCount(node, limit) !== undefined)) {
       this.truncated.push(node.id);
     }
 
@@ -178,12 +183,16 @@ class DesignWriter {
       .join("")}`;
 
     if (node.type === "TEXT" && asset === null) {
-      this.lines.push(`${open}>${this.textContent(node)}</${tag}>`);
+      const content = clipped
+        ? `${escapeText((node.text?.characters ?? "").slice(0, limit))}…`
+        : this.textContent(node);
+
+      this.lines.push(`${open}>${content}</${tag}>`);
 
       return;
     }
 
-    const children = asset === null && !isCut ? visibleChildren(node) : [];
+    const children = asset === null && !isCut ? visibleChildren(node).slice(0, limit) : [];
 
     if (children.length === 0) {
       this.lines.push(`${open}/>`);
@@ -222,7 +231,7 @@ class DesignWriter {
       Object.entries(properties)
         .filter(([, property]) => types.has(property.type))
         // Figma suffixes a non-variant property's name with its id: "Label#12:0".
-        .map(([name, property]) => `${name.replace(/#[^#]*$/, "")}=${String(property.value)}`)
+        .map(([name, property]) => `${listItem(name.replace(/#[^#]*$/, ""))}=${listItem(String(property.value))}`)
         .join(", ");
     const variant = listed(VARIANT_PROPERTY);
     const props = listed(OWN_PROPERTIES);
@@ -376,10 +385,15 @@ const VARIANT_PROPERTY: ReadonlySet<string> = new Set(["VARIANT"]);
 /** An instance's own settings: its texts and toggles (a swapped instance and a slot show as children). */
 const OWN_PROPERTIES: ReadonlySet<string> = new Set(["TEXT", "BOOLEAN"]);
 
-/** The designer's Dev Mode notes, each with its category. */
+/** A name or value in a `Name=Value, …` list: backslash before the separators, so a value with them reads back whole. */
+function listItem(text: string): string {
+  return text.replace(/[\\,=]/g, (char) => `\\${char}`);
+}
+
+/** The designer's Dev Mode notes, each with its category, separated by ` | ` (a bar inside a note is escaped). */
 function noteOf(node: SnapshotNode): string | undefined {
   const notes = (node.annotations ?? []).map(({ label, category }) =>
-    category === undefined ? label : `${category}: ${label}`,
+    (category === undefined ? label : `${category}: ${label}`).replace(/[\\|]/g, (char) => `\\${char}`),
   );
 
   return notes.length === 0 ? undefined : notes.join(" | ");
@@ -396,21 +410,35 @@ function urlOf(segments: readonly TextSegment[]): string | undefined {
 }
 
 /**
- * Figma exports a turned or mirrored layer already turned: the asset takes the box it covers, with no transform, so it
- * is not turned twice.
+ * Where an asset's file goes. Figma exports a turned or mirrored layer already turned, so the asset takes the box it
+ * covers and no transform; an icon is exported with what it draws outside its geometry (centred and outside strokes),
+ * so it takes that box. An image keeps only its outside (drop) shadows: the inner ones are in the file.
  */
-function turnedAsset(
+function assetPlacement(
   node: SnapshotNode,
   parent: SnapshotNode | null,
+  kind: "icon" | "image",
   properties: [string, string][],
 ): [string, string][] {
-  const { bounds } = node;
+  const outside = properties
+    .map(([property, value]): [string, string] =>
+      property === "box-shadow"
+        ? [
+            property,
+            splitShadows(value)
+              .filter((shadow) => !shadow.startsWith("inset"))
+              .join(", "),
+          ]
+        : [property, value],
+    )
+    .filter(([, value]) => value !== "");
+  const bounds = kind === "icon" ? (node.renderBounds ?? node.bounds) : node.bounds;
 
   if (bounds === undefined) {
-    return properties;
+    return outside;
   }
 
-  const placed = new Map(properties.filter(([property]) => property !== "transform"));
+  const placed = new Map(outside.filter(([property]) => property !== "transform"));
 
   placed.set("width", px(bounds.width));
   placed.set("height", px(bounds.height));
@@ -423,9 +451,14 @@ function turnedAsset(
     placed.set("top", px(bounds.y - parent.y));
   }
 
-  return properties
+  return outside
     .filter(([property]) => placed.has(property))
     .map(([property]) => [property, placed.get(property) ?? ""]);
+}
+
+/** A box-shadow list split at the commas between shadows, not those inside rgba(). */
+function splitShadows(value: string): string[] {
+  return value.split(/,(?![^(]*\))/).map((shadow) => shadow.trim());
 }
 
 /** The read-only CSS of a layer; an asset keeps only its blend mode, which no exported file holds. */
@@ -435,9 +468,9 @@ function readOnlyOf(readOnly: readonly [string, string][], isAsset: boolean): st
   return kept.length === 0 ? undefined : kept.map(([property, value]) => `${property}: ${value}`).join("; ");
 }
 
-/** How many children a layer has when the snapshot did not list them all. */
-function cutCount(node: SnapshotNode): string | undefined {
-  const listed = node.children?.length ?? 0;
+/** How many children a layer has when the snapshot or the fit to maxChars did not list them all. */
+function cutCount(node: SnapshotNode, limit?: number): string | undefined {
+  const listed = Math.min(node.children?.length ?? 0, limit ?? Number.POSITIVE_INFINITY);
 
   return listed < node.childCount ? String(node.childCount) : undefined;
 }

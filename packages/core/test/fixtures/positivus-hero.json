@@ -123,6 +123,16 @@
                     }
                   }
                 },
+                "inferredLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "itemSpacing": 12.919921875,
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "paddingTop": 0,
+                  "paddingRight": 0,
+                  "paddingBottom": 0,
+                  "paddingLeft": 0
+                },
                 "css": {
                   "display": "flex",
                   "width": "219.537px",
@@ -149,6 +159,16 @@
                     },
                     "layoutSizingHorizontal": "FIXED",
                     "layoutSizingVertical": "FIXED",
+                    "inferredLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "itemSpacing": 0,
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER",
+                      "paddingTop": 0.34912109375,
+                      "paddingRight": 0.40026092529296875,
+                      "paddingBottom": 0.39879608154296875,
+                      "paddingLeft": 0.34765625
+                    },
                     "css": {
                       "width": "36px",
                       "height": "36px",
@@ -276,6 +296,12 @@
                 "y": 20,
                 "width": 88,
                 "height": 28,
+                "renderBounds": {
+                  "x": 529.5,
+                  "y": 27,
+                  "width": 85.7,
+                  "height": 14.28
+                },
                 "layoutSizingHorizontal": "HUG",
                 "layoutSizingVertical": "HUG",
                 "fills": [
@@ -374,6 +400,12 @@
                 "y": 20,
                 "width": 82,
                 "height": 28,
+                "renderBounds": {
+                  "x": 657.96,
+                  "y": 26.72,
+                  "width": 79.69,
+                  "height": 14.56
+                },
                 "layoutSizingHorizontal": "HUG",
                 "layoutSizingVertical": "HUG",
                 "fills": [
@@ -472,6 +504,12 @@
                 "y": 20,
                 "width": 99,
                 "height": 28,
+                "renderBounds": {
+                  "x": 780.5,
+                  "y": 26.72,
+                  "width": 95.52,
+                  "height": 14.56
+                },
                 "layoutSizingHorizontal": "HUG",
                 "layoutSizingVertical": "HUG",
                 "fills": [
@@ -570,6 +608,12 @@
                 "y": 20,
                 "width": 67,
                 "height": 28,
+                "renderBounds": {
+                  "x": 919.6,
+                  "y": 27,
+                  "width": 63.15,
+                  "height": 18
+                },
                 "layoutSizingHorizontal": "HUG",
                 "layoutSizingVertical": "HUG",
                 "fills": [
@@ -668,6 +712,12 @@
                 "y": 20,
                 "width": 44,
                 "height": 28,
+                "renderBounds": {
+                  "x": 1025.94,
+                  "y": 27,
+                  "width": 40.73,
+                  "height": 18
+                },
                 "layoutSizingHorizontal": "HUG",
                 "layoutSizingVertical": "HUG",
                 "fills": [
@@ -831,6 +881,12 @@
                     "y": 20,
                     "width": 161,
                     "height": 28,
+                    "renderBounds": {
+                      "x": 1145.87,
+                      "y": 27,
+                      "width": 157.77,
+                      "height": 18
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "layoutSizingVertical": "HUG",
                     "fills": [
@@ -1002,6 +1058,12 @@
                 "y": 138,
                 "width": 531,
                 "height": 231,
+                "renderBounds": {
+                  "x": 101.62,
+                  "y": 155,
+                  "width": 496.18,
+                  "height": 196.84
+                },
                 "layoutSizingHorizontal": "FIXED",
                 "layoutSizingVertical": "HUG",
                 "fills": [
@@ -1101,6 +1163,12 @@
                 "y": 404,
                 "width": 498,
                 "height": 112,
+                "renderBounds": {
+                  "x": 101,
+                  "y": 410.72,
+                  "width": 496.38,
+                  "height": 98.56
+                },
                 "layoutSizingHorizontal": "FIXED",
                 "layoutSizingVertical": "HUG",
                 "fills": [
@@ -1263,6 +1331,12 @@
                     "y": 571,
                     "width": 194,
                     "height": 28,
+                    "renderBounds": {
+                      "x": 136.19,
+                      "y": 578,
+                      "width": 191.01,
+                      "height": 14.28
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "layoutSizingVertical": "HUG",
                     "fills": [
@@ -1401,6 +1475,16 @@
                     "boundVariables": {}
                   }
                 ],
+                "inferredLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "itemSpacing": 0,
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "paddingTop": 0.34912109375,
+                  "paddingRight": 0.40026092529296875,
+                  "paddingBottom": 0.39879608154296875,
+                  "paddingLeft": 0.34765625
+                },
                 "css": {
                   "width": "36px",
                   "height": "36px"
@@ -1416,6 +1500,12 @@
                     "y": 565.35,
                     "width": 35.25,
                     "height": 35.25,
+                    "renderBounds": {
+                      "x": 1032.54,
+                      "y": 565,
+                      "width": 36,
+                      "height": 36
+                    },
                     "constraints": {
                       "horizontal": "SCALE",
                       "vertical": "SCALE"
@@ -1496,6 +1586,16 @@
                     "boundVariables": {}
                   }
                 ],
+                "inferredLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "itemSpacing": 0,
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "paddingTop": 0.6818298697471619,
+                  "paddingRight": 0.7792220711708069,
+                  "paddingBottom": 0.7792220711708069,
+                  "paddingLeft": 0.6818298697471619
+                },
                 "css": {
                   "width": "70.326px",
                   "height": "70.326px",
@@ -1512,6 +1612,12 @@
                     "y": 451.96,
                     "width": 68.86,
                     "height": 68.86,
+                    "renderBounds": {
+                      "x": 797.54,
+                      "y": 451,
+                      "width": 99.46,
+                      "height": 99.39
+                    },
                     "constraints": {
                       "horizontal": "SCALE",
                       "vertical": "SCALE"
@@ -1574,6 +1680,12 @@
                   "width": 553.28,
                   "height": 377.65
                 },
+                "renderBounds": {
+                  "x": 807.04,
+                  "y": 244.46,
+                  "width": 499.2,
+                  "height": 292.74
+                },
                 "rotation": -28.880768907313545,
                 "layoutSizingHorizontal": "FIXED",
                 "layoutSizingVertical": "FIXED",
@@ -1617,6 +1729,12 @@
                   "width": 553.28,
                   "height": 377.65
                 },
+                "renderBounds": {
+                  "x": 786.81,
+                  "y": 281.13,
+                  "width": 499.2,
+                  "height": 292.74
+                },
                 "rotation": -28.880768907313545,
                 "layoutSizingHorizontal": "FIXED",
                 "layoutSizingVertical": "FIXED",
@@ -1659,6 +1777,12 @@
                   "y": 275.35,
                   "width": 553.28,
                   "height": 377.65
+                },
+                "renderBounds": {
+                  "x": 766.58,
+                  "y": 317.81,
+                  "width": 499.2,
+                  "height": 292.74
                 },
                 "rotation": -28.880768907313545,
                 "layoutSizingHorizontal": "FIXED",
@@ -1994,6 +2118,12 @@
                                   "width": 214.23,
                                   "height": 278.05
                                 },
+                                "renderBounds": {
+                                  "x": 1050.83,
+                                  "y": 177.57,
+                                  "width": 152.35,
+                                  "height": 233.73
+                                },
                                 "rotation": 27.453355909437533,
                                 "constraints": {
                                   "horizontal": "SCALE",
@@ -2128,6 +2258,12 @@
                                   "y": 269.74,
                                   "width": 49.6,
                                   "height": 64.36
+                                },
+                                "renderBounds": {
+                                  "x": 1094.95,
+                                  "y": 274.87,
+                                  "width": 35.27,
+                                  "height": 54.09
                                 },
                                 "rotation": 27.453355909437533,
                                 "constraints": {
@@ -2721,6 +2857,12 @@
                               "width": 98.72,
                               "height": 98.62
                             },
+                            "renderBounds": {
+                              "x": 1161.19,
+                              "y": 150.8,
+                              "width": 73.16,
+                              "height": 73.01
+                            },
                             "rotation": 27.71491594952407,
                             "constraints": {
                               "horizontal": "SCALE",
@@ -2855,6 +2997,12 @@
                                   "y": 150.38,
                                   "width": 94.91,
                                   "height": 94.95
+                                },
+                                "renderBounds": {
+                                  "x": 1258.99,
+                                  "y": 164.29,
+                                  "width": 67.11,
+                                  "height": 67.14
                                 },
                                 "rotation": 45.01151646665131,
                                 "constraints": {
@@ -2993,6 +3141,12 @@
                               "width": 94.05,
                               "height": 93.99
                             },
+                            "renderBounds": {
+                              "x": 1249.06,
+                              "y": 266.57,
+                              "width": 67.62,
+                              "height": 67.51
+                            },
                             "rotation": 34.775157121945185,
                             "constraints": {
                               "horizontal": "SCALE",
@@ -3108,6 +3262,12 @@
                                   "y": 352.52,
                                   "width": 101.97,
                                   "height": 101.79
+                                },
+                                "renderBounds": {
+                                  "x": 1227.73,
+                                  "y": 365.37,
+                                  "width": 76.36,
+                                  "height": 76.1
                                 },
                                 "rotation": 25.966817590584192,
                                 "constraints": {
@@ -3243,6 +3403,12 @@
                                   "y": 383.8,
                                   "width": 25.36,
                                   "height": 25.37
+                                },
+                                "renderBounds": {
+                                  "x": 1256.82,
+                                  "y": 387.51,
+                                  "width": 17.93,
+                                  "height": 17.94
                                 },
                                 "rotation": 45.01151646665131,
                                 "constraints": {
@@ -3481,6 +3647,16 @@
                 }
               }
             },
+            "inferredLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 9.06640625,
+              "paddingRight": 0.6017684936523438,
+              "paddingBottom": 11.704940795898438,
+              "paddingLeft": 0
+            },
             "css": {
               "width": "126.369px",
               "height": "48px",
@@ -3689,6 +3865,16 @@
                 }
               }
             },
+            "inferredLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 6.00048828125,
+              "paddingRight": 0.5138397216796875,
+              "paddingBottom": 7.549510955810547,
+              "paddingLeft": 0
+            },
             "css": {
               "width": "145.551px",
               "height": "48px",
@@ -3775,6 +3961,16 @@
                 }
               }
             },
+            "inferredLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 10,
+              "paddingRight": 0,
+              "paddingBottom": 8,
+              "paddingLeft": 0
+            },
             "css": {
               "width": "125.241px",
               "height": "48px",
@@ -3860,6 +4056,16 @@
                   "value": "Zoom"
                 }
               }
+            },
+            "inferredLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 14,
+              "paddingRight": 0.11492156982421875,
+              "paddingBottom": 12,
+              "paddingLeft": 0
             },
             "css": {
               "width": "110.573px",

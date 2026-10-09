@@ -202,3 +202,49 @@ describe("outline of the document", () => {
     });
   });
 });
+
+describe("find on a page the user has not opened", () => {
+  it("loads the page before searching it", async () => {
+    const other = tree({
+      id: "0:2",
+      type: "PAGE",
+      name: "Components",
+    });
+    let loaded = false;
+
+    other.loadAsync = async () => {
+      loaded = true;
+      other.children = [
+        tree(
+          {
+            id: "7:1",
+            name: "Button",
+          },
+          other,
+        ),
+      ];
+    };
+    installFigma(
+      tree({
+        id: "0:0",
+        type: "DOCUMENT",
+        children: [],
+      }),
+    );
+    Object.assign(figma, {
+      currentPage: tree({
+        id: "0:1",
+        type: "PAGE",
+      }),
+      getNodeByIdAsync: async (id: string) => (id === "0:2" ? other : null),
+    });
+
+    const found = (await runOperation("find", {
+      name: "Button",
+      within: "0:2",
+    })) as { nodes: { id: string }[] };
+
+    expect(loaded).toBe(true);
+    expect(found.nodes.map((node) => node.id)).toEqual(["7:1"]);
+  });
+});

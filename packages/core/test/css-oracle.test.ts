@@ -71,7 +71,11 @@ describe("our CSS against getCSSAsync on the Positivus fixtures", () => {
         }
 
         const written = nodeCss(node, parent, context);
-        const ours = new Map([...written.properties, ...written.readOnly]);
+        // A read-only value may carry our note after the value Figma writes: "-367px (the children overlap)".
+        const ours = new Map([
+          ...written.properties,
+          ...written.readOnly.map(([property, value]): [string, string] => [property, value.replace(/ \(.*\)$/, "")]),
+        ]);
         const textStyled = ours.get("font") === undefined && node.textStyleId !== undefined;
 
         for (const [property, value] of oracleOf(node)) {

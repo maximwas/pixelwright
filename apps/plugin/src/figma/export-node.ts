@@ -5,11 +5,11 @@ import { requireNode } from "./nodes.ts";
 const exports = chunkSource<{ bytes: Uint8Array; scale: number }>();
 const images = chunkSource<{ bytes: Uint8Array }>();
 
-/** One chunk of a layer's export, rendered once per request. */
+/** One chunk of a layer's export, rendered once per stream (one export the server reads). */
 export async function exportNode(input: OperationInput<"export">): Promise<OperationOutput<"export">> {
   const { node: id, format, effects, offset, length, maxSide } = input;
   const key = JSON.stringify([id, format, input.scale, effects, maxSide]);
-  const { result, totalBytes, chunk } = await exports(key, offset, length, () =>
+  const { result, totalBytes, chunk } = await exports(input.stream ?? key, key, offset, length, () =>
     render(id, format, input.scale, effects, maxSide),
   );
 
@@ -25,8 +25,9 @@ export async function originalImage({
   hash,
   offset,
   length,
+  stream,
 }: OperationInput<"image">): Promise<OperationOutput<"image">> {
-  const { totalBytes, chunk } = await images(hash, offset, length, async () => {
+  const { totalBytes, chunk } = await images(stream ?? hash, hash, offset, length, async () => {
     const image = figma.getImageByHash(hash);
 
     if (image === null) {

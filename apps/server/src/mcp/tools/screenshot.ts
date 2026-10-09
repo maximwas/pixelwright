@@ -1,9 +1,9 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, extname, resolve } from "node:path";
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { BridgeError } from "@pixelwright/core";
 import type * as z from "zod";
-import { MAX_IMAGE_SIDE_PX } from "../../constants/mcp.ts";
+import { INLINE_ATTEMPTS, MAX_IMAGE_SIDE_PX, MAX_INLINE_IMAGE_BYTES } from "../../constants/mcp.ts";
 import { ScreenshotInputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { readPngSize } from "../../utils/png-size.ts";
@@ -42,6 +42,7 @@ export function registerScreenshotTool(server: McpServer, { bridge }: ToolContex
 export async function takeScreenshot(
   bridge: ToolContext["bridge"],
   { node, scale, effects, save, file }: ScreenshotArgs,
+  target?: { session: string },
 ): Promise<CallToolResult> {
   const request = {
     node,
@@ -49,10 +50,14 @@ export async function takeScreenshot(
     scale,
     effects,
   };
+  const where = {
+    file,
+    target,
+  };
 
   if (save !== undefined) {
-    const { bytes } = await exportBytes(bridge, request, { file });
-    const path = resolve(save);
+    const path = await pngPath(save);
+    const { bytes } = await exportBytes(bridge, request, where);
 
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, bytes);
@@ -72,22 +77,70 @@ export async function takeScreenshot(
     };
   }
 
-  // The plugin lowers the scale to fit; the check on the first chunk is for what it could not fit.
-  const { bytes, scale: used } = await exportBytes(
-    bridge,
-    {
-      ...request,
-      maxSide: MAX_IMAGE_SIDE_PX,
-    },
-    {
-      file,
-      onFirstChunk: (first, rendered) => assertFitsInline(sizeOf(first, node), node, rendered),
-    },
-  );
+  // The plugin lowers the scale to fit 2000 px; a render too heavy for an inline image is made again smaller.
+  let asked = scale;
+  let heavy: number | null = null;
+
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const { bytes, scale: used } = await exportBytes(
+        bridge,
+        {
+          ...request,
+          scale: asked,
+          maxSide: MAX_IMAGE_SIDE_PX,
+        },
+        {
+          ...where,
+          onFirstChunk: (first, rendered, totalBytes) => {
+            assertFitsInline(sizeOf(first, node), node, rendered);
+
+            if (totalBytes > MAX_INLINE_IMAGE_BYTES) {
+              throw new TooHeavy(totalBytes, rendered);
+            }
+          },
+        },
+      );
+
+      return inlineShot(bytes, node, scale, used, heavy);
+    } catch (error) {
+      if (!(error instanceof TooHeavy) || attempt >= INLINE_ATTEMPTS) {
+        throw error instanceof TooHeavy
+          ? new BridgeError(
+              "RESULT_TOO_LARGE",
+              `${node} renders to ${megabytes(error.totalBytes)} even at scale ${error.scale}, too much to return inline: screenshot one section of it (outline lists them), or pass save with a .png path.`,
+            )
+          : error;
+      }
+
+      heavy = error.totalBytes;
+      // The bytes of an image grow with its area, the square of the scale; a tenth less for the estimate's error.
+      asked = Math.floor(error.scale * Math.sqrt(MAX_INLINE_IMAGE_BYTES / error.totalBytes) * 0.9 * 100) / 100;
+    }
+  }
+}
+
+/** A render too heavy to return inline, found on its first chunk. */
+class TooHeavy extends Error {
+  readonly totalBytes: number;
+  readonly scale: number;
+
+  constructor(totalBytes: number, scale: number) {
+    super("too heavy");
+    this.totalBytes = totalBytes;
+    this.scale = scale;
+  }
+}
+
+function inlineShot(bytes: Buffer, node: string, asked: number, used: number, heavy: number | null): CallToolResult {
   const { width, height } = sizeOf(bytes, node);
+  const why =
+    heavy === null
+      ? `fit ${MAX_IMAGE_SIDE_PX} px`
+      : `stay under ${megabytes(MAX_INLINE_IMAGE_BYTES)} inline (it was ${megabytes(heavy)})`;
   const full =
-    used < scale
-      ? ` Scaled down to fit ${MAX_IMAGE_SIDE_PX} px: at scale ${scale} it is ${Math.round((width / used) * scale)}×${Math.round((height / used) * scale)} px; screenshot a section, or pass save, for the details.`
+    used < asked
+      ? ` Scaled down to ${why}: at scale ${asked} it is ${Math.round((width / used) * asked)}×${Math.round((height / used) * asked)} px; screenshot a section, or pass save, for the details.`
       : "";
 
   return {
@@ -103,6 +156,28 @@ export async function takeScreenshot(
       },
     ],
   };
+}
+
+const megabytes = (bytes: number) => `${Math.round((bytes / 1024 / 1024) * 10) / 10} MB`;
+
+/**
+ * Where save writes: a .png path, never over a file that is not a PNG (a tool that only reads Figma must not destroy
+ * a file the user keeps); an earlier screenshot is replaced.
+ */
+async function pngPath(save: string): Promise<string> {
+  const path = resolve(save);
+
+  if (extname(path).toLowerCase() !== ".png") {
+    throw new BridgeError("OP_FAILED", `save must be a .png path, not ${save}.`);
+  }
+
+  const existing = await readFile(path).catch(() => null);
+
+  if (existing !== null && readPngSize(existing) === null) {
+    throw new BridgeError("OP_FAILED", `${path} exists and is not a PNG: choose another path, it is not overwritten.`);
+  }
+
+  return path;
 }
 
 function sizeOf(bytes: Uint8Array, node: string): { width: number; height: number } {

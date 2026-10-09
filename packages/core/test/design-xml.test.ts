@@ -209,8 +209,8 @@ describe("design XML rules", () => {
             {
               ...base,
               id: "1:3",
-              name: "Wordmark",
-              type: "TEXT",
+              name: "Mark",
+              type: "RECTANGLE",
             },
           ],
         },

@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
-import { BridgeError, designHints, fitDesign, OPERATION_SCHEMAS, type PlannedAsset } from "@pixelwright/core";
+import { BridgeError, designHints, designXml, fitPlan, OPERATION_SCHEMAS, type PlannedAsset } from "@pixelwright/core";
 import type * as z from "zod";
 import { writeAssets } from "../../assets/write-assets.ts";
 import { resolveTarget } from "../../bridge/target.ts";
@@ -25,7 +25,7 @@ export function registerDesignTool(server: McpServer, { bridge }: ToolContext): 
     {
       title: "Read a design",
       description:
-        "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, and truncated (ids of branches left empty to fit maxChars: read each on its own). For a big frame, find its sections with outline first. Rebuild the result with the project's own components and tokens.",
+        "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, and truncated (ids of branches left empty to fit maxChars: read each on its own). A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project's own components and tokens.",
       inputSchema,
       annotations: {
         readOnlyHint: true,
@@ -61,8 +61,21 @@ export async function readDesign(
       target,
     ),
   );
+
+  if (!snapshot.root.visible) {
+    throw new BridgeError(
+      "OP_FAILED",
+      `${node} is hidden in Figma, and a hidden layer is read as a name and a box only: show it, or read a visible one.`,
+    );
+  }
+
   const assetsPath = assetsDir ?? "assets";
-  let read = fitDesign(snapshot, maxChars, { assetsPath });
+  // The cuts are made once: the read with the written files' paths must cut the same branches as the planned one.
+  const plan = fitPlan(snapshot, maxChars, { assetsPath });
+  let read = designXml(snapshot, {
+    assetsPath,
+    ...plan,
+  });
   let assets: readonly unknown[] = read.assets.map(({ node: id, kind, src }) => ({
     node: id,
     kind,
@@ -78,9 +91,10 @@ export async function readDesign(
       assetsDir,
     );
 
-    read = fitDesign(snapshot, maxChars, {
+    read = designXml(snapshot, {
       assetsPath,
       assetSrc: srcByKey,
+      ...plan,
     });
     assets = written;
   }
@@ -116,12 +130,15 @@ export async function readDesign(
   ];
 
   if (screenshot) {
-    const shot = await takeScreenshot(bridge, {
-      node,
-      scale: 1,
-      effects: true,
-      ...(file === undefined ? {} : { file }),
-    });
+    const shot = await takeScreenshot(
+      bridge,
+      {
+        node,
+        scale: 1,
+        effects: true,
+      },
+      target,
+    );
 
     content.push(...shot.content);
   }
@@ -159,8 +176,9 @@ function fetchAsset(bridge: ToolContext["bridge"], asset: PlannedAsset, target: 
       node: asset.node,
       format,
       scale: asset.scale ?? (format === "PNG" || format === "JPG" ? RASTER_SCALE : 1),
-      // The layer's own box: shadows and outlines stay CSS around it.
-      effects: false,
+      // An icon with everything it draws (centred and outside strokes would be cut off at its box); an image as its own
+      // box, its drop shadows and outlines staying CSS around it.
+      effects: asset.kind === "icon",
     },
     { target },
   ).then(({ bytes }) => bytes);
