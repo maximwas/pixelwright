@@ -1,0 +1,3820 @@
+{
+  "root": {
+    "id": "2:4785",
+    "name": "Landing page",
+    "type": "FRAME",
+    "visible": true,
+    "x": 0,
+    "y": 0,
+    "width": 1440,
+    "height": 771,
+    "layoutMode": "VERTICAL",
+    "layoutWrap": "NO_WRAP",
+    "primaryAxisAlignItems": "MIN",
+    "counterAxisAlignItems": "MIN",
+    "counterAxisAlignContent": "AUTO",
+    "itemSpacing": 70,
+    "counterAxisSpacing": 0,
+    "paddingTop": 0,
+    "paddingRight": 0,
+    "paddingBottom": 0,
+    "paddingLeft": 0,
+    "itemReverseZIndex": false,
+    "strokesIncludedInLayout": false,
+    "layoutSizingHorizontal": "FIXED",
+    "layoutSizingVertical": "HUG",
+    "css": {
+      "display": "flex",
+      "width": "1440px",
+      "flex-direction": "column",
+      "align-items": "flex-start",
+      "gap": "70px"
+    },
+    "childCount": 3,
+    "children": [
+      {
+        "id": "2:4786",
+        "name": "Navigation bar",
+        "type": "FRAME",
+        "visible": true,
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 68,
+        "clipsContent": true,
+        "layoutMode": "HORIZONTAL",
+        "layoutWrap": "NO_WRAP",
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "CENTER",
+        "counterAxisAlignContent": "AUTO",
+        "itemSpacing": 206,
+        "counterAxisSpacing": 0,
+        "paddingTop": 0,
+        "paddingRight": 100,
+        "paddingBottom": 0,
+        "paddingLeft": 100,
+        "itemReverseZIndex": false,
+        "strokesIncludedInLayout": false,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "HUG",
+        "css": {
+          "display": "flex",
+          "width": "1440px",
+          "padding": "0 100px",
+          "justify-content": "space-between",
+          "align-items": "center"
+        },
+        "childCount": 2,
+        "children": [
+          {
+            "id": "2:4787",
+            "name": "Frame 9",
+            "type": "FRAME",
+            "visible": true,
+            "x": 100,
+            "y": 6,
+            "width": 219.54,
+            "height": 56,
+            "clipsContent": true,
+            "layoutMode": "HORIZONTAL",
+            "layoutWrap": "NO_WRAP",
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "counterAxisAlignContent": "AUTO",
+            "itemSpacing": 10,
+            "counterAxisSpacing": 0,
+            "paddingTop": 10,
+            "paddingRight": 0,
+            "paddingBottom": 10,
+            "paddingLeft": 0,
+            "itemReverseZIndex": false,
+            "strokesIncludedInLayout": false,
+            "layoutSizingHorizontal": "HUG",
+            "layoutSizingVertical": "HUG",
+            "css": {
+              "display": "flex",
+              "padding": "10px 0",
+              "align-items": "flex-start",
+              "gap": "10px"
+            },
+            "childCount": 1,
+            "children": [
+              {
+                "id": "2:4788",
+                "name": "Logo",
+                "type": "INSTANCE",
+                "visible": true,
+                "x": 100,
+                "y": 16,
+                "width": 219.54,
+                "height": 36,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "instance": {
+                  "componentId": "2:4245",
+                  "componentName": "Property 1=Default",
+                  "componentKey": "8615c704721050f9977edf601df4a4b2b8563971",
+                  "setId": "2:4244",
+                  "setName": "Logo",
+                  "properties": {
+                    "Property 1": {
+                      "type": "VARIANT",
+                      "value": "Default"
+                    }
+                  }
+                },
+                "css": {
+                  "display": "flex",
+                  "width": "219.537px",
+                  "height": "36px",
+                  "justify-content": "center",
+                  "align-items": "center",
+                  "gap": "12.92px"
+                },
+                "childCount": 2,
+                "children": [
+                  {
+                    "id": "I2:4788;330:315",
+                    "name": "Icon",
+                    "type": "FRAME",
+                    "visible": true,
+                    "x": 100,
+                    "y": 16,
+                    "width": 36,
+                    "height": 36,
+                    "clipsContent": true,
+                    "constraints": {
+                      "horizontal": "SCALE",
+                      "vertical": "SCALE"
+                    },
+                    "layoutSizingHorizontal": "FIXED",
+                    "layoutSizingVertical": "FIXED",
+                    "css": {
+                      "width": "36px",
+                      "height": "36px",
+                      "flex-shrink": "0"
+                    },
+                    "childCount": 1,
+                    "children": [
+                      {
+                        "id": "I2:4788;330:316",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "visible": true,
+                        "x": 100.35,
+                        "y": 16.35,
+                        "width": 35.25,
+                        "height": 35.25,
+                        "constraints": {
+                          "horizontal": "SCALE",
+                          "vertical": "SCALE"
+                        },
+                        "layoutSizingHorizontal": "FIXED",
+                        "layoutSizingVertical": "FIXED",
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "visible": true,
+                            "opacity": 1,
+                            "blendMode": "NORMAL",
+                            "color": {
+                              "r": 0,
+                              "g": 0,
+                              "b": 0
+                            },
+                            "boundVariables": {}
+                          }
+                        ],
+                        "css": {
+                          "width": "35.252px",
+                          "height": "35.252px",
+                          "fill": "#000"
+                        },
+                        "childCount": 0
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I2:4788;330:318",
+                    "name": "Positivus",
+                    "type": "VECTOR",
+                    "visible": true,
+                    "x": 148.92,
+                    "y": 19,
+                    "width": 170.62,
+                    "height": 28.56,
+                    "constraints": {
+                      "horizontal": "SCALE",
+                      "vertical": "SCALE"
+                    },
+                    "layoutSizingHorizontal": "FIXED",
+                    "layoutSizingVertical": "FIXED",
+                    "fills": [
+                      {
+                        "type": "SOLID",
+                        "visible": true,
+                        "opacity": 1,
+                        "blendMode": "NORMAL",
+                        "color": {
+                          "r": 0,
+                          "g": 0,
+                          "b": 0
+                        },
+                        "boundVariables": {}
+                      }
+                    ],
+                    "css": {
+                      "width": "170.617px",
+                      "height": "28.56px",
+                      "flex-shrink": "0",
+                      "fill": "#000"
+                    },
+                    "childCount": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2:4789",
+            "name": "Frame 10",
+            "type": "FRAME",
+            "visible": true,
+            "x": 529,
+            "y": 0,
+            "width": 811,
+            "height": 68,
+            "layoutMode": "HORIZONTAL",
+            "layoutWrap": "NO_WRAP",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "counterAxisAlignContent": "AUTO",
+            "itemSpacing": 40,
+            "counterAxisSpacing": 0,
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemReverseZIndex": false,
+            "strokesIncludedInLayout": false,
+            "layoutSizingHorizontal": "HUG",
+            "layoutSizingVertical": "HUG",
+            "css": {
+              "display": "flex",
+              "justify-content": "center",
+              "align-items": "center",
+              "gap": "40px"
+            },
+            "childCount": 6,
+            "children": [
+              {
+                "id": "2:4790",
+                "name": "About us",
+                "type": "TEXT",
+                "visible": true,
+                "x": 529,
+                "y": 20,
+                "width": 88,
+                "height": 28,
+                "layoutSizingHorizontal": "HUG",
+                "layoutSizingVertical": "HUG",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "text": {
+                  "characters": "About us",
+                  "textAutoResize": "WIDTH_AND_HEIGHT",
+                  "textAlignHorizontal": "LEFT",
+                  "textAlignVertical": "TOP",
+                  "segments": [
+                    {
+                      "characters": "About us",
+                      "start": 0,
+                      "end": 8,
+                      "fontName": {
+                        "family": "Space Grotesk",
+                        "style": "Regular"
+                      },
+                      "fontSize": 20,
+                      "fontWeight": 400,
+                      "fontStyle": "REGULAR",
+                      "textDecoration": "NONE",
+                      "textCase": "ORIGINAL",
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 28
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "visible": true,
+                          "opacity": 1,
+                          "blendMode": "NORMAL",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0
+                          },
+                          "boundVariables": {}
+                        }
+                      ],
+                      "fillStyleId": "",
+                      "textStyleId": "",
+                      "hyperlink": null,
+                      "boundVariables": {}
+                    }
+                  ]
+                },
+                "css": {
+                  "color": "#000",
+                  "font-family": "\"Space Grotesk\"",
+                  "font-size": "20px",
+                  "font-style": "normal",
+                  "font-weight": "400",
+                  "line-height": "28px /* 140% */"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4791",
+                "name": "Services",
+                "type": "TEXT",
+                "visible": true,
+                "x": 657,
+                "y": 20,
+                "width": 82,
+                "height": 28,
+                "layoutSizingHorizontal": "HUG",
+                "layoutSizingVertical": "HUG",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "text": {
+                  "characters": "Services",
+                  "textAutoResize": "WIDTH_AND_HEIGHT",
+                  "textAlignHorizontal": "LEFT",
+                  "textAlignVertical": "TOP",
+                  "segments": [
+                    {
+                      "characters": "Services",
+                      "start": 0,
+                      "end": 8,
+                      "fontName": {
+                        "family": "Space Grotesk",
+                        "style": "Regular"
+                      },
+                      "fontSize": 20,
+                      "fontWeight": 400,
+                      "fontStyle": "REGULAR",
+                      "textDecoration": "NONE",
+                      "textCase": "ORIGINAL",
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 28
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "visible": true,
+                          "opacity": 1,
+                          "blendMode": "NORMAL",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0
+                          },
+                          "boundVariables": {}
+                        }
+                      ],
+                      "fillStyleId": "",
+                      "textStyleId": "",
+                      "hyperlink": null,
+                      "boundVariables": {}
+                    }
+                  ]
+                },
+                "css": {
+                  "color": "#000",
+                  "font-family": "\"Space Grotesk\"",
+                  "font-size": "20px",
+                  "font-style": "normal",
+                  "font-weight": "400",
+                  "line-height": "28px /* 140% */"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4792",
+                "name": "Use Cases",
+                "type": "TEXT",
+                "visible": true,
+                "x": 779,
+                "y": 20,
+                "width": 99,
+                "height": 28,
+                "layoutSizingHorizontal": "HUG",
+                "layoutSizingVertical": "HUG",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "text": {
+                  "characters": "Use Cases",
+                  "textAutoResize": "WIDTH_AND_HEIGHT",
+                  "textAlignHorizontal": "LEFT",
+                  "textAlignVertical": "TOP",
+                  "segments": [
+                    {
+                      "characters": "Use Cases",
+                      "start": 0,
+                      "end": 9,
+                      "fontName": {
+                        "family": "Space Grotesk",
+                        "style": "Regular"
+                      },
+                      "fontSize": 20,
+                      "fontWeight": 400,
+                      "fontStyle": "REGULAR",
+                      "textDecoration": "NONE",
+                      "textCase": "ORIGINAL",
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 28
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "visible": true,
+                          "opacity": 1,
+                          "blendMode": "NORMAL",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0
+                          },
+                          "boundVariables": {}
+                        }
+                      ],
+                      "fillStyleId": "",
+                      "textStyleId": "",
+                      "hyperlink": null,
+                      "boundVariables": {}
+                    }
+                  ]
+                },
+                "css": {
+                  "color": "#000",
+                  "font-family": "\"Space Grotesk\"",
+                  "font-size": "20px",
+                  "font-style": "normal",
+                  "font-weight": "400",
+                  "line-height": "28px /* 140% */"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4793",
+                "name": "Pricing",
+                "type": "TEXT",
+                "visible": true,
+                "x": 918,
+                "y": 20,
+                "width": 67,
+                "height": 28,
+                "layoutSizingHorizontal": "HUG",
+                "layoutSizingVertical": "HUG",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "text": {
+                  "characters": "Pricing",
+                  "textAutoResize": "WIDTH_AND_HEIGHT",
+                  "textAlignHorizontal": "LEFT",
+                  "textAlignVertical": "TOP",
+                  "segments": [
+                    {
+                      "characters": "Pricing",
+                      "start": 0,
+                      "end": 7,
+                      "fontName": {
+                        "family": "Space Grotesk",
+                        "style": "Regular"
+                      },
+                      "fontSize": 20,
+                      "fontWeight": 400,
+                      "fontStyle": "REGULAR",
+                      "textDecoration": "NONE",
+                      "textCase": "ORIGINAL",
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 28
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "visible": true,
+                          "opacity": 1,
+                          "blendMode": "NORMAL",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0
+                          },
+                          "boundVariables": {}
+                        }
+                      ],
+                      "fillStyleId": "",
+                      "textStyleId": "",
+                      "hyperlink": null,
+                      "boundVariables": {}
+                    }
+                  ]
+                },
+                "css": {
+                  "color": "#000",
+                  "font-family": "\"Space Grotesk\"",
+                  "font-size": "20px",
+                  "font-style": "normal",
+                  "font-weight": "400",
+                  "line-height": "28px /* 140% */"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4794",
+                "name": "Blog",
+                "type": "TEXT",
+                "visible": true,
+                "x": 1025,
+                "y": 20,
+                "width": 44,
+                "height": 28,
+                "layoutSizingHorizontal": "HUG",
+                "layoutSizingVertical": "HUG",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "text": {
+                  "characters": "Blog",
+                  "textAutoResize": "WIDTH_AND_HEIGHT",
+                  "textAlignHorizontal": "LEFT",
+                  "textAlignVertical": "TOP",
+                  "segments": [
+                    {
+                      "characters": "Blog",
+                      "start": 0,
+                      "end": 4,
+                      "fontName": {
+                        "family": "Space Grotesk",
+                        "style": "Regular"
+                      },
+                      "fontSize": 20,
+                      "fontWeight": 400,
+                      "fontStyle": "REGULAR",
+                      "textDecoration": "NONE",
+                      "textCase": "ORIGINAL",
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 28
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "visible": true,
+                          "opacity": 1,
+                          "blendMode": "NORMAL",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0
+                          },
+                          "boundVariables": {}
+                        }
+                      ],
+                      "fillStyleId": "",
+                      "textStyleId": "",
+                      "hyperlink": null,
+                      "boundVariables": {}
+                    }
+                  ]
+                },
+                "css": {
+                  "color": "#000",
+                  "font-family": "\"Space Grotesk\"",
+                  "font-size": "20px",
+                  "font-style": "normal",
+                  "font-weight": "400",
+                  "line-height": "28px /* 140% */"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4795",
+                "name": "Button",
+                "type": "INSTANCE",
+                "visible": true,
+                "x": 1109,
+                "y": 0,
+                "width": 231,
+                "height": 68,
+                "layoutMode": "HORIZONTAL",
+                "layoutWrap": "NO_WRAP",
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "counterAxisAlignContent": "AUTO",
+                "itemSpacing": 10,
+                "counterAxisSpacing": 0,
+                "paddingTop": 20,
+                "paddingRight": 35,
+                "paddingBottom": 20,
+                "paddingLeft": 35,
+                "itemReverseZIndex": false,
+                "strokesIncludedInLayout": false,
+                "layoutSizingHorizontal": "HUG",
+                "layoutSizingVertical": "HUG",
+                "strokes": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0.09803921729326248,
+                      "g": 0.10196078568696976,
+                      "b": 0.13725490868091583
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "strokeWeight": 1,
+                "strokeAlign": "INSIDE",
+                "cornerRadius": 14,
+                "strokeStyleId": "S:4fd252e43efba2d8d2d75696ea8cf7744e655565,109:2",
+                "instance": {
+                  "componentId": "2:4259",
+                  "componentName": "Property 1=Button secondary",
+                  "componentKey": "4525cf3d3faeaf1af7ee7217534d1c92c97e2653",
+                  "setId": "2:4254",
+                  "setName": "Button",
+                  "properties": {
+                    "Property 1": {
+                      "type": "VARIANT",
+                      "value": "Button secondary"
+                    }
+                  }
+                },
+                "css": {
+                  "display": "flex",
+                  "padding": "20px 35px",
+                  "align-items": "flex-start",
+                  "gap": "10px",
+                  "border-radius": "14px",
+                  "border": "1px solid var(--Dark, #191A23)"
+                },
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "I2:4795;326:276",
+                    "name": "Label",
+                    "type": "TEXT",
+                    "visible": true,
+                    "x": 1144,
+                    "y": 20,
+                    "width": 161,
+                    "height": 28,
+                    "layoutSizingHorizontal": "HUG",
+                    "layoutSizingVertical": "HUG",
+                    "fills": [
+                      {
+                        "type": "SOLID",
+                        "visible": true,
+                        "opacity": 1,
+                        "blendMode": "NORMAL",
+                        "color": {
+                          "r": 0,
+                          "g": 0,
+                          "b": 0
+                        },
+                        "boundVariables": {}
+                      }
+                    ],
+                    "text": {
+                      "characters": "Request a quote",
+                      "textAutoResize": "WIDTH_AND_HEIGHT",
+                      "textAlignHorizontal": "CENTER",
+                      "textAlignVertical": "TOP",
+                      "segments": [
+                        {
+                          "characters": "Request a quote",
+                          "start": 0,
+                          "end": 15,
+                          "fontName": {
+                            "family": "Space Grotesk",
+                            "style": "Regular"
+                          },
+                          "fontSize": 20,
+                          "fontWeight": 400,
+                          "fontStyle": "REGULAR",
+                          "textDecoration": "NONE",
+                          "textCase": "ORIGINAL",
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 28
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "visible": true,
+                              "opacity": 1,
+                              "blendMode": "NORMAL",
+                              "color": {
+                                "r": 0,
+                                "g": 0,
+                                "b": 0
+                              },
+                              "boundVariables": {}
+                            }
+                          ],
+                          "fillStyleId": "",
+                          "textStyleId": "",
+                          "hyperlink": null,
+                          "boundVariables": {}
+                        }
+                      ]
+                    },
+                    "css": {
+                      "color": "#000",
+                      "text-align": "center",
+                      "font-family": "\"Space Grotesk\"",
+                      "font-size": "20px",
+                      "font-style": "normal",
+                      "font-weight": "400",
+                      "line-height": "28px /* 140% */"
+                    },
+                    "childCount": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "2:4796",
+        "name": "Header",
+        "type": "FRAME",
+        "visible": true,
+        "x": 0,
+        "y": 138,
+        "width": 1440,
+        "height": 515,
+        "clipsContent": true,
+        "layoutMode": "HORIZONTAL",
+        "layoutWrap": "NO_WRAP",
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "MIN",
+        "counterAxisAlignContent": "AUTO",
+        "itemSpacing": 206,
+        "counterAxisSpacing": 0,
+        "paddingTop": 0,
+        "paddingRight": 100,
+        "paddingBottom": 0,
+        "paddingLeft": 100,
+        "itemReverseZIndex": false,
+        "strokesIncludedInLayout": false,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "HUG",
+        "css": {
+          "display": "flex",
+          "width": "1440px",
+          "padding": "0 100px",
+          "justify-content": "space-between",
+          "align-items": "flex-start"
+        },
+        "childCount": 2,
+        "children": [
+          {
+            "id": "2:4797",
+            "name": "Frame 13",
+            "type": "FRAME",
+            "visible": true,
+            "x": 100,
+            "y": 138,
+            "width": 531,
+            "height": 481,
+            "layoutMode": "VERTICAL",
+            "layoutWrap": "NO_WRAP",
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "counterAxisAlignContent": "AUTO",
+            "itemSpacing": 35,
+            "counterAxisSpacing": 0,
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemReverseZIndex": false,
+            "strokesIncludedInLayout": false,
+            "layoutSizingHorizontal": "HUG",
+            "layoutSizingVertical": "HUG",
+            "css": {
+              "display": "flex",
+              "flex-direction": "column",
+              "align-items": "flex-start",
+              "gap": "35px"
+            },
+            "childCount": 3,
+            "children": [
+              {
+                "id": "2:4798",
+                "name": "Navigating the digital landscape for success",
+                "type": "TEXT",
+                "visible": true,
+                "x": 100,
+                "y": 138,
+                "width": 531,
+                "height": 231,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "HUG",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "textStyleId": "S:04c3fd0dd8f9347062b8fa1a09b6a43abee5c622,53:11",
+                "text": {
+                  "characters": "Navigating the digital landscape for success",
+                  "textAutoResize": "HEIGHT",
+                  "textAlignHorizontal": "LEFT",
+                  "textAlignVertical": "TOP",
+                  "segments": [
+                    {
+                      "characters": "Navigating the digital landscape for success",
+                      "start": 0,
+                      "end": 44,
+                      "fontName": {
+                        "family": "Space Grotesk",
+                        "style": "Medium"
+                      },
+                      "fontSize": 60,
+                      "fontWeight": 500,
+                      "fontStyle": "MEDIUM",
+                      "textDecoration": "NONE",
+                      "textCase": "ORIGINAL",
+                      "lineHeight": {
+                        "unit": "AUTO"
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "visible": true,
+                          "opacity": 1,
+                          "blendMode": "NORMAL",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0
+                          },
+                          "boundVariables": {}
+                        }
+                      ],
+                      "fillStyleId": "",
+                      "textStyleId": "S:04c3fd0dd8f9347062b8fa1a09b6a43abee5c622,53:11",
+                      "hyperlink": null,
+                      "boundVariables": {}
+                    }
+                  ]
+                },
+                "css": {
+                  "width": "531px",
+                  "color": "#000",
+                  "font-family": "\"Space Grotesk\"",
+                  "font-size": "60px",
+                  "font-style": "normal",
+                  "font-weight": "500",
+                  "line-height": "normal"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4799",
+                "name": "Our digital marketing agency helps businesses grow and succeed online through a range of services including SEO, PPC, social media marketing, and content creation.",
+                "type": "TEXT",
+                "visible": true,
+                "x": 100,
+                "y": 404,
+                "width": 498,
+                "height": 112,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "HUG",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "text": {
+                  "characters": "Our digital marketing agency helps businesses grow and succeed online through a range of services including SEO, PPC, social media marketing, and content creation.",
+                  "textAutoResize": "HEIGHT",
+                  "textAlignHorizontal": "LEFT",
+                  "textAlignVertical": "TOP",
+                  "segments": [
+                    {
+                      "characters": "Our digital marketing agency helps businesses grow and succeed online through a range of services including SEO, PPC, social media marketing, and content creation.",
+                      "start": 0,
+                      "end": 163,
+                      "fontName": {
+                        "family": "Space Grotesk",
+                        "style": "Regular"
+                      },
+                      "fontSize": 20,
+                      "fontWeight": 400,
+                      "fontStyle": "REGULAR",
+                      "textDecoration": "NONE",
+                      "textCase": "ORIGINAL",
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 28
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "visible": true,
+                          "opacity": 1,
+                          "blendMode": "NORMAL",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0
+                          },
+                          "boundVariables": {}
+                        }
+                      ],
+                      "fillStyleId": "",
+                      "textStyleId": "",
+                      "hyperlink": null,
+                      "boundVariables": {}
+                    }
+                  ]
+                },
+                "css": {
+                  "width": "498px",
+                  "color": "#000",
+                  "font-family": "\"Space Grotesk\"",
+                  "font-size": "20px",
+                  "font-style": "normal",
+                  "font-weight": "400",
+                  "line-height": "28px /* 140% */"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4800",
+                "name": "Button",
+                "type": "INSTANCE",
+                "visible": true,
+                "x": 100,
+                "y": 551,
+                "width": 264,
+                "height": 68,
+                "layoutMode": "HORIZONTAL",
+                "layoutWrap": "NO_WRAP",
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "counterAxisAlignContent": "AUTO",
+                "itemSpacing": 10,
+                "counterAxisSpacing": 0,
+                "paddingTop": 20,
+                "paddingRight": 35,
+                "paddingBottom": 20,
+                "paddingLeft": 35,
+                "itemReverseZIndex": false,
+                "strokesIncludedInLayout": false,
+                "layoutSizingHorizontal": "HUG",
+                "layoutSizingVertical": "HUG",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0.09803921729326248,
+                      "g": 0.10196078568696976,
+                      "b": 0.13725490868091583
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "cornerRadius": 14,
+                "fillStyleId": "S:4fd252e43efba2d8d2d75696ea8cf7744e655565,109:2",
+                "instance": {
+                  "componentId": "2:4255",
+                  "componentName": "Property 1=Button primary",
+                  "componentKey": "5749e6b472c9f3eda8cc0e2d16b755e989cfb11d",
+                  "setId": "2:4254",
+                  "setName": "Button",
+                  "properties": {
+                    "Property 1": {
+                      "type": "VARIANT",
+                      "value": "Button primary"
+                    }
+                  }
+                },
+                "css": {
+                  "display": "flex",
+                  "padding": "20px 35px",
+                  "align-items": "flex-start",
+                  "gap": "10px",
+                  "border-radius": "14px",
+                  "background": "var(--Dark, #191A23)"
+                },
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "I2:4800;326:271",
+                    "name": "Label",
+                    "type": "TEXT",
+                    "visible": true,
+                    "x": 135,
+                    "y": 571,
+                    "width": 194,
+                    "height": 28,
+                    "layoutSizingHorizontal": "HUG",
+                    "layoutSizingVertical": "HUG",
+                    "fills": [
+                      {
+                        "type": "SOLID",
+                        "visible": true,
+                        "opacity": 1,
+                        "blendMode": "NORMAL",
+                        "color": {
+                          "r": 1,
+                          "g": 1,
+                          "b": 1
+                        },
+                        "boundVariables": {}
+                      }
+                    ],
+                    "text": {
+                      "characters": "Book a consultation",
+                      "textAutoResize": "WIDTH_AND_HEIGHT",
+                      "textAlignHorizontal": "CENTER",
+                      "textAlignVertical": "TOP",
+                      "segments": [
+                        {
+                          "characters": "Book a consultation",
+                          "start": 0,
+                          "end": 19,
+                          "fontName": {
+                            "family": "Space Grotesk",
+                            "style": "Regular"
+                          },
+                          "fontSize": 20,
+                          "fontWeight": 400,
+                          "fontStyle": "REGULAR",
+                          "textDecoration": "NONE",
+                          "textCase": "ORIGINAL",
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 28
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "visible": true,
+                              "opacity": 1,
+                              "blendMode": "NORMAL",
+                              "color": {
+                                "r": 1,
+                                "g": 1,
+                                "b": 1
+                              },
+                              "boundVariables": {}
+                            }
+                          ],
+                          "fillStyleId": "",
+                          "textStyleId": "",
+                          "hyperlink": null,
+                          "boundVariables": {}
+                        }
+                      ]
+                    },
+                    "css": {
+                      "color": "#FFF",
+                      "text-align": "center",
+                      "font-family": "\"Space Grotesk\"",
+                      "font-size": "20px",
+                      "font-style": "normal",
+                      "font-weight": "400",
+                      "line-height": "28px /* 140% */"
+                    },
+                    "childCount": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2:4801",
+            "name": "Illustration",
+            "type": "GROUP",
+            "visible": true,
+            "x": 739.54,
+            "y": 138,
+            "width": 600.46,
+            "height": 515,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "css": {
+              "width": "600.462px",
+              "height": "515px",
+              "flex-shrink": "0"
+            },
+            "childCount": 9,
+            "children": [
+              {
+                "id": "2:4802",
+                "name": "Frame",
+                "type": "FRAME",
+                "visible": true,
+                "x": 1032.54,
+                "y": 565,
+                "width": 36,
+                "height": 36,
+                "clipsContent": true,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": false,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "36px",
+                  "height": "36px"
+                },
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "2:4803",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "visible": true,
+                    "x": 1032.89,
+                    "y": 565.35,
+                    "width": 35.25,
+                    "height": 35.25,
+                    "constraints": {
+                      "horizontal": "SCALE",
+                      "vertical": "SCALE"
+                    },
+                    "layoutSizingHorizontal": "FIXED",
+                    "layoutSizingVertical": "FIXED",
+                    "fills": [
+                      {
+                        "type": "SOLID",
+                        "visible": true,
+                        "opacity": 1,
+                        "blendMode": "NORMAL",
+                        "color": {
+                          "r": 0,
+                          "g": 0,
+                          "b": 0
+                        },
+                        "boundVariables": {}
+                      }
+                    ],
+                    "strokes": [
+                      {
+                        "type": "SOLID",
+                        "visible": true,
+                        "opacity": 1,
+                        "blendMode": "NORMAL",
+                        "color": {
+                          "r": 1,
+                          "g": 1,
+                          "b": 1
+                        },
+                        "boundVariables": {}
+                      }
+                    ],
+                    "strokeWeight": 1,
+                    "strokeAlign": "CENTER",
+                    "css": {
+                      "width": "35.252px",
+                      "height": "35.252px",
+                      "fill": "#000",
+                      "stroke-width": "1px",
+                      "stroke": "#FFF"
+                    },
+                    "childCount": 0
+                  }
+                ]
+              },
+              {
+                "id": "2:4804",
+                "name": "Frame",
+                "type": "FRAME",
+                "visible": true,
+                "x": 847.27,
+                "y": 451,
+                "width": 70.33,
+                "height": 70.33,
+                "bounds": {
+                  "x": 797.54,
+                  "y": 451,
+                  "width": 99.46,
+                  "height": 99.46
+                },
+                "rotation": -45,
+                "clipsContent": true,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": false,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "70.326px",
+                  "height": "70.326px",
+                  "transform": "rotate(45deg)"
+                },
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "2:4805",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "visible": true,
+                    "x": 847.27,
+                    "y": 451.96,
+                    "width": 68.86,
+                    "height": 68.86,
+                    "constraints": {
+                      "horizontal": "SCALE",
+                      "vertical": "SCALE"
+                    },
+                    "layoutSizingHorizontal": "FIXED",
+                    "layoutSizingVertical": "FIXED",
+                    "fills": [
+                      {
+                        "type": "SOLID",
+                        "visible": true,
+                        "opacity": 1,
+                        "blendMode": "NORMAL",
+                        "color": {
+                          "r": 0,
+                          "g": 0,
+                          "b": 0
+                        },
+                        "boundVariables": {}
+                      }
+                    ],
+                    "strokes": [
+                      {
+                        "type": "SOLID",
+                        "visible": true,
+                        "opacity": 1,
+                        "blendMode": "NORMAL",
+                        "color": {
+                          "r": 1,
+                          "g": 1,
+                          "b": 1
+                        },
+                        "boundVariables": {}
+                      }
+                    ],
+                    "strokeWeight": 1,
+                    "strokeAlign": "CENTER",
+                    "css": {
+                      "width": "68.865px",
+                      "height": "68.865px",
+                      "fill": "#000",
+                      "stroke-width": "1px",
+                      "stroke": "#FFF"
+                    },
+                    "childCount": 0
+                  }
+                ]
+              },
+              {
+                "id": "2:4806",
+                "name": "Ellipse 7",
+                "type": "ELLIPSE",
+                "visible": true,
+                "x": 837.45,
+                "y": 202,
+                "width": 566.26,
+                "height": 118.95,
+                "bounds": {
+                  "x": 780,
+                  "y": 202,
+                  "width": 553.28,
+                  "height": 377.65
+                },
+                "rotation": -28.880768907313545,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "strokes": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "strokeWeight": 1,
+                "strokeAlign": "INSIDE",
+                "css": {
+                  "width": "566.261px",
+                  "height": "118.948px",
+                  "transform": "rotate(28.881deg)",
+                  "border-radius": "566.261px",
+                  "border": "1px solid #000"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4807",
+                "name": "Ellipse 8",
+                "type": "ELLIPSE",
+                "visible": true,
+                "x": 817.22,
+                "y": 238.67,
+                "width": 566.26,
+                "height": 118.95,
+                "bounds": {
+                  "x": 759.77,
+                  "y": 238.67,
+                  "width": 553.28,
+                  "height": 377.65
+                },
+                "rotation": -28.880768907313545,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "strokes": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "strokeWeight": 1,
+                "strokeAlign": "INSIDE",
+                "css": {
+                  "width": "566.261px",
+                  "height": "118.948px",
+                  "transform": "rotate(28.881deg)",
+                  "border-radius": "566.261px",
+                  "border": "1px solid #000"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4808",
+                "name": "Ellipse 9",
+                "type": "ELLIPSE",
+                "visible": true,
+                "x": 796.99,
+                "y": 275.35,
+                "width": 566.26,
+                "height": 118.95,
+                "bounds": {
+                  "x": 739.54,
+                  "y": 275.35,
+                  "width": 553.28,
+                  "height": 377.65
+                },
+                "rotation": -28.880768907313545,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "strokes": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "strokeWeight": 1,
+                "strokeAlign": "INSIDE",
+                "css": {
+                  "width": "566.261px",
+                  "height": "118.948px",
+                  "transform": "rotate(28.881deg)",
+                  "border-radius": "566.261px",
+                  "border": "1px solid #000"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4809",
+                "name": "Ellipse 14",
+                "type": "ELLIPSE",
+                "visible": true,
+                "x": 855.54,
+                "y": 227,
+                "width": 31,
+                "height": 31,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0.7254902124404907,
+                      "g": 1,
+                      "b": 0.4000000059604645
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "31px",
+                  "height": "31px",
+                  "fill": "#B9FF66"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4810",
+                "name": "Ellipse 16",
+                "type": "ELLIPSE",
+                "visible": true,
+                "x": 1150.54,
+                "y": 563,
+                "width": 20,
+                "height": 20,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0.7254902124404907,
+                      "g": 1,
+                      "b": 0.4000000059604645
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "20px",
+                  "height": "20px",
+                  "fill": "#B9FF66"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4811",
+                "name": "Ellipse 15",
+                "type": "ELLIPSE",
+                "visible": true,
+                "x": 797.54,
+                "y": 179,
+                "width": 47,
+                "height": 47,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "47px",
+                  "height": "47px",
+                  "fill": "#000"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "2:4812",
+                "name": "Group",
+                "type": "GROUP",
+                "visible": true,
+                "x": 893.54,
+                "y": 138,
+                "width": 446.46,
+                "height": 385,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "css": {
+                  "width": "446.463px",
+                  "height": "385px"
+                },
+                "childCount": 2,
+                "children": [
+                  {
+                    "id": "2:4813",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "visible": true,
+                    "x": 893.54,
+                    "y": 155.41,
+                    "width": 340.58,
+                    "height": 367.59,
+                    "layoutSizingHorizontal": "FIXED",
+                    "layoutSizingVertical": "FIXED",
+                    "css": {
+                      "width": "340.58px",
+                      "height": "367.589px"
+                    },
+                    "childCount": 1,
+                    "children": [
+                      {
+                        "id": "2:4814",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "visible": true,
+                        "x": 893.54,
+                        "y": 155.41,
+                        "width": 340.58,
+                        "height": 367.59,
+                        "layoutSizingHorizontal": "FIXED",
+                        "layoutSizingVertical": "FIXED",
+                        "css": {
+                          "width": "340.58px",
+                          "height": "367.589px"
+                        },
+                        "childCount": 12,
+                        "children": [
+                          {
+                            "id": "2:4815",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 989.59,
+                            "y": 389.14,
+                            "width": 64.42,
+                            "height": 133.86,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "64.421px",
+                              "height": "133.863px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4816",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 990.5,
+                                "y": 390.01,
+                                "width": 62.7,
+                                "height": 132.13,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "62.702px",
+                                  "height": "132.134px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4817",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 989.59,
+                                "y": 389.14,
+                                "width": 64.42,
+                                "height": 133.86,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "64.421px",
+                                  "height": "133.863px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2:4818",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 894.42,
+                            "y": 193.38,
+                            "width": 274.07,
+                            "height": 236.32,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 0.7254902124404907,
+                                  "g": 1,
+                                  "b": 0.4000000059604645
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "274.071px",
+                              "height": "236.319px",
+                              "fill": "#B9FF66"
+                            },
+                            "childCount": 0
+                          },
+                          {
+                            "id": "2:4819",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 1019.89,
+                            "y": 155.41,
+                            "width": 214.23,
+                            "height": 278.05,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "214.233px",
+                              "height": "278.052px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4820",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1019.89,
+                                "y": 205.13,
+                                "width": 107.84,
+                                "height": 257.25,
+                                "bounds": {
+                                  "x": 1019.89,
+                                  "y": 155.41,
+                                  "width": 214.23,
+                                  "height": 278.05
+                                },
+                                "rotation": 27.453355909437533,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 1,
+                                      "g": 1,
+                                      "b": 1
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "107.843px",
+                                  "height": "257.253px",
+                                  "transform": "rotate(-27.439deg)",
+                                  "fill": "#FFF"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4821",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1049.92,
+                                "y": 176.68,
+                                "width": 154.12,
+                                "height": 235.51,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "154.125px",
+                                  "height": "235.508px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2:4822",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 1049.92,
+                            "y": 176.69,
+                            "width": 154.13,
+                            "height": 235.49,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 0,
+                                  "g": 0,
+                                  "b": 0
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "154.125px",
+                              "height": "235.49px",
+                              "fill": "#000"
+                            },
+                            "childCount": 0
+                          },
+                          {
+                            "id": "2:4823",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 1087.79,
+                            "y": 269.74,
+                            "width": 49.6,
+                            "height": 64.36,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "49.602px",
+                              "height": "64.36px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4824",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1087.79,
+                                "y": 281.26,
+                                "width": 24.98,
+                                "height": 59.53,
+                                "bounds": {
+                                  "x": 1087.79,
+                                  "y": 269.74,
+                                  "width": 49.6,
+                                  "height": 64.36
+                                },
+                                "rotation": 27.453355909437533,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0.7254902124404907,
+                                      "g": 1,
+                                      "b": 0.4000000059604645
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "24.983px",
+                                  "height": "59.535px",
+                                  "transform": "rotate(-27.439deg)",
+                                  "fill": "#B9FF66"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4825",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1094.09,
+                                "y": 274.03,
+                                "width": 36.98,
+                                "height": 55.82,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0.7254902124404907,
+                                      "g": 1,
+                                      "b": 0.4000000059604645
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "36.977px",
+                                  "height": "55.817px",
+                                  "fill": "#B9FF66"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2:4826",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 1059.47,
+                            "y": 191.32,
+                            "width": 135.11,
+                            "height": 206.26,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 0,
+                                  "g": 0,
+                                  "b": 0
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "135.112px",
+                              "height": "206.258px",
+                              "fill": "#000"
+                            },
+                            "childCount": 0
+                          },
+                          {
+                            "id": "2:4827",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 893.54,
+                            "y": 192.5,
+                            "width": 275.86,
+                            "height": 238.02,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 0,
+                                  "g": 0,
+                                  "b": 0
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "275.861px",
+                              "height": "238.018px",
+                              "fill": "#000"
+                            },
+                            "childCount": 0
+                          },
+                          {
+                            "id": "2:4828",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 1005.15,
+                            "y": 192.54,
+                            "width": 164.32,
+                            "height": 219.06,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "164.322px",
+                              "height": "219.06px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4829",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1006.03,
+                                "y": 193.34,
+                                "width": 162.55,
+                                "height": 217.4,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 1,
+                                      "g": 1,
+                                      "b": 1
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "162.547px",
+                                  "height": "217.399px",
+                                  "fill": "#FFF"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4830",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1005.15,
+                                "y": 192.54,
+                                "width": 164.32,
+                                "height": 219.06,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "164.322px",
+                                  "height": "219.06px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2:4831",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 893.54,
+                            "y": 372.93,
+                            "width": 40.43,
+                            "height": 57.47,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 0,
+                                  "g": 0,
+                                  "b": 0
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "40.429px",
+                              "height": "57.465px",
+                              "fill": "#000"
+                            },
+                            "childCount": 0
+                          },
+                          {
+                            "id": "2:4832",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 893.54,
+                            "y": 372.44,
+                            "width": 41.71,
+                            "height": 57.96,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "41.713px",
+                              "height": "57.965px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4833",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 894.42,
+                                "y": 373.37,
+                                "width": 40.08,
+                                "height": 56.17,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 1,
+                                      "g": 1,
+                                      "b": 1
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "40.08px",
+                                  "height": "56.171px",
+                                  "fill": "#FFF"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4834",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 893.54,
+                                "y": 372.44,
+                                "width": 41.71,
+                                "height": 57.96,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "41.713px",
+                                  "height": "57.965px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2:4835",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 904,
+                            "y": 343.14,
+                            "width": 71.94,
+                            "height": 87.22,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "71.943px",
+                              "height": "87.221px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4836",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 904.89,
+                                "y": 343.99,
+                                "width": 70.17,
+                                "height": 85.47,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "70.173px",
+                                  "height": "85.471px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4837",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 904,
+                                "y": 343.14,
+                                "width": 71.94,
+                                "height": 87.22,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "71.943px",
+                                  "height": "87.221px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2:4838",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 1070.32,
+                            "y": 274.7,
+                            "width": 56.86,
+                            "height": 72.93,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "56.858px",
+                              "height": "72.931px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4839",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1071.16,
+                                "y": 275.48,
+                                "width": 55.12,
+                                "height": 71.29,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "55.121px",
+                                  "height": "71.291px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4840",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1070.32,
+                                "y": 274.7,
+                                "width": 56.86,
+                                "height": 72.93,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "56.858px",
+                                  "height": "72.931px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2:4841",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "visible": true,
+                    "x": 1148.42,
+                    "y": 138,
+                    "width": 191.58,
+                    "height": 316.32,
+                    "layoutSizingHorizontal": "FIXED",
+                    "layoutSizingVertical": "FIXED",
+                    "css": {
+                      "width": "191.582px",
+                      "height": "316.315px"
+                    },
+                    "childCount": 4,
+                    "children": [
+                      {
+                        "id": "2:4842",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "visible": true,
+                        "x": 1148.42,
+                        "y": 138,
+                        "width": 98.72,
+                        "height": 98.62,
+                        "layoutSizingHorizontal": "FIXED",
+                        "layoutSizingVertical": "FIXED",
+                        "css": {
+                          "width": "98.716px",
+                          "height": "98.624px"
+                        },
+                        "childCount": 2,
+                        "children": [
+                          {
+                            "id": "2:4843",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 1148.42,
+                            "y": 172.05,
+                            "width": 73.23,
+                            "height": 72.93,
+                            "bounds": {
+                              "x": 1148.42,
+                              "y": 138,
+                              "width": 98.72,
+                              "height": 98.62
+                            },
+                            "rotation": 27.71491594952407,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 0,
+                                  "g": 0,
+                                  "b": 0
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "73.227px",
+                              "height": "72.93px",
+                              "transform": "rotate(-27.7deg)",
+                              "fill": "#000"
+                            },
+                            "childCount": 0
+                          },
+                          {
+                            "id": "2:4844",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 1178.92,
+                            "y": 173.22,
+                            "width": 37.81,
+                            "height": 34.55,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "37.814px",
+                              "height": "34.553px"
+                            },
+                            "childCount": 1,
+                            "children": [
+                              {
+                                "id": "2:4845",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1178.92,
+                                "y": 173.22,
+                                "width": 37.81,
+                                "height": 34.55,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 1,
+                                      "g": 1,
+                                      "b": 1
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "37.814px",
+                                  "height": "34.553px",
+                                  "fill": "#FFF"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "2:4846",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "visible": true,
+                        "x": 1245.09,
+                        "y": 150.38,
+                        "width": 94.91,
+                        "height": 94.95,
+                        "layoutSizingHorizontal": "FIXED",
+                        "layoutSizingVertical": "FIXED",
+                        "css": {
+                          "width": "94.91px",
+                          "height": "94.948px"
+                        },
+                        "childCount": 2,
+                        "children": [
+                          {
+                            "id": "2:4847",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 1245.09,
+                            "y": 150.38,
+                            "width": 94.91,
+                            "height": 94.95,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "94.91px",
+                              "height": "94.948px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4848",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1245.09,
+                                "y": 197.86,
+                                "width": 67.13,
+                                "height": 67.13,
+                                "bounds": {
+                                  "x": 1245.09,
+                                  "y": 150.38,
+                                  "width": 94.91,
+                                  "height": 94.95
+                                },
+                                "rotation": 45.01151646665131,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0.7254902124404907,
+                                      "g": 1,
+                                      "b": 0.4000000059604645
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "67.126px",
+                                  "height": "67.126px",
+                                  "transform": "rotate(-45deg)",
+                                  "fill": "#B9FF66"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4849",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1258.12,
+                                "y": 163.41,
+                                "width": 68.83,
+                                "height": 68.86,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0.7254902124404907,
+                                      "g": 1,
+                                      "b": 0.4000000059604645
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "68.835px",
+                                  "height": "68.863px",
+                                  "fill": "#B9FF66"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2:4850",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 1273.98,
+                            "y": 182.68,
+                            "width": 33.52,
+                            "height": 30.28,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 0,
+                                  "g": 0,
+                                  "b": 0
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "33.517px",
+                              "height": "30.279px",
+                              "fill": "#000"
+                            },
+                            "childCount": 0
+                          }
+                        ]
+                      },
+                      {
+                        "id": "2:4851",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "visible": true,
+                        "x": 1235.84,
+                        "y": 253.32,
+                        "width": 94.05,
+                        "height": 93.99,
+                        "layoutSizingHorizontal": "FIXED",
+                        "layoutSizingVertical": "FIXED",
+                        "css": {
+                          "width": "94.049px",
+                          "height": "93.988px"
+                        },
+                        "childCount": 2,
+                        "children": [
+                          {
+                            "id": "2:4852",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 1235.84,
+                            "y": 291.96,
+                            "width": 67.75,
+                            "height": 67.37,
+                            "bounds": {
+                              "x": 1235.84,
+                              "y": 253.32,
+                              "width": 94.05,
+                              "height": 93.99
+                            },
+                            "rotation": 34.775157121945185,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 0,
+                                  "g": 0,
+                                  "b": 0
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "67.747px",
+                              "height": "67.365px",
+                              "transform": "rotate(-34.761deg)",
+                              "fill": "#000"
+                            },
+                            "childCount": 0
+                          },
+                          {
+                            "id": "2:4853",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "visible": true,
+                            "x": 1269.45,
+                            "y": 287.4,
+                            "width": 32.91,
+                            "height": 30.51,
+                            "constraints": {
+                              "horizontal": "SCALE",
+                              "vertical": "SCALE"
+                            },
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "visible": true,
+                                "opacity": 1,
+                                "blendMode": "NORMAL",
+                                "color": {
+                                  "r": 1,
+                                  "g": 1,
+                                  "b": 1
+                                },
+                                "boundVariables": {}
+                              }
+                            ],
+                            "css": {
+                              "width": "32.908px",
+                              "height": "30.512px",
+                              "fill": "#FFF"
+                            },
+                            "childCount": 0
+                          }
+                        ]
+                      },
+                      {
+                        "id": "2:4854",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "visible": true,
+                        "x": 1214.93,
+                        "y": 352.52,
+                        "width": 101.97,
+                        "height": 101.79,
+                        "layoutSizingHorizontal": "FIXED",
+                        "layoutSizingVertical": "FIXED",
+                        "css": {
+                          "width": "101.967px",
+                          "height": "101.791px"
+                        },
+                        "childCount": 2,
+                        "children": [
+                          {
+                            "id": "2:4855",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 1214.93,
+                            "y": 352.52,
+                            "width": 101.97,
+                            "height": 101.79,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "101.967px",
+                              "height": "101.791px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4856",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1214.93,
+                                "y": 385.99,
+                                "width": 76.44,
+                                "height": 75.99,
+                                "bounds": {
+                                  "x": 1214.93,
+                                  "y": 352.52,
+                                  "width": 101.97,
+                                  "height": 101.79
+                                },
+                                "rotation": 25.966817590584192,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0.7254902124404907,
+                                      "g": 1,
+                                      "b": 0.4000000059604645
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "76.437px",
+                                  "height": "75.986px",
+                                  "transform": "rotate(-25.952deg)",
+                                  "fill": "#B9FF66"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4857",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1226.92,
+                                "y": 364.52,
+                                "width": 78.06,
+                                "height": 77.83,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "78.062px",
+                                  "height": "77.826px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2:4858",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "visible": true,
+                            "x": 1246.21,
+                            "y": 376.84,
+                            "width": 39.18,
+                            "height": 57.79,
+                            "layoutSizingHorizontal": "FIXED",
+                            "layoutSizingVertical": "FIXED",
+                            "css": {
+                              "width": "39.18px",
+                              "height": "57.789px"
+                            },
+                            "childCount": 2,
+                            "children": [
+                              {
+                                "id": "2:4859",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1246.21,
+                                "y": 376.84,
+                                "width": 39.18,
+                                "height": 57.79,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0,
+                                      "g": 0,
+                                      "b": 0
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "39.18px",
+                                  "height": "57.789px",
+                                  "fill": "#000"
+                                },
+                                "childCount": 0
+                              },
+                              {
+                                "id": "2:4860",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "visible": true,
+                                "x": 1253.11,
+                                "y": 396.48,
+                                "width": 17.94,
+                                "height": 17.94,
+                                "bounds": {
+                                  "x": 1253.11,
+                                  "y": 383.8,
+                                  "width": 25.36,
+                                  "height": 25.37
+                                },
+                                "rotation": 45.01151646665131,
+                                "constraints": {
+                                  "horizontal": "SCALE",
+                                  "vertical": "SCALE"
+                                },
+                                "layoutSizingHorizontal": "FIXED",
+                                "layoutSizingVertical": "FIXED",
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "visible": true,
+                                    "opacity": 1,
+                                    "blendMode": "NORMAL",
+                                    "color": {
+                                      "r": 0.7254902124404907,
+                                      "g": 1,
+                                      "b": 0.4000000059604645
+                                    },
+                                    "boundVariables": {}
+                                  }
+                                ],
+                                "css": {
+                                  "width": "17.937px",
+                                  "height": "17.937px",
+                                  "transform": "rotate(-45deg)",
+                                  "fill": "#B9FF66"
+                                },
+                                "childCount": 0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "2:4861",
+        "name": "Logotypes",
+        "type": "FRAME",
+        "visible": true,
+        "x": 0,
+        "y": 723,
+        "width": 1440,
+        "height": 48,
+        "clipsContent": true,
+        "layoutMode": "HORIZONTAL",
+        "layoutWrap": "NO_WRAP",
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "MIN",
+        "counterAxisAlignContent": "AUTO",
+        "itemSpacing": 206,
+        "counterAxisSpacing": 0,
+        "paddingTop": 0,
+        "paddingRight": 100,
+        "paddingBottom": 0,
+        "paddingLeft": 100,
+        "itemReverseZIndex": false,
+        "strokesIncludedInLayout": false,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "HUG",
+        "css": {
+          "display": "flex",
+          "width": "1440px",
+          "padding": "0 100px",
+          "justify-content": "space-between",
+          "align-items": "flex-start"
+        },
+        "childCount": 6,
+        "children": [
+          {
+            "id": "2:4862",
+            "name": "Company logo",
+            "type": "INSTANCE",
+            "visible": true,
+            "x": 100,
+            "y": 723,
+            "width": 124.11,
+            "height": 48,
+            "blendMode": "LUMINOSITY",
+            "clipsContent": true,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": false,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                },
+                "boundVariables": {}
+              }
+            ],
+            "instance": {
+              "componentId": "2:4289",
+              "componentName": "Company=Amazon",
+              "componentKey": "3bf5ef94da919ad7ae31e82745bdd4e7f559e3f8",
+              "setId": "2:4262",
+              "setName": "Company logo",
+              "properties": {
+                "Company": {
+                  "type": "VARIANT",
+                  "value": "Amazon"
+                }
+              }
+            },
+            "css": {
+              "width": "124.113px",
+              "height": "48px",
+              "flex-shrink": "0",
+              "mix-blend-mode": "luminosity"
+            },
+            "childCount": 2,
+            "children": [
+              {
+                "id": "I2:4862;201:7796",
+                "name": "Vector",
+                "type": "VECTOR",
+                "visible": true,
+                "x": 117.38,
+                "y": 754.91,
+                "width": 65.57,
+                "height": 13.09,
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 1,
+                      "g": 0.6000000238418579,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "65.568px",
+                  "height": "13.09px",
+                  "fill": "#F90"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "I2:4862;201:7797",
+                "name": "Vector",
+                "type": "VECTOR",
+                "visible": true,
+                "x": 100,
+                "y": 735,
+                "width": 123.56,
+                "height": 19.49,
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "123.555px",
+                  "height": "19.491px",
+                  "fill": "#000"
+                },
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "2:4863",
+            "name": "Company logo",
+            "type": "INSTANCE",
+            "visible": true,
+            "x": 320.02,
+            "y": 723,
+            "width": 126.37,
+            "height": 48,
+            "blendMode": "LUMINOSITY",
+            "clipsContent": true,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": false,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                },
+                "boundVariables": {}
+              }
+            ],
+            "instance": {
+              "componentId": "2:4413",
+              "componentName": "Company=Dribbble",
+              "componentKey": "a9c59d566752a9570e760b2f310ac043e8b2b610",
+              "setId": "2:4262",
+              "setName": "Company logo",
+              "properties": {
+                "Company": {
+                  "type": "VARIANT",
+                  "value": "Dribbble"
+                }
+              }
+            },
+            "css": {
+              "width": "126.369px",
+              "height": "48px",
+              "flex-shrink": "0",
+              "mix-blend-mode": "luminosity"
+            },
+            "childCount": 1,
+            "children": [
+              {
+                "id": "I2:4863;201:7920",
+                "name": "Vector",
+                "type": "VECTOR",
+                "visible": true,
+                "x": 320.02,
+                "y": 732.07,
+                "width": 125.77,
+                "height": 27.23,
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0.05098039284348488,
+                      "g": 0.0470588244497776,
+                      "b": 0.13333334028720856
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "125.768px",
+                  "height": "27.229px",
+                  "fill": "#0D0C22"
+                },
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "2:4864",
+            "name": "Company logo",
+            "type": "INSTANCE",
+            "visible": true,
+            "x": 542.29,
+            "y": 723,
+            "width": 128.63,
+            "height": 48,
+            "blendMode": "LUMINOSITY",
+            "clipsContent": true,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": false,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                },
+                "boundVariables": {}
+              }
+            ],
+            "instance": {
+              "componentId": "2:4509",
+              "componentName": "Company=Hubspot",
+              "componentKey": "83b1806d38b9a14237c32dfe6fbd4ecf1a66a177",
+              "setId": "2:4262",
+              "setName": "Company logo",
+              "properties": {
+                "Company": {
+                  "type": "VARIANT",
+                  "value": "Hubspot"
+                }
+              }
+            },
+            "css": {
+              "width": "128.626px",
+              "height": "48px",
+              "flex-shrink": "0",
+              "mix-blend-mode": "luminosity"
+            },
+            "childCount": 2,
+            "children": [
+              {
+                "id": "I2:4864;201:8016",
+                "name": "Vector",
+                "type": "VECTOR",
+                "visible": true,
+                "x": 542.29,
+                "y": 736.11,
+                "width": 128.24,
+                "height": 26.89,
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0.20000000298023224,
+                      "g": 0.27843138575553894,
+                      "b": 0.35686275362968445
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "128.241px",
+                  "height": "26.894px",
+                  "fill": "#33475B"
+                },
+                "childCount": 0
+              },
+              {
+                "id": "I2:4864;201:8017",
+                "name": "Vector",
+                "type": "VECTOR",
+                "visible": true,
+                "x": 624.88,
+                "y": 731,
+                "width": 33.86,
+                "height": 31.45,
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 1,
+                      "g": 0.47843137383461,
+                      "b": 0.3490196168422699
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "33.862px",
+                  "height": "31.449px",
+                  "fill": "#FF7A59"
+                },
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "2:4865",
+            "name": "Company logo",
+            "type": "INSTANCE",
+            "visible": true,
+            "x": 766.82,
+            "y": 723,
+            "width": 145.55,
+            "height": 48,
+            "blendMode": "LUMINOSITY",
+            "clipsContent": true,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": false,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                },
+                "boundVariables": {}
+              }
+            ],
+            "instance": {
+              "componentId": "2:4562",
+              "componentName": "Company=Notion",
+              "componentKey": "3263df574de080085685764d89cc1dc4770a373f",
+              "setId": "2:4262",
+              "setName": "Company logo",
+              "properties": {
+                "Company": {
+                  "type": "VARIANT",
+                  "value": "Notion"
+                }
+              }
+            },
+            "css": {
+              "width": "145.551px",
+              "height": "48px",
+              "flex-shrink": "0",
+              "mix-blend-mode": "luminosity"
+            },
+            "childCount": 1,
+            "children": [
+              {
+                "id": "I2:4865;201:8069",
+                "name": "Vector",
+                "type": "VECTOR",
+                "visible": true,
+                "x": 766.82,
+                "y": 729,
+                "width": 145.04,
+                "height": 34.45,
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "145.037px",
+                  "height": "34.45px",
+                  "fill": "#000"
+                },
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "2:4866",
+            "name": "Company logo",
+            "type": "INSTANCE",
+            "visible": true,
+            "x": 1008.28,
+            "y": 723,
+            "width": 125.24,
+            "height": 48,
+            "blendMode": "LUMINOSITY",
+            "clipsContent": true,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": false,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                },
+                "boundVariables": {}
+              }
+            ],
+            "instance": {
+              "componentId": "2:4560",
+              "componentName": "Company=Netflix",
+              "componentKey": "e251205e50cdf99e19c8072c49836ffebf7b1aa2",
+              "setId": "2:4262",
+              "setName": "Company logo",
+              "properties": {
+                "Company": {
+                  "type": "VARIANT",
+                  "value": "Netflix"
+                }
+              }
+            },
+            "css": {
+              "width": "125.241px",
+              "height": "48px",
+              "flex-shrink": "0",
+              "mix-blend-mode": "luminosity"
+            },
+            "childCount": 1,
+            "children": [
+              {
+                "id": "I2:4866;201:8067",
+                "name": "Vector",
+                "type": "VECTOR",
+                "visible": true,
+                "x": 1008.28,
+                "y": 733,
+                "width": 125.25,
+                "height": 30,
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0.8470588326454163,
+                      "g": 0.12156862765550613,
+                      "b": 0.14901961386203766
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "125.248px",
+                  "height": "30px",
+                  "fill": "#D81F26"
+                },
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "2:4867",
+            "name": "Company logo",
+            "type": "INSTANCE",
+            "visible": true,
+            "x": 1229.43,
+            "y": 723,
+            "width": 110.57,
+            "height": 48,
+            "blendMode": "LUMINOSITY",
+            "clipsContent": true,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": false,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                },
+                "boundVariables": {}
+              }
+            ],
+            "instance": {
+              "componentId": "2:4672",
+              "componentName": "Company=Zoom",
+              "componentKey": "686ff431e6cfb0d1876ee8911f00242b3c60cca5",
+              "setId": "2:4262",
+              "setName": "Company logo",
+              "properties": {
+                "Company": {
+                  "type": "VARIANT",
+                  "value": "Zoom"
+                }
+              }
+            },
+            "css": {
+              "width": "110.573px",
+              "height": "48px",
+              "flex-shrink": "0",
+              "mix-blend-mode": "luminosity"
+            },
+            "childCount": 1,
+            "children": [
+              {
+                "id": "I2:4867;201:8179",
+                "name": "Vector",
+                "type": "VECTOR",
+                "visible": true,
+                "x": 1229.43,
+                "y": 737,
+                "width": 110.46,
+                "height": 22,
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                },
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0.1764705926179886,
+                      "g": 0.5490196347236633,
+                      "b": 1
+                    },
+                    "boundVariables": {}
+                  }
+                ],
+                "css": {
+                  "width": "110.458px",
+                  "height": "22px",
+                  "fill": "#2D8CFF"
+                },
+                "childCount": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "styles": {
+    "S:4fd252e43efba2d8d2d75696ea8cf7744e655565,109:2": {
+      "name": "Dark",
+      "type": "PAINT",
+      "remote": true,
+      "paints": [
+        {
+          "type": "SOLID",
+          "visible": true,
+          "opacity": 1,
+          "blendMode": "NORMAL",
+          "color": {
+            "r": 0.09803921729326248,
+            "g": 0.10196078568696976,
+            "b": 0.13725490868091583
+          },
+          "boundVariables": {}
+        }
+      ]
+    },
+    "S:04c3fd0dd8f9347062b8fa1a09b6a43abee5c622,53:11": {
+      "name": "h1",
+      "type": "TEXT",
+      "remote": true,
+      "fontName": {
+        "family": "Space Grotesk",
+        "style": "Medium"
+      },
+      "fontSize": 60,
+      "lineHeight": {
+        "unit": "AUTO"
+      },
+      "letterSpacing": {
+        "unit": "PERCENT",
+        "value": 0
+      },
+      "textCase": "ORIGINAL",
+      "textDecoration": "NONE"
+    }
+  },
+  "variables": {}
+}
