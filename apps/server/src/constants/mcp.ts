@@ -22,3 +22,9 @@ export const READ_ONLY_ANNOTATIONS = {
 
 /** The most library variables tokens_read lists by name; the rest are counted. */
 export const MAX_LIBRARY_VARIABLES = 500;
+
+/** Rasters at 2x, so they stay sharp on high-density screens; vectors as they are. */
+export const RASTER_SCALE = 2;
+
+/** The most layers one assets_export writes. */
+export const MAX_EXPORT_NODES = 50;

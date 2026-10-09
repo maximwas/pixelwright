@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { MAX_EXPORT_NODES } from "../constants/mcp.ts";
 
 /** Which connected file a tool works on: its session from status, or its name; the active file when left out. */
 export const FileSchema = z
@@ -140,4 +141,57 @@ export const TokensReadOutputSchema = z.object({
     .exactOptional(),
   library: LibrarySchema.exactOptional(),
   notes: z.array(z.string()),
+});
+
+export const AssetsExportInputSchema = z.object({
+  nodes: z
+    .array(z.string().min(1).max(200))
+    .min(1)
+    .max(MAX_EXPORT_NODES)
+    .exactOptional()
+    .describe(
+      "Layers to write, one file each: SVG for an icon, PNG otherwise, unless format says. Give nodes or from.",
+    ),
+  from: z
+    .string()
+    .min(1)
+    .max(200)
+    .exactOptional()
+    .describe(
+      "A layer to write every true asset of (its icons and images, as design_read plans them). Give nodes or from.",
+    ),
+  dir: z
+    .string()
+    .min(1)
+    .max(4_096)
+    .describe(
+      "The folder to write into; created if missing. Files already there are never overwritten with other bytes.",
+    ),
+  format: z.enum(["PNG", "JPG", "SVG", "PDF"]).exactOptional().describe("For nodes: the format of every file."),
+  scale: z.number().min(0.01).max(4).exactOptional().describe("For PNG and JPG: pixels per Figma pixel. Default 2."),
+  original: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Write the images as they were placed (not cropped, filtered or scaled) instead of renders, with their real format.",
+    ),
+  file: FileSchema,
+});
+
+export const AssetsExportOutputSchema = z.object({
+  files: z.array(
+    z.object({
+      node: z.string(),
+      kind: z.enum(["icon", "image"]),
+      format: z.string(),
+      path: z.string(),
+      bytes: z.number(),
+    }),
+  ),
+  errors: z.array(
+    z.object({
+      node: z.string(),
+      message: z.string(),
+    }),
+  ),
 });

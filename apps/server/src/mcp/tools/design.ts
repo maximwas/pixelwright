@@ -1,19 +1,16 @@
 import { resolve } from "node:path";
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
-import { BridgeError, designHints, designXml, fitPlan, OPERATION_SCHEMAS, type PlannedAsset } from "@pixelwright/core";
+import { BridgeError, designHints, designXml, fitPlan, OPERATION_SCHEMAS } from "@pixelwright/core";
 import type * as z from "zod";
+import { fetchAsset } from "../../assets/fetch-asset.ts";
 import { writeAssets } from "../../assets/write-assets.ts";
 import { resolveTarget } from "../../bridge/target.ts";
 import { DesignReadInputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { describeError } from "../describe-error.ts";
-import { exportBytes, imageBytes } from "../export-bytes.ts";
 import { takeScreenshot } from "./screenshot.ts";
 
 type DesignReadArgs = z.output<typeof DesignReadInputSchema>;
-
-/** Rasters at 2x, so they stay sharp on high-density screens; vectors as they are. */
-const RASTER_SCALE = 2;
 
 /** No outputSchema on purpose: the XML reads best as plain text, and an asked-for screenshot is an image block. */
 export function registerDesignTool(server: McpServer, { bridge }: ToolContext): void {
@@ -161,25 +158,4 @@ async function selectedLayer(bridge: ToolContext["bridge"], target: { session: s
   }
 
   return only.id;
-}
-
-function fetchAsset(bridge: ToolContext["bridge"], asset: PlannedAsset, target: { session: string }): Promise<Buffer> {
-  if (asset.imageHash !== undefined) {
-    return imageBytes(bridge, asset.imageHash, target);
-  }
-
-  const format = asset.format === "JPG" || asset.format === "SVG" || asset.format === "PDF" ? asset.format : "PNG";
-
-  return exportBytes(
-    bridge,
-    {
-      node: asset.node,
-      format,
-      scale: asset.scale ?? (format === "PNG" || format === "JPG" ? RASTER_SCALE : 1),
-      // An icon with everything it draws (centred and outside strokes would be cut off at its box); an image as its own
-      // box, its drop shadows and outlines staying CSS around it.
-      effects: asset.kind === "icon",
-    },
-    { target },
-  ).then(({ bytes }) => bytes);
 }
