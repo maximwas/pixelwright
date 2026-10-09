@@ -24,14 +24,12 @@ export type LinkState =
 export interface SocketLinkOptions {
   readonly url: string;
   readonly info: () => PluginInfo;
-  /** The key stored by an earlier pairing, or null; the link keeps it current from then on. */
+  /** The key stored by an earlier pairing, or null; only a key issued after the user's code replaces it. */
   readonly key: PluginKey | null;
   readonly onRequest: (request: RequestMessage) => Promise<RequestOutcome>;
   readonly onState: (state: LinkState) => void;
   /** The server issued a key after the user typed the code: keep it. */
   readonly onPaired: (key: PluginKey) => void;
-  /** The server no longer knows the key (its bridge.json was deleted, or the proof failed): forget it. */
-  readonly onForgetKey: () => void;
   readonly createSocket?: (url: string) => SocketLike;
   /** Runs a reconnect later; returns how to cancel it. */
   readonly schedule?: (run: () => void, ms: number) => () => void;

@@ -46,8 +46,8 @@ export interface PairingHandler extends EventHandler {
   handler: (key: PluginKey | null) => void;
 }
 
-/** window → main: keep this key (the user paired), or forget the stored one (null). */
+/** window → main: keep this key, issued after the user typed the pairing code. */
 export interface SavePairingHandler extends EventHandler {
   name: "SAVE_PAIRING";
-  handler: (key: PluginKey | null) => void;
+  handler: (key: PluginKey) => void;
 }

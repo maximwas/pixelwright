@@ -70,7 +70,6 @@ export default function (root: HTMLElement): void {
         render();
       },
       onPaired: (key) => emit<SavePairingHandler>("SAVE_PAIRING", key),
-      onForgetKey: () => emit<SavePairingHandler>("SAVE_PAIRING", null),
     });
 
   on<ResponseHandler>("RESPONSE", (id, outcome) => relay.settle(id, outcome));

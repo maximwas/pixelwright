@@ -8,11 +8,7 @@ export async function readPairing(): Promise<PluginKey | null> {
   return stored.success ? stored.data : null;
 }
 
-/** Keeps a newly issued key, or forgets the stored one. */
-export async function savePairing(key: PluginKey | null): Promise<void> {
-  if (key === null) {
-    await figma.clientStorage.deleteAsync(PAIRING_STORAGE_KEY);
-  } else {
-    await figma.clientStorage.setAsync(PAIRING_STORAGE_KEY, key);
-  }
+/** Keeps a newly issued key in place of the stored one; a key is never just deleted (see SocketLink). */
+export async function savePairing(key: PluginKey): Promise<void> {
+  await figma.clientStorage.setAsync(PAIRING_STORAGE_KEY, key);
 }

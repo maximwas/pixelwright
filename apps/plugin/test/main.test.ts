@@ -87,14 +87,10 @@ describe("the plugin's main code", () => {
     ]);
   });
 
-  it("keeps the key the window was issued, and forgets it when told", async () => {
+  it("keeps the key the window was issued", async () => {
     fakeFigma.ui.onmessage?.(["SAVE_PAIRING", NEW_KEY]);
     await tick();
     expect(stored.get("pixelwright.pairing")).toEqual(NEW_KEY);
-
-    fakeFigma.ui.onmessage?.(["SAVE_PAIRING", null]);
-    await tick();
-    expect(stored.has("pixelwright.pairing")).toBe(false);
   });
 
   it("sends no key when storage holds something that is not one", async () => {

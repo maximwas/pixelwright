@@ -149,11 +149,8 @@ export class SocketLink {
         this.#onChallenge(socket, message.nonce, message.proof);
         break;
       case "pairing_required":
-        if (message.reason === "unknown_key" && this.#key !== null) {
-          this.#key = null;
-          this.#options.onForgetKey();
-        }
-
+        // The key stays: whoever says it is unknown proved nothing, and only a key issued after the user's code
+        // replaces it. A real server that forgot it just asks for the code again on every hello.
         this.#handshake = { kind: "pairing" };
         this.#options.onState({
           kind: "pairing",
@@ -285,11 +282,6 @@ export class SocketLink {
   #onClose(code: number, reason: string | null): void {
     if (this.#stopped) {
       return;
-    }
-
-    if (code === CloseCode.Unauthorized && this.#key !== null) {
-      this.#key = null;
-      this.#options.onForgetKey();
     }
 
     const stopReason = STOP_REASONS[code];

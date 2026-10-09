@@ -89,7 +89,6 @@ function setup({
   const states: LinkState[] = [];
   const scheduled: { run: () => void; ms: number; cancelled: boolean }[] = [];
   const paired: PluginKey[] = [];
-  let forgotten = 0;
   const link = new SocketLink({
     url: "ws://localhost:18720/pixelwright/v1",
     info: () => info,
@@ -97,9 +96,6 @@ function setup({
     onRequest: answer,
     onState: (state) => states.push(state),
     onPaired: (next) => paired.push(next),
-    onForgetKey: () => {
-      forgotten += 1;
-    },
     createSocket: () => {
       const socket = new FakeSocket();
 
@@ -131,7 +127,6 @@ function setup({
     states,
     scheduled,
     paired,
-    forgotten: () => forgotten,
   };
 }
 
@@ -292,8 +287,8 @@ describe("SocketLink", () => {
     expect(sockets[0]?.sent.some((message) => message.type === "response")).toBe(false);
   });
 
-  it("forgets a key the server no longer knows, and shows the code field", () => {
-    const { sockets, states, forgotten, scheduled } = setup();
+  it("keeps its key when a server says it does not know it, and shows the code field", () => {
+    const { sockets, states, scheduled } = setup();
 
     sockets[0]?.open();
     sockets[0]?.receive({
@@ -302,7 +297,6 @@ describe("SocketLink", () => {
       attemptsLeft: 5,
       expiresInMs: 120_000,
     });
-    expect(forgotten()).toBe(1);
     expect(states.at(-1)).toMatchObject({
       kind: "pairing",
       reason: "unknown_key",
@@ -310,16 +304,19 @@ describe("SocketLink", () => {
     sockets[0]?.drop(1006);
     scheduled[0]?.run();
     sockets[1]?.open();
-    expect(sockets[1]?.hello().keyId).toBeNull();
+    // Whoever said so proved nothing: only a key issued after the user's code replaces this one.
+    expect(sockets[1]?.hello().keyId).toBe(KEY.id);
   });
 
-  it("forgets its key after a 4401 and tries again", () => {
-    const { sockets, forgotten, scheduled } = setup();
+  it("keeps its key after a 4401 and tries again", () => {
+    const { sockets, scheduled } = setup();
 
     sockets[0]?.open();
     sockets[0]?.drop(4401);
-    expect(forgotten()).toBe(1);
     expect(scheduled).toHaveLength(1);
+    scheduled[0]?.run();
+    sockets[1]?.open();
+    expect(sockets[1]?.hello().keyId).toBe(KEY.id);
   });
 
   it("answers a request with what the main code returned", async () => {
