@@ -5,9 +5,14 @@ import {
   encode,
   MAX_MESSAGE_BYTES,
   NO_RECONNECT_CODES,
+  newNonce,
   PLUGIN_INFO_EVENT,
+  type PluginKey,
   type PluginToServer,
+  proofEquals,
+  proofFor,
   type RequestMessage,
+  type ServerToPlugin,
   toWireError,
 } from "@pixelwright/core";
 import type { RequestOutcome, SocketLike, SocketLinkOptions } from "../types/link.ts";
@@ -22,46 +27,88 @@ const STOP_REASONS: Readonly<Record<number, string>> = {
   [CloseCode.Superseded]: "Another window of this plugin took over the connection.",
 };
 
+const UNPROVEN_SERVER = "The program on port 18720 could not prove it is your Pixelwright server.";
+
+/** How far one connection got: only a trusted server's acknowledgement makes it a session. */
+type Handshake =
+  /** Hello sent: waiting for a challenge (with a key) or for pairing_required. */
+  | { readonly kind: "hello"; readonly nonce: string }
+  /** The server proved the key, or issued one after the user's code: its hello_ack is welcome. */
+  | { readonly kind: "trusted" }
+  /** The user typed a code and it was sent: only now may the server issue a key. */
+  | { readonly kind: "pair-sent" }
+  | { readonly kind: "pairing" }
+  | { readonly kind: "acknowledged" };
+
 /**
- * The plugin's end of the bridge, in the UI iframe: says hello, hands requests to the main code and sends back what it
- * answered, and reconnects with backoff whenever the server goes away.
+ * The plugin's end of the bridge, in the UI iframe: says hello, proves the paired key once the server proved it first
+ * (or sends the code the user typed), hands requests to the main code and sends back what it answered, and reconnects
+ * with backoff whenever the server goes away.
  */
 export class SocketLink {
   readonly #options: SocketLinkOptions;
+  #key: PluginKey | null;
   #socket: SocketLike | null = null;
+  #handshake: Handshake = {
+    kind: "hello",
+    nonce: "",
+  };
+  #infoChanged = false;
   #attempt = 0;
-  #acknowledged = false;
   #stopped = false;
+  #cancelRetry: (() => void) | null = null;
 
   constructor(options: SocketLinkOptions) {
     this.#options = options;
+    this.#key = options.key;
   }
 
   start(): void {
     this.#open();
   }
 
-  /** Tells the server about a new file, page, window visibility or Allow edits; nothing before the hello is answered. */
+  /** Tells the server about a new file, page, window visibility or Allow edits, once the session stands. */
   sendInfo(): void {
-    if (this.#acknowledged) {
+    if (this.#handshake.kind !== "acknowledged") {
+      this.#infoChanged = true;
+
+      return;
+    }
+
+    this.#send({
+      type: "event",
+      name: PLUGIN_INFO_EVENT,
+      data: this.#options.info(),
+    });
+  }
+
+  /** Sends the code the user typed into the window, while the server waits for one. */
+  pair(code: string): void {
+    if (this.#handshake.kind === "pairing") {
+      this.#handshake = { kind: "pair-sent" };
       this.#send({
-        type: "event",
-        name: PLUGIN_INFO_EVENT,
-        data: this.#options.info(),
+        type: "pair",
+        code,
       });
     }
   }
 
   stop(): void {
     this.#stopped = true;
+    this.#cancelRetry?.();
     this.#socket?.close(1000, "plugin closed");
   }
 
   #open(): void {
     const socket = (this.#options.createSocket ?? browserSocket)(this.#options.url);
+    const nonce = newNonce();
 
+    this.#cancelRetry = null;
     this.#socket = socket;
-    this.#acknowledged = false;
+    this.#handshake = {
+      kind: "hello",
+      nonce,
+    };
     this.#options.onState({ kind: "connecting" });
     socket.onopen = () => {
       if (socket === this.#socket) {
@@ -69,6 +116,8 @@ export class SocketLink {
           type: "hello",
           protocol: BRIDGE_PROTOCOL_VERSION,
           plugin: this.#options.info(),
+          keyId: this.#key?.id ?? null,
+          nonce,
         });
       }
     };
@@ -79,7 +128,7 @@ export class SocketLink {
     };
     socket.onclose = (event) => {
       if (socket === this.#socket) {
-        this.#onClose(event.code);
+        this.#onClose(event.code, null);
       }
     };
   }
@@ -87,16 +136,89 @@ export class SocketLink {
   #onMessage(socket: SocketLike, raw: string): void {
     const message = decodeServerToPlugin(raw);
 
-    if (message?.type === "hello_ack") {
-      this.#attempt = 0;
-      this.#acknowledged = true;
-      this.#options.onState({
-        kind: "connected",
-        serverVersion: message.server.version,
-      });
-    } else if (message?.type === "request") {
-      void this.#answer(socket, message);
+    if (message !== null) {
+      this.#handle(socket, message);
     }
+  }
+
+  #handle(socket: SocketLike, message: ServerToPlugin): void {
+    const handshake = this.#handshake;
+
+    switch (message.type) {
+      case "challenge":
+        this.#onChallenge(socket, message.nonce, message.proof);
+        break;
+      case "pairing_required":
+        if (message.reason === "unknown_key" && this.#key !== null) {
+          this.#key = null;
+          this.#options.onForgetKey();
+        }
+
+        this.#handshake = { kind: "pairing" };
+        this.#options.onState({
+          kind: "pairing",
+          reason: message.reason,
+          attemptsLeft: message.attemptsLeft,
+        });
+        break;
+      case "paired":
+        // Only after this plugin sent the code the user typed: anything else is not the server it paired with.
+        if (handshake.kind === "pair-sent") {
+          this.#key = message.key;
+          this.#handshake = { kind: "trusted" };
+          this.#options.onPaired(message.key);
+        }
+
+        break;
+      case "hello_ack":
+        if (handshake.kind === "trusted") {
+          this.#attempt = 0;
+          this.#handshake = { kind: "acknowledged" };
+          this.#options.onState({
+            kind: "connected",
+            serverVersion: message.server.version,
+          });
+
+          if (this.#infoChanged) {
+            this.#infoChanged = false;
+            this.sendInfo();
+          }
+        }
+
+        break;
+      case "request":
+        if (handshake.kind === "acknowledged") {
+          void this.#answer(socket, message);
+        }
+
+        break;
+      case "event":
+        break;
+    }
+  }
+
+  /** The server proves the key over this plugin's nonce first; only then does the plugin prove it back. */
+  #onChallenge(socket: SocketLike, serverNonce: string, serverProof: string): void {
+    const handshake = this.#handshake;
+    const key = this.#key;
+
+    if (handshake.kind !== "hello" || key === null) {
+      return;
+    }
+
+    if (!proofEquals(serverProof, proofFor(key.secret, "server", handshake.nonce, serverNonce))) {
+      this.#socket = null;
+      socket.close(CloseCode.Unauthorized, "the server could not prove the key");
+      this.#onClose(CloseCode.GoingAway, UNPROVEN_SERVER);
+
+      return;
+    }
+
+    this.#handshake = { kind: "trusted" };
+    this.#send({
+      type: "auth",
+      proof: proofFor(key.secret, "plugin", serverNonce, handshake.nonce),
+    });
   }
 
   /**
@@ -115,21 +237,33 @@ export class SocketLink {
       };
     }
 
-    const text = encode(
-      outcome.ok
-        ? {
-            type: "response",
-            id: request.id,
-            ok: true,
-            result: outcome.result,
-          }
-        : {
-            type: "response",
-            id: request.id,
-            ok: false,
-            error: outcome.error,
-          },
-    );
+    let text: string;
+
+    try {
+      text = encode(
+        outcome.ok
+          ? {
+              type: "response",
+              id: request.id,
+              ok: true,
+              result: outcome.result,
+            }
+          : {
+              type: "response",
+              id: request.id,
+              ok: false,
+              error: outcome.error,
+            },
+      );
+    } catch (error) {
+      sendOn(
+        socket,
+        refusal(request.id, "RESULT_NOT_SERIALIZABLE", `The result of ${request.op} cannot be sent: ${String(error)}`),
+      );
+
+      return;
+    }
+
     const size = new TextEncoder().encode(text).byteLength;
 
     if (size <= MAX_MESSAGE_BYTES) {
@@ -140,46 +274,52 @@ export class SocketLink {
 
     sendOn(
       socket,
-      encode({
-        type: "response",
-        id: request.id,
-        ok: false,
-        error: {
-          code: "RESULT_TOO_LARGE",
-          message: `The result of ${request.op} is ${size} bytes, over the bridge's limit of ${MAX_MESSAGE_BYTES}.`,
-        },
-      }),
+      refusal(
+        request.id,
+        "RESULT_TOO_LARGE",
+        `The result of ${request.op} is ${size} bytes, over the bridge's limit of ${MAX_MESSAGE_BYTES}.`,
+      ),
     );
   }
 
-  #onClose(code: number): void {
-    this.#acknowledged = false;
-
+  #onClose(code: number, reason: string | null): void {
     if (this.#stopped) {
       return;
     }
 
-    const reason = STOP_REASONS[code];
+    if (code === CloseCode.Unauthorized && this.#key !== null) {
+      this.#key = null;
+      this.#options.onForgetKey();
+    }
 
-    if (NO_RECONNECT_CODES.has(code) && reason !== undefined) {
+    const stopReason = STOP_REASONS[code];
+
+    if (NO_RECONNECT_CODES.has(code) && stopReason !== undefined) {
       this.#stopped = true;
       this.#options.onState({
         kind: "stopped",
-        reason,
+        reason: stopReason,
       });
 
       return;
     }
 
     const delay = reconnectDelay(this.#attempt, this.#options.random);
-    const schedule = this.#options.schedule ?? ((run: () => void, ms: number) => void setTimeout(run, ms));
+    const schedule =
+      this.#options.schedule ??
+      ((run: () => void, ms: number) => {
+        const timer = setTimeout(run, ms);
+
+        return () => clearTimeout(timer);
+      });
 
     this.#attempt += 1;
     this.#options.onState({
       kind: "waiting",
       retryInMs: delay,
+      reason,
     });
-    schedule(() => this.#open(), delay);
+    this.#cancelRetry = schedule(() => this.#open(), delay);
   }
 
   #send(message: PluginToServer): void {
@@ -187,6 +327,19 @@ export class SocketLink {
       sendOn(this.#socket, encode(message));
     }
   }
+}
+
+/** A failed response that always encodes. */
+function refusal(id: string, code: string, message: string): string {
+  return encode({
+    type: "response",
+    id,
+    ok: false,
+    error: {
+      code,
+      message,
+    },
+  });
 }
 
 /** Sends on one socket while it is open; a closed one drops the message, as the server has failed it already. */

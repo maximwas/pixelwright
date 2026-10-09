@@ -2,8 +2,22 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 /** A file name that closes the window's inline script and opens its own: any Figma file may be named like this. */
 const HOSTILE_NAME = "Brand kit</script><script>window.injected = true</script>";
+const STORED_KEY = {
+  id: "0123456789abcdef",
+  secret: "ab".repeat(32),
+};
+const NEW_KEY = {
+  id: "fedcba9876543210",
+  secret: "cd".repeat(32),
+};
 const posted: unknown[][] = [];
 let windowHtml = "";
+
+/** figma.clientStorage as an earlier run left it: Allow edits on (from stage 1) and a paired key. */
+const stored = new Map<string, unknown>([
+  ["pixelwright.allowEdits", true],
+  ["pixelwright.pairing", STORED_KEY],
+]);
 
 const fakeFigma = {
   editorType: "figma",
@@ -15,8 +29,13 @@ const fakeFigma = {
     name: "Page 1",
   },
   clientStorage: {
-    getAsync: async () => true,
-    setAsync: async () => {},
+    getAsync: async (key: string) => stored.get(key),
+    setAsync: async (key: string, value: unknown) => {
+      stored.set(key, value);
+    },
+    deleteAsync: async (key: string) => {
+      stored.delete(key);
+    },
   },
   showUI: (html: string) => {
     windowHtml = html;
@@ -27,6 +46,8 @@ const fakeFigma = {
   },
   on: () => {},
 };
+
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 beforeAll(async () => {
   // The Plugin API is a global of Figma's sandbox: the fake has to exist before the utilities module loads.
@@ -46,18 +67,42 @@ describe("the plugin's main code", () => {
     expect(windowHtml).not.toContain("Brand kit");
   });
 
-  it("sends the context once the window says it is ready, with Allow edits off whatever an earlier run stored", () => {
+  it("answers the window's READY with the stored key, then the context with Allow edits off", async () => {
+    posted.length = 0;
     fakeFigma.ui.onmessage?.(["READY"]);
+    await tick();
 
-    expect(posted.at(-1)).toEqual([
-      "CONTEXT",
-      expect.objectContaining({
-        file: {
-          name: HOSTILE_NAME,
-          key: null,
-        },
-        allowEdits: false,
-      }),
+    expect(posted).toEqual([
+      ["PAIRING", STORED_KEY],
+      [
+        "CONTEXT",
+        expect.objectContaining({
+          file: {
+            name: HOSTILE_NAME,
+            key: null,
+          },
+          allowEdits: false,
+        }),
+      ],
     ]);
+  });
+
+  it("keeps the key the window was issued, and forgets it when told", async () => {
+    fakeFigma.ui.onmessage?.(["SAVE_PAIRING", NEW_KEY]);
+    await tick();
+    expect(stored.get("pixelwright.pairing")).toEqual(NEW_KEY);
+
+    fakeFigma.ui.onmessage?.(["SAVE_PAIRING", null]);
+    await tick();
+    expect(stored.has("pixelwright.pairing")).toBe(false);
+  });
+
+  it("sends no key when storage holds something that is not one", async () => {
+    stored.set("pixelwright.pairing", { id: "not a key" });
+    posted.length = 0;
+    fakeFigma.ui.onmessage?.(["READY"]);
+    await tick();
+
+    expect(posted[0]).toEqual(["PAIRING", null]);
   });
 });

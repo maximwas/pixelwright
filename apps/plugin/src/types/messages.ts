@@ -1,4 +1,5 @@
 import type { EventHandler } from "@create-figma-plugin/utilities";
+import type { PluginKey } from "@pixelwright/core";
 import type { RequestOutcome } from "./link.ts";
 
 /**
@@ -37,4 +38,16 @@ export interface ResponseHandler extends EventHandler {
 export interface AllowEditsHandler extends EventHandler {
   name: "ALLOW_EDITS";
   handler: (allowEdits: boolean) => void;
+}
+
+/** main → window: the key stored by an earlier pairing, or null; sent on READY before the context. */
+export interface PairingHandler extends EventHandler {
+  name: "PAIRING";
+  handler: (key: PluginKey | null) => void;
+}
+
+/** window → main: keep this key (the user paired), or forget the stored one (null). */
+export interface SavePairingHandler extends EventHandler {
+  name: "SAVE_PAIRING";
+  handler: (key: PluginKey | null) => void;
 }

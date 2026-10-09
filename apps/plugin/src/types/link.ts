@@ -1,4 +1,4 @@
-import type { PluginInfo, RequestMessage, WireError } from "@pixelwright/core";
+import type { PairingReason, PluginInfo, PluginKey, RequestMessage, WireError } from "@pixelwright/core";
 
 /** The browser WebSocket as far as SocketLink uses it, so tests can hand it a fake. */
 export interface SocketLike {
@@ -17,15 +17,23 @@ export type RequestOutcome =
 export type LinkState =
   | { readonly kind: "connecting" }
   | { readonly kind: "connected"; readonly serverVersion: string }
-  | { readonly kind: "waiting"; readonly retryInMs: number }
+  | { readonly kind: "pairing"; readonly reason: PairingReason; readonly attemptsLeft: number }
+  | { readonly kind: "waiting"; readonly retryInMs: number; readonly reason: string | null }
   | { readonly kind: "stopped"; readonly reason: string };
 
 export interface SocketLinkOptions {
   readonly url: string;
   readonly info: () => PluginInfo;
+  /** The key stored by an earlier pairing, or null; the link keeps it current from then on. */
+  readonly key: PluginKey | null;
   readonly onRequest: (request: RequestMessage) => Promise<RequestOutcome>;
   readonly onState: (state: LinkState) => void;
+  /** The server issued a key after the user typed the code: keep it. */
+  readonly onPaired: (key: PluginKey) => void;
+  /** The server no longer knows the key (its bridge.json was deleted, or the proof failed): forget it. */
+  readonly onForgetKey: () => void;
   readonly createSocket?: (url: string) => SocketLike;
-  readonly schedule?: (run: () => void, ms: number) => void;
+  /** Runs a reconnect later; returns how to cancel it. */
+  readonly schedule?: (run: () => void, ms: number) => () => void;
   readonly random?: () => number;
 }

@@ -12,6 +12,10 @@ body { margin: 0; background: var(--figma-color-bg); color: var(--figma-color-te
 .toggle input:checked { background: var(--figma-color-bg-brand); }
 .toggle input:checked::after { transform: translateX(12px); }
 .note { margin: 0; color: var(--figma-color-text-secondary); }
+.pairing { display: flex; gap: 8px; }
+.pairing input { flex: 1; min-width: 0; padding: 4px 8px; font: 500 13px/20px Inter, system-ui, sans-serif; letter-spacing: 0.2em; color: var(--figma-color-text); background: var(--figma-color-bg); border: 1px solid var(--figma-color-border); border-radius: 5px; }
+.pairing button { padding: 4px 12px; font: 500 11px/20px Inter, system-ui, sans-serif; color: var(--figma-color-text-onbrand); background: var(--figma-color-bg-brand); border: none; border-radius: 5px; cursor: pointer; }
+[hidden] { display: none !important; }
 .actions { margin: 0; padding: 8px 0 0; list-style: none; border-top: 1px solid var(--figma-color-border); }
 .actions li { display: flex; justify-content: space-between; color: var(--figma-color-text-secondary); }
 `;
