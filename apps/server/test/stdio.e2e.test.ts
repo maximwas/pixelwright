@@ -43,6 +43,7 @@ describe("stdio server", () => {
         "node_show",
         "nodes_find",
         "outline",
+        "screenshot",
         "selection_get",
         "status",
       ]);

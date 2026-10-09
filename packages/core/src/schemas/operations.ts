@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { EXPORT_CHUNK_BYTES } from "../constants/bridge.ts";
 import type { OutlineNode } from "../types/operations.ts";
 
 /** A node's box in page coordinates, whole pixels. */
@@ -80,5 +81,21 @@ export const OPERATION_SCHEMAS = {
       depth: z.number().int().min(1).max(10).default(3),
     }),
     output: z.object({ root: OutlineNodeSchema }),
+  },
+  export: {
+    input: z.object({
+      node: NodeIdSchema,
+      format: z.enum(["PNG", "JPG", "SVG"]),
+      scale: z.number().min(0.01).max(4).default(1),
+      /** With effects off, the node's own box: no shadow or outside stroke around it. */
+      effects: z.boolean().default(true),
+      offset: z.number().int().min(0).default(0),
+      length: z.number().int().min(1).max(EXPORT_CHUNK_BYTES).default(EXPORT_CHUNK_BYTES),
+    }),
+    output: z.object({
+      totalBytes: z.number().int().min(0),
+      /** Base64 of the export's bytes from `offset`, at most `length` of them. */
+      bytes: z.string(),
+    }),
   },
 } as const;

@@ -15,6 +15,9 @@ export const BRIDGE_PORT = 18_720;
  */
 export const MAX_MESSAGE_BYTES = 4 * 1024 * 1024;
 
+/** The most bytes of an export one answer carries: base64 makes them a third bigger, still under MAX_MESSAGE_BYTES. */
+export const EXPORT_CHUNK_BYTES = 2 * 1024 * 1024;
+
 /** WebSocket close codes of the bridge; 4xxx are its own. */
 export const CloseCode = {
   GoingAway: 1001,
