@@ -16,6 +16,7 @@ import { requireEdits } from "./edits.ts";
 import { fontKey, fontNameOf } from "./fonts.ts";
 import { pageOf } from "./nodes.ts";
 import { type TokenIndex, tokenIndex } from "./token-index.ts";
+import { dropUploads, uploaded } from "./uploads.ts";
 import { WriteError } from "./write-error.ts";
 
 const MAKERS: Readonly<Record<string, () => SceneNode>> = {
@@ -87,6 +88,8 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
   if (created.length > 0 || changed.length > 0) {
     figma.commitUndo();
   }
+
+  dropUploads(changes.flatMap(streamsOf));
 
   return {
     created,
@@ -177,6 +180,7 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
     tokens,
     fonts,
     unloaded,
+    uploads: uploaded,
   };
 }
 
@@ -540,4 +544,14 @@ function tokensIn(props: FigmaProps): [keyof FigmaProps, Resolve][] {
   }
 
   return found;
+}
+
+/** The upload streams a change names: its asset's and its image paints'. */
+function streamsOf(change: ApplyChange): string[] {
+  const paints = [...(change.props.fills ?? []), ...(change.props.textFills ?? [])];
+
+  return [
+    change.props.asset?.stream,
+    ...paints.map((paint) => (paint.kind === "image" ? paint.stream : undefined)),
+  ].filter((stream): stream is string => stream !== undefined);
 }

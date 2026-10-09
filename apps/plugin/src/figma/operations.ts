@@ -12,6 +12,7 @@ import { deleteNodes } from "./delete.ts";
 import { exportNode, originalImage } from "./export-node.ts";
 import { find, outline, selection, show } from "./read-ops.ts";
 import { entries, snapshot } from "./snapshot.ts";
+import { upload } from "./uploads.ts";
 import { variables } from "./variables.ts";
 
 type Handlers = { readonly [N in OperationName]: (input: OperationInput<N>) => Promise<OperationOutput<N>> };
@@ -31,6 +32,7 @@ const HANDLERS: Handlers = {
   entries,
   apply,
   delete: deleteNodes,
+  upload,
 };
 
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/server";
 import {
   type ApplyChange,
@@ -5,13 +6,15 @@ import {
   type ApplyError,
   changeOf,
   OPERATION_SCHEMAS,
+  type PaintSpec,
   readApply,
   type SnapshotNode,
   unchangedAttributes,
 } from "@pixelwright/core";
 import type * as z from "zod";
+import { readSource, type SourceFile } from "../../assets/read-source.ts";
 import { resolveTarget } from "../../bridge/target.ts";
-import { WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
+import { UPLOAD_CHUNK_BYTES, WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
 import { DesignApplyInputSchema, DesignApplyOutputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
@@ -41,6 +44,7 @@ export function registerApplyTool(server: McpServer, { bridge }: ToolContext): v
 export async function applyDesign(
   bridge: ToolContext["bridge"],
   { xml, parent, dryRun, file }: DesignApplyArgs,
+  { cwd = process.cwd(), chunkBytes = UPLOAD_CHUNK_BYTES }: { cwd?: string; chunkBytes?: number } = {},
 ): Promise<DesignApplied> {
   const read = readApply(xml);
   const errors: ApplyError[] = [...read.errors];
@@ -58,7 +62,16 @@ export async function applyDesign(
   }
 
   const target = resolveTarget(bridge.plugins(), file);
-  const ids = [...new Set(read.elements.flatMap((element) => (element.id === null ? [] : [element.id])))];
+  // The layers changed, and the sources copies are made of (a copy starts as its source).
+  const ids = [
+    ...new Set(
+      read.elements.flatMap((element) =>
+        [element.id, element.source, element.attributes.copyOf].filter(
+          (id): id is string => id !== undefined && id !== null,
+        ),
+      ),
+    ),
+  ];
   const layers = new Map<string, Layer>();
   const missing = new Set<string>();
   const tokens = {
@@ -92,21 +105,30 @@ export async function applyDesign(
     });
 
   for (const element of read.elements) {
-    const layer = element.id === null ? undefined : layers.get(element.id);
+    const named = element.id ?? element.source ?? element.attributes.copyOf ?? null;
+    const layer = named === null ? undefined : layers.get(named);
 
-    if (element.id !== null && layer === undefined && !missing.has(element.id)) {
+    if (named !== null && layer === undefined && !missing.has(named) && element.attributes.copyOf === undefined) {
       // Past the read's size budget: unknown, so every attribute would be written again, rounded.
       refuse(
         element,
-        `design_apply could not read ${element.id}'s current state: the call holds too many layers at once.`,
+        `design_apply could not read ${named}'s current state: the call holds too many layers at once.`,
         "Send fewer layers in one call, or this one on its own.",
       );
       continue;
     }
 
+    const now = layer === undefined ? undefined : unchangedAttributes(element, layer, tokens);
+    // A file the layer's image is not: written again (src, a background's url).
+    const differ = layer === undefined ? [] : await filesChanged(element, layer.node, cwd);
     const { change, errors: translated } = changeOf(
       element,
-      layer === undefined ? undefined : unchangedAttributes(element, layer, tokens),
+      now === undefined
+        ? undefined
+        : {
+            ...now,
+            attributes: new Set([...now.attributes].filter((name) => !differ.includes(name))),
+          },
     );
 
     changes.push(change);
@@ -117,11 +139,20 @@ export async function applyDesign(
     refuse(element, message, "Change it where it is; move it in Figma for now (moving comes in a later version).");
   }
 
+  const files = await attachFiles(changes, {
+    cwd,
+    dryRun,
+    chunkBytes,
+    send: (input) => bridge.request("upload", input, target),
+  });
+
+  errors.push(...files.errors);
+
   const parents = new Set(
-    changes.flatMap((change) => (change.kind === "create" && change.parent !== null ? [change.parent] : [])),
+    files.changes.flatMap((change) => (change.kind === "create" && change.parent !== null ? [change.parent] : [])),
   );
   // What writes nothing stays here; an unchanged parent goes along so the layers made in it find it.
-  const sent = changes.filter(
+  const sent = files.changes.filter(
     (change) =>
       change.kind === "create" ||
       change.text !== undefined ||
@@ -211,4 +242,184 @@ function index(node: SnapshotNode, parent: SnapshotNode | null, layers: Map<stri
 
 function sorted(errors: readonly ApplyError[]): ApplyError[] {
   return errors.toSorted((a, b) => a.line - b.line || a.column - b.column);
+}
+
+/** The files an element names that exist and hold another image than the layer's: their attributes. */
+async function filesChanged(element: ApplyElement, node: SnapshotNode, cwd: string): Promise<string[]> {
+  const hashes = new Set(
+    (Array.isArray(node.fills) ? node.fills : []).flatMap((paint) =>
+      paint.imageHash === undefined ? [] : [paint.imageHash],
+    ),
+  );
+  const differs = async (path: string) => {
+    const file = await readSource(path, cwd, "image");
+
+    return typeof file === "object" && file !== null && !hashes.has(file.sha1);
+  };
+  const changed: string[] = [];
+  const src = element.attributes.src;
+
+  if (element.tag === "Image" && src !== undefined && (await differs(src))) {
+    changed.push("src");
+  }
+
+  for (const [, path] of (element.attributes.background ?? "").matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
+    if (path !== undefined && (await differs(path))) {
+      changed.push("background");
+      break;
+    }
+  }
+
+  return changed;
+}
+
+/**
+ * Each file the changes name, read once: an Icon's SVG goes on its change, an image's bytes to the plugin in chunks
+ * (not on a dry run), its stream named where it is used. A file that cannot be used is an error on its attribute; an
+ * Image or Icon without its file is not made.
+ */
+async function attachFiles(
+  changes: readonly ApplyChange[],
+  options: {
+    cwd: string;
+    dryRun: boolean;
+    chunkBytes: number;
+    send: (input: { stream: string; offset: number; chunk: string; total: number }) => Promise<unknown>;
+  },
+): Promise<{ changes: ApplyChange[]; errors: ApplyError[] }> {
+  const held = new Map<string, Promise<Held>>();
+  const errors: ApplyError[] = [];
+  const hold = (path: string, kind: "image" | "icon") => {
+    const key = `${kind} ${path}`;
+    let file = held.get(key);
+
+    if (file === undefined) {
+      file = holdFile(path, kind, options);
+      held.set(key, file);
+    }
+
+    return file;
+  };
+  const kept: ApplyChange[] = [];
+
+  for (const change of changes) {
+    const fail = (attribute: string, message: string) =>
+      errors.push({
+        line: change.line,
+        column: change.column,
+        ...(change.id === null ? {} : { id: change.id }),
+        attribute,
+        message,
+      });
+    let props = change.props;
+    const asset = props.asset;
+
+    if (asset !== undefined) {
+      const file = await hold(asset.src, asset.kind);
+
+      if ("error" in file) {
+        fail(change.sources.asset ?? "src", file.error);
+        props = without(props, "asset");
+
+        if (change.kind === "create" && change.copyOf === undefined) {
+          continue;
+        }
+      } else {
+        props = {
+          ...props,
+          asset: {
+            ...asset,
+            ...(file.stream === undefined ? {} : { stream: file.stream }),
+            ...(asset.kind === "icon" ? { svg: file.file.bytes.toString("utf8") } : {}),
+          },
+        };
+      }
+    }
+
+    if (props.fills?.some((paint) => paint.kind === "image")) {
+      const fills: PaintSpec[] = [];
+      let broken = false;
+
+      for (const paint of props.fills) {
+        const file = paint.kind === "image" ? await hold(paint.src, "image") : null;
+
+        if (file !== null && "error" in file) {
+          fail(change.sources.fills ?? "background", file.error);
+          broken = true;
+          break;
+        }
+
+        fills.push(
+          paint.kind === "image" && file?.stream !== undefined
+            ? {
+                ...paint,
+                stream: file.stream,
+              }
+            : paint,
+        );
+      }
+
+      props = broken
+        ? without(props, "fills")
+        : {
+            ...props,
+            fills,
+          };
+    }
+
+    kept.push({
+      ...change,
+      props,
+    });
+  }
+
+  return {
+    changes: kept,
+    errors,
+  };
+}
+
+/** A file read for the changes: why it cannot be used, or the file and, for an image sent, its stream. */
+type Held = { readonly error: string } | { readonly file: SourceFile; readonly stream?: string };
+
+async function holdFile(
+  path: string,
+  kind: "image" | "icon",
+  options: Parameters<typeof attachFiles>[1],
+): Promise<Held> {
+  const file = await readSource(path, options.cwd, kind);
+
+  if (file === null) {
+    return { error: `${path} is not a file the server can read (paths are from its folder: ${options.cwd}).` };
+  }
+
+  if (typeof file === "string") {
+    return { error: file };
+  }
+
+  if (kind === "icon" || options.dryRun) {
+    return { file };
+  }
+
+  const stream = randomUUID();
+
+  for (let offset = 0; offset < file.bytes.length; offset += options.chunkBytes) {
+    await options.send({
+      stream,
+      offset,
+      chunk: file.bytes.subarray(offset, offset + options.chunkBytes).toString("base64"),
+      total: file.bytes.length,
+    });
+  }
+
+  return {
+    file,
+    stream,
+  };
+}
+
+function without<T extends object, K extends keyof T>(value: T, key: K): Omit<T, K> {
+  const { [key]: _left, ...rest } = value;
+
+  return rest;
 }

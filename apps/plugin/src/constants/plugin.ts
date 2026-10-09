@@ -49,3 +49,9 @@ export const MAIN_COMPONENT_BATCH = 25;
  * reports weights like SF Pro Semibold's 590): a style further off is an error naming the family's styles.
  */
 export const NEAR_FONT_WEIGHT = 50;
+
+/** How many files may be on their way in at once before the oldest is dropped. */
+export const UPLOAD_STREAMS = 8;
+
+/** How long a file sent for an apply waits for it. */
+export const UPLOAD_TTL_MS = 5 * 60 * 1000;

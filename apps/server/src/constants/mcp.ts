@@ -36,3 +36,12 @@ export const RASTER_SCALE = 2;
 
 /** The most layers one assets_export writes. */
 export const MAX_EXPORT_NODES = 50;
+
+/** The most raw bytes one upload chunk carries: base64 makes them a third bigger, still under the bridge's 4 MiB. */
+export const UPLOAD_CHUNK_BYTES = 2 * 1024 * 1024;
+
+/** The largest file design_apply reads for an Image or a background. */
+export const MAX_SOURCE_BYTES = 32 * 1024 * 1024;
+
+/** The largest SVG an Icon carries inline on its change. */
+export const MAX_SVG_BYTES = 2 * 1024 * 1024;

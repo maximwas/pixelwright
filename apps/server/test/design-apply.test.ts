@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { type ApplyChange, designXml, type Snapshot, SnapshotSchema } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { applyDesign } from "../src/mcp/tools/apply.ts";
@@ -25,6 +28,12 @@ function bridgeOver(snapshot: Snapshot, { cut = false }: { cut?: boolean } = {})
         op,
         input: input as Record<string, unknown>,
       });
+
+      if (op === "upload") {
+        const { offset, chunk } = input as { offset: number; chunk: string };
+
+        return { received: offset + Buffer.from(chunk, "base64").length };
+      }
 
       if (op === "entries") {
         return {
@@ -204,5 +213,143 @@ describe("design_apply", () => {
       }),
     ]);
     expect(sent().map((change) => change.id)).toEqual(["2:4869"]);
+  });
+});
+
+/** A frame holding a photo (a leaf with an image fill: design_read's Image) whose image is these bytes. */
+function photoSnapshot(bytes: Buffer): Snapshot {
+  return {
+    root: {
+      id: "1:1",
+      name: "Gallery",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 200,
+      childCount: 1,
+      layoutMode: "HORIZONTAL",
+      children: [
+        {
+          id: "1:2",
+          name: "Photo",
+          type: "RECTANGLE",
+          visible: true,
+          x: 0,
+          y: 0,
+          width: 300,
+          height: 200,
+          childCount: 0,
+          fills: [
+            {
+              type: "IMAGE",
+              imageHash: createHash("sha1").update(bytes).digest("hex"),
+              scaleMode: "FILL",
+            },
+          ],
+        },
+      ],
+    },
+    styles: {},
+    variables: {},
+  };
+}
+
+const PNG = Buffer.from(
+  "89504e470d0a1a0a0000000d4948445200000001000000010806000000" +
+    "1f15c4890000000d49444154789c63f8cfc0f01f0005000201" +
+    "e1d7f0a50000000049454e44ae426082",
+  "hex",
+);
+
+describe("design_apply: files", () => {
+  const folder = () => {
+    const dir = mkdtempSync(join(tmpdir(), "pixelwright-apply-"));
+
+    writeFileSync(join(dir, "photo.png"), PNG);
+    writeFileSync(join(dir, "other.png"), Buffer.concat([PNG, Buffer.from("x")]));
+    writeFileSync(join(dir, "arrow.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"/>');
+
+    return dir;
+  };
+
+  it("leaves an image as it is when its file holds the same bytes, and swaps it when they differ", async () => {
+    const dir = folder();
+    const snapshot = photoSnapshot(PNG);
+    const xml = designXml(snapshot).xml;
+    const same = bridgeOver(snapshot);
+    const kept = await applyDesign(
+      same.bridge,
+      {
+        xml: xml.replace(/src="[^"]+"/, 'src="photo.png"'),
+        dryRun: false,
+      },
+      { cwd: dir },
+    );
+
+    expect(kept.errors).toEqual([]);
+    expect(same.requests.map(({ op }) => op)).toEqual(["entries"]);
+
+    const swapped = bridgeOver(snapshot);
+
+    await applyDesign(
+      swapped.bridge,
+      {
+        xml: xml.replace(/src="[^"]+"/, 'src="other.png"'),
+        dryRun: false,
+      },
+      { cwd: dir },
+    );
+
+    expect(swapped.requests.map(({ op }) => op)).toEqual(["entries", "upload", "apply"]);
+    expect(swapped.sent()[0]?.props.asset).toMatchObject({
+      kind: "image",
+      src: "other.png",
+      stream: expect.any(String),
+    });
+  });
+
+  it("uploads a file in chunks once for every element naming it, and sends an icon's SVG inline", async () => {
+    const dir = folder();
+    const { bridge, requests, sent } = bridgeOver(photoSnapshot(PNG));
+    const result = await applyDesign(
+      bridge,
+      {
+        xml: '<Image src="photo.png" width="10px"/>\n<Image src="photo.png" width="20px"/>\n<Icon src="arrow.svg"/>',
+        parent: "1:1",
+        dryRun: false,
+      },
+      {
+        cwd: dir,
+        chunkBytes: 32,
+      },
+    );
+    const uploads = requests.filter(({ op }) => op === "upload");
+
+    expect(result.errors).toEqual([]);
+    expect(uploads.map(({ input }) => input.offset)).toEqual([0, 32, 64]);
+    expect(new Set(sent().map((change) => change.props.asset?.stream ?? "svg")).size).toBe(2);
+    expect(sent()[2]?.props.asset?.svg).toContain("<svg");
+  });
+
+  it("refuses a missing or wrong file on the element that names it, and writes the rest", async () => {
+    const dir = folder();
+    const { bridge, sent } = bridgeOver(photoSnapshot(PNG));
+    const result = await applyDesign(
+      bridge,
+      {
+        xml: '<Image src="nowhere.png"/>\n<Icon src="photo.png"/>\n<Frame name="Kept"/>',
+        parent: "1:1",
+        dryRun: false,
+      },
+      { cwd: dir },
+    );
+
+    expect(result.errors.map(({ line, attribute }) => [line, attribute])).toEqual([
+      [1, "src"],
+      [2, "src"],
+    ]);
+    expect(sent().map((change) => change.tag)).toEqual(["Frame"]);
   });
 });

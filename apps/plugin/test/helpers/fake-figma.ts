@@ -465,6 +465,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
       writes.loaded.add(fontKey(font));
     },
     listAvailableFontsAsync: async () => (library.fonts ?? []).map((fontName) => ({ fontName })),
+    base64Decode: (text: string) => Uint8Array.from(atob(text), (char) => char.charCodeAt(0)),
     commitUndo: () => {
       writes.undo += 1;
     },

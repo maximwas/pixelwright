@@ -209,6 +209,21 @@ export const OPERATION_SCHEMAS = {
     }),
     output: ApplyResultSchema,
   },
+  upload: {
+    input: z.object({
+      /** A fresh id for one file; apply names it where the file's bytes are needed. */
+      stream: z.string().min(1).max(64),
+      offset: z.number().int().min(0),
+      /** Base64, at most UPLOAD_CHUNK_BYTES raw bytes. */
+      chunk: z.string().max(4 * 1024 * 1024),
+      total: z
+        .number()
+        .int()
+        .min(1)
+        .max(32 * 1024 * 1024),
+    }),
+    output: z.object({ received: z.number().int() }),
+  },
   delete: {
     input: z.object({
       nodes: z.array(NodeIdSchema).min(1).max(500),

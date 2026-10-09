@@ -2,6 +2,7 @@ import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwr
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setEditsAllowed } from "../src/figma/edits.ts";
 import { runOperation } from "../src/figma/operations.ts";
+import { uploaded } from "../src/figma/uploads.ts";
 import { type FakeLibrary, type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
 
 interface Applied {
@@ -598,5 +599,30 @@ describe("apply: review fixes", () => {
     expect(line?.width).toBe(120);
     expect([a, b, c, d].map((value) => Math.round(value ?? 0))).toEqual([0, -1, 1, 0]);
     expect(line?.strokeWeight).toBe(1);
+  });
+});
+
+describe("upload", () => {
+  it("puts a file's chunks together, and gives its bytes only once all of them came", async () => {
+    const bytes = Uint8Array.from({ length: 10 }, (_, index) => index);
+    const chunk = (from: number, to: number) => btoa(String.fromCharCode(...bytes.subarray(from, to)));
+
+    await runOperation("upload", {
+      stream: "s-1",
+      offset: 0,
+      chunk: chunk(0, 6),
+      total: 10,
+    });
+
+    expect(uploaded("s-1")).toBeUndefined();
+
+    await runOperation("upload", {
+      stream: "s-1",
+      offset: 6,
+      chunk: chunk(6, 10),
+      total: 10,
+    });
+
+    expect([...(uploaded("s-1") ?? [])]).toEqual([...bytes]);
   });
 });
