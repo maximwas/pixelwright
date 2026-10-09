@@ -486,3 +486,73 @@ describe("design_apply: files", () => {
     expect(sent().map((change) => change.tag)).toEqual(["Frame"]);
   });
 });
+
+describe("design_apply on a big read", () => {
+  it("sends back 5 000 layers read with design_read in a few seconds, writing nothing", async () => {
+    const rectangle = (id: string, y: number) => ({
+      id,
+      name: `Bar ${id}`,
+      type: "RECTANGLE",
+      visible: true,
+      x: 0,
+      y,
+      width: 100,
+      height: 8,
+      childCount: 0,
+      fills: [
+        {
+          type: "SOLID",
+          visible: true,
+          opacity: 1,
+          blendMode: "NORMAL",
+          color: {
+            r: 0.1,
+            g: 0.2,
+            b: 0.3,
+          },
+        },
+      ],
+    });
+    const column = (index: number) => ({
+      id: `2:${index}`,
+      name: `Column ${index}`,
+      type: "FRAME",
+      visible: true,
+      x: index * 120,
+      y: 0,
+      width: 100,
+      height: 1_000,
+      childCount: 100,
+      layoutMode: "VERTICAL",
+      itemSpacing: 2,
+      children: Array.from({ length: 100 }, (_, row) => rectangle(`3:${index * 100 + row}`, row * 10)),
+    });
+    const snapshot = SnapshotSchema.parse({
+      root: {
+        id: "1:1",
+        name: "Chart",
+        type: "FRAME",
+        visible: true,
+        x: 0,
+        y: 0,
+        width: 6_000,
+        height: 1_000,
+        childCount: 50,
+        children: Array.from({ length: 50 }, (_, index) => column(index)),
+      },
+      styles: {},
+      variables: {},
+    });
+    const { xml } = designXml(snapshot);
+    const { bridge, requests } = bridgeOver(snapshot);
+    const started = performance.now();
+    const result = await applyDesign(bridge, {
+      xml,
+      dryRun: false,
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(requests.map(({ op }) => op)).toEqual(["entries"]);
+    expect(performance.now() - started).toBeLessThan(3_000);
+  });
+});

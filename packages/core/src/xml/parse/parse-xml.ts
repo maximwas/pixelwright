@@ -229,8 +229,19 @@ class XmlReader {
     return end + close.length;
   }
 
+  /** The line and column of a position: the last line starting at or before it, found by halving. */
   #locate(index: number): XmlLocation {
-    const line = this.#lineStarts.findLastIndex((start) => start <= index);
+    let line = 0;
+
+    for (let high = this.#lineStarts.length - 1; line < high; ) {
+      const middle = Math.ceil((line + high) / 2);
+
+      if ((this.#lineStarts[middle] ?? 0) <= index) {
+        line = middle;
+      } else {
+        high = middle - 1;
+      }
+    }
 
     return {
       line: line + 1,
