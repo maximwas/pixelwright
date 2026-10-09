@@ -10,7 +10,7 @@ import {
   variableTokenName,
 } from "@pixelwright/core";
 import { errorMessage } from "../utils/error-message.ts";
-import { effectsOf, paintsOf } from "./apply-props.ts";
+import { effectKey, effectsOf, paintsOf } from "./apply-props.ts";
 import { requireEdits } from "./edits.ts";
 import { fontNameOf } from "./fonts.ts";
 import { type TokenIndex, tokenIndex } from "./token-index.ts";
@@ -508,7 +508,7 @@ async function writeStyles(
   let index: Promise<TokenIndex> | null = null;
   const context = {
     tokens: () => {
-      index ??= tokenIndex();
+      index ??= tokenIndex({ importing: !dryRun });
 
       return index;
     },
@@ -667,26 +667,7 @@ function paintKeys(paints: readonly Paint[]): unknown[] {
     });
 }
 
-/** The parts of effects that make them look as they do, rounded as CSS writes them. */
-function effectKeys(effects: readonly Effect[]): unknown[] {
-  const round = (value: number | undefined) => Math.round((value ?? 0) * 1_000);
-
-  return effects
-    .filter((effect) => effect.visible ?? true)
-    .map((effect) => {
-      const shadow = effect as Partial<DropShadowEffect>;
-
-      return [
-        effect.type,
-        round((effect as { radius?: number }).radius),
-        round(shadow.spread),
-        round(shadow.offset?.x),
-        round(shadow.offset?.y),
-        shadow.color === undefined
-          ? null
-          : [shadow.color.r, shadow.color.g, shadow.color.b, shadow.color.a].map((channel) =>
-              Math.round(channel * 255),
-            ),
-      ];
-    });
+/** The effects that show, as their keys: what a style holds compared with what CSS wrote. */
+function effectKeys(effects: readonly Effect[]): string[] {
+  return effects.filter((effect) => effect.visible ?? true).map(effectKey);
 }

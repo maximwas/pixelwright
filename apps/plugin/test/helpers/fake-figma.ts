@@ -117,6 +117,8 @@ export interface FakeLibrary {
   readonly pages?: FakeNode[];
   /** How many modes a collection may have (Figma's plan limit): addMode refuses past it. Default 4. */
   readonly modeLimit?: number;
+  /** An enabled library's variables as importVariableByKeyAsync brings them in, by key. */
+  readonly importable?: Record<string, Record<string, unknown> & { id: string }>;
 }
 
 /** A local variable collection as the fake keeps it, writable as Figma's. */
@@ -877,6 +879,21 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
           valuesByMode: {},
         });
       },
+      importVariableByKeyAsync: async (key: string) => {
+        writes.calls.push({
+          node: key,
+          method: "importVariableByKeyAsync",
+          args: [key],
+        });
+
+        const variable = library.importable?.[key];
+
+        if (variable === undefined) {
+          throw new Error(`No variable with key ${key}`);
+        }
+
+        return variable;
+      },
       createVariableAlias: (variable: { id: string }) => ({
         type: "VARIABLE_ALIAS",
         id: variable.id,
@@ -993,6 +1010,12 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     },
     loadAllPagesAsync: async () => undefined,
     importComponentByKeyAsync: async (key: string) => {
+      writes.calls.push({
+        node: key,
+        method: "importComponentByKeyAsync",
+        args: [key],
+      });
+
       const found = [...lost, ...(library.components ?? [])].find(
         (node) => node.key === key && node.type === "COMPONENT",
       );
@@ -1004,6 +1027,12 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
       return found;
     },
     importComponentSetByKeyAsync: async (key: string) => {
+      writes.calls.push({
+        node: key,
+        method: "importComponentSetByKeyAsync",
+        args: [key],
+      });
+
       const found = (library.components ?? []).find((node) => node.key === key && node.type === "COMPONENT_SET");
 
       if (found === undefined) {

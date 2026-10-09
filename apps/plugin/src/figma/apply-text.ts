@@ -262,7 +262,7 @@ async function setRun(
   const whole = start === end;
 
   if (key === "textStyle") {
-    const id = props.textStyle === "" ? "" : (await context.tokens()).textStyle(props.textStyle ?? "");
+    const id = props.textStyle === "" ? "" : await (await context.tokens()).textStyle(props.textStyle ?? "");
 
     await (whole ? node.setTextStyleIdAsync(id) : node.setRangeTextStyleIdAsync(start, end, id));
   } else if (key === "font" && props.font !== undefined) {

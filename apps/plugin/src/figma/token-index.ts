@@ -1,4 +1,4 @@
-import { closest, tokenName, variableTokenName } from "@pixelwright/core";
+import { closest, type RawTokens, tokenName, variableTokenName } from "@pixelwright/core";
 import { variables } from "./variables.ts";
 import { WriteError } from "./write-error.ts";
 
@@ -6,58 +6,105 @@ type StyleKind = "PAINT" | "EFFECT" | "TEXT";
 
 /**
  * Tokens by the CSS names design_read gives them (text styles also by their own name, as textStyle names them): the
- * file's styles and variables and the library ones its page uses, so what a read wrote binds back.
+ * file's styles and variables and the library ones its pages use, then the enabled libraries' variables, so what a
+ * read wrote binds back wherever the file uses it.
  */
 export interface TokenIndex {
   /** A style's id, or null when no style of that kind has the name. */
-  style(token: string, kind: StyleKind): string | null;
+  style(token: string, kind: StyleKind): Promise<string | null>;
   /** A text style's id by its name; an error naming close ones when none has it. */
-  textStyle(name: string): string;
+  textStyle(name: string): Promise<string>;
   /** A variable of the type, or an error naming close tokens. */
   variable(token: string, type: VariableResolvedDataType): Promise<Variable>;
 }
 
-export async function tokenIndex(): Promise<TokenIndex> {
-  const raw = await variables({
-    libraries: false,
-    used: true,
-  });
+/**
+ * Built from what the current page uses; a name it lacks is looked for once on the file's other pages, then a variable
+ * among the enabled libraries' (imported on use, which writes: a dry run only finds it and gets a stand-in).
+ */
+export async function tokenIndex({ importing = true }: { importing?: boolean } = {}): Promise<TokenIndex> {
   const styles = new Map<string, string>();
   const textStyles = new Map<string, string>();
   const tokens = new Map<string, { id: string; resolvedType: string }>();
+  const take = (raw: RawTokens) => {
+    for (const style of raw.styles) {
+      styles.set(`${style.type} ${tokenName(style.name)}`, style.id);
 
-  for (const style of raw.styles) {
-    styles.set(`${style.type} ${tokenName(style.name)}`, style.id);
-
-    if (style.type === "TEXT") {
-      textStyles.set(style.name, style.id);
+      if (style.type === "TEXT") {
+        textStyles.set(style.name, style.id);
+      }
     }
-  }
 
-  for (const variable of raw.variables) {
-    tokens.set(variableTokenName(variable), variable);
-  }
+    for (const variable of raw.variables) {
+      tokens.set(variableTokenName(variable), variable);
+    }
 
-  for (const [id, variable] of Object.entries(raw.external)) {
-    tokens.set(variableTokenName(variable), {
-      id,
-      resolvedType: variable.resolvedType,
-    });
-  }
+    for (const [id, variable] of Object.entries(raw.external)) {
+      tokens.set(variableTokenName(variable), {
+        id,
+        resolvedType: variable.resolvedType,
+      });
+    }
+  };
 
-  const names = [...tokens.keys(), ...[...styles.keys()].map((key) => key.slice(key.indexOf(" ") + 1))];
+  take(
+    await variables({
+      libraries: false,
+      used: true,
+    }),
+  );
+
+  let farther: Promise<void> | null = null;
+  // The other pages, read once and only when a name is missing: loading every page is slow on big files.
+  const lookFarther = () => {
+    farther ??= (async () => {
+      await figma.loadAllPagesAsync();
+
+      for (const page of figma.root.children) {
+        if (page.id !== figma.currentPage.id) {
+          take(
+            await variables({
+              libraries: false,
+              used: true,
+              within: page.id,
+            }),
+          );
+        }
+      }
+    })();
+
+    return farther;
+  };
+  let catalogue: Promise<Map<string, LibraryVariable>> | null = null;
+  const libraries = () => {
+    catalogue ??= libraryVariables();
+
+    return catalogue;
+  };
+  const names = () => [...tokens.keys(), ...[...styles.keys()].map((key) => key.slice(key.indexOf(" ") + 1))];
   const unknown = (what: string, token: string, candidates: Iterable<string>) => {
     const near = closest(token, candidates);
 
     return new WriteError(
-      `No ${what} is named ${token} in this file or the libraries its page uses.`,
+      `No ${what} is named ${token} in this file or the libraries it uses.`,
       near === null ? "tokens_read lists the file's tokens." : `Did you mean ${near}?`,
     );
   };
+  const style = async (token: string, kind: StyleKind) => {
+    if (!styles.has(`${kind} ${token}`)) {
+      await lookFarther();
+    }
+
+    return styles.get(`${kind} ${token}`) ?? null;
+  };
 
   return {
-    style: (token, kind) => styles.get(`${kind} ${token}`) ?? null,
-    textStyle: (name) => {
+    style,
+    textStyle: async (name) => {
+      if (!textStyles.has(name)) {
+        await lookFarther();
+      }
+
       const id = textStyles.get(name);
 
       if (id === undefined) {
@@ -67,10 +114,20 @@ export async function tokenIndex(): Promise<TokenIndex> {
       return id;
     },
     variable: async (token, type) => {
+      if (!tokens.has(token)) {
+        await lookFarther();
+      }
+
       const entry = tokens.get(token);
 
       if (entry === undefined) {
-        throw unknown(type === "COLOR" ? "paint style or colour variable" : "variable", token, names);
+        const listed = (await libraries()).get(token);
+
+        if (listed === undefined) {
+          throw unknown(type === "COLOR" ? "paint style or colour variable" : "variable", token, names());
+        }
+
+        return await imported(listed, type, importing);
       }
 
       const variable = await figma.variables.getVariableByIdAsync(entry.id);
@@ -82,13 +139,64 @@ export async function tokenIndex(): Promise<TokenIndex> {
         );
       }
 
-      if (variable.resolvedType !== type) {
-        throw new WriteError(
-          `${token} is a ${variable.resolvedType.toLowerCase()} variable: this needs a ${type.toLowerCase()} one.`,
-        );
-      }
-
-      return variable;
+      return ofType(variable, token, type);
     },
   };
+}
+
+/** An enabled library's variable as figma.teamLibrary lists it. */
+interface LibraryVariable {
+  readonly key: string;
+  readonly name: string;
+  readonly resolvedType: string;
+}
+
+/** The enabled libraries' variables by the CSS name design_read would give them; none when the libraries fail. */
+async function libraryVariables(): Promise<Map<string, LibraryVariable>> {
+  const found = new Map<string, LibraryVariable>();
+
+  try {
+    for (const collection of await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()) {
+      for (const variable of await figma.teamLibrary.getVariablesInLibraryCollectionAsync(collection.key)) {
+        found.set(tokenName(variable.name), variable);
+      }
+    }
+  } catch {
+    // Libraries that cannot be read leave the name unknown, which is the error the caller gives.
+  }
+
+  return found;
+}
+
+/** A library variable brought into the file, or on a dry run a stand-in that only says it is there. */
+async function imported(
+  listed: LibraryVariable,
+  type: VariableResolvedDataType,
+  importing: boolean,
+): Promise<Variable> {
+  if (listed.resolvedType !== type) {
+    throw new WriteError(
+      `${tokenName(listed.name)} is a ${listed.resolvedType.toLowerCase()} variable: this needs a ${type.toLowerCase()} one.`,
+    );
+  }
+
+  if (!importing) {
+    return {
+      id: `library:${listed.key}`,
+      name: listed.name,
+      resolvedType: listed.resolvedType,
+    } as unknown as Variable;
+  }
+
+  return ofType(await figma.variables.importVariableByKeyAsync(listed.key), tokenName(listed.name), type);
+}
+
+function ofType(variable: Variable, token: string, type: VariableResolvedDataType): Variable {
+  if (variable.resolvedType !== type) {
+    throw new WriteError(
+      `${token} is a ${variable.resolvedType.toLowerCase()} variable: this needs a ${type.toLowerCase()} one.`,
+    );
+  }
+
+  return variable;
 }

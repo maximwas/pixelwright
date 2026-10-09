@@ -542,7 +542,7 @@ export async function paintsOf(
   const [only] = specs;
 
   if (specs.length === 1 && only?.kind === "token" && only.opacity === 1) {
-    const style = (await context.tokens()).style(only.token, "PAINT");
+    const style = await (await context.tokens()).style(only.token, "PAINT");
 
     if (style !== null) {
       return { style };
@@ -572,7 +572,7 @@ export async function paintsOf(
 
     const index = await context.tokens();
 
-    if (index.style(spec.token, "PAINT") !== null) {
+    if ((await index.style(spec.token, "PAINT")) !== null) {
       throw new WriteError(
         `${spec.token} is a paint style, which is the whole list of a layer's paints.`,
         "Use it as the only layer, without color-mix().",
@@ -702,7 +702,7 @@ async function effects(node: Layer, { effects: spec }: FigmaProps, context: Writ
 
   if (!Array.isArray(spec)) {
     const token = (spec as { token: string }).token;
-    const style = (await context.tokens()).style(token, "EFFECT");
+    const style = await (await context.tokens()).style(token, "EFFECT");
 
     if (style === null) {
       throw new WriteError(`No effect style is named ${token} in this file or the libraries its page uses.`);
@@ -715,7 +715,50 @@ async function effects(node: Layer, { effects: spec }: FigmaProps, context: Writ
     return;
   }
 
-  set(node, "effects", effectsOf(spec as readonly EffectSpec[]));
+  set(
+    node,
+    "effects",
+    mergedEffects(
+      Array.isArray(node.effects) ? (node.effects as Effect[]) : [],
+      effectsOf(spec as readonly EffectSpec[]),
+    ),
+  );
+}
+
+/** The effects CSS writes: shadows and plain blurs. */
+const CSS_EFFECTS: ReadonlySet<string> = new Set(["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR", "BACKGROUND_BLUR"]);
+
+/**
+ * The effects CSS wrote, each one the layer already has kept as it is (a shadow's colour variable, blend mode and
+ * show-behind, a progressive blur of that radius), then what CSS cannot write and design_read never shows (noise,
+ * texture, glass, hidden effects), as the layer has them.
+ */
+export function mergedEffects(current: readonly Effect[], written: readonly Effect[]): Effect[] {
+  const unused = current.filter((effect) => CSS_EFFECTS.has(effect.type) && (effect.visible ?? true));
+  const merged = written.map((effect) => {
+    const at = unused.findIndex((held) => effectKey(held) === effectKey(effect));
+
+    return at === -1 ? effect : (unused.splice(at, 1)[0] as Effect);
+  });
+
+  return [...merged, ...current.filter((effect) => !CSS_EFFECTS.has(effect.type) || !(effect.visible ?? true))];
+}
+
+/** The parts of an effect CSS writes, rounded as it writes them: equal keys look the same in a read. */
+export function effectKey(effect: Effect): string {
+  const shadow = effect as Partial<DropShadowEffect>;
+  const round = (value: number | undefined) => Math.round((value ?? 0) * 1_000);
+
+  return JSON.stringify([
+    effect.type,
+    round((effect as { radius?: number }).radius),
+    round(shadow.spread),
+    round(shadow.offset?.x),
+    round(shadow.offset?.y),
+    shadow.color === undefined
+      ? null
+      : [shadow.color.r, shadow.color.g, shadow.color.b, shadow.color.a].map((channel) => Math.round(channel * 255)),
+  ]);
 }
 
 /** Shadows and blurs as Figma holds them, in Figma's order. */

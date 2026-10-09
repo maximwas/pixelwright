@@ -322,7 +322,7 @@ async function loadPageOf(node: BaseNode): Promise<void> {
 async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promise<WriteContext> {
   let index: Promise<TokenIndex> | null = null;
   const tokens = () => {
-    index ??= tokenIndex();
+    index ??= tokenIndex({ importing: !dryRun });
 
     return index;
   };
@@ -385,7 +385,7 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
 
 async function styleFonts(index: TokenIndex, name: string): Promise<FontName[]> {
   try {
-    const style = await figma.getStyleByIdAsync(index.textStyle(name));
+    const style = await figma.getStyleByIdAsync(await index.textStyle(name));
 
     return style?.type === "TEXT" ? [(style as TextStyle).fontName] : [];
   } catch {
@@ -866,10 +866,11 @@ async function check(
     const name = change.props.component ?? "";
     const made = planned.get(name);
 
-    // The component and variant it names, found without making anything: one this XML makes, or the file's.
-    if (made === undefined) {
+    // The component and variant it names, found without making anything: one this XML makes, or the file's. A library
+    // one named by key is checked on a real run: finding it imports it, which writes to the file.
+    if (made === undefined && !name.startsWith("key:")) {
       variantFor(await context.components.find(name), change.props.variant ?? {});
-    } else if (made !== null) {
+    } else if (made !== undefined && made !== null) {
       plannedVariant(name, made, change.props.variant ?? {});
     }
 
@@ -880,6 +881,15 @@ async function check(
     throw new WriteError("Its parent element was not written: fix the parent's error first.");
   } else {
     nodes.set(change.ref, null);
+  }
+
+  const neighbour = change.before ?? change.after;
+
+  if (neighbour !== undefined && (await figma.getNodeByIdAsync(neighbour)) === null) {
+    fail(
+      new WriteError(`No layer ${neighbour} to put this one next to.`),
+      change.before === undefined ? "after" : "before",
+    );
   }
 
   plan(change, byRef, planned);
@@ -959,7 +969,7 @@ function tokensIn(props: FigmaProps): [keyof FigmaProps, Resolve][] {
       if (spec.kind === "token") {
         found.push([
           key,
-          async (index) => index.style(spec.token, "PAINT") ?? (await index.variable(spec.token, "COLOR")),
+          async (index) => (await index.style(spec.token, "PAINT")) ?? (await index.variable(spec.token, "COLOR")),
         ]);
       }
     }
@@ -1000,7 +1010,7 @@ function tokensIn(props: FigmaProps): [keyof FigmaProps, Resolve][] {
     found.push([
       "effects",
       async (index) => {
-        if (index.style(token, "EFFECT") === null) {
+        if ((await index.style(token, "EFFECT")) === null) {
           throw new WriteError(`No effect style is named ${token} in this file or the libraries its page uses.`);
         }
       },
@@ -1010,7 +1020,7 @@ function tokensIn(props: FigmaProps): [keyof FigmaProps, Resolve][] {
   if (props.textStyle !== undefined && props.textStyle !== "") {
     const name = props.textStyle;
 
-    found.push(["textStyle", async (index) => index.textStyle(name)]);
+    found.push(["textStyle", async (index) => await index.textStyle(name)]);
   }
 
   return found;
