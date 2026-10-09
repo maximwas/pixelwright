@@ -166,6 +166,12 @@ export const OPERATION_SCHEMAS = {
     input: z.object({
       /** Also list the enabled libraries' variables (by name: their values need an import). */
       libraries: z.boolean().default(false),
+      /**
+       * Also take the styles and variables the layers in `within` (or the current page) use, wherever they come from:
+       * a file that uses a team library has its tokens there, not among its own.
+       */
+      used: z.boolean().default(true),
+      within: NodeIdSchema.exactOptional(),
     }),
     output: RawTokensSchema,
   },

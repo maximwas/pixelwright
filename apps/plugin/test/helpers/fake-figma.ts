@@ -97,7 +97,7 @@ export function tree(spec: Spec, parent: FakeNode | null = null): FakeNode {
 export interface FakeLibrary {
   readonly styles?: Record<string, object>;
   readonly variables?: Record<string, Record<string, unknown> & { name: string; variableCollectionId: string }>;
-  readonly collections?: Record<string, { name: string }>;
+  readonly collections?: Record<string, Record<string, unknown> & { name: string }>;
   /** The file's own collections and variables (getLocal…Async), and its own styles by kind. */
   readonly localCollections?: object[];
   readonly localVariables?: object[];

@@ -114,6 +114,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 
 ## tokens_read
 
+- It takes the file's own styles and variables, and those the current page (or \`within\`) uses from a team library:
+  a file built on a library has its tokens there. \`used: false\` keeps only the file's own.
 - format css (default): \`:root\` holds every collection's default mode and the styles; every other mode is a block
   \`[data-<collection>="<mode>"]\` with that collection's variables. Put the attribute on the element the theme applies
   to: \`<html data-brand="dark">\`.

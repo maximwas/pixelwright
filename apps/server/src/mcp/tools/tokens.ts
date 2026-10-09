@@ -15,7 +15,7 @@ export function registerTokensTool(server: McpServer, { bridge }: ToolContext): 
     name: "tokens_read",
     title: "Read the design tokens",
     description:
-      "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every other mode is a block [data-<collection>=\"<mode>\"] to put on the element a theme applies to; format json returns the same per collection and mode. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
+      "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every other mode is a block [data-<collection>=\"<mode>\"] to put on the element a theme applies to; format json returns the same per collection and mode. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
     input: TokensReadInputSchema,
     output: TokensReadOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
@@ -25,9 +25,18 @@ export function registerTokensTool(server: McpServer, { bridge }: ToolContext): 
 
 export async function readTokens(
   bridge: ToolContext["bridge"],
-  { collections, libraries, format, file }: TokensReadArgs,
+  { collections, libraries, used, within, format, file }: TokensReadArgs,
 ): Promise<TokensRead> {
-  const raw = await runOp(bridge, "variables", { libraries }, file);
+  const raw = await runOp(
+    bridge,
+    "variables",
+    {
+      libraries,
+      used,
+      ...(within === undefined ? {} : { within }),
+    },
+    file,
+  );
   const model = tokenModel(raw, collections === undefined ? {} : { collections });
   const notes = [...model.notes];
 

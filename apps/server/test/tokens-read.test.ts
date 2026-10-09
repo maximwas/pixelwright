@@ -80,6 +80,7 @@ describe("tokens_read", () => {
     const { bridge } = bridgeAnswering(RAW);
     const css = await readTokens(bridge, {
       libraries: false,
+      used: true,
       format: "css",
     });
 
@@ -101,6 +102,7 @@ describe("tokens_read", () => {
 
     const json = await readTokens(bridge, {
       libraries: false,
+      used: true,
       format: "json",
     });
 
@@ -115,6 +117,7 @@ describe("tokens_read", () => {
     const { bridge } = bridgeAnswering(RAW);
     const read = await readTokens(bridge, {
       libraries: false,
+      used: true,
       format: "css",
       collections: ["Spacing"],
     });
@@ -130,6 +133,7 @@ describe("tokens_read", () => {
       }).bridge,
       {
         libraries: true,
+        used: true,
         format: "css",
       },
     );
@@ -155,6 +159,7 @@ describe("tokens_read", () => {
       }).bridge,
       {
         libraries: true,
+        used: true,
         format: "css",
       },
     );

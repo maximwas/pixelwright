@@ -274,3 +274,165 @@ describe("variables", () => {
     expect((offline.variables as unknown[]).length).toBe(3);
   });
 });
+
+describe("variables the page uses from a library", () => {
+  it("adds the library styles and variables the layers use, with their collections and modes", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "2:1",
+            name: "Card",
+            fillStyleId: "S:lib-grey",
+            fills: [
+              {
+                type: "SOLID",
+                color: WHITE,
+                boundVariables: {
+                  color: {
+                    type: "VARIABLE_ALIAS",
+                    id: "V:lib-surface",
+                  },
+                },
+              },
+            ],
+            children: [
+              {
+                id: "2:2",
+                type: "TEXT",
+                name: "Title",
+                textStyleId: "S:lib-h3",
+              },
+            ],
+          },
+        ],
+      }),
+      {
+        styles: {
+          "S:lib-grey": {
+            id: "S:lib-grey",
+            name: "Grey",
+            type: "PAINT",
+            remote: true,
+            paints: [
+              {
+                type: "SOLID",
+                color: {
+                  r: 0.95,
+                  g: 0.95,
+                  b: 0.95,
+                },
+              },
+            ],
+          },
+          "S:lib-h3": {
+            id: "S:lib-h3",
+            name: "h3",
+            type: "TEXT",
+            remote: true,
+            fontName: {
+              family: "Space Grotesk",
+              style: "Medium",
+            },
+            fontSize: 30,
+            lineHeight: { unit: "AUTO" },
+            letterSpacing: {
+              unit: "PERCENT",
+              value: 0,
+            },
+            textCase: "ORIGINAL",
+            textDecoration: "NONE",
+          },
+        },
+        variables: {
+          "V:lib-surface": {
+            id: "V:lib-surface",
+            name: "Surface",
+            variableCollectionId: "C:lib",
+            resolvedType: "COLOR",
+            remote: true,
+            description: "",
+            scopes: ["ALL_SCOPES"],
+            valuesByMode: {
+              "M:l": WHITE,
+              "M:d": {
+                type: "VARIABLE_ALIAS",
+                id: "V:lib-ink",
+              },
+            },
+          },
+          "V:lib-ink": {
+            id: "V:lib-ink",
+            name: "Ink",
+            variableCollectionId: "C:lib",
+            resolvedType: "COLOR",
+            remote: true,
+            description: "",
+            scopes: ["ALL_SCOPES"],
+            valuesByMode: {
+              "M:l": DARK,
+              "M:d": WHITE,
+            },
+          },
+        },
+        collections: {
+          "C:lib": {
+            id: "C:lib",
+            name: "Theme",
+            remote: true,
+            defaultModeId: "M:l",
+            modes: [
+              {
+                modeId: "M:l",
+                name: "Light",
+              },
+              {
+                modeId: "M:d",
+                name: "Dark",
+              },
+            ],
+          },
+        },
+      },
+    );
+
+    const tokens = (await runOperation("variables", {})) as {
+      collections: { name: string; remote: boolean; modes: unknown[] }[];
+      variables: { name: string; valuesByMode: Record<string, unknown> }[];
+      styles: { name: string; remote: boolean }[];
+    };
+
+    expect(tokens.styles.map(({ name, remote }) => [name, remote])).toEqual([
+      ["Grey", true],
+      ["h3", true],
+    ]);
+    expect(tokens.collections).toEqual([
+      {
+        id: "C:lib",
+        name: "Theme",
+        remote: true,
+        defaultModeId: "M:l",
+        modes: [
+          {
+            modeId: "M:l",
+            name: "Light",
+          },
+          {
+            modeId: "M:d",
+            name: "Dark",
+          },
+        ],
+      },
+    ]);
+    expect(tokens.variables.map(({ name }) => name).sort()).toEqual(["Ink", "Surface"]);
+
+    const onlyLocal = (await runOperation("variables", { used: false })) as { styles: unknown[]; variables: unknown[] };
+
+    expect(onlyLocal).toMatchObject({
+      styles: [],
+      variables: [],
+    });
+  });
+});

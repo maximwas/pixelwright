@@ -67,6 +67,18 @@ export const TokensReadInputSchema = z.object({
     .describe(
       "Also list the enabled libraries' variables, by name and type: their values are read only once the file uses them.",
     ),
+  used: z
+    .boolean()
+    .default(true)
+    .describe(
+      "Also take the styles and variables the layers on the current page (or within) use, a team library's among them. A file that uses a library has its tokens there.",
+    ),
+  within: z
+    .string()
+    .min(1)
+    .max(200)
+    .exactOptional()
+    .describe("The layer or page whose used tokens to take. Default: the current page."),
   format: z
     .enum(["css", "json"])
     .default("css")

@@ -122,6 +122,53 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           },
         ],
         ["selection_get", "selection.json", { file: FILE }],
+        ["tokens_read", "tokens.json", { file: FILE }],
+        [
+          "tokens_read",
+          "tokens-libraries.json",
+          {
+            libraries: true,
+            format: "json",
+            file: FILE,
+          },
+        ],
+        [
+          "components_read",
+          "components-used.json",
+          {
+            scope: "used",
+            within: "2:4766",
+            file: FILE,
+          },
+        ],
+        [
+          "components_read",
+          "components-local.json",
+          {
+            scope: "local",
+            file: FILE,
+          },
+        ],
+        [
+          "assets_export",
+          "export-from.json",
+          {
+            from: "2:4869",
+            dir: join(OUT, "export"),
+            file: FILE,
+          },
+        ],
+        [
+          "assets_export",
+          "export-originals.json",
+          {
+            nodes: ["2:4875", "2:4881", "2:4788"],
+            dir: join(OUT, "originals"),
+            original: true,
+            file: FILE,
+          },
+        ],
+        ["guide", "guide.json", { topic: "workflow" }],
       ];
 
       for (const [name, out, args] of calls) {
