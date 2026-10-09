@@ -1,0 +1,118 @@
+import { MIXED } from "../schemas/snapshot.ts";
+import type { CssContext } from "../types/css.ts";
+import type { SnapshotNode, SnapshotPaint } from "../types/snapshot.ts";
+import { colorCss, type Rgba } from "./color.ts";
+import { tokenName, variableTokenName } from "./tokens.ts";
+
+/** A paint the mapping table cannot write back yet (gradients, video, patterns): read-only CSS instead. */
+export const UNMAPPED = Symbol("unmapped");
+
+export type PaintCss = string | typeof UNMAPPED | null;
+
+const SCALE_MODES: Readonly<Record<string, string>> = {
+  FILL: "center / cover no-repeat",
+  CROP: "center / cover no-repeat",
+  FIT: "center / contain no-repeat",
+  TILE: "repeat",
+};
+
+/**
+ * A layer's paints as one CSS value, top layer first: `var(--Name)` for a paint style, the token of a bound variable,
+ * else the literal. Null when nothing visible is painted.
+ */
+export function paintsCss(
+  paints: SnapshotNode["fills"],
+  styleId: string | undefined,
+  node: SnapshotNode,
+  context: CssContext,
+): PaintCss {
+  if (paints === undefined) {
+    return null;
+  }
+
+  if (paints === MIXED) {
+    return UNMAPPED;
+  }
+
+  const style = styleId === undefined || styleId === MIXED ? undefined : context.styles[styleId];
+
+  if (style?.paints !== undefined) {
+    const name = tokenName(style.name);
+    const value = layersCss(style.paints, node, context);
+
+    if (typeof value === "string") {
+      context.tokens.set(name, value);
+    }
+
+    return `var(${name})`;
+  }
+
+  return layersCss(paints, node, context);
+}
+
+function layersCss(paints: readonly SnapshotPaint[], node: SnapshotNode, context: CssContext): PaintCss {
+  const layers = paints
+    .filter((paint) => paint.visible !== false)
+    .toReversed()
+    .map((paint) => layerCss(paint, node, context));
+
+  if (layers.length === 0) {
+    return null;
+  }
+
+  if (layers.some((layer) => layer === UNMAPPED)) {
+    return UNMAPPED;
+  }
+
+  const values = layers as string[];
+
+  // Only the bottom layer of a CSS background may be a plain color: one above it becomes a flat gradient.
+  return values
+    .map((value, index) =>
+      index < values.length - 1 && isColor(value) ? `linear-gradient(${value}, ${value})` : value,
+    )
+    .join(", ");
+}
+
+function isColor(value: string): boolean {
+  return !value.startsWith("url(") && !value.includes("gradient(");
+}
+
+function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext): string | typeof UNMAPPED {
+  if (paint.type === "SOLID" && paint.color !== undefined) {
+    const variable = boundVariable(paint.boundVariables?.color, context);
+
+    if (variable !== null) {
+      const name = variableTokenName(variable);
+
+      if (isRgba(variable.value)) {
+        context.tokens.set(name, colorCss(variable.value));
+      }
+
+      return `var(${name})`;
+    }
+
+    return colorCss(paint.color, paint.opacity ?? 1);
+  }
+
+  if (paint.type === "IMAGE") {
+    const url = context.imageUrl?.(node, paint) ?? `assets/${paint.imageHash ?? "image"}.png`;
+
+    return `url(${url}) ${SCALE_MODES[paint.scaleMode ?? "FILL"] ?? SCALE_MODES.FILL}`;
+  }
+
+  return UNMAPPED;
+}
+
+/** The variable an alias (`{type: "VARIABLE_ALIAS", id}`) points at, when the snapshot resolved it. */
+export function boundVariable(alias: unknown, context: CssContext) {
+  if (typeof alias !== "object" || alias === null || !("id" in alias) || typeof alias.id !== "string") {
+    return null;
+  }
+
+  return context.variables[alias.id] ?? null;
+}
+
+function isRgba(value: unknown): value is Rgba {
+  return typeof value === "object" && value !== null && "r" in value && "g" in value && "b" in value;
+}

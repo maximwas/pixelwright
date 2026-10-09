@@ -58,6 +58,10 @@ export function tree(spec: Spec, parent: FakeNode | null = null): FakeNode {
     [1, 0, box.x],
     [0, 1, box.y],
   ];
+  node.relativeTransform ??= [
+    [1, 0, box.x],
+    [0, 1, box.y],
+  ];
   node.width ??= box.width;
   node.height ??= box.height;
 

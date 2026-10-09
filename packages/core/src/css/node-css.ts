@@ -1,0 +1,436 @@
+import { CSS_ORDER, VECTOR_TYPES } from "../constants/css.ts";
+import { MIXED } from "../schemas/snapshot.ts";
+import type { CssContext, NodeCss } from "../types/css.ts";
+import type { SnapshotEffect, SnapshotNode } from "../types/snapshot.ts";
+import { colorCss } from "./color.ts";
+import { boxShorthand, decimal, px } from "./format.ts";
+import { boundVariable, paintsCss, UNMAPPED } from "./paint.ts";
+import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
+import { tokenName, variableTokenName } from "./tokens.ts";
+
+const JUSTIFY: Readonly<Record<string, string>> = {
+  CENTER: "center",
+  MAX: "flex-end",
+  SPACE_BETWEEN: "space-between",
+};
+
+const ALIGN: Readonly<Record<string, string>> = {
+  CENTER: "center",
+  MAX: "flex-end",
+  BASELINE: "baseline",
+};
+
+const RADII = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
+const SIDES = [
+  ["strokeTopWeight", "border-top"],
+  ["strokeRightWeight", "border-right"],
+  ["strokeBottomWeight", "border-bottom"],
+  ["strokeLeftWeight", "border-left"],
+] as const;
+
+/**
+ * A layer's CSS from its raw Figma properties, through the one mapping table design_apply reads back. `parent` decides
+ * how the layer sits (flowing in auto layout, or placed absolutely); the read's root always gets its size.
+ */
+export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context: CssContext): NodeCss {
+  const css = new Map<string, string>();
+  const readOnly: [string, string][] = [];
+  let textStyle: string | undefined;
+
+  layoutCss(node, css, context);
+
+  if (node.type === "LINE") {
+    lineCss(node, parent, css, context);
+  } else {
+    positionCss(node, parent, context, css);
+    sizeCss(node, parent, context, css);
+  }
+
+  if (node.opacity !== undefined) {
+    css.set("opacity", decimal(node.opacity));
+  }
+
+  if (node.clipsContent) {
+    css.set("overflow", "hidden");
+  }
+
+  if (node.blendMode !== undefined) {
+    readOnly.push([
+      "mix-blend-mode",
+      node.css?.["mix-blend-mode"] ?? node.blendMode.toLowerCase().replaceAll("_", "-"),
+    ]);
+  }
+
+  if (node.type === "TEXT") {
+    textStyle = textCss(node, css, readOnly, context);
+  } else if (!VECTOR_TYPES.has(node.type) && node.type !== "LINE") {
+    radiusCss(node, css, context);
+    borderCss(node, css, readOnly, context);
+
+    const background = paintsCss(node.fills, styleIdOf(node.fillStyleId), node, context);
+
+    if (background === UNMAPPED) {
+      readOnly.push(["background", node.css?.background ?? "a gradient or other fill the table cannot write yet"]);
+    } else if (background !== null) {
+      css.set("background", background);
+    }
+  }
+
+  effectsCss(node, css, context);
+
+  return {
+    properties: [...css].sort(([a], [b]) => order(a) - order(b)),
+    readOnly: readOnly.map(([property, value]) => [property, cleanOracle(value)]),
+    ...(textStyle === undefined ? {} : { textStyle }),
+  };
+}
+
+function order(property: string): number {
+  const index = (CSS_ORDER as readonly string[]).indexOf(property);
+
+  return index === -1 ? CSS_ORDER.length : index;
+}
+
+function isFlex(node: SnapshotNode | null): boolean {
+  return node?.layoutMode === "HORIZONTAL" || node?.layoutMode === "VERTICAL";
+}
+
+function hasLayout(node: SnapshotNode | null): boolean {
+  return isFlex(node) || node?.layoutMode === "GRID";
+}
+
+function layoutCss(node: SnapshotNode, css: Map<string, string>, context: CssContext): void {
+  if (node.layoutMode === "GRID") {
+    css.set("display", "grid");
+
+    if (node.gridColumnCount !== undefined) {
+      css.set("grid-template-columns", `repeat(${node.gridColumnCount}, 1fr)`);
+    }
+
+    setLength(css, "column-gap", node, "gridColumnGap", node.gridColumnGap, context);
+    setLength(css, "row-gap", node, "gridRowGap", node.gridRowGap, context);
+
+    return;
+  }
+
+  if (!isFlex(node)) {
+    return;
+  }
+
+  css.set("display", "flex");
+
+  if (node.layoutMode === "VERTICAL") {
+    css.set("flex-direction", "column");
+  }
+
+  if (node.layoutWrap === "WRAP") {
+    css.set("flex-wrap", "wrap");
+  }
+
+  const sides = (["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"] as const).map((key) =>
+    length(node, key, node[key] ?? 0, context),
+  );
+
+  if (sides.some((side) => side !== "0")) {
+    css.set("padding", boxShorthand(...(sides as [string, string, string, string])));
+  }
+
+  const justify = JUSTIFY[node.primaryAxisAlignItems ?? "MIN"];
+  const align = ALIGN[node.counterAxisAlignItems ?? "MIN"];
+
+  if (justify !== undefined) {
+    css.set("justify-content", justify);
+  }
+
+  if (align !== undefined) {
+    css.set("align-items", align);
+  }
+
+  const spaced = node.children?.filter((child) => child.visible).length ?? node.childCount;
+
+  // Space-between spaces the children itself, and a gap with fewer than two children spaces nothing.
+  if (node.primaryAxisAlignItems !== "SPACE_BETWEEN" && spaced >= 2) {
+    setLength(css, "gap", node, "itemSpacing", node.itemSpacing, context);
+  }
+
+  if (node.layoutWrap === "WRAP") {
+    setLength(css, "row-gap", node, "counterAxisSpacing", node.counterAxisSpacing ?? undefined, context);
+  }
+}
+
+function sizeCss(node: SnapshotNode, parent: SnapshotNode | null, context: CssContext, css: Map<string, string>): void {
+  const isRoot = node === context.root;
+  const flowing = isFlex(parent) && node.layoutPositioning !== "ABSOLUTE";
+  const axes = [
+    ["width", node.layoutSizingHorizontal, node.width, parent?.layoutMode === "HORIZONTAL"],
+    ["height", node.layoutSizingVertical, node.height, parent?.layoutMode === "VERTICAL"],
+  ] as const;
+
+  for (const [property, sizing, value, mainAxis] of axes) {
+    if (isRoot || sizing === "FIXED" || sizing === undefined) {
+      setLength(css, property, node, property, value, context);
+    } else if (sizing === "FILL" && flowing) {
+      css.set(mainAxis ? "flex" : "align-self", mainAxis ? "1" : "stretch");
+    }
+  }
+
+  for (const key of ["minWidth", "maxWidth", "minHeight", "maxHeight"] as const) {
+    setLength(
+      css,
+      key.replace(/[A-Z]/, (letter) => `-${letter.toLowerCase()}`),
+      node,
+      key,
+      node[key],
+      context,
+    );
+  }
+}
+
+function positionCss(
+  node: SnapshotNode,
+  parent: SnapshotNode | null,
+  context: CssContext,
+  css: Map<string, string>,
+): void {
+  const transform = transformCss(node);
+
+  if (parent !== null && node !== context.root && (node.layoutPositioning === "ABSOLUTE" || !hasLayout(parent))) {
+    // A rotated or mirrored layer turns about its centre in CSS: place the unrotated box so the centres meet (Figma's
+    // own x and y are the transformed corner, the far one at -180).
+    const centre =
+      node.bounds !== undefined
+        ? {
+            x: node.bounds.x + node.bounds.width / 2,
+            y: node.bounds.y + node.bounds.height / 2,
+          }
+        : null;
+
+    css.set("position", "absolute");
+    css.set("left", px((centre === null ? node.x : centre.x - node.width / 2) - parent.x));
+    css.set("top", px((centre === null ? node.y : centre.y - node.height / 2) - parent.y));
+  }
+
+  if (transform !== null) {
+    css.set("transform", transform);
+  }
+}
+
+/**
+ * CSS turns clockwise, Figma counter-clockwise. A mirrored layer is its matrix times a horizontal flip: the angle left
+ * once the flip is taken out, then scaleX(-1).
+ */
+function transformCss(node: SnapshotNode): string | null {
+  if (node.mirrorTransform !== undefined) {
+    const [a = -1, b = 0] = node.mirrorTransform;
+    const angle = Math.round(((Math.atan2(b, -a) * 180) / Math.PI) * 100) / 100;
+
+    return angle === 0 ? "scaleX(-1)" : `rotate(${decimal(-angle)}deg) scaleX(-1)`;
+  }
+
+  const rotation = node.rotation ?? 0;
+
+  return rotation === 0 ? null : `rotate(${decimal(-rotation)}deg)`;
+}
+
+/** A line is a box with one border: across when it lies flat, down its left side when it stands. */
+function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: Map<string, string>, context: CssContext): void {
+  const turns = Math.round(((((node.rotation ?? 0) % 360) + 360) % 360) / 90);
+  const standing = turns === 1 || turns === 3;
+  const flat = turns === 0 || turns === 2;
+  const color = paintsCss(node.strokes, node.strokeStyleId, node, context);
+  const weight = typeof node.strokeWeight === "number" ? node.strokeWeight : 1;
+  const border = `${px(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${typeof color === "string" ? color : "currentColor"}`;
+
+  if (parent !== null && node !== context.root && (node.layoutPositioning === "ABSOLUTE" || !hasLayout(parent))) {
+    const box = node.bounds ?? node;
+
+    css.set("position", "absolute");
+    css.set("left", px(box.x - parent.x));
+    css.set("top", px(box.y - parent.y));
+  }
+
+  if (standing) {
+    css.set("height", px(node.width));
+    css.set("border-left", border);
+  } else {
+    css.set("width", px(node.width));
+    css.set("border-top", border);
+
+    if (!flat) {
+      css.set("transform", `rotate(${decimal(-(node.rotation ?? 0))}deg)`);
+    }
+  }
+}
+
+function radiusCss(node: SnapshotNode, css: Map<string, string>, context: CssContext): void {
+  if (node.type === "ELLIPSE") {
+    css.set("border-radius", "50%");
+
+    return;
+  }
+
+  if (node.cornerRadius === MIXED) {
+    css.set("border-radius", RADII.map((key) => length(node, key, node[key] ?? 0, context)).join(" "));
+  } else if (node.cornerRadius !== undefined) {
+    setLength(css, "border-radius", node, "topLeftRadius", node.cornerRadius, context);
+  }
+}
+
+function borderCss(
+  node: SnapshotNode,
+  css: Map<string, string>,
+  readOnly: [string, string][],
+  context: CssContext,
+): void {
+  const color = paintsCss(node.strokes, node.strokeStyleId, node, context);
+
+  if (color === null) {
+    return;
+  }
+
+  if (color === UNMAPPED) {
+    readOnly.push(["border", node.css?.border ?? "a gradient or other stroke the table cannot write yet"]);
+
+    return;
+  }
+
+  const line = (weight: number) => `${px(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${color}`;
+
+  if (node.strokeWeight === MIXED) {
+    for (const [key, property] of SIDES) {
+      const weight = node[key] ?? 0;
+
+      if (weight > 0) {
+        css.set(property, line(weight));
+      }
+    }
+
+    return;
+  }
+
+  // An inside or centred stroke is a border (with box-sizing: border-box it keeps the size); outside, an outline.
+  css.set(node.strokeAlign === "OUTSIDE" ? "outline" : "border", line(node.strokeWeight ?? 1));
+}
+
+function effectsCss(node: SnapshotNode, css: Map<string, string>, context: CssContext): void {
+  const effects = (node.effects ?? []).filter((effect) => effect.visible !== false);
+  const style = node.effectStyleId === undefined ? undefined : context.styles[node.effectStyleId];
+  const isText = node.type === "TEXT";
+  const shadows = effects
+    .filter((effect) => effect.type === "DROP_SHADOW" || (effect.type === "INNER_SHADOW" && !isText))
+    .toReversed()
+    .map((effect) => shadowCss(effect, isText))
+    .join(", ");
+
+  if (shadows !== "") {
+    const property = isText ? "text-shadow" : "box-shadow";
+
+    if (style !== undefined) {
+      const name = tokenName(style.name);
+
+      context.tokens.set(name, shadows);
+      css.set(property, `var(${name})`);
+    } else {
+      css.set(property, shadows);
+    }
+  }
+
+  // Figma's blur radius is twice the CSS one: Dev Mode writes blur(radius / 2).
+  for (const effect of effects) {
+    if (effect.type === "LAYER_BLUR" && effect.radius !== undefined) {
+      css.set("filter", `blur(${px(effect.radius / 2)})`);
+    }
+
+    if (effect.type === "BACKGROUND_BLUR" && effect.radius !== undefined) {
+      css.set("backdrop-filter", `blur(${px(effect.radius / 2)})`);
+    }
+  }
+}
+
+function shadowCss(effect: SnapshotEffect, isText: boolean): string {
+  const parts = [
+    effect.type === "INNER_SHADOW" ? "inset" : null,
+    px(effect.offset?.x ?? 0),
+    px(effect.offset?.y ?? 0),
+    px(effect.radius ?? 0),
+    isText ? null : px(effect.spread ?? 0),
+    effect.color === undefined ? null : colorCss(effect.color),
+  ];
+
+  return parts.filter((part) => part !== null).join(" ");
+}
+
+function textCss(
+  node: SnapshotNode,
+  css: Map<string, string>,
+  readOnly: [string, string][],
+  context: CssContext,
+): string | undefined {
+  const base = node.text === undefined ? undefined : baseSegment(node.text.segments);
+  const align = textAlignCss(node);
+
+  if (align !== undefined) {
+    css.set("text-align", align);
+  }
+
+  if (base === undefined) {
+    return undefined;
+  }
+
+  const { css: run, textStyle } = segmentCss(base, node, context, readOnly);
+
+  for (const [property, value] of run) {
+    css.set(property, value);
+  }
+
+  return textStyle;
+}
+
+function styleIdOf(id: string | undefined): string | undefined {
+  return id === undefined || id === "" || id === MIXED ? undefined : id;
+}
+
+/** A length, or the token of the variable bound to it. */
+function length(node: SnapshotNode, key: string, value: number, context: CssContext): string {
+  const variable = boundVariable(node.boundVariables?.[key], context);
+
+  if (variable === null) {
+    return px(value);
+  }
+
+  const name = variableTokenName(variable);
+
+  if (typeof variable.value === "number") {
+    context.tokens.set(name, px(variable.value));
+  }
+
+  return `var(${name})`;
+}
+
+function setLength(
+  css: Map<string, string>,
+  property: string,
+  node: SnapshotNode,
+  key: string,
+  value: number | undefined,
+  context: CssContext,
+): void {
+  if (value === undefined) {
+    return;
+  }
+
+  const written = length(node, key, value, context);
+
+  if (written !== "0" || property === "width" || property === "height") {
+    css.set(property, written);
+  }
+}
+
+/** getCSSAsync's value made like ours: no fallbacks inside var(), no comments, whole pixels. */
+export function cleanOracle(value: string): string {
+  return value
+    .replace(/\/\*.*?\*\//g, "")
+    .replace(/var\((--[^,)]+),[^)]*\)/g, "var($1)")
+    .replace(/(-?\d+\.\d+)px/g, (_match, number: string) => px(Number(number)))
+    .trim();
+}

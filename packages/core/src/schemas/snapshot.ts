@@ -101,7 +101,7 @@ export const SnapshotFieldsSchema = z.object({
   y: z.number(),
   width: z.number(),
   height: z.number(),
-  /** The rotated node's bounding box, relative to the root; only when the node is rotated. */
+  /** The rotated or mirrored node's bounding box, relative to the root; only for such nodes. */
   bounds: z
     .object({
       x: z.number(),
@@ -111,6 +111,11 @@ export const SnapshotFieldsSchema = z.object({
     })
     .optional(),
   rotation: z.number().optional(),
+  /**
+   * The relative transform's 2x2 part [a, b, c, d], only for a mirrored layer (negative determinant): Figma reports a
+   * horizontal flip as a -180° rotation, and only the matrix tells them apart.
+   */
+  mirrorTransform: z.array(z.number()).length(4).optional(),
   opacity: z.number().optional(),
   blendMode: z.string().optional(),
   isMask: z.boolean().optional(),

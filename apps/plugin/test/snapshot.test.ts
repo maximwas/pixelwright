@@ -304,3 +304,47 @@ describe("snapshot of more than one answer can carry", () => {
     expect(root.children?.length).toBeLessThan(2_000);
   });
 });
+
+describe("snapshot of a mirrored layer", () => {
+  it("keeps the matrix that tells a flip from a turn, and the box it covers", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "2:4893",
+            rotation: -180,
+            absoluteBoundingBox: {
+              x: 1080,
+              y: 408,
+              width: 210,
+              height: 192,
+            },
+            absoluteTransform: [
+              [-1, 0, 1290],
+              [0, 1, 408],
+            ],
+            relativeTransform: [
+              [-1, 0, 210],
+              [0, 1, 0],
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", { node: "2:4893" })) as Shot;
+
+    expect(root).toMatchObject({
+      rotation: -180,
+      mirrorTransform: [-1, 0, 0, 1],
+      bounds: {
+        x: -210,
+        y: 0,
+        width: 210,
+        height: 192,
+      },
+    });
+  });
+});

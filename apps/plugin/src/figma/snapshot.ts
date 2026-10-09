@@ -149,7 +149,13 @@ async function entryOf(node: SceneNode, context: EntryContext): Promise<Snapshot
 
   put("rotation", layer.rotation, 0);
 
-  if (entry.rotation !== undefined && node.absoluteBoundingBox !== null) {
+  const [[a, b], [c, d]] = node.relativeTransform;
+
+  if ((a ?? 1) * (d ?? 1) - (b ?? 0) * (c ?? 0) < 0) {
+    entry.mirrorTransform = [a, b, c, d].map((value) => Math.round((value ?? 0) * 10_000) / 10_000);
+  }
+
+  if ((entry.rotation !== undefined || entry.mirrorTransform !== undefined) && node.absoluteBoundingBox !== null) {
     const box = node.absoluteBoundingBox;
 
     entry.bounds = {

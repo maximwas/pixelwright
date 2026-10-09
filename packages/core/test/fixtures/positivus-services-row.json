@@ -198,7 +198,7 @@
                   "flex-direction": "column",
                   "align-items": "flex-start"
                 },
-                "childCount": 2,
+                "childCount": 3,
                 "children": [
                   {
                     "id": "I2:4872;330:291",
@@ -471,6 +471,17 @@
                         "childCount": 0
                       }
                     ]
+                  },
+                  {
+                    "id": "I2:4872;334:1541",
+                    "name": "Label",
+                    "type": "FRAME",
+                    "visible": false,
+                    "x": 150,
+                    "y": 152,
+                    "width": 119,
+                    "height": 51,
+                    "childCount": 1
                   }
                 ]
               },
@@ -961,7 +972,7 @@
                   "flex-direction": "column",
                   "align-items": "flex-start"
                 },
-                "childCount": 2,
+                "childCount": 3,
                 "children": [
                   {
                     "id": "I2:4878;333:1380",
@@ -1232,6 +1243,17 @@
                         "childCount": 0
                       }
                     ]
+                  },
+                  {
+                    "id": "I2:4878;334:1555",
+                    "name": "Label",
+                    "type": "FRAME",
+                    "visible": false,
+                    "x": 790,
+                    "y": 152,
+                    "width": 119,
+                    "height": 51,
+                    "childCount": 1
                   }
                 ]
               },
