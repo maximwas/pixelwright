@@ -360,3 +360,22 @@ describe("entries", () => {
     expect(result.missing).toEqual(["9:9"]);
   });
 });
+
+describe("delete", () => {
+  it("deletes layers, refuses one inside an instance and a missing one, one undo step, never without Allow edits", async () => {
+    const result = (await runOperation("delete", { nodes: ["3:2", "I2:1;3:4", "9:9"] })) as {
+      deleted: string[];
+      errors: { id: string; message: string }[];
+    };
+
+    expect(result.deleted).toEqual(["3:2"]);
+    expect(byId("3:1")?.children).toEqual([]);
+    expect(result.errors.map(({ id }) => id)).toEqual(["I2:1;3:4", "9:9"]);
+    expect(result.errors[0]?.message).toMatch(/instance/);
+    expect(fake.writes.undo).toBe(1);
+
+    setEditsAllowed(false);
+
+    await expect(runOperation("delete", { nodes: ["1:2"] })).rejects.toMatchObject({ code: "EDITS_DISABLED" });
+  });
+});

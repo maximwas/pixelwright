@@ -26,6 +26,8 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    \`components_read\`: the components a page uses, or the file defines, with variants and properties.
 6. **Files.** \`assets_export\`: several layers, or every asset inside one, as PNG, JPG, SVG or PDF, or the images as
    they were placed (originals).
+7. **Write.** \`design_apply\` writes the same XML back into Figma: change layers by id, create new ones (see \`guide
+   write\`). The user turns Allow edits on in the plugin window first.
 
 Build the code from the XML with the project's own components, tokens and layout conventions: the XML is the spec, not
 the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, unnamed layers,
@@ -172,6 +174,59 @@ Only true assets become files; everything else is CSS.
 Named after the layer (\`Hero photo\` → hero-photo.png, a component's variant added: company-logo-amazon.svg). The
 same bytes are written once and shared; a name already taken by other bytes gets -2; a file already in the folder is
 never overwritten with other bytes.
+`,
+  },
+  write: {
+    about: "design_apply: changing layers by id and creating new ones with the same XML.",
+    markdown: `# Writing with design_apply
+
+\`design_apply\` takes the XML \`design_read\` returns. The user turns **Allow edits** on in the plugin window first;
+until then every call is refused (\`dryRun: true\` checks a call without writing, switch on or off).
+
+## Changing a layer
+
+- An element with \`id\` changes that layer, and only the attributes it gives: \`<Frame id="2:4869" gap="48px"/>\`
+  changes the gap and nothing else. Read the layer first, edit the XML, send back what you changed (sending the whole
+  read back is fine: what the layer already has is not written again).
+- Leaving an attribute out never removes it. To remove, write the value that means none: \`background="none"\`,
+  \`border="none"\`, \`box-shadow="none"\`, \`width="auto"\` (hug), \`max-width="none"\`, \`flex="none"\`,
+  \`left="auto"\`, \`transform="none"\`, \`display="block"\` (no auto layout), \`display="none"\` (hide).
+- A text: \`<Text id="…">New words</Text>\` replaces the characters and keeps the look; spans style runs. A Text
+  without content keeps its text, so \`<Text id="…" color="var(--Dark)"/>\` only recolours it. A text inside an
+  instance changes by its \`I…;…\` id and stays an override.
+- What Figma keeps together is completed from the layer: a new \`column-gap\` keeps its direction and wrap, a new
+  \`filter\` keeps its shadows, a new \`border-bottom\` keeps its other sides, a new \`width\` keeps the edge it
+  is pinned to. A new \`left\` or \`right\` replaces both edges.
+
+## Creating
+
+- An element without \`id\` creates a layer: \`Frame\`, \`Section\`, \`Text\`, \`Rectangle\`, \`Ellipse\`,
+  \`Line\`. It goes inside its parent element, after the element before it (alone: last); at the top level into
+  \`parent\` or the current page, or next to a layer with \`before="id"\` / \`after="id"\`.
+- A new layer has what its XML says and nothing more: no fill without \`background\`, no clipping without
+  \`overflow\`; a new auto layout frame hugs unless sized; a new text is black unless \`color\` says otherwise.
+- Components, instances by \`component\`, \`Image\` and \`Icon\` from files, \`copyOf\` and \`note\` come next:
+  change existing ones by id meanwhile.
+
+## Values
+
+- Lengths in px; \`var(--Name)\` binds the variable or style of that name, as \`design_read\` and \`tokens_read\`
+  write them (a paint style, a colour or number variable, an effect style); \`textStyle="h3"\` applies a text style.
+- \`font\` is the shorthand \`[italic] weight size/line-height 'Family'\`; Figma must have the family and that
+  weight, or the error lists the styles it has.
+- Sizes: \`width\`/\`height\` in px or \`auto\`; \`flex="1"\` fills an auto layout parent's direction,
+  \`align-self="stretch"\` fills across it. Placement: \`position="absolute"\` with \`left\`/\`right\`/\`top\`/
+  \`bottom\`, \`calc(50% ± Npx)\` for the centre, percents (with the size in percents) to scale.
+- Not written yet, and refused with an error: gradients, images in \`background\`, blend modes, grow weights,
+  \`overflow: scroll\`, links on frames, dashed underlines.
+
+## Errors and undo
+
+\`nodes_delete\` deletes layers by id (not those inside an instance: hide them with \`display="none"\`).
+
+Each element is written on its own: an error names its line and attribute, and the rest of the XML still goes in.
+\`created\` lists the new layers' ids by line, \`changed\` the layers written to. One call is one undo step in Figma:
+the user's Cmd+Z takes the whole call back.
 `,
   },
   email: {

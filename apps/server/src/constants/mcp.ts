@@ -20,6 +20,14 @@ export const READ_ONLY_ANNOTATIONS = {
   openWorldHint: false,
 } as const;
 
+/** A tool that changes the file: MCP clients ask before each call. */
+export const WRITE_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  idempotentHint: false,
+  openWorldHint: false,
+} as const;
+
 /** The most library variables tokens_read lists by name; the rest are counted. */
 export const MAX_LIBRARY_VARIABLES = 500;
 

@@ -42,9 +42,11 @@ describe("stdio server", () => {
       expect(tools.map((tool) => tool.name).sort()).toEqual([
         "assets_export",
         "components_read",
+        "design_apply",
         "design_read",
         "guide",
         "node_show",
+        "nodes_delete",
         "nodes_find",
         "outline",
         "screenshot",
@@ -54,8 +56,11 @@ describe("stdio server", () => {
       ]);
 
       for (const tool of tools) {
-        // Every tool so far only reads the document (node_show moves the view and the selection, not the file).
-        expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
+        // The writing tools say so, so clients ask first (node_show moves the view, not the file).
+        const writes = ["design_apply", "nodes_delete"].includes(tool.name);
+
+        expect(tool.annotations?.readOnlyHint, tool.name).toBe(!writes);
+        expect(tool.annotations?.destructiveHint ?? false, tool.name).toBe(writes);
         // A tool that returns an image has no outputSchema: Claude Code would show only structuredContent and drop it.
         expect(tool.outputSchema === undefined, tool.name).toBe(["design_read", "screenshot"].includes(tool.name));
       }
@@ -71,7 +76,14 @@ describe("stdio server", () => {
         topics: { name: string }[];
       };
 
-      expect(index.topics.map((topic) => topic.name)).toEqual(["workflow", "xml", "tokens", "assets", "email"]);
+      expect(index.topics.map((topic) => topic.name)).toEqual([
+        "workflow",
+        "xml",
+        "tokens",
+        "assets",
+        "write",
+        "email",
+      ]);
 
       for (const { name } of index.topics) {
         const topic = (

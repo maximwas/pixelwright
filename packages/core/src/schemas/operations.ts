@@ -209,4 +209,19 @@ export const OPERATION_SCHEMAS = {
     }),
     output: ApplyResultSchema,
   },
+  delete: {
+    input: z.object({
+      nodes: z.array(NodeIdSchema).min(1).max(500),
+    }),
+    output: z.object({
+      deleted: z.array(z.string()),
+      /** Layers that stay, with why. */
+      errors: z.array(
+        z.object({
+          id: z.string(),
+          message: z.string(),
+        }),
+      ),
+    }),
+  },
 } as const;
