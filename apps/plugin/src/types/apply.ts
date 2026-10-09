@@ -15,6 +15,8 @@ export interface WriteContext {
   readonly fonts: ReadonlyMap<string, FontName | WriteError>;
   /** Fonts a text uses now that this Figma could not load: its characters cannot change. */
   readonly unloaded: ReadonlySet<string>;
+  /** The bytes an upload stream brought, if it is complete. */
+  readonly uploads?: (stream: string) => Uint8Array | undefined;
 }
 
 /**

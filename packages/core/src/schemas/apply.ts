@@ -35,6 +35,9 @@ export const ApplyChangeSchema: z.ZodType<ApplyChange, ApplyChange> = z.object({
       runs: z.array(RunSchema),
     })
     .exactOptional(),
+  copyOf: RefSchema.exactOptional(),
+  source: RefSchema.exactOptional(),
+  move: z.boolean().exactOptional(),
 });
 
 export const ApplyErrorSchema: z.ZodType<ApplyError, ApplyError> = z.object({

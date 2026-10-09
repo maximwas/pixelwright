@@ -57,7 +57,8 @@ export function unchangedAttributes(
   const attributes = new Set<string>();
 
   for (const [name, value] of Object.entries(element.attributes)) {
-    // An asset's file name depends on where design_read wrote it; a file is replaced in stage 4b.
+    // A file's name depends on where design_read wrote it (folder, -2 suffixes): the server compares the bytes of a
+    // file that exists with the layer's image, and swaps it only when they differ.
     if (name === "src" || renders.some((rendered) => same(name, rendered?.props[name], value))) {
       attributes.add(name);
     }

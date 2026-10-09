@@ -602,3 +602,113 @@ describe("the change itself", () => {
     });
   });
 });
+
+describe("CSS to Figma: components, notes, files and copies", () => {
+  it("reads component, variant and props with design_read's escapes", () => {
+    expect(
+      props(
+        '<Instance id="1:1" component="Heading" variant="Property 1=Green, Size\\=XL=Large" props="Label=Hello\\, world, Has icon=false"/>',
+      ),
+    ).toEqual({
+      component: "Heading",
+      variant: {
+        "Property 1": "Green",
+        "Size=XL": "Large",
+      },
+      props: {
+        Label: "Hello, world",
+        "Has icon": "false",
+      },
+    });
+  });
+
+  it("reads notes with their categories, descriptions and the properties a new component's layers make", () => {
+    expect(
+      props('<Frame id="1:1" note="Behavior: opens the modal | Plain note with a \\| bar" description="A card."/>'),
+    ).toEqual({
+      notes: [
+        {
+          category: "Behavior",
+          label: "opens the modal",
+        },
+        {
+          category: null,
+          label: "Plain note with a | bar",
+        },
+      ],
+      description: "A card.",
+    });
+    expect(props('<Component><Text prop="Label" visibleProp="Shown">Hi</Text></Component>').property).toBeUndefined();
+    expect(
+      changeOf(
+        readApply('<Component><Text prop="Label" visibleProp="Shown">Hi</Text></Component>')
+          .elements[1] as ApplyElement,
+      ).change.props.property,
+    ).toEqual({
+      text: "Label",
+      visible: "Shown",
+    });
+  });
+
+  it("reads files: an image or icon src, and an image in a background with its fit", () => {
+    expect(props('<Image src="assets/photo.png" width="20px"/>').asset).toEqual({
+      kind: "image",
+      src: "assets/photo.png",
+    });
+    expect(props('<Icon id="1:2" src="assets/arrow.svg"/>').asset).toEqual({
+      kind: "icon",
+      src: "assets/arrow.svg",
+    });
+    expect(props('<Frame id="1:1" background="url(assets/hero.png) center / contain no-repeat, #FFF"/>').fills).toEqual(
+      [
+        {
+          kind: "color",
+          color: {
+            r: 1,
+            g: 1,
+            b: 1,
+            a: 1,
+          },
+        },
+        {
+          kind: "image",
+          src: "assets/hero.png",
+          scaleMode: "FIT",
+        },
+      ],
+    );
+  });
+
+  it("makes a copy a create with its source, and the layers inside it updates of the copy's", () => {
+    const { elements } = readApply('<Frame copyOf="2:4870" name="Card 2"><Text id="I2:1;3:4">New</Text></Frame>');
+    const [copy, text] = elements.map((element) => changeOf(element).change);
+
+    expect(copy).toMatchObject({
+      kind: "create",
+      copyOf: "2:4870",
+      props: { name: "Card 2" },
+    });
+    expect(text).toMatchObject({
+      kind: "update",
+      id: null,
+      source: "I2:1;3:4",
+      parent: copy?.ref,
+    });
+  });
+
+  it("lets a gap shorthand reset the line gap the layer has, as CSS does", () => {
+    expect(
+      props('<Frame id="1:1" gap="20px"/>', {
+        current: {
+          display: "flex",
+          "flex-wrap": "wrap",
+          gap: "12px",
+          "row-gap": "30px",
+        },
+      }),
+    ).toMatchObject({
+      itemSpacing: 20,
+      counterAxisSpacing: 20,
+    });
+  });
+});

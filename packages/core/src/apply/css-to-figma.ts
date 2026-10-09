@@ -70,8 +70,6 @@ const SIDES = ["top", "right", "bottom", "left"] as const;
 const STROKES = ["border", "border-top", "border-right", "border-bottom", "border-left", "outline"];
 const EFFECTS = ["box-shadow", "text-shadow", "filter", "backdrop-filter"];
 const DECORATION = ["text-decoration", "text-underline-offset", "text-decoration-thickness"];
-/** Metadata written in stage 4b, with components, images and notes. */
-const LATER_META = ["component", "variant", "props", "description", "note", "copyOf"];
 
 const DISPLAYS: Readonly<Record<string, "flex" | "grid" | "block" | "none">> = {
   flex: "flex",
@@ -187,17 +185,63 @@ const RULES: readonly Rule[] = [
     write: ({ own }, out) => out.set("name", own("name") ?? "", "name"),
   },
   HREF,
-  ...LATER_META.map(
-    (name): Rule => ({
-      attributes: [name],
-      write: (_input, out) =>
+  {
+    attributes: ["component"],
+    write: ({ own }, out) => out.set("component", own("component") ?? "", "component"),
+  },
+  {
+    attributes: ["variant"],
+    write: listRule("variant"),
+  },
+  {
+    attributes: ["props"],
+    write: listRule("props"),
+  },
+  {
+    attributes: ["description"],
+    write: ({ own }, out) => out.set("description", own("description") ?? "", "description"),
+  },
+  {
+    attributes: ["note"],
+    write: ({ own }, out) => out.set("notes", notesOf(own("note") ?? ""), "note"),
+  },
+  {
+    attributes: ["prop", "visibleProp"],
+    write: ({ own }, out) => {
+      const text = own("prop");
+      const visible = own("visibleProp");
+
+      out.set(
+        "property",
+        {
+          ...(text === undefined ? {} : { text }),
+          ...(visible === undefined ? {} : { visible }),
+        },
+        text === undefined ? "visibleProp" : "prop",
+      );
+    },
+  },
+  {
+    attributes: ["src"],
+    write: ({ tag, own }, out) => {
+      if (tag === "Image" || tag === "Icon") {
+        out.set(
+          "asset",
+          {
+            kind: tag === "Image" ? "image" : "icon",
+            src: own("src") ?? "",
+          },
+          "src",
+        );
+      } else {
         out.fail(
-          name,
-          `Writing ${name} comes with components, images and notes in the next stage.`,
-          "Change it in Figma for now: the element's other attributes still apply.",
-        ),
-    }),
-  ),
+          "src",
+          `src makes an <Image> or an <Icon>, not a <${tag}>.`,
+          "A frame's image is its background: url(…).",
+        );
+      }
+    },
+  },
   {
     attributes: LAYOUT,
     write: layoutRule,
@@ -376,7 +420,7 @@ export function changeOf(element: ApplyElement, now?: LayerNow): { change: Apply
     change: {
       line: element.line,
       column: element.column,
-      kind: element.id === null ? "create" : "update",
+      kind: element.id === null && element.source === undefined ? "create" : "update",
       ref: element.ref,
       id: element.id,
       tag: element.tag,
@@ -387,6 +431,8 @@ export function changeOf(element: ApplyElement, now?: LayerNow): { change: Apply
       props,
       sources,
       ...(text === undefined ? {} : { text }),
+      ...(attributes.copyOf === undefined ? {} : { copyOf: attributes.copyOf }),
+      ...(element.source === undefined ? {} : { source: element.source }),
     },
     errors: errors.toSorted((a, b) => rank(a) - rank(b)),
   };
@@ -493,7 +539,9 @@ function layoutRule(input: Input, out: Output): void {
   }
 }
 
-function flexLayout({ merged, changed }: Input, out: Output): void {
+function flexLayout(input: Input, out: Output): void {
+  const { merged, changed } = input;
+
   const direction = merged("flex-direction") ?? "row";
 
   if (direction !== "row" && direction !== "column") {
@@ -523,7 +571,7 @@ function flexLayout({ merged, changed }: Input, out: Output): void {
   }
 
   // As in CSS: along a row the columns are spaced, along a column the rows; the other gap is between wrapped lines.
-  const { row, column } = gapsOf(merged, out);
+  const { row, column } = gapsOf(input, out);
   const along = vertical ? row : column;
   const across = vertical ? column : row;
 
@@ -540,7 +588,9 @@ function flexLayout({ merged, changed }: Input, out: Output): void {
   }
 }
 
-function gridLayout({ merged, changed }: Input, out: Output): void {
+function gridLayout(input: Input, out: Output): void {
+  const { merged, changed } = input;
+
   out.set("layoutMode", "GRID", "display");
 
   for (const [attribute, key] of [
@@ -557,7 +607,7 @@ function gridLayout({ merged, changed }: Input, out: Output): void {
     }
   }
 
-  const { row, column } = gapsOf(merged, out);
+  const { row, column } = gapsOf(input, out);
 
   if (column !== undefined) {
     out.set("gridColumnGap", column.value, column.attribute);
@@ -574,9 +624,11 @@ function gridLayout({ merged, changed }: Input, out: Output): void {
 
 /** The row and column gaps: `gap` gives both (or row then column), row-gap and column-gap one each. */
 function gapsOf(
-  merged: Read,
+  { own, merged }: Pick<Input, "own" | "merged">,
   out: Output,
 ): { row?: { value: LengthValue; attribute: string }; column?: { value: LengthValue; attribute: string } } {
+  // A gap the element gives resets the row and column gaps the layer has, as the CSS shorthand does.
+  const shorthand = own("gap") !== undefined;
   const gap = merged("gap");
   let parts = gap === undefined ? [] : splitTop(gap, " ").map(lengthOf);
 
@@ -594,7 +646,7 @@ function gapsOf(
     ["row", "row-gap", parts[0]],
     ["column", "column-gap", parts[1] ?? parts[0]],
   ] as const) {
-    const value = merged(attribute);
+    const value = shorthand ? own(attribute) : merged(attribute);
 
     if (value === undefined) {
       if (part !== undefined && part !== null) {
@@ -959,10 +1011,21 @@ function layersOf(attribute: string, value: string, out: Output): PaintSpec[] | 
     const flat = stops === undefined ? null : splitTop(stops, ",");
     const paint = flat !== null && flat.length === 2 && flat[0] === flat[1] ? paintOf(flat[0] ?? "") : paintOf(layer);
 
+    const image = /^url\(\s*['"]?([^'")]+)['"]?\s*\)\s*(.*)$/s.exec(layer);
+
     if (paint !== null) {
       layers.push(paint);
-    } else if (layer.startsWith("url(")) {
-      out.fail(attribute, "An image is not written yet: images come in the next stage.", "Keep the layer's own image.");
+    } else if (image?.[1] !== undefined && attribute === "background") {
+      // design_read's fits: cover is FILL, contain FIT, a repeat TILE.
+      const fit = image[2] ?? "";
+
+      layers.push({
+        kind: "image",
+        src: image[1],
+        scaleMode: fit.includes("contain") ? "FIT" : /(^|\s)repeat(\s|$)/.test(fit) ? "TILE" : "FILL",
+      });
+    } else if (image !== null) {
+      out.fail(attribute, "A text is coloured with paint, not an image.", "Use a colour or a token.");
 
       return null;
     } else if (layer.includes("gradient(")) {
@@ -1425,4 +1488,97 @@ function boxOf<T>(parts: readonly (T | null)[]): [T, T, T, T] | null {
 /** Away from floating-point noise (0.07em is 7.000000000000001 percent), and never -0. */
 function round(value: number): number {
   return Math.round(value * 10_000) / 10_000 || 0;
+}
+
+/** design_read's list `Name=Value, Other=Value`, a comma, equals sign or backslash in it escaped with a backslash. */
+function listRule(key: "variant" | "props"): Rule["write"] {
+  return ({ own }, out) => {
+    const value = own(key) ?? "";
+    const items = listOf(value);
+
+    if (items === null) {
+      out.fail(
+        key,
+        `${key}="${value}" is not a list of Name=Value, separated by commas.`,
+        "Escape a comma or = in a name or value with a backslash.",
+      );
+    } else {
+      out.set(key, items, key);
+    }
+  };
+}
+
+function listOf(value: string): Record<string, string> | null {
+  const items: [string, string][] = [];
+  let name: string | null = null;
+  let current = "";
+
+  for (let index = 0; index < value.length; index++) {
+    const char = value[index] ?? "";
+
+    if (char === "\\" && index + 1 < value.length) {
+      index += 1;
+      current += value[index] ?? "";
+    } else if (char === "=" && name === null) {
+      name = current.trim();
+      current = "";
+    } else if (char === ",") {
+      if (name === null) {
+        return null;
+      }
+
+      items.push([name, current.trim()]);
+      name = null;
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  if (name !== null) {
+    items.push([name, current.trim()]);
+  } else if (current.trim() !== "") {
+    return null;
+  }
+
+  return Object.fromEntries(items);
+}
+
+/** design_read's notes: `Category: note | Another`, a bar or backslash in a note escaped with a backslash. */
+function notesOf(value: string): { category: string | null; label: string }[] {
+  const items: string[] = [];
+  let current = "";
+
+  for (let index = 0; index < value.length; index++) {
+    const char = value[index] ?? "";
+
+    if (char === "\\" && index + 1 < value.length) {
+      index += 1;
+      current += value[index] ?? "";
+    } else if (char === "|") {
+      items.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  items.push(current);
+
+  return items
+    .map((item) => item.trim())
+    .filter((item) => item !== "")
+    .map((item) => {
+      const at = item.indexOf(": ");
+
+      return at === -1
+        ? {
+            category: null,
+            label: item,
+          }
+        : {
+            category: item.slice(0, at),
+            label: item.slice(at + 2),
+          };
+    });
 }

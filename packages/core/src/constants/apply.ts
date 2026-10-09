@@ -1,6 +1,6 @@
 import { CSS_ORDER } from "./css.ts";
 
-/** Tags design_apply can create now. */
+/** Tags design_apply can create. */
 export const CREATABLE_TAGS: ReadonlySet<string> = new Set([
   "Frame",
   "Section",
@@ -8,17 +8,17 @@ export const CREATABLE_TAGS: ReadonlySet<string> = new Set([
   "Rectangle",
   "Ellipse",
   "Line",
-]);
-
-/** Tags whose layers can be changed by id now and created only in stage 4b (components, images, vectors). */
-export const LATER_TAGS: ReadonlySet<string> = new Set([
-  "Group",
+  "Instance",
   "Component",
   "ComponentSet",
-  "Instance",
   "Image",
   "Icon",
   "Slot",
+]);
+
+/** Tags whose layers can be changed by id but not created: vectors come as an Icon from an SVG, groups by grouping. */
+export const LATER_TAGS: ReadonlySet<string> = new Set([
+  "Group",
   "Vector",
   "Star",
   "Polygon",
@@ -55,6 +55,8 @@ export const META_ATTRIBUTES: ReadonlySet<string> = new Set([
   "before",
   "after",
   "copyOf",
+  "prop",
+  "visibleProp",
 ]);
 
 /** CSS attributes the mapping table reads and writes. */

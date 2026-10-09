@@ -51,7 +51,7 @@ export function readApply(xml: string): { elements: ApplyElement[]; errors: Appl
 
   const reader = new ApplyReader();
 
-  reader.children(roots, null, null);
+  reader.children(roots);
 
   return {
     elements: reader.elements,
@@ -59,14 +59,32 @@ export function readApply(xml: string): { elements: ApplyElement[]; errors: Appl
   };
 }
 
+/** Where an element sits while reading: its parent, a copy it is in, a new component it is in. */
+interface Scope {
+  /** The parent element's ref, applied. */
+  readonly parentRef: string | null;
+  /** A parent that was not applied: an existing one (with id) still holds layers, a new one holds nothing. */
+  readonly skippedParent: XmlElementNode | null;
+  /** Inside a copy (copyOf): the source's layers named so far, each once; ids here are the source's layers. */
+  readonly copy: Set<string> | null;
+  /** Inside a new Component: its layers may make properties (prop, visibleProp). */
+  readonly inComponent: boolean;
+}
+
+const TOP: Scope = {
+  parentRef: null,
+  skippedParent: null,
+  copy: null,
+  inComponent: false,
+};
+
 class ApplyReader {
   readonly elements: ApplyElement[] = [];
   readonly errors: ApplyError[] = [];
   readonly #refs = new Set<string>();
   readonly #ids = new Set<string>();
 
-  /** The elements among `nodes`, under a parent that is applied (ref), skipped but existing (id), or skipped and new. */
-  children(nodes: readonly XmlChild[], parentRef: string | null, skippedParent: XmlElementNode | null): void {
+  children(nodes: readonly XmlChild[], scope: Scope = TOP): void {
     let index = 0;
 
     for (const node of nodes) {
@@ -79,17 +97,36 @@ class ApplyReader {
         continue;
       }
 
-      this.element(node, parentRef, skippedParent, index);
+      this.element(node, scope, index);
       index += 1;
     }
   }
 
-  element(node: XmlElementNode, parentRef: string | null, skippedParent: XmlElementNode | null, index: number): void {
-    const id = node.props.id ?? null;
+  element(node: XmlElementNode, scope: Scope, index: number): void {
+    const named = node.props.id ?? null;
+    // Inside a copy an id names the source's layer: the element writes its copy, a layer of its own.
+    const source = scope.copy === null ? null : named;
+    const id = source === null ? named : null;
     const where = {
       line: node.line,
       column: node.column,
-      ...(id === null ? {} : { id }),
+      ...(named === null ? {} : { id: named }),
+    };
+    const skip = (message: string, hint?: string) => {
+      this.errors.push({
+        ...where,
+        message,
+        ...(hint === undefined ? {} : { hint }),
+      });
+      // Its children with ids are layers of their own; new ones would land in the wrong layer.
+      this.children(node.children, {
+        ...scope,
+        parentRef: null,
+        skippedParent: {
+          ...node,
+          props: Object.fromEntries(Object.entries(node.props).filter(([name]) => name !== "id")),
+        },
+      });
     };
     const refuse = (message: string, hint?: string) => {
       this.errors.push({
@@ -98,13 +135,17 @@ class ApplyReader {
         ...(hint === undefined ? {} : { hint }),
       });
       // Children with ids are layers of their own; new ones need this element to be made first.
-      this.children(node.children, id, node);
+      this.children(node.children, {
+        ...scope,
+        parentRef: id,
+        skippedParent: node,
+      });
     };
 
-    if (skippedParent !== null && id === null && skippedParent.props.id === undefined) {
+    if (scope.skippedParent !== null && id === null && scope.skippedParent.props.id === undefined) {
       this.errors.push({
         ...where,
-        message: `<${node.type}> is not created: its parent <${skippedParent.type}> at line ${skippedParent.line} was not applied.`,
+        message: `<${node.type}> is not created: its parent <${scope.skippedParent.type}> at line ${scope.skippedParent.line} was not applied.`,
       });
 
       return;
@@ -130,32 +171,39 @@ class ApplyReader {
       return;
     }
 
-    if (id !== null && (this.#ids.has(id) || !LAYER_ID.test(id))) {
-      this.errors.push({
-        ...where,
-        message: this.#ids.has(id)
-          ? `id ${id} is given twice: a new layer has no id, so copy an element without its ids.`
-          : `id="${id}" is not a Figma layer id (like 2:4869): a new layer has no id.`,
-      });
-      // Its children with ids are layers of their own; new ones would land in the wrong layer.
-      this.children(node.children, null, {
-        ...node,
-        props: Object.fromEntries(Object.entries(node.props).filter(([name]) => name !== "id")),
-      });
+    if (named !== null && !LAYER_ID.test(named)) {
+      skip(`id="${named}" is not a Figma layer id (like 2:4869): a new layer has no id.`);
 
       return;
     }
 
-    if (id !== null) {
-      this.#ids.add(id);
+    if (named !== null && node.props.copyOf !== undefined) {
+      skip(`A copy is a new layer: an element with copyOf has no id (${named}).`);
+
+      return;
     }
 
-    if (id === null && !CREATABLE_TAGS.has(node.type)) {
-      refuse(
-        LATER_TAGS.has(node.type)
-          ? `Creating <${node.type}> is not available yet (components, images and vectors come next): change existing ones by id.`
-          : `<${node.type}> cannot be created.`,
+    const seen = source === null ? this.#ids : (scope.copy ?? this.#ids);
+
+    if (named !== null && seen.has(named)) {
+      skip(
+        source === null
+          ? `id ${named} is given twice: a new layer has no id, so copy an element without its ids.`
+          : `${named} is named twice in one copy: each of the source's layers has one element.`,
       );
+
+      return;
+    }
+
+    if (named !== null) {
+      seen.add(named);
+    }
+
+    const creating = id === null && source === null;
+    const missing = creating ? missingFor(node) : null;
+
+    if (missing !== null) {
+      refuse(missing.message, missing.hint);
 
       return;
     }
@@ -168,7 +216,8 @@ class ApplyReader {
         continue;
       }
 
-      const refused = META_ATTRIBUTES.has(name) || CSS_ATTRIBUTES.has(name) ? refusalOf(node.type, name, value) : null;
+      const known = META_ATTRIBUTES.has(name) || CSS_ATTRIBUTES.has(name);
+      const refused = known ? refusalOf(node.type, name, value, scope.inComponent) : null;
 
       if (refused !== null) {
         this.errors.push({
@@ -176,7 +225,7 @@ class ApplyReader {
           attribute: name,
           ...refused,
         });
-      } else if (META_ATTRIBUTES.has(name) || CSS_ATTRIBUTES.has(name)) {
+      } else if (known) {
         attributes[name] = value;
       } else {
         const near = closest(name, [...META_ATTRIBUTES, ...CSS_ATTRIBUTES]);
@@ -201,14 +250,20 @@ class ApplyReader {
       tag: node.type,
       id,
       ref,
-      parent: parentRef ?? skippedParent?.props.id ?? null,
+      parent: scope.parentRef ?? scope.skippedParent?.props.id ?? null,
       index,
       attributes,
       ...(content.length > 0 ? { content } : {}),
+      ...(source === null ? {} : { source }),
     });
 
     if (!isText) {
-      this.children(node.children, ref, null);
+      this.children(node.children, {
+        parentRef: ref,
+        skippedParent: null,
+        copy: attributes.copyOf === undefined ? scope.copy : new Set(),
+        inComponent: scope.inComponent || (creating && node.type === "Component"),
+      });
     }
   }
 
@@ -260,9 +315,58 @@ class ApplyReader {
   }
 }
 
+/** What a new layer of this tag cannot be made without; null when it has it or is a copy. */
+function missingFor(node: XmlElementNode): { message: string; hint?: string } | null {
+  if (node.props.copyOf !== undefined) {
+    return null;
+  }
+
+  if (!CREATABLE_TAGS.has(node.type)) {
+    return node.type === "Group"
+      ? {
+          message: "A group is made by grouping layers in Figma.",
+          hint: "Create a <Frame> instead, or change the group by its id.",
+        }
+      : LATER_TAGS.has(node.type)
+        ? {
+            message: `A <${node.type}> is not drawn from XML.`,
+            hint: 'Draw it as an <Icon src="…svg">, or change it by its id.',
+          }
+        : { message: `<${node.type}> cannot be created.` };
+  }
+
+  if (node.type === "Instance" && node.props.component === undefined) {
+    return {
+      message: "An <Instance> is made from a component.",
+      hint: 'Give component="Name" and variant="Property=Value"; components_read lists them.',
+    };
+  }
+
+  if ((node.type === "Image" || node.type === "Icon") && node.props.src === undefined) {
+    return {
+      message: `An <${node.type}> is made from a file: give it src.`,
+      hint: `Give src="path/to/file${node.type === "Icon" ? ".svg" : ".png"}".`,
+    };
+  }
+
+  return null;
+}
+
 /** Why a tag cannot take an attribute, with what to write instead; null when it can. */
-function refusalOf(tag: string, name: string, value: string): { message: string; hint: string } | null {
+function refusalOf(
+  tag: string,
+  name: string,
+  value: string,
+  inComponent: boolean,
+): { message: string; hint: string } | null {
   const layout = LAYOUT_TAGS.has(tag);
+
+  if ((name === "prop" || name === "visibleProp") && !inComponent) {
+    return {
+      message: `${name} makes a property of a new <Component>: this layer is in none.`,
+      hint: "Use it on the layers inside a <Component> you create.",
+    };
+  }
 
   if (name === "display" && !layout && value !== "none" && value !== "block") {
     return {

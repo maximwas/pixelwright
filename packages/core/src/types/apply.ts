@@ -16,6 +16,8 @@ export interface ApplyElement {
   readonly attributes: Readonly<Record<string, string>>;
   /** A Text's content: text and Span elements, as parsed. */
   readonly content?: readonly XmlChild[];
+  /** Inside a copy (copyOf): the source's layer this element stands for, written onto its copy. */
+  readonly source?: string;
 }
 
 /** An error design_apply returns: where in the XML, on which layer and attribute, and what to do. */
@@ -55,10 +57,17 @@ export interface ColorValue {
   readonly a: number;
 }
 
-/** One paint layer: a colour, or a token (a paint style or a colour variable) at an opacity. */
+/** One paint layer: a colour, a token (a paint style or a colour variable) at an opacity, or an image file. */
 export type PaintSpec =
   | { readonly kind: "color"; readonly color: ColorValue }
-  | { readonly kind: "token"; readonly token: string; readonly opacity: number };
+  | { readonly kind: "token"; readonly token: string; readonly opacity: number }
+  | {
+      readonly kind: "image";
+      /** The file, as the XML names it; the server reads it and names its upload in `stream`. */
+      readonly src: string;
+      readonly scaleMode: "FILL" | "FIT" | "TILE";
+      readonly stream?: string;
+    };
 
 export type EffectSpec =
   | {
@@ -184,6 +193,20 @@ export interface FigmaProps {
   /** One-line truncation with an ellipsis. */
   truncate?: boolean;
   textFills?: readonly PaintSpec[];
+  /** An instance's component or component set, by name (or `key:<key>` for a library one). */
+  component?: string;
+  /** Variant property values: an instance's, or the variant a Component in a set stands for. */
+  variant?: Readonly<Record<string, string>>;
+  /** Instance properties by name without Figma's #id: text values, "true"/"false" for a boolean. */
+  props?: Readonly<Record<string, string>>;
+  /** A component's or set's description. */
+  description?: string;
+  /** Dev Mode annotations, the whole list (an empty one removes them). */
+  notes?: readonly { readonly category: string | null; readonly label: string }[];
+  /** Inside a new Component: the text property (`prop`) or visibility property (`visibleProp`) this layer makes. */
+  property?: { readonly text?: string; readonly visible?: string };
+  /** An Image's or Icon's file; the server reads it (an image's bytes go as an upload stream, an icon's SVG inline). */
+  asset?: { readonly kind: "image" | "icon"; readonly src: string; readonly stream?: string; readonly svg?: string };
 }
 
 export interface TextRunSpec {
@@ -210,4 +233,10 @@ export interface ApplyChange {
   readonly sources: Readonly<Partial<Record<keyof FigmaProps, string>>>;
   /** The characters and their runs, when the text changed or was restyled. */
   readonly text?: { readonly characters: string; readonly runs: readonly TextRunSpec[] };
+  /** A create that starts as a clone of this layer. */
+  readonly copyOf?: string;
+  /** Inside a copy: the source layer whose clone this change writes. */
+  readonly source?: string;
+  /** An update placed again, as a create is: another parent, before/after, or another order. */
+  readonly move?: boolean;
 }

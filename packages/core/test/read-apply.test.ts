@@ -110,16 +110,60 @@ describe("readApply", () => {
     expect(elements[0]?.attributes).toEqual({ id: "2:1" });
   });
 
-  it("refuses creating what comes in stage 4b, and keeps changing such layers by id", () => {
-    const { elements, errors } = readApply('<Instance component="Button"/>\n<Image id="2:9" width="20px"/>');
+  it("creates instances, components, sets, images, icons and slots, and refuses what they lack", () => {
+    const { elements, errors } = readApply(
+      [
+        '<Instance component="Button" variant="Size=Large"/>',
+        "<Instance/>",
+        '<Image src="assets/photo.png" width="20px"/>',
+        "<Icon/>",
+        '<ComponentSet name="Badge"><Component variant="Tone=Dark"><Text prop="Label">New</Text></Component></ComponentSet>',
+        '<Frame><Text prop="Label" visibleProp="Shown">x</Text></Frame>',
+        "<Group/>",
+        '<Image id="2:9" width="20px"/>',
+      ].join("\n"),
+    );
+
+    expect(errors.map(({ line, attribute, message }) => [line, attribute, message])).toEqual([
+      [2, undefined, expect.stringMatching(/component/)],
+      [4, undefined, expect.stringMatching(/src/)],
+      [6, "prop", expect.stringMatching(/Component/)],
+      [6, "visibleProp", expect.stringMatching(/Component/)],
+      [7, undefined, expect.stringMatching(/grouping/)],
+    ]);
+    expect(elements.map(({ tag, id }) => [tag, id])).toEqual([
+      ["Instance", null],
+      ["Image", null],
+      ["ComponentSet", null],
+      ["Component", null],
+      ["Text", null],
+      ["Frame", null],
+      ["Text", null],
+      ["Image", "2:9"],
+    ]);
+    expect(elements[4]?.attributes.prop).toBe("Label");
+  });
+
+  it("reads the ids inside a copy as the source's layers, each copy on its own", () => {
+    const copy = (title: string) =>
+      `<Frame copyOf="2:4870" name="Card ${title}"><Frame id="2:4871"><Text id="I2:4872;330:292">${title}</Text></Frame></Frame>`;
+    const { elements, errors } = readApply(`${copy("One")}\n${copy("Two")}\n<Frame copyOf="2:4870" id="2:1"/>`);
 
     expect(errors).toEqual([
       expect.objectContaining({
-        line: 1,
-        message: expect.stringMatching(/Instance.*not available yet/),
+        line: 3,
+        message: expect.stringMatching(/copy is a new layer/),
       }),
     ]);
-    expect(elements.map(({ id }) => id)).toEqual(["2:9"]);
+    expect(elements.map(({ id, source, attributes }) => [id, source ?? null, attributes.copyOf ?? null])).toEqual([
+      [null, null, "2:4870"],
+      [null, "2:4871", null],
+      [null, "I2:4872;330:292", null],
+      [null, null, "2:4870"],
+      [null, "2:4871", null],
+      [null, "I2:4872;330:292", null],
+    ]);
+    expect(new Set(elements.map(({ ref }) => ref)).size).toBe(6);
   });
 
   it("refuses an id given twice and an id that is no Figma id, and skips their elements' new children", () => {

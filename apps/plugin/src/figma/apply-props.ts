@@ -551,6 +551,11 @@ export async function paintsOf(
       continue;
     }
 
+    if (spec.kind === "image") {
+      paints.push(imagePaint(spec, context));
+      continue;
+    }
+
     const index = await context.tokens();
 
     if (index.style(spec.token, "PAINT") !== null) {
@@ -578,6 +583,21 @@ export async function paintsOf(
   }
 
   return { paints };
+}
+
+/** An image layer from its uploaded file (Task 2 sends the bytes; until then a background image cannot be written). */
+function imagePaint(spec: Extract<PaintSpec, { kind: "image" }>, context: WriteContext): ImagePaint {
+  const bytes = spec.stream === undefined ? undefined : context.uploads?.(spec.stream);
+
+  if (bytes === undefined) {
+    throw new WriteError(`${spec.src} did not reach the plugin.`, "Give the file's path as design_read wrote it.");
+  }
+
+  return {
+    type: "IMAGE",
+    imageHash: figma.createImage(bytes).hash,
+    scaleMode: spec.scaleMode,
+  };
 }
 
 /** The parts of a paint that make it look as it does, to tell an equal one from a changed one. */
