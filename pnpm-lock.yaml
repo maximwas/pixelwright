@@ -126,6 +126,9 @@ importers:
       culori:
         specifier: 4.0.2
         version: 4.0.2
+      slugify:
+        specifier: 1.6.9
+        version: 1.6.9
       zod:
         specifier: 'catalog:'
         version: 4.6.5
@@ -2063,6 +2066,10 @@ packages:
   slash@5.1.0:
     resolution: {integrity: sha512-ZA6oR3T/pEyuqwMgAKT0/hAv8oAXckzbkmR0UkUosQ+Mc4RxGoJkRmwHgHufaenlyAgE1Mxgpdcrf75y6XcnDg==}
     engines: {node: '>=14.16'}
+
+  slugify@1.6.9:
+    resolution: {integrity: sha512-vZ7rfeehZui7wQs438JXBckYLkIIdfHOXsaVEUMyS5fHo1483l1bMdo0EDSWYclY0yZKFOipDy4KHuKs6ssvdg==}
+    engines: {node: '>=8.0.0'}
 
   sonic-boom@4.2.1:
     resolution: {integrity: sha512-w6AxtubXa2wTXAUsZMMWERrsIRAdrK0Sc+FUytWvYAhBJLyuI4llrMIC1DtlNSdI99EI86KZum2MMq3EAZlF9Q==}
@@ -4002,6 +4009,8 @@ snapshots:
   signal-exit@4.1.0: {}
 
   slash@5.1.0: {}
+
+  slugify@1.6.9: {}
 
   sonic-boom@4.2.1:
     dependencies:

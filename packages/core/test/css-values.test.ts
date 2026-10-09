@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changeOf, cleanOracle, colorOf, splitTop, urlsOf } from "../src/index.ts";
+import { changeOf, cleanOracle, colorOf, slug, splitTop, urlsOf } from "../src/index.ts";
 
 const props = (tag: string, attributes: Record<string, string>) =>
   changeOf({
@@ -89,5 +89,31 @@ describe("colours", () => {
         "not a colour",
       ].map(rgb),
     ).toMatchSnapshot();
+  });
+});
+
+describe("file names from layer names", () => {
+  it("keeps a name's letters readable whatever its script, never empty", () => {
+    expect(
+      [
+        "tokyo-magnifier 2",
+        "photo 1.5",
+        "Логотип компанії",
+        "Ґанок / Іконка",
+        "Café crème",
+        "Icons/arrow-right",
+        "",
+        "!!!",
+      ].map(slug),
+    ).toEqual([
+      "tokyo-magnifier-2",
+      "photo-1-5",
+      "lohotyp-kompaniyi",
+      "ganok-ikonka",
+      "cafe-creme",
+      "icons-arrow-right",
+      "asset",
+      "asset",
+    ]);
   });
 });
