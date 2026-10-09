@@ -1,0 +1,105 @@
+import type { ApplyElement } from "../types/apply.ts";
+import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
+import type { XmlChild, XmlElementNode } from "../types/xml.ts";
+import { designXml } from "../xml/design.ts";
+import { parseXml } from "../xml/parse/parse-xml.ts";
+
+/**
+ * Which of an element's attributes the layer already has, as design_read would write them (the reader's rounding
+ * included), and whether its text is already so: what is left is what design_apply writes. The layer is rendered both
+ * as the read's root and as its parent's child, since design_read writes either.
+ */
+export function unchangedAttributes(
+  element: ApplyElement,
+  item: { node: SnapshotNode; parent: SnapshotNode | null },
+  tokens: Pick<Snapshot, "styles" | "variables">,
+): { attributes: Set<string>; text: boolean } {
+  const renders = [
+    render(
+      {
+        root: item.node,
+        ...pick(tokens),
+      },
+      item.node.id,
+      null,
+    ),
+  ];
+
+  if (item.parent !== null) {
+    renders.push(
+      render(
+        {
+          root: {
+            ...item.parent,
+            children: [item.node],
+          },
+          ...pick(tokens),
+        },
+        item.node.id,
+        item.parent.id,
+      ),
+    );
+  }
+
+  const attributes = new Set<string>();
+
+  for (const [name, value] of Object.entries(element.attributes)) {
+    // An asset's file name depends on where design_read wrote it; a file is replaced in stage 4b.
+    if (name === "src" || renders.some((rendered) => rendered?.props[name] === value)) {
+      attributes.add(name);
+    }
+  }
+
+  const wanted = element.content === undefined ? null : canonical(element.content);
+
+  return {
+    attributes,
+    text: wanted === null || renders.some((rendered) => rendered !== null && canonical(rendered.children) === wanted),
+  };
+}
+
+function pick(tokens: Pick<Snapshot, "styles" | "variables">): Pick<Snapshot, "styles" | "variables"> {
+  return {
+    styles: tokens.styles,
+    variables: tokens.variables,
+  };
+}
+
+/** The element design_read writes for a layer in this snapshot; its parent is kept a layout, never an asset. */
+function render(snapshot: Snapshot, id: string, layout: string | null): XmlElementNode | null {
+  const { xml } = designXml(snapshot, layout === null ? {} : { notAssets: new Set([layout]) });
+
+  return find(parseXml(xml), id);
+}
+
+function find(nodes: readonly XmlChild[], id: string): XmlElementNode | null {
+  for (const node of nodes) {
+    if (node.kind === "element") {
+      if (node.props.id === id) {
+        return node;
+      }
+
+      const inside = find(node.children, id);
+
+      if (inside !== null) {
+        return inside;
+      }
+    }
+  }
+
+  return null;
+}
+
+/** A text's content in one comparable form: text values and spans with their attributes, positions left out. */
+function canonical(children: readonly XmlChild[]): string {
+  return JSON.stringify(
+    children.map((child) =>
+      child.kind === "text"
+        ? child.value
+        : {
+            span: child.props,
+            text: canonical(child.children),
+          },
+    ),
+  );
+}

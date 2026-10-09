@@ -35,6 +35,8 @@ export interface DesignXmlOptions {
    * only its first N characters (`$truncated="true"`).
    */
   readonly limits?: ReadonlyMap<string, number>;
+  /** Layers never taken for an asset: a parent rendered around one child, to compare that child as design_read wrote it. */
+  readonly notAssets?: ReadonlySet<string>;
 }
 
 /** Where a layer's element sits in the XML's lines, for measuring and cutting branches. */

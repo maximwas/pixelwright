@@ -132,7 +132,7 @@ class DesignWriter {
     const clipped = node.type === "TEXT" && limit !== undefined;
 
     const indent = INDENT.repeat(level);
-    const asset = classify(node, this.snapshot.root);
+    const asset = this.options.notAssets?.has(node.id) ? null : classify(node, this.snapshot.root);
     const tag = asset === null ? tagFor(node.type) : asset.kind === "icon" ? "Icon" : "Image";
     const keeps = asset === null ? null : asset.kind === "icon" ? PLACEMENT : IMAGE_KEEPS;
     // An asset's own look is in its file: its fills plan no background, and the CSS it drops adds no tokens.
