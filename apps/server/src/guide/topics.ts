@@ -294,9 +294,11 @@ changes, and a shadow sent back as it was keeps its colour variable and blend mo
 
 \`execute\` runs JavaScript in the plugin for what design_apply and tokens_apply cannot say (removing a variable,
 a prototype link, a plugin data field). The code is the body of an async function given \`figma\` (the Plugin API)
-and \`console\`: \`await\` works, \`return\` gives \`result\` (layers as {id, type, name}), \`console.log\` lines
-come back as \`logs\`, and what it throws as \`error\`. It is one undo step, needs Allow edits, and runs at most 25 s;
-a synchronous endless loop freezes Figma until the plugin is closed. Read the result back with the read tools.
+and \`console\`: \`await\` works, \`return\` gives \`result\` (Figma's layers as {id, type, name}, plain data as
+built), \`console.log\` lines come back as \`logs\`, and what it throws as \`error\`. What it changes during the call is
+one undo step; it needs Allow edits, and the tool waits at most 25 s. Code it starts that outlives the call (timers,
+listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
+synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.
 `,
   },
   email: {

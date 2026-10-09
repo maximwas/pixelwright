@@ -33,6 +33,8 @@ export default function (root: HTMLElement): void {
   let actions: readonly RecentAction[] = [];
   // A write came while Allow edits was off: the window asks for it until it is on.
   let refused = false;
+  // execute ran: code it started may outlive the switch until the window closes.
+  let ranCode = false;
   let socket: SocketLink | null = null;
   const view = createPluginWindow(root, {
     onAllowEdits: (value) => emit<AllowEditsHandler>("ALLOW_EDITS", value),
@@ -45,6 +47,7 @@ export default function (root: HTMLElement): void {
         link,
         actions,
         refused,
+        ranCode,
       });
     }
   };
@@ -59,6 +62,8 @@ export default function (root: HTMLElement): void {
       info: () => info(context ?? current),
       key: storedKey,
       onRequest: async (request: RequestMessage): Promise<RequestOutcome> => {
+        ranCode ||= request.op === "execute";
+
         const outcome = await relay.call(request.op, request.input ?? null);
         const line = describeAction(request.op, request.input, outcome);
 

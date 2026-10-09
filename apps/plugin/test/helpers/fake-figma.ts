@@ -860,6 +860,11 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
         });
       },
       createVariable: (name: string, collection: { id: string }, resolvedType: string) => {
+        // As Figma (its staff on the forum): a name with ".", "{", "}" or "$" is refused.
+        if (/[.{}$]/.test(name)) {
+          throw new Error(`in createVariable: invalid variable name "${name}"`);
+        }
+
         const id = `VariableID:90:${localVariables.length + 1}`;
 
         writes.calls.push({
@@ -1008,7 +1013,13 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
       findAllWithCriteria: ({ types }: { types: string[] }) =>
         [...byId.values()].filter((node) => types.includes(node.type) && node.parent !== null),
     },
-    loadAllPagesAsync: async () => undefined,
+    loadAllPagesAsync: async () => {
+      writes.calls.push({
+        node: "0:0",
+        method: "loadAllPagesAsync",
+        args: [],
+      });
+    },
     importComponentByKeyAsync: async (key: string) => {
       writes.calls.push({
         node: key,

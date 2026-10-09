@@ -14,8 +14,8 @@ export interface TokenIndex {
   style(token: string, kind: StyleKind): Promise<string | null>;
   /** A text style's id by its name; an error naming close ones when none has it. */
   textStyle(name: string): Promise<string>;
-  /** A variable of the type, or an error naming close tokens. */
-  variable(token: string, type: VariableResolvedDataType): Promise<Variable>;
+  /** A variable of the type (of any type when none is given), or an error naming close tokens. */
+  variable(token: string, type?: VariableResolvedDataType): Promise<Variable>;
 }
 
 /**
@@ -90,13 +90,15 @@ export async function tokenIndex({ importing = true }: { importing?: boolean } =
       near === null ? "tokens_read lists the file's tokens." : `Did you mean ${near}?`,
     );
   };
+  // A name a variable has is a variable's: no style of it is looked for farther.
   const style = async (token: string, kind: StyleKind) => {
-    if (!styles.has(`${kind} ${token}`)) {
+    if (!styles.has(`${kind} ${token}`) && !tokens.has(token)) {
       await lookFarther();
     }
 
     return styles.get(`${kind} ${token}`) ?? null;
   };
+  const imports = new Map<string, Promise<Variable>>();
 
   return {
     style,
@@ -127,7 +129,15 @@ export async function tokenIndex({ importing = true }: { importing?: boolean } =
           throw unknown(type === "COLOR" ? "paint style or colour variable" : "variable", token, names());
         }
 
-        return await imported(listed, type, importing);
+        // Each library variable brought in once per call, however often it is named.
+        let brought = imports.get(listed.key);
+
+        if (brought === undefined) {
+          brought = imported(listed, importing);
+          imports.set(listed.key, brought);
+        }
+
+        return ofType(await brought, token, type);
       }
 
       const variable = await figma.variables.getVariableByIdAsync(entry.id);
@@ -169,17 +179,7 @@ async function libraryVariables(): Promise<Map<string, LibraryVariable>> {
 }
 
 /** A library variable brought into the file, or on a dry run a stand-in that only says it is there. */
-async function imported(
-  listed: LibraryVariable,
-  type: VariableResolvedDataType,
-  importing: boolean,
-): Promise<Variable> {
-  if (listed.resolvedType !== type) {
-    throw new WriteError(
-      `${tokenName(listed.name)} is a ${listed.resolvedType.toLowerCase()} variable: this needs a ${type.toLowerCase()} one.`,
-    );
-  }
-
+async function imported(listed: LibraryVariable, importing: boolean): Promise<Variable> {
   if (!importing) {
     return {
       id: `library:${listed.key}`,
@@ -188,11 +188,12 @@ async function imported(
     } as unknown as Variable;
   }
 
-  return ofType(await figma.variables.importVariableByKeyAsync(listed.key), tokenName(listed.name), type);
+  return await figma.variables.importVariableByKeyAsync(listed.key);
 }
 
-function ofType(variable: Variable, token: string, type: VariableResolvedDataType): Variable {
-  if (variable.resolvedType !== type) {
+/** The variable, when it is of the type asked for (any type when none is). */
+function ofType(variable: Variable, token: string, type: VariableResolvedDataType | undefined): Variable {
+  if (type !== undefined && variable.resolvedType !== type) {
     throw new WriteError(
       `${token} is a ${variable.resolvedType.toLowerCase()} variable: this needs a ${type.toLowerCase()} one.`,
     );

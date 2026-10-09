@@ -46,6 +46,9 @@ export async function execute({ code, timeoutMs }: OperationInput<"execute">): P
   };
   const kept = () => (dropped === 0 ? logs : [...logs, `…and ${dropped} more lines`]);
   let timer: ReturnType<typeof setTimeout> | undefined;
+  // The window's messages (Allow edits among them) come through this handler: code may not keep it.
+  const ui = (figma as { ui?: { onmessage?: unknown } }).ui;
+  const handler = ui?.onmessage;
 
   try {
     const run = new AsyncFunction("figma", "console", code);
@@ -76,6 +79,11 @@ export async function execute({ code, timeoutMs }: OperationInput<"execute">): P
     };
   } finally {
     clearTimeout(timer);
+
+    if (ui !== undefined && ui.onmessage !== handler) {
+      ui.onmessage = handler;
+    }
+
     figma.commitUndo();
   }
 }

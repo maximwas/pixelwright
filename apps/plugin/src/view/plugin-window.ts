@@ -68,7 +68,7 @@ export function createPluginWindow(
   root.append(style, status, pairing, pairingText, hint, edits, activity);
 
   return {
-    render({ context, link, actions: recent, refused }) {
+    render({ context, link, actions: recent, refused, ranCode }) {
       const line = statusLine(link, context.file.name);
       const pairingLine = pairingNote(link);
       const hintLine = editsHint(refused, context.allowEdits);
@@ -83,7 +83,7 @@ export function createPluginWindow(
       hint.hidden = hintLine === null;
       hint.textContent = hintLine ?? "";
       toggle.checked = context.allowEdits;
-      note.textContent = editsNote(context.allowEdits, UNDO);
+      note.textContent = editsNote(context.allowEdits, UNDO, ranCode);
       actions.replaceChildren(
         ...(recent.length === 0
           ? [element("li", "empty", "Nothing yet")]

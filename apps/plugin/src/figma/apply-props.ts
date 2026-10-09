@@ -730,18 +730,29 @@ const CSS_EFFECTS: ReadonlySet<string> = new Set(["DROP_SHADOW", "INNER_SHADOW",
 
 /**
  * The effects CSS wrote, each one the layer already has kept as it is (a shadow's colour variable, blend mode and
- * show-behind, a progressive blur of that radius), then what CSS cannot write and design_read never shows (noise,
- * texture, glass, hidden effects), as the layer has them.
+ * show-behind, a progressive blur of that radius), with what CSS cannot write and design_read never shows (noise,
+ * texture, glass, hidden effects) kept where they were.
  */
-export function mergedEffects(current: readonly Effect[], written: readonly Effect[]): Effect[] {
-  const unused = current.filter((effect) => CSS_EFFECTS.has(effect.type) && (effect.visible ?? true));
+export function mergedEffects(
+  current: readonly Effect[],
+  written: readonly Effect[],
+  covered: ReadonlySet<string> = CSS_EFFECTS,
+): Effect[] {
+  const unused = current.filter((effect) => covered.has(effect.type) && (effect.visible ?? true));
   const merged = written.map((effect) => {
     const at = unused.findIndex((held) => effectKey(held) === effectKey(effect));
 
     return at === -1 ? effect : (unused.splice(at, 1)[0] as Effect);
   });
 
-  return [...merged, ...current.filter((effect) => !CSS_EFFECTS.has(effect.type) || !(effect.visible ?? true))];
+  // What CSS does not write stays where it was in the list.
+  current.forEach((effect, index) => {
+    if (!covered.has(effect.type) || !(effect.visible ?? true)) {
+      merged.splice(Math.min(index, merged.length), 0, effect);
+    }
+  });
+
+  return merged;
 }
 
 /** The parts of an effect CSS writes, rounded as it writes them: equal keys look the same in a read. */

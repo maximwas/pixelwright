@@ -34,9 +34,10 @@ export function jsonValue(value: unknown, path: Set<object> = new Set(), depth =
     return "[…]";
   }
 
-  const layer = value as { id?: unknown; type?: unknown; name?: unknown };
+  const layer = value as { id?: unknown; type?: unknown; name?: unknown; remove?: unknown };
 
-  if (typeof layer.id === "string" && typeof layer.type === "string") {
+  // Figma's own layers only (they can be removed): plain data with an id and a type is walked as data.
+  if (typeof layer.id === "string" && typeof layer.type === "string" && typeof layer.remove === "function") {
     return {
       id: layer.id,
       type: layer.type,

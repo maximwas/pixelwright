@@ -106,6 +106,36 @@ describe("execute", () => {
     expect(logs[200]).toMatch(/100 more/);
   });
 
+  it("returns plain data with an id and a type as the code built it, only Figma's own layers as their summary", async () => {
+    const { result } = await run(
+      "return figma.currentPage.children.map((node) => ({ id: node.id, type: node.type, name: node.name, width: 100 }));",
+    );
+
+    expect(result).toEqual([
+      {
+        id: "1:1",
+        type: "FRAME",
+        name: "Card",
+        width: 100,
+      },
+      {
+        id: "1:2",
+        type: "TEXT",
+        name: "Title",
+        width: 100,
+      },
+    ]);
+  });
+
+  it("puts back the window's message handler the code replaced, so Allow edits still reaches the plugin", async () => {
+    const handler = () => undefined;
+
+    Object.assign(figma, { ui: { onmessage: handler } });
+    await run("figma.ui.onmessage = () => {}; return 1;");
+
+    expect((figma as unknown as { ui: { onmessage: unknown } }).ui.onmessage).toBe(handler);
+  });
+
   it("refuses to run while Allow edits is off", async () => {
     setEditsAllowed(false);
 

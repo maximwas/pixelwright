@@ -204,6 +204,28 @@ describe("apply: tokens beyond the current page", () => {
     expect(fake.writes.calls.map(({ method }) => method)).not.toContain("importVariableByKeyAsync");
   });
 
+  it("reads no other page for a variable the current page already knows", async () => {
+    const pages = await figma.variables.getLocalVariableCollectionsAsync();
+
+    expect(pages).toEqual([]);
+
+    const local = figma.variables.createVariableCollection("Theme");
+    const ink = figma.variables.createVariable("ink", local, "COLOR");
+
+    ink.setValueForMode(local.modes[0]?.modeId ?? "", {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 1,
+    });
+    fake.writes.calls.splice(0);
+
+    const { errors } = await apply('<Frame id="4:2" background="var(--ink)"/>');
+
+    expect(errors).toEqual([]);
+    expect(fake.writes.calls.map(({ method }) => method)).not.toContain("loadAllPagesAsync");
+  });
+
   it("finds a library style the file uses only on another page", async () => {
     const { errors } = await apply('<Frame id="4:2" background="var(--Far)"/>');
 

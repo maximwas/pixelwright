@@ -189,7 +189,8 @@ export function textStyleCss(style: SnapshotStyle): string | null {
   return parts.join("; ");
 }
 
-function lineHeightCss(lineHeight: TextSegment["lineHeight"], fontSize: number): string {
+/** A line height as CSS writes it at this font size: px, or normal. */
+export function lineHeightCss(lineHeight: TextSegment["lineHeight"], fontSize: number): string {
   if (lineHeight.unit === "PIXELS" && lineHeight.value !== undefined) {
     return px(lineHeight.value);
   }

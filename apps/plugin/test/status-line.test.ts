@@ -85,6 +85,9 @@ describe("the window's status", () => {
       "AI may change this file until you close this window. Each change is one undo step (⌘Z).",
     );
     expect(editsNote(false, "⌘Z")).toBe("AI only reads this file.");
+    expect(editsNote(false, "⌘Z", true)).toBe(
+      "AI only reads this file now. Code it ran with execute keeps running until you close this window.",
+    );
     expect(editsHint(true, false)).toBe("Your AI tried to change this file: turn on Allow edits.");
     expect(editsHint(true, true)).toBeNull();
     expect(editsHint(false, false)).toBeNull();

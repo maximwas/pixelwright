@@ -22,4 +22,6 @@ export interface WindowState {
   readonly actions: readonly RecentAction[];
   /** A write came while Allow edits was off: the window asks for it until it is on. */
   readonly refused: boolean;
+  /** execute ran in this window: what its code started may still run. */
+  readonly ranCode: boolean;
 }

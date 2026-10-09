@@ -99,6 +99,42 @@ describe("the window's activity", () => {
       ),
     ).toBe("Ran code");
     expect(
+      text(
+        "tokens_apply",
+        { dryRun: false },
+        ok({
+          created: [
+            {
+              kind: "variable",
+              name: "a",
+            },
+            {
+              kind: "paint",
+              name: "b",
+            },
+          ],
+          updated: [
+            {
+              kind: "variable",
+              name: "c",
+            },
+          ],
+          errors: [],
+        }),
+      ),
+    ).toBe("Made 2 tokens, changed 1");
+    expect(
+      text(
+        "tokens_apply",
+        { dryRun: true },
+        ok({
+          created: [],
+          updated: [],
+          errors: [],
+        }),
+      ),
+    ).toBe("Checked tokens");
+    expect(
       describeAction(
         "execute",
         {},

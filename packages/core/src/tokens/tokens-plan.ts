@@ -3,14 +3,13 @@ import { changeOf } from "../apply/css-to-figma.ts";
 import { colorOf, lengthOf, numberOf, tokenOf } from "../apply/css-values.ts";
 import { tokenName } from "../css/tokens.ts";
 import type { TokensApplyInputSchema } from "../schemas/tokens-apply.ts";
-import type { FigmaProps } from "../types/apply.ts";
+import type { EffectSpec, FigmaProps, FontSpec, PaintSpec } from "../types/apply.ts";
 import type {
   CollectionPlan,
   EffectStylePlan,
   PaintStylePlan,
   TextStylePlan,
   TokenError,
-  TokenKind,
   TokensPlan,
   VariablePlan,
   VariableValueSpec,
@@ -58,7 +57,7 @@ export function tokensPlan(input: TokensApplyInput): { plan: TokensPlan; errors:
           continue;
         }
 
-        const value = readValue(css, type);
+        const value = variableValueOf(css, type);
 
         if (value === null) {
           fail(
@@ -100,71 +99,33 @@ export function tokensPlan(input: TokensApplyInput): { plan: TokensPlan; errors:
     text: [] as TextStylePlan[],
     effect: [] as EffectStylePlan[],
   };
-  const read = (kind: TokenKind, name: string, tag: "Frame" | "Text", attribute: string, value: string) => {
-    const { change, errors: refused } = changeOf({
-      line: 1,
-      column: 1,
-      tag,
-      id: null,
-      ref: "token",
-      parent: null,
-      index: 0,
-      attributes: { [attribute]: value },
-    });
 
-    for (const error of refused) {
-      errors.push({
-        kind,
-        name,
-        message: error.message,
-      });
-    }
+  for (const kind of ["paint", "text", "effect"] as const) {
+    for (const { name, value } of input.styles[kind]) {
+      const read = styleValueOf(kind, value);
 
-    return refused.length === 0 ? change.props : null;
-  };
-  const refuse = (kind: TokenKind, name: string, message: string) =>
-    errors.push({
-      kind,
-      name,
-      message,
-    });
-
-  for (const { name, value } of input.styles.paint) {
-    const paints = read("paint", name, "Frame", "background", value)?.fills;
-
-    if (paints?.some((paint) => paint.kind === "image") ?? false) {
-      refuse("paint", name, `${value} is an image: a paint style holds colours and colour variables.`);
-    } else if (paints !== undefined && paints.length > 0) {
-      styles.paint.push({
-        name,
-        paints,
-      });
-    } else if (paints !== undefined) {
-      refuse("paint", name, "A paint style holds at least one colour.");
-    }
-  }
-
-  for (const { name, value } of input.styles.text) {
-    const font = read("text", name, "Text", "font", value)?.font;
-
-    if (font !== undefined) {
-      styles.text.push({
-        name,
-        font,
-      });
-    }
-  }
-
-  for (const { name, value } of input.styles.effect) {
-    const effects: FigmaProps["effects"] = read("effect", name, "Frame", "box-shadow", value)?.effects;
-
-    if (effects !== undefined && !Array.isArray(effects)) {
-      refuse("effect", name, `${value} names another style: an effect style holds its shadows.`);
-    } else if (effects !== undefined) {
-      styles.effect.push({
-        name,
-        effects,
-      });
+      if ("error" in read) {
+        errors.push({
+          kind,
+          name,
+          message: read.error,
+        });
+      } else if ("paints" in read) {
+        styles.paint.push({
+          name,
+          paints: read.paints,
+        });
+      } else if ("font" in read) {
+        styles.text.push({
+          name,
+          font: read.font,
+        });
+      } else {
+        styles.effect.push({
+          name,
+          effects: read.effects,
+        });
+      }
     }
   }
 
@@ -177,8 +138,55 @@ export function tokensPlan(input: TokensApplyInput): { plan: TokensPlan; errors:
   };
 }
 
+/**
+ * A style's CSS value as tokens_read writes it, read by design_apply's own rules: a paint style's as a background
+ * (colours and colour variables), a text style's as the font shorthand, an effect style's as a shadow list.
+ */
+export function styleValueOf(
+  kind: "paint" | "text" | "effect",
+  value: string,
+): { paints: readonly PaintSpec[] } | { font: FontSpec } | { effects: readonly EffectSpec[] } | { error: string } {
+  const [tag, attribute] =
+    kind === "text" ? ["Text", "font"] : ["Frame", kind === "paint" ? "background" : "box-shadow"];
+  const { change, errors } = changeOf({
+    line: 1,
+    column: 1,
+    tag,
+    id: null,
+    ref: "token",
+    parent: null,
+    index: 0,
+    attributes: { [attribute]: value },
+  });
+  const { fills, font, effects } = change.props as FigmaProps;
+
+  if (errors.length > 0) {
+    return { error: errors.map(({ message }) => message).join(" ") };
+  }
+
+  if (kind === "paint") {
+    if (fills?.some((paint) => paint.kind === "image") ?? false) {
+      return { error: `${value} is an image: a paint style holds colours and colour variables.` };
+    }
+
+    return fills === undefined || fills.length === 0
+      ? { error: "A paint style holds at least one colour." }
+      : { paints: fills };
+  }
+
+  if (kind === "text") {
+    return font === undefined ? { error: `${value} is not a font shorthand.` } : { font };
+  }
+
+  if (effects !== undefined && !Array.isArray(effects)) {
+    return { error: `${value} names another style: an effect style holds its shadows.` };
+  }
+
+  return { effects: (effects ?? []) as readonly EffectSpec[] };
+}
+
 /** A mode's CSS value as the type takes it; with no type yet, whatever it reads as. */
-function readValue(css: string, type: WritableVariableType | null): VariableValueSpec | null {
+export function variableValueOf(css: string, type: WritableVariableType | null): VariableValueSpec | null {
   const value = css.trim();
   const token = tokenOf(value);
 

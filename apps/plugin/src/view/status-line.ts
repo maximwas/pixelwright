@@ -48,10 +48,17 @@ export function statusLine(link: LinkState, fileName: string): StatusLine {
   }
 }
 
-/** Under the Allow edits switch: how long it stays on and how a change is taken back, or that the AI only reads. */
-export function editsNote(allowEdits: boolean, undo: string): string {
-  return allowEdits
-    ? `AI may change this file until you close this window. Each change is one undo step (${undo}).`
+/**
+ * Under the Allow edits switch: how long it stays on and how a change is taken back, or that the AI only reads, and
+ * that code execute started may outlive the switch (only closing the window stops it).
+ */
+export function editsNote(allowEdits: boolean, undo: string, ranCode = false): string {
+  if (allowEdits) {
+    return `AI may change this file until you close this window. Each change is one undo step (${undo}).`;
+  }
+
+  return ranCode
+    ? "AI only reads this file now. Code it ran with execute keeps running until you close this window."
     : "AI only reads this file.";
 }
 

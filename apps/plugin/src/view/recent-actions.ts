@@ -33,7 +33,14 @@ export function describeAction(op: string, input: unknown, outcome: RequestOutco
   }
 
   return {
-    text: op === "apply" ? applied(input, outcome.result) : op === "delete" ? deleted(outcome.result) : name,
+    text:
+      op === "apply"
+        ? applied(input, outcome.result)
+        : op === "delete"
+          ? deleted(outcome.result)
+          : op === "tokens_apply"
+            ? tokensWritten(input, outcome.result)
+            : name,
     warning: false,
     refused: false,
   };
@@ -72,6 +79,33 @@ function applied(input: unknown, result: unknown): string {
         : `Made ${count(created.length, "layer")}`;
   } else if (changed.length > 0) {
     done = `Changed ${count(changed.length, "layer")}`;
+  }
+
+  return withErrors(done, errors.length);
+}
+
+function tokensWritten(input: unknown, result: unknown): string {
+  const {
+    created = [],
+    updated = [],
+    errors = [],
+  } = (result ?? {}) as {
+    created?: unknown[];
+    updated?: unknown[];
+    errors?: unknown[];
+  };
+  const dryRun = typeof input === "object" && input !== null && ((input as { dryRun?: boolean }).dryRun ?? false);
+  let done = "Changed nothing";
+
+  if (dryRun) {
+    done = "Checked tokens";
+  } else if (created.length > 0) {
+    done =
+      updated.length > 0
+        ? `Made ${count(created.length, "token")}, changed ${updated.length}`
+        : `Made ${count(created.length, "token")}`;
+  } else if (updated.length > 0) {
+    done = `Changed ${count(updated.length, "token")}`;
   }
 
   return withErrors(done, errors.length);

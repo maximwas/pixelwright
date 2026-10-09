@@ -38,6 +38,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   apply: "Changed the file",
   delete: "Deleted layers",
   execute: "Ran code",
+  tokens_apply: "Wrote tokens",
 };
 
 /** Steps of another action the activity leaves out: status probes, the reads before a write, files on their way in. */
