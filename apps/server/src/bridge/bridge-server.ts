@@ -61,6 +61,9 @@ export class BridgeServer
   /** Unpaired plugins waiting for the user to type the code: never listed, never asked. */
   readonly #pending = new Set<unknown>();
   readonly #pairing: PairingCodesLike;
+  /** What peers last heard about pairing, and the timer that tells them when the code or the pause runs out. */
+  #pairingSnapshot = "";
+  #pairingTimer: ReturnType<typeof setTimeout> | undefined;
   #policy: UpgradePolicy;
   #sequence = 0;
   #requests = 0;
@@ -111,6 +114,7 @@ export class BridgeServer
   /** Frees the port first, so a new server process can take it at once, then says goodbye to the plugins. */
   async close(): Promise<void> {
     clearInterval(this.#heartbeat);
+    clearTimeout(this.#pairingTimer);
     await closeGracefully(this.#http, this.#sockets, CLOSE_GRACE_MS);
   }
 
@@ -130,17 +134,50 @@ export class BridgeServer
    */
   pairing(): PairingStatus | null {
     if (this.#pending.size === 0) {
+      clearTimeout(this.#pairingTimer);
+
       return null;
     }
 
     const active = this.#pairing.ensure();
-
-    return {
+    const status: PairingStatus = {
       code: active?.code ?? null,
       expiresAt: active?.expiresAt ?? null,
       lockedUntil: this.#pairing.lockedUntil(),
       waiting: this.#pending.size,
     };
+
+    this.#watchPairing(status);
+
+    return status;
+  }
+
+  /**
+   * Peers show the code the owner makes: they hear it whenever it changes, and when it or the pause runs out (a code
+   * expires silently, so a timer fires then and the next status makes a fresh one).
+   */
+  #watchPairing(status: PairingStatus): void {
+    const snapshot = JSON.stringify(status);
+
+    if (snapshot !== this.#pairingSnapshot) {
+      this.#pairingSnapshot = snapshot;
+      queueMicrotask(() => this.#tellPeers());
+    }
+
+    clearTimeout(this.#pairingTimer);
+
+    const next = Math.min(status.expiresAt ?? Number.POSITIVE_INFINITY, status.lockedUntil ?? Number.POSITIVE_INFINITY);
+
+    if (Number.isFinite(next)) {
+      this.#pairingTimer = setTimeout(() => this.#tellPeers(), Math.max(0, next - this.#pairing.now()) + 10);
+      this.#pairingTimer.unref();
+    }
+  }
+
+  #tellPeers(): void {
+    for (const peer of this.#peers) {
+      peer.sendStatus();
+    }
   }
 
   /** Sends an operation to a plugin (the active one unless a session is named) and resolves with its result. */
@@ -223,7 +260,14 @@ export class BridgeServer
       keys: this.#options.keys,
       activeCode: () => this.#pairing.active(),
       lockedUntil: () => this.#pairing.lockedUntil(),
-      checkCode: (code) => this.#pairing.check(code),
+      checkCode: (code) => {
+        const check = this.#pairing.check(code);
+
+        // A used, spent or locked code changes what peers must show.
+        queueMicrotask(() => this.#tellPeers());
+
+        return check;
+      },
       now: () => this.#pairing.now(),
       onPending: (waiting) => {
         if (this.#pending.size >= MAX_PENDING_PLUGINS) {
@@ -295,10 +339,7 @@ export class BridgeServer
 
   #changed(): void {
     this.emit("changed");
-
-    for (const peer of this.#peers) {
-      peer.sendStatus();
-    }
+    this.#tellPeers();
   }
 
   #checkClients(): void {

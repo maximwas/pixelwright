@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { WebSocketServer } from "ws";
 import { BridgeServer } from "../src/bridge/bridge-server.ts";
 import { OwnerClient } from "../src/bridge/owner-client.ts";
+import { PairingCodes } from "../src/bridge/pairing-codes.ts";
 import { PluginBridge } from "../src/bridge/plugin-bridge.ts";
 import { FilePluginKeys } from "../src/bridge/plugin-keys.ts";
 import type { PluginKeys } from "../src/types/bridge.ts";
@@ -20,13 +21,14 @@ const logger = pino({ level: "silent" });
 const log = () => {};
 const cleanup: (() => unknown)[] = [];
 
-const server = (port: number, keys: PluginKeys = memoryKeys(TEST_KEY)) =>
+const server = (port: number, keys: PluginKeys = memoryKeys(TEST_KEY), pairing?: PairingCodes) =>
   new BridgeServer({
     port,
     token,
     pluginOrigins: ["null"],
     serverVersion: "test",
     keys,
+    ...(pairing === undefined ? {} : { pairing }),
   });
 
 /** A bridge.json the way the first process writes it, for keys shared between processes. */
@@ -46,9 +48,9 @@ async function bridgeFile(port: number): Promise<string> {
   return file;
 }
 
-async function bridgeOn(port: number, keys?: PluginKeys): Promise<PluginBridge> {
+async function bridgeOn(port: number, keys?: PluginKeys, pairing?: PairingCodes): Promise<PluginBridge> {
   const bridge = await PluginBridge.connect(
-    server(port, keys),
+    server(port, keys, pairing),
     new OwnerClient({
       port,
       token,
@@ -150,6 +152,33 @@ describe("peers", () => {
     await until(() => peer.pairing() !== null);
     expect(peer.pairing()?.code).toBe(owner.pairing()?.code);
     expect(peer.status().hint).toContain(owner.pairing()?.code ?? "no code");
+  });
+
+  it("keeps a peer's pairing code current when the code expires and when its tries run out", async () => {
+    const port = await freePort();
+
+    await bridgeOn(port, undefined, new PairingCodes({ ttlMs: 300 }));
+
+    const peer = await bridgeOn(port);
+    const waiting = await rawPlugin(port, null);
+
+    cleanup.push(() => waiting.socket.close());
+    await waiting.next("pairing_required");
+    await until(() => peer.pairing()?.code !== null && peer.pairing() !== null);
+
+    const first = peer.pairing()?.code;
+
+    await until(() => peer.pairing()?.code !== first && peer.pairing()?.code !== null);
+
+    for (let index = 0; index < 5; index += 1) {
+      waiting.send({
+        type: "pair",
+        code: "999999",
+      });
+      await waiting.next("pairing_required");
+    }
+
+    await until(() => peer.pairing()?.lockedUntil !== null);
   });
 
   it("never sends the token to a program squatting on the port", async () => {
