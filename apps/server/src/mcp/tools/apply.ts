@@ -29,7 +29,7 @@ export function registerApplyTool(server: McpServer, { bridge }: ToolContext): v
     name: "design_apply",
     title: "Write a design",
     description:
-      'Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background="none", width="auto" to hug, display="block" to drop auto layout); an element without id creates a Frame, Section, Text, Rectangle, Ellipse or Line inside its parent element, in `parent`, or next to the layer before="id" / after="id" names. var(--Name) binds the style or variable of that name (as design_read and tokens_read write them); fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). Components, instances by name and images from files come in the next version: change existing ones by id. See guide write.',
+      'Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background="none", width="auto" to hug, display="block" to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; an Instance by component="Name" variant="Prop=Value" props="Label=Text"; a Component (prop and visibleProp on its layers make its properties) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf="id" copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write.',
     input: DesignApplyInputSchema,
     output: DesignApplyOutputSchema,
     annotations: WRITE_ANNOTATIONS,
@@ -120,7 +120,8 @@ export async function applyDesign(
 
     const now = layer === undefined ? undefined : unchangedAttributes(element, layer, tokens);
     // A file the layer's image is not: written again (src, a background's url).
-    const differ = layer === undefined ? [] : await filesChanged(element, layer.node, cwd);
+    const differ =
+      layer === undefined || now === undefined ? [] : await filesChanged(element, layer.node, now.current, cwd);
     const { change, errors: translated } = changeOf(
       element,
       now === undefined
@@ -251,14 +252,30 @@ function sorted(errors: readonly ApplyError[]): ApplyError[] {
   return errors.toSorted((a, b) => a.line - b.line || a.column - b.column);
 }
 
-/** The files an element names that exist and hold another image than the layer's: their attributes. */
-async function filesChanged(element: ApplyElement, node: SnapshotNode, cwd: string): Promise<string[]> {
+/**
+ * The files an element names that exist and hold another image than the layer's: their attributes. A file named as
+ * design_read names this layer's (its -2 suffixes and folder aside) is the one it wrote, a render of the layer rather
+ * than the original image, so it is never a new image.
+ */
+async function filesChanged(
+  element: ApplyElement,
+  node: SnapshotNode,
+  current: Readonly<Record<string, string>>,
+  cwd: string,
+): Promise<string[]> {
+  const written = new Set(
+    [current.src, ...urlsIn(current.background ?? "")].flatMap((path) => (path === undefined ? [] : [stem(path)])),
+  );
   const hashes = new Set(
     (Array.isArray(node.fills) ? node.fills : []).flatMap((paint) =>
       paint.imageHash === undefined ? [] : [paint.imageHash],
     ),
   );
   const differs = async (path: string) => {
+    if (written.has(stem(path))) {
+      return false;
+    }
+
     const file = await readSource(path, cwd, "image");
 
     return typeof file === "object" && file !== null && !hashes.has(file.sha1);
@@ -270,14 +287,25 @@ async function filesChanged(element: ApplyElement, node: SnapshotNode, cwd: stri
     changed.push("src");
   }
 
-  for (const [, path] of (element.attributes.background ?? "").matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
-    if (path !== undefined && (await differs(path))) {
+  for (const path of urlsIn(element.attributes.background ?? "")) {
+    if (await differs(path)) {
       changed.push("background");
       break;
     }
   }
 
   return changed;
+}
+
+function urlsIn(css: string): string[] {
+  return [...css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].flatMap(([, path]) =>
+    path === undefined ? [] : [path],
+  );
+}
+
+/** A file's name as design_read gives it: no folder, no extension, no -2 a second read with the same name adds. */
+function stem(path: string): string {
+  return (path.split(/[\\/]/).at(-1) ?? path).replace(/\.[^.]+$/, "").replace(/-\d+$/, "");
 }
 
 /**

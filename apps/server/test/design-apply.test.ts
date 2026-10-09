@@ -315,6 +315,27 @@ describe("design_apply: files", () => {
     });
   });
 
+  it("keeps an image whose file is the one design_read wrote for it (a render, not the original)", async () => {
+    const dir = folder();
+    const snapshot = photoSnapshot(PNG);
+
+    // design_read named the photo's render photo.png; a second read of it wrote photo-2.png.
+    writeFileSync(join(dir, "photo-2.png"), Buffer.concat([PNG, Buffer.from("render")]));
+
+    const { bridge, requests } = bridgeOver(snapshot);
+    const result = await applyDesign(
+      bridge,
+      {
+        xml: designXml(snapshot).xml.replace(/src="[^"]+"/, 'src="photo-2.png"'),
+        dryRun: false,
+      },
+      { cwd: dir },
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(requests.map(({ op }) => op)).toEqual(["entries"]);
+  });
+
   it("uploads a file in chunks once for every element naming it, and sends an icon's SVG inline", async () => {
     const dir = folder();
     const { bridge, requests, sent } = bridgeOver(photoSnapshot(PNG));

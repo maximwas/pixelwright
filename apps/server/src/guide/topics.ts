@@ -177,7 +177,8 @@ never overwritten with other bytes.
 `,
   },
   write: {
-    about: "design_apply: changing layers by id and creating new ones with the same XML.",
+    about:
+      "design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.",
     markdown: `# Writing with design_apply
 
 \`design_apply\` takes the XML \`design_read\` returns. The user turns **Allow edits** on in the plugin window first;
@@ -197,9 +198,9 @@ until then every call is refused (\`dryRun: true\` checks a call without writing
 - What Figma keeps together is completed from the layer: a new \`column-gap\` keeps its direction and wrap, a new
   \`filter\` keeps its shadows, a new \`border-bottom\` keeps its other sides, a new \`width\` keeps the edge it
   is pinned to. A new \`left\` or \`right\` replaces both edges.
-- A layer stays where it is: putting an element with \`id\` under another parent, next to another layer
-  (\`before\`/\`after\`) or in another order is refused for the move (its own attributes still apply); moving comes
-  later.
+- Moving: an element with \`id\` under another parent element moves the layer there, \`before="id"\` /
+  \`after="id"\` puts it next to that layer, and listing layers in another order reorders them. A layer inside an
+  instance stays where it is (only an instance's slots take new layers).
 - A text \`design_read\` shortened (\`$truncated\`) is never written back: read that layer on its own to change it.
 - A hidden layer comes back with \`display\` (\`flex\`, \`grid\` or \`block\`, as it was laid out).
 - Each tag takes its own attributes: no \`background\` or \`gap\` on a Text (its colour is \`color\`), no text
@@ -208,12 +209,40 @@ until then every call is refused (\`dryRun: true\` checks a call without writing
 ## Creating
 
 - An element without \`id\` creates a layer: \`Frame\`, \`Section\`, \`Text\`, \`Rectangle\`, \`Ellipse\`,
-  \`Line\`. It goes inside its parent element, after the element before it (alone: last); at the top level into
-  \`parent\` or the current page, or next to a layer with \`before="id"\` / \`after="id"\`.
+  \`Line\`, \`Instance\`, \`Component\`, \`ComponentSet\`, \`Image\`, \`Icon\`, \`Slot\`. It goes inside its parent
+  element, after the element before it (alone: last); at the top level into \`parent\` or the current page, or next
+  to a layer with \`before="id"\` / \`after="id"\`. Groups and vectors are not drawn from XML: use an \`Icon\`.
 - A new layer has what its XML says and nothing more: no fill without \`background\`, no clipping without
   \`overflow\`; a new auto layout frame hugs unless sized; a new text is black unless \`color\` says otherwise.
-- Components, instances by \`component\`, \`Image\` and \`Icon\` from files, \`copyOf\` and \`note\` come next:
-  change existing ones by id meanwhile.
+- **A copy:** \`<Frame copyOf="2:4870" name="Card 2">\` clones that layer (everything the XML cannot show comes
+  along) and then writes the element onto the copy. Inside it, elements with the source's ids write the copy's
+  layers: copy a card's XML, drop the root's id, add \`copyOf\`, change the title.
+
+## Components and instances
+
+- \`<Instance component="Heading" variant="Property 1=Green" props="Label=Our work, Has icon=false"/>\` makes an
+  instance by the names design_read and components_read write: the file's components, the ones its page uses from a
+  library, or \`component="key:<key>"\` for a library one the file does not use yet. \`variant\` picks the variant
+  (values left out are the set's default), \`props\` sets text and boolean properties (names without Figma's #id).
+- An existing instance: \`variant\` switches it, \`props\` changes its properties, \`component\` swaps it to
+  another component. A comma or \`=\` inside a name or value is escaped with a backslash, as design_read writes it.
+- \`<Component name="Badge">…</Component>\` makes a component like a frame; inside it, \`prop="Label"\` on a
+  Text makes a text property bound to it and \`visibleProp="Shown"\` makes a boolean property bound to the layer's
+  visibility. \`<ComponentSet name="Badge">\` holds \`<Component variant="Tone=Dark">\` variants: they are
+  combined into one set (the properties defined once on it) and laid out in a grid. \`description\` describes a
+  component or a set; an instance of a new component can follow later in the same XML.
+- \`<Slot name="Content">\` makes a slot in a new component; in an instance, give its \`<Slot id="…">\` new layers.
+
+## Images, icons and notes
+
+- \`<Image src="photos/hero.jpg" width="600px" height="400px"/>\` makes an image from a file (PNG, JPG, GIF or
+  WebP, up to 32 MB), \`<Icon src="icons/arrow.svg" width="24px"/>\` an icon from an SVG; \`background:
+  url(…)\` fills a frame with one. Paths are on the server's machine, from its folder.
+- An existing \`Image\` with another file in \`src\` takes that image, keeping its fit. A file named as design_read
+  named the layer's (with assetsDir) is the one it wrote and changes nothing, so a read sent back keeps the
+  originals; give a new image another file name. An existing icon is replaced by deleting it and creating a new one.
+- \`note="Behavior: opens the modal | Spacing: 8px"\` writes the layer's Dev Mode notes, the whole list (a
+  category the file lacks is made; \`note=""\` removes them).
 
 ## Values
 
@@ -224,8 +253,8 @@ until then every call is refused (\`dryRun: true\` checks a call without writing
 - Sizes: \`width\`/\`height\` in px or \`auto\`; \`flex="1"\` fills an auto layout parent's direction,
   \`align-self="stretch"\` fills across it. Placement: \`position="absolute"\` with \`left\`/\`right\`/\`top\`/
   \`bottom\`, \`calc(50% ± Npx)\` for the centre, percents (with the size in percents) to scale.
-- Not written yet, and refused with an error: gradients, images in \`background\`, blend modes, grow weights,
-  \`overflow: scroll\`, links on frames, dashed underlines.
+- Not written yet, and refused with an error: gradients, blend modes, grow weights, \`overflow: scroll\`, links on
+  frames, dashed underlines.
 
 ## Errors and undo
 

@@ -224,6 +224,118 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         texts.pop();
         expect((await call("design_read", { node: labelId })).text).toBe(before);
 
+        // Stage 4b, all inside the board. (a) An instance of the page's Heading by name and variant, then another variant.
+        const used = (await call("components_read", { scope: "used" })).structured as {
+          components: { name: string; variants?: string[] }[];
+        };
+        const headingVariants = used.components.find(({ name }) => name === "Heading")?.variants ?? [];
+        const [firstVariant = "", secondVariant = firstVariant] = headingVariants;
+        const instance = (
+          await call("design_apply", {
+            xml: `<Frame id="${boardId}"><Instance component="Heading" variant="${firstVariant}" position="absolute" left="40px" top="300px"/></Frame>`,
+          })
+        ).structured as { created: { id: string }[]; errors: unknown[] };
+        const instanceId = instance.created[0]?.id ?? "";
+
+        log.instance = {
+          headingVariants,
+          instance,
+        };
+        expect(instance.errors).toEqual([]);
+        await call("design_apply", { xml: `<Instance id="${instanceId}" variant="${secondVariant}"/>` });
+        expect((await call("design_read", { node: instanceId })).text).toContain(`variant="${secondVariant}"`);
+
+        // (b) A set of two new variants with a text property, and an instance of it.
+        const tag = (variant: string, fill: string, ink: string) =>
+          `<Component variant="Tone=${variant}" display="flex" padding="8px 16px" background="${fill}" border-radius="7px"><Text prop="Label" color="${ink}" font="500 16px/normal 'Space Grotesk'">${variant}</Text></Component>`;
+        const set = (
+          await call("design_apply", {
+            xml: `<Frame id="${boardId}"><ComponentSet name="Pixelwright check tag" position="absolute" left="400px" top="300px">${tag("Dark", "var(--Dark)", "#FFF")}${tag("Light", "var(--Grey)", "#000")}</ComponentSet><Instance component="Pixelwright check tag" variant="Tone=Light" props="Label=Made from XML" position="absolute" left="400px" top="420px"/></Frame>`,
+          })
+        ).structured as { created: { id: string; tag: string }[]; errors: unknown[] };
+        const tagInstance = set.created.find(({ tag: kind }) => kind === "Instance")?.id ?? "";
+
+        log.set = set;
+        expect(set.errors).toEqual([]);
+        expect((await call("design_read", { node: tagInstance })).text).toContain('props="Label=Made from XML"');
+
+        // (c) The row read with its files and sent back writes nothing; its image and icon made again from those files.
+        const assets = join(OUT, "assets");
+        const withFiles = (
+          await call("design_read", {
+            node: "2:4869",
+            assetsDir: assets,
+          })
+        ).text;
+        const filesBack = (await call("design_apply", { xml: withFiles })).structured;
+
+        log.filesBack = filesBack;
+        expect(filesBack).toEqual({
+          created: [],
+          changed: [],
+          errors: [],
+          dryRun: false,
+        });
+
+        const images = [...withFiles.matchAll(/<Image [^>]*src="([^"]+)"/g)].map(([, src]) => src ?? "");
+        const icons = [...withFiles.matchAll(/<Icon [^>]*src="([^"]+\.svg)"/g)].map(([, src]) => src ?? "");
+        const files = (
+          await call("design_apply", {
+            xml: `<Frame id="${boardId}"><Image src="${images[0]}" width="210px" height="166px" position="absolute" left="40px" top="420px"/><Icon src="${icons[0]}" width="41px" position="absolute" left="300px" top="420px"/></Frame>`,
+          })
+        ).structured as { created: { id: string; tag: string }[]; errors: unknown[] };
+        const imageId = files.created.find(({ tag: kind }) => kind === "Image")?.id ?? "";
+
+        log.files = {
+          images,
+          icons,
+          files,
+        };
+        expect(files.errors).toEqual([]);
+
+        if (images[1] !== undefined && images[1] !== images[0]) {
+          const swapped = (await call("design_apply", { xml: `<Image id="${imageId}" src="${images[1]}"/>` }))
+            .structured;
+
+          log.swapped = swapped;
+          expect(swapped).toMatchObject({ changed: [imageId] });
+        }
+
+        // (d) A copy of a card with a new title; the source card stays as it was.
+        const sourceCard = (await call("design_read", { node: "2:4870" })).text;
+        const copy = (
+          await call("design_apply", {
+            xml: `<Frame id="${boardId}"><Frame copyOf="2:4870" name="Pixelwright card copy" position="absolute" left="40px" top="700px"><Frame id="2:4871"><Instance id="2:4872"><Frame id="I2:4872;330:291"><Text id="I2:4872;330:292">Copied title</Text></Frame></Instance></Frame></Frame></Frame>`,
+          })
+        ).structured as { created: { id: string }[]; errors: unknown[] };
+        const copyId = copy.created[0]?.id ?? "";
+
+        log.copy = copy;
+        expect(copy.errors).toEqual([]);
+        expect((await call("design_read", { node: copyId })).text).toContain(">Copied title<");
+        expect((await call("design_read", { node: "2:4870" })).text).toBe(sourceCard);
+
+        // (e) A note with a category the file lacks.
+        await call("design_apply", { xml: `<Frame id="${cardId}" note="Pixelwright check: written live"/>` });
+        expect((await call("design_read", { node: boardId })).text).toContain('note="Pixelwright check: written live"');
+
+        // (f) The Heading instance moved into the card, then first in it.
+        const cardRead = (await call("design_read", { node: cardId })).text;
+        const firstText = /<Text id="([^"]+)"/.exec(cardRead)?.[1] ?? "";
+
+        await call("design_apply", {
+          xml: `<Frame id="${cardId}"><Text id="${firstText}"/><Instance id="${instanceId}"/></Frame>`,
+        });
+        await call("design_apply", {
+          xml: `<Frame id="${cardId}"><Instance id="${instanceId}"/><Text id="${firstText}"/></Frame>`,
+        });
+
+        const movedRead = (await call("design_read", { node: cardId })).text;
+
+        log.moved = movedRead;
+        expect(movedRead.indexOf(`id="${instanceId}"`)).toBeGreaterThan(-1);
+        expect(movedRead.indexOf(`id="${instanceId}"`)).toBeLessThan(movedRead.indexOf(`id="${firstText}"`));
+
         log.deleted = (await call("nodes_delete", { nodes: made.splice(0) })).structured;
         // Taken back whole: the row reads as before.
         expect((await call("design_read", { node: "2:4869" })).text).toBe(row);
