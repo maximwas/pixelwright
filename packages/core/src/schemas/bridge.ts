@@ -9,6 +9,8 @@ export const BridgeErrorCodeSchema = z.enum([
   "PLUGIN_DISCONNECTED",
   "FILE_NOT_FOUND",
   "RESULT_NOT_SERIALIZABLE",
+  "AMBIGUOUS_FILE",
+  "NODE_NOT_FOUND",
 ]);
 
 /** Any string on the wire: a newer plugin may send a code this side does not know (fromWireError maps it). */

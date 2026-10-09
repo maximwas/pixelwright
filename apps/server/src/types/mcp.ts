@@ -1,14 +1,14 @@
 import type { ToolAnnotations } from "@modelcontextprotocol/server";
 import type * as z from "zod";
 import type { StatusOutputSchema } from "../schemas/status.ts";
-import type { BridgeStatus, ConnectedPlugin, PairingStatus } from "./bridge.ts";
+import type { BridgeStatus, ConnectedPlugin, PairingStatus, RequestOptions } from "./bridge.ts";
 
 /** What tools need from the plugin bridge (PluginBridge implements it). */
 export interface BridgeView {
   status(): BridgeStatus;
   plugins(): readonly ConnectedPlugin[];
   pairing(): PairingStatus | null;
-  request(op: string, input: unknown): Promise<unknown>;
+  request(op: string, input: unknown, options?: RequestOptions): Promise<unknown>;
 }
 
 export interface ToolContext {

@@ -19,6 +19,8 @@ export const StatusOutputSchema = z.object({
   server: z.object({
     version: z.string(),
     role: z.enum(["owner", "peer", "unavailable", "failed", "disabled"]),
+    /** The bridge protocol this server speaks; a plugin on another one is turned away. */
+    protocol: z.number().int(),
     port: z.number().int(),
   }),
   files: z.array(FileSchema),

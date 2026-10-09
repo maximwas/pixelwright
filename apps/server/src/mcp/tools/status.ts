@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/server";
+import { BRIDGE_PROTOCOL_VERSION } from "@pixelwright/core";
 import { StatusInputSchema, StatusOutputSchema } from "../../schemas/status.ts";
 import type { BridgeView, StatusOutput, ToolContext } from "../../types/mcp.ts";
 import { describeError } from "../describe-error.ts";
@@ -40,6 +41,7 @@ export async function readStatus(bridge: BridgeView, version: string, probe: boo
     server: {
       version,
       role,
+      protocol: BRIDGE_PROTOCOL_VERSION,
       port,
     },
     files,

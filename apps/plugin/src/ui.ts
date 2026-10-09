@@ -1,6 +1,6 @@
 import { emit, on } from "@create-figma-plugin/utilities";
 import type { PluginInfo, PluginKey, RequestMessage } from "@pixelwright/core";
-import { BRIDGE_URL, RECENT_ACTIONS } from "./constants/plugin.ts";
+import { BRIDGE_URL } from "./constants/plugin.ts";
 import { newInstanceId } from "./link/instance-id.ts";
 import { MainRelay } from "./link/main-relay.ts";
 import { SocketLink } from "./link/socket-link.ts";
@@ -17,6 +17,7 @@ import type {
 } from "./types/messages.ts";
 import type { RecentAction } from "./types/window.ts";
 import { createPluginWindow } from "./view/plugin-window.ts";
+import { withAction } from "./view/recent-actions.ts";
 
 /**
  * The UI iframe: holds the bridge socket (only the iframe may use the network) and draws the window. It starts with no
@@ -54,13 +55,7 @@ export default function (root: HTMLElement): void {
       info: () => info(context ?? current),
       key: storedKey,
       onRequest: (request: RequestMessage): Promise<RequestOutcome> => {
-        actions = [
-          {
-            op: request.op,
-            at: Date.now(),
-          },
-          ...actions,
-        ].slice(0, RECENT_ACTIONS);
+        actions = withAction(actions, request.op, Date.now());
         render();
 
         return relay.call(request.op, request.input ?? null);

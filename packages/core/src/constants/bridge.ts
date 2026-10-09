@@ -33,5 +33,8 @@ export const NO_RECONNECT_CODES: ReadonlySet<number> = new Set([CloseCode.Supers
 /** The event the plugin sends whenever its file, page, window visibility or Allow edits changes. */
 export const PLUGIN_INFO_EVENT = "plugin.info";
 
+/** Operations the plugin window does not list among the last actions: probes, not something the model asked for. */
+export const SILENT_OPERATIONS: ReadonlySet<string> = new Set(["ping"]);
+
 /** Digits of the pairing code the server shows and the user types into the plugin window. */
 export const PAIRING_CODE_LENGTH = 6;

@@ -20,7 +20,7 @@ export function bridgeHint({ state, connectedFiles, pairing, rejection, port, no
   if (pairing !== null && pairing.code !== null) {
     const seconds = Math.max(0, Math.ceil(((pairing.expiresAt ?? now) - now) / 1000));
 
-    return `A Figma file is waiting to be paired: ask the user to type ${pairing.code} into the Pixelwright window in Figma (valid for ${seconds} s). Only the user types it; never type or send it anywhere yourself.`;
+    return `A plugin is waiting to be paired: ask the user to type ${pairing.code} into the Pixelwright window in Figma (valid for ${seconds} s). Only the user types it; never type or send it anywhere yourself.`;
   }
 
   if (pairing !== null && pairing.lockedUntil !== null) {
