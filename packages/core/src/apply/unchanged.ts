@@ -1,4 +1,4 @@
-import type { ApplyElement } from "../types/apply.ts";
+import type { ApplyElement, LayerNow } from "../types/apply.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import type { XmlChild, XmlElementNode } from "../types/xml.ts";
 import { designXml } from "../xml/design.ts";
@@ -13,7 +13,7 @@ export function unchangedAttributes(
   element: ApplyElement,
   item: { node: SnapshotNode; parent: SnapshotNode | null },
   tokens: Pick<Snapshot, "styles" | "variables">,
-): { attributes: Set<string>; text: boolean } {
+): LayerNow {
   const renders = [
     render(
       {
@@ -45,17 +45,31 @@ export function unchangedAttributes(
 
   for (const [name, value] of Object.entries(element.attributes)) {
     // An asset's file name depends on where design_read wrote it; a file is replaced in stage 4b.
-    if (name === "src" || renders.some((rendered) => rendered?.props[name] === value)) {
+    if (name === "src" || renders.some((rendered) => same(name, rendered?.props[name], value))) {
       attributes.add(name);
     }
   }
+
+  // As its parent holds it when it has one: that render places it.
+  const shown = renders.findLast((rendered) => rendered !== null);
 
   const wanted = element.content === undefined ? null : canonical(element.content);
 
   return {
     attributes,
     text: wanted === null || renders.some((rendered) => rendered !== null && canonical(rendered.children) === wanted),
+    visible: item.node.visible,
+    current: Object.fromEntries(
+      Object.entries(shown?.props ?? {}).filter(([name]) => name !== "id" && !name.startsWith("$")),
+    ),
   };
+}
+
+/** Equal as design_read writes it; an image's file name aside, which depends on where the read wrote it. */
+function same(name: string, written: string | undefined, value: string): boolean {
+  const file = (css: string) => css.replace(/url\([^)]*\)/g, "url()");
+
+  return written === value || (written !== undefined && name === "background" && file(written) === file(value));
 }
 
 function pick(tokens: Pick<Snapshot, "styles" | "variables">): Pick<Snapshot, "styles" | "variables"> {

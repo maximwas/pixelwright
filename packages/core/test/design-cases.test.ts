@@ -253,6 +253,27 @@ describe("auto layout and grid", () => {
     expect(line(xml, "1:1")).not.toContain("gap=");
   });
 
+  it("writes the gap between wrapped lines when it differs from the gap, 0 included, as CSS reads gap for both", () => {
+    const wrap = (itemSpacing: number, counterAxisSpacing: number, fields: Partial<SnapshotNode> = {}) =>
+      line(
+        xmlOf(
+          box([layer({ id: "1:2" }), layer({ id: "1:3" })], {
+            layoutMode: "HORIZONTAL",
+            layoutWrap: "WRAP",
+            itemSpacing,
+            counterAxisSpacing,
+            ...fields,
+          }),
+        ),
+        "1:1",
+      );
+
+    expect(wrap(12, 0)).toContain('gap="12px" row-gap="0"');
+    expect(wrap(12, 12)).toContain('gap="12px"');
+    expect(wrap(12, 12)).not.toContain("row-gap");
+    expect(wrap(12, 16, { primaryAxisAlignItems: "SPACE_BETWEEN" })).toContain('row-gap="16px"');
+  });
+
   it("writes grid tracks and where each child sits", () => {
     const xml = xmlOf(
       box(

@@ -1,3 +1,5 @@
+export * from "./apply/css-to-figma.ts";
+export * from "./apply/css-values.ts";
 export * from "./apply/read-apply.ts";
 export * from "./apply/unchanged.ts";
 export * from "./bridge/proof.ts";

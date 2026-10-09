@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@noble/hashes": "2.4.0",
+    "culori": "4.0.2",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/culori": "4.0.1",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "vitest": "catalog:"

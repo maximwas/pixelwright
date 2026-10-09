@@ -187,4 +187,59 @@ describe("unchangedAttributes", () => {
     expect([...frameUnchanged.attributes].sort()).toEqual(["id", "padding"]);
     expect(textUnchanged.text).toBe(false);
   });
+
+  it("gives what the layer has now, and an image background whose file alone differs is unchanged", () => {
+    const card: SnapshotNode = {
+      id: "1:1",
+      name: "Card",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+      childCount: 1,
+      fills: [
+        {
+          type: "IMAGE",
+          imageHash: "abc",
+          scaleMode: "FILL",
+        },
+      ],
+      children: [
+        {
+          id: "1:2",
+          name: "Box",
+          type: "RECTANGLE",
+          visible: true,
+          x: 10,
+          y: 10,
+          width: 20,
+          height: 20,
+          childCount: 0,
+        },
+      ],
+    };
+    const snapshot: Snapshot = {
+      root: card,
+      styles: {},
+      variables: {},
+    };
+    const { elements } = readApply(designXml(snapshot, { assetsPath: "/tmp/read/assets" }).xml);
+    const now = unchangedAttributes(
+      elements[0] as never,
+      {
+        node: card,
+        parent: null,
+      },
+      snapshot,
+    );
+
+    expect(elements[0]?.attributes.background).toMatch(/^url\(\/tmp\/read\/assets\//);
+    expect(now.attributes.has("background")).toBe(true);
+    expect(now.current).toMatchObject({
+      width: "200px",
+      height: "100px",
+    });
+  });
 });

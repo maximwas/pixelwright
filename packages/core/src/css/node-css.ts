@@ -192,10 +192,17 @@ function layoutCss(
   }
 
   if (node.layoutWrap === "WRAP") {
-    // Between wrapped lines: rows of a horizontal wrap, columns of a vertical one.
+    // Between wrapped lines: rows of a horizontal wrap, columns of a vertical one. CSS's gap spaces the lines too, so
+    // the line gap is written only when it differs from the gap written, 0 included.
     const between = node.layoutMode === "VERTICAL" ? "column-gap" : "row-gap";
+    const lines =
+      typeof node.counterAxisSpacing === "number"
+        ? length(node, "counterAxisSpacing", node.counterAxisSpacing, context)
+        : undefined;
 
-    setLength(css, between, node, "counterAxisSpacing", node.counterAxisSpacing ?? undefined, context);
+    if (lines !== undefined && lines !== (css.get("gap") ?? "0")) {
+      css.set(between, lines);
+    }
 
     if (node.counterAxisAlignContent === "SPACE_BETWEEN") {
       css.set("align-content", "space-between");
