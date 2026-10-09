@@ -27,7 +27,8 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
 6. **Files.** \`assets_export\`: several layers, or every asset inside one, as PNG, JPG, SVG or PDF, or the images as
    they were placed (originals).
 7. **Write.** \`design_apply\` writes the same XML back into Figma: change layers by id, create new ones (see \`guide
-   write\`). The user turns Allow edits on in the plugin window first.
+   write\`); \`tokens_apply\` writes variables and styles in tokens_read's JSON shape (see \`guide tokens\`);
+   \`execute\` runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.
 
 Build the code from the XML with the project's own components, tokens and layout conventions: the XML is the spec, not
 the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, unnamed layers,
@@ -126,6 +127,23 @@ text-decoration-thickness), text-align, text-wrap, color.
 - \`collections\` keeps only the named ones; \`libraries: true\` adds the enabled libraries' variables by name and type.
 - Past \`maxChars\` (80 000) only the summary comes back, with the collections to read one at a time.
 - An alias to a token the output leaves out (a collection you did not ask for) is named in \`notes\`.
+
+## tokens_apply
+
+- It takes what tokens_read returns with format json, or the same shape written by hand: \`collections\` (each with
+  \`name\`, \`modes\` and \`variables\`: \`name\`, \`type\` if you like, \`values\` by mode name, \`description\`,
+  \`token\`) and \`styles\` (\`paint\`, \`text\`, \`effect\`: \`name\` and \`value\`). Values are CSS, as below.
+- Collections, modes and variables are found by name in the file's own collections, or made; a new collection's
+  first mode renames Figma's default one. A variable's type comes from its first value when not given.
+  \`var(--token)\` makes an alias, to a variable of the call (in any order) or of the file. A \`token\` other than the
+  name's own becomes the variable's Web code syntax.
+- A paint style's value reads as a \`background\` (colours, a colour variable), a text style's as the \`font\`
+  shorthand, an effect style's as a \`box-shadow\` list.
+- A value a variable or style already holds is left as it is, so sending tokens_read's own output writes nothing;
+  send only what you change. Nothing is ever deleted (use \`execute\` to remove a token).
+- A library's collection or style the file uses is never copied into the file: change it in the library.
+- More modes than the file's Figma plan allows: that mode's error comes back and the other modes are written.
+- One undo step; \`dryRun\` checks names, types, modes and aliases without writing.
 
 ## Values
 
@@ -268,6 +286,17 @@ until then every call is refused (\`dryRun: true\` checks a call without writing
 Each element is written on its own: an error names its line and attribute, and the rest of the XML still goes in.
 \`created\` lists the new layers' ids by line, \`changed\` the layers written to. One call is one undo step in Figma:
 the user's Cmd+Z takes the whole call back.
+
+Effects CSS cannot write (noise, texture, glass, hidden effects) stay when a layer's \`box-shadow\` or \`filter\`
+changes, and a shadow sent back as it was keeps its colour variable and blend mode.
+
+## Beyond the XML: execute
+
+\`execute\` runs JavaScript in the plugin for what design_apply and tokens_apply cannot say (removing a variable,
+a prototype link, a plugin data field). The code is the body of an async function given \`figma\` (the Plugin API)
+and \`console\`: \`await\` works, \`return\` gives \`result\` (layers as {id, type, name}), \`console.log\` lines
+come back as \`logs\`, and what it throws as \`error\`. It is one undo step, needs Allow edits, and runs at most 25 s;
+a synchronous endless loop freezes Figma until the plugin is closed. Read the result back with the read tools.
 `,
   },
   email: {

@@ -27,6 +27,74 @@ const PROBE =
 
 type Call = (name: string, args: Record<string, unknown>) => Promise<{ structured: unknown; text: string }>;
 
+/** The live check's tokens: a collection of its own, two modes, an alias, and a style of each kind. */
+const TOKENS = {
+  collections: [
+    {
+      name: "Pixelwright check",
+      modes: ["Light", "Dark"],
+      variables: [
+        {
+          name: "pixelwright/accent",
+          values: {
+            Light: "#0D99FF",
+            Dark: "#7CC4FA",
+          },
+        },
+        {
+          name: "pixelwright/gap",
+          values: {
+            Light: "12px",
+            Dark: "12px",
+          },
+        },
+        {
+          name: "pixelwright/link",
+          values: {
+            Light: "var(--pixelwright-accent)",
+            Dark: "var(--pixelwright-accent)",
+          },
+        },
+      ],
+    },
+  ],
+  styles: {
+    paint: [
+      {
+        name: "Pixelwright check/paint",
+        value: "#0D99FF",
+      },
+    ],
+    text: [
+      {
+        name: "Pixelwright check/text",
+        value: "500 20px/normal 'Space Grotesk'",
+      },
+    ],
+    effect: [
+      {
+        name: "Pixelwright check/effect",
+        value: "0 5px 0 0 #191A23",
+      },
+    ],
+  },
+};
+
+/** Takes the check's tokens back: tokens_apply never deletes. */
+const CLEAN_TOKENS = `
+for (const collection of await figma.variables.getLocalVariableCollectionsAsync()) {
+  if (collection.name === "Pixelwright check") collection.remove();
+}
+const styles = [
+  ...(await figma.getLocalPaintStylesAsync()),
+  ...(await figma.getLocalTextStylesAsync()),
+  ...(await figma.getLocalEffectStylesAsync()),
+];
+for (const style of styles) {
+  if (style.name.startsWith("Pixelwright check/")) style.remove();
+}
+return "cleaned";`;
+
 /**
  * design_apply and nodes_delete against the plugin in the Positivus file, opt-in twice: PIXELWRIGHT_LIVE=<dir> for the
  * results and PIXELWRIGHT_LIVE_WRITE=1 for writing. The round trip and the dry run write nothing; with Allow edits on in
@@ -53,6 +121,7 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
       // What the run made or changed, taken back in finally whatever failed: layers to delete, texts to restore.
       const made: string[] = [];
       const texts: [string, string][] = [];
+      let tokensMade = false;
       const call: Call = async (name, args) => {
         const result = await client.callTool({
           name,
@@ -408,7 +477,107 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         log.deleted = (await call("nodes_delete", { nodes: made.splice(0) })).structured;
         // Taken back whole: the row reads as before.
         expect((await call("design_read", { node: "2:4869" })).text).toBe(row);
+
+        // (g) execute: the code's value and logs; a thrown error with the logs before it.
+        const ran = (
+          await call("execute", { code: 'console.log("page", figma.currentPage.name); return figma.currentPage.name;' })
+        ).structured as { result: unknown; logs: string[]; error?: string };
+        const threw = (await call("execute", { code: 'console.log("before"); throw new Error("boom");' }))
+          .structured as { logs: string[]; error?: string };
+
+        log.execute = {
+          ran,
+          threw,
+        };
+        expect(ran.error).toBeUndefined();
+        expect(typeof ran.result).toBe("string");
+        expect(ran.logs[0]).toMatch(/^page /);
+        expect(threw).toMatchObject({
+          logs: ["before"],
+          error: "Error: boom",
+        });
+
+        // (h) tokens_apply: a collection with two modes, three variables (one an alias) and three styles, read back;
+        // the read sent back and the same input again change nothing; one change is reported. Taken back in finally.
+        type Applied = {
+          created: { kind: string; name: string }[];
+          updated: { kind: string; name: string }[];
+          errors: { kind: string; name: string; mode?: string; message: string }[];
+        };
+
+        tokensMade = true;
+
+        const first = (await call("tokens_apply", TOKENS)).structured as Applied;
+        // A Figma plan allowing one mode refuses Dark: its values wait, the rest goes in.
+        const darkRefused = first.errors.some(({ kind, name }) => kind === "mode" && name === "Dark");
+
+        log.tokensFirst = first;
+        expect(first.errors.filter(({ kind, mode }) => kind !== "mode" && !(darkRefused && mode === "Dark"))).toEqual(
+          [],
+        );
+        expect(first.created.map(({ kind, name }) => `${kind} ${name}`)).toEqual(
+          expect.arrayContaining([
+            "collection Pixelwright check",
+            "variable pixelwright/accent",
+            "variable pixelwright/gap",
+            "variable pixelwright/link",
+            "paint Pixelwright check/paint",
+            "text Pixelwright check/text",
+            "effect Pixelwright check/effect",
+          ]),
+        );
+
+        const readBack = (
+          await call("tokens_read", {
+            format: "json",
+            collections: ["Pixelwright check"],
+          })
+        ).structured as { tokens: Record<string, unknown> };
+        const roundTrip = (await call("tokens_apply", { ...readBack.tokens })).structured as Applied;
+        const again = (await call("tokens_apply", TOKENS)).structured as Applied;
+        const changed = (
+          await call("tokens_apply", {
+            collections: [
+              {
+                name: "Pixelwright check",
+                variables: [
+                  {
+                    name: "pixelwright/gap",
+                    values: { Light: "16px" },
+                  },
+                ],
+              },
+            ],
+          })
+        ).structured as Applied;
+
+        log.tokens = {
+          readBack,
+          roundTrip,
+          again,
+          changed,
+        };
+        expect(roundTrip).toMatchObject({
+          created: [],
+          updated: [],
+          errors: [],
+        });
+        expect(again).toMatchObject({
+          created: [],
+          updated: [],
+        });
+        expect(changed.updated).toEqual([
+          {
+            kind: "variable",
+            collection: "Pixelwright check",
+            name: "pixelwright/gap",
+          },
+        ]);
       } finally {
+        if (tokensMade) {
+          log.tokensCleanup = await call("execute", { code: CLEAN_TOKENS }).catch((error: unknown) => String(error));
+        }
+
         for (const [id, characters] of texts) {
           await call("design_apply", { xml: `<Text id="${id}">${characters}</Text>` }).catch(() => undefined);
         }
