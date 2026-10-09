@@ -173,6 +173,16 @@ beforeEach(() => {
         children: [],
       },
       {
+        id: "9:1",
+        name: "Row",
+        layoutMode: "HORIZONTAL",
+        children: ["A", "B", "C"].map((name, index) => ({
+          id: `9:${index + 2}`,
+          type: "RECTANGLE",
+          name,
+        })),
+      },
+      {
         id: "2:1",
         name: "Heading",
         type: "INSTANCE",
@@ -276,6 +286,15 @@ describe("design_apply end to end: dry runs and moves", () => {
     );
 
     expect(result.errors).toEqual([]);
+  });
+
+  it("moves a layer forward past the others, as Figma counts the index with the layer still in place", async () => {
+    const result = await apply(
+      '<Frame id="9:1"><Rectangle id="9:3"/><Rectangle id="9:4"/><Rectangle id="9:2"/></Frame>',
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(byId("9:1")?.children?.map(({ id }) => id)).toEqual(["9:3", "9:4", "9:2"]);
   });
 
   it("moves a nested layer before another, lists it as changed, in one undo step", async () => {

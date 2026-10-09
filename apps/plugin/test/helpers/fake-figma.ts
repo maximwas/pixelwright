@@ -214,13 +214,16 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
     });
   const insert = (index: number, child: FakeNode) => {
     const old = child.parent?.children;
+    // As Figma (checked live): the index is read in the list as it is, a child of this layer still in its place, so
+    // one moved further along lands just before the layer that was at the index.
+    const at = old !== undefined && child.parent === node ? old.indexOf(child) : -1;
 
     if (old !== undefined) {
       old.splice(old.indexOf(child), 1);
     }
 
     node.children ??= [];
-    node.children.splice(index, 0, child);
+    node.children.splice(at !== -1 && at < index ? index - 1 : index, 0, child);
     child.parent = node;
     register(child);
     record("insertChild", [index, child.id]);

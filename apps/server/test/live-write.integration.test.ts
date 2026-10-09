@@ -226,9 +226,11 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
 
         // Stage 4b, all inside the board. (a) An instance of the page's Heading by name and variant, then another variant.
         const used = (await call("components_read", { scope: "used" })).structured as {
-          components: { name: string; variants?: string[] }[];
+          components: { name: string; variants?: { id: string; name: string }[] }[];
         };
-        const headingVariants = used.components.find(({ name }) => name === "Heading")?.variants ?? [];
+        const headingVariants = (used.components.find(({ name }) => name === "Heading")?.variants ?? []).map(
+          ({ name }) => name,
+        );
         const [firstVariant = "", secondVariant = firstVariant] = headingVariants;
         const instance = (
           await call("design_apply", {

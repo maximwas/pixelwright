@@ -598,10 +598,9 @@ async function moveTo(
     }
   }
 
-  const at = node.parent?.id === parent.id ? indexIn(parent, node) : -1;
-
-  // A layer moved further along its own parent leaves a gap before the place it goes to.
-  parent.insertChild(at !== -1 && at < index ? index - 1 : index, node);
+  // Figma reads the index in the list as it is, the layer itself still in its place (checked live): the index of the
+  // layer it goes before is the one to give, whichever way it moves.
+  parent.insertChild(index, node);
 }
 
 /** Where a create goes: next to the layer before/after names, else in its parent element, the call's, or the page. */
