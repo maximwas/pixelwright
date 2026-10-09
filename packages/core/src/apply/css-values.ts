@@ -19,6 +19,28 @@ import {
 } from "@csstools/css-tokenizer";
 import {
   converter,
+  modeA98,
+  modeHsl,
+  modeHwb,
+  modeLab,
+  modeLch,
+  modeLrgb,
+  modeOklab,
+  modeOklch,
+  modeP3,
+  modeProphoto,
+  modeRec2020,
+  modeRgb,
+  modeXyz50,
+  modeXyz65,
+  parse,
+  useMode,
+} from "culori/fn";
+import type { ColorValue, LengthValue, PaintSpec, TokenRef } from "../types/apply.ts";
+
+// The colour spaces CSS has, color() ones included: the plugin bundle carries none of culori's others.
+for (const mode of [
+  modeRgb,
   modeHsl,
   modeHwb,
   modeLab,
@@ -26,14 +48,13 @@ import {
   modeOklab,
   modeOklch,
   modeP3,
-  modeRgb,
-  parse,
-  useMode,
-} from "culori/fn";
-import type { ColorValue, LengthValue, PaintSpec, TokenRef } from "../types/apply.ts";
-
-// Only the colour spaces CSS writes, so the plugin bundle does not carry every space culori knows.
-for (const mode of [modeRgb, modeHsl, modeHwb, modeLab, modeLch, modeOklab, modeOklch, modeP3]) {
+  modeLrgb,
+  modeA98,
+  modeProphoto,
+  modeRec2020,
+  modeXyz50,
+  modeXyz65,
+]) {
   useMode(mode);
 }
 
@@ -130,6 +151,25 @@ export function urlsOf(value: string): string[] {
   });
 
   return found;
+}
+
+/** A value with every url() emptied, quoted or not: what it shows, whichever file it names. */
+export function withoutUrls(value: string): string {
+  const [nodes = []] = replaceComponentValues([componentsOf(value)], (node) => {
+    if (isTokenNode(node) && (isTokenURL(node.value) || isTokenBadURL(node.value))) {
+      return parseListOfComponentValues(tokenize({ css: "url()" }));
+    }
+
+    if (isFunctionNode(node) && node.getName().toLowerCase() === "url") {
+      node.value = [];
+
+      return node;
+    }
+
+    return undefined;
+  });
+
+  return stringify([nodes]);
 }
 
 /** A value without comments and with every var() cut to its name: what a var() falls back to is left out. */

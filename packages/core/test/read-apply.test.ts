@@ -489,6 +489,73 @@ describe("unchangedAttributes", () => {
     ).toBe(true);
   });
 
+  it("writes an image background that reads back whatever its assets folder is called", () => {
+    // A frame with a child: its image is a background, url() and all.
+    const card: SnapshotNode = {
+      id: "1:1",
+      name: "Card",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+      childCount: 1,
+      fills: [
+        {
+          type: "IMAGE",
+          imageHash: "abc",
+          scaleMode: "FILL",
+        },
+      ],
+      children: [
+        {
+          id: "1:2",
+          name: "Box",
+          type: "RECTANGLE",
+          visible: true,
+          x: 10,
+          y: 10,
+          width: 20,
+          height: 20,
+          childCount: 0,
+        },
+      ],
+    };
+
+    const snapshot: Snapshot = {
+      root: card,
+      styles: {},
+      variables: {},
+    };
+
+    for (const assetsPath of ["/tmp/My Project/assets", "/tmp/assets (old)", "/tmp/it's", '/tmp/say "hi"']) {
+      const read = readApply(designXml(snapshot, { assetsPath }).xml);
+
+      const change = changeOf(read.elements[0] as never);
+
+      expect([...read.errors, ...change.errors], assetsPath).toEqual([]);
+      expect(change.change.props.fills, assetsPath).toEqual([
+        expect.objectContaining({
+          kind: "image",
+          src: expect.stringMatching(new RegExp(`^${assetsPath.replace(/[()]/g, "\\$&")}/`)),
+        }),
+      ]);
+      // Sent back as it was read, it is no change.
+      expect(
+        unchangedAttributes(
+          read.elements[0] as never,
+          {
+            node: card,
+            parent: null,
+          },
+          snapshot,
+        ).attributes.has("background"),
+        assetsPath,
+      ).toBe(true);
+    }
+  });
+
   it("gives what the layer has now, and an image background whose file alone differs is unchanged", () => {
     const card: SnapshotNode = {
       id: "1:1",

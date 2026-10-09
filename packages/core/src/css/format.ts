@@ -26,3 +26,8 @@ export function boxShorthand(top: string, right: string, bottom: string, left: s
 
   return `${top} ${right} ${bottom} ${left}`;
 }
+
+/** A file's url(): bare where CSS reads it so, quoted when the path holds spaces, quotes, brackets or backslashes. */
+export function cssUrl(path: string): string {
+  return /^[^\s"'()\\]+$/.test(path) ? `url(${path})` : `url("${path.replace(/["\\]/g, "\\$&")}")`;
+}

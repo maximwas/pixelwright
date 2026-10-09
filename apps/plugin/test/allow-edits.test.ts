@@ -93,6 +93,27 @@ describe("Allow edits", () => {
     expect(await run(fileA)).toBe(false);
   });
 
+  it("keeps the last choice when an earlier save is still running", async () => {
+    const file = new Map<string, string>();
+    const { setAsync } = fakeFigma.clientStorage;
+
+    // Storage that takes a while to store and no time to forget.
+    fakeFigma.clientStorage.setAsync = async (key, value) => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      await setAsync(key, value);
+    };
+
+    try {
+      expect(await run(file)).toBe(false);
+      fakeFigma.ui.onmessage?.(["ALLOW_EDITS", true]);
+      fakeFigma.ui.onmessage?.(["ALLOW_EDITS", false]);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(await run(file)).toBe(false);
+    } finally {
+      fakeFigma.clientStorage.setAsync = setAsync;
+    }
+  });
+
   it("goes by Figma's file key where Figma gives one, writing nothing into the file", async () => {
     const file = new Map<string, string>();
 

@@ -2,6 +2,7 @@ import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotPaint } from "../types/snapshot.ts";
 import { colorCss, type Rgba } from "./color.ts";
+import { cssUrl } from "./format.ts";
 import { tokenName, variableTokenName } from "./tokens.ts";
 
 /** A paint the mapping table cannot write back yet (gradients, video, patterns): read-only CSS instead. */
@@ -103,7 +104,7 @@ function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext)
   if (paint.type === "IMAGE") {
     const url = context.imageUrl?.(node, paint) ?? `assets/${paint.imageHash ?? "image"}.png`;
 
-    return `url(${url}) ${SCALE_MODES[paint.scaleMode ?? "FILL"] ?? SCALE_MODES.FILL}`;
+    return `${cssUrl(url)} ${SCALE_MODES[paint.scaleMode ?? "FILL"] ?? SCALE_MODES.FILL}`;
   }
 
   return UNMAPPED;

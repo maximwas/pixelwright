@@ -5,8 +5,13 @@ import slugify from "slugify";
  * `tokyo-magnifier 2` → `tokyo-magnifier-2`, `Логотип компанії` → `lohotyp-kompaniyi`, an empty one → `asset`.
  */
 export function slug(name: string): string {
-  // Separators become spaces first: slugify's strict mode would drop them and run "1.5" into "15".
-  const cleaned = slugify(name.replace(/[\\/.,:;_+|()[\]{}]+/g, " "), {
+  // Every run of anything but letters, digits and marks parts words first: slugify's strict mode would drop it and run
+  // "State=Default" into "statedefault". NFKC folds ligatures and the like ("ﬁ" → "fi"); apostrophes join ("Kid's").
+  const words = name
+    .normalize("NFKC")
+    .replace(/['’]/g, "")
+    .replace(/[^\p{L}\p{N}\p{M}]+/gu, " ");
+  const cleaned = slugify(words, {
     lower: true,
     strict: true,
     locale: "uk",

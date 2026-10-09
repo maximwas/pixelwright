@@ -1017,7 +1017,11 @@ function layersOf(attribute: string, value: string, out: Output): PaintSpec[] | 
     if (paint !== null) {
       layers.push(paint);
     } else if (image === "unquoted") {
-      out.fail(attribute, `${layer.slice(0, 40)}: a file name with spaces needs quotes.`, 'Write url("my photo.png").');
+      out.fail(
+        attribute,
+        `${layer.slice(0, 40)}: url() without quotes cannot hold spaces, quotes, brackets or var().`,
+        'Write the file in quotes: url("my photo.png").',
+      );
 
       return null;
     } else if (image !== null && attribute === "background") {

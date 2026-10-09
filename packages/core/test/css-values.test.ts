@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changeOf, cleanOracle, closest, colorOf, slug, splitTop, urlsOf } from "../src/index.ts";
+import { changeOf, cleanOracle, closest, colorOf, fontShorthand, slug, splitTop, urlsOf } from "../src/index.ts";
 
 const props = (tag: string, attributes: Record<string, string>) =>
   changeOf({
@@ -40,6 +40,24 @@ describe("CSS values, read as CSS reads them", () => {
         src: "assets/photo (1).png",
       }),
     ]);
+  });
+
+  it("reads back a font family design_read wrote with a quote in its name", () => {
+    for (const family of ["Kid's Font", 'Say "Hi"', "Back\\slash"]) {
+      const font = fontShorthand({
+        fontName: {
+          family,
+          style: "Regular",
+        },
+        fontSize: 16,
+        lineHeight: {
+          unit: "PIXELS",
+          value: 24,
+        },
+      });
+
+      expect(props("Text", { font }).change.props.font, font).toMatchObject({ family });
+    }
   });
 
   it("asks for quotes around a file name with spaces", () => {
@@ -92,7 +110,57 @@ describe("colours", () => {
   });
 });
 
+describe("colours in color()", () => {
+  it("reads the spaces it read before culori/fn: srgb-linear, a98-rgb, prophoto-rgb, rec2020, xyz, xyz-d50, xyz-d65", () => {
+    for (const white of [
+      "color(srgb-linear 1 1 1)",
+      "color(a98-rgb 1 1 1)",
+      "color(prophoto-rgb 1 1 1)",
+      "color(rec2020 1 1 1)",
+      "color(xyz 0.9505 1 1.089)",
+      "color(xyz-d65 0.9505 1 1.089)",
+      "color(xyz-d50 0.9642 1 0.8252)",
+    ]) {
+      const color = colorOf(white);
+
+      expect(color, white).not.toBeNull();
+
+      for (const channel of [color?.r, color?.g, color?.b]) {
+        expect(channel, white).toBeCloseTo(1, 2);
+      }
+    }
+  });
+});
+
 describe("file names from layer names", () => {
+  it("keeps words apart at any punctuation, as variant names need, and folds compatibility characters", () => {
+    expect(
+      [
+        "State=Default, Size=Large",
+        "Property 1=Variant2",
+        "Btn#Primary",
+        "Hero Image@2x",
+        "x<y>z",
+        "50% off",
+        "\ufb01nal",
+        "x\u00b2",
+        "\u2163 chapter",
+        "Kid's Font",
+      ].map(slug),
+    ).toEqual([
+      "state-default-size-large",
+      "property-1-variant2",
+      "btn-primary",
+      "hero-image-2x",
+      "x-y-z",
+      "50-off",
+      "final",
+      "x2",
+      "iv-chapter",
+      "kids-font",
+    ]);
+  });
+
   it("keeps a name's letters readable whatever its script, never empty", () => {
     expect(
       [

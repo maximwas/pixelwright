@@ -12,8 +12,19 @@ export async function readEditsAllowed(): Promise<boolean> {
   return id !== null && typeof (await figma.clientStorage.getAsync(`${EDITS_STORAGE_PREFIX}${id}`)) === "string";
 }
 
-/** Keeps the switch for this file: on stores when it was turned on, off forgets it. */
-export async function saveEditsAllowed(allowed: boolean): Promise<void> {
+let saving = Promise.resolve();
+
+/** Keeps the switch for this file: on stores when it was turned on, off forgets it. One save at a time, in order. */
+export function saveEditsAllowed(allowed: boolean): Promise<void> {
+  const saved = saving.then(() => save(allowed));
+
+  // A failed save is its caller's; the next one still runs.
+  saving = saved.catch(() => {});
+
+  return saved;
+}
+
+async function save(allowed: boolean): Promise<void> {
   if (allowed) {
     await figma.clientStorage.setAsync(`${EDITS_STORAGE_PREFIX}${fileId() ?? newFileId()}`, new Date().toISOString());
 

@@ -3,6 +3,7 @@ import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import type { XmlChild, XmlElementNode } from "../types/xml.ts";
 import { designXml } from "../xml/design.ts";
 import { parseXml } from "../xml/parse/parse-xml.ts";
+import { withoutUrls } from "./css-values.ts";
 
 /**
  * Which of an element's attributes the layer already has, as design_read would write them (the reader's rounding
@@ -86,9 +87,9 @@ export function unchangedAttributes(
 
 /** Equal as design_read writes it; an image's file name aside, which depends on where the read wrote it. */
 function same(name: string, written: string | undefined, value: string): boolean {
-  const file = (css: string) => css.replace(/url\([^)]*\)/g, "url()");
-
-  return written === value || (written !== undefined && name === "background" && file(written) === file(value));
+  return (
+    written === value || (written !== undefined && name === "background" && withoutUrls(written) === withoutUrls(value))
+  );
 }
 
 function pick(tokens: Pick<Snapshot, "styles" | "variables">): Pick<Snapshot, "styles" | "variables"> {
