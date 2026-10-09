@@ -1,4 +1,5 @@
 import * as z from "zod";
+import type { OutlineNode } from "../types/operations.ts";
 
 /** A node's box in page coordinates, whole pixels. */
 export const BoxSchema = z.object({
@@ -14,6 +15,25 @@ export const NodeRefSchema = z.object({
   name: z.string(),
   type: z.string(),
   box: BoxSchema.nullable(),
+});
+
+/**
+ * A layer in an outline: its box relative to the outlined root (none for a page), the number of its children, and
+ * those children up to the outline's depth.
+ */
+export const OutlineNodeSchema: z.ZodType<OutlineNode> = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  x: z.number().exactOptional(),
+  y: z.number().exactOptional(),
+  width: z.number().exactOptional(),
+  height: z.number().exactOptional(),
+  hidden: z.literal(true).exactOptional(),
+  childCount: z.number().int().min(0),
+  get children() {
+    return z.array(OutlineNodeSchema).exactOptional();
+  },
 });
 
 const NodeIdSchema = z.string().min(1).max(200);
@@ -53,5 +73,12 @@ export const OPERATION_SCHEMAS = {
       nodes: z.array(NodeRefSchema.extend({ path: z.array(z.string()) })),
       more: z.boolean(),
     }),
+  },
+  outline: {
+    input: z.object({
+      node: NodeIdSchema.exactOptional(),
+      depth: z.number().int().min(1).max(10).default(3),
+    }),
+    output: z.object({ root: OutlineNodeSchema }),
   },
 } as const;

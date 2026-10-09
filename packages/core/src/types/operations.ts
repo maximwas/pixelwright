@@ -9,3 +9,17 @@ export type OperationOutput<N extends OperationName> = z.input<(typeof OPERATION
 
 /** What the server gets back from an operation, once parsed. */
 export type OperationResult<N extends OperationName> = z.output<(typeof OPERATION_SCHEMAS)[N]["output"]>;
+
+/** A layer in an outline (OutlineNodeSchema): written out because zod cannot infer a recursive type. */
+export interface OutlineNode {
+  id: string;
+  name: string;
+  type: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  hidden?: true;
+  childCount: number;
+  children?: OutlineNode[];
+}

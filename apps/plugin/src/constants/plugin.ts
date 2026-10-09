@@ -22,3 +22,6 @@ export const RECONNECT = {
   firstMs: 500,
   maxMs: 10_000,
 } as const;
+
+/** The most nodes one outline lists, far below the bridge's message limit; children past it are counted, not listed. */
+export const OUTLINE_MAX_NODES = 2_000;

@@ -112,3 +112,47 @@ describe("read operations", () => {
     await expect(runOperation("show", { node: "9:9" })).rejects.toMatchObject({ code: "NODE_NOT_FOUND" });
   });
 });
+
+describe("outline", () => {
+  it("returns the tree to a depth, with boxes relative to the root and child counts where it stops", async () => {
+    const outline = (await runOperation("outline", {
+      node: "2:4868",
+      depth: 1,
+    })) as {
+      root: { x: number; y: number; children: { id: string; childCount: number; children?: unknown }[] };
+    };
+
+    expect(outline.root).toMatchObject({
+      x: 0,
+      y: 0,
+    });
+    expect(outline.root.children.map((child) => [child.id, child.childCount, child.children])).toEqual([
+      ["2:4873", 1, undefined],
+      ["2:4875", 0, undefined],
+    ]);
+  });
+});
+
+describe("outline of a frame with more children than one outline lists", () => {
+  it("lists the first ones and keeps the full count", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "1:1",
+            children: Array.from({ length: 2_500 }, (_, index) => ({ id: `1:${index + 2}` })),
+          },
+        ],
+      }),
+    );
+
+    const outline = (await runOperation("outline", { node: "1:1" })) as {
+      root: { childCount: number; children: unknown[] };
+    };
+
+    expect(outline.root.childCount).toBe(2_500);
+    expect(outline.root.children).toHaveLength(1_999);
+  });
+});

@@ -6,7 +6,7 @@ import {
   type OperationOutput,
 } from "@pixelwright/core";
 
-import { find, selection, show } from "./read-ops.ts";
+import { find, outline, selection, show } from "./read-ops.ts";
 
 type Handlers = { readonly [N in OperationName]: (input: OperationInput<N>) => Promise<OperationOutput<N>> };
 
@@ -16,6 +16,7 @@ const HANDLERS: Handlers = {
   selection,
   show,
   find,
+  outline,
 };
 
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);

@@ -1,4 +1,5 @@
-import { BridgeError, type OperationInput, type OperationOutput } from "@pixelwright/core";
+import { BridgeError, type OperationInput, type OperationOutput, type OutlineNode } from "@pixelwright/core";
+import { OUTLINE_MAX_NODES } from "../constants/plugin.ts";
 import { boxOf, pageOf, pathOf, requireNode } from "./nodes.ts";
 
 /** What the user selected on the current page. */
@@ -81,6 +82,84 @@ export async function find(input: OperationInput<"find">): Promise<OperationOutp
     })),
     more: found.length > input.limit,
   };
+}
+
+/**
+ * The layer tree under a node (the current page when left out) to `depth`, breadth first, so a big frame keeps every
+ * section before any of them loses its children to the node limit. Boxes are relative to the outlined node.
+ */
+export async function outline({ node: id, depth }: OperationInput<"outline">): Promise<OperationOutput<"outline">> {
+  const root = id === undefined ? figma.currentPage : await requireNode(id);
+
+  if (root.type === "DOCUMENT") {
+    throw new BridgeError("NODE_NOT_FOUND", `${id} is the document: outline a page or a layer.`);
+  }
+
+  if (root.type === "PAGE" && root !== figma.currentPage) {
+    // dynamic-page: a page the user is not on has no children until it is loaded.
+    await root.loadAsync();
+  }
+
+  const origin = boxOf(root) ?? {
+    x: 0,
+    y: 0,
+  };
+  const entryOf = (node: BaseNode): OutlineNode => {
+    const box = boxOf(node);
+
+    return {
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      ...(box === null
+        ? {}
+        : {
+            x: box.x - origin.x,
+            y: box.y - origin.y,
+            width: box.width,
+            height: box.height,
+          }),
+      ...("visible" in node && !node.visible ? { hidden: true } : {}),
+      childCount: childrenOf(node).length,
+    };
+  };
+  const top = entryOf(root);
+  const queue: { node: BaseNode; entry: OutlineNode; level: number }[] = [
+    {
+      node: root,
+      entry: top,
+      level: 0,
+    },
+  ];
+  let listed = 1;
+
+  for (let index = 0; index < queue.length && listed < OUTLINE_MAX_NODES; index++) {
+    const { node, entry, level } = queue[index] as (typeof queue)[number];
+    const children = childrenOf(node).slice(0, OUTLINE_MAX_NODES - listed);
+
+    if (level >= depth || children.length === 0) {
+      continue;
+    }
+
+    listed += children.length;
+    entry.children = children.map((child) => {
+      const childEntry = entryOf(child);
+
+      queue.push({
+        node: child,
+        entry: childEntry,
+        level: level + 1,
+      });
+
+      return childEntry;
+    });
+  }
+
+  return { root: top };
+}
+
+function childrenOf(node: BaseNode): readonly BaseNode[] {
+  return "children" in node ? node.children : [];
 }
 
 /** Whether an instance's main component, or its component set, is named like the query. */

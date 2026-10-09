@@ -5,3 +5,6 @@ export * from "./schemas/bridge.ts";
 export * from "./schemas/operations.ts";
 export type * from "./types/bridge.ts";
 export type * from "./types/operations.ts";
+export * from "./xml/escape.ts";
+export * from "./xml/outline.ts";
+export * from "./xml/tags.ts";

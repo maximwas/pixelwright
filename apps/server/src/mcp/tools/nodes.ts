@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { OPERATION_SCHEMAS } from "@pixelwright/core";
+import { countOutline, OPERATION_SCHEMAS, outlineXml } from "@pixelwright/core";
 import * as z from "zod";
 import { FileSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
@@ -45,5 +45,29 @@ export function registerNodeTools(server: McpServer, { bridge }: ToolContext): v
     output: OPERATION_SCHEMAS.find.output,
     annotations: READ_ONLY,
     run: ({ file, ...query }) => runOp(bridge, "find", query, file),
+  });
+  registerTool(server, {
+    name: "outline",
+    title: "Outline a frame",
+    description:
+      'The layer tree of a frame, a page or the current page, as light XML: tag (the Figma type), id, name and box (x and y relative to the outlined node) per layer, to `depth` levels. Use it to find the sections of a big frame before reading one with design_read. A layer with `$children="N"` has N children not listed here: outline it on its own.',
+    input: z.object({
+      node: OPERATION_SCHEMAS.outline.input.shape.node.describe("The layer or page id. Default: the current page."),
+      depth: OPERATION_SCHEMAS.outline.input.shape.depth.describe("How many levels below the node to list (1 to 10)."),
+      file: FileSchema,
+    }),
+    output: z.object({
+      xml: z.string(),
+      nodes: z.number().describe("How many layers the XML lists."),
+    }),
+    annotations: READ_ONLY,
+    run: async ({ file, ...query }) => {
+      const { root } = await runOp(bridge, "outline", query, file);
+
+      return {
+        xml: outlineXml(root),
+        nodes: countOutline(root),
+      };
+    },
   });
 }
