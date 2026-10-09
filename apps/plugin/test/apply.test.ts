@@ -1,0 +1,362 @@
+import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setEditsAllowed } from "../src/figma/edits.ts";
+import { runOperation } from "../src/figma/operations.ts";
+import { type FakeLibrary, type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+
+interface Applied {
+  created: { line: number; ref: string; id: string; tag: string }[];
+  changed: string[];
+  errors: ApplyError[];
+}
+
+/** The changes core makes of an XML, every attribute taken as new. */
+function changesOf(xml: string): ApplyChange[] {
+  const { elements, errors } = readApply(xml);
+
+  expect(errors).toEqual([]);
+
+  return elements.map((element) => changeOf(element).change);
+}
+
+const apply = async (xml: string, options: { parent?: string; dryRun?: boolean } = {}) =>
+  (await runOperation("apply", {
+    changes: changesOf(xml),
+    ...options,
+  })) as Applied;
+
+const DARK = {
+  r: 25 / 255,
+  g: 26 / 255,
+  b: 35 / 255,
+};
+
+const LIBRARY: FakeLibrary = {
+  fonts: [
+    {
+      family: "Inter",
+      style: "Regular",
+    },
+    {
+      family: "Inter",
+      style: "Medium",
+    },
+    {
+      family: "Inter",
+      style: "Bold",
+    },
+    {
+      family: "Space Grotesk",
+      style: "Medium",
+    },
+  ],
+  styles: {
+    "S:dark": {
+      id: "S:dark",
+      name: "Dark",
+      type: "PAINT",
+      remote: true,
+      paints: [
+        {
+          type: "SOLID",
+          color: DARK,
+        },
+      ],
+    },
+  },
+};
+
+/** A page with an auto layout card, a free-form box with a child, and a Heading instance, as Positivus has. */
+function page(): FakeNode {
+  return tree({
+    id: "0:1",
+    type: "PAGE",
+    children: [
+      {
+        id: "1:1",
+        name: "Card",
+        layoutMode: "HORIZONTAL",
+        opacity: 1,
+        fillStyleId: "S:dark",
+        fills: [
+          {
+            type: "SOLID",
+            color: DARK,
+          },
+        ],
+        absoluteBoundingBox: {
+          x: 0,
+          y: 0,
+          width: 600,
+          height: 300,
+        },
+        children: [
+          {
+            id: "1:2",
+            type: "TEXT",
+            name: "Title",
+            characters: "Hello",
+            fontName: {
+              family: "Inter",
+              style: "Regular",
+            },
+          },
+          {
+            id: "1:3",
+            name: "Side",
+            layoutSizingHorizontal: "FIXED",
+          },
+        ],
+      },
+      {
+        id: "3:1",
+        name: "Board",
+        layoutMode: "NONE",
+        absoluteBoundingBox: {
+          x: 1000,
+          y: 0,
+          width: 400,
+          height: 200,
+        },
+        children: [
+          {
+            id: "3:2",
+            name: "Badge",
+            constraints: {
+              horizontal: "MIN",
+              vertical: "MIN",
+            },
+            absoluteBoundingBox: {
+              x: 1010,
+              y: 10,
+              width: 100,
+              height: 40,
+            },
+            relativeTransform: [
+              [1, 0, 10],
+              [0, 1, 10],
+            ],
+          },
+        ],
+      },
+      {
+        id: "2:1",
+        name: "Heading",
+        type: "INSTANCE",
+        mainComponent: {
+          name: "Heading",
+          parent: null,
+        },
+        children: [
+          {
+            id: "I2:1;3:4",
+            type: "TEXT",
+            name: "Label",
+            characters: "Services",
+            fontName: {
+              family: "Space Grotesk",
+              style: "Medium",
+            },
+          },
+        ],
+      },
+    ],
+  });
+}
+
+let root: FakeNode;
+let fake: ReturnType<typeof installFigma>;
+const byId = (id: string, from: FakeNode = root): FakeNode | undefined =>
+  from.id === id ? from : (from.children ?? []).map((child) => byId(id, child)).find((node) => node !== undefined);
+
+beforeEach(() => {
+  root = page();
+  fake = installFigma(root, LIBRARY);
+  setEditsAllowed(true);
+});
+
+afterEach(() => {
+  setEditsAllowed(false);
+});
+
+describe("apply: the safety catch", () => {
+  it("refuses every write while Allow edits is off, and checks without writing on a dry run", async () => {
+    setEditsAllowed(false);
+
+    await expect(apply('<Frame id="1:1" opacity="0.5"/>')).rejects.toMatchObject({ code: "EDITS_DISABLED" });
+    expect(byId("1:1")?.opacity).toBe(1);
+
+    const checked = await apply(
+      '<Frame id="9:9" opacity="0.5"/>\n<Text id="1:2" font="300 14px/20px \'Inter\'">x</Text>\n<Frame id="1:1" opacity="0.5"/>',
+      { dryRun: true },
+    );
+
+    expect(checked.errors.map(({ line }) => line)).toEqual([1, 2]);
+    expect(byId("1:1")?.opacity).toBe(1);
+    expect(fake.writes.calls).toEqual([]);
+    expect(fake.writes.undo).toBe(0);
+  });
+});
+
+describe("apply: creating", () => {
+  it("creates a frame with a text in auto layout under the parent, the font loaded before the characters", async () => {
+    const result = await apply(
+      '<Frame name="Badge" display="flex" padding="8px 12px" gap="4px" background="#191A23"><Text color="#FFF" font="500 14px/20px \'Inter\'">New</Text></Frame>',
+      { parent: "3:1" },
+    );
+    const [frame, text] = fake.writes.created;
+
+    expect(result.errors).toEqual([]);
+    expect(result.created.map(({ tag, line }) => [tag, line])).toEqual([
+      ["Frame", 1],
+      ["Text", 1],
+    ]);
+    expect(frame).toMatchObject({
+      name: "Badge",
+      layoutMode: "HORIZONTAL",
+      paddingTop: 8,
+      paddingRight: 12,
+      itemSpacing: 4,
+      layoutSizingHorizontal: "HUG",
+      layoutSizingVertical: "HUG",
+      fills: [
+        expect.objectContaining({
+          type: "SOLID",
+          color: DARK,
+        }),
+      ],
+    });
+    expect(frame?.parent?.id).toBe("3:1");
+    expect(text?.parent).toBe(frame);
+    expect(text).toMatchObject({
+      characters: "New",
+      fontName: {
+        family: "Inter",
+        style: "Medium",
+      },
+      fontSize: 14,
+      lineHeight: {
+        unit: "PIXELS",
+        value: 20,
+      },
+    });
+    expect(fake.writes.undo).toBe(1);
+  });
+
+  it("puts a create after the element before it in the XML, alone at the end", async () => {
+    await apply('<Frame id="1:1"><Text id="1:2"/><Frame name="Between"/><Frame id="1:3"/></Frame>');
+    await apply('<Frame id="1:1"><Frame name="Last"/></Frame>');
+
+    expect(byId("1:1")?.children?.map(({ name }) => name)).toEqual(["Title", "Between", "Side", "Last"]);
+  });
+});
+
+describe("apply: changing", () => {
+  it("changes the attributes given and leaves the rest, one undo step for the call", async () => {
+    const result = await apply('<Frame id="1:1" opacity="0.5"/>\n<Frame id="3:1" name="Free board"/>');
+
+    expect(result).toMatchObject({
+      changed: ["1:1", "3:1"],
+      errors: [],
+    });
+    expect(byId("1:1")).toMatchObject({
+      opacity: 0.5,
+      fillStyleId: "S:dark",
+    });
+    expect(byId("3:1")?.name).toBe("Free board");
+    expect(fake.writes.undo).toBe(1);
+  });
+
+  it("changes a text inside an instance by its id, as an override", async () => {
+    const result = await apply('<Text id="I2:1;3:4">Our services</Text>');
+
+    expect(result.errors).toEqual([]);
+    expect(byId("I2:1;3:4")?.characters).toBe("Our services");
+    expect(fake.writes.loaded.has("Space Grotesk Medium")).toBe(true);
+    expect(byId("2:1")?.type).toBe("INSTANCE");
+  });
+
+  it("fills the parent's direction, pins to the right edge, turns about the centre", async () => {
+    await apply('<Frame id="1:3" flex="1"/>');
+    await apply('<Frame id="3:2" position="absolute" right="20px" top="10px" width="100px"/>');
+
+    expect(byId("1:3")?.layoutSizingHorizontal).toBe("FILL");
+    expect(byId("3:2")?.relativeTransform).toEqual([
+      [1, 0, 280],
+      [0, 1, 10],
+    ]);
+    expect(byId("3:2")?.constraints).toEqual({
+      horizontal: "MAX",
+      vertical: "MIN",
+    });
+
+    await apply('<Frame id="3:2" transform="rotate(-90deg)"/>');
+
+    const [[a, b, x], [c, d, y]] = (byId("3:2") as FakeNode).relativeTransform as [number[], number[]];
+
+    // Turned a quarter about its centre (330, 30): the 100 x 40 box now spans 20 across and 50 down from there.
+    expect([a, b, c, d].map((value) => Math.round(value ?? 0))).toEqual([0, 1, -1, 0]);
+    expect([Math.round(x ?? 0), Math.round(y ?? 0)]).toEqual([310, 80]);
+  });
+});
+
+describe("apply: tokens, fonts and errors", () => {
+  it("binds var() to the style the page uses, and names close tokens for one that matches nothing", async () => {
+    await apply('<Frame id="3:1" background="var(--Dark)"/>');
+
+    expect(byId("3:1")?.fillStyleId).toBe("S:dark");
+
+    const { errors } = await apply('<Frame id="3:1" background="var(--Darkk)"/>');
+
+    expect(errors).toEqual([
+      expect.objectContaining({
+        line: 1,
+        attribute: "background",
+        message: expect.stringMatching(/--Darkk/),
+        hint: expect.stringMatching(/--Dark\b/),
+      }),
+    ]);
+  });
+
+  it("names the styles a family has when the font asked for is not among them", async () => {
+    const { errors } = await apply('<Text id="1:2" font="300 14px/20px \'Inter\'">Hi</Text>');
+
+    expect(errors).toEqual([
+      expect.objectContaining({
+        attribute: "font",
+        message: expect.stringMatching(/Regular, Medium, Bold/),
+      }),
+    ]);
+  });
+
+  it("applies the good changes when one is bad, each error on its line", async () => {
+    const result = await apply(
+      '<Frame id="1:1" opacity="0.5"/>\n<Frame id="9:9" opacity="0.5"/>\n<Frame id="3:1" flex="1"/>\n<Frame id="3:1" name="Kept"/>',
+    );
+
+    expect(result.changed).toEqual(["1:1", "3:1"]);
+    expect(result.errors.map(({ line, attribute }) => [line, attribute])).toEqual([
+      [2, undefined],
+      [3, "flex"],
+    ]);
+    expect(byId("3:1")?.name).toBe("Kept");
+    expect(fake.writes.undo).toBe(1);
+  });
+});
+
+describe("entries", () => {
+  it("gives each layer asked for with its descendants and its parent, those inside another one within it", async () => {
+    const result = (await runOperation("entries", { ids: ["1:1", "1:2", "3:2", "9:9"] })) as {
+      roots: { node: { id: string; children?: { id: string }[] }; parent: { id: string; x: number } | null }[];
+      missing: string[];
+    };
+
+    expect(result.roots.map(({ node, parent }) => [node.id, parent?.id ?? null])).toEqual([
+      ["1:1", null],
+      ["3:2", "3:1"],
+    ]);
+    expect(result.roots[0]?.node.children?.map(({ id }) => id)).toEqual(["1:2", "1:3"]);
+    expect(result.roots[1]?.parent?.x).toBe(0);
+    expect(result.missing).toEqual(["9:9"]);
+  });
+});

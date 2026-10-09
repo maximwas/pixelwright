@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { EXPORT_CHUNK_BYTES } from "../constants/bridge.ts";
 import type { OutlineNode } from "../types/operations.ts";
+import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "./apply.ts";
 import { SnapshotSchema } from "./snapshot.ts";
 import { RawTokensSchema } from "./tokens.ts";
 
@@ -189,5 +190,23 @@ export const OPERATION_SCHEMAS = {
       css: z.enum(["none", "unmapped", "all"]).default("none"),
     }),
     output: SnapshotSchema,
+  },
+  entries: {
+    input: z.object({
+      /** The layers design_apply changes; each comes back with its parent, as design_read would see them. */
+      ids: z.array(NodeIdSchema).max(10_000),
+    }),
+    output: EntriesSchema,
+  },
+  apply: {
+    input: z.object({
+      /** In the XML's order: a parent before its children. */
+      changes: z.array(ApplyChangeSchema).max(10_000),
+      /** Where top-level creates go; the current page when left out. */
+      parent: NodeIdSchema.exactOptional(),
+      /** Check ids, parents, tokens and fonts without changing anything (works with Allow edits off). */
+      dryRun: z.boolean().default(false),
+    }),
+    output: ApplyResultSchema,
   },
 } as const;

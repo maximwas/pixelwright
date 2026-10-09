@@ -6,10 +6,11 @@ import {
   type OperationOutput,
 } from "@pixelwright/core";
 
+import { apply } from "./apply.ts";
 import { components } from "./components.ts";
 import { exportNode, originalImage } from "./export-node.ts";
 import { find, outline, selection, show } from "./read-ops.ts";
-import { snapshot } from "./snapshot.ts";
+import { entries, snapshot } from "./snapshot.ts";
 import { variables } from "./variables.ts";
 
 type Handlers = { readonly [N in OperationName]: (input: OperationInput<N>) => Promise<OperationOutput<N>> };
@@ -26,6 +27,8 @@ const HANDLERS: Handlers = {
   snapshot,
   variables,
   components,
+  entries,
+  apply,
 };
 
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);

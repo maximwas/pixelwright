@@ -76,14 +76,97 @@ export async function snapshot({
     variables: new Map(),
   };
   const categories = await annotationCategories();
-  const read = (node: SceneNode) =>
-    entryOf(node, {
-      x: originX ?? 0,
-      y: originY ?? 0,
-      css,
-      references,
-      categories,
+  const top = await subtree(
+    root,
+    depth,
+    (node) =>
+      entryOf(node, {
+        x: originX ?? 0,
+        y: originY ?? 0,
+        css,
+        references,
+        categories,
+      }),
+    { used: 0 },
+  );
+
+  return {
+    root: top,
+    styles: await resolveStyles(references.styles),
+    variables: await resolveVariables(references.variables),
+  };
+}
+
+/**
+ * design_apply's view of the layers it changes, as design_read would see them: each layer asked for that is not inside
+ * another one asked for, with its descendants and its parent's own entry, from the parent's origin so they place each
+ * other as in a read. The size budget is shared.
+ */
+export async function entries({ ids }: OperationInput<"entries">): Promise<OperationOutput<"entries">> {
+  const asked = new Set(ids);
+  const references: References = {
+    styles: new Set(),
+    variables: new Map(),
+  };
+  const categories = await annotationCategories();
+  const budget = { used: 0 };
+  const roots: OperationOutput<"entries">["roots"] = [];
+  const missing: string[] = [];
+
+  for (const id of ids) {
+    const node = await figma.getNodeByIdAsync(id);
+
+    if (node === null || !isLayer(node)) {
+      missing.push(id);
+      continue;
+    }
+
+    if (inside(node, asked)) {
+      continue;
+    }
+
+    const parent = node.parent !== null && isLayer(node.parent) ? node.parent : null;
+    const [[, , x], [, , y]] = (parent ?? node).absoluteTransform;
+    const read = (layer: SceneNode) =>
+      entryOf(layer, {
+        x: x ?? 0,
+        y: y ?? 0,
+        css: "none",
+        references,
+        categories,
+      });
+
+    roots.push({
+      node: await subtree(node, undefined, read, budget),
+      parent: parent === null ? null : await read(parent),
     });
+  }
+
+  return {
+    roots,
+    missing,
+    styles: await resolveStyles(references.styles),
+    variables: await resolveVariables(references.variables),
+  };
+}
+
+function inside(node: BaseNode, asked: ReadonlySet<string>): boolean {
+  for (let current = node.parent; current !== null; current = current.parent) {
+    if (asked.has(current.id)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/** A layer and its descendants, breadth first, until the budget (shared by the call) runs out. */
+async function subtree(
+  root: SceneNode,
+  depth: number | undefined,
+  read: (node: SceneNode) => Promise<SnapshotNode>,
+  budget: { used: number },
+): Promise<SnapshotNode> {
   const top = await read(root);
   const queue: { node: SceneNode; entry: SnapshotNode; level: number }[] = [
     {
@@ -92,8 +175,9 @@ export async function snapshot({
       level: 0,
     },
   ];
-  let used = JSON.stringify(top).length;
   let full = false;
+
+  budget.used += JSON.stringify(top).length;
 
   for (let index = 0; index < queue.length && !full; index++) {
     const { node, entry, level } = queue[index] as (typeof queue)[number];
@@ -107,9 +191,9 @@ export async function snapshot({
     for (const child of node.children) {
       const childEntry = await read(child);
 
-      used += JSON.stringify(childEntry).length;
+      budget.used += JSON.stringify(childEntry).length;
 
-      if (used > SNAPSHOT_MAX_CHARS) {
+      if (budget.used > SNAPSHOT_MAX_CHARS) {
         full = true;
         break;
       }
@@ -127,11 +211,7 @@ export async function snapshot({
     }
   }
 
-  return {
-    root: top,
-    styles: await resolveStyles(references.styles),
-    variables: await resolveVariables(references.variables),
-  };
+  return top;
 }
 
 function isLayer(node: BaseNode): node is SceneNode {

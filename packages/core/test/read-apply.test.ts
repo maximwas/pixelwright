@@ -113,6 +113,16 @@ describe("readApply", () => {
     expect(elements.map(({ id }) => id)).toEqual(["2:9"]);
   });
 
+  it("leaves a text as it is when its element has no content, so a partial edit never empties it", () => {
+    const [empty, closed, written] = readApply(
+      '<Text id="1:2" color="#F00"/>\n<Text id="1:3"></Text>\n<Text id="1:4">Hi</Text>',
+    ).elements;
+
+    expect(empty).not.toHaveProperty("content");
+    expect(closed).not.toHaveProperty("content");
+    expect(written?.content).toHaveLength(1);
+  });
+
   it("returns a parse error with its line and column instead of throwing", () => {
     expect(readApply('<Frame id="2:1">\n<Text>hi</Frame>').errors).toEqual([
       expect.objectContaining({

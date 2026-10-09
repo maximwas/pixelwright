@@ -1,5 +1,6 @@
 import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotStyle, TextSegment } from "../types/snapshot.ts";
+import { weightOf } from "../utils/font-weight.ts";
 import { colorCss } from "./color.ts";
 import { decimal, px } from "./format.ts";
 import { paintsCss, UNMAPPED } from "./paint.ts";
@@ -207,22 +208,6 @@ function letterSpacingCss(spacing: TextSegment["letterSpacing"]): string | null 
 
   // Not whole pixels: letter spacing lives in fractions.
   return spacing.unit === "PERCENT" ? `${decimal(spacing.value / 100)}em` : `${decimal(spacing.value)}px`;
-}
-
-/** A weight from a style name, for text styles, which carry no weight of their own. */
-function weightOf(style: string): number {
-  const names: [RegExp, number][] = [
-    [/thin|hairline/i, 100],
-    [/extra ?light|ultra ?light/i, 200],
-    [/semi ?bold|demi ?bold/i, 600],
-    [/extra ?bold|ultra ?bold/i, 800],
-    [/black|heavy/i, 900],
-    [/light/i, 300],
-    [/medium/i, 500],
-    [/bold/i, 700],
-  ];
-
-  return names.find(([pattern]) => pattern.test(style))?.[1] ?? 400;
 }
 
 function sameAsStyle(style: SnapshotStyle, segment: TextSegment, key: keyof FontParts): boolean {

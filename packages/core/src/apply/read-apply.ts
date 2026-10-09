@@ -154,6 +154,8 @@ class ApplyReader {
     }
 
     const isText = node.type === "Text";
+    // No content leaves the text as it is: a partial edit (<Text id="…" color="…"/>) never empties it.
+    const content = isText ? this.#content(node) : [];
 
     this.elements.push({
       line: node.line,
@@ -164,7 +166,7 @@ class ApplyReader {
       parent: parentRef ?? skippedParent?.props.id ?? null,
       index,
       attributes,
-      ...(isText ? { content: this.#content(node) } : {}),
+      ...(content.length > 0 ? { content } : {}),
     });
 
     if (!isText) {

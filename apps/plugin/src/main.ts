@@ -2,6 +2,7 @@ import { emit, on, showUI } from "@create-figma-plugin/utilities";
 import { toWireError } from "@pixelwright/core";
 import { PLUGIN_WINDOW } from "./constants/plugin.ts";
 import { readContext } from "./figma/context.ts";
+import { editsAllowed, setEditsAllowed } from "./figma/edits.ts";
 import { runOperation } from "./figma/operations.ts";
 import { readPairing, savePairing } from "./figma/pairing-store.ts";
 import type {
@@ -21,14 +22,15 @@ import type {
  * and page names are the user's, and its inline script would run them, so everything goes by message after READY.
  */
 export default function (): void {
-  let allowEdits = false;
-  const sendContext = () => emit<ContextHandler>("CONTEXT", readContext(allowEdits));
+  setEditsAllowed(false);
+
+  const sendContext = () => emit<ContextHandler>("CONTEXT", readContext(editsAllowed()));
 
   showUI(PLUGIN_WINDOW);
   on<ReadyHandler>("READY", () => void start(sendContext));
   on<RequestHandler>("REQUEST", (id, op, input) => void answer(id, op, input));
   on<AllowEditsHandler>("ALLOW_EDITS", (value) => {
-    allowEdits = value;
+    setEditsAllowed(value);
     sendContext();
   });
   on<SavePairingHandler>("SAVE_PAIRING", (key) => void savePairing(key).catch(() => {}));
