@@ -13,7 +13,7 @@ import { memoryKeys, pluginInfo, rawPlugin } from "./helpers/fake-plugin.ts";
 
 const servers: BridgeServer[] = [];
 
-async function start(keys: PluginKeys, pairing?: PairingCodes) {
+async function start(keys: PluginKeys, pairing?: PairingCodes, pendingTimeoutMs?: number) {
   const server = new BridgeServer({
     port: 0,
     token: "t".repeat(43),
@@ -21,6 +21,7 @@ async function start(keys: PluginKeys, pairing?: PairingCodes) {
     serverVersion: "test",
     keys,
     ...(pairing === undefined ? {} : { pairing }),
+    ...(pendingTimeoutMs === undefined ? {} : { pendingTimeoutMs }),
   });
   const port = await server.listen();
 
@@ -210,5 +211,28 @@ describe("pairing", () => {
 
     expect(await plugin.next("pairing_required")).toMatchObject({ reason: "unknown_key" });
     expect(server.pairing()).toMatchObject({ waiting: 1 });
+  });
+
+  it("lets a plugin wait for the code only as long as a code lives, so a page cannot hold the waiting slots", async () => {
+    const { server, port } = await start(memoryKeys(), undefined, 200);
+    const plugin = await rawPlugin(port, null);
+
+    await plugin.next("pairing_required");
+    expect(await plugin.closed).toBe(4408);
+    expect(server.pairing()).toBeNull();
+  });
+
+  it("keeps a plugin that paired in time past the waiting deadline", async () => {
+    const { server, port } = await start(memoryKeys(), undefined, 300);
+    const plugin = await rawPlugin(port, null);
+
+    await plugin.next("pairing_required");
+    plugin.send({
+      type: "pair",
+      code: server.pairing()?.code,
+    });
+    await plugin.next("hello_ack");
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(server.plugins()).toHaveLength(1);
   });
 });

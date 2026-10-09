@@ -68,6 +68,8 @@ export interface BridgeServerOptions {
   readonly keys: PluginKeys;
   /** The pairing code in force; tests pass predictable codes. */
   readonly pairing?: PairingCodesLike;
+  /** How long an unpaired plugin may wait for the code (default: a code's lifetime); tests pass less. */
+  readonly pendingTimeoutMs?: number;
 }
 
 /** What the bridge needs from PairingCodes. */
@@ -102,6 +104,7 @@ export interface PluginConnectionOptions {
   readonly lockedUntil: () => number | null;
   readonly checkCode: (code: string) => CodeCheck;
   readonly now: () => number;
+  readonly pendingTimeoutMs: number;
   /** An unpaired plugin starts waiting for the code; false: too many wait already. */
   readonly onPending: (connection: unknown) => boolean;
   /** It stopped waiting: paired, or gone. */

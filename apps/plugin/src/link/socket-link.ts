@@ -29,6 +29,13 @@ const STOP_REASONS: Readonly<Record<number, string>> = {
 
 const UNPROVEN_SERVER = "The program on port 18720 could not prove it is your Pixelwright server.";
 
+/** Why the server turned the plugin away for now; it reconnects on its own. */
+const RETRY_REASONS: Readonly<Record<number, string>> = {
+  [CloseCode.TooManySessions]:
+    "Pixelwright has too many connections waiting to pair, maybe another program's: trying again.",
+  [CloseCode.HelloTimeout]: "The wait for the pairing code ran out: reconnecting for a new one.",
+};
+
 /** How far one connection got: only a trusted server's acknowledgement makes it a session. */
 type Handshake =
   /** Hello sent: waiting for a challenge (with a key) or for pairing_required. */
@@ -297,6 +304,7 @@ export class SocketLink {
     }
 
     const delay = reconnectDelay(this.#attempt, this.#options.random);
+    const retryReason = reason ?? RETRY_REASONS[code] ?? null;
     const schedule =
       this.#options.schedule ??
       ((run: () => void, ms: number) => {
@@ -309,7 +317,7 @@ export class SocketLink {
     this.#options.onState({
       kind: "waiting",
       retryInMs: delay,
-      reason,
+      reason: retryReason,
     });
     this.#cancelRetry = schedule(() => this.#open(), delay);
   }

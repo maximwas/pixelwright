@@ -10,6 +10,7 @@ import {
   HEARTBEAT_MS,
   MAX_PENDING_PLUGINS,
   MAX_PLUGIN_SESSIONS,
+  PAIRING_CODE_TTL_MS,
   REQUEST_TIMEOUT_MS,
 } from "../constants/bridge.ts";
 import type {
@@ -269,6 +270,7 @@ export class BridgeServer
         return check;
       },
       now: () => this.#pairing.now(),
+      pendingTimeoutMs: this.#options.pendingTimeoutMs ?? PAIRING_CODE_TTL_MS,
       onPending: (waiting) => {
         if (this.#pending.size >= MAX_PENDING_PLUGINS) {
           return false;

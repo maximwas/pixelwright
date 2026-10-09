@@ -154,6 +154,11 @@ export class PluginConnection {
       kind: "pairing",
       info: message.plugin,
     };
+    // Waiting lasts as long as a code does: a page cannot sit on the few waiting slots, and the real plugin reconnects.
+    this.#deadline = setTimeout(
+      () => this.#socket.close(CloseCode.HelloTimeout, "waited too long for the pairing code"),
+      this.#options.pendingTimeoutMs,
+    );
     this.#askToPair(message.keyId === null ? "no_key" : "unknown_key");
   }
 
@@ -188,6 +193,7 @@ export class PluginConnection {
           return;
         }
 
+        clearTimeout(this.#deadline);
         this.#options.onPendingEnded(this);
         this.#send({
           type: "paired",

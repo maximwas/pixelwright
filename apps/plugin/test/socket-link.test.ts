@@ -418,6 +418,17 @@ describe("SocketLink", () => {
     expect(scheduled).toHaveLength(1);
   });
 
+  it("says why the server turned it away when too many plugins wait to pair", () => {
+    const { sockets, states } = setup({ key: null });
+
+    sockets[0]?.open();
+    sockets[0]?.drop(4429);
+    expect(states.at(-1)).toMatchObject({
+      kind: "waiting",
+      reason: expect.stringContaining("too many connections"),
+    });
+  });
+
   it("cancels a scheduled reconnect when stopped", () => {
     const { link, sockets, scheduled } = setup();
 
