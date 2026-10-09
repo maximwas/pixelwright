@@ -55,3 +55,6 @@ export const UPLOAD_STREAMS = 8;
 
 /** How long a file sent for an apply waits for it. */
 export const UPLOAD_TTL_MS = 5 * 60 * 1000;
+
+/** Room around and between a new component set's variants. */
+export const SET_GAP = 40;

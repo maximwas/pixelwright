@@ -10,6 +10,16 @@ import {
 } from "@pixelwright/core";
 import type { KnownFont, Layer, TextLayer, WriteContext } from "../types/apply.ts";
 import { errorMessage } from "../utils/error-message.ts";
+import {
+  bindProperties,
+  componentIndex,
+  layOut,
+  setProps,
+  setVariant,
+  swapTo,
+  variantFor,
+  variantName,
+} from "./apply-components.ts";
 import { STEPS, set } from "./apply-props.ts";
 import { hasTextProps, writeText } from "./apply-text.ts";
 import { requireEdits } from "./edits.ts";
@@ -26,6 +36,9 @@ const MAKERS: Readonly<Record<string, () => SceneNode>> = {
   Rectangle: () => figma.createRectangle(),
   Ellipse: () => figma.createEllipse(),
   Line: () => figma.createLine(),
+  Component: () => figma.createComponent(),
+  // A frame holds a new set's variants until they are combined into the set.
+  ComponentSet: () => figma.createFrame(),
 };
 
 /** The font a new text starts with: loaded before its characters are set. */
@@ -53,6 +66,43 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
   const created: OperationOutput<"apply">["created"] = [];
   const changed: string[] = [];
   const nodes = new Map<string, Layer | null>();
+  const sets: { change: ApplyChange; holder: Layer; fail: (error: unknown, attribute?: string) => void }[] = [];
+  /** New sets combined from their variants, laid out and written; then the properties new components' layers make. */
+  const settle = async () => {
+    for (const { change, holder, fail } of sets.splice(0)) {
+      try {
+        const variants = (holder.children ?? []).filter((child) => child.type === "COMPONENT");
+
+        if (variants.length === 0 || holder.parent === null) {
+          holder.remove();
+
+          throw new WriteError("A <ComponentSet> is made of its <Component> variants: this one has none.");
+        }
+
+        const made = figma.combineAsVariants(
+          variants as unknown as ComponentNode[],
+          holder.parent as unknown as BaseNode & ChildrenMixin,
+          indexIn(holder.parent, holder),
+        );
+
+        holder.remove();
+        nodes.set(change.ref, made as unknown as Layer);
+        await write(made as unknown as Layer, change, context, fail);
+        layOut(made);
+        context.components.add(made);
+        created.push({
+          line: change.line,
+          ref: change.ref,
+          id: made.id,
+          tag: change.tag,
+        });
+      } catch (error) {
+        fail(error);
+      }
+    }
+
+    bindProperties(context.marks.splice(0));
+  };
 
   for (const change of changes) {
     const fail = (error: unknown, attribute?: string) => errors.push(errorOf(change, error, attribute));
@@ -63,9 +113,24 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
         continue;
       }
 
-      const node = change.kind === "update" ? await existing(change) : await create(change, changes, nodes, top);
+      if (change.kind === "create" && change.tag === "Instance") {
+        // Components made earlier in the call are whole before an instance is made of one.
+        await settle();
+      }
+
+      const node =
+        change.kind === "update" ? await existing(change) : await create(change, changes, nodes, top, context);
 
       nodes.set(change.ref, node);
+
+      if (change.kind === "create" && change.tag === "ComponentSet") {
+        sets.push({
+          change,
+          holder: node,
+          fail,
+        });
+        continue;
+      }
 
       const wrote = await write(node, change, context, fail);
 
@@ -83,6 +148,10 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
     } catch (error) {
       fail(error);
     }
+  }
+
+  if (!dryRun) {
+    await settle();
   }
 
   if (created.length > 0 || changed.length > 0) {
@@ -181,6 +250,8 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
     fonts,
     unloaded,
     uploads: uploaded,
+    components: componentIndex(),
+    marks: [],
   };
 }
 
@@ -250,8 +321,16 @@ async function create(
   changes: readonly ApplyChange[],
   nodes: ReadonlyMap<string, Layer | null>,
   top: Layer | null,
+  context: WriteContext,
 ): Promise<Layer> {
-  const make = MAKERS[change.tag];
+  const make =
+    change.tag === "Instance"
+      ? async () =>
+          variantFor(
+            await context.components.find(change.props.component ?? ""),
+            change.props.variant ?? {},
+          ).createInstance()
+      : MAKERS[change.tag];
 
   if (make === undefined) {
     throw new WriteError(`Creating a ${change.tag} is not available yet.`);
@@ -263,7 +342,7 @@ async function create(
     throw new WriteError(`A ${parent.type.toLowerCase()} holds no layers: put the new one in a frame.`);
   }
 
-  const node = make() as unknown as Layer;
+  const node = (await make()) as unknown as Layer;
 
   try {
     parent.insertChild(index, node);
@@ -410,6 +489,49 @@ async function write(
   let wrote = false;
   const source = (keys: readonly (keyof FigmaProps)[]) =>
     keys.map((key) => change.sources[key]).find((attribute) => attribute !== undefined) ?? keys[0];
+  const { component, variant, props, property } = change.props;
+  // An instance is made of its component and variant; an existing one swaps them. Then its properties.
+  const own: (readonly [keyof FigmaProps, () => Promise<void> | void])[] = [
+    ...(node.type === "INSTANCE" && change.kind === "update" && component !== undefined
+      ? [["component", () => swapTo(node, component, variant, context.components)] as const]
+      : []),
+    ...(node.type === "INSTANCE" && change.kind === "update" && component === undefined && variant !== undefined
+      ? [["variant", () => setVariant(node, variant)] as const]
+      : []),
+    ...(node.type === "COMPONENT" && variant !== undefined
+      ? [["variant", () => set(node, "name", variantName(variant))] as const]
+      : []),
+    ...(node.type !== "INSTANCE" && node.type !== "COMPONENT" && (component !== undefined || variant !== undefined)
+      ? [
+          [
+            component === undefined ? "variant" : "component",
+            () => {
+              throw new WriteError(
+                `A ${node.type.toLowerCase()} has no component: component and variant make an <Instance>.`,
+              );
+            },
+          ] as const,
+        ]
+      : []),
+    ...(props !== undefined ? [["props", () => setProps(node, props, context.components)] as const] : []),
+  ];
+
+  for (const [key, step] of own) {
+    try {
+      await step();
+      wrote = true;
+    } catch (error) {
+      fail(error, source([key]));
+    }
+  }
+
+  if (property !== undefined) {
+    context.marks.push({
+      node,
+      property,
+      fail: (error) => fail(error, source(["property"])),
+    });
+  }
 
   for (const step of STEPS) {
     if (
@@ -449,6 +571,10 @@ async function check(
 ): Promise<void> {
   if (change.kind === "update") {
     nodes.set(change.ref, await existing(change, false));
+  } else if (change.tag === "Instance") {
+    // The component and variant it names, found without making anything.
+    variantFor(await context.components.find(change.props.component ?? ""), change.props.variant ?? {});
+    nodes.set(change.ref, null);
   } else if (MAKERS[change.tag] === undefined) {
     throw new WriteError(`Creating a ${change.tag} is not available yet.`);
   } else if (change.parent !== null && !nodes.has(change.parent)) {

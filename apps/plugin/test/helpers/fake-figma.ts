@@ -109,6 +109,20 @@ export interface FakeLibrary {
   readonly teamLibrary?: { collections: object[]; variables: Record<string, object[]> } | Error;
   /** listAvailableFontsAsync: the fonts this Figma has. */
   readonly fonts?: { family: string; style: string }[];
+  /** Components and sets that live off the page (a team library's), by key for importComponent…ByKeyAsync. */
+  readonly components?: FakeNode[];
+  /** The file's annotation categories. */
+  readonly categories?: { id: string; label: string; color: string }[];
+}
+
+/** A variant's values from its name, "Size=Large, State=Default", as Figma names variants. */
+export function variantOf(name: string): Record<string, string> {
+  return Object.fromEntries(
+    name
+      .split(",")
+      .map((part) => part.split("=").map((item) => item.trim()))
+      .filter((pair): pair is [string, string] => pair.length === 2),
+  );
 }
 
 /** What the writing calls did: undo steps, fonts loaded, calls by node, the layers made. */
@@ -235,14 +249,52 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
 
     record("resize", [width, height]);
   });
-  define("setProperties", (properties: Record<string, string>) => {
+  define("resizeWithoutConstraints", (width: number, height: number) => {
+    node.width = width;
+    node.height = height;
+    record("resizeWithoutConstraints", [width, height]);
+  });
+  define("setProperties", (properties: Record<string, string | boolean>) => {
     record("setProperties", [properties]);
+
+    const own = node.componentProperties as Record<string, { type: string; value: unknown }> | undefined;
+    const main = node.mainComponent as FakeNode | undefined;
+
+    for (const [key, value] of Object.entries(properties)) {
+      if (own !== undefined && own[key] === undefined) {
+        throw new Error(`Could not find a component property with name: '${key}'`);
+      }
+
+      if (own?.[key] !== undefined) {
+        own[key] = {
+          ...own[key],
+          value,
+        };
+      }
+
+      // A variant's value switches the instance to that variant of its set.
+      if (own?.[key]?.type === "VARIANT" && main?.parent?.type === "COMPONENT_SET") {
+        const wanted = {
+          ...variantOf(main.name),
+          [key]: String(value),
+        };
+        const next = main.parent.children?.find((child) =>
+          Object.entries(wanted).every(([name, option]) => variantOf(child.name)[name] === option),
+        );
+
+        if (next === undefined) {
+          throw new Error(`No variant ${JSON.stringify(wanted)}`);
+        }
+
+        node.mainComponent = next;
+      }
+    }
 
     const walkTexts = (layer: FakeNode) => {
       const key = (layer.componentPropertyReferences as { characters?: string } | undefined)?.characters;
 
       if (key !== undefined && properties[key] !== undefined) {
-        layer.characters = properties[key];
+        layer.characters = String(properties[key]);
       }
 
       for (const child of layer.children ?? []) {
@@ -252,6 +304,31 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
 
     walkTexts(node);
   });
+  define("swapComponent", (component: FakeNode) => {
+    node.mainComponent = component;
+    record("swapComponent", [component.id]);
+  });
+
+  if (node.type === "COMPONENT" || node.type === "COMPONENT_SET") {
+    // Never read here: Figma refuses reading a variant's definitions, and some tests model that with a getter.
+    if (Object.getOwnPropertyDescriptor(node, "componentPropertyDefinitions") === undefined) {
+      node.componentPropertyDefinitions = {};
+    }
+
+    define("addComponentProperty", (name: string, type: string, defaultValue: unknown) => {
+      const definitions = node.componentPropertyDefinitions as Record<string, unknown>;
+      const key = type === "VARIANT" ? name : `${name}#${Object.keys(definitions).length + 1}:0`;
+
+      definitions[key] = {
+        type,
+        defaultValue,
+      };
+      record("addComponentProperty", [name, type, defaultValue]);
+
+      return key;
+    });
+  }
+
   define("setBoundVariable", (field: string, variable: { id: string } | null) => {
     node.boundVariables = {
       ...(node.boundVariables as object | undefined),
@@ -410,6 +487,67 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     register(node);
   }
 
+  const lost: FakeNode[] = [];
+
+  for (const component of library.components ?? []) {
+    walk(component, lost);
+    register(component);
+  }
+
+  for (const node of lost) {
+    register(node);
+  }
+
+  const categories = [
+    ...(library.categories ?? [
+      {
+        id: "cat-dev",
+        label: "Development",
+        color: "blue",
+      },
+    ]),
+  ];
+  /** An instance of a component, its properties at their defaults (a variant's values from its name). */
+  const instanceOf = (component: FakeNode) => {
+    const owner = component.parent?.type === "COMPONENT_SET" ? component.parent : component;
+    const definitions = (owner.componentPropertyDefinitions ?? {}) as Record<
+      string,
+      { type: string; defaultValue: unknown }
+    >;
+    const instance = tree({
+      id: `90:${writes.created.length + 1}`,
+      name: owner.name,
+      type: "INSTANCE",
+      layoutMode: component.layoutMode ?? "NONE",
+      mainComponent: component,
+      componentProperties: Object.fromEntries(
+        Object.entries(definitions).map(([key, definition]) => [
+          key,
+          {
+            type: definition.type,
+            value: definition.type === "VARIANT" ? variantOf(component.name)[key] : definition.defaultValue,
+          },
+        ]),
+      ),
+      children: [],
+    });
+
+    writes.created.push(instance);
+    register(instance);
+
+    return instance;
+  };
+
+  for (const node of [...all, ...lost, ...(library.components ?? [])]) {
+    if (node.type === "COMPONENT") {
+      Object.defineProperty(node, "createInstance", {
+        value: () => instanceOf(node),
+        enumerable: false,
+        configurable: true,
+      });
+    }
+  }
+
   const figma = {
     currentPage: page as FakeNode & { selection?: FakeNode[] },
     mixed: FAKE_MIXED,
@@ -461,6 +599,93 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     createRectangle: create("RECTANGLE"),
     createEllipse: create("ELLIPSE"),
     createLine: create("LINE"),
+    createComponent: () => {
+      const component = create("COMPONENT")();
+
+      Object.defineProperty(component, "createInstance", {
+        value: () => instanceOf(component),
+        enumerable: false,
+        configurable: true,
+      });
+
+      return component;
+    },
+    combineAsVariants: (
+      components: FakeNode[],
+      parent: FakeNode & { insertChild: (index: number, child: FakeNode) => void },
+      index?: number,
+    ) => {
+      const set = create("COMPONENT_SET")();
+      const definitions = set.componentPropertyDefinitions as Record<
+        string,
+        { type: string; defaultValue: string; variantOptions: string[] }
+      >;
+
+      parent.insertChild(index ?? parent.children?.length ?? 0, set);
+
+      for (const component of components) {
+        (set as FakeNode & { appendChild: (child: FakeNode) => void }).appendChild(component);
+
+        for (const [name, option] of Object.entries(variantOf(component.name))) {
+          definitions[name] ??= {
+            type: "VARIANT",
+            defaultValue: option,
+            variantOptions: [],
+          };
+          definitions[name].variantOptions.push(option);
+        }
+      }
+
+      set.defaultVariant = components[0];
+      writes.calls.push({
+        node: set.id,
+        method: "combineAsVariants",
+        args: [components.map(({ id }) => id)],
+      });
+
+      return set;
+    },
+    root: {
+      type: "DOCUMENT",
+      children: [page],
+      findAllWithCriteria: ({ types }: { types: string[] }) =>
+        [...byId.values()].filter((node) => types.includes(node.type) && node.parent !== null),
+    },
+    loadAllPagesAsync: async () => undefined,
+    importComponentByKeyAsync: async (key: string) => {
+      const found = [...lost, ...(library.components ?? [])].find(
+        (node) => node.key === key && node.type === "COMPONENT",
+      );
+
+      if (found === undefined) {
+        throw new Error(`No component with key ${key}`);
+      }
+
+      return found;
+    },
+    importComponentSetByKeyAsync: async (key: string) => {
+      const found = (library.components ?? []).find((node) => node.key === key && node.type === "COMPONENT_SET");
+
+      if (found === undefined) {
+        throw new Error(`No component set with key ${key}`);
+      }
+
+      return found;
+    },
+    annotations: {
+      getAnnotationCategoriesAsync: async () => categories,
+      addAnnotationCategoryAsync: async ({ label, color }: { label: string; color: string }) => {
+        const category = {
+          id: `cat-${categories.length + 1}`,
+          label,
+          color,
+        };
+
+        categories.push(category);
+
+        return category;
+      },
+    },
     loadFontAsync: async (font: { family: string; style: string }) => {
       writes.loaded.add(fontKey(font));
     },

@@ -124,6 +124,20 @@ export const STEPS: readonly Step[] = [
     write: effects,
   },
   {
+    keys: ["description"],
+    write: (node, { description }) => {
+      if (node.type !== "COMPONENT" && node.type !== "COMPONENT_SET") {
+        throw new WriteError("A description belongs to a component or a component set.");
+      }
+
+      set(node, "description", description);
+    },
+  },
+  {
+    keys: ["notes"],
+    write: notesStep,
+  },
+  {
     keys: ["hyperlink"],
     write: (node) => {
       if (node.type !== "TEXT") {
@@ -727,4 +741,36 @@ async function effects(node: Layer, { effects: spec }: FigmaProps, context: Writ
   });
 
   set(node, "effects", list);
+}
+
+/** Dev Mode annotations, the whole list, each category found by its label (made when the file lacks it). */
+async function notesStep(node: Layer, { notes }: FigmaProps): Promise<void> {
+  const categories = new Map(
+    (await figma.annotations.getAnnotationCategoriesAsync()).map((category) => [
+      category.label.toLowerCase(),
+      category.id,
+    ]),
+  );
+  const annotations: Annotation[] = [];
+
+  for (const { category, label } of notes ?? []) {
+    let id = category === null ? undefined : categories.get(category.toLowerCase());
+
+    if (category !== null && id === undefined) {
+      id = (
+        await figma.annotations.addAnnotationCategoryAsync({
+          label: category,
+          color: "blue",
+        })
+      ).id;
+      categories.set(category.toLowerCase(), id);
+    }
+
+    annotations.push({
+      label,
+      ...(id === undefined ? {} : { categoryId: id }),
+    });
+  }
+
+  node.annotations = annotations;
 }

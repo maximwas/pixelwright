@@ -1,3 +1,5 @@
+import type { FigmaProps } from "@pixelwright/core";
+import type { ComponentIndex } from "../figma/apply-components.ts";
 import type { TokenIndex } from "../figma/token-index.ts";
 import type { WriteError } from "../figma/write-error.ts";
 
@@ -17,6 +19,10 @@ export interface WriteContext {
   readonly unloaded: ReadonlySet<string>;
   /** The bytes an upload stream brought, if it is complete. */
   readonly uploads?: (stream: string) => Uint8Array | undefined;
+  /** Components by name, looked up as needed. */
+  readonly components: ComponentIndex;
+  /** Properties new components' layers make, bound once their component (or its set) is complete. */
+  readonly marks: { node: Layer; property: NonNullable<FigmaProps["property"]>; fail: (error: unknown) => void }[];
 }
 
 /**
@@ -33,6 +39,7 @@ export interface Layer {
   readonly boundVariables?: Readonly<Record<string, { readonly id: string } | undefined>>;
   relativeTransform: Transform;
   resize(width: number, height: number): void;
+  remove(): void;
   setBoundVariable(field: string, variable: Variable | null): void;
   insertChild(index: number, child: Layer): void;
   setFillStyleIdAsync(id: string): Promise<void>;
