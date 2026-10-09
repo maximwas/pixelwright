@@ -18,6 +18,7 @@ export const MAX_MESSAGE_BYTES = 4 * 1024 * 1024;
 /** WebSocket close codes of the bridge; 4xxx are its own. */
 export const CloseCode = {
   GoingAway: 1001,
+  InternalError: 1011,
   BadMessage: 4400,
   Unauthorized: 4401,
   HelloTimeout: 4408,

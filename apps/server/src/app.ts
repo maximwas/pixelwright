@@ -62,7 +62,15 @@ async function createBridge(config: AppConfig, logger: Logger): Promise<PluginBr
     pluginOrigins: config.pluginOrigins,
     serverVersion: serverPackage.version,
     log,
-    keys: new FilePluginKeys(bridgeConfigFile()),
+    // A deleted bridge.json revokes every key: the fallback rebuilds it with this process's port and token, no keys.
+    keys: new FilePluginKeys(
+      bridgeConfigFile(),
+      () => ({
+        ...bridgeConfig,
+        pluginKeys: [],
+      }),
+      (message) => logger.warn(message),
+    ),
   });
 
   return PluginBridge.connect(

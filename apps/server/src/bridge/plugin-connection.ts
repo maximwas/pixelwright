@@ -122,7 +122,7 @@ export class PluginConnection {
       return;
     }
 
-    const key = message.keyId === null ? null : this.#options.keys.find(message.keyId);
+    const key = message.keyId === null ? null : this.#findKey(message.keyId);
 
     if (key !== null) {
       const serverNonce = newNonce();
@@ -179,14 +179,23 @@ export class PluginConnection {
     const check = this.#options.checkCode(message.code);
 
     switch (check.outcome) {
-      case "ok":
+      case "ok": {
+        const key = this.#storeKey();
+
+        if (key === null) {
+          this.#socket.close(CloseCode.InternalError, "the key could not be stored");
+
+          return;
+        }
+
         this.#options.onPendingEnded(this);
         this.#send({
           type: "paired",
-          key: this.#options.keys.add(),
+          key,
         });
         this.#admit(stage.info);
         break;
+      }
       case "wrong":
         this.#send({
           type: "pairing_required",
@@ -201,6 +210,27 @@ export class PluginConnection {
       case "locked":
         this.#askToPair("locked");
         break;
+    }
+  }
+
+  /** A stored key; a key store that fails counts as one without the key (the plugin is asked to pair). */
+  #findKey(id: string): PluginKey | null {
+    try {
+      return this.#options.keys.find(id);
+    } catch (error) {
+      this.#options.log("key lookup failed", { error: String(error) });
+
+      return null;
+    }
+  }
+
+  #storeKey(): PluginKey | null {
+    try {
+      return this.#options.keys.add();
+    } catch (error) {
+      this.#options.log("key store failed", { error: String(error) });
+
+      return null;
     }
   }
 

@@ -1,8 +1,12 @@
 import { once } from "node:events";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { newKeyId, newNonce, newSecret, type PluginKey, proofFor } from "@pixelwright/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { BridgeServer } from "../src/bridge/bridge-server.ts";
 import { PairingCodes } from "../src/bridge/pairing-codes.ts";
+import { FilePluginKeys } from "../src/bridge/plugin-keys.ts";
 import { MAX_PENDING_PLUGINS } from "../src/constants/bridge.ts";
 import type { PluginKeys } from "../src/types/bridge.ts";
 import { memoryKeys, pluginInfo, rawPlugin } from "./helpers/fake-plugin.ts";
@@ -27,13 +31,6 @@ async function start(keys: PluginKeys, pairing?: PairingCodes) {
     port: port ?? 0,
   };
 }
-
-/** Codes 111111, 222222, … so a test knows the next code. */
-const predictableCodes = () => {
-  let digit = 0;
-
-  return new PairingCodes({ randomDigits: () => String(++digit).repeat(6) });
-};
 
 afterEach(async () => {
   await Promise.all(servers.splice(0).map((server) => server.close()));
@@ -190,5 +187,28 @@ describe("pairing", () => {
     const extra = await rawPlugin(port, null, pluginInfo({ instanceId: newNonce().slice(0, 12) }));
 
     expect(await extra.closed).toBe(4429);
+  });
+
+  it("keeps running when bridge.json is deleted, and asks a plugin with a key to pair again", async () => {
+    const path = join(await mkdtemp(join(tmpdir(), "pixelwright-deleted-")), "bridge.json");
+
+    await writeFile(
+      path,
+      `${JSON.stringify({
+        version: 1,
+        port: 18_720,
+        token: "t".repeat(43),
+      })}\n`,
+      { mode: 0o600 },
+    );
+
+    const { server, port } = await start(new FilePluginKeys(path));
+
+    await rm(path);
+
+    const plugin = await rawPlugin(port, newKeyId());
+
+    expect(await plugin.next("pairing_required")).toMatchObject({ reason: "unknown_key" });
+    expect(server.pairing()).toMatchObject({ waiting: 1 });
   });
 });
