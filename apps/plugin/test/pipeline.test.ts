@@ -1,43 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { applyDesign } from "../../server/src/mcp/tools/apply.ts";
-import type { BridgeView } from "../../server/src/types/mcp.ts";
 import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { pluginBridge } from "./helpers/plugin-bridge.ts";
 
-/**
- * design_apply end to end: the server's applyDesign over a bridge that runs the plugin's operations on the fake
- * Figma, so what one side sends and the other reads is tested together.
- */
+/** design_apply end to end: the server's applyDesign over the plugin on the fake Figma. */
 function pipeline() {
-  const bridge: BridgeView = {
-    status: () => {
-      throw new Error("not used");
-    },
-    pairing: () => null,
-    plugins: () => [
-      {
-        session: "s1",
-        info: {
-          instanceId: "window-a",
-          pluginVersion: "0.1.0",
-          editorType: "figma",
-          file: {
-            name: "Positivus",
-            key: null,
-          },
-          page: {
-            id: "0:1",
-            name: "Page 1",
-          },
-          allowEdits: true,
-          visible: true,
-        },
-        active: true,
-      },
-    ],
-    request: async (op, input) => await runOperation(op, input),
-  };
+  const bridge = pluginBridge();
 
   return (xml: string, options: { parent?: string; dryRun?: boolean } = {}) =>
     applyDesign(bridge, {

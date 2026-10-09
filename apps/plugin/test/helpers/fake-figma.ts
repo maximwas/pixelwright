@@ -115,7 +115,25 @@ export interface FakeLibrary {
   readonly categories?: { id: string; label: string; color: string }[];
   /** The file's other pages. */
   readonly pages?: FakeNode[];
+  /** How many modes a collection may have (Figma's plan limit): addMode refuses past it. Default 4. */
+  readonly modeLimit?: number;
 }
+
+/** A local variable collection as the fake keeps it, writable as Figma's. */
+type FakeCollection = Record<string, unknown> & {
+  id: string;
+  name: string;
+  modes: { modeId: string; name: string }[];
+};
+
+/** A local variable as the fake keeps it, writable as Figma's. */
+type FakeVariable = Record<string, unknown> & {
+  id: string;
+  name: string;
+  variableCollectionId: string;
+  resolvedType: string;
+  valuesByMode: Record<string, unknown>;
+};
 
 /** A variant's values from its name, "Size=Large, State=Default", as Figma names variants. */
 export function variantOf(name: string): Record<string, string> {
@@ -672,6 +690,86 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     }
   }
 
+  // The file's own collections and variables, which the writing calls change as Figma's do.
+  const method = (target: object, name: string, value: unknown) =>
+    Object.defineProperty(target, name, {
+      value,
+      enumerable: false,
+      configurable: true,
+    });
+  const localCollections: FakeCollection[] = [];
+  const localVariables: FakeVariable[] = [];
+  const collectionStore = (collection: FakeCollection): FakeCollection => {
+    method(collection, "addMode", (name: string) => {
+      if (collection.modes.length >= (library.modeLimit ?? 4)) {
+        throw new Error(`in addMode: Limited to ${library.modeLimit ?? 4} modes only`);
+      }
+
+      const modeId = `${collection.id}/m${collection.modes.length + 1}`;
+
+      collection.modes.push({
+        modeId,
+        name,
+      });
+      writes.calls.push({
+        node: collection.id,
+        method: "addMode",
+        args: [name],
+      });
+
+      return modeId;
+    });
+    method(collection, "renameMode", (modeId: string, name: string) => {
+      const mode = collection.modes.find((item) => item.modeId === modeId);
+
+      if (mode === undefined) {
+        throw new Error(`No mode ${modeId}`);
+      }
+
+      mode.name = name;
+      writes.calls.push({
+        node: collection.id,
+        method: "renameMode",
+        args: [modeId, name],
+      });
+    });
+    localCollections.push(collection);
+
+    return collection;
+  };
+  const variableStore = (variable: FakeVariable): FakeVariable => {
+    method(variable, "setValueForMode", (modeId: string, value: unknown) => {
+      variable.valuesByMode[modeId] = structuredClone(value);
+      writes.calls.push({
+        node: variable.id,
+        method: "setValueForMode",
+        args: [modeId, value],
+      });
+    });
+    method(variable, "setVariableCodeSyntax", (platform: string, value: string) => {
+      variable.codeSyntax = {
+        ...(variable.codeSyntax as Record<string, string> | undefined),
+        [platform]: value,
+      };
+      writes.calls.push({
+        node: variable.id,
+        method: "setVariableCodeSyntax",
+        args: [platform, value],
+      });
+    });
+    localVariables.push(variable);
+
+    return variable;
+  };
+
+  for (const collection of library.localCollections ?? []) {
+    collectionStore(collection as FakeCollection);
+  }
+
+  for (const variable of library.localVariables ?? []) {
+    variableStore(variable as FakeVariable);
+  }
+
   const figma = {
     currentPage: page as FakeNode & { selection?: FakeNode[] },
     mixed: FAKE_MIXED,
@@ -682,7 +780,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
         const variable = library.variables?.[id];
 
         return variable === undefined
-          ? null
+          ? (localVariables.find((local) => local.id === id) ?? null)
           : {
               remote: false,
               codeSyntax: {},
@@ -690,9 +788,56 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
               resolveForConsumer: () => ({ value: variable.value }),
             };
       },
-      getVariableCollectionByIdAsync: async (id: string) => library.collections?.[id] ?? null,
-      getLocalVariableCollectionsAsync: async () => library.localCollections ?? [],
-      getLocalVariablesAsync: async () => library.localVariables ?? [],
+      getVariableCollectionByIdAsync: async (id: string) =>
+        library.collections?.[id] ?? localCollections.find((local) => local.id === id) ?? null,
+      getLocalVariableCollectionsAsync: async () => localCollections,
+      getLocalVariablesAsync: async () => localVariables,
+      createVariableCollection: (name: string) => {
+        const id = `VariableCollectionId:90:${localCollections.length + 1}`;
+
+        writes.calls.push({
+          node: id,
+          method: "createVariableCollection",
+          args: [name],
+        });
+
+        return collectionStore({
+          id,
+          name,
+          remote: false,
+          defaultModeId: `${id}/m1`,
+          modes: [
+            {
+              modeId: `${id}/m1`,
+              name: "Mode 1",
+            },
+          ],
+        });
+      },
+      createVariable: (name: string, collection: { id: string }, resolvedType: string) => {
+        const id = `VariableID:90:${localVariables.length + 1}`;
+
+        writes.calls.push({
+          node: id,
+          method: "createVariable",
+          args: [name, collection.id, resolvedType],
+        });
+
+        return variableStore({
+          id,
+          name,
+          variableCollectionId: collection.id,
+          resolvedType,
+          description: "",
+          scopes: ["ALL_SCOPES"],
+          codeSyntax: {},
+          valuesByMode: {},
+        });
+      },
+      createVariableAlias: (variable: { id: string }) => ({
+        type: "VARIABLE_ALIAS",
+        id: variable.id,
+      }),
       setBoundVariableForPaint: (paint: object, field: string, variable: { id: string }) => ({
         ...paint,
         boundVariables: {

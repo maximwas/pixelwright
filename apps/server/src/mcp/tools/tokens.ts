@@ -1,14 +1,21 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { type RawTokens, tokenModel, tokensCss } from "@pixelwright/core";
+import { type RawTokens, tokenModel, tokensCss, tokensPlan } from "@pixelwright/core";
 import type * as z from "zod";
-import { MAX_LIBRARY_VARIABLES, READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
-import { TokensReadInputSchema, TokensReadOutputSchema } from "../../schemas/tools.ts";
+import { MAX_LIBRARY_VARIABLES, READ_ONLY_ANNOTATIONS, WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
+import {
+  TokensApplyOutputSchema,
+  TokensApplyToolInputSchema,
+  TokensReadInputSchema,
+  TokensReadOutputSchema,
+} from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
 import { runOp } from "../run-op.ts";
 
 type TokensReadArgs = z.output<typeof TokensReadInputSchema>;
 type TokensRead = z.input<typeof TokensReadOutputSchema>;
+type TokensApplyArgs = z.output<typeof TokensApplyToolInputSchema>;
+type TokensApplied = z.input<typeof TokensApplyOutputSchema>;
 
 export function registerTokensTool(server: McpServer, { bridge }: ToolContext): void {
   registerTool(server, {
@@ -21,6 +28,39 @@ export function registerTokensTool(server: McpServer, { bridge }: ToolContext): 
     annotations: READ_ONLY_ANNOTATIONS,
     run: (args) => readTokens(bridge, args),
   });
+  registerTool(server, {
+    name: "tokens_apply",
+    title: "Write design tokens",
+    description:
+      "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias). Collections, modes and variables are found by name in the file's own collections or made; a value the variable already holds is left as it is, and nothing is deleted. A library's collection is never copied into the file: change it in the library. Send only what you change. errors name each variable and mode that could not be written while the rest goes in. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+    input: TokensApplyToolInputSchema,
+    output: TokensApplyOutputSchema,
+    annotations: WRITE_ANNOTATIONS,
+    run: (args) => applyTokens(bridge, args),
+  });
+}
+
+/** tokens_apply: the values read in core, written by the plugin; what core could not read comes first among errors. */
+export async function applyTokens(
+  bridge: ToolContext["bridge"],
+  { dryRun, file, ...input }: TokensApplyArgs,
+): Promise<TokensApplied> {
+  const { plan, errors } = tokensPlan(input);
+  const applied = await runOp(
+    bridge,
+    "tokens_apply",
+    {
+      plan,
+      dryRun,
+    },
+    file,
+  );
+
+  return {
+    ...applied,
+    errors: [...errors, ...applied.errors],
+    dryRun,
+  };
 }
 
 export async function readTokens(

@@ -5,6 +5,7 @@ import type { OutlineNode } from "../types/operations.ts";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "./apply.ts";
 import { SnapshotSchema } from "./snapshot.ts";
 import { RawTokensSchema } from "./tokens.ts";
+import { TokensApplyResultSchema, TokensPlanSchema } from "./tokens-apply.ts";
 
 /** A node's box in page coordinates, whole pixels. */
 export const BoxSchema = z.object({
@@ -224,6 +225,14 @@ export const OPERATION_SCHEMAS = {
         .max(32 * 1024 * 1024),
     }),
     output: z.object({ received: z.number().int() }),
+  },
+  /** Variables and styles written by name, as tokens_apply planned them; a dry run only checks. */
+  tokens_apply: {
+    input: z.object({
+      plan: TokensPlanSchema,
+      dryRun: z.boolean(),
+    }),
+    output: TokensApplyResultSchema,
   },
   /** Code run in the plugin: its value made JSON-safe, what it printed, and what it threw or that it ran too long. */
   execute: {

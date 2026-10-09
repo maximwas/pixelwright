@@ -13,6 +13,7 @@ import { execute } from "./execute.ts";
 import { exportNode, originalImage } from "./export-node.ts";
 import { find, outline, selection, show } from "./read-ops.ts";
 import { entries, snapshot } from "./snapshot.ts";
+import { tokensApply } from "./tokens-apply.ts";
 import { upload } from "./uploads.ts";
 import { variables } from "./variables.ts";
 
@@ -34,6 +35,7 @@ const HANDLERS: Handlers = {
   apply,
   delete: deleteNodes,
   execute,
+  tokens_apply: tokensApply,
   upload,
 };
 

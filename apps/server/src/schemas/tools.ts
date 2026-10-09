@@ -5,6 +5,8 @@ import {
   EXECUTE_DEFAULT_MS,
   EXECUTE_MAX_MS,
   OPERATION_SCHEMAS,
+  TokensApplyInputSchema,
+  TokensApplyResultSchema,
 } from "@pixelwright/core";
 import * as z from "zod";
 import { MAX_EXPORT_NODES } from "../constants/mcp.ts";
@@ -268,3 +270,15 @@ export const ExecuteInputSchema = z.object({
 });
 
 export const ExecuteOutputSchema = OPERATION_SCHEMAS.execute.output;
+
+export const TokensApplyToolInputSchema = TokensApplyInputSchema.extend({
+  dryRun: z
+    .boolean()
+    .default(false)
+    .describe("Check names, types, modes and aliases without writing; works with Allow edits off."),
+  file: FileSchema,
+});
+
+export const TokensApplyOutputSchema = TokensApplyResultSchema.extend({
+  dryRun: z.boolean(),
+});
