@@ -178,7 +178,7 @@ describe("snapshot", () => {
   it("answers what the server's schema expects", async () => {
     const answer = await runOperation("snapshot", {
       node: "2:4869",
-      css: true,
+      css: "all",
     });
 
     expect(() => OPERATION_SCHEMAS.snapshot.output.parse(answer)).not.toThrow();
@@ -270,7 +270,7 @@ describe("snapshot", () => {
     const { root } = (await runOperation("snapshot", {
       node: "2:4869",
       depth: 0,
-      css: true,
+      css: "all",
     })) as Shot;
 
     expect(root.children).toBeUndefined();
@@ -346,5 +346,145 @@ describe("snapshot of a mirrored layer", () => {
         height: 192,
       },
     });
+  });
+});
+
+describe("snapshot of what designers tell developers, and of a grid", () => {
+  it("keeps notes with their category, a component's description, a prototype link and a grid child's cell", async () => {
+    const { figma } = installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "3:1",
+            type: "FRAME",
+            layoutMode: "GRID",
+            gridColumnSizes: [
+              {
+                type: "FLEX",
+                value: 1,
+              },
+            ],
+            gridRowSizes: [{ type: "HUG" }],
+            children: [
+              {
+                id: "3:2",
+                type: "COMPONENT",
+                description: "A product card.",
+                annotations: [
+                  {
+                    label: "Opens the product page",
+                    categoryId: "C:1",
+                  },
+                ],
+                reactions: [
+                  {
+                    trigger: { type: "ON_CLICK" },
+                    actions: [
+                      {
+                        type: "URL",
+                        url: "https://example.com/product",
+                      },
+                    ],
+                  },
+                ],
+                gridRowAnchorIndex: 0,
+                gridColumnAnchorIndex: 0,
+                gridRowSpan: 1,
+                gridColumnSpan: 1,
+                gridChildHorizontalAlign: "AUTO",
+                gridChildVerticalAlign: "AUTO",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    Object.assign(figma, {
+      annotations: {
+        getAnnotationCategoriesAsync: async () => [
+          {
+            id: "C:1",
+            label: "Behavior",
+          },
+        ],
+      },
+    });
+
+    const { root } = (await runOperation("snapshot", { node: "3:1" })) as Shot;
+
+    expect(root).toMatchObject({
+      gridColumnSizes: [
+        {
+          type: "FLEX",
+          value: 1,
+        },
+      ],
+      gridRowSizes: [{ type: "HUG" }],
+    });
+    expect(root.children?.[0]).toMatchObject({
+      description: "A product card.",
+      annotations: [
+        {
+          label: "Opens the product page",
+          category: "Behavior",
+        },
+      ],
+      href: "https://example.com/product",
+      gridRowAnchorIndex: 0,
+      gridColumnSpan: 1,
+    });
+  });
+
+  it("asks Figma for its CSS only for layers our table cannot write, when asked for that", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "4:1",
+            css: { display: "flex" },
+            children: [
+              {
+                id: "4:2",
+                fills: [
+                  {
+                    type: "GRADIENT_LINEAR",
+                    gradientStops: [],
+                  },
+                ],
+                css: { background: "linear-gradient(90deg, #000 0%, #FFF 100%)" },
+              },
+              {
+                id: "4:3",
+                fills: [
+                  {
+                    type: "SOLID",
+                    color: {
+                      r: 0,
+                      g: 0,
+                      b: 0,
+                    },
+                  },
+                ],
+                css: { background: "#000" },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", {
+      node: "4:1",
+      css: "unmapped",
+    })) as Shot;
+
+    expect(root).not.toHaveProperty("css");
+    expect(root.children?.[0]?.css).toEqual({ background: "linear-gradient(90deg, #000 0%, #FFF 100%)" });
+    expect(root.children?.[1]).not.toHaveProperty("css");
   });
 });

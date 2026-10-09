@@ -1,7 +1,7 @@
 import { CSS_ORDER, VECTOR_TYPES } from "../constants/css.ts";
 import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
-import type { SnapshotEffect, SnapshotNode } from "../types/snapshot.ts";
+import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
 import { colorCss } from "./color.ts";
 import { boxShorthand, decimal, px } from "./format.ts";
 import { boundVariable, paintsCss, UNMAPPED } from "./paint.ts";
@@ -12,7 +12,21 @@ const JUSTIFY: Readonly<Record<string, string>> = {
   CENTER: "center",
   MAX: "flex-end",
   SPACE_BETWEEN: "space-between",
+  SPACE_EVENLY: "space-evenly",
+  SPACE_AROUND: "space-around",
 };
+
+/** Ways of spreading children that leave no room for a gap. */
+const SPREAD = new Set(["SPACE_BETWEEN", "SPACE_EVENLY", "SPACE_AROUND"]);
+
+const SELF_ALIGN: Readonly<Record<string, string>> = {
+  MIN: "start",
+  CENTER: "center",
+  MAX: "end",
+};
+
+/** A size the constraints decide instead of the layer's own: left out (stretched) or a percent (scaled). */
+type SizeOverride = Partial<Record<"width" | "height", string | null>>;
 
 const ALIGN: Readonly<Record<string, string>> = {
   CENTER: "center",
@@ -42,8 +56,8 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
   if (node.type === "LINE") {
     lineCss(node, parent, css, context);
   } else {
-    positionCss(node, parent, context, css);
-    sizeCss(node, parent, context, css);
+    sizeCss(node, parent, context, css, positionCss(node, parent, context, css));
+    gridChildCss(node, parent, css);
   }
 
   if (node.opacity !== undefined) {
@@ -103,8 +117,17 @@ function layoutCss(node: SnapshotNode, css: Map<string, string>, context: CssCon
   if (node.layoutMode === "GRID") {
     css.set("display", "grid");
 
-    if (node.gridColumnCount !== undefined) {
-      css.set("grid-template-columns", `repeat(${node.gridColumnCount}, 1fr)`);
+    const columns =
+      tracksCss(node.gridColumnSizes) ??
+      (node.gridColumnCount === undefined ? null : `repeat(${node.gridColumnCount}, 1fr)`);
+    const rows = tracksCss(node.gridRowSizes);
+
+    if (columns !== null) {
+      css.set("grid-template-columns", columns);
+    }
+
+    if (rows !== null) {
+      css.set("grid-template-rows", rows);
     }
 
     setLength(css, "column-gap", node, "gridColumnGap", node.gridColumnGap, context);
@@ -148,17 +171,68 @@ function layoutCss(node: SnapshotNode, css: Map<string, string>, context: CssCon
 
   const spaced = node.children?.filter((child) => child.visible).length ?? node.childCount;
 
-  // Space-between spaces the children itself, and a gap with fewer than two children spaces nothing.
-  if (node.primaryAxisAlignItems !== "SPACE_BETWEEN" && spaced >= 2) {
+  // Spreading spaces the children itself, and a gap with fewer than two children spaces nothing.
+  if (!SPREAD.has(node.primaryAxisAlignItems ?? "MIN") && spaced >= 2) {
     setLength(css, "gap", node, "itemSpacing", node.itemSpacing, context);
   }
 
   if (node.layoutWrap === "WRAP") {
     setLength(css, "row-gap", node, "counterAxisSpacing", node.counterAxisSpacing ?? undefined, context);
+
+    if (node.counterAxisAlignContent === "SPACE_BETWEEN") {
+      css.set("align-content", "space-between");
+    }
   }
 }
 
-function sizeCss(node: SnapshotNode, parent: SnapshotNode | null, context: CssContext, css: Map<string, string>): void {
+/** Grid tracks: a flex track is `fr`, a fixed one pixels, a hugging one `auto`; equal tracks as repeat(). */
+function tracksCss(tracks: SnapshotNode["gridColumnSizes"]): string | null {
+  if (tracks === undefined || tracks.length === 0) {
+    return null;
+  }
+
+  const sizes = tracks.map((track) =>
+    track.type === "FIXED" ? px(track.value ?? 0) : track.type === "HUG" ? "auto" : `${decimal(track.value ?? 1)}fr`,
+  );
+  const [first] = sizes;
+
+  return sizes.length > 2 && sizes.every((size) => size === first)
+    ? `repeat(${sizes.length}, ${first})`
+    : sizes.join(" ");
+}
+
+/** Where a grid's child sits (1-based lines in CSS) and how it aligns in its cell. */
+function gridChildCss(node: SnapshotNode, parent: SnapshotNode | null, css: Map<string, string>): void {
+  if (parent?.layoutMode !== "GRID" || node.layoutPositioning === "ABSOLUTE") {
+    return;
+  }
+
+  const place = (anchor: number | undefined, span: number | undefined) =>
+    anchor === undefined ? undefined : (span ?? 1) > 1 ? `${anchor + 1} / span ${span}` : String(anchor + 1);
+  const row = place(node.gridRowAnchorIndex, node.gridRowSpan);
+  const column = place(node.gridColumnAnchorIndex, node.gridColumnSpan);
+  const justify = SELF_ALIGN[node.gridChildHorizontalAlign ?? "AUTO"];
+  const align = SELF_ALIGN[node.gridChildVerticalAlign ?? "AUTO"];
+
+  for (const [property, value] of [
+    ["grid-row", row],
+    ["grid-column", column],
+    ["justify-self", justify],
+    ["align-self", align],
+  ] as const) {
+    if (value !== undefined) {
+      css.set(property, value);
+    }
+  }
+}
+
+function sizeCss(
+  node: SnapshotNode,
+  parent: SnapshotNode | null,
+  context: CssContext,
+  css: Map<string, string>,
+  override: SizeOverride,
+): void {
   const isRoot = node === context.root;
   const flowing = isFlex(parent) && node.layoutPositioning !== "ABSOLUTE";
   const axes = [
@@ -167,7 +241,13 @@ function sizeCss(node: SnapshotNode, parent: SnapshotNode | null, context: CssCo
   ] as const;
 
   for (const [property, sizing, value, mainAxis] of axes) {
-    if (isRoot || sizing === "FIXED" || sizing === undefined) {
+    const decided = override[property];
+
+    if (decided !== undefined) {
+      if (decided !== null) {
+        css.set(property, decided);
+      }
+    } else if (isRoot || sizing === "FIXED" || sizing === undefined) {
       setLength(css, property, node, property, value, context);
     } else if (sizing === "FILL" && flowing) {
       css.set(mainAxis ? "flex" : "align-self", mainAxis ? "1" : "stretch");
@@ -191,27 +271,69 @@ function positionCss(
   parent: SnapshotNode | null,
   context: CssContext,
   css: Map<string, string>,
-): void {
+): SizeOverride {
   const transform = transformCss(node);
-
-  if (parent !== null && node !== context.root && (node.layoutPositioning === "ABSOLUTE" || !hasLayout(parent))) {
-    // A rotated or mirrored layer turns about its centre in CSS: place the unrotated box so the centres meet (Figma's
-    // own x and y are the transformed corner, the far one at -180).
-    const centre =
-      node.bounds !== undefined
-        ? {
-            x: node.bounds.x + node.bounds.width / 2,
-            y: node.bounds.y + node.bounds.height / 2,
-          }
-        : null;
-
-    css.set("position", "absolute");
-    css.set("left", px((centre === null ? node.x : centre.x - node.width / 2) - parent.x));
-    css.set("top", px((centre === null ? node.y : centre.y - node.height / 2) - parent.y));
-  }
+  const override: SizeOverride = {};
 
   if (transform !== null) {
     css.set("transform", transform);
+  }
+
+  if (parent === null || node === context.root || !(node.layoutPositioning === "ABSOLUTE" || !hasLayout(parent))) {
+    return override;
+  }
+
+  // A rotated or mirrored layer turns about its centre in CSS: place the unrotated box so the centres meet (Figma's
+  // own x and y are the transformed corner, the far one at -180).
+  const centre =
+    node.bounds !== undefined
+      ? {
+          x: node.bounds.x + node.bounds.width / 2,
+          y: node.bounds.y + node.bounds.height / 2,
+        }
+      : null;
+  const left = (centre === null ? node.x : centre.x - node.width / 2) - parent.x;
+  const top = (centre === null ? node.y : centre.y - node.height / 2) - parent.y;
+  // A group is no frame: its layers keep their place in it whatever their constraints say.
+  const constraints = parent.type === "GROUP" ? undefined : node.constraints;
+
+  css.set("position", "absolute");
+  pin(css, override, constraints?.horizontal ?? "MIN", ["left", "right", "width"], left, node.width, parent.width);
+  pin(css, override, constraints?.vertical ?? "MIN", ["top", "bottom", "height"], top, node.height, parent.height);
+
+  return override;
+}
+
+/**
+ * One axis of an absolutely placed layer from its constraint: pinned to the start (MIN) or the end (MAX), held at its
+ * offset from the centre, stretched between both edges, or scaled as percents of the parent.
+ */
+function pin(
+  css: Map<string, string>,
+  override: SizeOverride,
+  constraint: string,
+  [start, end, size]: readonly ["left" | "top", "right" | "bottom", "width" | "height"],
+  offset: number,
+  length: number,
+  parentLength: number,
+): void {
+  const toEnd = parentLength - offset - length;
+
+  if (constraint === "MAX") {
+    css.set(end, px(toEnd));
+  } else if (constraint === "CENTER") {
+    const fromCentre = Math.round(offset - parentLength / 2);
+
+    css.set(start, fromCentre === 0 ? "50%" : `calc(50% ${fromCentre < 0 ? "-" : "+"} ${Math.abs(fromCentre)}px)`);
+  } else if (constraint === "STRETCH") {
+    css.set(start, px(offset));
+    css.set(end, px(toEnd));
+    override[size] = null;
+  } else if (constraint === "SCALE" && parentLength > 0) {
+    css.set(start, `${decimal((offset / parentLength) * 100)}%`);
+    override[size] = `${decimal((length / parentLength) * 100)}%`;
+  } else {
+    css.set(start, px(offset));
   }
 }
 
@@ -383,7 +505,80 @@ function textCss(
     css.set(property, value);
   }
 
+  textBlockCss(node, base, css, readOnly);
+
   return textStyle;
+}
+
+const TEXT_WRAPS: Readonly<Record<string, string>> = {
+  BALANCE: "balance",
+  PRETTY: "pretty",
+};
+
+const LIST_STYLES: Readonly<Record<string, string>> = {
+  ORDERED: "decimal",
+  UNORDERED: "disc",
+};
+
+/** What a text box does as a whole: wrapping, truncation, vertical alignment, lists and paragraphs. */
+function textBlockCss(
+  node: SnapshotNode,
+  base: TextSegment,
+  css: Map<string, string>,
+  readOnly: [string, string][],
+): void {
+  const text = node.text;
+
+  if (text === undefined) {
+    return;
+  }
+
+  const wrap = TEXT_WRAPS[base.textWrapStyle ?? "AUTO"];
+
+  if (wrap !== undefined) {
+    css.set("text-wrap", wrap);
+  }
+
+  if (text.textTruncation === "ENDING") {
+    if ((text.maxLines ?? 1) <= 1) {
+      css.set("overflow", "hidden");
+      css.set("text-overflow", "ellipsis");
+      css.set("white-space", "nowrap");
+    } else {
+      readOnly.push(["line-clamp", String(text.maxLines)]);
+    }
+  }
+
+  if (
+    node.layoutSizingVertical === "FIXED" &&
+    (text.textAlignVertical === "CENTER" || text.textAlignVertical === "BOTTOM")
+  ) {
+    readOnly.push(["align-content", text.textAlignVertical === "CENTER" ? "center" : "end"]);
+  }
+
+  const list = text.segments
+    .map((segment) => LIST_STYLES[segment.listOptions?.type ?? "NONE"])
+    .find((style) => style !== undefined);
+
+  if (list !== undefined) {
+    readOnly.push(["list-style", list]);
+  }
+
+  if (typeof text.paragraphSpacing === "number" && text.paragraphSpacing > 0) {
+    readOnly.push(["paragraph-spacing", px(text.paragraphSpacing)]);
+  }
+
+  if ((base.paragraphIndent ?? 0) > 0) {
+    readOnly.push(["text-indent", px(base.paragraphIndent ?? 0)]);
+  }
+
+  if (text.leadingTrim === "CAP_HEIGHT") {
+    readOnly.push(["text-box", "trim-both cap alphabetic"]);
+  }
+
+  if (text.hangingPunctuation) {
+    readOnly.push(["hanging-punctuation", "first"]);
+  }
 }
 
 function styleIdOf(id: string | undefined): string | undefined {

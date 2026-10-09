@@ -350,4 +350,59 @@ describe("CSS mapping rules", () => {
       ["color", "#191A23"],
     ]);
   });
+
+  it("keeps a variable font's axes the font shorthand does not say, and matches its text style by family and style", () => {
+    const { properties, readOnly, textStyle } = cssOf(
+      layer({
+        type: "TEXT",
+        layoutSizingHorizontal: "HUG",
+        layoutSizingVertical: "HUG",
+        text: {
+          characters: "Hello",
+          textAutoResize: "WIDTH_AND_HEIGHT",
+          textAlignHorizontal: "LEFT",
+          textAlignVertical: "TOP",
+          segments: [
+            segment({
+              fontName: {
+                family: "Inter",
+                style: "Regular",
+                variationSettings: {
+                  wght: 400,
+                  opsz: 14,
+                },
+              },
+              textStyleId: "S:body",
+            }),
+          ],
+        },
+      }),
+      frame({ layoutMode: "VERTICAL" }),
+      {
+        styles: {
+          "S:body": {
+            name: "Body",
+            type: "TEXT",
+            remote: false,
+            fontName: {
+              family: "Inter",
+              style: "Regular",
+            },
+            fontSize: 16,
+            lineHeight: { unit: "AUTO" },
+            letterSpacing: {
+              unit: "PIXELS",
+              value: 0,
+            },
+            textCase: "ORIGINAL",
+            textDecoration: "NONE",
+          },
+        },
+      },
+    );
+
+    expect(textStyle).toBe("Body");
+    expect(properties).toEqual([["color", "#191A23"]]);
+    expect(readOnly).toEqual([["font-variation-settings", '"opsz" 14']]);
+  });
 });

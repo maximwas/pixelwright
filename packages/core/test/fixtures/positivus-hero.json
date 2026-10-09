@@ -304,7 +304,10 @@
                       "end": 8,
                       "fontName": {
                         "family": "Space Grotesk",
-                        "style": "Regular"
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
                       },
                       "fontSize": 20,
                       "fontWeight": 400,
@@ -336,6 +339,18 @@
                       "fillStyleId": "",
                       "textStyleId": "",
                       "hyperlink": null,
+                      "textDecorationStyle": null,
+                      "textDecorationOffset": null,
+                      "textDecorationThickness": null,
+                      "textDecorationColor": null,
+                      "listOptions": {
+                        "type": "NONE"
+                      },
+                      "indentation": 0,
+                      "paragraphIndent": 0,
+                      "paragraphSpacing": 0,
+                      "textWrapStyle": "AUTO",
+                      "openTypeFeatures": {},
                       "boundVariables": {}
                     }
                   ]
@@ -387,7 +402,10 @@
                       "end": 8,
                       "fontName": {
                         "family": "Space Grotesk",
-                        "style": "Regular"
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
                       },
                       "fontSize": 20,
                       "fontWeight": 400,
@@ -419,6 +437,18 @@
                       "fillStyleId": "",
                       "textStyleId": "",
                       "hyperlink": null,
+                      "textDecorationStyle": null,
+                      "textDecorationOffset": null,
+                      "textDecorationThickness": null,
+                      "textDecorationColor": null,
+                      "listOptions": {
+                        "type": "NONE"
+                      },
+                      "indentation": 0,
+                      "paragraphIndent": 0,
+                      "paragraphSpacing": 0,
+                      "textWrapStyle": "AUTO",
+                      "openTypeFeatures": {},
                       "boundVariables": {}
                     }
                   ]
@@ -470,7 +500,10 @@
                       "end": 9,
                       "fontName": {
                         "family": "Space Grotesk",
-                        "style": "Regular"
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
                       },
                       "fontSize": 20,
                       "fontWeight": 400,
@@ -502,6 +535,18 @@
                       "fillStyleId": "",
                       "textStyleId": "",
                       "hyperlink": null,
+                      "textDecorationStyle": null,
+                      "textDecorationOffset": null,
+                      "textDecorationThickness": null,
+                      "textDecorationColor": null,
+                      "listOptions": {
+                        "type": "NONE"
+                      },
+                      "indentation": 0,
+                      "paragraphIndent": 0,
+                      "paragraphSpacing": 0,
+                      "textWrapStyle": "AUTO",
+                      "openTypeFeatures": {},
                       "boundVariables": {}
                     }
                   ]
@@ -553,7 +598,10 @@
                       "end": 7,
                       "fontName": {
                         "family": "Space Grotesk",
-                        "style": "Regular"
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
                       },
                       "fontSize": 20,
                       "fontWeight": 400,
@@ -585,6 +633,18 @@
                       "fillStyleId": "",
                       "textStyleId": "",
                       "hyperlink": null,
+                      "textDecorationStyle": null,
+                      "textDecorationOffset": null,
+                      "textDecorationThickness": null,
+                      "textDecorationColor": null,
+                      "listOptions": {
+                        "type": "NONE"
+                      },
+                      "indentation": 0,
+                      "paragraphIndent": 0,
+                      "paragraphSpacing": 0,
+                      "textWrapStyle": "AUTO",
+                      "openTypeFeatures": {},
                       "boundVariables": {}
                     }
                   ]
@@ -636,7 +696,10 @@
                       "end": 4,
                       "fontName": {
                         "family": "Space Grotesk",
-                        "style": "Regular"
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
                       },
                       "fontSize": 20,
                       "fontWeight": 400,
@@ -668,6 +731,18 @@
                       "fillStyleId": "",
                       "textStyleId": "",
                       "hyperlink": null,
+                      "textDecorationStyle": null,
+                      "textDecorationOffset": null,
+                      "textDecorationThickness": null,
+                      "textDecorationColor": null,
+                      "listOptions": {
+                        "type": "NONE"
+                      },
+                      "indentation": 0,
+                      "paragraphIndent": 0,
+                      "paragraphSpacing": 0,
+                      "textWrapStyle": "AUTO",
+                      "openTypeFeatures": {},
                       "boundVariables": {}
                     }
                   ]
@@ -784,7 +859,10 @@
                           "end": 15,
                           "fontName": {
                             "family": "Space Grotesk",
-                            "style": "Regular"
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
                           },
                           "fontSize": 20,
                           "fontWeight": 400,
@@ -816,6 +894,18 @@
                           "fillStyleId": "",
                           "textStyleId": "",
                           "hyperlink": null,
+                          "textDecorationStyle": null,
+                          "textDecorationOffset": null,
+                          "textDecorationThickness": null,
+                          "textDecorationColor": null,
+                          "listOptions": {
+                            "type": "NONE"
+                          },
+                          "indentation": 0,
+                          "paragraphIndent": 0,
+                          "paragraphSpacing": 0,
+                          "textWrapStyle": "AUTO",
+                          "openTypeFeatures": {},
                           "boundVariables": {}
                         }
                       ]
@@ -941,7 +1031,10 @@
                       "end": 44,
                       "fontName": {
                         "family": "Space Grotesk",
-                        "style": "Medium"
+                        "style": "Medium",
+                        "variationSettings": {
+                          "wght": 500
+                        }
                       },
                       "fontSize": 60,
                       "fontWeight": 500,
@@ -972,6 +1065,18 @@
                       "fillStyleId": "",
                       "textStyleId": "S:04c3fd0dd8f9347062b8fa1a09b6a43abee5c622,53:11",
                       "hyperlink": null,
+                      "textDecorationStyle": null,
+                      "textDecorationOffset": null,
+                      "textDecorationThickness": null,
+                      "textDecorationColor": null,
+                      "listOptions": {
+                        "type": "NONE"
+                      },
+                      "indentation": 0,
+                      "paragraphIndent": 0,
+                      "paragraphSpacing": 0,
+                      "textWrapStyle": "AUTO",
+                      "openTypeFeatures": {},
                       "boundVariables": {}
                     }
                   ]
@@ -1024,7 +1129,10 @@
                       "end": 163,
                       "fontName": {
                         "family": "Space Grotesk",
-                        "style": "Regular"
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
                       },
                       "fontSize": 20,
                       "fontWeight": 400,
@@ -1056,6 +1164,18 @@
                       "fillStyleId": "",
                       "textStyleId": "",
                       "hyperlink": null,
+                      "textDecorationStyle": null,
+                      "textDecorationOffset": null,
+                      "textDecorationThickness": null,
+                      "textDecorationColor": null,
+                      "listOptions": {
+                        "type": "NONE"
+                      },
+                      "indentation": 0,
+                      "paragraphIndent": 0,
+                      "paragraphSpacing": 0,
+                      "textWrapStyle": "AUTO",
+                      "openTypeFeatures": {},
                       "boundVariables": {}
                     }
                   ]
@@ -1171,7 +1291,10 @@
                           "end": 19,
                           "fontName": {
                             "family": "Space Grotesk",
-                            "style": "Regular"
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
                           },
                           "fontSize": 20,
                           "fontWeight": 400,
@@ -1203,6 +1326,18 @@
                           "fillStyleId": "",
                           "textStyleId": "",
                           "hyperlink": null,
+                          "textDecorationStyle": null,
+                          "textDecorationOffset": null,
+                          "textDecorationThickness": null,
+                          "textDecorationColor": null,
+                          "listOptions": {
+                            "type": "NONE"
+                          },
+                          "indentation": 0,
+                          "paragraphIndent": 0,
+                          "paragraphSpacing": 0,
+                          "textWrapStyle": "AUTO",
+                          "openTypeFeatures": {},
                           "boundVariables": {}
                         }
                       ]
@@ -3802,7 +3937,10 @@
       "remote": true,
       "fontName": {
         "family": "Space Grotesk",
-        "style": "Medium"
+        "style": "Medium",
+        "variationSettings": {
+          "wght": 500
+        }
       },
       "fontSize": 60,
       "lineHeight": {

@@ -84,6 +84,11 @@ describe("our CSS against getCSSAsync on the Positivus fixtures", () => {
             continue;
           }
 
+          if (scaled(node, property)) {
+            // A SCALE constraint is a percent of the parent for us; Dev Mode writes the pixels it has now.
+            continue;
+          }
+
           if (property === "transform" && sameRotation(ours.get(property), value)) {
             continue;
           }
@@ -106,4 +111,11 @@ function sameRotation(ours: string | undefined, theirs: string): boolean {
   const angle = (value: string | undefined) => Number(/^rotate\((-?[\d.]+)deg\)$/.exec(value ?? "")?.[1] ?? Number.NaN);
 
   return Math.abs(angle(ours) - angle(theirs)) < 0.05;
+}
+
+function scaled(node: SnapshotNode, property: string): boolean {
+  const horizontal = node.constraints?.horizontal === "SCALE" && ["width", "left"].includes(property);
+  const vertical = node.constraints?.vertical === "SCALE" && ["height", "top"].includes(property);
+
+  return horizontal || vertical;
 }

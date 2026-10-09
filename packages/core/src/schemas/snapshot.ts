@@ -63,6 +63,19 @@ const LetterSpacingSchema = z.looseObject({
 const FontNameSchema = z.object({
   family: z.string(),
   style: z.string(),
+  /** Axis values of a variable font: `{wght: 450}`. */
+  variationSettings: z.record(z.string(), z.number()).optional(),
+});
+
+/** A text decoration's offset or thickness: pixels, percent of the font size, or Figma's automatic one. */
+const DecorationLengthSchema = z.looseObject({
+  unit: z.string(),
+  value: z.number().optional(),
+});
+
+const GridTrackSchema = z.object({
+  type: z.string(),
+  value: z.number().optional(),
 });
 
 /** A run of text with one set of styles (getStyledTextSegments). */
@@ -81,7 +94,26 @@ export const TextSegmentSchema = z.looseObject({
   fills: z.array(PaintSchema),
   fillStyleId: z.string(),
   textStyleId: z.string(),
-  hyperlink: z.unknown().optional(),
+  hyperlink: z
+    .looseObject({
+      type: z.string(),
+      value: z.string(),
+    })
+    .nullable()
+    .optional(),
+  textDecorationStyle: z.string().nullable().optional(),
+  textDecorationOffset: DecorationLengthSchema.nullable().optional(),
+  textDecorationThickness: DecorationLengthSchema.nullable().optional(),
+  textDecorationColor: z
+    .looseObject({ value: z.union([z.literal("AUTO"), PaintSchema]) })
+    .nullable()
+    .optional(),
+  listOptions: z.looseObject({ type: z.string() }).optional(),
+  indentation: z.number().optional(),
+  paragraphIndent: z.number().optional(),
+  paragraphSpacing: z.number().optional(),
+  textWrapStyle: z.string().optional(),
+  openTypeFeatures: z.record(z.string(), z.boolean()).optional(),
   boundVariables: BoundVariablesSchema.optional(),
 });
 
@@ -145,6 +177,15 @@ export const SnapshotFieldsSchema = z.object({
   gridColumnCount: z.number().optional(),
   gridRowGap: z.number().optional(),
   gridColumnGap: z.number().optional(),
+  gridRowSizes: z.array(GridTrackSchema).optional(),
+  gridColumnSizes: z.array(GridTrackSchema).optional(),
+  /** Where a grid's child sits: 0-based anchors, spans, and its own alignment in the cell. */
+  gridRowAnchorIndex: z.number().optional(),
+  gridColumnAnchorIndex: z.number().optional(),
+  gridRowSpan: z.number().optional(),
+  gridColumnSpan: z.number().optional(),
+  gridChildHorizontalAlign: z.string().optional(),
+  gridChildVerticalAlign: z.string().optional(),
   layoutSizingHorizontal: z.string().optional(),
   layoutSizingVertical: z.string().optional(),
   layoutPositioning: z.string().optional(),
@@ -187,6 +228,8 @@ export const SnapshotFieldsSchema = z.object({
       textTruncation: z.string().optional(),
       maxLines: z.number().nullable().optional(),
       paragraphSpacing: NumberOrMixed.optional(),
+      leadingTrim: z.string().optional(),
+      hangingPunctuation: z.boolean().optional(),
       segments: z.array(TextSegmentSchema),
     })
     .optional(),
@@ -206,6 +249,19 @@ export const SnapshotFieldsSchema = z.object({
       ),
     })
     .optional(),
+  /** A component's description, for whoever builds it. */
+  description: z.string().optional(),
+  /** Dev Mode annotations: the designer's notes for developers, with their category's name. */
+  annotations: z
+    .array(
+      z.object({
+        label: z.string(),
+        category: z.string().optional(),
+      }),
+    )
+    .optional(),
+  /** The URL a prototype interaction opens. */
+  href: z.string().optional(),
   /** Export settings the designer gave the layer: it is meant to be an asset, in this format and scale. */
   exportSettings: z
     .array(

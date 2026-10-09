@@ -1,5 +1,6 @@
 import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotStyle, TextSegment } from "../types/snapshot.ts";
+import { colorCss } from "./color.ts";
 import { decimal, px } from "./format.ts";
 import { paintsCss, UNMAPPED } from "./paint.ts";
 
@@ -12,6 +13,12 @@ const TEXT_TRANSFORMS: Readonly<Record<string, string>> = {
 const TEXT_DECORATIONS: Readonly<Record<string, string>> = {
   UNDERLINE: "underline",
   STRIKETHROUGH: "line-through",
+};
+
+const DECORATION_STYLES: Readonly<Record<string, string>> = {
+  WAVY: "wavy",
+  DOTTED: "dotted",
+  DASHED: "dashed",
 };
 
 const TEXT_ALIGNS: Readonly<Record<string, string>> = {
@@ -70,7 +77,25 @@ export function segmentCss(
   const decoration = TEXT_DECORATIONS[segment.textDecoration];
 
   if (decoration !== undefined && !same("textDecoration")) {
-    css.set("text-decoration", decoration);
+    decorationCss(segment, decoration, css);
+  }
+
+  const features = Object.entries(segment.openTypeFeatures ?? {});
+
+  if (features.length > 0) {
+    readOnly.push([
+      "font-feature-settings",
+      features.map(([tag, on]) => `"${tag.toLowerCase()}" ${on ? 1 : 0}`).join(", "),
+    ]);
+  }
+
+  // A variable font reports its weight as an axis too: only axes the font shorthand does not already say are kept.
+  const axes = Object.entries(segment.fontName.variationSettings ?? {}).filter(
+    ([axis, value]) => !(axis === "wght" && value === segment.fontWeight),
+  );
+
+  if (axes.length > 0) {
+    readOnly.push(["font-variation-settings", axes.map(([axis, value]) => `"${axis}" ${decimal(value)}`).join(", ")]);
   }
 
   const color = paintsCss(segment.fills, segment.fillStyleId === "" ? undefined : segment.fillStyleId, node, context);
@@ -87,6 +112,36 @@ export function segmentCss(
     css,
     ...(styled === undefined ? {} : { textStyle: styled.name }),
   };
+}
+
+/** An underline or strike: its style and color in the shorthand, its offset and thickness on their own. */
+function decorationCss(segment: TextSegment, line: string, css: Map<string, string>): void {
+  const style = DECORATION_STYLES[segment.textDecorationStyle ?? "SOLID"];
+  const paint = segment.textDecorationColor?.value;
+  const color =
+    paint === undefined || paint === "AUTO" || paint.color === undefined
+      ? undefined
+      : colorCss(paint.color, paint.opacity ?? 1);
+  const offset = decorationLength(segment.textDecorationOffset);
+  const thickness = decorationLength(segment.textDecorationThickness);
+
+  css.set("text-decoration", [line, style, color].filter((part) => part !== undefined).join(" "));
+
+  if (offset !== null) {
+    css.set("text-underline-offset", offset);
+  }
+
+  if (thickness !== null) {
+    css.set("text-decoration-thickness", thickness);
+  }
+}
+
+function decorationLength(length: TextSegment["textDecorationOffset"]): string | null {
+  if (length?.value === undefined) {
+    return null;
+  }
+
+  return length.unit === "PERCENT" ? `${decimal(length.value / 100)}em` : `${decimal(length.value)}px`;
 }
 
 /** The text's alignment: left is the default and is left out. */
@@ -171,6 +226,11 @@ function weightOf(style: string): number {
 }
 
 function sameAsStyle(style: SnapshotStyle, segment: TextSegment, key: keyof FontParts): boolean {
+  if (key === "fontName") {
+    // A run of a variable font carries axis values its style's font name does not: family and style decide.
+    return style.fontName?.family === segment.fontName.family && style.fontName.style === segment.fontName.style;
+  }
+
   return canonical(style[key]) === canonical(segment[key]);
 }
 

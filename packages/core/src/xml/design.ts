@@ -1,3 +1,5 @@
+import { INVISIBLE_TYPES } from "../constants/css.ts";
+import { px } from "../css/format.ts";
 import { nodeCss } from "../css/node-css.ts";
 import { baseSegment, segmentCss, textStyleCss } from "../css/text.ts";
 import type { CssContext } from "../types/css.ts";
@@ -88,7 +90,7 @@ class DesignWriter {
   }
 
   private write(node: SnapshotNode, parent: SnapshotNode | null, level: number): void {
-    if (!node.visible) {
+    if (!node.visible || INVISIBLE_TYPES.has(node.type)) {
       return;
     }
 
@@ -106,7 +108,14 @@ class DesignWriter {
             imageUrl: () => "",
           };
     const css = nodeCss(node, parent, context);
-    const properties = keeps === null ? css.properties : css.properties.filter(([property]) => keeps.has(property));
+    const properties =
+      keeps === null
+        ? css.properties
+        : turnedAsset(
+            node,
+            parent,
+            css.properties.filter(([property]) => keeps.has(property)),
+          );
 
     if (context !== this.context) {
       this.keepTokens(properties, context.tokens);
@@ -116,6 +125,9 @@ class DesignWriter {
       ["id", node.id],
       ["name", node.type === "TEXT" && node.name === node.text?.characters ? undefined : node.name],
       ...this.componentOf(node),
+      ["description", node.description === "" ? undefined : node.description],
+      ["note", noteOf(node)],
+      ["href", node.href ?? (node.type === "TEXT" ? urlOf(node.text?.segments ?? []) : undefined)],
       ["textStyle", this.useTextStyle(css.textStyle)],
       ["src", asset === null ? undefined : this.plan(node, asset)],
       ...properties,
@@ -168,14 +180,19 @@ class DesignWriter {
     }
 
     const { setName, componentName, properties } = node.instance;
-    const variant = Object.entries(properties)
-      .filter(([, property]) => property.type === "VARIANT")
-      .map(([name, property]) => `${name}=${String(property.value)}`)
-      .join(", ");
+    const listed = (types: ReadonlySet<string>) =>
+      Object.entries(properties)
+        .filter(([, property]) => types.has(property.type))
+        // Figma suffixes a non-variant property's name with its id: "Label#12:0".
+        .map(([name, property]) => `${name.replace(/#[^#]*$/, "")}=${String(property.value)}`)
+        .join(", ");
+    const variant = listed(VARIANT_PROPERTY);
+    const props = listed(OWN_PROPERTIES);
 
     return [
       ["component", setName ?? componentName],
       ["variant", setName === undefined || variant === "" ? undefined : variant],
+      ["props", props === "" ? undefined : props],
     ];
   }
 
@@ -214,12 +231,18 @@ class DesignWriter {
         }
 
         const textStyle = own.textStyle === baseCss.textStyle ? undefined : this.useTextStyle(own.textStyle);
+        const href = urlOf([segment]);
+        const linked = href === urlOf([base]) ? undefined : href;
 
-        if (differs.length === 0 && textStyle === undefined) {
+        if (differs.length === 0 && textStyle === undefined && linked === undefined) {
           return escapeText(segment.characters);
         }
 
-        const attributes = [...(textStyle === undefined ? [] : [["textStyle", textStyle]]), ...differs]
+        const attributes = [
+          ...(textStyle === undefined ? [] : [["textStyle", textStyle]]),
+          ...(linked === undefined ? [] : [["href", linked]]),
+          ...differs,
+        ]
           .map(([name, value]) => ` ${name}="${escapeAttribute(value ?? "")}"`)
           .join("");
 
@@ -308,6 +331,63 @@ class DesignWriter {
 
     return name;
   }
+}
+
+const VARIANT_PROPERTY: ReadonlySet<string> = new Set(["VARIANT"]);
+
+/** An instance's own settings: its texts and toggles (a swapped instance and a slot show as children). */
+const OWN_PROPERTIES: ReadonlySet<string> = new Set(["TEXT", "BOOLEAN"]);
+
+/** The designer's Dev Mode notes, each with its category. */
+function noteOf(node: SnapshotNode): string | undefined {
+  const notes = (node.annotations ?? []).map(({ label, category }) =>
+    category === undefined ? label : `${category}: ${label}`,
+  );
+
+  return notes.length === 0 ? undefined : notes.join(" | ");
+}
+
+/** The URL every given run links to, if they all link to the same one. */
+function urlOf(segments: readonly TextSegment[]): string | undefined {
+  const urls = new Set(
+    segments.map((segment) => (segment.hyperlink?.type === "URL" ? segment.hyperlink.value : undefined)),
+  );
+  const [url] = urls;
+
+  return urls.size === 1 ? url : undefined;
+}
+
+/**
+ * Figma exports a turned or mirrored layer already turned: the asset takes the box it covers, with no transform, so it
+ * is not turned twice.
+ */
+function turnedAsset(
+  node: SnapshotNode,
+  parent: SnapshotNode | null,
+  properties: [string, string][],
+): [string, string][] {
+  const { bounds } = node;
+
+  if (bounds === undefined) {
+    return properties;
+  }
+
+  const placed = new Map(properties.filter(([property]) => property !== "transform"));
+
+  placed.set("width", px(bounds.width));
+  placed.set("height", px(bounds.height));
+
+  if (placed.has("left") && parent !== null) {
+    placed.set("left", px(bounds.x - parent.x));
+  }
+
+  if (placed.has("top") && parent !== null) {
+    placed.set("top", px(bounds.y - parent.y));
+  }
+
+  return properties
+    .filter(([property]) => placed.has(property))
+    .map(([property]) => [property, placed.get(property) ?? ""]);
 }
 
 /** The read-only CSS of a layer; an asset keeps only its blend mode, which no exported file holds. */

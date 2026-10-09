@@ -109,7 +109,11 @@ export const OPERATION_SCHEMAS = {
       node: NodeIdSchema,
       /** Levels below the node to include; all of them when left out (the plugin's size budget still applies). */
       depth: z.number().int().min(0).max(100).exactOptional(),
-      css: z.boolean().default(false),
+      /**
+       * Figma's own CSS (getCSSAsync, slow): for no layer, only for layers with what our table cannot write yet
+       * (gradients, new effects, blend modes), or for all of them (the test oracle).
+       */
+      css: z.enum(["none", "unmapped", "all"]).default("none"),
     }),
     output: SnapshotSchema,
   },

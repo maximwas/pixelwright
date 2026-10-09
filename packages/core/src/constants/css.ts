@@ -8,7 +8,9 @@ export const CSS_ORDER = [
   "flex-wrap",
   "position",
   "left",
+  "right",
   "top",
+  "bottom",
   "width",
   "height",
   "min-width",
@@ -17,17 +19,23 @@ export const CSS_ORDER = [
   "max-height",
   "flex",
   "align-self",
+  "grid-row",
+  "grid-column",
+  "justify-self",
   "padding",
   "justify-content",
   "align-items",
+  "align-content",
   "gap",
-  "row-gap",
   "column-gap",
+  "row-gap",
   "grid-template-columns",
   "grid-template-rows",
   "transform",
   "opacity",
   "overflow",
+  "text-overflow",
+  "white-space",
   "border-radius",
   "border",
   "border-top",
@@ -44,9 +52,31 @@ export const CSS_ORDER = [
   "letter-spacing",
   "text-transform",
   "text-decoration",
+  "text-underline-offset",
+  "text-decoration-thickness",
   "text-align",
+  "text-wrap",
   "color",
 ] as const;
 
-/** Layer types drawn as SVG, whose fills and strokes are the vector's own, not a box's background and border. */
-export const VECTOR_TYPES: ReadonlySet<string> = new Set(["VECTOR", "BOOLEAN_OPERATION", "STAR", "POLYGON"]);
+/**
+ * Layer types drawn as SVG, whose fills and strokes are the vector's own, not a box's background and border: shapes,
+ * and Figma Draw's text on a path and transform groups, which CSS cannot draw.
+ */
+export const VECTOR_TYPES: ReadonlySet<string> = new Set([
+  "VECTOR",
+  "BOOLEAN_OPERATION",
+  "STAR",
+  "POLYGON",
+  "TEXT_PATH",
+  "TRANSFORM_GROUP",
+]);
+
+/** Paints CSS cannot draw: a leaf filled with one is rendered as an image (gradients stay CSS, read-only for now). */
+export const RENDERED_PAINTS: ReadonlySet<string> = new Set(["VIDEO", "PATTERN", "SHADER"]);
+
+/** Effects CSS cannot draw: a leaf with one is rendered as an image. */
+export const RENDERED_EFFECTS: ReadonlySet<string> = new Set(["NOISE", "TEXTURE", "GLASS", "SHADER"]);
+
+/** Layer types design_read leaves out: they draw nothing. */
+export const INVISIBLE_TYPES: ReadonlySet<string> = new Set(["SLICE"]);

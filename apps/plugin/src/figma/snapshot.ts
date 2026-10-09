@@ -16,7 +16,13 @@ interface References {
   readonly variables: Map<string, SceneNode>;
 }
 
-const SEGMENT_FIELDS: (keyof Omit<StyledTextSegment, "characters" | "start" | "end">)[] = [
+type SegmentField = keyof Omit<StyledTextSegment, "characters" | "start" | "end">;
+
+/** Paints and effects core writes as CSS itself; anything else asks Figma for its CSS in "unmapped" mode. */
+const MAPPED_PAINTS = new Set(["SOLID", "IMAGE"]);
+const MAPPED_EFFECTS = new Set(["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR", "BACKGROUND_BLUR"]);
+
+const BASE_SEGMENT_FIELDS: SegmentField[] = [
   "fontName",
   "fontSize",
   "fontWeight",
@@ -30,6 +36,21 @@ const SEGMENT_FIELDS: (keyof Omit<StyledTextSegment, "characters" | "start" | "e
   "textStyleId",
   "hyperlink",
   "boundVariables",
+];
+
+/** Newer fields (text wrap: Aug 2026): a Figma without them refuses the whole call, so they are asked for apart. */
+const SEGMENT_FIELDS: SegmentField[] = [
+  ...BASE_SEGMENT_FIELDS,
+  "textDecorationStyle",
+  "textDecorationOffset",
+  "textDecorationThickness",
+  "textDecorationColor",
+  "listOptions",
+  "indentation",
+  "paragraphIndent",
+  "paragraphSpacing",
+  "textWrapStyle",
+  "openTypeFeatures",
 ];
 
 /**
@@ -52,12 +73,14 @@ export async function snapshot({
     styles: new Set(),
     variables: new Map(),
   };
+  const categories = await annotationCategories();
   const read = (node: SceneNode) =>
     entryOf(node, {
       x: originX ?? 0,
       y: originY ?? 0,
       css,
       references,
+      categories,
     });
   const top = await read(root);
   const queue: { node: SceneNode; entry: SnapshotNode; level: number }[] = [
@@ -116,8 +139,10 @@ function isLayer(node: BaseNode): node is SceneNode {
 interface EntryContext {
   readonly x: number;
   readonly y: number;
-  readonly css: boolean;
+  readonly css: OperationInput<"snapshot">["css"];
   readonly references: References;
+  /** Annotation category names by id. */
+  readonly categories: ReadonlyMap<string, string>;
 }
 
 async function entryOf(node: SceneNode, context: EntryContext): Promise<SnapshotNode> {
@@ -193,8 +218,14 @@ async function entryOf(node: SceneNode, context: EntryContext): Promise<Snapshot
 
     if (layer.layoutMode === "GRID") {
       for (const key of GRID_FIELDS) {
-        put(key, layer[key]);
+        put(key, key.endsWith("Sizes") ? plain(layer[key]) : layer[key]);
       }
+    }
+  }
+
+  if (node.parent !== null && "layoutMode" in node.parent && node.parent.layoutMode === "GRID") {
+    for (const key of GRID_CHILD_FIELDS) {
+      put(key, layer[key]);
     }
   }
 
@@ -250,6 +281,22 @@ async function entryOf(node: SceneNode, context: EntryContext): Promise<Snapshot
     entry.exportSettings = plain(layer.exportSettings);
   }
 
+  if ((node.type === "COMPONENT" || node.type === "COMPONENT_SET") && node.description !== "") {
+    entry.description = node.description;
+  }
+
+  const notes = annotationsOf(node, context.categories);
+
+  if (notes.length > 0) {
+    entry.annotations = notes;
+  }
+
+  const href = urlOf(node);
+
+  if (href !== null) {
+    entry.href = href;
+  }
+
   if (node.type === "TEXT") {
     entry.text = textOf(node);
   }
@@ -262,7 +309,7 @@ async function entryOf(node: SceneNode, context: EntryContext): Promise<Snapshot
     }
   }
 
-  if (context.css && "getCSSAsync" in node) {
+  if ((context.css === "all" || (context.css === "unmapped" && needsOracle(entry))) && "getCSSAsync" in node) {
     entry.css = await node.getCSSAsync();
   }
 
@@ -289,7 +336,87 @@ const AUTO_LAYOUT_FIELDS = [
   "strokesIncludedInLayout",
 ] as const;
 
-const GRID_FIELDS = ["gridRowCount", "gridColumnCount", "gridRowGap", "gridColumnGap"] as const;
+const GRID_FIELDS = [
+  "gridRowCount",
+  "gridColumnCount",
+  "gridRowGap",
+  "gridColumnGap",
+  "gridRowSizes",
+  "gridColumnSizes",
+] as const;
+
+const GRID_CHILD_FIELDS = [
+  "gridRowAnchorIndex",
+  "gridColumnAnchorIndex",
+  "gridRowSpan",
+  "gridColumnSpan",
+  "gridChildHorizontalAlign",
+  "gridChildVerticalAlign",
+] as const;
+
+/** Whether a layer has what core cannot write as CSS yet, so Figma's own CSS is worth its time. */
+function needsOracle(entry: Record<string, unknown>): boolean {
+  const paints = (value: unknown) =>
+    value === MIXED ||
+    (Array.isArray(value) && value.some((paint: { type: string }) => !MAPPED_PAINTS.has(paint.type)));
+  const effects = Array.isArray(entry.effects) ? (entry.effects as { type: string; blurType?: string }[]) : [];
+  const segments = (entry.text as { segments?: { fills: unknown }[] } | undefined)?.segments ?? [];
+
+  return (
+    paints(entry.fills) ||
+    paints(entry.strokes) ||
+    entry.blendMode !== undefined ||
+    effects.some((effect) => !MAPPED_EFFECTS.has(effect.type) || effect.blurType === "PROGRESSIVE") ||
+    segments.some((segment) => paints(segment.fills))
+  );
+}
+
+async function annotationCategories(): Promise<ReadonlyMap<string, string>> {
+  // Older Figma versions and the tests' fake have no annotations API.
+  const categories = await figma.annotations?.getAnnotationCategoriesAsync().catch(() => []);
+
+  return new Map((categories ?? []).map((category) => [category.id, category.label]));
+}
+
+function annotationsOf(
+  node: SceneNode,
+  categories: ReadonlyMap<string, string>,
+): { label: string; category?: string }[] {
+  if (!("annotations" in node)) {
+    return [];
+  }
+
+  return node.annotations.flatMap((annotation) => {
+    const label = annotation.label ?? annotation.labelMarkdown;
+    const category = annotation.categoryId === undefined ? undefined : categories.get(annotation.categoryId);
+
+    return label === undefined || label === ""
+      ? []
+      : [
+          {
+            label,
+            ...(category === undefined ? {} : { category }),
+          },
+        ];
+  });
+}
+
+/** The URL a prototype interaction of the layer opens, if one does. */
+function urlOf(node: SceneNode): string | null {
+  if (!("reactions" in node)) {
+    return null;
+  }
+
+  for (const reaction of node.reactions) {
+    for (const action of reaction.actions ?? (reaction.action === undefined ? [] : [reaction.action])) {
+      if (action.type === "URL") {
+        return action.url;
+      }
+    }
+  }
+
+  return null;
+}
 
 function textOf(node: TextNode): Record<string, unknown> {
   const text: Record<string, unknown> = {
@@ -297,7 +424,7 @@ function textOf(node: TextNode): Record<string, unknown> {
     textAutoResize: node.textAutoResize,
     textAlignHorizontal: node.textAlignHorizontal,
     textAlignVertical: node.textAlignVertical,
-    segments: plain(node.getStyledTextSegments(SEGMENT_FIELDS)),
+    segments: plain(segmentsOf(node)),
   };
 
   if (node.textTruncation !== "DISABLED") {
@@ -305,11 +432,27 @@ function textOf(node: TextNode): Record<string, unknown> {
     text.maxLines = node.maxLines;
   }
 
+  if (node.leadingTrim !== "NONE" && typeof node.leadingTrim === "string") {
+    text.leadingTrim = node.leadingTrim;
+  }
+
+  if (node.hangingPunctuation) {
+    text.hangingPunctuation = true;
+  }
+
   if (node.paragraphSpacing !== 0) {
     text.paragraphSpacing = node.paragraphSpacing === figma.mixed ? MIXED : node.paragraphSpacing;
   }
 
   return text;
+}
+
+function segmentsOf(node: TextNode) {
+  try {
+    return node.getStyledTextSegments(SEGMENT_FIELDS);
+  } catch {
+    return node.getStyledTextSegments(BASE_SEGMENT_FIELDS);
+  }
 }
 
 async function instanceOf(node: InstanceNode): Promise<Record<string, unknown> | null> {

@@ -18,21 +18,21 @@ const SNAPSHOTS: readonly { file: string; input: OperationInput<"snapshot"> }[] 
     file: "positivus-services-row.json",
     input: {
       node: "2:4869",
-      css: true,
+      css: "all",
     },
   },
   {
     file: "positivus-services-block.json",
     input: {
       node: "2:4868",
-      css: true,
+      css: "all",
     },
   },
   {
     file: "positivus-hero.json",
     input: {
       node: "2:4785",
-      css: true,
+      css: "all",
     },
   },
   {
@@ -40,7 +40,7 @@ const SNAPSHOTS: readonly { file: string; input: OperationInput<"snapshot"> }[] 
     input: {
       node: "2:4766",
       depth: 1,
-      css: true,
+      css: "all",
     },
   },
 ];
@@ -123,7 +123,7 @@ async function readyTarget(app: Awaited<ReturnType<typeof createApp>>): Promise<
       {
         node: "2:4869",
         depth: 0,
-        css: false,
+        css: "none",
       },
       target,
     );

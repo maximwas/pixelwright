@@ -1,4 +1,4 @@
-import { VECTOR_TYPES } from "../constants/css.ts";
+import { RENDERED_EFFECTS, RENDERED_PAINTS, VECTOR_TYPES } from "../constants/css.ts";
 import type { SnapshotNode } from "../types/snapshot.ts";
 
 /** Shapes an icon may be drawn with, besides true vectors. */
@@ -48,7 +48,7 @@ export function classify(node: SnapshotNode): Classified | null {
     };
   }
 
-  if (children.length === 0 && node.childCount === 0 && hasImageFill(node)) {
+  if (children.length === 0 && node.childCount === 0 && (hasImageFill(node) || needsRender(node))) {
     return {
       kind: "image",
       format: "PNG",
@@ -67,6 +67,16 @@ export function classify(node: SnapshotNode): Classified | null {
 
 export function visibleChildren(node: SnapshotNode): SnapshotNode[] {
   return (node.children ?? []).filter((child) => child.visible);
+}
+
+/** Painted with something CSS cannot draw: video, pattern or shader fills, noise, texture, glass or shader effects. */
+function needsRender(node: SnapshotNode): boolean {
+  const fills = Array.isArray(node.fills) ? node.fills : [];
+
+  return (
+    fills.some((paint) => paint.visible !== false && RENDERED_PAINTS.has(paint.type)) ||
+    (node.effects ?? []).some((effect) => effect.visible !== false && RENDERED_EFFECTS.has(effect.type))
+  );
 }
 
 export function hasImageFill(node: SnapshotNode): boolean {
