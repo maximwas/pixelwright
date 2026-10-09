@@ -1,6 +1,12 @@
 import type { TokenIndex } from "../figma/token-index.ts";
 import type { WriteError } from "../figma/write-error.ts";
 
+/** A font a text uses now, with the weight Figma reports for it (a variable font's own, like 590). */
+export interface KnownFont {
+  readonly fontName: FontName;
+  readonly weight: number;
+}
+
 /** What writing needs beyond the change itself, made once per call. */
 export interface WriteContext {
   /** Built on first use: most calls name no token. */
@@ -31,6 +37,7 @@ export interface Layer {
   setStrokeStyleIdAsync(id: string): Promise<void>;
   setEffectStyleIdAsync(id: string): Promise<void>;
   setGridChildPosition(row: number, column: number): void;
+  setProperties(properties: Record<string, string | boolean>): void;
   [key: string]: unknown;
 }
 
@@ -54,4 +61,5 @@ export interface TextLayer extends Layer {
   setRangeTextDecorationColor(start: number, end: number, value: TextDecorationColor): void;
   setRangeFills(start: number, end: number, value: Paint[]): void;
   setRangeHyperlink(start: number, end: number, value: HyperlinkTarget | null): void;
+  setRangeBoundVariable(start: number, end: number, field: VariableBindableTextField, variable: Variable | null): void;
 }

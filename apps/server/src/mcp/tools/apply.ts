@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import {
   type ApplyChange,
+  type ApplyElement,
   type ApplyError,
   changeOf,
   OPERATION_SCHEMAS,
@@ -16,6 +17,8 @@ import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
 
 type DesignApplyArgs = z.output<typeof DesignApplyInputSchema>;
+/** A layer as the plugin read it, with its parent. */
+type Layer = { node: SnapshotNode; parent: SnapshotNode | null };
 type DesignApplied = z.input<typeof DesignApplyOutputSchema>;
 
 export function registerApplyTool(server: McpServer, { bridge }: ToolContext): void {
@@ -56,7 +59,8 @@ export async function applyDesign(
 
   const target = resolveTarget(bridge.plugins(), file);
   const ids = [...new Set(read.elements.flatMap((element) => (element.id === null ? [] : [element.id])))];
-  const layers = new Map<string, { node: SnapshotNode; parent: SnapshotNode | null }>();
+  const layers = new Map<string, Layer>();
+  const missing = new Set<string>();
   const tokens = {
     styles: {},
     variables: {},
@@ -71,12 +75,35 @@ export async function applyDesign(
     for (const root of entries.roots) {
       index(root.node, root.parent, layers);
     }
+
+    for (const id of entries.missing) {
+      missing.add(id);
+    }
   }
 
   const changes: ApplyChange[] = [];
+  const refuse = (element: ApplyElement, message: string, hint: string) =>
+    errors.push({
+      line: element.line,
+      column: element.column,
+      ...(element.id === null ? {} : { id: element.id }),
+      message,
+      hint,
+    });
 
   for (const element of read.elements) {
     const layer = element.id === null ? undefined : layers.get(element.id);
+
+    if (element.id !== null && layer === undefined && !missing.has(element.id)) {
+      // Past the read's size budget: unknown, so every attribute would be written again, rounded.
+      refuse(
+        element,
+        `design_apply could not read ${element.id}'s current state: the call holds too many layers at once.`,
+        "Send fewer layers in one call, or this one on its own.",
+      );
+      continue;
+    }
+
     const { change, errors: translated } = changeOf(
       element,
       layer === undefined ? undefined : unchangedAttributes(element, layer, tokens),
@@ -84,6 +111,10 @@ export async function applyDesign(
 
     changes.push(change);
     errors.push(...translated);
+  }
+
+  for (const [element, message] of moves(read.elements, layers)) {
+    refuse(element, message, "Change it where it is; move it in Figma for now (moving comes in a later version).");
   }
 
   const parents = new Set(
@@ -125,11 +156,49 @@ export async function applyDesign(
   };
 }
 
-function index(
-  node: SnapshotNode,
-  parent: SnapshotNode | null,
-  layers: Map<string, { node: SnapshotNode; parent: SnapshotNode | null }>,
-): void {
+/**
+ * Elements that would move their layer: into another parent element (a new one included), next to another layer, or
+ * into another order among the layers listed with it. Writing moves comes later, and a silent no-op would mislead.
+ */
+function moves(elements: readonly ApplyElement[], layers: ReadonlyMap<string, Layer>): [ApplyElement, string][] {
+  const byRef = new Map(elements.map((element) => [element.ref, element]));
+  const found: [ApplyElement, string][] = [];
+  const last = new Map<string, number>();
+
+  for (const element of elements) {
+    const layer = element.id === null ? undefined : layers.get(element.id);
+
+    if (layer === undefined) {
+      continue;
+    }
+
+    const inside = element.parent === null ? undefined : byRef.get(element.parent);
+    const parent = layer.parent?.id ?? null;
+    const where = parent === null ? "on its page" : `in ${parent}`;
+
+    if (element.attributes.before !== undefined || element.attributes.after !== undefined) {
+      found.push([
+        element,
+        `Moving a layer is not written yet: before and after place new layers, ${element.id} stays ${where}.`,
+      ]);
+    } else if (inside !== undefined && inside.id !== parent) {
+      found.push([element, `Moving a layer is not written yet: ${element.id} stays ${where}.`]);
+    } else if (inside !== undefined && parent !== null) {
+      const at = (layers.get(parent)?.node.children ?? []).findIndex((child) => child.id === element.id);
+      const before = last.get(parent) ?? -1;
+
+      if (at !== -1 && at < before) {
+        found.push([element, `Reordering layers is not written yet: ${element.id} keeps its place in the order.`]);
+      }
+
+      last.set(parent, Math.max(before, at));
+    }
+  }
+
+  return found;
+}
+
+function index(node: SnapshotNode, parent: SnapshotNode | null, layers: Map<string, Layer>): void {
   layers.set(node.id, {
     node,
     parent,

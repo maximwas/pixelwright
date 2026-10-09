@@ -46,11 +46,37 @@ const LIBRARY: FakeLibrary = {
       style: "Bold",
     },
     {
+      family: "Inter",
+      style: "Book",
+    },
+    {
       family: "Space Grotesk",
       style: "Medium",
     },
+    ...["Regular", "Medium", "Semibold", "Bold"].map((style) => ({
+      family: "SF Pro",
+      style,
+    })),
   ],
   styles: {
+    "S:h3": {
+      id: "S:h3",
+      name: "h3",
+      type: "TEXT",
+      remote: true,
+      fontName: {
+        family: "Space Grotesk",
+        style: "Medium",
+      },
+      fontSize: 30,
+      lineHeight: { unit: "AUTO" },
+      letterSpacing: {
+        unit: "PIXELS",
+        value: 0,
+      },
+      textCase: "ORIGINAL",
+      textDecoration: "NONE",
+    },
     "S:dark": {
       id: "S:dark",
       name: "Dark",
@@ -96,6 +122,7 @@ function page(): FakeNode {
             type: "TEXT",
             name: "Title",
             characters: "Hello",
+            textAutoResize: "WIDTH_AND_HEIGHT",
             fontName: {
               family: "Inter",
               style: "Regular",
@@ -153,12 +180,110 @@ function page(): FakeNode {
             type: "TEXT",
             name: "Label",
             characters: "Services",
+            textStyleId: "S:h3",
             fontName: {
               family: "Space Grotesk",
               style: "Medium",
             },
           },
         ],
+      },
+      {
+        id: "2:5",
+        name: "Button",
+        type: "INSTANCE",
+        mainComponent: {
+          name: "Button",
+          parent: null,
+        },
+        componentProperties: {
+          "Label#1:0": {
+            type: "TEXT",
+            value: "Old",
+          },
+        },
+        children: [
+          {
+            id: "I2:5;3:6",
+            type: "TEXT",
+            characters: "Old",
+            componentPropertyReferences: { characters: "Label#1:0" },
+            fontName: {
+              family: "Inter",
+              style: "Regular",
+            },
+          },
+        ],
+      },
+      {
+        id: "4:1",
+        name: "Hidden panel",
+        visible: false,
+        layoutMode: "VERTICAL",
+        itemSpacing: 8,
+        children: [{ id: "4:2" }],
+      },
+      {
+        id: "1:4",
+        type: "TEXT",
+        characters: "Hello world",
+        fontName: {
+          family: "Inter",
+          style: "Regular",
+        },
+        segments: [
+          {
+            characters: "Hello ",
+            start: 0,
+            end: 6,
+            fontName: {
+              family: "Inter",
+              style: "Regular",
+            },
+            fills: [
+              {
+                type: "SOLID",
+                color: DARK,
+              },
+            ],
+          },
+          {
+            characters: "world",
+            start: 6,
+            end: 11,
+            fontName: {
+              family: "Inter",
+              style: "Regular",
+            },
+            fills: [
+              {
+                type: "SOLID",
+                color: {
+                  r: 1,
+                  g: 0,
+                  b: 0,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "1:6",
+        type: "TEXT",
+        characters: "Hi",
+        fontWeight: 590,
+        fontName: {
+          family: "SF Pro",
+          style: "Semibold",
+        },
+      },
+      {
+        id: "1:7",
+        name: "Card",
+        layoutMode: "VERTICAL",
+        layoutSizingHorizontal: "HUG",
+        layoutSizingVertical: "HUG",
       },
     ],
   });
@@ -331,15 +456,15 @@ describe("apply: tokens, fonts and errors", () => {
 
   it("applies the good changes when one is bad, each error on its line", async () => {
     const result = await apply(
-      '<Frame id="1:1" opacity="0.5"/>\n<Frame id="9:9" opacity="0.5"/>\n<Frame id="3:1" flex="1"/>\n<Frame id="3:1" name="Kept"/>',
+      '<Frame id="1:1" opacity="0.5"/>\n<Frame id="9:9" opacity="0.5"/>\n<Frame id="3:1" flex="1"/>\n<Frame id="3:2" name="Kept"/>',
     );
 
-    expect(result.changed).toEqual(["1:1", "3:1"]);
+    expect(result.changed).toEqual(["1:1", "3:2"]);
     expect(result.errors.map(({ line, attribute }) => [line, attribute])).toEqual([
       [2, undefined],
       [3, "flex"],
     ]);
-    expect(byId("3:1")?.name).toBe("Kept");
+    expect(byId("3:2")?.name).toBe("Kept");
     expect(fake.writes.undo).toBe(1);
   });
 });
@@ -377,5 +502,101 @@ describe("delete", () => {
     setEditsAllowed(false);
 
     await expect(runOperation("delete", { nodes: ["1:2"] })).rejects.toMatchObject({ code: "EDITS_DISABLED" });
+  });
+});
+
+describe("apply: review fixes", () => {
+  const calls = (node: string, method?: string) =>
+    fake.writes.calls.filter((call) => call.node === node && (method === undefined || call.method === method));
+
+  it("reads a hidden layer asked for whole, with its layers", async () => {
+    const result = (await runOperation("entries", { ids: ["4:1"] })) as {
+      roots: { node: { layoutMode?: string; children?: { id: string }[] } }[];
+    };
+
+    expect(result.roots[0]?.node.layoutMode).toBe("VERTICAL");
+    expect(result.roots[0]?.node.children?.map(({ id }) => id)).toEqual(["4:2"]);
+  });
+
+  it("gives the whole text its own look again when its runs change, the characters the same", async () => {
+    await apply('<Text id="1:4">Hello world</Text>');
+
+    expect(calls("1:4", "setRangeFills")).toEqual([
+      expect.objectContaining({
+        args: [0, 11, [expect.objectContaining({ color: DARK })]],
+      }),
+    ]);
+  });
+
+  it("loads a text's fonts before sizing it", async () => {
+    const { errors } = await apply('<Text id="1:2" width="200px"/>');
+
+    expect(errors).toEqual([]);
+    expect(byId("1:2")).toMatchObject({
+      width: 200,
+      textAutoResize: "HEIGHT",
+    });
+  });
+
+  it("keeps the font a text has for its weight, else takes the nearest, never a far one", async () => {
+    const kept = await apply('<Text id="1:6" font="590 20px/24px \'SF Pro\'">Hi</Text>');
+    const made = await apply(
+      "<Text font=\"590 16px/normal 'SF Pro'\">New</Text>\n<Text font=\"400 16px/normal 'Inter'\">New</Text>",
+      {
+        parent: "3:1",
+      },
+    );
+
+    expect([kept.errors, made.errors]).toEqual([[], []]);
+    expect(byId("1:6")?.fontName).toEqual({
+      family: "SF Pro",
+      style: "Semibold",
+    });
+    expect(fake.writes.created.map(({ fontName }) => (fontName as { style: string }).style)).toEqual([
+      "Semibold",
+      "Regular",
+    ]);
+  });
+
+  it("sets a text bound to a component property through the instance's property", async () => {
+    const result = await apply('<Text id="I2:5;3:6">New label</Text>');
+
+    expect(result.errors).toEqual([]);
+    expect(calls("2:5", "setProperties")).toEqual([
+      expect.objectContaining({
+        args: [{ "Label#1:0": "New label" }],
+      }),
+    ]);
+    expect(byId("I2:5;3:6")?.characters).toBe("New label");
+  });
+
+  it("keeps a styled text's style when its characters change, writing no raw look over it", async () => {
+    await apply('<Text id="I2:1;3:4">Our services</Text>');
+
+    expect(byId("I2:1;3:4")?.textStyleId).toBe("S:h3");
+    expect(calls("I2:1;3:4").map(({ method }) => method)).toEqual(["characters"]);
+  });
+
+  it("keeps the other axis hugging when one size is set", async () => {
+    await apply('<Frame id="1:7" width="400px"/>');
+
+    expect(byId("1:7")).toMatchObject({
+      width: 400,
+      layoutSizingHorizontal: "FIXED",
+      layoutSizingVertical: "HUG",
+    });
+  });
+
+  it("stands a line upright when it is given a height and its left border", async () => {
+    const { created, errors } = await apply('<Line height="120px" border-left="1px solid #191A23"/>', {
+      parent: "3:1",
+    });
+    const line = byId(created[0]?.id ?? "");
+    const [[a, b], [c, d]] = (line as FakeNode).relativeTransform as [number[], number[]];
+
+    expect(errors).toEqual([]);
+    expect(line?.width).toBe(120);
+    expect([a, b, c, d].map((value) => Math.round(value ?? 0))).toEqual([0, -1, 1, 0]);
+    expect(line?.strokeWeight).toBe(1);
   });
 });

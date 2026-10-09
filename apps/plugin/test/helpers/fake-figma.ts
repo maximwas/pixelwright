@@ -213,9 +213,44 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
   define("appendChild", (child: FakeNode) => insert(node.children?.length ?? 0, child));
   define("insertChild", insert);
   define("resize", (width: number, height: number) => {
+    if (node.type === "TEXT" && !writes.loaded.has(fontKey(node.fontName as { family: string; style: string }))) {
+      throw new Error(
+        `Cannot resize a text with unloaded font "${fontKey(node.fontName as { family: string; style: string })}"`,
+      );
+    }
+
     node.width = width;
     node.height = height;
+
+    // As Figma does: a resize fixes the size, hugging stops on both axes, and a text stops sizing itself.
+    for (const sizing of ["layoutSizingHorizontal", "layoutSizingVertical"]) {
+      if (node[sizing] === "HUG") {
+        node[sizing] = "FIXED";
+      }
+    }
+
+    if (node.type === "TEXT") {
+      textAutoResize = "NONE";
+    }
+
     record("resize", [width, height]);
+  });
+  define("setProperties", (properties: Record<string, string>) => {
+    record("setProperties", [properties]);
+
+    const walkTexts = (layer: FakeNode) => {
+      const key = (layer.componentPropertyReferences as { characters?: string } | undefined)?.characters;
+
+      if (key !== undefined && properties[key] !== undefined) {
+        layer.characters = properties[key];
+      }
+
+      for (const child of layer.children ?? []) {
+        walkTexts(child);
+      }
+    };
+
+    walkTexts(node);
   });
   define("setBoundVariable", (field: string, variable: { id: string } | null) => {
     node.boundVariables = {
@@ -254,6 +289,24 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
   }
 
   let characters = typeof node.characters === "string" ? node.characters : "";
+  let textAutoResize = typeof node.textAutoResize === "string" ? node.textAutoResize : "NONE";
+
+  // Figma: setting how a text sizes itself requires its font loaded.
+  Object.defineProperty(node, "textAutoResize", {
+    get: () => textAutoResize,
+    set: (value: string) => {
+      if (!writes.loaded.has(fontKey(node.fontName as { family: string; style: string }))) {
+        throw new Error(
+          `Cannot write to node with unloaded font "${fontKey(node.fontName as { family: string; style: string })}"`,
+        );
+      }
+
+      textAutoResize = value;
+      record("textAutoResize", [value]);
+    },
+    enumerable: true,
+    configurable: true,
+  });
 
   Object.defineProperty(node, "characters", {
     get: () => characters,

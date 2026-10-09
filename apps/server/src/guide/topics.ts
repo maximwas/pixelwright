@@ -197,6 +197,13 @@ until then every call is refused (\`dryRun: true\` checks a call without writing
 - What Figma keeps together is completed from the layer: a new \`column-gap\` keeps its direction and wrap, a new
   \`filter\` keeps its shadows, a new \`border-bottom\` keeps its other sides, a new \`width\` keeps the edge it
   is pinned to. A new \`left\` or \`right\` replaces both edges.
+- A layer stays where it is: putting an element with \`id\` under another parent, next to another layer
+  (\`before\`/\`after\`) or in another order is refused for the move (its own attributes still apply); moving comes
+  later.
+- A text \`design_read\` shortened (\`$truncated\`) is never written back: read that layer on its own to change it.
+- A hidden layer comes back with \`display\` (\`flex\`, \`grid\` or \`block\`, as it was laid out).
+- Each tag takes its own attributes: no \`background\` or \`gap\` on a Text (its colour is \`color\`), no text
+  styles on a Frame, no auto layout on a shape; an element's id is given once (a copy has none).
 
 ## Creating
 

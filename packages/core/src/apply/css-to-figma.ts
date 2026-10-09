@@ -1,3 +1,4 @@
+import { LAYOUT_TAGS } from "../constants/apply.ts";
 import type {
   ApplyChange,
   ApplyElement,
@@ -482,7 +483,7 @@ function layoutRule(input: Input, out: Output): void {
   } else if (mode === "flex") {
     flexLayout(input, out);
   } else {
-    if (display !== undefined) {
+    if (display !== undefined && LAYOUT_TAGS.has(input.tag)) {
       out.set("layoutMode", "NONE", "display");
     }
 
@@ -1005,11 +1006,11 @@ function strokesRule({ own, merged }: Input, out: Output): void {
     return value === undefined ? all : sideOf(`border-${side}`, value, out);
   });
 
-  if (all === false || sides.includes(false)) {
+  if (all === INVALID || sides.includes(INVALID)) {
     return;
   }
 
-  const drawn = sides.filter((side): side is Side => side !== null && side !== false);
+  const drawn = sides.filter((side): side is Side => side !== null && side !== INVALID);
   const [first] = drawn;
   const align = outside ? "OUTSIDE" : "INSIDE";
 
@@ -1059,8 +1060,11 @@ function strokesRule({ own, merged }: Input, out: Output): void {
   );
 }
 
-/** One side of a border, in any order CSS allows: `1px solid #000`; null when none is drawn, false when invalid. */
-function sideOf(attribute: string, value: string, out: Output): Side | null | false {
+/** A side that could not be read: its error is out already. */
+const INVALID = Symbol("invalid");
+
+/** One side of a border, in any order CSS allows: `1px solid #000`; null when none is drawn. */
+function sideOf(attribute: string, value: string, out: Output): Side | null | typeof INVALID {
   if (value === "none" || value === "0") {
     return null;
   }
@@ -1077,7 +1081,7 @@ function sideOf(attribute: string, value: string, out: Output): Side | null | fa
   if (width === undefined || style === undefined || paint === null) {
     out.fail(attribute, `${attribute}="${value}" is not "Npx solid|dashed <colour or token>".`);
 
-    return false;
+    return INVALID;
   }
 
   return {

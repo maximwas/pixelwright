@@ -241,21 +241,56 @@ function size(axis: "width" | "height"): Step["write"] {
     }
 
     if (node.type === "LINE") {
-      // A line is as long as it is wide; a standing one is written with its height and turned upright.
+      // A line is as long as it is wide; a standing one is written with its height and stands upright, as read.
       if (node.width !== value) {
         node.resize(value, 0);
+      }
+
+      if (axis === "height" && !standing(node)) {
+        transform(node, {
+          rotation: -90,
+          mirror: false,
+        });
       }
 
       return;
     }
 
     if (node[axis] !== value) {
-      node.resize(
+      resizeKeeping(
+        node,
         axis === "width" ? Math.max(value, 0.01) : node.width,
         axis === "height" ? Math.max(value, 0.01) : node.height,
       );
     }
   };
+}
+
+/**
+ * resize(), keeping how the layer sizes itself: Figma's resize fixes the size on both axes and stops a text sizing
+ * itself, while the XML changed one size only.
+ */
+function resizeKeeping(node: Layer, width: number, height: number): void {
+  const kept = [
+    ["layoutSizingHorizontal", node.layoutSizingHorizontal],
+    ["layoutSizingVertical", node.layoutSizingVertical],
+    ["textAutoResize", node.textAutoResize],
+  ] as const;
+
+  node.resize(width, height);
+
+  for (const [key, value] of kept) {
+    if (value !== undefined && node[key] !== value) {
+      node[key] = value;
+    }
+  }
+}
+
+/** A line turned upright (within half a degree), as design_read writes it: a height and its left border. */
+function standing(node: Layer): boolean {
+  const [[a = 1]] = node.relativeTransform;
+
+  return Math.abs(a) < Math.sin((0.5 * Math.PI) / 180);
 }
 
 async function limit(node: Layer, key: Limit, value: LengthValue | null | undefined, context: WriteContext) {
@@ -417,8 +452,15 @@ function place(axis: "horizontal" | "vertical"): Step["write"] {
       throw new WriteError("A layer on the page is placed by left and top alone.");
     }
 
+    // design_read places a level or standing line by the box it covers; other layers by their unturned box's centre.
+    const line = node.type === "LINE" && (standing(node) || Math.abs(node.relativeTransform[0]?.[1] ?? 0) < 1e-6);
+    const [[a0 = 1, b0 = 0], [c0 = 0, d0 = 1]] = node.relativeTransform;
+    const covered =
+      axis === "horizontal"
+        ? Math.abs(a0) * node.width + Math.abs(b0) * node.height
+        : Math.abs(c0) * node.width + Math.abs(d0) * node.height;
     let start: number;
-    let size = node[length];
+    let size = line ? covered : node[length];
 
     if (spec.kind === "STRETCH") {
       start = spec.start;
@@ -431,8 +473,9 @@ function place(axis: "horizontal" | "vertical"): Step["write"] {
         spec.kind === "MIN" ? spec.offset : spec.kind === "MAX" ? span - spec.offset - size : span / 2 + spec.offset;
     }
 
-    if (size !== node[length]) {
-      node.resize(
+    if (!line && size !== node[length]) {
+      resizeKeeping(
+        node,
         axis === "horizontal" ? Math.max(size, 0.01) : node.width,
         axis === "vertical" ? Math.max(size, 0.01) : node.height,
       );
@@ -450,7 +493,7 @@ function place(axis: "horizontal" | "vertical"): Step["write"] {
     const origin = group ? (parent[axis === "horizontal" ? "x" : "y"] as number) : 0;
     const [[a = 1, b = 0, x = 0], [c = 0, d = 1, y = 0]] = node.relativeTransform;
     const half = [node.width / 2, node.height / 2] as const;
-    const centre = origin + start + (axis === "horizontal" ? half[0] : half[1]);
+    const centre = origin + start + (line ? covered / 2 : axis === "horizontal" ? half[0] : half[1]);
 
     setTransform(
       node,

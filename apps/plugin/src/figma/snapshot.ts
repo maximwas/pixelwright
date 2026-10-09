@@ -134,10 +134,11 @@ export async function entries({ ids }: OperationInput<"entries">): Promise<Opera
         css: "none",
         references,
         categories,
+        whole: asked.has(layer.id),
       });
 
     roots.push({
-      node: await subtree(node, undefined, read, budget),
+      node: await subtree(node, undefined, read, budget, (layer) => asked.has(layer.id)),
       parent: parent === null ? null : await read(parent),
     });
   }
@@ -166,6 +167,8 @@ async function subtree(
   depth: number | undefined,
   read: (node: SceneNode) => Promise<SnapshotNode>,
   budget: { used: number },
+  /** A hidden layer whose layers are read all the same. */
+  open: (node: SceneNode) => boolean = () => false,
 ): Promise<SnapshotNode> {
   const top = await read(root);
   const queue: { node: SceneNode; entry: SnapshotNode; level: number }[] = [
@@ -182,7 +185,11 @@ async function subtree(
   for (let index = 0; index < queue.length && !full; index++) {
     const { node, entry, level } = queue[index] as (typeof queue)[number];
 
-    if ((depth !== undefined && level >= depth) || !("children" in node) || (level > 0 && !node.visible)) {
+    if (
+      (depth !== undefined && level >= depth) ||
+      !("children" in node) ||
+      (level > 0 && !node.visible && !open(node))
+    ) {
       continue;
     }
 
@@ -225,6 +232,8 @@ interface EntryContext {
   readonly references: References;
   /** Annotation category names by id. */
   readonly categories: ReadonlyMap<string, string>;
+  /** A hidden layer read whole, not as a name and a box: design_apply changes it. */
+  readonly whole?: boolean;
 }
 
 async function entryOf(node: SceneNode, context: EntryContext): Promise<SnapshotNode> {
@@ -241,7 +250,7 @@ async function entryOf(node: SceneNode, context: EntryContext): Promise<Snapshot
   };
   const childCount = "children" in node ? node.children.length : 0;
 
-  if (!node.visible) {
+  if (!node.visible && !context.whole) {
     entry.childCount = childCount;
 
     return entry as unknown as SnapshotNode;

@@ -5,8 +5,8 @@ import { applyDesign } from "../src/mcp/tools/apply.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
-/** A bridge over one snapshot: entries come from it, apply answers what it was given. */
-function bridgeOver(snapshot: Snapshot) {
+/** A bridge over one snapshot: entries come from it (cut below the root when asked), apply answers what it was given. */
+function bridgeOver(snapshot: Snapshot, { cut = false }: { cut?: boolean } = {}) {
   const requests: { op: string; input: Record<string, unknown> }[] = [];
   const bridge: BridgeView = {
     status: () => {
@@ -30,7 +30,12 @@ function bridgeOver(snapshot: Snapshot) {
         return {
           roots: [
             {
-              node: snapshot.root,
+              node: cut
+                ? {
+                    ...snapshot.root,
+                    children: [],
+                  }
+                : snapshot.root,
               parent: null,
             },
           ],
@@ -151,5 +156,53 @@ describe("design_apply", () => {
       dryRun: true,
     });
     expect(result.dryRun).toBe(true);
+  });
+
+  it("refuses moving a layer, into a new one, into another parent, next to another or in another order", async () => {
+    const { bridge, sent } = bridgeOver(ROW);
+    const result = await applyDesign(bridge, {
+      xml: [
+        '<Frame name="Row" display="flex"><Frame id="2:4870"/></Frame>',
+        '<Frame id="2:4869"><Frame id="2:4877" opacity="0.5"/></Frame>',
+        '<Frame id="2:4876" after="2:4870"/>',
+      ].join("\n"),
+      dryRun: false,
+    });
+
+    expect(result.errors.map(({ line, id, message }) => [line, id, message])).toEqual([
+      [1, "2:4870", expect.stringMatching(/Moving a layer/)],
+      [2, "2:4877", expect.stringMatching(/Moving a layer/)],
+      [3, "2:4876", expect.stringMatching(/Moving a layer/)],
+    ]);
+    // What the layer itself was asked for still goes in.
+    expect(sent().find((change) => change.id === "2:4877")?.props).toEqual({ opacity: 0.5 });
+
+    const reordered = await applyDesign(bridgeOver(ROW).bridge, {
+      xml: '<Frame id="2:4869"><Frame id="2:4876"/><Frame id="2:4870"/></Frame>',
+      dryRun: false,
+    });
+
+    expect(reordered.errors).toEqual([
+      expect.objectContaining({
+        id: "2:4870",
+        message: expect.stringMatching(/order/),
+      }),
+    ]);
+  });
+
+  it("refuses a layer whose state the read could not take, instead of writing it whole", async () => {
+    const { bridge, sent } = bridgeOver(ROW, { cut: true });
+    const result = await applyDesign(bridge, {
+      xml: '<Frame id="2:4869" opacity="0.9"><Frame id="2:4870" opacity="0.5"/></Frame>',
+      dryRun: false,
+    });
+
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        id: "2:4870",
+        message: expect.stringMatching(/could not read/),
+      }),
+    ]);
+    expect(sent().map((change) => change.id)).toEqual(["2:4869"]);
   });
 });

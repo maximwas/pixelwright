@@ -6,24 +6,37 @@ import { parseXml } from "../xml/parse/parse-xml.ts";
 
 /**
  * Which of an element's attributes the layer already has, as design_read would write them (the reader's rounding
- * included), and whether its text is already so: what is left is what design_apply writes. The layer is rendered both
- * as the read's root and as its parent's child, since design_read writes either.
+ * included), and whether its text is already so: what is left is what design_apply writes. A top-level element is
+ * compared with the layer as the read's root and as its parent's child, since design_read writes either; a nested
+ * one only as its parent holds it (the root's own size would hide a size that is new). A hidden layer is rendered as
+ * shown, so what it has is known when it is shown again.
  */
 export function unchangedAttributes(
   element: ApplyElement,
   item: { node: SnapshotNode; parent: SnapshotNode | null },
   tokens: Pick<Snapshot, "styles" | "variables">,
 ): LayerNow {
-  const renders = [
-    render(
-      {
-        root: item.node,
-        ...pick(tokens),
-      },
-      item.node.id,
-      null,
-    ),
-  ];
+  const node = item.node.visible
+    ? item.node
+    : {
+        ...item.node,
+        visible: true,
+      };
+  const nested = element.parent !== null && item.parent !== null;
+  const renders: (XmlElementNode | null)[] = [];
+
+  if (!nested) {
+    renders.push(
+      render(
+        {
+          root: node,
+          ...pick(tokens),
+        },
+        node.id,
+        null,
+      ),
+    );
+  }
 
   if (item.parent !== null) {
     renders.push(
@@ -31,11 +44,11 @@ export function unchangedAttributes(
         {
           root: {
             ...item.parent,
-            children: [item.node],
+            children: [node],
           },
           ...pick(tokens),
         },
-        item.node.id,
+        node.id,
         item.parent.id,
       ),
     );
@@ -48,6 +61,11 @@ export function unchangedAttributes(
     if (name === "src" || renders.some((rendered) => same(name, rendered?.props[name], value))) {
       attributes.add(name);
     }
+  }
+
+  if (!item.node.visible) {
+    // Rendered as shown, but its display is none now: any display given shows it.
+    attributes.delete("display");
   }
 
   // As its parent holds it when it has one: that render places it.

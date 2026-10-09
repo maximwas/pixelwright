@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { designXml, readApply, type Snapshot, type SnapshotNode, unchangedAttributes } from "../src/index.ts";
+import {
+  changeOf,
+  designXml,
+  fitPlan,
+  readApply,
+  type Snapshot,
+  type SnapshotNode,
+  type TextSegment,
+  unchangedAttributes,
+} from "../src/index.ts";
 import { fixture, nodesOf } from "./helpers/fixtures.ts";
 
 describe("readApply", () => {
@@ -113,6 +122,41 @@ describe("readApply", () => {
     expect(elements.map(({ id }) => id)).toEqual(["2:9"]);
   });
 
+  it("refuses an id given twice and an id that is no Figma id, and skips their elements' new children", () => {
+    const { elements, errors } = readApply(
+      '<Frame id="2:4870" name="Card"/>\n<Frame id="2:4870" name="Copy"><Frame name="Badge"/></Frame>\n<Frame id="hero-title"/>',
+    );
+
+    expect(elements.map(({ ref }) => ref)).toEqual(["2:4870"]);
+    expect(errors.map(({ line, message }) => [line, message])).toEqual([
+      [2, expect.stringMatching(/given twice.*a new layer has no id/)],
+      [2, expect.stringMatching(/not created/)],
+      [3, expect.stringMatching(/not a Figma layer id/)],
+    ]);
+  });
+
+  it("refuses what a tag cannot take, naming what to write instead", () => {
+    const { elements, errors } = readApply(
+      '<Text id="1:1" background="#000" display="flex" gap="4px" color="#FFF" box-shadow="0 1px 2px 0 #000">x</Text>\n<Rectangle id="1:2" padding="4px" font="400 12px/normal \'Inter\'"/>\n<Text id="1:3" display="none"/>',
+    );
+
+    expect(errors.map(({ line, attribute }) => [line, attribute])).toEqual([
+      [1, "background"],
+      [1, "display"],
+      [1, "gap"],
+      [1, "box-shadow"],
+      [2, "padding"],
+      [2, "font"],
+    ]);
+    expect(errors[0]?.hint).toMatch(/color/);
+    expect(errors[3]?.hint).toMatch(/text-shadow/);
+    expect(elements.map(({ attributes }) => Object.keys(attributes))).toEqual([
+      ["id", "color"],
+      ["id"],
+      ["id", "display"],
+    ]);
+  });
+
   it("leaves a text as it is when its element has no content, so a partial edit never empties it", () => {
     const [empty, closed, written] = readApply(
       '<Text id="1:2" color="#F00"/>\n<Text id="1:3"></Text>\n<Text id="1:4">Hi</Text>',
@@ -175,6 +219,94 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
   }
 });
 
+/** A text layer of these characters, one run of Inter 16. */
+function textLayer(id: string, characters: string): SnapshotNode {
+  const segment: TextSegment = {
+    characters,
+    start: 0,
+    end: characters.length,
+    fontName: {
+      family: "Inter",
+      style: "Regular",
+    },
+    fontSize: 16,
+    fontWeight: 400,
+    textDecoration: "NONE",
+    textCase: "ORIGINAL",
+    lineHeight: { unit: "AUTO" },
+    letterSpacing: {
+      unit: "PIXELS",
+      value: 0,
+    },
+    fills: [],
+    fillStyleId: "",
+    textStyleId: "",
+  };
+
+  return {
+    id,
+    name: characters.slice(0, 10),
+    type: "TEXT",
+    visible: true,
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 2000,
+    childCount: 0,
+    layoutSizingHorizontal: "FIXED",
+    layoutSizingVertical: "HUG",
+    text: {
+      characters,
+      textAutoResize: "HEIGHT",
+      textAlignHorizontal: "LEFT",
+      textAlignVertical: "TOP",
+      segments: [segment],
+    },
+  };
+}
+
+describe("the round trip of a read cut to fit maxChars", () => {
+  it("leaves a text design_read shortened as it is, never writing the shortened one", () => {
+    const snapshot: Snapshot = {
+      root: {
+        id: "1:1",
+        name: "Article",
+        type: "FRAME",
+        visible: true,
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 2000,
+        childCount: 1,
+        layoutMode: "VERTICAL",
+        children: [textLayer("1:2", "Lorem ipsum dolor sit amet. ".repeat(200))],
+      },
+      styles: {},
+      variables: {},
+    };
+    const xml = designXml(snapshot, fitPlan(snapshot, 2_000)).xml;
+    const { elements } = readApply(xml);
+    const text = elements.find(({ id }) => id === "1:2");
+
+    expect(xml).toContain('$truncated="true"');
+    expect(text).toBeDefined();
+    expect(text).not.toHaveProperty("content");
+    expect(
+      changeOf(
+        text as never,
+        unchangedAttributes(
+          text as never,
+          {
+            node: snapshot.root.children?.[0] as SnapshotNode,
+            parent: snapshot.root,
+          },
+          snapshot,
+        ),
+      ).change,
+    ).not.toHaveProperty("text");
+  });
+});
+
 describe("unchangedAttributes", () => {
   it("keeps what really changed: a new gap, a renamed layer, new text", () => {
     const snapshot: Snapshot = fixture("positivus-services-row");
@@ -196,6 +328,101 @@ describe("unchangedAttributes", () => {
 
     expect([...frameUnchanged.attributes].sort()).toEqual(["id", "padding"]);
     expect(textUnchanged.text).toBe(false);
+  });
+
+  it("reads a hidden layer whole, so showing it again keeps the layout it has", () => {
+    const panel: SnapshotNode = {
+      id: "5:1",
+      name: "Panel",
+      type: "FRAME",
+      visible: false,
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 300,
+      childCount: 0,
+      layoutMode: "VERTICAL",
+      itemSpacing: 8,
+      layoutSizingHorizontal: "FIXED",
+      layoutSizingVertical: "FIXED",
+    };
+    const [element] = readApply('<Frame id="5:1" display="flex"/>').elements;
+    const now = unchangedAttributes(
+      element as never,
+      {
+        node: panel,
+        parent: null,
+      },
+      {
+        styles: {},
+        variables: {},
+      },
+    );
+
+    expect(now).toMatchObject({
+      visible: false,
+      current: { "flex-direction": "column" },
+    });
+    expect(changeOf(element as never, now).change.props).toMatchObject({
+      visible: true,
+      layoutMode: "VERTICAL",
+    });
+  });
+
+  it("compares a nested element with its layer as its parent holds it, so a hugging layer's own size is a change", () => {
+    const button: SnapshotNode = {
+      id: "6:2",
+      name: "Button",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 120,
+      height: 40,
+      childCount: 0,
+      layoutMode: "HORIZONTAL",
+      layoutSizingHorizontal: "HUG",
+      layoutSizingVertical: "HUG",
+    };
+    const row: SnapshotNode = {
+      id: "6:1",
+      name: "Row",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 40,
+      childCount: 1,
+      layoutMode: "HORIZONTAL",
+    };
+    const tokens = {
+      styles: {},
+      variables: {},
+    };
+    const nested = readApply('<Frame id="6:1"><Frame id="6:2" width="120px"/></Frame>').elements[1];
+    const alone = readApply('<Frame id="6:2" width="120px"/>').elements[0];
+
+    expect(
+      unchangedAttributes(
+        nested as never,
+        {
+          node: button,
+          parent: row,
+        },
+        tokens,
+      ).attributes.has("width"),
+    ).toBe(false);
+    expect(
+      unchangedAttributes(
+        alone as never,
+        {
+          node: button,
+          parent: row,
+        },
+        tokens,
+      ).attributes.has("width"),
+    ).toBe(true);
   });
 
   it("gives what the layer has now, and an image background whose file alone differs is unchanged", () => {

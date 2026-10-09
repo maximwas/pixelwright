@@ -141,36 +141,64 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         svg: readFileSync(svg.files[0]?.path ?? "", "utf8").slice(0, 2_000),
       };
 
-      // A card beside the page's layers, looked at, then deleted.
-      const card = (await call("design_apply", { xml: CARD })).structured as {
+      // A card in a free-form board beside the page's layers: made, looked at, widened (its height still hugs).
+      const board = (
+        await call("design_apply", {
+          xml: `<Frame name="Pixelwright check" width="900px" height="600px" background="#FFF">${CARD.replace(
+            "<Frame name=",
+            '<Frame position="absolute" left="40px" top="40px" name=',
+          )}</Frame>`,
+        })
+      ).structured as {
         created: { id: string; tag: string }[];
         errors: unknown[];
       };
-      const cardId = card.created[0]?.id ?? "";
+      const [boardLayer, cardLayer] = board.created;
+      const boardId = boardLayer?.id ?? "";
+      const cardId = cardLayer?.id ?? "";
 
-      log.card = card;
-      expect(card.errors).toEqual([]);
-      log.cardXml = (await call("design_read", { node: cardId })).text;
+      log.card = board;
+      expect(board.errors).toEqual([]);
+      log.cardXml = (await call("design_read", { node: boardId })).text;
       await call("screenshot", {
         node: cardId,
         save: join(OUT, "card.png"),
       });
 
-      // An instance's text by its I…;… id, then the old text back.
+      const widened = (await call("design_apply", { xml: `<Frame id="${cardId}" width="560px"/>` })).structured;
+      const cardLine = (await call("design_read", { node: boardId })).text
+        .split("\n")
+        .find((line) => line.includes(`id="${cardId}"`));
+
+      log.widened = {
+        widened,
+        cardLine,
+      };
+      expect(cardLine).toContain('width="560px"');
+      expect(cardLine).not.toContain("height=");
+
+      // An instance's text by its I…;… id: only the characters change, its style stays; then the old text back.
       const label = /<Text id="(I[^"]+)"[^>]*>([^<]+)<\/Text>/.exec(row);
       const [, labelId = "", labelText = ""] = label ?? [];
+      const before = (await call("design_read", { node: labelId })).text;
       const edited = (await call("design_apply", { xml: `<Text id="${labelId}">${labelText} now</Text>` }))
         .structured as { changed: string[]; errors: unknown[] };
+      const after = (await call("design_read", { node: labelId })).text;
 
       log.instanceText = {
         id: labelId,
         edited,
-        read: (await call("design_read", { node: labelId })).text,
+        before,
+        after,
       };
       expect(edited.changed).toEqual([labelId]);
+      expect(after).toBe(before.replace(`>${labelText}<`, `>${labelText} now<`));
       await call("design_apply", { xml: `<Text id="${labelId}">${labelText}</Text>` });
+      expect((await call("design_read", { node: labelId })).text).toBe(before);
 
-      log.deleted = (await call("nodes_delete", { nodes: [cardId, probeId] })).structured;
+      log.deleted = (await call("nodes_delete", { nodes: [boardId, probeId] })).structured;
+      // Taken back whole: the row reads as before.
+      expect((await call("design_read", { node: "2:4869" })).text).toBe(row);
     } finally {
       writeFileSync(join(OUT, "live-write.json"), JSON.stringify(log, null, 2));
       await client.close();

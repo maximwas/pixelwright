@@ -31,7 +31,12 @@ const BASE_FIELDS = [
   "fills",
   "fillStyleId",
   "textStyleId",
+  "hyperlink",
+  "boundVariables",
 ];
+
+/** The look a text style sets: a restored run takes these from its style, not as values over it. */
+const STYLED_FIELDS = ["fontName", "fontSize", "lineHeight", "letterSpacing", "textCase", "textDecoration"] as const;
 
 const TEXT_KEYS: readonly (keyof FigmaProps)[] = [
   ...RUN_PROPS.map(([key]) => key),
@@ -57,28 +62,34 @@ export async function writeText(
 ): Promise<boolean> {
   let wrote = false;
 
-  if (change.text !== undefined && node.characters !== change.text.characters) {
+  if (change.text !== undefined) {
     try {
-      const unloaded = node
-        .getRangeAllFontNames(0, node.characters.length)
-        .find((font) => context.unloaded.has(`${font.family} ${font.style}`));
+      const segments = node.getStyledTextSegments(BASE_FIELDS);
+      const base = longest(segments);
+      const retyped = node.characters !== change.text.characters;
 
-      if (unloaded !== undefined) {
-        throw new WriteError(
-          `The text uses ${unloaded.family} ${unloaded.style}, which this Figma cannot load: its characters cannot change.`,
-          "Install the font, or give the text a font this Figma has first.",
-        );
+      if (retyped) {
+        const unloaded = node
+          .getRangeAllFontNames(0, node.characters.length)
+          .find((font) => context.unloaded.has(`${font.family} ${font.style}`));
+
+        if (unloaded !== undefined) {
+          throw new WriteError(
+            `The text uses ${unloaded.family} ${unloaded.style}, which this Figma cannot load: its characters cannot change.`,
+            "Install the font, or give the text a font this Figma has first.",
+          );
+        }
+
+        setCharacters(node, change.text.characters);
       }
 
-      const base = longest(node.getStyledTextSegments(BASE_FIELDS));
-
-      node.characters = change.text.characters;
-
-      if (base !== undefined && node.characters.length > 0) {
+      // New characters take the first one's look, which for one run is the text's own. A text of several runs takes
+      // its own look again over all of it, so a span removed or moved leaves nothing behind; the spans come after.
+      if (segments.length > 1 && base !== undefined && node.characters.length > 0) {
         await restore(node, base);
       }
 
-      wrote = true;
+      wrote ||= retyped || segments.length > 1;
     } catch (error) {
       fail("text", error);
 
@@ -141,25 +152,71 @@ function longest<T extends { start: number; end: number }>(segments: readonly T[
   );
 }
 
-/** The look the text had, over all of it again. */
-async function restore(node: TextLayer, base: Record<string, unknown>): Promise<void> {
-  const end = node.characters.length;
+/**
+ * Characters through the component property they are bound to, when an instance holds it (written on the text
+ * itself they would not stick); otherwise on the text, an override inside an instance.
+ */
+function setCharacters(node: TextLayer, characters: string): void {
+  const key = (node.componentPropertyReferences as { characters?: string } | null | undefined)?.characters;
 
-  if (typeof base.textStyleId === "string" && base.textStyleId !== "") {
-    await node.setRangeTextStyleIdAsync(0, end, base.textStyleId);
+  for (let owner = node.parent; key !== undefined && owner !== null; owner = owner.parent) {
+    if (owner.type === "INSTANCE" && Object.hasOwn((owner.componentProperties as object | undefined) ?? {}, key)) {
+      owner.setProperties({ [key]: characters });
+
+      return;
+    }
   }
 
-  node.setRangeFontName(0, end, base.fontName as FontName);
-  node.setRangeFontSize(0, end, base.fontSize as number);
-  node.setRangeLineHeight(0, end, base.lineHeight as LineHeight);
-  node.setRangeLetterSpacing(0, end, base.letterSpacing as LetterSpacing);
-  node.setRangeTextCase(0, end, base.textCase as TextCase);
-  node.setRangeTextDecoration(0, end, base.textDecoration as TextDecoration);
+  node.characters = characters;
+}
+
+/**
+ * The look the text had, over all of it again: its style, then what the style does not set or sets otherwise, its
+ * colour, link and the variables bound to its type, so a style and its bindings stay.
+ */
+async function restore(node: TextLayer, base: Record<string, unknown>): Promise<void> {
+  const end = node.characters.length;
+  const styleId = typeof base.textStyleId === "string" && base.textStyleId !== "" ? base.textStyleId : null;
+  const style = styleId === null ? null : ((await figma.getStyleByIdAsync(styleId)) as TextStyle | null);
+
+  if (styleId !== null) {
+    await node.setRangeTextStyleIdAsync(0, end, styleId);
+  }
+
+  const writers: Record<(typeof STYLED_FIELDS)[number], (value: never) => void> = {
+    fontName: (value) => node.setRangeFontName(0, end, value),
+    fontSize: (value) => node.setRangeFontSize(0, end, value),
+    lineHeight: (value) => node.setRangeLineHeight(0, end, value),
+    letterSpacing: (value) => node.setRangeLetterSpacing(0, end, value),
+    textCase: (value) => node.setRangeTextCase(0, end, value),
+    textDecoration: (value) => node.setRangeTextDecoration(0, end, value),
+  };
+
+  for (const field of STYLED_FIELDS) {
+    const value = base[field];
+
+    if (value !== undefined && (style === null || JSON.stringify(style[field]) !== JSON.stringify(value))) {
+      writers[field](value as never);
+    }
+  }
 
   if (typeof base.fillStyleId === "string" && base.fillStyleId !== "") {
     await node.setRangeFillStyleIdAsync(0, end, base.fillStyleId);
-  } else {
+  } else if (Array.isArray(base.fills)) {
     node.setRangeFills(0, end, base.fills as Paint[]);
+  }
+
+  if (base.hyperlink !== undefined) {
+    node.setRangeHyperlink(0, end, (base.hyperlink as HyperlinkTarget | null) ?? null);
+  }
+
+  for (const [field, alias] of Object.entries((base.boundVariables as Record<string, unknown> | undefined) ?? {})) {
+    const id = (alias as { id?: unknown } | undefined)?.id;
+    const variable = typeof id === "string" ? await figma.variables.getVariableByIdAsync(id) : null;
+
+    if (variable !== null && field !== "fills") {
+      node.setRangeBoundVariable(0, end, field as VariableBindableTextField, variable);
+    }
   }
 }
 

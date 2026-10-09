@@ -10,13 +10,13 @@ const PropsSchema = z.custom<FigmaProps>(
   "props must be an object",
 );
 
-const RunSchema: z.ZodType<TextRunSpec> = z.object({
+const RunSchema: z.ZodType<TextRunSpec, TextRunSpec> = z.object({
   start: z.number().int().min(0),
   end: z.number().int().min(0),
   props: PropsSchema,
 });
 
-export const ApplyChangeSchema: z.ZodType<ApplyChange> = z.object({
+export const ApplyChangeSchema: z.ZodType<ApplyChange, ApplyChange> = z.object({
   line: z.number().int(),
   column: z.number().int(),
   kind: z.enum(["create", "update"]),
@@ -37,7 +37,7 @@ export const ApplyChangeSchema: z.ZodType<ApplyChange> = z.object({
     .exactOptional(),
 });
 
-export const ApplyErrorSchema: z.ZodType<ApplyError> = z.object({
+export const ApplyErrorSchema: z.ZodType<ApplyError, ApplyError> = z.object({
   line: z.number().int(),
   column: z.number().int(),
   id: z.string().exactOptional(),

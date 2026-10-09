@@ -1,4 +1,6 @@
 import { closest, type FontSpec, weightOf } from "@pixelwright/core";
+import { NEAR_FONT_WEIGHT } from "../constants/plugin.ts";
+import type { KnownFont } from "../types/apply.ts";
 import { WriteError } from "./write-error.ts";
 
 /** The fonts this Figma has, asked for once per plugin run (and again for another `figma`, as tests install). */
@@ -20,10 +22,24 @@ export function fontKey(spec: Pick<FontSpec, "family" | "weight" | "italic">): s
   return `${spec.family.toLowerCase()} ${spec.weight}${spec.italic ? " italic" : ""}`;
 }
 
-/** The family's style with the weight and slant asked for; else an error naming the styles the family has. */
-export async function fontNameOf(spec: FontSpec): Promise<FontName> {
-  const fonts = await availableFonts();
+/**
+ * The font for a family, weight and slant: the one a changed text already uses for them (design_read wrote its weight),
+ * else the family's style nearest that weight with that slant (a plain Regular before a Book of the same weight); an
+ * error names the styles the family has when none is near.
+ */
+export async function fontNameOf(spec: FontSpec, known: readonly KnownFont[] = []): Promise<FontName> {
   const family = spec.family.toLowerCase();
+  const slanted = (style: string) => /italic|oblique/i.test(style) === spec.italic;
+  const used = known.find(
+    ({ fontName, weight }) =>
+      fontName.family.toLowerCase() === family && weight === spec.weight && slanted(fontName.style),
+  );
+
+  if (used !== undefined) {
+    return used.fontName;
+  }
+
+  const fonts = await availableFonts();
   const styles = fonts.map(({ fontName }) => fontName).filter((font) => font.family.toLowerCase() === family);
 
   if (styles.length === 0) {
@@ -35,10 +51,14 @@ export async function fontNameOf(spec: FontSpec): Promise<FontName> {
     );
   }
 
-  const matching = styles
-    .filter((font) => weightOf(font.style) === spec.weight && /italic|oblique/i.test(font.style) === spec.italic)
-    .sort((a, b) => a.style.length - b.style.length);
-  const [best] = matching;
+  const plain = (style: string) => (/^(regular|italic|normal)$/i.test(style) ? 0 : style.length);
+  const [best] = styles
+    .filter((font) => slanted(font.style) && Math.abs(weightOf(font.style) - spec.weight) <= NEAR_FONT_WEIGHT)
+    .sort(
+      (a, b) =>
+        Math.abs(weightOf(a.style) - spec.weight) - Math.abs(weightOf(b.style) - spec.weight) ||
+        plain(a.style) - plain(b.style),
+    );
 
   if (best === undefined) {
     throw new WriteError(

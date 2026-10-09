@@ -8,7 +8,7 @@ import {
   type OperationOutput,
   type PaintSpec,
 } from "@pixelwright/core";
-import type { Layer, TextLayer, WriteContext } from "../types/apply.ts";
+import type { KnownFont, Layer, TextLayer, WriteContext } from "../types/apply.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import { STEPS, set } from "./apply-props.ts";
 import { hasTextProps, writeText } from "./apply-text.ts";
@@ -128,11 +128,27 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
   };
   const fonts = new Map<string, FontName | WriteError>();
   const wanted: FontName[] = [];
+  const known: KnownFont[] = [];
+
+  // A text being changed has its fonts loaded whatever changes (sizing it needs them too), and the fonts it uses are
+  // the first choice for the weights design_read wrote.
+  for (const change of changes) {
+    if (change.kind === "update" && change.id !== null) {
+      const node = await figma.getNodeByIdAsync(change.id);
+
+      if (node?.type === "TEXT") {
+        wanted.push(...currentFonts(node));
+        known.push(...knownFonts(node));
+      }
+    } else if (change.tag === "Text") {
+      wanted.push(NEW_TEXT_FONT);
+    }
+  }
 
   for (const change of changes) {
     for (const props of [change.props, ...(change.text?.runs ?? []).map((run) => run.props)]) {
       if (props.font !== undefined && !fonts.has(fontKey(props.font))) {
-        const font = await fontNameOf(props.font).catch((error: unknown) =>
+        const font = await fontNameOf(props.font, known).catch((error: unknown) =>
           error instanceof WriteError ? error : new WriteError(errorMessage(error)),
         );
 
@@ -145,18 +161,6 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
 
       if (props.textStyle !== undefined && props.textStyle !== "") {
         wanted.push(...(await styleFonts(await tokens(), props.textStyle)));
-      }
-    }
-
-    if (change.kind === "create" && change.tag === "Text") {
-      wanted.push(NEW_TEXT_FONT);
-    }
-
-    if (change.kind === "update" && change.id !== null && (change.text !== undefined || hasTextProps(change.props))) {
-      const node = await figma.getNodeByIdAsync(change.id);
-
-      if (node?.type === "TEXT") {
-        wanted.push(...currentFonts(node));
       }
     }
   }
@@ -185,6 +189,24 @@ async function styleFonts(index: TokenIndex, name: string): Promise<FontName[]> 
     // An unknown style is the textStyle step's error.
     return [];
   }
+}
+
+function knownFonts(node: TextNode): KnownFont[] {
+  if (node.characters.length === 0) {
+    return node.fontName === figma.mixed || node.fontWeight === figma.mixed
+      ? []
+      : [
+          {
+            fontName: node.fontName,
+            weight: node.fontWeight,
+          },
+        ];
+  }
+
+  return node.getStyledTextSegments(["fontName", "fontWeight"]).map((segment) => ({
+    fontName: segment.fontName,
+    weight: segment.fontWeight,
+  }));
 }
 
 function currentFonts(node: TextNode): FontName[] {
