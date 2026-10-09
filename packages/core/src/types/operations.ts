@@ -20,6 +20,6 @@ export interface OutlineNode {
   width?: number;
   height?: number;
   hidden?: true;
-  childCount: number;
+  childCount?: number;
   children?: OutlineNode[];
 }

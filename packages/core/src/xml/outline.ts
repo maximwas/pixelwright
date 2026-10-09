@@ -33,7 +33,7 @@ function writeNode(node: OutlineNode, level: number, lines: string[]): void {
     ["width", node.width],
     ["height", node.height],
     ["hidden", node.hidden],
-    ["$children", children.length < node.childCount ? node.childCount : undefined],
+    ["$children", node.childCount !== undefined && children.length < node.childCount ? node.childCount : undefined],
   ];
   const attributes = values
     .filter((pair): pair is [string, string | number | boolean] => pair[1] !== undefined)

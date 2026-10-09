@@ -6,21 +6,25 @@ export type ExportRequest = Omit<OperationInput<"export">, "offset" | "length">;
 
 export interface ExportOptions {
   readonly file?: string | undefined;
-  /** Sees the first chunk before the rest are asked for; throwing stops the export there. */
-  readonly onFirstChunk?: (first: Buffer, totalBytes: number) => void;
+  /** Sees the first chunk and the scale it was rendered at before the rest are asked for; throwing stops there. */
+  readonly onFirstChunk?: (first: Buffer, scale: number) => void;
 }
 
-/** A node's export, asked for in chunks that each fit one bridge message, and put back together. */
+/**
+ * A node's export, asked for in chunks that each fit one bridge message, and put back together, with the scale the
+ * plugin rendered it at (lower than asked when it had to fit maxSide).
+ */
 export async function exportBytes(
   bridge: BridgeView,
   request: ExportRequest,
   { file, onFirstChunk }: ExportOptions = {},
-): Promise<Buffer> {
+): Promise<{ bytes: Buffer; scale: number }> {
   // One target for every chunk: the user may switch the active file between two of them.
   const target = resolveTarget(bridge.plugins(), file);
   const chunks: Buffer[] = [];
   let received = 0;
   let total: number | null = null;
+  let scale = request.scale;
 
   while (total === null || received < total) {
     const answer = OPERATION_SCHEMAS.export.output.parse(
@@ -46,12 +50,16 @@ export async function exportBytes(
 
     if (total === null) {
       total = answer.totalBytes;
-      onFirstChunk?.(bytes, total);
+      scale = answer.scale;
+      onFirstChunk?.(bytes, scale);
     }
 
     chunks.push(bytes);
     received += bytes.length;
   }
 
-  return Buffer.concat(chunks, received);
+  return {
+    bytes: Buffer.concat(chunks, received),
+    scale,
+  };
 }

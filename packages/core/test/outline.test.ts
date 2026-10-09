@@ -52,4 +52,22 @@ describe("outline XML", () => {
       ].join("\n"),
     );
   });
+
+  it("leaves the count out where it is unknown, as for pages not loaded yet", () => {
+    expect(
+      outlineXml({
+        id: "0:0",
+        name: "Untitled",
+        type: "DOCUMENT",
+        childCount: 1,
+        children: [
+          {
+            id: "0:1",
+            name: "Landing",
+            type: "PAGE",
+          },
+        ],
+      }),
+    ).toBe(['<Document id="0:0" name="Untitled">', '  <Page id="0:1" name="Landing"/>', "</Document>"].join("\n"));
+  });
 });

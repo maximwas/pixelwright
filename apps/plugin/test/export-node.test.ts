@@ -11,7 +11,17 @@ beforeEach(() => {
   const page = tree({
     id: "0:1",
     type: "PAGE",
-    children: [{ id: "2:4869" }],
+    children: [
+      {
+        id: "2:4869",
+        absoluteBoundingBox: {
+          x: 0,
+          y: 0,
+          width: 1440,
+          height: 8000,
+        },
+      },
+    ],
   });
   const { figma } = installFigma(page);
   const node = page.children?.[0] as unknown as Record<string, unknown>;
@@ -59,5 +69,29 @@ describe("export", () => {
 
     expect(exports).toHaveLength(2);
     expect(exports[1]).toMatchObject({ useAbsoluteBounds: true });
+  });
+
+  it("lowers the scale so the longer side fits maxSide, and says which scale it used", async () => {
+    const part = await chunk(0, {
+      scale: 2,
+      maxSide: 2_000,
+    });
+
+    expect(exports[0]).toMatchObject({
+      constraint: {
+        type: "SCALE",
+        value: 0.25,
+      },
+    });
+    expect(part).toMatchObject({ scale: 0.25 });
+  });
+
+  it("keeps the scale asked for when the image fits", async () => {
+    const part = await chunk(0, {
+      scale: 0.2,
+      maxSide: 2_000,
+    });
+
+    expect(part).toMatchObject({ scale: 0.2 });
   });
 });

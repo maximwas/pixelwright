@@ -32,7 +32,8 @@ export const OutlineNodeSchema: z.ZodType<OutlineNode> = z.object({
   width: z.number().exactOptional(),
   height: z.number().exactOptional(),
   hidden: z.literal(true).exactOptional(),
-  childCount: z.number().int().min(0),
+  /** Unknown for a page the user has not opened yet: Figma loads its layers only when asked. */
+  childCount: z.number().int().min(0).exactOptional(),
   get children() {
     return z.array(OutlineNodeSchema).exactOptional();
   },
@@ -92,8 +93,12 @@ export const OPERATION_SCHEMAS = {
       effects: z.boolean().default(true),
       offset: z.number().int().min(0).default(0),
       length: z.number().int().min(1).max(EXPORT_CHUNK_BYTES).default(EXPORT_CHUNK_BYTES),
+      /** A raster export's longest side: the plugin lowers the scale to fit it. */
+      maxSide: z.number().int().min(1).max(16_384).exactOptional(),
     }),
     output: z.object({
+      /** The scale the export was rendered at: lower than asked when it had to fit maxSide. */
+      scale: z.number(),
       totalBytes: z.number().int().min(0),
       /** Base64 of the export's bytes from `offset`, at most `length` of them. */
       bytes: z.string(),

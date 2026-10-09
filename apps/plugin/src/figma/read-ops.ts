@@ -92,7 +92,20 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
   const root = id === undefined ? figma.currentPage : await requireNode(id);
 
   if (root.type === "DOCUMENT") {
-    throw new BridgeError("NODE_NOT_FOUND", `${id} is the document: outline a page or a layer.`);
+    // Pages the user has not opened have no layers until loaded, and loading every page of a big file is slow.
+    return {
+      root: {
+        id: root.id,
+        name: root.name,
+        type: root.type,
+        childCount: root.children.length,
+        children: root.children.map((page) => ({
+          id: page.id,
+          name: page.name,
+          type: page.type,
+        })),
+      },
+    };
   }
 
   if (root.type === "PAGE" && root !== figma.currentPage) {

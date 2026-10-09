@@ -21,7 +21,7 @@ export function registerScreenshotTool(server: McpServer, { bridge }: ToolContex
     "screenshot",
     {
       title: "Screenshot a layer",
-      description: `Renders a layer to PNG so you can see it: a section to build, or your result to check. Returned inline up to ${MAX_IMAGE_SIDE_PX} px on a side; for a larger one use a lower scale, screenshot one section (outline lists them), or pass save to write it full size to a file.`,
+      description: `Renders a layer to PNG so you can see it: a section to build, or your result to check. Returned inline at most ${MAX_IMAGE_SIDE_PX} px on a side: a larger layer comes scaled down to fit, and the text says its full size. For details of a tall layer screenshot one section of it (outline lists them); pass save to write the PNG full size to a file instead.`,
       inputSchema,
       annotations: {
         readOnlyHint: true,
@@ -51,7 +51,7 @@ export async function takeScreenshot(
   };
 
   if (save !== undefined) {
-    const bytes = await exportBytes(bridge, request, { file });
+    const { bytes } = await exportBytes(bridge, request, { file });
     const path = resolve(save);
 
     await mkdir(dirname(path), { recursive: true });
@@ -72,12 +72,23 @@ export async function takeScreenshot(
     };
   }
 
-  // Checked on the first chunk, so a refused image is not carried over the bridge whole.
-  const bytes = await exportBytes(bridge, request, {
-    file,
-    onFirstChunk: (first) => assertFitsInline(sizeOf(first, node), node, scale),
-  });
+  // The plugin lowers the scale to fit; the check on the first chunk is for what it could not fit.
+  const { bytes, scale: used } = await exportBytes(
+    bridge,
+    {
+      ...request,
+      maxSide: MAX_IMAGE_SIDE_PX,
+    },
+    {
+      file,
+      onFirstChunk: (first, rendered) => assertFitsInline(sizeOf(first, node), node, rendered),
+    },
+  );
   const { width, height } = sizeOf(bytes, node);
+  const full =
+    used < scale
+      ? ` Scaled down to fit ${MAX_IMAGE_SIDE_PX} px: at scale ${scale} it is ${Math.round((width / used) * scale)}×${Math.round((height / used) * scale)} px; screenshot a section, or pass save, for the details.`
+      : "";
 
   return {
     content: [
@@ -88,7 +99,7 @@ export async function takeScreenshot(
       },
       {
         type: "text",
-        text: `Screenshot of ${node}: ${width}×${height} px at scale ${scale}.`,
+        text: `Screenshot of ${node}: ${width}×${height} px at scale ${used}.${full}`,
       },
     ],
   };

@@ -52,7 +52,9 @@ export function registerNodeTools(server: McpServer, { bridge }: ToolContext): v
     description:
       'The layer tree of a frame, a page or the current page, as light XML: tag (the Figma type), id, name and box (x and y relative to the outlined node) per layer, to `depth` levels. Use it to find the sections of a big frame before reading one with design_read. A layer with `$children="N"` has N children not listed here: outline it on its own.',
     input: z.object({
-      node: OPERATION_SCHEMAS.outline.input.shape.node.describe("The layer or page id. Default: the current page."),
+      node: OPERATION_SCHEMAS.outline.input.shape.node.describe(
+        "The layer or page id, or 0:0 for the list of pages. Default: the current page.",
+      ),
       depth: OPERATION_SCHEMAS.outline.input.shape.depth.describe("How many levels below the node to list (1 to 10)."),
       file: FileSchema,
     }),

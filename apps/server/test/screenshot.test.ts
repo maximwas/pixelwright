@@ -21,8 +21,8 @@ function fakePng(width: number, height: number, length = 64): Buffer {
 }
 
 /** A bridge whose one plugin exports `image`, answering each chunk request like the plugin does. */
-function exportingBridge(image: Buffer) {
-  const requests: { offset: number; length: number }[] = [];
+function exportingBridge(image: Buffer, scale = 1) {
+  const requests: { offset: number; length: number; maxSide?: number }[] = [];
   const bridge: BridgeView = {
     status: () => {
       throw new Error("not used");
@@ -36,14 +36,16 @@ function exportingBridge(image: Buffer) {
       },
     ],
     request: async (_op, input) => {
-      const { offset, length } = input as { offset: number; length: number };
+      const { offset, length, maxSide } = input as { offset: number; length: number; maxSide?: number };
 
       requests.push({
         offset,
         length,
+        ...(maxSide === undefined ? {} : { maxSide }),
       });
 
       return {
+        scale,
         totalBytes: image.length,
         bytes: image.subarray(offset, offset + length).toString("base64"),
       };
@@ -65,7 +67,7 @@ describe("exportBytes", () => {
     }
 
     const { bridge, requests } = exportingBridge(image);
-    const bytes = await exportBytes(bridge, {
+    const { bytes } = await exportBytes(bridge, {
       node: "2:4868",
       format: "PNG",
       scale: 1,
@@ -78,7 +80,7 @@ describe("exportBytes", () => {
 });
 
 describe("screenshot", () => {
-  it("refuses an image over 2000 px on a side inline, saying its size and how to get it", async () => {
+  it("refuses an image the plugin could not fit, saying its size and how to get it", async () => {
     const { bridge } = exportingBridge(fakePng(1440, 8000));
 
     await expect(
@@ -109,6 +111,21 @@ describe("screenshot", () => {
       },
     ]);
     expect((result.content[0] as { text: string }).text).toContain('"width":1440,"height":8000');
+  });
+
+  it("asks the plugin to fit the image into 2000 px and says when it had to scale down", async () => {
+    const { bridge, requests } = exportingBridge(fakePng(360, 2000), 0.25);
+    const result = await takeScreenshot(bridge, {
+      node: "2:4766",
+      scale: 1,
+      effects: true,
+    });
+
+    expect(requests[0]).toMatchObject({ maxSide: 2_000 });
+    expect(result.content[1]).toEqual({
+      type: "text",
+      text: expect.stringMatching(/360×2000 px at scale 0\.25.*at scale 1 it is 1440×8000 px/s),
+    });
   });
 
   it("returns a small image inline with a line naming the node and its size", async () => {
