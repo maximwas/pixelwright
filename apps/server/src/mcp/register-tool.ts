@@ -1,20 +1,25 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import type * as z from "zod";
+import * as z from "zod";
 import type { ToolDefinition } from "../types/mcp.ts";
+import type { SupportNotes } from "../types/support.ts";
 import { describeError } from "./describe-error.ts";
 
 /**
  * Registers a tool whose result is always structuredContent validated against its outputSchema, with the same JSON
- * as text content. Claude Code shows the model only structuredContent, so hints and diagnostics live there.
+ * as text content. Claude Code shows the model only structuredContent, so hints and diagnostics live there. A tool that
+ * says when it changed the file gets the weekly support note on such a result, when one is due.
  */
 export function registerTool<I extends z.ZodObject, O extends z.ZodObject>(
   server: McpServer,
   tool: ToolDefinition<I, O>,
+  support?: SupportNotes,
 ): void {
   const { name, title, description, annotations } = tool;
+  const changed = support === undefined ? undefined : tool.changed;
   // The SDK's overloads take a plain ZodObject, not one narrowed by a type parameter.
   const inputSchema: z.ZodObject = tool.input;
-  const outputSchema: z.ZodObject = tool.output;
+  const outputSchema: z.ZodObject =
+    changed === undefined ? tool.output : tool.output.extend({ support: z.string().exactOptional() });
 
   server.registerTool(
     name,
@@ -36,6 +41,11 @@ export function registerTool<I extends z.ZodObject, O extends z.ZodObject>(
       }
 
       const data: Record<string, unknown> = outputSchema.parse(result);
+      const note = changed?.(tool.output.parse(result)) ? await support?.due() : null;
+
+      if (typeof note === "string") {
+        data.support = note;
+      }
 
       return {
         content: [

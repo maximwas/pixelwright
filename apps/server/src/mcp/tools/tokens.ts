@@ -17,7 +17,7 @@ type TokensRead = z.input<typeof TokensReadOutputSchema>;
 type TokensApplyArgs = z.output<typeof TokensApplyToolInputSchema>;
 type TokensApplied = z.input<typeof TokensApplyOutputSchema>;
 
-export function registerTokensTool(server: McpServer, { bridge }: ToolContext): void {
+export function registerTokensTool(server: McpServer, { bridge, support }: ToolContext): void {
   registerTool(server, {
     name: "tokens_read",
     title: "Read the design tokens",
@@ -28,16 +28,21 @@ export function registerTokensTool(server: McpServer, { bridge }: ToolContext): 
     annotations: READ_ONLY_ANNOTATIONS,
     run: (args) => readTokens(bridge, args),
   });
-  registerTool(server, {
-    name: "tokens_apply",
-    title: "Write design tokens",
-    description:
-      "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), and styles: paint (a colour or colour variable), text (the font shorthand) and effect (a box-shadow list). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
-    input: TokensApplyToolInputSchema,
-    output: TokensApplyOutputSchema,
-    annotations: WRITE_ANNOTATIONS,
-    run: (args) => applyTokens(bridge, args),
-  });
+  registerTool(
+    server,
+    {
+      name: "tokens_apply",
+      title: "Write design tokens",
+      description:
+        "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), and styles: paint (a colour or colour variable), text (the font shorthand) and effect (a box-shadow list). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+      input: TokensApplyToolInputSchema,
+      output: TokensApplyOutputSchema,
+      annotations: WRITE_ANNOTATIONS,
+      run: (args) => applyTokens(bridge, args),
+      changed: ({ dryRun, created, updated }) => !dryRun && created.length + updated.length > 0,
+    },
+    support,
+  );
 }
 
 /** tokens_apply: the values read in core, written by the plugin; what core could not read comes first among errors. */

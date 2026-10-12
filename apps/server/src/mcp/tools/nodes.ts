@@ -9,7 +9,7 @@ import { runOp } from "../run-op.ts";
 
 const READ_ONLY = READ_ONLY_ANNOTATIONS;
 
-export function registerNodeTools(server: McpServer, { bridge }: ToolContext): void {
+export function registerNodeTools(server: McpServer, { bridge, support }: ToolContext): void {
   registerTool(server, {
     name: "selection_get",
     title: "Read the selection",
@@ -69,17 +69,22 @@ export function registerNodeTools(server: McpServer, { bridge }: ToolContext): v
       };
     },
   });
-  registerTool(server, {
-    name: "nodes_delete",
-    title: "Delete layers",
-    description:
-      'Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display="none" in design_apply instead) stays, with why. One call is one undo step in Figma. Refused while the plugin\'s Allow edits switch is off.',
-    input: z.object({
-      nodes: OPERATION_SCHEMAS.delete.input.shape.nodes.describe('The layers\' ids, e.g. ["2:4868"].'),
-      file: FileSchema,
-    }),
-    output: OPERATION_SCHEMAS.delete.output,
-    annotations: WRITE_ANNOTATIONS,
-    run: ({ file, nodes }) => runOp(bridge, "delete", { nodes }, file),
-  });
+  registerTool(
+    server,
+    {
+      name: "nodes_delete",
+      title: "Delete layers",
+      description:
+        'Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display="none" in design_apply instead) stays, with why. One call is one undo step in Figma. Refused while the plugin\'s Allow edits switch is off.',
+      input: z.object({
+        nodes: OPERATION_SCHEMAS.delete.input.shape.nodes.describe('The layers\' ids, e.g. ["2:4868"].'),
+        file: FileSchema,
+      }),
+      output: OPERATION_SCHEMAS.delete.output,
+      annotations: WRITE_ANNOTATIONS,
+      run: ({ file, nodes }) => runOp(bridge, "delete", { nodes }, file),
+      changed: ({ deleted }) => deleted.length > 0,
+    },
+    support,
+  );
 }

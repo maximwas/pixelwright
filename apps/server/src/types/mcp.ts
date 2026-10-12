@@ -3,6 +3,7 @@ import type * as z from "zod";
 import type { WrittenFiles } from "../assets/written-files.ts";
 import type { StatusOutputSchema } from "../schemas/status.ts";
 import type { BridgeStatus, ConnectedPlugin, PairingStatus, RequestOptions } from "./bridge.ts";
+import type { SupportNotes } from "./support.ts";
 
 /** What tools need from the plugin bridge (PluginBridge implements it). */
 export interface BridgeView {
@@ -19,6 +20,8 @@ export interface ToolContext {
   readonly files: WrittenFiles;
   /** The project folder, where Code Connect templates are looked for. */
   readonly projectRoot: string;
+  /** The weekly support note, added to a write's result after a change that worked. */
+  readonly support: SupportNotes;
 }
 
 export interface ToolDefinition<I extends z.ZodObject, O extends z.ZodObject> {
@@ -29,6 +32,8 @@ export interface ToolDefinition<I extends z.ZodObject, O extends z.ZodObject> {
   readonly output: O;
   readonly annotations: ToolAnnotations;
   run(args: z.output<I>): Promise<z.input<O>>;
+  /** For a tool that writes: whether this result changed the file, which is when the support note may ride on it. */
+  changed?(output: z.output<O>): boolean;
 }
 
 export type StatusOutput = z.output<typeof StatusOutputSchema>;

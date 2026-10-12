@@ -1,14 +1,17 @@
+import { join } from "node:path";
 import serverPackage from "../package.json" with { type: "json" };
 import { fileStore } from "./assets/written-files.ts";
-import { bridgeConfigFile, loadOrCreateBridgeConfig } from "./bridge/bridge-config.ts";
+import { bridgeConfigFile, homeDir, loadOrCreateBridgeConfig } from "./bridge/bridge-config.ts";
 import { BridgeServer } from "./bridge/bridge-server.ts";
 import { OwnerClient } from "./bridge/owner-client.ts";
 import { PluginBridge } from "./bridge/plugin-bridge.ts";
 import { FilePluginKeys } from "./bridge/plugin-keys.ts";
 import { readConfig } from "./config/config.ts";
 import { DEFAULT_BRIDGE_PORT } from "./constants/bridge.ts";
+import { SUPPORT_LINKS, SUPPORT_STATE_FILE } from "./constants/support.ts";
 import { createLogger } from "./logging/logger.ts";
 import { createMcpServer } from "./mcp/mcp-server.ts";
+import { SupportReminder } from "./support/support-reminder.ts";
 import type { App } from "./types/app.ts";
 import type { BridgeConfig } from "./types/bridge.ts";
 import type { AppConfig } from "./types/config.ts";
@@ -24,6 +27,11 @@ export async function createApp(): Promise<App> {
     version: serverPackage.version,
     files: fileStore(),
     projectRoot: config.projectRoot ?? process.cwd(),
+    support: new SupportReminder({
+      file: join(homeDir(), SUPPORT_STATE_FILE),
+      enabled: config.supportReminders,
+      links: SUPPORT_LINKS,
+    }),
   });
 
   return {
