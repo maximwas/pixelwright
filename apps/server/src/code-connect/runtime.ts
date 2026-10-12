@@ -597,7 +597,8 @@ function transform(source: string, path: string, kind: "template" | "helper"): {
         statement.declaration.start,
         kind === "template" ? "__template.default = (" : "__exports.default = (",
       );
-      replace(statement.end, statement.end, ");");
+      // The declaration's own end, not the statement's: a semicolon after it is part of the statement.
+      replace(statement.declaration.end, statement.end, ");");
     } else if (statement.type === "ExportNamedDeclaration" || statement.type === "ExportAllDeclaration") {
       if (kind === "template") {
         throw new TemplateError("TEMPLATE_EXPORT", `${path}: a template exports its default and nothing else.`);

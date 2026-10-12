@@ -407,6 +407,15 @@ describe("templates across a read", () => {
     expect(results.at(-1)).toMatchObject({ error: expect.stringMatching(/^TEMPLATE_BUDGET: /) });
   });
 
+  it("runs a template written with semicolons, its default export's included", () => {
+    const BUTTON = template(
+      "Button",
+      "const label = 'Save';\nexport default { example: figma.code`<Button>${label}</Button>` };\n",
+    );
+
+    expect(renderInstance(button(), [BUTTON])).toMatchObject({ snippet: "<Button>Save</Button>" });
+  });
+
   it("runs a template whose comment mentions figma.connect(", () => {
     const BUTTON = template(
       "Button",
