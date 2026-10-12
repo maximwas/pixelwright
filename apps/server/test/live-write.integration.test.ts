@@ -13,7 +13,8 @@ const WRITE = process.env.PIXELWRIGHT_LIVE_WRITE === "1";
 const WAIT = Number(process.env.PIXELWRIGHT_LIVE_WAIT ?? "0") * 1_000;
 
 /** The Positivus test file: Maxim's test file, anything may be done in it. Writes go nowhere else. */
-const FILE = "Untitled";
+// PIXELWRIGHT_LIVE_FILE when the file was renamed (it was, to "Test MCP", on 2026-10-12).
+const FILE = process.env.PIXELWRIGHT_LIVE_FILE ?? "Untitled";
 
 /** A Positivus-like card made from XML with the file's library styles and fonts. */
 const CARD = `<Frame name="Pixelwright check card" display="flex" flex-direction="column" gap="16px" padding="40px" border-radius="45px" background="var(--Grey)" border="1px solid var(--Dark)" box-shadow="0 5px 0 0 #191A23">

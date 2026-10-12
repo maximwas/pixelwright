@@ -10,7 +10,8 @@ const entry = fileURLToPath(new URL("../src/bin.ts", import.meta.url));
 const OUT = process.env.PIXELWRIGHT_LIVE ?? "";
 
 /** The Positivus test file: Maxim's test file, anything may be done in it. */
-const FILE = "Untitled";
+// PIXELWRIGHT_LIVE_FILE when the file was renamed (it was, to "Test MCP", on 2026-10-12).
+const FILE = process.env.PIXELWRIGHT_LIVE_FILE ?? "Untitled";
 
 /**
  * Calls the read tools through MCP against the plugin running in the Positivus file and writes every result under
