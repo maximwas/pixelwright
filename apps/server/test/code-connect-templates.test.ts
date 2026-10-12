@@ -1,5 +1,5 @@
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, mkdtemp, symlink, writeFile } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { SnapshotNode } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
@@ -56,6 +56,7 @@ describe("finding the project's Code Connect templates", () => {
     expect(templates).toEqual([
       {
         path: "src/Card.figma.ts",
+        file: join(root, "src/Card.figma.ts"),
         source: expect.stringContaining("figma.code"),
         url: "https://www.figma.com/file/KEY456/Old?node-id=12%3A34",
         nodeId: "12:34",
@@ -63,6 +64,7 @@ describe("finding the project's Code Connect templates", () => {
       },
       {
         path: "src/ui/Button.figma.ts",
+        file: join(root, "src/ui/Button.figma.ts"),
         source: expect.stringContaining("figma.code"),
         url: "https://www.figma.com/design/KEY123/Kit?node-id=1-2",
         nodeId: "1:2",
@@ -106,6 +108,79 @@ describe("finding the project's Code Connect templates", () => {
       expect.stringMatching(/^y\/Button\.figma\.ts: .*x\/Button\.figma\.ts/),
       expect.stringMatching(/^z\/Button\.figma\.ts: .*x\/Button\.figma\.ts/),
     ]);
+  });
+
+  it("takes only Code Connect files from the config's globs, quietly passing over code that is no template", async () => {
+    const root = await project({
+      "figma.config.json": JSON.stringify({
+        codeConnect: {
+          parser: "react",
+          include: ["src/**/*.{tsx,ts}"],
+        },
+      }),
+      "src/Button.tsx": "export function Button() { return null }\n",
+      "src/util.ts": "export const x = 1\n",
+      "src/Button.figma.ts": `// url=https://www.figma.com/design/K/F?node-id=1-2\n${BODY}`,
+      "src/Card.figma.ts": BODY,
+      "src/Old.figma.ts":
+        "import figma from '@figma/code-connect/html'\nfigma.connect('https://figma.com/x', { example: () => null })\n",
+    });
+    const { templates, problems } = await findTemplates(root);
+
+    expect(templates.map(({ path }) => path)).toEqual(["src/Button.figma.ts"]);
+    expect(problems).toEqual([
+      expect.stringMatching(/^src\/Card\.figma\.ts: no \/\/ url= comment/),
+      expect.stringMatching(/^src\/Old\.figma\.ts: .*npx figma connect migrate/),
+    ]);
+  });
+
+  it("finds .figma.template files too, and never fails on a folder or a broken link named like a template", async () => {
+    const root = await project({
+      "Card.figma.template.ts": `// url=https://www.figma.com/design/K/F?node-id=1-2\n${BODY}`,
+      "Tag.figma.template.js": `// url=https://www.figma.com/design/K/F?node-id=1-3\n${BODY}`,
+      "folder.figma.ts/inside.txt": "",
+    });
+
+    await symlink(join(root, "gone.ts"), join(root, "Broken.figma.ts"));
+
+    const { templates, problems } = await findTemplates(root);
+
+    expect(templates.map(({ path }) => path)).toEqual(["Card.figma.template.ts", "Tag.figma.template.js"]);
+    expect(problems).toEqual([expect.stringMatching(/^Broken\.figma\.ts: cannot be read/)]);
+  });
+
+  it("takes the config's url substitutions, globs written with ./ and directives in any case", async () => {
+    const root = await project({
+      "figma.config.json": JSON.stringify({
+        codeConnect: {
+          include: ["./src/**/*.figma.ts"],
+          exclude: ["./src/legacy/**"],
+          documentUrlSubstitutions: { "<FIGMA_BUTTON>": "https://www.figma.com/design/K/F?node-id=1-2" },
+        },
+      }),
+      "src/Button.figma.ts": `// URL=<FIGMA_BUTTON>\n// Component=Button\n${BODY}`,
+      "src/legacy/Old.figma.ts": `// url=https://www.figma.com/design/K/F?node-id=9-9\n${BODY}`,
+    });
+
+    expect(await findTemplates(root)).toEqual({
+      templates: [
+        expect.objectContaining({
+          path: "src/Button.figma.ts",
+          nodeId: "1:2",
+          component: "Button",
+        }),
+      ],
+      problems: [],
+    });
+  });
+
+  it("does not walk the home folder or the disk's root, and says how to name the project", async () => {
+    for (const root of [homedir(), "/"]) {
+      expect(await findTemplates(root)).toEqual({
+        templates: [],
+        problems: [expect.stringMatching(/CLAUDE_PROJECT_DIR/)],
+      });
+    }
   });
 
   it("finds nothing, and says so, in a project without templates", async () => {
@@ -169,6 +244,32 @@ describe("matching an instance to its template", () => {
         [button, card],
       ),
     ).toBe(card);
+  });
+
+  it("compares names as code names: case, spaces, punctuation and the Figma name's folders aside", () => {
+    const primary = template("ui/primary-button.figma.ts");
+
+    expect(
+      templateFor(
+        instance({
+          componentId: "77:3",
+          componentName: "Size=Large",
+          setName: "Buttons/Primary Button",
+          remote: true,
+        }),
+        [primary],
+      ),
+    ).toBe(primary);
+    expect(
+      templateFor(
+        instance({
+          componentId: "77:4",
+          componentName: "Badge",
+          remote: true,
+        }),
+        [primary],
+      ),
+    ).toBeNull();
   });
 
   it("prefers a template that both id and name point at, then one by name, then one by id alone", () => {

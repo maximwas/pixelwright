@@ -61,6 +61,12 @@ export const DesignReadInputSchema = z.object({
     .max(400_000)
     .default(80_000)
     .describe("Longest XML to return; deeper branches past it come back empty with $truncated, to read on their own."),
+  code: z
+    .boolean()
+    .default(true)
+    .describe(
+      "Run the project's Code Connect templates, giving connected instances as $code with their code (default); false reads them as layers.",
+    ),
   file: FileSchema,
 });
 

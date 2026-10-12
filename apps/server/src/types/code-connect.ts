@@ -4,6 +4,8 @@ import type { SnapshotNode } from "@pixelwright/core";
 export interface TemplateFile {
   /** Relative to the project root, with forward slashes. */
   readonly path: string;
+  /** The file's absolute path, which its relative imports start from. */
+  readonly file?: string;
   readonly source: string;
   readonly url?: string;
   /** The url's node-id as the Plugin API writes ids: 1-2 → 1:2. */

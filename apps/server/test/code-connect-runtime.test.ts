@@ -1,7 +1,10 @@
 /* biome-ignore-all lint/suspicious/noTemplateCurlyInString: these strings are template sources, their ${} the templates own. */
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { SnapshotNode } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
-import { renderInstance } from "../src/code-connect/runtime.ts";
+import { RenderSession, renderInstance } from "../src/code-connect/runtime.ts";
 import type { SnapshotInstance, TemplateFile } from "../src/types/code-connect.ts";
 
 type Layer = Partial<SnapshotNode> & Pick<SnapshotNode, "id" | "name" | "type">;
@@ -338,5 +341,123 @@ export default { example: figma.tsx\`<Button\${r.renderProp('disabled', true)}\$
 
   it("gives null for an instance no template connects", () => {
     expect(renderInstance(button(), [ARROW])).toBeNull();
+  });
+});
+
+describe("templates across a read", () => {
+  const LOOP = template("Button", "while (true) {}");
+
+  it("stops a template that loops on promises, and leaves the event loop free", () => {
+    const started = Date.now();
+
+    expect(
+      renderInstance(
+        button(),
+        [
+          template(
+            "Button",
+            ";(async () => { for (;;) await null })()\nexport default { example: figma.code`<Button />` }",
+          ),
+        ],
+        { timeout: 200 },
+      ),
+    ).toEqual({
+      template: "ui/Button.figma.ts",
+      error: expect.stringMatching(/^TEMPLATE_TIMEOUT: /),
+    });
+    expect(Date.now() - started).toBeLessThan(1_500);
+  });
+
+  it("gives a template that ran out of time no second chance in the same read", () => {
+    const session = new RenderSession([LOOP], { timeout: 100 });
+    const started = Date.now();
+    const results = Array.from({ length: 5 }, () => session.render(button()));
+
+    expect(results).toEqual(
+      Array(5).fill(expect.objectContaining({ error: expect.stringMatching(/^TEMPLATE_TIMEOUT: /) })),
+    );
+    expect(Date.now() - started).toBeLessThan(600);
+  });
+
+  it("blames the nested template that ran out of time, not the one that nests it", () => {
+    const BUTTON = template(
+      "Button",
+      "export default { example: figma.code`<Button>${figma.selectedInstance.findInstance('Icon').executeTemplate().example}</Button>` }",
+    );
+    const SPIN = template("Arrow", "while (true) {}", "ui/Spin.figma.ts");
+
+    expect(renderInstance(button(), [BUTTON, SPIN], { timeout: 200 })).toEqual({
+      template: "ui/Button.figma.ts",
+      error: expect.stringMatching(/^TEMPLATE_TIMEOUT: ui\/Spin\.figma\.ts/),
+    });
+  });
+
+  it("stops rendering once the read's time is spent", () => {
+    const SLOW = template(
+      "Button",
+      "const end = Date.now() + 120\nwhile (Date.now() < end) {}\nexport default { example: figma.code`<Button />` }",
+    );
+    const session = new RenderSession([SLOW], {
+      timeout: 1_000,
+      budget: 300,
+    });
+    const results = Array.from({ length: 6 }, () => session.render(button()));
+
+    expect(results[0]).toMatchObject({ snippet: "<Button />" });
+    expect(results.at(-1)).toMatchObject({ error: expect.stringMatching(/^TEMPLATE_BUDGET: /) });
+  });
+
+  it("runs a template whose comment mentions figma.connect(", () => {
+    const BUTTON = template(
+      "Button",
+      "// Migrated from a figma.connect( file.\nexport default { example: figma.code`<Button />` }",
+    );
+
+    expect(renderInstance(button(), [BUTTON])).toMatchObject({ snippet: "<Button />" });
+  });
+
+  it("imports the template's relative helpers, TypeScript and nested ones included", async () => {
+    const root = await mkdtemp(join(tmpdir(), "pixelwright-helpers-"));
+
+    await mkdir(join(root, "ui", "deep"), { recursive: true });
+    await writeFile(
+      join(root, "ui", "helpers.ts"),
+      "import { shout } from './deep/text'\nexport const sizes: Record<string, string> = { Large: 'lg' }\nexport function label(text: string): string { return shout(text) }\nexport * from './deep/text'\nexport default 'base'\n",
+    );
+    await writeFile(
+      join(root, "ui", "deep", "text.ts"),
+      "export const shout = (text: string) => text.toUpperCase()\nexport const quiet = 'quiet'\n",
+    );
+
+    const BUTTON: TemplateFile = {
+      ...template(
+        "Button",
+        "import base, { sizes, label, quiet } from './helpers'\nimport * as all from './helpers'\nconst i = figma.selectedInstance\nexport default { example: figma.code`<Button size=\"${sizes[i.getPropertyValue('Size')]}\">${label('save')} ${quiet} ${base} ${all.sizes.Large}</Button>` }",
+      ),
+      file: join(root, "ui", "Button.figma.ts"),
+    };
+
+    expect(renderInstance(button(), [BUTTON])).toMatchObject({
+      snippet: '<Button size="lg">SAVE quiet base lg</Button>',
+    });
+  });
+
+  it("gives what templates migrated by Figma use: props metadata, render with a function, value exports", () => {
+    const ARROW_PROPS = template(
+      "Arrow",
+      "export default { example: figma.code`<ArrowIcon />`, metadata: { __props: { name: 'arrow' } } }",
+    );
+    const BUTTON = template(
+      "Button",
+      "const icon = figma.selectedInstance.findInstance('Icon')\nconst props = icon.executeTemplate().metadata.props\nexport default { example: figma.code`${props.name} ${icon.__renderWithFn__((p) => figma.code`<I n=\"${p.name}\" />`)}` }",
+    );
+    const ARROW_VALUE = template("Arrow", "export default figma.value('arrow', 'Arrow')");
+    const NESTING = template(
+      "Button",
+      "export default { example: figma.code`<Button icon=\"${figma.selectedInstance.findInstance('Icon').executeTemplate().example}\" />` }",
+    );
+
+    expect(renderInstance(button(), [BUTTON, ARROW_PROPS])).toMatchObject({ snippet: 'arrow <I n="arrow" />' });
+    expect(renderInstance(button(), [NESTING, ARROW_VALUE])).toMatchObject({ snippet: '<Button icon="Arrow" />' });
   });
 });

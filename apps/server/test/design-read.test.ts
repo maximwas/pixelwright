@@ -1,3 +1,4 @@
+/* biome-ignore-all lint/suspicious/noTemplateCurlyInString: some strings here are template sources, their ${} the templates own. */
 import { createHash } from "node:crypto";
 import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -380,6 +381,36 @@ async function project(files: Record<string, string>): Promise<string> {
   return root;
 }
 
+/** The Positivus plugin, its snapshot changed: the row with some branch edited, or one layer of it alone. */
+function positivusWith(change: (row: { root: Record<string, unknown> }) => { root: unknown }) {
+  const { bridge } = positivus();
+
+  return {
+    ...bridge,
+    request: async (op: string, input: unknown, target?: unknown) =>
+      op === "snapshot"
+        ? change(structuredClone(ROW) as { root: Record<string, unknown> })
+        : bridge.request(op, input, target as never),
+  } as BridgeView;
+}
+
+/** A layer of the snapshot by id. */
+function layerOf(root: Record<string, unknown>, id: string): Record<string, unknown> | undefined {
+  if (root.id === id) {
+    return root;
+  }
+
+  for (const child of (root.children as Record<string, unknown>[] | undefined) ?? []) {
+    const found = layerOf(child, id);
+
+    if (found !== undefined) {
+      return found;
+    }
+  }
+
+  return undefined;
+}
+
 describe("design_read with the project's Code Connect templates", () => {
   const args = {
     node: "2:4869",
@@ -395,14 +426,14 @@ describe("design_read with the project's Code Connect templates", () => {
 
     expect(meta.codeComponents).toEqual([
       {
-        id: "2:4872",
+        ids: ["2:4872"],
         component: "Heading",
         template: "Heading.figma.ts",
         snippet: '<Heading tone="green">Search engine optimization</Heading>',
         imports: ['import { Heading } from "@/components/Heading"'],
       },
       {
-        id: "2:4878",
+        ids: ["2:4878"],
         component: "Heading",
         template: "Heading.figma.ts",
         snippet: '<Heading tone="white">Pay-per-click advertising</Heading>',
@@ -410,6 +441,7 @@ describe("design_read with the project's Code Connect templates", () => {
       },
     ]);
     expect(meta.imports).toEqual(['import { Heading } from "@/components/Heading"']);
+    expect(meta).not.toHaveProperty("codeErrors");
     expect(xml).toContain(
       '<Instance id="2:4872" name="Heading" component="Heading" variant="Property 1=Green" display="flex" flex-direction="column" $code="Heading"/>',
     );
@@ -418,23 +450,112 @@ describe("design_read with the project's Code Connect templates", () => {
     expect(xml).toContain("Learn more");
   });
 
-  it("keeps an instance whose template fails as it is, and lists the error", async () => {
-    const root = await project({ "Heading.figma.ts": HEADING.replace("'Property 1'", "'Tone'") });
-    const result = await readDesign(positivus().bridge, args, memoryFiles(), root);
-    const meta = JSON.parse(textOf(result, 1)) as { codeComponents: unknown[] };
+  it("lists instances whose code is the same once, with all their ids", async () => {
+    const root = await project({ "Heading.figma.ts": HEADING.replace("${tone}", "plain").replace("${words}", "") });
+    const meta = JSON.parse(textOf(await readDesign(positivus().bridge, args, memoryFiles(), root), 1)) as {
+      codeComponents: { ids: string[]; snippet: string }[];
+    };
 
     expect(meta.codeComponents).toEqual([
-      {
-        id: "2:4872",
-        template: "Heading.figma.ts",
-        error: expect.stringMatching(/^PROPERTY_NOT_FOUND: Heading \(2:4872\) has no property Tone/),
-      },
       expect.objectContaining({
-        id: "2:4878",
-        error: expect.stringMatching(/^PROPERTY_NOT_FOUND/),
+        ids: ["2:4872", "2:4878"],
+        snippet: '<Heading tone="plain"></Heading>',
       }),
     ]);
+  });
+
+  it("keeps an instance whose template fails as it is, and lists the error once per template", async () => {
+    const root = await project({ "Heading.figma.ts": HEADING.replace("'Property 1'", "'Tone'") });
+    const result = await readDesign(positivus().bridge, args, memoryFiles(), root);
+    const meta = JSON.parse(textOf(result, 1)) as Record<string, unknown>;
+
+    expect(meta.codeComponents).toEqual([]);
+    expect(meta.codeErrors).toEqual([
+      {
+        template: "Heading.figma.ts",
+        error: expect.stringMatching(/^PROPERTY_NOT_FOUND: Heading \(2:4872\) has no property Tone/),
+        ids: ["2:4872", "2:4878"],
+      },
+    ]);
     expect(textOf(result, 0)).toContain("Search engine");
+  });
+
+  it("renders no instance whose layers the read left out, and says how to read it whole", async () => {
+    const root = await project({ "Heading.figma.ts": HEADING });
+    const bridge = positivusWith((row) => {
+      const heading = layerOf(row.root, "2:4872") as Record<string, unknown>;
+
+      // What a depth-limited read or the plugin's size budget leaves: the count of children, none of them.
+      heading.children = [];
+
+      return row;
+    });
+    const result = await readDesign(bridge, args, memoryFiles(), root);
+    const meta = JSON.parse(textOf(result, 1)) as {
+      codeComponents: { ids: string[] }[];
+      codeErrors: { error: string; ids: string[] }[];
+    };
+
+    expect(meta.codeComponents.map(({ ids }) => ids)).toEqual([["2:4878"]]);
+    expect(meta.codeErrors).toEqual([
+      expect.objectContaining({
+        ids: ["2:4872"],
+        error: expect.stringMatching(/^TEMPLATE_CUT: .*design_read node=2:4872/),
+      }),
+    ]);
+    expect(textOf(result, 0)).toMatch(/<Instance id="2:4872"[^>]*\$children="3"/);
+  });
+
+  it("reads the asked layer's own layers even when a template connects it, and every layer with code: false", async () => {
+    const root = await project({ "Heading.figma.ts": HEADING });
+    const heading = positivusWith((row) => ({
+      ...row,
+      root: layerOf(row.root, "2:4872"),
+    }));
+    const own = await readDesign(
+      heading,
+      {
+        ...args,
+        node: "2:4872",
+      },
+      memoryFiles(),
+      root,
+    );
+    const off = await readDesign(
+      positivus().bridge,
+      {
+        ...args,
+        code: false,
+      },
+      memoryFiles(),
+      root,
+    );
+
+    expect(textOf(own, 0)).toContain("Search engine");
+    expect(JSON.parse(textOf(own, 1))).toMatchObject({
+      codeComponents: [expect.objectContaining({ ids: ["2:4872"] })],
+    });
+    expect(textOf(off, 0)).toContain("Search engine");
+    expect(JSON.parse(textOf(off, 1))).not.toHaveProperty("codeComponents");
+  });
+
+  it("keeps the code within a share of maxChars, reading the instances past it as layers", async () => {
+    const root = await project({
+      "Heading.figma.ts": HEADING.replace("${words}", "${words} ${'x'.repeat(3000)}"),
+    });
+    const result = await readDesign(
+      positivus().bridge,
+      {
+        ...args,
+        maxChars: 12_000,
+      },
+      memoryFiles(),
+      root,
+    );
+    const meta = JSON.parse(textOf(result, 1)) as { codeComponents: { ids: string[] }[]; hints: string[] };
+
+    expect(meta.codeComponents.map(({ ids }) => ids)).toEqual([["2:4872"]]);
+    expect(meta.hints).toContainEqual(expect.stringMatching(/^Code Connect: 1 more connected instance/));
   });
 
   it("reads as before in a project without templates", async () => {

@@ -8,7 +8,7 @@ export interface Runner {
   /** Whether a template connects this instance. */
   connected(node: SnapshotNode): boolean;
   /** The instance's template run, as one nested-instance section (or an error section); none without a template. */
-  example(node: SnapshotNode): { sections: ResultSection[]; metadata?: unknown };
+  example(node: SnapshotNode): { sections: ResultSection[]; metadata: Record<string, unknown> };
   /** The `id` the instance's template exports, or null. */
   connectedId(node: SnapshotNode): string | null;
 }
@@ -246,9 +246,14 @@ export class InstanceHandle {
   }
 
   __getProps__(): unknown {
-    const { metadata } = this.#run.example(this.#node);
+    return this.hasCodeConnect() ? this.#run.example(this.#node).metadata.__props : undefined;
+  }
 
-    return typeof metadata === "object" && metadata !== null && "__props" in metadata ? metadata.__props : undefined;
+  /** The instance rendered by a function of its template's props (Figma's React parser writes such templates). */
+  __renderWithFn__(render: (props: unknown) => unknown): ResultSection[] | undefined {
+    const props = this.__getProps__();
+
+    return props === undefined ? undefined : sectionsOf(render(props));
   }
 
   #handle(node: SnapshotNode): InstanceHandle | TextHandle | null {
