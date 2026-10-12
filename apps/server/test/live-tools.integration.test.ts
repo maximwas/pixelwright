@@ -1,4 +1,5 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/client";
@@ -205,4 +206,111 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
       await client.close();
     }
   }, 180_000);
+
+  it("Code Connect: a template for the Heading component connects its instances in the Services row", async () => {
+    const project = mkdtempSync(join(tmpdir(), "pixelwright-live-cc-"));
+
+    writeFileSync(
+      join(project, "Heading.figma.ts"),
+      [
+        "// url=https://www.figma.com/design/KIT/Kit?node-id=9-9",
+        "// component=Heading",
+        "import figma from 'figma'",
+        "",
+        "const heading = figma.selectedInstance",
+        "const tone: string | undefined = heading.getEnum('Property 1', { Green: 'green', White: 'white', Black: 'black' })",
+        "const words = heading.findLayers((layer) => layer.type === 'TEXT').map((text) => text.textContent).join(' ')",
+        "",
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: the template's own interpolations.
+        "export default { example: figma.code`<Heading tone=\"${tone}\">${words}</Heading>`, imports: ['import { Heading } from \"@/components/Heading\"'], id: 'heading' }",
+      ].join("\n"),
+    );
+
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [entry],
+      env: {
+        ...Object.fromEntries(
+          Object.entries(process.env).filter((pair): pair is [string, string] => pair[1] !== undefined),
+        ),
+        CLAUDE_PROJECT_DIR: project,
+      },
+      stderr: "pipe",
+    });
+    const client = new Client({
+      name: "live-code-connect",
+      version: "0.0.0",
+    });
+
+    await client.connect(transport);
+    mkdirSync(OUT, { recursive: true });
+
+    try {
+      for (let tries = 0; tries < 30; tries++) {
+        const status = (
+          await client.callTool({
+            name: "status",
+            arguments: {},
+          })
+        ).structuredContent as {
+          files?: unknown[];
+        };
+
+        if ((status.files?.length ?? 0) > 0) {
+          break;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+      }
+
+      const listed = (
+        await client.callTool({
+          name: "code_connect_read",
+          arguments: {
+            node: "2:4869",
+            file: FILE,
+          },
+        })
+      ).structuredContent as {
+        templates: { path: string; matches: { component: string; instances: number }[]; error?: string }[];
+      };
+      const read = await client.callTool({
+        name: "design_read",
+        arguments: {
+          node: "2:4869",
+          file: FILE,
+        },
+      });
+      const [xml, json] = (read.content as { text: string }[]).map((block) => block.text);
+      const meta = JSON.parse(json ?? "{}") as {
+        codeComponents?: { id: string; snippet?: string; error?: string }[];
+        imports?: string[];
+      };
+
+      writeFileSync(
+        join(OUT, "code-connect.json"),
+        JSON.stringify(
+          {
+            listed,
+            codeComponents: meta.codeComponents,
+            imports: meta.imports,
+            collapsed: xml?.match(/<Instance [^>]*\$code="Heading"[^>]*\/>/g),
+          },
+          null,
+          2,
+        ),
+      );
+      expect(listed.templates[0]).toMatchObject({
+        path: "Heading.figma.ts",
+        matches: [expect.objectContaining({ component: "Heading" })],
+      });
+      expect(listed.templates[0]?.error).toBeUndefined();
+      expect(meta.codeComponents?.length ?? 0).toBeGreaterThanOrEqual(2);
+      expect(meta.codeComponents?.every((code) => code.snippet?.startsWith("<Heading tone=")) ?? false).toBe(true);
+      expect(meta.imports).toEqual(['import { Heading } from "@/components/Heading"']);
+      expect(xml).toContain('$code="Heading"');
+    } finally {
+      await client.close();
+    }
+  }, 120_000);
 });
