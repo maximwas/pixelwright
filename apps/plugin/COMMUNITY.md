@@ -15,6 +15,8 @@ exists, people import `~/.pixelwright/plugin/manifest.json`, which `npx pixelwri
 - [ ] `execute` runs code the agent sends inside the plugin. If review refuses a plugin that evaluates code, publish a
       build without it and keep `execute` in the build imported from the manifest (spec, section 16).
 - [ ] Try the published build once in a fresh Figma account: pairing, a read, Allow edits, a write, undo.
+- [ ] Licences: each bundle ends with the licences of the packages it carries (apps/plugin/build-licenses.js), so the
+      published build carries them; nothing to add by hand.
 
 ## Listing
 
@@ -37,7 +39,8 @@ Nothing goes to Figma's REST API and no token is needed. Writing is off until yo
 window, and each change is one undo step.
 
 Pixelwright is free: https://github.com/maximwas/pixelwright. It is not made by or affiliated
-with Figma.
+with Figma. If it saves you time, you can support it on Ko-fi (https://ko-fi.com/maksymvasianin) or with a monobank jar
+(https://send.monobank.ua/jar/7o9oMrbXTj).
 
 **Tags:** developer tools, MCP, AI, code, design to code, tokens
 

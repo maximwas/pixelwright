@@ -3,7 +3,9 @@ name: Release
 # A tag v1.2.3 releases that version: the pixelwright package goes to npm (with the Figma plugin's build inside), and a
 # GitHub release carries the plugin as a zip for Import plugin from manifest. npm trusts this workflow (trusted
 # publishing, set on the package's npm settings page), so the repository holds no token and the package gets
-# provenance. The Figma Community listing is published from Figma Desktop by hand (apps/plugin/COMMUNITY.md).
+# provenance. npm sets up trusted publishing only for a package that exists, so the first version is published by hand
+# (README, Releasing); its tag then skips npm and still makes the GitHub release. The Figma Community listing is
+# published from Figma Desktop by hand (apps/plugin/COMMUNITY.md).
 on:
   push:
     tags: ["v*"]
@@ -39,7 +41,13 @@ jobs:
       - run: pnpm check:pack
       # pnpm pack writes the catalog: versions into package.json; npm then publishes that tarball.
       - run: pnpm --filter pixelwright pack --pack-destination "$RUNNER_TEMP/package"
-      - run: npm publish "$RUNNER_TEMP"/package/*.tgz --access public
+      - name: Publish to npm, unless this version is there already
+        run: |
+          if [ -n "$(npm view "pixelwright@${GITHUB_REF_NAME#v}" version 2>/dev/null)" ]; then
+            echo "pixelwright@${GITHUB_REF_NAME#v} is on npm already"
+          else
+            npm publish "$RUNNER_TEMP"/package/*.tgz --access public
+          fi
       - name: Zip the Figma plugin
         working-directory: apps/plugin
         run: zip -r "$RUNNER_TEMP/pixelwright-figma-plugin-${GITHUB_REF_NAME#v}.zip" manifest.json build

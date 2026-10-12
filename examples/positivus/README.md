@@ -1,7 +1,8 @@
 # Code Connect example: Positivus
 
 Two [Figma Code Connect](https://www.figma.com/developers/code-connect) templates for the Heading and Link components
-of the Positivus landing page template, written exactly as Figma documents them. Pixelwright runs them locally, on any
+of the [Positivus landing page design](https://www.figma.com/community/file/1230604708032389430) by Olga Averchenko
+(CC BY 4.0), written exactly as Figma documents them. Pixelwright runs them locally, on any
 Figma plan, without a token and without publishing anything.
 
 ```
@@ -14,11 +15,12 @@ examples/positivus/
 
 ## Try it
 
-1. Open a copy of the Positivus template in Figma Desktop and run the Pixelwright plugin in it.
+1. Open a copy of the [Positivus file](https://www.figma.com/community/file/1230604708032389430) in Figma Desktop and
+   run the Pixelwright plugin in it.
 2. Start your MCP client in this folder (or set `CLAUDE_PROJECT_DIR` to it), then ask it to read the Services section.
 
 `code_connect_read` lists both templates with the instances they connect. `design_read` writes each connected instance
-as `$code` in the XML and gives its code:
+as `$code` in the XML and gives its code (abridged):
 
 ```json
 {

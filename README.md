@@ -15,8 +15,8 @@ Requires Node.js 24.11 or newer and Figma Desktop. Run the setup in a terminal:
 npx -y pixelwright@latest
 ```
 
-It adds Pixelwright to Claude Code, Cursor or Codex, and puts the Figma plugin in `~/.pixelwright/plugin`. Then, in
-Figma Desktop:
+It connects Claude Code and Cursor, shows what to paste for Codex and other MCP clients, and puts the Figma plugin in
+`~/.pixelwright/plugin`. Then, in Figma Desktop:
 
 1. **Plugins → Development → Import plugin from manifest…** and pick `~/.pixelwright/plugin/manifest.json` (once; the
    Community listing will replace this step).
@@ -24,7 +24,8 @@ Figma Desktop:
 3. The first time, the window asks for a pairing code: your agent shows it (from `status`); type it in.
 4. Ask your agent to read a section, or turn on **Allow edits** in the window and ask it to change something.
 
-`npx pixelwright setup --print` prints the commands and config blocks instead, for scripts and CI.
+`npx -y pixelwright@latest setup --print` asks nothing: it puts the plugin in place and prints the commands and config
+blocks, for scripts.
 
 ## How it works
 
@@ -102,18 +103,27 @@ how they match. The project folder is `CLAUDE_PROJECT_DIR`, else the folder your
 - Figma takes images up to 4096 px a side, in PNG, JPG or GIF.
 - A library's component the file does not use yet is placed by its key (`component="key:…"`): the Plugin API cannot
   search a library's components.
+- Tested on macOS. On Windows the setup gives Claude Code `cmd /c npx …`, as its documentation asks; Windows itself is
+  not tested yet.
 
 ## Commands
 
 ```text
 pixelwright                 in a terminal: the setup; started by an MCP client: the MCP server on stdio
-pixelwright setup --print   the commands and config blocks, for scripts and CI
+pixelwright setup --print   no questions: the plugin put in place, the commands and config blocks printed
 pixelwright serve           the MCP server, however it is started
 pixelwright --version
 ```
 
 `PIXELWRIGHT_HOME` moves `~/.pixelwright` (the plugin, pairing keys, written-files.json); `CLAUDE_PROJECT_DIR` names the
-project for Code Connect.
+project for Code Connect; `PIXELWRIGHT_SUPPORT_REMINDERS=off` turns off the weekly support note (see Support).
+
+## Updating
+
+MCP clients start `pixelwright@latest`, so a client started again runs the newest server. The plugin is a copy on your
+computer: run `npx -y pixelwright@latest` again (or `setup --print`) to put the matching one in `~/.pixelwright/plugin`.
+Figma Desktop loads it the next time you run the plugin. When the plugin's window says the protocol versions differ,
+this is the fix.
 
 ## Development
 
@@ -134,12 +144,34 @@ Figma plugin), `examples/`, and `docs/` (the website, served by GitHub Pages).
 
 ### Releasing
 
-Set the version in `apps/server/package.json` and `apps/plugin/package.json`, commit, and push a tag `v<version>`: the
-Release workflow checks everything, publishes `pixelwright` to npm (trusted publishing, no token in the repository) and
-attaches the plugin as a zip to a GitHub release. The Figma Community listing is published from Figma Desktop
-(`apps/plugin/COMMUNITY.md`).
+`main` takes changes only through pull requests, with CI's `check` job passing; direct pushes, force pushes and
+deleting it are blocked (a repository ruleset). Work happens on `develop` or a topic branch. Set the same version in
+`apps/server/package.json` and `apps/plugin/package.json` on a branch, open a pull request into `main` and merge it,
+then tag the merge commit:
+
+```bash
+git switch main && git pull
+git tag v1.2.3 && git push origin v1.2.3
+```
+
+The Release workflow checks that the tag matches both versions, runs the checks, publishes `pixelwright` to npm
+(trusted publishing, with provenance; a version npm has already is left alone) and creates a GitHub release with the
+plugin as a zip. The Figma Community listing is published from Figma Desktop (`apps/plugin/COMMUNITY.md`).
+
+The first version goes to npm by hand, because npm sets up trusted publishing only for a package that exists:
+`pnpm build && pnpm --filter pixelwright pack`, then `npm publish apps/server/pixelwright-<version>.tgz --access public`
+from the maintainer's account. Then add the trusted publisher on npmjs.com (GitHub Actions, `maximwas/pixelwright`,
+`release.yml`) and tag the version as above: the workflow skips npm and makes the GitHub release.
+
+## Support
+
+Pixelwright is free. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a
+[monobank jar](https://send.monobank.ua/jar/7o9oMrbXTj). At most once a week, after a change that worked, your agent may
+mention it; turn that off with `PIXELWRIGHT_SUPPORT_REMINDERS=off`.
 
 ## License
 
-[FSL-1.1-MIT](LICENSE). The bundled third-party packages' licences ship in the npm package (`dist/THIRD-PARTY-NOTICES.md`, and
-`*.LICENSE.txt` beside the plugin's bundles).
+[FSL-1.1-MIT](LICENSE). The bundled third-party packages' licences ship in the npm package (`dist/THIRD-PARTY-NOTICES.md`) and
+at the end of the plugin's bundles. The examples and test fixtures use the
+[Positivus landing page design](https://www.figma.com/community/file/1230604708032389430) by Olga Averchenko, under
+CC BY 4.0.

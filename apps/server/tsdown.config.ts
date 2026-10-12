@@ -6,7 +6,8 @@ import { defineConfig } from "tsdown";
 const ADAPTED = [
   {
     name: "@figma/code-connect",
-    about: "2.0.1, MIT; adapted, not bundled: the React helpers of the Code Connect runtime (src/code-connect/react-helpers.ts)",
+    about:
+      "2.0.1, MIT; adapted, not bundled: the React helpers of the Code Connect runtime (src/code-connect/react-helpers.ts)",
     licenseText: readFileSync(new URL("./licenses/figma-code-connect.txt", import.meta.url), "utf8"),
   },
 ];
