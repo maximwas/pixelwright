@@ -34,6 +34,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@clack/prompts": "1.8.1",
     "@modelcontextprotocol/server": "2.2.0",
     "acorn": "8.19.0",
     "image-size": "2.0.4",
