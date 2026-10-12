@@ -41,6 +41,7 @@ describe("stdio server", () => {
 
       expect(tools.map((tool) => tool.name).sort()).toEqual([
         "assets_export",
+        "code_connect_read",
         "components_read",
         "design_apply",
         "design_read",
@@ -84,6 +85,7 @@ describe("stdio server", () => {
         "tokens",
         "assets",
         "write",
+        "code-connect",
         "email",
       ]);
 

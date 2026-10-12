@@ -29,6 +29,9 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
 7. **Write.** \`design_apply\` writes the same XML back into Figma: change layers by id, create new ones (see \`guide
    write\`); \`tokens_apply\` writes variables and styles in tokens_read's JSON shape (see \`guide tokens\`);
    \`execute\` runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.
+8. **Code Connect.** Where the project has Figma Code Connect templates (\`*.figma.ts\`), \`design_read\` gives each
+   connected instance as \`$code\` with its code in \`codeComponents\`: use that code as it is. \`code_connect_read\`
+   shows what is connected and what is not (see \`guide code-connect\`).
 
 Build the code from the XML with the project's own components, tokens and layout conventions: the XML is the spec, not
 the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, unnamed layers,
@@ -87,6 +90,8 @@ text-decoration-thickness), text-align, text-wrap, color.
   a negative gap ("children overlap"), a mask among layers.
 - \`$children="N"\`: the layer has N children and not all are listed (snapshot budget or maxChars).
 - \`$truncated="true"\`: the branch was emptied, or the text shortened, to fit maxChars; its id is in \`truncated\`.
+- \`$code="Button"\`: an instance the project's Code Connect template renders, written without its children; its code
+  is in \`codeComponents\` (see \`guide code-connect\`). design_apply leaves its children alone.
 
 ## Example (Positivus, a card)
 
@@ -299,6 +304,64 @@ built), \`console.log\` lines come back as \`logs\`, and what it throws as \`err
 one undo step; it needs Allow edits, and the tool waits at most 25 s. Code it starts that outlives the call (timers,
 listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
 synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.
+`,
+  },
+  "code-connect": {
+    about: "Figma Code Connect templates: how design_read runs them, writing one, what Pixelwright supports.",
+    markdown: `# Code Connect templates
+
+Pixelwright runs the project's **Figma Code Connect templates** itself, on any Figma plan, without a token and without
+publishing anything: \`design_read\` gives each instance a template connects as \`$code\` in the XML (no children) and
+its code in \`codeComponents\` (\`{ id, component, template, snippet, imports }\`), with the read's \`imports\` once each.
+Nested connected instances are inside their parent's snippet. \`code_connect_read\` lists the templates, what each
+connects on the page, the components none connects, and errors.
+
+## Where templates are
+
+The project folder is \`CLAUDE_PROJECT_DIR\`, else the server's working directory. Templates are the files
+\`figma.config.json\`'s \`codeConnect.include\` globs name (minus \`exclude\`), else every \`*.figma.ts\` and \`*.figma.js\`;
+dependency folders are never searched.
+
+## Writing one
+
+Write it as Figma documents it, with types from the npm package \`@figma/code-connect\` (in tsconfig:
+\`"types": ["@figma/code-connect/figma-types"]\`):
+
+\`\`\`ts
+// url=https://www.figma.com/design/<fileKey>/Kit?node-id=1-2
+// component=Button
+// source=src/components/Button.tsx
+import figma from 'figma'
+
+const button = figma.selectedInstance
+const size = button.getEnum('Size', { Small: 'sm', Large: 'lg' })
+const icon = button.getInstanceSwap('Icon')
+
+export default {
+  example: figma.tsx\`<Button size="\${size}"\${figma.helpers.react.renderProp('disabled', button.getBoolean('Disabled'))}>\${button.getString('Label')}\${icon?.executeTemplate().example}</Button>\`,
+  imports: ['import { Button } from "@/components/Button"'],
+  id: 'button',
+}
+\`\`\`
+
+- \`url\` (required): the component's or component set's link (Copy link in Figma). \`component\`: its name, when the
+  file's name is not it. \`source\`: the code component's file.
+- **Matching:** the url's node-id is the instance's component or set when that lives in the file read; a library's
+  component matches by name (\`component\`, else the file name before \`.figma.\`). Check with \`code_connect_read\`.
+- **The API:** \`figma.selectedInstance\` (alias \`currentLayer\`) with \`getString\`, \`getBoolean(name, mapping?)\`,
+  \`getEnum\`, \`getPropertyValue\`, \`getInstanceSwap\`, \`getSlot\` (the slot layer named after the property,
+  \`connectedInstances\`), \`findInstance\`, \`findText\`, \`findLayers\`, \`findConnectedInstance(s)\` (with \`path\` and
+  \`traverseInstances\`), \`executeTemplate\`, \`hasCodeConnect\`, \`codeConnectId\`, \`id\`, \`properties\`;
+  \`figma.code\`, \`tsx\`, \`html\`, \`swift\`, \`kotlin\`, \`figma.helpers.react.*\`, \`figma.properties.*\`. Property names
+  are as Figma shows them (without the #id suffix). Hidden layers are not found.
+- **Errors** are the instance's alone: \`PROPERTY_NOT_FOUND\`, \`CHILD_LAYER_NOT_FOUND\` (when the missing layer is
+  rendered), \`TEMPLATE_TIMEOUT\` (one second per instance, nested templates included), \`TEMPLATE_IMPORT\` (only
+  \`figma\` may be imported), \`TEMPLATE_CYCLE\`. Such an instance is read as usual, with its children.
+- Old \`figma.connect(...)\` files are not run: \`npx figma connect migrate\` turns them into templates.
+
+Templates run on this computer as the project's own code, in a separate context without \`require\`, \`process\` or
+files, but that context is no protection against a hostile template: run Pixelwright only in projects you trust, as
+you would their build scripts.
 `,
   },
   email: {
