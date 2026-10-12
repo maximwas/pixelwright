@@ -10,10 +10,14 @@ import { marked } from "marked";
 import { GUIDE_TOPICS } from "../apps/server/src/guide/topics.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const README_SECTIONS = ["Quick start", "How it works", "Code Connect", "Safety", "Limits", "Commands"];
+const README_SECTIONS = ["Quick start", "How it works", "Code Connect", "Safety", "Limits", "Commands", "Updating"];
 
 const escapeHtml = (text) =>
   String(text).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+
+// The texts are Markdown about XML: a tag written in them is something to show, never markup. marked escapes code spans
+// and plain text itself, so only raw HTML needs it (escaping before marked would escape code spans twice).
+marked.use({ renderer: { html: ({ text }) => escapeHtml(text) } });
 const slug = (text) =>
   text
     .toLowerCase()
@@ -122,14 +126,14 @@ function toolHtml(tool) {
   const rows = properties
     .map(
       ([name, schema]) =>
-        `<tr><td><code>${escapeHtml(name)}</code>${required.has(name) ? "" : '<span class="optional">optional</span>'}</td><td><code>${escapeHtml(typeOf(schema))}</code>${schema.default === undefined ? "" : `<br /><span class="default">default ${escapeHtml(JSON.stringify(schema.default))}</span>`}</td><td>${marked.parseInline(escapeHtml(schema.description ?? ""))}</td></tr>`,
+        `<tr><td><code>${escapeHtml(name)}</code>${required.has(name) ? "" : '<span class="optional">optional</span>'}</td><td><code>${escapeHtml(typeOf(schema))}</code>${schema.default === undefined ? "" : `<br /><span class="default">default ${escapeHtml(JSON.stringify(schema.default))}</span>`}</td><td>${marked.parseInline(schema.description ?? "")}</td></tr>`,
     )
     .join("\n");
   const writes = tool.annotations?.readOnlyHint === false;
 
   return `<section class="tool" id="tool-${tool.name}">
   <h3><code>${tool.name}</code>${writes ? '<span class="writes">writes</span>' : ""}</h3>
-  <p>${marked.parseInline(escapeHtml(tool.description ?? ""))}</p>
+  <p>${marked.parseInline(tool.description ?? "")}</p>
   ${properties.length === 0 ? "" : `<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>\n${rows}\n</tbody></table>`}
 </section>`;
 }
@@ -167,34 +171,42 @@ const page = `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Pixelwright docs</title>
     <meta name="description" content="How to set up Pixelwright, what each of its tools does, and the formats your agent reads: the XML, writing, tokens, assets and Code Connect." />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark light" />
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Onest:wght@400;500;600&family=Unbounded:wght@500;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
     <link rel="stylesheet" href="../site.css" />
+    <script src="../nav.js" defer></script>
   </head>
   <body class="docs">
     <a class="skip" href="#main">Skip to the content</a>
+    <div class="progress" aria-hidden="true"></div>
     <header class="top">
-      <a class="wordmark" href="../" aria-label="Pixelwright home">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <rect class="mark-frame" x="4" y="4" width="16" height="16" />
-          <rect class="mark-handle" x="2" y="2" width="4" height="4" />
-          <rect class="mark-handle" x="18" y="2" width="4" height="4" />
-          <rect class="mark-handle" x="2" y="18" width="4" height="4" />
-          <rect class="mark-handle" x="18" y="18" width="4" height="4" />
-        </svg>
-        Pixelwright
-      </a>
-      <nav class="links" aria-label="Site">
-        <a href="../">Home</a>
-        <a href="https://github.com/maximwas/pixelwright">GitHub</a>
-        <a href="https://www.npmjs.com/package/pixelwright">npm</a>
-      </nav>
+      <div class="top-inner">
+        <a class="wordmark" href="../" aria-label="Pixelwright home">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect class="mark-frame" x="4" y="4" width="16" height="16" />
+            <rect class="mark-handle" x="2" y="2" width="4" height="4" />
+            <rect class="mark-handle" x="18" y="2" width="4" height="4" />
+            <rect class="mark-handle" x="2" y="18" width="4" height="4" />
+            <rect class="mark-handle" x="18" y="18" width="4" height="4" />
+          </svg>
+          <span class="wordmark-text">Pixelwright</span>
+        </a>
+        <nav class="links" aria-label="Site">
+          <a href="../">Home</a>
+          <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="https://ko-fi.com/maksymvasianin">Support</a>
+        </nav>
+        <a class="github" href="https://github.com/maximwas/pixelwright">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
     </header>
     <div class="doc">
-      <nav class="toc" aria-label="On this page">
+      <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
 ${parts.map(({ id, title }) => `          <li><a href="#${id}">${escapeHtml(title)}</a></li>`).join("\n")}
         </ol>
@@ -205,8 +217,19 @@ ${parts.map(({ id, title, html }) => `        <section id="${id}">\n          <h
       </main>
     </div>
     <footer class="bottom">
-      <p>Built from Pixelwright's README, its tools and its guide (scripts/build-docs.mjs).</p>
-      <p>Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
+      <div class="bottom-inner">
+        <div>
+          <p>Built from Pixelwright's README, its tools and its guide (scripts/build-docs.mjs). Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
+          <p class="doc-credits">The examples use the <a href="https://www.figma.com/community/file/1230604708032389430">Positivus landing page design</a> by Olga Averchenko, CC BY 4.0.</p>
+        </div>
+        <p class="footer-links">
+          <a href="../">Home</a>
+          <a href="https://github.com/maximwas/pixelwright">GitHub</a>
+          <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="https://ko-fi.com/maksymvasianin">Ko-fi</a>
+          <a href="https://send.monobank.ua/jar/7o9oMrbXTj">monobank</a>
+        </p>
+      </div>
     </footer>
   </body>
 </html>
