@@ -17,3 +17,22 @@ export interface TemplateFile {
 
 /** What design_read knows of an instance's component. */
 export type SnapshotInstance = NonNullable<SnapshotNode["instance"]>;
+
+/** Figma's Template API result sections (figma-types.d.ts): code, a nested instance, a slot, an error. */
+export type ResultSection =
+  | { type: "CODE"; code: string; nestedImports?: string[] }
+  | { type: "INSTANCE"; guid: string; symbolId: string; resultSections?: ResultSection[]; nestedImports?: string[] }
+  | { type: "SLOT"; guid?: string; propertyName: string }
+  | { type: "ERROR"; message: string };
+
+/** What figma.code`…` and its siblings return. */
+export interface TemplateStringResult {
+  readonly type: "SECTIONS";
+  readonly language: string;
+  readonly sections: ResultSection[];
+}
+
+/** One instance as its template renders it, or the template's error; null when no template connects it. */
+export type RenderedInstance =
+  | { component: string; template: string; snippet: string; imports: string[] }
+  | { template: string; error: string };
