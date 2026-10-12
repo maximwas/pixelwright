@@ -23,7 +23,7 @@ const OPEN = 1;
 
 const STOP_REASONS: Readonly<Record<number, string>> = {
   [CloseCode.VersionMismatch]:
-    "This plugin and the Pixelwright server speak different protocol versions: update the older one, then run the plugin again.",
+    "This plugin and the Pixelwright server speak different versions. Run npx -y pixelwright@latest in a terminal to update the plugin, restart your MCP client, then run the plugin again.",
   [CloseCode.Superseded]: "Another window of this plugin took over the connection.",
 };
 

@@ -418,6 +418,18 @@ describe("SocketLink", () => {
     expect(scheduled).toHaveLength(1);
   });
 
+  it("says how to update when the plugin and the server speak different protocol versions", () => {
+    const { sockets, states } = setup();
+
+    sockets[0]?.open();
+    sockets[0]?.drop(4426);
+    // This text lives on in every copy of the plugin already out there, so it names the fix itself.
+    expect(states.at(-1)).toMatchObject({
+      kind: "stopped",
+      reason: expect.stringContaining("npx -y pixelwright@latest"),
+    });
+  });
+
   it("says why the server turned it away when too many plugins wait to pair", () => {
     const { sockets, states } = setup({ key: null });
 
