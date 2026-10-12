@@ -595,6 +595,7 @@ async function instanceOf(node: InstanceNode): Promise<Record<string, unknown> |
     componentId: main.id,
     componentName: main.name,
     componentKey: main.key,
+    ...(main.remote ? { remote: true } : {}),
     ...(set === null
       ? {}
       : {

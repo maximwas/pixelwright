@@ -245,6 +245,37 @@ describe("snapshot", () => {
     });
   });
 
+  it("marks an instance of a library's component, whose id in this file is not the library's", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:1",
+            name: "Chip",
+            type: "INSTANCE",
+            mainComponent: {
+              id: "5:9",
+              key: "lib",
+              name: "Chip",
+              remote: true,
+              parent: null,
+            },
+            componentProperties: {},
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", { node: "5:1" })) as Shot;
+
+    expect(root.instance).toMatchObject({
+      componentId: "5:9",
+      remote: true,
+    });
+  });
+
   it("resolves the styles and variables the layers use, once each", async () => {
     const { styles, variables } = (await runOperation("snapshot", { node: "2:4869" })) as Shot;
 

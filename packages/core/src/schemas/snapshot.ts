@@ -250,6 +250,8 @@ export const SnapshotFieldsSchema = z.object({
       componentId: z.string(),
       componentName: z.string(),
       componentKey: z.string().optional(),
+      /** The main component comes from a library: its id is this file's copy, not the library's node id. */
+      remote: z.boolean().optional(),
       setId: z.string().optional(),
       setName: z.string().optional(),
       properties: z.record(

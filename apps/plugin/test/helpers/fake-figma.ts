@@ -18,6 +18,7 @@ export interface FakeNode {
     id?: string;
     key?: string;
     name: string;
+    remote?: boolean;
     parent: { type: string; id?: string; name: string } | null;
   };
   getMainComponentAsync?: () => Promise<FakeNode["mainComponent"] | null>;
