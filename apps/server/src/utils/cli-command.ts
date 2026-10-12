@@ -3,7 +3,8 @@ import type { CliCommand } from "../types/cli.ts";
 
 /**
  * The command a command line asks for. With no arguments it is the MCP server, which is how MCP clients start it, unless
- * a person runs it at a terminal: then it is the setup. `serve` is the server whatever stdin is.
+ * a person runs it at a terminal: then it is the setup. `serve` is the server whatever stdin is. `setup` away from a
+ * terminal prints, as `setup --print` does: its questions need a person.
  */
 export function parseCommand(args: readonly string[], interactive: boolean): CliCommand {
   const [first, ...rest] = args;
@@ -48,7 +49,7 @@ export function parseCommand(args: readonly string[], interactive: boolean): Cli
 
     return {
       kind: "setup",
-      print: values.print ?? false,
+      print: (values.print ?? false) || !interactive,
     };
   } catch {
     return unknown;

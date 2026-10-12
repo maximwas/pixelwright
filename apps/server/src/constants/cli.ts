@@ -6,7 +6,8 @@ export const HELP_TEXT = `pixelwright: an MCP server for Figma that works throug
   pixelwright                 in a terminal: the setup (MCP clients, the Figma plugin)
                               started by an MCP client: the MCP server on stdio
   pixelwright setup           the setup
-  pixelwright setup --print   the commands and config blocks instead, for scripts and CI
+  pixelwright setup --print   no questions: puts the Figma plugin in place and prints the commands and config
+                              blocks for your MCP clients, for scripts (also what setup does away from a terminal)
   pixelwright serve           the MCP server, however it is started
   pixelwright --version
   pixelwright --help

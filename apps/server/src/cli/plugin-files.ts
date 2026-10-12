@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
-import { cp, mkdir, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { cp, mkdir, readdir, readFile, rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { PLUGIN_MANIFEST_NAME } from "../constants/clients.ts";
 
 /**
  * Where this copy of Pixelwright keeps the Figma plugin: dist/plugin inside the npm package, apps/plugin in the
@@ -21,13 +22,20 @@ export function packagedPlugin(): string | null {
 
 /**
  * Copies the plugin (its manifest and build) to `to`, where Figma Desktop can import it from (Figma cannot read every
- * folder, such as ~/Desktop on macOS); an older copy there is replaced. Resolves with the manifest's path.
+ * folder, such as ~/Desktop on macOS). An older copy there is replaced; a folder holding anything else is left alone.
+ * The Pixelwright folder around it, which also keeps the pairing keys, is made for its owner only. Resolves with the
+ * manifest's path.
  */
 export async function installPlugin(from: string, to: string): Promise<string> {
   if (!existsSync(join(from, "manifest.json"))) {
     throw new Error(`No plugin in ${from} (manifest.json is missing): reinstall pixelwright, or build the plugin.`);
   }
 
+  await refuseOtherFiles(to);
+  await mkdir(dirname(to), {
+    recursive: true,
+    mode: 0o700,
+  });
   await rm(to, {
     recursive: true,
     force: true,
@@ -37,4 +45,33 @@ export async function installPlugin(from: string, to: string): Promise<string> {
   await cp(join(from, "build"), join(to, "build"), { recursive: true });
 
   return join(to, "manifest.json");
+}
+
+/** Throws unless `to` is missing, empty, or an older copy of the plugin (its manifest names it). */
+async function refuseOtherFiles(to: string): Promise<void> {
+  if (!existsSync(to)) {
+    return;
+  }
+
+  const entries = await readdir(to);
+
+  if (entries.length === 0) {
+    return;
+  }
+
+  try {
+    const manifest: unknown = JSON.parse(await readFile(join(to, "manifest.json"), "utf8"));
+
+    if (typeof manifest === "object" && manifest !== null && "name" in manifest) {
+      if (manifest.name === PLUGIN_MANIFEST_NAME) {
+        return;
+      }
+    }
+  } catch {
+    // No readable manifest: not a copy of the plugin.
+  }
+
+  throw new Error(
+    `${to} is not a Pixelwright plugin folder (it holds ${entries.slice(0, 3).join(", ")}${entries.length > 3 ? ", …" : ""}), so it was left as it is: move those files, or set PIXELWRIGHT_HOME to another folder.`,
+  );
 }

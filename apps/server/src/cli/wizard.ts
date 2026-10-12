@@ -3,7 +3,8 @@ import { confirm, intro, log, multiselect, note, outro, spinner } from "@clack/p
 import { CODEX_CONFIG_PATH, MCP_CLIENTS, SERVER_INVOCATION } from "../constants/clients.ts";
 import type { McpClient } from "../types/cli.ts";
 import { errorMessage } from "../utils/error-message.ts";
-import { answered } from "./cancel.ts";
+import { claudeCodeInvocation } from "../utils/server-invocation.ts";
+import { answered, SetupCancelled } from "./cancel.ts";
 import { addToClaudeCode, addToCursor, clientConfigBlock, codexBlock, detectClients } from "./clients.ts";
 import { installPlugin, packagedPlugin } from "./plugin-files.ts";
 
@@ -15,9 +16,12 @@ export async function runWizard({ home, pluginHome }: { home: string; pluginHome
   intro("Pixelwright: AI agents that read and edit your Figma files");
 
   const clients = await chooseClients(home);
+  let connected = 0;
 
   for (const client of clients) {
-    await connectClient(client, home);
+    if (await connectClient(client, home)) {
+      connected += 1;
+    }
   }
 
   const manifest = await placePlugin(pluginHome);
@@ -31,7 +35,7 @@ export async function runWizard({ home, pluginHome }: { home: string; pluginHome
       `${manifest === null ? 2 : 3}. The first time, your agent shows a pairing code: type it into that window.`,
       `${manifest === null ? 3 : 4}. Turn on Allow edits there when the agent should change the file.`,
       "",
-      clients.length === 0 ? "" : "Restart your MCP client so it loads Pixelwright.",
+      connected === 0 ? "" : "Restart your MCP client so it loads Pixelwright.",
     ]
       .filter((line, index, lines) => line !== "" || index < lines.length - 1)
       .join("\n"),
@@ -57,39 +61,70 @@ async function chooseClients(home: string): Promise<McpClient[]> {
   );
 }
 
-async function connectClient(client: McpClient, home: string): Promise<void> {
+/** One client; false when it could not be set up (said why). Ctrl+C in its questions stops the whole setup. */
+async function connectClient(client: McpClient, home: string): Promise<boolean> {
   try {
     switch (client) {
-      case "claude-code": {
-        const working = spinner();
-
-        working.start("Adding to Claude Code…");
-
-        const outcome = await addToClaudeCode(SERVER_INVOCATION, async () => {
-          working.stop("Claude Code has Pixelwright already.");
-
-          return answered(await confirm({ message: "Replace it with this one?" }));
-        });
-
-        working.stop(outcome);
-
-        return;
-      }
+      case "claude-code":
+        return await connectClaudeCode();
       case "cursor":
-        log.success(await addToCursor(SERVER_INVOCATION, home));
+        log.success(
+          await addToCursor(SERVER_INVOCATION, home, async () =>
+            answered(await confirm({ message: "Cursor has another Pixelwright set up. Replace it with this one?" })),
+          ),
+        );
 
-        return;
+        return true;
       case "codex":
         note(codexBlock(SERVER_INVOCATION), `Add to ${join(home, ...CODEX_CONFIG_PATH)}`);
 
-        return;
+        return true;
       case "other":
         note(clientConfigBlock(SERVER_INVOCATION), "Add to your MCP client's config");
 
-        return;
+        return true;
     }
   } catch (error) {
+    if (error instanceof SetupCancelled) {
+      throw error;
+    }
+
     log.error(errorMessage(error));
+
+    return false;
+  }
+}
+
+/** Claude Code, through its claude command. The spinner stops on every path: a running one would keep the setup open. */
+async function connectClaudeCode(): Promise<boolean> {
+  const working = spinner();
+  let spinning = true;
+
+  working.start("Adding to Claude Code…");
+
+  try {
+    const outcome = await addToClaudeCode(claudeCodeInvocation(SERVER_INVOCATION, process.platform), async () => {
+      spinning = false;
+      working.stop("Claude Code has Pixelwright already.");
+
+      return answered(await confirm({ message: "Replace it with this one?" }));
+    });
+
+    if (spinning) {
+      working.stop(outcome);
+    } else {
+      log.success(outcome);
+    }
+
+    return true;
+  } catch (error) {
+    if (!spinning) {
+      throw error;
+    }
+
+    working.error(errorMessage(error));
+
+    return false;
   }
 }
 

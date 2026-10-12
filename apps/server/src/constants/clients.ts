@@ -34,3 +34,9 @@ export const CURSOR_CONFIG_PATH = [".cursor", "mcp.json"] as const;
 
 /** Codex's config, where the wizard only shows what to add (TOML is edited by hand). */
 export const CODEX_CONFIG_PATH = [".codex", "config.toml"] as const;
+
+/** Codex gives a server 10 s to start by default; the first start through npx downloads the package first. */
+export const CODEX_STARTUP_TIMEOUT_SEC = 60;
+
+/** The name in the plugin's manifest: a folder whose manifest says so holds an older copy the setup may replace. */
+export const PLUGIN_MANIFEST_NAME = "Pixelwright";

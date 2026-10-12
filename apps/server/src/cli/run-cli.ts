@@ -6,8 +6,10 @@ import { homeDir } from "../bridge/bridge-config.ts";
 import { HELP_TEXT, STARTED_IN_TERMINAL } from "../constants/cli.ts";
 import { startMcp } from "../main.ts";
 import { parseCommand } from "../utils/cli-command.ts";
+import { errorMessage } from "../utils/error-message.ts";
 import { SetupCancelled } from "./cancel.ts";
-import { setupText } from "./setup-text.ts";
+import { packagedPlugin } from "./plugin-files.ts";
+import { printSetup } from "./setup-text.ts";
 import { runWizard } from "./wizard.ts";
 
 /** The command line: the MCP server for MCP clients, the setup for a person at a terminal. */
@@ -27,7 +29,18 @@ export async function runCli(args: readonly string[]): Promise<void> {
       return;
     case "setup":
       if (command.print) {
-        process.stdout.write(setupText(join(pluginHome, "manifest.json")));
+        try {
+          process.stdout.write(
+            await printSetup({
+              from: packagedPlugin(),
+              pluginHome,
+              platform: process.platform,
+            }),
+          );
+        } catch (error) {
+          process.stderr.write(`${errorMessage(error)}\n`);
+          process.exitCode = 1;
+        }
 
         return;
       }
