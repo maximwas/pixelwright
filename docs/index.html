@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixelwright, an MCP server for Figma</title>
+    <meta
+      name="description"
+      content="Pixelwright lets Claude Code, Cursor and Codex read and edit the Figma file you have open, through a Figma plugin: designs as XML with CSS, tokens, components, assets, your Code Connect templates, and the writes you allow. Free, with its code public."
+    />
+    <meta property="og:title" content="Pixelwright, an MCP server for Figma" />
+    <meta
+      property="og:description"
+      content="Your AI agent reads and edits the Figma file you have open, through a plugin: no REST API, no token, no API rate limits."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Onest:wght@400;500;600&family=Unbounded:wght@500;700&display=swap"
+    />
+    <link rel="stylesheet" href="site.css" />
+    <script>
+      document.documentElement.classList.add("js");
+      // Shows everything if the scripts never run.
+      window.pixelwrightFallback = setTimeout(() => document.documentElement.classList.remove("js"), 3000);
+    </script>
+    <script src="vendor/motion-14.0.0.js" defer></script>
+    <script src="site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to the content</a>
+    <header class="top">
+      <a class="wordmark" href="./" aria-label="Pixelwright home">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect class="mark-frame" x="4" y="4" width="16" height="16" />
+          <rect class="mark-handle" x="2" y="2" width="4" height="4" />
+          <rect class="mark-handle" x="18" y="2" width="4" height="4" />
+          <rect class="mark-handle" x="2" y="18" width="4" height="4" />
+          <rect class="mark-handle" x="18" y="18" width="4" height="4" />
+        </svg>
+        Pixelwright
+      </a>
+      <nav class="links" aria-label="Sections">
+        <a href="#setup">Setup</a>
+        <a href="#tools">Tools</a>
+        <a href="#code-connect">Code Connect</a>
+        <a href="#safety">Safety</a>
+        <a href="docs/">Docs</a>
+        <a href="https://github.com/maximwas/pixelwright">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="frame-title" aria-hidden="true">
+          <span>Pixelwright</span>
+          <span class="frame-size">MCP server for Figma</span>
+        </div>
+        <div class="frame">
+          <span class="handle tl" aria-hidden="true"></span>
+          <span class="handle tr" aria-hidden="true"></span>
+          <span class="handle bl" aria-hidden="true"></span>
+          <span class="handle br" aria-hidden="true"></span>
+
+          <div class="hero-copy">
+            <h1 id="hero-title" data-words>Let your agent work inside the Figma file you have open.</h1>
+            <p class="lede" data-intro>
+              Pixelwright connects Claude Code, Cursor or Codex to Figma Desktop through a plugin. Your agent reads
+              designs as code-ready XML, knows your tokens and components, and changes the file when you allow it. No
+              REST API, no token, no API rate limits, any plan.
+            </p>
+            <div class="install-row" data-intro>
+              <div class="install">
+                <code id="install-command">npx -y pixelwright@latest</code>
+                <button type="button" class="copy" data-copy="install-command">Copy</button>
+              </div>
+              <a class="docs-link" href="docs/">Read the docs</a>
+            </div>
+          </div>
+
+          <figure class="scene" data-intro aria-label="An agent reads a pricing card from Figma, then changes its button">
+            <div class="agent" aria-hidden="true">
+              <div class="window-bar"><span>Your agent</span></div>
+              <ol class="chat">
+                <li class="ask" data-step="ask">Build the Pro plan card from Figma with our components.</li>
+                <li class="call" data-step="read"><b>design_read</b> Pricing / Pro</li>
+                <li class="say" data-step="code">Writing <code>PlanCard.tsx</code> with your <code>&lt;Button&gt;</code> and <code>--brand</code> tokens.</li>
+                <li class="ask" data-step="ask2">Make the button say “Start free trial”.</li>
+                <li class="call" data-step="write"><b>design_apply</b> 1 layer changed, 1 undo step</li>
+              </ol>
+            </div>
+
+            <div class="wire" aria-hidden="true">
+              <span class="wire-line"></span>
+              <span class="packet out" data-packet="read">design_read</span>
+              <span class="packet back" data-packet="xml">XML</span>
+              <span class="packet out" data-packet="write">design_apply</span>
+              <span class="wire-label">localhost</span>
+            </div>
+
+            <div class="figma" aria-hidden="true">
+              <div class="window-bar"><span>Orbit / Pricing</span><span class="plugin-pill">Pixelwright connected</span></div>
+              <div class="board">
+                <div class="plan" data-node="card" data-label="Pro">
+                  <div class="plan-head" data-node="head" data-label="Header">
+                    <span class="plan-name">Pro</span>
+                    <span class="plan-badge" data-node="badge" data-label="Badge">Popular</span>
+                  </div>
+                  <p class="plan-price" data-node="price" data-label="Price"><span>$12</span> per month</p>
+                  <ul class="plan-list" data-node="list" data-label="Features">
+                    <li>Unlimited projects</li>
+                    <li>Shared libraries</li>
+                    <li>Priority support</li>
+                  </ul>
+                  <span class="plan-button" data-node="button" data-label="Button / Primary"><span class="button-text">Get started</span></span>
+                </div>
+              </div>
+            </div>
+            <figcaption class="sr-only">
+              The agent calls design_read and gets the card as XML, writes the component with the project's own Button
+              and tokens, then calls design_apply to change the button's text in the file: one undo step.
+            </figcaption>
+          </figure>
+          <button type="button" class="replay" hidden>Play it again</button>
+        </div>
+      </section>
+
+      <section id="setup" class="section">
+        <h2>Set it up once, in a terminal and in Figma.</h2>
+        <ol class="steps" data-reveal>
+          <li>
+            <h3>Run the setup</h3>
+            <p><code>npx -y pixelwright@latest</code> adds Pixelwright to your agents and puts the Figma plugin in <code>~/.pixelwright/plugin</code>.</p>
+          </li>
+          <li>
+            <h3>Import the plugin</h3>
+            <p>Figma Desktop: Plugins, Development, Import plugin from manifest, then <code>~/.pixelwright/plugin/manifest.json</code>.</p>
+          </li>
+          <li>
+            <h3>Open it in your file</h3>
+            <p>Plugins, Development, Pixelwright. The first time, type in the pairing code your agent shows you.</p>
+          </li>
+          <li>
+            <h3>Ask your agent</h3>
+            <p>Read a section and build it, check a screen against the code, or turn on Allow edits and change the file.</p>
+          </li>
+        </ol>
+        <p class="aside">
+          The plugin does every read and write through Figma's Plugin API, in the file. Nothing goes to api.figma.com,
+          so no seat or plan counts the calls, and the plugin and the server talk on <code>localhost</code> only.
+        </p>
+      </section>
+
+      <section id="tools" class="section">
+        <h2>What your agent can do with a file.</h2>
+        <div class="tools" data-reveal>
+          <div class="tool-group">
+            <h3>Read the design</h3>
+            <dl>
+              <dt>design_read</dt><dd>A section as XML: layer types as tags, CSS as attributes, tokens as <code>var(--name)</code>, icons and images as files.</dd>
+              <dt>outline, nodes_find</dt><dd>A frame's layer tree; layers by name, type, text or component.</dd>
+              <dt>selection_get, node_show</dt><dd>What you picked; showing you a layer.</dd>
+              <dt>screenshot</dt><dd>A layer as an image, to compare the build with.</dd>
+            </dl>
+          </div>
+          <div class="tool-group">
+            <h3>Know the system</h3>
+            <dl>
+              <dt>tokens_read</dt><dd>Variables with every mode, and styles, as CSS or JSON.</dd>
+              <dt>components_read</dt><dd>The components a page uses or the file defines, with variants and properties.</dd>
+              <dt>assets_export</dt><dd>Icons and images as SVG, PNG, JPG or PDF, originals included.</dd>
+            </dl>
+          </div>
+          <div class="tool-group">
+            <h3>Change the file</h3>
+            <dl>
+              <dt>design_apply</dt><dd>The same XML back: change layers by id, add frames, instances, components and variants, place images.</dd>
+              <dt>tokens_apply</dt><dd>Variable collections, modes and aliases, and styles.</dd>
+              <dt>nodes_delete, execute</dt><dd>Delete layers; run plugin code for what XML cannot say.</dd>
+            </dl>
+          </div>
+          <div class="tool-group">
+            <h3>Connect your code</h3>
+            <dl>
+              <dt>code_connect_read</dt><dd>Your Code Connect templates and what each connects.</dd>
+              <dt>status, guide</dt><dd>The connected files; the formats, for the agent to read.</dd>
+            </dl>
+          </div>
+        </div>
+        <p class="aside">A read sent back changes nothing; one attribute changed changes exactly that, in one undo step.</p>
+      </section>
+
+      <section id="code-connect" class="section">
+        <h2>Instances arrive as your components.</h2>
+        <p class="intro">
+          Write Figma Code Connect templates the way Figma documents them. Pixelwright runs them on your computer, on
+          any plan, without publishing anything, and gives every connected instance as your code with its imports.
+        </p>
+        <div class="pair" data-reveal>
+          <figure>
+            <figcaption>Button.figma.ts</figcaption>
+            <pre><code><span class="c">// url=https://www.figma.com/design/…?node-id=12-40</span>
+<span class="c">// component=Button</span>
+<span class="k">import</span> figma <span class="k">from</span> <span class="s">"figma"</span>;
+
+<span class="k">const</span> button = figma.selectedInstance;
+
+<span class="k">export default</span> {
+  example: figma.tsx<span class="s">`&lt;Button variant="${</span>button.getEnum(<span class="s">"Type"</span>, {
+    Primary: <span class="s">"primary"</span>, Ghost: <span class="s">"ghost"</span>,
+  })<span class="s">}"&gt;${</span>button.getString(<span class="s">"Label"</span>)<span class="s">}&lt;/Button&gt;`</span>,
+  imports: [<span class="s">'import { Button } from "@/ui/Button"'</span>],
+};</code></pre>
+          </figure>
+          <figure>
+            <figcaption>In design_read</figcaption>
+            <pre><code>&lt;<span class="t">Instance</span> id="12:44" component="Button"
+  variant="Type=Primary" $code="Button"/&gt;
+
+<span class="c">codeComponents</span>
+import { Button } from "@/ui/Button"
+&lt;Button variant="primary"&gt;Get started&lt;/Button&gt;</code></pre>
+          </figure>
+        </div>
+      </section>
+
+      <section id="safety" class="section">
+        <h2>Nothing in the file changes until you allow it.</h2>
+        <div class="facts" data-reveal>
+          <div>
+            <h3>Allow edits</h3>
+            <p>A switch in the plugin's window, off until you turn it on for a file. While it is off, the plugin refuses every write.</p>
+          </div>
+          <div>
+            <h3>One undo step per call</h3>
+            <p>Each call that writes is one step of Figma's own undo. <code>dryRun</code> checks a change without making it.</p>
+          </div>
+          <div>
+            <h3>On your computer</h3>
+            <p>The server listens on localhost. A plugin window pairs once with a code you type in; before that it gets nothing.</p>
+          </div>
+          <div>
+            <h3>Code you trust</h3>
+            <p><code>execute</code> runs plugin code the agent writes, and templates run as your project's code: use them where you would run the project's scripts.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" class="section">
+        <h2>Questions</h2>
+        <details>
+          <summary>Does it need a paid Figma plan?</summary>
+          <p>No. The plugin runs in Figma Desktop on any plan. Writing needs edit access to the file, as it would for you.</p>
+        </details>
+        <details>
+          <summary>Which agents does it work with?</summary>
+          <p>Any MCP client. The setup connects Claude Code and Cursor for you and shows the config for Codex and others.</p>
+        </details>
+        <details>
+          <summary>What does the file have to be?</summary>
+          <p>Open in Figma Desktop with the Pixelwright window open. Several files can be connected at once; the agent uses the one you looked at last, or the one it names.</p>
+        </details>
+        <details>
+          <summary>Is it made by Figma?</summary>
+          <p>No. Pixelwright is an independent project.</p>
+        </details>
+      </section>
+
+      <section class="closing">
+        <h2>Open a file. Ask your agent.</h2>
+        <div class="install">
+          <code id="install-command-again">npx -y pixelwright@latest</code>
+          <button type="button" class="copy" data-copy="install-command-again">Copy</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <p>Pixelwright is free to use.</p>
+      <p>Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
+      <p class="footer-links"><a href="https://github.com/maximwas/pixelwright">GitHub</a><a href="https://www.npmjs.com/package/pixelwright">npm</a><a href="docs/">Docs</a></p>
+    </footer>
+  </body>
+</html>

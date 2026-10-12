@@ -22,5 +22,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      # The website's docs page is built from the README, the tools and the guide: it must match them.
+      - run: pnpm build:docs && git diff --exit-code -- docs/docs
       # Builds the plugin and the server, packs the server like npm publish, installs it into an empty folder and runs it.
       - run: pnpm check:pack

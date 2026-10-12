@@ -9,6 +9,7 @@
   "scripts": {
     "build": "pnpm --filter @pixelwright/plugin build && pnpm --filter pixelwright build",
     "check:pack": "pnpm build && node scripts/check-pack.mjs",
+    "build:docs": "node scripts/build-docs.mjs",
     "dev:plugin": "pnpm --filter @pixelwright/plugin dev",
     "plugin:install": "pnpm --filter @pixelwright/plugin build && mkdir -p ~/.pixelwright/plugin && rsync -a --delete apps/plugin/manifest.json apps/plugin/build ~/.pixelwright/plugin/",
     "test": "vitest run --project core --project server --project plugin",
@@ -23,6 +24,7 @@
     "@typescript-eslint/parser": "8.71.0",
     "@typescript/native": "catalog:",
     "eslint": "10.12.0",
+    "marked": "18.1.0",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "vitest": "catalog:"
   }
