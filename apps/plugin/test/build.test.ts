@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,9 +15,28 @@ describe("the plugin build", () => {
       encoding: "utf8",
     });
 
-    expect(build.status, `${build.stdout}${build.stderr}`).toBe(0);
-    // The window only links Figma to the server: core's XML, CSS and token code belongs to the main thread alone.
-    expect(statSync(join(out, "build", "ui.js")).size).toBeLessThan(160_000);
-    expect(statSync(join(out, "build", "main.js")).size).toBeLessThan(350_000);
+    try {
+      expect(build.status, `${build.stdout}${build.stderr}`).toBe(0);
+      // The window only links Figma to the server: core's XML, CSS and token code belongs to the main thread alone.
+      expect(statSync(join(out, "build", "ui.js")).size).toBeLessThan(160_000);
+      expect(statSync(join(out, "build", "main.js")).size).toBeLessThan(350_000);
+
+      // Beside each bundle, the licences of the packages it carries: what their licences ask of a copy.
+      const main = readFileSync(join(out, "build", "main.js.LICENSE.txt"), "utf8");
+      const ui = readFileSync(join(out, "build", "ui.js.LICENSE.txt"), "utf8");
+
+      for (const name of ["culori", "leven", "@csstools/css-tokenizer", "zod", "@create-figma-plugin/utilities"]) {
+        expect(main, name).toContain(`## ${name}`);
+      }
+
+      expect(main).toContain("MIT License");
+      expect(ui).toContain("## zod");
+      expect(ui).not.toContain("## culori");
+    } finally {
+      rmSync(out, {
+        recursive: true,
+        force: true,
+      });
+    }
   }, 60_000);
 });

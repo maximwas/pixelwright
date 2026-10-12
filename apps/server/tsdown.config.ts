@@ -1,3 +1,4 @@
+import license from "rollup-plugin-license";
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
@@ -11,4 +12,23 @@ export default defineConfig({
   deps: {
     alwaysBundle: ["@pixelwright/core"],
   },
+  plugins: [
+    // The licences of the packages bundled in (core's dependencies), which MIT and its kin ask to go with every copy.
+    license({
+      thirdParty: {
+        output: {
+          file: "dist/THIRD-PARTY-NOTICES.md",
+          template: (dependencies) =>
+            [
+              "# Third-party software in the pixelwright server bundle",
+              "",
+              ...dependencies.map(
+                ({ name, version, license: kind, licenseText }) =>
+                  `## ${name}\n\n${version}, ${kind ?? "unknown licence"}\n\n${(licenseText ?? "").trim()}\n`,
+              ),
+            ].join("\n"),
+        },
+      },
+    }),
+  ],
 });

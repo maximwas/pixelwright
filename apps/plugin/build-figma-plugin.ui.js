@@ -1,3 +1,9 @@
 import { importingEntry } from "./build-entry.js";
+import { licenses } from "./build-licenses.js";
 
-export default importingEntry;
+export default function ui(options) {
+  return {
+    ...importingEntry(options),
+    plugins: [...(options.plugins ?? []), licenses()],
+  };
+}

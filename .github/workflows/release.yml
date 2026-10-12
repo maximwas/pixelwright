@@ -1,0 +1,52 @@
+name: Release
+
+# A tag v1.2.3 releases that version: the pixelwright package goes to npm (with the Figma plugin's build inside), and a
+# GitHub release carries the plugin as a zip for Import plugin from manifest. npm trusts this workflow (trusted
+# publishing, set on the package's npm settings page), so the repository holds no token and the package gets
+# provenance. The Figma Community listing is published from Figma Desktop by hand (apps/plugin/COMMUNITY.md).
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.11.0
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or newer.
+      - run: npm install -g npm@11.17.0
+      - name: Tag matches the server and plugin versions
+        run: |
+          for app in server plugin; do
+            version="v$(node -p "require('./apps/$app/package.json').version")"
+            test "$version" = "$GITHUB_REF_NAME" || { echo "apps/$app is $version, the tag is $GITHUB_REF_NAME"; exit 1; }
+          done
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      # Builds everything, packs the server like npm publish, installs it into an empty folder and runs it there.
+      - run: pnpm check:pack
+      # pnpm pack writes the catalog: versions into package.json; npm then publishes that tarball.
+      - run: pnpm --filter pixelwright pack --pack-destination "$RUNNER_TEMP/package"
+      - run: npm publish "$RUNNER_TEMP"/package/*.tgz --access public
+      - name: Zip the Figma plugin
+        working-directory: apps/plugin
+        run: zip -r "$RUNNER_TEMP/pixelwright-figma-plugin-${GITHUB_REF_NAME#v}.zip" manifest.json build
+      - name: GitHub release with the plugin zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/pixelwright-figma-plugin-${GITHUB_REF_NAME#v}.zip" \
+            --title "Pixelwright ${GITHUB_REF_NAME#v}" --generate-notes \
+            --notes "Set up: \`npx -y pixelwright@latest\` in a terminal. The zip below is the Figma plugin for Plugins → Development → Import plugin from manifest."

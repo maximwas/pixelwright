@@ -30,7 +30,7 @@
     "design-to-code"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && node scripts/copy-plugin.mjs",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
@@ -51,6 +51,7 @@
     "@types/ws": "8.18.2",
     "@typescript/native": "catalog:",
     "fast-png": "8.0.0",
+    "rollup-plugin-license": "3.7.1",
     "tsdown": "0.23.0",
     "vitest": "catalog:"
   }
