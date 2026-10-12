@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readdir, readFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { PlannedAsset } from "@pixelwright/core";
@@ -351,5 +351,97 @@ describe("design_read review fixes", () => {
     });
 
     expect(new Set(sessions.map((entry) => entry.split(":")[1]))).toEqual(new Set(["s1"]));
+  });
+});
+
+const HEADING = `// url=https://www.figma.com/design/KIT/Kit?node-id=9-9
+// component=Heading
+import figma from 'figma'
+
+const heading = figma.selectedInstance
+const tone = heading.getEnum('Property 1', { Green: 'green', White: 'white', Black: 'black' })
+const words = heading.findLayers((layer) => layer.type === 'TEXT').map((text) => text.textContent).join(' ')
+
+export default {
+  example: figma.code\`<Heading tone="\${tone}">\${words}</Heading>\`,
+  imports: ['import { Heading } from "@/components/Heading"'],
+  id: 'heading',
+}
+`;
+
+/** A project folder with these template files. */
+async function project(files: Record<string, string>): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), "pixelwright-project-"));
+
+  for (const [name, text] of Object.entries(files)) {
+    await writeFile(join(root, name), text);
+  }
+
+  return root;
+}
+
+describe("design_read with the project's Code Connect templates", () => {
+  const args = {
+    node: "2:4869",
+    screenshot: false,
+    maxChars: 80_000,
+  };
+
+  it("gives each connected instance's code and collapses it in the XML", async () => {
+    const root = await project({ "Heading.figma.ts": HEADING });
+    const result = await readDesign(positivus().bridge, args, memoryFiles(), root);
+    const xml = textOf(result, 0);
+    const meta = JSON.parse(textOf(result, 1)) as Record<string, unknown>;
+
+    expect(meta.codeComponents).toEqual([
+      {
+        id: "2:4872",
+        component: "Heading",
+        template: "Heading.figma.ts",
+        snippet: '<Heading tone="green">Search engine optimization</Heading>',
+        imports: ['import { Heading } from "@/components/Heading"'],
+      },
+      {
+        id: "2:4878",
+        component: "Heading",
+        template: "Heading.figma.ts",
+        snippet: '<Heading tone="white">Pay-per-click advertising</Heading>',
+        imports: ['import { Heading } from "@/components/Heading"'],
+      },
+    ]);
+    expect(meta.imports).toEqual(['import { Heading } from "@/components/Heading"']);
+    expect(xml).toContain(
+      '<Instance id="2:4872" name="Heading" component="Heading" variant="Property 1=Green" display="flex" flex-direction="column" $code="Heading"/>',
+    );
+    expect(xml).not.toContain("Search engine");
+    // The Link instances have no template: written as before.
+    expect(xml).toContain("Learn more");
+  });
+
+  it("keeps an instance whose template fails as it is, and lists the error", async () => {
+    const root = await project({ "Heading.figma.ts": HEADING.replace("'Property 1'", "'Tone'") });
+    const result = await readDesign(positivus().bridge, args, memoryFiles(), root);
+    const meta = JSON.parse(textOf(result, 1)) as { codeComponents: unknown[] };
+
+    expect(meta.codeComponents).toEqual([
+      {
+        id: "2:4872",
+        template: "Heading.figma.ts",
+        error: expect.stringMatching(/^PROPERTY_NOT_FOUND: Heading \(2:4872\) has no property Tone/),
+      },
+      expect.objectContaining({
+        id: "2:4878",
+        error: expect.stringMatching(/^PROPERTY_NOT_FOUND/),
+      }),
+    ]);
+    expect(textOf(result, 0)).toContain("Search engine");
+  });
+
+  it("reads as before in a project without templates", async () => {
+    const plain = await readDesign(positivus().bridge, args);
+    const empty = await readDesign(positivus().bridge, args, memoryFiles(), await project({ "README.md": "hi" }));
+
+    expect(empty.content).toEqual(plain.content);
+    expect(JSON.parse(textOf(empty, 1))).not.toHaveProperty("codeComponents");
   });
 });

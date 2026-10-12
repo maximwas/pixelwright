@@ -37,6 +37,11 @@ export interface DesignXmlOptions {
   readonly limits?: ReadonlyMap<string, number>;
   /** Layers never taken for an asset: a parent rendered around one child, to compare that child as design_read wrote it. */
   readonly notAssets?: ReadonlySet<string>;
+  /**
+   * Instances a Code Connect template renders, by id, with their component's name: each is written with `$code` and
+   * without its children, its code going with the read instead.
+   */
+  readonly connected?: ReadonlyMap<string, string>;
 }
 
 /** Where a layer's element sits in the XML's lines, for measuring and cutting branches. */

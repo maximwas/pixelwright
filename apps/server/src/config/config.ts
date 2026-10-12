@@ -18,5 +18,6 @@ export function readConfig(env: Record<string, string | undefined>): AppConfig {
     logLevel: isLogLevel(level) ? level : "info",
     bridgeEnabled: env.PIXELWRIGHT_PLUGIN_BRIDGE?.trim() !== "off",
     pluginOrigins: [...new Set([...DEFAULT_PLUGIN_ORIGINS, ...extraOrigins])],
+    projectRoot: env.CLAUDE_PROJECT_DIR?.trim() || null,
   };
 }

@@ -133,7 +133,10 @@ class DesignWriter {
     const clipped = node.type === "TEXT" && limit !== undefined;
 
     const indent = INDENT.repeat(level);
-    const asset = this.options.notAssets?.has(node.id) ? null : classify(node, this.snapshot.root);
+    // An instance its template renders is its code: no asset, no children.
+    const code = node.type === "INSTANCE" ? this.options.connected?.get(node.id) : undefined;
+    const asset =
+      code !== undefined || this.options.notAssets?.has(node.id) ? null : classify(node, this.snapshot.root);
     const tag = asset === null ? tagFor(node.type) : asset.kind === "icon" ? "Icon" : "Image";
     const keeps = asset === null ? null : asset.kind === "icon" ? PLACEMENT : IMAGE_KEEPS;
     // An asset's own look is in its file: its fills plan no background, and the CSS it drops adds no tokens.
@@ -170,12 +173,13 @@ class DesignWriter {
       ["textStyle", this.useTextStyle(css.textStyle)],
       ["src", asset === null ? undefined : this.plan(node, asset)],
       ...properties,
+      ["$code", code],
       ["$css", readOnlyOf(css.readOnly, asset !== null)],
-      ["$children", asset === null && !isCut && !clipped ? cutCount(node, limit) : undefined],
+      ["$children", asset === null && code === undefined && !isCut && !clipped ? cutCount(node, limit) : undefined],
       ["$truncated", isCut || clipped ? "true" : undefined],
     ];
 
-    if (isCut || clipped || (asset === null && cutCount(node, limit) !== undefined)) {
+    if (isCut || clipped || (asset === null && code === undefined && cutCount(node, limit) !== undefined)) {
       this.truncated.push(node.id);
     }
 
@@ -194,7 +198,7 @@ class DesignWriter {
       return;
     }
 
-    const children = asset === null && !isCut ? visibleChildren(node).slice(0, limit) : [];
+    const children = asset === null && code === undefined && !isCut ? visibleChildren(node).slice(0, limit) : [];
 
     if (children.length === 0) {
       this.lines.push(`${open}/>`);

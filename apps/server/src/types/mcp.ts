@@ -17,6 +17,8 @@ export interface ToolContext {
   readonly version: string;
   /** The files design_read and assets_export wrote, which design_apply knows again. */
   readonly files: WrittenFiles;
+  /** The project folder, where Code Connect templates are looked for. */
+  readonly projectRoot: string;
 }
 
 export interface ToolDefinition<I extends z.ZodObject, O extends z.ZodObject> {

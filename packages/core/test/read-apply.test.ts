@@ -251,37 +251,54 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
   ]) {
     it(name, () => {
       const snapshot = fixture(name);
-      const byId = new Map(nodesOf(snapshot).map((entry) => [entry.node.id, entry]));
-      const { elements, errors } = readApply(designXml(snapshot).xml);
-      const changed: string[] = [];
 
-      expect(errors).toEqual([]);
-
-      for (const element of elements) {
-        const item = element.id === null ? undefined : byId.get(element.id);
-
-        if (item === undefined) {
-          changed.push(`${element.tag} without a layer`);
-          continue;
-        }
-
-        const unchanged = unchangedAttributes(element, item, snapshot);
-
-        for (const attribute of Object.keys(element.attributes)) {
-          if (attribute !== "id" && !unchanged.attributes.has(attribute)) {
-            changed.push(`${element.id} ${attribute}="${element.attributes[attribute]}"`);
-          }
-        }
-
-        if (element.content !== undefined && !unchanged.text) {
-          changed.push(`${element.id} text`);
-        }
-      }
-
-      expect(changed).toEqual([]);
+      expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
     });
   }
+
+  it("with instances a Code Connect template renders written without their children", () => {
+    const snapshot = fixture("positivus-services-row");
+    const xml = designXml(snapshot, {
+      connected: new Map([
+        ["2:4872", "Heading"],
+        ["2:4878", "Heading"],
+      ]),
+    }).xml;
+
+    expect(xml).toContain('$code="Heading"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
 });
+
+/** What sending this XML back would change in the snapshot's layers: an element's attributes and text, by id. */
+function changesOf(snapshot: Snapshot, xml: string): string[] {
+  const byId = new Map(nodesOf(snapshot).map((entry) => [entry.node.id, entry]));
+  const { elements, errors } = readApply(xml);
+  const changed: string[] = errors.map(({ message }) => message);
+
+  for (const element of elements) {
+    const item = element.id === null ? undefined : byId.get(element.id);
+
+    if (item === undefined) {
+      changed.push(`${element.tag} without a layer`);
+      continue;
+    }
+
+    const unchanged = unchangedAttributes(element, item, snapshot);
+
+    for (const attribute of Object.keys(element.attributes)) {
+      if (attribute !== "id" && !unchanged.attributes.has(attribute)) {
+        changed.push(`${element.id} ${attribute}="${element.attributes[attribute]}"`);
+      }
+    }
+
+    if (element.content !== undefined && !unchanged.text) {
+      changed.push(`${element.id} text`);
+    }
+  }
+
+  return changed;
+}
 
 /** A text layer of these characters, one run of Inter 16. */
 function textLayer(id: string, characters: string): SnapshotNode {

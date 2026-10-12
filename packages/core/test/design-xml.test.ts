@@ -30,6 +30,23 @@ describe("design XML of the Positivus Services row", () => {
     expect(designXml(row).xml.startsWith(FIRST_CARD)).toBe(true);
   });
 
+  it("writes an instance a Code Connect template renders as $code, without its children, and the rest as before", () => {
+    const plain = designXml(row);
+    const read = designXml(row, { connected: new Map([["2:4872", "Heading"]]) });
+    const heading = FIRST_CARD.slice(
+      FIRST_CARD.indexOf('      <Instance id="2:4872"'),
+      FIRST_CARD.indexOf('      <Instance id="2:4873"'),
+    );
+
+    expect(read.xml).toBe(
+      plain.xml.replace(
+        heading,
+        '      <Instance id="2:4872" name="Heading" component="Heading" variant="Property 1=Green" display="flex" flex-direction="column" $code="Heading"/>\n',
+      ),
+    );
+    expect(read.truncated).toEqual(plain.truncated);
+  });
+
   it("lists the tokens, text styles and fonts the XML refers to", () => {
     const read = designXml(row);
 

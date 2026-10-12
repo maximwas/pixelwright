@@ -23,6 +23,7 @@ export async function createApp(): Promise<App> {
     bridge,
     version: serverPackage.version,
     files: fileStore(),
+    projectRoot: config.projectRoot ?? process.cwd(),
   });
 
   return {
