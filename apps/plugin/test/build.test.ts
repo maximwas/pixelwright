@@ -32,6 +32,10 @@ describe("the plugin build", () => {
       expect(main).toContain("MIT License");
       expect(ui).toContain("## zod");
       expect(ui).not.toContain("## culori");
+
+      // The bundles carry them too: the Figma Community takes only the manifest and the bundles.
+      expect(readFileSync(join(out, "build", "main.js"), "utf8").includes(main)).toBe(true);
+      expect(readFileSync(join(out, "build", "ui.js"), "utf8").includes(ui)).toBe(true);
     } finally {
       rmSync(out, {
         recursive: true,

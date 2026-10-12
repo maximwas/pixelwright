@@ -1,7 +1,24 @@
-/*
+/*!
  * figma.helpers.react: adapted from @figma/code-connect 2.0.1, src/react/parser_template_helpers.ts
- * (https://github.com/figma/code-connect), MIT License, Copyright (c) 2024 Figma. Figma injects these into each
- * template as source, where `figma.tsx` is the template's own; here they take that tag as a parameter.
+ * (https://github.com/figma/code-connect). Figma injects these into each template as source, where `figma.tsx` is the
+ * template's own; here they take that tag as a parameter. Its licence (also in the package's THIRD-PARTY-NOTICES.md):
+ *
+ * MIT License
+ *
+ * Copyright (c) 2024 Figma
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 /* biome-ignore-all lint/suspicious/noExplicitAny: Figma's helpers take whatever a template passes them. */
 import type { ResultSection, TemplateStringResult } from "../types/code-connect.ts";

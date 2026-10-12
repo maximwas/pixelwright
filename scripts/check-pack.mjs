@@ -2,7 +2,7 @@
 // the CLI, the MCP server on stdio with no Figma plugin around, and the files the package must carry (the Figma
 // plugin's build and the licences of what is bundled).
 import { execFileSync, spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -18,6 +18,8 @@ const CARRIED = [
   "dist/plugin/build/ui.js",
   "dist/plugin/build/ui.js.LICENSE.txt",
 ];
+// Copyright lines of code adapted into the server rather than bundled from a package.
+const ADAPTED_NOTICES = ["Copyright (c) 2024 Figma"];
 
 const work = mkdtempSync(join(tmpdir(), `${PACKAGE}-pack-`));
 // pnpm passes its own npm_config_* settings down; npm warns about the ones it does not know.
@@ -43,6 +45,14 @@ try {
 
   if (missing.length > 0) {
     throw new Error(`The package lacks ${missing.join(", ")}`);
+  }
+
+  // Code adapted from other projects is not a package in node_modules: its notice has to be there all the same.
+  const notices = readFileSync(join(installed, "dist/THIRD-PARTY-NOTICES.md"), "utf8");
+  const unnoticed = ADAPTED_NOTICES.filter((notice) => !notices.includes(notice));
+
+  if (unnoticed.length > 0) {
+    throw new Error(`THIRD-PARTY-NOTICES.md lacks ${unnoticed.join(", ")}`);
   }
 
   const bin = join(work, "node_modules", ".bin", PACKAGE);

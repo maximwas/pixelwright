@@ -1,10 +1,11 @@
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 /**
- * An esbuild plugin that writes the licence of every package a bundle carries code from beside it, as
- * `<bundle>.LICENSE.txt`: MIT and its kin ask that their notice go with every copy. No maintained package does this for
- * esbuild (esbuild-plugin-license had its last release in 2024 and a few hundred downloads a week).
+ * An esbuild plugin that puts the licence of every package a bundle carries code from at the end of the bundle, and
+ * beside it as `<bundle>.LICENSE.txt`: MIT and its kin ask that their notice go with every copy, and the Figma
+ * Community takes only the manifest and the bundles. No maintained package does this for esbuild
+ * (esbuild-plugin-license had its last release in 2024 and a few hundred downloads a week).
  */
 export function licenses() {
   return {
@@ -47,11 +48,12 @@ export function licenses() {
 
             return `## ${name}\n\n${version}, ${license ?? "unknown licence"}\n\n${text}\n`;
           });
+        const notice = `Third-party software in this bundle of the Pixelwright Figma plugin.\n\n${sections.join("\n")}`;
+        const outfile = build.initialOptions.outfile;
 
-        writeFileSync(
-          `${build.initialOptions.outfile}.LICENSE.txt`,
-          `Third-party software in this bundle of the Pixelwright Figma plugin.\n\n${sections.join("\n")}`,
-        );
+        writeFileSync(`${outfile}.LICENSE.txt`, notice);
+        // A comment the minifier never sees: esbuild has written the bundle by now. "*/" inside would end it early.
+        appendFileSync(outfile, `\n/*!\n${notice.replaceAll("*/", "* /")}*/\n`);
       });
     },
   };
