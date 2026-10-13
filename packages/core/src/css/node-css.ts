@@ -56,6 +56,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
 
   if (node.type === "LINE") {
     lineCss(node, parent, css, context);
+    centredStroke(node, readOnly);
   } else {
     sizeCss(node, parent, context, css, positionCss(node, parent, context, css));
     gridChildCss(node, parent, css);

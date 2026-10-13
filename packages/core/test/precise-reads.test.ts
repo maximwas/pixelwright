@@ -146,6 +146,30 @@ describe("how strokes paint", () => {
     expect(line(xml, "1:2")).toContain("stroke-align: center (half of it paints outside the box)");
     expect(line(xml, "1:3")).not.toContain("stroke-align");
   });
+
+  it("says it of a Line too: Figma paints a Line at y=100 over 99.5 to 100.5, a border-top from 100", () => {
+    const { xml } = read(
+      box([
+        layer({
+          id: "1:4",
+          type: "LINE",
+          y: 100,
+          width: 100,
+          height: 0,
+          strokes: [
+            {
+              type: "SOLID",
+              color: DARK,
+            },
+          ],
+          strokeWeight: 1,
+          strokeAlign: "CENTER",
+        }),
+      ]),
+    );
+
+    expect(line(xml, "1:4")).toContain("stroke-align: center (half of it paints outside the box)");
+  });
 });
 
 describe("text", () => {
