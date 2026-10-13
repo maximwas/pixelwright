@@ -38,16 +38,45 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-1-1">0.1.1 — 2026-10-13</a></li>
           <li><a href="#v0-1-0">0.1.0 — 2026-10-13</a></li>
         </ol>
       </nav>
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-1-1">
+          <h2>0.1.1 — 2026-10-13</h2>
+<h4>Added</h4>
+<ul>
+<li>A changelog: every release with its date and what changed, in CHANGELOG.md and on the website.</li>
+<li>Feedback has a home: GitHub Discussions for questions, ideas and what you built, and issue forms for bugs and feature
+requests. The plugin window, the READMEs and the website link there.</li>
+<li>A Code Connect example for a button and a pricing card, the card showing its button through the button&#39;s own
+template.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>Pixelwright&#39;s licence is FSL-1.1-MIT: use it for anything, at work and for clients, and change it for your own use,
+but not to build a competing product or service. Each version becomes MIT two years after its release.</li>
+<li>The plugin stays a development plugin you import once from its manifest (<code>npx -y pixelwright@latest</code> puts it in
+place and keeps it current): Figma does not list plugins that overlap its own MCP server on the Community.</li>
+<li>The README, the guide and the examples read Orbit, a demo pricing page made for Pixelwright, instead of a
+third-party design.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>A text in a variable font (Inter, for one) no longer carries <code>font-variation-settings</code> for axes a browser draws
+anyway: upright, normal width, optical size at the text&#39;s size.</li>
+<li>The hint about layers left with Figma&#39;s default names reads right for a single layer.</li>
+</ul>
+
+        </section>
         <section id="v0-1-0">
           <h2>0.1.0 — 2026-10-13</h2>
 <p>The first release: an MCP server and a Figma plugin that let AI agents (Claude Code, Cursor, Codex and other MCP
-clients) read and edit the Figma file you have open, through the Plugin API: no token, no API rate limits, any plan.</p>
+clients) read and edit the Figma file you have open, through the Plugin API: no token, no API rate limits, any plan.
+Withdrawn from npm the same day in favour of 0.1.1.</p>
 <h4>Added</h4>
 <ul>
 <li><code>npx -y pixelwright@latest</code> sets up Claude Code and Cursor, shows what to paste for other clients, and puts the

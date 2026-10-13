@@ -16,7 +16,7 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
-## Unreleased
+## 0.1.1 — 2026-10-13
 
 ### Added
 
@@ -45,6 +45,7 @@ How to write this file (people and agents alike):
 
 The first release: an MCP server and a Figma plugin that let AI agents (Claude Code, Cursor, Codex and other MCP
 clients) read and edit the Figma file you have open, through the Plugin API: no token, no API rate limits, any plan.
+Withdrawn from npm the same day in favour of 0.1.1.
 
 ### Added
 
