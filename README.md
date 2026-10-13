@@ -5,6 +5,10 @@ Desktop, through a Figma plugin: no REST API, no access token, no API rate limit
 
 [Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [npm](https://www.npmjs.com/package/pixelwright)
 
+[![npm version](https://img.shields.io/npm/v/pixelwright)](https://www.npmjs.com/package/pixelwright)
+[![npm downloads](https://img.shields.io/npm/dm/pixelwright)](https://www.npmjs.com/package/pixelwright)
+[![License](https://img.shields.io/npm/l/pixelwright)](LICENSE)
+
 > Unofficial. Not affiliated with or endorsed by Figma. "Figma" is a trademark of Figma, Inc.
 
 ## Quick start
