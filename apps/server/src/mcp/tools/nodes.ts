@@ -64,6 +64,16 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
     run: ({ file, cursor }) => runOp(bridge, "changes", cursor === undefined ? {} : { since: cursor }, file),
   });
   registerTool(server, {
+    name: "file_map",
+    title: "Map the file",
+    description:
+      "Every page of the file with its top layers (frames, sections, components) and, inside each section, its own, with their types and sizes, in one call: where to start in a big file. Pages load one at a time; past the time a call has, more: true and the rest are left out (outline them one by one).",
+    input: z.object({ file: FileSchema }),
+    output: OPERATION_SCHEMAS.file_map.output,
+    annotations: READ_ONLY_ANNOTATIONS,
+    run: ({ file }) => runOp(bridge, "file_map", null, file),
+  });
+  registerTool(server, {
     name: "viewport_get",
     title: "What the user sees",
     description:

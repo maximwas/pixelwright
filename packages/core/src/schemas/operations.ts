@@ -23,6 +23,13 @@ const LayerNameSchema = z.object({
   name: z.string(),
 });
 
+/** A layer in the file map: what it is and its size. */
+const MapNodeSchema = LayerNameSchema.extend({
+  type: z.string(),
+  width: z.number(),
+  height: z.number(),
+});
+
 /** A node as lists show it: enough to name it, find it again and point at it. */
 export const NodeRefSchema = z.object({
   id: z.string(),
@@ -158,6 +165,24 @@ export const OPERATION_SCHEMAS = {
           at: z.string(),
         }),
       ),
+    }),
+  },
+  file_map: {
+    input: z.null(),
+    output: z.object({
+      pages: z.array(
+        LayerNameSchema.extend({
+          current: z.boolean(),
+          /** The page's top layers (frames, sections, components), a section's own listed inside it. */
+          nodes: z.array(
+            MapNodeSchema.extend({
+              children: z.array(MapNodeSchema).exactOptional(),
+            }),
+          ),
+        }),
+      ),
+      /** Pages left out: the operation's time ran out, read them with outline. */
+      more: z.boolean(),
     }),
   },
   screens: {

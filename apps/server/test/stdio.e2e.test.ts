@@ -49,6 +49,7 @@ describe("stdio server", () => {
         "design_apply",
         "design_read",
         "execute",
+        "file_map",
         "flow_read",
         "fonts_check",
         "guide",

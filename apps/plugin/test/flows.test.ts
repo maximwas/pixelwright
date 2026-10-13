@@ -156,3 +156,55 @@ describe("breakpoints_find's screens", () => {
     });
   });
 });
+
+describe("file_map", () => {
+  it("lists every page with its frames, sections and what they hold, in one call", async () => {
+    installFigma(prototype(), {
+      pages: [
+        tree({
+          id: "0:2",
+          type: "PAGE",
+          name: "Components",
+          children: [
+            {
+              id: "3:1",
+              type: "SECTION",
+              name: "Buttons",
+              absoluteBoundingBox: {
+                x: 0,
+                y: 0,
+                width: 600,
+                height: 300,
+              },
+              children: [
+                {
+                  id: "3:2",
+                  type: "COMPONENT_SET",
+                  name: "Button",
+                  absoluteBoundingBox: {
+                    x: 20,
+                    y: 20,
+                    width: 300,
+                    height: 100,
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+
+    const map = (await runOperation("file_map", null)) as {
+      pages: { name: string; current: boolean; nodes: { id: string; children?: { id: string }[] }[] }[];
+      more: boolean;
+    };
+
+    expect(map.more).toBe(false);
+    expect(map.pages.map((page) => [page.name, page.current, page.nodes.map((node) => node.id)])).toEqual([
+      ["App", true, ["9:1", "9:3"]],
+      ["Components", false, ["3:1"]],
+    ]);
+    expect(map.pages[1]?.nodes[0]?.children?.map((child) => child.id)).toEqual(["3:2"]);
+  });
+});

@@ -12,7 +12,7 @@ import { components } from "./components.ts";
 import { deleteNodes } from "./delete.ts";
 import { execute } from "./execute.ts";
 import { exportNode, originalImage } from "./export-node.ts";
-import { flows, screens } from "./flows.ts";
+import { fileMap, flows, screens } from "./flows.ts";
 import { inspect } from "./inspect.ts";
 import { find, outline, selection, setOf, show, viewport } from "./read-ops.ts";
 import { selectionWait } from "./selection-wait.ts";
@@ -36,6 +36,7 @@ const HANDLERS: Handlers = {
   usage,
   set_of: setOf,
   screens,
+  file_map: fileMap,
   find,
   outline,
   export: exportNode,

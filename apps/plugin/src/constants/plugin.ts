@@ -48,6 +48,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   usage: "Looked up a token's layers",
   set_of: "Found a component's set",
   screens: "Compared the page's screens",
+  file_map: "Mapped the file",
   inspect: "Inspected layers",
   apply: "Changed the file",
   delete: "Deleted layers",

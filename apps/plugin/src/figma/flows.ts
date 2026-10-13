@@ -5,7 +5,7 @@ import {
   type OperationOutput,
   type SnapshotReaction,
 } from "@pixelwright/core";
-import { FLOW_MAX_LINKS } from "../constants/plugin.ts";
+import { FLOW_MAX_LINKS, OP_BUDGET_MS } from "../constants/plugin.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import { reactionsOf } from "./snapshot.ts";
 import { loaded } from "./used-tokens.ts";
@@ -147,5 +147,43 @@ export async function flows({ page: id }: OperationInput<"flows">): Promise<Oper
     })),
     links,
     more,
+  };
+}
+
+/** Every page with its top layers and a section's own, sizes rounded; pages are loaded one at a time within the budget. */
+export async function fileMap(): Promise<OperationOutput<"file_map">> {
+  const started = Date.now();
+  const pages: OperationOutput<"file_map">["pages"] = [];
+  const entry = (node: SceneNode) => ({
+    id: node.id,
+    name: node.name,
+    type: node.type,
+    width: Math.round(node.width),
+    height: Math.round(node.height),
+  });
+
+  for (const page of figma.root.children) {
+    if (Date.now() - started > OP_BUDGET_MS) {
+      return {
+        pages,
+        more: true,
+      };
+    }
+
+    await loaded(page);
+    pages.push({
+      id: page.id,
+      name: page.name,
+      current: page === figma.currentPage,
+      nodes: page.children.map((node) => ({
+        ...entry(node),
+        ...(node.type === "SECTION" ? { children: node.children.map(entry) } : {}),
+      })),
+    });
+  }
+
+  return {
+    pages,
+    more: false,
   };
 }
