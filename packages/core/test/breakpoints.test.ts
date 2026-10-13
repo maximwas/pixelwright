@@ -28,3 +28,23 @@ describe("breakpoints_find", () => {
     expect(found.widths.find((match) => match.id === "1:1")?.this).toBe(true);
   });
 });
+
+describe("breakpoints_find after the review", () => {
+  it("matches screens named only by their size, by their children", () => {
+    const found = breakpointsOf({
+      target: screen("2:1", "Desktop", 1440, ["Header", "Hero", "Footer"]),
+      screens: [screen("2:2", "Mobile", 375, ["Header", "Hero", "Footer"]), screen("2:3", "1440", 1440, ["Header"])],
+    });
+
+    expect(found.widths.map(({ id }) => id)).toEqual(["2:2", "2:1"]);
+  });
+
+  it("leaves out a state of the screen at its own width", () => {
+    const found = breakpointsOf({
+      target: screen("3:1", "Home / Desktop", 1440, ["Header", "Hero"]),
+      screens: [screen("3:2", "Home / Desktop – menu open", 1440, ["Header", "Hero"])],
+    });
+
+    expect(found.widths.map(({ id }) => id)).toEqual(["3:1"]);
+  });
+});

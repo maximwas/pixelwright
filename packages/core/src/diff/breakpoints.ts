@@ -5,6 +5,8 @@ const SIZE_WORDS =
   /\b(desktop|tablet|mobile|phone|laptop|web|ipad|iphone|android|wide|small|medium|large|xl|lg|md|sm|xs|\d{3,4}(\s*[x×]\s*\d{3,4})?(px)?)\b/gi;
 /** The least a screen must score to count as the same one at another width. */
 const SAME_SCREEN = 0.5;
+/** Widths this close are one breakpoint: another frame there is a state of the screen, not a size. */
+const SAME_WIDTH = 8;
 
 /**
  * The screen asked about at other widths: the page's screens whose names match once size words are left out, and
@@ -14,13 +16,19 @@ export function breakpointsOf({ target, screens }: ScreensRaw): Breakpoints {
   const words = wordsOf(target.name);
   const children = new Set(target.children);
   const matches = screens
-    .map((screen) => ({
-      screen,
-      score:
-        Math.round(
-          (0.6 * overlap(words, wordsOf(screen.name)) + 0.4 * overlap(children, new Set(screen.children))) * 100,
-        ) / 100,
-    }))
+    // Another width, not another state of the screen at its own width (a menu open).
+    .filter((screen) => Math.abs(screen.width - target.width) > SAME_WIDTH)
+    .map((screen) => {
+      const named = wordsOf(screen.name);
+      const shared = overlap(children, new Set(screen.children));
+      // Screens named only by their size ("Desktop", "375") are told apart by their children alone.
+      const score = words.size === 0 && named.size === 0 ? shared : 0.6 * overlap(words, named) + 0.4 * shared;
+
+      return {
+        screen,
+        score: Math.round(score * 100) / 100,
+      };
+    })
     .filter(({ score }) => score >= SAME_SCREEN);
   const widths = [
     {
