@@ -183,8 +183,10 @@ text-decoration-thickness), text-align, text-wrap, color.
 - format json: per collection, its modes and each variable's value in every mode.
 - format dtcg: Design Tokens Format (DTCG 2025.10) files, one per mode of each collection, keyed
   \`<collection>.<mode>\` (the collection alone when it has one mode), and \`styles\` for the styles; aliases are
-  \`{path}\`, a token whose path is also a group sits at the group's \`$root\`. Style Dictionary and other DTCG tools
-  read them as they are. What DTCG has no type for (a text variable, a boolean, an image style) is named in \`notes\`.
+  \`{path}\`, a token whose path is also a group sits at the group's \`$root\`; a token takes the type of the tokens
+  it is aliased with (a number a gap points at is a dimension). Style Dictionary and other DTCG tools read them. Named
+  in \`notes\`: an alias to a token no file here holds (a library's, a collection left out), a name taken twice (the
+  second suffixed -2), and what DTCG has no type for (a text variable, a boolean, an image style).
 - \`collections\` keeps only the named ones; \`libraries: true\` adds the enabled libraries' variables by name and type.
 - Past \`maxChars\` (80 000) only the summary comes back, with the collections to read one at a time.
 - An alias to a token the output leaves out (a collection you did not ask for) is named in \`notes\`.

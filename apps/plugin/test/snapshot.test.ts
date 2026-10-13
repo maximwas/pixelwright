@@ -812,6 +812,132 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     expect((await read())?.motion).not.toHaveProperty("tracks.2");
   });
 
+  it("places a style's keyframes by the one style a layer has, and leaves a manual track where it is", async () => {
+    const float = (value: number) => ({
+      type: "FLOAT",
+      value,
+    });
+    const keyframes = (...times: (number | undefined)[]) =>
+      times.map((timelinePosition, index) => ({
+        id: `K:${index}`,
+        timelinePosition,
+        value: float(index),
+        easing: { type: "LINEAR" },
+      }));
+    const opacity = (id: string, times: (number | undefined)[]) => ({
+      OPACITY: {
+        baseValue: float(1),
+        timelineDuration: 2,
+        tracks: [
+          {
+            id,
+            keyframeOperation: "SET",
+            keyframes: keyframes(...times),
+          },
+        ],
+      },
+    });
+    const style = (type: string, name: string, timelineOffset: number) => ({
+      type,
+      id: `A:${name}`,
+      styleId: "C:1",
+      name,
+      timelineOffset,
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "8:1",
+            type: "FRAME",
+            children: [
+              {
+                // A custom style, the layer's only one: its track starts where the style does.
+                id: "8:2",
+                timelines: [],
+                animationStyles: [style("CUSTOM", "Bounce in", 0.4)],
+                manualKeyframeTracks: {},
+                animations: opacity("T:1", [0, 0.3, undefined]),
+              },
+              {
+                // Two styles neither of which says what it animates: the start is not known.
+                id: "8:3",
+                timelines: [],
+                animationStyles: [
+                  style("CUSTOM", "Bounce in", 0.4),
+                  style("FIGMA", "motion.preset_name.text_stagger", 0.2),
+                ],
+                manualKeyframeTracks: {},
+                animations: opacity("T:2", [0, 0.3]),
+              },
+              {
+                // A manual opacity track beside Figma's Opacity style: on the timeline already.
+                id: "8:4",
+                timelines: [],
+                animationStyles: [style("FIGMA", "motion.preset_name.opacity", 0.5)],
+                manualKeyframeTracks: {
+                  OPACITY: {
+                    id: "T:3",
+                    baseValue: float(1),
+                    keyframes: [],
+                  },
+                },
+                animations: opacity("T:3", [0.1, 0.2]),
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    Object.assign(figma, { motion: {} });
+
+    const { root } = (await runOperation("snapshot", { node: "8:1" })) as Shot;
+    const [single, double, manual] = (root.children ?? []).map(
+      (child) => (child.motion as { tracks: Record<string, unknown>[] }).tracks[0],
+    );
+
+    expect(single).toMatchObject({
+      style: "Bounce in",
+      keyframes: [{ t: 0.4 }, { t: 0.7 }],
+    });
+    expect(single?.keyframes).toHaveLength(2);
+    expect(double).toMatchObject({
+      unplaced: true,
+      keyframes: [{ t: 0 }, { t: 0.3 }],
+    });
+    expect(double).not.toHaveProperty("style");
+    expect(manual).toMatchObject({ keyframes: [{ t: 0.1 }, { t: 0.2 }] });
+    expect(manual).not.toHaveProperty("style");
+  });
+
+  it("reads on without Motion or measurements when Figma's beta API throws", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [{ id: "8:1" }],
+    });
+    const [layer] = page.children ?? [];
+
+    Object.defineProperty(layer, "animations", {
+      get: () => {
+        throw new Error("Motion is not available here");
+      },
+    });
+    page.getMeasurements = () => {
+      throw new Error("Only in Dev Mode");
+    };
+    installFigma(page);
+    Object.assign(figma, { motion: {} });
+
+    const answer = await runOperation("snapshot", { node: "8:1" });
+
+    expect(answer).not.toHaveProperty("measurements");
+    expect((answer as Shot).root).not.toHaveProperty("motion");
+  });
+
   it("asks Figma for its CSS only for layers our table cannot write, when asked for that", async () => {
     installFigma(
       tree({

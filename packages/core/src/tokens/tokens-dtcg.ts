@@ -1,4 +1,10 @@
-import { DTCG_AUTO_LINE_HEIGHT, DTCG_DIMENSION_SCOPES, DTCG_ROOT, DTCG_SHADOWS } from "../constants/tokens.ts";
+import {
+  DTCG_AUTO_LINE_HEIGHT,
+  DTCG_DIMENSION_SCOPES,
+  DTCG_ROOT,
+  DTCG_SHADOWS,
+  DTCG_STYLES,
+} from "../constants/tokens.ts";
 import type { DtcgGroup, DtcgResult, DtcgToken, RawTokens } from "../types/tokens.ts";
 import { weightOf } from "../utils/font-weight.ts";
 
@@ -17,19 +23,30 @@ export function dtcgTrees(raw: RawTokens, filter: { collections?: readonly strin
   const collections = raw.collections.filter(
     (collection) => wanted === undefined || wanted.includes(collection.name.toLowerCase()),
   );
-  const refs = referencesOf(raw);
+  const included = new Set(collections.map((collection) => collection.id));
+  const types = typesOf(raw);
+  const refs = referencesOf(raw, types, included);
   const trees: Record<string, DtcgGroup> = {};
   const untyped = new Map<string, string>();
   const lost = new Set<string>();
+  const outside = new Map<string, string>();
+  const keys = new Set([DTCG_STYLES]);
+  const renamed: string[] = [];
 
   for (const collection of collections) {
     const variables = raw.variables.filter((variable) => variable.collectionId === collection.id);
+    const key = uniqueKey(slug(collection.name), keys);
+    const modes = new Set<string>();
+
+    if (key !== slug(collection.name)) {
+      renamed.push(`The collection ${collection.name} is written as ${key}: ${slug(collection.name)} is taken.`);
+    }
 
     for (const mode of collection.modes) {
       const tree: DtcgGroup = {};
 
       for (const variable of variables) {
-        const type = typeOf(variable);
+        const type = types.get(variable.id) ?? null;
 
         if (type === null) {
           untyped.set(variable.name, variable.resolvedType);
@@ -45,6 +62,12 @@ export function dtcgTrees(raw: RawTokens, filter: { collections?: readonly strin
           continue;
         }
 
+        const elsewhere = alias === null ? null : outsideOf(raw, alias, included);
+
+        if (elsewhere !== null) {
+          outside.set(variable.name, `${variable.name} points at ${elsewhere}`);
+        }
+
         const token: DtcgToken = {
           $type: type,
           $value: reference ?? dtcgValue(type, value),
@@ -56,18 +79,19 @@ export function dtcgTrees(raw: RawTokens, filter: { collections?: readonly strin
         put(tree, refs.location(variable.id), token);
       }
 
-      trees[collection.modes.length === 1 ? slug(collection.name) : `${slug(collection.name)}.${slug(mode.name)}`] =
-        tree;
+      trees[collection.modes.length === 1 ? key : `${key}.${uniqueKey(slug(mode.name), modes)}`] = tree;
     }
   }
 
   const styles = stylesTree(raw.styles);
 
-  trees.styles = styles.tree;
+  trees[DTCG_STYLES] = styles.tree;
 
   return {
     trees,
     notes: [
+      ...renamed,
+      ...refs.renamed,
       ...(untyped.size === 0
         ? []
         : [
@@ -76,18 +100,85 @@ export function dtcgTrees(raw: RawTokens, filter: { collections?: readonly strin
       ...[...lost].map(
         (name) => `${name} points at a variable that is neither in this file nor in a library it uses: left out.`,
       ),
+      ...outside.values(),
       ...styles.notes,
     ],
   };
 }
 
-/** Each variable's place in its collection's trees, and its alias reference (`{color.brand}`, `{color.brand.$root}`). */
-function referencesOf(raw: RawTokens) {
+/**
+ * Each variable's DTCG type: from its own type and scopes, then from the tokens it is linked with by an alias, so a
+ * reference never points at a token left out or of another unit (a FLOAT for any field aliased by a gap is a dimension;
+ * a text aliased by a font family is a font family).
+ */
+function typesOf(raw: RawTokens): Map<string, string | null> {
+  const types = new Map(raw.variables.map((variable) => [variable.id, typeOf(variable)]));
+  const links = raw.variables.flatMap((variable) =>
+    Object.values(variable.valuesByMode).flatMap((value) => {
+      const target = aliasOf(value);
+
+      return target !== null && types.has(target) ? [[variable.id, target] as const] : [];
+    }),
+  );
+
+  for (let changed = true; changed; ) {
+    changed = false;
+
+    for (const [a, b] of links) {
+      for (const [weak, strong] of [
+        [a, b],
+        [b, a],
+      ] as const) {
+        const own = types.get(weak) ?? null;
+        const other = types.get(strong) ?? null;
+
+        if (other !== null && other !== own && (own === null || (own === "number" && other !== "number"))) {
+          types.set(weak, other);
+          changed = true;
+        }
+      }
+    }
+  }
+
+  return types;
+}
+
+/** Where an alias's token lives when no tree here holds it: a collection left out, or a library. Null: in a tree. */
+function outsideOf(raw: RawTokens, id: string, included: ReadonlySet<string>): string | null {
+  const local = raw.variables.find((variable) => variable.id === id);
+
+  if (local !== undefined) {
+    const collection = raw.collections.find((candidate) => candidate.id === local.collectionId);
+
+    return included.has(local.collectionId)
+      ? null
+      : `${local.name} in ${collection?.name ?? local.collectionId}, which this output leaves out: add it to collections for the reference to resolve.`;
+  }
+
+  const external = raw.external[id];
+
+  return external === undefined
+    ? null
+    : `${external.name} from a library (${external.collection}): no file here defines it, so add that library's tokens for the reference to resolve.`;
+}
+
+/** Each typed variable's place in its collection's trees, and its alias reference (`{color.brand}`, `{color.brand.$root}`). */
+function referencesOf(raw: RawTokens, types: ReadonlyMap<string, string | null>, included: ReadonlySet<string>) {
   const locations = new Map<string, string[]>();
+  const renamed: string[] = [];
 
   for (const collection of raw.collections) {
-    const variables = raw.variables.filter((variable) => variable.collectionId === collection.id);
-    const placed = placements(variables.map((variable) => [variable.id, pathOf(variable.name)]));
+    const variables = raw.variables.filter(
+      (variable) => variable.collectionId === collection.id && (types.get(variable.id) ?? null) !== null,
+    );
+    const placed = placements(
+      variables.map((variable) => ({
+        id: variable.id,
+        name: variable.name,
+        path: pathOf(variable.name),
+      })),
+      included.has(collection.id) ? renamed : [],
+    );
 
     for (const [id, path] of placed) {
       locations.set(id, path);
@@ -109,23 +200,56 @@ function referencesOf(raw: RawTokens) {
   return {
     get: (id: string) => references.get(id),
     location: (id: string) => locations.get(id) ?? [],
+    renamed,
   };
 }
 
-/** Where each named thing goes: its path, or its path's `$root` when another path continues under it. */
-function placements(entries: readonly [string, string[]][]): Map<string, string[]> {
-  const joined = new Set(entries.map(([, path]) => path.join("/")));
+/**
+ * Where each named thing goes: its path, suffixed when an earlier one took it (named in `renamed`), or its path's
+ * `$root` when another path continues under it.
+ */
+function placements(
+  entries: readonly { id: string; name: string; path: string[] }[],
+  renamed: string[],
+): Map<string, string[]> {
+  const taken = new Set<string>();
+  const unique = entries.map(({ id, name, path }) => {
+    let placed = path;
+
+    for (let index = 2; taken.has(placed.join("/")); index++) {
+      placed = [...path.slice(0, -1), `${path.at(-1) ?? ""}-${index}`];
+    }
+
+    if (placed !== path) {
+      renamed.push(`${name} has the same DTCG path as another token: written as ${placed.join(".")}.`);
+    }
+
+    taken.add(placed.join("/"));
+
+    return [id, placed] as const;
+  });
   const groups = new Set<string>();
 
-  for (const path of joined) {
-    const segments = path.split("/");
-
-    for (let length = 1; length < segments.length; length++) {
-      groups.add(segments.slice(0, length).join("/"));
+  for (const [, path] of unique) {
+    for (let length = 1; length < path.length; length++) {
+      groups.add(path.slice(0, length).join("/"));
     }
   }
 
-  return new Map(entries.map(([id, path]) => [id, groups.has(path.join("/")) ? [...path, DTCG_ROOT] : path]));
+  return new Map(unique.map(([id, path]) => [id, groups.has(path.join("/")) ? [...path, DTCG_ROOT] : path]));
+}
+
+/** A key not taken yet: suffixed -2, -3… when it is. Takes it. */
+function uniqueKey(key: string, taken: Set<string>): string {
+  let unique = key;
+
+  for (let index = 2; taken.has(unique); index++) {
+    unique = `${key}-${index}`;
+  }
+
+  taken.add(unique);
+
+  return unique;
 }
 
 function put(tree: DtcgGroup, path: readonly string[], token: DtcgToken): void {
@@ -203,7 +327,15 @@ function stylesTree(styles: readonly RawStyle[]): { tree: DtcgGroup; notes: stri
   const tree: DtcgGroup = {};
   const untyped: string[] = [];
   const autoLineHeight: string[] = [];
-  const placed = placements(styles.map((style) => [style.id, pathOf(style.name)]));
+  const renamed: string[] = [];
+  const placed = placements(
+    styles.map((style) => ({
+      id: style.id,
+      name: style.name,
+      path: pathOf(style.name),
+    })),
+    renamed,
+  );
 
   for (const style of styles) {
     const token = styleToken(style, autoLineHeight);
@@ -219,6 +351,7 @@ function stylesTree(styles: readonly RawStyle[]): { tree: DtcgGroup; notes: stri
   return {
     tree,
     notes: [
+      ...renamed,
       ...(untyped.length === 0
         ? []
         : [

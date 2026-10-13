@@ -23,3 +23,6 @@ export const DTCG_AUTO_LINE_HEIGHT = 1.2;
 
 /** The key of a group's own token, when a token's path is also a group (DTCG 2025.10). */
 export const DTCG_ROOT = "$root";
+
+/** The key of the DTCG tree that holds the styles; a collection of that name gets another. */
+export const DTCG_STYLES = "styles";

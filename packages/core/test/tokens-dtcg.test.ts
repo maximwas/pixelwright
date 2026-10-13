@@ -517,3 +517,170 @@ describe("DTCG trees", () => {
     ]);
   });
 });
+
+const alias = (id: string) => ({
+  type: "VARIABLE_ALIAS",
+  id,
+});
+
+describe("DTCG references", () => {
+  it("types a token by the tokens that point at it, so no alias dangles or loses its unit", () => {
+    const { trees, notes } = dtcgTrees({
+      ...RAW,
+      variables: [
+        variable({
+          id: "V:sans",
+          name: "font/sans",
+          resolvedType: "STRING",
+          valuesByMode: { "M:o": "Inter" },
+        }),
+        variable({
+          id: "V:family",
+          name: "heading/family",
+          resolvedType: "STRING",
+          scopes: ["FONT_FAMILY"],
+          valuesByMode: { "M:o": alias("V:sans") },
+        }),
+        variable({
+          id: "V:4",
+          name: "space/4",
+          resolvedType: "FLOAT",
+          valuesByMode: { "M:o": 16 },
+        }),
+        variable({
+          id: "V:md",
+          name: "gap/md",
+          resolvedType: "FLOAT",
+          scopes: ["GAP"],
+          valuesByMode: { "M:o": alias("V:4") },
+        }),
+      ],
+      styles: [],
+    });
+
+    expect(trees.orbit).toEqual({
+      font: {
+        sans: {
+          $type: "fontFamily",
+          $value: "Inter",
+        },
+      },
+      heading: {
+        family: {
+          $type: "fontFamily",
+          $value: "{font.sans}",
+        },
+      },
+      space: {
+        4: {
+          $type: "dimension",
+          $value: {
+            value: 16,
+            unit: "px",
+          },
+        },
+      },
+      gap: {
+        md: {
+          $type: "dimension",
+          $value: "{space.4}",
+        },
+      },
+    });
+    expect(notes.join("\n")).not.toMatch(/font\/sans/);
+  });
+
+  it("names an alias to a token no tree here holds: a library's, or one in a collection left out", () => {
+    expect(dtcgTrees(RAW).notes.join("\n")).toMatch(
+      /accent points at Accent\/Primary from a library \(Core\): no file here defines it/,
+    );
+    expect(dtcgTrees(RAW, { collections: ["brand theme"] }).notes.join("\n")).toMatch(
+      /surface points at color\/brand in Orbit, which this output leaves out/,
+    );
+  });
+
+  it("never lets one token overwrite another: a collection named Styles, same-named styles, names alike once cleaned", () => {
+    const { trees, notes } = dtcgTrees({
+      ...RAW,
+      collections: [
+        ...RAW.collections,
+        {
+          id: "C:styles",
+          name: "Styles",
+          remote: false,
+          defaultModeId: "M:s",
+          modes: [
+            {
+              modeId: "M:s",
+              name: "Default",
+            },
+          ],
+        },
+      ],
+      variables: [
+        variable({
+          id: "V:dot",
+          name: "brand.primary",
+          valuesByMode: { "M:o": rgb(255, 0, 0) },
+        }),
+        variable({
+          id: "V:dash",
+          name: "brand-primary",
+          valuesByMode: { "M:o": rgb(0, 0, 255) },
+        }),
+        variable({
+          id: "V:link",
+          name: "link",
+          valuesByMode: { "M:o": alias("V:dash") },
+        }),
+        variable({
+          id: "V:ink",
+          name: "ink",
+          collectionId: "C:styles",
+          valuesByMode: { "M:s": rgb(0, 0, 0) },
+        }),
+      ],
+      styles: [
+        style({
+          id: "S:local",
+          name: "Brand/Primary",
+          type: "PAINT",
+          paints: [
+            {
+              type: "SOLID",
+              visible: true,
+              color: rgb(59, 47, 217),
+            },
+          ],
+        }),
+        style({
+          id: "S:library",
+          name: "Brand/Primary",
+          type: "PAINT",
+          remote: true,
+          paints: [
+            {
+              type: "SOLID",
+              visible: true,
+              color: rgb(0, 0, 0),
+            },
+          ],
+        }),
+      ],
+    });
+    const orbit = trees.orbit as Record<string, { $value: unknown }>;
+    const text = notes.join("\n");
+
+    expect(Object.keys(trees)).toEqual(["orbit", "brand-theme.light", "brand-theme.dark-mode", "styles-2", "styles"]);
+    expect((trees["styles-2"] as Record<string, unknown>).ink).toBeDefined();
+    expect(Object.keys(orbit)).toEqual(["brand-primary", "brand-primary-2", "link"]);
+    expect(orbit.link?.$value).toBe("{brand-primary-2}");
+    expect(Object.keys((trees.styles as Record<string, Record<string, unknown>>).Brand ?? {})).toEqual([
+      "Primary",
+      "Primary-2",
+    ]);
+    expect(text).toMatch(/The collection Styles is written as styles-2/);
+    expect(text).toMatch(/brand-primary has the same DTCG path as another token: written as brand-primary-2/);
+    expect(text).toMatch(/Brand\/Primary has the same DTCG path as another token: written as Brand\.Primary-2/);
+  });
+});

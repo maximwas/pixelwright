@@ -375,6 +375,8 @@ export const SnapshotFieldsSchema = z.object({
           operation: z.string(),
           base: MotionValueSchema,
           style: z.string().optional(),
+          /** A style made it, but which one (so where it starts) is not known: its keyframes start at 0. */
+          unplaced: z.boolean().optional(),
           keyframes: z.array(
             z.object({
               t: z.number(),

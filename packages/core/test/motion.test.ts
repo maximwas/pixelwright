@@ -127,13 +127,13 @@ describe("Figma Motion in a read", () => {
     const css = designMotion(read(title))?.css ?? "";
 
     expect(motionSummary(title)).toBe(
-      "Position, Opacity: translate-x -190→10px 0.2–0.8s ease-out, opacity 0→0.8 0–0.6s linear",
+      "Position, Opacity: translate-x -200→0px 0.2–0.8s ease-out, opacity 0→0.8 0–0.6s linear",
     );
-    expect(css).toContain("  0% { translate: -190px 0; opacity: 0; }");
-    expect(css).toContain("  16.67% { translate: -190px 0; animation-timing-function: ease-out; }");
+    expect(css).toContain("  0% { translate: -200px 0; opacity: 0; }");
+    expect(css).toContain("  16.67% { translate: -200px 0; animation-timing-function: ease-out; }");
     expect(css).toContain("  50% { opacity: 0.8; }");
-    expect(css).toContain("  66.67% { translate: 10px 0; }");
-    expect(css).toContain("  100% { translate: 10px 0; opacity: 0.8; }");
+    expect(css).toContain("  66.67% { translate: 0 0; }");
+    expect(css).toContain("  100% { translate: 0 0; opacity: 0.8; }");
   });
 
   it("animates rotation and scale with rotate and scale, and colours as background, a text's color, a border's", () => {
@@ -182,6 +182,59 @@ describe("Figma Motion in a read", () => {
     expect(css).toContain("  0% { rotate: 0deg; scale: 1; background-color: #FFF; border-color: #FFF; }");
     expect(css).toContain("  50% { rotate: -90deg; scale: 1.2; background-color: #3B2FD9; border-color: #3B2FD9; }");
     expect(css).toMatch(/@keyframes label \{\n {2}0% \{ color: #FFF; \}/);
+  });
+
+  it("moves and turns a layer from its own place and angle: translate and rotate are the change from the base", () => {
+    const badge = animated("1:2", "Badge", [
+      track("ROTATION", [at(0, 180, "LINEAR"), at(0.5, 0, "LINEAR")], {
+        operation: "OFFSET",
+        base: {
+          type: "FLOAT",
+          value: 30,
+        },
+      }),
+      track("TRANSLATION_Y", [at(0, 120), at(0.5, 96)], {
+        base: {
+          type: "FLOAT",
+          value: 120,
+        },
+      }),
+    ]);
+    const css = designMotion(read(badge))?.css ?? "";
+
+    expect(motionSummary(badge)).toBe("rotate -180→0deg, translate-y 0→-24px; 0–0.5s linear");
+    expect(css).toContain("  0% { rotate: -180deg; translate: 0 0; }");
+    expect(css).toContain("  41.67% { rotate: 0deg; translate: 0 -24px; }");
+  });
+
+  it("says when Figma gives a style's keyframes from the style's start, which it does not say", () => {
+    const card = animated("1:2", "Card", [
+      {
+        ...fade(),
+        unplaced: true,
+      },
+    ]);
+
+    card.motion = {
+      ...(card.motion as Motion),
+      styles: [
+        {
+          type: "CUSTOM",
+          name: "Bounce in",
+          start: 0.2,
+        },
+        {
+          type: "FIGMA",
+          name: "motion.preset_name.text_stagger",
+          start: 0.4,
+        },
+      ],
+    };
+
+    expect(motionSummary(card)).toBe("Bounce in, Text stagger: opacity 0→1; 0–0.6s ease-out after its style's start");
+    expect(designMotion(read(card))?.css).toContain(
+      "/* opacity: Figma gives these keyframes from their animation style's start, not the timeline's: delay them by when the style starts */",
+    );
   });
 
   it("says in a comment what CSS cannot animate this way, never writing it as a property", () => {

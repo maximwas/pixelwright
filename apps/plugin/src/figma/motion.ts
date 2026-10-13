@@ -15,14 +15,24 @@ interface RawBinding {
 /**
  * The layer's Figma Motion (a beta API): its animation styles and every keyframe track. Figma gives a style's
  * keyframes from 0, so a track a style made moves to where the style starts on the timeline; a manual track's
- * keyframes are on the timeline already. Undefined where Figma has no Motion API or nothing on the layer animates.
+ * keyframes are on the timeline already. Undefined where Figma has no Motion API, where it throws (a beta API must
+ * never break a read), or where nothing on the layer animates.
  */
 export function motionOf(node: SceneNode): SnapshotMotion | undefined {
   if ((figma as { motion?: unknown }).motion === undefined || !("animations" in node)) {
     return undefined;
   }
 
-  const styles = node.animationStyles.map((style) => ({
+  try {
+    return readMotion(node);
+  } catch {
+    return undefined;
+  }
+}
+
+function readMotion(node: SceneNode & MotionNodeMixin): SnapshotMotion | undefined {
+  const applied = (node.animationStyles as AppliedAnimationStyle[] | undefined) ?? [];
+  const styles = applied.map((style) => ({
     type: style.type,
     name: style.name,
     start: round(style.timelineOffset ?? 0),
@@ -31,22 +41,25 @@ export function motionOf(node: SceneNode): SnapshotMotion | undefined {
   const manual = new Set(bindingsOf(node.manualKeyframeTracks).map(([, binding]) => binding.id));
   const tracks: MotionTrack[] = bindingsOf(node.animations).flatMap(([field, binding]) =>
     (binding as unknown as RawBinding).tracks.map((track) => {
-      const style = manual.has(track.id) ? undefined : styleOf(field, node.animationStyles);
+      const style = manual.has(track.id) ? undefined : styleOf(field, applied);
 
       return {
         field,
         operation: track.keyframeOperation,
         base: keyframeValue((binding as unknown as RawBinding).baseValue),
         ...(style === undefined ? {} : { style: style.name }),
-        keyframes: track.keyframes.map((keyframe) => ({
-          t: round(keyframe.timelinePosition + (style?.timelineOffset ?? 0)),
-          value: keyframeValue(keyframe.value),
-          easing: easingOf(keyframe.easing),
-        })),
+        ...(style === undefined && !manual.has(track.id) ? { unplaced: true } : {}),
+        keyframes: track.keyframes
+          .filter((keyframe) => Number.isFinite(keyframe.timelinePosition))
+          .map((keyframe) => ({
+            t: round(keyframe.timelinePosition + (style?.timelineOffset ?? 0)),
+            value: keyframeValue(keyframe.value),
+            easing: easingOf(keyframe.easing),
+          })),
       };
     }),
   );
-  const [timeline] = node.timelines;
+  const [timeline] = (node.timelines as readonly Timeline[] | undefined) ?? [];
 
   if (styles.length === 0 && tracks.length === 0) {
     return undefined;
@@ -92,10 +105,16 @@ function isBinding(value: unknown): value is { readonly id?: string } {
 }
 
 /** The animation style that made a track of this field: the first of Figma's styles that animates it. */
+/**
+ * The animation style that made a track of this field: the first of Figma's styles that animates it, else the one
+ * style whose fields are not known (a custom style, a text stagger) when there is just one. Undefined: not known.
+ */
 function styleOf(field: string, styles: readonly AppliedAnimationStyle[]): AppliedAnimationStyle | undefined {
-  return styles.find((style) =>
-    (MOTION_STYLE_FIELDS[style.name.replace(/^motion\.preset_name\./, "")] ?? []).includes(field),
-  );
+  const fields = (style: AppliedAnimationStyle) =>
+    MOTION_STYLE_FIELDS[style.name.replace(/^motion\.preset_name\./, "")];
+  const unknown = styles.filter((style) => fields(style) === undefined);
+
+  return styles.find((style) => fields(style)?.includes(field)) ?? (unknown.length === 1 ? unknown[0] : undefined);
 }
 
 /** A keyframe's easing: its type, its curve and a spring's bounce when Figma gives them; a variable's, by type only. */

@@ -615,8 +615,10 @@ and does not follow a mode set lower in the page.</li>
 <li>format json: per collection, its modes and each variable&#39;s value in every mode.</li>
 <li>format dtcg: Design Tokens Format (DTCG 2025.10) files, one per mode of each collection, keyed
 <code>&lt;collection&gt;.&lt;mode&gt;</code> (the collection alone when it has one mode), and <code>styles</code> for the styles; aliases are
-<code>{path}</code>, a token whose path is also a group sits at the group&#39;s <code>$root</code>. Style Dictionary and other DTCG tools
-read them as they are. What DTCG has no type for (a text variable, a boolean, an image style) is named in <code>notes</code>.</li>
+<code>{path}</code>, a token whose path is also a group sits at the group&#39;s <code>$root</code>; a token takes the type of the tokens
+it is aliased with (a number a gap points at is a dimension). Style Dictionary and other DTCG tools read them. Named
+in <code>notes</code>: an alias to a token no file here holds (a library&#39;s, a collection left out), a name taken twice (the
+second suffixed -2), and what DTCG has no type for (a text variable, a boolean, an image style).</li>
 <li><code>collections</code> keeps only the named ones; <code>libraries: true</code> adds the enabled libraries&#39; variables by name and type.</li>
 <li>Past <code>maxChars</code> (80 000) only the summary comes back, with the collections to read one at a time.</li>
 <li>An alias to a token the output leaves out (a collection you did not ask for) is named in <code>notes</code>.</li>

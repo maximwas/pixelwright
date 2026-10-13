@@ -27,6 +27,11 @@ How to write this file (people and agents alike):
 - `design_read` reads Figma Motion: each animated layer gets a short `$motion` summary, and the read gives the animation
   as CSS `@keyframes` placed over the timeline.
 
+### Changed
+
+- The plugin and the server speak a new version of their connection: run `npx -y pixelwright@latest` so both update
+  together. An older server tells a newer plugin to update instead of failing on its reads.
+
 ### Fixed
 
 - A component with a slot, and its instances, read again in `design_read` and `components_read`.

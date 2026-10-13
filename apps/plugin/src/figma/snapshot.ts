@@ -107,8 +107,12 @@ export async function snapshot({
 /** The page's Dev Mode measurements with a side on the layer or inside it; none where Figma has no such API. */
 function measurementsOf(root: SceneNode): NonNullable<OperationOutput<"snapshot">["measurements"]> {
   const page = pageOf(root) as (PageNode & Partial<MeasurementsMixin>) | null;
+  let measurements: Measurement[];
 
-  if (page?.getMeasurements === undefined) {
+  try {
+    measurements = page?.getMeasurements?.() ?? [];
+  } catch {
+    // The typings call measurements Dev Mode only: a Figma that refuses them reads without.
     return [];
   }
 
@@ -122,7 +126,7 @@ function measurementsOf(root: SceneNode): NonNullable<OperationOutput<"snapshot"
     return false;
   };
 
-  return page.getMeasurements().flatMap(({ start, end, freeText }) =>
+  return measurements.flatMap(({ start, end, freeText }) =>
     read(start.node) || read(end.node)
       ? [
           {

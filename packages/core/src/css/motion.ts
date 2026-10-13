@@ -212,8 +212,15 @@ function channelsOf(node: SnapshotNode, motion: SnapshotMotion): { channels: Cha
   };
 
   for (const track of motion.tracks) {
-    const points = pointsOf(track);
+    const points = cssPoints(track);
     const axis = MOTION_AXES[track.field];
+
+    if (track.unplaced) {
+      comments.push(
+        `${nameOf(node, track)}: Figma gives these keyframes from their animation style's start, not the timeline's: delay them by when the style starts`,
+      );
+    }
+
     const own = MOTION_PROPERTIES[track.field];
     const paint = paintProperty(node, track, points);
 
@@ -326,7 +333,7 @@ function paintProperty(node: SnapshotNode, track: MotionTrack, points: readonly 
 
 /** A track's change and timing in words, and whether its value changes at all. */
 function summaryOf(node: SnapshotNode, track: MotionTrack): { change: string; timing: string; moves: boolean } {
-  const points = pointsOf(track);
+  const points = cssPoints(track);
   const rotation = track.field === "ROTATION";
   const values = points
     .map((point) => valueText(rotation && typeof point.value === "number" ? -point.value : point.value))
@@ -351,7 +358,7 @@ function summaryOf(node: SnapshotNode, track: MotionTrack): { change: string; ti
 
   return {
     change: `${nameOf(node, track)} ${values.join("→")}${unit}`,
-    timing: [range, how].filter((part) => part !== "").join(" "),
+    timing: [range, how, track.unplaced ? "after its style's start" : ""].filter((part) => part !== "").join(" "),
     moves: values.length > 1,
   };
 }
@@ -372,6 +379,23 @@ function nameOf(node: SnapshotNode, track: MotionTrack): string {
     MOTION_PROPERTIES[track.field]?.property ??
     track.field.toLowerCase().replaceAll("_", "-").replaceAll(".", " ")
   );
+}
+
+/**
+ * The values CSS animates: for translate and rotate the change from the layer's own place and angle (Figma's base is
+ * the layer's x, y and rotation, which its layout and transform already give); else the value itself.
+ */
+function cssPoints(track: MotionTrack): Point[] {
+  const points = pointsOf(track);
+
+  if (track.field !== "ROTATION" && MOTION_AXES[track.field]?.property !== "translate") {
+    return points;
+  }
+
+  return points.map((point) => ({
+    ...point,
+    value: combine(point.value, track.base.value, (value, base) => value - base),
+  }));
 }
 
 /** A track's keyframes in time order, each value made absolute: OFFSET adds it to the base, SCALE multiplies it. */
