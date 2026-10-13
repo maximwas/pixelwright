@@ -2,13 +2,22 @@ import { describe, expect, it } from "vitest";
 import { type CssContext, cleanOracle, nodeCss, type SnapshotNode } from "../src/index.ts";
 import { fixture, nodesOf } from "./helpers/fixtures.ts";
 
-const FIXTURES = ["positivus-services-row", "positivus-services-block", "positivus-hero", "positivus-landing-top"];
+const FIXTURES = ["orbit-plans", "orbit-pricing", "orbit-customers", "orbit-desktop-top"];
 
 /** Oracle properties we leave out on purpose: SVG paint of vectors, Figma's flex-shrink on every fixed child. */
 const NOT_WRITTEN = new Set(["flex-shrink", "fill", "stroke", "stroke-width", "font-feature-settings"]);
 
 /** Dev Mode guesses a flex layout for a frame without auto layout; we place its children as Figma does. */
 const GUESSED_LAYOUT = new Set(["display", "flex-direction", "padding", "justify-content", "align-items", "gap"]);
+
+/** What a text style holds, so a styled text leaves it to the style; Figma writes it again, rounded to whole pixels. */
+const STYLE_HELD = /^(letter-spacing|text-transform|text-decoration|text-underline)/;
+
+/** What a text says per run: a text of several runs is read as its base and spans, Figma's CSS gives one run's. */
+const RUN_HELD = /^(color|font|letter-spacing|text-transform|text-decoration|text-underline)/;
+
+/** A layer's place in its parent: the read root's parent is not read, so none of it is written. */
+const PARENT_HELD = new Set(["align-self", "flex"]);
 
 const DEFAULTS: Readonly<Record<string, string>> = {
   "align-items": "flex-start",
@@ -41,7 +50,9 @@ function oracleOf(node: SnapshotNode): Map<string, string> {
 
   if (css["font-family"] !== undefined) {
     const italic = css["font-style"] === "italic" ? "italic " : "";
-    const family = css["font-family"].replaceAll('"', "'");
+    const family = css["font-family"].includes('"')
+      ? css["font-family"].replaceAll('"', "'")
+      : `'${css["font-family"]}'`;
 
     oracle.set(
       "font",
@@ -52,7 +63,7 @@ function oracleOf(node: SnapshotNode): Map<string, string> {
   return oracle;
 }
 
-describe("our CSS against getCSSAsync on the Positivus fixtures", () => {
+describe("our CSS against getCSSAsync on the Orbit fixtures", () => {
   it("agrees on every property both write", () => {
     const mismatches: string[] = [];
 
@@ -77,9 +88,26 @@ describe("our CSS against getCSSAsync on the Positivus fixtures", () => {
           ...written.readOnly.map(([property, value]): [string, string] => [property, value.replace(/ \(.*\)$/, "")]),
         ]);
         const textStyled = ours.get("font") === undefined && node.textStyleId !== undefined;
+        const runs = node.text?.segments.length ?? 1;
+        // Our value with its tokens' values in place, for Figma writes some styles (effects) by value.
+        const resolved = (value: string | undefined) =>
+          value?.replace(/var\((--[^)]+)\)/g, (whole, token: string) => context.tokens.get(token) ?? whole);
 
         for (const [property, value] of oracleOf(node)) {
-          if (textStyled && property === "font") {
+          if (
+            (textStyled && (property === "font" || (STYLE_HELD.test(property) && !ours.has(property)))) ||
+            (runs > 1 && RUN_HELD.test(property)) ||
+            (parent === null && PARENT_HELD.has(property))
+          ) {
+            continue;
+          }
+
+          if (property === "flex" && value === "1 0 0" && ours.get(property) === "1") {
+            // Grow from nothing: with a zero basis, shrinking never happens either way.
+            continue;
+          }
+
+          if (property === "padding" && sides(ours.get(property)) === sides(value)) {
             continue;
           }
 
@@ -97,7 +125,7 @@ describe("our CSS against getCSSAsync on the Positivus fixtures", () => {
             continue;
           }
 
-          if (ours.get(property) !== value) {
+          if (ours.get(property) !== value && resolved(ours.get(property)) !== value) {
             mismatches.push(
               `${name} ${node.id} ${node.type} "${node.name}" ${property}: ours ${ours.get(property)}, Figma's ${value}`,
             );
@@ -109,6 +137,13 @@ describe("our CSS against getCSSAsync on the Positivus fixtures", () => {
     expect(mismatches).toEqual([]);
   });
 });
+
+/** A padding shorthand as its four sides, so "8px 16px 4px" and "8px 16px 4px 16px" are the same. */
+function sides(value: string | undefined): string {
+  const [top, right = top, bottom = top, left = right] = (value ?? "").split(" ");
+
+  return [top, right, bottom, left].join(" ");
+}
 
 /** Figma's CSS takes the angle from the matrix, we from rotation: they differ in the hundredths of a degree. */
 function sameRotation(ours: string | undefined, theirs: string): boolean {

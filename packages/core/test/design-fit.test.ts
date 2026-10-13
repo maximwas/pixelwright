@@ -84,7 +84,7 @@ describe("fitting a huge read into maxChars", () => {
   });
 
   it("leaves a read that fits untouched", () => {
-    const row = fixture("positivus-services-row");
+    const row = fixture("orbit-plans");
     const read = fitDesign(row, 80_000);
 
     expect(read.truncated).toEqual([]);
@@ -93,13 +93,11 @@ describe("fitting a huge read into maxChars", () => {
 });
 
 describe("hints", () => {
-  it("names a raw color that equals a token, and layers left with Figma's default names", () => {
-    expect(designHints(fixture("positivus-services-row"))).toContainEqual(
-      expect.stringMatching(/#191A23 .*box-shadow.*2:4870.* equals --Dark/),
-    );
-    expect(designHints(fixture("positivus-hero"))).toContainEqual(
-      expect.stringMatching(/default names.*2:4787 "Frame 9"/),
-    );
+  it("names a raw color that equals a token, and a layer left with Figma's default name", () => {
+    const hints = designHints(fixture("orbit-customers"));
+
+    expect(hints).toContainEqual(expect.stringMatching(/#FF6B3D .*color of 54:457.* equals --color-accent/));
+    expect(hints).toContainEqual(expect.stringMatching(/^1 layer keeps Figma's default name \(54:458 "Rectangle 1"\)/));
   });
 
   it("points out a frame without auto layout and Figma's guess, a background rectangle, a bare wrapper, missing fonts and detached frames", () => {

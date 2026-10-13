@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { type Snapshot, type SnapshotNode, SnapshotSchema } from "../../src/index.ts";
 
-/** A snapshot captured from the Positivus file (packages/core/test/fixtures), checked against the schema. */
+/** A snapshot captured from the Orbit demo (packages/core/test/fixtures), checked against the schema. */
 export function fixture(name: string): Snapshot {
   return SnapshotSchema.parse(JSON.parse(readFileSync(new URL(`../fixtures/${name}.json`, import.meta.url), "utf8")));
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { designXml, type SnapshotNode, type TextSegment } from "../src/index.ts";
 
-/** Cases real files have and the Positivus fixtures do not, from the Plugin API's node, paint and effect types. */
+/** Cases real files have and the Orbit fixtures do not, from the Plugin API's node, paint and effect types. */
 
 const DARK = {
   r: 0.098,

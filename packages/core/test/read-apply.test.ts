@@ -243,12 +243,7 @@ describe("readApply", () => {
 });
 
 describe("the round trip: design_read's XML sent back changes nothing", () => {
-  for (const name of [
-    "positivus-services-row",
-    "positivus-services-block",
-    "positivus-hero",
-    "positivus-landing-top",
-  ]) {
+  for (const name of ["orbit-plans", "orbit-pricing", "orbit-customers", "orbit-desktop-top"]) {
     it(name, () => {
       const snapshot = fixture(name);
 
@@ -257,15 +252,16 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
   }
 
   it("with instances a Code Connect template renders written without their children", () => {
-    const snapshot = fixture("positivus-services-row");
+    const snapshot = fixture("orbit-plans");
     const xml = designXml(snapshot, {
       connected: new Map([
-        ["2:4872", "Heading"],
-        ["2:4878", "Heading"],
+        ["I54:244;54:211", "Button"],
+        ["54:268", "PlanCard"],
       ]),
     }).xml;
 
-    expect(xml).toContain('$code="Heading"');
+    expect(xml).toContain('$code="Button"');
+    expect(xml).toContain('$code="PlanCard"');
     expect(changesOf(snapshot, xml)).toEqual([]);
   });
 });
@@ -390,24 +386,24 @@ describe("the round trip of a read cut to fit maxChars", () => {
 
 describe("unchangedAttributes", () => {
   it("keeps what really changed: a new gap, a renamed layer, new text", () => {
-    const snapshot: Snapshot = fixture("positivus-services-row");
+    const snapshot: Snapshot = fixture("orbit-plans");
     const byId = new Map(nodesOf(snapshot).map((entry) => [entry.node.id, entry]));
     const { elements } = readApply(
-      '<Frame id="2:4869" name="Services" gap="48px" padding="0 100px"/>\n<Text id="I2:4873;334:1481">Read more</Text>',
+      '<Frame id="54:243" name="Tiers" gap="48px" width="1200px"/>\n<Text id="I54:244;54:207">For hobby projects.</Text>',
     );
     const [frame, text] = elements;
     const frameUnchanged = unchangedAttributes(
       frame as never,
-      byId.get("2:4869") as { node: SnapshotNode; parent: SnapshotNode | null },
+      byId.get("54:243") as { node: SnapshotNode; parent: SnapshotNode | null },
       snapshot,
     );
     const textUnchanged = unchangedAttributes(
       text as never,
-      byId.get("I2:4873;334:1481") as { node: SnapshotNode; parent: SnapshotNode | null },
+      byId.get("I54:244;54:207") as { node: SnapshotNode; parent: SnapshotNode | null },
       snapshot,
     );
 
-    expect([...frameUnchanged.attributes].sort()).toEqual(["id", "padding"]);
+    expect([...frameUnchanged.attributes].sort()).toEqual(["id", "width"]);
     expect(textUnchanged.text).toBe(false);
   });
 

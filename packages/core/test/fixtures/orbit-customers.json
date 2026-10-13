@@ -46,7 +46,7 @@
       "border-radius": "24px",
       "background": "var(--color-surface, #FFF)"
     },
-    "childCount": 10,
+    "childCount": 12,
     "children": [
       {
         "id": "54:435",
@@ -1081,7 +1081,7 @@
         "primaryAxisAlignItems": "MIN",
         "counterAxisAlignItems": "MIN",
         "counterAxisAlignContent": "AUTO",
-        "itemSpacing": 0,
+        "itemSpacing": 6,
         "counterAxisSpacing": 0,
         "paddingTop": 6,
         "paddingRight": 12,
@@ -1124,6 +1124,7 @@
           "transform": "rotate(-8deg)",
           "padding": "6px 12px",
           "align-items": "flex-start",
+          "gap": "6px",
           "border-radius": "999px",
           "background": "var(--color-accent, #FF6B3D)"
         },
@@ -1492,6 +1493,142 @@
             "childCount": 0
           }
         ]
+      },
+      {
+        "id": "54:457",
+        "name": "★★★★★",
+        "type": "TEXT",
+        "visible": true,
+        "x": 112,
+        "y": 204,
+        "width": 74,
+        "height": 17,
+        "renderBounds": {
+          "x": 113.27,
+          "y": 206.55,
+          "width": 70.66,
+          "height": 11.55
+        },
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 1,
+              "g": 0.41960784792900085,
+              "b": 0.239215686917305
+            },
+            "boundVariables": {}
+          }
+        ],
+        "text": {
+          "characters": "★★★★★",
+          "textAutoResize": "WIDTH_AND_HEIGHT",
+          "textAlignHorizontal": "LEFT",
+          "textAlignVertical": "TOP",
+          "segments": [
+            {
+              "characters": "★★★★★",
+              "start": 0,
+              "end": 5,
+              "fontName": {
+                "family": "Inter",
+                "style": "Regular",
+                "variationSettings": {
+                  "slnt": 0,
+                  "wght": 400
+                }
+              },
+              "fontSize": 14,
+              "fontWeight": 400,
+              "fontStyle": "REGULAR",
+              "textDecoration": "NONE",
+              "textCase": "ORIGINAL",
+              "lineHeight": {
+                "unit": "AUTO"
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "visible": true,
+                  "opacity": 1,
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 0.41960784792900085,
+                    "b": 0.239215686917305
+                  },
+                  "boundVariables": {}
+                }
+              ],
+              "fillStyleId": "",
+              "textStyleId": "",
+              "hyperlink": null,
+              "textDecorationStyle": null,
+              "textDecorationOffset": null,
+              "textDecorationThickness": null,
+              "textDecorationColor": null,
+              "listOptions": {
+                "type": "NONE"
+              },
+              "indentation": 0,
+              "paragraphIndent": 0,
+              "paragraphSpacing": 0,
+              "textWrapStyle": "AUTO",
+              "openTypeFeatures": {},
+              "boundVariables": {}
+            }
+          ]
+        },
+        "css": {
+          "color": "#FF6B3D",
+          "font-family": "Inter",
+          "font-size": "14px",
+          "font-style": "normal",
+          "font-weight": "400",
+          "line-height": "normal"
+        },
+        "childCount": 0
+      },
+      {
+        "id": "54:458",
+        "name": "Rectangle 1",
+        "type": "RECTANGLE",
+        "visible": true,
+        "x": 40,
+        "y": 188,
+        "width": 560,
+        "height": 1,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 0.8823529481887817,
+              "g": 0.8980392217636108,
+              "b": 0.9333333373069763
+            },
+            "boundVariables": {}
+          }
+        ],
+        "css": {
+          "width": "560px",
+          "height": "1px",
+          "background": "#E1E5EE"
+        },
+        "childCount": 0
       }
     ]
   },
