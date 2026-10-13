@@ -501,3 +501,23 @@ export const ChangesSinceInputSchema = z.object({
     .describe("The cursor an earlier answer gave: only what changed after it. Default: all the plugin has seen."),
   file: FileSchema,
 });
+
+export const ContrastInputSchema = z.object({
+  node: z
+    .string()
+    .min(1)
+    .max(200)
+    .exactOptional()
+    .describe("The layer whose texts to check (a section, a screen). Default: the one layer selected in Figma."),
+  file: FileSchema,
+});
+
+export const TokensUsageInputSchema = z.object({
+  token: OPERATION_SCHEMAS.usage.input.shape.token.describe(
+    "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg.",
+  ),
+  within: OPERATION_SCHEMAS.usage.input.shape.within.describe(
+    "The layer or page to look in. Default: the current page.",
+  ),
+  file: FileSchema,
+});

@@ -211,3 +211,43 @@ describe("gradient paint styles", () => {
     expect(tokens.styles.find((style) => style.id === "S:g")?.css).toBe(gradient);
   });
 });
+
+describe("tokens_usage", () => {
+  it("lists the layers a numbered style token names, and only those", async () => {
+    const white = (id: string) => ({
+      ...blackStyle(id, 1),
+      name: "White",
+      remote: true,
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [filled("1:1", "S:w1"), filled("1:2", "S:w2"), filled("1:3", "S:w2")],
+      }),
+      {
+        styles: {
+          "S:w1": white("S:w1"),
+          "S:w2": white("S:w2"),
+        },
+      },
+    );
+
+    await expect(runOperation("usage", { token: "--White-2" })).resolves.toMatchObject({
+      kind: "paint style",
+      name: "White",
+      layers: [
+        {
+          id: "1:2",
+          property: "fill",
+        },
+        {
+          id: "1:3",
+          property: "fill",
+        },
+      ],
+      more: false,
+    });
+  });
+});

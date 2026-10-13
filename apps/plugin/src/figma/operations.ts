@@ -19,6 +19,7 @@ import { selectionWait } from "./selection-wait.ts";
 import { entries, snapshot } from "./snapshot.ts";
 import { tokensApply } from "./tokens-apply.ts";
 import { upload } from "./uploads.ts";
+import { usage } from "./usage.ts";
 import { variables } from "./variables.ts";
 
 type Handlers = { readonly [N in OperationName]: (input: OperationInput<N>) => Promise<OperationOutput<N>> };
@@ -32,6 +33,7 @@ const HANDLERS: Handlers = {
   selection_wait: selectionWait,
   changes,
   flows,
+  usage,
   find,
   outline,
   export: exportNode,

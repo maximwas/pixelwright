@@ -159,6 +159,26 @@ export const OPERATION_SCHEMAS = {
       ),
     }),
   },
+  usage: {
+    input: z.object({
+      /** A style's or variable's token as design_read and tokens_read write it (--White-2, --h1-font). */
+      token: z.string().min(3).max(300),
+      /** The layer or page to look in. Default: the current page. */
+      within: NodeIdSchema.exactOptional(),
+    }),
+    output: z.object({
+      token: z.string(),
+      kind: z.enum(["paint style", "text style", "effect style", "variable"]),
+      name: z.string(),
+      layers: z.array(
+        LayerNameSchema.extend({
+          type: z.string(),
+          property: z.string().describe("Where the layer uses it: fill, stroke, effect, text, a text run, or a field."),
+        }),
+      ),
+      more: z.boolean(),
+    }),
+  },
   flows: {
     input: z.object({
       /** The page to map. Default: the current page. */

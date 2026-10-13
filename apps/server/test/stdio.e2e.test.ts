@@ -44,6 +44,7 @@ describe("stdio server", () => {
         "changes_since",
         "code_connect_read",
         "components_read",
+        "contrast_check",
         "design_apply",
         "design_read",
         "execute",
@@ -63,6 +64,7 @@ describe("stdio server", () => {
         "status",
         "tokens_apply",
         "tokens_read",
+        "tokens_usage",
         "viewport_get",
       ]);
 

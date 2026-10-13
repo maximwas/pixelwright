@@ -45,6 +45,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   selection_wait: "Waited for a selection",
   changes: "Read the changes",
   flows: "Mapped the prototype",
+  usage: "Looked up a token's layers",
   inspect: "Inspected layers",
   apply: "Changed the file",
   delete: "Deleted layers",
@@ -111,3 +112,6 @@ export const OWN_WRITE_ECHO_MS = 1_000;
 
 /** The most prototype links flow_read lists. */
 export const FLOW_MAX_LINKS = 500;
+
+/** The most layers tokens_usage lists. */
+export const USAGE_MAX_LAYERS = 500;
