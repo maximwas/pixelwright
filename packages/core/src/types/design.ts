@@ -12,7 +12,7 @@ export interface PlannedAsset {
 
 export interface DesignRead {
   readonly xml: string;
-  /** Every token the XML refers to: `--Dark` → `#191A23`. */
+  /** Every token the XML refers to: `--color-ink` → `#14161F`. */
   readonly tokens: Record<string, string>;
   /** Every text style the XML names: `h3` → its font shorthand. */
   readonly textStyles: Record<string, string>;

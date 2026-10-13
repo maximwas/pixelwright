@@ -16,6 +16,9 @@ const STYLE_HELD = /^(letter-spacing|text-transform|text-decoration|text-underli
 /** What a text says per run: a text of several runs is read as its base and spans, Figma's CSS gives one run's. */
 const RUN_HELD = /^(color|font|letter-spacing|text-transform|text-decoration|text-underline)/;
 
+/** Properties Figma writes by value though a style holds them (effect styles); colours it writes as var() itself. */
+const BY_VALUE = new Set(["box-shadow", "filter", "backdrop-filter"]);
+
 /** A layer's place in its parent: the read root's parent is not read, so none of it is written. */
 const PARENT_HELD = new Set(["align-self", "flex"]);
 
@@ -89,9 +92,11 @@ describe("our CSS against getCSSAsync on the Orbit fixtures", () => {
         ]);
         const textStyled = ours.get("font") === undefined && node.textStyleId !== undefined;
         const runs = node.text?.segments.length ?? 1;
-        // Our value with its tokens' values in place, for Figma writes some styles (effects) by value.
-        const resolved = (value: string | undefined) =>
-          value?.replace(/var\((--[^)]+)\)/g, (whole, token: string) => context.tokens.get(token) ?? whole);
+        // Our value with its tokens' values in place, where Figma writes the style by value (effects).
+        const resolved = (property: string, value: string | undefined) =>
+          BY_VALUE.has(property)
+            ? value?.replace(/var\((--[^)]+)\)/g, (whole, token: string) => context.tokens.get(token) ?? whole)
+            : value;
 
         for (const [property, value] of oracleOf(node)) {
           if (
@@ -125,7 +130,7 @@ describe("our CSS against getCSSAsync on the Orbit fixtures", () => {
             continue;
           }
 
-          if (ours.get(property) !== value && resolved(ours.get(property)) !== value) {
+          if (ours.get(property) !== value && resolved(property, ours.get(property)) !== value) {
             mismatches.push(
               `${name} ${node.id} ${node.type} "${node.name}" ${property}: ours ${ours.get(property)}, Figma's ${value}`,
             );

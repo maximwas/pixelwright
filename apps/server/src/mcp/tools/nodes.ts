@@ -31,7 +31,7 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
     description:
       "Brings layers into view in Figma (switching to their page when needed) and selects them, so the user sees what you mean: one layer, or several on one page, fitted in view or at a zoom (1 is 100%) centred on them; select: false only moves the view. Changes only the view and the selection, never the file.",
     input: z.object({
-      node: OPERATION_SCHEMAS.show.input.shape.node.describe("The layer's id, e.g. 2:4868. Give node or nodes."),
+      node: OPERATION_SCHEMAS.show.input.shape.node.describe("The layer's id, e.g. 54:243. Give node or nodes."),
       nodes: OPERATION_SCHEMAS.show.input.shape.nodes.describe("Several layers on one page, fitted in view together."),
       zoom: OPERATION_SCHEMAS.show.input.shape.zoom.describe('"fit" (default), or a zoom: 1 is 100%, 0.5 is 50%.'),
       select: OPERATION_SCHEMAS.show.input.shape.select.describe(
@@ -120,7 +120,7 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
       description:
         'Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display="none" in design_apply instead) stays, with why. One call is one undo step in Figma. Refused while the plugin\'s Allow edits switch is off.',
       input: z.object({
-        nodes: OPERATION_SCHEMAS.delete.input.shape.nodes.describe('The layers\' ids, e.g. ["2:4868"].'),
+        nodes: OPERATION_SCHEMAS.delete.input.shape.nodes.describe('The layers\' ids, e.g. ["54:243"].'),
         file: FileSchema,
       }),
       output: OPERATION_SCHEMAS.delete.output,

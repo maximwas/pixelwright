@@ -406,7 +406,7 @@ describe("CSS mapping rules", () => {
     expect(readOnly).toEqual([["font-variation-settings", '"opsz" 14']]);
   });
 
-  it("leaves out a variable font's axes at their registered defaults (upright, not italic, normal width)", () => {
+  it("leaves out a variable font's axes at what a browser draws anyway (upright, normal width, optical size at the size)", () => {
     const axesOf = (variationSettings: Record<string, number>) =>
       cssOf(
         layer({
@@ -451,5 +451,7 @@ describe("CSS mapping rules", () => {
         wdth: 100,
       }),
     ).toEqual([["font-variation-settings", '"slnt" -10']]);
+    // Optical size at the font size is what a browser picks itself (font-optical-sizing: auto).
+    expect(axesOf({ opsz: 16 })).toEqual([]);
   });
 });

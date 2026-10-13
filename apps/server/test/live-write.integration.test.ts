@@ -302,10 +302,10 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Orbit file", () => {
         ).structured as {
           components: { name: string; variants?: { id: string; name: string }[] }[];
         };
-        const headingVariants = (used.components.find(({ name }) => name === "Button")?.variants ?? []).map(
+        const buttonVariants = (used.components.find(({ name }) => name === "Button")?.variants ?? []).map(
           ({ name }) => name,
         );
-        const [firstVariant = "", secondVariant = firstVariant] = headingVariants;
+        const [firstVariant = "", secondVariant = firstVariant] = buttonVariants;
         const instance = (
           await call("design_apply", {
             xml: `<Frame id="${boardId}"><Instance component="Button" variant="${firstVariant}" position="absolute" left="40px" top="300px"/></Frame>`,
@@ -314,7 +314,7 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Orbit file", () => {
         const instanceId = instance.created[0]?.id ?? "";
 
         log.instance = {
-          headingVariants,
+          buttonVariants,
           instance,
         };
         expect(instance.errors).toEqual([]);

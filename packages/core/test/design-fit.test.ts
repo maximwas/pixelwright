@@ -97,7 +97,35 @@ describe("hints", () => {
     const hints = designHints(fixture("orbit-customers"));
 
     expect(hints).toContainEqual(expect.stringMatching(/#FF6B3D .*color of 54:457.* equals --color-accent/));
-    expect(hints).toContainEqual(expect.stringMatching(/^1 layer keeps Figma's default name \(54:458 "Rectangle 1"\)/));
+    expect(hints).toContainEqual(
+      `1 layer keeps Figma's default name (54:458 "Rectangle 1"): name it by its role in the code.`,
+    );
+  });
+
+  it("counts several layers left with Figma's default names", () => {
+    const hints = designHints(
+      snapshotOf(
+        layer({
+          id: "1:1",
+          name: "Card",
+          layoutMode: "VERTICAL",
+          children: [
+            layer({
+              id: "1:2",
+              name: "Frame 12",
+            }),
+            layer({
+              id: "1:3",
+              name: "Rectangle 4",
+            }),
+          ],
+        }),
+      ),
+    );
+
+    expect(hints).toContainEqual(
+      `2 layers keep Figma's default names (1:2 "Frame 12", 1:3 "Rectangle 4"): name the elements by their role in the code.`,
+    );
   });
 
   it("points out a frame without auto layout and Figma's guess, a background rectangle, a bare wrapper, missing fonts and detached frames", () => {

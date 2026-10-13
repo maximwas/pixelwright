@@ -119,6 +119,37 @@ describe("assets beyond icons and photos", () => {
     );
   });
 
+  it("keeps a drawing's blend mode on its icon, as Figma blends the exported logo with what is under it", () => {
+    const xml = xmlOf(
+      box([
+        layer({
+          id: "1:2",
+          type: "INSTANCE",
+          name: "Logo",
+          width: 124,
+          height: 48,
+          blendMode: "LUMINOSITY",
+          children: [
+            layer({
+              id: "I1:2;1:1",
+              type: "VECTOR",
+              name: "Mark",
+            }),
+          ],
+        }),
+        // Text keeps the box a frame: a frame of vectors only would be one icon itself.
+        layer({
+          id: "1:3",
+          type: "TEXT",
+        }),
+      ]),
+    );
+
+    expect(line(xml, "1:2")).toMatch(
+      /^ {2}<Icon id="1:2" name="Logo" src="assets\/logo.svg" .*\$css="mix-blend-mode: luminosity"\/>$/,
+    );
+  });
+
   it("renders a leaf painted with what CSS cannot draw (video, pattern, shader, noise, glass) as an image", () => {
     const xml = xmlOf(
       box([
