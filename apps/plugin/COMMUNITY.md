@@ -7,9 +7,9 @@ exists, people import `~/.pixelwright/plugin/manifest.json`, which `npx pixelwri
 ## Before the first publish
 
 - [ ] The listing's name, tagline and description below, checked against the README.
-- [ ] An icon (128 × 128) and a cover (1920 × 960) made for Pixelwright, not taken from a test file.
-- [ ] Figma gives the plugin a numeric id on publish: put it in `package.json` → `figma-plugin.id` (it is `pixelwright`
-      for development imports), rebuild, and release so the npm package carries the same id.
+- [x] An icon (128 × 128) and a cover (1920 × 960) made for Pixelwright: `community/icon.png`, `community/cover.png`.
+- [x] Figma gives the plugin a numeric id on publish: it is in `package.json` → `figma-plugin.id`
+      (1691873879456586177), so the npm package carries the same id.
 - [ ] Network access: the manifest allows only `ws://localhost:18720`, with its reasoning. Confirm Figma's review
       accepts a localhost WebSocket (other published MCP bridges use one).
 - [ ] `execute` runs code the agent sends inside the plugin. If review refuses a plugin that evaluates code, publish a
@@ -30,13 +30,17 @@ Pixelwright connects AI coding agents (Claude Code, Cursor, Codex and other MCP 
 open. Run `npx -y pixelwright@latest` in a terminal, open this plugin in your file, and your agent can:
 
 - read a section as XML with CSS, tokens and assets, ready to build with your own components;
-- read your variables, styles and components;
+- inspect and measure layers, compare variants and screen sizes, check contrast and the design's scale;
+- compare a screenshot of your build with the design;
+- read your variables, styles, components and prototype flows;
 - change the file with the same XML, create components and variants, and write tokens, when you allow it;
 - turn instances into your code with your Figma Code Connect templates, on any plan.
 
 The plugin talks only to the Pixelwright server on your computer (localhost), after you pair them once with a code.
-Nothing goes to Figma's REST API and no token is needed. Writing is off until you turn on Allow edits in the plugin's
-window, and each change is one undo step.
+Nothing goes to Figma's REST API and no token is needed, so there are no API rate limits. Writing is off until you turn
+on Allow edits in the plugin's window, and each change is one undo step.
+
+Needs Node.js 24.11 or newer and Figma Desktop.
 
 Pixelwright is free: https://github.com/maximwas/pixelwright. It is not made by or affiliated
 with Figma. If it saves you time, you can support it on Ko-fi (https://ko-fi.com/maksymvasianin) or with a monobank jar
