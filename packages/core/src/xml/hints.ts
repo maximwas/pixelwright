@@ -68,6 +68,12 @@ const LAYER_HINTS = {
     `${examples.length === 1 ? "A frame only wraps" : `${examples.length} frames only wrap`} one layer (${listed(examples)}): they may not need elements of their own.`,
   detached: (examples: readonly string[]) =>
     `${examples.length === 1 ? "A frame was" : `${examples.length} frames were`} detached from a component (${listed(examples)}): check whether the component fits instead.`,
+  autoLineHeight: (examples: readonly string[]) =>
+    `line-height normal is Figma's Auto line height: the font's own spacing, about 1.2× the font size for most fonts (${listed(examples)}); give it in px where the build must match to the pixel (inspect shows each text's).`,
+  softBreak: (examples: readonly string[]) =>
+    `&#8232; is a line break inside a paragraph (Shift+Enter in Figma, <br> in HTML), not spaces (${listed(examples)}).`,
+  overflow: (examples: readonly string[]) =>
+    `${examples.length === 1 ? "A layer is" : `${examples.length} layers are`} wider or taller than the room their auto layout parent gives them, so they overflow it in Figma too (${listed(examples)}): decide whether the build wraps, clips or lets them out.`,
 } as const;
 
 type LayerHint = keyof typeof LAYER_HINTS;
@@ -159,7 +165,39 @@ function layerHints(node: SnapshotNode, parent: SnapshotNode | null, root: Snaps
     hints.push(["detached", label(node)]);
   }
 
+  const segments = node.text?.segments ?? [];
+
+  if (segments.some((segment) => segment.lineHeight.unit === "AUTO")) {
+    hints.push(["autoLineHeight", label(node)]);
+  }
+
+  if ((node.text?.characters ?? "").includes("\u2028")) {
+    hints.push(["softBreak", label(node)]);
+  }
+
+  const room = parent === null ? null : roomIn(parent);
+
+  if (room !== null && node.layoutPositioning !== "ABSOLUTE") {
+    if (node.width > room.width + 0.5) {
+      hints.push(["overflow", `${label(node)} ${px(node.width)} wide in ${px(room.width)}`]);
+    } else if (node.height > room.height + 0.5) {
+      hints.push(["overflow", `${label(node)} ${px(node.height)} tall in ${px(room.height)}`]);
+    }
+  }
+
   return hints;
+}
+
+/** The box an auto layout parent gives its children: its own less its padding; null when it places them by hand. */
+function roomIn(parent: SnapshotNode): { width: number; height: number } | null {
+  if (parent.layoutMode === undefined || parent.layoutMode === "NONE") {
+    return null;
+  }
+
+  return {
+    width: parent.width - (parent.paddingLeft ?? 0) - (parent.paddingRight ?? 0),
+    height: parent.height - (parent.paddingTop ?? 0) - (parent.paddingBottom ?? 0),
+  };
 }
 
 /** A rectangle with a plain fill under the rest, the size of its parent: a background drawn as a layer. */

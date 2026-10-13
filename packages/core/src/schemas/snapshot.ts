@@ -50,6 +50,21 @@ export const EffectSchema = z.looseObject({
   blendMode: z.string().optional(),
   showShadowBehindNode: z.boolean().optional(),
   boundVariables: BoundVariablesSchema.optional(),
+  /** A blur's kind: NORMAL, or PROGRESSIVE from startRadius at startOffset to radius at endOffset (0–1 of the box). */
+  blurType: z.string().optional(),
+  startRadius: z.number().optional(),
+  startOffset: z
+    .object({
+      x: z.number(),
+      y: z.number(),
+    })
+    .optional(),
+  endOffset: z
+    .object({
+      x: z.number(),
+      y: z.number(),
+    })
+    .optional(),
 });
 
 const LineHeightSchema = z.looseObject({

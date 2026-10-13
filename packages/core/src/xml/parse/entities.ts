@@ -45,7 +45,9 @@ export function inlineText(text: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll("\n", "&#10;")
     .replaceAll("\r", "&#13;")
-    .replaceAll("\t", "&#9;");
+    .replaceAll("\t", "&#9;")
+    .replaceAll("\u2028", "&#8232;")
+    .replaceAll("\u2029", "&#8233;");
 
   return text.trim() === "" ? escaped.replaceAll(" ", "&#32;") : escaped;
 }

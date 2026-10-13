@@ -96,7 +96,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
     }
   }
 
-  effectsCss(node, css, context);
+  effectsCss(node, css, readOnly, context);
 
   return {
     properties: [...css].sort(([a], [b]) => order(a) - order(b)),
@@ -460,14 +460,29 @@ function borderCss(
       }
     }
 
+    centredStroke(node, readOnly);
+
     return;
   }
 
   // An inside or centred stroke is a border (with box-sizing: border-box it keeps the size); outside, an outline.
   css.set(node.strokeAlign === "OUTSIDE" ? "outline" : "border", line(node.strokeWeight ?? 1));
+  centredStroke(node, readOnly);
 }
 
-function effectsCss(node: SnapshotNode, css: Map<string, string>, context: CssContext): void {
+/** A centred stroke paints half of itself outside the layer's box, which a border-box border cannot. */
+function centredStroke(node: SnapshotNode, readOnly: [string, string][]): void {
+  if (node.strokeAlign === "CENTER") {
+    readOnly.push(["stroke-align", "center (half of it paints outside the box)"]);
+  }
+}
+
+function effectsCss(
+  node: SnapshotNode,
+  css: Map<string, string>,
+  readOnly: [string, string][],
+  context: CssContext,
+): void {
   const effects = (node.effects ?? []).filter((effect) => effect.visible !== false);
   const style = node.effectStyleId === undefined ? undefined : context.styles[node.effectStyleId];
   const isText = node.type === "TEXT";
@@ -490,16 +505,44 @@ function effectsCss(node: SnapshotNode, css: Map<string, string>, context: CssCo
     }
   }
 
-  // Figma's blur radius is twice the CSS one: Dev Mode writes blur(radius / 2).
+  // Figma's blur radius is twice the CSS one: Dev Mode writes blur(radius / 2). A progressive blur shows its end
+  // radius, and how it runs is noted: CSS has no blur that changes across a box.
   for (const effect of effects) {
     if (effect.type === "LAYER_BLUR" && effect.radius !== undefined) {
       css.set("filter", `blur(${px(effect.radius / 2)})`);
+      progressiveBlur(effect, "blur", readOnly);
     }
 
     if (effect.type === "BACKGROUND_BLUR" && effect.radius !== undefined) {
       css.set("backdrop-filter", `blur(${px(effect.radius / 2)})`);
+      progressiveBlur(effect, "backdrop-blur", readOnly);
     }
   }
+}
+
+/** A progressive blur's run, in CSS radii, from where it starts to where it ends (percents of the box). */
+function progressiveBlur(effect: SnapshotEffect, property: string, readOnly: [string, string][]): void {
+  if (effect.blurType !== "PROGRESSIVE") {
+    return;
+  }
+
+  const at = (offset: { x: number; y: number } | undefined, fallback: { x: number; y: number }) => {
+    const { x, y } = offset ?? fallback;
+
+    return `${Math.round(x * 100)}% ${Math.round(y * 100)}%`;
+  };
+  const radius = (value: number) => `${Math.round(value / 2)}px`;
+
+  readOnly.push([
+    property,
+    `progressive from ${radius(effect.startRadius ?? 0)} at ${at(effect.startOffset, {
+      x: 0.5,
+      y: 0,
+    })} to ${radius(effect.radius ?? 0)} at ${at(effect.endOffset, {
+      x: 0.5,
+      y: 1,
+    })}`,
+  ]);
 }
 
 /** Shadows as a box-shadow list, top first (an effect style's value, for the tokens). */
