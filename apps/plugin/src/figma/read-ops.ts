@@ -1,5 +1,5 @@
 import { BridgeError, type OperationInput, type OperationOutput, type OutlineNode } from "@pixelwright/core";
-import { OUTLINE_MAX_NODES } from "../constants/plugin.ts";
+import { OUTLINE_MAX_NODES, VIEWPORT_MAX_LAYERS } from "../constants/plugin.ts";
 import { boxOf, pageOf, pathOf, requireNode } from "./nodes.ts";
 
 /** What the user selected on the current page. */
@@ -15,27 +15,121 @@ export async function selection(): Promise<OperationOutput<"selection">> {
 }
 
 /** Selects a node and brings it into view, switching to its page when needed. */
-export async function show({ node: id }: OperationInput<"show">): Promise<OperationOutput<"show">> {
-  const node = await requireNode(id);
-  const page = pageOf(node);
+export async function show({ node, nodes, zoom, select }: OperationInput<"show">): Promise<OperationOutput<"show">> {
+  const ids = nodes ?? (node === undefined ? [] : [node]);
 
-  if (page === null || node.type === "PAGE" || node.type === "DOCUMENT") {
-    throw new BridgeError("NODE_NOT_FOUND", `${id} is not a layer on a page.`);
+  if (ids.length === 0) {
+    throw new BridgeError("OP_FAILED", "Give node or nodes: the layers to show.");
   }
 
-  if (page !== figma.currentPage) {
+  const layers: SceneNode[] = [];
+  let page: PageNode | null = null;
+
+  for (const id of ids) {
+    const found = await requireNode(id);
+    const on = pageOf(found);
+
+    if (on === null || found.type === "PAGE" || found.type === "DOCUMENT") {
+      throw new BridgeError("NODE_NOT_FOUND", `${id} is not a layer on a page.`);
+    }
+
+    if (page !== null && on !== page) {
+      throw new BridgeError(
+        "OP_FAILED",
+        `${id} is on page ${on.name}, the others on ${page.name}: show one page at a time.`,
+      );
+    }
+
+    page = on;
+    layers.push(found as SceneNode);
+  }
+
+  if (page !== null && page !== figma.currentPage) {
     await figma.setCurrentPageAsync(page);
   }
 
-  const layer = node as SceneNode;
+  if (select) {
+    figma.currentPage.selection = layers;
+  }
 
-  figma.currentPage.selection = [layer];
-  figma.viewport.scrollAndZoomIntoView([layer]);
+  figma.viewport.scrollAndZoomIntoView(layers);
+
+  if (zoom !== "fit") {
+    figma.viewport.zoom = zoom;
+  }
 
   return {
-    id: node.id,
-    name: node.name,
-    page: page.name,
+    nodes: layers.map((layer) => ({
+      id: layer.id,
+      name: layer.name,
+    })),
+    page: page?.name ?? figma.currentPage.name,
+    zoom: figma.viewport.zoom,
+  };
+}
+
+/** What the user sees: the page, the zoom, and the page's layers and their children that meet the view. */
+export async function viewport(): Promise<OperationOutput<"viewport">> {
+  const { bounds, zoom, center } = figma.viewport;
+  const meets = (box: Rect | null) =>
+    box !== null &&
+    box.x < bounds.x + bounds.width &&
+    box.x + box.width > bounds.x &&
+    box.y < bounds.y + bounds.height &&
+    box.y + box.height > bounds.y;
+  const layers: OperationOutput<"viewport">["layers"] = [];
+  let more = false;
+  const visit = (node: SceneNode, level: number) => {
+    const box = "absoluteBoundingBox" in node ? node.absoluteBoundingBox : null;
+
+    if (!node.visible || !meets(box) || box === null) {
+      return;
+    }
+
+    if (layers.length >= VIEWPORT_MAX_LAYERS) {
+      more = true;
+
+      return;
+    }
+
+    layers.push({
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      box: {
+        x: Math.round(box.x),
+        y: Math.round(box.y),
+        width: Math.round(box.width),
+        height: Math.round(box.height),
+      },
+    });
+
+    if (level < 1 && "children" in node) {
+      for (const child of node.children) {
+        visit(child, level + 1);
+      }
+    }
+  };
+
+  for (const node of figma.currentPage.children) {
+    visit(node, 0);
+  }
+
+  return {
+    page: figma.currentPage.name,
+    zoom,
+    center: {
+      x: Math.round(center.x),
+      y: Math.round(center.y),
+    },
+    bounds: {
+      x: Math.round(bounds.x),
+      y: Math.round(bounds.y),
+      width: Math.round(bounds.width),
+      height: Math.round(bounds.height),
+    },
+    layers,
+    more,
   };
 }
 

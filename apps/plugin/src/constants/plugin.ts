@@ -40,7 +40,8 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   variables: "Read styles and variables",
   find: "Searched layers",
   selection: "Read the selection",
-  show: "Showed a layer",
+  show: "Showed layers",
+  viewport: "Read the view",
   inspect: "Inspected layers",
   apply: "Changed the file",
   delete: "Deleted layers",
@@ -95,3 +96,6 @@ export const SET_GAP = 40;
 /** Pixelwright's mark, as on the website and its tab icon: a blue tile with a white selection frame. */
 export const MARK_SVG =
   '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d99ff"/><rect x="9" y="9" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.2"/><g fill="#0d99ff" stroke="#fff" stroke-width="1.8"><rect x="6.2" y="6.2" width="5.6" height="5.6"/><rect x="20.2" y="6.2" width="5.6" height="5.6"/><rect x="6.2" y="20.2" width="5.6" height="5.6"/><rect x="20.2" y="20.2" width="5.6" height="5.6"/></g></svg>';
+
+/** The most layers viewport lists as in view. */
+export const VIEWPORT_MAX_LAYERS = 50;

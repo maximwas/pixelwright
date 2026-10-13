@@ -96,11 +96,40 @@ export const OPERATION_SCHEMAS = {
     output: z.object({ nodes: z.array(NodeRefSchema) }),
   },
   show: {
-    input: z.object({ node: NodeIdSchema }),
+    input: z.object({
+      node: NodeIdSchema.exactOptional(),
+      /** Several layers, all on one page: the view fits them all. */
+      nodes: z.array(NodeIdSchema).min(1).max(50).exactOptional(),
+      /** Fit the layers in view, or this zoom (1 is 100%) centred on them. */
+      zoom: z.union([z.literal("fit"), z.number().min(0.01).max(256)]).default("fit"),
+      /** Select them too, or only bring them into view. */
+      select: z.boolean().default(true),
+    }),
     output: z.object({
-      id: z.string(),
-      name: z.string(),
+      nodes: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+        }),
+      ),
       page: z.string(),
+      zoom: z.number(),
+    }),
+  },
+  viewport: {
+    input: z.null(),
+    output: z.object({
+      page: z.string(),
+      zoom: z.number(),
+      center: z.object({
+        x: z.number(),
+        y: z.number(),
+      }),
+      /** The part of the page in view, in page px. */
+      bounds: BoxSchema,
+      /** The page's layers and their children that meet the view, outermost first. */
+      layers: z.array(NodeRefSchema),
+      more: z.boolean(),
     }),
   },
   find: {

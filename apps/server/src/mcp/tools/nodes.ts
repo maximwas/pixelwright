@@ -21,16 +21,31 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
   });
   registerTool(server, {
     name: "node_show",
-    title: "Show a node",
+    title: "Show layers",
     description:
-      "Selects a layer in Figma and brings it into view (switching to its page when needed), so the user sees what you mean. Changes only the view and the selection, never the file.",
+      "Brings layers into view in Figma (switching to their page when needed) and selects them, so the user sees what you mean: one layer, or several on one page, fitted in view or at a zoom (1 is 100%) centred on them; select: false only moves the view. Changes only the view and the selection, never the file.",
     input: z.object({
-      node: OPERATION_SCHEMAS.show.input.shape.node.describe("The layer's id, e.g. 2:4868."),
+      node: OPERATION_SCHEMAS.show.input.shape.node.describe("The layer's id, e.g. 2:4868. Give node or nodes."),
+      nodes: OPERATION_SCHEMAS.show.input.shape.nodes.describe("Several layers on one page, fitted in view together."),
+      zoom: OPERATION_SCHEMAS.show.input.shape.zoom.describe('"fit" (default), or a zoom: 1 is 100%, 0.5 is 50%.'),
+      select: OPERATION_SCHEMAS.show.input.shape.select.describe(
+        "Select them too (default), or only bring them into view.",
+      ),
       file: FileSchema,
     }),
     output: OPERATION_SCHEMAS.show.output,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: ({ file, node }) => runOp(bridge, "show", { node }, file),
+    run: ({ file, ...show }) => runOp(bridge, "show", show, file),
+  });
+  registerTool(server, {
+    name: "viewport_get",
+    title: "What the user sees",
+    description:
+      'What the user is looking at in Figma now: the page, the zoom, the part of the page in view (page px), and the page\'s layers and their children that meet it, outermost first. Use it when the user says "this" or "here" without selecting anything; selection_get gives what is selected.',
+    input: z.object({ file: FileSchema }),
+    output: OPERATION_SCHEMAS.viewport.output,
+    annotations: READ_ONLY_ANNOTATIONS,
+    run: ({ file }) => runOp(bridge, "viewport", null, file),
   });
   registerTool(server, {
     name: "nodes_find",

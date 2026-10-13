@@ -12,7 +12,7 @@ import { deleteNodes } from "./delete.ts";
 import { execute } from "./execute.ts";
 import { exportNode, originalImage } from "./export-node.ts";
 import { inspect } from "./inspect.ts";
-import { find, outline, selection, show } from "./read-ops.ts";
+import { find, outline, selection, show, viewport } from "./read-ops.ts";
 import { entries, snapshot } from "./snapshot.ts";
 import { tokensApply } from "./tokens-apply.ts";
 import { upload } from "./uploads.ts";
@@ -25,6 +25,7 @@ const HANDLERS: Handlers = {
   ping: async () => ({ pong: true }),
   selection,
   show,
+  viewport,
   find,
   outline,
   export: exportNode,

@@ -1079,6 +1079,17 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
       state.currentPage = next;
     },
     viewport: {
+      zoom: 1,
+      center: {
+        x: 0,
+        y: 0,
+      },
+      bounds: {
+        x: 0,
+        y: 0,
+        width: 1440,
+        height: 900,
+      },
       scrollAndZoomIntoView: (nodes: FakeNode[]) => {
         state.zoomedTo = nodes;
       },

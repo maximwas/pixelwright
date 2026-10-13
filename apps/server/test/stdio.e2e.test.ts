@@ -60,6 +60,7 @@ describe("stdio server", () => {
         "status",
         "tokens_apply",
         "tokens_read",
+        "viewport_get",
       ]);
 
       for (const tool of tools) {

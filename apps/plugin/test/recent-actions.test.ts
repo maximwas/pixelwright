@@ -40,7 +40,7 @@ describe("the window's activity", () => {
       "Read styles and variables",
       "Searched layers",
       "Read the selection",
-      "Showed a layer",
+      "Showed layers",
       "Inspected layers",
     ]);
   });

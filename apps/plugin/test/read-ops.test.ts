@@ -104,9 +104,14 @@ describe("read operations", () => {
 
   it("selects and zooms to a node, and fails on an id that does not exist", async () => {
     await expect(runOperation("show", { node: "2:4875" })).resolves.toEqual({
-      id: "2:4875",
-      name: "tokyo-magnifier",
+      nodes: [
+        {
+          id: "2:4875",
+          name: "tokyo-magnifier",
+        },
+      ],
       page: "Page 1",
+      zoom: 1,
     });
     expect(installed.state.zoomedTo.map((node) => node.id)).toEqual(["2:4875"]);
     await expect(runOperation("show", { node: "9:9" })).rejects.toMatchObject({ code: "NODE_NOT_FOUND" });
@@ -289,5 +294,117 @@ describe("outline of repeated components", () => {
       ["4:1", "Card", "Type=Hover, Size=L"],
       ["4:2", "Logo", undefined],
     ]);
+  });
+});
+
+describe("the view", () => {
+  const board = () =>
+    tree({
+      id: "0:1",
+      type: "PAGE",
+      name: "Page 1",
+      children: [
+        {
+          id: "8:1",
+          type: "FRAME",
+          name: "Home",
+          absoluteBoundingBox: {
+            x: 0,
+            y: 0,
+            width: 1440,
+            height: 3000,
+          },
+          children: [
+            {
+              id: "8:2",
+              type: "FRAME",
+              name: "Hero",
+              absoluteBoundingBox: {
+                x: 0,
+                y: 0,
+                width: 1440,
+                height: 800,
+              },
+            },
+            {
+              id: "8:3",
+              type: "FRAME",
+              name: "Footer",
+              absoluteBoundingBox: {
+                x: 0,
+                y: 2600,
+                width: 1440,
+                height: 400,
+              },
+            },
+          ],
+        },
+        {
+          id: "8:4",
+          type: "FRAME",
+          name: "Mobile",
+          absoluteBoundingBox: {
+            x: 2000,
+            y: 0,
+            width: 375,
+            height: 800,
+          },
+        },
+      ],
+    });
+
+  it("shows several layers at a zoom without touching the selection", async () => {
+    const installed = installFigma(board());
+
+    installed.figma.currentPage.selection = [];
+
+    await expect(
+      runOperation("show", {
+        nodes: ["8:2", "8:3"],
+        zoom: 0.5,
+        select: false,
+      }),
+    ).resolves.toEqual({
+      nodes: [
+        {
+          id: "8:2",
+          name: "Hero",
+        },
+        {
+          id: "8:3",
+          name: "Footer",
+        },
+      ],
+      page: "Page 1",
+      zoom: 0.5,
+    });
+    expect(installed.state.zoomedTo.map((node) => node.id)).toEqual(["8:2", "8:3"]);
+    expect(installed.figma.currentPage.selection).toEqual([]);
+  });
+
+  it("says what the user sees: the page, the zoom and the layers in view", async () => {
+    const installed = installFigma(board());
+
+    Object.assign(installed.figma.viewport, {
+      zoom: 0.25,
+      bounds: {
+        x: -100,
+        y: -100,
+        width: 1600,
+        height: 1000,
+      },
+    });
+
+    const view = (await runOperation("viewport", null)) as {
+      page: string;
+      zoom: number;
+      layers: { id: string }[];
+    };
+
+    expect(view).toMatchObject({
+      page: "Page 1",
+      zoom: 0.25,
+    });
+    expect(view.layers.map((layer) => layer.id)).toEqual(["8:1", "8:2"]);
   });
 });
