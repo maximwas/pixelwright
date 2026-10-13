@@ -1,0 +1,46 @@
+name: Bug report
+description: Something in Pixelwright does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Leave out anything private from your Figma files: layer names, a short text or a screenshot of a test file
+        are enough.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you asked the agent or did in Figma, what you expected, and what happened instead. The tool's answer or error helps most.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      placeholder: |
+        1. Open a file with …
+        2. Ask the agent to …
+  - type: input
+    id: version
+    attributes:
+      label: Pixelwright version
+      description: "`npx -y pixelwright@latest --version`, or the version `status` reports."
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: MCP client
+      options:
+        - Claude Code
+        - Cursor
+        - Codex
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System
+      placeholder: macOS 15, Figma Desktop 125

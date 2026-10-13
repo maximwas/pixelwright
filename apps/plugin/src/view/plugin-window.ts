@@ -1,4 +1,4 @@
-import { SUPPORT_LINKS } from "@pixelwright/core";
+import { FEEDBACK_LINK, SUPPORT_LINKS, type SupportLink } from "@pixelwright/core";
 import { MARK_SVG } from "../constants/plugin.ts";
 import type { WindowState } from "../types/window.ts";
 import { editsHint, editsNote, pairingNote, statusLine } from "./status-line.ts";
@@ -8,7 +8,7 @@ interface WindowHandlers {
   readonly onAllowEdits: (allowEdits: boolean) => void;
   /** The user typed the pairing code and pressed Pair (or Enter). */
   readonly onPair: (code: string) => void;
-  /** The user clicked a support link: main opens it in the browser. */
+  /** The user clicked a support or feedback link: main opens it in the browser. */
   readonly onOpenLink: (url: string) => void;
 }
 
@@ -17,8 +17,8 @@ const UNDO = navigator.userAgent.includes("Mac") ? "⌘Z" : "Ctrl+Z";
 
 /**
  * The plugin's small window: its mark, the connection and what it lets the AI do, the pairing field while the server
- * waits for the code, the Allow edits switch, what the AI did last, and where to support the project. Built once,
- * re-rendered in place.
+ * waits for the code, the Allow edits switch, what the AI did last, where to support the project and where to tell what
+ * works or does not. Built once, re-rendered in place.
  */
 export function createPluginWindow(
   root: HTMLElement,
@@ -28,6 +28,7 @@ export function createPluginWindow(
   const brand = element("header", "brand");
   const mark = element("span", "mark");
   const support = element("p", "support", "Pixelwright is free. Support it on ");
+  const feedback = element("p", "support", "Ideas or a bug? Tell us on ");
   const status = element("div", "status");
   const dot = element("span", "dot");
   const title = element("strong", "title");
@@ -50,18 +51,24 @@ export function createPluginWindow(
   mark.innerHTML = MARK_SVG;
   brand.append(mark, element("strong", "brand-name", "Pixelwright"));
 
-  for (const [index, { label, url }] of SUPPORT_LINKS.entries()) {
-    const anchor = element("a", "", label);
+  const anchor = ({ label, url }: SupportLink): HTMLAnchorElement => {
+    const link = element("a", "", label);
 
-    anchor.href = url;
-    anchor.addEventListener("click", (event) => {
+    link.href = url;
+    link.addEventListener("click", (event) => {
       event.preventDefault();
       onOpenLink(url);
     });
-    support.append(index === 0 ? "" : " or ", anchor);
+
+    return link;
+  };
+
+  for (const [index, link] of SUPPORT_LINKS.entries()) {
+    support.append(index === 0 ? "" : " or ", anchor(link));
   }
 
   support.append(".");
+  feedback.append(anchor(FEEDBACK_LINK), ".");
   status.append(dot, element("div", "words", title, detail));
   codeField.inputMode = "numeric";
   codeField.maxLength = 6;
@@ -89,7 +96,7 @@ export function createPluginWindow(
   edits.append(toggleRow, note);
   heading.textContent = "Activity";
   activity.append(heading, actions);
-  root.append(style, brand, status, pairing, pairingText, hint, edits, activity, support);
+  root.append(style, brand, status, pairing, pairingText, hint, edits, activity, support, feedback);
 
   return {
     render({ context, link, actions: recent, refused, ranCode }) {

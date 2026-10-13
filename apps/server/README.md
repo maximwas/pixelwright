@@ -137,6 +137,13 @@ one (another client's, still open) holds the port, the older one hands the port 
 status then asks you to restart Pixelwright in that client (`/mcp` in Claude Code). A plugin turned away by an older
 server keeps trying, and connects once the newer one holds the port.
 
+## Feedback
+
+Questions, ideas and what you built with Pixelwright go to
+[GitHub Discussions](https://github.com/maximwas/pixelwright/discussions); bugs to
+[issues](https://github.com/maximwas/pixelwright/issues/new/choose), whose form asks for the version, the MCP client and
+the system. The plugin's window links there too.
+
 ## Support
 
 Pixelwright is free. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a

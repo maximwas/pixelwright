@@ -220,6 +220,7 @@ ${parts.map(({ id, title, html }) => `        <section id="${id}">\n          <h
           <a href="../">Home</a>
           <a href="https://github.com/maximwas/pixelwright">GitHub</a>
           <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="https://github.com/maximwas/pixelwright/discussions">Feedback</a>
           <a href="https://ko-fi.com/maksymvasianin">Ko-fi</a>
           <a href="https://send.monobank.ua/jar/7o9oMrbXTj">monobank</a>
         </p>

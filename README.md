@@ -175,6 +175,13 @@ The first version goes to npm by hand, because npm sets up trusted publishing on
 from the maintainer's account. Then add the trusted publisher on npmjs.com (GitHub Actions, `maximwas/pixelwright`,
 `release.yml`) and tag the version as above: the workflow skips npm and makes the GitHub release.
 
+## Feedback
+
+Questions, ideas and what you built with Pixelwright go to
+[GitHub Discussions](https://github.com/maximwas/pixelwright/discussions); bugs to
+[issues](https://github.com/maximwas/pixelwright/issues/new/choose), whose form asks for the version, the MCP client and
+the system. The plugin's window links there too.
+
 ## Support
 
 Pixelwright is free. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a

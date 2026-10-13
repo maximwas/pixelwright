@@ -110,12 +110,17 @@ describe("the plugin's main code", () => {
     expect(posted[0]).toEqual(["PAIRING", null]);
   });
 
-  it("opens a support link from the window, and no other address", async () => {
+  it("opens a support or feedback link from the window, and no other address", async () => {
     fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://ko-fi.com/maksymvasianin"]);
     fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://send.monobank.ua/jar/7o9oMrbXTj"]);
+    fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://github.com/maximwas/pixelwright/discussions"]);
     fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://example.com/phish"]);
     await tick();
 
-    expect(opened).toEqual(["https://ko-fi.com/maksymvasianin", "https://send.monobank.ua/jar/7o9oMrbXTj"]);
+    expect(opened).toEqual([
+      "https://ko-fi.com/maksymvasianin",
+      "https://send.monobank.ua/jar/7o9oMrbXTj",
+      "https://github.com/maximwas/pixelwright/discussions",
+    ]);
   });
 });

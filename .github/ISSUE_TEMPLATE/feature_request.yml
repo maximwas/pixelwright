@@ -1,0 +1,16 @@
+name: Feature request
+description: A tool, or an answer, Pixelwright should give.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What you are trying to do
+      description: The task, and where Pixelwright falls short of it today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: A tool, a field in an answer, a change to one. Optional.

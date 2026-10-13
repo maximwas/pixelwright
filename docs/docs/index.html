@@ -170,7 +170,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-changes_since">
   <h3><code>changes_since</code></h3>
-  <p>What changed in the file since the plugin started watching (its window opened) or since an earlier answer&#39;s cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed.</p>
+  <p>What changed in the file since the plugin started watching (its window opened) or since an earlier answer&#39;s cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed. Only pages the user had open while the plugin ran are watched; an edit made while one of Pixelwright&#39;s writes runs (or within a second after) counts as Pixelwright&#39;s, and changes from code execute left running count as the user&#39;s.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>cursor</code><span class="optional">optional</span></td><td><code>integer</code></td><td>The cursor an earlier answer gave: only what changed after it. Default: all the plugin has seen.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
@@ -548,8 +548,9 @@ a negative gap (&quot;children overlap&quot;), a mask among layers.</li>
 is in <code>codeComponents</code> (see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
 <li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
 of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box).</li>
-<li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>, <code>$on-key</code>,
-<code>$after-timeout</code>: the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state). A link stays <code>href</code>.</li>
+<li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>,
+<code>$on-mouse-down</code>, <code>$on-mouse-up</code>, <code>$on-key</code>, <code>$after-timeout</code>, <code>$on-media-hit</code>, <code>$on-media-end</code> (any other trigger
+as <code>$on-&lt;trigger&gt;</code>): the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state). A link stays <code>href</code>.</li>
 </ul>
 <h3>Text</h3>
 <ul>
@@ -583,7 +584,8 @@ way (&quot;space/4&quot; → <code>--space-4</code>).</li>
 <li>Two styles of one kind with one name (two paint styles &quot;Black&quot;) are different tokens: the file&#39;s first keeps
 <code>--Black</code>, the next are <code>--Black-2</code>, <code>--Black-3</code> (tokens_read notes them with their values). Use the one the
 layer names. The file&#39;s own styles come first; library styles are numbered among those the page uses, so every tool
-means one style by a name on that page (a read from another page may number a library&#39;s Black differently).</li>
+means one style by a name on that page (a read from another page may number a library&#39;s Black differently). Text
+styles are numbered alike: the second &quot;h1&quot; is <code>--h1-2-font</code> and <code>textStyle=&quot;h1-2&quot;</code>, and design_apply binds it so.</li>
 </ul>
 <h3>tokens_read</h3>
 <ul>
@@ -883,6 +885,7 @@ that turn unreadable.</p>
           <a href="../">Home</a>
           <a href="https://github.com/maximwas/pixelwright">GitHub</a>
           <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="https://github.com/maximwas/pixelwright/discussions">Feedback</a>
           <a href="https://ko-fi.com/maksymvasianin">Ko-fi</a>
           <a href="https://send.monobank.ua/jar/7o9oMrbXTj">monobank</a>
         </p>
