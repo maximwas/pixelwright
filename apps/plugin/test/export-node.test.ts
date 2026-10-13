@@ -253,3 +253,81 @@ describe("export in a variable mode", () => {
     ).rejects.toMatchObject({ code: "EDITS_DISABLED" });
   });
 });
+
+describe("mode renders at once", () => {
+  it("render one at a time, each in its own mode, and leave the layer as it was", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "4:2",
+          name: "Panel",
+          absoluteBoundingBox: {
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+          },
+        },
+      ],
+    });
+    const installed = installFigma(page, {
+      collections: {
+        "C:1": {
+          id: "C:1",
+          name: "Theme",
+          modes: [
+            {
+              modeId: "m:1",
+              name: "Light",
+            },
+            {
+              modeId: "m:2",
+              name: "Dark",
+            },
+          ],
+        },
+      },
+    });
+    const node = page.children?.[0] as unknown as Record<string, unknown>;
+    const seen: string[] = [];
+
+    node.resolvedVariableModes = { "C:1": "m:1" };
+    node.explicitVariableModes = {};
+    node.setExplicitVariableModeForCollection = (collection: { id: string }, mode: string) => {
+      (node.explicitVariableModes as Record<string, string>)[collection.id] = mode;
+    };
+    node.clearExplicitVariableModeForCollection = (collection: { id: string }) => {
+      delete (node.explicitVariableModes as Record<string, string>)[collection.id];
+    };
+    node.exportAsync = async () => {
+      const mode = (node.explicitVariableModes as Record<string, string>)["C:1"] ?? "none";
+
+      // Slow, as a real render is: the other request arrives while this one runs.
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      seen.push(mode);
+
+      return IMAGE;
+    };
+    Object.assign(installed.figma, {
+      base64Encode: (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)),
+    });
+    setEditsAllowed(true);
+
+    const render = (mode: string) =>
+      runOperation("export", {
+        node: "4:2",
+        format: "PNG",
+        offset: 0,
+        length: 4,
+        modes: { Theme: mode },
+        stream: mode,
+      });
+
+    await Promise.all([render("Dark"), render("Light")]);
+
+    expect(seen.toSorted()).toEqual(["m:1", "m:2"]);
+    expect(node.explicitVariableModes).toEqual({});
+  });
+});

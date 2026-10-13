@@ -100,11 +100,23 @@ function fittedScale(node: BaseNode, asked: number, effects: boolean, maxSide: n
   return side <= maxSide ? asked : Math.floor((maxSide / side) * asked * 10_000) / 10_000;
 }
 
+/** The mode render running now: the next waits for it, or it would take the first one's mode for the layer's own. */
+let modeTurn: Promise<unknown> = Promise.resolve();
+
 /**
  * Runs a render with the layer in the variable modes asked for (collection and mode by name, any case), then sets its
- * modes back: a write for a moment, so Allow edits must be on; one undo step that leaves the file as it was.
+ * modes back: a write for a moment, so Allow edits must be on; one undo step that leaves the file as it was. One mode
+ * render at a time: two at once (light and dark side by side) would each see the other's mode as the layer's.
  */
-async function inModes<T>(id: string, modes: Readonly<Record<string, string>>, run: () => Promise<T>): Promise<T> {
+function inModes<T>(id: string, modes: Readonly<Record<string, string>>, run: () => Promise<T>): Promise<T> {
+  const turn = modeTurn.then(() => inModesNow(id, modes, run));
+
+  modeTurn = turn.catch(() => {});
+
+  return turn;
+}
+
+async function inModesNow<T>(id: string, modes: Readonly<Record<string, string>>, run: () => Promise<T>): Promise<T> {
   requireEdits();
 
   const node = await requireNode(id);
