@@ -143,7 +143,7 @@ describe("how strokes paint", () => {
       });
     const { xml } = read(box([stroke("1:2", "CENTER"), stroke("1:3", "INSIDE")]));
 
-    expect(line(xml, "1:2")).toContain("stroke-align: center (half of it paints outside the box)");
+    expect(line(xml, "1:2")).toContain('$css="stroke-align: center"');
     expect(line(xml, "1:3")).not.toContain("stroke-align");
   });
 
@@ -168,7 +168,7 @@ describe("how strokes paint", () => {
       ]),
     );
 
-    expect(line(xml, "1:4")).toContain("stroke-align: center (half of it paints outside the box)");
+    expect(line(xml, "1:4")).toContain('$css="stroke-align: center"');
   });
 });
 

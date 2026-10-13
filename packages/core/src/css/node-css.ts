@@ -474,7 +474,7 @@ function borderCss(
 /** A centred stroke paints half of itself outside the layer's box, which a border-box border cannot. */
 function centredStroke(node: SnapshotNode, readOnly: [string, string][]): void {
   if (node.strokeAlign === "CENTER") {
-    readOnly.push(["stroke-align", "center (half of it paints outside the box)"]);
+    readOnly.push(["stroke-align", "center"]);
   }
 }
 

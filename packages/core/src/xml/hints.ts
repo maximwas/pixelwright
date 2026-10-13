@@ -52,6 +52,7 @@ export function designHints(
 
   return [
     ...valuelessTokenHints(snapshot, read),
+    ...numberedTokenHints(snapshot, read),
     ...rawTokenHints(snapshot, xml),
     ...defaultNameHints(all.map(({ node }) => node)),
     ...[...found].map(([kind, examples]) => LAYER_HINTS[kind](examples)),
@@ -77,6 +78,8 @@ const LAYER_HINTS = {
     `line-height normal is Figma's Auto line height: the font's own spacing, about 1.2× the font size for most fonts (${listed(examples)}); give it in px where the build must match to the pixel (inspect shows each text's).`,
   softBreak: (examples: readonly string[]) =>
     `&#8232; is a line break inside a paragraph (Shift+Enter in Figma, <br> in HTML), not spaces (${listed(examples)}).`,
+  centredStroke: (examples: readonly string[]) =>
+    `${examples.length === 1 ? "A layer has a stroke centred on its edge" : `${examples.length} layers have strokes centred on their edges`} (${listed(examples)}): Figma paints half of it outside the box, a CSS border all inside; where it must match to the pixel, use an outline with outline-offset of minus half its width.`,
   overflow: (examples: readonly string[]) =>
     `${examples.length === 1 ? "A layer is" : `${examples.length} layers are`} wider or taller than the room their auto layout parent gives them, so they overflow it in Figma too (${listed(examples)}): decide whether the build wraps, clips or lets them out.`,
 } as const;
@@ -103,6 +106,31 @@ function valuelessTokenHints(
     ([name, paints]) =>
       `${name} has no value: its paint style is ${paints}, which neither core nor Figma wrote as CSS here; take its look from a screenshot of a layer that uses it.`,
   );
+}
+
+/** Each numbered style token the XML names (--White-2), with its value and the first one's: two styles, not one. */
+function numberedTokenHints(
+  snapshot: Snapshot,
+  { xml, tokens }: { readonly xml: string; readonly tokens: Readonly<Record<string, string>> },
+): string[] {
+  const hints = new Map<string, string>();
+
+  for (const style of Object.values(snapshot.styles)) {
+    const name = styleTokenName(style);
+
+    if (style.duplicate === undefined || !xml.includes(`var(${name}`)) {
+      continue;
+    }
+
+    const first = styleTokenName({ name: style.name });
+
+    hints.set(
+      name,
+      `${name} is another ${style.type.toLowerCase()} style named ${style.name} (${tokens[name] ?? "no value here"}); ${first} is ${tokens[first] ?? "not used here"}: they are two styles, keep each where the layer names it.`,
+    );
+  }
+
+  return [...hints.values()];
 }
 
 function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
@@ -185,6 +213,14 @@ function layerHints(node: SnapshotNode, parent: SnapshotNode | null, root: Snaps
     parent !== null
   ) {
     hints.push(["wrapper", `${label(node)} only wraps ${children[0]?.id}`]);
+  }
+
+  if (
+    node.strokeAlign === "CENTER" &&
+    Array.isArray(node.strokes) &&
+    node.strokes.some((paint) => paint.visible !== false)
+  ) {
+    hints.push(["centredStroke", label(node)]);
   }
 
   if (node.detached) {

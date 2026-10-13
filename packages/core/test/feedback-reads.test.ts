@@ -129,3 +129,81 @@ describe("a paint style's value", () => {
     expect(model.notes.join("\n")).not.toMatch(/only a single solid color/);
   });
 });
+
+const WHITE = {
+  type: "SOLID",
+  visible: true,
+  color: {
+    r: 1,
+    g: 1,
+    b: 1,
+  },
+};
+
+describe("what the read says in hints, not in $css", () => {
+  it("writes a centred stroke as plain CSS, and explains it in a hint", () => {
+    const snapshot = snapshotOf(
+      layer({
+        id: "1:1",
+        type: "FRAME",
+        width: 400,
+        height: 300,
+        children: [
+          layer({
+            id: "1:2",
+            name: "Card",
+            strokes: [WHITE],
+            strokeWeight: 1,
+            strokeAlign: "CENTER",
+          }),
+        ],
+      }),
+    );
+    const read = designXml(snapshot);
+
+    expect(read.xml).toContain('$css="stroke-align: center"');
+    expect(designHints(snapshot, read).join("\n")).toMatch(/stroke centred on its edge \(1:2 "Card"\)/);
+  });
+
+  it("names a numbered style token with its value and the one it shares the name with", () => {
+    const snapshot = snapshotOf(
+      layer({
+        id: "1:1",
+        type: "FRAME",
+        width: 400,
+        height: 300,
+        children: [
+          layer({
+            id: "1:2",
+            fills: [WHITE],
+            fillStyleId: "S:1",
+          }),
+          layer({
+            id: "1:3",
+            fills: [WHITE],
+            fillStyleId: "S:2",
+          }),
+        ],
+      }),
+      {
+        "S:1": {
+          name: "White",
+          type: "PAINT",
+          remote: true,
+          paints: [WHITE],
+        },
+        "S:2": {
+          name: "White",
+          type: "PAINT",
+          remote: true,
+          paints: [WHITE],
+          duplicate: 2,
+        },
+      },
+    );
+
+    expect(designHints(snapshot).join("\n")).toMatch(
+      /--White-2 is another paint style named White \(#FFF\); --White is #FFF: they are two styles/,
+    );
+  });
+});
