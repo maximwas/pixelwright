@@ -137,18 +137,35 @@ export async function takeScreenshot(
   }
 }
 
+type Clip = NonNullable<ScreenshotArgs["clip"]>;
+
 /**
- * A region of a layer: the whole layer rendered at the scale, then cut to the clip, which is measured from the layer's
- * box (inspect says where that box sits in the render: with effects, the render covers what paints around it, and may
- * cover less than the box, as a text's glyphs do). The clip may reach anywhere in the box and what paints around it;
- * the parts of that the render does not cover are transparent.
+ * A layer rendered to PNG at the scale, full size; with a clip, a region of it: the whole layer rendered, then cut to
+ * the clip, which is measured from the layer's box (inspect says where that box sits in the render: with effects, the
+ * render covers what paints around it, and may cover less than the box, as a text's glyphs do). The clip may reach
+ * anywhere in the box and what paints around it; the parts of that the render does not cover are transparent.
  */
-async function clippedShot(
+export async function renderPng(
   bridge: ToolContext["bridge"],
-  { node, scale, effects, save, file, clip }: ScreenshotArgs & { clip: NonNullable<ScreenshotArgs["clip"]> },
-  target?: { session: string },
-): Promise<CallToolResult> {
-  const session = target ?? resolveTarget(bridge.plugins(), file);
+  { node, scale, effects, clip }: { node: string; scale: number; effects: boolean; clip?: Clip | undefined },
+  session: { session: string },
+): Promise<{ png: Buffer; scale: number }> {
+  const request = {
+    node,
+    format: "PNG" as const,
+    scale,
+    effects,
+  };
+
+  if (clip === undefined) {
+    const { bytes, scale: used } = await exportBytes(bridge, request, { target: session });
+
+    return {
+      png: bytes,
+      scale: used,
+    };
+  }
+
   const inspected = OPERATION_SCHEMAS.inspect.output.parse(await bridge.request("inspect", { nodes: [node] }, session));
   const layer = inspected.layers[0];
 
@@ -182,19 +199,7 @@ async function clippedShot(
     );
   }
 
-  const { bytes, scale: used } = await exportBytes(
-    bridge,
-    {
-      node,
-      format: "PNG",
-      scale,
-      effects,
-    },
-    {
-      file,
-      target: session,
-    },
-  );
+  const { bytes, scale: used } = await exportBytes(bridge, request, { target: session });
   const cropped = cropPng(bytes, {
     x: Math.round((layer.box.x - rendered.x + clip.x) * used),
     y: Math.round((layer.box.y - rendered.y + clip.y) * used),
@@ -206,7 +211,29 @@ async function clippedShot(
     throw new BridgeError("OP_FAILED", `The clip is under a pixel at scale ${used}: give a bigger region or scale.`);
   }
 
-  const png = Buffer.from(cropped);
+  return {
+    png: Buffer.from(cropped),
+    scale: used,
+  };
+}
+
+/** A region of a layer (renderPng with a clip), saved or returned inline. */
+async function clippedShot(
+  bridge: ToolContext["bridge"],
+  { node, scale, effects, save, file, clip }: ScreenshotArgs & { clip: Clip },
+  target?: { session: string },
+): Promise<CallToolResult> {
+  const session = target ?? resolveTarget(bridge.plugins(), file);
+  const { png, scale: used } = await renderPng(
+    bridge,
+    {
+      node,
+      scale,
+      effects,
+      clip,
+    },
+    session,
+  );
   const size = sizeOf(png, node);
 
   if (save !== undefined) {
@@ -301,7 +328,7 @@ const megabytes = (bytes: number) => `${Math.round((bytes / 1024 / 1024) * 10) /
  * Where save writes: a .png path, never over a file that is not a PNG (a tool that only reads Figma must not destroy
  * a file the user keeps); an earlier screenshot is replaced.
  */
-async function pngPath(save: string): Promise<string> {
+export async function pngPath(save: string): Promise<string> {
   const path = resolve(save);
 
   if (extname(path).toLowerCase() !== ".png") {
