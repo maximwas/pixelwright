@@ -1,13 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { InspectViewSchema, inspectView } from "@pixelwright/core";
-import type * as z from "zod";
+import { InspectViewSchema } from "@pixelwright/core";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
+import { inspectLayers } from "../../layers/inspect-layers.ts";
 import { InspectInputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
-import { runOp } from "../run-op.ts";
-
-type InspectArgs = z.output<typeof InspectInputSchema>;
 
 export function registerInspectTool(server: McpServer, { bridge }: ToolContext): void {
   registerTool(server, {
@@ -20,28 +17,4 @@ export function registerInspectTool(server: McpServer, { bridge }: ToolContext):
     annotations: READ_ONLY_ANNOTATIONS,
     run: (args) => inspectLayers(bridge, args),
   });
-}
-
-/** The layers named, else the selection, inspected by the plugin and put into words by core. */
-export async function inspectLayers(
-  bridge: ToolContext["bridge"],
-  { nodes, relativeTo, file }: InspectArgs,
-): Promise<z.output<typeof InspectViewSchema>> {
-  const ids = nodes ?? (await runOp(bridge, "selection", null, file)).nodes.map((node) => node.id);
-
-  if (ids.length === 0) {
-    throw new Error("Nothing is selected in Figma: select the layers to inspect, or give their ids in nodes.");
-  }
-
-  const raw = await runOp(
-    bridge,
-    "inspect",
-    {
-      nodes: ids.slice(0, 100),
-      ...(relativeTo === undefined ? {} : { relativeTo }),
-    },
-    file,
-  );
-
-  return inspectView(raw);
 }

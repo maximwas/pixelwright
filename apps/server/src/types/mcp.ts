@@ -1,4 +1,4 @@
-import type { ToolAnnotations } from "@modelcontextprotocol/server";
+import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/server";
 import type * as z from "zod";
 import type { WrittenFiles } from "../assets/written-files.ts";
 import type { StatusOutputSchema } from "../schemas/status.ts";
@@ -34,6 +34,16 @@ export interface ToolDefinition<I extends z.ZodObject, O extends z.ZodObject> {
   run(args: z.output<I>): Promise<z.input<O>>;
   /** For a tool that writes: whether this result changed the file, which is when the support note may ride on it. */
   changed?(output: z.output<O>): boolean;
+}
+
+/** A tool that answers with content blocks of its own (an image, XML as text) and has no outputSchema. */
+export interface ContentToolDefinition<I extends z.ZodObject> {
+  readonly name: string;
+  readonly title: string;
+  readonly description: string;
+  readonly input: I;
+  readonly annotations: ToolAnnotations;
+  run(args: z.output<I>): Promise<CallToolResult>;
 }
 
 export type StatusOutput = z.output<typeof StatusOutputSchema>;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { executeCode } from "../src/mcp/tools/execute.ts";
+import { executeCode } from "../src/execute/execute-code.ts";
 import { ExecuteInputSchema } from "../src/schemas/tools.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";

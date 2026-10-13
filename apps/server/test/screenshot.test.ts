@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EXPORT_CHUNK_BYTES } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
+import { takeScreenshot } from "../src/images/screenshot.ts";
 import { exportBytes } from "../src/mcp/export-bytes.ts";
-import { takeScreenshot } from "../src/mcp/tools/screenshot.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 

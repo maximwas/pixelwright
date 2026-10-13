@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diffNodes } from "../src/mcp/tools/diff.ts";
+import { diffNodes } from "../src/design/diff-nodes.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 

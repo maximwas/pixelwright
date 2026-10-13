@@ -1,12 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import type * as z from "zod";
 import { WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
+import { executeCode } from "../../execute/execute-code.ts";
 import { ExecuteInputSchema, ExecuteOutputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
-import { runOp } from "../run-op.ts";
-
-type ExecuteArgs = z.output<typeof ExecuteInputSchema>;
 
 export function registerExecuteTool(server: McpServer, { bridge }: ToolContext): void {
   registerTool(server, {
@@ -19,19 +16,4 @@ export function registerExecuteTool(server: McpServer, { bridge }: ToolContext):
     annotations: WRITE_ANNOTATIONS,
     run: (args) => executeCode(bridge, args),
   });
-}
-
-export async function executeCode(
-  bridge: ToolContext["bridge"],
-  { code, timeout, file }: ExecuteArgs,
-): Promise<z.input<typeof ExecuteOutputSchema>> {
-  return await runOp(
-    bridge,
-    "execute",
-    {
-      code,
-      timeoutMs: Math.round(timeout * 1_000),
-    },
-    file,
-  );
 }

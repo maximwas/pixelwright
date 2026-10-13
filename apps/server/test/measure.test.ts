@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { measureNodes } from "../src/mcp/tools/measure.ts";
+import { measureNodes } from "../src/layers/measure-layers.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 

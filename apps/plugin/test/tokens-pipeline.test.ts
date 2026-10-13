@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { applyTokens, readTokens } from "../../server/src/mcp/tools/tokens.ts";
 import { TokensApplyToolInputSchema, TokensReadInputSchema } from "../../server/src/schemas/tools.ts";
+import { applyTokens, readTokens } from "../../server/src/tokens/tokens.ts";
 import { setEditsAllowed } from "../src/figma/edits.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
 import { pluginBridge } from "./helpers/plugin-bridge.ts";

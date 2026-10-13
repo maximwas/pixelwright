@@ -1,6 +1,6 @@
 import { decode, encode } from "fast-png";
 import { describe, expect, it } from "vitest";
-import { takeScreenshot } from "../src/mcp/tools/screenshot.ts";
+import { takeScreenshot } from "../src/images/screenshot.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 

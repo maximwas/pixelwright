@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { type ApplyChange, designXml, type Snapshot, SnapshotSchema } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../src/assets/written-files.ts";
-import { applyDesign } from "../src/mcp/tools/apply.ts";
+import { applyDesign } from "../src/design/apply-design.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 import { pngHeader } from "./helpers/images.ts";

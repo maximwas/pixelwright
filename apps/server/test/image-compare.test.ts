@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { decode, encode } from "fast-png";
 import { describe, expect, it } from "vitest";
-import { compareImage } from "../src/mcp/tools/image-compare.ts";
+import { compareImage } from "../src/images/compare-image.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 

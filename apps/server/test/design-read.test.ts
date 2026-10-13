@@ -7,7 +7,7 @@ import type { PlannedAsset } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { writeAssets } from "../src/assets/write-assets.ts";
 import { memoryFiles } from "../src/assets/written-files.ts";
-import { readDesign } from "../src/mcp/tools/design.ts";
+import { readDesign } from "../src/design/read-design.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 import { JPEG, PNG } from "./helpers/images.ts";

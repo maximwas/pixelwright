@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../src/assets/written-files.ts";
 import { findTemplates } from "../src/code-connect/templates.ts";
-import { readDesign } from "../src/mcp/tools/design.ts";
+import { readDesign } from "../src/design/read-design.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 

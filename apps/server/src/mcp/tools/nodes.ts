@@ -1,13 +1,12 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { countOutline, OPERATION_SCHEMAS, outlineXml } from "@pixelwright/core";
+import { OPERATION_SCHEMAS } from "@pixelwright/core";
 import * as z from "zod";
 import { READ_ONLY_ANNOTATIONS, WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
+import { readOutline } from "../../layers/read-outline.ts";
 import { FileSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
 import { runOp } from "../run-op.ts";
-
-const READ_ONLY = READ_ONLY_ANNOTATIONS;
 
 export function registerNodeTools(server: McpServer, { bridge, support }: ToolContext): void {
   registerTool(server, {
@@ -17,7 +16,7 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
       'Lists the layers the user selected in Figma (id, name, type, box in page coordinates). Call it when the user says "this", "the selected one" or "what I picked", then read those ids with design_read or outline.',
     input: z.object({ file: FileSchema }),
     output: OPERATION_SCHEMAS.selection.output,
-    annotations: READ_ONLY,
+    annotations: READ_ONLY_ANNOTATIONS,
     run: ({ file }) => runOp(bridge, "selection", null, file),
   });
   registerTool(server, {
@@ -30,7 +29,7 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
       file: FileSchema,
     }),
     output: OPERATION_SCHEMAS.show.output,
-    annotations: READ_ONLY,
+    annotations: READ_ONLY_ANNOTATIONS,
     run: ({ file, node }) => runOp(bridge, "show", { node }, file),
   });
   registerTool(server, {
@@ -40,7 +39,7 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
       "Finds layers on the current page, or inside `within`, by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance's component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down.",
     input: OPERATION_SCHEMAS.find.input.extend({ file: FileSchema }),
     output: OPERATION_SCHEMAS.find.output,
-    annotations: READ_ONLY,
+    annotations: READ_ONLY_ANNOTATIONS,
     run: ({ file, ...query }) => runOp(bridge, "find", query, file),
   });
   registerTool(server, {
@@ -59,15 +58,8 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
       xml: z.string(),
       nodes: z.number().describe("How many layers the XML lists."),
     }),
-    annotations: READ_ONLY,
-    run: async ({ file, ...query }) => {
-      const { root } = await runOp(bridge, "outline", query, file);
-
-      return {
-        xml: outlineXml(root),
-        nodes: countOutline(root),
-      };
-    },
+    annotations: READ_ONLY_ANNOTATIONS,
+    run: (args) => readOutline(bridge, args),
   });
   registerTool(
     server,

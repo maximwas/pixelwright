@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { applyDesign } from "../../server/src/mcp/tools/apply.ts";
+import { applyDesign } from "../../server/src/design/apply-design.ts";
 import { setEditsAllowed } from "../src/figma/edits.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
 import { pluginBridge } from "./helpers/plugin-bridge.ts";

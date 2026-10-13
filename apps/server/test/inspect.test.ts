@@ -1,6 +1,6 @@
 import type { InspectRaw } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
-import { inspectLayers } from "../src/mcp/tools/inspect.ts";
+import { inspectLayers } from "../src/layers/inspect-layers.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 

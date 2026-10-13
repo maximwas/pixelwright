@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readTokens } from "../src/mcp/tools/tokens.ts";
+import { readTokens } from "../src/tokens/tokens.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
