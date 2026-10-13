@@ -21,7 +21,12 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    branches are left empty with \`$truncated="true"\` and their ids listed in \`truncated\`; read each on its own.
    Pass \`assetsDir\` (e.g. src/assets) to get its icons and images written as files.
 4. **Look at it.** \`screenshot\` renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; \`save\`
-   writes a .png file full size). Compare your build with it.
+   writes a .png file full size; \`clip\` takes a region of it, in px from its box). Compare your build with it.
+   **Measure it.** \`inspect\` reads layers as Figma has them, without code and with Allow edits off: the layout box
+   and the painted box (a centred stroke, shadows and blur reach past it), how strokes paint, every effect's
+   parameters (a progressive blur's start and end), a text's lines and line heights, overflow, interactions with
+   their transitions, a component's variant. Give \`relativeTo\` (the section) and a list of layers to measure them
+   all in one call.
 5. **The design system.** \`tokens_read\`: variables with every mode (light, dark…) and styles, as CSS or JSON.
    \`components_read\`: the components a page uses, or the file defines, with variants and properties.
 6. **Files.** \`assets_export\`: several layers, or every asset inside one, as PNG, JPG, SVG or PDF, or the images as
@@ -92,6 +97,19 @@ text-decoration-thickness), text-align, text-wrap, color.
 - \`$truncated="true"\`: the branch was emptied, or the text shortened, to fit maxChars; its id is in \`truncated\`.
 - \`$code="Button"\`: an instance the project's Code Connect template renders, written without its children; its code
   is in \`codeComponents\` (see \`guide code-connect\`). design_apply leaves its children alone.
+- In \`$css\`: \`blur: progressive from 0px at 50% 0% to 8px at 50% 100%\` (a blur that changes across the layer;
+  \`filter\` holds its end radius) and \`stroke-align: center\` (half of the stroke paints outside the box, which a
+  border-box border does not; \`inspect\` gives the painted box).
+- \`$on-click\`, \`$on-hover\`, \`$on-press\`, \`$on-drag\`, \`$on-mouse-enter\`, \`$on-mouse-leave\`, \`$on-key\`,
+  \`$after-timeout\`: the layer's prototype interactions, e.g. \`$on-hover="change to Type=Hover; smart animate 300ms
+  ease-out"\` (a variant to switch to on hover, and how: build it as the hover state). A link stays \`href\`.
+
+## Text
+
+- \`&#10;\` is a paragraph break (Enter), \`&#8232;\` a line break inside a paragraph (Shift+Enter, \`<br>\` in HTML):
+  never spaces.
+- \`line-height: normal\` is Figma's Auto line height, the font's own spacing (about 1.2× the size for most fonts):
+  give it in px where the build must match; \`inspect\` shows each text's.
 
 ## Example (Positivus, a card)
 
@@ -119,6 +137,9 @@ text-decoration-thickness), text-align, text-wrap, color.
 - A variable: its Web code syntax when the designer set one (var(--surface) → \`--surface\`), else its name the same
   way ("space/4" → \`--space-4\`).
 - A text style is \`--<name>-font\`, holding its font shorthand: \`font: var(--h3-font)\`.
+- Two styles of one kind with one name (two paint styles "Black") are different tokens: the file's first keeps
+  \`--Black\`, the next are \`--Black-2\`, \`--Black-3\` (tokens_read notes them with their values). Use the one the
+  layer names.
 
 ## tokens_read
 

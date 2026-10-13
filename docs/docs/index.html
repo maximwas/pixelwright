@@ -212,6 +212,15 @@ this is the fix.</p>
 <tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot; | &quot;write&quot; | &quot;code-connect&quot; | &quot;email&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-inspect">
+  <h3><code>inspect</code></h3>
+  <p>Reads layers as Figma has them, for what design_read&#39;s CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma&#39;s own parameters (a progressive blur&#39;s start and end, noise, texture), a text&#39;s lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component&#39;s variant. Boxes are measured from relativeTo&#39;s top left, so it also measures: give a list of layers and their section.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids, e.g. [&quot;2:4868&quot;]. Default: the layers selected in Figma.</td></tr>
+<tr><td><code>relativeTo</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer (a section, a frame) whose top left the boxes are measured from. Default: the page&#39;s.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-node_show">
   <h3><code>node_show</code></h3>
   <p>Selects a layer in Figma and brings it into view (switching to its page when needed), so the user sees what you mean. Changes only the view and the selection, never the file.</p>
@@ -252,12 +261,13 @@ this is the fix.</p>
 </section>
 <section class="tool" id="tool-screenshot">
   <h3><code>screenshot</code></h3>
-  <p>Renders a layer to PNG so you can see it: a section to build, or your result to check. Returned inline at most 2000 px on a side: a larger layer comes scaled down to fit, and the text says its full size. For details of a tall layer screenshot one section of it (outline lists them); pass save to write the PNG full size to a file instead.</p>
+  <p>Renders a layer to PNG so you can see it: a section to build, or your result to check. Returned inline at most 2000 px on a side: a larger layer comes scaled down to fit, and the text says its full size. For details of a tall layer screenshot one section of it (outline lists them), or pass clip for a region of it; pass save to write the PNG full size to a file instead.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 2:4868.</td></tr>
 <tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel: 2 for a sharp look, below 1 to fit.</td></tr>
 <tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Include shadows and outside strokes around the layer; false renders only its own box.</td></tr>
 <tr><td><code>save</code><span class="optional">optional</span></td><td><code>string</code></td><td>Write the PNG to this file (any size) instead of returning it; a relative path is from the server&#39;s folder.</td></tr>
+<tr><td><code>clip</code><span class="optional">optional</span></td><td><code>object</code></td><td>Only this region of the layer, in Figma px from its box&#39;s top left (before scale); with effects on it may reach into what paints around the box.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -321,7 +331,12 @@ styles, fonts, assets, hints and truncated. Read sections, not whole pages: past
 branches are left empty with <code>$truncated=&quot;true&quot;</code> and their ids listed in <code>truncated</code>; read each on its own.
 Pass <code>assetsDir</code> (e.g. src/assets) to get its icons and images written as files.</li>
 <li><strong>Look at it.</strong> <code>screenshot</code> renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; <code>save</code>
-writes a .png file full size). Compare your build with it.</li>
+writes a .png file full size; <code>clip</code> takes a region of it, in px from its box). Compare your build with it.
+<strong>Measure it.</strong> <code>inspect</code> reads layers as Figma has them, without code and with Allow edits off: the layout box
+and the painted box (a centred stroke, shadows and blur reach past it), how strokes paint, every effect&#39;s
+parameters (a progressive blur&#39;s start and end), a text&#39;s lines and line heights, overflow, interactions with
+their transitions, a component&#39;s variant. Give <code>relativeTo</code> (the section) and a list of layers to measure them
+all in one call.</li>
 <li><strong>The design system.</strong> <code>tokens_read</code>: variables with every mode (light, dark…) and styles, as CSS or JSON.
 <code>components_read</code>: the components a page uses, or the file defines, with variants and properties.</li>
 <li><strong>Files.</strong> <code>assets_export</code>: several layers, or every asset inside one, as PNG, JPG, SVG or PDF, or the images as
@@ -386,6 +401,18 @@ a negative gap (&quot;children overlap&quot;), a mask among layers.</li>
 <li><code>$truncated=&quot;true&quot;</code>: the branch was emptied, or the text shortened, to fit maxChars; its id is in <code>truncated</code>.</li>
 <li><code>$code=&quot;Button&quot;</code>: an instance the project&#39;s Code Connect template renders, written without its children; its code
 is in <code>codeComponents</code> (see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
+<li>In <code>$css</code>: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer;
+<code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half of the stroke paints outside the box, which a
+border-box border does not; <code>inspect</code> gives the painted box).</li>
+<li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>, <code>$on-key</code>,
+<code>$after-timeout</code>: the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state). A link stays <code>href</code>.</li>
+</ul>
+<h3>Text</h3>
+<ul>
+<li><code>&amp;#10;</code> is a paragraph break (Enter), <code>&amp;#8232;</code> a line break inside a paragraph (Shift+Enter, <code>&lt;br&gt;</code> in HTML):
+never spaces.</li>
+<li><code>line-height: normal</code> is Figma&#39;s Auto line height, the font&#39;s own spacing (about 1.2× the size for most fonts):
+give it in px where the build must match; <code>inspect</code> shows each text&#39;s.</li>
 </ul>
 <h3>Example (Positivus, a card)</h3>
 <pre><code class="language-xml">&lt;Frame id=&quot;2:4870&quot; name=&quot;Card&quot; display=&quot;flex&quot; width=&quot;600px&quot; padding=&quot;50px&quot; justify-content=&quot;space-between&quot; align-items=&quot;center&quot; overflow=&quot;hidden&quot; border-radius=&quot;45px&quot; border=&quot;1px solid var(--Dark)&quot; background=&quot;var(--Grey)&quot; box-shadow=&quot;0 5px 0 0 #191A23&quot;&gt;
@@ -409,6 +436,9 @@ is in <code>codeComponents</code> (see <code>guide code-connect</code>). design_
 <li>A variable: its Web code syntax when the designer set one (var(--surface) → <code>--surface</code>), else its name the same
 way (&quot;space/4&quot; → <code>--space-4</code>).</li>
 <li>A text style is <code>--&lt;name&gt;-font</code>, holding its font shorthand: <code>font: var(--h3-font)</code>.</li>
+<li>Two styles of one kind with one name (two paint styles &quot;Black&quot;) are different tokens: the file&#39;s first keeps
+<code>--Black</code>, the next are <code>--Black-2</code>, <code>--Black-3</code> (tokens_read notes them with their values). Use the one the
+layer names.</li>
 </ul>
 <h3>tokens_read</h3>
 <ul>

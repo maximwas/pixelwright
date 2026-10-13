@@ -44,7 +44,8 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `status` | The connected files, which one tools use, and what to do when none is |
 | `selection_get`, `node_show`, `nodes_find`, `outline` | What the user picked, showing a layer, finding layers, a frame's layer tree |
 | `design_read` | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files |
-| `screenshot`, `assets_export` | A layer as PNG to compare with; icons and images as SVG, PNG, JPG or PDF, originals included |
+| `inspect` | Layers as Figma has them, without code: layout and painted boxes, how strokes paint, every effect's parameters, a text's lines and line heights, overflow, interactions with their transitions; also measures a list of layers in their section |
+| `screenshot`, `assets_export` | A layer, or a region of it, as PNG to compare with; icons and images as SVG, PNG, JPG or PDF, originals included |
 | `tokens_read`, `components_read` | Variables with every mode and styles, as CSS or JSON; the components a page uses, with variants and properties |
 | `code_connect_read` | The project's Figma Code Connect templates, what each connects, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images |
