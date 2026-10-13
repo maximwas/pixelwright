@@ -115,6 +115,50 @@ describe("tokens_read", () => {
     expect(json).not.toHaveProperty("css");
   });
 
+  it("returns DTCG trees per collection mode when asked, with what DTCG cannot hold in notes", async () => {
+    const { bridge } = bridgeAnswering(RAW);
+    const read = await readTokens(bridge, {
+      libraries: false,
+      used: true,
+      format: "dtcg",
+      maxChars: 80_000,
+    });
+
+    expect(read.format).toBe("dtcg");
+    expect(Object.keys(read.dtcg ?? {})).toEqual(["brand.light", "brand.dark", "styles"]);
+    expect(read.dtcg?.["brand.dark"]?.Ink).toEqual({
+      $type: "color",
+      $value: {
+        colorSpace: "srgb",
+        components: [1, 1, 1],
+        hex: "#FFFFFF",
+      },
+    });
+    expect(read).not.toHaveProperty("css");
+    expect(read).not.toHaveProperty("tokens");
+  });
+
+  it("gives DTCG past maxChars as the summary and the collections to ask for", async () => {
+    const many = {
+      ...RAW,
+      variables: Array.from({ length: 200 }, (_, index) => ({
+        ...RAW.variables[0],
+        id: `V:${index}`,
+        name: `color/shade-${index}`,
+      })),
+    };
+    const read = await readTokens(bridgeAnswering(many).bridge, {
+      libraries: false,
+      used: true,
+      format: "dtcg",
+      maxChars: 2_000,
+    });
+
+    expect(read).not.toHaveProperty("dtcg");
+    expect(read.summary?.collections[0]?.variables).toBe(200);
+    expect(read.notes.join("\n")).toMatch(/past maxChars/);
+  });
+
   it("says which collections exist when a filter matches none", async () => {
     const { bridge } = bridgeAnswering(RAW);
     const read = await readTokens(bridge, {

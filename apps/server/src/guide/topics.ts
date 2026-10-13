@@ -38,7 +38,7 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    differences from its default (build :hover, :active, :disabled from them). \`breakpoints_find\` finds a screen at the
    page's other widths, for the media queries. \`flow_read\` maps the prototype: screens and the links between them.
    A screenshot in another variable mode (\`modes: {"Theme": "Dark"}\`) shows a theme without switching it in Figma.
-5. **The design system.** \`tokens_read\`: variables with every mode (light, dark…) and styles, as CSS or JSON.
+5. **The design system.** \`tokens_read\`: variables with every mode (light, dark…) and styles, as CSS, JSON or DTCG token files.
    \`tokens_usage\`: the layers a token is used on. \`components_read\`: the components a page uses, or the file
    defines, with variants and properties. \`design_audit\`: the scale a design uses (spacing, radii, font sizes,
    colours) and what is off it, for a file without tokens. \`contrast_check\`: every text's WCAG contrast.

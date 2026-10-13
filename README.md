@@ -56,7 +56,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `flow_read` | The prototype as screens and the links between them, for an app's routes |
 | `screenshot`, `image_compare` | A layer, or a region of it, as PNG, in a variable mode if you like; the same render compared with a PNG of your build (rmse, differing pixels, edges off by N px) |
 | `assets_export` | Icons and images as SVG, PNG, JPG, WebP or PDF, sized by a CSS width if you like, originals included |
-| `tokens_read`, `tokens_usage`, `components_read` | Variables with every mode and styles, as CSS or JSON; the layers a token is used on; the components a page uses, with variants and properties |
+| `tokens_read`, `tokens_usage`, `components_read` | Variables with every mode and styles, as CSS, JSON or DTCG token files; the layers a token is used on; the components a page uses, with variants and properties |
 | `design_audit`, `contrast_check`, `fonts_check` | The scale a design uses and what is off it; every text's WCAG contrast; where the build gets each font |
 | `code_connect_read` | The project's Figma Code Connect templates, what each connects, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images |
