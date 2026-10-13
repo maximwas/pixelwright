@@ -126,7 +126,9 @@ export async function readDesign(
   const hints = [
     ...designHints(snapshot, read),
     ...(assetsDir === undefined && read.assets.length > 0
-      ? [`${read.assets.length} assets are planned but not written: pass assetsDir to export them.`]
+      ? [
+          `${read.assets.length} assets are planned but not written, so their src names are plans: pass assetsDir to write them with their real names, or take each path assets_export gives (a name holding other bytes gets -2, the same bytes share one file).`,
+        ]
       : []),
     ...problems.map((problem) => `Code Connect: ${problem}`),
     ...(code !== null && code.left > 0

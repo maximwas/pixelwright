@@ -132,6 +132,27 @@ describe("assets_export", () => {
     expect(await readdir(dir)).toHaveLength(27);
   });
 
+  it("says which path design_read planned whenever a layer's file got another name", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
+    const result = await exportAssets(file().bridge, {
+      nodes: ["1:1", "1:2", "1:3", "1:4"],
+      dir,
+      original: false,
+    });
+    const [first, same, hero, clash] = result.files;
+
+    expect(first?.planned).toBeUndefined();
+    // The same bytes went into 1:1's file; another layer's bytes held hero-photo.png.
+    expect(same?.planned).toBe(join(dir, "photo-1-2.png"));
+    expect(same?.path).toBe(first?.path);
+    expect(hero?.planned).toBeUndefined();
+    expect(clash).toMatchObject({
+      planned: join(dir, "hero-photo.png"),
+      path: join(dir, "hero-photo-2.png"),
+    });
+    expect(result.notes.join("\n")).toMatch(/1:4.*hero-photo-2\.png/);
+  });
+
   it("remembers each file it writes as its layer's, so design_apply knows a render sent back", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
     const files = memoryFiles();
@@ -203,6 +224,8 @@ describe("assets_export", () => {
         kind: "image",
         format: "JPG",
         path: join(dir, "photo-1-5.jpg"),
+        // A plan names an original .png before its bytes say JPEG.
+        planned: join(dir, "photo-1-5.png"),
         bytes: JPEG.length,
       },
     ]);

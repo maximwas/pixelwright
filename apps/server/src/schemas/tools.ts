@@ -232,9 +232,14 @@ export const AssetsExportOutputSchema = z.object({
       kind: z.enum(["icon", "image"]),
       format: z.string(),
       path: z.string(),
+      planned: z
+        .string()
+        .exactOptional()
+        .describe("The path design_read plans for this layer, when the file got another name: use path in its src."),
       bytes: z.number(),
     }),
   ),
+  notes: z.array(z.string()),
   errors: z.array(
     z.object({
       node: z.string(),

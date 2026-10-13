@@ -149,7 +149,9 @@ describe("design_read", () => {
 
     expect(ops).toEqual(["snapshot"]);
     expect(meta.assets.every((asset) => !asset.written)).toBe(true);
-    expect(meta.hints).toContainEqual(expect.stringMatching(/4 assets are planned but not written: pass assetsDir/));
+    expect(meta.hints).toContainEqual(
+      expect.stringMatching(/4 assets are planned but not written, so their src names are plans: pass assetsDir/),
+    );
   });
 
   it("reads the selected layer when none is named, and refuses to guess between several", async () => {

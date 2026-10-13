@@ -1,4 +1,4 @@
-import { extname, resolve } from "node:path";
+import { basename, extname, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/server";
 import {
   BridgeError,
@@ -78,15 +78,22 @@ export async function exportAssets(
     files,
   );
 
+  const renamed = written.filter(({ src, planned: wanted }) => basename(src) !== basename(wanted));
+
   return {
-    files: written.map(({ node, kind, src, bytes }) => ({
+    files: written.map(({ node, kind, src, planned: wanted, bytes }) => ({
       node,
       kind,
       format: formatOf(src),
       path: src,
+      ...(basename(src) === basename(wanted) ? {} : { planned: wanted }),
       bytes,
     })),
     errors,
+    notes: renamed.map(
+      ({ node, src, planned: wanted }) =>
+        `${node} is in ${basename(src)}, not ${basename(wanted)} as design_read plans it (the same bytes share one file, a name holding other bytes gets -2): use ${src} in its src.`,
+    ),
   };
 }
 

@@ -10,6 +10,8 @@ export interface WrittenAsset {
   readonly node: string;
   readonly kind: PlannedAsset["kind"];
   readonly src: string;
+  /** The path the plan gave it; src differs when the same bytes went to another layer's file or the name held others. */
+  readonly planned: string;
   readonly bytes: number;
 }
 
@@ -66,6 +68,7 @@ export async function writeAssets(
       node: asset.node,
       kind: asset.kind,
       src,
+      planned: asset.src,
       bytes: bytes.length,
     });
   }
