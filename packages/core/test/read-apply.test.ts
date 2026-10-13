@@ -264,6 +264,27 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
     expect(xml).toContain('$code="PlanCard"');
     expect(changesOf(snapshot, xml)).toEqual([]);
   });
+
+  it("with the properties a designer pinned in annotations", () => {
+    const plans = fixture("orbit-plans");
+    const snapshot: Snapshot = {
+      ...plans,
+      root: {
+        ...plans.root,
+        annotations: [
+          {
+            label: "Three plans side by side",
+            pins: ["itemSpacing", "padding"],
+          },
+          { pins: ["width"] },
+        ],
+      },
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain('$pins="gap, padding, width"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
 });
 
 /** What sending this XML back would change in the snapshot's layers: an element's attributes and text, by id. */

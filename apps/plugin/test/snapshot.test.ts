@@ -469,6 +469,39 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     });
   });
 
+  it("keeps the properties a designer pinned in an annotation, with its note or without one", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:1",
+            type: "FRAME",
+            annotations: [
+              {
+                label: "API",
+                properties: [{ type: "width" }, { type: "itemSpacing" }],
+              },
+              { properties: [{ type: "fills" }] },
+              { properties: [] },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", { node: "5:1" })) as Shot;
+
+    expect(root.annotations).toEqual([
+      {
+        label: "API",
+        pins: ["width", "itemSpacing"],
+      },
+      { pins: ["fills"] },
+    ]);
+  });
+
   it("asks Figma for its CSS only for layers our table cannot write, when asked for that", async () => {
     installFigma(
       tree({

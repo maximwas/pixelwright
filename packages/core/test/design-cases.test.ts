@@ -496,6 +496,36 @@ describe("what designers tell developers", () => {
     );
     expect(line(xml, "1:3")).toContain('name="Card" description="A product card."');
   });
+
+  it("writes the properties pinned in annotations in CSS words, once each, after the notes", () => {
+    const xml = xmlOf(
+      box([
+        layer({
+          id: "1:2",
+          type: "FRAME",
+          name: "Card",
+          layoutMode: "VERTICAL",
+          annotations: [
+            {
+              label: "API",
+              pins: ["width", "itemSpacing"],
+            },
+            { pins: ["fills", "width", "gridColumnSpan", "somethingNew"] },
+          ],
+        }),
+        layer({
+          id: "1:3",
+          type: "TEXT",
+          name: "Price",
+          annotations: [{ pins: ["fills", "textStyleId"] }],
+        }),
+      ]),
+    );
+
+    expect(line(xml, "1:2")).toContain('note="API" $pins="width, gap, background, grid-column, somethingNew"');
+    expect(line(xml, "1:3")).toContain('$pins="color, text style"');
+    expect(line(xml, "1:3")).not.toContain("note=");
+  });
 });
 
 describe("export settings and masks that do not make an asset", () => {

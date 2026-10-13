@@ -334,12 +334,16 @@ export const SnapshotFieldsSchema = z.object({
     .optional(),
   /** A component's description, for whoever builds it. */
   description: z.string().optional(),
-  /** Dev Mode annotations: the designer's notes for developers, with their category's name. */
+  /**
+   * Dev Mode annotations: the designer's notes for developers, with their category's name, and the properties pinned in
+   * them (Figma's types, in the order pinned). An annotation has a note, pins, or both.
+   */
   annotations: z
     .array(
       z.object({
-        label: z.string(),
+        label: z.string().optional(),
         category: z.string().optional(),
+        pins: z.array(z.string()).optional(),
       }),
     )
     .optional(),

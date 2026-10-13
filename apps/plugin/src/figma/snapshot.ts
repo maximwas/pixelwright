@@ -528,10 +528,11 @@ export async function annotationCategories(): Promise<ReadonlyMap<string, string
   return new Map((categories ?? []).map((category) => [category.id, category.label]));
 }
 
+/** The layer's annotations that say something: a note, pinned properties, or both. */
 function annotationsOf(
   node: SceneNode,
   categories: ReadonlyMap<string, string>,
-): { label: string; category?: string }[] {
+): { label?: string; category?: string; pins?: string[] }[] {
   if (!("annotations" in node)) {
     return [];
   }
@@ -539,13 +540,16 @@ function annotationsOf(
   return node.annotations.flatMap((annotation) => {
     const label = annotation.label ?? annotation.labelMarkdown;
     const category = annotation.categoryId === undefined ? undefined : categories.get(annotation.categoryId);
+    const pins = (annotation.properties ?? []).map((property) => property.type);
+    const noted = label !== undefined && label !== "";
 
-    return label === undefined || label === ""
+    return !noted && pins.length === 0
       ? []
       : [
           {
-            label,
+            ...(noted ? { label } : {}),
             ...(category === undefined ? {} : { category }),
+            ...(pins.length === 0 ? {} : { pins }),
           },
         ];
   });
