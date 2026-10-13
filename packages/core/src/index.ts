@@ -39,6 +39,7 @@ export * from "./schemas/variants.ts";
 export * from "./tokens/style-numbers.ts";
 export * from "./tokens/token-model.ts";
 export * from "./tokens/tokens-css.ts";
+export * from "./tokens/tokens-dtcg.ts";
 export * from "./tokens/tokens-plan.ts";
 export type * from "./types/apply.ts";
 export type * from "./types/audit.ts";
