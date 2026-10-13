@@ -248,3 +248,46 @@ describe("find on a page the user has not opened", () => {
     expect(found.nodes.map((node) => node.id)).toEqual(["7:1"]);
   });
 });
+
+describe("outline of repeated components", () => {
+  it("names each instance's component and variant, so repeated cards show without a read", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "4:1",
+            type: "INSTANCE",
+            name: "Card",
+            mainComponent: {
+              name: "Type=Hover, Size=L",
+              parent: {
+                type: "COMPONENT_SET",
+                name: "Card",
+              },
+            },
+          },
+          {
+            id: "4:2",
+            type: "INSTANCE",
+            name: "Logo",
+            mainComponent: {
+              name: "Logo",
+              parent: null,
+            },
+          },
+        ],
+      }),
+    );
+
+    const outline = (await runOperation("outline", { depth: 1 })) as {
+      root: { children: { id: string; component?: string; variant?: string }[] };
+    };
+
+    expect(outline.root.children.map(({ id, component, variant }) => [id, component, variant])).toEqual([
+      ["4:1", "Card", "Type=Hover, Size=L"],
+      ["4:2", "Logo", undefined],
+    ]);
+  });
+});

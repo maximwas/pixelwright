@@ -122,13 +122,14 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
     x: 0,
     y: 0,
   };
-  const entryOf = (node: BaseNode): OutlineNode => {
+  const entryOf = async (node: BaseNode): Promise<OutlineNode> => {
     const box = boxOf(node);
 
     return {
       id: node.id,
       name: node.name,
       type: node.type,
+      ...(node.type === "INSTANCE" ? await componentOf(node) : {}),
       ...(box === null
         ? {}
         : {
@@ -141,7 +142,7 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
       childCount: childrenOf(node).length,
     };
   };
-  const top = entryOf(root);
+  const top = await entryOf(root);
   const queue: { node: BaseNode; entry: OutlineNode; level: number }[] = [
     {
       node: root,
@@ -160,20 +161,37 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
     }
 
     listed += children.length;
-    entry.children = children.map((child) => {
-      const childEntry = entryOf(child);
+    entry.children = [];
+
+    for (const child of children) {
+      const childEntry = await entryOf(child);
 
       queue.push({
         node: child,
         entry: childEntry,
         level: level + 1,
       });
-
-      return childEntry;
-    });
+      entry.children.push(childEntry);
+    }
   }
 
   return { root: top };
+}
+
+/** An instance's component, by its set's name for a variant, with the variant as Figma names it. */
+async function componentOf(node: InstanceNode): Promise<Pick<OutlineNode, "component" | "variant">> {
+  const main = await node.getMainComponentAsync();
+
+  if (main === null) {
+    return {};
+  }
+
+  return main.parent?.type === "COMPONENT_SET"
+    ? {
+        component: main.parent.name,
+        variant: main.name,
+      }
+    : { component: main.name };
 }
 
 function childrenOf(node: BaseNode): readonly BaseNode[] {

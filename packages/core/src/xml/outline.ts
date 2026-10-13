@@ -28,6 +28,8 @@ function writeNode(node: OutlineNode, level: number, lines: string[]): void {
   const values: [string, string | number | boolean | undefined][] = [
     ["id", node.id],
     ["name", node.name],
+    ["component", node.component],
+    ["variant", node.variant],
     ["x", node.x],
     ["y", node.y],
     ["width", node.width],

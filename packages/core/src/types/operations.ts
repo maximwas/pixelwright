@@ -15,6 +15,8 @@ export interface OutlineNode {
   id: string;
   name: string;
   type: string;
+  component?: string;
+  variant?: string;
   x?: number;
   y?: number;
   width?: number;

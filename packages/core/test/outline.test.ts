@@ -70,4 +70,16 @@ describe("outline XML", () => {
       }),
     ).toBe(['<Document id="0:0" name="Untitled">', '  <Page id="0:1" name="Landing"/>', "</Document>"].join("\n"));
   });
+
+  it("names an instance's component and variant", () => {
+    expect(
+      outlineXml({
+        id: "4:1",
+        name: "Card",
+        type: "INSTANCE",
+        component: "Card",
+        variant: "Type=Hover",
+      }),
+    ).toBe('<Instance id="4:1" name="Card" component="Card" variant="Type=Hover"/>');
+  });
 });

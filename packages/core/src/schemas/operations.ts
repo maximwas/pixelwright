@@ -32,6 +32,9 @@ export const OutlineNodeSchema: z.ZodType<OutlineNode> = z.object({
   id: z.string(),
   name: z.string(),
   type: z.string(),
+  /** An instance's component (its set for a variant) and the variant, so repeated components show. */
+  component: z.string().exactOptional(),
+  variant: z.string().exactOptional(),
   x: z.number().exactOptional(),
   y: z.number().exactOptional(),
   width: z.number().exactOptional(),
