@@ -98,6 +98,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
   }
 
   effectsCss(node, css, readOnly, context);
+  layoutGridsCss(node, readOnly);
 
   return {
     properties: [...css].sort(([a], [b]) => order(a) - order(b)),
@@ -472,6 +473,29 @@ function borderCss(
 }
 
 /** A centred stroke paints half of itself outside the layer's box, which a border-box border cannot. */
+/** A frame's visible layout grids, read-only: the columns, rows or square grid the design is laid on. */
+function layoutGridsCss(node: SnapshotNode, readOnly: [string, string][]): void {
+  const grids = (node.layoutGrids ?? []).filter((grid) => grid.visible !== false).map(layoutGridText);
+
+  if (grids.length > 0) {
+    readOnly.push(["layout-grid", grids.join(" + ")]);
+  }
+}
+
+function layoutGridText(grid: NonNullable<SnapshotNode["layoutGrids"]>[number]): string {
+  if (grid.pattern === "GRID") {
+    return `${px(grid.sectionSize ?? 0)} grid`;
+  }
+
+  const unit = grid.pattern === "ROWS" ? "rows" : "columns";
+  const alignment = (grid.alignment ?? "STRETCH").toLowerCase();
+  const width = alignment === "stretch" ? "" : ` ${px(grid.sectionSize ?? 0)} wide`;
+  const edge =
+    alignment === "center" ? "" : `, ${alignment === "stretch" ? "margin" : "offset"} ${px(grid.offset ?? 0)}`;
+
+  return `${grid.count ?? 1} ${unit} ${alignment}${width}, gutter ${px(grid.gutterSize ?? 0)}${edge}`;
+}
+
 function centredStroke(node: SnapshotNode, readOnly: [string, string][]): void {
   if (node.strokeAlign === "CENTER") {
     readOnly.push(["stroke-align", "center"]);

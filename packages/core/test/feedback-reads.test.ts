@@ -255,3 +255,35 @@ describe("text style tokens", () => {
     expect(tokensCss(model)).toContain("--Caption-letter-spacing: 0.03em;");
   });
 });
+
+describe("layout grids", () => {
+  it("are written as a read-only layout-grid, columns and a square grid alike", () => {
+    const { xml } = designXml(
+      snapshotOf(
+        layer({
+          id: "1:1",
+          type: "FRAME",
+          width: 1440,
+          height: 900,
+          layoutGrids: [
+            {
+              pattern: "COLUMNS",
+              alignment: "STRETCH",
+              count: 12,
+              gutterSize: 24,
+              offset: 80,
+              visible: true,
+            },
+            {
+              pattern: "GRID",
+              sectionSize: 8,
+              visible: true,
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(xml).toContain('$css="layout-grid: 12 columns stretch, gutter 24px, margin 80px + 8px grid"');
+  });
+});

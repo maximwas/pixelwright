@@ -360,6 +360,20 @@ export const SnapshotFieldsSchema = z.object({
   detached: z.boolean().optional(),
   /** A vector's paths, hashed: two icons alike in everything else may still draw something else. */
   pathHash: z.string().optional(),
+  /** A frame's layout grids, as Figma has them. */
+  layoutGrids: z
+    .array(
+      z.looseObject({
+        pattern: z.string(),
+        visible: z.boolean().optional(),
+        alignment: z.string().optional(),
+        count: z.number().optional(),
+        sectionSize: z.number().optional(),
+        gutterSize: z.number().optional(),
+        offset: z.number().optional(),
+      }),
+    )
+    .optional(),
   /** A text whose font is not installed here: its metrics may be off. */
   missingFont: z.boolean().optional(),
   /** The URL a prototype interaction opens. */

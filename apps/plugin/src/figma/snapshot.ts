@@ -349,6 +349,10 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
   putPaints(entry, "fills", layer.fills);
   putPaints(entry, "strokes", layer.strokes);
 
+  if (Array.isArray(layer.layoutGrids) && layer.layoutGrids.length > 0) {
+    entry.layoutGrids = plain(layer.layoutGrids);
+  }
+
   if (Array.isArray(layer.vectorPaths) && layer.vectorPaths.length > 0) {
     // Not the paths themselves (an icon's can be long): enough to tell two drawings apart.
     entry.pathHash = fnv1a(JSON.stringify(layer.vectorPaths));

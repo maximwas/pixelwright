@@ -530,3 +530,8 @@ export const VariantsInputSchema = z.object({
     .describe("A component set's id, or one of its variants', or an instance's: its set is read."),
   file: FileSchema,
 });
+
+export const BreakpointsInputSchema = z.object({
+  node: z.string().min(1).max(200).describe("A screen's id, or a layer's on it."),
+  file: FileSchema,
+});

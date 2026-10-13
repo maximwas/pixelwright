@@ -131,3 +131,28 @@ describe("flow_read", () => {
     ]);
   });
 });
+
+describe("breakpoints_find's screens", () => {
+  it("names the screen a layer is on and the page's other screens, with their children", async () => {
+    installFigma(prototype());
+
+    await expect(runOperation("screens", { node: "9:4" })).resolves.toEqual({
+      target: {
+        id: "9:3",
+        name: "Detail",
+        width: 375,
+        height: 812,
+        children: ["Back"],
+      },
+      screens: [
+        {
+          id: "9:1",
+          name: "Home",
+          width: 375,
+          height: 812,
+          children: ["Open"],
+        },
+      ],
+    });
+  });
+});

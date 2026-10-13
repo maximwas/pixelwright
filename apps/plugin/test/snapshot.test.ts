@@ -613,3 +613,40 @@ describe("vector paths in a snapshot", () => {
     expect(hashes[2]).not.toBe(hashes[0]);
   });
 });
+
+describe("layout grids in a snapshot", () => {
+  it("carry a frame's grids as Figma has them", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "7:9",
+            type: "FRAME",
+            name: "Desktop",
+            layoutGrids: [
+              {
+                pattern: "COLUMNS",
+                alignment: "STRETCH",
+                count: 12,
+                gutterSize: 24,
+                offset: 80,
+                visible: true,
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", { node: "7:9" })) as { root: { layoutGrids?: unknown[] } };
+
+    expect(root.layoutGrids).toEqual([
+      expect.objectContaining({
+        pattern: "COLUMNS",
+        count: 12,
+      }),
+    ]);
+  });
+});

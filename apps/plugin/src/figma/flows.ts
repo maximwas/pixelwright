@@ -6,13 +6,63 @@ import {
   type SnapshotReaction,
 } from "@pixelwright/core";
 import { FLOW_MAX_LINKS } from "../constants/plugin.ts";
-import { requireNode } from "./nodes.ts";
+import { pageOf, requireNode } from "./nodes.ts";
 import { reactionsOf } from "./snapshot.ts";
 import { loaded } from "./used-tokens.ts";
 
 type Link = OperationOutput<"flows">["links"][number];
 
 const SCREEN_TYPES = new Set(["FRAME", "COMPONENT", "INSTANCE"]);
+
+/** The page's screens: its frames, and those in its sections. */
+function screensOf(page: PageNode): SceneNode[] {
+  return page.children
+    .flatMap((node) => (node.type === "SECTION" ? node.children : [node]))
+    .filter((node) => SCREEN_TYPES.has(node.type));
+}
+
+/** The screen a layer is on, and the page's other screens, each with its children's names (for breakpoints_find). */
+export async function screens({ node: id }: OperationInput<"screens">): Promise<OperationOutput<"screens">> {
+  const node = await requireNode(id);
+  const page = pageOf(node);
+
+  if (page === null) {
+    throw new BridgeError("NODE_NOT_FOUND", `${id} is not a layer on a page.`);
+  }
+
+  const all = screensOf(page);
+  const target = all.find((screen) => screen === node || contains(screen, node));
+
+  if (target === undefined) {
+    throw new BridgeError(
+      "OP_FAILED",
+      `${id} "${node.name}" is on no screen: give a frame on the page or a layer in one.`,
+    );
+  }
+
+  const describe = (screen: SceneNode) => ({
+    id: screen.id,
+    name: screen.name,
+    width: Math.round(screen.width),
+    height: Math.round(screen.height),
+    children: "children" in screen ? screen.children.map((child) => child.name) : [],
+  });
+
+  return {
+    target: describe(target),
+    screens: all.filter((screen) => screen !== target).map(describe),
+  };
+}
+
+function contains(ancestor: BaseNode, node: BaseNode): boolean {
+  for (let current = node.parent; current !== null; current = current.parent) {
+    if (current === ancestor) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 /**
  * A page's prototype as a map: where its flows start, its screens (its frames, and those in its sections), and every
@@ -27,11 +77,7 @@ export async function flows({ page: id }: OperationInput<"flows">): Promise<Oper
 
   await loaded(page);
 
-  const screens = page.children
-    .flatMap((node) =>
-      node.type === "SECTION" ? node.children.filter((child) => SCREEN_TYPES.has(child.type)) : [node],
-    )
-    .filter((node) => SCREEN_TYPES.has(node.type));
+  const screens = screensOf(page);
   const names = new Map(screens.map((screen) => [screen.id, screen.name]));
   const links: Link[] = [];
   let more = false;
