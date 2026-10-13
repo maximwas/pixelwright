@@ -1,0 +1,1770 @@
+{
+  "root": {
+    "id": "54:434",
+    "name": "Customers",
+    "type": "FRAME",
+    "visible": true,
+    "x": 0,
+    "y": 0,
+    "width": 1200,
+    "height": 360,
+    "clipsContent": true,
+    "layoutSizingHorizontal": "FILL",
+    "layoutSizingVertical": "FIXED",
+    "layoutAlign": "STRETCH",
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 1,
+          "g": 1,
+          "b": 1
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:54:151"
+          }
+        }
+      }
+    ],
+    "cornerRadius": 24,
+    "boundVariables": {
+      "fills": [
+        {
+          "type": "VARIABLE_ALIAS",
+          "id": "VariableID:54:151"
+        }
+      ]
+    },
+    "css": {
+      "height": "360px",
+      "align-self": "stretch",
+      "border-radius": "24px",
+      "background": "var(--color-surface, #FFF)"
+    },
+    "childCount": 12,
+    "children": [
+      {
+        "id": "54:435",
+        "name": "Title",
+        "type": "TEXT",
+        "visible": true,
+        "x": 40,
+        "y": 40,
+        "width": 251,
+        "height": 30,
+        "renderBounds": {
+          "x": 40.6,
+          "y": 46.2,
+          "width": 248.49,
+          "height": 21.6
+        },
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 0.0784313753247261,
+              "g": 0.08627451211214066,
+              "b": 0.12156862765550613
+            },
+            "boundVariables": {
+              "color": {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:54:147"
+              }
+            }
+          }
+        ],
+        "textStyleId": "S:9c8f777679e0cd6b2726a6f33a9b3109b0945b8b,",
+        "boundVariables": {
+          "fills": [
+            {
+              "type": "VARIABLE_ALIAS",
+              "id": "VariableID:54:147"
+            }
+          ]
+        },
+        "text": {
+          "characters": "Teams already in orbit",
+          "textAutoResize": "WIDTH_AND_HEIGHT",
+          "textAlignHorizontal": "LEFT",
+          "textAlignVertical": "TOP",
+          "segments": [
+            {
+              "characters": "Teams already in orbit",
+              "start": 0,
+              "end": 22,
+              "fontName": {
+                "family": "Space Grotesk",
+                "style": "Medium",
+                "variationSettings": {
+                  "wght": 500
+                }
+              },
+              "fontSize": 24,
+              "fontWeight": 500,
+              "fontStyle": "MEDIUM",
+              "textDecoration": "NONE",
+              "textCase": "ORIGINAL",
+              "lineHeight": {
+                "unit": "PIXELS",
+                "value": 30
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": -1
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "visible": true,
+                  "opacity": 1,
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0.0784313753247261,
+                    "g": 0.08627451211214066,
+                    "b": 0.12156862765550613
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:54:147"
+                    }
+                  }
+                }
+              ],
+              "fillStyleId": "",
+              "textStyleId": "S:9c8f777679e0cd6b2726a6f33a9b3109b0945b8b,",
+              "hyperlink": null,
+              "textDecorationStyle": null,
+              "textDecorationOffset": null,
+              "textDecorationThickness": null,
+              "textDecorationColor": null,
+              "listOptions": {
+                "type": "NONE"
+              },
+              "indentation": 0,
+              "paragraphIndent": 0,
+              "paragraphSpacing": 0,
+              "textWrapStyle": "AUTO",
+              "openTypeFeatures": {},
+              "boundVariables": {}
+            }
+          ]
+        },
+        "css": {
+          "color": "var(--color-ink, #14161F)",
+          "font-family": "\"Space Grotesk\"",
+          "font-size": "24px",
+          "font-style": "normal",
+          "font-weight": "500",
+          "line-height": "30px /* 125% */",
+          "letter-spacing": "-0.24px"
+        },
+        "childCount": 0
+      },
+      {
+        "id": "54:436",
+        "name": "Trusted",
+        "type": "TEXT",
+        "visible": true,
+        "x": 40,
+        "y": 80,
+        "width": 170,
+        "height": 17,
+        "renderBounds": {
+          "x": 40.62,
+          "y": 83.68,
+          "width": 167.81,
+          "height": 13.18
+        },
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 0.29019609093666077,
+              "g": 0.30980393290519714,
+              "b": 0.3686274588108063
+            },
+            "boundVariables": {
+              "color": {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:54:148"
+              }
+            }
+          }
+        ],
+        "boundVariables": {
+          "fills": [
+            {
+              "type": "VARIABLE_ALIAS",
+              "id": "VariableID:54:148"
+            }
+          ]
+        },
+        "text": {
+          "characters": "Trusted by 2,000+ teams",
+          "textAutoResize": "WIDTH_AND_HEIGHT",
+          "textAlignHorizontal": "LEFT",
+          "textAlignVertical": "TOP",
+          "segments": [
+            {
+              "characters": "Trusted by 2,000+ teams",
+              "start": 0,
+              "end": 23,
+              "fontName": {
+                "family": "Inter",
+                "style": "Medium",
+                "variationSettings": {
+                  "slnt": 0,
+                  "wght": 500
+                }
+              },
+              "fontSize": 14,
+              "fontWeight": 500,
+              "fontStyle": "MEDIUM",
+              "textDecoration": "NONE",
+              "textCase": "ORIGINAL",
+              "lineHeight": {
+                "unit": "AUTO"
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "visible": true,
+                  "opacity": 1,
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0.29019609093666077,
+                    "g": 0.30980393290519714,
+                    "b": 0.3686274588108063
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:54:148"
+                    }
+                  }
+                }
+              ],
+              "fillStyleId": "",
+              "textStyleId": "",
+              "hyperlink": null,
+              "textDecorationStyle": null,
+              "textDecorationOffset": null,
+              "textDecorationThickness": null,
+              "textDecorationColor": null,
+              "listOptions": {
+                "type": "NONE"
+              },
+              "indentation": 0,
+              "paragraphIndent": 0,
+              "paragraphSpacing": 0,
+              "textWrapStyle": "AUTO",
+              "openTypeFeatures": {},
+              "boundVariables": {}
+            }
+          ]
+        },
+        "css": {
+          "color": "var(--color-ink-muted, #4A4F5E)",
+          "font-family": "Inter",
+          "font-size": "14px",
+          "font-style": "normal",
+          "font-weight": "500",
+          "line-height": "normal"
+        },
+        "childCount": 0
+      },
+      {
+        "id": "54:437",
+        "name": "Logo",
+        "type": "INSTANCE",
+        "visible": true,
+        "x": 40,
+        "y": 124,
+        "width": 120,
+        "height": 32,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "instance": {
+          "componentId": "54:425",
+          "componentName": "Brand=Nova",
+          "componentKey": "4b7234f9949c0f215e115b7b40f317f45a50c1e0",
+          "setId": "54:433",
+          "setName": "Logo",
+          "properties": {
+            "Brand": {
+              "type": "VARIANT",
+              "value": "Nova"
+            }
+          }
+        },
+        "css": {
+          "width": "120px",
+          "height": "32px"
+        },
+        "childCount": 3,
+        "children": [
+          {
+            "id": "I54:437;54:426",
+            "name": "Mark",
+            "type": "STAR",
+            "visible": true,
+            "x": 40,
+            "y": 124,
+            "width": 32,
+            "height": 32,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0.23137255012989044,
+                  "g": 0.18431372940540314,
+                  "b": 0.8509804010391235
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:153"
+                  }
+                }
+              }
+            ],
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:153"
+                }
+              ]
+            },
+            "css": {
+              "width": "32px",
+              "height": "32px",
+              "fill": "var(--color-brand, #3B2FD9)"
+            },
+            "childCount": 0
+          },
+          {
+            "id": "I54:437;54:427",
+            "name": "Bar",
+            "type": "RECTANGLE",
+            "visible": true,
+            "x": 84,
+            "y": 132,
+            "width": 72,
+            "height": 6,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0.0784313753247261,
+                  "g": 0.08627451211214066,
+                  "b": 0.12156862765550613
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:147"
+                  }
+                }
+              }
+            ],
+            "cornerRadius": 3,
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:147"
+                }
+              ]
+            },
+            "css": {
+              "width": "72px",
+              "height": "6px",
+              "border-radius": "3px",
+              "background": "var(--color-ink, #14161F)"
+            },
+            "childCount": 0
+          },
+          {
+            "id": "I54:437;54:428",
+            "name": "Bar",
+            "type": "RECTANGLE",
+            "visible": true,
+            "x": 84,
+            "y": 144,
+            "width": 48,
+            "height": 6,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0.0784313753247261,
+                  "g": 0.08627451211214066,
+                  "b": 0.12156862765550613
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:147"
+                  }
+                }
+              }
+            ],
+            "cornerRadius": 3,
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:147"
+                }
+              ]
+            },
+            "css": {
+              "width": "48px",
+              "height": "6px",
+              "border-radius": "3px",
+              "background": "var(--color-ink, #14161F)"
+            },
+            "childCount": 0
+          }
+        ]
+      },
+      {
+        "id": "54:441",
+        "name": "Logo",
+        "type": "INSTANCE",
+        "visible": true,
+        "x": 190,
+        "y": 124,
+        "width": 120,
+        "height": 32,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "instance": {
+          "componentId": "54:429",
+          "componentName": "Brand=Lumen",
+          "componentKey": "4aa3dd560255efecd28daac0af9bb89a4d9547ff",
+          "setId": "54:433",
+          "setName": "Logo",
+          "properties": {
+            "Brand": {
+              "type": "VARIANT",
+              "value": "Lumen"
+            }
+          }
+        },
+        "css": {
+          "width": "120px",
+          "height": "32px"
+        },
+        "childCount": 3,
+        "children": [
+          {
+            "id": "I54:441;54:430",
+            "name": "Mark",
+            "type": "POLYGON",
+            "visible": true,
+            "x": 190,
+            "y": 124,
+            "width": 32,
+            "height": 32,
+            "renderBounds": {
+              "x": 192.14,
+              "y": 124,
+              "width": 27.71,
+              "height": 24
+            },
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 1,
+                  "g": 0.41960784792900085,
+                  "b": 0.239215686917305
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:156"
+                  }
+                }
+              }
+            ],
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:156"
+                }
+              ]
+            },
+            "css": {
+              "width": "32px",
+              "height": "32px",
+              "fill": "var(--color-accent, #FF6B3D)"
+            },
+            "childCount": 0
+          },
+          {
+            "id": "I54:441;54:431",
+            "name": "Bar",
+            "type": "RECTANGLE",
+            "visible": true,
+            "x": 234,
+            "y": 132,
+            "width": 72,
+            "height": 6,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0.0784313753247261,
+                  "g": 0.08627451211214066,
+                  "b": 0.12156862765550613
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:147"
+                  }
+                }
+              }
+            ],
+            "cornerRadius": 3,
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:147"
+                }
+              ]
+            },
+            "css": {
+              "width": "72px",
+              "height": "6px",
+              "border-radius": "3px",
+              "background": "var(--color-ink, #14161F)"
+            },
+            "childCount": 0
+          },
+          {
+            "id": "I54:441;54:432",
+            "name": "Bar",
+            "type": "RECTANGLE",
+            "visible": true,
+            "x": 234,
+            "y": 144,
+            "width": 48,
+            "height": 6,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0.0784313753247261,
+                  "g": 0.08627451211214066,
+                  "b": 0.12156862765550613
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:147"
+                  }
+                }
+              }
+            ],
+            "cornerRadius": 3,
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:147"
+                }
+              ]
+            },
+            "css": {
+              "width": "48px",
+              "height": "6px",
+              "border-radius": "3px",
+              "background": "var(--color-ink, #14161F)"
+            },
+            "childCount": 0
+          }
+        ]
+      },
+      {
+        "id": "54:445",
+        "name": "Logo",
+        "type": "INSTANCE",
+        "visible": true,
+        "x": 340,
+        "y": 124,
+        "width": 120,
+        "height": 32,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "instance": {
+          "componentId": "54:425",
+          "componentName": "Brand=Nova",
+          "componentKey": "4b7234f9949c0f215e115b7b40f317f45a50c1e0",
+          "setId": "54:433",
+          "setName": "Logo",
+          "properties": {
+            "Brand": {
+              "type": "VARIANT",
+              "value": "Nova"
+            }
+          }
+        },
+        "css": {
+          "width": "120px",
+          "height": "32px"
+        },
+        "childCount": 3,
+        "children": [
+          {
+            "id": "I54:445;54:426",
+            "name": "Mark",
+            "type": "STAR",
+            "visible": true,
+            "x": 340,
+            "y": 124,
+            "width": 32,
+            "height": 32,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0.23137255012989044,
+                  "g": 0.18431372940540314,
+                  "b": 0.8509804010391235
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:153"
+                  }
+                }
+              }
+            ],
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:153"
+                }
+              ]
+            },
+            "css": {
+              "width": "32px",
+              "height": "32px",
+              "fill": "var(--color-brand, #3B2FD9)"
+            },
+            "childCount": 0
+          },
+          {
+            "id": "I54:445;54:427",
+            "name": "Bar",
+            "type": "RECTANGLE",
+            "visible": true,
+            "x": 384,
+            "y": 132,
+            "width": 72,
+            "height": 6,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0.0784313753247261,
+                  "g": 0.08627451211214066,
+                  "b": 0.12156862765550613
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:147"
+                  }
+                }
+              }
+            ],
+            "cornerRadius": 3,
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:147"
+                }
+              ]
+            },
+            "css": {
+              "width": "72px",
+              "height": "6px",
+              "border-radius": "3px",
+              "background": "var(--color-ink, #14161F)"
+            },
+            "childCount": 0
+          },
+          {
+            "id": "I54:445;54:428",
+            "name": "Bar",
+            "type": "RECTANGLE",
+            "visible": true,
+            "x": 384,
+            "y": 144,
+            "width": 48,
+            "height": 6,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0.0784313753247261,
+                  "g": 0.08627451211214066,
+                  "b": 0.12156862765550613
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:147"
+                  }
+                }
+              }
+            ],
+            "cornerRadius": 3,
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:147"
+                }
+              ]
+            },
+            "css": {
+              "width": "48px",
+              "height": "6px",
+              "border-radius": "3px",
+              "background": "var(--color-ink, #14161F)"
+            },
+            "childCount": 0
+          }
+        ]
+      },
+      {
+        "id": "54:449",
+        "name": "Quote",
+        "type": "TEXT",
+        "visible": true,
+        "x": 112,
+        "y": 230,
+        "width": 520,
+        "height": 48,
+        "renderBounds": {
+          "x": 112.77,
+          "y": 235.82,
+          "width": 491.27,
+          "height": 36.39
+        },
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 0.0784313753247261,
+              "g": 0.08627451211214066,
+              "b": 0.12156862765550613
+            },
+            "boundVariables": {
+              "color": {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:54:147"
+              }
+            }
+          }
+        ],
+        "boundVariables": {
+          "fills": [
+            {
+              "type": "VARIABLE_ALIAS",
+              "id": "VariableID:54:147"
+            }
+          ]
+        },
+        "text": {
+          "characters": "“Orbit replaced three tools for us.” Maya Chen, Head of Design at Nova",
+          "textAutoResize": "HEIGHT",
+          "textAlignHorizontal": "LEFT",
+          "textAlignVertical": "TOP",
+          "segments": [
+            {
+              "characters": "“Orbit replaced three tools for us.” ",
+              "start": 0,
+              "end": 37,
+              "fontName": {
+                "family": "Inter",
+                "style": "Regular",
+                "variationSettings": {
+                  "slnt": 0,
+                  "wght": 400
+                }
+              },
+              "fontSize": 16,
+              "fontWeight": 400,
+              "fontStyle": "REGULAR",
+              "textDecoration": "NONE",
+              "textCase": "ORIGINAL",
+              "lineHeight": {
+                "unit": "PIXELS",
+                "value": 24
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "visible": true,
+                  "opacity": 1,
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0.0784313753247261,
+                    "g": 0.08627451211214066,
+                    "b": 0.12156862765550613
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:54:147"
+                    }
+                  }
+                }
+              ],
+              "fillStyleId": "",
+              "textStyleId": "",
+              "hyperlink": null,
+              "textDecorationStyle": null,
+              "textDecorationOffset": null,
+              "textDecorationThickness": null,
+              "textDecorationColor": null,
+              "listOptions": {
+                "type": "NONE"
+              },
+              "indentation": 0,
+              "paragraphIndent": 0,
+              "paragraphSpacing": 0,
+              "textWrapStyle": "AUTO",
+              "openTypeFeatures": {},
+              "boundVariables": {}
+            },
+            {
+              "characters": "Maya Chen",
+              "start": 37,
+              "end": 46,
+              "fontName": {
+                "family": "Inter",
+                "style": "Semi Bold",
+                "variationSettings": {
+                  "slnt": 0,
+                  "wght": 600
+                }
+              },
+              "fontSize": 16,
+              "fontWeight": 600,
+              "fontStyle": "SEMI BOLD",
+              "textDecoration": "NONE",
+              "textCase": "ORIGINAL",
+              "lineHeight": {
+                "unit": "PIXELS",
+                "value": 24
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "visible": true,
+                  "opacity": 1,
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0.0784313753247261,
+                    "g": 0.08627451211214066,
+                    "b": 0.12156862765550613
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:54:147"
+                    }
+                  }
+                }
+              ],
+              "fillStyleId": "",
+              "textStyleId": "",
+              "hyperlink": null,
+              "textDecorationStyle": null,
+              "textDecorationOffset": null,
+              "textDecorationThickness": null,
+              "textDecorationColor": null,
+              "listOptions": {
+                "type": "NONE"
+              },
+              "indentation": 0,
+              "paragraphIndent": 0,
+              "paragraphSpacing": 0,
+              "textWrapStyle": "AUTO",
+              "openTypeFeatures": {},
+              "boundVariables": {}
+            },
+            {
+              "characters": ", Head of Design at Nova",
+              "start": 46,
+              "end": 70,
+              "fontName": {
+                "family": "Inter",
+                "style": "Regular",
+                "variationSettings": {
+                  "slnt": 0,
+                  "wght": 400
+                }
+              },
+              "fontSize": 16,
+              "fontWeight": 400,
+              "fontStyle": "REGULAR",
+              "textDecoration": "NONE",
+              "textCase": "ORIGINAL",
+              "lineHeight": {
+                "unit": "PIXELS",
+                "value": 24
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "visible": true,
+                  "opacity": 1,
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0.0784313753247261,
+                    "g": 0.08627451211214066,
+                    "b": 0.12156862765550613
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:54:147"
+                    }
+                  }
+                }
+              ],
+              "fillStyleId": "",
+              "textStyleId": "",
+              "hyperlink": null,
+              "textDecorationStyle": null,
+              "textDecorationOffset": null,
+              "textDecorationThickness": null,
+              "textDecorationColor": null,
+              "listOptions": {
+                "type": "NONE"
+              },
+              "indentation": 0,
+              "paragraphIndent": 0,
+              "paragraphSpacing": 0,
+              "textWrapStyle": "AUTO",
+              "openTypeFeatures": {},
+              "boundVariables": {}
+            }
+          ]
+        },
+        "css": {
+          "width": "520px",
+          "color": "var(--color-ink, #14161F)",
+          "font-family": "Inter",
+          "font-size": "16px",
+          "font-style": "normal",
+          "font-weight": "600",
+          "line-height": "24px"
+        },
+        "childCount": 0
+      },
+      {
+        "id": "54:450",
+        "name": "Sticker",
+        "type": "FRAME",
+        "visible": true,
+        "x": 520,
+        "y": 292,
+        "width": 144,
+        "height": 28,
+        "bounds": {
+          "x": 520,
+          "y": 271.96,
+          "width": 146.5,
+          "height": 47.77
+        },
+        "rotation": 8.000000756261047,
+        "clipsContent": true,
+        "layoutMode": "HORIZONTAL",
+        "layoutWrap": "NO_WRAP",
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "counterAxisAlignContent": "AUTO",
+        "itemSpacing": 6,
+        "counterAxisSpacing": 0,
+        "paddingTop": 6,
+        "paddingRight": 12,
+        "paddingBottom": 6,
+        "paddingLeft": 12,
+        "itemReverseZIndex": false,
+        "strokesIncludedInLayout": true,
+        "layoutSizingHorizontal": "HUG",
+        "layoutSizingVertical": "HUG",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 1,
+              "g": 0.41960784792900085,
+              "b": 0.239215686917305
+            },
+            "boundVariables": {
+              "color": {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:54:156"
+              }
+            }
+          }
+        ],
+        "cornerRadius": 999,
+        "boundVariables": {
+          "fills": [
+            {
+              "type": "VARIABLE_ALIAS",
+              "id": "VariableID:54:156"
+            }
+          ]
+        },
+        "css": {
+          "display": "inline-flex",
+          "transform": "rotate(-8deg)",
+          "padding": "6px 12px",
+          "align-items": "flex-start",
+          "gap": "6px",
+          "border-radius": "999px",
+          "background": "var(--color-accent, #FF6B3D)"
+        },
+        "childCount": 1,
+        "children": [
+          {
+            "id": "54:451",
+            "name": "Save 20% yearly",
+            "type": "TEXT",
+            "visible": true,
+            "x": 532.72,
+            "y": 296.27,
+            "width": 120,
+            "height": 16,
+            "renderBounds": {
+              "x": 533.68,
+              "y": 282.67,
+              "width": 118.84,
+              "height": 25.65
+            },
+            "layoutSizingHorizontal": "HUG",
+            "layoutSizingVertical": "HUG",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                },
+                "boundVariables": {
+                  "color": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:54:157"
+                  }
+                }
+              }
+            ],
+            "textStyleId": "S:1a268929358e5b62462368e6366165ecabed8c02,",
+            "boundVariables": {
+              "fills": [
+                {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:54:157"
+                }
+              ]
+            },
+            "text": {
+              "characters": "Save 20% yearly",
+              "textAutoResize": "WIDTH_AND_HEIGHT",
+              "textAlignHorizontal": "LEFT",
+              "textAlignVertical": "TOP",
+              "segments": [
+                {
+                  "characters": "Save 20% yearly",
+                  "start": 0,
+                  "end": 15,
+                  "fontName": {
+                    "family": "Inter",
+                    "style": "Semi Bold",
+                    "variationSettings": {
+                      "slnt": 0,
+                      "wght": 600
+                    }
+                  },
+                  "fontSize": 12,
+                  "fontWeight": 600,
+                  "fontStyle": "SEMI BOLD",
+                  "textDecoration": "NONE",
+                  "textCase": "UPPER",
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 16
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 6
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": true,
+                      "opacity": 1,
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1
+                      },
+                      "boundVariables": {
+                        "color": {
+                          "type": "VARIABLE_ALIAS",
+                          "id": "VariableID:54:157"
+                        }
+                      }
+                    }
+                  ],
+                  "fillStyleId": "",
+                  "textStyleId": "S:1a268929358e5b62462368e6366165ecabed8c02,",
+                  "hyperlink": null,
+                  "textDecorationStyle": null,
+                  "textDecorationOffset": null,
+                  "textDecorationThickness": null,
+                  "textDecorationColor": null,
+                  "listOptions": {
+                    "type": "NONE"
+                  },
+                  "indentation": 0,
+                  "paragraphIndent": 0,
+                  "paragraphSpacing": 0,
+                  "textWrapStyle": "AUTO",
+                  "openTypeFeatures": {},
+                  "boundVariables": {}
+                }
+              ]
+            },
+            "css": {
+              "color": "var(--color-on-brand, #FFF)",
+              "font-family": "Inter",
+              "font-size": "12px",
+              "font-style": "normal",
+              "font-weight": "600",
+              "line-height": "16px /* 133.333% */",
+              "letter-spacing": "0.72px",
+              "text-transform": "uppercase"
+            },
+            "childCount": 0
+          }
+        ]
+      },
+      {
+        "id": "54:452",
+        "name": "Arrow",
+        "type": "VECTOR",
+        "visible": true,
+        "x": 748,
+        "y": 250,
+        "width": 80,
+        "height": 40,
+        "bounds": {
+          "x": 668,
+          "y": 250,
+          "width": 80,
+          "height": 40
+        },
+        "renderBounds": {
+          "x": 666.45,
+          "y": 249,
+          "width": 82.55,
+          "height": 42
+        },
+        "rotation": -180,
+        "mirrorTransform": [
+          -1,
+          0,
+          0,
+          1
+        ],
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "strokes": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 0.5411764979362488,
+              "g": 0.5607843399047852,
+              "b": 0.6117647290229797
+            },
+            "boundVariables": {
+              "color": {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:54:149"
+              }
+            }
+          }
+        ],
+        "strokeWeight": 2,
+        "strokeAlign": "CENTER",
+        "boundVariables": {
+          "strokes": [
+            {
+              "type": "VARIABLE_ALIAS",
+              "id": "VariableID:54:149"
+            }
+          ]
+        },
+        "css": {
+          "width": "80px",
+          "height": "40px",
+          "transform": "scaleX(-1)",
+          "stroke-width": "2px",
+          "stroke": "var(--color-ink-subtle, #8A8F9C)"
+        },
+        "childCount": 0
+      },
+      {
+        "id": "54:454",
+        "name": "Product shot",
+        "type": "RECTANGLE",
+        "visible": true,
+        "x": 760,
+        "y": 56,
+        "width": 400,
+        "height": 248,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "fills": [
+          {
+            "type": "IMAGE",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "imageHash": "1f1c2ceb21b866d4ea84f1cc4a6d69ed0b83ab13",
+            "scaleMode": "CROP",
+            "scalingFactor": 1,
+            "filters": {
+              "exposure": 0,
+              "contrast": 0,
+              "saturation": 0,
+              "temperature": 0,
+              "tint": 0,
+              "highlights": 0,
+              "shadows": 0
+            },
+            "imageTransform": [
+              [
+                0.6200000047683716,
+                0,
+                0.30000001192092896
+              ],
+              [
+                0,
+                0.6200000047683716,
+                0.03999999910593033
+              ]
+            ]
+          }
+        ],
+        "cornerRadius": 12,
+        "exportSettings": [
+          {
+            "format": "PNG",
+            "suffix": "",
+            "constraint": {
+              "type": "SCALE",
+              "value": 2
+            },
+            "contentsOnly": true,
+            "colorProfile": "DOCUMENT"
+          }
+        ],
+        "css": {
+          "width": "400px",
+          "height": "248px",
+          "border-radius": "12px",
+          "background": "url(<path-to-image>) lightgray -193.548px -16px / 161.29% 161.29% no-repeat"
+        },
+        "childCount": 0
+      },
+      {
+        "id": "54:456",
+        "name": "Avatar",
+        "type": "GROUP",
+        "visible": true,
+        "x": 40,
+        "y": 226,
+        "width": 56,
+        "height": 56,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "css": {
+          "width": "56px",
+          "height": "56px"
+        },
+        "childCount": 2,
+        "children": [
+          {
+            "id": "54:455",
+            "name": "Mask",
+            "type": "ELLIPSE",
+            "visible": true,
+            "x": 40,
+            "y": 226,
+            "width": 56,
+            "height": 56,
+            "isMask": true,
+            "maskType": "ALPHA",
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                },
+                "boundVariables": {}
+              }
+            ],
+            "css": {
+              "width": "56px",
+              "height": "56px",
+              "fill": "#000"
+            },
+            "childCount": 0
+          },
+          {
+            "id": "54:453",
+            "name": "Photo",
+            "type": "RECTANGLE",
+            "visible": true,
+            "x": 40,
+            "y": 226,
+            "width": 56,
+            "height": 56,
+            "layoutSizingHorizontal": "FIXED",
+            "layoutSizingVertical": "FIXED",
+            "fills": [
+              {
+                "type": "IMAGE",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "imageHash": "ae0cb3f73754806e1b2c5f6d9273af02f7aa8b71",
+                "scaleMode": "FILL",
+                "scalingFactor": 1,
+                "rotation": 0,
+                "filters": {
+                  "exposure": 0,
+                  "contrast": 0,
+                  "saturation": 0,
+                  "temperature": 0,
+                  "tint": 0,
+                  "highlights": 0,
+                  "shadows": 0
+                },
+                "imageTransform": [
+                  [
+                    1,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1,
+                    0
+                  ]
+                ]
+              }
+            ],
+            "css": {
+              "width": "56px",
+              "height": "56px",
+              "background": "url(<path-to-image>) lightgray 50% / cover no-repeat"
+            },
+            "childCount": 0
+          }
+        ]
+      },
+      {
+        "id": "54:457",
+        "name": "★★★★★",
+        "type": "TEXT",
+        "visible": true,
+        "x": 112,
+        "y": 204,
+        "width": 74,
+        "height": 17,
+        "renderBounds": {
+          "x": 113.27,
+          "y": 206.55,
+          "width": 70.66,
+          "height": 11.55
+        },
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 1,
+              "g": 0.41960784792900085,
+              "b": 0.239215686917305
+            },
+            "boundVariables": {}
+          }
+        ],
+        "text": {
+          "characters": "★★★★★",
+          "textAutoResize": "WIDTH_AND_HEIGHT",
+          "textAlignHorizontal": "LEFT",
+          "textAlignVertical": "TOP",
+          "segments": [
+            {
+              "characters": "★★★★★",
+              "start": 0,
+              "end": 5,
+              "fontName": {
+                "family": "Inter",
+                "style": "Regular",
+                "variationSettings": {
+                  "slnt": 0,
+                  "wght": 400
+                }
+              },
+              "fontSize": 14,
+              "fontWeight": 400,
+              "fontStyle": "REGULAR",
+              "textDecoration": "NONE",
+              "textCase": "ORIGINAL",
+              "lineHeight": {
+                "unit": "AUTO"
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "visible": true,
+                  "opacity": 1,
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 0.41960784792900085,
+                    "b": 0.239215686917305
+                  },
+                  "boundVariables": {}
+                }
+              ],
+              "fillStyleId": "",
+              "textStyleId": "",
+              "hyperlink": null,
+              "textDecorationStyle": null,
+              "textDecorationOffset": null,
+              "textDecorationThickness": null,
+              "textDecorationColor": null,
+              "listOptions": {
+                "type": "NONE"
+              },
+              "indentation": 0,
+              "paragraphIndent": 0,
+              "paragraphSpacing": 0,
+              "textWrapStyle": "AUTO",
+              "openTypeFeatures": {},
+              "boundVariables": {}
+            }
+          ]
+        },
+        "css": {
+          "color": "#FF6B3D",
+          "font-family": "Inter",
+          "font-size": "14px",
+          "font-style": "normal",
+          "font-weight": "400",
+          "line-height": "normal"
+        },
+        "childCount": 0
+      },
+      {
+        "id": "54:458",
+        "name": "Rectangle 1",
+        "type": "RECTANGLE",
+        "visible": true,
+        "x": 40,
+        "y": 188,
+        "width": 560,
+        "height": 1,
+        "layoutSizingHorizontal": "FIXED",
+        "layoutSizingVertical": "FIXED",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 0.8823529481887817,
+              "g": 0.8980392217636108,
+              "b": 0.9333333373069763
+            },
+            "boundVariables": {}
+          }
+        ],
+        "css": {
+          "width": "560px",
+          "height": "1px",
+          "background": "#E1E5EE"
+        },
+        "childCount": 0
+      }
+    ]
+  },
+  "styles": {
+    "S:9c8f777679e0cd6b2726a6f33a9b3109b0945b8b,": {
+      "name": "Heading/H3",
+      "type": "TEXT",
+      "remote": false,
+      "fontName": {
+        "family": "Space Grotesk",
+        "style": "Medium",
+        "variationSettings": {
+          "wght": 500
+        }
+      },
+      "fontSize": 24,
+      "lineHeight": {
+        "unit": "PIXELS",
+        "value": 30
+      },
+      "letterSpacing": {
+        "unit": "PERCENT",
+        "value": -1
+      },
+      "textCase": "ORIGINAL",
+      "textDecoration": "NONE"
+    },
+    "S:1a268929358e5b62462368e6366165ecabed8c02,": {
+      "name": "Label",
+      "type": "TEXT",
+      "remote": false,
+      "fontName": {
+        "family": "Inter",
+        "style": "Semi Bold",
+        "variationSettings": {
+          "slnt": 0,
+          "wght": 600
+        }
+      },
+      "fontSize": 12,
+      "lineHeight": {
+        "unit": "PIXELS",
+        "value": 16
+      },
+      "letterSpacing": {
+        "unit": "PERCENT",
+        "value": 6
+      },
+      "textCase": "UPPER",
+      "textDecoration": "NONE"
+    }
+  },
+  "variables": {
+    "VariableID:54:151": {
+      "name": "color/surface",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      }
+    },
+    "VariableID:54:147": {
+      "name": "color/ink",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 0.0784313753247261,
+        "g": 0.08627451211214066,
+        "b": 0.12156862765550613,
+        "a": 1
+      }
+    },
+    "VariableID:54:148": {
+      "name": "color/ink-muted",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 0.29019609093666077,
+        "g": 0.30980393290519714,
+        "b": 0.3686274588108063,
+        "a": 1
+      }
+    },
+    "VariableID:54:156": {
+      "name": "color/accent",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 1,
+        "g": 0.41960784792900085,
+        "b": 0.239215686917305,
+        "a": 1
+      }
+    },
+    "VariableID:54:149": {
+      "name": "color/ink-subtle",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 0.5411764979362488,
+        "g": 0.5607843399047852,
+        "b": 0.6117647290229797,
+        "a": 1
+      }
+    },
+    "VariableID:54:153": {
+      "name": "color/brand",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 0.23137255012989044,
+        "g": 0.18431372940540314,
+        "b": 0.8509804010391235,
+        "a": 1
+      }
+    },
+    "VariableID:54:157": {
+      "name": "color/on-brand",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      }
+    }
+  }
+}

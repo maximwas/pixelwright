@@ -2270,10 +2270,6 @@ details[open] summary::after {
   color: var(--ink-3);
 }
 
-.doc-credits {
-  margin-top: 6px;
-}
-
 @media (max-width: 900px) {
   .doc {
     grid-template-columns: minmax(0, 1fr);

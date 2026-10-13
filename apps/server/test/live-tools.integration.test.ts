@@ -9,16 +9,15 @@ import { describe, expect, it } from "vitest";
 const entry = fileURLToPath(new URL("../src/bin.ts", import.meta.url));
 const OUT = process.env.PIXELWRIGHT_LIVE ?? "";
 
-/** The Positivus test file: Maxim's test file, anything may be done in it. */
-// PIXELWRIGHT_LIVE_FILE when the file was renamed (it was, to "Test MCP", on 2026-10-12).
-const FILE = process.env.PIXELWRIGHT_LIVE_FILE ?? "Untitled";
+/** The playground file with the Orbit demo: Maxim's test file, anything may be done in it. */
+const FILE = process.env.PIXELWRIGHT_LIVE_FILE ?? "Test MCP";
 
 /**
- * Calls the read tools through MCP against the plugin running in the Positivus file and writes every result under
+ * Calls the read tools through MCP against the plugin running in the Orbit file and writes every result under
  * PIXELWRIGHT_LIVE (a folder): PIXELWRIGHT_LIVE=/tmp/live pnpm vitest run --project integration test/live-tools.
  * Nothing in the file changes; node_show moves the selection and the view.
  */
-describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
+describe.skipIf(OUT === "")("the read tools on the Orbit file", () => {
   it("outline, nodes_find, design_read with assets and a screenshot", async () => {
     const transport = new StdioClientTransport({
       command: process.execPath,
@@ -59,7 +58,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "outline",
           "outline.json",
           {
-            node: "2:4766",
+            node: "54:227",
             depth: 1,
             file: FILE,
           },
@@ -76,7 +75,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "nodes_find",
           "find.json",
           {
-            text: "Learn more",
+            text: "Get started",
             file: FILE,
           },
         ],
@@ -84,16 +83,16 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "design_read",
           "design-row.json",
           {
-            node: "2:4869",
+            node: "54:243",
             assetsDir: join(OUT, "assets"),
             file: FILE,
           },
         ],
         [
           "design_read",
-          "design-hero.json",
+          "design-customers.json",
           {
-            node: "2:4785",
+            node: "54:434",
             assetsDir: join(OUT, "assets"),
             file: FILE,
           },
@@ -102,7 +101,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "design_read",
           "design-landing.json",
           {
-            node: "2:4766",
+            node: "54:227",
             maxChars: 30_000,
             file: FILE,
           },
@@ -111,7 +110,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "screenshot",
           "screenshot.json",
           {
-            node: "2:4868",
+            node: "54:243",
             file: FILE,
           },
         ],
@@ -119,7 +118,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "node_show",
           "show.json",
           {
-            node: "2:4875",
+            node: "54:454",
             file: FILE,
           },
         ],
@@ -139,7 +138,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "components-used.json",
           {
             scope: "used",
-            within: "2:4766",
+            within: "54:227",
             file: FILE,
           },
         ],
@@ -155,7 +154,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "assets_export",
           "export-from.json",
           {
-            from: "2:4869",
+            from: "54:434",
             dir: join(OUT, "export"),
             file: FILE,
           },
@@ -164,7 +163,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
           "assets_export",
           "export-originals.json",
           {
-            nodes: ["2:4875", "2:4881", "2:4788"],
+            nodes: ["54:454", "54:453", "54:317"],
             dir: join(OUT, "originals"),
             original: true,
             file: FILE,
@@ -208,22 +207,21 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
     }
   }, 180_000);
 
-  it("Code Connect: a template for the Heading component connects its instances in the Services row", async () => {
+  it("Code Connect: a template for the Plan Card component connects its instances in the Plans row", async () => {
     const project = mkdtempSync(join(tmpdir(), "pixelwright-live-cc-"));
 
     writeFileSync(
-      join(project, "Heading.figma.ts"),
+      join(project, "PlanCard.figma.ts"),
       [
         "// url=https://www.figma.com/design/KIT/Kit?node-id=9-9",
-        "// component=Heading",
+        "// component=Plan Card",
         "import figma from 'figma'",
         "",
-        "const heading = figma.selectedInstance",
-        "const tone: string | undefined = heading.getEnum('Property 1', { Green: 'green', White: 'white', Black: 'black' })",
-        "const words = heading.findLayers((layer) => layer.type === 'TEXT').map((text) => text.textContent).join(' ')",
+        "const card = figma.selectedInstance",
+        "const popular = card.getBoolean('Popular') ? ' popular' : ''",
         "",
         // biome-ignore lint/suspicious/noTemplateCurlyInString: the template's own interpolations.
-        "export default { example: figma.code`<Heading tone=\"${tone}\">${words}</Heading>`, imports: ['import { Heading } from \"@/components/Heading\"'], id: 'heading' }",
+        "export default { example: figma.code`<PlanCard name=\"${card.getString('Name')}\"${popular} />`, imports: ['import { PlanCard } from \"@/components/PlanCard\"'], id: 'plan-card' }",
       ].join("\n"),
     );
 
@@ -268,7 +266,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
         await client.callTool({
           name: "code_connect_read",
           arguments: {
-            node: "2:4869",
+            node: "54:243",
             file: FILE,
           },
         })
@@ -278,7 +276,7 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
       const read = await client.callTool({
         name: "design_read",
         arguments: {
-          node: "2:4869",
+          node: "54:243",
           file: FILE,
         },
       });
@@ -295,21 +293,29 @@ describe.skipIf(OUT === "")("the read tools on the Positivus file", () => {
             listed,
             codeComponents: meta.codeComponents,
             imports: meta.imports,
-            collapsed: xml?.match(/<Instance [^>]*\$code="Heading"[^>]*\/>/g),
+            collapsed: xml?.match(/<Instance [^>]*\$code="Plan Card"[^>]*\/>/g),
           },
           null,
           2,
         ),
       );
       expect(listed.templates[0]).toMatchObject({
-        path: "Heading.figma.ts",
-        matches: [expect.objectContaining({ component: "Heading" })],
+        path: "PlanCard.figma.ts",
+        matches: [
+          expect.objectContaining({
+            component: "Plan Card",
+            instances: 3,
+          }),
+        ],
       });
       expect(listed.templates[0]?.error).toBeUndefined();
-      expect(meta.codeComponents?.length ?? 0).toBeGreaterThanOrEqual(2);
-      expect(meta.codeComponents?.every((code) => code.snippet?.startsWith("<Heading tone=")) ?? false).toBe(true);
-      expect(meta.imports).toEqual(['import { Heading } from "@/components/Heading"']);
-      expect(xml).toContain('$code="Heading"');
+      expect(meta.codeComponents?.map((code) => code.snippet)).toEqual([
+        '<PlanCard name="Starter" />',
+        '<PlanCard name="Pro" popular />',
+        '<PlanCard name="Team" />',
+      ]);
+      expect(meta.imports).toEqual(['import { PlanCard } from "@/components/PlanCard"']);
+      expect(xml).toContain('$code="Plan Card"');
     } finally {
       await client.close();
     }

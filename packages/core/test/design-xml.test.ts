@@ -2,46 +2,55 @@ import { describe, expect, it } from "vitest";
 import { designXml, type SnapshotNode } from "../src/index.ts";
 import { fixture } from "./helpers/fixtures.ts";
 
-const row = fixture("positivus-services-row");
+const row = fixture("orbit-plans");
+const customers = fixture("orbit-customers");
 
-const FIRST_CARD = `<Frame id="2:4869" name="Cards section" display="flex" width="1440px" height="310px" padding="0 100px" gap="40px">
-  <Frame id="2:4870" name="Card" display="flex" width="600px" padding="50px" justify-content="space-between" align-items="center" overflow="hidden" border-radius="45px" border="1px solid var(--Dark)" background="var(--Grey)" box-shadow="0 5px 0 0 #191A23">
-    <Frame id="2:4871" name="Heading and link" display="flex" flex-direction="column" justify-content="center" gap="93px">
-      <Instance id="2:4872" name="Heading" component="Heading" variant="Property 1=Green" display="flex" flex-direction="column">
-        <Frame id="I2:4872;330:291" name="Label" display="flex" flex-direction="column" padding="0 7px" border-radius="7px" background="var(--Green)">
-          <Text id="I2:4872;330:292" name="Label" textStyle="h3" color="#000">Search engine</Text>
-        </Frame>
-        <Frame id="I2:4872;334:1522" name="Label" display="flex" flex-direction="column" padding="0 7px" border-radius="7px" background="var(--Green)">
-          <Text id="I2:4872;334:1523" name="Label" textStyle="h3" color="#000">optimization</Text>
-        </Frame>
-      </Instance>
-      <Instance id="2:4873" name="Link" component="Link" variant="Property 1=Black" display="flex" align-items="center" gap="15px">
-        <Icon id="I2:4873;334:1478" name="Icon" src="assets/icon.svg" width="41px" height="41px"/>
-        <Text id="I2:4873;334:1481" name="Label" font="400 20px/28px 'Space Grotesk'" color="var(--Black)">Learn more</Text>
-      </Instance>
+const FIRST_CARD = `<Frame id="54:243" name="Plans" display="flex" width="1200px" height="394px" gap="var(--space-24)">
+  <Instance id="54:244" name="Plan – Starter" component="Plan Card" props="Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter" display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="1px solid var(--color-line)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
+    <Frame id="I54:244;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+      <Text id="I54:244;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Starter</Text>
     </Frame>
-    <Frame id="2:4874" name="Illustration" width="210px" height="170px">
-      <Image id="2:4875" name="tokyo-magnifier-web-search-with-elements 2" src="assets/tokyo-magnifier-web-search-with-elements-2.png" position="absolute" left="0" top="2px" width="210px" height="166px"/>
+    <Text id="I54:244;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For side projects and trying things out.</Text>
+    <Frame id="I54:244;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">
+      <Text id="I54:244;54:209" name="Amount" textStyle="Price" color="var(--color-ink)">$0</Text>
+      <Text id="I54:244;54:210" name="Period" textStyle="Body" color="var(--color-ink-muted)">/ month</Text>
     </Frame>
-  </Frame>`;
+    <Instance id="I54:244;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Start free" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+      <Text id="I54:244;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Start free</Text>
+    </Instance>
+    <Frame id="I54:244;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+      <Frame id="I54:244;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:244;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check.svg" width="20px" height="20px"/>
+        <Text id="I54:244;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+      </Frame>
+      <Frame id="I54:244;54:218" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:244;54:219" name="Icon/Check" component="Icon/Check" src="assets/icon-check-2.svg" width="20px" height="20px"/>
+        <Text id="I54:244;54:221" name="Text" textStyle="Body Small" color="var(--color-ink)">Version history for 30 days</Text>
+      </Frame>
+      <Frame id="I54:244;54:222" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:244;54:223" name="Icon/Check" component="Icon/Check" src="assets/icon-check-3.svg" width="20px" height="20px"/>
+        <Text id="I54:244;54:225" name="Text" textStyle="Body Small" color="var(--color-ink)">Email support</Text>
+      </Frame>
+    </Frame>
+  </Instance>`;
 
-describe("design XML of the Positivus Services row", () => {
+describe("design XML of the Orbit Plans row", () => {
   it("matches the approved example, with the rules decided since", () => {
     expect(designXml(row).xml.startsWith(FIRST_CARD)).toBe(true);
   });
 
   it("writes an instance a Code Connect template renders as $code, without its children, and the rest as before", () => {
     const plain = designXml(row);
-    const read = designXml(row, { connected: new Map([["2:4872", "Heading"]]) });
-    const heading = FIRST_CARD.slice(
-      FIRST_CARD.indexOf('      <Instance id="2:4872"'),
-      FIRST_CARD.indexOf('      <Instance id="2:4873"'),
+    const read = designXml(row, { connected: new Map([["I54:244;54:211", "Button"]]) });
+    const button = FIRST_CARD.slice(
+      FIRST_CARD.indexOf('    <Instance id="I54:244;54:211"'),
+      FIRST_CARD.indexOf('    <Frame id="I54:244;54:213"'),
     );
 
     expect(read.xml).toBe(
       plain.xml.replace(
-        heading,
-        '      <Instance id="2:4872" name="Heading" component="Heading" variant="Property 1=Green" display="flex" flex-direction="column" $code="Heading"/>\n',
+        button,
+        '    <Instance id="I54:244;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Start free" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)" $code="Button"/>\n',
       ),
     );
     expect(read.truncated).toEqual(plain.truncated);
@@ -51,42 +60,89 @@ describe("design XML of the Positivus Services row", () => {
     const read = designXml(row);
 
     expect(read.tokens).toEqual({
-      "--Black": "#000",
-      "--Dark": "#191A23",
-      "--Green": "#B9FF66",
-      "--Grey": "#F3F3F3",
+      "--color-accent": "#FF6B3D",
+      "--color-brand": "#3B2FD9",
+      "--color-ink": "#14161F",
+      "--color-ink-muted": "#4A4F5E",
+      "--color-line": "#E1E5EE",
+      "--color-on-brand": "#FFF",
+      "--color-surface": "#FFF",
+      "--radius-lg": "24px",
+      "--radius-md": "12px",
+      "--radius-pill": "999px",
+      "--Shadow-Card": "0 12px 32px -8px rgba(20, 22, 31, 0.12)",
+      "--space-12": "12px",
+      "--space-24": "24px",
+      "--space-32": "32px",
+      "--space-4": "4px",
+      "--space-8": "8px",
     });
-    expect(read.textStyles).toEqual({ h3: "500 30px/normal 'Space Grotesk'" });
-    expect(read.fonts).toEqual({ "Space Grotesk": ["400", "500"] });
+    expect(read.textStyles).toEqual({
+      Body: "400 16px/24px 'Inter'",
+      "Body Small": "400 14px/20px 'Inter'",
+      Button: "600 15px/20px 'Inter'",
+      "Heading/H3": "500 24px/30px 'Space Grotesk'; letter-spacing: -0.01em",
+      Label: "600 12px/16px 'Inter'; letter-spacing: 0.06em; text-transform: uppercase",
+      Price: "700 48px/52px 'Space Grotesk'; letter-spacing: -0.02em",
+    });
+    expect(read.fonts).toEqual({
+      "Space Grotesk": ["500", "700"],
+      Inter: ["400", "600"],
+    });
   });
+});
 
-  it("plans one asset per icon and image, names slugged from the layers, a clash suffixed", () => {
-    expect(designXml(row).assets).toEqual([
+describe("design XML of the Orbit Customers frame", () => {
+  it("plans one asset per icon and image, names slugged from the layers and variants, a clash suffixed", () => {
+    expect(designXml(customers).assets).toEqual([
       {
-        node: "I2:4873;334:1478",
+        node: "54:437",
         kind: "icon",
         format: "SVG",
-        src: "assets/icon.svg",
+        src: "assets/logo-nova.svg",
       },
       {
-        node: "2:4875",
-        kind: "image",
-        format: "PNG",
-        src: "assets/tokyo-magnifier-web-search-with-elements-2.png",
-      },
-      {
-        node: "I2:4879;334:1478",
+        node: "54:441",
         kind: "icon",
         format: "SVG",
-        src: "assets/icon-2.svg",
+        src: "assets/logo-lumen.svg",
       },
       {
-        node: "2:4881",
+        node: "54:445",
+        kind: "icon",
+        format: "SVG",
+        src: "assets/logo-nova-2.svg",
+      },
+      {
+        node: "54:452",
+        kind: "icon",
+        format: "SVG",
+        src: "assets/arrow.svg",
+      },
+      {
+        node: "54:454",
         kind: "image",
         format: "PNG",
-        src: "assets/tokyo-selecting-a-value-in-the-browser-window-1.png",
+        src: "assets/product-shot.png",
+        scale: 2,
+      },
+      {
+        node: "54:456",
+        kind: "image",
+        format: "PNG",
+        src: "assets/avatar.png",
       },
     ]);
+  });
+
+  it("draws a component instance made only of vectors (a logo) as one icon named by its variant, and a masked group and a layer marked for export as images", () => {
+    const { xml } = designXml(customers);
+
+    expect(xml).toContain(
+      '<Icon id="54:437" name="Logo" component="Logo" variant="Brand=Nova" src="assets/logo-nova.svg" position="absolute" left="40px" top="124px" width="120px" height="32px"/>',
+    );
+    expect(xml).toContain('<Image id="54:456" name="Avatar" src="assets/avatar.png"');
+    expect(xml).toContain('<Image id="54:454" name="Product shot" src="assets/product-shot.png"');
   });
 });
 
@@ -262,18 +318,5 @@ describe("design XML rules", () => {
       ["1:2", "icon", "SVG"],
       ["1:4", "image", "PNG"],
     ]);
-  });
-
-  it("draws a component instance made only of vectors (a logo) as one icon, named by its variant", () => {
-    const hero = fixture("positivus-hero");
-    const { xml, assets } = designXml(hero);
-
-    expect(xml).toContain(
-      '<Icon id="2:4862" name="Company logo" component="Company logo" variant="Company=Amazon" src="assets/company-logo-amazon.svg" width="124px" height="48px" $css="mix-blend-mode: luminosity"/>',
-    );
-    expect(xml).toContain(
-      '<Icon id="2:4788" name="Logo" component="Logo" variant="Property 1=Default" src="assets/logo-default.svg"',
-    );
-    expect(assets.filter((asset) => asset.kind === "icon")).toHaveLength(8);
   });
 });

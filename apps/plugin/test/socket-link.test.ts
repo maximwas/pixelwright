@@ -59,7 +59,7 @@ const info: PluginInfo = {
   pluginVersion: "0.1.0",
   editorType: "figma",
   file: {
-    name: "Positivus",
+    name: "Orbit",
     key: null,
   },
   page: {

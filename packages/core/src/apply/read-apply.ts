@@ -175,7 +175,7 @@ class ApplyReader {
     }
 
     if (named !== null && !LAYER_ID.test(named)) {
-      skip(`id="${named}" is not a Figma layer id (like 2:4869): a new layer has no id.`);
+      skip(`id="${named}" is not a Figma layer id (like 54:243): a new layer has no id.`);
 
       return;
     }

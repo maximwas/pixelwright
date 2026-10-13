@@ -21,7 +21,7 @@ export const FileSchema = z
   .describe("The file to work on: its session from status or its name. Default: the active file.");
 
 export const ScreenshotInputSchema = z.object({
-  node: z.string().min(1).max(200).describe("The layer's id, e.g. 2:4868."),
+  node: z.string().min(1).max(200).describe("The layer's id, e.g. 54:243."),
   scale: z.number().min(0.01).max(4).default(1).describe("Pixels per Figma pixel: 2 for a sharp look, below 1 to fit."),
   effects: z
     .boolean()
@@ -58,7 +58,7 @@ export const DesignReadInputSchema = z.object({
     .min(1)
     .max(200)
     .exactOptional()
-    .describe("The layer's id, e.g. 2:4868. Default: the one layer selected in Figma."),
+    .describe("The layer's id, e.g. 54:243. Default: the one layer selected in Figma."),
   depth: z.number().int().min(0).max(100).exactOptional().describe("Levels below the layer to read. Default: all."),
   assetsDir: z
     .string()
@@ -341,7 +341,7 @@ export const CodeConnectReadInputSchema = z.object({
     .min(1)
     .max(200)
     .exactOptional()
-    .describe("A layer or page id to look in, e.g. 2:4868. Default: the current page."),
+    .describe("A layer or page id to look in, e.g. 54:243. Default: the current page."),
   file: FileSchema,
 });
 
@@ -371,7 +371,7 @@ export const InspectInputSchema = z.object({
     .min(1)
     .max(100)
     .exactOptional()
-    .describe('The layers\' ids, e.g. ["2:4868"]. Default: the layers selected in Figma.'),
+    .describe('The layers\' ids, e.g. ["54:243"]. Default: the layers selected in Figma.'),
   relativeTo: z
     .string()
     .min(1)
@@ -382,7 +382,7 @@ export const InspectInputSchema = z.object({
 });
 
 export const NodesDiffInputSchema = z.object({
-  a: z.string().min(1).max(200).describe("The first layer's id (variant A), e.g. 2:4868."),
+  a: z.string().min(1).max(200).describe("The first layer's id (variant A), e.g. 54:243."),
   b: z.string().min(1).max(200).describe("The second layer's id (variant B)."),
   depth: z.number().int().min(0).max(100).exactOptional().describe("Levels below each layer to compare. Default: all."),
   file: FileSchema,
@@ -411,7 +411,7 @@ const EdgeDiffSchema = z.object({
 });
 
 export const ImageCompareInputSchema = z.object({
-  node: z.string().min(1).max(200).describe("The layer's id, e.g. 2:4868."),
+  node: z.string().min(1).max(200).describe("The layer's id, e.g. 54:243."),
   reference: z
     .string()
     .min(1)
@@ -472,7 +472,7 @@ export const MeasureInputSchema = z.object({
     .max(100)
     .exactOptional()
     .describe(
-      'The layers\' ids in the order to measure, each from the one before, e.g. ["2:4868", "2:4870"]. Default: the layers selected in Figma.',
+      'The layers\' ids in the order to measure, each from the one before, e.g. ["54:244", "54:268"]. Default: the layers selected in Figma.',
     ),
   painted: z
     .boolean()

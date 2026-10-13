@@ -7,9 +7,9 @@ import { readDesign } from "../src/design/read-design.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
-const EXAMPLE = fileURLToPath(new URL("../../../examples/positivus", import.meta.url));
+const EXAMPLE = fileURLToPath(new URL("../../../examples/orbit", import.meta.url));
 const ROW = JSON.parse(
-  await readFile(new URL("../../../packages/core/test/fixtures/positivus-services-row.json", import.meta.url), "utf8"),
+  await readFile(new URL("../../../packages/core/test/fixtures/orbit-plans.json", import.meta.url), "utf8"),
 ) as unknown;
 
 const bridge: BridgeView = {
@@ -33,19 +33,19 @@ const bridge: BridgeView = {
   },
 };
 
-describe("the Positivus example's Code Connect templates", () => {
+describe("the Orbit example's Code Connect templates", () => {
   it("are found without problems", async () => {
     const { templates, problems } = await findTemplates(EXAMPLE);
 
     expect(problems).toEqual([]);
-    expect(templates.map(({ path }) => path)).toEqual(["components/Heading.figma.ts", "components/Link.figma.ts"]);
+    expect(templates.map(({ path }) => path)).toEqual(["components/Button.figma.ts", "components/PlanCard.figma.ts"]);
   });
 
-  it("give the Services row's headings and links their code, as the README shows", async () => {
+  it("give the Plans row's cards their code with their buttons inside, as the README shows", async () => {
     const result = await readDesign(
       bridge,
       {
-        node: "2:4869",
+        node: "54:243",
         screenshot: false,
         maxChars: 80_000,
       },
@@ -54,33 +54,24 @@ describe("the Positivus example's Code Connect templates", () => {
     );
     const meta = JSON.parse((result.content[1] as { text: string }).text) as Record<string, unknown>;
 
+    const imports = [
+      'import { PlanCard } from "@/components/PlanCard"',
+      'import { Button } from "@/components/Button"',
+    ];
+    const card = (id: string, props: string, label: string) => ({
+      ids: [id],
+      component: "Plan Card",
+      template: "components/PlanCard.figma.ts",
+      snippet: `<PlanCard ${props}>\n  <Button variant="primary">${label}</Button>\n</PlanCard>`,
+      imports,
+    });
+
     expect(meta.codeComponents).toEqual([
-      {
-        ids: ["2:4872"],
-        component: "Heading",
-        template: "components/Heading.figma.ts",
-        snippet: '<Heading tone="green">Search engine optimization</Heading>',
-        imports: ['import { Heading } from "@/components/Heading"'],
-      },
-      {
-        ids: ["2:4873", "2:4879"],
-        component: "Link",
-        template: "components/Link.figma.ts",
-        snippet: '<Link tone="dark" href="#">Learn more</Link>',
-        imports: ['import { Link } from "@/components/Link"'],
-      },
-      {
-        ids: ["2:4878"],
-        component: "Heading",
-        template: "components/Heading.figma.ts",
-        snippet: '<Heading tone="light">Pay-per-click advertising</Heading>',
-        imports: ['import { Heading } from "@/components/Heading"'],
-      },
+      card("54:244", 'name="Starter" price="$0"', "Start free"),
+      card("54:268", 'name="Pro" price="$12" popular', "Get started"),
+      card("54:292", 'name="Team" price="$29"', "Contact sales"),
     ]);
-    expect(meta.imports).toEqual([
-      'import { Heading } from "@/components/Heading"',
-      'import { Link } from "@/components/Link"',
-    ]);
+    expect(meta.imports).toEqual(imports);
     expect(meta).not.toHaveProperty("codeErrors");
   });
 });

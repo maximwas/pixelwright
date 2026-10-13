@@ -3,7 +3,11 @@
 An MCP server that lets AI agents (Claude Code, Cursor, Codex) read and edit the Figma files you have open in Figma
 Desktop, through a Figma plugin: no REST API, no access token, no API rate limits, any Figma plan.
 
-[Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [npm](https://www.npmjs.com/package/pixelwright)
+[Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [Changelog](https://maximwas.github.io/pixelwright/changelog/) · [npm](https://www.npmjs.com/package/pixelwright)
+
+[![npm version](https://img.shields.io/npm/v/pixelwright)](https://www.npmjs.com/package/pixelwright)
+[![npm downloads](https://img.shields.io/npm/dm/pixelwright)](https://www.npmjs.com/package/pixelwright)
+[![License](https://img.shields.io/npm/l/pixelwright)](LICENSE)
 
 > Unofficial. Not affiliated with or endorsed by Figma. "Figma" is a trademark of Figma, Inc.
 
@@ -18,8 +22,9 @@ npx -y pixelwright@latest
 It connects Claude Code and Cursor, shows what to paste for Codex and other MCP clients, and puts the Figma plugin in
 `~/.pixelwright/plugin`. Then, in Figma Desktop:
 
-1. **Plugins → Development → Import plugin from manifest…** and pick `~/.pixelwright/plugin/manifest.json` (once; the
-   Community listing will replace this step).
+1. **Plugins → Development → Import plugin from manifest…** and pick `~/.pixelwright/plugin/manifest.json`, once.
+   Figma loads the plugin from there every time you run it, and the setup puts the new one there on every update. (The
+   plugin is not on the Figma Community: Figma does not list plugins that overlap its own MCP server.)
 2. Open your file and run **Plugins → Development → Pixelwright**. Keep its small window open while you work.
 3. The first time, the window asks for a pairing code: your agent shows it (from `status`); type it in.
 4. Ask your agent to read a section, or turn on **Allow edits** in the window and ask it to change something.
@@ -59,23 +64,26 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `nodes_delete`, `execute` | Delete layers; run plugin code for what the XML cannot say |
 | `guide` | The XML format, writing, tokens, assets, Code Connect and HTML email, for the agent |
 
-A read of the Positivus template's card, abridged:
+A read of the Pro card from Orbit, the demo the tests run on, abridged:
 
 ```xml
-<Frame id="2:4870" name="Card" display="flex" width="600px" padding="50px" justify-content="space-between" align-items="center" overflow="hidden" border-radius="45px" border="1px solid var(--Dark)" background="var(--Grey)" box-shadow="0 5px 0 0 #191A23">
-  <Frame id="2:4871" name="Heading and link" display="flex" flex-direction="column" justify-content="center" gap="93px">
-    <Instance id="2:4872" name="Heading" component="Heading" variant="Property 1=Green" display="flex" flex-direction="column">
-      <Frame id="I2:4872;330:291" name="Label" display="flex" flex-direction="column" padding="0 7px" border-radius="7px" background="var(--Green)">
-        <Text id="I2:4872;330:292" name="Label" textStyle="h3" color="#000">Search engine</Text>
-      </Frame>
-      …
-    </Instance>
+<Instance id="54:268" name="Plan – Pro" component="Plan Card" props="Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro" note="The price comes from the billing API. Show the Popular badge only on the plan the API marks popular." display="flex" flex-direction="column" width="385px" height="394px" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="2px solid var(--color-brand)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)" $on-click="go to Checkout – Desktop; dissolve 300ms ease-out">
+  <Frame id="I54:268;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+    <Text id="I54:268;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Pro</Text>
+    <Instance id="I54:268;54:205" name="Badge" component="Badge" props="Label=Popular" display="flex" padding="var(--space-4) var(--space-12)" align-items="center" border-radius="var(--radius-pill)" background="var(--color-accent)">…</Instance>
+  </Frame>
+  …
+  <Instance id="I54:268;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Get started" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+    <Text id="I54:268;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Get started</Text>
+  </Instance>
+  <Frame id="I54:268;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+    <Frame id="I54:268;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+      <Icon id="I54:268;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check.svg" width="20px" height="20px"/>
+      <Text id="I54:268;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+    </Frame>
     …
   </Frame>
-  <Frame id="2:4874" name="Illustration" width="210px" height="170px">
-    <Image id="2:4875" name="tokyo-magnifier-web-search-with-elements 2" src="assets/tokyo-magnifier-web-search-with-elements-2.png" position="absolute" left="0" top="2px" width="210px" height="166px"/>
-  </Frame>
-</Frame>
+</Instance>
 ```
 
 Sending that XML back changes nothing; changing an attribute changes exactly that, in one undo step.
@@ -87,12 +95,13 @@ Pixelwright runs your project's [Figma Code Connect](https://www.figma.com/devel
 gives each connected instance as `$code` in the XML with its code and imports:
 
 ```json
-{ "ids": ["2:4872"], "component": "Heading", "snippet": "<Heading tone=\"green\">Search engine optimization</Heading>",
-  "imports": ["import { Heading } from \"@/components/Heading\""] }
+{ "ids": ["54:268"], "component": "Plan Card",
+  "snippet": "<PlanCard name=\"Pro\" price=\"$12\" popular>\n  <Button variant=\"primary\">Get started</Button>\n</PlanCard>",
+  "imports": ["import { PlanCard } from \"@/components/PlanCard\"", "import { Button } from \"@/components/Button\""] }
 ```
 
-See [examples/positivus](https://github.com/maximwas/pixelwright/tree/main/examples/positivus) for two templates and
-how they match. The project folder is `CLAUDE_PROJECT_DIR`, else the folder your MCP client starts the server in.
+See [examples/orbit](https://github.com/maximwas/pixelwright/tree/main/examples/orbit) for two templates, one rendering
+the other inside it, and how they match. The project folder is `CLAUDE_PROJECT_DIR`, else the folder your MCP client starts the server in.
 
 ## Safety
 
@@ -158,22 +167,28 @@ Figma plugin), `examples/`, and `docs/` (the website, served by GitHub Pages).
 
 `main` takes changes only through pull requests, with CI's `check` job passing; direct pushes, force pushes and
 deleting it are blocked (a repository ruleset). Work happens on `develop` or a topic branch. Set the same version in
-`apps/server/package.json` and `apps/plugin/package.json` on a branch, open a pull request into `main` and merge it,
-then tag the merge commit:
+`apps/server/package.json` and `apps/plugin/package.json` on a branch, give it its section in `CHANGELOG.md`
+(`## 1.2.3 — <date>`; the format is at the top of that file) and run `pnpm build:docs` for the website's page, open a
+pull request into `main` and merge it, then tag the merge commit:
 
 ```bash
 git switch main && git pull
 git tag v1.2.3 && git push origin v1.2.3
 ```
 
-The Release workflow checks that the tag matches both versions, runs the checks, publishes `pixelwright` to npm
-(trusted publishing, with provenance; a version npm has already is left alone) and creates a GitHub release with the
-plugin as a zip. The Figma Community listing is published from Figma Desktop (`apps/plugin/COMMUNITY.md`).
+The Release workflow checks that the tag matches both versions and has its section in `CHANGELOG.md`, runs the checks,
+publishes `pixelwright` to npm (trusted publishing, with provenance; a version npm has already is left alone) and
+creates a GitHub release with the plugin as a zip and that section as its notes.
 
 The first version goes to npm by hand, because npm sets up trusted publishing only for a package that exists:
 `pnpm build && pnpm --filter pixelwright pack`, then `npm publish apps/server/pixelwright-<version>.tgz --access public`
 from the maintainer's account. Then add the trusted publisher on npmjs.com (GitHub Actions, `maximwas/pixelwright`,
 `release.yml`) and tag the version as above: the workflow skips npm and makes the GitHub release.
+
+## Changelog
+
+Every release, with its date and what changed: [CHANGELOG.md](CHANGELOG.md), also on the
+[website](https://maximwas.github.io/pixelwright/changelog/).
 
 ## Feedback
 
@@ -184,13 +199,13 @@ the system. The plugin's window links there too.
 
 ## Support
 
-Pixelwright is free. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a
+Pixelwright is free, and its code is public. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a
 [monobank jar](https://send.monobank.ua/jar/7o9oMrbXTj). At most once a week, after a change that worked, your agent may
 mention it; turn that off with `PIXELWRIGHT_SUPPORT_REMINDERS=off`.
 
 ## License
 
-[FSL-1.1-MIT](LICENSE). The bundled third-party packages' licences ship in the npm package (`dist/THIRD-PARTY-NOTICES.md`) and
-at the end of the plugin's bundles. The examples and test fixtures use the
-[Positivus landing page design](https://www.figma.com/community/file/1230604708032389430) by Olga Averchenko, under
-CC BY 4.0.
+[FSL-1.1-MIT](LICENSE), the Functional Source License with an MIT future license. Use Pixelwright for anything, at work
+and for clients, and change it for your own use; do not build a competing product or service from its code. Each
+version becomes MIT two years after its release. The bundled third-party packages' licences ship in the npm package
+(`dist/THIRD-PARTY-NOTICES.md`) and at the end of the plugin's bundles.

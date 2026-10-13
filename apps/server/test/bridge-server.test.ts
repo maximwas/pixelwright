@@ -39,7 +39,7 @@ describe("BridgeServer", () => {
     await changed;
     expect(server.plugins()).toMatchObject([
       {
-        info: { file: { name: "Positivus" } },
+        info: { file: { name: "Orbit" } },
         active: true,
       },
     ]);

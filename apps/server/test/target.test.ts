@@ -15,7 +15,7 @@ const plugin = (session: string, name: string, active = false): ConnectedPlugin 
   active,
 });
 
-const files = [plugin("s1", "Positivus", true), plugin("s2", "Kit"), plugin("s3", "Kit")];
+const files = [plugin("s1", "Orbit", true), plugin("s2", "Kit"), plugin("s3", "Kit")];
 
 describe("resolveTarget", () => {
   it("takes the active file when none is named", () => {
@@ -24,7 +24,7 @@ describe("resolveTarget", () => {
 
   it("finds a file by session id, or by name whatever the case", () => {
     expect(resolveTarget(files, "s3")).toEqual({ session: "s3" });
-    expect(resolveTarget(files, "positivus")).toEqual({ session: "s1" });
+    expect(resolveTarget(files, "orbit")).toEqual({ session: "s1" });
   });
 
   it("refuses a name two files share, naming their sessions", () => {
@@ -34,7 +34,7 @@ describe("resolveTarget", () => {
 
   it("says which files are connected when none matches", () => {
     expect(() => resolveTarget(files, "Brand")).toThrow(expect.objectContaining({ code: "FILE_NOT_FOUND" }));
-    expect(() => resolveTarget(files, "Brand")).toThrow(/Positivus.*Kit/);
+    expect(() => resolveTarget(files, "Brand")).toThrow(/Orbit.*Kit/);
   });
 
   it("says no file is connected when there are none", () => {

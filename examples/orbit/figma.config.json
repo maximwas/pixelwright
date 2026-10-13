@@ -2,7 +2,7 @@
   "codeConnect": {
     "include": ["components/**/*.figma.ts"],
     "documentUrlSubstitutions": {
-      "<POSITIVUS>": "https://www.figma.com/design/YOUR_FILE_KEY/Positivus"
+      "<ORBIT>": "https://www.figma.com/design/YOUR_FILE_KEY/Orbit"
     }
   }
 }

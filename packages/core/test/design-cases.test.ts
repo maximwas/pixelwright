@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { designXml, type SnapshotNode, type TextSegment } from "../src/index.ts";
 
-/** Cases real files have and the Positivus fixtures do not, from the Plugin API's node, paint and effect types. */
+/** Cases real files have and the Orbit fixtures do not, from the Plugin API's node, paint and effect types. */
 
 const DARK = {
   r: 0.098,
@@ -116,6 +116,37 @@ describe("assets beyond icons and photos", () => {
 
     expect(line(xml, "1:2")).toBe(
       '  <Icon id="1:2" name="Arrow" src="assets/arrow.svg" position="absolute" left="50px" top="10px" width="4px" height="40px"/>',
+    );
+  });
+
+  it("keeps a drawing's blend mode on its icon, as Figma blends the exported logo with what is under it", () => {
+    const xml = xmlOf(
+      box([
+        layer({
+          id: "1:2",
+          type: "INSTANCE",
+          name: "Logo",
+          width: 124,
+          height: 48,
+          blendMode: "LUMINOSITY",
+          children: [
+            layer({
+              id: "I1:2;1:1",
+              type: "VECTOR",
+              name: "Mark",
+            }),
+          ],
+        }),
+        // Text keeps the box a frame: a frame of vectors only would be one icon itself.
+        layer({
+          id: "1:3",
+          type: "TEXT",
+        }),
+      ]),
+    );
+
+    expect(line(xml, "1:2")).toMatch(
+      /^ {2}<Icon id="1:2" name="Logo" src="assets\/logo.svg" .*\$css="mix-blend-mode: luminosity"\/>$/,
     );
   });
 

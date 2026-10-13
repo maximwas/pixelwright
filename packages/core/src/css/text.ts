@@ -1,3 +1,4 @@
+import { DEFAULT_FONT_AXES } from "../constants/css.ts";
 import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotStyle, TextSegment } from "../types/snapshot.ts";
 import { weightOf } from "../utils/font-weight.ts";
@@ -91,9 +92,13 @@ export function segmentCss(
     ]);
   }
 
-  // A variable font reports its weight as an axis too: only axes the font shorthand does not already say are kept.
+  // A variable font reports its weight as an axis too: only axes the font shorthand does not already say are kept,
+  // and none left at the value a browser draws anyway (optical size at the font size: font-optical-sizing is auto).
   const axes = Object.entries(segment.fontName.variationSettings ?? {}).filter(
-    ([axis, value]) => !(axis === "wght" && value === segment.fontWeight),
+    ([axis, value]) =>
+      !(axis === "wght" && value === segment.fontWeight) &&
+      !(axis === "opsz" && value === segment.fontSize) &&
+      DEFAULT_FONT_AXES[axis] !== value,
   );
 
   if (axes.length > 0) {

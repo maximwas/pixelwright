@@ -75,7 +75,7 @@ export const SPAN_ATTRIBUTES: ReadonlySet<string> = new Set([
   "color",
 ]);
 
-/** A Figma layer id: 2:4869, or an instance's layer I2:4873;334:1481. */
+/** A Figma layer id: 54:243, or an instance's layer I54:268;54:211. */
 export const LAYER_ID = /^I?\d+:\d+(?:;\d+:\d+)*$/;
 
 /** A frame's own layout, auto layout or grid (display is checked by its value). */

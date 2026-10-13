@@ -10,35 +10,35 @@ const FIXTURES = fileURLToPath(new URL("../../../packages/core/test/fixtures/", 
 const CODE_FILE = fileURLToPath(new URL("../../../.superpowers/live-pairing-code.txt", import.meta.url));
 const WAIT_MS = 300_000;
 
-/** The Positivus test file: read only, never changed. */
-const POSITIVUS = "Untitled";
+/** The playground file with the Orbit demo (Maxim's test file); capturing only reads it. */
+const ORBIT = "Test MCP";
 
 const SNAPSHOTS: readonly { file: string; input: OperationRequest<"snapshot"> }[] = [
   {
-    file: "positivus-services-row.json",
+    file: "orbit-plans.json",
     input: {
-      node: "2:4869",
+      node: "54:243",
       css: "all",
     },
   },
   {
-    file: "positivus-services-block.json",
+    file: "orbit-pricing.json",
     input: {
-      node: "2:4868",
+      node: "54:227",
       css: "all",
     },
   },
   {
-    file: "positivus-hero.json",
+    file: "orbit-customers.json",
     input: {
-      node: "2:4785",
+      node: "54:434",
       css: "all",
     },
   },
   {
-    file: "positivus-landing-top.json",
+    file: "orbit-desktop-top.json",
     input: {
-      node: "2:4766",
+      node: "54:227",
       depth: 1,
       css: "all",
     },
@@ -46,13 +46,13 @@ const SNAPSHOTS: readonly { file: string; input: OperationRequest<"snapshot"> }[
 ];
 
 /**
- * Captures the snapshot fixtures core's CSS and XML tests run on, from the Positivus file open in Figma Desktop with
+ * Captures the snapshot fixtures core's CSS and XML tests run on, from the Orbit demo open in Figma Desktop with
  * the Pixelwright plugin running. Runs only when asked: PIXELWRIGHT_CAPTURE=1 pnpm vitest run --project integration
  * test/capture-fixtures.integration.test.ts
  */
-describe.skipIf(process.env.PIXELWRIGHT_CAPTURE === undefined)("Positivus fixtures", () => {
+describe.skipIf(process.env.PIXELWRIGHT_CAPTURE === undefined)("Orbit fixtures", () => {
   it(
-    "captures the snapshots and the landing's outline",
+    "captures the snapshots",
     async () => {
       const app = await createApp();
 
@@ -61,7 +61,7 @@ describe.skipIf(process.env.PIXELWRIGHT_CAPTURE === undefined)("Positivus fixtur
         let shownCode: string | null = null;
         let target: { session: string } | null = null;
 
-        // Until a plugin of this build runs in the Positivus file: an older window answers UNKNOWN_OP, and running
+        // Until a plugin of this build runs in the Orbit file: an older window answers UNKNOWN_OP, and running
         // the plugin again opens a new session.
         while (target === null && Date.now() < deadline) {
           const code = app.bridge.pairing()?.code ?? null;
@@ -79,7 +79,7 @@ describe.skipIf(process.env.PIXELWRIGHT_CAPTURE === undefined)("Positivus fixtur
           }
         }
 
-        expect(target, "no plugin of this build in the Positivus file: run Pixelwright there again").not.toBeNull();
+        expect(target, "no plugin of this build in the Orbit file: run Pixelwright there again").not.toBeNull();
 
         if (target === null) {
           return;
@@ -92,17 +92,6 @@ describe.skipIf(process.env.PIXELWRIGHT_CAPTURE === undefined)("Positivus fixtur
 
           writeFileSync(join(FIXTURES, file), `${JSON.stringify(snapshot, null, 2)}\n`);
         }
-
-        const outline = await app.bridge.request(
-          "outline",
-          {
-            node: "2:4766",
-            depth: 2,
-          },
-          target,
-        );
-
-        writeFileSync(join(FIXTURES, "positivus-outline.json"), `${JSON.stringify(outline, null, 2)}\n`);
       } finally {
         await app.close();
       }
@@ -113,15 +102,15 @@ describe.skipIf(process.env.PIXELWRIGHT_CAPTURE === undefined)("Positivus fixtur
 
 const RETRY_CODES = new Set(["UNKNOWN_OP", "PLUGIN_NOT_CONNECTED", "PLUGIN_DISCONNECTED", "FILE_NOT_FOUND"]);
 
-/** The Positivus file's session once its plugin answers snapshot; null while none does yet. */
+/** The Orbit file's session once its plugin answers snapshot; null while none does yet. */
 async function readyTarget(app: Awaited<ReturnType<typeof createApp>>): Promise<{ session: string } | null> {
   try {
-    const target = resolveTarget(app.bridge.plugins(), POSITIVUS);
+    const target = resolveTarget(app.bridge.plugins(), ORBIT);
 
     await app.bridge.request(
       "snapshot",
       {
-        node: "2:4869",
+        node: "54:243",
         depth: 0,
         css: "none",
       },

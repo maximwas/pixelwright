@@ -13,7 +13,7 @@ const hex = (channel: number) =>
     .padStart(2, "0")
     .toUpperCase();
 
-/** A Figma color (channels 0–1) as Dev Mode writes it: `#191A23`, `#000` when it shortens, `rgba()` when see-through. */
+/** A Figma color (channels 0–1) as Dev Mode writes it: `#14161F`, `#000` when it shortens, `rgba()` when see-through. */
 export function colorCss(color: Rgba, opacity = 1): string {
   const alpha = (color.a ?? 1) * opacity;
 

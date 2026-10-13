@@ -12,14 +12,13 @@ const WRITE = process.env.PIXELWRIGHT_LIVE_WRITE === "1";
 /** Seconds to wait for the user to switch Allow edits on before the writes (PIXELWRIGHT_LIVE_WAIT, default none). */
 const WAIT = Number(process.env.PIXELWRIGHT_LIVE_WAIT ?? "0") * 1_000;
 
-/** The Positivus test file: Maxim's test file, anything may be done in it. Writes go nowhere else. */
-// PIXELWRIGHT_LIVE_FILE when the file was renamed (it was, to "Test MCP", on 2026-10-12).
-const FILE = process.env.PIXELWRIGHT_LIVE_FILE ?? "Untitled";
+/** The playground file with the Orbit demo: Maxim's test file, anything may be done in it. Writes go nowhere else. */
+const FILE = process.env.PIXELWRIGHT_LIVE_FILE ?? "Test MCP";
 
-/** A Positivus-like card made from XML with the file's library styles and fonts. */
-const CARD = `<Frame name="Pixelwright check card" display="flex" flex-direction="column" gap="16px" padding="40px" border-radius="45px" background="var(--Grey)" border="1px solid var(--Dark)" box-shadow="0 5px 0 0 #191A23">
-  <Text textStyle="h3" color="var(--Black)">Written by Pixelwright</Text>
-  <Text width="320px" textStyle="p" color="var(--Dark)">A card made from XML, with the file's own styles.</Text>
+/** An Orbit-like card made from XML with the file's variables, styles and fonts. */
+const CARD = `<Frame name="Pixelwright check card" display="flex" flex-direction="column" gap="var(--space-16)" padding="var(--space-32)" border-radius="var(--radius-lg)" background="var(--color-surface)" border="1px solid var(--color-line)" box-shadow="var(--Shadow-Card)">
+  <Text textStyle="Heading/H3" color="var(--color-ink)">Written by Pixelwright</Text>
+  <Text width="320px" textStyle="Body" color="var(--color-ink-muted)">A card made from XML, with the file's own tokens.</Text>
 </Frame>`;
 
 /** S1: is a layer's opacity, and its inner shadow, in what Figma exports? A faded red square with a black inner rim. */
@@ -97,12 +96,12 @@ for (const style of styles) {
 return "cleaned";`;
 
 /**
- * design_apply and nodes_delete against the plugin in the Positivus file, opt-in twice: PIXELWRIGHT_LIVE=<dir> for the
+ * design_apply and nodes_delete against the plugin in the Orbit file, opt-in twice: PIXELWRIGHT_LIVE=<dir> for the
  * results and PIXELWRIGHT_LIVE_WRITE=1 for writing. The round trip and the dry run write nothing; with Allow edits on in
  * the plugin window it also probes the export (S1), makes a card and edits an instance's text, and takes all of it
  * back (the card and probe deleted, the text restored).
  */
-describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () => {
+describe.skipIf(OUT === "" || !WRITE)("design_apply on the Orbit file", () => {
   it(
     "round trip, dry run, then (with Allow edits) the export probe, a card and an instance text",
     async () => {
@@ -168,8 +167,8 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
           await new Promise((resolve) => setTimeout(resolve, 1_000));
         }
 
-        // The round trip: the Services row read and sent back writes nothing (it needs no Allow edits).
-        const row = (await call("design_read", { node: "2:4869" })).text;
+        // The round trip: the Plans row read and sent back writes nothing (it needs no Allow edits).
+        const row = (await call("design_read", { node: "54:243" })).text;
         const back = (await call("design_apply", { xml: row })).structured;
 
         log.roundTrip = back;
@@ -269,9 +268,9 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         expect(cardLine).toContain('width="560px"');
         expect(cardLine).not.toContain("height=");
 
-        // An instance's text by its I…;… id: the characters change and its style stays (an auto-width label's box
-        // follows them); the old text back reads exactly as before.
-        const label = /<Text id="(I[^"]+)"[^>]*>([^<]+)<\/Text>/.exec(row);
+        // An instance's text by its I…;… id (a feature line, bound to no property): the characters change and its style
+        // stays (an auto-width label's box follows them); the old text back reads exactly as before.
+        const label = /<Text id="(I54:244;54:217)"[^>]*>([^<]+)<\/Text>/.exec(row);
         const [, labelId = "", labelText = ""] = label ?? [];
         const before = (await call("design_read", { node: labelId })).text;
         const unsized = (xml: string) => xml.replace(/ (width|height)="[^"]*"/g, "");
@@ -294,23 +293,28 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         texts.pop();
         expect((await call("design_read", { node: labelId })).text).toBe(before);
 
-        // Stage 4b, all inside the board. (a) An instance of the page's Heading by name and variant, then another variant.
-        const used = (await call("components_read", { scope: "used" })).structured as {
+        // Stage 4b, all inside the board. (a) An instance of the screen's Button by name and variant, then another variant.
+        const used = (
+          await call("components_read", {
+            scope: "used",
+            within: "54:227",
+          })
+        ).structured as {
           components: { name: string; variants?: { id: string; name: string }[] }[];
         };
-        const headingVariants = (used.components.find(({ name }) => name === "Heading")?.variants ?? []).map(
+        const buttonVariants = (used.components.find(({ name }) => name === "Button")?.variants ?? []).map(
           ({ name }) => name,
         );
-        const [firstVariant = "", secondVariant = firstVariant] = headingVariants;
+        const [firstVariant = "", secondVariant = firstVariant] = buttonVariants;
         const instance = (
           await call("design_apply", {
-            xml: `<Frame id="${boardId}"><Instance component="Heading" variant="${firstVariant}" position="absolute" left="40px" top="300px"/></Frame>`,
+            xml: `<Frame id="${boardId}"><Instance component="Button" variant="${firstVariant}" position="absolute" left="40px" top="300px"/></Frame>`,
           })
         ).structured as { created: { id: string }[]; errors: unknown[] };
         const instanceId = instance.created[0]?.id ?? "";
 
         log.instance = {
-          headingVariants,
+          buttonVariants,
           instance,
         };
         expect(instance.errors).toEqual([]);
@@ -322,7 +326,7 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
           `<Component variant="Tone=${variant}" display="flex" padding="8px 16px" background="${fill}" border-radius="7px"><Text prop="Label" color="${ink}" font="500 16px/normal 'Space Grotesk'">${variant}</Text></Component>`;
         const set = (
           await call("design_apply", {
-            xml: `<Frame id="${boardId}"><ComponentSet name="Pixelwright check tag" position="absolute" left="400px" top="300px">${tag("Dark", "var(--Dark)", "#FFF")}${tag("Light", "var(--Grey)", "#000")}</ComponentSet><Instance component="Pixelwright check tag" variant="Tone=Light" props="Label=Made from XML" position="absolute" left="400px" top="420px"/></Frame>`,
+            xml: `<Frame id="${boardId}"><ComponentSet name="Pixelwright check tag" position="absolute" left="400px" top="300px">${tag("Dark", "var(--color-ink)", "#FFF")}${tag("Light", "var(--color-canvas)", "#000")}</ComponentSet><Instance component="Pixelwright check tag" variant="Tone=Light" props="Label=Made from XML" position="absolute" left="400px" top="420px"/></Frame>`,
           })
         ).structured as { created: { id: string; tag: string }[]; errors: unknown[] };
         const tagInstance = set.created.find(({ tag: kind }) => kind === "Instance")?.id ?? "";
@@ -334,12 +338,12 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         const tagRead = (await call("design_read", { node: tagInstance })).text;
 
         expect(tagRead).toContain('props="Label=Made from XML"');
-        expect(tagRead).toMatch(/^<Instance [^>]*background="var\(--Grey\)"/);
+        expect(tagRead).toMatch(/^<Instance [^>]*background="var\(--color-canvas\)"/);
 
         // (b2) A set whose variant holds an instance: combined once its XML ends, both variants in it.
         const nested = (
           await call("design_apply", {
-            xml: `<Frame id="${boardId}"><ComponentSet name="Pixelwright check nested" position="absolute" left="620px" top="300px"><Component variant="Kind=A" display="flex"><Instance component="Heading" variant="${firstVariant}"/></Component><Component variant="Kind=B" display="flex"><Text>B</Text></Component></ComponentSet></Frame>`,
+            xml: `<Frame id="${boardId}"><ComponentSet name="Pixelwright check nested" position="absolute" left="620px" top="300px"><Component variant="Kind=A" display="flex"><Instance component="Button" variant="${firstVariant}"/></Component><Component variant="Kind=B" display="flex"><Text>B</Text></Component></ComponentSet></Frame>`,
           })
         ).structured as { created: { id: string; tag: string }[]; errors: unknown[] };
         const nestedRead = (
@@ -356,11 +360,12 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         expect(nestedRead).toContain("Kind=A");
         expect(nestedRead).toContain("Kind=B");
 
-        // (c) The row read with its files and sent back writes nothing; its image and icon made again from those files.
+        // (c) The Customers frame read with its files and sent back writes nothing; an image and an icon made again from
+        // those files.
         const assets = join(OUT, "assets");
         const withFiles = (
           await call("design_read", {
-            node: "2:4869",
+            node: "54:434",
             assetsDir: assets,
           })
         ).text;
@@ -378,7 +383,7 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         const icons = [...withFiles.matchAll(/<Icon [^>]*src="([^"]+\.svg)"/g)].map(([, src]) => src ?? "");
         const files = (
           await call("design_apply", {
-            xml: `<Frame id="${boardId}"><Image src="${images[0]}" width="210px" height="166px" position="absolute" left="40px" top="420px"/><Icon src="${icons[0]}" width="41px" position="absolute" left="300px" top="420px"/></Frame>`,
+            xml: `<Frame id="${boardId}"><Image src="${images[0]}" width="210px" height="166px" position="absolute" left="40px" top="420px"/><Icon src="${icons[0]}" width="120px" position="absolute" left="300px" top="420px"/></Frame>`,
           })
         ).structured as { created: { id: string; tag: string }[]; errors: unknown[] };
         const imageId = files.created.find(({ tag: kind }) => kind === "Image")?.id ?? "";
@@ -423,11 +428,11 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
           expect(swapped).toMatchObject({ changed: [imageId] });
         }
 
-        // (d) A copy of a card with a new title; the source card stays as it was.
-        const sourceCard = (await call("design_read", { node: "2:4870" })).text;
+        // (d) A copy of the Plans row with a new line in its Pro card; the source card stays as it was.
+        const sourceCard = (await call("design_read", { node: "54:268" })).text;
         const copy = (
           await call("design_apply", {
-            xml: `<Frame id="${boardId}"><Frame copyOf="2:4870" name="Pixelwright card copy" position="absolute" left="40px" top="700px"><Frame id="2:4871"><Instance id="2:4872"><Frame id="I2:4872;330:291"><Text id="I2:4872;330:292">Copied title</Text></Frame></Instance></Frame></Frame></Frame>`,
+            xml: `<Frame id="${boardId}"><Frame copyOf="54:243" name="Pixelwright card copy" position="absolute" left="40px" top="700px"><Instance id="54:268"><Frame id="I54:268;54:213"><Frame id="I54:268;54:214"><Text id="I54:268;54:217">Copied title</Text></Frame></Frame></Instance></Frame></Frame>`,
           })
         ).structured as { created: { id: string }[]; errors: unknown[] };
         const copyId = copy.created[0]?.id ?? "";
@@ -435,14 +440,12 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         log.copy = copy;
         expect(copy.errors).toEqual([]);
         expect((await call("design_read", { node: copyId })).text).toContain(">Copied title<");
-        expect((await call("design_read", { node: "2:4870" })).text).toBe(sourceCard);
+        expect((await call("design_read", { node: "54:268" })).text).toBe(sourceCard);
 
-        // (d2) A new Heading instance named by the card's instance's ids: its own label changes, the card's stays.
-        const cardHeading = (await call("design_read", { node: "2:4872" })).text;
-        const headingVariant = /variant="([^"]+)"/.exec(cardHeading)?.[1] ?? "";
+        // (d2) A new Plan Card instance named by the Pro card's ids: its own line changes, the Pro card's stays.
         const named = (
           await call("design_apply", {
-            xml: `<Frame id="${boardId}"><Instance component="Heading" variant="${headingVariant}" position="absolute" left="500px" top="700px"><Frame id="I2:4872;330:291"><Text id="I2:4872;330:292">Named by another instance</Text></Frame></Instance></Frame>`,
+            xml: `<Frame id="${boardId}"><Instance component="Plan Card" position="absolute" left="500px" top="700px"><Frame id="I54:268;54:213"><Frame id="I54:268;54:214"><Text id="I54:268;54:217">Named by another instance</Text></Frame></Frame></Instance></Frame>`,
           })
         ).structured as { created: { id: string }[]; errors: unknown[] };
 
@@ -451,13 +454,13 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
         expect((await call("design_read", { node: named.created[0]?.id ?? "" })).text).toContain(
           ">Named by another instance<",
         );
-        expect((await call("design_read", { node: "2:4872" })).text).toBe(cardHeading);
+        expect((await call("design_read", { node: "54:268" })).text).toBe(sourceCard);
 
         // (e) A note with a category the file lacks.
         await call("design_apply", { xml: `<Frame id="${cardId}" note="Pixelwright check: written live"/>` });
         expect((await call("design_read", { node: boardId })).text).toContain('note="Pixelwright check: written live"');
 
-        // (f) The Heading instance moved into the card, then first in it: the text before it moves forward, after it
+        // (f) The Button instance moved into the card, then first in it: the text before it moves forward, after it
         // (how Figma counts insertChild's index for a layer already in that parent).
         const cardRead = (await call("design_read", { node: cardId })).text;
         const firstText = /<Text id="([^"]+)"/.exec(cardRead)?.[1] ?? "";
@@ -477,7 +480,7 @@ describe.skipIf(OUT === "" || !WRITE)("design_apply on the Positivus file", () =
 
         log.deleted = (await call("nodes_delete", { nodes: made.splice(0) })).structured;
         // Taken back whole: the row reads as before.
-        expect((await call("design_read", { node: "2:4869" })).text).toBe(row);
+        expect((await call("design_read", { node: "54:243" })).text).toBe(row);
 
         // (g) execute: the code's value and logs; a thrown error with the logs before it.
         const ran = (

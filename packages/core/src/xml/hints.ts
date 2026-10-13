@@ -181,6 +181,10 @@ function defaultNameHints(nodes: readonly SnapshotNode[]): string[] {
 
   const examples = unnamed.slice(0, EXAMPLES).map(label).join(", ");
 
+  if (unnamed.length === 1) {
+    return [`1 layer keeps Figma's default name (${examples}): name it by its role in the code.`];
+  }
+
   return [
     `${unnamed.length} layers keep Figma's default names (${examples}${unnamed.length > EXAMPLES ? ", …" : ""}): name the elements by their role in the code.`,
   ];

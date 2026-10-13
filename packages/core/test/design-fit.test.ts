@@ -84,7 +84,7 @@ describe("fitting a huge read into maxChars", () => {
   });
 
   it("leaves a read that fits untouched", () => {
-    const row = fixture("positivus-services-row");
+    const row = fixture("orbit-plans");
     const read = fitDesign(row, 80_000);
 
     expect(read.truncated).toEqual([]);
@@ -93,12 +93,38 @@ describe("fitting a huge read into maxChars", () => {
 });
 
 describe("hints", () => {
-  it("names a raw color that equals a token, and layers left with Figma's default names", () => {
-    expect(designHints(fixture("positivus-services-row"))).toContainEqual(
-      expect.stringMatching(/#191A23 .*box-shadow.*2:4870.* equals --Dark/),
+  it("names a raw color that equals a token, and a layer left with Figma's default name", () => {
+    const hints = designHints(fixture("orbit-customers"));
+
+    expect(hints).toContainEqual(expect.stringMatching(/#FF6B3D .*color of 54:457.* equals --color-accent/));
+    expect(hints).toContainEqual(
+      `1 layer keeps Figma's default name (54:458 "Rectangle 1"): name it by its role in the code.`,
     );
-    expect(designHints(fixture("positivus-hero"))).toContainEqual(
-      expect.stringMatching(/default names.*2:4787 "Frame 9"/),
+  });
+
+  it("counts several layers left with Figma's default names", () => {
+    const hints = designHints(
+      snapshotOf(
+        layer({
+          id: "1:1",
+          name: "Card",
+          layoutMode: "VERTICAL",
+          children: [
+            layer({
+              id: "1:2",
+              name: "Frame 12",
+            }),
+            layer({
+              id: "1:3",
+              name: "Rectangle 4",
+            }),
+          ],
+        }),
+      ),
+    );
+
+    expect(hints).toContainEqual(
+      `2 layers keep Figma's default names (1:2 "Frame 12", 1:3 "Rectangle 4"): name the elements by their role in the code.`,
     );
   });
 

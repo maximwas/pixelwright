@@ -405,4 +405,53 @@ describe("CSS mapping rules", () => {
     expect(properties).toEqual([["color", "#191A23"]]);
     expect(readOnly).toEqual([["font-variation-settings", '"opsz" 14']]);
   });
+
+  it("leaves out a variable font's axes at what a browser draws anyway (upright, normal width, optical size at the size)", () => {
+    const axesOf = (variationSettings: Record<string, number>) =>
+      cssOf(
+        layer({
+          type: "TEXT",
+          layoutSizingHorizontal: "HUG",
+          layoutSizingVertical: "HUG",
+          text: {
+            characters: "Hello",
+            textAutoResize: "WIDTH_AND_HEIGHT",
+            textAlignHorizontal: "LEFT",
+            textAlignVertical: "TOP",
+            segments: [
+              segment({
+                fontName: {
+                  family: "Inter",
+                  style: "Regular",
+                  variationSettings,
+                },
+              }),
+            ],
+          },
+        }),
+        frame({ layoutMode: "VERTICAL" }),
+      ).readOnly;
+
+    expect(
+      axesOf({
+        wght: 400,
+        slnt: 0,
+      }),
+    ).toEqual([]);
+    expect(
+      axesOf({
+        slnt: 0,
+        ital: 0,
+        wdth: 100,
+      }),
+    ).toEqual([]);
+    expect(
+      axesOf({
+        slnt: -10,
+        wdth: 100,
+      }),
+    ).toEqual([["font-variation-settings", '"slnt" -10']]);
+    // Optical size at the font size is what a browser picks itself (font-optical-sizing: auto).
+    expect(axesOf({ opsz: 16 })).toEqual([]);
+  });
 });

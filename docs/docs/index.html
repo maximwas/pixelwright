@@ -24,6 +24,8 @@
         </a>
         <nav class="links" aria-label="Site">
           <a href="../">Home</a>
+          <a href="../docs/">Docs</a>
+          <a href="../changelog/">Changelog</a>
           <a href="https://www.npmjs.com/package/pixelwright">npm</a>
           <a href="https://ko-fi.com/maksymvasianin">Support</a>
         </nav>
@@ -63,8 +65,9 @@
 <p>It connects Claude Code and Cursor, shows what to paste for Codex and other MCP clients, and puts the Figma plugin in
 <code>~/.pixelwright/plugin</code>. Then, in Figma Desktop:</p>
 <ol>
-<li><strong>Plugins → Development → Import plugin from manifest…</strong> and pick <code>~/.pixelwright/plugin/manifest.json</code> (once; the
-Community listing will replace this step).</li>
+<li><strong>Plugins → Development → Import plugin from manifest…</strong> and pick <code>~/.pixelwright/plugin/manifest.json</code>, once.
+Figma loads the plugin from there every time you run it, and the setup puts the new one there on every update. (The
+plugin is not on the Figma Community: Figma does not list plugins that overlap its own MCP server.)</li>
 <li>Open your file and run <strong>Plugins → Development → Pixelwright</strong>. Keep its small window open while you work.</li>
 <li>The first time, the window asks for a pairing code: your agent shows it (from <code>status</code>); type it in.</li>
 <li>Ask your agent to read a section, or turn on <strong>Allow edits</strong> in the window and ask it to change something.</li>
@@ -87,11 +90,12 @@ connected at once; tools work on the one whose plugin window was in front last, 
 <p>Pixelwright runs your project&#39;s <a href="https://www.figma.com/developers/code-connect">Figma Code Connect</a> templates
 (<code>*.figma.ts</code>, written as Figma documents them) itself, on any plan, without publishing anything. <code>design_read</code> then
 gives each connected instance as <code>$code</code> in the XML with its code and imports:</p>
-<pre><code class="language-json">{ &quot;ids&quot;: [&quot;2:4872&quot;], &quot;component&quot;: &quot;Heading&quot;, &quot;snippet&quot;: &quot;&lt;Heading tone=\&quot;green\&quot;&gt;Search engine optimization&lt;/Heading&gt;&quot;,
-  &quot;imports&quot;: [&quot;import { Heading } from \&quot;@/components/Heading\&quot;&quot;] }
+<pre><code class="language-json">{ &quot;ids&quot;: [&quot;54:268&quot;], &quot;component&quot;: &quot;Plan Card&quot;,
+  &quot;snippet&quot;: &quot;&lt;PlanCard name=\&quot;Pro\&quot; price=\&quot;$12\&quot; popular&gt;\n  &lt;Button variant=\&quot;primary\&quot;&gt;Get started&lt;/Button&gt;\n&lt;/PlanCard&gt;&quot;,
+  &quot;imports&quot;: [&quot;import { PlanCard } from \&quot;@/components/PlanCard\&quot;&quot;, &quot;import { Button } from \&quot;@/components/Button\&quot;&quot;] }
 </code></pre>
-<p>See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/positivus">examples/positivus</a> for two templates and
-how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
+<p>See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/orbit">examples/orbit</a> for two templates, one rendering
+the other inside it, and how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
 
         </section>
         <section id="safety">
@@ -180,7 +184,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>code_connect_read</code></h3>
   <p>Lists the project&#39;s Figma Code Connect templates (*.figma.ts and *.figma.js, as figma.config.json&#39;s globs name them) with what each connects on the current page, or inside <code>node</code>: components with how many instances, and the error a trial run on the first one gives. Also the components used there that no template connects, and what keeps a template out. design_read returns the code these templates give as codeComponents. Templates are code: write them with your file tools as Figma documents them (guide topic code-connect).</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer or page id to look in, e.g. 2:4868. Default: the current page.</td></tr>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer or page id to look in, e.g. 54:243. Default: the current page.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -225,7 +229,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>design_read</code></h3>
   <p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), and, where the project has Figma Code Connect templates (*.figma.ts), codeComponents: the code connected instances render to ({ids, component, template, snippet, imports}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code as it is (code: false reads it as layers). A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project&#39;s own components and tokens.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 2:4868. Default: the one layer selected in Figma.</td></tr>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243. Default: the one layer selected in Figma.</td></tr>
 <tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below the layer to read. Default: all.</td></tr>
 <tr><td><code>assetsDir</code><span class="optional">optional</span></td><td><code>string</code></td><td>Folder to write the icons (SVG) and images (PNG at 2x, originals for backgrounds) into, e.g. src/assets; the XML&#39;s src paths start with it. Without it the assets are only planned.</td></tr>
 <tr><td><code>screenshot</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also return the layer&#39;s image, to compare your build with.</td></tr>
@@ -277,7 +281,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>image_compare</code></h3>
   <p>Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render&#39;s is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render&#39;s density (scale 2 for a 2x screenshot). Works while Allow edits is off.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 2:4868.</td></tr>
+<tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243.</td></tr>
 <tr><td><code>reference</code></td><td><code>string</code></td><td>The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server&#39;s folder or absolute.</td></tr>
 <tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel of the render: the reference&#39;s density.</td></tr>
 <tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Render shadows and outside strokes around the layer; false renders only its own box.</td></tr>
@@ -291,7 +295,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>inspect</code></h3>
   <p>Reads layers as Figma has them, for what design_read&#39;s CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma&#39;s own parameters (a progressive blur&#39;s start and end, noise, texture), a text&#39;s lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component&#39;s variant. Boxes are measured from relativeTo&#39;s top left, so it also measures: give a list of layers and their section.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids, e.g. [&quot;2:4868&quot;]. Default: the layers selected in Figma.</td></tr>
+<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids, e.g. [&quot;54:243&quot;]. Default: the layers selected in Figma.</td></tr>
 <tr><td><code>relativeTo</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer (a section, a frame) whose top left the boxes are measured from. Default: the page&#39;s.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
@@ -300,7 +304,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>measure</code></h3>
   <p>Measures the distances between layers, each from the one before it in the list (a→b, b→c, so a row&#39;s rhythm shows): the gap between their boxes on each axis (negative where they overlap), how their edges and centres line up (B&#39;s minus A&#39;s: 0 is aligned), and, when one holds the other, how far it sits from each edge, as padding. Layout boxes by default; painted: true measures what is painted (strokes, shadows). A sentence per pair says it plainly. Works while Allow edits is off.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids in the order to measure, each from the one before, e.g. [&quot;2:4868&quot;, &quot;2:4870&quot;]. Default: the layers selected in Figma.</td></tr>
+<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids in the order to measure, each from the one before, e.g. [&quot;54:244&quot;, &quot;54:268&quot;]. Default: the layers selected in Figma.</td></tr>
 <tr><td><code>painted</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Measure what is painted (centred or outside strokes, shadows, blur) instead of the layout boxes.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
@@ -309,7 +313,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>node_show</code></h3>
   <p>Brings layers into view in Figma (switching to their page when needed) and selects them, so the user sees what you mean: one layer, or several on one page, fitted in view or at a zoom (1 is 100%) centred on them; select: false only moves the view. Changes only the view and the selection, never the file.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 2:4868. Give node or nodes.</td></tr>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243. Give node or nodes.</td></tr>
 <tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>Several layers on one page, fitted in view together.</td></tr>
 <tr><td><code>zoom</code><span class="optional">optional</span></td><td><code>string | number</code><br /><span class="default">default &quot;fit&quot;</span></td><td>&quot;fit&quot; (default), or a zoom: 1 is 100%, 0.5 is 50%.</td></tr>
 <tr><td><code>select</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Select them too (default), or only bring them into view.</td></tr>
@@ -320,7 +324,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>nodes_delete</code><span class="writes">writes</span></h3>
   <p>Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display=&quot;none&quot; in design_apply instead) stays, with why. One call is one undo step in Figma. Refused while the plugin&#39;s Allow edits switch is off.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>nodes</code></td><td><code>string[]</code></td><td>The layers&#39; ids, e.g. [&quot;2:4868&quot;].</td></tr>
+<tr><td><code>nodes</code></td><td><code>string[]</code></td><td>The layers&#39; ids, e.g. [&quot;54:243&quot;].</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -328,7 +332,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>nodes_diff</code></h3>
   <p>Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A&#39;s, B&#39;s] (text as $text, an instance&#39;s variant and props too) and whether an icon&#39;s or image&#39;s own drawing differs (paths, colours, inner layers). Ids and the two roots&#39; own names and places are left out. Works while Allow edits is off.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>a</code></td><td><code>string</code></td><td>The first layer&#39;s id (variant A), e.g. 2:4868.</td></tr>
+<tr><td><code>a</code></td><td><code>string</code></td><td>The first layer&#39;s id (variant A), e.g. 54:243.</td></tr>
 <tr><td><code>b</code></td><td><code>string</code></td><td>The second layer&#39;s id (variant B).</td></tr>
 <tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below each layer to compare. Default: all.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
@@ -360,7 +364,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <h3><code>screenshot</code></h3>
   <p>Renders a layer to PNG so you can see it: a section to build, or your result to check. Returned inline at most 2000 px on a side: a larger layer comes scaled down to fit, and the text says its full size. For details of a tall layer screenshot one section of it (outline lists them), or pass clip for a region of it; pass save to write the PNG full size to a file instead.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 2:4868.</td></tr>
+<tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243.</td></tr>
 <tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel: 2 for a sharp look, below 1 to fit.</td></tr>
 <tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Include shadows and outside strokes around the layer; false renders only its own box.</td></tr>
 <tr><td><code>save</code><span class="optional">optional</span></td><td><code>string</code></td><td>Write the PNG to this file (any size) instead of returning it; a relative path is from the server&#39;s folder.</td></tr>
@@ -559,13 +563,20 @@ never spaces.</li>
 <li><code>line-height: normal</code> is Figma&#39;s Auto line height, the font&#39;s own spacing (about 1.2× the size for most fonts):
 give it in px where the build must match; <code>inspect</code> shows each text&#39;s.</li>
 </ul>
-<h3>Example (Positivus, a card)</h3>
-<pre><code class="language-xml">&lt;Frame id=&quot;2:4870&quot; name=&quot;Card&quot; display=&quot;flex&quot; width=&quot;600px&quot; padding=&quot;50px&quot; justify-content=&quot;space-between&quot; align-items=&quot;center&quot; overflow=&quot;hidden&quot; border-radius=&quot;45px&quot; border=&quot;1px solid var(--Dark)&quot; background=&quot;var(--Grey)&quot; box-shadow=&quot;0 5px 0 0 #191A23&quot;&gt;
-  &lt;Instance id=&quot;2:4873&quot; name=&quot;Link&quot; component=&quot;Link&quot; variant=&quot;Property 1=Black&quot; display=&quot;flex&quot; align-items=&quot;center&quot; gap=&quot;15px&quot;&gt;
-    &lt;Icon id=&quot;I2:4873;334:1478&quot; name=&quot;Icon&quot; src=&quot;assets/icon.svg&quot; width=&quot;41px&quot; height=&quot;41px&quot;/&gt;
-    &lt;Text id=&quot;I2:4873;334:1481&quot; name=&quot;Label&quot; font=&quot;400 20px/28px &#39;Space Grotesk&#39;&quot; color=&quot;var(--Black)&quot;&gt;Learn more&lt;/Text&gt;
+<h3>Example (Orbit, a pricing card, abridged)</h3>
+<pre><code class="language-xml">&lt;Instance id=&quot;54:268&quot; name=&quot;Plan – Pro&quot; component=&quot;Plan Card&quot; props=&quot;Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro&quot; note=&quot;The price comes from the billing API. Show the Popular badge only on the plan the API marks popular.&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; width=&quot;385px&quot; height=&quot;394px&quot; padding=&quot;var(--space-32)&quot; gap=&quot;var(--space-24)&quot; border-radius=&quot;var(--radius-lg)&quot; border=&quot;2px solid var(--color-brand)&quot; background=&quot;var(--color-surface)&quot; box-shadow=&quot;var(--Shadow-Card)&quot; $on-click=&quot;go to Checkout – Desktop; dissolve 300ms ease-out&quot;&gt;
+  …
+  &lt;Instance id=&quot;I54:268;54:211&quot; name=&quot;Button&quot; component=&quot;Button&quot; variant=&quot;Variant=Primary, State=Default&quot; props=&quot;Label=Get started&quot; display=&quot;flex&quot; align-self=&quot;stretch&quot; padding=&quot;var(--space-12) var(--space-24)&quot; justify-content=&quot;center&quot; align-items=&quot;center&quot; border-radius=&quot;var(--radius-md)&quot; background=&quot;var(--color-brand)&quot;&gt;
+    &lt;Text id=&quot;I54:268;54:211;54:190&quot; name=&quot;Label&quot; textStyle=&quot;Button&quot; color=&quot;var(--color-on-brand)&quot;&gt;Get started&lt;/Text&gt;
   &lt;/Instance&gt;
-&lt;/Frame&gt;
+  &lt;Frame id=&quot;I54:268;54:213&quot; name=&quot;Features&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; align-self=&quot;stretch&quot; gap=&quot;var(--space-12)&quot; overflow=&quot;hidden&quot;&gt;
+    &lt;Frame id=&quot;I54:268;54:214&quot; name=&quot;Feature&quot; display=&quot;flex&quot; align-items=&quot;center&quot; gap=&quot;var(--space-8)&quot; overflow=&quot;hidden&quot;&gt;
+      &lt;Icon id=&quot;I54:268;54:215&quot; name=&quot;Icon/Check&quot; component=&quot;Icon/Check&quot; src=&quot;assets/icon-check.svg&quot; width=&quot;20px&quot; height=&quot;20px&quot;/&gt;
+      &lt;Text id=&quot;I54:268;54:217&quot; name=&quot;Text&quot; textStyle=&quot;Body Small&quot; color=&quot;var(--color-ink)&quot;&gt;Unlimited projects&lt;/Text&gt;
+    &lt;/Frame&gt;
+    …
+  &lt;/Frame&gt;
+&lt;/Instance&gt;
 </code></pre>
 
         </section>
@@ -677,7 +688,7 @@ never overwritten with other bytes.</p>
 until then every call is refused (<code>dryRun: true</code> checks a call without writing, switch on or off).</p>
 <h3>Changing a layer</h3>
 <ul>
-<li>An element with <code>id</code> changes that layer, and only the attributes it gives: <code>&lt;Frame id=&quot;2:4869&quot; gap=&quot;48px&quot;/&gt;</code>
+<li>An element with <code>id</code> changes that layer, and only the attributes it gives: <code>&lt;Frame id=&quot;54:243&quot; gap=&quot;48px&quot;/&gt;</code>
 changes the gap and nothing else. Read the layer first, edit the XML, send back what you changed (sending the whole
 read back is fine: what the layer already has is not written again).</li>
 <li>Leaving an attribute out never removes it. To remove, write the value that means none: <code>background=&quot;none&quot;</code>,
@@ -705,7 +716,7 @@ element, after the element before it (alone: last); at the top level into <code>
 to a layer with <code>before=&quot;id&quot;</code> / <code>after=&quot;id&quot;</code>. Groups and vectors are not drawn from XML: use an <code>Icon</code>.</li>
 <li>A new layer has what its XML says and nothing more: no fill without <code>background</code>, no clipping without
 <code>overflow</code>; a new auto layout frame hugs unless sized; a new text is black unless <code>color</code> says otherwise.</li>
-<li><strong>A copy:</strong> <code>&lt;Frame copyOf=&quot;2:4870&quot; name=&quot;Card 2&quot;&gt;</code> clones that layer (everything the XML cannot show comes
+<li><strong>A copy:</strong> <code>&lt;Frame copyOf=&quot;54:268&quot; name=&quot;Card 2&quot;&gt;</code> clones that layer (everything the XML cannot show comes
 along) and then writes the element onto the copy. Inside it, elements with the source&#39;s ids write the copy&#39;s
 layers: copy a card&#39;s XML, drop the root&#39;s id, add <code>copyOf</code>, change the title.</li>
 </ul>
@@ -879,12 +890,12 @@ that turn unreadable.</p>
       <div class="bottom-inner">
         <div>
           <p>Built from Pixelwright's README, its tools and its guide (scripts/build-docs.mjs). Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
-          <p class="doc-credits">The examples use the <a href="https://www.figma.com/community/file/1230604708032389430">Positivus landing page design</a> by Olga Averchenko, CC BY 4.0.</p>
         </div>
         <p class="footer-links">
           <a href="../">Home</a>
           <a href="https://github.com/maximwas/pixelwright">GitHub</a>
           <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="../changelog/">Changelog</a>
           <a href="https://github.com/maximwas/pixelwright/discussions">Feedback</a>
           <a href="https://ko-fi.com/maksymvasianin">Ko-fi</a>
           <a href="https://send.monobank.ua/jar/7o9oMrbXTj">monobank</a>

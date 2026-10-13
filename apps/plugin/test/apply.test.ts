@@ -93,7 +93,7 @@ const LIBRARY: FakeLibrary = {
   },
 };
 
-/** A page with an auto layout card, a free-form box with a child, and a Heading instance, as Positivus has. */
+/** A page with an auto layout card, a free-form box with a child, and a Heading instance. */
 function page(): FakeNode {
   return tree({
     id: "0:1",

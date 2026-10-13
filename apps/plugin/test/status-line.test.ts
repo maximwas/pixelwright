@@ -10,7 +10,7 @@ describe("the window's status", () => {
           retryInMs: 500,
           reason: null,
         },
-        "Positivus",
+        "Orbit",
       ),
     ).toEqual({
       tone: "wait",
@@ -36,12 +36,12 @@ describe("the window's status", () => {
           kind: "connected",
           serverVersion: "0.1.0",
         },
-        "Positivus",
+        "Orbit",
       ),
     ).toEqual({
       tone: "ok",
       title: "Connected",
-      detail: "Your AI assistant sees “Positivus”.",
+      detail: "Your AI assistant sees “Orbit”.",
     });
   });
 

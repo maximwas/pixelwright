@@ -308,30 +308,36 @@ describe("token model", () => {
   });
 
   it("adds the file's styles as tokens named like design_read's", () => {
-    const row = fixture("positivus-services-row");
+    const plans = fixture("orbit-plans");
     const model = tokenModel({
       collections: [],
       variables: [],
       external: {},
-      styles: Object.entries(row.styles).map(([id, style]) => ({
+      styles: Object.entries(plans.styles).map(([id, style]) => ({
         id,
         ...style,
       })),
     });
     const css = tokensCss(model);
 
-    expect(model.styles.paint).toContainEqual({
-      name: "Dark",
-      token: "--Dark",
-      value: "#191A23",
-    });
     expect(model.styles.text).toContainEqual({
-      name: "h3",
-      token: "--h3-font",
-      value: "500 30px/normal 'Space Grotesk'",
+      name: "Heading/H3",
+      token: "--Heading-H3-font",
+      value: "500 24px/30px 'Space Grotesk'",
+      also: [
+        {
+          token: "--Heading-H3-letter-spacing",
+          value: "-0.01em",
+        },
+      ],
     });
-    expect(css).toContain("--Dark: #191A23;");
-    expect(css).toContain("--h3-font: 500 30px/normal 'Space Grotesk';");
+    expect(model.styles.effect).toContainEqual({
+      name: "Shadow/Card",
+      token: "--Shadow-Card",
+      value: "0 12px 32px -8px rgba(20, 22, 31, 0.12)",
+    });
+    expect(css).toContain("--Heading-H3-font: 500 24px/30px 'Space Grotesk';");
+    expect(css).toContain("--Shadow-Card: 0 12px 32px -8px rgba(20, 22, 31, 0.12);");
   });
 });
 

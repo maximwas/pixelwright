@@ -25,7 +25,7 @@ function errorOf(source: string): BridgeError {
 
 describe("parseXml", () => {
   it("reads design_read's XML back: every attribute, $ names included, with lines", () => {
-    const [root] = elements(parseXml(designXml(fixture("positivus-services-row")).xml));
+    const [root] = elements(parseXml(designXml(fixture("orbit-plans")).xml));
     const [card] = elements(root?.children ?? []);
 
     expect(root).toMatchObject({
@@ -33,16 +33,17 @@ describe("parseXml", () => {
       line: 1,
       column: 1,
       props: {
-        id: "2:4869",
-        gap: "40px",
+        id: "54:243",
+        gap: "var(--space-24)",
       },
     });
     expect(card).toMatchObject({
-      type: "Frame",
+      type: "Instance",
       line: 2,
       props: {
-        id: "2:4870",
-        border: "1px solid var(--Dark)",
+        id: "54:244",
+        props: "Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter",
+        border: "1px solid var(--color-line)",
       },
     });
     expect(elements(parseXml('<Frame id="1:1" $css="mix-blend-mode: multiply" $children="3"/>'))[0]?.props).toEqual({

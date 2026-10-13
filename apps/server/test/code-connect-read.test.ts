@@ -8,14 +8,14 @@ import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
 const ROW = JSON.parse(
-  await readFile(new URL("../../../packages/core/test/fixtures/positivus-services-row.json", import.meta.url), "utf8"),
+  await readFile(new URL("../../../packages/core/test/fixtures/orbit-plans.json", import.meta.url), "utf8"),
 ) as unknown;
 
-const HEADING =
-  "// url=https://www.figma.com/design/KIT/Kit?node-id=9-9\n// component=Heading\nimport figma from 'figma'\nexport default { example: figma.code`<Heading tone=\"${figma.selectedInstance.getEnum('Property 1', { Green: 'green' })}\" />` }\n";
+const PLAN_CARD =
+  "// url=https://www.figma.com/design/KIT/Kit?node-id=9-9\n// component=Plan Card\nimport figma from 'figma'\nexport default { example: figma.code`<PlanCard name=\"${figma.selectedInstance.getString('Name')}\" />` }\n";
 
-/** The Positivus Services row as the page, and which node each snapshot asked for. */
-function positivus() {
+/** The Orbit Plans row as the page, and which node each snapshot asked for. */
+function orbit() {
   const asked: unknown[] = [];
   const bridge: BridgeView = {
     status: () => {
@@ -64,11 +64,11 @@ async function project(files: Record<string, string>): Promise<string> {
 describe("code_connect_read", () => {
   it("lists the templates with what they match on the page, and the components that have none", async () => {
     const root = await project({
-      "Heading.figma.ts": HEADING,
+      "PlanCard.figma.ts": PLAN_CARD,
       "Ghost.figma.ts":
         "// url=https://www.figma.com/design/KIT/Kit?node-id=9-10\nimport figma from 'figma'\nexport default { example: figma.code`<Ghost />` }\n",
     });
-    const { bridge, asked } = positivus();
+    const { bridge, asked } = orbit();
 
     expect(await readCodeConnect(bridge, {}, root)).toEqual({
       root,
@@ -79,21 +79,29 @@ describe("code_connect_read", () => {
           matches: [],
         },
         {
-          path: "Heading.figma.ts",
+          path: "PlanCard.figma.ts",
           url: "https://www.figma.com/design/KIT/Kit?node-id=9-9",
-          component: "Heading",
+          component: "Plan Card",
           matches: [
             {
-              component: "Heading",
-              instances: 2,
+              component: "Plan Card",
+              instances: 3,
             },
           ],
         },
       ],
       unconnected: [
         {
-          component: "Link",
-          instances: 2,
+          component: "Button",
+          instances: 3,
+        },
+        {
+          component: "Icon/Check",
+          instances: 9,
+        },
+        {
+          component: "Badge",
+          instances: 1,
         },
       ],
       problems: [],
@@ -108,25 +116,33 @@ describe("code_connect_read", () => {
   });
 
   it("gives a template's error from a trial run on the first instance it matches", async () => {
-    const root = await project({ "Heading.figma.ts": HEADING.replace("'Property 1'", "'Tone'") });
-    const { templates } = await readCodeConnect(positivus().bridge, { node: "2:4869" }, root);
+    const root = await project({ "PlanCard.figma.ts": PLAN_CARD.replace("getString('Name')", "getString('Title')") });
+    const { templates } = await readCodeConnect(orbit().bridge, { node: "54:243" }, root);
 
-    expect(templates[0]?.error).toMatch(/^PROPERTY_NOT_FOUND: Heading \(2:4872\) has no property Tone/);
+    expect(templates[0]?.error).toMatch(/^PROPERTY_NOT_FOUND: Plan – Starter \(54:244\) has no property Title/);
   });
 
   it("says why when the project has no templates", async () => {
     const root = await project({ "README.md": "hi" });
 
-    expect(await readCodeConnect(positivus().bridge, {}, root)).toMatchObject({
+    expect(await readCodeConnect(orbit().bridge, {}, root)).toMatchObject({
       templates: [],
       unconnected: [
         {
-          component: "Heading",
-          instances: 2,
+          component: "Plan Card",
+          instances: 3,
         },
         {
-          component: "Link",
-          instances: 2,
+          component: "Button",
+          instances: 3,
+        },
+        {
+          component: "Icon/Check",
+          instances: 9,
+        },
+        {
+          component: "Badge",
+          instances: 1,
         },
       ],
       problems: [expect.stringMatching(/^No Code Connect templates/)],

@@ -1,6 +1,7 @@
 // Builds the website's docs page (docs/docs/index.html) from what the product says about itself: the README's
 // sections for people, every tool as the MCP server lists it (description and parameters), and the guide's topics the
-// agent reads. Nothing on the page is written twice, so it cannot drift from the product. Run: pnpm build:docs.
+// agent reads; and its changelog page (docs/changelog/index.html) from CHANGELOG.md's released versions. Nothing on the
+// pages is written twice, so they cannot drift from the product. Run: pnpm build:docs.
 import { spawn } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -164,13 +165,15 @@ const parts = [
   })),
 ];
 
-const page = `<!doctype html>
+/** A page of the site under docs/<dir>: the header, a table of contents, the parts and the footer every page shares. */
+function sitePage({ title, description, parts, intro = "", footerNote }) {
+  return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pixelwright docs</title>
-    <meta name="description" content="How to set up Pixelwright, what each of its tools does, and the formats your agent reads: the XML, writing, tokens, assets and Code Connect." />
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}" />
     <meta name="color-scheme" content="dark light" />
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -190,6 +193,8 @@ const page = `<!doctype html>
         </a>
         <nav class="links" aria-label="Site">
           <a href="../">Home</a>
+          <a href="../docs/">Docs</a>
+          <a href="../changelog/">Changelog</a>
           <a href="https://www.npmjs.com/package/pixelwright">npm</a>
           <a href="https://ko-fi.com/maksymvasianin">Support</a>
         </nav>
@@ -202,24 +207,24 @@ const page = `<!doctype html>
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
-${parts.map(({ id, title }) => `          <li><a href="#${id}">${escapeHtml(title)}</a></li>`).join("\n")}
+${parts.map(({ id, title: label }) => `          <li><a href="#${id}">${escapeHtml(label)}</a></li>`).join("\n")}
         </ol>
       </nav>
       <main id="main" class="doc-body">
-        <h1>Pixelwright docs</h1>
-${parts.map(({ id, title, html }) => `        <section id="${id}">\n          <h2>${escapeHtml(title)}</h2>\n${html}\n        </section>`).join("\n")}
+        <h1>${escapeHtml(title)}</h1>
+${intro}${parts.map(({ id, title: label, html }) => `        <section id="${id}">\n          <h2>${escapeHtml(label)}</h2>\n${html}\n        </section>`).join("\n")}
       </main>
     </div>
     <footer class="bottom">
       <div class="bottom-inner">
         <div>
-          <p>Built from Pixelwright's README, its tools and its guide (scripts/build-docs.mjs). Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
-          <p class="doc-credits">The examples use the <a href="https://www.figma.com/community/file/1230604708032389430">Positivus landing page design</a> by Olga Averchenko, CC BY 4.0.</p>
+          <p>${footerNote} Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
         </div>
         <p class="footer-links">
           <a href="../">Home</a>
           <a href="https://github.com/maximwas/pixelwright">GitHub</a>
           <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="../changelog/">Changelog</a>
           <a href="https://github.com/maximwas/pixelwright/discussions">Feedback</a>
           <a href="https://ko-fi.com/maksymvasianin">Ko-fi</a>
           <a href="https://send.monobank.ua/jar/7o9oMrbXTj">monobank</a>
@@ -229,7 +234,62 @@ ${parts.map(({ id, title, html }) => `        <section id="${id}">\n          <h
   </body>
 </html>
 `;
+}
 
-mkdirSync(join(root, "docs/docs"), { recursive: true });
-writeFileSync(join(root, "docs/docs/index.html"), page);
+/** CHANGELOG.md's released versions, newest first: "## 0.1.0 — 2026-10-13" and its Markdown; Unreleased left out. */
+function releases() {
+  const text = readFileSync(join(root, "CHANGELOG.md"), "utf8").replace(/<!--[\s\S]*?-->/g, "");
+  const found = [];
+
+  for (const part of text.split(/^## /m).slice(1)) {
+    const newline = part.indexOf("\n");
+    const heading = /^(\d+\.\d+\.\d+) — (\d{4}-\d{2}-\d{2})$/.exec(part.slice(0, newline).trim());
+
+    if (heading !== null) {
+      found.push({ version: heading[1], date: heading[2], markdown: part.slice(newline + 1) });
+    }
+  }
+
+  return found;
+}
+
+writePage(
+  "docs",
+  sitePage({
+    title: "Pixelwright docs",
+    description:
+      "How to set up Pixelwright, what each of its tools does, and the formats your agent reads: the XML, writing, tokens, assets and Code Connect.",
+    parts,
+    footerNote: "Built from Pixelwright's README, its tools and its guide (scripts/build-docs.mjs).",
+  }),
+);
 console.log(`docs/docs/index.html: ${parts.length} sections, ${tools.length} tools`);
+
+const versions = releases();
+
+if (versions.length === 0) {
+  throw new Error("CHANGELOG.md has no released version (## 1.2.3 — YYYY-MM-DD)");
+}
+
+writePage(
+  "changelog",
+  sitePage({
+    title: "Pixelwright changelog",
+    description:
+      "Every release of Pixelwright, the MCP server and Figma plugin: the version, the day and what changed.",
+    intro:
+      "        <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>\n",
+    parts: versions.map(({ version, date, markdown }) => ({
+      id: `v${version.replaceAll(".", "-")}`,
+      title: `${version} — ${date}`,
+      html: render(markdown, 1),
+    })),
+    footerNote: "Built from CHANGELOG.md (scripts/build-docs.mjs).",
+  }),
+);
+console.log(`docs/changelog/index.html: ${versions.length} versions`);
+
+function writePage(dir, html) {
+  mkdirSync(join(root, "docs", dir), { recursive: true });
+  writeFileSync(join(root, "docs", dir, "index.html"), html);
+}

@@ -15,7 +15,7 @@ const view = (request: BridgeView["request"]): BridgeView => ({
       session: "s1",
       info: pluginInfo({
         file: {
-          name: "Positivus",
+          name: "Orbit",
           key: null,
         },
       }),
@@ -55,7 +55,7 @@ describe("status", () => {
     expect(status.files).toEqual([
       {
         session: "s1",
-        name: "Positivus",
+        name: "Orbit",
         key: null,
         page: "Page 1",
         editorType: "figma",

@@ -3,7 +3,7 @@ import type { SnapshotNode, SnapshotPaint, SnapshotStyle, SnapshotVariable } fro
 export interface CssContext {
   readonly styles: Readonly<Record<string, SnapshotStyle>>;
   readonly variables: Readonly<Record<string, SnapshotVariable>>;
-  /** Every token the CSS refers to, with its value, gathered as layers are written: `--Dark` → `#191A23`. */
+  /** Every token the CSS refers to, with its value, gathered as layers are written: `--color-ink` → `#14161F`. */
   readonly tokens: Map<string, string>;
   /** The layer the read starts from: it always gets its size, whatever its sizing. */
   readonly root: SnapshotNode;
