@@ -168,25 +168,25 @@ export function textStyleCss(style: SnapshotStyle): string | null {
     return null;
   }
 
-  const parts = [
+  return [
     fontShorthand({
       fontName: style.fontName,
       fontSize: style.fontSize,
       lineHeight: style.lineHeight,
     }),
-  ];
+    ...textStyleExtras(style).map(([property, value]) => `${property}: ${value}`),
+  ].join("; ");
+}
+
+/** What a text style sets besides its font, when not the default: letter spacing and case. */
+export function textStyleExtras(style: SnapshotStyle): [string, string][] {
   const spacing = style.letterSpacing === undefined ? null : letterSpacingCss(style.letterSpacing);
   const transform = style.textCase === undefined ? undefined : TEXT_TRANSFORMS[style.textCase];
 
-  if (spacing !== null) {
-    parts.push(`letter-spacing: ${spacing}`);
-  }
-
-  if (transform !== undefined) {
-    parts.push(`text-transform: ${transform}`);
-  }
-
-  return parts.join("; ");
+  return [
+    ...(spacing === null ? [] : [["letter-spacing", spacing] as [string, string]]),
+    ...(transform === undefined ? [] : [["text-transform", transform] as [string, string]]),
+  ];
 }
 
 /** A line height as CSS writes it at this font size: px, or normal. */

@@ -7,6 +7,7 @@ import {
   type SnapshotNode,
   type SnapshotStyle,
   tokenModel,
+  tokensCss,
 } from "../src/index.ts";
 
 /** What a second real build (six screens of a client project) found missing or wrong (stage 8). */
@@ -205,5 +206,52 @@ describe("what the read says in hints, not in $css", () => {
     expect(designHints(snapshot).join("\n")).toMatch(
       /--White-2 is another paint style named White \(#FFF\); --White is #FFF: they are two styles/,
     );
+  });
+});
+
+describe("text style tokens", () => {
+  it("carry the letter spacing and case design_read gives the style, as tokens of their own", () => {
+    const model = tokenModel({
+      collections: [],
+      variables: [],
+      external: {},
+      styles: [
+        {
+          id: "S:c",
+          name: "Caption",
+          type: "TEXT",
+          remote: true,
+          fontName: {
+            family: "Manrope",
+            style: "SemiBold",
+          },
+          fontSize: 12,
+          lineHeight: {
+            unit: "PIXELS",
+            value: 18,
+          },
+          letterSpacing: {
+            unit: "PERCENT",
+            value: 3,
+          },
+          textCase: "UPPER",
+        },
+      ],
+    });
+
+    expect(model.styles.text[0]).toMatchObject({
+      token: "--Caption-font",
+      also: [
+        {
+          token: "--Caption-letter-spacing",
+          value: "0.03em",
+        },
+        {
+          token: "--Caption-text-transform",
+          value: "uppercase",
+        },
+      ],
+    });
+    expect(tokensCss(model)).toContain("--Caption-letter-spacing: 0.03em;");
   });
 });

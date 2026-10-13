@@ -28,7 +28,12 @@ export function tokensCss(model: TokenModel): string {
   for (const [title, styles] of styleGroups) {
     if (styles.length > 0) {
       root.push(`${INDENT}/* ${title} */`);
-      root.push(...styles.map((style) => declaration(style.token, style.value)));
+      root.push(
+        ...styles.flatMap((style) => [
+          declaration(style.token, style.value),
+          ...(style.also ?? []).map((extra) => declaration(extra.token, extra.value)),
+        ]),
+      );
     }
   }
 

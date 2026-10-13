@@ -26,6 +26,8 @@ export interface StyleToken {
   name: string;
   token: string;
   value: string;
+  /** A text style's other properties as tokens of their own: --Caption-letter-spacing, --Caption-text-transform. */
+  also?: { token: string; value: string }[];
 }
 
 /** A file's tokens ready for code: what tokens_read returns as JSON and turns into CSS. */

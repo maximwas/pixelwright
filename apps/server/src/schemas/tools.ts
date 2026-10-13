@@ -124,6 +124,15 @@ const StyleTokenSchema = z.object({
   name: z.string(),
   token: z.string(),
   value: z.string(),
+  also: z
+    .array(
+      z.object({
+        token: z.string(),
+        value: z.string(),
+      }),
+    )
+    .exactOptional()
+    .describe("A text style's letter spacing and case, as tokens of their own."),
 });
 
 const LibrarySchema = z.array(

@@ -1,7 +1,7 @@
 import { colorCss, type Rgba } from "../css/color.ts";
 import { decimal } from "../css/format.ts";
 import { shadowListCss } from "../css/node-css.ts";
-import { fontShorthand } from "../css/text.ts";
+import { fontShorthand, textStyleExtras } from "../css/text.ts";
 import { styleTokenName, tokenName, variableTokenName } from "../css/tokens.ts";
 import type { RawTokens, StyleToken, TokenCollection, TokenModel } from "../types/tokens.ts";
 
@@ -315,6 +315,11 @@ function stylesOf(styles: RawTokens["styles"], notes: string[]): TokenModel["sty
       style.fontSize !== undefined &&
       style.lineHeight !== undefined
     ) {
+      const also = textStyleExtras(style).map(([property, value]) => ({
+        token: `${token}-${property}`,
+        value,
+      }));
+
       text.push({
         name: style.name,
         token: `${token}-font`,
@@ -323,6 +328,7 @@ function stylesOf(styles: RawTokens["styles"], notes: string[]): TokenModel["sty
           fontSize: style.fontSize,
           lineHeight: style.lineHeight,
         }),
+        ...(also.length === 0 ? {} : { also }),
       });
     } else if (style.type === "EFFECT") {
       const shadows = shadowListCss(style.effects ?? []);
