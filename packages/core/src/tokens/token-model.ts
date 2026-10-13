@@ -298,9 +298,15 @@ function stylesOf(styles: RawTokens["styles"], notes: string[]): TokenModel["sty
           token,
           value: colorCss(only.color, only.opacity ?? 1),
         });
+      } else if (style.css !== undefined) {
+        paint.push({
+          name: style.name,
+          token,
+          value: style.css,
+        });
       } else {
         notes.push(
-          `Paint style ${style.name} is ${visible.map((layer) => layer.type.toLowerCase()).join(" + ") || "empty"}: only a single solid color is a token yet.`,
+          `Paint style ${style.name} is ${visible.map((layer) => layer.type.toLowerCase()).join(" + ") || "empty"}: CSS for it comes from a layer that uses it, and none read here does (an image has none).`,
         );
       }
     } else if (

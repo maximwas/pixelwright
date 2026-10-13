@@ -167,3 +167,47 @@ describe("library styles that share a name", () => {
     expect(await index.style("--Black", "PAINT")).toBe("S:a");
   });
 });
+
+describe("gradient paint styles", () => {
+  it("take their CSS in tokens_read from a layer the style fills, as Figma writes it", async () => {
+    const gradient = "radial-gradient(144.83% 129.61% at 97.4% 5.56%, #9D3535 0%, #E29B6A 100%)";
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            ...filled("1:1", "S:g"),
+            css: { background: `var(--Brand-Gradient, ${gradient})` },
+          },
+        ],
+      }),
+      {
+        styles: {
+          "S:g": {
+            id: "S:g",
+            name: "Brand Gradient",
+            type: "PAINT",
+            remote: true,
+            paints: [
+              {
+                type: "GRADIENT_RADIAL",
+                visible: true,
+                gradientStops: [],
+                gradientTransform: [
+                  [1, 0, 0],
+                  [0, 1, 0],
+                ],
+              },
+            ],
+          },
+        },
+      },
+    );
+
+    const tokens = (await runOperation("variables", { used: true })) as { styles: { id: string; css?: string }[] };
+
+    expect(tokens.styles.find((style) => style.id === "S:g")?.css).toBe(gradient);
+  });
+});

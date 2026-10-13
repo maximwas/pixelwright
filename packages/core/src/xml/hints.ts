@@ -18,7 +18,11 @@ const label = (node: SnapshotNode) => `${node.id} "${node.name}"`;
  * What Figma does not bind and the code should: raw values equal to tokens, unnamed layers, frames placed by hand,
  * backgrounds drawn as rectangles, bare wrappers, missing fonts, detached components. Hints never change the XML.
  */
-export function designHints(snapshot: Snapshot, xml = designXml(snapshot).xml): string[] {
+export function designHints(
+  snapshot: Snapshot,
+  read: { readonly xml: string; readonly tokens: Readonly<Record<string, string>> } = designXml(snapshot),
+): string[] {
+  const { xml } = read;
   const all: { node: SnapshotNode; parent: SnapshotNode | null }[] = [];
   const walk = (node: SnapshotNode, parent: SnapshotNode | null) => {
     // An asset is one file: how it is built inside does not reach the code.
@@ -47,6 +51,7 @@ export function designHints(snapshot: Snapshot, xml = designXml(snapshot).xml): 
   }
 
   return [
+    ...valuelessTokenHints(snapshot, read),
     ...rawTokenHints(snapshot, xml),
     ...defaultNameHints(all.map(({ node }) => node)),
     ...[...found].map(([kind, examples]) => LAYER_HINTS[kind](examples)),
@@ -79,6 +84,27 @@ const LAYER_HINTS = {
 type LayerHint = keyof typeof LAYER_HINTS;
 
 /** A color written raw that equals a style's or a variable's value. */
+/** Paint styles the XML names whose value no layer here could give: a var() the build cannot resolve on its own. */
+function valuelessTokenHints(
+  snapshot: Snapshot,
+  { xml, tokens }: { readonly xml: string; readonly tokens: Readonly<Record<string, string>> },
+): string[] {
+  const missing = new Map<string, string>();
+
+  for (const style of Object.values(snapshot.styles)) {
+    const name = styleTokenName(style);
+
+    if (style.paints !== undefined && tokens[name] === undefined && xml.includes(`var(${name})`)) {
+      missing.set(name, (style.paints ?? []).map((paint) => paint.type.toLowerCase()).join(" + ") || "empty");
+    }
+  }
+
+  return [...missing].map(
+    ([name, paints]) =>
+      `${name} has no value: its paint style is ${paints}, which neither core nor Figma wrote as CSS here; take its look from a screenshot of a layer that uses it.`,
+  );
+}
+
 function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
   const tokens = new Map<string, string>();
 

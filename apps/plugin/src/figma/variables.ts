@@ -1,4 +1,4 @@
-import type { OperationInput, OperationOutput, RawTokens } from "@pixelwright/core";
+import { type OperationInput, type OperationOutput, type RawTokens, unwrapVar } from "@pixelwright/core";
 import { LIBRARY_BUDGET_MS } from "../constants/plugin.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import { plain } from "../utils/plain.ts";
@@ -34,6 +34,7 @@ export async function variables({
     const page = root.type === "PAGE" ? null : pageOf(root);
 
     await addUsed(raw, root);
+    await addPaintCss(raw, root);
     // A library style may share a name with one of the file's or another library's: numbered again among the page's,
     // as every reader numbers them, so a part of the page reads the same names as the whole page.
     raw.styles = numbered(raw.styles, page === null ? [] : await numberingStyles([page]));
@@ -117,6 +118,44 @@ async function addVariables(raw: RawTokens, ids: readonly string[]): Promise<voi
     knownVariables.add(id);
     queue.push(...aliasesIn(entry.valuesByMode));
   }
+}
+
+/**
+ * Each gradient or layered paint style's CSS, from the first layer under `root` it fills: core writes only single solid
+ * paint styles itself, and Figma writes the rest for a layer (getCSSAsync's background).
+ */
+async function addPaintCss(raw: RawTokens, root: BaseNode): Promise<void> {
+  const wanted = new Map(
+    raw.styles
+      .filter((style) => style.type === "PAINT" && style.css === undefined && !singleSolid(style.paints ?? []))
+      .map((style) => [style.id, style]),
+  );
+
+  if (wanted.size === 0 || !("findAll" in root)) {
+    return;
+  }
+
+  const filled = root.findAll(
+    (layer) => "fillStyleId" in layer && typeof layer.fillStyleId === "string" && wanted.has(layer.fillStyleId),
+  );
+
+  for (const layer of filled) {
+    const style = wanted.get((layer as SceneNode & { fillStyleId: string }).fillStyleId);
+
+    if (style !== undefined && style.css === undefined && "getCSSAsync" in layer) {
+      const css = unwrapVar((await layer.getCSSAsync()).background);
+
+      if (css !== undefined) {
+        style.css = css;
+      }
+    }
+  }
+}
+
+function singleSolid(paints: readonly { type: string; visible?: boolean | undefined }[]): boolean {
+  const visible = paints.filter((paint) => paint.visible !== false);
+
+  return visible.length === 1 && visible[0]?.type === "SOLID";
 }
 
 /** The styles and variables the layers under `root` use and the file does not define (a team library's). */

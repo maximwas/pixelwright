@@ -54,7 +54,13 @@ export const RawTokensSchema = z.object({
   collections: z.array(RawCollectionSchema),
   variables: z.array(RawVariableSchema),
   external: z.record(z.string(), ExternalVariableSchema),
-  styles: z.array(SnapshotStyleSchema.extend({ id: z.string() })),
+  styles: z.array(
+    SnapshotStyleSchema.extend({
+      id: z.string(),
+      /** A gradient or layered paint style's CSS, as Figma writes it for a layer that uses the style. */
+      css: z.string().optional(),
+    }),
+  ),
   library: z.array(LibraryCollectionSchema).optional(),
   /** Why the library catalogue is missing although it was asked for. */
   libraryError: z.string().optional(),

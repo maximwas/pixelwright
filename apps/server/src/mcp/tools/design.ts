@@ -124,7 +124,7 @@ export async function readDesign(
   }
 
   const hints = [
-    ...designHints(snapshot, read.xml),
+    ...designHints(snapshot, read),
     ...(assetsDir === undefined && read.assets.length > 0
       ? [`${read.assets.length} assets are planned but not written: pass assetsDir to export them.`]
       : []),

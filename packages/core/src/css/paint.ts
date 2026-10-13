@@ -1,6 +1,7 @@
 import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotPaint } from "../types/snapshot.ts";
+import { unwrapVar } from "../utils/css-value.ts";
 import { colorCss, type Rgba } from "./color.ts";
 import { cssUrl } from "./format.ts";
 import { styleTokenName, variableTokenName } from "./tokens.ts";
@@ -19,7 +20,8 @@ const SCALE_MODES: Readonly<Record<string, string>> = {
 
 /**
  * A layer's paints as one CSS value, top layer first: `var(--Name)` for a paint style, the token of a bound variable,
- * else the literal. Null when nothing visible is painted.
+ * else the literal. Null when nothing visible is painted. A style's value goes to the tokens: its paints as core writes
+ * them, else (a gradient) the layer's own background as Figma writes it, which a layer with such fills carries.
  */
 export function paintsCss(
   paints: SnapshotNode["fills"],
@@ -40,9 +42,10 @@ export function paintsCss(
   if (style?.paints !== undefined) {
     const name = styleTokenName(style);
     const value = layersCss(style.paints, node, context);
+    const css = typeof value === "string" ? value : paints === node.fills ? unwrapVar(node.css?.background) : undefined;
 
-    if (typeof value === "string") {
-      context.tokens.set(name, value);
+    if (css !== undefined) {
+      context.tokens.set(name, css);
     }
 
     return `var(${name})`;
