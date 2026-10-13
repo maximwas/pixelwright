@@ -221,6 +221,66 @@ describe("design_read", () => {
     expect(JSON.parse(textOf(await readDesign(orbit(PLANS).bridge, args), 1))).not.toHaveProperty("measurements");
   });
 
+  it("gives Figma Motion as CSS keyframes when a layer animates", async () => {
+    const [first, ...rest] = (PLANS.root.children ?? []) as Record<string, unknown>[];
+    const animated = {
+      ...PLANS,
+      root: {
+        ...PLANS.root,
+        children: [
+          {
+            ...first,
+            motion: {
+              timeline: 1.2,
+              styles: [],
+              tracks: [
+                {
+                  field: "OPACITY",
+                  operation: "SET",
+                  base: {
+                    type: "FLOAT",
+                    value: 1,
+                  },
+                  keyframes: [0, 0.6].map((t) => ({
+                    t,
+                    value: {
+                      type: "FLOAT",
+                      value: t === 0 ? 0 : 1,
+                    },
+                    easing: { type: "EASE_OUT" },
+                  })),
+                },
+              ],
+            },
+          },
+          ...rest,
+        ],
+      },
+    };
+    const args = {
+      node: "54:243",
+      screenshot: false,
+      maxChars: 80_000,
+      code: false,
+    };
+    const result = await readDesign(orbit(animated).bridge, args);
+
+    expect(textOf(result, 0)).toContain('$motion="opacity 0→1; 0–0.6s ease-out"');
+    expect(JSON.parse(textOf(result, 1))).toMatchObject({
+      motion: {
+        timeline: "1.2s",
+        css: expect.stringContaining("@keyframes plan-starter {"),
+        layers: [
+          {
+            id: "54:244",
+            class: "plan-starter",
+          },
+        ],
+      },
+    });
+    expect(JSON.parse(textOf(await readDesign(orbit(PLANS).bridge, args), 1))).not.toHaveProperty("motion");
+  });
+
   it("cuts a read past maxChars and tells how to read the rest", async () => {
     const result = await readDesign(orbit().bridge, {
       node: "54:434",

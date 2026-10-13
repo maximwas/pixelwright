@@ -1,6 +1,14 @@
 import { resolve } from "node:path";
 import type { CallToolResult } from "@modelcontextprotocol/server";
-import { BridgeError, designHints, designMeasurements, designXml, fitPlan, OPERATION_SCHEMAS } from "@pixelwright/core";
+import {
+  BridgeError,
+  designHints,
+  designMeasurements,
+  designMotion,
+  designXml,
+  fitPlan,
+  OPERATION_SCHEMAS,
+} from "@pixelwright/core";
 import type * as z from "zod";
 import { fetchAsset } from "../assets/fetch-asset.ts";
 import { writeAssets } from "../assets/write-assets.ts";
@@ -114,6 +122,7 @@ export async function readDesign(
       : []),
   ];
   const measurements = designMeasurements(snapshot);
+  const motion = designMotion(snapshot);
   const content: CallToolResult["content"] = [
     {
       type: "text",
@@ -128,6 +137,7 @@ export async function readDesign(
         fonts: read.fonts,
         assets,
         ...(measurements.length === 0 ? {} : { measurements }),
+        ...(motion === null ? {} : { motion }),
         hints,
         truncated: read.truncated,
         ...(code === null ? {} : codeOutput(code, read.xml, node)),

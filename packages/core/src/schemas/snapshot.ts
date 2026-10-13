@@ -193,6 +193,12 @@ const StyleIdSchema = z.union([z.string(), MixedSchema]);
  * One node of a snapshot, without its children: the raw Figma properties core turns into CSS. Positions are relative
  * to the snapshot's root (absoluteTransform's translation); properties at Figma's defaults are left out.
  */
+/** A Motion keyframe's or base value as Figma gives it: FLOAT, COLOR, VECTOR, TEXT_DATA and the rest. */
+const MotionValueSchema = z.object({
+  type: z.string(),
+  value: z.unknown(),
+});
+
 export const SnapshotFieldsSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -346,6 +352,43 @@ export const SnapshotFieldsSchema = z.object({
         pins: z.array(z.string()).optional(),
       }),
     )
+    .optional(),
+  /**
+   * Figma Motion: the animation styles on the layer (each starting `start` seconds into the timeline) and every
+   * keyframe track, a style's keyframes moved to where the style starts. A field is a property (`OPACITY`), a paint
+   * (`fills.0`) or an effect's parameter (`effects.0.RADIUS`); `operation` says how a keyframe's value meets `base`.
+   */
+  motion: z
+    .object({
+      timeline: z.number().optional(),
+      styles: z.array(
+        z.object({
+          type: z.string(),
+          name: z.string(),
+          start: z.number(),
+          duration: z.number().optional(),
+        }),
+      ),
+      tracks: z.array(
+        z.object({
+          field: z.string(),
+          operation: z.string(),
+          base: MotionValueSchema,
+          style: z.string().optional(),
+          keyframes: z.array(
+            z.object({
+              t: z.number(),
+              value: MotionValueSchema,
+              easing: z.object({
+                type: z.string(),
+                bezier: z.array(z.number()).optional(),
+                bounce: z.number().optional(),
+              }),
+            }),
+          ),
+        }),
+      ),
+    })
     .optional(),
   /** For a frame without auto layout: the auto layout Figma guesses it has, for a hint. */
   inferredLayout: z

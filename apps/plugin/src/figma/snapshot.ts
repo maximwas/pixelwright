@@ -10,6 +10,7 @@ import {
 } from "@pixelwright/core";
 import { SNAPSHOT_MAX_CHARS } from "../constants/plugin.ts";
 import { plain } from "../utils/plain.ts";
+import { motionOf } from "./motion.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import { numbered, numberingStyles, styleOf } from "./styles.ts";
 
@@ -474,6 +475,8 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
   if (notes.length > 0) {
     entry.annotations = notes;
   }
+
+  put("motion", motionOf(node));
 
   const href = urlOf(node);
 

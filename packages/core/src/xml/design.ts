@@ -3,6 +3,7 @@ import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../constants/annotations.
 import { INVISIBLE_TYPES } from "../constants/css.ts";
 import { px } from "../css/format.ts";
 import { interactionAttributes } from "../css/interactions.ts";
+import { motionSummary } from "../css/motion.ts";
 import { nodeCss } from "../css/node-css.ts";
 import { baseSegment, segmentCss, textStyleCss } from "../css/text.ts";
 import { styleName } from "../css/tokens.ts";
@@ -180,6 +181,7 @@ class DesignWriter {
       ["$code", code],
       ["$css", readOnlyOf(css.readOnly, asset !== null)],
       ...interactionAttributes(node.reactions ?? []),
+      ["$motion", motionSummary(node)],
       ["$children", asset === null && code === undefined && !isCut && !clipped ? cutCount(node, limit) : undefined],
       ["$truncated", isCut || clipped ? "true" : undefined],
     ];

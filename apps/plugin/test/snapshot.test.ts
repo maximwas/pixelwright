@@ -582,6 +582,191 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     expect(await runOperation("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
   });
 
+  it("reads Figma Motion where the API is, a style's keyframes moved to where the style starts", async () => {
+    const easing = (type: string, bezier: number[]) => ({
+      type,
+      easingFunctionCubicBezier: {
+        x1: bezier[0],
+        y1: bezier[1],
+        x2: bezier[2],
+        y2: bezier[3],
+      },
+    });
+    const float = (value: number) => ({
+      type: "FLOAT",
+      value,
+    });
+    const rotation = {
+      id: "T:2",
+      keyframeOperation: "SET",
+      keyframes: [
+        {
+          id: "K:3",
+          timelinePosition: 0.2,
+          value: float(0),
+          easing: easing("LINEAR", [0, 0, 1, 1]),
+        },
+        {
+          id: "K:4",
+          timelinePosition: 1.0000001,
+          value: float(90),
+          easing: easing("LINEAR", [0, 0, 1, 1]),
+        },
+      ],
+    };
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "8:1",
+            type: "FRAME",
+            children: [
+              {
+                id: "8:2",
+                type: "RECTANGLE",
+                timelines: [
+                  {
+                    id: "8:0",
+                    duration: 2,
+                  },
+                ],
+                animationStyles: [
+                  {
+                    type: "FIGMA",
+                    id: "A:1",
+                    styleId: "CodeComponentId:1",
+                    name: "motion.preset_name.opacity",
+                    duration: 0.4000000059604645,
+                    timelineOffset: 0.5,
+                  },
+                ],
+                manualKeyframeTracks: {
+                  ROTATION: {
+                    id: "T:2",
+                    baseValue: float(0),
+                    keyframes: rotation.keyframes,
+                  },
+                },
+                animations: {
+                  OPACITY: {
+                    baseValue: float(1),
+                    timelineDuration: 2,
+                    tracks: [
+                      {
+                        id: "T:1",
+                        keyframeOperation: "SCALE",
+                        keyframes: [
+                          {
+                            id: "K:1",
+                            timelinePosition: 0,
+                            value: float(0),
+                            easing: easing("EASE_OUT", [0, 0, 0.58, 1]),
+                          },
+                          {
+                            id: "K:2",
+                            timelinePosition: 0.4000000059604645,
+                            value: float(1),
+                            easing: easing("EASE_OUT", [0, 0, 0.58, 1]),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ROTATION: {
+                    baseValue: float(0),
+                    timelineDuration: 2,
+                    tracks: [rotation],
+                  },
+                  fills: {
+                    0: {
+                      baseValue: {
+                        type: "COLOR",
+                        value: {
+                          r: 1,
+                          g: 1,
+                          b: 1,
+                          a: 1,
+                        },
+                      },
+                      timelineDuration: 2,
+                      tracks: [],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const read = async () => ((await runOperation("snapshot", { node: "8:1" })) as Shot).root.children?.[0];
+
+    expect(await read()).not.toHaveProperty("motion");
+
+    Object.assign(figma, { motion: { figmaAnimationStyles: () => [] } });
+
+    expect(await read()).toMatchObject({
+      motion: {
+        timeline: 2,
+        styles: [
+          {
+            type: "FIGMA",
+            name: "motion.preset_name.opacity",
+            start: 0.5,
+            duration: 0.4,
+          },
+        ],
+        tracks: [
+          {
+            field: "OPACITY",
+            operation: "SCALE",
+            base: float(1),
+            style: "motion.preset_name.opacity",
+            keyframes: [
+              {
+                t: 0.5,
+                value: float(0),
+                easing: {
+                  type: "EASE_OUT",
+                  bezier: [0, 0, 0.58, 1],
+                },
+              },
+              {
+                t: 0.9,
+                value: float(1),
+                easing: {
+                  type: "EASE_OUT",
+                  bezier: [0, 0, 0.58, 1],
+                },
+              },
+            ],
+          },
+          {
+            field: "ROTATION",
+            operation: "SET",
+            base: float(0),
+            keyframes: [
+              {
+                t: 0.2,
+                value: float(0),
+              },
+              {
+                t: 1,
+                value: float(90),
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect((await read())?.motion).not.toHaveProperty("tracks.1.style");
+    expect((await read())?.motion).not.toHaveProperty("tracks.2");
+  });
+
   it("asks Figma for its CSS only for layers our table cannot write, when asked for that", async () => {
     installFigma(
       tree({
