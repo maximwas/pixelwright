@@ -89,6 +89,9 @@ importers:
       acorn:
         specifier: 8.19.0
         version: 8.19.0
+      fast-png:
+        specifier: 8.0.0
+        version: 8.0.0
       image-size:
         specifier: 2.0.4
         version: 2.0.4
@@ -123,9 +126,6 @@ importers:
       '@typescript/native':
         specifier: 'catalog:'
         version: typescript@7.0.2
-      fast-png:
-        specifier: 8.0.0
-        version: 8.0.0
       rollup-plugin-license:
         specifier: 3.7.1
         version: 3.7.1(picomatch@4.0.7)(rollup@4.64.5)

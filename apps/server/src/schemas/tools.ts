@@ -34,6 +34,17 @@ export const ScreenshotInputSchema = z.object({
     .describe(
       "Write the PNG to this file (any size) instead of returning it; a relative path is from the server's folder.",
     ),
+  clip: z
+    .object({
+      x: z.number(),
+      y: z.number(),
+      width: z.number().positive(),
+      height: z.number().positive(),
+    })
+    .exactOptional()
+    .describe(
+      "Only this region of the layer, in Figma px from its box's top left (before scale); with effects on it may reach into what paints around the box.",
+    ),
   file: FileSchema,
 });
 

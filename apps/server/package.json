@@ -47,6 +47,7 @@
     "@clack/prompts": "1.8.1",
     "@modelcontextprotocol/server": "2.2.0",
     "acorn": "8.19.0",
+    "fast-png": "8.0.0",
     "image-size": "2.0.4",
     "pino": "10.3.1",
     "write-file-atomic": "7.0.1",
@@ -60,7 +61,6 @@
     "@types/write-file-atomic": "4.0.3",
     "@types/ws": "8.18.2",
     "@typescript/native": "catalog:",
-    "fast-png": "8.0.0",
     "rollup-plugin-license": "3.7.1",
     "tsdown": "0.23.0",
     "vitest": "catalog:"

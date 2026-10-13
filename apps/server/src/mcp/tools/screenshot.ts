@@ -1,12 +1,14 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, extname, resolve } from "node:path";
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
-import { BridgeError } from "@pixelwright/core";
+import { BridgeError, OPERATION_SCHEMAS } from "@pixelwright/core";
 import type * as z from "zod";
 import { imageInfo } from "../../assets/image-info.ts";
+import { resolveTarget } from "../../bridge/target.ts";
 import { INLINE_ATTEMPTS, MAX_IMAGE_SIDE_PX, MAX_INLINE_IMAGE_BYTES } from "../../constants/mcp.ts";
 import { ScreenshotInputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
+import { cropPng } from "../../utils/crop-png.ts";
 import { describeError } from "../describe-error.ts";
 import { exportBytes } from "../export-bytes.ts";
 
@@ -21,7 +23,7 @@ export function registerScreenshotTool(server: McpServer, { bridge }: ToolContex
     "screenshot",
     {
       title: "Screenshot a layer",
-      description: `Renders a layer to PNG so you can see it: a section to build, or your result to check. Returned inline at most ${MAX_IMAGE_SIDE_PX} px on a side: a larger layer comes scaled down to fit, and the text says its full size. For details of a tall layer screenshot one section of it (outline lists them); pass save to write the PNG full size to a file instead.`,
+      description: `Renders a layer to PNG so you can see it: a section to build, or your result to check. Returned inline at most ${MAX_IMAGE_SIDE_PX} px on a side: a larger layer comes scaled down to fit, and the text says its full size. For details of a tall layer screenshot one section of it (outline lists them), or pass clip for a region of it; pass save to write the PNG full size to a file instead.`,
       inputSchema,
       annotations: {
         readOnlyHint: true,
@@ -41,7 +43,7 @@ export function registerScreenshotTool(server: McpServer, { bridge }: ToolContex
 
 export async function takeScreenshot(
   bridge: ToolContext["bridge"],
-  { node, scale, effects, save, file }: ScreenshotArgs,
+  { node, scale, effects, save, file, clip }: ScreenshotArgs,
   target?: { session: string },
 ): Promise<CallToolResult> {
   const request = {
@@ -54,6 +56,21 @@ export async function takeScreenshot(
     file,
     target,
   };
+
+  if (clip !== undefined) {
+    return clippedShot(
+      bridge,
+      {
+        node,
+        scale,
+        effects,
+        save,
+        file,
+        clip,
+      },
+      target,
+    );
+  }
 
   if (save !== undefined) {
     const path = await pngPath(save);
@@ -119,6 +136,107 @@ export async function takeScreenshot(
     }
   }
 }
+
+/**
+ * A region of a layer: the whole layer rendered at the scale, then cut to the clip, which is measured from the layer's
+ * box (inspect says where that box sits in the render: with effects, the render covers what paints around it).
+ */
+async function clippedShot(
+  bridge: ToolContext["bridge"],
+  { node, scale, effects, save, file, clip }: ScreenshotArgs & { clip: NonNullable<ScreenshotArgs["clip"]> },
+  target?: { session: string },
+): Promise<CallToolResult> {
+  const session = target ?? resolveTarget(bridge.plugins(), file);
+  const inspected = OPERATION_SCHEMAS.inspect.output.parse(await bridge.request("inspect", { nodes: [node] }, session));
+  const layer = inspected.layers[0];
+
+  if (layer === undefined) {
+    throw new BridgeError("NODE_NOT_FOUND", `${node} is not a layer of this file.`);
+  }
+
+  const rendered = effects ? (layer.paintedBox ?? layer.box) : layer.box;
+  const { bytes, scale: used } = await exportBytes(
+    bridge,
+    {
+      node,
+      format: "PNG",
+      scale,
+      effects,
+    },
+    {
+      file,
+      target: session,
+    },
+  );
+  const cropped = cropPng(bytes, {
+    x: Math.round((layer.box.x - rendered.x + clip.x) * used),
+    y: Math.round((layer.box.y - rendered.y + clip.y) * used),
+    width: Math.round(clip.width * used),
+    height: Math.round(clip.height * used),
+  });
+
+  if (cropped === null) {
+    const painted =
+      rendered === layer.box
+        ? ""
+        : `, and with effects it paints from ${round(rendered.x - layer.box.x)}, ${round(rendered.y - layer.box.y)} to ${round(rendered.x - layer.box.x + rendered.width)}, ${round(rendered.y - layer.box.y + rendered.height)}`;
+
+    throw new BridgeError(
+      "OP_FAILED",
+      `The clip does not lie within ${node}: its box is ${layer.box.width}×${layer.box.height} px${painted}.`,
+    );
+  }
+
+  const png = Buffer.from(cropped);
+  const size = sizeOf(png, node);
+
+  if (save !== undefined) {
+    const path = await pngPath(save);
+
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, png);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            node,
+            clip,
+            path,
+            ...size,
+            bytes: png.length,
+          }),
+        },
+      ],
+    };
+  }
+
+  assertFitsInline(size, node, used);
+
+  if (png.length > MAX_INLINE_IMAGE_BYTES) {
+    throw new BridgeError(
+      "RESULT_TOO_LARGE",
+      `The clip of ${node} is ${megabytes(png.length)}, too much to return inline: a smaller clip or scale, or pass save.`,
+    );
+  }
+
+  return {
+    content: [
+      {
+        type: "image",
+        data: png.toString("base64"),
+        mimeType: "image/png",
+      },
+      {
+        type: "text",
+        text: `Screenshot of ${node}, ${clip.width}×${clip.height} px from ${clip.x}, ${clip.y} of its box: ${size.width}×${size.height} px at scale ${used}.`,
+      },
+    ],
+  };
+}
+
+const round = (value: number) => Math.round(value * 100) / 100;
 
 /** A render too heavy to return inline, found on its first chunk. */
 class TooHeavy extends Error {
