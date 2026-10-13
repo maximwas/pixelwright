@@ -80,11 +80,9 @@ function bridgeOver(snapshot: Snapshot, { cut = false }: { cut?: boolean } = {})
   };
 }
 
-/** The Services row captured from Positivus, core's fixture. */
+/** Orbit's desktop pricing screen, core's fixture. */
 const ROW = SnapshotSchema.parse(
-  JSON.parse(
-    readFileSync(new URL("../../../packages/core/test/fixtures/positivus-services-row.json", import.meta.url), "utf8"),
-  ),
+  JSON.parse(readFileSync(new URL("../../../packages/core/test/fixtures/orbit-pricing.json", import.meta.url), "utf8")),
 );
 
 describe("design_apply", () => {
@@ -105,7 +103,7 @@ describe("design_apply", () => {
   });
 
   it("sends only what changed, in Figma's terms, with the layer's own layout around it", async () => {
-    const xml = designXml(ROW).xml.replace('gap="40px"', 'gap="48px"');
+    const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
     const { bridge, sent } = bridgeOver(ROW);
     const result = await applyDesign(bridge, {
       xml,
@@ -116,7 +114,7 @@ describe("design_apply", () => {
     expect(sent()).toEqual([
       expect.objectContaining({
         kind: "update",
-        id: "2:4869",
+        id: "54:227",
         props: expect.objectContaining({ itemSpacing: 48 }),
       }),
     ]);
@@ -125,7 +123,7 @@ describe("design_apply", () => {
   it("returns a parse error with its line and column and asks the plugin for nothing", async () => {
     const { bridge, requests } = bridgeOver(ROW);
     const result = await applyDesign(bridge, {
-      xml: '<Frame id="2:4869">\n  <Text>Hi</Frame>',
+      xml: '<Frame id="54:227">\n  <Text>Hi</Frame>',
       dryRun: false,
     });
 
@@ -141,8 +139,8 @@ describe("design_apply", () => {
   it("keeps writing the rest when an element has a bad attribute, and passes a dry run on", async () => {
     const { bridge, sent, requests } = bridgeOver(ROW);
     const result = await applyDesign(bridge, {
-      xml: '<Frame id="2:4869" gapp="8px" opacity="0.5"/>\n<Frame name="New" background="#FFF"/>',
-      parent: "2:4766",
+      xml: '<Frame id="54:227" gapp="8px" opacity="0.5"/>\n<Frame name="New" background="#FFF"/>',
+      parent: "54:226",
       dryRun: true,
     });
 
@@ -163,7 +161,7 @@ describe("design_apply", () => {
       ],
     ]);
     expect(requests.find(({ op }) => op === "apply")?.input).toMatchObject({
-      parent: "2:4766",
+      parent: "54:226",
       dryRun: true,
     });
     expect(result.dryRun).toBe(true);
@@ -173,9 +171,9 @@ describe("design_apply", () => {
     const { bridge, sent } = bridgeOver(ROW);
     const result = await applyDesign(bridge, {
       xml: [
-        '<Frame name="Row" display="flex"><Frame id="2:4870"/></Frame>',
-        '<Frame id="2:4869"><Frame id="2:4877" opacity="0.5"/></Frame>',
-        '<Frame id="2:4876" after="2:4870"/>',
+        '<Frame name="Row" display="flex"><Frame id="54:228"/></Frame>',
+        '<Frame id="54:227"><Frame id="54:239" opacity="0.5"/></Frame>',
+        '<Frame id="54:238" after="54:228"/>',
       ].join("\n"),
       dryRun: false,
     });
@@ -183,43 +181,43 @@ describe("design_apply", () => {
     expect(result.errors).toEqual([]);
     expect(sent().map((change) => [change.id ?? change.tag, change.move ?? false])).toEqual([
       ["Frame", false],
-      ["2:4870", true],
-      ["2:4869", false],
-      ["2:4877", true],
-      ["2:4876", true],
+      ["54:228", true],
+      ["54:227", false],
+      ["54:239", true],
+      ["54:238", true],
     ]);
     // What the layer itself was asked for goes in with the move.
-    expect(sent().find((change) => change.id === "2:4877")?.props).toEqual({ opacity: 0.5 });
+    expect(sent().find((change) => change.id === "54:239")?.props).toEqual({ opacity: 0.5 });
 
     const reordered = bridgeOver(ROW);
 
     await applyDesign(reordered.bridge, {
-      xml: '<Frame id="2:4869"><Frame id="2:4876"/><Frame id="2:4870"/></Frame>',
+      xml: '<Frame id="54:227"><Frame id="54:238"/><Frame id="54:228"/></Frame>',
       dryRun: false,
     });
 
     // The layer before it in the XML goes along, so the plugin can place it after that one.
     expect(reordered.sent().map((change) => [change.id, change.move ?? false])).toEqual([
-      ["2:4869", false],
-      ["2:4876", false],
-      ["2:4870", true],
+      ["54:227", false],
+      ["54:238", false],
+      ["54:228", true],
     ]);
   });
 
   it("refuses a layer whose state the read could not take, instead of writing it whole", async () => {
     const { bridge, sent } = bridgeOver(ROW, { cut: true });
     const result = await applyDesign(bridge, {
-      xml: '<Frame id="2:4869" opacity="0.9"><Frame id="2:4870" opacity="0.5"/></Frame>',
+      xml: '<Frame id="54:227" opacity="0.9"><Frame id="54:228" opacity="0.5"/></Frame>',
       dryRun: false,
     });
 
     expect(result.errors).toEqual([
       expect.objectContaining({
-        id: "2:4870",
+        id: "54:228",
         message: expect.stringMatching(/could not read/),
       }),
     ]);
-    expect(sent().map((change) => change.id)).toEqual(["2:4869"]);
+    expect(sent().map((change) => change.id)).toEqual(["54:227"]);
   });
 });
 

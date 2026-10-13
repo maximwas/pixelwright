@@ -12,7 +12,7 @@ import { pluginInfo } from "./helpers/fake-plugin.ts";
 import { JPEG, PNG } from "./helpers/images.ts";
 
 const ROW = JSON.parse(
-  await readFile(new URL("../../../packages/core/test/fixtures/positivus-services-row.json", import.meta.url), "utf8"),
+  await readFile(new URL("../../../packages/core/test/fixtures/orbit-customers.json", import.meta.url), "utf8"),
 ) as unknown;
 
 const HASH = "c".repeat(40);
@@ -54,7 +54,7 @@ function file() {
       const { node, offset = 0 } = input as { node: string; offset?: number };
 
       if (op === "snapshot") {
-        if (node === "2:4869") {
+        if (node === "54:434") {
           return ROW;
         }
 
@@ -235,16 +235,18 @@ describe("assets_export", () => {
   it("exports every true asset inside a layer, like design_read plans them", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
     const result = await exportAssets(file().bridge, {
-      from: "2:4869",
+      from: "54:434",
       dir,
       original: false,
     });
 
     expect(result.files.map(({ node, kind }) => [node, kind])).toEqual([
-      ["I2:4873;334:1478", "icon"],
-      ["2:4875", "image"],
-      ["I2:4879;334:1478", "icon"],
-      ["2:4881", "image"],
+      ["54:437", "icon"],
+      ["54:441", "icon"],
+      ["54:445", "icon"],
+      ["54:452", "icon"],
+      ["54:454", "image"],
+      ["54:456", "image"],
     ]);
   });
 
@@ -254,7 +256,7 @@ describe("assets_export", () => {
     await expect(
       exportAssets(file().bridge, {
         nodes: ["1:1"],
-        from: "2:4869",
+        from: "54:434",
         dir,
         original: false,
       }),

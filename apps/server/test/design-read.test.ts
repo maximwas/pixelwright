@@ -12,9 +12,20 @@ import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 import { JPEG, PNG } from "./helpers/images.ts";
 
-const ROW = JSON.parse(
-  await readFile(new URL("../../../packages/core/test/fixtures/positivus-services-row.json", import.meta.url), "utf8"),
-) as unknown;
+const fixture = async (name: string) =>
+  JSON.parse(await readFile(new URL(`../../../packages/core/test/fixtures/${name}.json`, import.meta.url), "utf8")) as {
+    root: Record<string, unknown>;
+  };
+const CUSTOMERS = await fixture("orbit-customers");
+const PLANS = await fixture("orbit-plans");
+
+/** The icons' SVG in these tests: the two Nova logos draw the same. */
+const ICONS: Readonly<Record<string, string>> = {
+  "54:437": "<svg>nova</svg>",
+  "54:445": "<svg>nova</svg>",
+  "54:441": "<svg>lumen</svg>",
+  "54:452": "<svg>arrow</svg>",
+};
 
 /** A 100×100 PNG header: what a screenshot export returns in these tests. */
 const PNG_100 = (() => {
@@ -28,8 +39,8 @@ const PNG_100 = (() => {
   return png;
 })();
 
-/** A plugin in the Positivus file: the Services row snapshot, the same arrow icon twice, a different PNG per image. */
-function positivus(selected: string[] = []) {
+/** A plugin in the Orbit file: a layer's snapshot (Customers by default), the Nova logo twice, a PNG per image. */
+function orbit(snapshot: unknown = CUSTOMERS, selected: string[] = []) {
   const ops: string[] = [];
   const bridge: BridgeView = {
     status: () => {
@@ -47,7 +58,7 @@ function positivus(selected: string[] = []) {
       ops.push(op);
 
       if (op === "snapshot") {
-        return ROW;
+        return snapshot;
       }
 
       if (op === "selection") {
@@ -62,9 +73,8 @@ function positivus(selected: string[] = []) {
       }
 
       const { node, offset } = input as { node: string; offset: number };
-      const bytes = node.endsWith("334:1478")
-        ? Buffer.from("<svg>arrow</svg>")
-        : Buffer.concat([PNG, Buffer.from(node)]);
+      const icon = ICONS[node];
+      const bytes = icon === undefined ? Buffer.concat([PNG, Buffer.from(node)]) : Buffer.from(icon);
 
       return {
         scale: 2,
@@ -86,9 +96,9 @@ const textOf = (result: Awaited<ReturnType<typeof readDesign>>, index: number) =
 describe("design_read", () => {
   it("writes each asset once and points the XML at the files", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-assets-"));
-    const { bridge } = positivus();
+    const { bridge } = orbit();
     const result = await readDesign(bridge, {
-      node: "2:4869",
+      node: "54:434",
       assetsDir: dir,
       screenshot: false,
       maxChars: 80_000,
@@ -97,27 +107,31 @@ describe("design_read", () => {
     const meta = JSON.parse(textOf(result, 1)) as { assets: { node: string; src: string }[]; hints: string[] };
 
     expect((await readdir(dir)).sort()).toEqual([
-      "icon.svg",
-      "tokyo-magnifier-web-search-with-elements-2.png",
-      "tokyo-selecting-a-value-in-the-browser-window-1.png",
+      "arrow.svg",
+      "avatar.png",
+      "logo-lumen.svg",
+      "logo-nova.svg",
+      "product-shot.png",
     ]);
-    expect(xml.match(new RegExp(`src="${dir}/icon.svg"`, "g"))).toHaveLength(2);
+    expect(xml.match(new RegExp(`src="${dir}/logo-nova.svg"`, "g"))).toHaveLength(2);
     expect(meta.assets.map((asset) => asset.src)).toEqual([
-      `${dir}/icon.svg`,
-      `${dir}/tokyo-magnifier-web-search-with-elements-2.png`,
-      `${dir}/icon.svg`,
-      `${dir}/tokyo-selecting-a-value-in-the-browser-window-1.png`,
+      `${dir}/logo-nova.svg`,
+      `${dir}/logo-lumen.svg`,
+      `${dir}/logo-nova.svg`,
+      `${dir}/arrow.svg`,
+      `${dir}/product-shot.png`,
+      `${dir}/avatar.png`,
     ]);
-    expect(meta.hints).toContainEqual(expect.stringContaining("equals --Dark"));
+    expect(meta.hints).toContainEqual(expect.stringContaining("equals --color-accent"));
   });
 
   it("remembers each file it writes as its layer's, so design_apply knows a render sent back", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-assets-"));
     const files = memoryFiles();
     const result = await readDesign(
-      positivus().bridge,
+      orbit().bridge,
       {
-        node: "2:4869",
+        node: "54:434",
         assetsDir: dir,
         screenshot: false,
         maxChars: 80_000,
@@ -139,9 +153,9 @@ describe("design_read", () => {
   });
 
   it("plans the assets without writing them when no folder is given, and says so", async () => {
-    const { bridge, ops } = positivus();
+    const { bridge, ops } = orbit();
     const result = await readDesign(bridge, {
-      node: "2:4869",
+      node: "54:434",
       screenshot: false,
       maxChars: 80_000,
     });
@@ -150,29 +164,29 @@ describe("design_read", () => {
     expect(ops).toEqual(["snapshot"]);
     expect(meta.assets.every((asset) => !asset.written)).toBe(true);
     expect(meta.hints).toContainEqual(
-      expect.stringMatching(/4 assets are planned but not written, so their src names are plans: pass assetsDir/),
+      expect.stringMatching(/6 assets are planned but not written, so their src names are plans: pass assetsDir/),
     );
   });
 
   it("reads the selected layer when none is named, and refuses to guess between several", async () => {
     await expect(
-      readDesign(positivus(["2:4869", "2:4870"]).bridge, {
+      readDesign(orbit(CUSTOMERS, ["54:434", "54:435"]).bridge, {
         screenshot: false,
         maxChars: 80_000,
       }),
     ).rejects.toThrow(/2 layers are selected/);
 
-    const result = await readDesign(positivus(["2:4869"]).bridge, {
+    const result = await readDesign(orbit(CUSTOMERS, ["54:434"]).bridge, {
       screenshot: false,
       maxChars: 80_000,
     });
 
-    expect(JSON.parse(textOf(result, 1))).toMatchObject({ node: "2:4869" });
+    expect(JSON.parse(textOf(result, 1))).toMatchObject({ node: "54:434" });
   });
 
   it("cuts a read past maxChars and tells how to read the rest", async () => {
-    const result = await readDesign(positivus().bridge, {
-      node: "2:4869",
+    const result = await readDesign(orbit().bridge, {
+      node: "54:434",
       screenshot: false,
       maxChars: 2_000,
     });
@@ -256,7 +270,7 @@ describe("writeAssets into a folder an earlier read wrote", () => {
 describe("design_read review fixes", () => {
   it("exports icons with their strokes and images as their own box, each export its own stream", async () => {
     const inputs: { node: string; effects: boolean; stream?: string; offset: number }[] = [];
-    const { bridge } = positivus();
+    const { bridge } = orbit();
     const request = bridge.request;
 
     bridge.request = async (op, input, options) => {
@@ -268,7 +282,7 @@ describe("design_read review fixes", () => {
     };
 
     await readDesign(bridge, {
-      node: "2:4869",
+      node: "54:434",
       assetsDir: await mkdtemp(join(tmpdir(), "pixelwright-assets-")),
       screenshot: false,
       maxChars: 80_000,
@@ -277,24 +291,26 @@ describe("design_read review fixes", () => {
     const first = inputs.filter((input) => input.offset === 0);
 
     expect(first.map((input) => [input.node, input.effects])).toEqual([
-      ["I2:4873;334:1478", true],
-      ["2:4875", false],
-      ["I2:4879;334:1478", true],
-      ["2:4881", false],
+      ["54:437", true],
+      ["54:441", true],
+      ["54:445", true],
+      ["54:452", true],
+      ["54:454", false],
+      ["54:456", false],
     ]);
-    expect(new Set(first.map((input) => input.stream)).size).toBe(4);
+    expect(new Set(first.map((input) => input.stream)).size).toBe(6);
   });
 
   it("says a hidden layer cannot be read instead of returning nothing", async () => {
-    const { bridge } = positivus();
+    const { bridge } = orbit();
     const request = bridge.request;
 
     bridge.request = async (op, input, options) =>
       op === "snapshot"
         ? {
-            ...(ROW as object),
+            ...CUSTOMERS,
             root: {
-              ...(ROW as { root: object }).root,
+              ...CUSTOMERS.root,
               visible: false,
             },
           }
@@ -302,7 +318,7 @@ describe("design_read review fixes", () => {
 
     await expect(
       readDesign(bridge, {
-        node: "2:4869",
+        node: "54:434",
         screenshot: false,
         maxChars: 80_000,
       }),
@@ -311,7 +327,7 @@ describe("design_read review fixes", () => {
 
   it("takes the screenshot from the file the read came from", async () => {
     const sessions: string[] = [];
-    const { bridge } = positivus();
+    const { bridge } = orbit();
     const request = bridge.request;
     let active = "s1";
 
@@ -348,7 +364,7 @@ describe("design_read review fixes", () => {
     };
 
     await readDesign(bridge, {
-      node: "2:4869",
+      node: "54:434",
       screenshot: true,
       maxChars: 80_000,
     });
@@ -357,18 +373,19 @@ describe("design_read review fixes", () => {
   });
 });
 
-const HEADING = `// url=https://www.figma.com/design/KIT/Kit?node-id=9-9
-// component=Heading
+const PLAN_CARD = `// url=https://www.figma.com/design/KIT/Kit?node-id=9-9
+// component=Plan Card
 import figma from 'figma'
 
-const heading = figma.selectedInstance
-const tone = heading.getEnum('Property 1', { Green: 'green', White: 'white', Black: 'black' })
-const words = heading.findLayers((layer) => layer.type === 'TEXT').map((text) => text.textContent).join(' ')
+const card = figma.selectedInstance
+const name = card.getString('Name')
+const price = card.getString('Price')
+const popular = card.getBoolean('Popular')
 
 export default {
-  example: figma.code\`<Heading tone="\${tone}">\${words}</Heading>\`,
-  imports: ['import { Heading } from "@/components/Heading"'],
-  id: 'heading',
+  example: figma.code\`<PlanCard name="\${name}" price="\${price}"\${popular ? ' popular' : ''} />\`,
+  imports: ['import { PlanCard } from "@/components/PlanCard"'],
+  id: 'plan-card',
 }
 `;
 
@@ -383,15 +400,15 @@ async function project(files: Record<string, string>): Promise<string> {
   return root;
 }
 
-/** The Positivus plugin, its snapshot changed: the row with some branch edited, or one layer of it alone. */
-function positivusWith(change: (row: { root: Record<string, unknown> }) => { root: unknown }) {
-  const { bridge } = positivus();
+/** The Orbit plugin reading the Plans row, its snapshot changed: some branch edited, or one layer of it alone. */
+function plansWith(change: (row: { root: Record<string, unknown> }) => { root: unknown }) {
+  const { bridge } = orbit(PLANS);
 
   return {
     ...bridge,
     request: async (op: string, input: unknown, target?: unknown) =>
       op === "snapshot"
-        ? change(structuredClone(ROW) as { root: Record<string, unknown> })
+        ? change(structuredClone(PLANS) as { root: Record<string, unknown> })
         : bridge.request(op, input, target as never),
   } as BridgeView;
 }
@@ -415,80 +432,90 @@ function layerOf(root: Record<string, unknown>, id: string): Record<string, unkn
 
 describe("design_read with the project's Code Connect templates", () => {
   const args = {
-    node: "2:4869",
+    node: "54:243",
     screenshot: false,
     maxChars: 80_000,
   };
+  const plans = () => orbit(PLANS).bridge;
 
   it("gives each connected instance's code and collapses it in the XML", async () => {
-    const root = await project({ "Heading.figma.ts": HEADING });
-    const result = await readDesign(positivus().bridge, args, memoryFiles(), root);
+    const root = await project({ "PlanCard.figma.ts": PLAN_CARD });
+    const result = await readDesign(plans(), args, memoryFiles(), root);
     const xml = textOf(result, 0);
     const meta = JSON.parse(textOf(result, 1)) as Record<string, unknown>;
+    const imports = ['import { PlanCard } from "@/components/PlanCard"'];
 
     expect(meta.codeComponents).toEqual([
       {
-        ids: ["2:4872"],
-        component: "Heading",
-        template: "Heading.figma.ts",
-        snippet: '<Heading tone="green">Search engine optimization</Heading>',
-        imports: ['import { Heading } from "@/components/Heading"'],
+        ids: ["54:244"],
+        component: "Plan Card",
+        template: "PlanCard.figma.ts",
+        snippet: '<PlanCard name="Starter" price="$0" />',
+        imports,
       },
       {
-        ids: ["2:4878"],
-        component: "Heading",
-        template: "Heading.figma.ts",
-        snippet: '<Heading tone="white">Pay-per-click advertising</Heading>',
-        imports: ['import { Heading } from "@/components/Heading"'],
+        ids: ["54:268"],
+        component: "Plan Card",
+        template: "PlanCard.figma.ts",
+        snippet: '<PlanCard name="Pro" price="$12" popular />',
+        imports,
+      },
+      {
+        ids: ["54:292"],
+        component: "Plan Card",
+        template: "PlanCard.figma.ts",
+        snippet: '<PlanCard name="Team" price="$29" />',
+        imports,
       },
     ]);
-    expect(meta.imports).toEqual(['import { Heading } from "@/components/Heading"']);
+    expect(meta.imports).toEqual(imports);
     expect(meta).not.toHaveProperty("codeErrors");
-    expect(xml).toContain(
-      '<Instance id="2:4872" name="Heading" component="Heading" variant="Property 1=Green" display="flex" flex-direction="column" $code="Heading"/>',
-    );
-    expect(xml).not.toContain("Search engine");
-    // The Link instances have no template: written as before.
-    expect(xml).toContain("Learn more");
+    expect(xml).toMatch(/<Instance id="54:244" name="Plan – Starter" component="Plan Card"[^>]* \$code="Plan Card"\/>/);
+    // The card's own layers are left out; its properties stay on it.
+    expect(xml).not.toContain('<Text id="I54:244;54:207"');
   });
 
   it("lists instances whose code is the same once, with all their ids", async () => {
-    const root = await project({ "Heading.figma.ts": HEADING.replace("${tone}", "plain").replace("${words}", "") });
-    const meta = JSON.parse(textOf(await readDesign(positivus().bridge, args, memoryFiles(), root), 1)) as {
+    const root = await project({
+      "PlanCard.figma.ts": PLAN_CARD.replace("${name}", "plan")
+        .replace("${price}", "")
+        .replace("${popular ? ' popular' : ''}", ""),
+    });
+    const meta = JSON.parse(textOf(await readDesign(plans(), args, memoryFiles(), root), 1)) as {
       codeComponents: { ids: string[]; snippet: string }[];
     };
 
     expect(meta.codeComponents).toEqual([
       expect.objectContaining({
-        ids: ["2:4872", "2:4878"],
-        snippet: '<Heading tone="plain"></Heading>',
+        ids: ["54:244", "54:268", "54:292"],
+        snippet: '<PlanCard name="plan" price="" />',
       }),
     ]);
   });
 
   it("keeps an instance whose template fails as it is, and lists the error once per template", async () => {
-    const root = await project({ "Heading.figma.ts": HEADING.replace("'Property 1'", "'Tone'") });
-    const result = await readDesign(positivus().bridge, args, memoryFiles(), root);
+    const root = await project({ "PlanCard.figma.ts": PLAN_CARD.replace("getString('Name')", "getString('Title')") });
+    const result = await readDesign(plans(), args, memoryFiles(), root);
     const meta = JSON.parse(textOf(result, 1)) as Record<string, unknown>;
 
     expect(meta.codeComponents).toEqual([]);
     expect(meta.codeErrors).toEqual([
       {
-        template: "Heading.figma.ts",
-        error: expect.stringMatching(/^PROPERTY_NOT_FOUND: Heading \(2:4872\) has no property Tone/),
-        ids: ["2:4872", "2:4878"],
+        template: "PlanCard.figma.ts",
+        error: expect.stringMatching(/^PROPERTY_NOT_FOUND: Plan – Starter \(54:244\) has no property Title/),
+        ids: ["54:244", "54:268", "54:292"],
       },
     ]);
-    expect(textOf(result, 0)).toContain("Search engine");
+    expect(textOf(result, 0)).toContain('<Text id="I54:244;54:207"');
   });
 
   it("renders no instance whose layers the read left out, and says how to read it whole", async () => {
-    const root = await project({ "Heading.figma.ts": HEADING });
-    const bridge = positivusWith((row) => {
-      const heading = layerOf(row.root, "2:4872") as Record<string, unknown>;
+    const root = await project({ "PlanCard.figma.ts": PLAN_CARD });
+    const bridge = plansWith((row) => {
+      const starter = layerOf(row.root, "54:244") as Record<string, unknown>;
 
       // What a depth-limited read or the plugin's size budget leaves: the count of children, none of them.
-      heading.children = [];
+      starter.children = [];
 
       return row;
     });
@@ -498,33 +525,33 @@ describe("design_read with the project's Code Connect templates", () => {
       codeErrors: { error: string; ids: string[] }[];
     };
 
-    expect(meta.codeComponents.map(({ ids }) => ids)).toEqual([["2:4878"]]);
+    expect(meta.codeComponents.map(({ ids }) => ids)).toEqual([["54:268"], ["54:292"]]);
     expect(meta.codeErrors).toEqual([
       expect.objectContaining({
-        ids: ["2:4872"],
-        error: expect.stringMatching(/^TEMPLATE_CUT: .*design_read node=2:4872/),
+        ids: ["54:244"],
+        error: expect.stringMatching(/^TEMPLATE_CUT: .*design_read node=54:244/),
       }),
     ]);
-    expect(textOf(result, 0)).toMatch(/<Instance id="2:4872"[^>]*\$children="3"/);
+    expect(textOf(result, 0)).toMatch(/<Instance id="54:244"[^>]*\$children="5"/);
   });
 
   it("reads the asked layer's own layers even when a template connects it, and every layer with code: false", async () => {
-    const root = await project({ "Heading.figma.ts": HEADING });
-    const heading = positivusWith((row) => ({
+    const root = await project({ "PlanCard.figma.ts": PLAN_CARD });
+    const starter = plansWith((row) => ({
       ...row,
-      root: layerOf(row.root, "2:4872"),
+      root: layerOf(row.root, "54:244"),
     }));
     const own = await readDesign(
-      heading,
+      starter,
       {
         ...args,
-        node: "2:4872",
+        node: "54:244",
       },
       memoryFiles(),
       root,
     );
     const off = await readDesign(
-      positivus().bridge,
+      plans(),
       {
         ...args,
         code: false,
@@ -533,20 +560,20 @@ describe("design_read with the project's Code Connect templates", () => {
       root,
     );
 
-    expect(textOf(own, 0)).toContain("Search engine");
+    expect(textOf(own, 0)).toContain('<Text id="I54:244;54:207"');
     expect(JSON.parse(textOf(own, 1))).toMatchObject({
-      codeComponents: [expect.objectContaining({ ids: ["2:4872"] })],
+      codeComponents: [expect.objectContaining({ ids: ["54:244"] })],
     });
-    expect(textOf(off, 0)).toContain("Search engine");
+    expect(textOf(off, 0)).toContain('<Text id="I54:244;54:207"');
     expect(JSON.parse(textOf(off, 1))).not.toHaveProperty("codeComponents");
   });
 
   it("keeps the code within a share of maxChars, reading the instances past it as layers", async () => {
     const root = await project({
-      "Heading.figma.ts": HEADING.replace("${words}", "${words} ${'x'.repeat(3000)}"),
+      "PlanCard.figma.ts": PLAN_CARD.replace('name="${name}"', "name=\"${name} ${'x'.repeat(3000)}\""),
     });
     const result = await readDesign(
-      positivus().bridge,
+      plans(),
       {
         ...args,
         maxChars: 12_000,
@@ -556,13 +583,13 @@ describe("design_read with the project's Code Connect templates", () => {
     );
     const meta = JSON.parse(textOf(result, 1)) as { codeComponents: { ids: string[] }[]; hints: string[] };
 
-    expect(meta.codeComponents.map(({ ids }) => ids)).toEqual([["2:4872"]]);
-    expect(meta.hints).toContainEqual(expect.stringMatching(/^Code Connect: 1 more connected instance/));
+    expect(meta.codeComponents.map(({ ids }) => ids)).toEqual([["54:244"]]);
+    expect(meta.hints).toContainEqual(expect.stringMatching(/^Code Connect: 2 more connected instances/));
   });
 
   it("reads as before in a project without templates", async () => {
-    const plain = await readDesign(positivus().bridge, args);
-    const empty = await readDesign(positivus().bridge, args, memoryFiles(), await project({ "README.md": "hi" }));
+    const plain = await readDesign(plans(), args);
+    const empty = await readDesign(plans(), args, memoryFiles(), await project({ "README.md": "hi" }));
 
     expect(empty.content).toEqual(plain.content);
     expect(JSON.parse(textOf(empty, 1))).not.toHaveProperty("codeComponents");
