@@ -1,0 +1,454 @@
+{
+  "root": {
+    "id": "54:227",
+    "name": "Pricing – Desktop",
+    "type": "FRAME",
+    "visible": true,
+    "x": 0,
+    "y": 0,
+    "width": 1440,
+    "height": 1620,
+    "clipsContent": true,
+    "layoutMode": "VERTICAL",
+    "layoutWrap": "NO_WRAP",
+    "primaryAxisAlignItems": "MIN",
+    "counterAxisAlignItems": "MIN",
+    "counterAxisAlignContent": "AUTO",
+    "itemSpacing": 64,
+    "counterAxisSpacing": 0,
+    "paddingTop": 64,
+    "paddingRight": 120,
+    "paddingBottom": 120,
+    "paddingLeft": 120,
+    "itemReverseZIndex": false,
+    "strokesIncludedInLayout": true,
+    "layoutSizingHorizontal": "FIXED",
+    "layoutSizingVertical": "HUG",
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.9333333373069763,
+          "g": 0.9450980424880981,
+          "b": 0.9647058844566345
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:54:150"
+          }
+        }
+      }
+    ],
+    "boundVariables": {
+      "itemSpacing": {
+        "type": "VARIABLE_ALIAS",
+        "id": "VariableID:54:166"
+      },
+      "paddingLeft": {
+        "type": "VARIABLE_ALIAS",
+        "id": "VariableID:54:168"
+      },
+      "paddingTop": {
+        "type": "VARIABLE_ALIAS",
+        "id": "VariableID:54:166"
+      },
+      "paddingRight": {
+        "type": "VARIABLE_ALIAS",
+        "id": "VariableID:54:168"
+      },
+      "paddingBottom": {
+        "type": "VARIABLE_ALIAS",
+        "id": "VariableID:54:168"
+      },
+      "fills": [
+        {
+          "type": "VARIABLE_ALIAS",
+          "id": "VariableID:54:150"
+        }
+      ]
+    },
+    "layoutGrids": [
+      {
+        "pattern": "COLUMNS",
+        "visible": true,
+        "alignment": "STRETCH",
+        "count": 12,
+        "gutterSize": 24,
+        "offset": 120,
+        "color": {
+          "r": 1,
+          "g": 0,
+          "b": 0,
+          "a": 0.10000000149011612
+        },
+        "boundVariables": {}
+      }
+    ],
+    "css": {
+      "display": "flex",
+      "width": "1440px",
+      "padding": "var(--space-64, 64px) var(--space-120, 120px) var(--space-120, 120px) var(--space-120, 120px)",
+      "flex-direction": "column",
+      "align-items": "flex-start",
+      "gap": "var(--space-64, 64px)",
+      "background": "var(--color-canvas, #EEF1F6)"
+    },
+    "childCount": 5,
+    "children": [
+      {
+        "id": "54:228",
+        "name": "Header",
+        "type": "FRAME",
+        "visible": true,
+        "x": 120,
+        "y": 64,
+        "width": 1200,
+        "height": 46,
+        "clipsContent": true,
+        "layoutMode": "HORIZONTAL",
+        "layoutWrap": "NO_WRAP",
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "CENTER",
+        "counterAxisAlignContent": "AUTO",
+        "itemSpacing": 0,
+        "counterAxisSpacing": 0,
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemReverseZIndex": false,
+        "strokesIncludedInLayout": true,
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "layoutAlign": "STRETCH",
+        "css": {
+          "display": "flex",
+          "justify-content": "space-between",
+          "align-items": "center",
+          "align-self": "stretch"
+        },
+        "childCount": 3
+      },
+      {
+        "id": "54:238",
+        "name": "Hero",
+        "type": "FRAME",
+        "visible": true,
+        "x": 120,
+        "y": 174,
+        "width": 1200,
+        "height": 360,
+        "clipsContent": true,
+        "layoutMode": "HORIZONTAL",
+        "layoutWrap": "NO_WRAP",
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "counterAxisAlignContent": "AUTO",
+        "itemSpacing": 64,
+        "counterAxisSpacing": 0,
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemReverseZIndex": false,
+        "strokesIncludedInLayout": true,
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "layoutAlign": "STRETCH",
+        "boundVariables": {
+          "itemSpacing": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:54:166"
+          }
+        },
+        "css": {
+          "display": "flex",
+          "align-items": "center",
+          "gap": "var(--space-64, 64px)",
+          "align-self": "stretch"
+        },
+        "childCount": 2
+      },
+      {
+        "id": "54:243",
+        "name": "Plans",
+        "type": "FRAME",
+        "visible": true,
+        "x": 120,
+        "y": 598,
+        "width": 1200,
+        "height": 394,
+        "renderBounds": {
+          "x": 96,
+          "y": 586,
+          "width": 1248,
+          "height": 442
+        },
+        "layoutMode": "HORIZONTAL",
+        "layoutWrap": "NO_WRAP",
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "counterAxisAlignContent": "AUTO",
+        "itemSpacing": 24,
+        "counterAxisSpacing": 0,
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemReverseZIndex": false,
+        "strokesIncludedInLayout": true,
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "layoutAlign": "STRETCH",
+        "boundVariables": {
+          "itemSpacing": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:54:163"
+          }
+        },
+        "css": {
+          "display": "flex",
+          "align-items": "flex-start",
+          "gap": "var(--space-24, 24px)",
+          "align-self": "stretch"
+        },
+        "childCount": 3
+      },
+      {
+        "id": "54:434",
+        "name": "Customers",
+        "type": "FRAME",
+        "visible": true,
+        "x": 120,
+        "y": 1056,
+        "width": 1200,
+        "height": 360,
+        "clipsContent": true,
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "FIXED",
+        "layoutAlign": "STRETCH",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1
+            },
+            "boundVariables": {
+              "color": {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:54:151"
+              }
+            }
+          }
+        ],
+        "cornerRadius": 24,
+        "boundVariables": {
+          "fills": [
+            {
+              "type": "VARIABLE_ALIAS",
+              "id": "VariableID:54:151"
+            }
+          ]
+        },
+        "css": {
+          "height": "360px",
+          "align-self": "stretch",
+          "border-radius": "24px",
+          "background": "var(--color-surface, #FFF)"
+        },
+        "childCount": 10
+      },
+      {
+        "id": "54:316",
+        "name": "Footnote",
+        "type": "TEXT",
+        "visible": true,
+        "x": 120,
+        "y": 1480,
+        "width": 1200,
+        "height": 20,
+        "renderBounds": {
+          "x": 616.21,
+          "y": 1484.5,
+          "width": 207.78,
+          "height": 13.36
+        },
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "layoutAlign": "STRETCH",
+        "fills": [
+          {
+            "type": "SOLID",
+            "visible": true,
+            "opacity": 1,
+            "blendMode": "NORMAL",
+            "color": {
+              "r": 0.7099999785423279,
+              "g": 0.7250000238418579,
+              "b": 0.7689999938011169
+            },
+            "boundVariables": {}
+          }
+        ],
+        "textStyleId": "S:f915279df204fce2c9103e446aa1bc6cbd72bedb,",
+        "text": {
+          "characters": "Prices in USD. Taxes may apply.",
+          "textAutoResize": "HEIGHT",
+          "textAlignHorizontal": "CENTER",
+          "textAlignVertical": "TOP",
+          "segments": [
+            {
+              "characters": "Prices in USD. Taxes may apply.",
+              "start": 0,
+              "end": 31,
+              "fontName": {
+                "family": "Inter",
+                "style": "Regular",
+                "variationSettings": {
+                  "slnt": 0,
+                  "wght": 400
+                }
+              },
+              "fontSize": 14,
+              "fontWeight": 400,
+              "fontStyle": "REGULAR",
+              "textDecoration": "NONE",
+              "textCase": "ORIGINAL",
+              "lineHeight": {
+                "unit": "PIXELS",
+                "value": 20
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "visible": true,
+                  "opacity": 1,
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0.7099999785423279,
+                    "g": 0.7250000238418579,
+                    "b": 0.7689999938011169
+                  },
+                  "boundVariables": {}
+                }
+              ],
+              "fillStyleId": "",
+              "textStyleId": "S:f915279df204fce2c9103e446aa1bc6cbd72bedb,",
+              "hyperlink": null,
+              "textDecorationStyle": null,
+              "textDecorationOffset": null,
+              "textDecorationThickness": null,
+              "textDecorationColor": null,
+              "listOptions": {
+                "type": "NONE"
+              },
+              "indentation": 0,
+              "paragraphIndent": 0,
+              "paragraphSpacing": 0,
+              "textWrapStyle": "AUTO",
+              "openTypeFeatures": {},
+              "boundVariables": {}
+            }
+          ]
+        },
+        "css": {
+          "align-self": "stretch",
+          "color": "#B5B9C4",
+          "text-align": "center",
+          "font-family": "Inter",
+          "font-size": "14px",
+          "font-style": "normal",
+          "font-weight": "400",
+          "line-height": "20px /* 142.857% */"
+        },
+        "childCount": 0
+      }
+    ]
+  },
+  "styles": {
+    "S:f915279df204fce2c9103e446aa1bc6cbd72bedb,": {
+      "name": "Body Small",
+      "type": "TEXT",
+      "remote": false,
+      "fontName": {
+        "family": "Inter",
+        "style": "Regular",
+        "variationSettings": {
+          "slnt": 0,
+          "wght": 400
+        }
+      },
+      "fontSize": 14,
+      "lineHeight": {
+        "unit": "PIXELS",
+        "value": 20
+      },
+      "letterSpacing": {
+        "unit": "PERCENT",
+        "value": 0
+      },
+      "textCase": "ORIGINAL",
+      "textDecoration": "NONE"
+    }
+  },
+  "variables": {
+    "VariableID:54:150": {
+      "name": "color/canvas",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 0.9333333373069763,
+        "g": 0.9450980424880981,
+        "b": 0.9647058844566345,
+        "a": 1
+      }
+    },
+    "VariableID:54:166": {
+      "name": "space/64",
+      "collection": "Orbit",
+      "resolvedType": "FLOAT",
+      "remote": false,
+      "value": 64
+    },
+    "VariableID:54:168": {
+      "name": "space/120",
+      "collection": "Orbit",
+      "resolvedType": "FLOAT",
+      "remote": false,
+      "value": 120
+    },
+    "VariableID:54:163": {
+      "name": "space/24",
+      "collection": "Orbit",
+      "resolvedType": "FLOAT",
+      "remote": false,
+      "value": 24
+    },
+    "VariableID:54:151": {
+      "name": "color/surface",
+      "collection": "Orbit",
+      "resolvedType": "COLOR",
+      "remote": false,
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      }
+    }
+  }
+}
