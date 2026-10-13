@@ -209,8 +209,8 @@ p {
 }
 
 .wordmark svg {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
 }
 
@@ -219,17 +219,6 @@ p {
   text-box: trim-both cap alphabetic;
 }
 
-.mark-frame {
-  fill: none;
-  stroke: var(--select);
-  stroke-width: 1.6;
-}
-
-.mark-handle {
-  fill: var(--bg);
-  stroke: var(--select);
-  stroke-width: 1.4;
-}
 
 .links {
   display: flex;
