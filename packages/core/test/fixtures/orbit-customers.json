@@ -1263,20 +1263,20 @@
         "name": "Arrow",
         "type": "VECTOR",
         "visible": true,
-        "x": 748,
-        "y": 250,
-        "width": 80,
+        "x": 749,
+        "y": 258,
+        "width": 78,
         "height": 40,
         "bounds": {
-          "x": 668,
-          "y": 250,
-          "width": 80,
+          "x": 671,
+          "y": 258,
+          "width": 78,
           "height": 40
         },
         "renderBounds": {
-          "x": 666.45,
-          "y": 249,
-          "width": 82.55,
+          "x": 669.64,
+          "y": 257,
+          "width": 80.36,
           "height": 42
         },
         "rotation": -180,
@@ -1318,7 +1318,7 @@
           ]
         },
         "css": {
-          "width": "80px",
+          "width": "78px",
           "height": "40px",
           "transform": "scaleX(-1)",
           "stroke-width": "2px",

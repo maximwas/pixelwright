@@ -1519,7 +1519,10 @@
                       ],
                       "fillStyleId": "",
                       "textStyleId": "S:a449151380648c87d63f2e17783a2651c6345d45,",
-                      "hyperlink": null,
+                      "hyperlink": {
+                        "type": "URL",
+                        "value": "https://orbit.example/plans"
+                      },
                       "textDecorationStyle": "SOLID",
                       "textDecorationOffset": {
                         "unit": "AUTO"
@@ -8635,20 +8638,20 @@
             "name": "Arrow",
             "type": "VECTOR",
             "visible": true,
-            "x": 868,
-            "y": 1306,
-            "width": 80,
+            "x": 869,
+            "y": 1314,
+            "width": 78,
             "height": 40,
             "bounds": {
-              "x": 788,
-              "y": 1306,
-              "width": 80,
+              "x": 791,
+              "y": 1314,
+              "width": 78,
               "height": 40
             },
             "renderBounds": {
-              "x": 786.45,
-              "y": 1305,
-              "width": 82.55,
+              "x": 789.64,
+              "y": 1313,
+              "width": 80.36,
               "height": 42
             },
             "rotation": -180,
@@ -8690,7 +8693,7 @@
               ]
             },
             "css": {
-              "width": "80px",
+              "width": "78px",
               "height": "40px",
               "transform": "scaleX(-1)",
               "stroke-width": "2px",

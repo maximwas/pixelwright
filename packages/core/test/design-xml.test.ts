@@ -4,6 +4,7 @@ import { fixture } from "./helpers/fixtures.ts";
 
 const row = fixture("orbit-plans");
 const customers = fixture("orbit-customers");
+const pricing = fixture("orbit-pricing");
 
 const FIRST_CARD = `<Frame id="54:243" name="Plans" display="flex" width="1200px" height="394px" gap="var(--space-24)">
   <Instance id="54:244" name="Plan – Starter" component="Plan Card" props="Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter" display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="1px solid var(--color-line)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
@@ -143,6 +144,14 @@ describe("design XML of the Orbit Customers frame", () => {
     );
     expect(xml).toContain('<Image id="54:456" name="Avatar" src="assets/avatar.png"');
     expect(xml).toContain('<Image id="54:454" name="Product shot" src="assets/product-shot.png"');
+  });
+});
+
+describe("design XML of the Orbit Pricing screen", () => {
+  it("writes a link on part of a text as a Span with its href, its own colour and underline", () => {
+    expect(designXml(pricing).xml).toContain(
+      'Every plan includes unlimited projects and a 14-day trial of Pro. <Span href="https://orbit.example/plans" text-decoration="underline" color="var(--color-brand)">See what\'s included.</Span></Text>',
+    );
   });
 });
 
