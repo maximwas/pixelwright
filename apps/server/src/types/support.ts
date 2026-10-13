@@ -1,9 +1,4 @@
-/** A place to support the project. */
-export interface SupportLink {
-  /** What the link says, e.g. "Ko-fi". */
-  readonly label: string;
-  readonly url: string;
-}
+import type { SupportLink } from "@pixelwright/core";
 
 /** What a tool needs to add the support note to a result: the note when one is due, else null. */
 export interface SupportNotes {

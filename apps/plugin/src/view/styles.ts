@@ -26,5 +26,10 @@ body { margin: 0; background: var(--figma-color-bg); color: var(--figma-color-te
 .actions .when { flex: none; color: var(--figma-color-text-tertiary); }
 .actions .warning .what { color: var(--figma-color-text-warning); }
 .actions .empty { color: var(--figma-color-text-tertiary); }
+.brand { display: flex; align-items: center; gap: 6px; }
+.mark svg { display: block; width: 16px; height: 16px; }
+.brand-name { font-size: 12px; font-weight: 600; }
+.support { margin: 0; color: var(--figma-color-text-tertiary); }
+.support a { color: var(--figma-color-text-brand); text-decoration: underline; cursor: pointer; }
 [hidden] { display: none !important; }
 `;

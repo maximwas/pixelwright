@@ -1,5 +1,5 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
-import { toWireError } from "@pixelwright/core";
+import { SUPPORT_LINKS, toWireError } from "@pixelwright/core";
 import { PLUGIN_WINDOW, WINDOW_HEIGHT } from "./constants/plugin.ts";
 import { readContext } from "./figma/context.ts";
 import { editsAllowed, setEditsAllowed } from "./figma/edits.ts";
@@ -9,6 +9,7 @@ import { readPairing, savePairing } from "./figma/pairing-store.ts";
 import type {
   AllowEditsHandler,
   ContextHandler,
+  OpenLinkHandler,
   PairingHandler,
   ReadyHandler,
   RequestHandler,
@@ -38,6 +39,12 @@ export default function (): void {
     void saveEditsAllowed(value).catch(() => {});
   });
   on<SavePairingHandler>("SAVE_PAIRING", (key) => void savePairing(key).catch(() => {}));
+  // Only the project's own support links: the window is ours, but an address it passes is still checked.
+  on<OpenLinkHandler>("OPEN_LINK", (url) => {
+    if (SUPPORT_LINKS.some((link) => link.url === url)) {
+      figma.openExternal(url);
+    }
+  });
   on<ResizeHandler>("RESIZE", (height) =>
     figma.ui.resize(PLUGIN_WINDOW.width, Math.min(Math.max(Math.ceil(height), WINDOW_HEIGHT.min), WINDOW_HEIGHT.max)),
   );

@@ -8,6 +8,7 @@ import type { LinkState, RequestOutcome } from "./types/link.ts";
 import type {
   AllowEditsHandler,
   ContextHandler,
+  OpenLinkHandler,
   PairingHandler,
   PluginContext,
   ReadyHandler,
@@ -39,6 +40,7 @@ export default function (root: HTMLElement): void {
   const view = createPluginWindow(root, {
     onAllowEdits: (value) => emit<AllowEditsHandler>("ALLOW_EDITS", value),
     onPair: (code) => socket?.pair(code),
+    onOpenLink: (url) => emit<OpenLinkHandler>("OPEN_LINK", url),
   });
   const render = () => {
     if (context !== null) {

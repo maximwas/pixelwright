@@ -91,3 +91,7 @@ export const UPLOAD_TTL_MS = 5 * 60 * 1000;
 
 /** Room around and between a new component set's variants. */
 export const SET_GAP = 40;
+
+/** Pixelwright's mark, as on the website and its tab icon: a blue tile with a white selection frame. */
+export const MARK_SVG =
+  '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d99ff"/><rect x="9" y="9" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.2"/><g fill="#0d99ff" stroke="#fff" stroke-width="1.8"><rect x="6.2" y="6.2" width="5.6" height="5.6"/><rect x="20.2" y="6.2" width="5.6" height="5.6"/><rect x="6.2" y="20.2" width="5.6" height="5.6"/><rect x="20.2" y="20.2" width="5.6" height="5.6"/></g></svg>';

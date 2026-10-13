@@ -11,6 +11,7 @@ const NEW_KEY = {
   secret: "cd".repeat(32),
 };
 const posted: unknown[][] = [];
+const opened: string[] = [];
 let windowHtml = "";
 
 /** figma.clientStorage as an earlier run left it: stage 1's Allow edits for every file, which arms none, and a key. */
@@ -48,6 +49,9 @@ const fakeFigma = {
     onmessage: null as ((message: unknown) => void) | null,
   },
   on: () => {},
+  openExternal: (url: string) => {
+    opened.push(url);
+  },
 };
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -103,5 +107,14 @@ describe("the plugin's main code", () => {
     await tick();
 
     expect(posted[0]).toEqual(["PAIRING", null]);
+  });
+
+  it("opens a support link from the window, and no other address", async () => {
+    fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://ko-fi.com/maksymvasianin"]);
+    fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://send.monobank.ua/jar/7o9oMrbXTj"]);
+    fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://example.com/phish"]);
+    await tick();
+
+    expect(opened).toEqual(["https://ko-fi.com/maksymvasianin", "https://send.monobank.ua/jar/7o9oMrbXTj"]);
   });
 });

@@ -1,4 +1,4 @@
-import type { SupportLink } from "../types/support.ts";
+import type { SupportLink } from "@pixelwright/core";
 
 /** The one sentence the agent passes on: the project is free, and where to support it. */
 export function supportNote(links: readonly SupportLink[]): string {

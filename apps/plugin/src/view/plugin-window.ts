@@ -1,3 +1,5 @@
+import { SUPPORT_LINKS } from "@pixelwright/core";
+import { MARK_SVG } from "../constants/plugin.ts";
 import type { WindowState } from "../types/window.ts";
 import { editsHint, editsNote, pairingNote, statusLine } from "./status-line.ts";
 import { WINDOW_CSS } from "./styles.ts";
@@ -6,20 +8,26 @@ interface WindowHandlers {
   readonly onAllowEdits: (allowEdits: boolean) => void;
   /** The user typed the pairing code and pressed Pair (or Enter). */
   readonly onPair: (code: string) => void;
+  /** The user clicked a support link: main opens it in the browser. */
+  readonly onOpenLink: (url: string) => void;
 }
 
 /** The undo shortcut of the system Figma runs on. */
 const UNDO = navigator.userAgent.includes("Mac") ? "⌘Z" : "Ctrl+Z";
 
 /**
- * The plugin's small window: the connection and what it lets the AI do, the pairing field while the server waits for
- * the code, the Allow edits switch, what the AI did last. Built once, re-rendered in place.
+ * The plugin's small window: its mark, the connection and what it lets the AI do, the pairing field while the server
+ * waits for the code, the Allow edits switch, what the AI did last, and where to support the project. Built once,
+ * re-rendered in place.
  */
 export function createPluginWindow(
   root: HTMLElement,
-  { onAllowEdits, onPair }: WindowHandlers,
+  { onAllowEdits, onPair, onOpenLink }: WindowHandlers,
 ): { render(state: WindowState): void } {
   const style = document.createElement("style");
+  const brand = element("header", "brand");
+  const mark = element("span", "mark");
+  const support = element("p", "support", "Pixelwright is free. Support it on ");
   const status = element("div", "status");
   const dot = element("span", "dot");
   const title = element("strong", "title");
@@ -38,6 +46,22 @@ export function createPluginWindow(
   const actions = element("ul", "actions");
 
   style.textContent = WINDOW_CSS;
+  // A constant of ours, never the file's data.
+  mark.innerHTML = MARK_SVG;
+  brand.append(mark, element("strong", "brand-name", "Pixelwright"));
+
+  for (const [index, { label, url }] of SUPPORT_LINKS.entries()) {
+    const anchor = element("a", "", label);
+
+    anchor.href = url;
+    anchor.addEventListener("click", (event) => {
+      event.preventDefault();
+      onOpenLink(url);
+    });
+    support.append(index === 0 ? "" : " or ", anchor);
+  }
+
+  support.append(".");
   status.append(dot, element("div", "words", title, detail));
   codeField.inputMode = "numeric";
   codeField.maxLength = 6;
@@ -65,7 +89,7 @@ export function createPluginWindow(
   edits.append(toggleRow, note);
   heading.textContent = "Activity";
   activity.append(heading, actions);
-  root.append(style, status, pairing, pairingText, hint, edits, activity);
+  root.append(style, brand, status, pairing, pairingText, hint, edits, activity, support);
 
   return {
     render({ context, link, actions: recent, refused, ranCode }) {

@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { SUPPORT_LINKS } from "@pixelwright/core";
 import serverPackage from "../package.json" with { type: "json" };
 import { fileStore } from "./assets/written-files.ts";
 import { bridgeConfigFile, homeDir, loadOrCreateBridgeConfig } from "./bridge/bridge-config.ts";
@@ -8,7 +9,7 @@ import { PluginBridge } from "./bridge/plugin-bridge.ts";
 import { FilePluginKeys } from "./bridge/plugin-keys.ts";
 import { readConfig } from "./config/config.ts";
 import { DEFAULT_BRIDGE_PORT } from "./constants/bridge.ts";
-import { SUPPORT_LINKS, SUPPORT_STATE_FILE } from "./constants/support.ts";
+import { SUPPORT_STATE_FILE } from "./constants/support.ts";
 import { createLogger } from "./logging/logger.ts";
 import { createMcpServer } from "./mcp/mcp-server.ts";
 import { SupportReminder } from "./support/support-reminder.ts";

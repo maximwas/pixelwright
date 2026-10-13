@@ -57,3 +57,9 @@ export interface SavePairingHandler extends EventHandler {
   name: "SAVE_PAIRING";
   handler: (key: PluginKey) => void;
 }
+
+/** window → main: open this support link in the browser (main opens only SUPPORT_LINKS). */
+export interface OpenLinkHandler extends EventHandler {
+  name: "OPEN_LINK";
+  handler: (url: string) => void;
+}
