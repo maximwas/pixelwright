@@ -149,7 +149,7 @@ export const OPERATION_SCHEMAS = {
     }),
     output: z.object({
       cursor: z.number().int(),
-      /** When the plugin started watching (its window opened, or the page was switched to). */
+      /** When the plugin started watching: its window opened. */
       since: z.string(),
       /** Older changes than the cursor asked for were dropped: the journal keeps the latest only. */
       truncated: z.boolean(),
@@ -356,6 +356,8 @@ export const OPERATION_SCHEMAS = {
        * (gradients, new effects, blend modes), or for all of them (the test oracle).
        */
       css: z.enum(["none", "unmapped", "all"]).default("none"),
+      /** Hash each vector's paths (pathHash), for comparing drawings: nodes_diff and variants_read ask for it. */
+      paths: z.boolean().default(false),
     }),
     output: SnapshotSchema,
   },

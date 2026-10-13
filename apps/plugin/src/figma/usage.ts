@@ -1,8 +1,9 @@
 import { BridgeError, type OperationInput, type OperationOutput } from "@pixelwright/core";
-import { USAGE_MAX_LAYERS } from "../constants/plugin.ts";
+import { OP_BUDGET_MS, USAGE_MAX_LAYERS } from "../constants/plugin.ts";
 import { requireNode } from "./nodes.ts";
 import { tokenIndex } from "./token-index.ts";
 import { aliasesIn, loaded } from "./used-tokens.ts";
+import { layersUntil } from "./walk.ts";
 
 type Usage = OperationOutput<"usage">;
 
@@ -24,8 +25,8 @@ export async function usage({ token, within }: OperationInput<"usage">): Promise
   await loaded(root);
 
   const layers: Usage["layers"] = [];
-  let more = false;
-  const all = "findAll" in root ? [root, ...root.findAll(() => true)] : [root];
+  const { layers: all, finished } = layersUntil(root, Date.now() + OP_BUDGET_MS);
+  let more = !finished;
 
   for (const layer of all) {
     const property = target.variable ? variableUse(layer, target.id) : styleUse(layer, target.id);

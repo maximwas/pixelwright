@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BridgeError, OPERATION_SCHEMAS, type OperationInput } from "@pixelwright/core";
+import { BridgeError, OPERATION_SCHEMAS, type OperationRequest } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { createApp } from "../src/app.ts";
 import { resolveTarget } from "../src/bridge/target.ts";
@@ -13,7 +13,7 @@ const WAIT_MS = 300_000;
 /** The Positivus test file: read only, never changed. */
 const POSITIVUS = "Untitled";
 
-const SNAPSHOTS: readonly { file: string; input: OperationInput<"snapshot"> }[] = [
+const SNAPSHOTS: readonly { file: string; input: OperationRequest<"snapshot"> }[] = [
   {
     file: "positivus-services-row.json",
     input: {

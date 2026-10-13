@@ -1,5 +1,5 @@
 import { BridgeError, type OperationInput, type OperationOutput, type OutlineNode } from "@pixelwright/core";
-import { OUTLINE_MAX_NODES, VIEWPORT_MAX_LAYERS } from "../constants/plugin.ts";
+import { MAIN_COMPONENT_BATCH, OP_BUDGET_MS, OUTLINE_MAX_NODES, VIEWPORT_MAX_LAYERS } from "../constants/plugin.ts";
 import { boxOf, pageOf, pathOf, requireNode } from "./nodes.ts";
 
 /** What the user selected on the current page. */
@@ -216,14 +216,14 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
     x: 0,
     y: 0,
   };
-  const entryOf = async (node: BaseNode): Promise<OutlineNode> => {
+  // Instances name their component once the tree is laid out: looked up in batches, within the budget.
+  const instances: [OutlineNode, InstanceNode][] = [];
+  const entryOf = (node: BaseNode): OutlineNode => {
     const box = boxOf(node);
-
-    return {
+    const entry: OutlineNode = {
       id: node.id,
       name: node.name,
       type: node.type,
-      ...(node.type === "INSTANCE" ? await componentOf(node) : {}),
       ...(box === null
         ? {}
         : {
@@ -235,8 +235,14 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
       ...("visible" in node && !node.visible ? { hidden: true } : {}),
       childCount: childrenOf(node).length,
     };
+
+    if (node.type === "INSTANCE") {
+      instances.push([entry, node]);
+    }
+
+    return entry;
   };
-  const top = await entryOf(root);
+  const top = entryOf(root);
   const queue: { node: BaseNode; entry: OutlineNode; level: number }[] = [
     {
       node: root,
@@ -258,7 +264,7 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
     entry.children = [];
 
     for (const child of children) {
-      const childEntry = await entryOf(child);
+      const childEntry = entryOf(child);
 
       queue.push({
         node: child,
@@ -267,6 +273,16 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
       });
       entry.children.push(childEntry);
     }
+  }
+
+  const deadline = Date.now() + OP_BUDGET_MS;
+
+  for (let start = 0; start < instances.length && Date.now() < deadline; start += MAIN_COMPONENT_BATCH) {
+    await Promise.all(
+      instances.slice(start, start + MAIN_COMPONENT_BATCH).map(async ([entry, node]) => {
+        Object.assign(entry, await componentOf(node));
+      }),
+    );
   }
 
   return { root: top };

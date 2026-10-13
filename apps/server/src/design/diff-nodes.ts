@@ -22,6 +22,7 @@ export async function diffNodes(
         {
           node,
           css: "unmapped",
+          paths: true,
           ...(depth === undefined ? {} : { depth }),
         },
         target,

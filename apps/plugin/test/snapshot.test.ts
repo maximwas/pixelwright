@@ -604,13 +604,23 @@ describe("vector paths in a snapshot", () => {
 
     const hashes = await Promise.all(
       ["7:1", "7:2", "7:3"].map(
-        async (node) => ((await runOperation("snapshot", { node })) as { root: { pathHash?: string } }).root.pathHash,
+        async (node) =>
+          (
+            (await runOperation("snapshot", {
+              node,
+              paths: true,
+            })) as { root: { pathHash?: string } }
+          ).root.pathHash,
       ),
     );
 
     expect(hashes[0]).toBeDefined();
     expect(hashes[0]).toBe(hashes[1]);
     expect(hashes[2]).not.toBe(hashes[0]);
+    // Only nodes_diff asks: a read does not pay for hashing every vector.
+    expect(
+      ((await runOperation("snapshot", { node: "7:1" })) as { root: { pathHash?: string } }).root.pathHash,
+    ).toBeUndefined();
   });
 });
 

@@ -127,7 +127,7 @@ async function addVariables(raw: RawTokens, ids: readonly string[]): Promise<voi
 async function addPaintCss(raw: RawTokens, root: BaseNode): Promise<void> {
   const wanted = new Map(
     raw.styles
-      .filter((style) => style.type === "PAINT" && style.css === undefined && !singleSolid(style.paints ?? []))
+      .filter((style) => style.type === "PAINT" && style.css === undefined && gradient(style.paints ?? []))
       .map((style) => [style.id, style]),
   );
 
@@ -152,10 +152,9 @@ async function addPaintCss(raw: RawTokens, root: BaseNode): Promise<void> {
   }
 }
 
-function singleSolid(paints: readonly { type: string; visible?: boolean | undefined }[]): boolean {
-  const visible = paints.filter((paint) => paint.visible !== false);
-
-  return visible.length === 1 && visible[0]?.type === "SOLID";
+/** Whether a paint style draws a gradient: only that is worth asking Figma for CSS (an image has none). */
+function gradient(paints: readonly { type: string; visible?: boolean | undefined }[]): boolean {
+  return paints.some((paint) => paint.visible !== false && paint.type.startsWith("GRADIENT_"));
 }
 
 /** The styles and variables the layers under `root` use and the file does not define (a team library's). */

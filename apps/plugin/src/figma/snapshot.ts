@@ -64,6 +64,7 @@ export async function snapshot({
   node: id,
   depth,
   css,
+  paths,
 }: OperationInput<"snapshot">): Promise<OperationOutput<"snapshot">> {
   const root = await requireNode(id);
 
@@ -85,6 +86,7 @@ export async function snapshot({
         x: originX ?? 0,
         y: originY ?? 0,
         css,
+        paths,
         references,
         categories,
       }),
@@ -233,6 +235,8 @@ export interface EntryContext {
   readonly x: number;
   readonly y: number;
   readonly css: OperationInput<"snapshot">["css"];
+  /** Hash each vector's paths: only a comparison of drawings needs it. */
+  readonly paths?: boolean;
   readonly references: References;
   /** Annotation category names by id. */
   readonly categories: ReadonlyMap<string, string>;
@@ -353,7 +357,7 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
     entry.layoutGrids = plain(layer.layoutGrids);
   }
 
-  if (Array.isArray(layer.vectorPaths) && layer.vectorPaths.length > 0) {
+  if (context.paths && Array.isArray(layer.vectorPaths) && layer.vectorPaths.length > 0) {
     // Not the paths themselves (an icon's can be long): enough to tell two drawings apart.
     entry.pathHash = fnv1a(JSON.stringify(layer.vectorPaths));
   }

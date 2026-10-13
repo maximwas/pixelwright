@@ -17,6 +17,7 @@ export async function readVariants(
       {
         node: set.id,
         css: "unmapped",
+        paths: true,
       },
       target,
     ),

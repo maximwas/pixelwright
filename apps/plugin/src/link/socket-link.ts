@@ -32,7 +32,7 @@ const UNPROVEN_SERVER = "The program on port 18720 could not prove it is your Pi
 
 /** An older server turned this plugin away: a newer one (another MCP client's, or this one restarted) may take its port. */
 const OLDER_SERVER =
-  "The Pixelwright server on port 18720 is older than this plugin, maybe another MCP client's: restart Pixelwright there (/mcp in Claude Code). This window connects by itself once a current server holds the port.";
+  "The Pixelwright server on port 18720 is older than this plugin, maybe another MCP client's: update it (npx -y pixelwright@latest in a terminal) and restart Pixelwright there (/mcp in Claude Code). This window connects by itself once a current server holds the port.";
 
 /** Why the server turned the plugin away for now; it reconnects on its own. */
 const RETRY_REASONS: Readonly<Record<number, string>> = {

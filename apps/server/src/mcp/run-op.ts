@@ -1,4 +1,4 @@
-import { OPERATION_SCHEMAS, type OperationInput, type OperationName, type OperationResult } from "@pixelwright/core";
+import { OPERATION_SCHEMAS, type OperationName, type OperationRequest, type OperationResult } from "@pixelwright/core";
 import { resolveTarget } from "../bridge/target.ts";
 import type { BridgeView } from "../types/mcp.ts";
 
@@ -6,7 +6,7 @@ import type { BridgeView } from "../types/mcp.ts";
 export async function runOp<N extends OperationName>(
   bridge: BridgeView,
   op: N,
-  input: OperationInput<N>,
+  input: OperationRequest<N>,
   file?: string,
 ): Promise<OperationResult<N>> {
   const target = resolveTarget(bridge.plugins(), file);

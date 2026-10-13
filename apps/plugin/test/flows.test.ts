@@ -234,3 +234,22 @@ describe("file_map of a page with thousands of loose layers", () => {
     expect(map.more).toBe(true);
   });
 });
+
+describe("screens on a page the user is not on", () => {
+  it("loads the page before it looks for its screens", async () => {
+    const installed = installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [],
+      }),
+      {
+        pages: [prototype()],
+      },
+    );
+
+    await runOperation("screens", { node: "9:2" });
+
+    expect(installed.writes.calls).toContainEqual(expect.objectContaining({ method: "loadAsync" }));
+  });
+});

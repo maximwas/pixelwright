@@ -9,6 +9,7 @@ import { FILE_MAP_MAX_NODES, FLOW_MAX_LINKS, OP_BUDGET_MS } from "../constants/p
 import { pageOf, requireNode } from "./nodes.ts";
 import { reactionsOf } from "./snapshot.ts";
 import { loaded } from "./used-tokens.ts";
+import { layersUntil } from "./walk.ts";
 
 type Link = OperationOutput<"flows">["links"][number];
 
@@ -29,6 +30,8 @@ export async function screens({ node: id }: OperationInput<"screens">): Promise<
   if (page === null) {
     throw new BridgeError("NODE_NOT_FOUND", `${id} is not a layer on a page.`);
   }
+
+  await loaded(page);
 
   const all = screensOf(page);
   const target = all.find((screen) => screen === node || contains(screen, node));
@@ -82,11 +85,13 @@ export async function flows({ page: id }: OperationInput<"flows">): Promise<Oper
   const links: Link[] = [];
   let more = false;
 
+  const deadline = Date.now() + OP_BUDGET_MS;
+
   for (const screen of screens) {
-    const layers = [
-      screen,
-      ...("findAll" in screen ? screen.findAll((node) => "reactions" in node && node.reactions.length > 0) : []),
-    ];
+    const walked = layersUntil(screen, deadline);
+    const layers = walked.layers.filter((node): node is SceneNode => "reactions" in node && node.reactions.length > 0);
+
+    more ||= !walked.finished;
 
     for (const layer of layers) {
       for (const reaction of (await reactionsOf(layer)) as SnapshotReaction[]) {

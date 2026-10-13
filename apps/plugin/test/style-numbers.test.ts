@@ -294,3 +294,53 @@ describe("same-named text styles in design_apply's lookup", () => {
     expect(await index.textStyle("h1-2")).toBe("S:t2");
   });
 });
+
+describe("image paint styles in tokens_read", () => {
+  it("are not asked for CSS: only a gradient's is worth Figma's time", async () => {
+    let asked = 0;
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            ...filled("1:1", "S:img"),
+            css: { background: "url(x.png)" },
+          },
+        ],
+      }),
+      {
+        styles: {
+          "S:img": {
+            id: "S:img",
+            name: "Photo",
+            type: "PAINT",
+            remote: true,
+            paints: [
+              {
+                type: "IMAGE",
+                visible: true,
+                imageHash: "a".repeat(40),
+              },
+            ],
+          },
+        },
+      },
+    );
+
+    const layer = (globalThis as unknown as { figma: { currentPage: { children: Record<string, unknown>[] } } }).figma
+      .currentPage.children[0] as Record<string, unknown>;
+    const original = layer.getCSSAsync as () => Promise<unknown>;
+
+    layer.getCSSAsync = async () => {
+      asked += 1;
+
+      return original();
+    };
+
+    await runOperation("variables", { used: true });
+
+    expect(asked).toBe(0);
+  });
+});

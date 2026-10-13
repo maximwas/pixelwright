@@ -444,7 +444,7 @@ describe("SocketLink", () => {
     sockets[0]?.drop(4426, `protocol ${BRIDGE_PROTOCOL_VERSION - 1} required`);
     expect(states.at(-1)).toMatchObject({
       kind: "waiting",
-      reason: expect.stringContaining("older"),
+      reason: expect.stringMatching(/older[\s\S]*npx -y pixelwright@latest/),
     });
     scheduled[0]?.run();
     sockets[1]?.open();
