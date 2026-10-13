@@ -29,6 +29,7 @@ describe("the window's activity", () => {
         ["find", {}],
         ["selection", {}],
         ["show", {}],
+        ["inspect", {}],
       ].map(([op, input]) => text(op as string, input, ok({}))),
     ).toEqual([
       "Read a design",
@@ -40,6 +41,7 @@ describe("the window's activity", () => {
       "Searched layers",
       "Read the selection",
       "Showed a layer",
+      "Inspected layers",
     ]);
   });
 

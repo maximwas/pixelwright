@@ -318,3 +318,19 @@ export const CodeConnectReadOutputSchema = z.object({
   unconnected: z.array(ComponentCountSchema).describe("Components used here that no template connects."),
   problems: z.array(z.string()),
 });
+
+export const InspectInputSchema = z.object({
+  nodes: z
+    .array(z.string().min(1).max(200))
+    .min(1)
+    .max(100)
+    .exactOptional()
+    .describe('The layers\' ids, e.g. ["2:4868"]. Default: the layers selected in Figma.'),
+  relativeTo: z
+    .string()
+    .min(1)
+    .max(200)
+    .exactOptional()
+    .describe("A layer (a section, a frame) whose top left the boxes are measured from. Default: the page's."),
+  file: FileSchema,
+});

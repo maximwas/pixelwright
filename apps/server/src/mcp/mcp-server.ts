@@ -8,6 +8,7 @@ import { registerComponentsTool } from "./tools/components.ts";
 import { registerDesignTool } from "./tools/design.ts";
 import { registerExecuteTool } from "./tools/execute.ts";
 import { registerGuideTool } from "./tools/guide.ts";
+import { registerInspectTool } from "./tools/inspect.ts";
 import { registerNodeTools } from "./tools/nodes.ts";
 import { registerScreenshotTool } from "./tools/screenshot.ts";
 import { registerStatusTool } from "./tools/status.ts";
@@ -26,6 +27,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerNodeTools(server, context);
   registerScreenshotTool(server, context);
   registerDesignTool(server, context);
+  registerInspectTool(server, context);
   registerApplyTool(server, context);
   registerExecuteTool(server, context);
   registerTokensTool(server, context);

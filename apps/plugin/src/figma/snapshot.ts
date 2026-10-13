@@ -13,7 +13,7 @@ import { requireNode } from "./nodes.ts";
 import { numbered, ownStyles, styleOf } from "./styles.ts";
 
 /** Styles and variables the snapshot's layers use, resolved once at the end; a variable keeps its first consumer. */
-interface References {
+export interface References {
   readonly styles: Set<string>;
   readonly variables: Map<string, SceneNode>;
 }
@@ -221,11 +221,11 @@ async function subtree(
   return top;
 }
 
-function isLayer(node: BaseNode): node is SceneNode {
+export function isLayer(node: BaseNode): node is SceneNode {
   return node.type !== "DOCUMENT" && node.type !== "PAGE";
 }
 
-interface EntryContext {
+export interface EntryContext {
   readonly x: number;
   readonly y: number;
   readonly css: OperationInput<"snapshot">["css"];
@@ -236,7 +236,7 @@ interface EntryContext {
   readonly whole?: boolean;
 }
 
-async function entryOf(node: SceneNode, context: EntryContext): Promise<SnapshotNode> {
+export async function entryOf(node: SceneNode, context: EntryContext): Promise<SnapshotNode> {
   const [[, , x], [, , y]] = node.absoluteTransform;
   const entry: Record<string, unknown> = {
     id: node.id,
@@ -504,7 +504,7 @@ function needsOracle(entry: Record<string, unknown>): boolean {
   );
 }
 
-async function annotationCategories(): Promise<ReadonlyMap<string, string>> {
+export async function annotationCategories(): Promise<ReadonlyMap<string, string>> {
   // Older Figma versions and the tests' fake have no annotations API.
   const categories = await figma.annotations?.getAnnotationCategoriesAsync().catch(() => []);
 

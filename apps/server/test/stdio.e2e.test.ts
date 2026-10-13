@@ -47,6 +47,7 @@ describe("stdio server", () => {
         "design_read",
         "execute",
         "guide",
+        "inspect",
         "node_show",
         "nodes_delete",
         "nodes_find",

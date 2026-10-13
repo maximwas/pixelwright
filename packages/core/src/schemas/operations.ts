@@ -3,6 +3,7 @@ import { EXPORT_CHUNK_BYTES } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
 import type { OutlineNode } from "../types/operations.ts";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "./apply.ts";
+import { InspectRawSchema } from "./inspect.ts";
 import { SnapshotSchema } from "./snapshot.ts";
 import { RawTokensSchema } from "./tokens.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "./tokens-apply.ts";
@@ -245,6 +246,14 @@ export const OPERATION_SCHEMAS = {
       logs: z.array(z.string()),
       error: z.string().exactOptional(),
     }),
+  },
+  /** Layers as Figma has them, from `relativeTo`'s top left (the page's without it): read only, Allow edits or not. */
+  inspect: {
+    input: z.object({
+      nodes: z.array(NodeIdSchema).min(1).max(100),
+      relativeTo: NodeIdSchema.exactOptional(),
+    }),
+    output: InspectRawSchema,
   },
   delete: {
     input: z.object({

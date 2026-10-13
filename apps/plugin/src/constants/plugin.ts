@@ -41,6 +41,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   find: "Searched layers",
   selection: "Read the selection",
   show: "Showed a layer",
+  inspect: "Inspected layers",
   apply: "Changed the file",
   delete: "Deleted layers",
   execute: "Ran code",
