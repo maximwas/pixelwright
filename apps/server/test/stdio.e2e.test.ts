@@ -49,6 +49,7 @@ describe("stdio server", () => {
         "guide",
         "image_compare",
         "inspect",
+        "measure",
         "node_show",
         "nodes_delete",
         "nodes_diff",

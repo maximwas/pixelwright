@@ -460,3 +460,19 @@ export const ImageCompareOutputSchema = z.object({
   diff: z.string().exactOptional(),
   note: z.string().exactOptional(),
 });
+
+export const MeasureInputSchema = z.object({
+  nodes: z
+    .array(z.string().min(1).max(200))
+    .min(2)
+    .max(100)
+    .exactOptional()
+    .describe(
+      'The layers\' ids in the order to measure, each from the one before, e.g. ["2:4868", "2:4870"]. Default: the layers selected in Figma.',
+    ),
+  painted: z
+    .boolean()
+    .default(false)
+    .describe("Measure what is painted (centred or outside strokes, shadows, blur) instead of the layout boxes."),
+  file: FileSchema,
+});
