@@ -1,9 +1,15 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { ContrastSchema } from "@pixelwright/core";
+import { ContrastSchema, DesignAuditSchema } from "@pixelwright/core";
+import { auditDesign } from "../../checks/audit-design.ts";
 import { checkContrast } from "../../checks/contrast-check.ts";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
 import { checkFonts } from "../../fonts/check-fonts.ts";
-import { ContrastInputSchema, FontsCheckInputSchema, FontsCheckOutputSchema } from "../../schemas/tools.ts";
+import {
+  AuditInputSchema,
+  ContrastInputSchema,
+  FontsCheckInputSchema,
+  FontsCheckOutputSchema,
+} from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
 
@@ -30,5 +36,15 @@ export function registerChecksTools(server: McpServer, { bridge }: ToolContext):
       openWorldHint: true,
     },
     run: (args) => checkFonts(bridge, args),
+  });
+  registerTool(server, {
+    name: "design_audit",
+    title: "Audit the design's scale",
+    description:
+      "The scale a layer uses (the selected layer by default): spacing (gaps and paddings), radii, font sizes, line heights and colours, each with how often it is used and whether it is bound to a token; and what is off it: values off the 4 px grid, raw colours equal to or a hair from a token, sizes a pixel apart. Use it to define tokens when a file has none, or to see what the build should round.",
+    input: AuditInputSchema,
+    output: DesignAuditSchema,
+    annotations: READ_ONLY_ANNOTATIONS,
+    run: (args) => auditDesign(bridge, args),
   });
 }
