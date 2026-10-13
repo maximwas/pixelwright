@@ -285,17 +285,20 @@
             <h3>Read the design</h3>
             <dl>
               <dt>design_read</dt><dd>A section as XML: layer types as tags, CSS as attributes, tokens as <code>var(--name)</code>, icons and images as files.</dd>
-              <dt>outline, nodes_find</dt><dd>A frame's layer tree; layers by name, type, text or component.</dd>
-              <dt>selection_get, node_show</dt><dd>What you picked; showing you a layer.</dd>
+              <dt>file_map, outline, nodes_find</dt><dd>Every page with its frames; a frame's layer tree; layers by name, type, text or component.</dd>
+              <dt>selection_get, selection_wait, viewport_get</dt><dd>What you picked, or waiting for you to pick; what you are looking at.</dd>
+              <dt>node_show, changes_since</dt><dd>Showing you layers at a zoom; what you changed since the agent last looked.</dd>
               <dt>inspect</dt><dd>Layers as Figma has them: painted boxes, fills with their styles, how strokes paint, every effect, line heights and breaks, interactions.</dd>
               <dt>measure, nodes_diff</dt><dd>The distances between layers; how one variant differs from another.</dd>
-              <dt>screenshot, image_compare</dt><dd>A layer, or a region of it, as an image; the same render compared with a screenshot of your build.</dd>
+              <dt>variants_read, breakpoints_find, flow_read</dt><dd>A component's states; a screen at its other widths; the prototype's screens and links.</dd>
+              <dt>screenshot, image_compare</dt><dd>A layer, or a region of it, as an image, dark mode included; the same render compared with a screenshot of your build.</dd>
             </dl>
           </div>
           <div class="tool-group">
             <h3>Know the system</h3>
             <dl>
-              <dt>tokens_read</dt><dd>Variables with every mode, and styles, as CSS or JSON.</dd>
+              <dt>tokens_read, tokens_usage</dt><dd>Variables with every mode, and styles, as CSS or JSON; where each is used.</dd>
+              <dt>design_audit, contrast_check, fonts_check</dt><dd>The scale in use and what is off it; text contrast; where each font comes from.</dd>
               <dt>components_read</dt><dd>The components a page uses or the file defines, with variants and properties.</dd>
               <dt>assets_export</dt><dd>Icons and images as SVG, PNG, JPG, WebP or PDF, sized by a CSS width, originals included.</dd>
             </dl>

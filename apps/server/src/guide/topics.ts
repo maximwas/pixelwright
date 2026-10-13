@@ -11,12 +11,15 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code status
    shows into the plugin window).
 2. **Find what to read.**
-   - \`selection_get\`: what the user selected ("this", "the selected one").
+   - \`file_map\`: every page with its frames, sections and components, in one call: where to start in a big file.
+   - \`selection_get\`: what the user selected ("this", "the selected one"). \`selection_wait\`: ask the user to select
+     something, then wait for it. \`viewport_get\`: what the user is looking at, when "this" comes with no selection.
    - \`outline\`: the layer tree with boxes, x and y relative to the outlined layer; \`node: "0:0"\` lists the pages.
      A layer with \`$children="N"\` has more children than listed: outline it on its own. An instance names its
      \`component\` and \`variant\`, so repeated cards show without a read.
    - \`nodes_find\`: layers by name, type, text or component.
-   - \`node_show\`: selects a layer and brings it into view, so the user sees which one you mean.
+   - \`node_show\`: brings layers into view (fitted or at a zoom) and selects them, so the user sees which you mean.
+   - \`changes_since\`: what the designer changed since you last looked (a cursor), to read again only that.
 3. **Read one section.** \`design_read\` returns the section as XML (see \`guide xml\`), then JSON with tokens, text
    styles, fonts, assets, hints and truncated. Read sections, not whole pages: past \`maxChars\` (80 000) the deepest
    branches are left empty with \`$truncated="true"\` and their ids listed in \`truncated\`; read each on its own.
@@ -31,9 +34,15 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    end), a text's lines and line heights, overflow, interactions with their transitions, a component's variant.
    \`measure\` gives the distances between layers, each from the one before (gaps, aligned edges, insets).
    **Compare variants.** \`nodes_diff\` says how one layer differs from another (A/B screens): the layers only one
-   has, the attributes that differ, and icons whose drawing differs.
+   has, the attributes that differ, and icons whose drawing differs. \`variants_read\` gives a component's states as
+   differences from its default (build :hover, :active, :disabled from them). \`breakpoints_find\` finds a screen at the
+   page's other widths, for the media queries. \`flow_read\` maps the prototype: screens and the links between them.
+   A screenshot in another variable mode (\`modes: {"Theme": "Dark"}\`) shows a theme without switching it in Figma.
 5. **The design system.** \`tokens_read\`: variables with every mode (light, dark…) and styles, as CSS or JSON.
-   \`components_read\`: the components a page uses, or the file defines, with variants and properties.
+   \`tokens_usage\`: the layers a token is used on. \`components_read\`: the components a page uses, or the file
+   defines, with variants and properties. \`design_audit\`: the scale a design uses (spacing, radii, font sizes,
+   colours) and what is off it, for a file without tokens. \`contrast_check\`: every text's WCAG contrast.
+   \`fonts_check\`: the fonts used and where the build gets each (Google Fonts links).
 6. **Files.** \`assets_export\`: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
    images as they were placed (originals); \`width\` sizes a render by the CSS width the build shows it at (110 at
    scale 2: 220 px). When a file gets another name than design_read planned (\`planned\`), use the path it gives.

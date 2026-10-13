@@ -42,13 +42,17 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | Tool | What it is for |
 | --- | --- |
 | `status` | The connected files, which one tools use, and what to do when none is |
-| `selection_get`, `node_show`, `nodes_find`, `outline` | What the user picked, showing a layer, finding layers, a frame's layer tree |
+| `file_map`, `outline`, `nodes_find` | Every page with its frames and sections in one call; a frame's layer tree (instances name their component); layers by name, type, text or component |
+| `selection_get`, `selection_wait`, `viewport_get`, `node_show` | What the user picked, or waiting for them to pick; what they are looking at; showing layers, fitted or at a zoom |
+| `changes_since` | What the designer changed since the agent last looked, by whom |
 | `design_read` | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files |
-| `inspect` | Layers as Figma has them, without code: layout and painted boxes, the fill with its style or variables, how strokes paint, every effect's parameters, a text's lines and line heights, overflow, interactions with their transitions |
-| `measure`, `nodes_diff` | The distances between layers (gaps, aligned edges, insets); how one layer differs from another, as A/B variants |
-| `screenshot`, `image_compare` | A layer, or a region of it, as PNG; the same render compared with a PNG of your build (rmse, differing pixels, edges off by N px) |
+| `inspect`, `measure` | Layers as Figma has them, without code: layout and painted boxes, the fill with its style or variables, how strokes paint, every effect's parameters, a text's lines and line heights, overflow, interactions; the distances between layers |
+| `nodes_diff`, `variants_read`, `breakpoints_find` | How one layer differs from another (A/B variants); a component's states as differences from its default; a screen at its other widths |
+| `flow_read` | The prototype as screens and the links between them, for an app's routes |
+| `screenshot`, `image_compare` | A layer, or a region of it, as PNG, in a variable mode if you like; the same render compared with a PNG of your build (rmse, differing pixels, edges off by N px) |
 | `assets_export` | Icons and images as SVG, PNG, JPG, WebP or PDF, sized by a CSS width if you like, originals included |
-| `tokens_read`, `components_read` | Variables with every mode and styles, as CSS or JSON; the components a page uses, with variants and properties |
+| `tokens_read`, `tokens_usage`, `components_read` | Variables with every mode and styles, as CSS or JSON; the layers a token is used on; the components a page uses, with variants and properties |
+| `design_audit`, `contrast_check`, `fonts_check` | The scale a design uses and what is off it; every text's WCAG contrast; where the build gets each font |
 | `code_connect_read` | The project's Figma Code Connect templates, what each connects, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images |
 | `tokens_apply` | Variables (collections, modes, aliases) and styles, in `tokens_read`'s shape |
