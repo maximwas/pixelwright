@@ -4,6 +4,7 @@ import { px } from "../css/format.ts";
 import { interactionAttributes } from "../css/interactions.ts";
 import { nodeCss } from "../css/node-css.ts";
 import { baseSegment, segmentCss, textStyleCss } from "../css/text.ts";
+import { styleName } from "../css/tokens.ts";
 import type { CssContext } from "../types/css.ts";
 import type { DesignRead, DesignSpan, DesignXmlOptions, PlannedAsset } from "../types/design.ts";
 import type { Snapshot, SnapshotNode, SnapshotPaint, SnapshotStyle, TextSegment } from "../types/snapshot.ts";
@@ -311,7 +312,9 @@ class DesignWriter {
       return undefined;
     }
 
-    const style = Object.values(this.snapshot.styles).find((candidate: SnapshotStyle) => candidate.name === name);
+    const style = Object.values(this.snapshot.styles).find(
+      (candidate: SnapshotStyle) => candidate.type === "TEXT" && styleName(candidate) === name,
+    );
     const css = style === undefined ? null : textStyleCss(style);
 
     if (css !== null) {

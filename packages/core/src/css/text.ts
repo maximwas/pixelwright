@@ -4,6 +4,7 @@ import { weightOf } from "../utils/font-weight.ts";
 import { colorCss } from "./color.ts";
 import { decimal, px } from "./format.ts";
 import { paintsCss, UNMAPPED } from "./paint.ts";
+import { styleName } from "./tokens.ts";
 
 const TEXT_TRANSFORMS: Readonly<Record<string, string>> = {
   UPPER: "uppercase",
@@ -111,7 +112,7 @@ export function segmentCss(
 
   return {
     css,
-    ...(styled === undefined ? {} : { textStyle: styled.name }),
+    ...(styled === undefined ? {} : { textStyle: styleName(styled) }),
   };
 }
 

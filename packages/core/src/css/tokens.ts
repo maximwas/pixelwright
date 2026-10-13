@@ -14,6 +14,11 @@ export function tokenName(name: string): string {
   return cleaned === "" ? `--token-${fnv1a(name)}` : `--${cleaned}`;
 }
 
+/** A style's name as the XML writes it (textStyle): numbered like its token when another of its kind shares it (h1-2). */
+export function styleName(style: { readonly name: string; readonly duplicate?: number | undefined }): string {
+  return style.duplicate === undefined ? style.name : `${style.name}-${style.duplicate}`;
+}
+
 /** A style's custom property: its name's, numbered when other styles of its kind share the name (--Black-2). */
 export function styleTokenName(style: { readonly name: string; readonly duplicate?: number | undefined }): string {
   const name = tokenName(style.name);

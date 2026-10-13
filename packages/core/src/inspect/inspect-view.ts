@@ -214,10 +214,10 @@ function textOf(layer: InspectedLayer): NonNullable<InspectedLayerView["text"]> 
   let current = "";
 
   for (const char of text.characters) {
-    if (char === " " || char === "\n") {
+    if (char === "\u2028" || char === "\u2029" || char === "\n") {
       lines.push({
         text: current,
-        break: char === "\n" ? "paragraph" : "line",
+        break: char === "\u2028" ? "line" : "paragraph",
       });
       current = "";
     } else {

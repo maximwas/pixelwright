@@ -251,3 +251,46 @@ describe("tokens_usage", () => {
     });
   });
 });
+
+describe("same-named text styles in design_apply's lookup", () => {
+  it("find the second h1 by the name reads give it, h1-2", async () => {
+    const h1 = (id: string) => ({
+      id,
+      name: "h1",
+      type: "TEXT",
+      remote: false,
+      fontName: {
+        family: "Inter",
+        style: "Bold",
+      },
+      fontSize: 32,
+      lineHeight: { unit: "AUTO" },
+      letterSpacing: {
+        unit: "PIXELS",
+        value: 0,
+      },
+      textCase: "ORIGINAL",
+      textDecoration: "NONE",
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [],
+      }),
+      {
+        styles: {
+          "S:t1": h1("S:t1"),
+          "S:t2": h1("S:t2"),
+        },
+        localStyles: { text: [h1("S:t1"), h1("S:t2")] },
+      },
+    );
+
+    const index = await tokenIndex();
+
+    expect(await index.textStyle("h1")).toBe("S:t1");
+    expect(await index.textStyle("h1-2")).toBe("S:t2");
+  });
+});

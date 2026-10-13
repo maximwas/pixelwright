@@ -62,7 +62,8 @@ export function interactionAttributes(reactions: readonly SnapshotReaction[]): [
     }
 
     const attribute =
-      TRIGGER_ATTRIBUTES[reaction.trigger.type] ?? `$on-${words(reaction.trigger.type).replaceAll(" ", "-")}`;
+      TRIGGER_ATTRIBUTES[reaction.trigger.type] ??
+      `$on-${words(reaction.trigger.type.replace(/^ON_/, "")).replaceAll(" ", "-")}`;
 
     byAttribute.set(attribute, [...(byAttribute.get(attribute) ?? []), interactionSummary(reaction)]);
   }

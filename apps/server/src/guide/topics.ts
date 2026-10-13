@@ -115,8 +115,9 @@ text-decoration-thickness), text-align, text-wrap, color.
 - \`$css\` holds \`property: value\` pairs only, explained in hints: \`blur: progressive from 0px at 50% 0% to 8px at
   50% 100%\` (a blur that changes across the layer; \`filter\` holds its end radius) and \`stroke-align: center\` (half
   of the stroke paints outside the box, which a border-box border does not; \`inspect\` gives the painted box).
-- \`$on-click\`, \`$on-hover\`, \`$on-press\`, \`$on-drag\`, \`$on-mouse-enter\`, \`$on-mouse-leave\`, \`$on-key\`,
-  \`$after-timeout\`: the layer's prototype interactions, e.g. \`$on-hover="change to Type=Hover; smart animate 300ms
+- \`$on-click\`, \`$on-hover\`, \`$on-press\`, \`$on-drag\`, \`$on-mouse-enter\`, \`$on-mouse-leave\`,
+  \`$on-mouse-down\`, \`$on-mouse-up\`, \`$on-key\`, \`$after-timeout\`, \`$on-media-hit\`, \`$on-media-end\` (any other trigger
+  as \`$on-<trigger>\`): the layer's prototype interactions, e.g. \`$on-hover="change to Type=Hover; smart animate 300ms
   ease-out"\` (a variant to switch to on hover, and how: build it as the hover state). A link stays \`href\`.
 
 ## Text
@@ -155,7 +156,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 - Two styles of one kind with one name (two paint styles "Black") are different tokens: the file's first keeps
   \`--Black\`, the next are \`--Black-2\`, \`--Black-3\` (tokens_read notes them with their values). Use the one the
   layer names. The file's own styles come first; library styles are numbered among those the page uses, so every tool
-  means one style by a name on that page (a read from another page may number a library's Black differently).
+  means one style by a name on that page (a read from another page may number a library's Black differently). Text
+  styles are numbered alike: the second "h1" is \`--h1-2-font\` and \`textStyle="h1-2"\`, and design_apply binds it so.
 
 ## tokens_read
 

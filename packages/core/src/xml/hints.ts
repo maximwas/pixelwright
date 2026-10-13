@@ -67,7 +67,7 @@ const listed = (examples: readonly string[]) =>
 /** One hint per kind, however many layers it is about. */
 const LAYER_HINTS = {
   manual: (examples: readonly string[]) =>
-    `${examples.length === 1 ? "A frame has" : `${examples.length} frames have`} no auto layout, so their children are placed absolutely (${listed(examples)}): build them as a flow if they are meant to resize.`,
+    `${examples.length === 1 ? "A frame has no auto layout, so its children are" : `${examples.length} frames have no auto layout, so their children are`} placed absolutely (${listed(examples)}): build them as a flow if they are meant to resize.`,
   background: (examples: readonly string[]) =>
     `${examples.length === 1 ? "A rectangle covers its parent" : `${examples.length} rectangles cover their parents`} under the content (${listed(examples)}): write each as its parent's background, not as an element.`,
   wrapper: (examples: readonly string[]) =>
@@ -86,7 +86,6 @@ const LAYER_HINTS = {
 
 type LayerHint = keyof typeof LAYER_HINTS;
 
-/** A color written raw that equals a style's or a variable's value. */
 /** Paint styles the XML names whose value no layer here could give: a var() the build cannot resolve on its own. */
 function valuelessTokenHints(
   snapshot: Snapshot,
@@ -118,7 +117,7 @@ function numberedTokenHints(
   for (const style of Object.values(snapshot.styles)) {
     const name = styleTokenName(style);
 
-    if (style.duplicate === undefined || !xml.includes(`var(${name}`)) {
+    if (style.duplicate === undefined || !usesToken(xml, name)) {
       continue;
     }
 
@@ -133,6 +132,7 @@ function numberedTokenHints(
   return [...hints.values()];
 }
 
+/** A color written raw that equals a style's or a variable's value. */
 function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
   const tokens = new Map<string, string>();
 
@@ -239,7 +239,8 @@ function layerHints(node: SnapshotNode, parent: SnapshotNode | null, root: Snaps
 
   const room = parent === null ? null : roomIn(parent);
 
-  if (room !== null && node.layoutPositioning !== "ABSOLUTE") {
+  // A turned layer's width and height are not the box it takes in the flow.
+  if (room !== null && node.layoutPositioning !== "ABSOLUTE" && Math.abs(node.rotation ?? 0) < 0.5) {
     if (node.width > room.width + 0.5) {
       hints.push(["overflow", `${label(node)} ${px(node.width)} wide in ${px(room.width)}`]);
     } else if (node.height > room.height + 0.5) {
@@ -351,4 +352,9 @@ function missingFontHints(nodes: readonly SnapshotNode[]): string[] {
       .map(label)
       .join(", ")}: Figma could not lay these texts out, so their sizes may be off.`,
   ];
+}
+
+/** Whether the XML names this token itself: var(--White-2) or var(--White-2, …), not var(--White-20). */
+function usesToken(xml: string, token: string): boolean {
+  return xml.includes(`var(${token})`) || xml.includes(`var(${token},`);
 }

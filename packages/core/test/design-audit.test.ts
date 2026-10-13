@@ -78,8 +78,8 @@ describe("design_audit", () => {
             fills: [solid(0x191a24)],
             fillStyleId: "S:d",
           }),
-          text("1:3", 14),
-          text("1:4", 13),
+          text("1:3", 24),
+          text("1:4", 23),
         ],
       }),
       styles: {
@@ -103,13 +103,40 @@ describe("design_audit", () => {
         count: 2,
       },
     ]);
-    expect(audit.fontSizes.map((size) => size.value)).toEqual([13, 14]);
+    expect(audit.fontSizes.map((size) => size.value)).toEqual([23, 24]);
     expect(audit.colors).toContainEqual({
       value: "#191A23",
       count: 1,
     });
     expect(audit.notes.join("\n")).toMatch(/13px is off the 4px grid/);
-    expect(audit.notes.join("\n")).toMatch(/13px and 14px font sizes are a pixel apart/);
+    expect(audit.notes.join("\n")).toMatch(/23px and 24px font sizes are a pixel apart/);
     expect(audit.notes.join("\n")).toMatch(/#191A23 is a hair from --Dark \(#191A24\)/);
+  });
+});
+
+describe("design_audit's notes, quieter", () => {
+  it("leave pill radii, a space-between gap and small sizes a pixel apart alone", () => {
+    const audit = designAudit({
+      root: box("2:1", {
+        layoutMode: "HORIZONTAL",
+        primaryAxisAlignItems: "SPACE_BETWEEN",
+        itemSpacing: 10,
+        children: [
+          box("2:2", {
+            width: 120,
+            height: 44,
+            cornerRadius: 22,
+          }),
+          box("2:3", { cornerRadius: 999 }),
+          text("2:4", 12),
+          text("2:5", 13),
+        ],
+      }),
+      styles: {},
+      variables: {},
+    });
+
+    expect(audit.spacing).toEqual([]);
+    expect(audit.notes.filter((note) => !note.includes("#191A23"))).toEqual([]);
   });
 });

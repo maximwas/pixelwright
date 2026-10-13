@@ -10,6 +10,8 @@ import type { Snapshot, SnapshotNode, SnapshotPaint } from "../types/snapshot.ts
 const GRID = 4;
 /** How far apart two colour channels (0–255) may be and still look the same. */
 const HAIR = 3;
+/** Below this, sizes a pixel apart are a scale's own steps (12, 13, 14), not a slip. */
+const NEAR_FROM = 16;
 const SPACING_KEYS = [
   "itemSpacing",
   "counterAxisSpacing",
@@ -20,7 +22,7 @@ const SPACING_KEYS = [
 ] as const;
 const RADIUS_KEYS = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
 
-type Tally = Map<string, { value: number; token?: string; count: number; where: string }>;
+type Tally = Map<string, { value: number; token?: string; count: number; where: string; full?: boolean }>;
 
 /**
  * The scale a layer uses, from its snapshot: spacing, radii, font sizes, line heights and colours with how often each
@@ -39,13 +41,14 @@ export function designAudit(snapshot: Snapshot): DesignAudit {
   const fontSizes: Tally = new Map();
   const lineHeights = new Map<string, number>();
   const colors = new Map<string, { value: string; token?: string; count: number }>();
-  const add = (tally: Tally, value: number, where: string, token?: string) => {
+  const add = (tally: Tally, value: number, where: string, token?: string, full = false) => {
     const key = `${value} ${token ?? ""}`;
     const entry = tally.get(key) ?? {
       value,
       count: 0,
       where,
       ...(token === undefined ? {} : { token }),
+      ...(full ? { full } : {}),
     };
 
     entry.count += 1;
@@ -88,21 +91,26 @@ export function designAudit(snapshot: Snapshot): DesignAudit {
     if (node.layoutMode !== undefined) {
       for (const key of SPACING_KEYS) {
         const value = node[key];
+        // Space-between places the children itself: the gap set on the frame does nothing.
+        const ignored = key === "itemSpacing" && node.primaryAxisAlignItems === "SPACE_BETWEEN";
 
-        if (typeof value === "number" && value > 0) {
+        if (typeof value === "number" && value > 0 && !ignored) {
           add(spacing, value, `${key} of ${where}`, tokenOf(key));
         }
       }
     }
 
+    // A radius of half the short side or more rounds the ends fully (a pill): its number is not a design choice.
+    const full = (value: number) => value >= Math.min(node.width, node.height) / 2 - 0.5;
+
     if (typeof node.cornerRadius === "number" && node.cornerRadius > 0) {
-      add(radii, node.cornerRadius, where, tokenOf("topLeftRadius"));
+      add(radii, node.cornerRadius, where, tokenOf("topLeftRadius"), full(node.cornerRadius));
     } else if (node.cornerRadius === MIXED) {
       for (const key of RADIUS_KEYS) {
         const value = node[key];
 
         if (typeof value === "number" && value > 0) {
-          add(radii, value, where, tokenOf(key));
+          add(radii, value, where, tokenOf(key), full(value));
         }
       }
     }
@@ -170,7 +178,7 @@ export function designAudit(snapshot: Snapshot): DesignAudit {
 
 function offGrid(tally: Tally, what: string): string[] {
   return [...tally.values()]
-    .filter((entry) => entry.token === undefined && entry.value > 2 && entry.value % GRID !== 0)
+    .filter((entry) => entry.token === undefined && !entry.full && entry.value > 2 && entry.value % GRID !== 0)
     .map(
       (entry) =>
         `${entry.value}px is off the ${GRID}px grid (${what}, ${entry.where}${entry.count > 1 ? ` and ${entry.count - 1} more` : ""}).`,
@@ -183,7 +191,7 @@ function pixelApart(tally: Tally, what: string): string[] {
   return values
     .slice(1)
     .map((value, index) => [values[index] as number, value] as const)
-    .filter(([a, b]) => b - a <= 1)
+    .filter(([a, b]) => b - a <= 1 && a >= NEAR_FROM)
     .map(([a, b]) => `${a}px and ${b}px ${what} are a pixel apart: one of them on purpose?`);
 }
 

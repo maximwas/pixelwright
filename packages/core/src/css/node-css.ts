@@ -56,7 +56,10 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
 
   if (node.type === "LINE") {
     lineCss(node, parent, css, context);
-    centredStroke(node, readOnly);
+
+    if (Array.isArray(node.strokes) && node.strokes.some((paint) => paint.visible !== false)) {
+      centredStroke(node, readOnly);
+    }
   } else {
     sizeCss(node, parent, context, css, positionCss(node, parent, context, css));
     gridChildCss(node, parent, css);
@@ -472,7 +475,6 @@ function borderCss(
   centredStroke(node, readOnly);
 }
 
-/** A centred stroke paints half of itself outside the layer's box, which a border-box border cannot. */
 /** A frame's visible layout grids, read-only: the columns, rows or square grid the design is laid on. */
 function layoutGridsCss(node: SnapshotNode, readOnly: [string, string][]): void {
   const grids = (node.layoutGrids ?? []).filter((grid) => grid.visible !== false).map(layoutGridText);
@@ -496,6 +498,7 @@ function layoutGridText(grid: NonNullable<SnapshotNode["layoutGrids"]>[number]):
   return `${grid.count ?? 1} ${unit} ${alignment}${width}, gutter ${px(grid.gutterSize ?? 0)}${edge}`;
 }
 
+/** A centred stroke paints half of itself outside the layer's box, which a border-box border cannot. */
 function centredStroke(node: SnapshotNode, readOnly: [string, string][]): void {
   if (node.strokeAlign === "CENTER") {
     readOnly.push(["stroke-align", "center"]);

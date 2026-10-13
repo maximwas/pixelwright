@@ -1,4 +1,4 @@
-import { closest, type RawTokens, styleTokenName, tokenName, variableTokenName } from "@pixelwright/core";
+import { closest, type RawTokens, styleName, styleTokenName, tokenName, variableTokenName } from "@pixelwright/core";
 import { variables } from "./variables.ts";
 import { WriteError } from "./write-error.ts";
 
@@ -35,8 +35,8 @@ export async function tokenIndex({ importing = true }: { importing?: boolean } =
         styles.set(key, style.id);
       }
 
-      if (style.type === "TEXT" && !textStyles.has(style.name)) {
-        textStyles.set(style.name, style.id);
+      if (style.type === "TEXT" && !textStyles.has(styleName(style))) {
+        textStyles.set(styleName(style), style.id);
       }
     }
 
