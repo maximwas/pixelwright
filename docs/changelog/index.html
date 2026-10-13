@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixelwright changelog</title>
+    <meta name="description" content="Every release of Pixelwright, the MCP server and Figma plugin: the version, the day and what changed." />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="../site.css" />
+    <script src="../nav.js" defer></script>
+  </head>
+  <body class="docs">
+    <a class="skip" href="#main">Skip to the content</a>
+    <div class="progress" aria-hidden="true"></div>
+    <header class="top">
+      <div class="top-inner">
+        <a class="wordmark" href="../" aria-label="Pixelwright home">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d99ff" /><rect x="9" y="9" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.2" /><g fill="#0d99ff" stroke="#fff" stroke-width="1.8"><rect x="6.2" y="6.2" width="5.6" height="5.6" /><rect x="20.2" y="6.2" width="5.6" height="5.6" /><rect x="6.2" y="20.2" width="5.6" height="5.6" /><rect x="20.2" y="20.2" width="5.6" height="5.6" /></g></svg>
+          <span class="wordmark-text">Pixelwright</span>
+        </a>
+        <nav class="links" aria-label="Site">
+          <a href="../">Home</a>
+          <a href="../docs/">Docs</a>
+          <a href="../changelog/">Changelog</a>
+          <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="https://ko-fi.com/maksymvasianin">Support</a>
+        </nav>
+        <a class="github" href="https://github.com/maximwas/pixelwright">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </header>
+    <div class="doc">
+      <nav class="toc" aria-label="On this page" data-follow="first">
+        <ol>
+          <li><a href="#v0-1-0">0.1.0 — 2026-10-13</a></li>
+        </ol>
+      </nav>
+      <main id="main" class="doc-body">
+        <h1>Pixelwright changelog</h1>
+        <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-1-0">
+          <h2>0.1.0 — 2026-10-13</h2>
+<p>The first release: an MCP server and a Figma plugin that let AI agents (Claude Code, Cursor, Codex and other MCP
+clients) read and edit the Figma file you have open, through the Plugin API: no token, no API rate limits, any plan.</p>
+<h4>Added</h4>
+<ul>
+<li><code>npx -y pixelwright@latest</code> sets up Claude Code and Cursor, shows what to paste for other clients, and puts the
+plugin in place. The plugin pairs with the server once, with a code.</li>
+<li>Reading: <code>design_read</code> gives a section as XML with CSS, tokens as <code>var(--Name)</code> and assets as files; <code>inspect</code> and
+<code>measure</code> give layers as Figma has them; <code>outline</code>, <code>file_map</code> and <code>nodes_find</code> find your way around a file.</li>
+<li>Comparing and checking: <code>nodes_diff</code>, <code>variants_read</code> and <code>breakpoints_find</code> show how layers, states and screen
+sizes differ; <code>screenshot</code> and <code>image_compare</code> hold your build against the design; <code>design_audit</code>,
+<code>contrast_check</code> and <code>fonts_check</code> check the scale, contrast and fonts.</li>
+<li>Tokens and components: <code>tokens_read</code> (CSS or JSON, every mode), <code>tokens_usage</code>, <code>components_read</code>, and
+<code>code_connect_read</code> with your Figma Code Connect templates, run locally on any plan.</li>
+<li>Prototype, selection and changes: <code>flow_read</code>, <code>selection_get</code>, <code>selection_wait</code>, <code>viewport_get</code>, <code>node_show</code>
+and <code>changes_since</code>.</li>
+<li>Writing, when you switch on Allow edits in the plugin: <code>design_apply</code> writes the same XML back (new layers,
+instances, components and variants, images), <code>tokens_apply</code> writes variables and styles, <code>nodes_delete</code> and
+<code>execute</code>. Each write is one undo step.</li>
+<li>Several files and several MCP clients at once, sharing one bridge.</li>
+</ul>
+
+        </section>
+      </main>
+    </div>
+    <footer class="bottom">
+      <div class="bottom-inner">
+        <div>
+          <p>Built from CHANGELOG.md (scripts/build-docs.mjs). Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
+        </div>
+        <p class="footer-links">
+          <a href="../">Home</a>
+          <a href="https://github.com/maximwas/pixelwright">GitHub</a>
+          <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="../changelog/">Changelog</a>
+          <a href="https://github.com/maximwas/pixelwright/discussions">Feedback</a>
+          <a href="https://ko-fi.com/maksymvasianin">Ko-fi</a>
+          <a href="https://send.monobank.ua/jar/7o9oMrbXTj">monobank</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

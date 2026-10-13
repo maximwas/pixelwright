@@ -3,7 +3,7 @@
 An MCP server that lets AI agents (Claude Code, Cursor, Codex) read and edit the Figma files you have open in Figma
 Desktop, through a Figma plugin: no REST API, no access token, no API rate limits, any Figma plan.
 
-[Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [npm](https://www.npmjs.com/package/pixelwright)
+[Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [Changelog](https://maximwas.github.io/pixelwright/changelog/) · [npm](https://www.npmjs.com/package/pixelwright)
 
 [![npm version](https://img.shields.io/npm/v/pixelwright)](https://www.npmjs.com/package/pixelwright)
 [![npm downloads](https://img.shields.io/npm/dm/pixelwright)](https://www.npmjs.com/package/pixelwright)
@@ -166,22 +166,28 @@ Figma plugin), `examples/`, and `docs/` (the website, served by GitHub Pages).
 
 `main` takes changes only through pull requests, with CI's `check` job passing; direct pushes, force pushes and
 deleting it are blocked (a repository ruleset). Work happens on `develop` or a topic branch. Set the same version in
-`apps/server/package.json` and `apps/plugin/package.json` on a branch, open a pull request into `main` and merge it,
-then tag the merge commit:
+`apps/server/package.json` and `apps/plugin/package.json` on a branch, give it its section in `CHANGELOG.md`
+(`## 1.2.3 — <date>`; the format is at the top of that file) and run `pnpm build:docs` for the website's page, open a
+pull request into `main` and merge it, then tag the merge commit:
 
 ```bash
 git switch main && git pull
 git tag v1.2.3 && git push origin v1.2.3
 ```
 
-The Release workflow checks that the tag matches both versions, runs the checks, publishes `pixelwright` to npm
-(trusted publishing, with provenance; a version npm has already is left alone) and creates a GitHub release with the
-plugin as a zip. The Figma Community listing is published from Figma Desktop (`apps/plugin/COMMUNITY.md`).
+The Release workflow checks that the tag matches both versions and has its section in `CHANGELOG.md`, runs the checks,
+publishes `pixelwright` to npm (trusted publishing, with provenance; a version npm has already is left alone) and
+creates a GitHub release with the plugin as a zip and that section as its notes. The Figma Community listing is published from Figma Desktop (`apps/plugin/COMMUNITY.md`).
 
 The first version goes to npm by hand, because npm sets up trusted publishing only for a package that exists:
 `pnpm build && pnpm --filter pixelwright pack`, then `npm publish apps/server/pixelwright-<version>.tgz --access public`
 from the maintainer's account. Then add the trusted publisher on npmjs.com (GitHub Actions, `maximwas/pixelwright`,
 `release.yml`) and tag the version as above: the workflow skips npm and makes the GitHub release.
+
+## Changelog
+
+Every release, with its date and what changed: [CHANGELOG.md](CHANGELOG.md), also on the
+[website](https://maximwas.github.io/pixelwright/changelog/).
 
 ## Feedback
 

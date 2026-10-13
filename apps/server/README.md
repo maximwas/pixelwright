@@ -3,7 +3,7 @@
 An MCP server that lets AI agents (Claude Code, Cursor, Codex) read and edit the Figma files you have open in Figma
 Desktop, through a Figma plugin: no REST API, no access token, no API rate limits, any Figma plan.
 
-[Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [npm](https://www.npmjs.com/package/pixelwright)
+[Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [Changelog](https://maximwas.github.io/pixelwright/changelog/) · [npm](https://www.npmjs.com/package/pixelwright)
 
 > Unofficial. Not affiliated with or endorsed by Figma. "Figma" is a trademark of Figma, Inc.
 
@@ -140,6 +140,11 @@ Every MCP client session runs its own server, and they share one bridge port. Wh
 one (another client's, still open) holds the port, the older one hands the port over and switches its bridge off: its
 status then asks you to restart Pixelwright in that client (`/mcp` in Claude Code). A plugin turned away by an older
 server keeps trying, and connects once the newer one holds the port.
+
+## Changelog
+
+Every release, with its date and what changed: [CHANGELOG.md](https://github.com/maximwas/pixelwright/blob/main/CHANGELOG.md),
+also on the [website](https://maximwas.github.io/pixelwright/changelog/).
 
 ## Feedback
 

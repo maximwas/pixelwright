@@ -1,7 +1,8 @@
 name: Release
 
 # A tag v1.2.3 releases that version: the pixelwright package goes to npm (with the Figma plugin's build inside), and a
-# GitHub release carries the plugin as a zip for Import plugin from manifest. npm trusts this workflow (trusted
+# GitHub release carries the plugin as a zip for Import plugin from manifest, with the version's section of CHANGELOG.md
+# as its notes. npm trusts this workflow (trusted
 # publishing, set on the package's npm settings page), so the repository holds no token and the package gets
 # provenance. npm sets up trusted publishing only for a package that exists, so the first version is published by hand
 # (README, Releasing); its tag then skips npm and still makes the GitHub release. The Figma Community listing is
@@ -33,6 +34,9 @@ jobs:
             version="v$(node -p "require('./apps/$app/package.json').version")"
             test "$version" = "$GITHUB_REF_NAME" || { echo "apps/$app is $version, the tag is $GITHUB_REF_NAME"; exit 1; }
           done
+      - name: CHANGELOG.md has this version
+        run: |
+          grep -q "^## ${GITHUB_REF_NAME#v} — " CHANGELOG.md || { echo "Add a '## ${GITHUB_REF_NAME#v} — <YYYY-MM-DD>' section to CHANGELOG.md"; exit 1; }
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
@@ -55,6 +59,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # The release's notes: this version's section of CHANGELOG.md, then how to install.
+          awk -v heading="## ${GITHUB_REF_NAME#v} — " 'index($0, heading) == 1 { on = 1; next } on && /^## / { exit } on' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          printf '\nSet up: `npx -y pixelwright@latest` in a terminal. The zip below is the Figma plugin for Plugins → Development → Import plugin from manifest.\n' >> "$RUNNER_TEMP/notes.md"
           gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/pixelwright-figma-plugin-${GITHUB_REF_NAME#v}.zip" \
-            --title "Pixelwright ${GITHUB_REF_NAME#v}" --generate-notes \
-            --notes "Set up: \`npx -y pixelwright@latest\` in a terminal. The zip below is the Figma plugin for Plugins → Development → Import plugin from manifest."
+            --title "Pixelwright ${GITHUB_REF_NAME#v}" --notes-file "$RUNNER_TEMP/notes.md"
