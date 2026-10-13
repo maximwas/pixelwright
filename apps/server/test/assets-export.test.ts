@@ -3,6 +3,7 @@ import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BridgeError } from "@pixelwright/core";
+import { encode } from "fast-png";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../src/assets/written-files.ts";
 import { exportAssets } from "../src/mcp/tools/assets.ts";
@@ -307,5 +308,103 @@ describe("assets_export review fixes", () => {
       kind: "icon",
       format: "PNG",
     });
+  });
+});
+
+/** A layer 55 px wide whose render is a half-transparent 4×4 PNG, for the CSS width and WebP. */
+function translucent() {
+  const exported: { node: string; scale: number; format: string }[] = [];
+  const png = Buffer.from(
+    encode({
+      width: 4,
+      height: 4,
+      channels: 4,
+      data: new Uint8Array(64).fill(128),
+    }),
+  );
+  const bridge: BridgeView = {
+    status: () => {
+      throw new Error("not used");
+    },
+    pairing: () => null,
+    plugins: () => [
+      {
+        session: "s1",
+        info: pluginInfo(),
+        active: true,
+      },
+    ],
+    request: async (op, input) => {
+      const { node, offset = 0 } = input as { node: string; offset?: number };
+
+      if (op === "snapshot") {
+        return layer(node, "Badge", { width: 55 });
+      }
+
+      if (offset === 0) {
+        exported.push(input as (typeof exported)[number]);
+      }
+
+      return {
+        scale: (input as { scale: number }).scale,
+        totalBytes: png.length,
+        bytes: png.subarray(offset).toString("base64"),
+      };
+    },
+  };
+
+  return {
+    bridge,
+    exported,
+  };
+}
+
+describe("assets_export sizes and WebP", () => {
+  it("renders at the CSS width asked, times the density", async () => {
+    const { bridge, exported } = translucent();
+
+    await exportAssets(bridge, {
+      nodes: ["5:1"],
+      dir: await mkdtemp(join(tmpdir(), "pixelwright-export-")),
+      format: "PNG",
+      width: 110,
+      scale: 2,
+      original: false,
+    });
+
+    expect(exported[0]?.scale).toBe(4);
+  });
+
+  it("refuses a CSS width Figma cannot render, naming the largest", async () => {
+    const result = await exportAssets(translucent().bridge, {
+      nodes: ["5:1"],
+      dir: await mkdtemp(join(tmpdir(), "pixelwright-export-")),
+      width: 220,
+      scale: 2,
+      original: false,
+    });
+
+    expect(result.errors[0]?.message).toMatch(/at most 4× the layer: 110 px at 2x/);
+  });
+
+  it("writes WebP, keeping the transparency", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
+    const { bridge, exported } = translucent();
+    const result = await exportAssets(bridge, {
+      nodes: ["5:1"],
+      dir,
+      format: "WEBP",
+      original: false,
+    });
+    const bytes = await readFile(join(dir, "badge.webp"));
+
+    expect(exported[0]?.format).toBe("PNG");
+    expect(result.files[0]).toMatchObject({
+      format: "WEBP",
+      path: join(dir, "badge.webp"),
+    });
+    expect([bytes.subarray(0, 4).toString(), bytes.subarray(8, 12).toString()]).toEqual(["RIFF", "WEBP"]);
+    // VP8X with its alpha flag, or a lossless VP8L: the transparency is in the file.
+    expect(bytes.subarray(12, 16).toString() === "VP8L" || (bytes[20] ?? 0) & 0x10).toBeTruthy();
   });
 });

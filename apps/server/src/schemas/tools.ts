@@ -224,8 +224,25 @@ export const AssetsExportInputSchema = z.object({
     .describe(
       "The folder to write into; created if missing. Files already there are never overwritten with other bytes.",
     ),
-  format: z.enum(["PNG", "JPG", "SVG", "PDF"]).exactOptional().describe("For nodes: the format of every file."),
-  scale: z.number().min(0.01).max(4).exactOptional().describe("For PNG and JPG: pixels per Figma pixel. Default 2."),
+  format: z
+    .enum(["PNG", "JPG", "WEBP", "SVG", "PDF"])
+    .exactOptional()
+    .describe("For nodes: the format of every file. WEBP is rendered as PNG by Figma and encoded here."),
+  scale: z
+    .number()
+    .min(0.01)
+    .max(4)
+    .exactOptional()
+    .describe("For PNG, JPG and WEBP: pixels per Figma pixel, or per CSS px with width. Default 2."),
+  width: z
+    .number()
+    .positive()
+    .max(16_384)
+    .exactOptional()
+    .describe(
+      "For nodes as PNG, JPG or WEBP: the CSS width the build shows the layer at; the file is width × scale px wide (110 at scale 2: 220 px).",
+    ),
+  quality: z.number().int().min(1).max(100).exactOptional().describe("For WEBP: 1 to 100. Default 85."),
   original: z
     .boolean()
     .default(false)

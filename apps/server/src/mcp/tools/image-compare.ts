@@ -10,7 +10,8 @@ import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
 import { ImageCompareInputSchema, ImageCompareOutputSchema } from "../../schemas/tools.ts";
 import type { RgbaImage } from "../../types/images.ts";
 import type { ToolContext } from "../../types/mcp.ts";
-import { compareImages, differenceImage, toRgba } from "../../utils/image-compare.ts";
+import { compareImages, differenceImage } from "../../utils/image-compare.ts";
+import { toRgba } from "../../utils/rgba.ts";
 import { registerTool } from "../register-tool.ts";
 import { pngPath, renderPng } from "./screenshot.ts";
 

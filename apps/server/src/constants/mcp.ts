@@ -57,3 +57,9 @@ export const EDGE_PX = 0.01;
 
 /** The most differences nodes_diff lists in each of its lists; past them it counts how many more. */
 export const MAX_DIFF_ENTRIES = 200;
+
+/** The largest scale Figma renders a layer at (its export constraint). */
+export const MAX_EXPORT_SCALE = 4;
+
+/** WebP quality when none is asked: small files, edges still clean. */
+export const WEBP_QUALITY = 85;

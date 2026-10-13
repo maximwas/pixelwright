@@ -12,10 +12,11 @@ import {
 } from "@pixelwright/core";
 import type * as z from "zod";
 import { fetchAsset } from "../../assets/fetch-asset.ts";
+import { pngToWebp } from "../../assets/webp.ts";
 import { writeAssets } from "../../assets/write-assets.ts";
 import { memoryFiles, type WrittenFiles } from "../../assets/written-files.ts";
 import { resolveTarget } from "../../bridge/target.ts";
-import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
+import { MAX_EXPORT_SCALE, RASTER_SCALE, READ_ONLY_ANNOTATIONS, WEBP_QUALITY } from "../../constants/mcp.ts";
 import { AssetsExportInputSchema, AssetsExportOutputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { describeError } from "../describe-error.ts";
@@ -43,10 +44,14 @@ export async function exportAssets(
   args: AssetsExportArgs,
   files: WrittenFiles = memoryFiles(),
 ): Promise<AssetsExport> {
-  const { nodes, from, dir, original, file } = args;
+  const { nodes, from, dir, original, file, width, quality } = args;
 
   if ((nodes === undefined) === (from === undefined)) {
     throw new BridgeError("OP_FAILED", "Give nodes or from: the layers to write, or one layer to write the assets of.");
+  }
+
+  if (width !== undefined && (from !== undefined || original)) {
+    throw new BridgeError("OP_FAILED", "width is for nodes rendered as PNG, JPG or WEBP: one CSS width per layer.");
   }
 
   // One file for the whole export: the user may switch files while it runs.
@@ -60,7 +65,10 @@ export async function exportAssets(
 
   for (const asset of planned) {
     try {
-      fetched.set(asset, await fetchAsset(bridge, asset, target));
+      const bytes = await fetchAsset(bridge, asset, target);
+
+      // Figma renders PNG; WebP is encoded here.
+      fetched.set(asset, extname(asset.src) === ".webp" ? await pngToWebp(bytes, quality ?? WEBP_QUALITY) : bytes);
     } catch (error) {
       errors.push({
         node: asset.node,
@@ -101,7 +109,7 @@ export async function exportAssets(
 async function planLayers(
   bridge: ToolContext["bridge"],
   nodes: readonly string[],
-  { dir, format, scale, original }: AssetsExportArgs,
+  { dir, format, scale, original, width }: AssetsExportArgs,
   target: Target,
   errors: AssetsExport["errors"],
 ): Promise<PlannedAsset[]> {
@@ -128,14 +136,26 @@ async function planLayers(
       // Named by the user: the layer's own export settings count even though it is the root of this read.
       const asset = classify(root, null);
       const chosen = format ?? (asset?.format === "SVG" ? "SVG" : asset?.format === "JPG" ? "JPG" : "PNG");
+      const vector = chosen === "SVG" || chosen === "PDF";
+      const density = scale ?? RASTER_SCALE;
+      // A CSS width sets the render's: density px per CSS px, so the scale over the layer's own width.
+      const sized =
+        width === undefined || vector ? scale : Math.round(((density * width) / root.width) * 10_000) / 10_000;
+
+      if (sized !== undefined && sized > MAX_EXPORT_SCALE) {
+        throw new BridgeError(
+          "OP_FAILED",
+          `${node} is ${root.width} px wide and Figma renders at most ${MAX_EXPORT_SCALE}× the layer: ${Math.floor((root.width * MAX_EXPORT_SCALE) / density)} px at ${density}x.`,
+        );
+      }
 
       planned.push({
         node,
         // An icon stays an icon in any format: rendered with everything it draws, strokes outside its box included.
-        kind: asset?.kind ?? (chosen === "SVG" ? "icon" : "image"),
-        format: chosen,
+        kind: asset?.kind ?? (vector && chosen === "SVG" ? "icon" : "image"),
+        format: chosen === "WEBP" ? "PNG" : chosen,
         src: `${dir}/${slug(root.name)}.${chosen.toLowerCase()}`,
-        ...(scale === undefined || chosen === "SVG" || chosen === "PDF" ? {} : { scale }),
+        ...(sized === undefined || vector ? {} : { scale: sized }),
       });
     } catch (error) {
       errors.push({
