@@ -4,10 +4,14 @@ import { CHANGES_MAX, OWN_WRITE_ECHO_MS } from "../constants/plugin.ts";
 type Change = OperationOutput<"changes">["changes"][number];
 type Entry = Change & { seq: number };
 
-/** The journal: the latest entry per layer, oldest first; a layer's run of changes by one hand is one entry. */
+/** The journal, oldest first: one entry per layer and hand, a layer's run of changes by one hand merged into it. */
 const entries = new Map<string, Entry>();
+/** Cursors count from the start time, so a cursor from before the plugin started again is told apart. */
+let start = 0;
 let seq = 0;
 let dropped = 0;
+/** The latest cursor an answer gave: entries up to it may have been read. */
+let served = 0;
 let since = new Date().toISOString();
 let watched: PageNode | null = null;
 let writing = 0;
@@ -16,8 +20,11 @@ let echoUntil = 0;
 /** Starts journalling the current page's changes, and follows the user to every page they switch to. */
 export function startChangeJournal(): void {
   entries.clear();
-  seq = 0;
-  dropped = 0;
+  start = Math.max(Date.now() * 1_000, seq + 1);
+  seq = start;
+  dropped = start;
+  served = start;
+  echoUntil = 0;
   since = new Date().toISOString();
   watch(figma.currentPage);
   figma.on("currentpagechange", () => watch(figma.currentPage));
@@ -41,12 +48,21 @@ export async function asOwnWrite<T>(write: () => Promise<T>): Promise<T> {
 }
 
 /** What changed after `since` (a cursor from an earlier answer), with the cursor to ask from next time. */
-export async function changes({ since: after = 0 }: OperationInput<"changes">): Promise<OperationOutput<"changes">> {
+export async function changes({
+  since: after = start,
+}: OperationInput<"changes">): Promise<OperationOutput<"changes">> {
+  // A cursor from another run of the plugin (or none it gave) cannot be followed: everything this run knows comes back.
+  const foreign = after < start || after > seq;
+
+  served = seq;
+
   return {
     cursor: seq,
     since,
-    truncated: after < dropped,
-    changes: [...entries.values()].filter((entry) => entry.seq > after).map(({ seq: _seq, ...change }) => change),
+    truncated: foreign || after < dropped,
+    changes: [...entries.values()]
+      .filter((entry) => entry.seq > (foreign ? start : after))
+      .map(({ seq: _seq, ...change }) => change),
   };
 }
 
@@ -67,21 +83,22 @@ function onChange(event: NodeChangeEvent): void {
     const by: Change["by"] = change.origin === "REMOTE" ? "collaborator" : own ? "pixelwright" : "user";
     const kind: Change["change"] =
       change.type === "CREATE" ? "created" : change.type === "DELETE" ? "deleted" : "changed";
-    const last = entries.get(change.id);
+    const key = `${change.id} ${by}`;
+    const last = entries.get(key);
     const node = change.node as Partial<SceneNode> & { removed?: boolean };
     const properties = "properties" in change ? [...change.properties] : [];
 
-    if (last !== undefined && last.by === by && kind === "deleted" && last.change === "created") {
-      // Made and taken away by one hand: nothing is left to tell.
-      entries.delete(change.id);
+    if (last !== undefined && kind === "deleted" && last.change === "created" && last.seq > served) {
+      // Made and taken away by one hand before anyone read of it: nothing is left to tell.
+      entries.delete(key);
       continue;
     }
 
-    const merged = last !== undefined && last.by === by && kind === "changed";
+    const merged = last !== undefined && kind === "changed";
 
-    entries.delete(change.id);
+    entries.delete(key);
     seq += 1;
-    entries.set(change.id, {
+    entries.set(key, {
       seq,
       id: change.id,
       name: (node.removed ? undefined : node.name) ?? last?.name ?? "",
@@ -102,6 +119,6 @@ function onChange(event: NodeChangeEvent): void {
     }
 
     dropped = oldest.seq;
-    entries.delete(oldest.id);
+    entries.delete(`${oldest.id} ${oldest.by}`);
   }
 }

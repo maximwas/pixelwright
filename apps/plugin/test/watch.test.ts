@@ -98,3 +98,79 @@ describe("changes_since", () => {
     ]);
   });
 });
+
+describe("changes_since after the review", () => {
+  const change = (node: unknown, type: string, origin: string, properties: string[] = []) => ({
+    nodeChanges: [
+      {
+        id: (node as { id: string }).id,
+        node,
+        type,
+        origin,
+        properties,
+      },
+    ],
+  });
+
+  it("tells a deletion of a layer whose creation it already reported", async () => {
+    const installed = installFigma(page());
+    const [card] = installed.figma.currentPage.children ?? [];
+
+    startChangeJournal();
+    installed.emit("nodechange", change(card, "CREATE", "LOCAL"), "0:1");
+
+    const { cursor } = (await runOperation("changes", {})) as { cursor: number };
+
+    installed.emit(
+      "nodechange",
+      change(
+        {
+          id: "1:1",
+          removed: true,
+        },
+        "DELETE",
+        "LOCAL",
+      ),
+      "0:1",
+    );
+
+    const later = (await runOperation("changes", { since: cursor })) as { changes: { id: string; change: string }[] };
+
+    expect(later.changes.map(({ id, change: kind }) => [id, kind])).toEqual([["1:1", "deleted"]]);
+  });
+
+  it("keeps the user's change to a layer when Pixelwright changes it after", async () => {
+    const installed = installFigma(page());
+    const [card] = installed.figma.currentPage.children ?? [];
+
+    startChangeJournal();
+    installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["characters"]), "0:1");
+    noteOwnWrite();
+    installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["fills"]), "0:1");
+
+    const all = (await runOperation("changes", {})) as { changes: { by: string; properties: string[] }[] };
+
+    expect(all.changes.map(({ by, properties }) => [by, properties])).toEqual([
+      ["user", ["characters"]],
+      ["pixelwright", ["fills"]],
+    ]);
+  });
+
+  it("says a cursor from before the plugin started again is past what it knows", async () => {
+    const installed = installFigma(page());
+    const [card] = installed.figma.currentPage.children ?? [];
+
+    startChangeJournal();
+    installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["fills"]), "0:1");
+
+    const { cursor } = (await runOperation("changes", {})) as { cursor: number };
+
+    startChangeJournal();
+    installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["width"]), "0:1");
+
+    await expect(runOperation("changes", { since: cursor })).resolves.toMatchObject({
+      truncated: true,
+      changes: [{ properties: ["width"] }],
+    });
+  });
+});
