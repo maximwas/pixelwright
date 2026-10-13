@@ -1,6 +1,13 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
-import { requireNode } from "./nodes.ts";
-import { annotationCategories, entryOf, isLayer, type References } from "./snapshot.ts";
+import { pageOf, requireNode } from "./nodes.ts";
+import {
+  annotationCategories,
+  entryOf,
+  isLayer,
+  type References,
+  resolveStyles,
+  resolveVariables,
+} from "./snapshot.ts";
 
 type Box = { x: number; y: number; width: number; height: number };
 
@@ -30,6 +37,7 @@ export async function inspect({ nodes, relativeTo }: OperationInput<"inspect">):
   };
   const categories = await annotationCategories();
   const layers: OperationOutput<"inspect">["layers"] = [];
+  const pages = new Set<PageNode | null>();
   const missing: string[] = [];
 
   for (const id of nodes) {
@@ -40,10 +48,13 @@ export async function inspect({ nodes, relativeTo }: OperationInput<"inspect">):
       continue;
     }
 
+    pages.add(pageOf(node));
+
+    // Figma's own CSS for what core does not write (a gradient fill), as design_read takes it.
     const entry = await entryOf(node, {
       x: origin.x,
       y: origin.y,
-      css: "none",
+      css: "unmapped",
       references,
       categories,
       whole: true,
@@ -93,6 +104,8 @@ export async function inspect({ nodes, relativeTo }: OperationInput<"inspect">):
           },
     layers,
     missing,
+    styles: await resolveStyles(references.styles, pages),
+    variables: await resolveVariables(references.variables),
   };
 }
 

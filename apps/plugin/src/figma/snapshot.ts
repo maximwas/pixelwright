@@ -711,7 +711,7 @@ function collect(value: unknown, node: SceneNode, references: References): void 
  * The styles the layers use, numbered where names repeat (the second Black is --Black-2): among the file's own, and,
  * once a library style is used, among the styles their pages use too, as every reader numbers them.
  */
-async function resolveStyles(
+export async function resolveStyles(
   ids: ReadonlySet<string>,
   pages: Iterable<PageNode | null>,
 ): Promise<Record<string, SnapshotStyle>> {
@@ -739,7 +739,9 @@ async function resolveStyles(
   return Object.fromEntries(numbered(used, among).map(({ id, ...style }) => [id, style]));
 }
 
-async function resolveVariables(consumers: ReadonlyMap<string, SceneNode>): Promise<Record<string, SnapshotVariable>> {
+export async function resolveVariables(
+  consumers: ReadonlyMap<string, SceneNode>,
+): Promise<Record<string, SnapshotVariable>> {
   const variables: Record<string, SnapshotVariable> = {};
 
   for (const [id, consumer] of consumers) {

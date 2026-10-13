@@ -1,5 +1,11 @@
 import * as z from "zod";
-import { EffectSchema, ReactionSchema, SnapshotFieldsSchema } from "./snapshot.ts";
+import {
+  EffectSchema,
+  ReactionSchema,
+  SnapshotFieldsSchema,
+  SnapshotStyleSchema,
+  SnapshotVariableSchema,
+} from "./snapshot.ts";
 
 /** A box in px, from the origin inspect measures from. */
 export const InspectBoxSchema = z.object({
@@ -44,6 +50,9 @@ export const InspectRawSchema = z.object({
     .nullable(),
   layers: z.array(InspectedLayerSchema),
   missing: z.array(z.string()),
+  /** The styles and variables the layers use, as a snapshot gives them. */
+  styles: z.record(z.string(), SnapshotStyleSchema).optional(),
+  variables: z.record(z.string(), SnapshotVariableSchema).optional(),
 });
 
 /** The inspect tool's answer, per layer (inspectView). */
@@ -105,6 +114,24 @@ export const InspectViewSchema = z.object({
           fontSizes: z.array(z.number()),
           autoResize: z.string(),
           paragraphSpacing: z.number().exactOptional(),
+        })
+        .exactOptional(),
+      fills: z
+        .object({
+          css: z
+            .string()
+            .describe("The fill as a CSS value, top paint first: a colour, a gradient as Figma writes it."),
+          style: z
+            .object({
+              name: z.string(),
+              token: z.string(),
+            })
+            .exactOptional()
+            .describe("The paint style it comes from, and the token design_read names it by."),
+          tokens: z
+            .record(z.string(), z.string())
+            .exactOptional()
+            .describe("The variables the paints are bound to, by token, with their values."),
         })
         .exactOptional(),
       interactions: z

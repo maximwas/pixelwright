@@ -218,3 +218,52 @@ describe("inspect", () => {
     });
   });
 });
+
+describe("inspect fills", () => {
+  it("carries the styles the layers use, so their fills name them", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "3:1",
+            type: "RECTANGLE",
+            name: "Swatch",
+            fills: [
+              {
+                type: "SOLID",
+                visible: true,
+                opacity: 1,
+                color: DARK,
+              },
+            ],
+            fillStyleId: "S:d",
+          },
+        ],
+      }),
+      {
+        styles: {
+          "S:d": {
+            id: "S:d",
+            name: "Dark",
+            type: "PAINT",
+            remote: true,
+            paints: [
+              {
+                type: "SOLID",
+                visible: true,
+                opacity: 1,
+                color: DARK,
+              },
+            ],
+          },
+        },
+      },
+    );
+
+    const raw = (await runOperation("inspect", { nodes: ["3:1"] })) as { styles?: Record<string, { name: string }> };
+
+    expect(raw.styles?.["S:d"]?.name).toBe("Dark");
+  });
+});

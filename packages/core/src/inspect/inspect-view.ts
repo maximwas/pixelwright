@@ -1,9 +1,12 @@
 import { colorCss } from "../css/color.ts";
 import { px } from "../css/format.ts";
 import { interactionSummary } from "../css/interactions.ts";
+import { paintsCss } from "../css/paint.ts";
+import { styleTokenName } from "../css/tokens.ts";
 import { MIXED } from "../schemas/snapshot.ts";
 import type { InspectBox, InspectedLayer, InspectedLayerView, InspectRaw, InspectView } from "../types/inspect.ts";
 import type { TextSegment } from "../types/snapshot.ts";
+import { unwrapVar } from "../utils/css-value.ts";
 
 /** How far two boxes may differ and still be the same box. */
 const SAME = 0.01;
@@ -19,12 +22,12 @@ const round = (value: number) => Math.round(value * 100) / 100;
 export function inspectView(raw: InspectRaw): InspectView {
   return {
     relativeTo: raw.origin === null ? "the page" : `${raw.origin.id} "${raw.origin.name}"`,
-    layers: raw.layers.map(layerView),
+    layers: raw.layers.map((layer) => layerView(layer, raw)),
     missing: raw.missing,
   };
 }
 
-function layerView(layer: InspectedLayer): InspectedLayerView {
+function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
   const view: InspectedLayerView = {
     id: layer.id,
     name: layer.name,
@@ -35,6 +38,7 @@ function layerView(layer: InspectedLayer): InspectedLayerView {
   const overflow = overflowOf(layer);
   const strokes = strokesOf(layer);
   const text = textOf(layer);
+  const fills = fillsOf(layer, raw);
   const interactions = (layer.reactions ?? []).map((reaction) => ({
     trigger: reaction.trigger?.type ?? "NONE",
     summary: interactionSummary(reaction),
@@ -55,6 +59,10 @@ function layerView(layer: InspectedLayer): InspectedLayerView {
 
   if (strokes !== null) {
     view.strokes = strokes;
+  }
+
+  if (fills !== null) {
+    view.fills = fills;
   }
 
   if (layer.effects !== undefined && layer.effects.length > 0) {
@@ -84,6 +92,39 @@ function layerView(layer: InspectedLayer): InspectedLayerView {
   }
 
   return view;
+}
+
+/**
+ * The fill as a CSS value, resolved (a style's own value, not its var()), with the style and the variables behind it;
+ * a gradient as Figma writes it for the layer. Null when nothing visible fills it.
+ */
+function fillsOf(layer: InspectedLayer, raw: InspectRaw): NonNullable<InspectedLayerView["fills"]> | null {
+  if (!Array.isArray(layer.fills) || !layer.fills.some((paint) => paint.visible !== false)) {
+    return null;
+  }
+
+  const context = {
+    styles: raw.styles ?? {},
+    variables: raw.variables ?? {},
+    tokens: new Map<string, string>(),
+    root: layer,
+  };
+  const value = paintsCss(layer.fills, undefined, layer, context);
+  const style =
+    typeof layer.fillStyleId === "string" && layer.fillStyleId !== "" ? raw.styles?.[layer.fillStyleId] : undefined;
+
+  return {
+    css: typeof value === "string" ? value : (unwrapVar(layer.css?.background) ?? "a paint CSS cannot hold"),
+    ...(style === undefined
+      ? {}
+      : {
+          style: {
+            name: style.name,
+            token: styleTokenName(style),
+          },
+        }),
+    ...(context.tokens.size === 0 ? {} : { tokens: Object.fromEntries(context.tokens) }),
+  };
 }
 
 function sameBox(a: InspectBox, b: InspectBox): boolean {

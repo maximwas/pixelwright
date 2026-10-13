@@ -254,3 +254,104 @@ describe("inspect", () => {
     });
   });
 });
+
+describe("inspect fills", () => {
+  const white = {
+    type: "SOLID",
+    color: {
+      r: 1,
+      g: 1,
+      b: 1,
+    },
+  };
+  const base = RAW.layers[1] as InspectRaw["layers"][number];
+  const fills = (fields: Partial<InspectRaw["layers"][number]>, raw: Partial<InspectRaw> = {}) =>
+    inspectView({
+      origin: null,
+      missing: [],
+      ...raw,
+      layers: [
+        {
+          ...base,
+          type: "RECTANGLE",
+          reactions: [],
+          ...fields,
+        },
+      ],
+    }).layers[0]?.fills;
+
+  it("gives the fill as its CSS value with the style it comes from", () => {
+    expect(
+      fills(
+        {
+          fills: [white],
+          fillStyleId: "S:w",
+        },
+        {
+          styles: {
+            "S:w": {
+              name: "White",
+              type: "PAINT",
+              remote: true,
+              paints: [white],
+            },
+          },
+        },
+      ),
+    ).toEqual({
+      css: "#FFF",
+      style: {
+        name: "White",
+        token: "--White",
+      },
+    });
+  });
+
+  it("names the variables a fill is bound to, with their values", () => {
+    expect(
+      fills(
+        {
+          fills: [
+            {
+              ...white,
+              boundVariables: {
+                color: {
+                  type: "VARIABLE_ALIAS",
+                  id: "V:1",
+                },
+              },
+            },
+          ],
+        },
+        {
+          variables: {
+            "V:1": {
+              name: "color/bg",
+              collection: "Colors",
+              resolvedType: "COLOR",
+              remote: false,
+              value: DARK,
+            },
+          },
+        },
+      ),
+    ).toEqual({
+      css: "var(--color-bg)",
+      tokens: { "--color-bg": "#191A23" },
+    });
+  });
+
+  it("gives a gradient as Figma writes it", () => {
+    expect(
+      fills({
+        fills: [
+          {
+            type: "GRADIENT_LINEAR",
+            gradientStops: [],
+          },
+        ],
+        css: { background: "linear-gradient(90deg, #FFF 0%, #000 100%)" },
+      }),
+    ).toEqual({ css: "linear-gradient(90deg, #FFF 0%, #000 100%)" });
+  });
+});
