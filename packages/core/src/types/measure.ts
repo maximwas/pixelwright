@@ -12,3 +12,11 @@ export interface MeasuredLayer {
   readonly box: InspectBox;
   readonly paintedBox: InspectBox | null;
 }
+
+/** A Dev Mode measurement as design_read gives it: each end as "<id> <side>", and the distance when both are read. */
+export interface MeasurementView {
+  readonly from: string;
+  readonly to: string;
+  readonly px?: number;
+  readonly text?: string;
+}

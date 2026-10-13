@@ -502,6 +502,86 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     ]);
   });
 
+  it("keeps the page's Dev Mode measurements that touch the read layers, and only those", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "6:1",
+          type: "FRAME",
+          children: [{ id: "6:2" }, { id: "6:3" }],
+        },
+        { id: "7:1" },
+      ],
+    });
+    const [frame, other] = page.children ?? [];
+    const [first, second] = frame?.children ?? [];
+    const measurement = (start: unknown, startSide: string, end: unknown, endSide: string, freeText = "") => ({
+      id: `M:${Math.random()}`,
+      start: {
+        node: start,
+        side: startSide,
+      },
+      end: {
+        node: end,
+        side: endSide,
+      },
+      offset: {
+        type: "INNER",
+        relative: 0,
+      },
+      freeText,
+    });
+
+    page.getMeasurements = () => [
+      ...Array.from({ length: 298 }, () => measurement(other, "LEFT", other, "RIGHT")),
+      measurement(first, "RIGHT", second, "LEFT", "gap"),
+      measurement(other, "TOP", second, "BOTTOM"),
+    ];
+    installFigma(page);
+
+    const shot = (await runOperation("snapshot", { node: "6:1" })) as Shot & { measurements?: unknown };
+
+    expect(shot.measurements).toEqual([
+      {
+        start: {
+          id: "6:2",
+          side: "RIGHT",
+        },
+        end: {
+          id: "6:3",
+          side: "LEFT",
+        },
+        text: "gap",
+      },
+      {
+        start: {
+          id: "7:1",
+          side: "TOP",
+        },
+        end: {
+          id: "6:3",
+          side: "BOTTOM",
+        },
+      },
+    ]);
+  });
+
+  it("leaves measurements out where the page has none, or Figma has no measurements API", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [{ id: "6:1" }],
+    });
+
+    installFigma(page);
+    expect(await runOperation("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
+
+    page.getMeasurements = () => [];
+    expect(await runOperation("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
+  });
+
   it("asks Figma for its CSS only for layers our table cannot write, when asked for that", async () => {
     installFigma(
       tree({

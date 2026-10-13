@@ -438,8 +438,24 @@ export const SnapshotVariableSchema = z.object({
   codeSyntax: z.record(z.string(), z.string()).optional(),
 });
 
+/** One end of a Dev Mode measurement: a layer's id and the side measured from (Figma's TOP, RIGHT, BOTTOM, LEFT). */
+const MeasuredSideSchema = z.object({
+  id: z.string(),
+  side: z.string(),
+});
+
 export const SnapshotSchema = z.object({
   root: SnapshotNodeSchema,
   styles: z.record(z.string(), SnapshotStyleSchema),
   variables: z.record(z.string(), SnapshotVariableSchema),
+  /** The page's Dev Mode measurements with a side on the read layers, with the designer's text when there is one. */
+  measurements: z
+    .array(
+      z.object({
+        start: MeasuredSideSchema,
+        end: MeasuredSideSchema,
+        text: z.string().optional(),
+      }),
+    )
+    .optional(),
 });

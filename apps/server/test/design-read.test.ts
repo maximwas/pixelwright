@@ -184,6 +184,43 @@ describe("design_read", () => {
     expect(JSON.parse(textOf(result, 1))).toMatchObject({ node: "54:434" });
   });
 
+  it("gives the designer's Dev Mode measurements in pixels when the read has any", async () => {
+    const measured = {
+      ...PLANS,
+      measurements: [
+        {
+          start: {
+            id: "54:268",
+            side: "RIGHT",
+          },
+          end: {
+            id: "54:292",
+            side: "LEFT",
+          },
+          text: "gap between plans",
+        },
+      ],
+    };
+    const args = {
+      node: "54:243",
+      screenshot: false,
+      maxChars: 80_000,
+      code: false,
+    };
+
+    expect(JSON.parse(textOf(await readDesign(orbit(measured).bridge, args), 1))).toMatchObject({
+      measurements: [
+        {
+          from: "54:268 right",
+          to: "54:292 left",
+          px: 24.01,
+          text: "gap between plans",
+        },
+      ],
+    });
+    expect(JSON.parse(textOf(await readDesign(orbit(PLANS).bridge, args), 1))).not.toHaveProperty("measurements");
+  });
+
   it("cuts a read past maxChars and tells how to read the rest", async () => {
     const result = await readDesign(orbit().bridge, {
       node: "54:434",

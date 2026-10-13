@@ -23,6 +23,7 @@ export * from "./diff/design-diff.ts";
 export * from "./diff/variants.ts";
 export * from "./inspect/inspect-view.ts";
 export * from "./inspect/measure.ts";
+export * from "./inspect/measurements.ts";
 export * from "./schemas/apply.ts";
 export * from "./schemas/audit.ts";
 export * from "./schemas/breakpoints.ts";

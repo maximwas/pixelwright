@@ -93,11 +93,51 @@ export async function snapshot({
     { used: 0 },
   );
 
+  const measurements = measurementsOf(root);
+
   return {
     root: top,
     styles: await resolveStyles(references.styles, [pageOf(root)]),
     variables: await resolveVariables(references.variables),
+    ...(measurements.length === 0 ? {} : { measurements }),
   };
+}
+
+/** The page's Dev Mode measurements with a side on the layer or inside it; none where Figma has no such API. */
+function measurementsOf(root: SceneNode): NonNullable<OperationOutput<"snapshot">["measurements"]> {
+  const page = pageOf(root) as (PageNode & Partial<MeasurementsMixin>) | null;
+
+  if (page?.getMeasurements === undefined) {
+    return [];
+  }
+
+  const read = (node: BaseNode) => {
+    for (let current: BaseNode | null = node; current !== null; current = current.parent) {
+      if (current.id === root.id) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  return page.getMeasurements().flatMap(({ start, end, freeText }) =>
+    read(start.node) || read(end.node)
+      ? [
+          {
+            start: {
+              id: start.node.id,
+              side: start.side,
+            },
+            end: {
+              id: end.node.id,
+              side: end.side,
+            },
+            ...(freeText === "" ? {} : { text: freeText }),
+          },
+        ]
+      : [],
+  );
 }
 
 /**
