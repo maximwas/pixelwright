@@ -127,15 +127,20 @@ text-decoration-thickness), text-align, text-wrap, color.
 - \`line-height: normal\` is Figma's Auto line height, the font's own spacing (about 1.2× the size for most fonts):
   give it in px where the build must match; \`inspect\` shows each text's.
 
-## Example (Positivus, a card)
+## Example (Orbit, a pricing card)
 
 \`\`\`xml
-<Frame id="2:4870" name="Card" display="flex" width="600px" padding="50px" justify-content="space-between" align-items="center" overflow="hidden" border-radius="45px" border="1px solid var(--Dark)" background="var(--Grey)" box-shadow="0 5px 0 0 #191A23">
-  <Instance id="2:4873" name="Link" component="Link" variant="Property 1=Black" display="flex" align-items="center" gap="15px">
-    <Icon id="I2:4873;334:1478" name="Icon" src="assets/icon.svg" width="41px" height="41px"/>
-    <Text id="I2:4873;334:1481" name="Label" font="400 20px/28px 'Space Grotesk'" color="var(--Black)">Learn more</Text>
+<Instance id="54:268" name="Plan – Pro" component="Plan Card" props="Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro" display="flex" flex-direction="column" width="385px" height="394px" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="2px solid var(--color-brand)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
+  <Instance id="I54:268;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Get started" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+    <Text id="I54:268;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Get started</Text>
   </Instance>
-</Frame>
+  <Frame id="I54:268;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+    <Frame id="I54:268;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+      <Icon id="I54:268;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check.svg" width="20px" height="20px"/>
+      <Text id="I54:268;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+    </Frame>
+  </Frame>
+</Instance>
 \`\`\`
 `,
   },

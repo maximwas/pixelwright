@@ -63,23 +63,26 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `nodes_delete`, `execute` | Delete layers; run plugin code for what the XML cannot say |
 | `guide` | The XML format, writing, tokens, assets, Code Connect and HTML email, for the agent |
 
-A read of the Positivus template's card, abridged:
+A read of the Pro card from Orbit, the demo the tests run on, abridged:
 
 ```xml
-<Frame id="2:4870" name="Card" display="flex" width="600px" padding="50px" justify-content="space-between" align-items="center" overflow="hidden" border-radius="45px" border="1px solid var(--Dark)" background="var(--Grey)" box-shadow="0 5px 0 0 #191A23">
-  <Frame id="2:4871" name="Heading and link" display="flex" flex-direction="column" justify-content="center" gap="93px">
-    <Instance id="2:4872" name="Heading" component="Heading" variant="Property 1=Green" display="flex" flex-direction="column">
-      <Frame id="I2:4872;330:291" name="Label" display="flex" flex-direction="column" padding="0 7px" border-radius="7px" background="var(--Green)">
-        <Text id="I2:4872;330:292" name="Label" textStyle="h3" color="#000">Search engine</Text>
-      </Frame>
-      …
-    </Instance>
+<Instance id="54:268" name="Plan – Pro" component="Plan Card" props="Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro" note="The price comes from the billing API. Show the Popular badge only on the plan the API marks popular." display="flex" flex-direction="column" width="385px" height="394px" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="2px solid var(--color-brand)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)" $on-click="go to Checkout – Desktop; dissolve 300ms ease-out">
+  <Frame id="I54:268;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+    <Text id="I54:268;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Pro</Text>
+    <Instance id="I54:268;54:205" name="Badge" component="Badge" props="Label=Popular" display="flex" padding="var(--space-4) var(--space-12)" align-items="center" border-radius="var(--radius-pill)" background="var(--color-accent)">…</Instance>
+  </Frame>
+  …
+  <Instance id="I54:268;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Get started" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+    <Text id="I54:268;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Get started</Text>
+  </Instance>
+  <Frame id="I54:268;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+    <Frame id="I54:268;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+      <Icon id="I54:268;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check.svg" width="20px" height="20px"/>
+      <Text id="I54:268;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+    </Frame>
     …
   </Frame>
-  <Frame id="2:4874" name="Illustration" width="210px" height="170px">
-    <Image id="2:4875" name="tokyo-magnifier-web-search-with-elements 2" src="assets/tokyo-magnifier-web-search-with-elements-2.png" position="absolute" left="0" top="2px" width="210px" height="166px"/>
-  </Frame>
-</Frame>
+</Instance>
 ```
 
 Sending that XML back changes nothing; changing an attribute changes exactly that, in one undo step.
@@ -91,12 +94,13 @@ Pixelwright runs your project's [Figma Code Connect](https://www.figma.com/devel
 gives each connected instance as `$code` in the XML with its code and imports:
 
 ```json
-{ "ids": ["2:4872"], "component": "Heading", "snippet": "<Heading tone=\"green\">Search engine optimization</Heading>",
-  "imports": ["import { Heading } from \"@/components/Heading\""] }
+{ "ids": ["54:268"], "component": "Plan Card",
+  "snippet": "<PlanCard name=\"Pro\" price=\"$12\" popular>\n  <Button variant=\"primary\">Get started</Button>\n</PlanCard>",
+  "imports": ["import { PlanCard } from \"@/components/PlanCard\"", "import { Button } from \"@/components/Button\""] }
 ```
 
-See [examples/positivus](https://github.com/maximwas/pixelwright/tree/main/examples/positivus) for two templates and
-how they match. The project folder is `CLAUDE_PROJECT_DIR`, else the folder your MCP client starts the server in.
+See [examples/orbit](https://github.com/maximwas/pixelwright/tree/main/examples/orbit) for two templates, one rendering
+the other inside it, and how they match. The project folder is `CLAUDE_PROJECT_DIR`, else the folder your MCP client starts the server in.
 
 ## Safety
 
@@ -195,6 +199,4 @@ mention it; turn that off with `PIXELWRIGHT_SUPPORT_REMINDERS=off`.
 ## License
 
 [FSL-1.1-MIT](LICENSE). The bundled third-party packages' licences ship in the npm package (`dist/THIRD-PARTY-NOTICES.md`) and
-at the end of the plugin's bundles. The examples and test fixtures use the
-[Positivus landing page design](https://www.figma.com/community/file/1230604708032389430) by Olga Averchenko, under
-CC BY 4.0.
+at the end of the plugin's bundles.

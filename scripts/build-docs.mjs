@@ -214,7 +214,6 @@ ${parts.map(({ id, title, html }) => `        <section id="${id}">\n          <h
       <div class="bottom-inner">
         <div>
           <p>Built from Pixelwright's README, its tools and its guide (scripts/build-docs.mjs). Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
-          <p class="doc-credits">The examples use the <a href="https://www.figma.com/community/file/1230604708032389430">Positivus landing page design</a> by Olga Averchenko, CC BY 4.0.</p>
         </div>
         <p class="footer-links">
           <a href="../">Home</a>

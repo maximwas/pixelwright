@@ -87,11 +87,12 @@ connected at once; tools work on the one whose plugin window was in front last, 
 <p>Pixelwright runs your project&#39;s <a href="https://www.figma.com/developers/code-connect">Figma Code Connect</a> templates
 (<code>*.figma.ts</code>, written as Figma documents them) itself, on any plan, without publishing anything. <code>design_read</code> then
 gives each connected instance as <code>$code</code> in the XML with its code and imports:</p>
-<pre><code class="language-json">{ &quot;ids&quot;: [&quot;2:4872&quot;], &quot;component&quot;: &quot;Heading&quot;, &quot;snippet&quot;: &quot;&lt;Heading tone=\&quot;green\&quot;&gt;Search engine optimization&lt;/Heading&gt;&quot;,
-  &quot;imports&quot;: [&quot;import { Heading } from \&quot;@/components/Heading\&quot;&quot;] }
+<pre><code class="language-json">{ &quot;ids&quot;: [&quot;54:268&quot;], &quot;component&quot;: &quot;Plan Card&quot;,
+  &quot;snippet&quot;: &quot;&lt;PlanCard name=\&quot;Pro\&quot; price=\&quot;$12\&quot; popular&gt;\n  &lt;Button variant=\&quot;primary\&quot;&gt;Get started&lt;/Button&gt;\n&lt;/PlanCard&gt;&quot;,
+  &quot;imports&quot;: [&quot;import { PlanCard } from \&quot;@/components/PlanCard\&quot;&quot;, &quot;import { Button } from \&quot;@/components/Button\&quot;&quot;] }
 </code></pre>
-<p>See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/positivus">examples/positivus</a> for two templates and
-how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
+<p>See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/orbit">examples/orbit</a> for two templates, one rendering
+the other inside it, and how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
 
         </section>
         <section id="safety">
@@ -559,13 +560,18 @@ never spaces.</li>
 <li><code>line-height: normal</code> is Figma&#39;s Auto line height, the font&#39;s own spacing (about 1.2× the size for most fonts):
 give it in px where the build must match; <code>inspect</code> shows each text&#39;s.</li>
 </ul>
-<h3>Example (Positivus, a card)</h3>
-<pre><code class="language-xml">&lt;Frame id=&quot;2:4870&quot; name=&quot;Card&quot; display=&quot;flex&quot; width=&quot;600px&quot; padding=&quot;50px&quot; justify-content=&quot;space-between&quot; align-items=&quot;center&quot; overflow=&quot;hidden&quot; border-radius=&quot;45px&quot; border=&quot;1px solid var(--Dark)&quot; background=&quot;var(--Grey)&quot; box-shadow=&quot;0 5px 0 0 #191A23&quot;&gt;
-  &lt;Instance id=&quot;2:4873&quot; name=&quot;Link&quot; component=&quot;Link&quot; variant=&quot;Property 1=Black&quot; display=&quot;flex&quot; align-items=&quot;center&quot; gap=&quot;15px&quot;&gt;
-    &lt;Icon id=&quot;I2:4873;334:1478&quot; name=&quot;Icon&quot; src=&quot;assets/icon.svg&quot; width=&quot;41px&quot; height=&quot;41px&quot;/&gt;
-    &lt;Text id=&quot;I2:4873;334:1481&quot; name=&quot;Label&quot; font=&quot;400 20px/28px &#39;Space Grotesk&#39;&quot; color=&quot;var(--Black)&quot;&gt;Learn more&lt;/Text&gt;
+<h3>Example (Orbit, a pricing card)</h3>
+<pre><code class="language-xml">&lt;Instance id=&quot;54:268&quot; name=&quot;Plan – Pro&quot; component=&quot;Plan Card&quot; props=&quot;Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; width=&quot;385px&quot; height=&quot;394px&quot; padding=&quot;var(--space-32)&quot; gap=&quot;var(--space-24)&quot; border-radius=&quot;var(--radius-lg)&quot; border=&quot;2px solid var(--color-brand)&quot; background=&quot;var(--color-surface)&quot; box-shadow=&quot;var(--Shadow-Card)&quot;&gt;
+  &lt;Instance id=&quot;I54:268;54:211&quot; name=&quot;Button&quot; component=&quot;Button&quot; variant=&quot;Variant=Primary, State=Default&quot; props=&quot;Label=Get started&quot; display=&quot;flex&quot; align-self=&quot;stretch&quot; padding=&quot;var(--space-12) var(--space-24)&quot; justify-content=&quot;center&quot; align-items=&quot;center&quot; border-radius=&quot;var(--radius-md)&quot; background=&quot;var(--color-brand)&quot;&gt;
+    &lt;Text id=&quot;I54:268;54:211;54:190&quot; name=&quot;Label&quot; textStyle=&quot;Button&quot; color=&quot;var(--color-on-brand)&quot;&gt;Get started&lt;/Text&gt;
   &lt;/Instance&gt;
-&lt;/Frame&gt;
+  &lt;Frame id=&quot;I54:268;54:213&quot; name=&quot;Features&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; align-self=&quot;stretch&quot; gap=&quot;var(--space-12)&quot; overflow=&quot;hidden&quot;&gt;
+    &lt;Frame id=&quot;I54:268;54:214&quot; name=&quot;Feature&quot; display=&quot;flex&quot; align-items=&quot;center&quot; gap=&quot;var(--space-8)&quot; overflow=&quot;hidden&quot;&gt;
+      &lt;Icon id=&quot;I54:268;54:215&quot; name=&quot;Icon/Check&quot; component=&quot;Icon/Check&quot; src=&quot;assets/icon-check.svg&quot; width=&quot;20px&quot; height=&quot;20px&quot;/&gt;
+      &lt;Text id=&quot;I54:268;54:217&quot; name=&quot;Text&quot; textStyle=&quot;Body Small&quot; color=&quot;var(--color-ink)&quot;&gt;Unlimited projects&lt;/Text&gt;
+    &lt;/Frame&gt;
+  &lt;/Frame&gt;
+&lt;/Instance&gt;
 </code></pre>
 
         </section>
@@ -879,7 +885,6 @@ that turn unreadable.</p>
       <div class="bottom-inner">
         <div>
           <p>Built from Pixelwright's README, its tools and its guide (scripts/build-docs.mjs). Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
-          <p class="doc-credits">The examples use the <a href="https://www.figma.com/community/file/1230604708032389430">Positivus landing page design</a> by Olga Averchenko, CC BY 4.0.</p>
         </div>
         <p class="footer-links">
           <a href="../">Home</a>
