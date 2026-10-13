@@ -15,7 +15,7 @@ type ScreenshotArgs = z.output<typeof ScreenshotInputSchema>;
 
 export async function takeScreenshot(
   bridge: ToolContext["bridge"],
-  { node, scale, effects, save, file, clip }: ScreenshotArgs,
+  { node, scale, effects, save, file, clip, modes }: ScreenshotArgs,
   target?: { session: string },
 ): Promise<CallToolResult> {
   const request = {
@@ -23,6 +23,7 @@ export async function takeScreenshot(
     format: "PNG" as const,
     scale,
     effects,
+    ...(modes === undefined ? {} : { modes }),
   };
   const where = {
     file,
@@ -39,6 +40,7 @@ export async function takeScreenshot(
         clip,
         ...(save === undefined ? {} : { save }),
         ...(file === undefined ? {} : { file }),
+        ...(modes === undefined ? {} : { modes }),
       },
       target,
     );
@@ -110,6 +112,7 @@ export async function takeScreenshot(
 }
 
 type Clip = NonNullable<ScreenshotArgs["clip"]>;
+type Modes = NonNullable<ScreenshotArgs["modes"]>;
 
 /**
  * A layer rendered to PNG at the scale, full size; with a clip, a region of it: the whole layer rendered, then cut to
@@ -119,7 +122,13 @@ type Clip = NonNullable<ScreenshotArgs["clip"]>;
  */
 export async function renderPng(
   bridge: ToolContext["bridge"],
-  { node, scale, effects, clip }: { node: string; scale: number; effects: boolean; clip?: Clip | undefined },
+  {
+    node,
+    scale,
+    effects,
+    clip,
+    modes,
+  }: { node: string; scale: number; effects: boolean; clip?: Clip | undefined; modes?: Modes | undefined },
   session: { session: string },
 ): Promise<{ png: Buffer; scale: number }> {
   const request = {
@@ -127,6 +136,7 @@ export async function renderPng(
     format: "PNG" as const,
     scale,
     effects,
+    ...(modes === undefined ? {} : { modes }),
   };
 
   if (clip === undefined) {
@@ -192,7 +202,7 @@ export async function renderPng(
 /** A region of a layer (renderPng with a clip), saved or returned inline. */
 async function clippedShot(
   bridge: ToolContext["bridge"],
-  { node, scale, effects, save, file, clip }: ScreenshotArgs & { clip: Clip },
+  { node, scale, effects, save, file, clip, modes }: ScreenshotArgs & { clip: Clip },
   target?: { session: string },
 ): Promise<CallToolResult> {
   const session = target ?? resolveTarget(bridge.plugins(), file);
@@ -203,6 +213,7 @@ async function clippedShot(
       scale,
       effects,
       clip,
+      modes,
     },
     session,
   );

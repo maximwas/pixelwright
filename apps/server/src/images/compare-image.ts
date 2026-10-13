@@ -20,7 +20,7 @@ const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 /** The layer rendered, the reference read, both compared; the difference written when asked. */
 export async function compareImage(
   bridge: ToolContext["bridge"],
-  { node, reference, scale, effects, clip, diff, file }: ImageCompareArgs,
+  { node, reference, scale, effects, clip, modes, diff, file }: ImageCompareArgs,
 ): Promise<ImageCompare> {
   const wanted = await referenceImage(reference);
   const { png, scale: used } = await renderPng(
@@ -30,6 +30,7 @@ export async function compareImage(
       scale,
       effects,
       clip,
+      modes,
     },
     resolveTarget(bridge.plugins(), file),
   );

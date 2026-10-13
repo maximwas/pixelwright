@@ -171,3 +171,43 @@ describe("screenshot clip", () => {
     ).rejects.toThrow(/20×10/);
   });
 });
+
+describe("screenshot in a variable mode", () => {
+  it("asks the plugin to render in the modes given", async () => {
+    const asked: unknown[] = [];
+    const png = Buffer.from(coordinatePng(4, 4));
+    const bridge: BridgeView = {
+      status: () => {
+        throw new Error("not used");
+      },
+      pairing: () => null,
+      plugins: () => [
+        {
+          session: "s1",
+          info: pluginInfo(),
+          active: true,
+        },
+      ],
+      request: async (_op, input) => {
+        asked.push(input);
+
+        const { offset, length } = input as { offset: number; length: number };
+
+        return {
+          scale: 1,
+          totalBytes: png.length,
+          bytes: png.subarray(offset, offset + length).toString("base64"),
+        };
+      },
+    };
+
+    await takeScreenshot(bridge, {
+      node: "1:2",
+      scale: 1,
+      effects: true,
+      modes: { Theme: "Dark" },
+    });
+
+    expect(asked[0]).toMatchObject({ modes: { Theme: "Dark" } });
+  });
+});

@@ -46,6 +46,9 @@ export const ScreenshotInputSchema = z.object({
     .describe(
       "Only this region of the layer, in Figma px from its box's top left (before scale); with effects on it may reach into what paints around the box.",
     ),
+  modes: OPERATION_SCHEMAS.export.input.shape.modes.describe(
+    'Render in these variable modes, by collection and mode name, e.g. {"Theme": "Dark"}: set on the layer for the render, then set back (needs Allow edits; the file is left as it was).',
+  ),
   file: FileSchema,
 });
 
@@ -427,6 +430,7 @@ export const ImageCompareInputSchema = z.object({
     .default(true)
     .describe("Render shadows and outside strokes around the layer; false renders only its own box."),
   clip: ScreenshotInputSchema.shape.clip,
+  modes: ScreenshotInputSchema.shape.modes,
   diff: z
     .string()
     .min(1)

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { setEditsAllowed } from "../src/figma/edits.ts";
 import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
 
@@ -155,5 +156,100 @@ describe("exports read at the same time", () => {
     const again = await read("c", "PNG", 0);
 
     expect(atob(again.bytes)).toBe(String.fromCharCode(...Array(4).fill(3)));
+  });
+});
+
+describe("export in a variable mode", () => {
+  const themed = (allowEdits: boolean) => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "4:1",
+          name: "Card",
+          absoluteBoundingBox: {
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+          },
+        },
+      ],
+    });
+    const installed = installFigma(page, {
+      collections: {
+        "C:1": {
+          id: "C:1",
+          name: "Theme",
+          modes: [
+            {
+              modeId: "m:1",
+              name: "Light",
+            },
+            {
+              modeId: "m:2",
+              name: "Dark",
+            },
+          ],
+        },
+      },
+    });
+    const node = page.children?.[0] as unknown as Record<string, unknown>;
+    const seen: unknown[] = [];
+
+    node.resolvedVariableModes = { "C:1": "m:1" };
+    node.explicitVariableModes = {};
+    node.setExplicitVariableModeForCollection = (collection: { id: string }, mode: string) => {
+      (node.explicitVariableModes as Record<string, string>)[collection.id] = mode;
+    };
+    node.clearExplicitVariableModeForCollection = (collection: { id: string }) => {
+      delete (node.explicitVariableModes as Record<string, string>)[collection.id];
+    };
+    node.exportAsync = async () => {
+      seen.push({ ...(node.explicitVariableModes as object) });
+
+      return IMAGE;
+    };
+    Object.assign(installed.figma, {
+      base64Encode: (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)),
+    });
+    setEditsAllowed(allowEdits);
+
+    return {
+      node,
+      seen,
+      writes: installed.writes,
+    };
+  };
+
+  it("renders the layer in the mode asked for and leaves its modes as they were, in one undo step", async () => {
+    const { node, seen, writes } = themed(true);
+
+    await runOperation("export", {
+      node: "4:1",
+      format: "PNG",
+      offset: 0,
+      length: 4,
+      modes: { theme: "dark" },
+    });
+
+    expect(seen).toEqual([{ "C:1": "m:2" }]);
+    expect(node.explicitVariableModes).toEqual({});
+    expect(writes.undo).toBe(1);
+  });
+
+  it("is refused while Allow edits is off: it writes, if only for a moment", async () => {
+    themed(false);
+
+    await expect(
+      runOperation("export", {
+        node: "4:1",
+        format: "PNG",
+        offset: 0,
+        length: 4,
+        modes: { Theme: "Dark" },
+      }),
+    ).rejects.toMatchObject({ code: "EDITS_DISABLED" });
   });
 });

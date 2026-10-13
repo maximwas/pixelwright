@@ -295,6 +295,8 @@ export const OPERATION_SCHEMAS = {
       maxSide: z.number().int().min(1).max(16_384).exactOptional(),
       /** One id per export the server reads: its chunks come from one render, apart from other exports read at once. */
       stream: z.string().min(1).max(64).exactOptional(),
+      /** Variable modes to render in, by collection and mode name: set on the layer for the render, then set back. */
+      modes: z.record(z.string().min(1).max(200), z.string().min(1).max(200)).exactOptional(),
     }),
     output: z.object({
       /** The scale the export was rendered at: lower than asked when it had to fit maxSide. */
