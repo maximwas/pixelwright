@@ -2,7 +2,8 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { ContrastSchema } from "@pixelwright/core";
 import { checkContrast } from "../../checks/contrast-check.ts";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
-import { ContrastInputSchema } from "../../schemas/tools.ts";
+import { checkFonts } from "../../fonts/check-fonts.ts";
+import { ContrastInputSchema, FontsCheckInputSchema, FontsCheckOutputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { registerTool } from "../register-tool.ts";
 
@@ -16,5 +17,18 @@ export function registerChecksTools(server: McpServer, { bridge }: ToolContext):
     output: ContrastSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     run: (args) => checkContrast(bridge, args),
+  });
+  registerTool(server, {
+    name: "fonts_check",
+    title: "Check the fonts",
+    description:
+      "The fonts a layer's texts use (the selected layer's by default), by family with the weights used, and where the build gets each: whether Google Fonts serves it, with a ready css2 link for those weights, and the weights it lacks; a family Google Fonts does not have needs its own files. Google Fonts' public catalogue is read once (no key); offline, the fonts are still listed.",
+    input: FontsCheckInputSchema,
+    output: FontsCheckOutputSchema,
+    annotations: {
+      ...READ_ONLY_ANNOTATIONS,
+      openWorldHint: true,
+    },
+    run: (args) => checkFonts(bridge, args),
   });
 }

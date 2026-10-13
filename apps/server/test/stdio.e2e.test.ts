@@ -50,6 +50,7 @@ describe("stdio server", () => {
         "design_read",
         "execute",
         "flow_read",
+        "fonts_check",
         "guide",
         "image_compare",
         "inspect",
