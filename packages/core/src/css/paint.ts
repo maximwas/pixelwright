@@ -3,7 +3,7 @@ import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotPaint } from "../types/snapshot.ts";
 import { colorCss, type Rgba } from "./color.ts";
 import { cssUrl } from "./format.ts";
-import { tokenName, variableTokenName } from "./tokens.ts";
+import { styleTokenName, variableTokenName } from "./tokens.ts";
 
 /** A paint the mapping table cannot write back yet (gradients, video, patterns): read-only CSS instead. */
 export const UNMAPPED = Symbol("unmapped");
@@ -38,7 +38,7 @@ export function paintsCss(
   const style = styleId === undefined || styleId === MIXED ? undefined : context.styles[styleId];
 
   if (style?.paints !== undefined) {
-    const name = tokenName(style.name);
+    const name = styleTokenName(style);
     const value = layersCss(style.paints, node, context);
 
     if (typeof value === "string") {

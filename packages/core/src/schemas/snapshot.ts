@@ -332,6 +332,8 @@ export const SnapshotStyleSchema = z.looseObject({
   letterSpacing: LetterSpacingSchema.optional(),
   textCase: z.string().optional(),
   textDecoration: z.string().optional(),
+  /** Its number among styles of its kind with the same name (2, 3…; see styleNumbers): its token is --Name-2. */
+  duplicate: z.number().int().min(2).optional(),
 });
 
 /** A variable the snapshot's nodes are bound to, with its value as the first node that uses it sees it. */

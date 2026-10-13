@@ -2,7 +2,7 @@ import { colorCss, type Rgba } from "../css/color.ts";
 import { decimal } from "../css/format.ts";
 import { shadowListCss } from "../css/node-css.ts";
 import { fontShorthand } from "../css/text.ts";
-import { tokenName, variableTokenName } from "../css/tokens.ts";
+import { styleTokenName, tokenName, variableTokenName } from "../css/tokens.ts";
 import type { RawTokens, StyleToken, TokenCollection, TokenModel } from "../types/tokens.ts";
 
 /** Scopes a number is used for without a unit; anything else (or no scope) is a length in pixels. */
@@ -286,7 +286,7 @@ function stylesOf(styles: RawTokens["styles"], notes: string[]): TokenModel["sty
   const effect: StyleToken[] = [];
 
   for (const style of styles) {
-    const token = tokenName(style.name);
+    const token = styleTokenName(style);
 
     if (style.type === "PAINT") {
       const visible = (style.paints ?? []).filter((paint) => paint.visible !== false);
@@ -329,6 +329,22 @@ function stylesOf(styles: RawTokens["styles"], notes: string[]): TokenModel["sty
           token,
           value: shadows,
         });
+      }
+    }
+  }
+
+  for (const [kind, tokens] of [
+    ["Paint", paint],
+    ["Effect", effect],
+    ["Text", text],
+  ] as const) {
+    const byName = Map.groupBy(tokens, ({ name }) => name);
+
+    for (const [name, group] of byName) {
+      if (group.length > 1) {
+        notes.push(
+          `${kind} styles named ${name} are ${group.length} different styles: ${group.map(({ token, value }) => `${token} ${value}`).join(", ")}.`,
+        );
       }
     }
   }

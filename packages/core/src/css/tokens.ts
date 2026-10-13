@@ -13,6 +13,13 @@ export function tokenName(name: string): string {
   return cleaned === "" ? `--token-${hash(name)}` : `--${cleaned}`;
 }
 
+/** A style's custom property: its name's, numbered when other styles of its kind share the name (--Black-2). */
+export function styleTokenName(style: { readonly name: string; readonly duplicate?: number | undefined }): string {
+  const name = tokenName(style.name);
+
+  return style.duplicate === undefined ? name : `${name}-${style.duplicate}`;
+}
+
 /** FNV-1a, in base 36: short, stable, good enough to keep a few odd names apart. */
 function hash(text: string): string {
   let value = 0x811c9dc5;

@@ -20,6 +20,7 @@ export * from "./schemas/operations.ts";
 export * from "./schemas/snapshot.ts";
 export * from "./schemas/tokens.ts";
 export * from "./schemas/tokens-apply.ts";
+export * from "./tokens/style-numbers.ts";
 export * from "./tokens/token-model.ts";
 export * from "./tokens/tokens-css.ts";
 export * from "./tokens/tokens-plan.ts";

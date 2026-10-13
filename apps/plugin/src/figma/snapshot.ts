@@ -10,7 +10,7 @@ import {
 import { SNAPSHOT_MAX_CHARS } from "../constants/plugin.ts";
 import { plain } from "../utils/plain.ts";
 import { requireNode } from "./nodes.ts";
-import { styleOf } from "./styles.ts";
+import { numbered, ownStyles, styleOf } from "./styles.ts";
 
 /** Styles and variables the snapshot's layers use, resolved once at the end; a variable keeps its first consumer. */
 interface References {
@@ -657,18 +657,33 @@ function collect(value: unknown, node: SceneNode, references: References): void 
   }
 }
 
+/** The styles the layers use, numbered among the file's own where names repeat (the second Black is --Black-2). */
 async function resolveStyles(ids: ReadonlySet<string>): Promise<Record<string, SnapshotStyle>> {
-  const styles: Record<string, SnapshotStyle> = {};
+  const used: (SnapshotStyle & { id: string })[] = [];
 
   for (const id of ids) {
     const style = await figma.getStyleByIdAsync(id);
 
     if (style !== null) {
-      styles[id] = styleOf(style);
+      used.push({
+        id,
+        ...styleOf(style),
+      });
     }
   }
 
-  return styles;
+  if (used.length === 0) {
+    return {};
+  }
+
+  const own = (await ownStyles()).map(({ id, type, name, remote }) => ({
+    id,
+    type,
+    name,
+    remote,
+  }));
+
+  return Object.fromEntries(numbered(used, own).map(({ id, ...style }) => [id, style]));
 }
 
 async function resolveVariables(consumers: ReadonlyMap<string, SceneNode>): Promise<Record<string, SnapshotVariable>> {

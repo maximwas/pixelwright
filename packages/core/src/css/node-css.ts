@@ -7,7 +7,7 @@ import { colorCss } from "./color.ts";
 import { boxShorthand, decimal, px } from "./format.ts";
 import { boundVariable, paintsCss, UNMAPPED } from "./paint.ts";
 import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
-import { tokenName, variableTokenName } from "./tokens.ts";
+import { styleTokenName, variableTokenName } from "./tokens.ts";
 
 const JUSTIFY: Readonly<Record<string, string>> = {
   CENTER: "center",
@@ -481,7 +481,7 @@ function effectsCss(node: SnapshotNode, css: Map<string, string>, context: CssCo
     const property = isText ? "text-shadow" : "box-shadow";
 
     if (style !== undefined) {
-      const name = tokenName(style.name);
+      const name = styleTokenName(style);
 
       context.tokens.set(name, shadows);
       css.set(property, `var(${name})`);

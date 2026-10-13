@@ -3,7 +3,7 @@ import { LIBRARY_BUDGET_MS } from "../constants/plugin.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import { plain } from "../utils/plain.ts";
 import { requireNode } from "./nodes.ts";
-import { localStyles, styleOf } from "./styles.ts";
+import { localStyles, numbered, styleOf } from "./styles.ts";
 
 /**
  * The file's tokens as Figma keeps them: every local collection with its modes and every variable's value per mode,
@@ -30,6 +30,8 @@ export async function variables({
 
   if (used) {
     await addUsed(raw, within === undefined ? figma.currentPage : await requireNode(within));
+    // A library style may share a name with one of the file's: numbered again with it.
+    raw.styles = numbered(raw.styles);
   }
 
   return {

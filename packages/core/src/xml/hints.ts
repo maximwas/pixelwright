@@ -1,6 +1,6 @@
 import { colorCss } from "../css/color.ts";
 import { boxShorthand, px } from "../css/format.ts";
-import { tokenName, variableTokenName } from "../css/tokens.ts";
+import { styleTokenName, variableTokenName } from "../css/tokens.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import { classify, visibleChildren } from "./classify.ts";
 import { designXml } from "./design.ts";
@@ -80,7 +80,7 @@ function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
     const [paint, ...rest] = style.paints ?? [];
 
     if (rest.length === 0 && paint?.type === "SOLID" && paint.color !== undefined) {
-      tokens.set(colorCss(paint.color, paint.opacity ?? 1), tokenName(style.name));
+      tokens.set(colorCss(paint.color, paint.opacity ?? 1), styleTokenName(style));
     }
   }
 
