@@ -408,3 +408,56 @@ describe("the view", () => {
     expect(view.layers.map((layer) => layer.id)).toEqual(["8:1", "8:2"]);
   });
 });
+
+describe("a component's set", () => {
+  it("is found from the set, a variant of it, or an instance of a variant", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:1",
+            type: "COMPONENT_SET",
+            name: "Button",
+            children: [
+              {
+                id: "5:2",
+                type: "COMPONENT",
+                name: "State=Default",
+              },
+            ],
+          },
+          {
+            id: "5:9",
+            type: "INSTANCE",
+            name: "Buy",
+            mainComponent: {
+              id: "5:2",
+              name: "State=Default",
+              parent: {
+                type: "COMPONENT_SET",
+                id: "5:1",
+                name: "Button",
+              },
+            },
+          },
+          {
+            id: "5:8",
+            type: "FRAME",
+            name: "Card",
+          },
+        ],
+      }),
+    );
+
+    for (const node of ["5:1", "5:2", "5:9"]) {
+      await expect(runOperation("set_of", { node })).resolves.toEqual({
+        id: "5:1",
+        name: "Button",
+      });
+    }
+
+    await expect(runOperation("set_of", { node: "5:8" })).rejects.toThrow(/not a component set/);
+  });
+});

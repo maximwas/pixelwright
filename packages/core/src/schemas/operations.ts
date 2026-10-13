@@ -159,6 +159,11 @@ export const OPERATION_SCHEMAS = {
       ),
     }),
   },
+  set_of: {
+    input: z.object({ node: NodeIdSchema }),
+    /** The component set the node is, or holds a variant of, or is an instance of a variant of. */
+    output: LayerNameSchema,
+  },
   usage: {
     input: z.object({
       /** A style's or variable's token as design_read and tokens_read write it (--White-2, --h1-font). */

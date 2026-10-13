@@ -65,6 +65,7 @@ describe("stdio server", () => {
         "tokens_apply",
         "tokens_read",
         "tokens_usage",
+        "variants_read",
         "viewport_get",
       ]);
 

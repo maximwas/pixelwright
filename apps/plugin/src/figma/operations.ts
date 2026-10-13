@@ -14,7 +14,7 @@ import { execute } from "./execute.ts";
 import { exportNode, originalImage } from "./export-node.ts";
 import { flows } from "./flows.ts";
 import { inspect } from "./inspect.ts";
-import { find, outline, selection, show, viewport } from "./read-ops.ts";
+import { find, outline, selection, setOf, show, viewport } from "./read-ops.ts";
 import { selectionWait } from "./selection-wait.ts";
 import { entries, snapshot } from "./snapshot.ts";
 import { tokensApply } from "./tokens-apply.ts";
@@ -34,6 +34,7 @@ const HANDLERS: Handlers = {
   changes,
   flows,
   usage,
+  set_of: setOf,
   find,
   outline,
   export: exportNode,

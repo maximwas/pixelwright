@@ -5,7 +5,7 @@ import { registerApplyTool } from "./tools/apply.ts";
 import { registerAssetsTool } from "./tools/assets.ts";
 import { registerChecksTools } from "./tools/checks.ts";
 import { registerCodeConnectTool } from "./tools/code-connect.ts";
-import { registerComponentsTool } from "./tools/components.ts";
+import { registerComponentsTool, registerVariantsTool } from "./tools/components.ts";
 import { registerDesignTool } from "./tools/design.ts";
 import { registerDiffTool } from "./tools/diff.ts";
 import { registerExecuteTool } from "./tools/execute.ts";
@@ -43,6 +43,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerExecuteTool(server, context);
   registerTokensTool(server, context);
   registerComponentsTool(server, context);
+  registerVariantsTool(server, context);
   registerAssetsTool(server, context);
   registerCodeConnectTool(server, context);
   registerGuideTool(server);
