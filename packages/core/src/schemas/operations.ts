@@ -16,6 +16,12 @@ export const BoxSchema = z.object({
   height: z.number(),
 });
 
+/** A layer by id and name. */
+const LayerNameSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
 /** A node as lists show it: enough to name it, find it again and point at it. */
 export const NodeRefSchema = z.object({
   id: z.string(),
@@ -151,6 +157,37 @@ export const OPERATION_SCHEMAS = {
           at: z.string(),
         }),
       ),
+    }),
+  },
+  flows: {
+    input: z.object({
+      /** The page to map. Default: the current page. */
+      page: NodeIdSchema.exactOptional(),
+    }),
+    output: z.object({
+      page: z.string(),
+      /** The page's flow starting points, by their names. */
+      starts: z.array(LayerNameSchema),
+      /** The page's frames, and those inside its sections: the screens a prototype moves between. */
+      screens: z.array(
+        LayerNameSchema.extend({
+          width: z.number(),
+          height: z.number(),
+        }),
+      ),
+      /** Each interaction that leaves its layer: from which screen and layer, on what, to where, and how. */
+      links: z.array(
+        z.object({
+          from: LayerNameSchema,
+          layer: LayerNameSchema,
+          trigger: z.string(),
+          action: z.string(),
+          to: LayerNameSchema.nullable(),
+          url: z.string().exactOptional(),
+          summary: z.string(),
+        }),
+      ),
+      more: z.boolean(),
     }),
   },
   viewport: {

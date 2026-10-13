@@ -8,6 +8,7 @@ import { registerComponentsTool } from "./tools/components.ts";
 import { registerDesignTool } from "./tools/design.ts";
 import { registerDiffTool } from "./tools/diff.ts";
 import { registerExecuteTool } from "./tools/execute.ts";
+import { registerFlowsTool } from "./tools/flows.ts";
 import { registerGuideTool } from "./tools/guide.ts";
 import { registerImageCompareTool } from "./tools/image-compare.ts";
 import { registerInspectTool } from "./tools/inspect.ts";
@@ -34,6 +35,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerDiffTool(server, context);
   registerImageCompareTool(server, context);
   registerMeasureTool(server, context);
+  registerFlowsTool(server, context);
   registerApplyTool(server, context);
   registerExecuteTool(server, context);
   registerTokensTool(server, context);

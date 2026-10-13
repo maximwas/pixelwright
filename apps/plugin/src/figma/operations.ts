@@ -12,6 +12,7 @@ import { components } from "./components.ts";
 import { deleteNodes } from "./delete.ts";
 import { execute } from "./execute.ts";
 import { exportNode, originalImage } from "./export-node.ts";
+import { flows } from "./flows.ts";
 import { inspect } from "./inspect.ts";
 import { find, outline, selection, show, viewport } from "./read-ops.ts";
 import { selectionWait } from "./selection-wait.ts";
@@ -30,6 +31,7 @@ const HANDLERS: Handlers = {
   viewport,
   selection_wait: selectionWait,
   changes,
+  flows,
   find,
   outline,
   export: exportNode,

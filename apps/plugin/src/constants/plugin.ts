@@ -44,6 +44,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   viewport: "Read the view",
   selection_wait: "Waited for a selection",
   changes: "Read the changes",
+  flows: "Mapped the prototype",
   inspect: "Inspected layers",
   apply: "Changed the file",
   delete: "Deleted layers",
@@ -107,3 +108,6 @@ export const CHANGES_MAX = 5_000;
 
 /** How long after one of Pixelwright's writes a change still counts as its own: Figma reports changes a moment later. */
 export const OWN_WRITE_ECHO_MS = 1_000;
+
+/** The most prototype links flow_read lists. */
+export const FLOW_MAX_LINKS = 500;
