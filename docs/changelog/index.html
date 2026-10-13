@@ -38,6 +38,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-2-0">0.2.0 — 2026-10-14</a></li>
           <li><a href="#v0-1-1">0.1.1 — 2026-10-13</a></li>
           <li><a href="#v0-1-0">0.1.0 — 2026-10-13</a></li>
         </ol>
@@ -45,6 +46,28 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-2-0">
+          <h2>0.2.0 — 2026-10-14</h2>
+<h4>Added</h4>
+<ul>
+<li><code>tokens_read</code> writes Design Tokens Format (DTCG) files: one per mode of each collection, and one for the styles,
+ready for Style Dictionary and other DTCG tools.</li>
+<li><code>design_read</code> shows the properties a designer pinned in a Dev Mode annotation (<code>$pins</code>), and gives the Dev Mode
+measurements between layers in pixels.</li>
+<li><code>design_read</code> reads Figma Motion: each animated layer gets a short <code>$motion</code> summary, and the read gives the animation
+as CSS <code>@keyframes</code> placed over the timeline.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>The plugin and the server speak a new version of their connection: run <code>npx -y pixelwright@latest</code> so both update
+together. An older server tells a newer plugin to update instead of failing on its reads.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>A component with a slot, and its instances, read again in <code>design_read</code> and <code>components_read</code>.</li>
+</ul>
+
+        </section>
         <section id="v0-1-1">
           <h2>0.1.1 — 2026-10-13</h2>
 <h4>Added</h4>
