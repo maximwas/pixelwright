@@ -71,7 +71,7 @@ const info: PluginInfo = {
 };
 const ack = {
   type: "hello_ack",
-  protocol: 3,
+  protocol: 4,
   sessionId: "s",
   server: {
     name: "pixelwright",
@@ -168,7 +168,7 @@ describe("SocketLink", () => {
     sockets[0]?.open();
     expect(sockets[0]?.sent[0]).toEqual({
       type: "hello",
-      protocol: 3,
+      protocol: 4,
       plugin: info,
       keyId: KEY.id,
       nonce: expect.stringMatching(/^[0-9a-f]{32}$/),

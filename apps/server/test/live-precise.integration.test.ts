@@ -136,7 +136,7 @@ describe.skipIf(OUT === "" || !WRITE)("precise reads on the test file", () => {
     mkdirSync(OUT, { recursive: true });
 
     try {
-      // The plugin must be this build's (protocol 3) with Allow edits on in the test file.
+      // The plugin must be this build's (protocol 4) with Allow edits on in the test file.
       for (const until = Date.now() + WAIT; ; ) {
         const files = ((await call("status", {})).structured?.files ?? []) as { name: string; allowEdits: boolean }[];
 
