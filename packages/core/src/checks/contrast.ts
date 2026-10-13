@@ -5,11 +5,6 @@ import type { Snapshot, SnapshotNode, SnapshotPaint, TextSegment } from "../type
 type Rgb = { r: number; g: number; b: number };
 type Layer = { color: Rgb; alpha: number } | { kind: string };
 
-const WHITE: Rgb = {
-  r: 1,
-  g: 1,
-  b: 1,
-};
 /** What a fill CSS cannot reduce to one colour is, in words. */
 const KINDS: Readonly<Record<string, string>> = {
   IMAGE: "an image",
@@ -64,12 +59,16 @@ function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[]): ContrastT
 
   for (const segment of segments) {
     const paint = topSolid(segment.fills);
+    const visible = segment.fills.filter((fill) => fill.visible !== false);
 
-    if (paint === null) {
+    if (paint === null && visible.length === 0) {
       continue;
     }
 
-    const rated = rateSegment(node, segment, paint, behind);
+    const rated =
+      paint === null
+        ? unknownColor(node, segment, KINDS[visible.at(-1)?.type ?? ""] ?? "a fill CSS cannot hold")
+        : rateSegment(node, segment, paint, behind);
 
     if (worst === null || (rated.ratio ?? Infinity) < (worst.ratio ?? Infinity)) {
       worst = rated;
@@ -122,7 +121,10 @@ function rateSegment(
   };
 }
 
-/** The colour behind a layer, or what it is in words when it is not one colour; white when nothing opaque is behind. */
+/**
+ * The colour behind a layer, or what it is in words when it is not one colour: the layers below it in each parent
+ * (their own children included) that paint under it, then the parent's fills, top first, until an opaque one.
+ */
 function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Rgb | string {
   const layers: Layer[] = [];
   let current = node;
@@ -134,30 +136,98 @@ function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Rgb
 
     // Figma lists children bottom first: those before it are below it.
     for (let below = index - 1; below >= 0; below--) {
-      const sibling = siblings[below] as SnapshotNode;
+      const found = paintedUnder(siblings[below] as SnapshotNode, node);
 
-      if (sibling.visible && covers(sibling, node)) {
-        layers.push(...paintLayers(sibling));
+      if (found.partly !== null) {
+        return `partly over ${found.partly.id} "${found.partly.name}": it covers only part of the text`;
       }
+
+      layers.push(...found.layers);
     }
 
     layers.push(...paintLayers(parent));
     current = parent;
   }
 
-  let color = WHITE;
   const opaque = layers.findIndex((layer) => "kind" in layer || layer.alpha >= 1);
-  const stack = opaque === -1 ? layers : layers.slice(0, opaque + 1);
 
-  for (const layer of stack.toReversed()) {
+  if (opaque === -1) {
+    return "nothing opaque behind it in the layer read: check it inside its screen";
+  }
+
+  let color: Rgb | null = null;
+
+  for (const layer of layers.slice(0, opaque + 1).toReversed()) {
     if ("kind" in layer) {
       return layer.kind;
     }
 
-    color = over(layer.color, layer.alpha, color);
+    color = color === null ? layer.color : over(layer.color, layer.alpha, color);
   }
 
-  return color;
+  return color as Rgb;
+}
+
+/**
+ * What a layer below the text paints under it, top first: its children's paints (above its own) and its own fills. A
+ * painting layer that meets the text without covering it makes the backdrop two things at once.
+ */
+function paintedUnder(layer: SnapshotNode, text: SnapshotNode): { layers: Layer[]; partly: SnapshotNode | null } {
+  if (!layer.visible || !meets(layer, text)) {
+    return {
+      layers: [],
+      partly: null,
+    };
+  }
+
+  const layers: Layer[] = [];
+
+  for (const child of (layer.children ?? []).toReversed()) {
+    const found = paintedUnder(child, text);
+
+    if (found.partly !== null) {
+      return found;
+    }
+
+    layers.push(...found.layers);
+  }
+
+  const own = paintLayers(layer);
+
+  if (own.length > 0 && !covers(layer, text)) {
+    return {
+      layers: [],
+      partly: layer,
+    };
+  }
+
+  return {
+    layers: [...layers, ...own],
+    partly: null,
+  };
+}
+
+function meets(a: SnapshotNode, b: SnapshotNode): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+function unknownColor(node: SnapshotNode, segment: TextSegment, kind: string): ContrastText {
+  const size = segment.fontSize;
+  const weight = segment.fontWeight;
+
+  return {
+    id: node.id,
+    name: node.name,
+    text: (node.text?.characters ?? "").slice(0, 40),
+    color: kind,
+    backdrop: "not compared",
+    ratio: null,
+    size,
+    weight,
+    large: size >= 24 || (size >= 18.66 && weight >= 700),
+    aa: null,
+    aaa: null,
+  };
 }
 
 /** A layer's visible fills, top first, each as a colour with its alpha or the kind of fill it is. */

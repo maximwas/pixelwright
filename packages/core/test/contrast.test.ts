@@ -136,3 +136,82 @@ describe("contrast_check", () => {
     });
   });
 });
+
+describe("contrast_check after the review", () => {
+  const DARK = solid(18, 18, 18);
+  const rect = (id: string, fills: unknown[], x: number, width: number): SnapshotNode => ({
+    id,
+    name: id,
+    type: "RECTANGLE",
+    visible: true,
+    x,
+    y: 0,
+    width,
+    height: 100,
+    childCount: 0,
+    fills: fills as SnapshotNode["fills"],
+  });
+  const check = (root: SnapshotNode) =>
+    contrastCheck({
+      root,
+      styles: {},
+      variables: {},
+    }).texts[0];
+
+  it("finds a backdrop nested inside a layer below the text", () => {
+    expect(
+      check(frame("1:1", [], [frame("1:2", [], [rect("1:3", [DARK], 0, 400)]), text("Over", 16, 10, 10)])),
+    ).toMatchObject({
+      backdrop: "#121212",
+      aa: true,
+    });
+  });
+
+  it("does not take white for granted when nothing opaque is behind the text in what was read", () => {
+    expect(check(frame("1:1", [], [text("Over", 16, 10, 10)]))).toMatchObject({
+      ratio: null,
+      backdrop: expect.stringMatching(/nothing opaque/),
+    });
+  });
+
+  it("says when a layer behind covers only part of the text", () => {
+    expect(check(frame("1:1", [WHITE], [rect("1:4", [DARK], 12, 98), text("Over", 16, 10, 10)]))).toMatchObject({
+      ratio: null,
+      backdrop: expect.stringMatching(/partly over 1:4/),
+    });
+  });
+
+  it("lists a text painted with a gradient, its contrast unknown", () => {
+    expect(
+      check(
+        frame(
+          "1:1",
+          [WHITE],
+          [
+            text("Shine", 16, 10, 10, {
+              text: {
+                ...(text("Shine", 16, 10, 10).text as NonNullable<SnapshotNode["text"]>),
+                segments: [
+                  {
+                    ...((text("Shine", 16, 10, 10).text as NonNullable<SnapshotNode["text"]>)
+                      .segments[0] as TextSegment),
+                    fills: [
+                      {
+                        type: "GRADIENT_LINEAR",
+                        visible: true,
+                      },
+                    ],
+                  },
+                ],
+              },
+            }),
+          ],
+        ),
+      ),
+    ).toMatchObject({
+      name: "Shine",
+      color: "a gradient",
+      ratio: null,
+    });
+  });
+});
