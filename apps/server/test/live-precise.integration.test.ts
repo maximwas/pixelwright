@@ -173,9 +173,12 @@ describe.skipIf(OUT === "" || !WRITE)("precise reads on the test file", () => {
 
       log.xml = xml;
       log.read = json;
-      // Only the second Black is used, and it keeps its number: the first is --PW-check-Black.
-      expect(json.tokens).toMatchObject({ "--PW-check-Black-2": "#141414" });
-      expect(xml).toContain("var(--PW-check-Black-2)");
+
+      // Only the #141414 Black is used; which of the two is -2 follows their ids, so it is checked against tokens_read.
+      const used = Object.entries(json.tokens).find(([, value]) => value === "#141414")?.[0] ?? "";
+
+      expect(used).toMatch(/^--PW-check-Black(-2)?$/);
+      expect(xml).toContain(`var(${used})`);
       expect(xml).toContain("blur: progressive from 0px at 50% 0% to 8px at 50% 100%");
       expect(xml).toContain("stroke-align: center");
       expect(xml).toContain("Behind&#8232;Your");
@@ -190,6 +193,7 @@ describe.skipIf(OUT === "" || !WRITE)("precise reads on the test file", () => {
         })
       ).structured as {
         layers: {
+          box: { width: number; height: number };
           paintedBox?: { y: number; height: number };
           overflow?: { right?: number };
           text?: { lines: { break: string | null }[] };
@@ -216,6 +220,30 @@ describe.skipIf(OUT === "" || !WRITE)("precise reads on the test file", () => {
 
       expect([image.width, image.height]).toEqual([80, 40]);
 
+      // A text paints only its glyphs: its whole box still clips, transparent where nothing paints.
+      const titleBox = inspected.layers[1]?.box ?? {
+        width: 0,
+        height: 0,
+      };
+      const title = decode(
+        Buffer.from(
+          (
+            await call("screenshot", {
+              node: ids.title,
+              clip: {
+                x: 0,
+                y: 0,
+                width: titleBox.width,
+                height: titleBox.height,
+              },
+            })
+          ).content.find((part) => part.type === "image")?.data ?? "",
+          "base64",
+        ),
+      );
+
+      expect([title.width, title.height]).toEqual([Math.round(titleBox.width), Math.round(titleBox.height)]);
+
       // Sent back unchanged, the read writes nothing: no $ attribute, soft break or numbered token goes astray.
       const back = (await call("design_apply", { xml })).structured;
 
@@ -225,7 +253,16 @@ describe.skipIf(OUT === "" || !WRITE)("precise reads on the test file", () => {
         changed: [],
       });
 
-      const tokens = (await call("tokens_read", { format: "json" })).structured as { notes?: string[] };
+      const tokens = (await call("tokens_read", { format: "json" })).structured as {
+        notes?: string[];
+        tokens?: { styles: { paint: { name: string; token: string; value: string }[] } };
+      };
+      const blacks = (tokens.tokens?.styles.paint ?? []).filter((style) => style.name === "PW check Black");
+
+      log.blacks = blacks;
+      // tokens_read means the same style by the same name as the read did.
+      expect(blacks.find((style) => style.value === "#141414")?.token).toBe(used);
+      expect(blacks.map((style) => style.token).toSorted()).toEqual(["--PW-check-Black", "--PW-check-Black-2"]);
 
       expect((tokens.notes ?? []).join("\n")).toMatch(/PW check Black/);
     } finally {
