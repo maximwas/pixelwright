@@ -28,6 +28,8 @@ How to write this file (people and agents alike):
 
 ### Changed
 
+- The plugin stays a development plugin you import once from its manifest (`npx -y pixelwright@latest` puts it in
+  place and keeps it current): Figma does not list plugins that overlap its own MCP server on the Community.
 - The README, the guide and the examples read Orbit, a demo pricing page made for Pixelwright, instead of a
   third-party design.
 

@@ -22,8 +22,9 @@ npx -y pixelwright@latest
 It connects Claude Code and Cursor, shows what to paste for Codex and other MCP clients, and puts the Figma plugin in
 `~/.pixelwright/plugin`. Then, in Figma Desktop:
 
-1. **Plugins → Development → Import plugin from manifest…** and pick `~/.pixelwright/plugin/manifest.json` (once; the
-   Community listing will replace this step).
+1. **Plugins → Development → Import plugin from manifest…** and pick `~/.pixelwright/plugin/manifest.json`, once.
+   Figma loads the plugin from there every time you run it, and the setup puts the new one there on every update. (The
+   plugin is not on the Figma Community: Figma does not list plugins that overlap its own MCP server.)
 2. Open your file and run **Plugins → Development → Pixelwright**. Keep its small window open while you work.
 3. The first time, the window asks for a pairing code: your agent shows it (from `status`); type it in.
 4. Ask your agent to read a section, or turn on **Allow edits** in the window and ask it to change something.
@@ -177,7 +178,7 @@ git tag v1.2.3 && git push origin v1.2.3
 
 The Release workflow checks that the tag matches both versions and has its section in `CHANGELOG.md`, runs the checks,
 publishes `pixelwright` to npm (trusted publishing, with provenance; a version npm has already is left alone) and
-creates a GitHub release with the plugin as a zip and that section as its notes. The Figma Community listing is published from Figma Desktop (`apps/plugin/COMMUNITY.md`).
+creates a GitHub release with the plugin as a zip and that section as its notes.
 
 The first version goes to npm by hand, because npm sets up trusted publishing only for a package that exists:
 `pnpm build && pnpm --filter pixelwright pack`, then `npm publish apps/server/pixelwright-<version>.tgz --access public`

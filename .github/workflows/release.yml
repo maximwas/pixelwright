@@ -5,8 +5,7 @@ name: Release
 # as its notes. npm trusts this workflow (trusted
 # publishing, set on the package's npm settings page), so the repository holds no token and the package gets
 # provenance. npm sets up trusted publishing only for a package that exists, so the first version is published by hand
-# (README, Releasing); its tag then skips npm and still makes the GitHub release. The Figma Community listing is
-# published from Figma Desktop by hand (apps/plugin/COMMUNITY.md).
+# (README, Releasing); its tag then skips npm and still makes the GitHub release.
 on:
   push:
     tags: ["v*"]

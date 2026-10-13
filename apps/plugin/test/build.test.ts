@@ -33,7 +33,7 @@ describe("the plugin build", () => {
       expect(ui).toContain("## zod");
       expect(ui).not.toContain("## culori");
 
-      // The bundles carry them too: the Figma Community takes only the manifest and the bundles.
+      // The bundles carry them too: a Figma plugin is loaded from its manifest and bundles alone.
       expect(readFileSync(join(out, "build", "main.js"), "utf8").includes(main)).toBe(true);
       expect(readFileSync(join(out, "build", "ui.js"), "utf8").includes(ui)).toBe(true);
     } finally {

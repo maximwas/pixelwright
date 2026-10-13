@@ -1,51 +1,8 @@
-# Publishing the plugin to the Figma Community
+# The Figma Community
 
-The plugin is published by hand, from Figma Desktop (Plugins → Development → Pixelwright → Publish), with the build
-the release workflow attaches to the GitHub release (or `pnpm --filter @pixelwright/plugin build`). Until the listing
-exists, people import `~/.pixelwright/plugin/manifest.json`, which `npx pixelwright` puts there.
+Pixelwright's plugin is not on the Figma Community. It was submitted on 2026-10-13 and declined: Figma does not
+approve plugins that overlap with what its own MCP server does. The plugin is a development plugin instead:
+`npx -y pixelwright@latest` puts it in `~/.pixelwright/plugin`, and Figma Desktop imports it once from
+`manifest.json` (Plugins → Development → Import plugin from manifest…).
 
-## Before the first publish
-
-- [ ] The listing's name, tagline and description below, checked against the README.
-- [x] An icon (128 × 128) and a cover (1920 × 960) made for Pixelwright: `community/icon.png`, `community/cover.png`.
-- [x] Figma gives the plugin a numeric id on publish: it is in `package.json` → `figma-plugin.id`
-      (1691873879456586177), so the npm package carries the same id.
-- [ ] Network access: the manifest allows only `ws://localhost:18720`, with its reasoning. Confirm Figma's review
-      accepts a localhost WebSocket (other published MCP bridges use one).
-- [ ] `execute` runs code the agent sends inside the plugin. If review refuses a plugin that evaluates code, publish a
-      build without it and keep `execute` in the build imported from the manifest (spec, section 16).
-- [ ] Try the published build once in a fresh Figma account: pairing, a read, Allow edits, a write, undo.
-- [ ] Licences: each bundle ends with the licences of the packages it carries (apps/plugin/build-licenses.js), so the
-      published build carries them; nothing to add by hand.
-
-## Listing
-
-**Name:** Pixelwright — MCP for Figma
-
-**Tagline:** Let your AI agent read and edit the file you have open.
-
-**Description:**
-
-Pixelwright connects AI coding agents (Claude Code, Cursor, Codex and other MCP clients) to the Figma file you have
-open. Run `npx -y pixelwright@latest` in a terminal, open this plugin in your file, and your agent can:
-
-- read a section as XML with CSS, tokens and assets, ready to build with your own components;
-- inspect and measure layers, compare variants and screen sizes, check contrast and the design's scale;
-- compare a screenshot of your build with the design;
-- read your variables, styles, components and prototype flows;
-- change the file with the same XML, create components and variants, and write tokens, when you allow it;
-- turn instances into your code with your Figma Code Connect templates, on any plan.
-
-The plugin talks only to the Pixelwright server on your computer (localhost), after you pair them once with a code.
-Nothing goes to Figma's REST API and no token is needed, so there are no API rate limits. Writing is off until you turn
-on Allow edits in the plugin's window, and each change is one undo step.
-
-Needs Node.js 24.11 or newer and Figma Desktop.
-
-Pixelwright is free: https://github.com/maximwas/pixelwright. It is not made by or affiliated
-with Figma. If it saves you time, you can support it on Ko-fi (https://ko-fi.com/maksymvasianin) or with a monobank jar
-(https://send.monobank.ua/jar/7o9oMrbXTj).
-
-**Tags:** developer tools, MCP, AI, code, design to code, tokens
-
-**Support contact:** the GitHub repository's issues.
+`community/icon.png` and `community/cover.png` are the plugin's icon and cover, made for that listing.

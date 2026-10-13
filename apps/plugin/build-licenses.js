@@ -3,8 +3,8 @@ import { join, resolve } from "node:path";
 
 /**
  * An esbuild plugin that puts the licence of every package a bundle carries code from at the end of the bundle, and
- * beside it as `<bundle>.LICENSE.txt`: MIT and its kin ask that their notice go with every copy, and the Figma
- * Community takes only the manifest and the bundles. No maintained package does this for esbuild
+ * beside it as `<bundle>.LICENSE.txt`: MIT and its kin ask that their notice go with every copy, and a Figma plugin is
+ * loaded from its manifest and bundles alone. No maintained package does this for esbuild
  * (esbuild-plugin-license had its last release in 2024 and a few hundred downloads a week).
  */
 export function licenses() {

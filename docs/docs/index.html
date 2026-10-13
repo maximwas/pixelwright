@@ -65,8 +65,9 @@
 <p>It connects Claude Code and Cursor, shows what to paste for Codex and other MCP clients, and puts the Figma plugin in
 <code>~/.pixelwright/plugin</code>. Then, in Figma Desktop:</p>
 <ol>
-<li><strong>Plugins → Development → Import plugin from manifest…</strong> and pick <code>~/.pixelwright/plugin/manifest.json</code> (once; the
-Community listing will replace this step).</li>
+<li><strong>Plugins → Development → Import plugin from manifest…</strong> and pick <code>~/.pixelwright/plugin/manifest.json</code>, once.
+Figma loads the plugin from there every time you run it, and the setup puts the new one there on every update. (The
+plugin is not on the Figma Community: Figma does not list plugins that overlap its own MCP server.)</li>
 <li>Open your file and run <strong>Plugins → Development → Pixelwright</strong>. Keep its small window open while you work.</li>
 <li>The first time, the window asks for a pairing code: your agent shows it (from <code>status</code>); type it in.</li>
 <li>Ask your agent to read a section, or turn on <strong>Allow edits</strong> in the window and ask it to change something.</li>
