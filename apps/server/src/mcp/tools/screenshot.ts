@@ -5,7 +5,7 @@ import { BridgeError, OPERATION_SCHEMAS } from "@pixelwright/core";
 import type * as z from "zod";
 import { imageInfo } from "../../assets/image-info.ts";
 import { resolveTarget } from "../../bridge/target.ts";
-import { INLINE_ATTEMPTS, MAX_IMAGE_SIDE_PX, MAX_INLINE_IMAGE_BYTES } from "../../constants/mcp.ts";
+import { EDGE_PX, INLINE_ATTEMPTS, MAX_IMAGE_SIDE_PX, MAX_INLINE_IMAGE_BYTES } from "../../constants/mcp.ts";
 import { ScreenshotInputSchema } from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
 import { cropPng } from "../../utils/crop-png.ts";
@@ -139,7 +139,9 @@ export async function takeScreenshot(
 
 /**
  * A region of a layer: the whole layer rendered at the scale, then cut to the clip, which is measured from the layer's
- * box (inspect says where that box sits in the render: with effects, the render covers what paints around it).
+ * box (inspect says where that box sits in the render: with effects, the render covers what paints around it, and may
+ * cover less than the box, as a text's glyphs do). The clip may reach anywhere in the box and what paints around it;
+ * the parts of that the render does not cover are transparent.
  */
 async function clippedShot(
   bridge: ToolContext["bridge"],
@@ -155,6 +157,31 @@ async function clippedShot(
   }
 
   const rendered = effects ? (layer.paintedBox ?? layer.box) : layer.box;
+  // Where the clip may reach, from the box's top left: the box and what paints around it.
+  const reach = {
+    left: Math.min(0, rendered.x - layer.box.x),
+    top: Math.min(0, rendered.y - layer.box.y),
+    right: Math.max(layer.box.width, rendered.x - layer.box.x + rendered.width),
+    bottom: Math.max(layer.box.height, rendered.y - layer.box.y + rendered.height),
+  };
+  const within =
+    clip.x >= reach.left - EDGE_PX &&
+    clip.y >= reach.top - EDGE_PX &&
+    clip.x + clip.width <= reach.right + EDGE_PX &&
+    clip.y + clip.height <= reach.bottom + EDGE_PX;
+
+  if (!within) {
+    const painted =
+      rendered === layer.box
+        ? ""
+        : `, and with effects it paints from ${round(reach.left)}, ${round(reach.top)} to ${round(reach.right)}, ${round(reach.bottom)}`;
+
+    throw new BridgeError(
+      "OP_FAILED",
+      `The clip does not lie within ${node}: its box is ${layer.box.width}×${layer.box.height} px${painted}.`,
+    );
+  }
+
   const { bytes, scale: used } = await exportBytes(
     bridge,
     {
@@ -176,15 +203,7 @@ async function clippedShot(
   });
 
   if (cropped === null) {
-    const painted =
-      rendered === layer.box
-        ? ""
-        : `, and with effects it paints from ${round(rendered.x - layer.box.x)}, ${round(rendered.y - layer.box.y)} to ${round(rendered.x - layer.box.x + rendered.width)}, ${round(rendered.y - layer.box.y + rendered.height)}`;
-
-    throw new BridgeError(
-      "OP_FAILED",
-      `The clip does not lie within ${node}: its box is ${layer.box.width}×${layer.box.height} px${painted}.`,
-    );
+    throw new BridgeError("OP_FAILED", `The clip is under a pixel at scale ${used}: give a bigger region or scale.`);
   }
 
   const png = Buffer.from(cropped);

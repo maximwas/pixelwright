@@ -8,20 +8,16 @@ export interface PixelRegion {
   readonly height: number;
 }
 
-/** The region of a PNG as a PNG of its own; null when the region does not lie within the image. */
+/**
+ * The region of a PNG as a PNG of its own; what lies outside the image comes out transparent (an alpha channel is added
+ * when the image has none). Null for an empty region.
+ */
 export function cropPng(png: Uint8Array, region: PixelRegion): Uint8Array | null {
-  const image = decode(png);
-
-  if (
-    region.x < 0 ||
-    region.y < 0 ||
-    region.width < 1 ||
-    region.height < 1 ||
-    region.x + region.width > image.width ||
-    region.y + region.height > image.height
-  ) {
+  if (region.width < 1 || region.height < 1) {
     return null;
   }
+
+  const image = decode(png);
 
   if (image.palette !== undefined) {
     throw new Error(
@@ -29,21 +25,48 @@ export function cropPng(png: Uint8Array, region: PixelRegion): Uint8Array | null
     );
   }
 
-  const samples = image.channels;
-  const size = region.width * region.height * samples;
+  const inside =
+    region.x >= 0 &&
+    region.y >= 0 &&
+    region.x + region.width <= image.width &&
+    region.y + region.height <= image.height;
+  const hasAlpha = image.channels === 2 || image.channels === 4;
+  const channels = inside || hasAlpha ? image.channels : image.channels + 1;
+  const size = region.width * region.height * channels;
+  // Zeros: transparent wherever the image does not reach.
   const data = image.data instanceof Uint16Array ? new Uint16Array(size) : new Uint8Array(size);
-  const row = region.width * samples;
+  const opaque = image.depth === 16 ? 0xff_ff : 0xff;
+  const left = Math.max(0, region.x);
+  const right = Math.min(image.width, region.x + region.width);
 
   for (let y = 0; y < region.height; y++) {
-    const from = ((region.y + y) * image.width + region.x) * samples;
+    const row = region.y + y;
 
-    data.set(image.data.subarray(from, from + row), y * row);
+    if (row < 0 || row >= image.height || left >= right) {
+      continue;
+    }
+
+    const from = (row * image.width + left) * image.channels;
+    const to = (y * region.width + left - region.x) * channels;
+
+    if (channels === image.channels) {
+      data.set(image.data.subarray(from, from + (right - left) * channels), to);
+      continue;
+    }
+
+    for (let x = 0; x < right - left; x++) {
+      for (let channel = 0; channel < image.channels; channel++) {
+        data[to + x * channels + channel] = image.data[from + x * image.channels + channel] ?? 0;
+      }
+
+      data[to + x * channels + image.channels] = opaque;
+    }
   }
 
   return encode({
     width: region.width,
     height: region.height,
-    channels: image.channels,
+    channels,
     depth: image.depth,
     data,
   });

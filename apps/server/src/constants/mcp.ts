@@ -51,3 +51,6 @@ export const WRITTEN_FILES_LIMIT = 5_000;
 
 /** The longest side of an image figma.createImage takes (verified live: 4100 px is refused). */
 export const MAX_FIGMA_IMAGE_SIDE = 4_096;
+
+/** How far past the box and what paints around it a screenshot clip may reach, for float noise in Figma's boxes. */
+export const EDGE_PX = 0.01;
