@@ -195,3 +195,111 @@ describe("text", () => {
     expect(hints).toContainEqual(expect.stringMatching(/wider.*1:2.*306px.*297px/s));
   });
 });
+
+describe("prototype interactions", () => {
+  const hover = {
+    trigger: { type: "ON_HOVER" },
+    actions: [
+      {
+        type: "NODE",
+        destinationId: "5:2",
+        destinationName: "Type=Hover",
+        navigation: "CHANGE_TO",
+        transition: {
+          type: "SMART_ANIMATE",
+          duration: 0.3,
+          easing: { type: "EASE_OUT" },
+        },
+      },
+    ],
+  };
+
+  it("writes each trigger as a read-only attribute: what happens, then how it moves", () => {
+    const { xml } = read(
+      box([
+        layer({
+          id: "1:2",
+          reactions: [
+            hover,
+            {
+              trigger: {
+                type: "AFTER_TIMEOUT",
+                timeout: 0.8,
+              },
+              actions: [
+                {
+                  type: "NODE",
+                  destinationId: "7:1",
+                  destinationName: "Step 2",
+                  navigation: "NAVIGATE",
+                  transition: {
+                    type: "MOVE_IN",
+                    direction: "LEFT",
+                    duration: 0.2,
+                    easing: {
+                      type: "CUSTOM_CUBIC_BEZIER",
+                      easingFunctionCubicBezier: {
+                        x1: 0.4,
+                        y1: 0,
+                        x2: 0.2,
+                        y2: 1,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+            {
+              trigger: { type: "ON_CLICK" },
+              actions: [
+                {
+                  type: "NODE",
+                  destinationId: "8:1",
+                  destinationName: "Menu",
+                  navigation: "OVERLAY",
+                  transition: {
+                    type: "DISSOLVE",
+                    duration: 0.25,
+                    easing: { type: "GENTLE" },
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      ]),
+    );
+
+    expect(line(xml, "1:2")).toContain('$on-hover="change to Type=Hover; smart animate 300ms ease-out"');
+    expect(line(xml, "1:2")).toContain(
+      '$after-timeout="after 800ms; go to Step 2; move in left 200ms cubic-bezier(0.4, 0, 0.2, 1)"',
+    );
+    expect(line(xml, "1:2")).toContain('$on-click="open overlay Menu; dissolve 250ms spring gentle"');
+  });
+
+  it("leaves a link to its href, and design_apply leaves the interactions alone", () => {
+    const { xml } = read(
+      box([
+        layer({
+          id: "1:2",
+          href: "https://example.com",
+          reactions: [
+            {
+              trigger: { type: "ON_CLICK" },
+              actions: [
+                {
+                  type: "URL",
+                  url: "https://example.com",
+                },
+              ],
+            },
+            hover,
+          ],
+        }),
+      ]),
+    );
+
+    expect(line(xml, "1:2")).not.toContain("$on-click");
+    expect(readApply(line(xml, "1:2").trim()).elements[0]?.attributes).not.toHaveProperty("$on-hover");
+  });
+});

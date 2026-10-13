@@ -424,6 +424,12 @@ async function entryOf(node: SceneNode, context: EntryContext): Promise<Snapshot
     entry.href = href;
   }
 
+  const reactions = await reactionsOf(node);
+
+  if (reactions.length > 0) {
+    entry.reactions = reactions;
+  }
+
   if (node.type === "TEXT") {
     entry.text = textOf(node);
   }
@@ -526,6 +532,47 @@ function annotationsOf(
           },
         ];
   });
+}
+
+/**
+ * The layer's prototype interactions as Figma keeps them, each NODE action with its destination's name (a variant's
+ * name says which state it changes to). The old single `action` becomes `actions`.
+ */
+export async function reactionsOf(node: SceneNode): Promise<Record<string, unknown>[]> {
+  if (!("reactions" in node) || node.reactions.length === 0) {
+    return [];
+  }
+
+  const names = new Map<string, string>();
+  const nameOf = async (id: string) => {
+    if (!names.has(id)) {
+      names.set(id, (await figma.getNodeByIdAsync(id))?.name ?? id);
+    }
+
+    return names.get(id);
+  };
+  const reactions: Record<string, unknown>[] = [];
+
+  for (const reaction of node.reactions) {
+    const actions: Record<string, unknown>[] = [];
+
+    for (const action of reaction.actions ?? (reaction.action === undefined ? [] : [reaction.action])) {
+      const plainAction = plain<Record<string, unknown>>(action);
+
+      if (action.type === "NODE" && action.destinationId !== null) {
+        plainAction.destinationName = await nameOf(action.destinationId);
+      }
+
+      actions.push(plainAction);
+    }
+
+    reactions.push({
+      trigger: plain(reaction.trigger),
+      actions,
+    });
+  }
+
+  return reactions;
 }
 
 /** The URL a prototype interaction of the layer opens, if one does. */

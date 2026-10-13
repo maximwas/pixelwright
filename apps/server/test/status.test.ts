@@ -49,7 +49,7 @@ describe("status", () => {
     expect(status.server).toEqual({
       version: "0.1.0",
       role: "owner",
-      protocol: 2,
+      protocol: 3,
       port: 18_720,
     });
     expect(status.files).toEqual([

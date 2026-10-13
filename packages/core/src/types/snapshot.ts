@@ -2,6 +2,7 @@ import type * as z from "zod";
 import type {
   EffectSchema,
   PaintSchema,
+  ReactionSchema,
   SnapshotFieldsSchema,
   SnapshotSchema,
   SnapshotStyleSchema,
@@ -19,4 +20,5 @@ export type SnapshotStyle = z.output<typeof SnapshotStyleSchema>;
 export type SnapshotVariable = z.output<typeof SnapshotVariableSchema>;
 export type SnapshotPaint = z.output<typeof PaintSchema>;
 export type SnapshotEffect = z.output<typeof EffectSchema>;
+export type SnapshotReaction = z.output<typeof ReactionSchema>;
 export type TextSegment = z.output<typeof TextSegmentSchema>;

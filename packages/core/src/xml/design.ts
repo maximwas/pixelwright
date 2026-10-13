@@ -1,6 +1,7 @@
 import { splitTop } from "../apply/css-values.ts";
 import { INVISIBLE_TYPES } from "../constants/css.ts";
 import { px } from "../css/format.ts";
+import { interactionAttributes } from "../css/interactions.ts";
 import { nodeCss } from "../css/node-css.ts";
 import { baseSegment, segmentCss, textStyleCss } from "../css/text.ts";
 import type { CssContext } from "../types/css.ts";
@@ -175,6 +176,7 @@ class DesignWriter {
       ...properties,
       ["$code", code],
       ["$css", readOnlyOf(css.readOnly, asset !== null)],
+      ...interactionAttributes(node.reactions ?? []),
       ["$children", asset === null && code === undefined && !isCut && !clipped ? cutCount(node, limit) : undefined],
       ["$truncated", isCut || clipped ? "true" : undefined],
     ];

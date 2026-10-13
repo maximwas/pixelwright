@@ -38,7 +38,7 @@ describe("bridge protocol", () => {
 
     expect(decodePluginToServer(hello)).toEqual({
       type: "hello",
-      protocol: 2,
+      protocol: 3,
       plugin: info,
       keyId: null,
       nonce: "0".repeat(32),
@@ -94,7 +94,7 @@ describe("bridge protocol", () => {
     const hello = (overrides: Partial<PluginInfo>) =>
       JSON.stringify({
         type: "hello",
-        protocol: 2,
+        protocol: 3,
         plugin: {
           ...info,
           ...overrides,

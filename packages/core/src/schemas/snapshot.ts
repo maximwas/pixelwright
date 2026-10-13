@@ -67,6 +67,60 @@ export const EffectSchema = z.looseObject({
     .optional(),
 });
 
+/** A transition's easing: a named curve, a cubic bezier or a spring. */
+const EasingSchema = z.looseObject({
+  type: z.string(),
+  easingFunctionCubicBezier: z
+    .object({
+      x1: z.number(),
+      y1: z.number(),
+      x2: z.number(),
+      y2: z.number(),
+    })
+    .optional(),
+  easingFunctionSpring: z
+    .looseObject({
+      mass: z.number(),
+      stiffness: z.number(),
+      damping: z.number(),
+    })
+    .optional(),
+});
+
+/** One prototype interaction: what starts it and what it does; NODE actions carry their destination's name. */
+export const ReactionSchema = z.looseObject({
+  trigger: z
+    .looseObject({
+      type: z.string(),
+      /** AFTER_TIMEOUT, in seconds. */
+      timeout: z.number().optional(),
+      /** MOUSE_ENTER and the like, in seconds. */
+      delay: z.number().optional(),
+    })
+    .nullable(),
+  actions: z
+    .array(
+      z.looseObject({
+        type: z.string(),
+        destinationId: z.string().nullable().optional(),
+        destinationName: z.string().optional(),
+        navigation: z.string().optional(),
+        url: z.string().optional(),
+        transition: z
+          .looseObject({
+            type: z.string(),
+            /** In seconds. */
+            duration: z.number(),
+            direction: z.string().optional(),
+            easing: EasingSchema,
+          })
+          .nullable()
+          .optional(),
+      }),
+    )
+    .optional(),
+});
+
 const LineHeightSchema = z.looseObject({
   unit: z.string(),
   value: z.number().optional(),
@@ -308,6 +362,8 @@ export const SnapshotFieldsSchema = z.object({
   missingFont: z.boolean().optional(),
   /** The URL a prototype interaction opens. */
   href: z.string().optional(),
+  /** Prototype interactions as Figma keeps them, each action's destination named by the plugin. */
+  reactions: z.array(ReactionSchema).optional(),
   /** Export settings the designer gave the layer: it is meant to be an asset, in this format and scale. */
   exportSettings: z
     .array(

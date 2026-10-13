@@ -1,8 +1,9 @@
 /**
  * Bumped on every breaking change of the bridge messages; the server closes a plugin of another version (4426).
  * 2 (09.10.2026): pairing and challenge-response; open error codes.
+ * 3 (13.10.2026): the inspect operation; snapshots carry prototype reactions and numbered styles.
  */
-export const BRIDGE_PROTOCOL_VERSION = 2;
+export const BRIDGE_PROTOCOL_VERSION = 3;
 
 export const BRIDGE_PATH = "/pixelwright/v1";
 

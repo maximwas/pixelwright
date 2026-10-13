@@ -10,6 +10,7 @@ export * from "./constants/css.ts";
 export * from "./constants/execute.ts";
 export * from "./css/color.ts";
 export * from "./css/format.ts";
+export * from "./css/interactions.ts";
 export * from "./css/node-css.ts";
 export * from "./css/paint.ts";
 export * from "./css/text.ts";
