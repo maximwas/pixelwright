@@ -1,5 +1,6 @@
 import { type NumberedStyle, type SnapshotStyle, styleNumbers } from "@pixelwright/core";
 import { plain } from "../utils/plain.ts";
+import { loaded, usedUnder } from "./used-tokens.ts";
 
 /** A style as snapshots and tokens carry it: its name, and its value for the tokens. */
 export function styleOf(style: BaseStyle): SnapshotStyle {
@@ -57,6 +58,42 @@ export async function ownStyles(): Promise<BaseStyle[]> {
     ...(await figma.getLocalTextStylesAsync()),
     ...(await figma.getLocalEffectStylesAsync()),
   ];
+}
+
+/**
+ * What same-named styles are numbered among: the file's own and the ones these pages' layers use (a team library's).
+ * Every reader takes the page of what it reads, so a snapshot of one layer, design_apply's entries, tokens_read and the
+ * token index all call the same library style --Black-2. The file's own styles come first, so their numbers never
+ * depend on a page: without pages only they are taken.
+ */
+export async function numberingStyles(pages: Iterable<PageNode>): Promise<NumberedStyle[]> {
+  const styles: NumberedStyle[] = (await ownStyles()).map(({ id, type, name, remote }) => ({
+    id,
+    type,
+    name,
+    remote,
+  }));
+  const known = new Set(styles.map((style) => style.id));
+
+  for (const page of pages) {
+    await loaded(page);
+
+    for (const id of usedUnder(page).styleIds) {
+      const style = known.has(id) ? null : await figma.getStyleByIdAsync(id);
+
+      if (style !== null) {
+        styles.push({
+          id,
+          type: style.type,
+          name: style.name,
+          remote: style.remote,
+        });
+        known.add(id);
+      }
+    }
+  }
+
+  return styles;
 }
 
 /**

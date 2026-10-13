@@ -91,3 +91,79 @@ describe("styles that share a name", () => {
     expect(await index.style("--Black-2", "PAINT")).toBe("S:2");
   });
 });
+
+/** Two library styles named Black, as team files have them: which one is --Black-2 must not depend on what is read. */
+const LIBRARY_A = {
+  ...blackStyle("S:a", 15 / 255),
+  remote: true,
+};
+const LIBRARY_B = {
+  ...blackStyle("S:b", 20 / 255),
+  remote: true,
+};
+const filled = (id: string, styleId: string) => ({
+  id,
+  type: "RECTANGLE",
+  fills: [],
+  fillStyleId: styleId,
+});
+const teamLibrary = (pages: ReturnType<typeof tree>[] = []) => ({
+  styles: {
+    "S:a": LIBRARY_A,
+    "S:b": LIBRARY_B,
+  },
+  pages,
+});
+
+describe("library styles that share a name", () => {
+  it("get the same numbers in a snapshot of one layer, design_apply's entries, tokens_read within it and the lookup", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [filled("1:1", "S:a"), filled("1:2", "S:b")],
+      }),
+      teamLibrary(),
+    );
+
+    const read = (await runOperation("snapshot", { node: "1:2" })) as {
+      styles: Record<string, { duplicate?: number }>;
+    };
+    const entries = (await runOperation("entries", { ids: ["1:2"] })) as {
+      styles: Record<string, { duplicate?: number }>;
+    };
+    const tokens = (await runOperation("variables", {
+      used: true,
+      within: "1:2",
+    })) as { styles: { id: string; duplicate?: number }[] };
+    const index = await tokenIndex();
+
+    expect(read.styles["S:b"]?.duplicate).toBe(2);
+    expect(entries.styles["S:b"]?.duplicate).toBe(2);
+    expect(tokens.styles.find((style) => style.id === "S:b")?.duplicate).toBe(2);
+    expect(await index.style("--Black", "PAINT")).toBe("S:a");
+    expect(await index.style("--Black-2", "PAINT")).toBe("S:b");
+  });
+
+  it("keep their meaning in the lookup after it looked on the other pages for another name", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [filled("1:1", "S:a")],
+      }),
+      teamLibrary([
+        tree({
+          id: "0:2",
+          type: "PAGE",
+          children: [filled("2:1", "S:b")],
+        }),
+      ]),
+    );
+
+    const index = await tokenIndex();
+
+    expect(await index.style("--Nope", "PAINT")).toBeNull();
+    expect(await index.style("--Black", "PAINT")).toBe("S:a");
+  });
+});

@@ -9,8 +9,8 @@ import {
 } from "@pixelwright/core";
 import { SNAPSHOT_MAX_CHARS } from "../constants/plugin.ts";
 import { plain } from "../utils/plain.ts";
-import { requireNode } from "./nodes.ts";
-import { numbered, ownStyles, styleOf } from "./styles.ts";
+import { pageOf, requireNode } from "./nodes.ts";
+import { numbered, numberingStyles, styleOf } from "./styles.ts";
 
 /** Styles and variables the snapshot's layers use, resolved once at the end; a variable keeps its first consumer. */
 export interface References {
@@ -92,7 +92,7 @@ export async function snapshot({
 
   return {
     root: top,
-    styles: await resolveStyles(references.styles),
+    styles: await resolveStyles(references.styles, [pageOf(root)]),
     variables: await resolveVariables(references.variables),
   };
 }
@@ -111,6 +111,7 @@ export async function entries({ ids }: OperationInput<"entries">): Promise<Opera
   const categories = await annotationCategories();
   const budget = { used: 0 };
   const roots: OperationOutput<"entries">["roots"] = [];
+  const pages = new Set<PageNode | null>();
   const missing: string[] = [];
 
   for (const id of ids) {
@@ -124,6 +125,8 @@ export async function entries({ ids }: OperationInput<"entries">): Promise<Opera
     if (inside(node, asked)) {
       continue;
     }
+
+    pages.add(pageOf(node));
 
     const parent = node.parent !== null && isLayer(node.parent) ? node.parent : null;
     const [[, , x], [, , y]] = (parent ?? node).absoluteTransform;
@@ -146,7 +149,7 @@ export async function entries({ ids }: OperationInput<"entries">): Promise<Opera
   return {
     roots,
     missing,
-    styles: await resolveStyles(references.styles),
+    styles: await resolveStyles(references.styles, pages),
     variables: await resolveVariables(references.variables),
   };
 }
@@ -704,8 +707,14 @@ function collect(value: unknown, node: SceneNode, references: References): void 
   }
 }
 
-/** The styles the layers use, numbered among the file's own where names repeat (the second Black is --Black-2). */
-async function resolveStyles(ids: ReadonlySet<string>): Promise<Record<string, SnapshotStyle>> {
+/**
+ * The styles the layers use, numbered where names repeat (the second Black is --Black-2): among the file's own, and,
+ * once a library style is used, among the styles their pages use too, as every reader numbers them.
+ */
+async function resolveStyles(
+  ids: ReadonlySet<string>,
+  pages: Iterable<PageNode | null>,
+): Promise<Record<string, SnapshotStyle>> {
   const used: (SnapshotStyle & { id: string })[] = [];
 
   for (const id of ids) {
@@ -723,14 +732,11 @@ async function resolveStyles(ids: ReadonlySet<string>): Promise<Record<string, S
     return {};
   }
 
-  const own = (await ownStyles()).map(({ id, type, name, remote }) => ({
-    id,
-    type,
-    name,
-    remote,
-  }));
+  const among = await numberingStyles(
+    used.some((style) => style.remote) ? [...pages].filter((page): page is PageNode => page !== null) : [],
+  );
 
-  return Object.fromEntries(numbered(used, own).map(({ id, ...style }) => [id, style]));
+  return Object.fromEntries(numbered(used, among).map(({ id, ...style }) => [id, style]));
 }
 
 async function resolveVariables(consumers: ReadonlyMap<string, SceneNode>): Promise<Record<string, SnapshotVariable>> {

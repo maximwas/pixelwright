@@ -26,11 +26,16 @@ export async function tokenIndex({ importing = true }: { importing?: boolean } =
   const styles = new Map<string, string>();
   const textStyles = new Map<string, string>();
   const tokens = new Map<string, { id: string; resolvedType: string }>();
+  // The current page's names come first and stay: another page, numbered among its own styles, never takes them over.
   const take = (raw: RawTokens) => {
     for (const style of raw.styles) {
-      styles.set(`${style.type} ${styleTokenName(style)}`, style.id);
+      const key = `${style.type} ${styleTokenName(style)}`;
 
-      if (style.type === "TEXT") {
+      if (!styles.has(key)) {
+        styles.set(key, style.id);
+      }
+
+      if (style.type === "TEXT" && !textStyles.has(style.name)) {
         textStyles.set(style.name, style.id);
       }
     }

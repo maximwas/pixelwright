@@ -139,7 +139,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 - A text style is \`--<name>-font\`, holding its font shorthand: \`font: var(--h3-font)\`.
 - Two styles of one kind with one name (two paint styles "Black") are different tokens: the file's first keeps
   \`--Black\`, the next are \`--Black-2\`, \`--Black-3\` (tokens_read notes them with their values). Use the one the
-  layer names.
+  layer names. The file's own styles come first; library styles are numbered among those the page uses, so every tool
+  means one style by a name on that page (a read from another page may number a library's Black differently).
 
 ## tokens_read
 

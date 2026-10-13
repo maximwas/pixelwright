@@ -2,8 +2,9 @@ import type { OperationInput, OperationOutput, RawTokens } from "@pixelwright/co
 import { LIBRARY_BUDGET_MS } from "../constants/plugin.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import { plain } from "../utils/plain.ts";
-import { requireNode } from "./nodes.ts";
-import { localStyles, numbered, styleOf } from "./styles.ts";
+import { pageOf, requireNode } from "./nodes.ts";
+import { localStyles, numbered, numberingStyles, styleOf } from "./styles.ts";
+import { aliasesIn, loaded, usedUnder } from "./used-tokens.ts";
 
 /**
  * The file's tokens as Figma keeps them: every local collection with its modes and every variable's value per mode,
@@ -29,9 +30,13 @@ export async function variables({
   );
 
   if (used) {
-    await addUsed(raw, within === undefined ? figma.currentPage : await requireNode(within));
-    // A library style may share a name with one of the file's: numbered again with it.
-    raw.styles = numbered(raw.styles);
+    const root = within === undefined ? figma.currentPage : await requireNode(within);
+    const page = root.type === "PAGE" ? null : pageOf(root);
+
+    await addUsed(raw, root);
+    // A library style may share a name with one of the file's or another library's: numbered again among the page's,
+    // as every reader numbers them, so a part of the page reads the same names as the whole page.
+    raw.styles = numbered(raw.styles, page === null ? [] : await numberingStyles([page]));
   }
 
   return {
@@ -116,18 +121,9 @@ async function addVariables(raw: RawTokens, ids: readonly string[]): Promise<voi
 
 /** The styles and variables the layers under `root` use and the file does not define (a team library's). */
 async function addUsed(raw: RawTokens, root: BaseNode): Promise<void> {
-  if (root.type === "PAGE" && root !== figma.currentPage) {
-    await root.loadAsync();
-  }
+  await loaded(root);
 
-  const styleIds = new Set<string>();
-  const variableIds: string[] = [];
-  const layers = "findAll" in root ? [root, ...root.findAll(() => true)] : [root];
-
-  for (const layer of layers) {
-    usedBy(layer, styleIds, variableIds);
-  }
-
+  const { styleIds, variableIds } = usedUnder(root);
   const knownStyles = new Set(raw.styles.map((style) => style.id));
 
   for (const id of styleIds) {
@@ -143,31 +139,6 @@ async function addUsed(raw: RawTokens, root: BaseNode): Promise<void> {
   }
 
   await addVariables(raw, variableIds);
-}
-
-/** The style ids and variable aliases one layer uses: its own, its paints' and effects', its text runs'. */
-function usedBy(layer: BaseNode, styleIds: Set<string>, variableIds: string[]): void {
-  const record = layer as BaseNode & Record<string, unknown>;
-
-  for (const key of ["fillStyleId", "strokeStyleId", "effectStyleId", "textStyleId"]) {
-    const id = record[key];
-
-    if (typeof id === "string" && id !== "") {
-      styleIds.add(id);
-    }
-  }
-
-  if (layer.type === "TEXT" && (layer.fillStyleId === figma.mixed || layer.textStyleId === figma.mixed)) {
-    for (const segment of layer.getStyledTextSegments(["fillStyleId", "textStyleId"])) {
-      for (const id of [segment.fillStyleId, segment.textStyleId]) {
-        if (id !== "") {
-          styleIds.add(id);
-        }
-      }
-    }
-  }
-
-  variableIds.push(...aliasesIn([record.boundVariables, record.fills, record.strokes, record.effects]));
 }
 
 /**
@@ -210,26 +181,6 @@ async function libraryCatalogue(): Promise<Pick<RawTokens, "library" | "libraryE
       libraryError: `The libraries could not be read: ${errorMessage(error)}`,
     };
   }
-}
-
-/** Every variable alias inside a value, however deep (paints, effects, bound fields, composed colours). */
-function aliasesIn(value: unknown): string[] {
-  const found: string[] = [];
-  const scan = (item: unknown): void => {
-    if (Array.isArray(item)) {
-      item.forEach(scan);
-    } else if (typeof item === "object" && item !== null) {
-      if ("type" in item && item.type === "VARIABLE_ALIAS" && "id" in item) {
-        found.push(String(item.id));
-      } else {
-        Object.values(item).forEach(scan);
-      }
-    }
-  };
-
-  scan(value);
-
-  return found;
 }
 
 function codeSyntaxOf(variable: Pick<Variable, "codeSyntax">): { codeSyntax?: Record<string, string> } {
