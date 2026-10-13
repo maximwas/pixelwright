@@ -276,6 +276,51 @@ describe("snapshot", () => {
     });
   });
 
+  it("reads an instance with a slot, whose property has no value: the slot's layers say what it holds", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:1",
+            name: "Panel",
+            type: "INSTANCE",
+            mainComponent: {
+              id: "5:9",
+              key: "panel",
+              name: "Panel",
+              parent: null,
+            },
+            componentProperties: {
+              "Content#5:8": {
+                type: "SLOT",
+                preferredValues: [],
+              },
+              "Title#5:7": {
+                type: "TEXT",
+                value: "Plans",
+              },
+            },
+          },
+        ],
+      }),
+    );
+
+    const answer = await runOperation("snapshot", { node: "5:1" });
+
+    expect(() => OPERATION_SCHEMAS.snapshot.output.parse(answer)).not.toThrow();
+    expect((answer as Shot).root.instance).toMatchObject({
+      properties: {
+        "Title#5:7": {
+          type: "TEXT",
+          value: "Plans",
+        },
+      },
+    });
+    expect((answer as Shot).root.instance).not.toHaveProperty(["properties", "Content#5:8"]);
+  });
+
   it("resolves the styles and variables the layers use, once each", async () => {
     const { styles, variables } = (await runOperation("snapshot", { node: "2:4869" })) as Shot;
 

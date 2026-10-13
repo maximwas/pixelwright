@@ -713,14 +713,21 @@ async function instanceOf(node: InstanceNode): Promise<Record<string, unknown> |
           setId: set.id,
           setName: set.name,
         }),
+    // A slot's property has no value: the slot's own layers, read as its children, say what it holds.
     properties: Object.fromEntries(
-      Object.entries(node.componentProperties).map(([name, property]) => [
-        name,
-        {
-          type: property.type,
-          value: property.value,
-        },
-      ]),
+      Object.entries(node.componentProperties).flatMap(([name, property]) =>
+        typeof property.value === "string" || typeof property.value === "boolean"
+          ? [
+              [
+                name,
+                {
+                  type: property.type,
+                  value: property.value,
+                },
+              ],
+            ]
+          : [],
+      ),
     ),
   };
 }

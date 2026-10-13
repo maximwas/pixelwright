@@ -1,3 +1,4 @@
+import { OPERATION_SCHEMAS } from "@pixelwright/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runOperation } from "../src/figma/operations.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
@@ -122,6 +123,24 @@ beforeEach(() => {
 });
 
 describe("components", () => {
+  it("lists a slot among a component's properties, a slot having no default", async () => {
+    (find(page, "9:5") as FakeNode).componentPropertyDefinitions = {
+      "Content#9:6": {
+        type: "SLOT",
+        description: null,
+        preferredValues: [],
+      },
+    };
+
+    const answer = await runOperation("components", {
+      scope: "local",
+      query: "Badge",
+    });
+    const { components } = OPERATION_SCHEMAS.components.output.parse(answer);
+
+    expect(components[0]?.properties).toEqual({ Content: { type: "SLOT" } });
+  });
+
   it("lists the file's components, variants folded into their set, properties read from the set", async () => {
     const { components, more } = (await runOperation("components", { scope: "local" })) as {
       components: unknown[];
