@@ -44,3 +44,6 @@ export const SILENT_OPERATIONS: ReadonlySet<string> = new Set(["ping"]);
 
 /** Digits of the pairing code the server shows and the user types into the plugin window. */
 export const PAIRING_CODE_LENGTH = 6;
+
+/** One round of waiting for the selection: the bridge gives a request 30 s, and the plugin must answer first. */
+export const SELECTION_WAIT_MAX_MS = 25_000;

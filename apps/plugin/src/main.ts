@@ -1,6 +1,7 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
 import { SUPPORT_LINKS, toWireError } from "@pixelwright/core";
 import { PLUGIN_WINDOW, WINDOW_HEIGHT } from "./constants/plugin.ts";
+import { startChangeJournal } from "./figma/changes.ts";
 import { readContext } from "./figma/context.ts";
 import { editsAllowed, setEditsAllowed } from "./figma/edits.ts";
 import { readEditsAllowed, saveEditsAllowed } from "./figma/edits-store.ts";
@@ -30,6 +31,8 @@ export default function (): void {
   const sendContext = () => emit<ContextHandler>("CONTEXT", readContext(editsAllowed()));
 
   showUI(PLUGIN_WINDOW);
+  // What the user changes from now on, for changes_since.
+  startChangeJournal();
   on<ReadyHandler>("READY", () => void start(sendContext));
   on<RequestHandler>("REQUEST", (id, op, input) => void answer(id, op, input));
   on<AllowEditsHandler>("ALLOW_EDITS", (value) => {

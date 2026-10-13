@@ -29,6 +29,7 @@ const fakeFigma = {
     getPluginData: () => "",
   },
   currentPage: {
+    on: () => {},
     id: "0:1",
     name: "Page 1",
   },

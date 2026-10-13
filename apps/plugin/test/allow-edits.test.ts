@@ -20,6 +20,7 @@ const fakeFigma = {
     },
   },
   currentPage: {
+    on: () => {},
     id: "0:1",
     name: "Page 1",
   },

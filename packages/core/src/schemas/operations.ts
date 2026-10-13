@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { EXPORT_CHUNK_BYTES } from "../constants/bridge.ts";
+import { EXPORT_CHUNK_BYTES, SELECTION_WAIT_MAX_MS } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
 import type { OutlineNode } from "../types/operations.ts";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "./apply.ts";
@@ -114,6 +114,43 @@ export const OPERATION_SCHEMAS = {
       ),
       page: z.string(),
       zoom: z.number(),
+    }),
+  },
+  selection_wait: {
+    input: z.object({
+      timeoutMs: z.number().int().min(1).max(SELECTION_WAIT_MAX_MS),
+      /** The selection the wait started from (ids): a later round keeps the first one's. Null: the selection now. */
+      from: z.array(z.string()).nullable(),
+    }),
+    output: z.object({
+      changed: z.boolean(),
+      from: z.array(z.string()),
+      nodes: z.array(NodeRefSchema),
+    }),
+  },
+  changes: {
+    input: z.object({
+      /** The cursor of an earlier answer: only what changed after it. Default: everything the plugin has seen. */
+      since: z.number().int().min(0).exactOptional(),
+    }),
+    output: z.object({
+      cursor: z.number().int(),
+      /** When the plugin started watching (its window opened, or the page was switched to). */
+      since: z.string(),
+      /** Older changes than the cursor asked for were dropped: the journal keeps the latest only. */
+      truncated: z.boolean(),
+      changes: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          type: z.string(),
+          change: z.enum(["created", "deleted", "changed"]),
+          properties: z.array(z.string()),
+          by: z.enum(["user", "collaborator", "pixelwright"]),
+          page: z.string(),
+          at: z.string(),
+        }),
+      ),
     }),
   },
   viewport: {

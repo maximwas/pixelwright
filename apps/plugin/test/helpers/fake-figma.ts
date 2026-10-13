@@ -816,7 +816,30 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     variableStore(variable as FakeVariable);
   }
 
+  // Events as Figma's: figma.on/off for the document, page.on/off for a page's own; tests fire them with emit.
+  const listeners = new Map<string, Set<(event: unknown) => void>>();
+  const listen = (key: string) => (name: string, handler: (event: unknown) => void) => {
+    listeners.set(`${key}:${name}`, (listeners.get(`${key}:${name}`) ?? new Set()).add(handler));
+  };
+  const unlisten = (key: string) => (name: string, handler: (event: unknown) => void) => {
+    listeners.get(`${key}:${name}`)?.delete(handler);
+  };
+  const emit = (name: string, event: unknown = undefined, pageId?: string) => {
+    for (const handler of [...(listeners.get(`${pageId ?? "figma"}:${name}`) ?? [])]) {
+      handler(event);
+    }
+  };
+
+  for (const each of [page, ...(library.pages ?? [])]) {
+    each.on = listen(each.id);
+    each.off = unlisten(each.id);
+    // A page always has a selection in Figma, empty at first.
+    each.selection ??= [];
+  }
+
   const figma = {
+    on: listen("figma"),
+    off: unlisten("figma"),
     currentPage: page as FakeNode & { selection?: FakeNode[] },
     mixed: FAKE_MIXED,
     getNodeByIdAsync: async (id: string) => byId.get(id) ?? null,
@@ -1102,5 +1125,6 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     figma,
     state,
     writes,
+    emit,
   };
 }

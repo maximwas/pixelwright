@@ -7,12 +7,14 @@ import {
 } from "@pixelwright/core";
 
 import { apply } from "./apply.ts";
+import { asOwnWrite, changes } from "./changes.ts";
 import { components } from "./components.ts";
 import { deleteNodes } from "./delete.ts";
 import { execute } from "./execute.ts";
 import { exportNode, originalImage } from "./export-node.ts";
 import { inspect } from "./inspect.ts";
 import { find, outline, selection, show, viewport } from "./read-ops.ts";
+import { selectionWait } from "./selection-wait.ts";
 import { entries, snapshot } from "./snapshot.ts";
 import { tokensApply } from "./tokens-apply.ts";
 import { upload } from "./uploads.ts";
@@ -26,6 +28,8 @@ const HANDLERS: Handlers = {
   selection,
   show,
   viewport,
+  selection_wait: selectionWait,
+  changes,
   find,
   outline,
   export: exportNode,
@@ -44,6 +48,9 @@ const HANDLERS: Handlers = {
 
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);
 
+/** The operations that change the file. */
+const OWN_WRITES: ReadonlySet<OperationName> = new Set(["apply", "delete", "execute", "tokens_apply"]);
+
 export async function runOperation(op: string, input: unknown): Promise<unknown> {
   if (!isOperation(op)) {
     throw new BridgeError("UNKNOWN_OP", `Unknown operation: ${op}`);
@@ -55,5 +62,8 @@ export async function runOperation(op: string, input: unknown): Promise<unknown>
     throw new BridgeError("OP_FAILED", `${op}: invalid input: ${parsed.error.message}`);
   }
 
-  return HANDLERS[op](parsed.data as never);
+  const run = (): Promise<unknown> => HANDLERS[op](parsed.data as never);
+
+  // A write's own changes are marked as Pixelwright's in the change journal.
+  return OWN_WRITES.has(op) ? asOwnWrite(run) : run();
 }

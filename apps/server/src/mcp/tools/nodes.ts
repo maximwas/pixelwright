@@ -3,8 +3,14 @@ import { OPERATION_SCHEMAS } from "@pixelwright/core";
 import * as z from "zod";
 import { READ_ONLY_ANNOTATIONS, WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
 import { readOutline } from "../../layers/read-outline.ts";
-import { FileSchema } from "../../schemas/tools.ts";
+import {
+  ChangesSinceInputSchema,
+  FileSchema,
+  SelectionWaitInputSchema,
+  SelectionWaitOutputSchema,
+} from "../../schemas/tools.ts";
 import type { ToolContext } from "../../types/mcp.ts";
+import { waitForSelection } from "../../watch/wait-selection.ts";
 import { registerTool } from "../register-tool.ts";
 import { runOp } from "../run-op.ts";
 
@@ -36,6 +42,26 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
     output: OPERATION_SCHEMAS.show.output,
     annotations: READ_ONLY_ANNOTATIONS,
     run: ({ file, ...show }) => runOp(bridge, "show", show, file),
+  });
+  registerTool(server, {
+    name: "selection_wait",
+    title: "Wait for a selection",
+    description:
+      'Waits until the user selects something in Figma, then answers with the selection, as selection_get does (changed: false when the time ran out first). Tell the user what to select before calling it: "select the card you mean in Figma".',
+    input: SelectionWaitInputSchema,
+    output: SelectionWaitOutputSchema,
+    annotations: READ_ONLY_ANNOTATIONS,
+    run: (args) => waitForSelection(bridge, args),
+  });
+  registerTool(server, {
+    name: "changes_since",
+    title: "What changed",
+    description:
+      "What changed in the file since the plugin started watching (its window opened) or since an earlier answer's cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed.",
+    input: ChangesSinceInputSchema,
+    output: OPERATION_SCHEMAS.changes.output,
+    annotations: READ_ONLY_ANNOTATIONS,
+    run: ({ file, cursor }) => runOp(bridge, "changes", cursor === undefined ? {} : { since: cursor }, file),
   });
   registerTool(server, {
     name: "viewport_get",
