@@ -13,6 +13,7 @@ import {
   type PluginToServer,
   proofEquals,
   proofFor,
+  protocolRequired,
   type ServerToPlugin,
 } from "@pixelwright/core";
 import type { RawData, WebSocket } from "ws";
@@ -134,7 +135,7 @@ export class PluginConnection {
     }
 
     if (message.protocol !== BRIDGE_PROTOCOL_VERSION) {
-      this.#close(CloseCode.VersionMismatch, `protocol ${BRIDGE_PROTOCOL_VERSION} required`);
+      this.#close(CloseCode.VersionMismatch, protocolRequired(BRIDGE_PROTOCOL_VERSION));
 
       return;
     }

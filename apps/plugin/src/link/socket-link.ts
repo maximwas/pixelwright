@@ -12,6 +12,7 @@ import {
   proofEquals,
   proofFor,
   type RequestMessage,
+  requiredProtocol,
   type ServerToPlugin,
   toWireError,
 } from "@pixelwright/core";
@@ -28,6 +29,10 @@ const STOP_REASONS: Readonly<Record<number, string>> = {
 };
 
 const UNPROVEN_SERVER = "The program on port 18720 could not prove it is your Pixelwright server.";
+
+/** An older server turned this plugin away: a newer one (another MCP client's, or this one restarted) may take its port. */
+const OLDER_SERVER =
+  "The Pixelwright server on port 18720 is older than this plugin, maybe another MCP client's: restart Pixelwright there (/mcp in Claude Code). This window connects by itself once a current server holds the port.";
 
 /** Why the server turned the plugin away for now; it reconnects on its own. */
 const RETRY_REASONS: Readonly<Record<number, string>> = {
@@ -135,7 +140,7 @@ export class SocketLink {
     };
     socket.onclose = (event) => {
       if (socket === this.#socket) {
-        this.#onClose(event.code, null);
+        this.#onClose(event.code, null, event.reason);
       }
     };
   }
@@ -286,12 +291,20 @@ export class SocketLink {
     );
   }
 
-  #onClose(code: number, reason: string | null): void {
+  #onClose(code: number, reason: string | null, serverReason: string | null = null): void {
     if (this.#stopped) {
       return;
     }
 
     const stopReason = STOP_REASONS[code];
+    const olderServer =
+      code === CloseCode.VersionMismatch && (requiredProtocol(serverReason) ?? Infinity) < BRIDGE_PROTOCOL_VERSION;
+
+    if (olderServer) {
+      this.#retry(OLDER_SERVER);
+
+      return;
+    }
 
     if (NO_RECONNECT_CODES.has(code) && stopReason !== undefined) {
       this.#stopped = true;
@@ -303,8 +316,12 @@ export class SocketLink {
       return;
     }
 
+    this.#retry(reason ?? RETRY_REASONS[code] ?? null);
+  }
+
+  /** Waits with backoff, saying why, then opens a new connection. */
+  #retry(retryReason: string | null): void {
     const delay = reconnectDelay(this.#attempt, this.#options.random);
-    const retryReason = reason ?? RETRY_REASONS[code] ?? null;
     const schedule =
       this.#options.schedule ??
       ((run: () => void, ms: number) => {

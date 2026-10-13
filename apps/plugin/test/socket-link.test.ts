@@ -1,4 +1,11 @@
-import { MAX_MESSAGE_BYTES, newNonce, type PluginInfo, type PluginKey, proofFor } from "@pixelwright/core";
+import {
+  BRIDGE_PROTOCOL_VERSION,
+  MAX_MESSAGE_BYTES,
+  newNonce,
+  type PluginInfo,
+  type PluginKey,
+  proofFor,
+} from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { reconnectDelay } from "../src/link/backoff.ts";
 import { SocketLink } from "../src/link/socket-link.ts";
@@ -29,11 +36,11 @@ class FakeSocket implements SocketLike {
     this.onmessage?.({ data: JSON.stringify(message) });
   }
 
-  drop(code: number): void {
+  drop(code: number, reason = ""): void {
     this.readyState = 3;
     this.onclose?.({
       code,
-      reason: "",
+      reason,
     });
   }
 
@@ -428,6 +435,25 @@ describe("SocketLink", () => {
       kind: "stopped",
       reason: expect.stringContaining("npx -y pixelwright@latest"),
     });
+  });
+
+  it("keeps trying when an older server turns it away, since a newer one may take the port, and stops for a newer one", () => {
+    const { sockets, states, scheduled } = setup();
+
+    sockets[0]?.open();
+    sockets[0]?.drop(4426, `protocol ${BRIDGE_PROTOCOL_VERSION - 1} required`);
+    expect(states.at(-1)).toMatchObject({
+      kind: "waiting",
+      reason: expect.stringContaining("older"),
+    });
+    scheduled[0]?.run();
+    sockets[1]?.open();
+    sockets[1]?.drop(4426, `protocol ${BRIDGE_PROTOCOL_VERSION + 1} required`);
+    expect(states.at(-1)).toMatchObject({
+      kind: "stopped",
+      reason: expect.stringContaining("npx -y pixelwright@latest"),
+    });
+    expect(scheduled).toHaveLength(1);
   });
 
   it("says why the server turned it away when too many plugins wait to pair", () => {
