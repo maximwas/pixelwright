@@ -13,7 +13,8 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
 2. **Find what to read.**
    - \`selection_get\`: what the user selected ("this", "the selected one").
    - \`outline\`: the layer tree with boxes, x and y relative to the outlined layer; \`node: "0:0"\` lists the pages.
-     A layer with \`$children="N"\` has more children than listed: outline it on its own.
+     A layer with \`$children="N"\` has more children than listed: outline it on its own. An instance names its
+     \`component\` and \`variant\`, so repeated cards show without a read.
    - \`nodes_find\`: layers by name, type, text or component.
    - \`node_show\`: selects a layer and brings it into view, so the user sees which one you mean.
 3. **Read one section.** \`design_read\` returns the section as XML (see \`guide xml\`), then JSON with tokens, text
@@ -21,16 +22,21 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    branches are left empty with \`$truncated="true"\` and their ids listed in \`truncated\`; read each on its own.
    Pass \`assetsDir\` (e.g. src/assets) to get its icons and images written as files.
 4. **Look at it.** \`screenshot\` renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; \`save\`
-   writes a .png file full size; \`clip\` takes a region of it, in px from its box). Compare your build with it.
+   writes a .png file full size; \`clip\` takes a region of it, in px from its box). Compare your build with it:
+   \`image_compare\` renders a layer the same way and compares it with a PNG of your build (rmse, the share of pixels
+   that differ, the box around them, edges off by N px; \`diff\` writes the difference as a PNG).
    **Measure it.** \`inspect\` reads layers as Figma has them, without code and with Allow edits off: the layout box
-   and the painted box (a centred stroke, shadows and blur reach past it), how strokes paint, every effect's
-   parameters (a progressive blur's start and end), a text's lines and line heights, overflow, interactions with
-   their transitions, a component's variant. Give \`relativeTo\` (the section) and a list of layers to measure them
-   all in one call.
+   and the painted box (a centred stroke, shadows and blur reach past it), the fill with the style or variables behind
+   it (what a \`var()\` resolves to), how strokes paint, every effect's parameters (a progressive blur's start and
+   end), a text's lines and line heights, overflow, interactions with their transitions, a component's variant.
+   \`measure\` gives the distances between layers, each from the one before (gaps, aligned edges, insets).
+   **Compare variants.** \`nodes_diff\` says how one layer differs from another (A/B screens): the layers only one
+   has, the attributes that differ, and icons whose drawing differs.
 5. **The design system.** \`tokens_read\`: variables with every mode (light, dark…) and styles, as CSS or JSON.
    \`components_read\`: the components a page uses, or the file defines, with variants and properties.
-6. **Files.** \`assets_export\`: several layers, or every asset inside one, as PNG, JPG, SVG or PDF, or the images as
-   they were placed (originals).
+6. **Files.** \`assets_export\`: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
+   images as they were placed (originals); \`width\` sizes a render by the CSS width the build shows it at (110 at
+   scale 2: 220 px). When a file gets another name than design_read planned (\`planned\`), use the path it gives.
 7. **Write.** \`design_apply\` writes the same XML back into Figma: change layers by id, create new ones (see \`guide
    write\`); \`tokens_apply\` writes variables and styles in tokens_read's JSON shape (see \`guide tokens\`);
    \`execute\` runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.
@@ -97,9 +103,9 @@ text-decoration-thickness), text-align, text-wrap, color.
 - \`$truncated="true"\`: the branch was emptied, or the text shortened, to fit maxChars; its id is in \`truncated\`.
 - \`$code="Button"\`: an instance the project's Code Connect template renders, written without its children; its code
   is in \`codeComponents\` (see \`guide code-connect\`). design_apply leaves its children alone.
-- In \`$css\`: \`blur: progressive from 0px at 50% 0% to 8px at 50% 100%\` (a blur that changes across the layer;
-  \`filter\` holds its end radius) and \`stroke-align: center\` (half of the stroke paints outside the box, which a
-  border-box border does not; \`inspect\` gives the painted box).
+- \`$css\` holds \`property: value\` pairs only, explained in hints: \`blur: progressive from 0px at 50% 0% to 8px at
+  50% 100%\` (a blur that changes across the layer; \`filter\` holds its end radius) and \`stroke-align: center\` (half
+  of the stroke paints outside the box, which a border-box border does not; \`inspect\` gives the painted box).
 - \`$on-click\`, \`$on-hover\`, \`$on-press\`, \`$on-drag\`, \`$on-mouse-enter\`, \`$on-mouse-leave\`, \`$on-key\`,
   \`$after-timeout\`: the layer's prototype interactions, e.g. \`$on-hover="change to Type=Hover; smart animate 300ms
   ease-out"\` (a variant to switch to on hover, and how: build it as the hover state). A link stays \`href\`.
@@ -180,11 +186,16 @@ text-decoration-thickness), text-align, text-wrap, color.
   durations in seconds.
 - An alias is \`var(--other)\`. One that points nowhere is a comment and a note.
 
+A text style is \`--<name>-font\`, with \`also\` holding \`--<name>-letter-spacing\` and \`--<name>-text-transform\`
+when they are not the default. A gradient paint style is a token once a layer that uses it is read (Figma writes its
+CSS for that layer).
+
 ## Not tokens yet
 
-Paint styles with gradients or images, blur effect styles, and library variables the file does not use (Figma gives
-their values only once they are imported into the file: \`libraries: true\` lists them by name and type). Paint styles
-and effect styles that are left out are named in \`notes\`.
+Paint styles with images, gradient styles no layer read uses, blur effect styles, and library variables the file does
+not use (Figma gives their values only once they are imported into the file: \`libraries: true\` lists them by name
+and type). Paint styles and effect styles that are left out are named in \`notes\`; a \`var()\` design_read writes
+without a value is named in its hints.
 `,
   },
   assets: {
@@ -211,8 +222,12 @@ Only true assets become files; everything else is CSS.
 
 - \`design_read\` with \`assetsDir\` writes the assets of the section it reads, and its XML points at the files.
 - \`assets_export\` writes files on their own: \`nodes\` (up to 50 layers, one file each, in the format and scale you
-  give: PNG, JPG, SVG or PDF) or \`from\` (every asset inside one layer). \`original: true\` writes the images as they
-  were placed, full size and in their own format, instead of renders.
+  give: PNG, JPG, WebP, SVG or PDF; \`width\`, the CSS width the build shows a layer at, sets the render to width ×
+  scale px) or \`from\` (every asset inside one layer). \`original: true\` writes the images as they were placed, full
+  size and in their own format, instead of renders.
+- design_read without \`assetsDir\` only plans names. When assets_export writes a file under another name (the name
+  holds other bytes, the same bytes are another layer's file, an original is a JPEG), the file has \`planned\`: use
+  its \`path\` in the \`src\`.
 
 ## Files
 

@@ -152,8 +152,10 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>Layers to write, one file each: SVG for an icon, PNG otherwise, unless format says. Give nodes or from.</td></tr>
 <tr><td><code>from</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer to write every true asset of (its icons and images, as design_read plans them). Give nodes or from.</td></tr>
 <tr><td><code>dir</code></td><td><code>string</code></td><td>The folder to write into; created if missing. Files already there are never overwritten with other bytes.</td></tr>
-<tr><td><code>format</code><span class="optional">optional</span></td><td><code>&quot;PNG&quot; | &quot;JPG&quot; | &quot;SVG&quot; | &quot;PDF&quot;</code></td><td>For nodes: the format of every file.</td></tr>
-<tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code></td><td>For PNG and JPG: pixels per Figma pixel. Default 2.</td></tr>
+<tr><td><code>format</code><span class="optional">optional</span></td><td><code>&quot;PNG&quot; | &quot;JPG&quot; | &quot;WEBP&quot; | &quot;SVG&quot; | &quot;PDF&quot;</code></td><td>For nodes: the format of every file. WEBP is rendered as PNG by Figma and encoded here.</td></tr>
+<tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code></td><td>For PNG, JPG and WEBP: pixels per Figma pixel, or per CSS px with width. Default 2.</td></tr>
+<tr><td><code>width</code><span class="optional">optional</span></td><td><code>number</code></td><td>For nodes as PNG, JPG or WEBP: the CSS width the build shows the layer at; the file is width × scale px wide (110 at scale 2: 220 px).</td></tr>
+<tr><td><code>quality</code><span class="optional">optional</span></td><td><code>integer</code></td><td>For WEBP: 1 to 100. Default 85.</td></tr>
 <tr><td><code>original</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Write the images as they were placed (not cropped, filtered or scaled) instead of renders, with their real format.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
@@ -216,12 +218,34 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot; | &quot;write&quot; | &quot;code-connect&quot; | &quot;email&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-image_compare">
+  <h3><code>image_compare</code></h3>
+  <p>Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render&#39;s is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render&#39;s density (scale 2 for a 2x screenshot). Works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 2:4868.</td></tr>
+<tr><td><code>reference</code></td><td><code>string</code></td><td>The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server&#39;s folder or absolute.</td></tr>
+<tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel of the render: the reference&#39;s density.</td></tr>
+<tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Render shadows and outside strokes around the layer; false renders only its own box.</td></tr>
+<tr><td><code>clip</code><span class="optional">optional</span></td><td><code>object</code></td><td>Only this region of the layer, in Figma px from its box&#39;s top left (before scale); with effects on it may reach into what paints around the box.</td></tr>
+<tr><td><code>diff</code><span class="optional">optional</span></td><td><code>string</code></td><td>A .png path to write the difference to: the render faded, every differing pixel red.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-inspect">
   <h3><code>inspect</code></h3>
-  <p>Reads layers as Figma has them, for what design_read&#39;s CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma&#39;s own parameters (a progressive blur&#39;s start and end, noise, texture), a text&#39;s lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component&#39;s variant. Boxes are measured from relativeTo&#39;s top left, so it also measures: give a list of layers and their section.</p>
+  <p>Reads layers as Figma has them, for what design_read&#39;s CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma&#39;s own parameters (a progressive blur&#39;s start and end, noise, texture), a text&#39;s lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component&#39;s variant. Boxes are measured from relativeTo&#39;s top left, so it also measures: give a list of layers and their section.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids, e.g. [&quot;2:4868&quot;]. Default: the layers selected in Figma.</td></tr>
 <tr><td><code>relativeTo</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer (a section, a frame) whose top left the boxes are measured from. Default: the page&#39;s.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-measure">
+  <h3><code>measure</code></h3>
+  <p>Measures the distances between layers, each from the one before it in the list (a→b, b→c, so a row&#39;s rhythm shows): the gap between their boxes on each axis (negative where they overlap), how their edges and centres line up (B&#39;s minus A&#39;s: 0 is aligned), and, when one holds the other, how far it sits from each edge, as padding. Layout boxes by default; painted: true measures what is painted (strokes, shadows). A sentence per pair says it plainly. Works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids in the order to measure, each from the one before, e.g. [&quot;2:4868&quot;, &quot;2:4870&quot;]. Default: the layers selected in Figma.</td></tr>
+<tr><td><code>painted</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Measure what is painted (centred or outside strokes, shadows, blur) instead of the layout boxes.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -241,6 +265,16 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-nodes_diff">
+  <h3><code>nodes_diff</code></h3>
+  <p>Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A&#39;s, B&#39;s] (text as $text, an instance&#39;s variant and props too) and whether an icon&#39;s or image&#39;s own drawing differs (paths, colours, inner layers). Ids and the two roots&#39; own names and places are left out. Works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>a</code></td><td><code>string</code></td><td>The first layer&#39;s id (variant A), e.g. 2:4868.</td></tr>
+<tr><td><code>b</code></td><td><code>string</code></td><td>The second layer&#39;s id (variant B).</td></tr>
+<tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below each layer to compare. Default: all.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-nodes_find">
   <h3><code>nodes_find</code></h3>
   <p>Finds layers on the current page, or inside <code>within</code>, by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance&#39;s component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most <code>limit</code> (more: true when there were more). Combine criteria to narrow down.</p>
@@ -256,7 +290,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-outline">
   <h3><code>outline</code></h3>
-  <p>The layer tree of a frame, a page or the current page, as light XML: tag (the Figma type), id, name and box (x and y relative to the outlined node) per layer, to <code>depth</code> levels. Use it to find the sections of a big frame before reading one with design_read. A layer with <code>$children=&quot;N&quot;</code> has N children not listed here: outline it on its own.</p>
+  <p>The layer tree of a frame, a page or the current page, as light XML: tag (the Figma type), id, name and box (x and y relative to the outlined node) per layer, to <code>depth</code> levels; an instance also names its component and variant, so repeated components show. Use it to find the sections of a big frame before reading one with design_read. A layer with <code>$children=&quot;N&quot;</code> has N children not listed here: outline it on its own.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer or page id, or 0:0 for the list of pages. Default: the current page.</td></tr>
 <tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 3</span></td><td>How many levels below the node to list (1 to 10).</td></tr>
@@ -325,7 +359,8 @@ shows into the plugin window).</li>
 <li><strong>Find what to read.</strong><ul>
 <li><code>selection_get</code>: what the user selected (&quot;this&quot;, &quot;the selected one&quot;).</li>
 <li><code>outline</code>: the layer tree with boxes, x and y relative to the outlined layer; <code>node: &quot;0:0&quot;</code> lists the pages.
-A layer with <code>$children=&quot;N&quot;</code> has more children than listed: outline it on its own.</li>
+A layer with <code>$children=&quot;N&quot;</code> has more children than listed: outline it on its own. An instance names its
+<code>component</code> and <code>variant</code>, so repeated cards show without a read.</li>
 <li><code>nodes_find</code>: layers by name, type, text or component.</li>
 <li><code>node_show</code>: selects a layer and brings it into view, so the user sees which one you mean.</li>
 </ul>
@@ -335,16 +370,21 @@ styles, fonts, assets, hints and truncated. Read sections, not whole pages: past
 branches are left empty with <code>$truncated=&quot;true&quot;</code> and their ids listed in <code>truncated</code>; read each on its own.
 Pass <code>assetsDir</code> (e.g. src/assets) to get its icons and images written as files.</li>
 <li><strong>Look at it.</strong> <code>screenshot</code> renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; <code>save</code>
-writes a .png file full size; <code>clip</code> takes a region of it, in px from its box). Compare your build with it.
+writes a .png file full size; <code>clip</code> takes a region of it, in px from its box). Compare your build with it:
+<code>image_compare</code> renders a layer the same way and compares it with a PNG of your build (rmse, the share of pixels
+that differ, the box around them, edges off by N px; <code>diff</code> writes the difference as a PNG).
 <strong>Measure it.</strong> <code>inspect</code> reads layers as Figma has them, without code and with Allow edits off: the layout box
-and the painted box (a centred stroke, shadows and blur reach past it), how strokes paint, every effect&#39;s
-parameters (a progressive blur&#39;s start and end), a text&#39;s lines and line heights, overflow, interactions with
-their transitions, a component&#39;s variant. Give <code>relativeTo</code> (the section) and a list of layers to measure them
-all in one call.</li>
+and the painted box (a centred stroke, shadows and blur reach past it), the fill with the style or variables behind
+it (what a <code>var()</code> resolves to), how strokes paint, every effect&#39;s parameters (a progressive blur&#39;s start and
+end), a text&#39;s lines and line heights, overflow, interactions with their transitions, a component&#39;s variant.
+<code>measure</code> gives the distances between layers, each from the one before (gaps, aligned edges, insets).
+<strong>Compare variants.</strong> <code>nodes_diff</code> says how one layer differs from another (A/B screens): the layers only one
+has, the attributes that differ, and icons whose drawing differs.</li>
 <li><strong>The design system.</strong> <code>tokens_read</code>: variables with every mode (light, dark…) and styles, as CSS or JSON.
 <code>components_read</code>: the components a page uses, or the file defines, with variants and properties.</li>
-<li><strong>Files.</strong> <code>assets_export</code>: several layers, or every asset inside one, as PNG, JPG, SVG or PDF, or the images as
-they were placed (originals).</li>
+<li><strong>Files.</strong> <code>assets_export</code>: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
+images as they were placed (originals); <code>width</code> sizes a render by the CSS width the build shows it at (110 at
+scale 2: 220 px). When a file gets another name than design_read planned (<code>planned</code>), use the path it gives.</li>
 <li><strong>Write.</strong> <code>design_apply</code> writes the same XML back into Figma: change layers by id, create new ones (see <code>guide write</code>); <code>tokens_apply</code> writes variables and styles in tokens_read&#39;s JSON shape (see <code>guide tokens</code>);
 <code>execute</code> runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.</li>
 <li><strong>Code Connect.</strong> Where the project has Figma Code Connect templates (<code>*.figma.ts</code>), <code>design_read</code> gives each
@@ -405,9 +445,8 @@ a negative gap (&quot;children overlap&quot;), a mask among layers.</li>
 <li><code>$truncated=&quot;true&quot;</code>: the branch was emptied, or the text shortened, to fit maxChars; its id is in <code>truncated</code>.</li>
 <li><code>$code=&quot;Button&quot;</code>: an instance the project&#39;s Code Connect template renders, written without its children; its code
 is in <code>codeComponents</code> (see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
-<li>In <code>$css</code>: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer;
-<code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half of the stroke paints outside the box, which a
-border-box border does not; <code>inspect</code> gives the painted box).</li>
+<li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
+of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box).</li>
 <li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>, <code>$on-key</code>,
 <code>$after-timeout</code>: the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state). A link stays <code>href</code>.</li>
 </ul>
@@ -442,7 +481,8 @@ way (&quot;space/4&quot; → <code>--space-4</code>).</li>
 <li>A text style is <code>--&lt;name&gt;-font</code>, holding its font shorthand: <code>font: var(--h3-font)</code>.</li>
 <li>Two styles of one kind with one name (two paint styles &quot;Black&quot;) are different tokens: the file&#39;s first keeps
 <code>--Black</code>, the next are <code>--Black-2</code>, <code>--Black-3</code> (tokens_read notes them with their values). Use the one the
-layer names.</li>
+layer names. The file&#39;s own styles come first; library styles are numbered among those the page uses, so every tool
+means one style by a name on that page (a read from another page may number a library&#39;s Black differently).</li>
 </ul>
 <h3>tokens_read</h3>
 <ul>
@@ -482,10 +522,14 @@ send only what you change. Nothing is ever deleted (use <code>execute</code> to 
 durations in seconds.</li>
 <li>An alias is <code>var(--other)</code>. One that points nowhere is a comment and a note.</li>
 </ul>
+<p>A text style is <code>--&lt;name&gt;-font</code>, with <code>also</code> holding <code>--&lt;name&gt;-letter-spacing</code> and <code>--&lt;name&gt;-text-transform</code>
+when they are not the default. A gradient paint style is a token once a layer that uses it is read (Figma writes its
+CSS for that layer).</p>
 <h3>Not tokens yet</h3>
-<p>Paint styles with gradients or images, blur effect styles, and library variables the file does not use (Figma gives
-their values only once they are imported into the file: <code>libraries: true</code> lists them by name and type). Paint styles
-and effect styles that are left out are named in <code>notes</code>.</p>
+<p>Paint styles with images, gradient styles no layer read uses, blur effect styles, and library variables the file does
+not use (Figma gives their values only once they are imported into the file: <code>libraries: true</code> lists them by name
+and type). Paint styles and effect styles that are left out are named in <code>notes</code>; a <code>var()</code> design_read writes
+without a value is named in its hints.</p>
 
         </section>
         <section id="guide-assets">
@@ -510,8 +554,12 @@ holds no text (an export on a section with text is a preview, read as layers). A
 <ul>
 <li><code>design_read</code> with <code>assetsDir</code> writes the assets of the section it reads, and its XML points at the files.</li>
 <li><code>assets_export</code> writes files on their own: <code>nodes</code> (up to 50 layers, one file each, in the format and scale you
-give: PNG, JPG, SVG or PDF) or <code>from</code> (every asset inside one layer). <code>original: true</code> writes the images as they
-were placed, full size and in their own format, instead of renders.</li>
+give: PNG, JPG, WebP, SVG or PDF; <code>width</code>, the CSS width the build shows a layer at, sets the render to width ×
+scale px) or <code>from</code> (every asset inside one layer). <code>original: true</code> writes the images as they were placed, full
+size and in their own format, instead of renders.</li>
+<li>design_read without <code>assetsDir</code> only plans names. When assets_export writes a file under another name (the name
+holds other bytes, the same bytes are another layer&#39;s file, an original is a JPEG), the file has <code>planned</code>: use
+its <code>path</code> in the <code>src</code>.</li>
 </ul>
 <h3>Files</h3>
 <p>Named after the layer (<code>Hero photo</code> → hero-photo.png, a component&#39;s variant added: company-logo-amazon.svg). The
