@@ -28,6 +28,8 @@ How to write this file (people and agents alike):
 
 ### Changed
 
+- Pixelwright's licence is FSL-1.1-MIT: use it for anything, at work and for clients, and change it for your own use,
+  but not to build a competing product or service. Each version becomes MIT two years after its release.
 - The plugin stays a development plugin you import once from its manifest (`npx -y pixelwright@latest` puts it in
   place and keeps it current): Figma does not list plugins that overlap its own MCP server on the Community.
 - The README, the guide and the examples read Orbit, a demo pricing page made for Pixelwright, instead of a
