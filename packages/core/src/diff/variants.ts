@@ -2,6 +2,10 @@ import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import type { VariantsView } from "../types/variants.ts";
 import { designDiff } from "./design-diff.ts";
 
+/** The most variants one answer compares, and the most differences listed per list. */
+const VARIANTS_MAX = 50;
+const DIFF_MAX = 100;
+
 /** State values and the CSS pseudo-class each suggests. */
 const PSEUDO: readonly [RegExp, string][] = [
   [/^hover(ed)?$/i, ":hover"],
@@ -35,6 +39,7 @@ export function variantsView(snapshot: Snapshot): VariantsView {
     root,
   });
   const base = propsOf(first);
+  const others = variants.filter((variant) => variant !== first);
 
   return {
     set: {
@@ -46,28 +51,71 @@ export function variantsView(snapshot: Snapshot): VariantsView {
       id: first.id,
       name: first.name,
     },
-    variants: variants
-      .filter((variant) => variant !== first)
-      .map((variant) => {
-        const diff = designDiff(of(first), of(variant));
-        const props = propsOf(variant);
-        const pseudo = Object.entries(props)
-          .filter(([name, value]) => base[name] !== value)
-          .map(([, value]) => PSEUDO.find(([pattern]) => pattern.test(value.trim()))?.[1])
-          .find((found) => found !== undefined);
+    variants: others.slice(0, VARIANTS_MAX).map((variant) => {
+      const props = propsOf(variant);
+      const against = baselineOf(variant, props, variants, base) ?? first;
+      const diff = designDiff(of(against), of(variant));
+      const pseudo = Object.entries(props)
+        .filter(([name, value]) => propsOf(against)[name] !== value)
+        .map(([, value]) => pseudoOf(value))
+        .find((found) => found !== undefined);
 
-        return {
-          id: variant.id,
-          name: variant.name,
-          props,
-          ...(pseudo === undefined ? {} : { pseudo }),
-          same: diff.same,
-          changed: diff.changed,
-          onlyInDefault: diff.onlyInA,
-          onlyInVariant: diff.onlyInB,
-        };
-      }),
+      return {
+        id: variant.id,
+        name: variant.name,
+        props,
+        against: {
+          id: against.id,
+          name: against.name,
+        },
+        ...(pseudo === undefined ? {} : { pseudo }),
+        same: diff.same,
+        changed: diff.changed.slice(0, DIFF_MAX),
+        onlyInDefault: diff.onlyInA.slice(0, DIFF_MAX),
+        onlyInVariant: diff.onlyInB.slice(0, DIFF_MAX),
+      };
+    }),
+    ...(others.length > VARIANTS_MAX ? { more: others.length - VARIANTS_MAX } : {}),
   };
+}
+
+/**
+ * The variant to compare one with: the one it differs from in a single property, set there as on the default, a
+ * state first (Size=Large, State=Hover against Size=Large, State=Default). None such: the default.
+ */
+function baselineOf(
+  variant: SnapshotNode,
+  props: Readonly<Record<string, string>>,
+  variants: readonly SnapshotNode[],
+  base: Readonly<Record<string, string>>,
+): SnapshotNode | undefined {
+  const candidates = variants.flatMap((other) => {
+    if (other === variant) {
+      return [];
+    }
+
+    const theirs = propsOf(other);
+    const apart = Object.keys({
+      ...props,
+      ...theirs,
+    }).filter((name) => props[name] !== theirs[name]);
+    const [only] = apart;
+
+    return apart.length === 1 && only !== undefined && theirs[only] === base[only]
+      ? [
+          {
+            other,
+            state: pseudoOf(props[only] ?? "") !== undefined,
+          },
+        ]
+      : [];
+  });
+
+  return (candidates.find((candidate) => candidate.state) ?? candidates[0])?.other;
+}
+
+function pseudoOf(value: string): string | undefined {
+  return PSEUDO.find(([pattern]) => pattern.test(value.trim()))?.[1];
 }
 
 /** A variant's properties from its name, as Figma writes it: "State=Hover, Size=Large". */

@@ -5,7 +5,7 @@ import {
   type OperationOutput,
   type SnapshotReaction,
 } from "@pixelwright/core";
-import { FLOW_MAX_LINKS, OP_BUDGET_MS } from "../constants/plugin.ts";
+import { FILE_MAP_MAX_NODES, FLOW_MAX_LINKS, OP_BUDGET_MS } from "../constants/plugin.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import { reactionsOf } from "./snapshot.ts";
 import { loaded } from "./used-tokens.ts";
@@ -150,10 +150,15 @@ export async function flows({ page: id }: OperationInput<"flows">): Promise<Oper
   };
 }
 
-/** Every page with its top layers and a section's own, sizes rounded; pages are loaded one at a time within the budget. */
+/**
+ * Every page with its top layers and a section's own, sizes rounded; pages are loaded one at a time within the budget,
+ * and at most FILE_MAP_MAX_NODES layers are listed in all (a page cut short says how many it has).
+ */
 export async function fileMap(): Promise<OperationOutput<"file_map">> {
   const started = Date.now();
   const pages: OperationOutput<"file_map">["pages"] = [];
+  let left = FILE_MAP_MAX_NODES;
+  let more = false;
   const entry = (node: SceneNode) => ({
     id: node.id,
     name: node.name,
@@ -163,7 +168,7 @@ export async function fileMap(): Promise<OperationOutput<"file_map">> {
   });
 
   for (const page of figma.root.children) {
-    if (Date.now() - started > OP_BUDGET_MS) {
+    if (Date.now() - started > OP_BUDGET_MS || left <= 0) {
       return {
         pages,
         more: true,
@@ -171,19 +176,35 @@ export async function fileMap(): Promise<OperationOutput<"file_map">> {
     }
 
     await loaded(page);
+
+    const nodes: OperationOutput<"file_map">["pages"][number]["nodes"] = [];
+
+    for (const node of page.children) {
+      if (left <= 0) {
+        break;
+      }
+
+      const children = node.type === "SECTION" ? node.children.slice(0, Math.max(0, left - 1)).map(entry) : null;
+
+      nodes.push({
+        ...entry(node),
+        ...(children === null ? {} : { children }),
+      });
+      left -= 1 + (children?.length ?? 0);
+    }
+
+    more ||= nodes.length < page.children.length;
     pages.push({
       id: page.id,
       name: page.name,
       current: page === figma.currentPage,
-      nodes: page.children.map((node) => ({
-        ...entry(node),
-        ...(node.type === "SECTION" ? { children: node.children.map(entry) } : {}),
-      })),
+      ...(nodes.length < page.children.length ? { total: page.children.length } : {}),
+      nodes,
     });
   }
 
   return {
     pages,
-    more: false,
+    more,
   };
 }

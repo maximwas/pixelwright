@@ -118,3 +118,6 @@ export const FLOW_MAX_LINKS = 500;
 
 /** The most layers tokens_usage lists. */
 export const USAGE_MAX_LAYERS = 500;
+
+/** The most layers file_map lists in all: past it, a page says how many it has. */
+export const FILE_MAP_MAX_NODES = 1_500;

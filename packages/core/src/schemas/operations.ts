@@ -173,6 +173,8 @@ export const OPERATION_SCHEMAS = {
       pages: z.array(
         LayerNameSchema.extend({
           current: z.boolean(),
+          /** How many top layers the page has, when not all are listed. */
+          total: z.number().int().exactOptional(),
           /** The page's top layers (frames, sections, components), a section's own listed inside it. */
           nodes: z.array(
             MapNodeSchema.extend({

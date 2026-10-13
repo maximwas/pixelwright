@@ -14,6 +14,9 @@ export const VariantsViewSchema = z.object({
   variants: z.array(
     LayerSchema.extend({
       props: z.record(z.string(), z.string()),
+      against: LayerSchema.describe(
+        "The variant it is compared with: the one it differs from by a single property (a state first), else the default.",
+      ),
       pseudo: z
         .string()
         .exactOptional()
@@ -24,4 +27,5 @@ export const VariantsViewSchema = z.object({
       onlyInVariant: z.array(DiffOnlySchema),
     }),
   ),
+  more: z.number().int().exactOptional().describe("Variants left out: read a smaller set, or the variants one by one."),
 });

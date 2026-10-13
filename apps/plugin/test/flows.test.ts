@@ -208,3 +208,29 @@ describe("file_map", () => {
     expect(map.pages[1]?.nodes[0]?.children?.map((child) => child.id)).toEqual(["3:2"]);
   });
 });
+
+describe("file_map of a page with thousands of loose layers", () => {
+  it("lists so many in all, with each page's own count, and says there is more", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        name: "Scraps",
+        children: Array.from({ length: 1_600 }, (_, index) => ({
+          id: `8:${index + 1}`,
+          type: "RECTANGLE",
+          name: `Rectangle ${index + 1}`,
+        })),
+      }),
+    );
+
+    const map = (await runOperation("file_map", null)) as {
+      pages: { nodes: unknown[]; total?: number }[];
+      more: boolean;
+    };
+
+    expect(map.pages[0]?.nodes).toHaveLength(1_500);
+    expect(map.pages[0]?.total).toBe(1_600);
+    expect(map.more).toBe(true);
+  });
+});
