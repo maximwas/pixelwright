@@ -64,9 +64,9 @@ export async function takeScreenshot(
         node,
         scale,
         effects,
-        save,
-        file,
         clip,
+        ...(save === undefined ? {} : { save }),
+        ...(file === undefined ? {} : { file }),
       },
       target,
     );
