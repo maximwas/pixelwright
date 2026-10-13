@@ -1,6 +1,6 @@
 import type { Server } from "node:http";
 import { CloseCode } from "@pixelwright/core";
-import type { WebSocketServer } from "ws";
+import type { WebSocket, WebSocketServer } from "ws";
 
 /**
  * Listens on 127.0.0.1. Resolves with the port, or null while another process (another pixelwright) holds it.
@@ -39,11 +39,15 @@ export async function listenOnLoopback(server: Server, port: number): Promise<nu
   return address.port;
 }
 
-/** Frees the port first, so a new server process can take it at once, then says goodbye to the plugin. */
+/**
+ * Frees the port first, so a new server process can take it at once, then says goodbye to the plugin; `handedTo`, the
+ * newer server's socket, hears that the port is its own now.
+ */
 export async function closeGracefully(
   server: Server,
   webSocketServer: WebSocketServer,
   graceMs: number,
+  handedTo: WebSocket | null = null,
 ): Promise<void> {
   const httpClosed = new Promise<void>((resolve) => server.close(() => resolve()));
 
@@ -52,7 +56,11 @@ export async function closeGracefully(
   const clients = [...webSocketServer.clients];
 
   for (const socket of clients) {
-    socket.close(CloseCode.GoingAway, "server shutting down");
+    if (socket === handedTo) {
+      socket.close(CloseCode.HandedOver, "a newer Pixelwright server takes the bridge");
+    } else {
+      socket.close(CloseCode.GoingAway, "server shutting down");
+    }
   }
 
   // A frozen tab never answers the close handshake; cut it off instead of waiting for ws's 30 s timeout.

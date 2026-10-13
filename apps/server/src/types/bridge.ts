@@ -152,6 +152,8 @@ export interface PeerConnectionOptions {
   readonly relay: (op: string, input: unknown, options: RequestOptions) => Promise<unknown>;
   readonly plugins: () => readonly ConnectedPlugin[];
   readonly onClose: () => void;
+  /** The peer proved the token and speaks a newer protocol: the owner gives it the port. */
+  readonly onNewer: () => void;
   /** bridge.json's token, which owner and peer prove to each other. */
   readonly token: string;
   readonly pairing: () => PairingStatus | null;
@@ -161,6 +163,8 @@ export interface PeerConnectionOptions {
 export type BridgeState =
   | { readonly kind: "owner" }
   | { readonly kind: "peer" }
+  /** A newer server joined and got the port; this process's bridge stays off until its MCP client restarts it. */
+  | { readonly kind: "handedOver" }
   | { readonly kind: "unavailable"; readonly closeCode: number | null }
   | { readonly kind: "failed"; readonly reason: string }
   | { readonly kind: "disabled" };

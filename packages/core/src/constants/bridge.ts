@@ -27,6 +27,8 @@ export const CloseCode = {
   Unauthorized: 4401,
   HelloTimeout: 4408,
   Superseded: 4409,
+  /** The bridge's owner gave its port to the newer server that joined it: that server takes the port at once. */
+  HandedOver: 4410,
   VersionMismatch: 4426,
   TooManySessions: 4429,
 } as const;

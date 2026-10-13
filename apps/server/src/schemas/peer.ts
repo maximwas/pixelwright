@@ -7,10 +7,15 @@ import {
 } from "@pixelwright/core";
 import * as z from "zod";
 
-/** A process joining the bridge's owner says which peer protocol it speaks, with its half of the challenge. */
+/**
+ * A process joining the bridge's owner says which peer and plugin protocols it speaks, with its half of the challenge.
+ * The hello, the challenge and the answer stay as they are in every version: an owner hands its port to a newer server
+ * only after this handshake, so a newer peer protocol may change only what follows it.
+ */
 const PeerHelloSchema = z.object({
   type: z.literal("peer_hello"),
   protocol: z.number().int(),
+  pluginProtocol: z.number().int().exactOptional(),
   nonce: NonceSchema,
 });
 

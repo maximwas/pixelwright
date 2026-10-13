@@ -8,6 +8,8 @@ export function bridgeHint({ state, connectedFiles, pairing, rejection, port, no
       return "The plugin bridge is off (PIXELWRIGHT_PLUGIN_BRIDGE=off): remove the variable and restart the MCP server.";
     case "failed":
       return `The plugin bridge could not start: ${state.reason}`;
+    case "handedOver":
+      return "A newer Pixelwright server, another MCP client's, took the Figma bridge over, so this one switched its bridge off: restart Pixelwright in this MCP client (/mcp in Claude Code) to reach Figma again.";
     case "unavailable":
       return state.closeCode === CloseCode.VersionMismatch
         ? `Another MCP client session runs another Pixelwright version and holds port ${port}: run the same version in both, or close that session. This one keeps retrying.`

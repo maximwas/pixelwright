@@ -46,6 +46,7 @@ export class BridgeServer
   extends EventEmitter<{
     changed: [];
     rejected: [UpgradeRejection];
+    handedOver: [];
   }>
   implements PluginLink
 {
@@ -303,10 +304,20 @@ export class BridgeServer
       relay: (op, input, options) => this.request(op, input, options),
       plugins: () => this.plugins(),
       onClose: () => this.#peers.delete(peer),
+      onNewer: () => void this.#handOver(socket),
     });
 
     this.#peers.add(peer);
     this.#log("peer joined", { peers: this.#peers.size });
+  }
+
+  /** A newer server joined: it gets the port, the plugins reconnect to it, and this process's bridge goes off. */
+  async #handOver(newer: WebSocket): Promise<void> {
+    this.#log("handing the port to a newer server");
+    clearInterval(this.#heartbeat);
+    clearTimeout(this.#pairingTimer);
+    this.emit("handedOver");
+    await closeGracefully(this.#http, this.#sockets, CLOSE_GRACE_MS, newer);
   }
 
   /** A plugin said hello. The same window reconnecting (after sleep, say) replaces its half-open old socket. */

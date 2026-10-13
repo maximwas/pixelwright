@@ -1,4 +1,4 @@
-import { BridgeError, CloseCode, newNonce, proofEquals, proofFor } from "@pixelwright/core";
+import { BRIDGE_PROTOCOL_VERSION, BridgeError, CloseCode, newNonce, proofEquals, proofFor } from "@pixelwright/core";
 import WebSocket, { type RawData } from "ws";
 import {
   PEER_JOIN_TIMEOUT_MS,
@@ -66,6 +66,7 @@ export class OwnerClient implements PluginLink {
         this.#send(socket, {
           type: "peer_hello",
           protocol: PEER_PROTOCOL_VERSION,
+          pluginProtocol: BRIDGE_PROTOCOL_VERSION,
           nonce: peerNonce,
         }),
       );

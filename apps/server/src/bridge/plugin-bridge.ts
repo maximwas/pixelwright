@@ -1,4 +1,4 @@
-import { BridgeError } from "@pixelwright/core";
+import { BridgeError, CloseCode } from "@pixelwright/core";
 import { PEER_RETRY_MS } from "../constants/bridge.ts";
 import type {
   BridgeState,
@@ -79,6 +79,11 @@ export class PluginBridge {
     server?.on("rejected", (rejection) => {
       this.#lastRejection = rejection;
     });
+    server?.on("handedOver", () => {
+      this.#state = { kind: "handedOver" };
+      clearTimeout(this.#retryTimer);
+      this.#options.logger.info("A newer Pixelwright server joined and took the plugin bridge over; this one is off");
+    });
     server?.on("changed", () => {
       if (server.plugins().length > 0) {
         this.#lastRejection = null;
@@ -144,8 +149,11 @@ export class PluginBridge {
     }
   }
 
-  /** Takes the port if it is free, joins its owner if not, and tries again later if neither works. */
-  async #connect(): Promise<void> {
+  /**
+   * Takes the port if it is free, joins its owner if not, and tries again later if neither works. `handedOver`: the
+   * owner just gave this process its port, so the next refusal waits as usual instead of trying again at once.
+   */
+  async #connect(handedOver = false): Promise<void> {
     const server = this.#server;
     const owner = this.#owner;
 
@@ -177,10 +185,10 @@ export class PluginBridge {
       return;
     }
 
-    await this.#join(owner);
+    await this.#join(owner, handedOver);
   }
 
-  async #join(owner: OwnerClient): Promise<void> {
+  async #join(owner: OwnerClient, handedOver: boolean): Promise<void> {
     const joined = await owner.join(() => this.#ownerLost());
 
     if (this.#closed) {
@@ -192,6 +200,13 @@ export class PluginBridge {
     if (joined) {
       this.#state = { kind: "peer" };
       this.#options.logger.info("Joined the plugin bridge of another Claude Code session");
+
+      return;
+    }
+
+    if (owner.lastCloseCode === CloseCode.HandedOver && !handedOver) {
+      this.#options.logger.info("The plugin bridge's older owner handed its port over: taking it");
+      await this.#connect(true);
 
       return;
     }

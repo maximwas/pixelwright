@@ -3,15 +3,16 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { newNonce, type PluginKey } from "@pixelwright/core";
+import { BRIDGE_PROTOCOL_VERSION, CloseCode, newNonce, type PluginKey, proofFor } from "@pixelwright/core";
 import pino from "pino";
 import { afterEach, describe, expect, it } from "vitest";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 import { BridgeServer } from "../src/bridge/bridge-server.ts";
 import { OwnerClient } from "../src/bridge/owner-client.ts";
 import { PairingCodes } from "../src/bridge/pairing-codes.ts";
 import { PluginBridge } from "../src/bridge/plugin-bridge.ts";
 import { FilePluginKeys } from "../src/bridge/plugin-keys.ts";
+import { PEER_PATH, PEER_PROTOCOL_VERSION } from "../src/constants/bridge.ts";
 import type { PluginKeys } from "../src/types/bridge.ts";
 import { connectPlugin, memoryKeys, pluginInfo, rawPlugin, TEST_KEY } from "./helpers/fake-plugin.ts";
 import { freePort } from "./helpers/free-port.ts";
@@ -77,6 +78,38 @@ async function until(check: () => boolean, ms = 5_000): Promise<void> {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
+}
+
+/** A peer that speaks the handshake by hand, as a newer Pixelwright would: resolves with the code the owner closed it with. */
+function handPeer(port: number, hello: { protocol: number; pluginProtocol?: number }, secret = token): Promise<number> {
+  return new Promise((resolve) => {
+    const socket = new WebSocket(`ws://127.0.0.1:${port}${PEER_PATH}`);
+    const nonce = newNonce();
+
+    socket.on("open", () =>
+      socket.send(
+        JSON.stringify({
+          type: "peer_hello",
+          nonce,
+          ...hello,
+        }),
+      ),
+    );
+    socket.on("message", (data) => {
+      const message = JSON.parse(data.toString()) as { type: string; nonce: string };
+
+      if (message.type === "peer_challenge") {
+        socket.send(
+          JSON.stringify({
+            type: "peer_auth",
+            proof: proofFor(secret, "peer", message.nonce, nonce),
+          }),
+        );
+      }
+    });
+    socket.on("close", (code) => resolve(code));
+    cleanup.push(() => socket.close());
+  });
 }
 
 afterEach(async () => {
@@ -247,6 +280,95 @@ describe("peers", () => {
 
     await expect(client.join(() => {})).resolves.toBe(false);
     expect(client.pairing()).toBeNull();
+  });
+
+  it("hands the port to a newer Pixelwright server that joins it, and switches its own bridge off", async () => {
+    const port = await freePort();
+    const owner = await bridgeOn(port);
+    const plugin = await connectPlugin(port, pluginInfo());
+
+    await until(() => owner.plugins().length === 1);
+    await expect(
+      handPeer(port, {
+        protocol: PEER_PROTOCOL_VERSION,
+        pluginProtocol: BRIDGE_PROTOCOL_VERSION + 1,
+      }),
+    ).resolves.toBe(CloseCode.HandedOver);
+    // The plugin is let go to reconnect, and the port is free for the newer server.
+    await expect(plugin.closed).resolves.toBe(CloseCode.GoingAway);
+
+    const next = server(port);
+
+    cleanup.push(() => next.close());
+    await expect(next.listen()).resolves.toBe(port);
+    expect(owner.status()).toMatchObject({
+      role: "handedOver",
+      hint: expect.stringContaining("/mcp"),
+    });
+    await expect(owner.request("ping", null)).rejects.toThrow(/newer Pixelwright server/);
+  });
+
+  it("hands the port over to a server that speaks a newer peer protocol too", async () => {
+    const port = await freePort();
+
+    await bridgeOn(port);
+    await expect(handPeer(port, { protocol: PEER_PROTOCOL_VERSION + 1 })).resolves.toBe(CloseCode.HandedOver);
+  });
+
+  it("keeps the port when a newer hello cannot prove the token", async () => {
+    const port = await freePort();
+    const owner = await bridgeOn(port);
+
+    await expect(
+      handPeer(
+        port,
+        {
+          protocol: PEER_PROTOCOL_VERSION,
+          pluginProtocol: BRIDGE_PROTOCOL_VERSION + 1,
+        },
+        "x".repeat(43),
+      ),
+    ).resolves.toBe(CloseCode.Unauthorized);
+    expect(owner.status().role).toBe("owner");
+  });
+
+  it("takes the port at once when an older owner hands it over", async () => {
+    const port = await freePort();
+    const older = createServer();
+    const sockets = new WebSocketServer({ noServer: true });
+
+    // An owner that proves the token, then gives the port up as soon as the newer peer proved it too.
+    older.on("upgrade", (request, stream, head) =>
+      sockets.handleUpgrade(request, stream, head, (socket) => {
+        let peerNonce = "";
+        const ownerNonce = newNonce();
+
+        socket.on("message", (data) => {
+          const message = JSON.parse(data.toString()) as { type: string; nonce: string };
+
+          if (message.type === "peer_hello") {
+            peerNonce = message.nonce;
+            socket.send(
+              JSON.stringify({
+                type: "peer_challenge",
+                nonce: ownerNonce,
+                proof: proofFor(token, "owner", peerNonce, ownerNonce),
+              }),
+            );
+          } else if (message.type === "peer_auth") {
+            older.close();
+            socket.close(CloseCode.HandedOver, "a newer Pixelwright server takes the bridge");
+          }
+        });
+      }),
+    );
+    older.listen(port, "127.0.0.1");
+    await once(older, "listening");
+    cleanup.push(() => new Promise((resolve) => sockets.close(resolve)));
+
+    const bridge = await bridgeOn(port);
+
+    expect(bridge.status().role).toBe("owner");
   });
 
   it("honours a key the previous owner stored", async () => {

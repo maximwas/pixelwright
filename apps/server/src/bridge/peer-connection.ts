@@ -1,4 +1,4 @@
-import { CloseCode, newNonce, proofEquals, proofFor, toWireError } from "@pixelwright/core";
+import { BRIDGE_PROTOCOL_VERSION, CloseCode, newNonce, proofEquals, proofFor, toWireError } from "@pixelwright/core";
 import type { RawData, WebSocket } from "ws";
 import { HELLO_TIMEOUT_MS, PEER_PROTOCOL_VERSION } from "../constants/bridge.ts";
 import { PeerToOwnerSchema } from "../schemas/peer.ts";
@@ -6,13 +6,14 @@ import type { OwnerToPeer, PeerConnectionOptions, PeerToOwner, RequestOptions } 
 
 type Stage =
   | { readonly kind: "hello" }
-  | { readonly kind: "challenged"; readonly peerNonce: string; readonly ownerNonce: string }
+  | { readonly kind: "challenged"; readonly peerNonce: string; readonly ownerNonce: string; readonly newer: boolean }
   | { readonly kind: "joined" };
 
 /**
  * Another pixelwright process (another MCP client session) joining this bridge owner. Both prove they know bridge.json's
  * token by challenge-response, the owner first; then the peer's operations go on to a plugin and the answers come back,
- * and it hears which plugins are connected and what code pairing waits for.
+ * and it hears which plugins are connected and what code pairing waits for. A peer that speaks a newer protocol gets the
+ * port instead (`onNewer`), once it proved the token: an old server must not keep a newer plugin out.
  */
 export class PeerConnection {
   readonly #socket: WebSocket;
@@ -71,7 +72,7 @@ export class PeerConnection {
       return;
     }
 
-    if (message.protocol !== PEER_PROTOCOL_VERSION) {
+    if (message.protocol < PEER_PROTOCOL_VERSION) {
       this.#socket.close(CloseCode.VersionMismatch, `peer protocol ${PEER_PROTOCOL_VERSION} required`);
 
       return;
@@ -83,6 +84,7 @@ export class PeerConnection {
       kind: "challenged",
       peerNonce: message.nonce,
       ownerNonce,
+      newer: message.protocol > PEER_PROTOCOL_VERSION || (message.pluginProtocol ?? 0) > BRIDGE_PROTOCOL_VERSION,
     };
     this.#send({
       type: "peer_challenge",
@@ -98,6 +100,12 @@ export class PeerConnection {
 
     if (message.type !== "peer_auth" || !proofEquals(message.proof, expected)) {
       this.#socket.close(CloseCode.Unauthorized, "the peer could not prove the token");
+
+      return;
+    }
+
+    if (stage.newer) {
+      this.#options.onNewer();
 
       return;
     }

@@ -136,6 +136,10 @@ project for Code Connect; <code>PIXELWRIGHT_SUPPORT_REMINDERS=off</code> turns o
 computer: run <code>npx -y pixelwright@latest</code> again (or <code>setup --print</code>) to put the matching one in <code>~/.pixelwright/plugin</code>.
 Figma Desktop loads it the next time you run the plugin. When the plugin&#39;s window says the protocol versions differ,
 this is the fix.</p>
+<p>Every MCP client session runs its own server, and they share one bridge port. When a newer server starts while an older
+one (another client&#39;s, still open) holds the port, the older one hands the port over and switches its bridge off: its
+status then asks you to restart Pixelwright in that client (<code>/mcp</code> in Claude Code). A plugin turned away by an older
+server keeps trying, and connects once the newer one holds the port.</p>
 
         </section>
         <section id="tools">
