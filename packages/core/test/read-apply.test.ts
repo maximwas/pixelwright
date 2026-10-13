@@ -264,6 +264,80 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
     expect(xml).toContain('$code="PlanCard"');
     expect(changesOf(snapshot, xml)).toEqual([]);
   });
+
+  it("with the properties a designer pinned in annotations", () => {
+    const plans = fixture("orbit-plans");
+    const snapshot: Snapshot = {
+      ...plans,
+      root: {
+        ...plans.root,
+        annotations: [
+          {
+            label: "Three plans side by side",
+            pins: ["itemSpacing", "padding"],
+          },
+          { pins: ["width"] },
+        ],
+      },
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain('$pins="gap, padding, width"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
+
+  it("with Figma Motion on a layer", () => {
+    const plans = fixture("orbit-plans");
+    const [first, ...rest] = plans.root.children ?? [];
+    const snapshot: Snapshot = {
+      ...plans,
+      root: {
+        ...plans.root,
+        children: [
+          {
+            ...(first as SnapshotNode),
+            motion: {
+              timeline: 1.2,
+              styles: [],
+              tracks: [
+                {
+                  field: "OPACITY",
+                  operation: "SET",
+                  base: {
+                    type: "FLOAT",
+                    value: 1,
+                  },
+                  keyframes: [
+                    {
+                      t: 0,
+                      value: {
+                        type: "FLOAT",
+                        value: 0,
+                      },
+                      easing: { type: "LINEAR" },
+                    },
+                    {
+                      t: 0.6,
+                      value: {
+                        type: "FLOAT",
+                        value: 1,
+                      },
+                      easing: { type: "LINEAR" },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          ...rest,
+        ],
+      },
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain('$motion="opacity 0→1; 0–0.6s linear"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
 });
 
 /** What sending this XML back would change in the snapshot's layers: an element's attributes and text, by id. */

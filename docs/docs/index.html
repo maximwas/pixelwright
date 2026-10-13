@@ -227,7 +227,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-design_read">
   <h3><code>design_read</code></h3>
-  <p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), and, where the project has Figma Code Connect templates (*.figma.ts), codeComponents: the code connected instances render to ({ids, component, template, snippet, imports}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code as it is (code: false reads it as layers). A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project&#39;s own components and tokens.</p>
+  <p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer&#39;s Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer&#39;s summary being $motion in the XML) when there are any, and, where the project has Figma Code Connect templates (*.figma.ts), codeComponents: the code connected instances render to ({ids, component, template, snippet, imports}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code as it is (code: false reads it as layers). A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project&#39;s own components and tokens.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243. Default: the one layer selected in Figma.</td></tr>
 <tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below the layer to read. Default: all.</td></tr>
@@ -407,13 +407,13 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-tokens_read">
   <h3><code>tokens_read</code></h3>
-  <p>Reads the file&#39;s design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection&#39;s default mode and the styles, and every other mode is a block [data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;] to put on the element a theme applies to; format json returns the same per collection and mode. libraries: true also lists the enabled libraries&#39; variables by name. notes say what could not be written.</p>
+  <p>Reads the file&#39;s design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection&#39;s default mode and the styles, and every other mode is a block [data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;] to put on the element a theme applies to; format json returns the same per collection and mode; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries&#39; variables by name. notes say what could not be written.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>collections</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>Only these variable collections, by name (case does not matter). Default: all of them.</td></tr>
 <tr><td><code>libraries</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also list the enabled libraries&#39; variables, by name and type: their values are read only once the file uses them.</td></tr>
 <tr><td><code>used</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Also take the styles and variables the layers on the current page (or within) use, a team library&#39;s among them. A file that uses a library has its tokens there.</td></tr>
 <tr><td><code>within</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer or page whose used tokens to take. Default: the current page.</td></tr>
-<tr><td><code>format</code><span class="optional">optional</span></td><td><code>&quot;css&quot; | &quot;json&quot;</code><br /><span class="default">default &quot;css&quot;</span></td><td>css: ready custom properties, a block per extra mode. json: the token model, per collection and mode.</td></tr>
+<tr><td><code>format</code><span class="optional">optional</span></td><td><code>&quot;css&quot; | &quot;json&quot; | &quot;dtcg&quot;</code><br /><span class="default">default &quot;css&quot;</span></td><td>css: ready custom properties, a block per extra mode. json: the token model, per collection and mode. dtcg: Design Tokens Format (DTCG 2025.10) trees, one per collection mode (<code>&lt;collection&gt;.&lt;mode&gt;</code>) and one of styles, each to save as its own .json file.</td></tr>
 <tr><td><code>maxChars</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 80000</span></td><td>Longest output; past it, only the summary comes back and you read collections one at a time.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
@@ -465,7 +465,8 @@ A layer with <code>$children=&quot;N&quot;</code> has more children than listed:
 </ul>
 </li>
 <li><strong>Read one section.</strong> <code>design_read</code> returns the section as XML (see <code>guide xml</code>), then JSON with tokens, text
-styles, fonts, assets, hints and truncated. Read sections, not whole pages: past <code>maxChars</code> (80 000) the deepest
+styles, fonts, assets, hints and truncated, plus <code>measurements</code> (the designer&#39;s Dev Mode measurements, in px) and
+<code>motion</code> (Figma Motion as CSS <code>@keyframes</code>) when the section has them. Read sections, not whole pages: past <code>maxChars</code> (80 000) the deepest
 branches are left empty with <code>$truncated=&quot;true&quot;</code> and their ids listed in <code>truncated</code>; read each on its own.
 Pass <code>assetsDir</code> (e.g. src/assets) to get its icons and images written as files.</li>
 <li><strong>Look at it.</strong> <code>screenshot</code> renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; <code>save</code>
@@ -482,7 +483,7 @@ has, the attributes that differ, and icons whose drawing differs. <code>variants
 differences from its default (build :hover, :active, :disabled from them). <code>breakpoints_find</code> finds a screen at the
 page&#39;s other widths, for the media queries. <code>flow_read</code> maps the prototype: screens and the links between them.
 A screenshot in another variable mode (<code>modes: {&quot;Theme&quot;: &quot;Dark&quot;}</code>) shows a theme without switching it in Figma.</li>
-<li><strong>The design system.</strong> <code>tokens_read</code>: variables with every mode (light, dark…) and styles, as CSS or JSON.
+<li><strong>The design system.</strong> <code>tokens_read</code>: variables with every mode (light, dark…) and styles, as CSS, JSON or DTCG token files.
 <code>tokens_usage</code>: the layers a token is used on. <code>components_read</code>: the components a page uses, or the file
 defines, with variants and properties. <code>design_audit</code>: the scale a design uses (spacing, radii, font sizes,
 colours) and what is off it, for a file without tokens. <code>contrast_check</code>: every text&#39;s WCAG contrast.
@@ -552,6 +553,11 @@ a negative gap (&quot;children overlap&quot;), a mask among layers.</li>
 is in <code>codeComponents</code> (see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
 <li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
 of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box).</li>
+<li><code>$pins=&quot;width, padding&quot;</code>: the properties the designer pinned in the layer&#39;s Dev Mode annotations, in CSS words:
+take those values exactly.</li>
+<li><code>$motion=&quot;opacity 0→1, translate-y 24→0px; 0–0.6s ease-out&quot;</code>: the layer&#39;s Figma Motion, led by the animation
+style&#39;s name when one made it. The JSON&#39;s <code>motion</code> has it as CSS: a <code>@keyframes</code> per animated layer and a rule
+for the class it names (<code>layers</code>), keyframes placed over the timeline; what CSS cannot animate is a comment.</li>
 <li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>,
 <code>$on-mouse-down</code>, <code>$on-mouse-up</code>, <code>$on-key</code>, <code>$after-timeout</code>, <code>$on-media-hit</code>, <code>$on-media-end</code> (any other trigger
 as <code>$on-&lt;trigger&gt;</code>): the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state). A link stays <code>href</code>.</li>
@@ -607,6 +613,12 @@ a file built on a library has its tokens there. <code>used: false</code> keeps o
 <code>&lt;html data-brand=&quot;dark&quot;&gt;</code>: a token in <code>:root</code> that points at another collection&#39;s token is computed in <code>:root</code>
 and does not follow a mode set lower in the page.</li>
 <li>format json: per collection, its modes and each variable&#39;s value in every mode.</li>
+<li>format dtcg: Design Tokens Format (DTCG 2025.10) files, one per mode of each collection, keyed
+<code>&lt;collection&gt;.&lt;mode&gt;</code> (the collection alone when it has one mode), and <code>styles</code> for the styles; aliases are
+<code>{path}</code>, a token whose path is also a group sits at the group&#39;s <code>$root</code>; a token takes the type of the tokens
+it is aliased with (a number a gap points at is a dimension). Style Dictionary and other DTCG tools read them. Named
+in <code>notes</code>: an alias to a token no file here holds (a library&#39;s, a collection left out), a name taken twice (the
+second suffixed -2), and what DTCG has no type for (a text variable, a boolean, an image style).</li>
 <li><code>collections</code> keeps only the named ones; <code>libraries: true</code> adds the enabled libraries&#39; variables by name and type.</li>
 <li>Past <code>maxChars</code> (80 000) only the summary comes back, with the collections to read one at a time.</li>
 <li>An alias to a token the output leaves out (a collection you did not ask for) is named in <code>notes</code>.</li>

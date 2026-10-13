@@ -193,6 +193,12 @@ const StyleIdSchema = z.union([z.string(), MixedSchema]);
  * One node of a snapshot, without its children: the raw Figma properties core turns into CSS. Positions are relative
  * to the snapshot's root (absoluteTransform's translation); properties at Figma's defaults are left out.
  */
+/** A Motion keyframe's or base value as Figma gives it: FLOAT, COLOR, VECTOR, TEXT_DATA and the rest. */
+const MotionValueSchema = z.object({
+  type: z.string(),
+  value: z.unknown(),
+});
+
 export const SnapshotFieldsSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -334,14 +340,57 @@ export const SnapshotFieldsSchema = z.object({
     .optional(),
   /** A component's description, for whoever builds it. */
   description: z.string().optional(),
-  /** Dev Mode annotations: the designer's notes for developers, with their category's name. */
+  /**
+   * Dev Mode annotations: the designer's notes for developers, with their category's name, and the properties pinned in
+   * them (Figma's types, in the order pinned). An annotation has a note, pins, or both.
+   */
   annotations: z
     .array(
       z.object({
-        label: z.string(),
+        label: z.string().optional(),
         category: z.string().optional(),
+        pins: z.array(z.string()).optional(),
       }),
     )
+    .optional(),
+  /**
+   * Figma Motion: the animation styles on the layer (each starting `start` seconds into the timeline) and every
+   * keyframe track, a style's keyframes moved to where the style starts. A field is a property (`OPACITY`), a paint
+   * (`fills.0`) or an effect's parameter (`effects.0.RADIUS`); `operation` says how a keyframe's value meets `base`.
+   */
+  motion: z
+    .object({
+      timeline: z.number().optional(),
+      styles: z.array(
+        z.object({
+          type: z.string(),
+          name: z.string(),
+          start: z.number(),
+          duration: z.number().optional(),
+        }),
+      ),
+      tracks: z.array(
+        z.object({
+          field: z.string(),
+          operation: z.string(),
+          base: MotionValueSchema,
+          style: z.string().optional(),
+          /** A style made it, but which one (so where it starts) is not known: its keyframes start at 0. */
+          unplaced: z.boolean().optional(),
+          keyframes: z.array(
+            z.object({
+              t: z.number(),
+              value: MotionValueSchema,
+              easing: z.object({
+                type: z.string(),
+                bezier: z.array(z.number()).optional(),
+                bounce: z.number().optional(),
+              }),
+            }),
+          ),
+        }),
+      ),
+    })
     .optional(),
   /** For a frame without auto layout: the auto layout Figma guesses it has, for a hint. */
   inferredLayout: z
@@ -434,8 +483,24 @@ export const SnapshotVariableSchema = z.object({
   codeSyntax: z.record(z.string(), z.string()).optional(),
 });
 
+/** One end of a Dev Mode measurement: a layer's id and the side measured from (Figma's TOP, RIGHT, BOTTOM, LEFT). */
+const MeasuredSideSchema = z.object({
+  id: z.string(),
+  side: z.string(),
+});
+
 export const SnapshotSchema = z.object({
   root: SnapshotNodeSchema,
   styles: z.record(z.string(), SnapshotStyleSchema),
   variables: z.record(z.string(), SnapshotVariableSchema),
+  /** The page's Dev Mode measurements with a side on the read layers, with the designer's text when there is one. */
+  measurements: z
+    .array(
+      z.object({
+        start: MeasuredSideSchema,
+        end: MeasuredSideSchema,
+        text: z.string().optional(),
+      }),
+    )
+    .optional(),
 });

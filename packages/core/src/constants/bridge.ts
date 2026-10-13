@@ -4,8 +4,9 @@
  * 3 (13.10.2026): the inspect operation; snapshots carry prototype reactions and numbered styles.
  * 4 (13.10.2026): show answers {nodes, page, zoom}; export takes variable modes; the viewport, selection_wait, changes,
  *   flows, usage, set_of, screens and file_map operations.
+ * 5 (14.10.2026): a snapshot's annotation may have pins and no label; snapshots carry measurements and Motion.
  */
-export const BRIDGE_PROTOCOL_VERSION = 4;
+export const BRIDGE_PROTOCOL_VERSION = 5;
 
 export const BRIDGE_PATH = "/pixelwright/v1";
 

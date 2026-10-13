@@ -10,6 +10,7 @@ import {
 } from "@pixelwright/core";
 import { SNAPSHOT_MAX_CHARS } from "../constants/plugin.ts";
 import { plain } from "../utils/plain.ts";
+import { motionOf } from "./motion.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import { numbered, numberingStyles, styleOf } from "./styles.ts";
 
@@ -93,11 +94,55 @@ export async function snapshot({
     { used: 0 },
   );
 
+  const measurements = measurementsOf(root);
+
   return {
     root: top,
     styles: await resolveStyles(references.styles, [pageOf(root)]),
     variables: await resolveVariables(references.variables),
+    ...(measurements.length === 0 ? {} : { measurements }),
   };
+}
+
+/** The page's Dev Mode measurements with a side on the layer or inside it; none where Figma has no such API. */
+function measurementsOf(root: SceneNode): NonNullable<OperationOutput<"snapshot">["measurements"]> {
+  const page = pageOf(root) as (PageNode & Partial<MeasurementsMixin>) | null;
+  let measurements: Measurement[];
+
+  try {
+    measurements = page?.getMeasurements?.() ?? [];
+  } catch {
+    // The typings call measurements Dev Mode only: a Figma that refuses them reads without.
+    return [];
+  }
+
+  const read = (node: BaseNode) => {
+    for (let current: BaseNode | null = node; current !== null; current = current.parent) {
+      if (current.id === root.id) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  return measurements.flatMap(({ start, end, freeText }) =>
+    read(start.node) || read(end.node)
+      ? [
+          {
+            start: {
+              id: start.node.id,
+              side: start.side,
+            },
+            end: {
+              id: end.node.id,
+              side: end.side,
+            },
+            ...(freeText === "" ? {} : { text: freeText }),
+          },
+        ]
+      : [],
+  );
 }
 
 /**
@@ -435,6 +480,8 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
     entry.annotations = notes;
   }
 
+  put("motion", motionOf(node));
+
   const href = urlOf(node);
 
   if (href !== null) {
@@ -528,10 +575,11 @@ export async function annotationCategories(): Promise<ReadonlyMap<string, string
   return new Map((categories ?? []).map((category) => [category.id, category.label]));
 }
 
+/** The layer's annotations that say something: a note, pinned properties, or both. */
 function annotationsOf(
   node: SceneNode,
   categories: ReadonlyMap<string, string>,
-): { label: string; category?: string }[] {
+): { label?: string; category?: string; pins?: string[] }[] {
   if (!("annotations" in node)) {
     return [];
   }
@@ -539,13 +587,16 @@ function annotationsOf(
   return node.annotations.flatMap((annotation) => {
     const label = annotation.label ?? annotation.labelMarkdown;
     const category = annotation.categoryId === undefined ? undefined : categories.get(annotation.categoryId);
+    const pins = (annotation.properties ?? []).map((property) => property.type);
+    const noted = label !== undefined && label !== "";
 
-    return label === undefined || label === ""
+    return !noted && pins.length === 0
       ? []
       : [
           {
-            label,
+            ...(noted ? { label } : {}),
             ...(category === undefined ? {} : { category }),
+            ...(pins.length === 0 ? {} : { pins }),
           },
         ];
   });
@@ -666,14 +717,21 @@ async function instanceOf(node: InstanceNode): Promise<Record<string, unknown> |
           setId: set.id,
           setName: set.name,
         }),
+    // A slot's property has no value: the slot's own layers, read as its children, say what it holds.
     properties: Object.fromEntries(
-      Object.entries(node.componentProperties).map(([name, property]) => [
-        name,
-        {
-          type: property.type,
-          value: property.value,
-        },
-      ]),
+      Object.entries(node.componentProperties).flatMap(([name, property]) =>
+        typeof property.value === "string" || typeof property.value === "boolean"
+          ? [
+              [
+                name,
+                {
+                  type: property.type,
+                  value: property.value,
+                },
+              ],
+            ]
+          : [],
+      ),
     ),
   };
 }

@@ -138,7 +138,7 @@ function propertiesOf(definitions: ComponentPropertyDefinitions): Entry["propert
       name.replace(/#[^#]*$/, ""),
       {
         type: definition.type,
-        default: definition.defaultValue,
+        ...(definition.defaultValue === undefined ? {} : { default: definition.defaultValue }),
         ...(definition.variantOptions === undefined ? {} : { options: [...definition.variantOptions] }),
       },
     ]),

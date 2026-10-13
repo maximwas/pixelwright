@@ -21,7 +21,8 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    - \`node_show\`: brings layers into view (fitted or at a zoom) and selects them, so the user sees which you mean.
    - \`changes_since\`: what the designer changed since you last looked (a cursor), to read again only that.
 3. **Read one section.** \`design_read\` returns the section as XML (see \`guide xml\`), then JSON with tokens, text
-   styles, fonts, assets, hints and truncated. Read sections, not whole pages: past \`maxChars\` (80 000) the deepest
+   styles, fonts, assets, hints and truncated, plus \`measurements\` (the designer's Dev Mode measurements, in px) and
+   \`motion\` (Figma Motion as CSS \`@keyframes\`) when the section has them. Read sections, not whole pages: past \`maxChars\` (80 000) the deepest
    branches are left empty with \`$truncated="true"\` and their ids listed in \`truncated\`; read each on its own.
    Pass \`assetsDir\` (e.g. src/assets) to get its icons and images written as files.
 4. **Look at it.** \`screenshot\` renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; \`save\`
@@ -38,7 +39,7 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    differences from its default (build :hover, :active, :disabled from them). \`breakpoints_find\` finds a screen at the
    page's other widths, for the media queries. \`flow_read\` maps the prototype: screens and the links between them.
    A screenshot in another variable mode (\`modes: {"Theme": "Dark"}\`) shows a theme without switching it in Figma.
-5. **The design system.** \`tokens_read\`: variables with every mode (light, dark…) and styles, as CSS or JSON.
+5. **The design system.** \`tokens_read\`: variables with every mode (light, dark…) and styles, as CSS, JSON or DTCG token files.
    \`tokens_usage\`: the layers a token is used on. \`components_read\`: the components a page uses, or the file
    defines, with variants and properties. \`design_audit\`: the scale a design uses (spacing, radii, font sizes,
    colours) and what is off it, for a file without tokens. \`contrast_check\`: every text's WCAG contrast.
@@ -115,6 +116,11 @@ text-decoration-thickness), text-align, text-wrap, color.
 - \`$css\` holds \`property: value\` pairs only, explained in hints: \`blur: progressive from 0px at 50% 0% to 8px at
   50% 100%\` (a blur that changes across the layer; \`filter\` holds its end radius) and \`stroke-align: center\` (half
   of the stroke paints outside the box, which a border-box border does not; \`inspect\` gives the painted box).
+- \`$pins="width, padding"\`: the properties the designer pinned in the layer's Dev Mode annotations, in CSS words:
+  take those values exactly.
+- \`$motion="opacity 0→1, translate-y 24→0px; 0–0.6s ease-out"\`: the layer's Figma Motion, led by the animation
+  style's name when one made it. The JSON's \`motion\` has it as CSS: a \`@keyframes\` per animated layer and a rule
+  for the class it names (\`layers\`), keyframes placed over the timeline; what CSS cannot animate is a comment.
 - \`$on-click\`, \`$on-hover\`, \`$on-press\`, \`$on-drag\`, \`$on-mouse-enter\`, \`$on-mouse-leave\`,
   \`$on-mouse-down\`, \`$on-mouse-up\`, \`$on-key\`, \`$after-timeout\`, \`$on-media-hit\`, \`$on-media-end\` (any other trigger
   as \`$on-<trigger>\`): the layer's prototype interactions, e.g. \`$on-hover="change to Type=Hover; smart animate 300ms
@@ -175,6 +181,12 @@ text-decoration-thickness), text-align, text-wrap, color.
   \`<html data-brand="dark">\`: a token in \`:root\` that points at another collection's token is computed in \`:root\`
   and does not follow a mode set lower in the page.
 - format json: per collection, its modes and each variable's value in every mode.
+- format dtcg: Design Tokens Format (DTCG 2025.10) files, one per mode of each collection, keyed
+  \`<collection>.<mode>\` (the collection alone when it has one mode), and \`styles\` for the styles; aliases are
+  \`{path}\`, a token whose path is also a group sits at the group's \`$root\`; a token takes the type of the tokens
+  it is aliased with (a number a gap points at is a dimension). Style Dictionary and other DTCG tools read them. Named
+  in \`notes\`: an alias to a token no file here holds (a library's, a collection left out), a name taken twice (the
+  second suffixed -2), and what DTCG has no type for (a text variable, a boolean, an image style).
 - \`collections\` keeps only the named ones; \`libraries: true\` adds the enabled libraries' variables by name and type.
 - Past \`maxChars\` (80 000) only the summary comes back, with the collections to read one at a time.
 - An alias to a token the output leaves out (a collection you did not ask for) is named in \`notes\`.

@@ -111,9 +111,11 @@ export const TokensReadInputSchema = z.object({
     .exactOptional()
     .describe("The layer or page whose used tokens to take. Default: the current page."),
   format: z
-    .enum(["css", "json"])
+    .enum(["css", "json", "dtcg"])
     .default("css")
-    .describe("css: ready custom properties, a block per extra mode. json: the token model, per collection and mode."),
+    .describe(
+      "css: ready custom properties, a block per extra mode. json: the token model, per collection and mode. dtcg: Design Tokens Format (DTCG 2025.10) trees, one per collection mode (`<collection>.<mode>`) and one of styles, each to save as its own .json file.",
+    ),
   maxChars: z
     .number()
     .int()
@@ -155,8 +157,9 @@ const LibrarySchema = z.array(
 );
 
 export const TokensReadOutputSchema = z.object({
-  format: z.enum(["css", "json"]),
+  format: z.enum(["css", "json", "dtcg"]),
   css: z.string().exactOptional(),
+  dtcg: z.record(z.string(), z.record(z.string(), z.unknown())).exactOptional(),
   summary: z
     .object({
       collections: z.array(

@@ -84,7 +84,8 @@ export const ComponentEntrySchema = z.object({
     z.string(),
     z.object({
       type: z.string(),
-      default: z.union([z.string(), z.boolean()]),
+      /** None for a slot: what it holds is its instances' own layers. */
+      default: z.union([z.string(), z.boolean()]).exactOptional(),
       options: z.array(z.string()).exactOptional(),
     }),
   ),

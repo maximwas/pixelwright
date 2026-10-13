@@ -1,7 +1,9 @@
 import { splitTop } from "../apply/css-values.ts";
+import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../constants/annotations.ts";
 import { INVISIBLE_TYPES } from "../constants/css.ts";
 import { px } from "../css/format.ts";
 import { interactionAttributes } from "../css/interactions.ts";
+import { motionSummary } from "../css/motion.ts";
 import { nodeCss } from "../css/node-css.ts";
 import { baseSegment, segmentCss, textStyleCss } from "../css/text.ts";
 import { styleName } from "../css/tokens.ts";
@@ -171,6 +173,7 @@ class DesignWriter {
       ...this.componentOf(node),
       ["description", node.description === "" ? undefined : node.description],
       ["note", noteOf(node)],
+      ["$pins", pinsOf(node)],
       ["href", node.href ?? (node.type === "TEXT" ? urlOf(node.text?.segments ?? []) : undefined)],
       ["textStyle", this.useTextStyle(css.textStyle)],
       ["src", asset === null ? undefined : this.plan(node, asset)],
@@ -178,6 +181,7 @@ class DesignWriter {
       ["$code", code],
       ["$css", readOnlyOf(css.readOnly, asset !== null)],
       ...interactionAttributes(node.reactions ?? []),
+      ["$motion", motionSummary(node)],
       ["$children", asset === null && code === undefined && !isCut && !clipped ? cutCount(node, limit) : undefined],
       ["$truncated", isCut || clipped ? "true" : undefined],
     ];
@@ -403,11 +407,26 @@ function listItem(text: string): string {
 
 /** The designer's Dev Mode notes, each with its category, separated by ` | ` (a bar inside a note is escaped). */
 function noteOf(node: SnapshotNode): string | undefined {
-  const notes = (node.annotations ?? []).map(({ label, category }) =>
-    (category === undefined ? label : `${category}: ${label}`).replace(/[\\|]/g, (char) => `\\${char}`),
+  const notes = (node.annotations ?? []).flatMap(({ label, category }) =>
+    label === undefined
+      ? []
+      : [(category === undefined ? label : `${category}: ${label}`).replace(/[\\|]/g, (char) => `\\${char}`)],
   );
 
   return notes.length === 0 ? undefined : notes.join(" | ");
+}
+
+/** The properties pinned in the layer's annotations, in CSS words, in the order pinned, each once. */
+function pinsOf(node: SnapshotNode): string | undefined {
+  const words = new Set(
+    (node.annotations ?? []).flatMap(({ pins }) =>
+      (pins ?? []).map(
+        (pin) => (node.type === "TEXT" ? TEXT_ANNOTATION_PINS[pin] : undefined) ?? ANNOTATION_PINS[pin] ?? pin,
+      ),
+    ),
+  );
+
+  return words.size === 0 ? undefined : [...words].join(", ");
 }
 
 /** The URL every given run links to, if they all link to the same one. */

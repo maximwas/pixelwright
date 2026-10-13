@@ -1,4 +1,4 @@
-import { type RawTokens, tokenModel, tokensCss, tokensPlan } from "@pixelwright/core";
+import { dtcgTrees, type RawTokens, tokenModel, tokensCss, tokensPlan } from "@pixelwright/core";
 import type * as z from "zod";
 import { MAX_LIBRARY_VARIABLES } from "../constants/mcp.ts";
 import { runOp } from "../mcp/run-op.ts";
@@ -92,7 +92,11 @@ export async function readTokens(
     styles: model.styles,
   };
   const css = format === "css" ? tokensCss(model) : null;
-  const size = css?.length ?? JSON.stringify(tokens).length;
+  const dtcg = format === "dtcg" ? dtcgTrees(raw, collections === undefined ? {} : { collections }) : null;
+
+  notes.push(...(dtcg?.notes ?? []));
+
+  const size = css?.length ?? JSON.stringify(dtcg?.trees ?? tokens).length;
 
   if (size > maxChars) {
     // A design system can be thousands of variables: past maxChars the model gets the map and asks for parts.
@@ -111,14 +115,19 @@ export async function readTokens(
     };
   }
 
+  const body =
+    dtcg !== null
+      ? { dtcg: dtcg.trees }
+      : css === null
+        ? { tokens }
+        : {
+            css,
+            summary,
+          };
+
   return {
     format,
-    ...(css === null
-      ? { tokens }
-      : {
-          css,
-          summary,
-        }),
+    ...body,
     ...(library === undefined ? {} : { library }),
     notes,
   };

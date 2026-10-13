@@ -276,6 +276,51 @@ describe("snapshot", () => {
     });
   });
 
+  it("reads an instance with a slot, whose property has no value: the slot's layers say what it holds", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:1",
+            name: "Panel",
+            type: "INSTANCE",
+            mainComponent: {
+              id: "5:9",
+              key: "panel",
+              name: "Panel",
+              parent: null,
+            },
+            componentProperties: {
+              "Content#5:8": {
+                type: "SLOT",
+                preferredValues: [],
+              },
+              "Title#5:7": {
+                type: "TEXT",
+                value: "Plans",
+              },
+            },
+          },
+        ],
+      }),
+    );
+
+    const answer = await runOperation("snapshot", { node: "5:1" });
+
+    expect(() => OPERATION_SCHEMAS.snapshot.output.parse(answer)).not.toThrow();
+    expect((answer as Shot).root.instance).toMatchObject({
+      properties: {
+        "Title#5:7": {
+          type: "TEXT",
+          value: "Plans",
+        },
+      },
+    });
+    expect((answer as Shot).root.instance).not.toHaveProperty(["properties", "Content#5:8"]);
+  });
+
   it("resolves the styles and variables the layers use, once each", async () => {
     const { styles, variables } = (await runOperation("snapshot", { node: "2:4869" })) as Shot;
 
@@ -467,6 +512,430 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
       gridRowAnchorIndex: 0,
       gridColumnSpan: 1,
     });
+  });
+
+  it("keeps the properties a designer pinned in an annotation, with its note or without one", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:1",
+            type: "FRAME",
+            annotations: [
+              {
+                label: "API",
+                properties: [{ type: "width" }, { type: "itemSpacing" }],
+              },
+              { properties: [{ type: "fills" }] },
+              { properties: [] },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", { node: "5:1" })) as Shot;
+
+    expect(root.annotations).toEqual([
+      {
+        label: "API",
+        pins: ["width", "itemSpacing"],
+      },
+      { pins: ["fills"] },
+    ]);
+  });
+
+  it("keeps the page's Dev Mode measurements that touch the read layers, and only those", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "6:1",
+          type: "FRAME",
+          children: [{ id: "6:2" }, { id: "6:3" }],
+        },
+        { id: "7:1" },
+      ],
+    });
+    const [frame, other] = page.children ?? [];
+    const [first, second] = frame?.children ?? [];
+    const measurement = (start: unknown, startSide: string, end: unknown, endSide: string, freeText = "") => ({
+      id: `M:${Math.random()}`,
+      start: {
+        node: start,
+        side: startSide,
+      },
+      end: {
+        node: end,
+        side: endSide,
+      },
+      offset: {
+        type: "INNER",
+        relative: 0,
+      },
+      freeText,
+    });
+
+    page.getMeasurements = () => [
+      ...Array.from({ length: 298 }, () => measurement(other, "LEFT", other, "RIGHT")),
+      measurement(first, "RIGHT", second, "LEFT", "gap"),
+      measurement(other, "TOP", second, "BOTTOM"),
+    ];
+    installFigma(page);
+
+    const shot = (await runOperation("snapshot", { node: "6:1" })) as Shot & { measurements?: unknown };
+
+    expect(shot.measurements).toEqual([
+      {
+        start: {
+          id: "6:2",
+          side: "RIGHT",
+        },
+        end: {
+          id: "6:3",
+          side: "LEFT",
+        },
+        text: "gap",
+      },
+      {
+        start: {
+          id: "7:1",
+          side: "TOP",
+        },
+        end: {
+          id: "6:3",
+          side: "BOTTOM",
+        },
+      },
+    ]);
+  });
+
+  it("leaves measurements out where the page has none, or Figma has no measurements API", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [{ id: "6:1" }],
+    });
+
+    installFigma(page);
+    expect(await runOperation("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
+
+    page.getMeasurements = () => [];
+    expect(await runOperation("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
+  });
+
+  it("reads Figma Motion where the API is, a style's keyframes moved to where the style starts", async () => {
+    const easing = (type: string, bezier: number[]) => ({
+      type,
+      easingFunctionCubicBezier: {
+        x1: bezier[0],
+        y1: bezier[1],
+        x2: bezier[2],
+        y2: bezier[3],
+      },
+    });
+    const float = (value: number) => ({
+      type: "FLOAT",
+      value,
+    });
+    const rotation = {
+      id: "T:2",
+      keyframeOperation: "SET",
+      keyframes: [
+        {
+          id: "K:3",
+          timelinePosition: 0.2,
+          value: float(0),
+          easing: easing("LINEAR", [0, 0, 1, 1]),
+        },
+        {
+          id: "K:4",
+          timelinePosition: 1.0000001,
+          value: float(90),
+          easing: easing("LINEAR", [0, 0, 1, 1]),
+        },
+      ],
+    };
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "8:1",
+            type: "FRAME",
+            children: [
+              {
+                id: "8:2",
+                type: "RECTANGLE",
+                timelines: [
+                  {
+                    id: "8:0",
+                    duration: 2,
+                  },
+                ],
+                animationStyles: [
+                  {
+                    type: "FIGMA",
+                    id: "A:1",
+                    styleId: "CodeComponentId:1",
+                    name: "motion.preset_name.opacity",
+                    duration: 0.4000000059604645,
+                    timelineOffset: 0.5,
+                  },
+                ],
+                manualKeyframeTracks: {
+                  ROTATION: {
+                    id: "T:2",
+                    baseValue: float(0),
+                    keyframes: rotation.keyframes,
+                  },
+                },
+                animations: {
+                  OPACITY: {
+                    baseValue: float(1),
+                    timelineDuration: 2,
+                    tracks: [
+                      {
+                        id: "T:1",
+                        keyframeOperation: "SCALE",
+                        keyframes: [
+                          {
+                            id: "K:1",
+                            timelinePosition: 0,
+                            value: float(0),
+                            easing: easing("EASE_OUT", [0, 0, 0.58, 1]),
+                          },
+                          {
+                            id: "K:2",
+                            timelinePosition: 0.4000000059604645,
+                            value: float(1),
+                            easing: easing("EASE_OUT", [0, 0, 0.58, 1]),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ROTATION: {
+                    baseValue: float(0),
+                    timelineDuration: 2,
+                    tracks: [rotation],
+                  },
+                  fills: {
+                    0: {
+                      baseValue: {
+                        type: "COLOR",
+                        value: {
+                          r: 1,
+                          g: 1,
+                          b: 1,
+                          a: 1,
+                        },
+                      },
+                      timelineDuration: 2,
+                      tracks: [],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const read = async () => ((await runOperation("snapshot", { node: "8:1" })) as Shot).root.children?.[0];
+
+    expect(await read()).not.toHaveProperty("motion");
+
+    Object.assign(figma, { motion: { figmaAnimationStyles: () => [] } });
+
+    expect(await read()).toMatchObject({
+      motion: {
+        timeline: 2,
+        styles: [
+          {
+            type: "FIGMA",
+            name: "motion.preset_name.opacity",
+            start: 0.5,
+            duration: 0.4,
+          },
+        ],
+        tracks: [
+          {
+            field: "OPACITY",
+            operation: "SCALE",
+            base: float(1),
+            style: "motion.preset_name.opacity",
+            keyframes: [
+              {
+                t: 0.5,
+                value: float(0),
+                easing: {
+                  type: "EASE_OUT",
+                  bezier: [0, 0, 0.58, 1],
+                },
+              },
+              {
+                t: 0.9,
+                value: float(1),
+                easing: {
+                  type: "EASE_OUT",
+                  bezier: [0, 0, 0.58, 1],
+                },
+              },
+            ],
+          },
+          {
+            field: "ROTATION",
+            operation: "SET",
+            base: float(0),
+            keyframes: [
+              {
+                t: 0.2,
+                value: float(0),
+              },
+              {
+                t: 1,
+                value: float(90),
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect((await read())?.motion).not.toHaveProperty("tracks.1.style");
+    expect((await read())?.motion).not.toHaveProperty("tracks.2");
+  });
+
+  it("places a style's keyframes by the one style a layer has, and leaves a manual track where it is", async () => {
+    const float = (value: number) => ({
+      type: "FLOAT",
+      value,
+    });
+    const keyframes = (...times: (number | undefined)[]) =>
+      times.map((timelinePosition, index) => ({
+        id: `K:${index}`,
+        timelinePosition,
+        value: float(index),
+        easing: { type: "LINEAR" },
+      }));
+    const opacity = (id: string, times: (number | undefined)[]) => ({
+      OPACITY: {
+        baseValue: float(1),
+        timelineDuration: 2,
+        tracks: [
+          {
+            id,
+            keyframeOperation: "SET",
+            keyframes: keyframes(...times),
+          },
+        ],
+      },
+    });
+    const style = (type: string, name: string, timelineOffset: number) => ({
+      type,
+      id: `A:${name}`,
+      styleId: "C:1",
+      name,
+      timelineOffset,
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "8:1",
+            type: "FRAME",
+            children: [
+              {
+                // A custom style, the layer's only one: its track starts where the style does.
+                id: "8:2",
+                timelines: [],
+                animationStyles: [style("CUSTOM", "Bounce in", 0.4)],
+                manualKeyframeTracks: {},
+                animations: opacity("T:1", [0, 0.3, undefined]),
+              },
+              {
+                // Two styles neither of which says what it animates: the start is not known.
+                id: "8:3",
+                timelines: [],
+                animationStyles: [
+                  style("CUSTOM", "Bounce in", 0.4),
+                  style("FIGMA", "motion.preset_name.text_stagger", 0.2),
+                ],
+                manualKeyframeTracks: {},
+                animations: opacity("T:2", [0, 0.3]),
+              },
+              {
+                // A manual opacity track beside Figma's Opacity style: on the timeline already.
+                id: "8:4",
+                timelines: [],
+                animationStyles: [style("FIGMA", "motion.preset_name.opacity", 0.5)],
+                manualKeyframeTracks: {
+                  OPACITY: {
+                    id: "T:3",
+                    baseValue: float(1),
+                    keyframes: [],
+                  },
+                },
+                animations: opacity("T:3", [0.1, 0.2]),
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    Object.assign(figma, { motion: {} });
+
+    const { root } = (await runOperation("snapshot", { node: "8:1" })) as Shot;
+    const [single, double, manual] = (root.children ?? []).map(
+      (child) => (child.motion as { tracks: Record<string, unknown>[] }).tracks[0],
+    );
+
+    expect(single).toMatchObject({
+      style: "Bounce in",
+      keyframes: [{ t: 0.4 }, { t: 0.7 }],
+    });
+    expect(single?.keyframes).toHaveLength(2);
+    expect(double).toMatchObject({
+      unplaced: true,
+      keyframes: [{ t: 0 }, { t: 0.3 }],
+    });
+    expect(double).not.toHaveProperty("style");
+    expect(manual).toMatchObject({ keyframes: [{ t: 0.1 }, { t: 0.2 }] });
+    expect(manual).not.toHaveProperty("style");
+  });
+
+  it("reads on without Motion or measurements when Figma's beta API throws", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [{ id: "8:1" }],
+    });
+    const [layer] = page.children ?? [];
+
+    Object.defineProperty(layer, "animations", {
+      get: () => {
+        throw new Error("Motion is not available here");
+      },
+    });
+    page.getMeasurements = () => {
+      throw new Error("Only in Dev Mode");
+    };
+    installFigma(page);
+    Object.assign(figma, { motion: {} });
+
+    const answer = await runOperation("snapshot", { node: "8:1" });
+
+    expect(answer).not.toHaveProperty("measurements");
+    expect((answer as Shot).root).not.toHaveProperty("motion");
   });
 
   it("asks Figma for its CSS only for layers our table cannot write, when asked for that", async () => {

@@ -16,6 +16,26 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## 0.2.0 — 2026-10-14
+
+### Added
+
+- `tokens_read` writes Design Tokens Format (DTCG) files: one per mode of each collection, and one for the styles,
+  ready for Style Dictionary and other DTCG tools.
+- `design_read` shows the properties a designer pinned in a Dev Mode annotation (`$pins`), and gives the Dev Mode
+  measurements between layers in pixels.
+- `design_read` reads Figma Motion: each animated layer gets a short `$motion` summary, and the read gives the animation
+  as CSS `@keyframes` placed over the timeline.
+
+### Changed
+
+- The plugin and the server speak a new version of their connection: run `npx -y pixelwright@latest` so both update
+  together. An older server tells a newer plugin to update instead of failing on its reads.
+
+### Fixed
+
+- A component with a slot, and its instances, read again in `design_read` and `components_read`.
+
 ## 0.1.1 — 2026-10-13
 
 ### Added
