@@ -1,3 +1,4 @@
+import { CloseCode } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { bridgeHint } from "../src/bridge/hints.ts";
 
@@ -21,5 +22,23 @@ describe("bridgeHint", () => {
     expect(hint).toContain("Pixelwright window");
     expect(hint).toContain("never type or send it");
     expect(hint).toMatch(/^A plugin is waiting to be paired/);
+  });
+});
+
+describe("status hints during a handover", () => {
+  it("say a newer server is taking the bridge over, not that a stranger holds the port", () => {
+    expect(
+      bridgeHint({
+        state: {
+          kind: "unavailable",
+          closeCode: CloseCode.HandedOver,
+        },
+        connectedFiles: 0,
+        pairing: null,
+        rejection: null,
+        port: 18720,
+        now: 0,
+      }),
+    ).toMatch(/newer Pixelwright server is taking the bridge over/);
   });
 });

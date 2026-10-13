@@ -211,3 +211,66 @@ describe("screenshot in a variable mode", () => {
     expect(asked[0]).toMatchObject({ modes: { Theme: "Dark" } });
   });
 });
+
+describe("screenshot clip of a huge layer", () => {
+  it("is refused before Figma renders it whole, with what to do instead", async () => {
+    const ops: string[] = [];
+    const huge = {
+      x: 0,
+      y: 0,
+      width: 1440,
+      height: 60_000,
+    };
+    const bridge: BridgeView = {
+      status: () => {
+        throw new Error("not used");
+      },
+      pairing: () => null,
+      plugins: () => [
+        {
+          session: "s1",
+          info: pluginInfo(),
+          active: true,
+        },
+      ],
+      request: async (op) => {
+        ops.push(op);
+
+        return {
+          origin: null,
+          missing: [],
+          layers: [
+            {
+              id: "1:2",
+              name: "Page",
+              type: "FRAME",
+              visible: true,
+              ...huge,
+              childCount: 0,
+              parent: null,
+              box: huge,
+              paintedBox: null,
+              parentBox: null,
+              parentPadding: null,
+            },
+          ],
+        };
+      },
+    };
+
+    await expect(
+      takeScreenshot(bridge, {
+        node: "1:2",
+        scale: 2,
+        effects: true,
+        clip: {
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+        },
+      }),
+    ).rejects.toThrow(/renders the whole layer first: 2880×120000 px/);
+    expect(ops).toEqual(["inspect"]);
+  });
+});

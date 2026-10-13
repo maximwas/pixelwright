@@ -31,7 +31,8 @@ export interface ToolDefinition<I extends z.ZodObject, O extends z.ZodObject> {
   readonly input: I;
   readonly output: O;
   readonly annotations: ToolAnnotations;
-  run(args: z.output<I>): Promise<z.input<O>>;
+  /** `signal` aborts when the client cancels the call. */
+  run(args: z.output<I>, signal: AbortSignal): Promise<z.input<O>>;
   /** For a tool that writes: whether this result changed the file, which is when the support note may ride on it. */
   changed?(output: z.output<O>): boolean;
 }

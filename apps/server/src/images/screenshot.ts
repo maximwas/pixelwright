@@ -5,7 +5,13 @@ import { BridgeError, OPERATION_SCHEMAS } from "@pixelwright/core";
 import type * as z from "zod";
 import { imageInfo } from "../assets/image-info.ts";
 import { resolveTarget } from "../bridge/target.ts";
-import { EDGE_PX, INLINE_ATTEMPTS, MAX_IMAGE_SIDE_PX, MAX_INLINE_IMAGE_BYTES } from "../constants/mcp.ts";
+import {
+  EDGE_PX,
+  INLINE_ATTEMPTS,
+  MAX_CLIP_RENDER_PX,
+  MAX_IMAGE_SIDE_PX,
+  MAX_INLINE_IMAGE_BYTES,
+} from "../constants/mcp.ts";
 import { exportBytes } from "../mcp/export-bytes.ts";
 import type { ScreenshotInputSchema } from "../schemas/tools.ts";
 import type { ToolContext } from "../types/mcp.ts";
@@ -178,6 +184,15 @@ export async function renderPng(
     throw new BridgeError(
       "OP_FAILED",
       `The clip does not lie within ${node}: its box is ${layer.box.width}×${layer.box.height} px${painted}.`,
+    );
+  }
+
+  const [renderWidth, renderHeight] = [Math.round(rendered.width * scale), Math.round(rendered.height * scale)];
+
+  if (renderWidth * renderHeight > MAX_CLIP_RENDER_PX) {
+    throw new BridgeError(
+      "RESULT_TOO_LARGE",
+      `A clip renders the whole layer first: ${renderWidth}×${renderHeight} px at scale ${scale} is too much for ${node}. Clip a layer inside it (outline or inspect gives their boxes), or lower the scale.`,
     );
   }
 

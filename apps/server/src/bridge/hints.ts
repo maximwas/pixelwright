@@ -11,6 +11,10 @@ export function bridgeHint({ state, connectedFiles, pairing, rejection, port, no
     case "handedOver":
       return "A newer Pixelwright server, another MCP client's, took the Figma bridge over, so this one switched its bridge off: restart Pixelwright in this MCP client (/mcp in Claude Code) to reach Figma again.";
     case "unavailable":
+      if (state.closeCode === CloseCode.HandedOver) {
+        return `A newer Pixelwright server is taking the bridge over on port ${port}: this session joins it in a moment.`;
+      }
+
       return state.closeCode === CloseCode.VersionMismatch
         ? `Another MCP client session runs another Pixelwright version and holds port ${port}: run the same version in both, or close that session. This one keeps retrying.`
         : `Port ${port} is held by a program that is not Pixelwright: free it. This session keeps retrying.`;

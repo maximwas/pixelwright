@@ -3,6 +3,7 @@
 // plugin's build and the licences of what is bundled).
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -66,7 +67,14 @@ try {
 
   const tools = await countTools(bin, work);
 
-  console.log(`ok: ${tarball}, version ${version}, ${tools} tools, the plugin and the licence notices included`);
+  // WebP is encoded through a wasm file the bundle finds beside the installed package: compile it from there.
+  const wasm = createRequire(join(installed, "package.json")).resolve("@jsquash/webp/codec/enc/webp_enc_simd.wasm");
+
+  await WebAssembly.compile(readFileSync(wasm));
+
+  console.log(
+    `ok: ${tarball}, version ${version}, ${tools} tools, the WebP encoder, the plugin and the licence notices included`,
+  );
 } finally {
   rmSync(work, { recursive: true, force: true });
 }

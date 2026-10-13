@@ -63,3 +63,9 @@ export const MAX_EXPORT_SCALE = 4;
 
 /** WebP quality when none is asked: small files, edges still clean. */
 export const WEBP_QUALITY = 85;
+
+/** The largest render a clip may cut from, in pixels: the whole layer is rendered first, then cropped in memory. */
+export const MAX_CLIP_RENDER_PX = 64_000_000;
+
+/** The most layers one inspect reads (the plugin op's own limit). */
+export const MAX_INSPECTED = 100;

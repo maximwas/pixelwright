@@ -16,8 +16,11 @@ export const TEMPLATE_TIMEOUT_MS = 1_000;
 /** How long all the templates of one read may take together; past it, instances are read as layers. */
 export const CODE_CONNECT_BUDGET_MS = 5_000;
 
-/** How much sooner each nested template's run is stopped than the one around it, so the innermost is the one blamed. */
-export const NESTED_TIMEOUT_MARGIN_MS = 5;
+/**
+ * How much sooner each nested template's run is stopped than the one around it, so the innermost is the one blamed:
+ * V8's watchdog fires late on a busy machine, and 5 ms let the outer one go first now and then.
+ */
+export const NESTED_TIMEOUT_MARGIN_MS = 50;
 
 /** The files a relative import may name, tried in order after the name as written. */
 export const HELPER_EXTENSIONS = [".ts", ".js", ".mts", ".mjs", "/index.ts", "/index.js"];

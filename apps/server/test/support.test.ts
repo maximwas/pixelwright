@@ -18,15 +18,16 @@ import type { ToolContext } from "../src/types/mcp.ts";
 const stateFile = async () => join(await mkdtemp(join(tmpdir(), "pixelwright-support-")), "support.json");
 
 type Handler = (args: unknown) => Promise<{ structuredContent: Record<string, unknown> }>;
+type SdkHandler = (args: unknown, extra: unknown) => ReturnType<Handler>;
 
-/** An McpServer that only records what is registered. */
+/** An McpServer that only records what is registered, and calls a handler as the SDK does: with the request. */
 function recordingServer() {
   const tools = new Map<string, { outputSchema: z.ZodObject; handler: Handler }>();
   const server = {
-    registerTool: (name: string, meta: { outputSchema: z.ZodObject }, handler: Handler) => {
+    registerTool: (name: string, meta: { outputSchema: z.ZodObject }, handler: SdkHandler) => {
       tools.set(name, {
         outputSchema: meta.outputSchema,
-        handler,
+        handler: (args) => handler(args, { mcpReq: { signal: new AbortController().signal } }),
       });
     },
   } as unknown as McpServer;

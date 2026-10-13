@@ -64,3 +64,39 @@ describe("selection_wait", () => {
     ]);
   });
 });
+
+describe("selection_wait cancelled", () => {
+  it("asks no more rounds once the client gave up", async () => {
+    const asked: unknown[] = [];
+    const cancel = new AbortController();
+    const bridge: BridgeView = {
+      status: () => {
+        throw new Error("not used");
+      },
+      pairing: () => null,
+      plugins: () => [
+        {
+          session: "s1",
+          info: pluginInfo(),
+          active: true,
+        },
+      ],
+      request: async (op, input) => {
+        asked.push([op, input]);
+        cancel.abort();
+
+        return {
+          changed: false,
+          from: [],
+          nodes: [],
+        };
+      },
+    };
+
+    await expect(waitForSelection(bridge, { timeout: 300 }, cancel.signal)).resolves.toEqual({
+      changed: false,
+      nodes: [],
+    });
+    expect(asked).toHaveLength(1);
+  });
+});

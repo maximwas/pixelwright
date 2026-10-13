@@ -30,12 +30,12 @@ export function registerTool<I extends z.ZodObject, O extends z.ZodObject>(
       outputSchema,
       annotations,
     },
-    async (args) => {
+    async (args, extra) => {
       let result: unknown;
 
       try {
         // The SDK has validated args already, but its callback type cannot follow a generic schema: parsing types them.
-        result = await tool.run(tool.input.parse(args));
+        result = await tool.run(tool.input.parse(args), extra.mcpReq.signal);
       } catch (error) {
         throw new Error(describeError(error), { cause: error });
       }

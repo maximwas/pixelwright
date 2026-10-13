@@ -1,5 +1,6 @@
 import { type InspectViewSchema, inspectView } from "@pixelwright/core";
 import type * as z from "zod";
+import { MAX_INSPECTED } from "../constants/mcp.ts";
 import { runOp } from "../mcp/run-op.ts";
 import type { InspectInputSchema } from "../schemas/tools.ts";
 import type { ToolContext } from "../types/mcp.ts";
@@ -21,11 +22,18 @@ export async function inspectLayers(
     bridge,
     "inspect",
     {
-      nodes: ids.slice(0, 100),
+      nodes: ids.slice(0, MAX_INSPECTED),
       ...(relativeTo === undefined ? {} : { relativeTo }),
     },
     file,
   );
 
-  return inspectView(raw);
+  const view = inspectView(raw);
+
+  return ids.length > MAX_INSPECTED
+    ? {
+        ...view,
+        left: ids.length - MAX_INSPECTED,
+      }
+    : view;
 }

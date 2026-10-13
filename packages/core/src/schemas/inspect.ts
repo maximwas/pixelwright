@@ -153,4 +153,5 @@ export const InspectViewSchema = z.object({
     }),
   ),
   missing: z.array(z.string()).describe("Ids that are not layers of this file."),
+  left: z.number().int().exactOptional().describe("Layers asked for past the first 100, not read: inspect them next."),
 });

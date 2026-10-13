@@ -51,7 +51,7 @@ export function registerNodeTools(server: McpServer, { bridge, support }: ToolCo
     input: SelectionWaitInputSchema,
     output: SelectionWaitOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (args) => waitForSelection(bridge, args),
+    run: (args, signal) => waitForSelection(bridge, args, signal),
   });
   registerTool(server, {
     name: "changes_since",

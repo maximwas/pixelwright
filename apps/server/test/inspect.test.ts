@@ -101,3 +101,13 @@ describe("the inspect tool", () => {
     await expect(inspectLayers(view, {})).rejects.toThrow(/select|nodes/i);
   });
 });
+
+describe("inspect of a big selection", () => {
+  it("reads the first 100 layers and says how many it left", async () => {
+    const { view, requests } = bridge(Array.from({ length: 103 }, (_, index) => `3:${index + 1}`));
+    const result = await inspectLayers(view, {});
+
+    expect((requests[1]?.input as { nodes: string[] } | undefined)?.nodes).toHaveLength(100);
+    expect(result.left).toBe(3);
+  });
+});

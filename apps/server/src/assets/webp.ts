@@ -18,7 +18,12 @@ function loaded(): Promise<unknown> {
     const path = createRequire(import.meta.url).resolve(`@jsquash/webp/codec/enc/${build}.wasm`);
 
     return init(await WebAssembly.compile(await readFile(path)));
-  })();
+  })().catch((error: unknown) => {
+    // Forgotten, so the next export tries again.
+    ready = null;
+
+    throw error;
+  });
 
   return ready;
 }

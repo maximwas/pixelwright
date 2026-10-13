@@ -12,7 +12,7 @@ import { OwnerClient } from "../src/bridge/owner-client.ts";
 import { PairingCodes } from "../src/bridge/pairing-codes.ts";
 import { PluginBridge } from "../src/bridge/plugin-bridge.ts";
 import { FilePluginKeys } from "../src/bridge/plugin-keys.ts";
-import { PEER_PATH, PEER_PROTOCOL_VERSION } from "../src/constants/bridge.ts";
+import { PEER_PATH, PEER_PROTOCOL_VERSION, PEER_RETRY_MS } from "../src/constants/bridge.ts";
 import type { PluginKeys } from "../src/types/bridge.ts";
 import { connectPlugin, memoryKeys, pluginInfo, rawPlugin, TEST_KEY } from "./helpers/fake-plugin.ts";
 import { freePort } from "./helpers/free-port.ts";
@@ -306,6 +306,9 @@ describe("peers", () => {
       hint: expect.stringContaining("/mcp"),
     });
     await expect(owner.request("ping", null)).rejects.toThrow(/newer Pixelwright server/);
+    // Past the longest retry a session waits, it has not come back for the port or joined as a peer.
+    await new Promise((resolve) => setTimeout(resolve, PEER_RETRY_MS * 1.6));
+    expect(owner.status().role).toBe("handedOver");
   });
 
   it("hands the port over to a server that speaks a newer peer protocol too", async () => {
