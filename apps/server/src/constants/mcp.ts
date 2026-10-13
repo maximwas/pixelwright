@@ -54,3 +54,6 @@ export const MAX_FIGMA_IMAGE_SIDE = 4_096;
 
 /** How far past the box and what paints around it a screenshot clip may reach, for float noise in Figma's boxes. */
 export const EDGE_PX = 0.01;
+
+/** The most differences nodes_diff lists in each of its lists; past them it counts how many more. */
+export const MAX_DIFF_ENTRIES = 200;

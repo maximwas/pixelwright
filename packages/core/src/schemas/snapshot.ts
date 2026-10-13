@@ -358,6 +358,8 @@ export const SnapshotFieldsSchema = z.object({
     .optional(),
   /** A frame detached from a component (Figma keeps where from): the component may be worth using instead. */
   detached: z.boolean().optional(),
+  /** A vector's paths, hashed: two icons alike in everything else may still draw something else. */
+  pathHash: z.string().optional(),
   /** A text whose font is not installed here: its metrics may be off. */
   missingFont: z.boolean().optional(),
   /** The URL a prototype interaction opens. */

@@ -579,3 +579,37 @@ describe("snapshot of a layer that draws past its box", () => {
     expect(root.children?.[1]).not.toHaveProperty("renderBounds");
   });
 });
+
+describe("vector paths in a snapshot", () => {
+  it("hash a vector's paths, so two icons alike in all else still tell apart", async () => {
+    const vector = (id: string, data: string) => ({
+      id,
+      type: "VECTOR",
+      name: "flask",
+      vectorPaths: [
+        {
+          windingRule: "NONZERO",
+          data,
+        },
+      ],
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [vector("7:1", "M0 0L10 10Z"), vector("7:2", "M0 0L10 10Z"), vector("7:3", "M0 0L20 5Z")],
+      }),
+    );
+
+    const hashes = await Promise.all(
+      ["7:1", "7:2", "7:3"].map(
+        async (node) => ((await runOperation("snapshot", { node })) as { root: { pathHash?: string } }).root.pathHash,
+      ),
+    );
+
+    expect(hashes[0]).toBeDefined();
+    expect(hashes[0]).toBe(hashes[1]);
+    expect(hashes[2]).not.toBe(hashes[0]);
+  });
+});

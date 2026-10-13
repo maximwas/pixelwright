@@ -50,6 +50,7 @@ describe("stdio server", () => {
         "inspect",
         "node_show",
         "nodes_delete",
+        "nodes_diff",
         "nodes_find",
         "outline",
         "screenshot",

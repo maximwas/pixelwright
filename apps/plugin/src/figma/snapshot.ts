@@ -1,5 +1,6 @@
 import {
   BridgeError,
+  fnv1a,
   MIXED,
   type OperationInput,
   type OperationOutput,
@@ -347,6 +348,11 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
 
   putPaints(entry, "fills", layer.fills);
   putPaints(entry, "strokes", layer.strokes);
+
+  if (Array.isArray(layer.vectorPaths) && layer.vectorPaths.length > 0) {
+    // Not the paths themselves (an icon's can be long): enough to tell two drawings apart.
+    entry.pathHash = fnv1a(JSON.stringify(layer.vectorPaths));
+  }
 
   if (Array.isArray(entry.strokes)) {
     put("strokeWeight", layer.strokeWeight);
