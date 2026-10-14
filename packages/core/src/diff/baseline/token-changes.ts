@@ -5,18 +5,22 @@ import { styleTokens } from "../../tokens/model/style-tokens.ts";
 import { Notes } from "../../tokens/notes.ts";
 import type { RawTokens } from "../../tokens/raw-tokens.ts";
 import type { Snapshot, SnapshotStyle } from "../../types/snapshot.ts";
-import { aliasedVariables, boundVariables } from "./bound-variables.ts";
+import { aliasedVariables, boundVariables, usedStyles } from "./bound-variables.ts";
 import { TokenUses } from "./token-uses.ts";
 import type { BaselineChanges } from "./types.ts";
 import { SideVariables, variableChanges } from "./variable-changes.ts";
 
 type TokenEntry = BaselineChanges["tokens"][number];
 
-/** One side's tokens: its raw tokens (null when they could not be read), its snapshot and its design tree. */
+/**
+ * One side's tokens: its raw tokens (null when they could not be read), its snapshot and its design tree, and the
+ * layers not compared (under a parent whose children were cut on either side), whose tokens are left out too.
+ */
 export interface TokenSide {
   readonly raw: RawTokens | null;
   readonly snapshot: Snapshot;
   readonly tree: DesignTree;
+  readonly skip: ReadonlySet<string>;
 }
 
 /**
@@ -26,8 +30,8 @@ export interface TokenSide {
  */
 export function tokenChanges(before: TokenSide, after: TokenSide, notes: string[]): TokenEntry[] {
   const uses = {
-    before: new TokenUses(before.tree.root),
-    after: new TokenUses(after.tree.root),
+    before: new TokenUses(before.tree.root, before.skip),
+    after: new TokenUses(after.tree.root, after.skip),
   };
 
   if (before.raw === null || after.raw === null) {
@@ -43,8 +47,8 @@ export function tokenChanges(before: TokenSide, after: TokenSide, notes: string[
     after: new SideVariables(after.raw),
   };
   const used = {
-    before: usedVariables(before.snapshot, before.raw),
-    after: usedVariables(after.snapshot, after.raw),
+    before: usedVariables(before, before.raw),
+    after: usedVariables(after, after.raw),
   };
   const variables = unique([...used.after.keys(), ...used.before.keys()]).flatMap((id) =>
     variableChanges(
@@ -58,15 +62,15 @@ export function tokenChanges(before: TokenSide, after: TokenSide, notes: string[
     ),
   );
 
-  return [...variables, ...styleChanges(before.snapshot, after.snapshot, uses)];
+  return [...variables, ...styleChanges(before, after, uses)];
 }
 
 /**
  * The variables a side's layers use, each with the bound ones it is reached through (none for a bound one): bound
  * variables and the ones they alias. The ones Figma merely matches a raw value to are hints, not what the layers use.
  */
-function usedVariables(snapshot: Snapshot, raw: RawTokens): Map<string, readonly string[]> {
-  const bound = boundVariables(snapshot.root);
+function usedVariables(side: TokenSide, raw: RawTokens): Map<string, readonly string[]> {
+  const bound = boundVariables(side.snapshot.root, side.skip);
 
   return new Map<string, readonly string[]>([
     ...[...bound].map((id) => [id, []] as const),
@@ -74,38 +78,68 @@ function usedVariables(snapshot: Snapshot, raw: RawTokens): Map<string, readonly
   ]);
 }
 
-/** The styles either side uses, compared as their token values (a text style as its font shorthand), by id. */
-function styleChanges(before: Snapshot, after: Snapshot, uses: { before: TokenUses; after: TokenUses }): TokenEntry[] {
-  return unique([...Object.keys(after.styles), ...Object.keys(before.styles)]).flatMap((id) => {
-    const old = before.styles[id];
-    const now = after.styles[id];
-    const shown = now ?? old;
+/** The styles either side's compared layers use, as their token values (a text style as its font shorthand), by id. */
+function styleChanges(
+  before: TokenSide,
+  after: TokenSide,
+  uses: { before: TokenUses; after: TokenUses },
+): TokenEntry[] {
+  const used = {
+    before: usedStyles(before.snapshot.root, before.skip),
+    after: usedStyles(after.snapshot.root, after.skip),
+  };
 
-    if (shown === undefined) {
-      return [];
-    }
+  return unique([...used.after, ...used.before]).flatMap((id) => {
+    const change = styleChange(id, {
+      old: used.before.has(id) ? before.snapshot.styles[id] : undefined,
+      now: used.after.has(id) ? after.snapshot.styles[id] : undefined,
+      snapshots: [before.snapshot, after.snapshot],
+      uses,
+    });
 
-    const pair = [styleValue(id, old, before), styleValue(id, now, after)] as const;
-    const was = old !== undefined && now !== undefined && old.name !== now.name ? old.name : undefined;
-
-    if (pair[0] === pair[1] && was === undefined) {
-      return [];
-    }
-
-    const token = styleTokenName(shown);
-    const counted = now === undefined ? uses.before : uses.after;
-
-    return [
-      {
-        token,
-        name: shown.name,
-        ...(was === undefined ? {} : { was }),
-        before: pair[0],
-        after: pair[1],
-        layers: counted.count(token, shown.type === "TEXT" ? shown.name : undefined),
-      },
-    ];
+    return change === null ? [] : [change];
   });
+}
+
+/** One style's change: its value, a rename, newly used or no longer used; null when it is the same. */
+function styleChange(
+  id: string,
+  {
+    old,
+    now,
+    snapshots,
+    uses,
+  }: {
+    old: SnapshotStyle | undefined;
+    now: SnapshotStyle | undefined;
+    snapshots: readonly [Snapshot, Snapshot];
+    uses: { before: TokenUses; after: TokenUses };
+  },
+): TokenEntry | null {
+  const shown = now ?? old;
+
+  if (shown === undefined) {
+    return null;
+  }
+
+  const pair = [styleValue(id, old, snapshots[0]), styleValue(id, now, snapshots[1])] as const;
+  const was = old !== undefined && now !== undefined && old.name !== now.name ? old.name : undefined;
+
+  if (pair[0] === pair[1] && was === undefined) {
+    return null;
+  }
+
+  const token = styleTokenName(shown);
+  const counted = now === undefined ? uses.before : uses.after;
+
+  return {
+    token,
+    name: shown.name,
+    ...(was === undefined ? {} : { was }),
+    before: pair[0],
+    after: pair[1],
+    layers: counted.count(token, shown.type === "TEXT" ? shown.name : undefined),
+  };
 }
 
 /** A style's token value as tokens_read writes it; null when the side does not use it. */
@@ -131,8 +165,15 @@ function styleValue(id: string, style: SnapshotStyle | undefined, snapshot: Snap
   return token?.value ?? null;
 }
 
-/** The reads' own token and text style maps compared by name: no modes, no renames. */
+/**
+ * The reads' own token and text style maps compared by name: no modes, no renames; a name only the layers left out
+ * of the comparison use is no use.
+ */
 function fromTrees(before: DesignTree, after: DesignTree, uses: { before: TokenUses; after: TokenUses }): TokenEntry[] {
+  const kept = (map: Record<string, string>, side: TokenUses, textStyles: boolean) =>
+    Object.fromEntries(
+      Object.entries(map).filter(([name]) => (textStyles ? side.count("", name) : side.count(name)) > 0),
+    );
   const compared = (left: Record<string, string>, right: Record<string, string>, textStyles: boolean) =>
     unique([...Object.keys(right), ...Object.keys(left)]).flatMap((name) => {
       const pair = [left[name] ?? null, right[name] ?? null] as const;
@@ -151,7 +192,10 @@ function fromTrees(before: DesignTree, after: DesignTree, uses: { before: TokenU
           ];
     });
 
-  return [...compared(before.tokens, after.tokens, false), ...compared(before.textStyles, after.textStyles, true)];
+  return [
+    ...compared(kept(before.tokens, uses.before, false), kept(after.tokens, uses.after, false), false),
+    ...compared(kept(before.textStyles, uses.before, true), kept(after.textStyles, uses.after, true), true),
+  ];
 }
 
 function unique(values: readonly string[]): string[] {

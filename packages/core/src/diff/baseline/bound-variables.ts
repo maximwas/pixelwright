@@ -4,39 +4,74 @@ import type { SnapshotNode } from "../../types/snapshot.ts";
 /** Fields that name variables a layer does not use: Figma's own matches for raw values, and its CSS. */
 const NOT_BOUND: ReadonlySet<string> = new Set(["inferred", "css"]);
 
-/** The variables a snapshot's layers are bound to, at any depth: fields, paints, effects, text runs. */
-export function boundVariables(root: SnapshotNode): Set<string> {
+const NONE: ReadonlySet<string> = new Set();
+
+/**
+ * The variables a snapshot's layers are bound to, at any depth: fields, paints, effects, text runs. The layers in
+ * `skip` (and what is inside them) are left out: a branch the comparison cannot pair.
+ */
+export function boundVariables(root: SnapshotNode, skip: ReadonlySet<string> = NONE): Set<string> {
   const bound = new Set<string>();
 
-  collect(root, bound);
+  collect(root, {
+    skip,
+    found: (key, value) => {
+      const alias = (typeof value === "object" && value !== null ? value : {}) as { type?: unknown; id?: unknown };
+
+      if (alias.type === "VARIABLE_ALIAS" && typeof alias.id === "string") {
+        bound.add(alias.id);
+
+        return true;
+      }
+
+      return NOT_BOUND.has(key);
+    },
+  });
 
   return bound;
 }
 
-function collect(value: unknown, bound: Set<string>): void {
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      collect(item, bound);
+/** The styles a snapshot's layers use, at any depth (their fill, stroke, effect, text and grid styles, a run's). */
+export function usedStyles(root: SnapshotNode, skip: ReadonlySet<string> = NONE): Set<string> {
+  const used = new Set<string>();
+
+  collect(root, {
+    skip,
+    found: (key, value) => {
+      if (key.endsWith("StyleId") && typeof value === "string" && value !== "") {
+        used.add(value);
+      }
+
+      return NOT_BOUND.has(key);
+    },
+  });
+
+  return used;
+}
+
+/** How a walk reads a value: true when it is done with it (taken, or a field never walked into). */
+interface Walk {
+  readonly skip: ReadonlySet<string>;
+  found(key: string, value: unknown): boolean;
+}
+
+/** Every value of a snapshot's layers, each with its field's name; a layer in `skip` is not walked into. */
+function collect(value: unknown, walk: Walk, key = ""): void {
+  if (walk.found(key, value) || typeof value !== "object" || value === null) {
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    for (const [name, item] of Object.entries(value)) {
+      collect(item, walk, name);
     }
 
     return;
   }
 
-  if (typeof value !== "object" || value === null) {
-    return;
-  }
-
-  const record = value as Record<string, unknown>;
-
-  if (record.type === "VARIABLE_ALIAS" && typeof record.id === "string") {
-    bound.add(record.id);
-
-    return;
-  }
-
-  for (const [key, item] of Object.entries(record)) {
-    if (!NOT_BOUND.has(key)) {
-      collect(item, bound);
+  for (const item of value) {
+    if (!(key === "children" && walk.skip.has((item as { id?: string }).id ?? ""))) {
+      collect(item, walk, key);
     }
   }
 }

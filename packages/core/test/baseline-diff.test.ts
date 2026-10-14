@@ -710,3 +710,136 @@ describe("baselineDiff: review fixes", () => {
     expect(result.changes.components).toEqual([]);
   });
 });
+
+describe("baselineDiff: a branch cut on one side only", () => {
+  const BLUE = {
+    r: 0,
+    g: 0,
+    b: 1,
+  };
+  const raw: RawTokens = {
+    collections: [
+      {
+        id: "VC:1",
+        name: "Theme",
+        remote: false,
+        defaultModeId: "m",
+        modes: [
+          {
+            modeId: "m",
+            name: "Default",
+          },
+        ],
+      },
+    ],
+    variables: [
+      {
+        id: "V:1",
+        name: "color/brand",
+        collectionId: "VC:1",
+        resolvedType: "COLOR",
+        scopes: [],
+        valuesByMode: {
+          m: {
+            ...BLUE,
+            a: 1,
+          },
+        },
+      },
+    ],
+    external: {},
+    styles: [],
+  };
+  /** The page with its Plans frame read whole, or cut by the read's budget (its two children left out). */
+  const page = (cut: boolean): Snapshot => {
+    const swatch = layer({
+      id: "1:3",
+      name: "Swatch",
+      fills: [
+        {
+          type: "SOLID",
+          color: BLUE,
+          boundVariables: {
+            color: {
+              type: "VARIABLE_ALIAS",
+              id: "V:1",
+            },
+          },
+        },
+      ],
+    });
+    const tile = layer({
+      id: "1:4",
+      name: "Tile",
+      fillStyleId: "S:1",
+      fills: [
+        {
+          type: "SOLID",
+          color: BLUE,
+        },
+      ],
+    });
+    const plans = layer({
+      id: "1:2",
+      name: "Plans",
+      childCount: 2,
+      ...(cut ? {} : { children: [swatch, tile] }),
+    });
+
+    return snap(column("1:1", "Page", [plans, text("1:5", "Note")]), {
+      styles: cut
+        ? {}
+        : {
+            "S:1": {
+              name: "Brand/Fill",
+              type: "PAINT",
+              remote: false,
+              paints: [
+                {
+                  type: "SOLID",
+                  color: BLUE,
+                },
+              ],
+            },
+          },
+      variables: cut
+        ? {}
+        : {
+            "V:1": {
+              name: "color/brand",
+              collection: "Theme",
+              resolvedType: "COLOR",
+              remote: false,
+              value: {
+                ...BLUE,
+                a: 1,
+              },
+            },
+          },
+    });
+  };
+
+  it("leaves the tokens under the cut out of the comparison, with token values", () => {
+    const result = baselineDiff(
+      {
+        snapshot: page(false),
+        tokens: raw,
+      },
+      {
+        snapshot: page(true),
+        tokens: raw,
+      },
+      { sameReader: true },
+    );
+
+    expect(result.changes.tokens).toEqual([]);
+    expect(result.same).toBe(true);
+  });
+
+  it("leaves them out of the reads' own token maps too, when a side has no token values", () => {
+    const result = diff(page(false), page(true));
+
+    expect(result.changes.tokens).toEqual([]);
+    expect(result.same).toBe(true);
+  });
+});

@@ -108,6 +108,11 @@ export class LayerPairs {
     });
   }
 
+  /** The layers of one side under a parent whose children were cut on either side: they are not compared. */
+  excluded(side: "before" | "after"): ReadonlySet<string> {
+    return this.#excluded[side];
+  }
+
   /** The layers of now without a pair, under no cut, in document order. */
   unpairedAfter(): Placed[] {
     return [...this.after.values()].filter(

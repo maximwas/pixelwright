@@ -84,7 +84,7 @@ export function baselineDiff(
       ),
       moved: structure.moved,
       reordered: structure.reordered,
-      tokens: tokenChanges(tokenSide(before, trees.before), tokenSide(after, trees.after), notes),
+      tokens: tokenChanges(...tokenSides([before, after], trees, pairs), notes),
       notCompared: [...cutPairs(pairs), ...layers.notCompared],
     },
     cap,
@@ -92,12 +92,20 @@ export function baselineDiff(
   );
 }
 
-function tokenSide(side: BaselineSide, tree: DesignTree): TokenSide {
-  return {
-    raw: side.tokens,
-    snapshot: side.snapshot,
+/** Both sides' tokens, each with the layers its comparison leaves out (under a cut on either side). */
+function tokenSides(
+  [before, after]: readonly [BaselineSide, BaselineSide],
+  trees: { before: DesignTree; after: DesignTree },
+  pairs: LayerPairs,
+): [TokenSide, TokenSide] {
+  const side = (of: BaselineSide, tree: DesignTree, skip: ReadonlySet<string>): TokenSide => ({
+    raw: of.tokens,
+    snapshot: of.snapshot,
     tree,
-  };
+    skip,
+  });
+
+  return [side(before, trees.before, pairs.excluded("before")), side(after, trees.after, pairs.excluded("after"))];
 }
 
 /** What the comparison of each pair needs: both sides' layers, the reader, the pages the roots were on. */

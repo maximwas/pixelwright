@@ -1,11 +1,17 @@
 import type { DesignElement } from "../../design/tree.ts";
 
-/** The elements of a design tree by the values they use: how many use a token, or name a text style. */
+/**
+ * The elements of a design tree by the values they use: how many use a token, or name a text style. The elements in
+ * `skip` (and what is inside them) are not counted: a branch the comparison cannot pair.
+ */
 export class TokenUses {
   readonly #values: string[][] = [];
   readonly #textStyles: (string | undefined)[] = [];
+  readonly #skip: ReadonlySet<string>;
 
-  constructor(root: DesignElement | null) {
+  constructor(root: DesignElement | null, skip: ReadonlySet<string> = new Set()) {
+    this.#skip = skip;
+
     if (root !== null) {
       this.#visit(root);
     }
@@ -28,7 +34,7 @@ export class TokenUses {
     this.#values.push([...element.attributes, ...spans].map(([, value]) => value));
     this.#textStyles.push(element.attributes.find(([name]) => name === "textStyle")?.[1]);
 
-    for (const child of element.children) {
+    for (const child of element.children.filter(({ id }) => !this.#skip.has(id))) {
       this.#visit(child);
     }
   }
