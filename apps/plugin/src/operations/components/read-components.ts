@@ -2,17 +2,21 @@ import type { OperationInput, OperationOutput } from "@pixelwright/core";
 import { MAIN_COMPONENT_BATCH, OP_BUDGET_MS } from "../../constants/plugin.ts";
 import { requireNode } from "../../figma/nodes.ts";
 import { type ComponentEntry, type ComponentOwner, componentEntryOf } from "./component-entry.ts";
+import { type LinkSources, withLinks } from "./component-links.ts";
+import { exposedOf } from "./exposed-instances.ts";
 
 /**
  * The file's own components (every page, loaded one at a time) or the ones the instances in a layer come from, local
  * or from a library; `within` itself counts. A variant is listed under its set; properties are read from the set, never
- * from a variant, where Figma throws. A big file answers within OP_BUDGET_MS with what it has and more: true.
+ * from a variant, where Figma throws. Each listed one comes with the nested instances it exposes, and with its Dev Mode
+ * links when asked. A big file answers within OP_BUDGET_MS with what it has and more: true.
  */
 export async function components({
   scope,
   within,
   query,
   limit,
+  links,
 }: OperationInput<"components">): Promise<OperationOutput<"components">> {
   const found = new FoundComponents();
 
@@ -20,21 +24,61 @@ export async function components({
 
   const wanted = query?.toLowerCase();
   const matching = found.entries().filter((entry) => wanted === undefined || entry.name.toLowerCase().includes(wanted));
+  const listed = await found.withExposed(matching.slice(0, limit));
+  const more = found.cut || matching.length > limit;
+
+  if (!links) {
+    return {
+      components: listed,
+      more,
+    };
+  }
+
+  const linked = await withLinks(listed, found, found.started);
 
   return {
-    components: matching.slice(0, limit),
-    more: found.cut || matching.length > limit,
+    components: linked.entries,
+    more,
+    linksRead: true,
+    ...(linked.note === undefined ? {} : { linksNote: linked.note }),
   };
 }
 
-/** The components found by id, and whether the time ran out first. */
-class FoundComponents {
+/** The components found by id, with their nodes and an instance of each used one, and whether the time ran out first. */
+class FoundComponents implements LinkSources {
   cut = false;
+  readonly started = Date.now();
   readonly #found = new Map<string, ComponentEntry>();
-  readonly #started = Date.now();
+  readonly #owners = new Map<string, ComponentOwner>();
+  readonly #instances = new Map<string, InstanceNode>();
 
   entries(): ComponentEntry[] {
     return [...this.#found.values()];
+  }
+
+  owner(id: string): ComponentOwner | undefined {
+    return this.#owners.get(id);
+  }
+
+  instanceOf(id: string): InstanceNode | undefined {
+    return this.#instances.get(id);
+  }
+
+  /** The entries with the nested instances their components expose, where there are any. */
+  async withExposed(entries: readonly ComponentEntry[]): Promise<ComponentEntry[]> {
+    return Promise.all(
+      entries.map(async (entry) => {
+        const owner = this.#owners.get(entry.id);
+        const exposed = owner === undefined ? [] : await exposedOf(owner);
+
+        return exposed.length === 0
+          ? entry
+          : {
+              ...entry,
+              exposed,
+            };
+      }),
+    );
   }
 
   /** The components and sets of every page, or of `within`. */
@@ -52,6 +96,7 @@ class FoundComponents {
       for (const node of [root, ...descendants(root, ["COMPONENT_SET", "COMPONENT"])]) {
         if (node.type === "COMPONENT_SET" || (node.type === "COMPONENT" && node.parent?.type !== "COMPONENT_SET")) {
           this.#found.set(node.id, componentEntryOf(node as ComponentOwner));
+          this.#owners.set(node.id, node as ComponentOwner);
         }
       }
     }
@@ -73,29 +118,35 @@ class FoundComponents {
         break;
       }
 
-      const mains = await Promise.all(
-        instances.slice(index, index + MAIN_COMPONENT_BATCH).map((instance) => instance.getMainComponentAsync()),
-      );
+      const batch = instances.slice(index, index + MAIN_COMPONENT_BATCH);
+      const mains = await Promise.all(batch.map((instance) => instance.getMainComponentAsync()));
 
-      for (const main of mains) {
-        if (main !== null) {
-          this.#count(main.parent?.type === "COMPONENT_SET" ? main.parent : main);
+      mains.forEach((main, at) => {
+        const instance = batch[at];
+
+        if (main !== null && instance !== undefined) {
+          this.#count(main.parent?.type === "COMPONENT_SET" ? main.parent : main, instance);
         }
-      }
+      });
     }
   }
 
-  #count(owner: ComponentOwner): void {
+  #count(owner: ComponentOwner, instance: InstanceNode): void {
     const entry = this.#found.get(owner.id) ?? componentEntryOf(owner);
 
     this.#found.set(owner.id, {
       ...entry,
       instances: (entry.instances ?? 0) + 1,
     });
+    this.#owners.set(owner.id, owner);
+
+    if (!this.#instances.has(owner.id)) {
+      this.#instances.set(owner.id, instance);
+    }
   }
 
   #late(): boolean {
-    return Date.now() - this.#started > OP_BUDGET_MS;
+    return Date.now() - this.started > OP_BUDGET_MS;
   }
 }
 

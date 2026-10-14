@@ -77,6 +77,12 @@ export const LIBRARY_BUDGET_MS = 10_000;
 /** Main components looked up at once for components_read. */
 export const MAIN_COMPONENT_BATCH = 25;
 
+/** Components whose Dev Mode links are asked for at once: each ask goes to Figma's servers. */
+export const LINKS_BATCH = 25;
+
+/** How long one ask for Dev Mode links may wait for Figma's servers before the links are given up on. */
+export const LINKS_TIMEOUT_MS = 5_000;
+
 /**
  * How far a font's weight may be from the one asked for and still be taken (CSS takes the nearest; a variable font
  * reports weights like SF Pro Semibold's 590): a style further off is an error naming the family's styles.

@@ -53,10 +53,16 @@ export const CONTENT_OPERATIONS = {
       within: NodeIdSchema.exactOptional(),
       query: QuerySchema.exactOptional(),
       limit: z.number().int().min(1).max(500).default(100),
+      /** Also read the links people attached in Dev Mode (Figma's servers, paid plans only). */
+      links: z.boolean().default(false),
     }),
     output: z.object({
       components: z.array(ComponentEntrySchema),
       more: z.boolean(),
+      /** Links were asked for and this plugin reads them: an older plugin leaves it out. */
+      linksRead: z.literal(true).exactOptional(),
+      /** Why some or all links were not read: Figma refused them, gave no answer, or the time ran out. */
+      linksNote: z.string().exactOptional(),
     }),
   },
   variables: {
