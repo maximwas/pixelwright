@@ -35,6 +35,10 @@ export function parseCommand(args: readonly string[], interactive: boolean): Cli
     return { kind: "mcp" };
   }
 
+  if (rest.length === 0 && first === "logs") {
+    return { kind: "logs" };
+  }
+
   if (first !== "setup") {
     return unknown;
   }

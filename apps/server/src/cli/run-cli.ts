@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { cancel } from "@clack/prompts";
 import serverPackage from "../../package.json" with { type: "json" };
 import { homeDir } from "../bridge/bridge-config.ts";
+import { readConfig } from "../config/config.ts";
 import { HELP_TEXT, STARTED_IN_TERMINAL } from "../constants/cli.ts";
 import { startMcp } from "../main.ts";
 import { parseCommand } from "../utils/cli-command.ts";
@@ -60,6 +61,13 @@ export async function runCli(args: readonly string[]): Promise<void> {
       }
 
       return;
+    case "logs": {
+      const { followLog } = await import("../logging/follow-log.ts");
+
+      await followLog(readConfig(process.env).logFile, (line) => process.stdout.write(`${line}\n`));
+
+      return;
+    }
     case "version":
       process.stdout.write(`${serverPackage.version}\n`);
 

@@ -6,6 +6,7 @@ export type CliCommand =
   | { kind: "setup"; print: boolean }
   | { kind: "version" }
   | { kind: "help" }
+  | { kind: "logs" }
   | { kind: "unknown"; argument: string };
 
 /** A command line: the program and its arguments. */

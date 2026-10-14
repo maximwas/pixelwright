@@ -63,6 +63,9 @@ describe("the command line", () => {
     });
     expect(parseCommand(["--version"], true)).toEqual({ kind: "version" });
     expect(parseCommand(["-h"], true)).toEqual({ kind: "help" });
+    expect(parseCommand(["logs"], true)).toEqual({ kind: "logs" });
+    expect(parseCommand(["logs"], false)).toEqual({ kind: "logs" });
+    expect(parseCommand(["logs", "--all"], true)).toMatchObject({ kind: "unknown" });
     expect(parseCommand(["publish"], true)).toEqual({
       kind: "unknown",
       argument: "publish",

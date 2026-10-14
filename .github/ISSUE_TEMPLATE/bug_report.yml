@@ -21,6 +21,14 @@ body:
       placeholder: |
         1. Open a file with …
         2. Ask the agent to …
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >-
+        Run `npx -y pixelwright@latest logs` in a terminal, make it happen again, and paste the lines around the problem
+        (tool calls, the plugin connecting, errors). Leave out anything private.
+      render: text
   - type: input
     id: version
     attributes:

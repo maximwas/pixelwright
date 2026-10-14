@@ -9,6 +9,7 @@ import { PluginBridge } from "./bridge/plugin-bridge.ts";
 import { FilePluginKeys } from "./bridge/plugin-keys.ts";
 import { readConfig } from "./config/config.ts";
 import { DEFAULT_BRIDGE_PORT } from "./constants/bridge.ts";
+import { BRIDGE_INFO_EVENTS } from "./constants/logging.ts";
 import { SUPPORT_STATE_FILE } from "./constants/support.ts";
 import { createLogger } from "./logging/logger.ts";
 import { createMcpServer } from "./mcp/mcp-server.ts";
@@ -21,7 +22,7 @@ import type { Logger } from "./types/logging.ts";
 /** Wires the server together from its environment; the bridge starts trying to connect at once. */
 export async function createApp(): Promise<App> {
   const config = readConfig(process.env);
-  const logger = createLogger(config.logLevel);
+  const logger = createLogger(config.logLevel, config.logFile);
   const bridge = await createBridge(config, logger);
   const server = createMcpServer({
     bridge,
@@ -67,7 +68,9 @@ async function createBridge(config: AppConfig, logger: Logger): Promise<PluginBr
   }
 
   const { port, token } = bridgeConfig;
-  const log = (message: string, data: Record<string, unknown> = {}) => logger.debug(data, message);
+  // A plugin coming and going is what a person following the logs looks for; the rest is detail.
+  const log = (message: string, data: Record<string, unknown> = {}) =>
+    BRIDGE_INFO_EVENTS.has(message) ? logger.info(data, message) : logger.debug(data, message);
   const server = new BridgeServer({
     port,
     token,

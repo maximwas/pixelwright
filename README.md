@@ -128,11 +128,13 @@ the other inside it, and how they match. The project folder is `CLAUDE_PROJECT_D
 pixelwright                 in a terminal: the setup; started by an MCP client: the MCP server on stdio
 pixelwright setup --print   no questions: the plugin put in place, the commands and config blocks printed
 pixelwright serve           the MCP server, however it is started
+pixelwright logs            follow the logs of every running server on this machine: tool calls, plugins, errors
 pixelwright --version
 ```
 
-`PIXELWRIGHT_HOME` moves `~/.pixelwright` (the plugin, pairing keys, written-files.json); `CLAUDE_PROJECT_DIR` names the
-project for Code Connect; `PIXELWRIGHT_SUPPORT_REMINDERS=off` turns off the weekly support note (see Support).
+`PIXELWRIGHT_HOME` moves `~/.pixelwright` (the plugin, pairing keys, written-files.json, the shared log in `logs/`);
+`CLAUDE_PROJECT_DIR` names the project for Code Connect; `PIXELWRIGHT_SUPPORT_REMINDERS=off` turns off the weekly
+support note (see Support); `PIXELWRIGHT_LOG_LEVEL=debug` adds the bridge's details to the log.
 
 ## Updating
 
@@ -194,8 +196,8 @@ Every release, with its date and what changed: [CHANGELOG.md](CHANGELOG.md), als
 
 Questions, ideas and what you built with Pixelwright go to
 [GitHub Discussions](https://github.com/maximwas/pixelwright/discussions); bugs to
-[issues](https://github.com/maximwas/pixelwright/issues/new/choose), whose form asks for the version, the MCP client and
-the system. The plugin's window links there too.
+[issues](https://github.com/maximwas/pixelwright/issues/new/choose), whose form asks for the version, the MCP client, the
+system and the lines `npx -y pixelwright@latest logs` shows around the problem. The plugin's window links there too.
 
 ## Support
 
