@@ -133,6 +133,52 @@ describe("hints", () => {
     expect(hints).toContainEqual("#F00 is written raw once (color of 1:2) and equals --Brand: use the token.");
   });
 
+  it("reads no token or raw colour in a text's own words, nor in a layer's name or note", () => {
+    const red = {
+      type: "SOLID",
+      visible: true,
+      color: {
+        r: 1,
+        g: 0,
+        b: 0,
+      },
+    };
+    const hints = designHints({
+      root: layer({
+        id: "1:1",
+        name: "Swatch #F00",
+        layoutMode: "VERTICAL",
+        annotations: [{ label: "Accent is #F00" }],
+        children: [
+          textLayer("1:2", "Copy", [["Use var(--Brand) here"]]),
+          textLayer("1:3", "Markup", [[' color="#F00"']]),
+        ],
+      }),
+      styles: {
+        "S:1": {
+          name: "Accent",
+          type: "PAINT",
+          remote: false,
+          paints: [red],
+        },
+        "S:2": {
+          name: "Brand",
+          type: "PAINT",
+          remote: false,
+          paints: [
+            {
+              type: "GRADIENT_LINEAR",
+              visible: true,
+            },
+          ],
+        },
+      },
+      variables: {},
+    });
+
+    expect(hints.join("\n")).not.toMatch(/--Brand|#F00/);
+  });
+
   it("counts several layers left with Figma's default names", () => {
     const hints = designHints(
       snapshotOf(

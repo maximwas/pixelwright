@@ -1,12 +1,10 @@
+import { CSS_ATTRIBUTES } from "../../css-mapping/vocabulary.ts";
 import { type Channels, Color } from "../../kernel/color/color.ts";
 import { colorSpaceOf } from "../../kernel/color/color-space.ts";
 import { styleTokenName, variableTokenName } from "../../kernel/names.ts";
 import type { Snapshot } from "../../types/snapshot.ts";
 import { type DesignAttribute, type DesignElement, type DesignTree, elementsOf } from "../tree.ts";
 import { EXAMPLES } from "./examples.ts";
-
-/** Attributes the code takes as written: CSS and metadata, not the read-only $ notes or textStyle. */
-const WRITTEN = /^[a-z-]+$/;
 
 /** Colours as design_read writes them raw: hex, rgba() and Display P3. */
 const RAW_COLOR = /#[0-9A-F]{3,8}\b|rgba\([^)]*\)|color\(display-p3 [^)]*\)/g;
@@ -74,13 +72,16 @@ function numberedTokenHints(
   return [...hints.values()];
 }
 
-/** A color written raw that equals a style's or a variable's value, named by the attribute and the layer it is on. */
+/**
+ * A color written raw in CSS that equals a style's or a variable's value, named by the attribute and the layer it is on;
+ * a colour in a name, a note or a link is no CSS.
+ */
 function rawTokenHints(snapshot: Snapshot, root: DesignElement | null): string[] {
   const tokens = colorTokens(snapshot);
   const uses = new Map<string, string[]>();
 
   for (const element of elementsOf(root)) {
-    for (const [property, value] of attributesOf(element).filter(([name]) => WRITTEN.test(name))) {
+    for (const [property, value] of attributesOf(element).filter(([name]) => CSS_ATTRIBUTES.has(name))) {
       for (const [color] of value.replace(/var\([^)]*\)/g, "").matchAll(RAW_COLOR)) {
         if (tokens.has(color)) {
           uses.set(color, [...(uses.get(color) ?? []), `${property} of ${element.id}`]);

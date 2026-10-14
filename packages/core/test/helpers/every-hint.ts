@@ -1,4 +1,4 @@
-import type { Snapshot } from "../../src/index.ts";
+import type { Snapshot, SnapshotNode } from "../../src/index.ts";
 import { layer, textLayer } from "./layers.ts";
 
 const RED = {
@@ -9,6 +9,36 @@ const RED = {
     g: 0,
     b: 0,
   },
+};
+const GRADIENT = {
+  type: "GRADIENT_LINEAR",
+  visible: true,
+  opacity: 1,
+  blendMode: "NORMAL",
+  gradientStops: [
+    {
+      position: 0,
+      color: {
+        r: 0.2314,
+        g: 0.1843,
+        b: 0.851,
+        a: 1,
+      },
+    },
+    {
+      position: 1,
+      color: {
+        r: 0.5451,
+        g: 0.3608,
+        b: 0.9647,
+        a: 1,
+      },
+    },
+  ],
+  gradientTransform: [
+    [0.7, 0.7, -0.2],
+    [-0.7, 0.7, 0.5],
+  ],
 };
 const WHITE = {
   ...RED,
@@ -23,12 +53,14 @@ const WHITE = {
  * A screen with a layer or more for each hint design_read gives on its own layers, tokens and Figma's matches, so
  * their words and their order are pinned together: unnamed layers, a frame placed by hand over a backdrop rectangle,
  * a bare wrapper, a soft line break, a centred stroke, a detached frame wider than its room, an overridden text in an
- * instance with its font missing, a numbered style, raw colours equal to styles, and a gap Figma matches to a token.
+ * instance with its font missing, a numbered style, raw colours equal to styles, a gap Figma matches to a token, and a
+ * paint style no CSS can give; each layer kind twice, for the plural wordings.
  */
-export function everyHintSnapshot(): Snapshot {
-  const children = [
+/** One layer or more for each layer hint, with ids under the prefix: a second copy brings the plural wordings. */
+function kinds(prefix: string): SnapshotNode[] {
+  return [
     layer({
-      id: "1:2",
+      id: `${prefix}:2`,
       name: "Frame 12",
       width: 400,
       height: 200,
@@ -41,7 +73,7 @@ export function everyHintSnapshot(): Snapshot {
       },
       children: [
         layer({
-          id: "1:3",
+          id: `${prefix}:3`,
           name: "Backdrop",
           type: "RECTANGLE",
           width: 400,
@@ -49,7 +81,7 @@ export function everyHintSnapshot(): Snapshot {
           fills: [WHITE],
         }),
         layer({
-          id: "1:4",
+          id: `${prefix}:4`,
           name: "Rectangle 7",
           type: "RECTANGLE",
           x: 10,
@@ -61,14 +93,14 @@ export function everyHintSnapshot(): Snapshot {
       ],
     }),
     layer({
-      id: "1:5",
+      id: `${prefix}:5`,
       name: "Wrapper",
       width: 200,
       height: 40,
-      children: [textLayer("1:6", "Note", [["Line one\u2028line two"]])],
+      children: [textLayer(`${prefix}:6`, "Note", [["Line one\u2028line two"]])],
     }),
     layer({
-      id: "1:7",
+      id: `${prefix}:7`,
       name: "Card",
       type: "RECTANGLE",
       width: 120,
@@ -79,7 +111,7 @@ export function everyHintSnapshot(): Snapshot {
       strokeAlign: "CENTER",
     }),
     layer({
-      id: "1:8",
+      id: `${prefix}:8`,
       name: "Detached card",
       layoutMode: "HORIZONTAL",
       width: 500,
@@ -87,7 +119,7 @@ export function everyHintSnapshot(): Snapshot {
       detached: true,
     }),
     layer({
-      id: "1:9",
+      id: `${prefix}:9`,
       name: "Button",
       type: "INSTANCE",
       layoutMode: "HORIZONTAL",
@@ -95,7 +127,7 @@ export function everyHintSnapshot(): Snapshot {
       height: 40,
       children: [
         {
-          ...textLayer("I1:9;2:1", "Label", [["Buy"]]),
+          ...textLayer(`I${prefix}:9;2:1`, "Label", [["Buy"]]),
           width: 40,
           overrides: ["fills"],
           missingFont: true,
@@ -103,7 +135,7 @@ export function everyHintSnapshot(): Snapshot {
       ],
     }),
     layer({
-      id: "1:10",
+      id: `${prefix}:10`,
       name: "Stack",
       layoutMode: "VERTICAL",
       itemSpacing: 16,
@@ -112,7 +144,7 @@ export function everyHintSnapshot(): Snapshot {
       inferred: { itemSpacing: "V:16" },
       children: [
         layer({
-          id: "1:11",
+          id: `${prefix}:11`,
           name: "Swatch",
           type: "RECTANGLE",
           width: 40,
@@ -121,7 +153,7 @@ export function everyHintSnapshot(): Snapshot {
           fillStyleId: "S:3",
         }),
         layer({
-          id: "1:12",
+          id: `${prefix}:12`,
           name: "Dot",
           type: "ELLIPSE",
           width: 40,
@@ -130,6 +162,22 @@ export function everyHintSnapshot(): Snapshot {
           fillStyleId: "S:1",
         }),
       ],
+    }),
+  ];
+}
+
+export function everyHintSnapshot(): Snapshot {
+  const children = [
+    ...kinds("1"),
+    ...kinds("2"),
+    layer({
+      id: "3:1",
+      name: "Mark",
+      type: "ELLIPSE",
+      width: 32,
+      height: 32,
+      fills: [GRADIENT],
+      fillStyleId: "S:4",
     }),
   ];
 
@@ -161,6 +209,12 @@ export function everyHintSnapshot(): Snapshot {
         remote: false,
         paints: [WHITE],
         duplicate: 2,
+      },
+      "S:4": {
+        name: "Orbit/Gradient",
+        type: "PAINT",
+        remote: false,
+        paints: [GRADIENT],
       },
     },
     variables: {
