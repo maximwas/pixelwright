@@ -281,6 +281,24 @@ export const AssetsExportOutputSchema = z.object({
   ),
 });
 
+/** The name of a version a write saves in the file's history first, for design_apply and tokens_apply. */
+const VersionInputSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .exactOptional()
+  .describe(
+    "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.",
+  );
+
+/** The version a write saved, as its result gives it. */
+const VersionSavedSchema = z
+  .object({
+    id: z.string().nullable(),
+    title: z.string(),
+  })
+  .exactOptional();
+
 export const DesignApplyInputSchema = z.object({
   xml: z
     .string()
@@ -299,14 +317,7 @@ export const DesignApplyInputSchema = z.object({
     .boolean()
     .default(false)
     .describe("Check ids, tokens and fonts without writing; works with Allow edits off."),
-  version: z
-    .string()
-    .min(1)
-    .max(100)
-    .exactOptional()
-    .describe(
-      "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.",
-    ),
+  version: VersionInputSchema,
   file: FileSchema,
 });
 
@@ -314,12 +325,7 @@ export const DesignApplyOutputSchema = ApplyResultSchema.extend({
   errors: z.array(ApplyErrorSchema),
   dryRun: z.boolean(),
   /** The version saved in the file's history before the write, when one was asked for. */
-  version: z
-    .object({
-      id: z.string().nullable(),
-      title: z.string(),
-    })
-    .exactOptional(),
+  version: VersionSavedSchema,
 });
 
 export const ExecuteInputSchema = z.object({
@@ -346,26 +352,14 @@ export const TokensApplyToolInputSchema = TokensApplyInputSchema.extend({
     .boolean()
     .default(false)
     .describe("Check names, types, modes and aliases without writing; works with Allow edits off."),
-  version: z
-    .string()
-    .min(1)
-    .max(100)
-    .exactOptional()
-    .describe(
-      "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.",
-    ),
+  version: VersionInputSchema,
   file: FileSchema,
 });
 
 export const TokensApplyOutputSchema = TokensApplyResultSchema.extend({
   dryRun: z.boolean(),
   /** The version saved in the file's history before the write, when one was asked for. */
-  version: z
-    .object({
-      id: z.string().nullable(),
-      title: z.string(),
-    })
-    .exactOptional(),
+  version: VersionSavedSchema,
 });
 
 export const CodeConnectReadInputSchema = z.object({

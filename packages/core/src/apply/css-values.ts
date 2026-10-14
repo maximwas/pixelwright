@@ -37,6 +37,7 @@ import {
   useMode,
 } from "culori/fn";
 import type { ColorValue, LengthValue, PaintSpec, TokenRef } from "../types/apply.ts";
+import { clampUnit } from "../utils/clamp.ts";
 
 // The colour spaces CSS has, color() ones included: the plugin bundle carries none of culori's others.
 for (const mode of [
@@ -237,14 +238,13 @@ export function percentOf(value: string): number | null {
  */
 export function colorOf(value: string): ColorValue | null {
   const parsed = parse(value.trim());
-  const clamp = (channel: number) => Math.min(1, Math.max(0, channel));
 
   if (parsed?.mode === "p3") {
     return {
-      r: clamp(parsed.r),
-      g: clamp(parsed.g),
-      b: clamp(parsed.b),
-      a: clamp(parsed.alpha ?? 1),
+      r: clampUnit(parsed.r),
+      g: clampUnit(parsed.g),
+      b: clampUnit(parsed.b),
+      a: clampUnit(parsed.alpha ?? 1),
       space: "display-p3",
     };
   }
@@ -256,10 +256,10 @@ export function colorOf(value: string): ColorValue | null {
   }
 
   return {
-    r: clamp(rgb.r),
-    g: clamp(rgb.g),
-    b: clamp(rgb.b),
-    a: clamp(rgb.alpha ?? 1),
+    r: clampUnit(rgb.r),
+    g: clampUnit(rgb.g),
+    b: clampUnit(rgb.b),
+    a: clampUnit(rgb.alpha ?? 1),
   };
 }
 

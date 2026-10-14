@@ -1,5 +1,6 @@
 import { clampRgb, converter, modeP3, modeRgb, useMode } from "culori/fn";
 import type { ColorSpace } from "../types/css.ts";
+import { clampUnit } from "../utils/clamp.ts";
 import { decimal } from "./format.ts";
 
 useMode(modeRgb);
@@ -83,7 +84,6 @@ export function toDocumentColor(
   document: ColorSpace,
 ): { r: number; g: number; b: number; a: number } {
   const a = color.a ?? 1;
-  const clamp = (channel: number) => Math.min(1, Math.max(0, channel));
 
   if (document === "display-p3" && color.space !== "display-p3") {
     const { r, g, b } = toP3({
@@ -94,9 +94,9 @@ export function toDocumentColor(
     });
 
     return {
-      r: clamp(r),
-      g: clamp(g),
-      b: clamp(b),
+      r: clampUnit(r),
+      g: clampUnit(g),
+      b: clampUnit(b),
       a,
     };
   }
