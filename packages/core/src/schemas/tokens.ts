@@ -62,6 +62,8 @@ export const RawTokensSchema = z.object({
     }),
   ),
   library: z.array(LibraryCollectionSchema).optional(),
+  /** Figma's colour profile of the file (LEGACY, SRGB, DISPLAY_P3): a Display P3 file's colours are P3 values. */
+  colorProfile: z.string().optional(),
   /** Why the library catalogue is missing although it was asked for. */
   libraryError: z.string().optional(),
 });

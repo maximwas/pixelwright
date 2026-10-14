@@ -1,8 +1,9 @@
-import { colorCss, type Rgba } from "../css/color.ts";
+import { colorCss, colorSpaceOf, type Rgba } from "../css/color.ts";
 import { decimal } from "../css/format.ts";
 import { shadowListCss } from "../css/node-css.ts";
 import { fontShorthand, textStyleExtras } from "../css/text.ts";
 import { styleTokenName, tokenName, variableTokenName } from "../css/tokens.ts";
+import type { ColorSpace } from "../types/css.ts";
 import type { RawTokens, StyleToken, TokenCollection, TokenModel } from "../types/tokens.ts";
 
 /** Scopes a number is used for without a unit; anything else (or no scope) is a length in pixels. */
@@ -24,6 +25,7 @@ const EASINGS: Readonly<Record<string, string>> = {
  * names it and written as CSS in every mode (an alias as `var(--other)`), and the paint, text and effect styles.
  */
 export function tokenModel(raw: RawTokens, filter: { collections?: readonly string[] } = {}): TokenModel {
+  const space = colorSpaceOf(raw.colorProfile);
   const notes: string[] = [];
   const names = new Map<string, string>();
 
@@ -58,6 +60,7 @@ export function tokenModel(raw: RawTokens, filter: { collections?: readonly stri
                 valueCss(variable.valuesByMode[modeId], variable, {
                   names,
                   notes,
+                  space,
                 }),
               ]),
             ),
@@ -71,7 +74,7 @@ export function tokenModel(raw: RawTokens, filter: { collections?: readonly stri
 
   return {
     collections,
-    styles: stylesOf(raw.styles, notes),
+    styles: stylesOf(raw.styles, notes, space),
     ...(raw.library === undefined ? {} : { library: raw.library }),
     notes: [...new Set(notes)],
   };
@@ -80,6 +83,7 @@ export function tokenModel(raw: RawTokens, filter: { collections?: readonly stri
 interface ValueContext {
   readonly names: ReadonlyMap<string, string>;
   readonly notes: string[];
+  readonly space: ColorSpace;
 }
 
 function valueCss(value: unknown, variable: RawTokens["variables"][number], context: ValueContext): string {
@@ -124,11 +128,13 @@ function valueCss(value: unknown, variable: RawTokens["variables"][number], cont
 /** A color, or a composed one (a color and an opacity, either of them a variable). */
 function colorValue(value: unknown, variable: RawTokens["variables"][number], context: ValueContext): string {
   if (isRgba(value)) {
-    return colorCss(value);
+    return colorCss(value, 1, context.space);
   }
 
   if (typeof value === "object" && value !== null && "color" in value && "opacity" in value) {
-    const color = isRgba(value.color) ? colorCss(value.color) : valueCss(value.color, variable, context);
+    const color = isRgba(value.color)
+      ? colorCss(value.color, 1, context.space)
+      : valueCss(value.color, variable, context);
     // Figma keeps the opacity of a composed colour as a percentage; a value up to 1 is read as a fraction.
     const opacity =
       typeof value.opacity === "number"
@@ -280,7 +286,7 @@ function unknownValue(value: unknown, variable: RawTokens["variables"][number], 
   return `/* ${JSON.stringify(value)} */`;
 }
 
-function stylesOf(styles: RawTokens["styles"], notes: string[]): TokenModel["styles"] {
+function stylesOf(styles: RawTokens["styles"], notes: string[], space: ColorSpace): TokenModel["styles"] {
   const paint: StyleToken[] = [];
   const text: StyleToken[] = [];
   const effect: StyleToken[] = [];
@@ -296,7 +302,7 @@ function stylesOf(styles: RawTokens["styles"], notes: string[]): TokenModel["sty
         paint.push({
           name: style.name,
           token,
-          value: colorCss(only.color, only.opacity ?? 1),
+          value: colorCss(only.color, only.opacity ?? 1, space),
         });
       } else if (style.css !== undefined) {
         paint.push({
@@ -331,7 +337,7 @@ function stylesOf(styles: RawTokens["styles"], notes: string[]): TokenModel["sty
         ...(also.length === 0 ? {} : { also }),
       });
     } else if (style.type === "EFFECT") {
-      const shadows = shadowListCss(style.effects ?? []);
+      const shadows = shadowListCss(style.effects ?? [], space);
 
       if (shadows === "") {
         notes.push(`Effect style ${style.name} holds no shadow: blurs are not tokens yet.`);

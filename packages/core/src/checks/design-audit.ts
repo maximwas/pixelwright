@@ -1,4 +1,4 @@
-import { colorCss } from "../css/color.ts";
+import { colorCss, colorSpaceOf } from "../css/color.ts";
 import { boundVariable } from "../css/paint.ts";
 import { styleTokenName, variableTokenName } from "../css/tokens.ts";
 import { MIXED } from "../schemas/snapshot.ts";
@@ -33,6 +33,7 @@ export function designAudit(snapshot: Snapshot): DesignAudit {
   const context: CssContext = {
     styles: snapshot.styles,
     variables: snapshot.variables,
+    colorSpace: colorSpaceOf(snapshot.colorProfile),
     tokens: new Map(),
     root: snapshot.root,
   };
@@ -64,7 +65,7 @@ export function designAudit(snapshot: Snapshot): DesignAudit {
     const token =
       style !== undefined ? styleTokenName(style) : variable !== null ? variableTokenName(variable) : undefined;
     const own = style?.paints?.find((each) => each.type === "SOLID")?.color ?? paint.color;
-    const value = colorCss(own, paint.opacity ?? 1);
+    const value = colorCss(own, paint.opacity ?? 1, context.colorSpace);
     const key = `${value} ${token ?? ""}`;
     const entry = colors.get(key) ?? {
       value,

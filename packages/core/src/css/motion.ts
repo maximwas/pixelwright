@@ -7,10 +7,11 @@ import {
   MOTION_SPRINGS,
   MOTION_UNCOVERED,
 } from "../constants/motion.ts";
+import type { ColorSpace } from "../types/css.ts";
 import type { MotionEasing, MotionLayer, MotionTrack, MotionView, SnapshotMotion } from "../types/motion.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import { slug } from "../utils/slug.ts";
-import { colorCss, type Rgba } from "./color.ts";
+import { colorCss, colorSpaceOf, type Rgba } from "./color.ts";
 import { decimal } from "./format.ts";
 
 /** A keyframe with its value made absolute from the track's base. */
@@ -37,14 +38,14 @@ interface Entry {
  * What a layer's Figma Motion does, for its `$motion`: what changes, from and to, when and how —
  * `opacity 0→1, translate-y 24→0px; 0–0.6s ease-out`, led by the animation styles that made it.
  */
-export function motionSummary(node: SnapshotNode): string | undefined {
+export function motionSummary(node: SnapshotNode, space: ColorSpace = "srgb"): string | undefined {
   const motion = node.motion;
 
   if (motion === undefined) {
     return undefined;
   }
 
-  const parts = motion.tracks.map((track) => summaryOf(node, track));
+  const parts = motion.tracks.map((track) => summaryOf(node, track, space));
   const moving = parts.filter((part) => part.moves);
   const shown = moving.length > 0 ? moving : parts;
   const styles = [
@@ -74,6 +75,7 @@ export function motionSummary(node: SnapshotNode): string | undefined {
  * property is said in a comment. Null when no layer is animated.
  */
 export function designMotion(snapshot: Snapshot): MotionView | null {
+  const space = colorSpaceOf(snapshot.colorProfile);
   const layers: MotionLayer[] = [];
   const css: string[] = [];
   const classes = new Set<string>();
@@ -88,7 +90,7 @@ export function designMotion(snapshot: Snapshot): MotionView | null {
 
       classes.add(name);
       timeline ??= `${decimal(duration)}s`;
-      css.push(layerCss(node, motion, name, duration));
+      css.push(layerCss(node, motion, name, duration, space));
       layers.push({
         id: node.id,
         name: node.name,
@@ -111,8 +113,14 @@ export function designMotion(snapshot: Snapshot): MotionView | null {
       };
 }
 
-function layerCss(node: SnapshotNode, motion: SnapshotMotion, name: string, duration: number): string {
-  const { channels, comments } = channelsOf(node, motion);
+function layerCss(
+  node: SnapshotNode,
+  motion: SnapshotMotion,
+  name: string,
+  duration: number,
+  space: ColorSpace,
+): string {
+  const { channels, comments } = channelsOf(node, motion, space);
   const notes = comments.map((comment) => `/* ${comment.replaceAll("*/", "* /")} */`);
 
   if (channels.length === 0) {
@@ -190,7 +198,11 @@ function entriesOf(channel: Channel, duration: number): Entry[] {
 }
 
 /** The layer's tracks as CSS properties, in the order the tracks come, and comments for what CSS cannot animate. */
-function channelsOf(node: SnapshotNode, motion: SnapshotMotion): { channels: Channel[]; comments: string[] } {
+function channelsOf(
+  node: SnapshotNode,
+  motion: SnapshotMotion,
+  space: ColorSpace,
+): { channels: Channel[]; comments: string[] } {
   const channels = new Map<string, Channel>();
   const axes = new Map<"translate" | "scale", { axis: "x" | "y" | "xy"; points: Point[] }[]>();
   const comments: string[] = [];
@@ -253,12 +265,12 @@ function channelsOf(node: SnapshotNode, motion: SnapshotMotion): { channels: Cha
       channel(paint).points.push(
         ...points.map((point) => ({
           t: point.t,
-          css: colorCss(point.value as Rgba),
+          css: colorCss(point.value as Rgba, 1, space),
           easing: point.easing,
         })),
       );
     } else {
-      const summary = summaryOf(node, track);
+      const summary = summaryOf(node, track, space);
       const how =
         MOTION_UNCOVERED[track.field] ??
         MOTION_UNCOVERED[track.field.split(".")[0] ?? ""] ??
@@ -332,11 +344,15 @@ function paintProperty(node: SnapshotNode, track: MotionTrack, points: readonly 
 }
 
 /** A track's change and timing in words, and whether its value changes at all. */
-function summaryOf(node: SnapshotNode, track: MotionTrack): { change: string; timing: string; moves: boolean } {
+function summaryOf(
+  node: SnapshotNode,
+  track: MotionTrack,
+  space: ColorSpace,
+): { change: string; timing: string; moves: boolean } {
   const points = cssPoints(track);
   const rotation = track.field === "ROTATION";
   const values = points
-    .map((point) => valueText(rotation && typeof point.value === "number" ? -point.value : point.value))
+    .map((point) => valueText(rotation && typeof point.value === "number" ? -point.value : point.value, space))
     .filter((value, index, all) => index === 0 || value !== all[index - 1]);
   const unit =
     MOTION_PROPERTIES[track.field]?.length || MOTION_AXES[track.field]?.property === "translate"
@@ -517,7 +533,7 @@ function classOf(name: string, taken: ReadonlySet<string>): string {
   return candidate;
 }
 
-function valueText(value: unknown): string {
+function valueText(value: unknown, space: ColorSpace): string {
   if (typeof value === "number") {
     return decimal(value);
   }
@@ -527,7 +543,7 @@ function valueText(value: unknown): string {
   }
 
   if (isRgba(value)) {
-    return colorCss(value);
+    return colorCss(value, 1, space);
   }
 
   return JSON.stringify(value);

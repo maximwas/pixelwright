@@ -11,6 +11,7 @@ import {
 } from "@pixelwright/core";
 import { SNAPSHOT_MAX_CHARS } from "../constants/plugin.ts";
 import { plain } from "../utils/plain.ts";
+import { colorProfile } from "./color-profile.ts";
 import { nearestDevStatus } from "./dev-status.ts";
 import { motionOf } from "./motion.ts";
 import { pageOf, requireNode } from "./nodes.ts";
@@ -104,6 +105,7 @@ export async function snapshot({
   return {
     root: top,
     ...(devStatus === undefined ? {} : { devStatus }),
+    ...colorProfile(),
     styles: await resolveStyles(references.styles, [pageOf(root)]),
     variables: await resolveVariables(references.variables),
     ...(measurements.length === 0 ? {} : { measurements }),

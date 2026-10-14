@@ -498,6 +498,8 @@ const MeasuredSideSchema = z.object({
 
 export const SnapshotSchema = z.object({
   root: SnapshotNodeSchema,
+  /** Figma's colour profile of the file (LEGACY, SRGB, DISPLAY_P3): a Display P3 file's colours are P3 values. */
+  colorProfile: z.string().optional(),
   /** What the designer marked in Dev Mode on the read layer or the nearest layer above it: ready, or completed. */
   devStatus: z.enum(["ready", "completed"]).optional(),
   styles: z.record(z.string(), SnapshotStyleSchema),

@@ -90,18 +90,18 @@ function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext)
       const name = variableTokenName(variable);
 
       if (isRgba(variable.value)) {
-        context.tokens.set(name, colorCss(variable.value));
+        context.tokens.set(name, colorCss(variable.value, 1, context.colorSpace));
       }
 
       const opacity = paint.opacity ?? 1;
 
       // The paint's own opacity on top of the variable's color: mixed with transparent, so it still names the token.
       return opacity < 1
-        ? `color-mix(in srgb, var(${name}) ${Math.round(opacity * 100)}%, transparent)`
+        ? `color-mix(in ${context.colorSpace ?? "srgb"}, var(${name}) ${Math.round(opacity * 100)}%, transparent)`
         : `var(${name})`;
     }
 
-    return colorCss(paint.color, paint.opacity ?? 1);
+    return colorCss(paint.color, paint.opacity ?? 1, context.colorSpace);
   }
 
   if (paint.type === "IMAGE") {

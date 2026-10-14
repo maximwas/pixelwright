@@ -1,5 +1,6 @@
-import { colorCss } from "../css/color.ts";
+import { colorCss, colorSpaceOf, srgbOf } from "../css/color.ts";
 import type { Contrast, ContrastText } from "../types/contrast.ts";
+import type { ColorSpace } from "../types/css.ts";
 import type { Snapshot, SnapshotNode, SnapshotPaint, TextSegment } from "../types/snapshot.ts";
 
 type Rgb = { r: number; g: number; b: number };
@@ -20,6 +21,7 @@ const KINDS: Readonly<Record<string, string>> = {
  * ancestors' fills, see-through ones laid over what is below them. An image or a gradient behind is said, not guessed.
  */
 export function contrastCheck(snapshot: Snapshot): Contrast {
+  const space = colorSpaceOf(snapshot.colorProfile);
   const texts: ContrastText[] = [];
   const walk = (node: SnapshotNode, ancestors: readonly SnapshotNode[]) => {
     if (!node.visible) {
@@ -27,7 +29,7 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
     }
 
     if (node.type === "TEXT") {
-      const rated = rate(node, ancestors);
+      const rated = rate(node, ancestors, space);
 
       if (rated !== null) {
         texts.push(rated);
@@ -52,7 +54,7 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
   };
 }
 
-function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[]): ContrastText | null {
+function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): ContrastText | null {
   const segments = node.text?.segments ?? [];
   const behind = backdropOf(node, ancestors);
   let worst: ContrastText | null = null;
@@ -68,7 +70,7 @@ function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[]): ContrastT
     const rated =
       paint === null
         ? unknownColor(node, segment, KINDS[visible.at(-1)?.type ?? ""] ?? "a fill CSS cannot hold")
-        : rateSegment(node, segment, paint, behind);
+        : rateSegment(node, segment, paint, behind, space);
 
     if (worst === null || (rated.ratio ?? Infinity) < (worst.ratio ?? Infinity)) {
       worst = rated;
@@ -83,6 +85,7 @@ function rateSegment(
   segment: TextSegment,
   paint: { color: Rgb; alpha: number },
   behind: Rgb | string,
+  space: ColorSpace,
 ): ContrastText {
   const size = segment.fontSize;
   const weight = segment.fontWeight;
@@ -100,7 +103,7 @@ function rateSegment(
   if (typeof behind === "string") {
     return {
       ...base,
-      color: colorCss(paint.color, alpha),
+      color: colorCss(paint.color, alpha, space),
       backdrop: behind,
       ratio: null,
       aa: null,
@@ -109,12 +112,13 @@ function rateSegment(
   }
 
   const color = over(paint.color, alpha, behind);
-  const ratio = contrastRatio(color, behind);
+  // WCAG's luminance is defined on sRGB: a Display P3 file's colours are converted first.
+  const ratio = contrastRatio(srgbOf(color, space), srgbOf(behind, space));
 
   return {
     ...base,
-    color: colorCss(paint.color, alpha),
-    backdrop: colorCss(behind, 1),
+    color: colorCss(paint.color, alpha, space),
+    backdrop: colorCss(behind, 1, space),
     ratio: Math.round(ratio * 100) / 100,
     aa: ratio >= (large ? 3 : 4.5),
     aaa: ratio >= (large ? 4.5 : 7),

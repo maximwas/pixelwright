@@ -1,7 +1,7 @@
 import { withoutFallbacks } from "../apply/css-values.ts";
 import { CSS_ORDER, VECTOR_TYPES } from "../constants/css.ts";
 import { MIXED } from "../schemas/snapshot.ts";
-import type { CssContext, NodeCss } from "../types/css.ts";
+import type { ColorSpace, CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
 import { colorCss } from "./color.ts";
 import { boxShorthand, decimal, px } from "./format.ts";
@@ -517,7 +517,7 @@ function effectsCss(
   const shadows = effects
     .filter((effect) => effect.type === "DROP_SHADOW" || (effect.type === "INNER_SHADOW" && !isText))
     .toReversed()
-    .map((effect) => shadowCss(effect, isText))
+    .map((effect) => shadowCss(effect, isText, context.colorSpace))
     .join(", ");
 
   if (shadows !== "") {
@@ -574,22 +574,22 @@ function progressiveBlur(effect: SnapshotEffect, property: string, readOnly: [st
 }
 
 /** Shadows as a box-shadow list, top first (an effect style's value, for the tokens). */
-export function shadowListCss(effects: readonly SnapshotEffect[]): string {
+export function shadowListCss(effects: readonly SnapshotEffect[], space: ColorSpace = "srgb"): string {
   return effects
     .filter((effect) => effect.visible !== false && (effect.type === "DROP_SHADOW" || effect.type === "INNER_SHADOW"))
     .toReversed()
-    .map((effect) => shadowCss(effect, false))
+    .map((effect) => shadowCss(effect, false, space))
     .join(", ");
 }
 
-function shadowCss(effect: SnapshotEffect, isText: boolean): string {
+function shadowCss(effect: SnapshotEffect, isText: boolean, space: ColorSpace | undefined): string {
   const parts = [
     effect.type === "INNER_SHADOW" ? "inset" : null,
     px(effect.offset?.x ?? 0),
     px(effect.offset?.y ?? 0),
     px(effect.radius ?? 0),
     isText ? null : px(effect.spread ?? 0),
-    effect.color === undefined ? null : colorCss(effect.color),
+    effect.color === undefined ? null : colorCss(effect.color, 1, space),
   ];
 
   return parts.filter((part) => part !== null).join(" ");

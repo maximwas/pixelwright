@@ -2,6 +2,7 @@ import { type OperationInput, type OperationOutput, type RawTokens, unwrapVar } 
 import { LIBRARY_BUDGET_MS } from "../constants/plugin.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import { plain } from "../utils/plain.ts";
+import { colorProfile } from "./color-profile.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import { localStyles, numbered, numberingStyles, styleOf } from "./styles.ts";
 import { aliasesIn, loaded, usedUnder } from "./used-tokens.ts";
@@ -22,6 +23,7 @@ export async function variables({
     variables: (await figma.variables.getLocalVariablesAsync()).map(variableOf),
     external: {},
     styles: await localStyles(),
+    ...colorProfile(),
   };
 
   await addVariables(

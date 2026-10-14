@@ -373,6 +373,14 @@ describe("snapshot", () => {
     expect(variables["V:16"]).toMatchObject({ name: "space/16" });
   });
 
+  it("says the file's colour profile, and nothing where Figma does not give one", async () => {
+    expect(await runOperation("snapshot", { node: "2:4869" })).not.toHaveProperty("colorProfile");
+
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    expect(await runOperation("snapshot", { node: "2:4869" })).toMatchObject({ colorProfile: "DISPLAY_P3" });
+  });
+
   it("marks an instance of a library's component, whose id in this file is not the library's", async () => {
     installFigma(
       tree({

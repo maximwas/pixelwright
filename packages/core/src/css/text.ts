@@ -1,5 +1,5 @@
 import { DEFAULT_FONT_AXES } from "../constants/css.ts";
-import type { CssContext } from "../types/css.ts";
+import type { ColorSpace, CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotStyle, TextSegment } from "../types/snapshot.ts";
 import { weightOf } from "../utils/font-weight.ts";
 import { colorCss } from "./color.ts";
@@ -80,7 +80,7 @@ export function segmentCss(
   const decoration = TEXT_DECORATIONS[segment.textDecoration];
 
   if (decoration !== undefined && !same("textDecoration")) {
-    decorationCss(segment, decoration, css);
+    decorationCss(segment, decoration, css, context.colorSpace);
   }
 
   const features = Object.entries(segment.openTypeFeatures ?? {});
@@ -122,13 +122,18 @@ export function segmentCss(
 }
 
 /** An underline or strike: its style and color in the shorthand, its offset and thickness on their own. */
-function decorationCss(segment: TextSegment, line: string, css: Map<string, string>): void {
+function decorationCss(
+  segment: TextSegment,
+  line: string,
+  css: Map<string, string>,
+  space: ColorSpace | undefined,
+): void {
   const style = DECORATION_STYLES[segment.textDecorationStyle ?? "SOLID"];
   const paint = segment.textDecorationColor?.value;
   const color =
     paint === undefined || paint === "AUTO" || paint.color === undefined
       ? undefined
-      : colorCss(paint.color, paint.opacity ?? 1);
+      : colorCss(paint.color, paint.opacity ?? 1, space);
   const offset = decorationLength(segment.textDecorationOffset);
   const thickness = decorationLength(segment.textDecorationThickness);
 

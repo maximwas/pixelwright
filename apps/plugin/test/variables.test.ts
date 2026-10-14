@@ -185,6 +185,16 @@ const page = () =>
   });
 
 describe("variables", () => {
+  it("says the file's colour profile, and nothing where Figma does not give one", async () => {
+    const { figma } = installFigma(page(), LIBRARY);
+
+    expect(await runOperation("variables", {})).not.toHaveProperty("colorProfile");
+
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    expect(await runOperation("variables", {})).toMatchObject({ colorProfile: "DISPLAY_P3" });
+  });
+
   it("reads every collection with its modes and every variable's value per mode, aliases kept", async () => {
     installFigma(page(), LIBRARY);
 

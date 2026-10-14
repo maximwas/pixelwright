@@ -1,6 +1,7 @@
 import { splitTop } from "../apply/css-values.ts";
 import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../constants/annotations.ts";
 import { DEV_STATUS_WORDS, INVISIBLE_TYPES } from "../constants/css.ts";
+import { colorSpaceOf } from "../css/color.ts";
 import { px } from "../css/format.ts";
 import { interactionAttributes } from "../css/interactions.ts";
 import { motionSummary } from "../css/motion.ts";
@@ -95,6 +96,7 @@ class DesignWriter {
       tokens: new Map(),
       root: snapshot.root,
       imageUrl: (node, paint) => this.background(node, paint),
+      colorSpace: colorSpaceOf(snapshot.colorProfile),
     };
   }
 
@@ -184,7 +186,7 @@ class DesignWriter {
       ["$code", code],
       ["$css", readOnlyOf(css.readOnly, asset !== null)],
       ...interactionAttributes(node.reactions ?? []),
-      ["$motion", motionSummary(node)],
+      ["$motion", motionSummary(node, this.context.colorSpace)],
       ["$children", asset === null && code === undefined && !isCut && !clipped ? cutCount(node, limit) : undefined],
       ["$truncated", isCut || clipped ? "true" : undefined],
     ];

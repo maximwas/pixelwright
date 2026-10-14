@@ -1,5 +1,5 @@
 import { INFERRED_WORDS } from "../constants/inferred.ts";
-import { colorCss } from "../css/color.ts";
+import { colorCss, colorSpaceOf } from "../css/color.ts";
 import { boxShorthand, decimal, px } from "../css/format.ts";
 import { styleTokenName, variableTokenName } from "../css/tokens.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
@@ -183,13 +183,14 @@ function numberedTokenHints(
 
 /** A color written raw that equals a style's or a variable's value. */
 function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
+  const space = colorSpaceOf(snapshot.colorProfile);
   const tokens = new Map<string, string>();
 
   for (const style of Object.values(snapshot.styles)) {
     const [paint, ...rest] = style.paints ?? [];
 
     if (rest.length === 0 && paint?.type === "SOLID" && paint.color !== undefined) {
-      tokens.set(colorCss(paint.color, paint.opacity ?? 1), styleTokenName(style));
+      tokens.set(colorCss(paint.color, paint.opacity ?? 1, space), styleTokenName(style));
     }
   }
 
@@ -197,7 +198,10 @@ function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
     const value = variable.value;
 
     if (variable.resolvedType === "COLOR" && typeof value === "object" && value !== null && "r" in value) {
-      tokens.set(colorCss(value as { r: number; g: number; b: number; a?: number }), variableTokenName(variable));
+      tokens.set(
+        colorCss(value as { r: number; g: number; b: number; a?: number }, 1, space),
+        variableTokenName(variable),
+      );
     }
   }
 
@@ -207,7 +211,9 @@ function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
     const id = /\bid="([^"]+)"/.exec(line)?.[1];
 
     for (const [, property, value] of line.matchAll(/ ([a-z-]+)="([^"]*)"/g)) {
-      for (const [color] of (value ?? "").replace(/var\([^)]*\)/g, "").matchAll(/#[0-9A-F]{3,8}\b|rgba\([^)]*\)/g)) {
+      for (const [color] of (value ?? "")
+        .replace(/var\([^)]*\)/g, "")
+        .matchAll(/#[0-9A-F]{3,8}\b|rgba\([^)]*\)|color\(display-p3 [^)]*\)/g)) {
         if (tokens.has(color)) {
           uses.set(color, [...(uses.get(color) ?? []), `${property} of ${id}`]);
         }

@@ -5,6 +5,8 @@ import {
   DTCG_SHADOWS,
   DTCG_STYLES,
 } from "../constants/tokens.ts";
+import { colorSpaceOf, srgbOf } from "../css/color.ts";
+import type { ColorSpace } from "../types/css.ts";
 import type { DtcgGroup, DtcgResult, DtcgToken, RawTokens } from "../types/tokens.ts";
 import { weightOf } from "../utils/font-weight.ts";
 
@@ -24,6 +26,7 @@ export function dtcgTrees(raw: RawTokens, filter: { collections?: readonly strin
     (collection) => wanted === undefined || wanted.includes(collection.name.toLowerCase()),
   );
   const included = new Set(collections.map((collection) => collection.id));
+  const space = colorSpaceOf(raw.colorProfile);
   const types = typesOf(raw);
   const refs = referencesOf(raw, types, included);
   const trees: Record<string, DtcgGroup> = {};
@@ -70,7 +73,7 @@ export function dtcgTrees(raw: RawTokens, filter: { collections?: readonly strin
 
         const token: DtcgToken = {
           $type: type,
-          $value: reference ?? dtcgValue(type, value),
+          $value: reference ?? dtcgValue(type, value, space),
           ...(variable.description === undefined || variable.description === ""
             ? {}
             : { $description: variable.description }),
@@ -83,7 +86,7 @@ export function dtcgTrees(raw: RawTokens, filter: { collections?: readonly strin
     }
   }
 
-  const styles = stylesTree(raw.styles);
+  const styles = stylesTree(raw.styles, space);
 
   trees[DTCG_STYLES] = styles.tree;
 
@@ -292,9 +295,9 @@ function typeOf(variable: RawVariable): string | null {
   }
 }
 
-function dtcgValue(type: string, value: unknown): unknown {
+function dtcgValue(type: string, value: unknown, space: ColorSpace): unknown {
   if (type === "color") {
-    return isRgba(value) ? colorOf(value) : value;
+    return isRgba(value) ? colorOf(value, 1, space) : value;
   }
 
   if (type === "dimension") {
@@ -304,10 +307,15 @@ function dtcgValue(type: string, value: unknown): unknown {
   return value;
 }
 
-/** A Figma colour as DTCG writes one: sRGB components, alpha when see-through, and the hex fallback. */
-function colorOf({ r, g, b, a = 1 }: Rgba, opacity = 1): Record<string, unknown> {
+/**
+ * A Figma colour as DTCG writes one: its space's components (Display P3 in a P3 file), alpha when see-through, and the
+ * sRGB hex fallback (a P3 colour converted and clipped).
+ */
+function colorOf(color: Rgba, opacity: number, space: ColorSpace): Record<string, unknown> {
+  const { r, g, b, a = 1 } = color;
   const alpha = round(a * opacity);
-  const hex = [r, g, b]
+  const srgb = srgbOf(color, space);
+  const hex = [srgb.r, srgb.g, srgb.b]
     .map((channel) =>
       Math.round(channel * 255)
         .toString(16)
@@ -316,14 +324,14 @@ function colorOf({ r, g, b, a = 1 }: Rgba, opacity = 1): Record<string, unknown>
     .join("");
 
   return {
-    colorSpace: "srgb",
+    colorSpace: space,
     components: [round(r), round(g), round(b)],
     ...(alpha < 1 ? { alpha } : {}),
     hex: `#${hex.toUpperCase()}`,
   };
 }
 
-function stylesTree(styles: readonly RawStyle[]): { tree: DtcgGroup; notes: string[] } {
+function stylesTree(styles: readonly RawStyle[], space: ColorSpace): { tree: DtcgGroup; notes: string[] } {
   const tree: DtcgGroup = {};
   const untyped: string[] = [];
   const autoLineHeight: string[] = [];
@@ -338,7 +346,7 @@ function stylesTree(styles: readonly RawStyle[]): { tree: DtcgGroup; notes: stri
   );
 
   for (const style of styles) {
-    const token = styleToken(style, autoLineHeight);
+    const token = styleToken(style, autoLineHeight, space);
 
     if (token === null) {
       untyped.push(`${style.name} (${style.type.toLowerCase()})`);
@@ -366,7 +374,7 @@ function stylesTree(styles: readonly RawStyle[]): { tree: DtcgGroup; notes: stri
   };
 }
 
-function styleToken(style: RawStyle, autoLineHeight: string[]): DtcgToken | null {
+function styleToken(style: RawStyle, autoLineHeight: string[], space: ColorSpace): DtcgToken | null {
   if (style.type === "PAINT") {
     const paints = (style.paints ?? []).filter((paint) => paint.visible !== false);
     const [paint] = paints;
@@ -378,7 +386,7 @@ function styleToken(style: RawStyle, autoLineHeight: string[]): DtcgToken | null
     if (paint.type === "SOLID" && isRgba(paint.color)) {
       return {
         $type: "color",
-        $value: colorOf(paint.color, paint.opacity ?? 1),
+        $value: colorOf(paint.color, paint.opacity ?? 1, space),
       };
     }
 
@@ -386,7 +394,7 @@ function styleToken(style: RawStyle, autoLineHeight: string[]): DtcgToken | null
       return {
         $type: "gradient",
         $value: paint.gradientStops.map((stop) => ({
-          color: colorOf(stop.color),
+          color: colorOf(stop.color, 1, space),
           position: round(stop.position),
         })),
       };
@@ -441,6 +449,8 @@ function styleToken(style: RawStyle, autoLineHeight: string[]): DtcgToken | null
               b: 0,
               a: 0.25,
             },
+        1,
+        space,
       ),
       offsetX: px(effect.offset?.x ?? 0),
       offsetY: px(effect.offset?.y ?? 0),
