@@ -62,4 +62,11 @@ export const SnapshotSchema = z.object({
       }),
     )
     .optional(),
+  /** The page the read layer is on; plugins before stage 11 leave it out. */
+  page: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .optional(),
 });
