@@ -37,6 +37,15 @@ How to write this file (people and agents alike):
 - In a Display P3 file, colours are written as `color(display-p3 …)` by `design_read`, `tokens_read` (in CSS and in
   DTCG files) and the checks, and colours written to it are converted to P3: they show as the designer chose them.
 
+### Fixed
+
+- `design_apply` writes a text of only no-break or em spaces as it is written, and a plain space typed between two
+  styled parts of a text as one space: it used to add a space to both.
+- In a Display P3 file, `design_read`'s own XML sent back to `design_apply` no longer changes a name or a note that
+  holds a word like `#FFF`.
+- `design_read`'s hints no longer take a text's own words, or a colour in a layer's name, note or link, for CSS that
+  should use a token.
+
 ## 0.2.0 — 2026-10-14
 
 ### Added
