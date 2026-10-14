@@ -1,11 +1,12 @@
-import type { McpServer } from "@modelcontextprotocol/server";
-import { readStatus } from "../../bridge/read-status.ts";
-import { StatusInputSchema, StatusOutputSchema } from "../../schemas/status.ts";
-import type { ToolContext } from "../../types/mcp.ts";
-import { registerTool } from "../register-tool.ts";
+import type { ToolContext, ToolDefinition } from "../../types/mcp.ts";
+import { readStatus } from "./read-status.ts";
+import { StatusInputSchema, StatusOutputSchema } from "./schemas.ts";
 
-export function registerStatusTool(server: McpServer, { bridge, version }: ToolContext): void {
-  registerTool(server, {
+export function statusTool({
+  bridge,
+  version,
+}: ToolContext): ToolDefinition<typeof StatusInputSchema, typeof StatusOutputSchema> {
+  return {
     name: "status",
     title: "Connection status",
     description:
@@ -18,5 +19,5 @@ export function registerStatusTool(server: McpServer, { bridge, version }: ToolC
       openWorldHint: false,
     },
     run: ({ probe }) => readStatus(bridge, version, probe),
-  });
+  };
 }

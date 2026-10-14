@@ -1,6 +1,6 @@
 import { BridgeError } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
-import { readStatus } from "../src/bridge/read-status.ts";
+import { readStatus } from "../src/features/status/read-status.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 

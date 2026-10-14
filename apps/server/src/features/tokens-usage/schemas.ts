@@ -1,6 +1,6 @@
 import { OPERATION_SCHEMAS } from "@pixelwright/core";
 import * as z from "zod";
-import { FileSchema } from "../../schemas/tools.ts";
+import { FileSchema } from "../../plugin/file-schema.ts";
 
 export const TokensUsageInputSchema = z.object({
   token: OPERATION_SCHEMAS.usage.input.shape.token.describe(

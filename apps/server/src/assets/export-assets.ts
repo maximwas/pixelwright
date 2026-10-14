@@ -12,7 +12,7 @@ import {
 import type * as z from "zod";
 import { resolveTarget } from "../bridge/target.ts";
 import { MAX_EXPORT_SCALE, RASTER_SCALE, WEBP_QUALITY } from "../constants/mcp.ts";
-import { describeError } from "../mcp/describe-error.ts";
+import { describeError } from "../plugin/describe-error.ts";
 import type { AssetsExportInputSchema, AssetsExportOutputSchema } from "../schemas/tools.ts";
 import type { ToolContext } from "../types/mcp.ts";
 import { fetchAsset } from "./fetch-asset.ts";

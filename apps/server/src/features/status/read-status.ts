@@ -1,6 +1,6 @@
 import { BRIDGE_PROTOCOL_VERSION } from "@pixelwright/core";
-import { describeError } from "../mcp/describe-error.ts";
-import type { BridgeView, StatusOutput } from "../types/mcp.ts";
+import { describeError } from "../../plugin/describe-error.ts";
+import type { BridgeView, StatusOutput } from "../../types/mcp.ts";
 
 export async function readStatus(bridge: BridgeView, version: string, probe: boolean): Promise<StatusOutput> {
   const { role, port, hint } = bridge.status();

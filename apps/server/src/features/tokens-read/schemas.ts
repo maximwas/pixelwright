@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { FileSchema } from "../../schemas/tools.ts";
+import { FileSchema } from "../../plugin/file-schema.ts";
 
 export const TokensReadInputSchema = z.object({
   collections: z

@@ -1,7 +1,7 @@
 import { TokensApplyInputSchema, TokensApplyResultSchema } from "@pixelwright/core";
 import * as z from "zod";
 import { VersionInputSchema, VersionSavedSchema } from "../../history/schemas.ts";
-import { FileSchema } from "../../schemas/tools.ts";
+import { FileSchema } from "../../plugin/file-schema.ts";
 
 export const TokensApplyToolInputSchema = TokensApplyInputSchema.extend({
   dryRun: z

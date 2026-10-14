@@ -7,14 +7,7 @@ import {
 } from "@pixelwright/core";
 import * as z from "zod";
 import { MAX_EXPORT_NODES } from "../constants/mcp.ts";
-
-/** Which connected file a tool works on: its session from status, or its name; the active file when left out. */
-export const FileSchema = z
-  .string()
-  .min(1)
-  .max(1_024)
-  .exactOptional()
-  .describe("The file to work on: its session from status or its name. Default: the active file.");
+import { FileSchema } from "../plugin/file-schema.ts";
 
 export const ScreenshotInputSchema = z.object({
   node: z.string().min(1).max(200).describe("The layer's id, e.g. 54:243."),
@@ -318,31 +311,6 @@ export const MeasureInputSchema = z.object({
     .boolean()
     .default(false)
     .describe("Measure what is painted (centred or outside strokes, shadows, blur) instead of the layout boxes."),
-  file: FileSchema,
-});
-
-export const SelectionWaitInputSchema = z.object({
-  timeout: z
-    .number()
-    .min(1)
-    .max(300)
-    .default(60)
-    .describe("Seconds to wait for the user to select something: 60 by default, 300 at most."),
-  file: FileSchema,
-});
-
-export const SelectionWaitOutputSchema = z.object({
-  changed: z.boolean().describe("Whether the user selected something else before the time ran out."),
-  nodes: OPERATION_SCHEMAS.selection.output.shape.nodes.describe("The selection now."),
-});
-
-export const ChangesSinceInputSchema = z.object({
-  cursor: z
-    .number()
-    .int()
-    .min(0)
-    .exactOptional()
-    .describe("The cursor an earlier answer gave: only what changed after it. Default: all the plugin has seen."),
   file: FileSchema,
 });
 

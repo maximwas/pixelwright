@@ -1,8 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod";
+import { describeError } from "../plugin/describe-error.ts";
 import type { ContentToolDefinition, ToolDefinition } from "../types/mcp.ts";
 import type { SupportNotes } from "../types/support.ts";
-import { describeError } from "./describe-error.ts";
 
 /**
  * Registers a tool whose result is always structuredContent validated against its outputSchema, with the same JSON

@@ -1,8 +1,8 @@
 import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/server";
 import type * as z from "zod";
 import type { WrittenFiles } from "../assets/written-files.ts";
+import type { StatusOutputSchema } from "../features/status/schemas.ts";
 import type { PluginClient } from "../plugin/plugin-client.ts";
-import type { StatusOutputSchema } from "../schemas/status.ts";
 import type { BridgeStatus, ConnectedPlugin, PairingStatus, RequestOptions } from "./bridge.ts";
 import type { SupportNotes } from "./support.ts";
 
