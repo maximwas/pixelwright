@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 /** Two screens: Home's button goes to Detail with a smart animate, Detail's goes back; Home starts the flow. */
 const prototype = () =>
@@ -81,7 +84,7 @@ describe("flow_read", () => {
   it("maps the prototype: where flows start, the screens, and which layer goes where, how", async () => {
     installFigma(prototype());
 
-    const map = (await runOperation("flows", {})) as {
+    const map = (await plugin.run("flows", {})) as {
       page: string;
       starts: unknown[];
       screens: { id: string }[];
@@ -136,7 +139,7 @@ describe("breakpoints_find's screens", () => {
   it("names the screen a layer is on and the page's other screens, with their children", async () => {
     installFigma(prototype());
 
-    await expect(runOperation("screens", { node: "9:4" })).resolves.toEqual({
+    await expect(plugin.run("screens", { node: "9:4" })).resolves.toEqual({
       target: {
         id: "9:3",
         name: "Detail",
@@ -195,7 +198,7 @@ describe("file_map", () => {
       ],
     });
 
-    const map = (await runOperation("file_map", null)) as {
+    const map = (await plugin.run("file_map", null)) as {
       pages: { name: string; current: boolean; nodes: { id: string; children?: { id: string }[] }[] }[];
       more: boolean;
     };
@@ -224,7 +227,7 @@ describe("file_map of a page with thousands of loose layers", () => {
       }),
     );
 
-    const map = (await runOperation("file_map", null)) as {
+    const map = (await plugin.run("file_map", null)) as {
       pages: { nodes: unknown[]; total?: number }[];
       more: boolean;
     };
@@ -248,7 +251,7 @@ describe("screens on a page the user is not on", () => {
       },
     );
 
-    await runOperation("screens", { node: "9:2" });
+    await plugin.run("screens", { node: "9:2" });
 
     expect(installed.writes.calls).toContainEqual(expect.objectContaining({ method: "loadAsync" }));
   });

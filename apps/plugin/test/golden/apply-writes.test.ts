@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { applyDesign } from "../../../server/src/features/design-apply/apply-design.ts";
-import { setEditsAllowed } from "../../src/figma/edits.ts";
 import { applyDocument } from "../helpers/apply-document.ts";
 import type { FakeNode } from "../helpers/fake-figma.ts";
 import { pluginClient } from "../helpers/plugin-bridge.ts";
+import { testPlugin } from "../helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 /**
  * What design_apply does to a Figma document, call by call, as the plugin before the apply pipeline's rewrite does it:
@@ -275,7 +278,7 @@ const GROUPS: Readonly<Record<string, readonly Case[]>> = {
 
 /** How a call runs: the one place the apply pipeline's rewrite changes in this file. */
 function run(testCase: Case, dryRun: boolean) {
-  return applyDesign(pluginClient(), {
+  return applyDesign(pluginClient(plugin), {
     xml: testCase.xml,
     dryRun,
     ...(testCase.parent === undefined ? {} : { parent: testCase.parent }),
@@ -284,7 +287,7 @@ function run(testCase: Case, dryRun: boolean) {
 
 /** Allows or refuses edits for the next call: the one other place the rewrite changes. */
 function allowEdits(allowed: boolean): void {
-  setEditsAllowed(allowed);
+  plugin.services.edits.allow(allowed);
 }
 
 const isNode = (value: object): value is FakeNode => "id" in value && "type" in value && "parent" in value;

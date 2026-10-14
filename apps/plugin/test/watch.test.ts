@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { noteOwnWrite, startChangeJournal } from "../src/figma/changes.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const page = () =>
   tree({
@@ -28,7 +30,7 @@ describe("selection_wait", () => {
 
     installed.figma.currentPage.selection = [];
 
-    const waiting = runOperation("selection_wait", {
+    const waiting = plugin.run("selection_wait", {
       timeoutMs: 5_000,
       from: null,
     });
@@ -51,7 +53,7 @@ describe("selection_wait", () => {
     installFigma(page());
 
     await expect(
-      runOperation("selection_wait", {
+      plugin.run("selection_wait", {
         timeoutMs: 20,
         from: null,
       }),
@@ -78,17 +80,17 @@ describe("changes_since", () => {
       ],
     });
 
-    startChangeJournal();
+    plugin.services.journal.start();
     installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["fills"]), "0:1");
 
-    const { cursor } = (await runOperation("changes", {})) as { cursor: number };
+    const { cursor } = (await plugin.run("changes", {})) as { cursor: number };
 
     installed.emit("nodechange", change(title, "PROPERTY_CHANGE", "REMOTE", ["characters"]), "0:1");
     installed.emit("nodechange", change(title, "PROPERTY_CHANGE", "REMOTE", ["fontSize"]), "0:1");
-    noteOwnWrite();
+    plugin.services.journal.noteOwnWrite();
     installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["width"]), "0:1");
 
-    const later = (await runOperation("changes", { since: cursor })) as {
+    const later = (await plugin.run("changes", { since: cursor })) as {
       changes: { id: string; change: string; properties: string[]; by: string }[];
     };
 
@@ -116,10 +118,10 @@ describe("changes_since after the review", () => {
     const installed = installFigma(page());
     const [card] = installed.figma.currentPage.children ?? [];
 
-    startChangeJournal();
+    plugin.services.journal.start();
     installed.emit("nodechange", change(card, "CREATE", "LOCAL"), "0:1");
 
-    const { cursor } = (await runOperation("changes", {})) as { cursor: number };
+    const { cursor } = (await plugin.run("changes", {})) as { cursor: number };
 
     installed.emit(
       "nodechange",
@@ -134,7 +136,7 @@ describe("changes_since after the review", () => {
       "0:1",
     );
 
-    const later = (await runOperation("changes", { since: cursor })) as { changes: { id: string; change: string }[] };
+    const later = (await plugin.run("changes", { since: cursor })) as { changes: { id: string; change: string }[] };
 
     expect(later.changes.map(({ id, change: kind }) => [id, kind])).toEqual([["1:1", "deleted"]]);
   });
@@ -143,12 +145,12 @@ describe("changes_since after the review", () => {
     const installed = installFigma(page());
     const [card] = installed.figma.currentPage.children ?? [];
 
-    startChangeJournal();
+    plugin.services.journal.start();
     installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["characters"]), "0:1");
-    noteOwnWrite();
+    plugin.services.journal.noteOwnWrite();
     installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["fills"]), "0:1");
 
-    const all = (await runOperation("changes", {})) as { changes: { by: string; properties: string[] }[] };
+    const all = (await plugin.run("changes", {})) as { changes: { by: string; properties: string[] }[] };
 
     expect(all.changes.map(({ by, properties }) => [by, properties])).toEqual([
       ["user", ["characters"]],
@@ -160,15 +162,15 @@ describe("changes_since after the review", () => {
     const installed = installFigma(page());
     const [card] = installed.figma.currentPage.children ?? [];
 
-    startChangeJournal();
+    plugin.services.journal.start();
     installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["fills"]), "0:1");
 
-    const { cursor } = (await runOperation("changes", {})) as { cursor: number };
+    const { cursor } = (await plugin.run("changes", {})) as { cursor: number };
 
-    startChangeJournal();
+    plugin.services.journal.start();
     installed.emit("nodechange", change(card, "PROPERTY_CHANGE", "LOCAL", ["width"]), "0:1");
 
-    await expect(runOperation("changes", { since: cursor })).resolves.toMatchObject({
+    await expect(plugin.run("changes", { since: cursor })).resolves.toMatchObject({
       truncated: true,
       changes: [{ properties: ["width"] }],
     });

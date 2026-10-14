@@ -9,7 +9,6 @@ import {
   weightOf,
 } from "@pixelwright/core";
 import { effectKey, effectsOf, mergedEffects, paintsOf } from "../../../figma/apply-props.ts";
-import { fontNameOf } from "../../../figma/fonts.ts";
 import type { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import type { TokenRun } from "./token-run.ts";
@@ -75,7 +74,7 @@ export const TEXT_STYLES: StyleKind<TextStylePlan, TextStyle, TextValue> = {
   local: () => figma.getLocalTextStylesAsync(),
   next: async ({ font }, held, run) => {
     // Its own face first: a condensed or variable face reads as its family and weight only.
-    const fontName = await fontNameOf(
+    const fontName = await run.fonts.fontNameOf(
       font,
       held === null
         ? []

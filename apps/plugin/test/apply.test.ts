@@ -1,9 +1,10 @@
 import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
-import { uploaded } from "../src/figma/uploads.ts";
 import { type FakeLibrary, type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 interface Applied {
   created: { line: number; ref: string; id: string; tag: string }[];
@@ -21,7 +22,7 @@ function changesOf(xml: string): ApplyChange[] {
 }
 
 const apply = async (xml: string, options: { parent?: string; dryRun?: boolean } = {}) =>
-  (await runOperation("apply", {
+  (await plugin.run("apply", {
     changes: changesOf(xml),
     ...options,
   })) as Applied;
@@ -298,16 +299,16 @@ const byId = (id: string, from: FakeNode = root): FakeNode | undefined =>
 beforeEach(() => {
   root = page();
   fake = installFigma(root, LIBRARY);
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("apply: the safety catch", () => {
   it("refuses every write while Allow edits is off, and checks without writing on a dry run", async () => {
-    setEditsAllowed(false);
+    plugin.services.edits.allow(false);
 
     await expect(apply('<Frame id="1:1" opacity="0.5"/>')).rejects.toMatchObject({ code: "EDITS_DISABLED" });
     expect(byId("1:1")?.opacity).toBe(1);
@@ -507,7 +508,7 @@ describe("apply: tokens, fonts and errors", () => {
 
 describe("entries", () => {
   it("gives each layer asked for with its descendants and its parent, those inside another one within it", async () => {
-    const result = (await runOperation("entries", { ids: ["1:1", "1:2", "3:2", "9:9"] })) as {
+    const result = (await plugin.run("entries", { ids: ["1:1", "1:2", "3:2", "9:9"] })) as {
       roots: { node: { id: string; children?: { id: string }[] }; parent: { id: string; x: number } | null }[];
       missing: string[];
     };
@@ -524,7 +525,7 @@ describe("entries", () => {
 
 describe("delete", () => {
   it("deletes layers, refuses one inside an instance and a missing one, one undo step, never without Allow edits", async () => {
-    const result = (await runOperation("delete", { nodes: ["3:2", "I2:1;3:4", "9:9"] })) as {
+    const result = (await plugin.run("delete", { nodes: ["3:2", "I2:1;3:4", "9:9"] })) as {
       deleted: string[];
       errors: { id: string; message: string }[];
     };
@@ -535,9 +536,9 @@ describe("delete", () => {
     expect(result.errors[0]?.message).toMatch(/instance/);
     expect(fake.writes.undo).toBe(1);
 
-    setEditsAllowed(false);
+    plugin.services.edits.allow(false);
 
-    await expect(runOperation("delete", { nodes: ["1:2"] })).rejects.toMatchObject({ code: "EDITS_DISABLED" });
+    await expect(plugin.run("delete", { nodes: ["1:2"] })).rejects.toMatchObject({ code: "EDITS_DISABLED" });
   });
 });
 
@@ -546,7 +547,7 @@ describe("apply: review fixes", () => {
     fake.writes.calls.filter((call) => call.node === node && (method === undefined || call.method === method));
 
   it("reads a hidden layer asked for whole, with its layers", async () => {
-    const result = (await runOperation("entries", { ids: ["4:1"] })) as {
+    const result = (await plugin.run("entries", { ids: ["4:1"] })) as {
       roots: { node: { layoutMode?: string; children?: { id: string }[] } }[];
     };
 
@@ -642,22 +643,22 @@ describe("upload", () => {
     const bytes = Uint8Array.from({ length: 10 }, (_, index) => index);
     const chunk = (from: number, to: number) => btoa(String.fromCharCode(...bytes.subarray(from, to)));
 
-    await runOperation("upload", {
+    await plugin.run("upload", {
       stream: "s-1",
       offset: 0,
       chunk: chunk(0, 6),
       total: 10,
     });
 
-    expect(uploaded("s-1")).toBeUndefined();
+    expect(plugin.services.uploads.bytes("s-1")).toBeUndefined();
 
-    await runOperation("upload", {
+    await plugin.run("upload", {
       stream: "s-1",
       offset: 6,
       chunk: chunk(6, 10),
       total: 10,
     });
 
-    expect([...(uploaded("s-1") ?? [])]).toEqual([...bytes]);
+    expect([...(plugin.services.uploads.bytes("s-1") ?? [])]).toEqual([...bytes]);
   });
 });

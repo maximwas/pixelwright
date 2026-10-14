@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { TokenIndex } from "../src/figma/tokens/token-index.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 /** Two of the file's paint styles named Black, as a real file had them (#0F0F0F and #141414). */
 const blackStyle = (id: string, level: number) => ({
@@ -62,7 +65,7 @@ describe("styles that share a name", () => {
   it("are numbered in tokens_read: the second Black is --Black-2", async () => {
     installFigma(page(), library);
 
-    const tokens = (await runOperation("variables", { used: false })) as {
+    const tokens = (await plugin.run("variables", { used: false })) as {
       styles: { id: string; duplicate?: number }[];
     };
 
@@ -75,7 +78,7 @@ describe("styles that share a name", () => {
   it("are numbered in a snapshot, though only the second is used", async () => {
     installFigma(page(), library);
 
-    const snapshot = (await runOperation("snapshot", { node: "1:1" })) as {
+    const snapshot = (await plugin.run("snapshot", { node: "1:1" })) as {
       styles: Record<string, { duplicate?: number }>;
     };
 
@@ -126,13 +129,13 @@ describe("library styles that share a name", () => {
       teamLibrary(),
     );
 
-    const read = (await runOperation("snapshot", { node: "1:2" })) as {
+    const read = (await plugin.run("snapshot", { node: "1:2" })) as {
       styles: Record<string, { duplicate?: number }>;
     };
-    const entries = (await runOperation("entries", { ids: ["1:2"] })) as {
+    const entries = (await plugin.run("entries", { ids: ["1:2"] })) as {
       styles: Record<string, { duplicate?: number }>;
     };
-    const tokens = (await runOperation("variables", {
+    const tokens = (await plugin.run("variables", {
       used: true,
       within: "1:2",
     })) as { styles: { id: string; duplicate?: number }[] };
@@ -206,7 +209,7 @@ describe("gradient paint styles", () => {
       },
     );
 
-    const tokens = (await runOperation("variables", { used: true })) as { styles: { id: string; css?: string }[] };
+    const tokens = (await plugin.run("variables", { used: true })) as { styles: { id: string; css?: string }[] };
 
     expect(tokens.styles.find((style) => style.id === "S:g")?.css).toBe(gradient);
   });
@@ -234,7 +237,7 @@ describe("tokens_usage", () => {
       },
     );
 
-    await expect(runOperation("usage", { token: "--White-2" })).resolves.toMatchObject({
+    await expect(plugin.run("usage", { token: "--White-2" })).resolves.toMatchObject({
       kind: "paint style",
       name: "White",
       layers: [
@@ -339,7 +342,7 @@ describe("image paint styles in tokens_read", () => {
       return original();
     };
 
-    await runOperation("variables", { used: true });
+    await plugin.run("variables", { used: true });
 
     expect(asked).toBe(0);
   });

@@ -1,0 +1,86 @@
+import {
+  BridgeError,
+  OPERATION_SCHEMAS,
+  type OperationInput,
+  type OperationName,
+  type OperationOutput,
+} from "@pixelwright/core";
+import { apply } from "../figma/apply.ts";
+import { components } from "../figma/components.ts";
+import { execute } from "../figma/execute.ts";
+import { exportNode, originalImage } from "../figma/export-node.ts";
+import { fileMap, flows, screens } from "../figma/flows.ts";
+import { inspect } from "../figma/inspect.ts";
+import { find, outline, selection, setOf, show, viewport } from "../figma/read-ops.ts";
+import { saveVersion } from "../figma/save-version.ts";
+import { selectionWait } from "../figma/selection-wait.ts";
+import { entries, snapshot } from "../figma/snapshot.ts";
+import type { PluginServices } from "../services/plugin-services.ts";
+import { deleteNodes } from "./delete/delete-nodes.ts";
+import { applyTokens } from "./tokens/apply-tokens.ts";
+import { readTokens } from "./tokens/read-tokens.ts";
+import { usage } from "./tokens/usage.ts";
+
+type Handlers = {
+  readonly [N in OperationName]: (input: OperationInput<N>, services: PluginServices) => Promise<OperationOutput<N>>;
+};
+
+/** What the plugin does for each operation the server may ask for, with the services the operation uses. */
+const HANDLERS: Handlers = {
+  ping: async () => ({ pong: true }),
+  selection,
+  show,
+  viewport,
+  selection_wait: selectionWait,
+  changes: async (input, { journal }) => journal.changes(input),
+  flows,
+  usage,
+  set_of: setOf,
+  screens,
+  file_map: fileMap,
+  find,
+  outline,
+  export: (input, services) => exportNode(input, services),
+  image: originalImage,
+  snapshot,
+  variables: readTokens,
+  components,
+  entries,
+  apply: (input, services) => apply(input, services),
+  delete: (input, { edits }) => deleteNodes(input, edits),
+  inspect,
+  execute: (input, { edits }) => execute(input, edits),
+  tokens_apply: (input, services) => applyTokens(input, services),
+  save_version: (input, { edits }) => saveVersion(input, edits),
+  upload: async (input, { uploads }) => uploads.receive(input),
+};
+
+/** The operations that change the file: their changes are marked as Pixelwright's in the change journal. */
+const OWN_WRITES: ReadonlySet<OperationName> = new Set(["apply", "delete", "execute", "tokens_apply"]);
+
+const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);
+
+/** Runs the operations the server asks for: by name, their input checked against the shared schemas. */
+export class OperationRegistry {
+  readonly #services: PluginServices;
+
+  constructor(services: PluginServices) {
+    this.#services = services;
+  }
+
+  async run(op: string, input: unknown): Promise<unknown> {
+    if (!isOperation(op)) {
+      throw new BridgeError("UNKNOWN_OP", `Unknown operation: ${op}`);
+    }
+
+    const parsed = OPERATION_SCHEMAS[op].input.safeParse(input);
+
+    if (!parsed.success) {
+      throw new BridgeError("OP_FAILED", `${op}: invalid input: ${parsed.error.message}`);
+    }
+
+    const run = (): Promise<unknown> => HANDLERS[op](parsed.data as never, this.#services);
+
+    return OWN_WRITES.has(op) ? this.#services.journal.asOwnWrite(run) : run();
+  }
+}

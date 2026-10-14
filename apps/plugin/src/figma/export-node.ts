@@ -1,20 +1,25 @@
 import { BridgeError, type OperationInput, type OperationOutput } from "@pixelwright/core";
-import { asOwnWrite } from "./changes.ts";
+import type { PluginServices } from "../services/plugin-services.ts";
 import { chunkSource } from "./chunks.ts";
-import { requireEdits } from "./edits.ts";
 import { requireNode } from "./nodes.ts";
+
+/** What a render in other variable modes needs: it writes for a moment, as Pixelwright. */
+type ModeWrites = Pick<PluginServices, "edits" | "journal">;
 
 const exports = chunkSource<{ bytes: Uint8Array; scale: number }>();
 const images = chunkSource<{ bytes: Uint8Array }>();
 
 /** One chunk of a layer's export, rendered once per stream (one export the server reads). */
-export async function exportNode(input: OperationInput<"export">): Promise<OperationOutput<"export">> {
+export async function exportNode(
+  input: OperationInput<"export">,
+  services: ModeWrites,
+): Promise<OperationOutput<"export">> {
   const { node: id, format, effects, offset, length, maxSide, modes } = input;
   const key = JSON.stringify([id, format, input.scale, effects, maxSide, modes]);
   const { result, totalBytes, chunk } = await exports(input.stream ?? key, key, offset, length, () =>
     modes === undefined || Object.keys(modes).length === 0
       ? render(id, format, input.scale, effects, maxSide)
-      : inModes(id, modes, () => render(id, format, input.scale, effects, maxSide)),
+      : inModes(id, modes, () => render(id, format, input.scale, effects, maxSide), services),
   );
 
   return {
@@ -108,16 +113,26 @@ let modeTurn: Promise<unknown> = Promise.resolve();
  * modes back: a write for a moment, so Allow edits must be on; one undo step that leaves the file as it was. One mode
  * render at a time: two at once (light and dark side by side) would each see the other's mode as the layer's.
  */
-function inModes<T>(id: string, modes: Readonly<Record<string, string>>, run: () => Promise<T>): Promise<T> {
-  const turn = modeTurn.then(() => inModesNow(id, modes, run));
+function inModes<T>(
+  id: string,
+  modes: Readonly<Record<string, string>>,
+  run: () => Promise<T>,
+  services: ModeWrites,
+): Promise<T> {
+  const turn = modeTurn.then(() => inModesNow(id, modes, run, services));
 
   modeTurn = turn.catch(() => {});
 
   return turn;
 }
 
-async function inModesNow<T>(id: string, modes: Readonly<Record<string, string>>, run: () => Promise<T>): Promise<T> {
-  requireEdits();
+async function inModesNow<T>(
+  id: string,
+  modes: Readonly<Record<string, string>>,
+  run: () => Promise<T>,
+  { edits, journal }: ModeWrites,
+): Promise<T> {
+  edits.require();
 
   const node = await requireNode(id);
 
@@ -159,7 +174,7 @@ async function inModesNow<T>(id: string, modes: Readonly<Record<string, string>>
     };
   });
 
-  return asOwnWrite(async () => {
+  return journal.asOwnWrite(async () => {
     try {
       for (const { collection, mode } of chosen) {
         node.setExplicitVariableModeForCollection(collection, mode);

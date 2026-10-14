@@ -1,6 +1,7 @@
 import type { OperationInput, OperationOutput, TokenError, TokenItem } from "@pixelwright/core";
-import { requireEdits } from "../../../figma/edits.ts";
+import type { FontCatalog } from "../../../figma/fonts.ts";
 import { TokenIndex } from "../../../figma/tokens/token-index.ts";
+import type { EditsGuard } from "../../../services/edits-guard.ts";
 import { FileTokens } from "./file-tokens.ts";
 import { KnownVariables } from "./known-variables.ts";
 import { StyleWriter } from "./styles.ts";
@@ -16,6 +17,8 @@ type Written = OperationOutput<"tokens_apply">;
  */
 export class TokenWriter implements TokenRun {
   readonly dryRun: boolean;
+  readonly fonts: FontCatalog;
+  readonly #edits: EditsGuard;
   readonly #plan: OperationInput<"tokens_apply">["plan"];
   readonly #results: Written = {
     created: [],
@@ -25,14 +28,19 @@ export class TokenWriter implements TokenRun {
   #index: Promise<TokenIndex> | null = null;
   #wrote = false;
 
-  constructor({ plan, dryRun }: OperationInput<"tokens_apply">) {
+  constructor(
+    { plan, dryRun }: OperationInput<"tokens_apply">,
+    { edits, fonts }: { readonly edits: EditsGuard; readonly fonts: FontCatalog },
+  ) {
     this.#plan = plan;
     this.dryRun = dryRun;
+    this.#edits = edits;
+    this.fonts = fonts;
   }
 
   async run(): Promise<Written> {
     if (!this.dryRun) {
-      requireEdits();
+      this.#edits.require();
     }
 
     const file = await FileTokens.read(this.#plan);

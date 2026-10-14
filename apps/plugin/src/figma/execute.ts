@@ -5,8 +5,8 @@ import {
   type OperationInput,
   type OperationOutput,
 } from "@pixelwright/core";
+import type { EditsGuard } from "../services/edits-guard.ts";
 import { jsonValue } from "../utils/json-value.ts";
-import { requireEdits } from "./edits.ts";
 
 type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<unknown>;
 
@@ -21,8 +21,11 @@ const TIMED_OUT = Symbol("timed out");
  * or what it threw, or that it ran past its time (it may still be running: a plugin cannot stop it). Whatever it
  * changed is one undo step. Refused while Allow edits is off.
  */
-export async function execute({ code, timeoutMs }: OperationInput<"execute">): Promise<OperationOutput<"execute">> {
-  requireEdits();
+export async function execute(
+  { code, timeoutMs }: OperationInput<"execute">,
+  edits: EditsGuard,
+): Promise<OperationOutput<"execute">> {
+  edits.require();
 
   const logs: string[] = [];
   let dropped = 0;

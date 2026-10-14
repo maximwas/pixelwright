@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 /** A button whose hover is its Hover variant, as a design file has it: the variant is the interaction's destination. */
 const page = () =>
@@ -42,7 +45,7 @@ describe("prototype interactions in a snapshot", () => {
   it("come with each destination's name", async () => {
     installFigma(page());
 
-    const snapshot = (await runOperation("snapshot", { node: "1:2" })) as {
+    const snapshot = (await plugin.run("snapshot", { node: "1:2" })) as {
       root: { reactions?: { actions: { destinationName?: string; navigation?: string }[] }[] };
     };
 

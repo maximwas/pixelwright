@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 describe("save_version", () => {
   it("saves a named version in the file's history, and only with Allow edits on", async () => {
@@ -21,15 +23,15 @@ describe("save_version", () => {
       },
     });
 
-    setEditsAllowed(false);
-    await expect(runOperation("save_version", { title: "Before hero" })).rejects.toMatchObject({
+    plugin.services.edits.allow(false);
+    await expect(plugin.run("save_version", { title: "Before hero" })).rejects.toMatchObject({
       code: "EDITS_DISABLED",
     });
     expect(saved).toEqual([]);
 
-    setEditsAllowed(true);
-    expect(await runOperation("save_version", { title: "Before hero" })).toEqual({ id: "v-42" });
+    plugin.services.edits.allow(true);
+    expect(await plugin.run("save_version", { title: "Before hero" })).toEqual({ id: "v-42" });
     expect(saved).toEqual(["Before hero"]);
-    setEditsAllowed(false);
+    plugin.services.edits.allow(false);
   });
 });

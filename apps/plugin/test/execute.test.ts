@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 interface Ran {
   result: unknown;
@@ -11,7 +13,7 @@ interface Ran {
 
 let fake: ReturnType<typeof installFigma>;
 const run = async (code: string, timeoutMs = 1_000) =>
-  (await runOperation("execute", {
+  (await plugin.run("execute", {
     code,
     timeoutMs,
   })) as Ran;
@@ -36,11 +38,11 @@ beforeEach(() => {
       ],
     }),
   );
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("execute", () => {
@@ -137,7 +139,7 @@ describe("execute", () => {
   });
 
   it("refuses to run while Allow edits is off", async () => {
-    setEditsAllowed(false);
+    plugin.services.edits.allow(false);
 
     await expect(run("return 1;")).rejects.toMatchObject({ code: "EDITS_DISABLED" });
   });

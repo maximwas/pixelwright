@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { type FakeLibrary, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const WHITE = {
   r: 1,
@@ -188,17 +191,17 @@ describe("variables", () => {
   it("says the file's colour profile, and nothing where Figma does not give one", async () => {
     const { figma } = installFigma(page(), LIBRARY);
 
-    expect(await runOperation("variables", {})).not.toHaveProperty("colorProfile");
+    expect(await plugin.run("variables", {})).not.toHaveProperty("colorProfile");
 
     Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
 
-    expect(await runOperation("variables", {})).toMatchObject({ colorProfile: "DISPLAY_P3" });
+    expect(await plugin.run("variables", {})).toMatchObject({ colorProfile: "DISPLAY_P3" });
   });
 
   it("reads every collection with its modes and every variable's value per mode, aliases kept", async () => {
     installFigma(page(), LIBRARY);
 
-    const tokens = (await runOperation("variables", {})) as Record<string, unknown>;
+    const tokens = (await plugin.run("variables", {})) as Record<string, unknown>;
 
     expect((tokens.collections as unknown[]).slice(0, 2)).toEqual([
       {
@@ -281,7 +284,7 @@ describe("variables", () => {
   it("lists the enabled libraries' variables by name when asked, and says why when it cannot", async () => {
     installFigma(page(), LIBRARY);
 
-    const withLibrary = (await runOperation("variables", { libraries: true })) as Record<string, unknown>;
+    const withLibrary = (await plugin.run("variables", { libraries: true })) as Record<string, unknown>;
 
     expect(withLibrary.library).toEqual([
       {
@@ -303,7 +306,7 @@ describe("variables", () => {
       teamLibrary: new Error("Offline"),
     });
 
-    const offline = (await runOperation("variables", { libraries: true })) as Record<string, unknown>;
+    const offline = (await plugin.run("variables", { libraries: true })) as Record<string, unknown>;
 
     expect(offline.libraryError).toMatch(/Offline/);
     expect((offline.variables as unknown[]).length).toBe(4);
@@ -433,7 +436,7 @@ describe("variables the page uses from a library", () => {
       },
     );
 
-    const tokens = (await runOperation("variables", {})) as {
+    const tokens = (await plugin.run("variables", {})) as {
       collections: { name: string; remote: boolean; modes: unknown[] }[];
       variables: { name: string; valuesByMode: Record<string, unknown> }[];
       styles: { name: string; remote: boolean }[];
@@ -463,7 +466,7 @@ describe("variables the page uses from a library", () => {
     ]);
     expect(tokens.variables.map(({ name }) => name).sort()).toEqual(["Ink", "Surface"]);
 
-    const onlyLocal = (await runOperation("variables", { used: false })) as { styles: unknown[]; variables: unknown[] };
+    const onlyLocal = (await plugin.run("variables", { used: false })) as { styles: unknown[]; variables: unknown[] };
 
     expect(onlyLocal).toMatchObject({
       styles: [],
@@ -502,7 +505,7 @@ describe("a slow library catalogue", () => {
         },
       });
 
-      const tokens = (await runOperation("variables", { libraries: true })) as Record<string, unknown>;
+      const tokens = (await plugin.run("variables", { libraries: true })) as Record<string, unknown>;
 
       expect(tokens.library).toHaveLength(1);
       expect(tokens.libraryError).toMatch(/1 of 3/);

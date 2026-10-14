@@ -1,8 +1,10 @@
 import { TokensApplyInputSchema, tokensPlan } from "@pixelwright/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 interface Applied {
   created: { kind: string; name: string }[];
@@ -27,7 +29,7 @@ const apply = async (styles: unknown) => {
 
   expect(errors).toEqual([]);
 
-  return (await runOperation("tokens_apply", {
+  return (await plugin.run("tokens_apply", {
     plan,
     dryRun: false,
   })) as Applied;
@@ -140,11 +142,11 @@ beforeEach(() => {
       ],
     },
   );
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("tokens_apply: styles", () => {

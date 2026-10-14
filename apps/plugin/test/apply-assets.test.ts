@@ -1,8 +1,10 @@
 import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 interface Applied {
   created: { line: number; ref: string; id: string; tag: string }[];
@@ -24,14 +26,14 @@ function changesOf(xml: string, extra: Record<string, (change: ApplyChange) => A
 }
 
 const apply = async (changes: ApplyChange[], options: { parent?: string } = {}) =>
-  (await runOperation("apply", {
+  (await plugin.run("apply", {
     changes,
     ...options,
   })) as Applied;
 
 /** A file's bytes sent the way the server sends them, in one chunk. */
 async function send(stream: string, length: number): Promise<void> {
-  await runOperation("upload", {
+  await plugin.run("upload", {
     stream,
     offset: 0,
     chunk: btoa("x".repeat(length)),
@@ -143,11 +145,11 @@ beforeEach(() => {
       },
     ],
   });
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("apply: images and icons", () => {
@@ -254,7 +256,7 @@ describe("apply: copies, slots and moves", () => {
   });
 
   it("checks a copy on a dry run without its own ids", async () => {
-    const result = (await runOperation("apply", {
+    const result = (await plugin.run("apply", {
       changes: changesOf('<Frame copyOf="1:1" name="Card 2"><Text id="1:2">New title</Text></Frame>'),
       parent: "3:1",
       dryRun: true,

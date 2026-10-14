@@ -1,14 +1,17 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
-import { errorMessage } from "../utils/error-message.ts";
-import { requireEdits } from "./edits.ts";
-import { pageOf } from "./nodes.ts";
+import { pageOf } from "../../figma/nodes.ts";
+import type { EditsGuard } from "../../services/edits-guard.ts";
+import { errorMessage } from "../../utils/error-message.ts";
 
 /**
  * Deletes layers, each on its own: one Figma will not delete (inside an instance, a page) stays with its reason. One
  * undo step for the call; refused while Allow edits is off.
  */
-export async function deleteNodes({ nodes }: OperationInput<"delete">): Promise<OperationOutput<"delete">> {
-  requireEdits();
+export async function deleteNodes(
+  { nodes }: OperationInput<"delete">,
+  edits: EditsGuard,
+): Promise<OperationOutput<"delete">> {
+  edits.require();
 
   const deleted: string[] = [];
   const errors: OperationOutput<"delete">["errors"] = [];

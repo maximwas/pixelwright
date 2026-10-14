@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const IMAGE = Uint8Array.from({ length: 10 }, (_, index) => index);
 let exports: unknown[];
@@ -38,7 +40,7 @@ beforeEach(() => {
 });
 
 const chunk = (offset: number, extra: object = {}) =>
-  runOperation("export", {
+  plugin.run("export", {
     node: "2:4869",
     format: "PNG",
     offset,
@@ -105,14 +107,14 @@ describe("image", () => {
       getImageByHash: (hash: string) => (hash === "a".repeat(40) ? { getBytesAsync: async () => original } : null),
     });
 
-    const first = (await runOperation("image", {
+    const first = (await plugin.run("image", {
       hash: "a".repeat(40),
       length: 4,
     })) as {
       totalBytes: number;
       bytes: string;
     };
-    const second = (await runOperation("image", {
+    const second = (await plugin.run("image", {
       hash: "a".repeat(40),
       offset: 4,
       length: 4,
@@ -120,7 +122,7 @@ describe("image", () => {
 
     expect(first.totalBytes).toBe(6);
     expect(atob(first.bytes) + atob(second.bytes)).toBe(String.fromCharCode(...original));
-    await expect(runOperation("image", { hash: "b".repeat(40) })).rejects.toThrow(/No image/);
+    await expect(plugin.run("image", { hash: "b".repeat(40) })).rejects.toThrow(/No image/);
   });
 });
 
@@ -139,7 +141,7 @@ describe("exports read at the same time", () => {
     };
 
     const read = (stream: string, format: string, offset: number) =>
-      runOperation("export", {
+      plugin.run("export", {
         node: "2:4869",
         format,
         offset,
@@ -214,7 +216,7 @@ describe("export in a variable mode", () => {
     Object.assign(installed.figma, {
       base64Encode: (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)),
     });
-    setEditsAllowed(allowEdits);
+    plugin.services.edits.allow(allowEdits);
 
     return {
       node,
@@ -226,7 +228,7 @@ describe("export in a variable mode", () => {
   it("renders the layer in the mode asked for and leaves its modes as they were, in one undo step", async () => {
     const { node, seen, writes } = themed(true);
 
-    await runOperation("export", {
+    await plugin.run("export", {
       node: "4:1",
       format: "PNG",
       offset: 0,
@@ -243,7 +245,7 @@ describe("export in a variable mode", () => {
     themed(false);
 
     await expect(
-      runOperation("export", {
+      plugin.run("export", {
         node: "4:1",
         format: "PNG",
         offset: 0,
@@ -313,10 +315,10 @@ describe("mode renders at once", () => {
     Object.assign(installed.figma, {
       base64Encode: (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)),
     });
-    setEditsAllowed(true);
+    plugin.services.edits.allow(true);
 
     const render = (mode: string) =>
-      runOperation("export", {
+      plugin.run("export", {
         node: "4:2",
         format: "PNG",
         offset: 0,

@@ -8,6 +8,7 @@ import {
   type OperationOutput,
   type PaintSpec,
 } from "@pixelwright/core";
+import type { PluginServices } from "../services/plugin-services.ts";
 import type { KnownFont, Layer, TextLayer, WriteContext } from "../types/apply.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import {
@@ -33,11 +34,9 @@ import {
 } from "./apply-components.ts";
 import { STEPS, set } from "./apply-props.ts";
 import { hasTextProps, writeText } from "./apply-text.ts";
-import { requireEdits } from "./edits.ts";
-import { fontKey, fontNameOf } from "./fonts.ts";
+import { fontKey } from "./fonts.ts";
 import { pageOf } from "./nodes.ts";
 import { TokenIndex } from "./tokens/token-index.ts";
-import { dropUploads, uploaded } from "./uploads.ts";
 import { WriteError } from "./write-error.ts";
 
 const MAKERS: Readonly<Record<string, () => SceneNode>> = {
@@ -75,13 +74,16 @@ interface Pending {
  * parent first, after the element before them in the XML; one undo step for the call. Refused while Allow edits is
  * off; a dry run checks ids, parents, tokens and fonts and writes nothing.
  */
-export async function apply({ changes, parent, dryRun }: OperationInput<"apply">): Promise<OperationOutput<"apply">> {
+export async function apply(
+  { changes, parent, dryRun }: OperationInput<"apply">,
+  services: PluginServices,
+): Promise<OperationOutput<"apply">> {
   if (!dryRun) {
-    requireEdits();
+    services.edits.require();
   }
 
   const top = parent === undefined ? null : await layerOf(parent);
-  const context = await prepare(changes, dryRun);
+  const context = await prepare(changes, dryRun, services);
   const errors: ApplyError[] = [];
   const created: OperationOutput<"apply">["created"] = [];
   const changed: string[] = [];
@@ -223,7 +225,7 @@ export async function apply({ changes, parent, dryRun }: OperationInput<"apply">
     figma.commitUndo();
   }
 
-  dropUploads(changes.flatMap(streamsOf));
+  services.uploads.drop(changes.flatMap(streamsOf));
 
   return {
     created,
@@ -319,7 +321,11 @@ async function loadPageOf(node: BaseNode): Promise<void> {
 }
 
 /** Every font the changes ask for, found and loaded up front, with the fonts of the texts they change. */
-async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promise<WriteContext> {
+async function prepare(
+  changes: readonly ApplyChange[],
+  dryRun: boolean,
+  { fonts: catalog, uploads }: PluginServices,
+): Promise<WriteContext> {
   let index: Promise<TokenIndex> | null = null;
   const tokens = () => {
     index ??= TokenIndex.of();
@@ -347,9 +353,9 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
   for (const change of changes) {
     for (const props of [change.props, ...(change.text?.runs ?? []).map((run) => run.props)]) {
       if (props.font !== undefined && !fonts.has(fontKey(props.font))) {
-        const font = await fontNameOf(props.font, known).catch((error: unknown) =>
-          error instanceof WriteError ? error : new WriteError(errorMessage(error)),
-        );
+        const font = await catalog
+          .fontNameOf(props.font, known)
+          .catch((error: unknown) => (error instanceof WriteError ? error : new WriteError(errorMessage(error))));
 
         fonts.set(fontKey(props.font), font);
 
@@ -376,7 +382,7 @@ async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promis
     tokens,
     fonts,
     unloaded,
-    uploads: uploaded,
+    uploads: (stream) => uploads.bytes(stream),
     images: new Map(),
     components: componentIndex(),
     marks: [],

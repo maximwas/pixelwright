@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import { readDesign } from "../../server/src/design/read-design.ts";
 import { applyDesign } from "../../server/src/features/design-apply/apply-design.ts";
 import { PluginClient } from "../../server/src/plugin/plugin-client.ts";
-import { setEditsAllowed } from "../src/figma/edits.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
 import { pluginBridge } from "./helpers/plugin-bridge.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const GRADIENT = {
   type: "GRADIENT_LINEAR",
@@ -73,9 +76,9 @@ describe("a layer filled with a gradient paint style", () => {
         },
       },
     );
-    setEditsAllowed(true);
+    plugin.services.edits.allow(true);
 
-    const bridge = pluginBridge();
+    const bridge = pluginBridge(plugin);
     const read = await readDesign(bridge, {
       node: "1:1",
       screenshot: false,

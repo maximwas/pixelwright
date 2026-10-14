@@ -1,8 +1,10 @@
 import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 interface Applied {
   created: { id: string }[];
@@ -19,7 +21,7 @@ function changesOf(xml: string): ApplyChange[] {
 }
 
 const apply = async (xml: string, options: { dryRun?: boolean; parent?: string } = {}) =>
-  (await runOperation("apply", {
+  (await plugin.run("apply", {
     changes: changesOf(xml),
     ...options,
   })) as Applied;
@@ -157,11 +159,11 @@ beforeEach(() => {
       },
     },
   });
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("apply: effects CSS cannot write", () => {

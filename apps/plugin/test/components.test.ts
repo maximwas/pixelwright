@@ -1,7 +1,10 @@
 import { OPERATION_SCHEMAS } from "@pixelwright/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 /** A variant's own definitions: Figma throws when they are read, so reading them is a bug. */
 const variantDefinitions = () => {
@@ -132,7 +135,7 @@ describe("components", () => {
       },
     };
 
-    const answer = await runOperation("components", {
+    const answer = await plugin.run("components", {
       scope: "local",
       query: "Badge",
     });
@@ -142,7 +145,7 @@ describe("components", () => {
   });
 
   it("lists the file's components, variants folded into their set, properties read from the set", async () => {
-    const { components, more } = (await runOperation("components", { scope: "local" })) as {
+    const { components, more } = (await plugin.run("components", { scope: "local" })) as {
       components: unknown[];
       more: boolean;
     };
@@ -196,7 +199,7 @@ describe("components", () => {
   });
 
   it("lists the components a page uses, a library's among them, with how many instances each has", async () => {
-    const { components } = (await runOperation("components", {
+    const { components } = (await plugin.run("components", {
       scope: "used",
       within: "3:1",
     })) as {
@@ -210,13 +213,13 @@ describe("components", () => {
   });
 
   it("narrows by name and stops at the limit, saying there is more", async () => {
-    const byName = (await runOperation("components", {
+    const byName = (await plugin.run("components", {
       scope: "local",
       query: "but",
     })) as {
       components: { name: string }[];
     };
-    const limited = (await runOperation("components", {
+    const limited = (await plugin.run("components", {
       scope: "local",
       limit: 1,
     })) as {
@@ -232,13 +235,13 @@ describe("components", () => {
 
 describe("components_read review fixes", () => {
   it("counts the layer it looks in: a set read as within, an instance read as within", async () => {
-    const local = (await runOperation("components", {
+    const local = (await plugin.run("components", {
       scope: "local",
       within: "9:0",
     })) as {
       components: { id: string }[];
     };
-    const used = (await runOperation("components", {
+    const used = (await plugin.run("components", {
       scope: "used",
       within: "3:2",
     })) as {
@@ -261,7 +264,7 @@ describe("components_read review fixes", () => {
       },
     });
 
-    const { components } = (await runOperation("components", { scope: "local" })) as {
+    const { components } = (await plugin.run("components", { scope: "local" })) as {
       components: { id: string; properties: object; error?: string }[];
     };
 
@@ -298,7 +301,7 @@ describe("components_read review fixes", () => {
         return instance;
       });
 
-      const { components, more } = (await runOperation("components", {
+      const { components, more } = (await plugin.run("components", {
         scope: "used",
         within: "3:1",
       })) as {

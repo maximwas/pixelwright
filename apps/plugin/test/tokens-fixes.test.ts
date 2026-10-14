@@ -3,9 +3,12 @@ import { applyTokens } from "../../server/src/features/tokens-apply/apply-tokens
 import { TokensApplyToolInputSchema } from "../../server/src/features/tokens-apply/schemas.ts";
 import { readTokens } from "../../server/src/features/tokens-read/read-tokens.ts";
 import { TokensReadInputSchema } from "../../server/src/features/tokens-read/schemas.ts";
-import { setEditsAllowed } from "../src/figma/edits.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
 import { pluginClient } from "./helpers/plugin-bridge.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const text = (id: string, name: string, family: string, style: string, fontSize: number, lineHeight: object) => ({
   id,
@@ -206,18 +209,18 @@ const variable = async (name: string) =>
 const textStyle = async (name: string) => (await figma.getLocalTextStylesAsync()).find((item) => item.name === name);
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("tokens_apply: what CSS cannot show survives", () => {
   it("writes nothing when given tokens_read's own output, however lossy its CSS", async () => {
     lossy();
-    setEditsAllowed(true);
+    plugin.services.edits.allow(true);
 
-    const plugin = pluginClient();
-    const read = await readTokens(plugin, TokensReadInputSchema.parse({ format: "json" }));
+    const client = pluginClient(plugin);
+    const read = await readTokens(client, TokensReadInputSchema.parse({ format: "json" }));
 
-    expect(await applyTokens(plugin, TokensApplyToolInputSchema.parse({ ...read.tokens }))).toEqual({
+    expect(await applyTokens(client, TokensApplyToolInputSchema.parse({ ...read.tokens }))).toEqual({
       created: [],
       updated: [],
       errors: [],
@@ -254,10 +257,10 @@ describe("tokens_apply: what CSS cannot show survives", () => {
 
   it("keeps a style's own face, its blur and an opacity's percent when one value of it changes", async () => {
     lossy();
-    setEditsAllowed(true);
+    plugin.services.edits.allow(true);
 
     const result = await applyTokens(
-      pluginClient(),
+      pluginClient(plugin),
       TokensApplyToolInputSchema.parse({
         collections: [
           {
@@ -442,14 +445,14 @@ describe("tokens_apply: library tokens", () => {
   it("never copies a library's collection or style into the file, whatever page is current", async () => {
     const { pageB } = onTwoPages();
 
-    setEditsAllowed(true);
+    plugin.services.edits.allow(true);
 
-    const plugin = pluginClient();
-    const read = await readTokens(plugin, TokensReadInputSchema.parse({ format: "json" }));
+    const client = pluginClient(plugin);
+    const read = await readTokens(client, TokensReadInputSchema.parse({ format: "json" }));
 
     figma.currentPage = pageB as never;
 
-    expect(await applyTokens(plugin, TokensApplyToolInputSchema.parse({ ...read.tokens }))).toMatchObject({
+    expect(await applyTokens(client, TokensApplyToolInputSchema.parse({ ...read.tokens }))).toMatchObject({
       created: [],
       updated: [],
       errors: [],
@@ -460,10 +463,10 @@ describe("tokens_apply: library tokens", () => {
 
   it("points an alias at an enabled library's variable the file does not use yet, importing it", async () => {
     onTwoPages();
-    setEditsAllowed(true);
+    plugin.services.edits.allow(true);
 
     const result = await applyTokens(
-      pluginClient(),
+      pluginClient(plugin),
       TokensApplyToolInputSchema.parse({
         collections: [
           {
@@ -494,7 +497,7 @@ describe("tokens_apply: library tokens", () => {
 
     const importing = vi.spyOn(figma.variables, "importVariableByKeyAsync");
     const result = await applyTokens(
-      pluginClient(),
+      pluginClient(plugin),
       TokensApplyToolInputSchema.parse({
         collections: [
           {
@@ -533,7 +536,7 @@ describe("tokens_apply: library tokens", () => {
     onTwoPages();
 
     const result = await applyTokens(
-      pluginClient(),
+      pluginClient(plugin),
       TokensApplyToolInputSchema.parse({
         styles: {
           paint: [
@@ -567,10 +570,10 @@ describe("tokens_apply: Figma refusing one item", () => {
       }),
     );
 
-    setEditsAllowed(true);
+    plugin.services.edits.allow(true);
 
     const result = await applyTokens(
-      pluginClient(),
+      pluginClient(plugin),
       TokensApplyToolInputSchema.parse({
         collections: [
           {

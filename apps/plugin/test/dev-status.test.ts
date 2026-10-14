@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const page = () =>
   tree({
@@ -48,10 +51,10 @@ describe("what the designer marked ready for dev", () => {
 
     Object.assign(figma, { root: { children: [figma.currentPage] } });
 
-    const { root } = (await runOperation("outline", { depth: 1 })) as {
+    const { root } = (await plugin.run("outline", { depth: 1 })) as {
       root: { children: { id: string; dev?: string }[] };
     };
-    const map = (await runOperation("file_map", null)) as {
+    const map = (await plugin.run("file_map", null)) as {
       pages: { nodes: { id: string; devStatus?: string }[] }[];
     };
 
@@ -70,7 +73,7 @@ describe("what the designer marked ready for dev", () => {
   it("gives a read the status of the layer or the nearest one above it that has one", async () => {
     installFigma(page());
 
-    expect(await runOperation("snapshot", { node: "3:3" })).toMatchObject({ devStatus: "ready" });
-    expect(await runOperation("snapshot", { node: "5:1" })).not.toHaveProperty("devStatus");
+    expect(await plugin.run("snapshot", { node: "3:3" })).toMatchObject({ devStatus: "ready" });
+    expect(await plugin.run("snapshot", { node: "5:1" })).not.toHaveProperty("devStatus");
   });
 });

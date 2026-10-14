@@ -19,6 +19,8 @@ const REWRITTEN = [
   "apps/server/src/features/**",
   "apps/server/src/plugin/**",
   "apps/plugin/src/operations/**",
+  "apps/plugin/src/services/**",
+  "apps/plugin/src/main.ts",
   "apps/plugin/src/figma/tokens/**",
 ];
 
