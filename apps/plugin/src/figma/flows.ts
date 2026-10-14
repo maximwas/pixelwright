@@ -6,6 +6,7 @@ import {
   type SnapshotReaction,
 } from "@pixelwright/core";
 import { FILE_MAP_MAX_NODES, FLOW_MAX_LINKS, OP_BUDGET_MS } from "../constants/plugin.ts";
+import { devStatusOf } from "./dev-status.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import { reactionsOf } from "./snapshot.ts";
 import { loaded } from "./used-tokens.ts";
@@ -164,13 +165,18 @@ export async function fileMap(): Promise<OperationOutput<"file_map">> {
   const pages: OperationOutput<"file_map">["pages"] = [];
   let left = FILE_MAP_MAX_NODES;
   let more = false;
-  const entry = (node: SceneNode) => ({
-    id: node.id,
-    name: node.name,
-    type: node.type,
-    width: Math.round(node.width),
-    height: Math.round(node.height),
-  });
+  const entry = (node: SceneNode) => {
+    const devStatus = devStatusOf(node);
+
+    return {
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      width: Math.round(node.width),
+      height: Math.round(node.height),
+      ...(devStatus === undefined ? {} : { devStatus }),
+    };
+  };
 
   for (const page of figma.root.children) {
     if (Date.now() - started > OP_BUDGET_MS || left <= 0) {

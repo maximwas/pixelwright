@@ -498,6 +498,8 @@ const MeasuredSideSchema = z.object({
 
 export const SnapshotSchema = z.object({
   root: SnapshotNodeSchema,
+  /** What the designer marked in Dev Mode on the read layer or the nearest layer above it: ready, or completed. */
+  devStatus: z.enum(["ready", "completed"]).optional(),
   styles: z.record(z.string(), SnapshotStyleSchema),
   variables: z.record(z.string(), SnapshotVariableSchema),
   /** The page's Dev Mode measurements with a side on the read layers, with the designer's text when there is one. */

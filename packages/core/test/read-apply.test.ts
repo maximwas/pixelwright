@@ -303,6 +303,18 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
     expect(changesOf(snapshot, xml)).toEqual([]);
   });
 
+  it("with the read marked ready for dev", () => {
+    const snapshot: Snapshot = {
+      ...fixture("orbit-plans"),
+      devStatus: "ready",
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml.split("\n")[0]).toContain('$dev="ready for dev"');
+    expect(xml.split("\n").slice(1).join("\n")).not.toContain("$dev");
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
+
   it("with Figma Motion on a layer", () => {
     const plans = fixture("orbit-plans");
     const [first, ...rest] = plans.root.children ?? [];

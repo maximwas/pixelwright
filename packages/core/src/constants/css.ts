@@ -91,3 +91,9 @@ export const DEFAULT_FONT_AXES: Readonly<Record<string, number>> = {
   ital: 0,
   wdth: 100,
 };
+
+/** design_read's `$dev` for what the designer marked in Dev Mode. */
+export const DEV_STATUS_WORDS: Readonly<Record<string, string>> = {
+  ready: "ready for dev",
+  completed: "completed",
+};

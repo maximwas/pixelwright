@@ -24,6 +24,7 @@ export interface OutlineNode {
   width?: number;
   height?: number;
   hidden?: true;
+  dev?: "ready" | "completed";
   childCount?: number;
   children?: OutlineNode[];
 }

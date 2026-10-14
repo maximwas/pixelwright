@@ -1,5 +1,6 @@
 import { BridgeError, type OperationInput, type OperationOutput, type OutlineNode } from "@pixelwright/core";
 import { MAIN_COMPONENT_BATCH, OP_BUDGET_MS, OUTLINE_MAX_NODES, VIEWPORT_MAX_LAYERS } from "../constants/plugin.ts";
+import { devStatusOf } from "./dev-status.ts";
 import { boxOf, pageOf, pathOf, requireNode } from "./nodes.ts";
 
 /** What the user selected on the current page. */
@@ -233,6 +234,7 @@ export async function outline({ node: id, depth }: OperationInput<"outline">): P
             height: box.height,
           }),
       ...("visible" in node && !node.visible ? { hidden: true } : {}),
+      ...devEntry(node),
       childCount: childrenOf(node).length,
     };
 
@@ -334,4 +336,11 @@ export async function setOf({ node: id }: OperationInput<"set_of">): Promise<Ope
     id: set.id,
     name: set.name,
   };
+}
+
+/** The node's Dev Mode status as an outline writes it, when the designer marked one. */
+function devEntry(node: BaseNode): { dev?: "ready" | "completed" } {
+  const dev = devStatusOf(node);
+
+  return dev === undefined ? {} : { dev };
 }

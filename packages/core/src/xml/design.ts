@@ -1,6 +1,6 @@
 import { splitTop } from "../apply/css-values.ts";
 import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../constants/annotations.ts";
-import { INVISIBLE_TYPES } from "../constants/css.ts";
+import { DEV_STATUS_WORDS, INVISIBLE_TYPES } from "../constants/css.ts";
 import { px } from "../css/format.ts";
 import { interactionAttributes } from "../css/interactions.ts";
 import { motionSummary } from "../css/motion.ts";
@@ -176,6 +176,7 @@ class DesignWriter {
       ["note", noteOf(node)],
       ["$pins", pinsOf(node)],
       ["$override", overrideWords(node).join(", ") || undefined],
+      ["$dev", node === this.snapshot.root ? DEV_STATUS_WORDS[this.snapshot.devStatus ?? ""] : undefined],
       ["href", node.href ?? (node.type === "TEXT" ? urlOf(node.text?.segments ?? []) : undefined)],
       ["textStyle", this.useTextStyle(css.textStyle)],
       ["src", asset === null ? undefined : this.plan(node, asset)],

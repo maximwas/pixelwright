@@ -11,6 +11,7 @@ import {
 } from "@pixelwright/core";
 import { SNAPSHOT_MAX_CHARS } from "../constants/plugin.ts";
 import { plain } from "../utils/plain.ts";
+import { nearestDevStatus } from "./dev-status.ts";
 import { motionOf } from "./motion.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import { numbered, numberingStyles, styleOf } from "./styles.ts";
@@ -98,9 +99,11 @@ export async function snapshot({
   );
 
   const measurements = measurementsOf(root);
+  const devStatus = nearestDevStatus(root);
 
   return {
     root: top,
+    ...(devStatus === undefined ? {} : { devStatus }),
     styles: await resolveStyles(references.styles, [pageOf(root)]),
     variables: await resolveVariables(references.variables),
     ...(measurements.length === 0 ? {} : { measurements }),

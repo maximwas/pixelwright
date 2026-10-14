@@ -28,6 +28,8 @@ const MapNodeSchema = LayerNameSchema.extend({
   type: z.string(),
   width: z.number(),
   height: z.number(),
+  /** What the designer marked in Dev Mode: ready for development, or completed. */
+  devStatus: z.enum(["ready", "completed"]).exactOptional(),
 });
 
 /** A node as lists show it: enough to name it, find it again and point at it. */
@@ -54,6 +56,8 @@ export const OutlineNodeSchema: z.ZodType<OutlineNode> = z.object({
   width: z.number().exactOptional(),
   height: z.number().exactOptional(),
   hidden: z.literal(true).exactOptional(),
+  /** What the designer marked in Dev Mode: ready for development, or completed. */
+  dev: z.enum(["ready", "completed"]).exactOptional(),
   /** Unknown for a page the user has not opened yet: Figma loads its layers only when asked. */
   childCount: z.number().int().min(0).exactOptional(),
   get children() {
