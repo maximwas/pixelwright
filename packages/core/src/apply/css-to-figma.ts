@@ -1,7 +1,8 @@
-import { LAYOUT_TAGS } from "../constants/apply.ts";
 import { ELEMENT_RULES, HREF_RULE } from "../css-mapping/groups/element.ts";
+import { LAYOUT_RULES } from "../css-mapping/groups/layout/layout.ts";
+import { keywordRule } from "../css-mapping/keyword-rule.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../css-mapping/property-group.ts";
-import { imageOf, lengthOf, numberOf, percentOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
+import { boxOf, imageOf, lengthOf, numberOf, percentOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
 import { fontOf, textLengthOf } from "../css-mapping/values/fonts.ts";
 import { paintOf } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
@@ -13,9 +14,7 @@ import type {
   AxisPlacement,
   EffectSpec,
   FigmaProps,
-  GridTrack,
   LayerNow,
-  LengthValue,
   PaintSpec,
   SelfAlign,
   TextLength,
@@ -36,59 +35,10 @@ interface Side {
   readonly paint: PaintSpec;
 }
 
-const LAYOUT = [
-  "display",
-  "flex-direction",
-  "flex-wrap",
-  "gap",
-  "row-gap",
-  "column-gap",
-  "grid-template-columns",
-  "grid-template-rows",
-];
 const SIDES = ["top", "right", "bottom", "left"] as const;
 const STROKES = ["border", "border-top", "border-right", "border-bottom", "border-left", "outline"];
 const EFFECTS = ["box-shadow", "text-shadow", "filter", "backdrop-filter"];
 const DECORATION = ["text-decoration", "text-underline-offset", "text-decoration-thickness"];
-
-const DISPLAYS: Readonly<Record<string, "flex" | "grid" | "block" | "none">> = {
-  flex: "flex",
-  "inline-flex": "flex",
-  grid: "grid",
-  "inline-grid": "grid",
-  block: "block",
-  "inline-block": "block",
-  none: "none",
-};
-
-const JUSTIFY: Readonly<Record<string, Exclude<FigmaProps["primaryAxisAlignItems"], undefined>>> = {
-  normal: "MIN",
-  "flex-start": "MIN",
-  start: "MIN",
-  center: "CENTER",
-  "flex-end": "MAX",
-  end: "MAX",
-  "space-between": "SPACE_BETWEEN",
-  "space-evenly": "SPACE_EVENLY",
-  "space-around": "SPACE_AROUND",
-};
-
-const ALIGN: Readonly<Record<string, Exclude<FigmaProps["counterAxisAlignItems"], undefined>>> = {
-  normal: "MIN",
-  "flex-start": "MIN",
-  start: "MIN",
-  center: "CENTER",
-  "flex-end": "MAX",
-  end: "MAX",
-  baseline: "BASELINE",
-};
-
-const ALIGN_CONTENT: Readonly<Record<string, Exclude<FigmaProps["counterAxisAlignContent"], undefined>>> = {
-  normal: "AUTO",
-  "flex-start": "AUTO",
-  start: "AUTO",
-  "space-between": "SPACE_BETWEEN",
-};
 
 const SELF: Readonly<Record<string, SelfAlign>> = {
   auto: "AUTO",
@@ -156,26 +106,7 @@ const VERTICAL: Axis = {
 
 const RULES: readonly Rule[] = [
   ...ELEMENT_RULES,
-  {
-    attributes: LAYOUT,
-    write: layoutRule,
-  },
-  {
-    attributes: ["padding"],
-    write: paddingRule,
-  },
-  {
-    attributes: ["justify-content"],
-    write: keywordRule("justify-content", JUSTIFY, "primaryAxisAlignItems"),
-  },
-  {
-    attributes: ["align-items"],
-    write: keywordRule("align-items", ALIGN, "counterAxisAlignItems"),
-  },
-  {
-    attributes: ["align-content"],
-    write: keywordRule("align-content", ALIGN_CONTENT, "counterAxisAlignContent"),
-  },
+  ...LAYOUT_RULES,
   {
     attributes: ["position"],
     write: positionRule,
@@ -394,210 +325,6 @@ function output(
       });
     },
   };
-}
-
-function keywordRule<K extends keyof FigmaProps>(
-  attribute: string,
-  table: Readonly<Record<string, Exclude<FigmaProps[K], undefined>>>,
-  key: K,
-): Rule["write"] {
-  return ({ own }, out) => {
-    const value = own(attribute) ?? "";
-    const mapped = table[value];
-
-    if (mapped === undefined) {
-      out.fail(attribute, `${attribute}="${value}" is not one Figma has: ${Object.keys(table).join(", ")}.`);
-    } else {
-      out.set(key, mapped, attribute);
-    }
-  };
-}
-
-/** Auto layout: the direction, wrap and gaps, read together since a gap means another axis in another direction. */
-function layoutRule(input: WriteInput, out: WriteOutput): void {
-  const { merged, changed } = input;
-  const display = merged("display");
-  const mode = display === undefined ? "block" : DISPLAYS[display];
-
-  if (mode === undefined) {
-    out.fail(
-      "display",
-      `display="${display}" is not one Figma has: flex, grid, block (no auto layout) or none (hidden).`,
-    );
-
-    return;
-  }
-
-  if (mode === "none") {
-    // Hidden: the layout it has stays for when it is shown again.
-    out.set("visible", false, "display");
-
-    return;
-  }
-
-  if (changed("display") && input.hidden) {
-    out.set("visible", true, "display");
-  }
-
-  if (mode === "grid") {
-    gridLayout(input, out);
-  } else if (mode === "flex") {
-    flexLayout(input, out);
-  } else {
-    if (display !== undefined && LAYOUT_TAGS.has(input.tag)) {
-      out.set("layoutMode", "NONE", "display");
-    }
-
-    for (const name of LAYOUT.slice(1).filter(changed)) {
-      out.fail(name, `${name} needs display="flex" or display="grid": without auto layout it spaces nothing.`);
-    }
-  }
-}
-
-function flexLayout(input: WriteInput, out: WriteOutput): void {
-  const { merged, changed } = input;
-
-  const direction = merged("flex-direction") ?? "row";
-
-  if (direction !== "row" && direction !== "column") {
-    out.fail(
-      "flex-direction",
-      `flex-direction="${direction}" is not one Figma has: row or column (auto layout has no reverse order).`,
-    );
-
-    return;
-  }
-
-  const vertical = direction === "column";
-  const wrap = merged("flex-wrap");
-
-  out.set(
-    "layoutMode",
-    vertical ? "VERTICAL" : "HORIZONTAL",
-    merged("flex-direction") === undefined ? "display" : "flex-direction",
-  );
-
-  if (wrap !== undefined) {
-    if (wrap === "wrap" || wrap === "nowrap") {
-      out.set("layoutWrap", wrap === "wrap" ? "WRAP" : "NO_WRAP", "flex-wrap");
-    } else {
-      out.fail("flex-wrap", `flex-wrap="${wrap}" is not one Figma has: wrap or nowrap.`);
-    }
-  }
-
-  // As in CSS: along a row the columns are spaced, along a column the rows; the other gap is between wrapped lines.
-  const { row, column } = gapsOf(input, out);
-  const along = vertical ? row : column;
-  const across = vertical ? column : row;
-
-  if (along !== undefined) {
-    out.set("itemSpacing", along.value, along.attribute);
-  }
-
-  if (across !== undefined && wrap === "wrap") {
-    out.set("counterAxisSpacing", across.value, across.attribute);
-  }
-
-  for (const name of ["grid-template-columns", "grid-template-rows"].filter(changed)) {
-    out.fail(name, `${name} needs display="grid".`);
-  }
-}
-
-function gridLayout(input: WriteInput, out: WriteOutput): void {
-  const { merged, changed } = input;
-
-  out.set("layoutMode", "GRID", "display");
-
-  for (const [attribute, key] of [
-    ["grid-template-columns", "gridColumns"],
-    ["grid-template-rows", "gridRows"],
-  ] as const) {
-    const value = merged(attribute);
-    const tracks = value === undefined ? undefined : tracksOf(value);
-
-    if (tracks === null) {
-      out.fail(attribute, `${attribute}="${value}" is not tracks in fr, px or auto (repeat() allowed).`);
-    } else if (tracks !== undefined) {
-      out.set(key, tracks, attribute);
-    }
-  }
-
-  const { row, column } = gapsOf(input, out);
-
-  if (column !== undefined) {
-    out.set("gridColumnGap", column.value, column.attribute);
-  }
-
-  if (row !== undefined) {
-    out.set("gridRowGap", row.value, row.attribute);
-  }
-
-  for (const name of ["flex-direction", "flex-wrap"].filter(changed)) {
-    out.fail(name, `${name} needs display="flex": a grid places its children in tracks.`);
-  }
-}
-
-/** The row and column gaps: `gap` gives both (or row then column), row-gap and column-gap one each. */
-function gapsOf(
-  { own, merged }: Pick<WriteInput, "own" | "merged">,
-  out: WriteOutput,
-): { row?: { value: LengthValue; attribute: string }; column?: { value: LengthValue; attribute: string } } {
-  // A gap the element gives resets the row and column gaps the layer has, as the CSS shorthand does.
-  const shorthand = own("gap") !== undefined;
-  const gap = merged("gap");
-  let parts = gap === undefined ? [] : splitTop(gap, " ").map(lengthOf);
-
-  if (gap !== undefined && (parts.length === 0 || parts.length > 2 || parts.includes(null))) {
-    out.fail("gap", `gap="${gap}" is not one or two lengths in px or tokens (rows, then columns).`);
-    parts = [];
-  }
-
-  const result: {
-    row?: { value: LengthValue; attribute: string };
-    column?: { value: LengthValue; attribute: string };
-  } = {};
-
-  for (const [axis, attribute, part] of [
-    ["row", "row-gap", parts[0]],
-    ["column", "column-gap", parts[1] ?? parts[0]],
-  ] as const) {
-    const value = shorthand ? own(attribute) : merged(attribute);
-
-    if (value === undefined) {
-      if (part !== undefined && part !== null) {
-        result[axis] = {
-          value: part,
-          attribute: "gap",
-        };
-      }
-
-      continue;
-    }
-
-    const length = value === "normal" ? 0 : lengthOf(value);
-
-    if (length === null) {
-      out.fail(attribute, `${attribute}="${value}" is not a length in px or a token.`);
-    } else {
-      result[axis] = {
-        value: length,
-        attribute,
-      };
-    }
-  }
-
-  return result;
-}
-
-function paddingRule({ own }: WriteInput, out: WriteOutput): void {
-  const value = own("padding") ?? "";
-  const sides = boxOf(splitTop(value, " ").map(lengthOf));
-
-  if (sides === null) {
-    out.fail("padding", `padding="${value}" is not 1 to 4 lengths in px or tokens.`);
-  } else {
-    out.set("padding", sides, "padding");
-  }
 }
 
 function positionRule({ own }: WriteInput, out: WriteOutput): void {
@@ -1283,47 +1010,4 @@ function textOf(
 
 function textIn(children: readonly XmlChild[]): string {
   return children.map((child) => (child.kind === "text" ? child.value : textIn(child.children))).join("");
-}
-
-function tracksOf(value: string): GridTrack[] | null {
-  const tracks: GridTrack[] = [];
-
-  for (const part of splitTop(value, " ")) {
-    const repeat = /^repeat\(\s*(\d+)\s*,\s*(.+)\)$/.exec(part);
-    const items = repeat === null ? [part] : Array.from({ length: Number(repeat[1]) }, () => (repeat[2] ?? "").trim());
-
-    for (const item of items) {
-      const fraction = /^(\d*\.?\d+)fr$/.exec(item);
-      const pixels = lengthOf(item);
-
-      if (fraction !== null) {
-        tracks.push({
-          type: "FLEX",
-          value: Number(fraction[1]),
-        });
-      } else if (item === "auto") {
-        tracks.push({ type: "HUG" });
-      } else if (typeof pixels === "number") {
-        tracks.push({
-          type: "FIXED",
-          value: pixels,
-        });
-      } else {
-        return null;
-      }
-    }
-  }
-
-  return tracks.length === 0 ? null : tracks;
-}
-
-/** A CSS box shorthand of 1 to 4 values, top (or top-left) first and clockwise. */
-function boxOf<T>(parts: readonly (T | null)[]): [T, T, T, T] | null {
-  if (parts.length === 0 || parts.length > 4 || parts.includes(null)) {
-    return null;
-  }
-
-  const [a, b = a, c = a, d = b] = parts as T[];
-
-  return [a as T, b as T, c as T, d as T];
 }

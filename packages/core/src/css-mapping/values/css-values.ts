@@ -196,3 +196,14 @@ export function unwrapVar(value: string | undefined): string | undefined {
 
   return match?.[1]?.trim() ?? value;
 }
+
+/** A CSS box shorthand of 1 to 4 values, top (or top-left) first and clockwise. */
+export function boxOf<T>(parts: readonly (T | null)[]): [T, T, T, T] | null {
+  if (parts.length === 0 || parts.length > 4 || parts.includes(null)) {
+    return null;
+  }
+
+  const [a, b = a, c = a, d = b] = parts as T[];
+
+  return [a as T, b as T, c as T, d as T];
+}

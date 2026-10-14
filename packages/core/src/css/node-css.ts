@@ -1,6 +1,7 @@
 import { VECTOR_TYPES } from "../constants/css.ts";
 import { CssDeclarations } from "../css-mapping/css-declarations.ts";
-import { boxShorthand, px } from "../css-mapping/values/format.ts";
+import { hasLayout, isFlex, readLayout } from "../css-mapping/groups/layout/layout.ts";
+import { px } from "../css-mapping/values/format.ts";
 import { paintsCss, UNMAPPED } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import type { ColorSpace } from "../kernel/color/color-space.ts";
@@ -11,17 +12,6 @@ import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
 import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
 
-const JUSTIFY: Readonly<Record<string, string>> = {
-  CENTER: "center",
-  MAX: "flex-end",
-  SPACE_BETWEEN: "space-between",
-  SPACE_EVENLY: "space-evenly",
-  SPACE_AROUND: "space-around",
-};
-
-/** Ways of spreading children that leave no room for a gap. */
-const SPREAD = new Set(["SPACE_BETWEEN", "SPACE_EVENLY", "SPACE_AROUND"]);
-
 const SELF_ALIGN: Readonly<Record<string, string>> = {
   MIN: "start",
   CENTER: "center",
@@ -30,12 +20,6 @@ const SELF_ALIGN: Readonly<Record<string, string>> = {
 
 /** A size the constraints decide instead of the layer's own: left out (stretched) or a percent (scaled). */
 type SizeOverride = Partial<Record<"width" | "height", string | null>>;
-
-const ALIGN: Readonly<Record<string, string>> = {
-  CENTER: "center",
-  MAX: "flex-end",
-  BASELINE: "baseline",
-};
 
 const RADII = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
 const SIDES = [
@@ -53,7 +37,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
   const css = new CssDeclarations(node, context);
   let textStyle: string | undefined;
 
-  layoutCss(node, css, context);
+  readLayout(node, css);
 
   if (node.type === "LINE") {
     lineCss(node, parent, css, context);
@@ -107,117 +91,6 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
   layoutGridsCss(node, css);
 
   return css.build(textStyle);
-}
-
-function isFlex(node: SnapshotNode | null): boolean {
-  return node?.layoutMode === "HORIZONTAL" || node?.layoutMode === "VERTICAL";
-}
-
-function hasLayout(node: SnapshotNode | null): boolean {
-  return isFlex(node) || node?.layoutMode === "GRID";
-}
-
-function layoutCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
-  if (node.layoutMode === "GRID") {
-    css.set("display", "grid");
-
-    const columns =
-      tracksCss(node.gridColumnSizes) ??
-      (node.gridColumnCount === undefined ? null : `repeat(${node.gridColumnCount}, 1fr)`);
-    const rows = tracksCss(node.gridRowSizes);
-
-    if (columns !== null) {
-      css.set("grid-template-columns", columns);
-    }
-
-    if (rows !== null) {
-      css.set("grid-template-rows", rows);
-    }
-
-    css.setLength("column-gap", "gridColumnGap", node.gridColumnGap);
-    css.setLength("row-gap", "gridRowGap", node.gridRowGap);
-
-    return;
-  }
-
-  if (!isFlex(node)) {
-    return;
-  }
-
-  css.set("display", "flex");
-
-  if (node.layoutMode === "VERTICAL") {
-    css.set("flex-direction", "column");
-  }
-
-  if (node.layoutWrap === "WRAP") {
-    css.set("flex-wrap", "wrap");
-  }
-
-  const sides = (["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"] as const).map((key) =>
-    css.length(key, node[key] ?? 0),
-  );
-
-  if (sides.some((side) => side !== "0")) {
-    css.set("padding", boxShorthand(...(sides as [string, string, string, string])));
-  }
-
-  const justify = JUSTIFY[node.primaryAxisAlignItems ?? "MIN"];
-  const align = ALIGN[node.counterAxisAlignItems ?? "MIN"];
-
-  if (justify !== undefined) {
-    css.set("justify-content", justify);
-  }
-
-  if (align !== undefined) {
-    css.set("align-items", align);
-  }
-
-  const spaced = node.children?.filter((child) => child.visible).length ?? node.childCount;
-
-  // Spreading spaces the children itself, and a gap with fewer than two children spaces nothing.
-  if (!SPREAD.has(node.primaryAxisAlignItems ?? "MIN") && spaced >= 2) {
-    if ((node.itemSpacing ?? 0) < 0) {
-      // Figma lets children overlap by a negative spacing (avatar stacks); CSS gap cannot be negative.
-      css.readOnly("gap", `${px(node.itemSpacing ?? 0)} (the children overlap)`);
-    } else {
-      css.setLength("gap", "itemSpacing", node.itemSpacing);
-    }
-  }
-
-  if (node.layoutWrap === "WRAP") {
-    // Between wrapped lines: rows of a horizontal wrap, columns of a vertical one. CSS's gap spaces the lines too, so
-    // the line gap is written only when it differs from the gap written, 0 included.
-    const between = node.layoutMode === "VERTICAL" ? "column-gap" : "row-gap";
-    const lines =
-      typeof node.counterAxisSpacing === "number"
-        ? css.length("counterAxisSpacing", node.counterAxisSpacing)
-        : undefined;
-
-    if (lines !== undefined && lines !== (css.get("gap") ?? "0")) {
-      css.set(between, lines);
-    }
-
-    if (node.counterAxisAlignContent === "SPACE_BETWEEN") {
-      css.set("align-content", "space-between");
-    }
-  }
-}
-
-/** Grid tracks: a flex track is `fr`, a fixed one pixels, a hugging one `auto`; equal tracks as repeat(). */
-function tracksCss(tracks: SnapshotNode["gridColumnSizes"]): string | null {
-  if (tracks === undefined || tracks.length === 0) {
-    return null;
-  }
-
-  const sizes = tracks.map((track) =>
-    track.type === "FIXED" ? px(track.value ?? 0) : track.type === "HUG" ? "auto" : `${decimal(track.value ?? 1)}fr`,
-  );
-  const [first] = sizes;
-
-  return sizes.length > 2 && sizes.every((size) => size === first)
-    ? `repeat(${sizes.length}, ${first})`
-    : sizes.join(" ");
 }
 
 /** Where a grid's child sits (1-based lines in CSS) and how it aligns in its cell. */
