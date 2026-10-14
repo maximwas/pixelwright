@@ -39,7 +39,9 @@
         "packages/core/src/kernel/**",
         "packages/core/src/tokens/**",
         "apps/server/src/features/**",
-        "apps/server/src/plugin/**"
+        "apps/server/src/plugin/**",
+        "apps/plugin/src/operations/**",
+        "apps/plugin/src/figma/tokens/**"
       ],
       "linter": {
         "rules": {

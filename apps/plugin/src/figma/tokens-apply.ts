@@ -22,8 +22,9 @@ import { effectKey, effectsOf, mergedEffects, paintsOf } from "./apply-props.ts"
 import { documentColor } from "./color-profile.ts";
 import { requireEdits } from "./edits.ts";
 import { fontNameOf } from "./fonts.ts";
-import { type TokenIndex, tokenIndex } from "./token-index.ts";
-import { variables } from "./variables.ts";
+import { libraryCollectionNames } from "./tokens/libraries.ts";
+import { tokensOfOtherPages, tokensUnder } from "./tokens/raw-tokens-builder.ts";
+import { TokenIndex } from "./tokens/token-index.ts";
 import { WriteError } from "./write-error.ts";
 
 /** A variable an alias may point at: by its CSS name. */
@@ -90,7 +91,7 @@ export async function tokensApply({ plan, dryRun }: OperationInput<"tokens_apply
     },
     dryRun,
     index: () => {
-      index ??= tokenIndex({ importing: !dryRun });
+      index ??= TokenIndex.of();
 
       return index;
     },
@@ -208,10 +209,7 @@ export async function tokensApply({ plan, dryRun }: OperationInput<"tokens_apply
 async function tokensOfFile(
   plan: OperationInput<"tokens_apply">["plan"],
 ): Promise<{ tokens: RawTokens; libraryCollections: ReadonlySet<string> }> {
-  const tokens = await variables({
-    libraries: false,
-    used: true,
-  });
+  const tokens = await tokensUnder(figma.currentPage);
   const knows = () =>
     plan.collections.every((collection) => tokens.collections.some((item) => item.name === collection.name)) &&
     (["paint", "text", "effect"] as const).every((kind) =>
@@ -228,32 +226,13 @@ async function tokensOfFile(
     };
   }
 
-  await figma.loadAllPagesAsync();
-
-  for (const page of figma.root.children) {
-    if (page.id !== figma.currentPage.id) {
-      merge(
-        tokens,
-        await variables({
-          libraries: false,
-          used: true,
-          within: page.id,
-        }),
-      );
-    }
-  }
-
-  try {
-    for (const collection of await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()) {
-      libraryCollections.add(collection.name);
-    }
-  } catch {
-    // Libraries that cannot be read leave only the file's own names.
+  for (const page of await tokensOfOtherPages()) {
+    merge(tokens, page);
   }
 
   return {
     tokens,
-    libraryCollections,
+    libraryCollections: await libraryCollectionNames(),
   };
 }
 
@@ -310,7 +289,9 @@ async function resolveAliases(
         }
 
         try {
-          const found = await (await state.index()).variable(value.token);
+          const index = await state.index();
+          // A dry run only finds a library variable; a real run imports it, so the alias has its id in the file.
+          const found = state.dryRun ? await index.find(value.token) : await index.variable(value.token);
 
           known.set(value.token, {
             id: found.id,

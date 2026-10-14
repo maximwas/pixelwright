@@ -5,7 +5,8 @@ import {
   type OperationName,
   type OperationOutput,
 } from "@pixelwright/core";
-
+import { readTokens } from "../operations/tokens/read-tokens.ts";
+import { usage } from "../operations/tokens/usage.ts";
 import { apply } from "./apply.ts";
 import { asOwnWrite, changes } from "./changes.ts";
 import { components } from "./components.ts";
@@ -20,8 +21,6 @@ import { selectionWait } from "./selection-wait.ts";
 import { entries, snapshot } from "./snapshot.ts";
 import { tokensApply } from "./tokens-apply.ts";
 import { upload } from "./uploads.ts";
-import { usage } from "./usage.ts";
-import { variables } from "./variables.ts";
 
 type Handlers = { readonly [N in OperationName]: (input: OperationInput<N>) => Promise<OperationOutput<N>> };
 
@@ -43,7 +42,7 @@ const HANDLERS: Handlers = {
   export: exportNode,
   image: originalImage,
   snapshot,
-  variables,
+  variables: readTokens,
   components,
   entries,
   apply,

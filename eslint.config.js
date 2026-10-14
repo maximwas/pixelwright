@@ -15,6 +15,8 @@ const REWRITTEN = [
   "packages/core/src/tokens/**",
   "apps/server/src/features/**",
   "apps/server/src/plugin/**",
+  "apps/plugin/src/operations/**",
+  "apps/plugin/src/figma/tokens/**",
 ];
 
 const BANNED_SYNTAX = [

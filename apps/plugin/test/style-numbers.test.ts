@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { runOperation } from "../src/figma/operations.ts";
-import { tokenIndex } from "../src/figma/token-index.ts";
+import { TokenIndex } from "../src/figma/tokens/token-index.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
 
 /** Two of the file's paint styles named Black, as a real file had them (#0F0F0F and #141414). */
@@ -85,7 +85,7 @@ describe("styles that share a name", () => {
   it("are found apart by design_apply's token lookup", async () => {
     installFigma(page(), library);
 
-    const index = await tokenIndex();
+    const index = await TokenIndex.of();
 
     expect(await index.style("--Black", "PAINT")).toBe("S:1");
     expect(await index.style("--Black-2", "PAINT")).toBe("S:2");
@@ -136,7 +136,7 @@ describe("library styles that share a name", () => {
       used: true,
       within: "1:2",
     })) as { styles: { id: string; duplicate?: number }[] };
-    const index = await tokenIndex();
+    const index = await TokenIndex.of();
 
     expect(read.styles["S:b"]?.duplicate).toBe(2);
     expect(entries.styles["S:b"]?.duplicate).toBe(2);
@@ -161,7 +161,7 @@ describe("library styles that share a name", () => {
       ]),
     );
 
-    const index = await tokenIndex();
+    const index = await TokenIndex.of();
 
     expect(await index.style("--Nope", "PAINT")).toBeNull();
     expect(await index.style("--Black", "PAINT")).toBe("S:a");
@@ -288,7 +288,7 @@ describe("same-named text styles in design_apply's lookup", () => {
       },
     );
 
-    const index = await tokenIndex();
+    const index = await TokenIndex.of();
 
     expect(await index.textStyle("h1")).toBe("S:t1");
     expect(await index.textStyle("h1-2")).toBe("S:t2");

@@ -36,7 +36,7 @@ import { hasTextProps, writeText } from "./apply-text.ts";
 import { requireEdits } from "./edits.ts";
 import { fontKey, fontNameOf } from "./fonts.ts";
 import { pageOf } from "./nodes.ts";
-import { type TokenIndex, tokenIndex } from "./token-index.ts";
+import { TokenIndex } from "./tokens/token-index.ts";
 import { dropUploads, uploaded } from "./uploads.ts";
 import { WriteError } from "./write-error.ts";
 
@@ -322,7 +322,7 @@ async function loadPageOf(node: BaseNode): Promise<void> {
 async function prepare(changes: readonly ApplyChange[], dryRun: boolean): Promise<WriteContext> {
   let index: Promise<TokenIndex> | null = null;
   const tokens = () => {
-    index ??= tokenIndex({ importing: !dryRun });
+    index ??= TokenIndex.of();
 
     return index;
   };
@@ -961,7 +961,7 @@ function tokensIn(props: FigmaProps): [keyof FigmaProps, Resolve][] {
   const found: [keyof FigmaProps, Resolve][] = [];
   const length = (key: keyof FigmaProps, value: LengthValue | "HUG" | null | undefined) => {
     if (typeof value === "object" && value !== null) {
-      found.push([key, (index) => index.variable(value.token, "FLOAT")]);
+      found.push([key, (index) => index.find(value.token, "FLOAT")]);
     }
   };
   const paints = (key: keyof FigmaProps, specs: readonly PaintSpec[] | undefined) => {
@@ -969,7 +969,7 @@ function tokensIn(props: FigmaProps): [keyof FigmaProps, Resolve][] {
       if (spec.kind === "token") {
         found.push([
           key,
-          async (index) => (await index.style(spec.token, "PAINT")) ?? (await index.variable(spec.token, "COLOR")),
+          async (index) => (await index.style(spec.token, "PAINT")) ?? (await index.find(spec.token, "COLOR")),
         ]);
       }
     }
