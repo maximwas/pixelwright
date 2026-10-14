@@ -283,6 +283,13 @@ const PNG = Buffer.from(
   "hex",
 );
 
+/** Orbit's customers screen: its brand logos are design_read's Icons. */
+const CUSTOMERS = SnapshotSchema.parse(
+  JSON.parse(
+    readFileSync(new URL("../../../packages/core/test/fixtures/orbit-customers.json", import.meta.url), "utf8"),
+  ),
+);
+
 describe("design_apply: files", () => {
   const folder = () => {
     const dir = mkdtempSync(join(tmpdir(), "pixelwright-apply-"));
@@ -293,6 +300,107 @@ describe("design_apply: files", () => {
 
     return dir;
   };
+
+  it("refuses a new drawing for an existing icon, and keeps the file design_read planned or wrote for it", async () => {
+    const dir = folder();
+    const files = memoryFiles();
+    const logo = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="32"><path d="M0 0h1v1z"/></svg>';
+    const planned = /id="54:437"[^>]* src="([^"]+)"/.exec(designXml(CUSTOMERS).xml)?.[1];
+    const apply = async (src: string) => {
+      const { bridge, requests } = recordingBridge(CUSTOMERS);
+      const result = await applyDesign(
+        new PluginClient(bridge),
+        {
+          xml: `<Icon id="54:437" src="${src}"/>`,
+          dryRun: false,
+        },
+        {
+          cwd: dir,
+          files,
+        },
+      );
+
+      return {
+        errors: result.errors.map(({ attribute, message }) => `${attribute}: ${message}`),
+        ops: requests.map(({ op }) => op),
+      };
+    };
+
+    writeFileSync(join(dir, "logo.svg"), logo);
+    await files.add([
+      {
+        sha1: createHash("sha1").update(logo).digest("hex"),
+        node: "54:437",
+      },
+    ]);
+
+    expect(planned).toBe("assets/logo-nova.svg");
+    expect(await apply("arrow.svg")).toEqual({
+      errors: [
+        "src: arrow.svg would redraw the icon: an icon's SVG makes new vector layers, so delete the icon and create it again from the file.",
+      ],
+      ops: ["entries"],
+    });
+    expect(await apply("gone.svg")).toEqual({
+      errors: [`src: gone.svg is not a file the server can read (paths are from its folder: ${dir}).`],
+      ops: ["entries"],
+    });
+    expect(await apply("assets/logo-nova.svg")).toEqual({
+      errors: [],
+      ops: ["entries"],
+    });
+    expect(await apply("logo.svg")).toEqual({
+      errors: [],
+      ops: ["entries"],
+    });
+  });
+
+  it("keeps the paths design_read planned for layers of one name, numbered across the whole read", async () => {
+    const photo = photoSnapshot(PNG).root.children?.[0];
+    const album = (id: string, hash: string) => ({
+      ...photoSnapshot(PNG).root,
+      id,
+      name: "Album",
+      children:
+        photo === undefined
+          ? []
+          : [
+              {
+                ...photo,
+                id: `${id}0`,
+                fills: [
+                  {
+                    type: "IMAGE",
+                    imageHash: hash,
+                    scaleMode: "FILL",
+                  },
+                ],
+              },
+            ],
+    });
+    const snapshot: Snapshot = {
+      ...photoSnapshot(PNG),
+      root: {
+        ...photoSnapshot(PNG).root,
+        childCount: 2,
+        children: [album("2:1", "a".repeat(40)), album("3:1", "b".repeat(40))],
+      },
+    };
+    const xml = designXml(snapshot).xml;
+    const { bridge } = recordingBridge(snapshot);
+
+    expect(xml).toContain('src="assets/photo-2.png"');
+    await expect(
+      applyDesign(
+        new PluginClient(bridge),
+        {
+          xml,
+          dryRun: false,
+        },
+        { cwd: folder() },
+      ),
+    ).resolves.toMatchObject({ errors: [] });
+  });
 
   it("leaves an image as it is when its file holds the same bytes, and swaps it when they differ", async () => {
     const dir = folder();

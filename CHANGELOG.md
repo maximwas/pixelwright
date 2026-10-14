@@ -54,6 +54,10 @@ How to write this file (people and agents alike):
 - `design_apply` says when the XML holds no element, instead of answering as if it had written something.
 - `design_apply` changes layers of every Figma type `design_read` writes by their id (widgets, stickies, connectors,
   slides…), instead of refusing their tags.
+- `design_apply` says when an existing `<Icon>` names another SVG instead of ignoring it: an icon cannot be redrawn in
+  place, so delete it and create it again from the file.
+- `design_read`'s XML sent back to `design_apply` no longer reports its own image and icon files as missing when
+  several layers share a name and the read numbered their files (`photo-2.png`).
 
 ## 0.2.0 — 2026-10-14
 

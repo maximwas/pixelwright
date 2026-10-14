@@ -242,6 +242,9 @@ describe("fileChangesOf", () => {
 
   it("lets the path design_read planned be missing, and reports any other file that cannot be used", async () => {
     expect(await filesOf(`<Image id="1:2" src="${PLANNED}"/>`)).toEqual({ "1:2": nothing });
+    expect(await filesOf(`<Image id="1:2" src="${PLANNED.replace(/\.png$/, "-12.png")}"/>`)).toEqual({
+      "1:2": nothing,
+    });
     expect(await filesOf('<Image id="1:2" src="nowhere.png"/>\n<Frame id="1:1" background="url(notes.txt)"/>')).toEqual(
       {
         "1:2": {
@@ -286,8 +289,40 @@ describe("fileChangesOf", () => {
     });
   });
 
-  it("never compares an Icon's src, and skips a create", async () => {
-    expect(await filesOf('<Icon id="1:2" src="arrow.svg"/>\n<Image src="other.png"/>')).toEqual({ "1:2": nothing });
+  it("refuses another drawing for an Icon, keeps its planned file or a render of it, and skips a create", async () => {
+    const { store, ready } = countedFiles([
+      {
+        sha1: sha1(Buffer.from(SVG)),
+        node: "1:2",
+      },
+    ]);
+
+    await ready;
+    expect(await filesOf('<Icon id="1:2" src="other.svg"/>\n<Image src="other.png"/>')).toEqual({
+      "1:2": {
+        changed: [],
+        problems: [
+          {
+            attribute: "src",
+            message: `other.svg is not a file the server can read (paths are from its folder: ${DIR}).`,
+          },
+        ],
+      },
+    });
+    expect(await filesOf('<Icon id="1:2" src="arrow.svg"/>')).toEqual({
+      "1:2": {
+        changed: [],
+        problems: [
+          {
+            attribute: "src",
+            message:
+              "arrow.svg would redraw the icon: an icon's SVG makes new vector layers, so delete the icon and create it again from the file.",
+          },
+        ],
+      },
+    });
+    expect(await filesOf('<Icon id="1:2" src="arrow.svg"/>', new KnownRenders(store))).toEqual({ "1:2": nothing });
+    expect(await filesOf(`<Icon id="1:2" src="${PLANNED}"/>`)).toEqual({ "1:2": nothing });
   });
 });
 
