@@ -1,4 +1,6 @@
+import type { FigmaProps } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
+import type { TypedLayer } from "../../../figma/capabilities.ts";
 import { ANNOTATION_STEPS } from "./annotation-steps.ts";
 import { APPEARANCE_STEPS } from "./appearance-steps.ts";
 import { CHILD_STEPS } from "./child-steps.ts";
@@ -43,3 +45,11 @@ export const STEPS: readonly Step[] = [
   ...PAINT_STEPS,
   ...ANNOTATION_STEPS,
 ];
+
+/** The steps a layer's properties run: those naming a property it gives; a text's link is the text writer's. */
+export function stepsFor(props: FigmaProps, node: TypedLayer): Step[] {
+  return STEPS.filter(
+    (step) =>
+      step.keys.some((key) => props[key] !== undefined) && !(step.keys[0] === "hyperlink" && node.type === "TEXT"),
+  );
+}

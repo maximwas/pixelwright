@@ -1,28 +1,42 @@
 import type { FigmaProps, LengthValue } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
-import { refusal } from "../../../figma/capabilities.ts";
+import { refusal, type TypedLayer } from "../../../figma/capabilities.ts";
 import type { WriteScope } from "./write-scope.ts";
 
-/** One step of writing a layer: the properties it takes, and how it writes them. */
+/**
+ * One step of writing a layer: the properties it takes, how it writes them, and what it refuses a layer for its type
+ * alone, checked without writing (a dry run asks it of layers it has not made).
+ */
 export interface Step {
   readonly keys: readonly (keyof FigmaProps)[];
   readonly write: (node: SceneNode, props: FigmaProps, scope: WriteScope) => void | Promise<void>;
+  readonly check?: (node: TypedLayer, props: FigmaProps) => void;
 }
 
 type StepWrite<N extends SceneNode> = (node: N, props: FigmaProps, scope: WriteScope) => void | Promise<void>;
 
-/** A step's write for the layers a guard lets through; any other layer is refused, naming what it lacks. */
+/**
+ * A step's write for the layers a guard lets through, and its check: any other layer is refused, naming what it
+ * lacks, by the write and by a dry run alike.
+ */
 export function guarded<N extends SceneNode>(
-  accepts: (node: SceneNode) => node is N,
+  accepts: (node: TypedLayer) => node is N,
   what: string,
   write: StepWrite<N>,
-): Step["write"] {
-  return (node, props, scope) => {
+): Pick<Step, "write" | "check"> {
+  const check = (node: TypedLayer) => {
     if (!accepts(node)) {
       throw refusal(node, what);
     }
+  };
 
-    return write(node, props, scope);
+  return {
+    write: (node, props, scope) => {
+      check(node);
+
+      return write(node as N, props, scope);
+    },
+    check,
   };
 }
 

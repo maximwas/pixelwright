@@ -379,6 +379,24 @@ describe("apply: a dry run finds what the real run would", () => {
     expect(messages(dry)).toEqual(messages(real));
   });
 
+  it("refuses for what each layer is, as the real run does: a frame's description and link, a dashed underline, a section's opacity", async () => {
+    const xml = [
+      '<Frame id="1:1" description="A card." href="https://example.com/pricing"/>',
+      '<Text id="1:2" text-decoration="underline dashed">Hello</Text>',
+      '<Section name="Notes" opacity="0.5"/>',
+    ].join("\n");
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    expect(messages(real)).toEqual([
+      "description: A description belongs to a component or a component set.",
+      "href: A link on a frame is a prototype reaction: it is written in the next stage.",
+      "text-decoration: Figma underlines solid, wavy or dotted: it has no dashed decoration.",
+      "opacity: A section has no opacity.",
+    ]);
+    expect(messages(dry)).toEqual(messages(real));
+  });
+
   it("gives one error for a property, as the real run's step does", async () => {
     const xml = '<Frame id="1:1" padding="8px var(--nope)"/>';
     const dry = await apply(xml, { dryRun: true });

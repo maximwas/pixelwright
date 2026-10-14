@@ -1,5 +1,6 @@
 import { type ApplyChange, closest, type FigmaProps } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
+import type { TypedLayer } from "../../../figma/capabilities.ts";
 import type { ComponentIndex } from "../../../figma/component-index.ts";
 import { type ComponentOwner, ownerOf, valuesOf, variantFor, variantName } from "../../../figma/variants.ts";
 import { WriteError } from "../../../figma/write-error.ts";
@@ -17,18 +18,52 @@ export interface ComponentStep {
 export function componentSteps(node: SceneNode, change: ApplyChange, components: ComponentIndex): ComponentStep[] {
   const { component, variant, props } = change.props;
   const made = change.kind === "create" && change.copyOf === undefined;
+  const refused = componentRefusals(node, change);
 
   return [
     ...(made ? [] : instanceSteps(node, component, variant, components)),
     ...(node.type === "COMPONENT" && variant !== undefined
       ? [step("variant", () => assign(node, "name", variantName(variant)))]
       : []),
-    ...(node.type !== "INSTANCE" && node.type !== "COMPONENT" && (component !== undefined || variant !== undefined)
-      ? [step(component === undefined ? "variant" : "component", () => refuseComponent(node))]
-      : []),
-    ...(props === undefined
+    ...refused.map(({ key, error }) =>
+      step(key, () => {
+        throw error;
+      }),
+    ),
+    ...(props === undefined || node.type !== "INSTANCE"
       ? []
-      : [step("props", () => (node.type === "INSTANCE" ? setProps(node, props, components) : refuseProps(node)))]),
+      : [step("props", () => setProps(node, props, components))]),
+  ];
+}
+
+/**
+ * What a change's component, variant and props are refused for the layer's type alone: they make an instance (a
+ * component takes a variant as its name), props set an instance's. A dry run asks it of layers it has not made.
+ */
+export function componentRefusals(
+  node: TypedLayer,
+  change: ApplyChange,
+): { key: keyof FigmaProps; error: WriteError }[] {
+  const { component, variant, props } = change.props;
+  const kind = node.type.toLowerCase();
+
+  return [
+    ...(node.type !== "INSTANCE" && node.type !== "COMPONENT" && (component !== undefined || variant !== undefined)
+      ? [
+          {
+            key: component === undefined ? ("variant" as const) : ("component" as const),
+            error: new WriteError(`A ${kind} has no component: component and variant make an <Instance>.`),
+          },
+        ]
+      : []),
+    ...(props !== undefined && node.type !== "INSTANCE"
+      ? [
+          {
+            key: "props" as const,
+            error: new WriteError(`A ${kind} has no properties: props set an <Instance>'s.`),
+          },
+        ]
+      : []),
   ];
 }
 
@@ -54,14 +89,6 @@ const step = (key: keyof FigmaProps, run: ComponentStep["run"]): ComponentStep =
   key,
   run,
 });
-
-function refuseProps(node: SceneNode): never {
-  throw new WriteError(`A ${node.type.toLowerCase()} has no properties: props set an <Instance>'s.`);
-}
-
-function refuseComponent(node: SceneNode): never {
-  throw new WriteError(`A ${node.type.toLowerCase()} has no component: component and variant make an <Instance>.`);
-}
 
 /** An instance's own component, and what holds its properties. */
 async function mainOf(node: InstanceNode): Promise<{ main: ComponentNode; owner: ComponentOwner }> {

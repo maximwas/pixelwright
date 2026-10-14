@@ -7,6 +7,7 @@ import {
   type TokenUse,
   tokenUsesOf,
 } from "@pixelwright/core";
+import type { TypedLayer } from "../../figma/capabilities.ts";
 import { ComponentIndex } from "../../figma/component-index.ts";
 import { checkPaints } from "../../figma/paints.ts";
 import type { TokenIndex } from "../../figma/tokens/token-index.ts";
@@ -14,8 +15,9 @@ import { variantFor } from "../../figma/variants.ts";
 import { WriteError } from "../../figma/write-error.ts";
 import type { ApplyFonts } from "./apply-fonts.ts";
 import { ApplyReport } from "./apply-report.ts";
-import { canMake } from "./new-layers.ts";
+import { canMake, newLayerType } from "./new-layers.ts";
 import { existingLayer } from "./targets.ts";
+import { typeRefusals } from "./type-refusals.ts";
 
 type Fail = (error: unknown, attribute?: string) => void;
 
@@ -47,7 +49,8 @@ function paintsAt(props: FigmaProps, key: keyof FigmaProps): readonly PaintSpec[
 
 /**
  * A dry run: for each change, the layer or the parent exists, the component and variant an instance names are there
- * (one the XML makes, or the file's), and every token and font it names is found. Nothing is written or imported.
+ * (one the XML makes, or the file's), what the write refuses for the layer's type is refused, and every token and
+ * font it names is found. Nothing is written or imported.
  */
 export class DryRunCheck {
   readonly #changes: readonly ApplyChange[];
@@ -75,11 +78,12 @@ export class DryRunCheck {
       const fail: Fail = (error, attribute) => this.#report.fail(change, error, attribute);
 
       try {
-        await this.#target(change);
+        const layer = await this.#target(change);
+
         this.#checked.add(change.ref);
         await this.#neighbour(change, fail);
         this.#planned.record(change, this.#byRef);
-        await this.#props(change, fail);
+        await this.#props(change, fail, this.#refused(change, layer));
       } catch (error) {
         fail(error);
       }
@@ -88,25 +92,55 @@ export class DryRunCheck {
     return this.#report.result();
   }
 
-  /** What the change writes onto: there, or makeable. A copy's or a new instance's layers are made on a real run. */
-  async #target(change: ApplyChange): Promise<void> {
+  /**
+   * What the change writes onto: there, or makeable; with the type the layer is or will be made as. A copy's or a new
+   * instance's layers are made on a real run, and a new set's frame becomes a set: their types are not known yet.
+   */
+  async #target(change: ApplyChange): Promise<TypedLayer | null> {
     if (change.source !== undefined) {
-      return;
+      return null;
     }
 
     if (change.kind === "update") {
-      await existingLayer(change, { load: false });
-    } else if (change.copyOf !== undefined) {
-      if ((await figma.getNodeByIdAsync(change.copyOf)) === null) {
+      return await existingLayer(change, { load: false });
+    }
+
+    if (change.copyOf !== undefined) {
+      const source = await figma.getNodeByIdAsync(change.copyOf);
+
+      if (source === null) {
         throw new WriteError(`No layer ${change.copyOf} to copy.`);
       }
-    } else if (change.tag === "Instance") {
+
+      return source.type === "PAGE" || source.type === "DOCUMENT" ? null : { type: source.type };
+    }
+
+    if (change.tag === "Instance") {
       await this.#instance(change);
     } else if (!canMake(change.tag)) {
       throw new WriteError(`Creating a ${change.tag} is not available.`);
     } else if (change.parent !== null && !this.#checked.has(change.parent)) {
       throw new WriteError("Its parent element was not written: fix the parent's error first.");
     }
+
+    const type = newLayerType(change.tag);
+
+    return type === null ? null : { type };
+  }
+
+  /** What the write would refuse for the layer's type, reported; the properties refused are not checked further. */
+  #refused(change: ApplyChange, layer: TypedLayer | null): Set<keyof FigmaProps> {
+    const refused = new Set<keyof FigmaProps>();
+
+    for (const { error, keys, attribute } of layer === null ? [] : typeRefusals(layer, change)) {
+      this.#report.fail(change, error, attribute);
+
+      for (const key of keys) {
+        refused.add(key);
+      }
+    }
+
+    return refused;
   }
 
   /**
@@ -138,12 +172,15 @@ export class DryRunCheck {
     }
   }
 
-  /** Every font and token the change and its runs name: one error a property at most, as the real run's step gives. */
-  async #props(change: ApplyChange, fail: Fail): Promise<void> {
+  /**
+   * Every font and token the change and its runs name: one error a property at most, as the real run's step gives; a
+   * property its layer's type refused is not checked again.
+   */
+  async #props(change: ApplyChange, fail: Fail, refused: ReadonlySet<keyof FigmaProps>): Promise<void> {
     for (const props of [change.props, ...(change.text?.runs ?? []).map((run) => run.props)]) {
       this.#font(change, props, fail);
 
-      const done = new Set<keyof FigmaProps>();
+      const done = new Set<keyof FigmaProps>(refused);
 
       for (const use of tokenUsesOf(props)) {
         if (done.has(use.key)) {

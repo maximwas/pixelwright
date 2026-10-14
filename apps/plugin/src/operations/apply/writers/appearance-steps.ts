@@ -1,6 +1,6 @@
 import type { FigmaProps, LengthValue } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
-import { hasAutoLayout, hasCornerSides, hasCorners, isBlended, refusal } from "../../../figma/capabilities.ts";
+import { hasAutoLayout, hasCornerSides, hasCorners, hasOpacity, refusal } from "../../../figma/capabilities.ts";
 import { guarded, type Step, writeLength, writeLengths } from "./step.ts";
 import type { WriteScope } from "./write-scope.ts";
 
@@ -10,7 +10,7 @@ const CORNERS = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottom
 export const APPEARANCE_STEPS: readonly Step[] = [
   {
     keys: ["opacity"],
-    write: guarded(isBlended, "opacity", (node, { opacity }) => {
+    ...guarded(hasOpacity, "opacity", (node, { opacity }) => {
       if (opacity !== undefined) {
         assign(node, "opacity", opacity);
       }
@@ -18,7 +18,7 @@ export const APPEARANCE_STEPS: readonly Step[] = [
   },
   {
     keys: ["clipsContent"],
-    write: guarded(hasAutoLayout, "clipping", (node, { clipsContent }) => {
+    ...guarded(hasAutoLayout, "clipping", (node, { clipsContent }) => {
       if (clipsContent !== undefined) {
         assign(node, "clipsContent", clipsContent);
       }
@@ -27,6 +27,11 @@ export const APPEARANCE_STEPS: readonly Step[] = [
   {
     keys: ["cornerRadius"],
     write: radius,
+    check: (node, { cornerRadius }) => {
+      if (Array.isArray(cornerRadius) ? !hasCornerSides(node) : !hasCorners(node)) {
+        throw refusal(node, Array.isArray(cornerRadius) ? "radius per corner" : "corner radius");
+      }
+    },
   },
 ];
 

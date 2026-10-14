@@ -2,8 +2,8 @@ import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import { WriteError } from "../../../figma/write-error.ts";
 import { fitIcon, writeImage } from "./asset-steps.ts";
 import { componentSteps } from "./component-steps.ts";
-import { STEPS } from "./steps.ts";
-import { hasTextProps, TextWriter } from "./text-writer.ts";
+import { stepsFor } from "./steps.ts";
+import { hasTextProps, holdsNoText, TextWriter } from "./text-writer.ts";
 import type { WriteScope } from "./write-scope.ts";
 
 /** Reports a step's error under the XML attribute its properties came from. */
@@ -93,15 +93,7 @@ export class LayerWriter {
   async #steps({ node, fail }: Target, props: FigmaProps): Promise<boolean> {
     let wrote = false;
 
-    for (const step of STEPS) {
-      // A text's link is a run of it: the text writer writes it.
-      if (
-        !step.keys.some((key) => props[key] !== undefined) ||
-        (step.keys[0] === "hyperlink" && node.type === "TEXT")
-      ) {
-        continue;
-      }
-
+    for (const step of stepsFor(props, node)) {
       try {
         await step.write(node, props, this.#scope);
         wrote = true;
@@ -121,7 +113,7 @@ export class LayerWriter {
     }
 
     if (change.text !== undefined || hasTextProps(change.props)) {
-      fail(new WriteError(`A ${node.type.toLowerCase()} holds no text: text and its styles go on a Text inside it.`));
+      fail(holdsNoText(node));
     }
 
     return false;
@@ -129,6 +121,6 @@ export class LayerWriter {
 }
 
 /** The XML attribute a step's properties came from: the first one the change names, else the first property. */
-function attributeOf(change: ApplyChange, keys: readonly (keyof FigmaProps)[]): string | undefined {
+export function attributeOf(change: ApplyChange, keys: readonly (keyof FigmaProps)[]): string | undefined {
   return keys.map((key) => change.sources[key]).find((attribute) => attribute !== undefined) ?? keys[0];
 }

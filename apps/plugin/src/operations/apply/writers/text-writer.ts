@@ -1,5 +1,6 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
+import type { TypedLayer } from "../../../figma/capabilities.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import { BASE_FIELDS, inherit, longest, restoreLook } from "./text-look.ts";
 import { TextRange } from "./text-range.ts";
@@ -19,6 +20,11 @@ const TEXT_KEYS: readonly (keyof FigmaProps)[] = [
 /** Whether a change writes anything only a text has. */
 export function hasTextProps(props: FigmaProps): boolean {
   return TEXT_KEYS.some((key) => props[key] !== undefined);
+}
+
+/** A layer that is no text, given a text or text styles: they go on a Text inside it. */
+export function holdsNoText(node: TypedLayer): WriteError {
+  return new WriteError(`A ${node.type.toLowerCase()} holds no text: text and its styles go on a Text inside it.`);
 }
 
 /**

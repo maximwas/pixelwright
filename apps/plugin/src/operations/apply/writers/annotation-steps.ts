@@ -1,6 +1,6 @@
 import type { FigmaProps } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
-import { isAnnotated } from "../../../figma/capabilities.ts";
+import { isAnnotated, type TypedLayer } from "../../../figma/capabilities.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import { guarded, type Step } from "./step.ts";
 
@@ -11,31 +11,40 @@ export const ANNOTATION_STEPS: readonly Step[] = [
   {
     keys: ["description"],
     write: (node, { description }) => {
-      if (node.type !== "COMPONENT" && node.type !== "COMPONENT_SET") {
-        throw new WriteError("A description belongs to a component or a component set.");
-      }
+      describable(node);
 
-      if (description !== undefined) {
+      if (description !== undefined && (node.type === "COMPONENT" || node.type === "COMPONENT_SET")) {
         assign(node, "description", description);
       }
     },
+    check: describable,
   },
   {
     keys: ["notes"],
-    write: guarded(isAnnotated, "Dev Mode notes", notes),
+    ...guarded(isAnnotated, "Dev Mode notes", notes),
   },
   {
     keys: ["hyperlink"],
-    write: (node) => {
-      if (node.type !== "TEXT") {
-        throw new WriteError(
-          "A link on a frame is a prototype reaction: it is written in the next stage.",
-          "A Text takes href.",
-        );
-      }
-    },
+    write: linkable,
+    check: linkable,
   },
 ];
+
+function describable(node: TypedLayer): void {
+  if (node.type !== "COMPONENT" && node.type !== "COMPONENT_SET") {
+    throw new WriteError("A description belongs to a component or a component set.");
+  }
+}
+
+/** A text's link is a run of it, written by the text writer; another layer's would be a prototype reaction. */
+function linkable(node: TypedLayer): void {
+  if (node.type !== "TEXT") {
+    throw new WriteError(
+      "A link on a frame is a prototype reaction: it is written in the next stage.",
+      "A Text takes href.",
+    );
+  }
+}
 
 /**
  * Dev Mode annotations, the whole list design_read shows, each category found by its label (made when the file lacks

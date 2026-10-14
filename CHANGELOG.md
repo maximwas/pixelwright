@@ -84,9 +84,9 @@ How to write this file (people and agents alike):
 - `design_apply` reads the layers named by id inside an element it does not create, or inside a `<Span>` outside a
   text, instead of dropping them, and says so when a `<Span>` inside a `<Span>` sets something (runs do not nest).
 - `design_apply` says when the XML holds no element, instead of answering as if it had written something.
-- `design_apply` takes the tags of every Figma type `design_read` writes (widgets, stickies, connectors, slides…) and
-  changes those layers by their id, instead of refusing their tags; the paints of FigJam and Slides layers are not
-  written yet.
+- `design_apply` changes layers of every Figma type `design_read` writes by their id (widgets, stickies, connectors,
+  slides…), instead of refusing their tags: each takes what Figma gives its type (a sticky's fill and opacity, a
+  connector's stroke, a stamp's size), and the rest is refused in plain words.
 - `design_apply` says when an existing `<Icon>` names another SVG instead of ignoring it: an icon cannot be redrawn in
   place, so delete it and create it again from the file.
 - `design_read`'s XML sent back to `design_apply` no longer reports its own image and icon files as missing when
@@ -97,8 +97,9 @@ How to write this file (people and agents alike):
   for a link on a frame.
 - `design_apply` places a new component set made on the page beside the page's layers, as it places any new layer,
   instead of on top of them at the page's corner.
-- A `design_apply` dry run refuses a paint style inside a list of paints, as the real run does, and a property with
-  several unknown tokens gives one error, not one per token.
+- A `design_apply` dry run refuses what the real run refuses for a layer's type (a description on a frame, a dashed
+  underline, a fill on a group) and a paint style inside a list of paints, and a property with several unknown tokens
+  gives one error, not one per token.
 - An attribute `design_apply` cannot write leaves its layer as it was: a padding, corner radius or size with an
   unknown token, or a border per side on a layer without one, no longer writes half of itself, and what a call writes
   is always one undo step.

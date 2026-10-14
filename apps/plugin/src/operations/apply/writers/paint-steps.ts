@@ -1,13 +1,20 @@
 import type { EffectSpec, FigmaProps, StrokeSpec } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
-import { type FilledNode, hasStrokeSides, isBlended, isFilled, refusal } from "../../../figma/capabilities.ts";
+import {
+  type FillsNode,
+  hasEffects,
+  hasFills,
+  hasStrokeSides,
+  hasStrokes,
+  refusal,
+  type StrokesNode,
+  type TypedLayer,
+} from "../../../figma/capabilities.ts";
 import { effectsOf, mergedEffects } from "../../../figma/effects.ts";
 import { paintsOf, samePaints } from "../../../figma/paints.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import { guarded, type Step } from "./step.ts";
 import type { WriteScope } from "./write-scope.ts";
-
-type Filled = FilledNode;
 
 const SIDES = ["Top", "Right", "Bottom", "Left"] as const;
 
@@ -15,19 +22,39 @@ const SIDES = ["Top", "Right", "Bottom", "Left"] as const;
 export const PAINT_STEPS: readonly Step[] = [
   {
     keys: ["fills"],
-    write: guarded(isFilled, "fills", fills),
+    ...guarded(hasFills, "fills", fills),
   },
   {
     keys: ["strokes"],
-    write: guarded(isFilled, "strokes", strokes),
+    ...guarded(hasStrokes, "strokes", strokes),
+    // Strokes per side are only some layers': the write refuses the rest once it has the stroke.
+    check: (node, { strokes: spec }) => {
+      if (!hasStrokes(node)) {
+        throw refusal(node, "strokes");
+      }
+
+      if (spec !== undefined && sided(spec, node) && !hasStrokeSides(node)) {
+        throw refusal(node, "stroke weight per side");
+      }
+    },
   },
   {
     keys: ["effects"],
     write: effects,
+    check: (node) => {
+      if (!hasEffects(node)) {
+        throw refusal(node, "effects");
+      }
+    },
   },
 ];
 
-async function fills(node: Filled, { fills: specs }: FigmaProps, scope: WriteScope): Promise<void> {
+/** Whether a stroke is given per side: a weight for each side, which only some layers take. */
+function sided(spec: StrokeSpec, node: TypedLayer): boolean {
+  return spec.paints.length > 0 && spec.weight === undefined && node.type !== "LINE" && spec.sides !== undefined;
+}
+
+async function fills(node: FillsNode, { fills: specs }: FigmaProps, scope: WriteScope): Promise<void> {
   const paints = await paintsOf(specs ?? [], scope);
 
   if ("style" in paints) {
@@ -42,13 +69,13 @@ async function fills(node: Filled, { fills: specs }: FigmaProps, scope: WriteSco
   }
 }
 
-async function strokes(node: Filled, { strokes: spec }: FigmaProps, scope: WriteScope): Promise<void> {
+async function strokes(node: StrokesNode, { strokes: spec }: FigmaProps, scope: WriteScope): Promise<void> {
   if (spec === undefined) {
     return;
   }
 
   // Refused before the paint is written: a stroke this layer cannot weigh per side is not half written.
-  if (spec.paints.length > 0 && spec.weight === undefined && node.type !== "LINE" && spec.sides !== undefined) {
+  if (sided(spec, node)) {
     sidedNode(node);
   }
 
@@ -71,7 +98,7 @@ async function strokes(node: Filled, { strokes: spec }: FigmaProps, scope: Write
 }
 
 /** The stroke's weight (one, or per side), its alignment and its dashes. */
-function strokeShape(node: Filled, spec: StrokeSpec): void {
+function strokeShape(node: StrokesNode, spec: StrokeSpec): void {
   strokeWeights(node, spec);
 
   // A CSS border cannot tell inside from centred: a centred stroke stays centred. A line's stroke is always centred.
@@ -87,7 +114,7 @@ function strokeShape(node: Filled, spec: StrokeSpec): void {
 }
 
 /** One weight (a line's is its border's), or a weight per side. */
-function strokeWeights(node: Filled, { weight, sides }: StrokeSpec): void {
+function strokeWeights(node: StrokesNode, { weight, sides }: StrokeSpec): void {
   if (weight !== undefined || node.type === "LINE") {
     assign(node, "strokeWeight", weight ?? Math.max(sides?.top ?? 0, sides?.left ?? 0, 0));
 
@@ -106,7 +133,7 @@ function strokeWeights(node: Filled, { weight, sides }: StrokeSpec): void {
 }
 
 /** A layer with a stroke weight per side, or the refusal of one without. */
-function sidedNode(node: Filled): Extract<Filled, { strokeTopWeight: number }> {
+function sidedNode(node: StrokesNode): Extract<StrokesNode, { strokeTopWeight: number }> {
   if (!hasStrokeSides(node)) {
     throw refusal(node, "stroke weight per side");
   }
@@ -119,7 +146,7 @@ async function effects(node: SceneNode, { effects: spec }: FigmaProps, scope: Wr
     return;
   }
 
-  if (!isBlended(node)) {
+  if (!hasEffects(node)) {
     throw refusal(node, "effects");
   }
 

@@ -115,9 +115,9 @@ holds it: the new layer is refused, and the copy&#39;s own layers named there ar
 <li><code>design_apply</code> reads the layers named by id inside an element it does not create, or inside a <code>&lt;Span&gt;</code> outside a
 text, instead of dropping them, and says so when a <code>&lt;Span&gt;</code> inside a <code>&lt;Span&gt;</code> sets something (runs do not nest).</li>
 <li><code>design_apply</code> says when the XML holds no element, instead of answering as if it had written something.</li>
-<li><code>design_apply</code> takes the tags of every Figma type <code>design_read</code> writes (widgets, stickies, connectors, slides…) and
-changes those layers by their id, instead of refusing their tags; the paints of FigJam and Slides layers are not
-written yet.</li>
+<li><code>design_apply</code> changes layers of every Figma type <code>design_read</code> writes by their id (widgets, stickies, connectors,
+slides…), instead of refusing their tags: each takes what Figma gives its type (a sticky&#39;s fill and opacity, a
+connector&#39;s stroke, a stamp&#39;s size), and the rest is refused in plain words.</li>
 <li><code>design_apply</code> says when an existing <code>&lt;Icon&gt;</code> names another SVG instead of ignoring it: an icon cannot be redrawn in
 place, so delete it and create it again from the file.</li>
 <li><code>design_read</code>&#39;s XML sent back to <code>design_apply</code> no longer reports its own image and icon files as missing when
@@ -128,8 +128,9 @@ changed but left the old image in place.</li>
 for a link on a frame.</li>
 <li><code>design_apply</code> places a new component set made on the page beside the page&#39;s layers, as it places any new layer,
 instead of on top of them at the page&#39;s corner.</li>
-<li>A <code>design_apply</code> dry run refuses a paint style inside a list of paints, as the real run does, and a property with
-several unknown tokens gives one error, not one per token.</li>
+<li>A <code>design_apply</code> dry run refuses what the real run refuses for a layer&#39;s type (a description on a frame, a dashed
+underline, a fill on a group) and a paint style inside a list of paints, and a property with several unknown tokens
+gives one error, not one per token.</li>
 <li>An attribute <code>design_apply</code> cannot write leaves its layer as it was: a padding, corner radius or size with an
 unknown token, or a border per side on a layer without one, no longer writes half of itself, and what a call writes
 is always one undo step.</li>

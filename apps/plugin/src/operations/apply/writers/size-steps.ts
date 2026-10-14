@@ -1,6 +1,6 @@
 import type { FigmaProps, LengthValue } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
-import { isSized, refusal, type SizedNode } from "../../../figma/capabilities.ts";
+import { isSized, refusal, type SizedNode, type TypedLayer } from "../../../figma/capabilities.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import { boundTo, hasLayout, type Step, writeLength } from "./step.ts";
 import { turnLayer } from "./transform-steps.ts";
@@ -20,18 +20,32 @@ export const SIZE_STEPS: readonly Step[] = [
   {
     keys: ["width"],
     write: (node, props, scope) => size(node, "width", props, scope),
+    check: sizeCheck,
   },
   {
     keys: ["height"],
     write: (node, props, scope) => size(node, "height", props, scope),
+    check: sizeCheck,
   },
   ...LIMITS.map(
     (key): Step => ({
       keys: [key],
       write: (node, props, scope) => limit(node, key, props[key], scope),
+      check: (node) => {
+        if (!isSized(node)) {
+          throw refusal(node, "size limits");
+        }
+      },
     }),
   ),
 ];
+
+/** A size is a sized layer's or a section's. */
+function sizeCheck(node: TypedLayer): void {
+  if (!isSized(node) && node.type !== "SECTION") {
+    throw refusal(node, "size of its own");
+  }
+}
 
 /** A frame without auto layout places every child itself: nothing to change there. */
 function positioning(node: SceneNode, { absolute }: FigmaProps): void {

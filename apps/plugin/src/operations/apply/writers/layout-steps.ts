@@ -15,7 +15,7 @@ const layoutStep = (
   write: (node: Frame, props: FigmaProps, scope: WriteScope) => void | Promise<void>,
 ): Step => ({
   keys,
-  write: guarded(hasAutoLayout, "auto layout", async (node, props, scope) => {
+  ...guarded(hasAutoLayout, "auto layout", async (node, props, scope) => {
     await write(node, props, scope);
   }),
 });

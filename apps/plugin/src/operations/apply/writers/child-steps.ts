@@ -10,19 +10,19 @@ type Sizing = "layoutSizingHorizontal" | "layoutSizingVertical";
 export const CHILD_STEPS: readonly Step[] = [
   {
     keys: ["grow"],
-    write: guarded(isSized, "place in auto layout", grow),
+    ...guarded(isSized, "place in auto layout", grow),
   },
   {
     keys: ["alignSelf"],
-    write: guarded(isSized, "place in auto layout", alignSelf),
+    ...guarded(isSized, "place in auto layout", alignSelf),
   },
   {
     keys: ["justifySelf"],
-    write: guarded(isSized, "place in a grid", justifySelf),
+    ...guarded(isSized, "place in a grid", justifySelf),
   },
   {
     keys: ["gridRow", "gridColumn"],
-    write: guarded(isSized, "place in a grid", cell),
+    ...guarded(isSized, "place in a grid", cell),
   },
 ];
 

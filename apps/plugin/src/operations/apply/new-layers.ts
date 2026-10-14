@@ -1,6 +1,6 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import { assign } from "../../figma/assign.ts";
-import { isFilled } from "../../figma/capabilities.ts";
+import { hasFills } from "../../figma/capabilities.ts";
 import type { ComponentIndex } from "../../figma/component-index.ts";
 import { variantFor } from "../../figma/variants.ts";
 import { WriteError } from "../../figma/write-error.ts";
@@ -22,6 +22,26 @@ const MAKERS: Readonly<Record<string, () => SceneNode>> = {
   // An image fills a rectangle; its file is written as its fill.
   Image: () => figma.createRectangle(),
 };
+
+/** The type each tag's new layer is made as: an image fills a rectangle, an icon's SVG makes a frame. */
+const NEW_TYPES: Readonly<Record<string, SceneNode["type"]>> = {
+  Frame: "FRAME",
+  Section: "SECTION",
+  Text: "TEXT",
+  Rectangle: "RECTANGLE",
+  Ellipse: "ELLIPSE",
+  Line: "LINE",
+  Component: "COMPONENT",
+  Image: "RECTANGLE",
+  Icon: "FRAME",
+  Slot: "SLOT",
+  Instance: "INSTANCE",
+};
+
+/** The type a new layer of this tag is made as; null for a set, whose frame becomes a set once its variants are in. */
+export function newLayerType(tag: string): SceneNode["type"] | null {
+  return NEW_TYPES[tag] ?? null;
+}
 
 /** What a new layer is made of besides its change: the call's components and images. */
 export interface Making {
@@ -155,7 +175,7 @@ function fileName(src: string): string {
 
 /** What the XML leaves out a new layer does not have: no fill without a background, no clipping without overflow. */
 function startBare(node: SceneNode, props: FigmaProps): void {
-  if (props.fills === undefined && node.type !== "TEXT" && node.type !== "LINE" && isFilled(node)) {
+  if (props.fills === undefined && node.type !== "TEXT" && node.type !== "LINE" && hasFills(node)) {
     node.fills = [];
   }
 

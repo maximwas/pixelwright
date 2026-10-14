@@ -1,5 +1,5 @@
 import type { FigmaProps } from "@pixelwright/core";
-import { isFilled, isSized, refusal } from "../../../figma/capabilities.ts";
+import { hasFills, isSized, refusal } from "../../../figma/capabilities.ts";
 import type { WriteScope } from "./write-scope.ts";
 
 /**
@@ -13,7 +13,7 @@ export function writeImage(node: SceneNode, props: FigmaProps, scope: WriteScope
     return;
   }
 
-  if (!isFilled(node)) {
+  if (!hasFills(node)) {
     throw refusal(node, "fills to hold an image");
   }
 

@@ -15,7 +15,7 @@ export function decorate(range: TextRange, decoration: NonNullable<FigmaProps["t
 
   // Refused before any of it is written: a dashed line would otherwise be left solid.
   if (style === "DASHED") {
-    throw new WriteError("Figma underlines solid, wavy or dotted: it has no dashed decoration.");
+    throw dashedRefusal();
   }
 
   range.decorationLine(decoration.line);
@@ -25,6 +25,17 @@ export function decorate(range: TextRange, decoration: NonNullable<FigmaProps["t
     offset: { ...(decoration.offset ?? { unit: "AUTO" }) } as TextDecorationOffset,
     thickness: { ...(decoration.thickness ?? { unit: "AUTO" }) } as TextDecorationThickness,
   });
+}
+
+/** A decoration Figma cannot draw is refused, by the write and by a dry run alike. */
+export function checkDecoration(decoration: NonNullable<FigmaProps["textDecoration"]>): void {
+  if (decoration.line !== "NONE" && decoration.style === "DASHED") {
+    throw dashedRefusal();
+  }
+}
+
+function dashedRefusal(): WriteError {
+  return new WriteError("Figma underlines solid, wavy or dotted: it has no dashed decoration.");
 }
 
 function decorationColor(color: NonNullable<FigmaProps["textDecoration"]>["color"]): TextDecorationColor {
