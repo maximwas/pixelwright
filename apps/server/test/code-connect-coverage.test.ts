@@ -109,6 +109,17 @@ describe("what a template's code leaves out", () => {
     expect(templates[0]?.unread).toEqual(["Price", "Popular"]);
   });
 
+  it("still names what the code never read when it asked for a property the card does not have", async () => {
+    const root = await project({
+      "PlanCard.figma.ts": card(
+        "const missing = card.getPropertyValue('Titel')\nexport default { example: figma.tsx`<PlanCard name=\"${card.getString('Name')}\" />` }",
+      ),
+    });
+    const { templates } = await readCodeConnect(orbit().plugin, { node: "54:244" }, root);
+
+    expect(templates[0]?.unread).toEqual(["Price", "Popular", "Description"]);
+  });
+
   it("names the properties of a nested instance the card exposes, or whose properties it overrides", async () => {
     const root = await project({
       "PlanCard.figma.ts": card(

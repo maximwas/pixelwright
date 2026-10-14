@@ -1,5 +1,5 @@
 import { access } from "node:fs/promises";
-import { isAbsolute, join, relative, sep } from "node:path";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 /** Where a repository host's file link has the branch and path: what follows these segments of its path. */
 const BLOB_MARKERS = [
@@ -35,7 +35,9 @@ export async function linkPath(url: string, root: string): Promise<string | unde
   }
 
   if (parsed.protocol === "vscode:" && parsed.hostname === "file") {
-    return editorPath(decodeURIComponent(parsed.pathname), root);
+    const path = decoded(parsed.pathname);
+
+    return path === undefined ? undefined : editorPath(path, root);
   }
 
   const marker = BLOB_MARKERS.find(({ host }) => host.test(parsed.hostname));
@@ -46,13 +48,8 @@ export async function linkPath(url: string, root: string): Promise<string | unde
 /** A file inside the project, from a vscode://file link's path (its :line:column dropped). */
 async function editorPath(path: string, root: string): Promise<string | undefined> {
   const file = path.replace(/(:\d+){1,2}$/, "");
-  const inside = relative(root, file);
 
-  if (!isAbsolute(file) || inside === "" || inside.startsWith("..") || isAbsolute(inside)) {
-    return undefined;
-  }
-
-  return (await exists(join(root, inside))) ? inside.split(sep).join("/") : undefined;
+  return isAbsolute(file) ? projectFile(relative(root, file), root) : undefined;
 }
 
 /** The longest end of a file link's branch and path that is a file of the project. */
@@ -60,7 +57,13 @@ async function repositoryPath(pathname: string, after: readonly string[], root: 
   const segments = pathname
     .split("/")
     .filter((segment) => segment !== "")
-    .map(decodeURIComponent);
+    .map(decoded);
+
+  // A segment that does not decode, or decodes to a step up or a slash, names no file of the project.
+  if (segments.some((segment) => segment === undefined || segment === ".." || segment.includes("/"))) {
+    return undefined;
+  }
+
   const at = segments.findIndex((_, index) => after.every((marker, offset) => segments[index + offset] === marker));
 
   if (at === -1) {
@@ -68,17 +71,37 @@ async function repositoryPath(pathname: string, after: readonly string[], root: 
   }
 
   // What follows is <branch>/<path>, the branch perhaps with slashes of its own: drop one segment at a time.
-  const rest = segments.slice(at + after.length);
+  const rest = segments.slice(at + after.length) as string[];
 
   for (let start = 1; start < rest.length; start += 1) {
-    const candidate = rest.slice(start).join("/");
+    const found = await projectFile(rest.slice(start).join("/"), root);
 
-    if (await exists(join(root, candidate))) {
-      return candidate;
+    if (found !== undefined) {
+      return found;
     }
   }
 
   return undefined;
+}
+
+/** A path relative to the project as the project's file, when it stays inside and exists; with forward slashes. */
+async function projectFile(path: string, root: string): Promise<string | undefined> {
+  const inside = relative(root, resolve(root, path));
+
+  if (inside === "" || inside.startsWith("..") || isAbsolute(inside)) {
+    return undefined;
+  }
+
+  return (await exists(join(root, inside))) ? inside.split(sep).join("/") : undefined;
+}
+
+/** A URL path decoded; undefined for one that does not decode (a lone %). */
+function decoded(path: string): string | undefined {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return undefined;
+  }
 }
 
 async function exists(path: string): Promise<boolean> {

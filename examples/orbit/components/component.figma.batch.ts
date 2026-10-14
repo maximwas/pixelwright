@@ -7,11 +7,19 @@ import figma from "figma";
 const row = figma.batch;
 const instance = figma.selectedInstance;
 const props = [];
+const missing = [];
 let children = "";
 
 for (const [property, target] of Object.entries(row.props ?? {})) {
   const prop = typeof target === "string" ? target : target.prop;
   const raw = instance.getPropertyValue(property);
+
+  // A property the component does not have: the row's error, written where its code would be.
+  if (typeof raw !== "string" && typeof raw !== "boolean") {
+    missing.push(raw);
+    continue;
+  }
+
   const value =
     typeof target === "string"
       ? raw
@@ -34,9 +42,11 @@ const name = row.component ?? instance.name;
 
 export default {
   example:
-    children === ""
-      ? figma.tsx`<${name}${props.join("")} />`
-      : figma.tsx`<${name}${props.join("")}>${children}</${name}>`,
+    missing.length > 0
+      ? figma.tsx`${missing[0]}`
+      : children === ""
+        ? figma.tsx`<${name}${props.join("")} />`
+        : figma.tsx`<${name}${props.join("")}>${children}</${name}>`,
   imports: row.imports ?? [],
   id: row.id ?? row.component,
 };

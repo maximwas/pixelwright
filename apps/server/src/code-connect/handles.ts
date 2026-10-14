@@ -304,8 +304,9 @@ export class InstanceHandle {
     return new ErrorHandle("PROPERTY_NOT_FOUND", this.#lacks(name));
   }
 
+  /** Names the instance's properties without counting them as read: an error message is no code reading them. */
   #lacks(name: string): string {
-    const names = Object.keys(this.properties);
+    const names = Object.keys(this.#node.instance?.properties ?? {}).map((key) => bare(key));
 
     return `${this.#node.name} (${this.#node.id}) has no property ${name}${names.length === 0 ? "" : `; it has ${names.join(", ")}`}.`;
   }

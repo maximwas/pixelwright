@@ -106,6 +106,21 @@ describe("a batch row through the shared template", () => {
     });
   });
 
+  it("fails the row's instance, naming the property, when its props table names one the component lacks", async () => {
+    const rendered = await render(
+      [
+        {
+          key: "k-card",
+          component: "PricingTier",
+          props: { Titel: "title" },
+        },
+      ],
+      card({}),
+    );
+
+    expect(rendered).toMatchObject({ error: expect.stringMatching(/^PROPERTY_NOT_FOUND: .* has no property Titel/) });
+  });
+
   it("writes the bare component for a row without props, named by the row else the instance", async () => {
     expect(
       await render(

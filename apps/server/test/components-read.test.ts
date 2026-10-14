@@ -243,6 +243,15 @@ describe("linkPath", () => {
     expect(await linkPath(`vscode://file${join(root, "src/Card.tsx")}:12:4`, root)).toBe("src/Card.tsx");
   });
 
+  it("gives nothing for a link that escapes the project or does not decode, and never throws", async () => {
+    const root = await project({ "src/Card.tsx": "" });
+    const up = "..%2F".repeat(20);
+
+    expect(await linkPath(`https://github.com/o/r/blob/main/${up}etc%2Fhosts`, root)).toBeUndefined();
+    expect(await linkPath("https://github.com/acme/ui/blob/main/docs/50%off.md", root)).toBeUndefined();
+    expect(await linkPath("vscode://file/Users/x/100%.tsx", root)).toBeUndefined();
+  });
+
   it("gives nothing for a file outside the project, one that is not there, or a link to no repository file", async () => {
     const root = await project({ "src/Card.tsx": "" });
 
