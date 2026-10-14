@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { designHints, fitDesign, type Snapshot, type SnapshotNode } from "../src/index.ts";
 import { fixture } from "./helpers/fixtures.ts";
+import { textLayer } from "./helpers/odd-text.ts";
 
 const layer = (fields: Partial<SnapshotNode> & { id: string }): SnapshotNode => ({
   name: `Layer ${fields.id}`,
@@ -100,6 +101,36 @@ describe("hints", () => {
     expect(hints).toContainEqual(
       `1 layer keeps Figma's default name (54:458 "Rectangle 1"): name it by its role in the code.`,
     );
+  });
+
+  it("names a raw color in a span's attributes as its text's", () => {
+    const red = {
+      type: "SOLID",
+      visible: true,
+      color: {
+        r: 1,
+        g: 0,
+        b: 0,
+      },
+    };
+    const hints = designHints({
+      root: layer({
+        id: "1:1",
+        layoutMode: "VERTICAL",
+        children: [textLayer("1:2", "Sale", [["Sale "], ["now", { fills: [red] }]])],
+      }),
+      styles: {
+        "S:1": {
+          name: "Brand",
+          type: "PAINT",
+          remote: false,
+          paints: [red],
+        },
+      },
+      variables: {},
+    });
+
+    expect(hints).toContainEqual("#F00 is written raw once (color of 1:2) and equals --Brand: use the token.");
   });
 
   it("counts several layers left with Figma's default names", () => {

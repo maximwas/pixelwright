@@ -1,11 +1,15 @@
 import { resolve } from "node:path";
 import type { CallToolResult } from "@modelcontextprotocol/server";
 import {
+  attributeOf,
   BridgeError,
+  type DesignElement,
   designHints,
   designMeasurements,
   designMotion,
-  designXml,
+  designReadOf,
+  designTree,
+  elementsOf,
   fitPlan,
   OPERATION_SCHEMAS,
 } from "@pixelwright/core";
@@ -72,12 +76,12 @@ export async function readDesign(
     assetsPath,
     connected,
   });
-  let read = designXml(snapshot, {
+  let tree = designTree(snapshot, {
     assetsPath,
     connected,
     ...plan,
   });
-  let assets: readonly unknown[] = read.assets.map(({ node: id, kind, src }) => ({
+  let assets: readonly unknown[] = tree.assets.map(({ node: id, kind, src }) => ({
     node: id,
     kind,
     src,
@@ -86,14 +90,14 @@ export async function readDesign(
 
   if (assetsDir !== undefined) {
     const { srcByKey, written } = await writeAssets(
-      read.assets,
+      tree.assets,
       (asset) => fetchAsset(bridge, asset, target),
       resolve(assetsDir),
       assetsDir,
       files,
     );
 
-    read = designXml(snapshot, {
+    tree = designTree(snapshot, {
       assetsPath,
       assetSrc: srcByKey,
       connected,
@@ -102,8 +106,9 @@ export async function readDesign(
     assets = written;
   }
 
+  const read = designReadOf(tree);
   const hints = [
-    ...designHints(snapshot, read),
+    ...designHints(snapshot, tree),
     ...(assetsDir === undefined && read.assets.length > 0
       ? [
           `${read.assets.length} assets are planned but not written, so their src names are plans: pass assetsDir to write them with their real names, or take each path assets_export gives (a name holding other bytes gets -2, the same bytes share one file).`,
@@ -140,7 +145,7 @@ export async function readDesign(
         ...(motion === null ? {} : { motion }),
         hints,
         truncated: read.truncated,
-        ...(code === null ? {} : codeOutput(code, read.xml, node)),
+        ...(code === null ? {} : codeOutput(code, tree.root, node)),
       }),
     },
   ];
@@ -180,13 +185,15 @@ async function selectedLayer(bridge: ToolContext["bridge"], target: { session: s
 }
 
 /**
- * The code of the connected instances the XML shows ($code, and the read's own layer): instances with the same code
- * once, with their ids; the errors once per template; the imports once each.
+ * The code of the connected instances the read shows ($code, and the read's own layer): instances with the same code
+ * once, with their ids; the errors of the layers it shows, once per template; the imports once each.
  */
-function codeOutput(code: CodeRead, xml: string, root: string) {
+function codeOutput(code: CodeRead, root: DesignElement | null, layer: string) {
+  const elements = elementsOf(root);
+  const present = new Set(elements.map(({ id }) => id));
   const shown = new Set([
-    root,
-    ...[...xml.matchAll(/<Instance id="([^"]+)"[^>]*\$code="/g)].map((match) => match[1] ?? ""),
+    layer,
+    ...elements.filter((element) => attributeOf(element, "$code") !== undefined).map(({ id }) => id),
   ]);
   const codeComponents = code.components
     .map((group) => ({
@@ -197,7 +204,7 @@ function codeOutput(code: CodeRead, xml: string, root: string) {
   const codeErrors = code.errors
     .map((group) => ({
       ...group,
-      ids: group.ids.filter((id) => xml.includes(`id="${id}"`)),
+      ids: group.ids.filter((id) => present.has(id)),
     }))
     .filter((group) => group.ids.length > 0);
 

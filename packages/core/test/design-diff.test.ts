@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { designDiff, type Snapshot, type SnapshotNode } from "../src/index.ts";
+import { BOLD, type Run, textLayer } from "./helpers/odd-text.ts";
 
 /** Two A/B screens as a client file has them: the same layout, one icon or one colour apart. */
 
@@ -153,5 +154,32 @@ describe("nodes_diff", () => {
       },
     ]);
     expect(diff.same).toBe(false);
+  });
+
+  it("compares a text's characters around its spans, and its spans in order as layers of the text", () => {
+    const promo = (id: string, runs: readonly Run[]) => screen(`${id}:1`, 0, [textLayer(`${id}:2`, "Promo", runs)]);
+    const diff = designDiff(
+      promo("10", [["Save "], ["20%", BOLD], [" today"]]),
+      promo("20", [["Save "], ["30%", BOLD], [" today"], ["!", BOLD]]),
+    );
+
+    expect(diff).toEqual({
+      same: false,
+      onlyInA: [],
+      onlyInB: [
+        {
+          path: 'Text "Promo" / Span ""[2]',
+          id: "",
+        },
+      ],
+      changed: [
+        {
+          path: 'Text "Promo" / Span ""',
+          a: "",
+          b: "",
+          attributes: { $text: ["20%", "30%"] },
+        },
+      ],
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   designHints,
+  designTree,
   designXml,
   type RawTokens,
   type Snapshot,
@@ -163,7 +164,7 @@ describe("what the read says in hints, not in $css", () => {
     const read = designXml(snapshot);
 
     expect(read.xml).toContain('$css="stroke-align: center"');
-    expect(designHints(snapshot, read).join("\n")).toMatch(/stroke centred on its edge \(1:2 "Card"\)/);
+    expect(designHints(snapshot, designTree(snapshot)).join("\n")).toMatch(/stroke centred on its edge \(1:2 "Card"\)/);
   });
 
   it("names a numbered style token with its value and the one it shares the name with", () => {

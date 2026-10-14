@@ -1,4 +1,4 @@
-import { designXml } from "@pixelwright/core";
+import { designTree } from "@pixelwright/core";
 import type * as z from "zod";
 import { runOp } from "../mcp/run-op.ts";
 import { selectedLayer } from "../mcp/selected-layer.ts";
@@ -17,7 +17,7 @@ export async function checkFonts(
   catalogue: () => Promise<ReadonlyMap<string, readonly string[]>> = googleFonts,
 ): Promise<FontsCheck> {
   const id = node ?? (await selectedLayer(bridge, file));
-  const { fonts } = designXml(
+  const { fonts } = designTree(
     await runOp(
       bridge,
       "snapshot",

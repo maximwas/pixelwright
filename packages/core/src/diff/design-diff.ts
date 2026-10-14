@@ -1,8 +1,7 @@
-import { designXml } from "../design/design-xml.ts";
+import { designTree } from "../design/design-xml.ts";
+import { type DesignElement, joinedContent } from "../design/tree.ts";
 import type { DesignDiff, DiffChange } from "../types/diff.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
-import type { XmlElementNode } from "../types/xml.ts";
-import { parseXml } from "../xml/parse/parse-xml.ts";
 
 /** What names a root or says where it is: two variants side by side differ there by nature (src follows the name). */
 const ROOT_PLACEMENT = new Set(["name", "src", "position", "left", "top", "right", "bottom", "transform"]);
@@ -10,6 +9,16 @@ const ROOT_PLACEMENT = new Set(["name", "src", "position", "left", "top", "right
 const DRAWN = new Set(["Icon", "Image"]);
 /** Snapshot fields that name or place a layer rather than draw it. */
 const NOT_DRAWING = new Set(["id", "name", "x", "y", "bounds", "renderBounds", "css"]);
+
+/** A layer as the diff compares it, or a run of a text's (a span, with no id): its layers or runs are its children. */
+interface Compared {
+  readonly id: string;
+  readonly tag: string;
+  readonly attributes: Readonly<Record<string, string>>;
+  /** A text's characters outside its spans; null when it has none. */
+  readonly text: string | null;
+  readonly children: readonly Compared[];
+}
 
 /**
  * How layer B differs from layer A as design_read reads them: layers matched by their path of names below the roots
@@ -23,7 +32,7 @@ export function designDiff(a: Snapshot, b: Snapshot): DesignDiff {
     changed: [],
   };
 
-  compare(rootOf(a), rootOf(b), "", true, {
+  compare(rootOf(a), rootOf(b), "", {
     a: nodesOf(a.root),
     b: nodesOf(b.root),
     diff,
@@ -41,59 +50,68 @@ interface Walk {
   readonly diff: Omit<DesignDiff, "same">;
 }
 
-function compare(x: XmlElementNode, y: XmlElementNode, path: string, root: boolean, walk: Walk): void {
+/** Two matched elements and, below them, their children; the path is empty at the roots. */
+function compare(x: Compared, y: Compared, path: string, walk: Walk): void {
+  const attributes = changedAttributes(x, y, path === "");
+  const drawing = DRAWN.has(x.tag) && fingerprint(walk.a.get(x.id)) !== fingerprint(walk.b.get(y.id));
+
+  if (Object.keys(attributes).length > 0 || drawing) {
+    walk.diff.changed.push({
+      path: path === "" ? "(root)" : path,
+      a: x.id,
+      b: y.id,
+      attributes,
+      ...(drawing ? { drawing: true as const } : {}),
+    });
+  }
+
+  compareChildren(x, y, path, walk);
+}
+
+/** The attributes and the text that differ, as [A, B]; ids, and a root's own name and place, aside. */
+function changedAttributes(x: Compared, y: Compared, root: boolean): DiffChange["attributes"] {
   const attributes: DiffChange["attributes"] = {};
 
-  for (const key of new Set([...Object.keys(x.props), ...Object.keys(y.props)])) {
+  for (const key of new Set([...Object.keys(x.attributes), ...Object.keys(y.attributes)])) {
     if (key === "id" || (root && ROOT_PLACEMENT.has(key))) {
       continue;
     }
 
-    const left = x.props[key] ?? null;
-    const right = y.props[key] ?? null;
+    const left = x.attributes[key] ?? null;
+    const right = y.attributes[key] ?? null;
 
     if (left !== right) {
       attributes[key] = [left, right];
     }
   }
 
-  const [textA, textB] = [textOf(x), textOf(y)];
-
-  if (textA !== textB) {
-    attributes.$text = [textA, textB];
+  if (x.text !== y.text) {
+    attributes.$text = [x.text, y.text];
   }
 
-  const drawing =
-    DRAWN.has(x.type) && fingerprint(walk.a.get(x.props.id ?? "")) !== fingerprint(walk.b.get(y.props.id ?? ""));
+  return attributes;
+}
 
-  if (Object.keys(attributes).length > 0 || drawing) {
-    walk.diff.changed.push({
-      path: path === "" ? "(root)" : path,
-      a: x.props.id ?? "",
-      b: y.props.id ?? "",
-      attributes,
-      ...(drawing ? { drawing: true as const } : {}),
-    });
-  }
-
+/** Children matched by tag and name, in order; the ones past the other side's count are only on one side. */
+function compareChildren(x: Compared, y: Compared, path: string, walk: Walk): void {
   const left = keyed(x);
   const right = keyed(y);
+  const pathOf = (element: Compared, index: number) =>
+    path === "" ? labelOf(element, index) : `${path} / ${labelOf(element, index)}`;
 
   for (const [key, elements] of left) {
     const others = right.get(key) ?? [];
 
     elements.forEach((element, index) => {
-      const label = labelOf(element, index);
-      const childPath = path === "" ? label : `${path} / ${label}`;
       const other = others[index];
 
       if (other === undefined) {
         walk.diff.onlyInA.push({
-          path: childPath,
-          id: element.props.id ?? "",
+          path: pathOf(element, index),
+          id: element.id,
         });
       } else {
-        compare(element, other, childPath, false, walk);
+        compare(element, other, pathOf(element, index), walk);
       }
     });
   }
@@ -102,49 +120,66 @@ function compare(x: XmlElementNode, y: XmlElementNode, path: string, root: boole
     const count = left.get(key)?.length ?? 0;
 
     elements.slice(count).forEach((element, index) => {
-      const label = labelOf(element, count + index);
-
       walk.diff.onlyInB.push({
-        path: path === "" ? label : `${path} / ${label}`,
-        id: element.props.id ?? "",
+        path: pathOf(element, count + index),
+        id: element.id,
       });
     });
   }
 }
 
-function rootOf(snapshot: Snapshot): XmlElementNode {
-  const [root] = parseXml(designXml(snapshot).xml).filter((child) => child.kind === "element");
+function rootOf(snapshot: Snapshot): Compared {
+  const { root } = designTree(snapshot);
 
-  if (root === undefined || root.kind !== "element") {
+  if (root === null) {
     throw new Error("design_read wrote no element for the layer");
   }
 
-  return root;
+  return comparedOf(root);
 }
 
-/** Element children by tag and name, each list in document order. */
-function keyed(element: XmlElementNode): Map<string, XmlElementNode[]> {
-  const groups = new Map<string, XmlElementNode[]>();
+/** An element as the diff compares it: a text's spans become its children, in order. */
+function comparedOf(element: DesignElement): Compared {
+  const content = joinedContent(element.content ?? []);
+  const texts = content.flatMap((piece) => (piece.kind === "text" ? [piece.value] : []));
+  const spans = content.flatMap((piece) =>
+    piece.kind === "span"
+      ? [
+          {
+            id: "",
+            tag: "Span",
+            attributes: Object.fromEntries(piece.attributes),
+            text: piece.value === "" ? null : piece.value,
+            children: [],
+          },
+        ]
+      : [],
+  );
+
+  return {
+    id: element.id,
+    tag: element.tag,
+    attributes: Object.fromEntries(element.attributes),
+    text: texts.length === 0 ? null : texts.join(""),
+    children: [...element.children.map(comparedOf), ...spans],
+  };
+}
+
+/** Children by tag and name, each list in document order. */
+function keyed(element: Compared): Map<string, Compared[]> {
+  const groups = new Map<string, Compared[]>();
 
   for (const child of element.children) {
-    if (child.kind === "element") {
-      const key = `${child.type} ${child.props.name ?? ""}`;
+    const key = `${child.tag} ${child.attributes.name ?? ""}`;
 
-      groups.set(key, [...(groups.get(key) ?? []), child]);
-    }
+    groups.set(key, [...(groups.get(key) ?? []), child]);
   }
 
   return groups;
 }
 
-function labelOf(element: XmlElementNode, index: number): string {
-  return `${element.type} "${element.props.name ?? ""}"${index > 0 ? `[${index + 1}]` : ""}`;
-}
-
-function textOf(element: XmlElementNode): string | null {
-  const texts = element.children.filter((child) => child.kind === "text").map((child) => child.value);
-
-  return texts.length === 0 ? null : texts.join("");
+function labelOf(element: Compared, index: number): string {
+  return `${element.tag} "${element.attributes.name ?? ""}"${index > 0 ? `[${index + 1}]` : ""}`;
 }
 
 function nodesOf(root: SnapshotNode): Map<string, SnapshotNode> {

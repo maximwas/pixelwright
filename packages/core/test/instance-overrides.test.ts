@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { designHints, designXml, type Snapshot, type SnapshotNode } from "../src/index.ts";
+import { designHints, designTree, designXml, type Snapshot, type SnapshotNode } from "../src/index.ts";
 
 const layer = (fields: Partial<SnapshotNode> & { id: string }): SnapshotNode => ({
   name: fields.id,
@@ -94,7 +94,7 @@ describe("what an instance changed outside its component's properties", () => {
   it("says once how many layers differ from their component, with examples", () => {
     const snapshot = card();
 
-    expect(designHints(snapshot, designXml(snapshot))).toContainEqual(
+    expect(designHints(snapshot, designTree(snapshot))).toContainEqual(
       expect.stringMatching(
         /^3 layers inside instances differ from their component outside its properties \(.*Card.*\): give the component a property or a variant for them, or build them as one-offs\.$/,
       ),

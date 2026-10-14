@@ -10,6 +10,7 @@ import {
   unchangedAttributes,
 } from "../src/index.ts";
 import { fixture, nodesOf } from "./helpers/fixtures.ts";
+import { oddTextSnapshot } from "./helpers/odd-text.ts";
 
 describe("readApply", () => {
   it("lists every element with its parent, position and attributes, $ ones left out", () => {
@@ -250,6 +251,12 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
       expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
     });
   }
+
+  it("with quotes, line breaks, U+2028 and texts of odd spaces", () => {
+    const snapshot = oddTextSnapshot();
+
+    expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
+  });
 
   it("with instances a Code Connect template renders written without their children", () => {
     const snapshot = fixture("orbit-plans");

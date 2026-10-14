@@ -2,7 +2,7 @@ import { basename, extname, resolve } from "node:path";
 import {
   BridgeError,
   classify,
-  designXml,
+  designTree,
   OPERATION_SCHEMAS,
   type PlannedAsset,
   type Snapshot,
@@ -155,7 +155,7 @@ async function planLayers(
 
 /** Every true asset inside a layer, as design_read plans them; with original, images as placed. */
 function planInside(snapshot: Snapshot, dir: string, original: boolean): PlannedAsset[] {
-  const { assets } = designXml(snapshot, { assetsPath: dir });
+  const { assets } = designTree(snapshot, { assetsPath: dir });
 
   if (!original) {
     return assets;

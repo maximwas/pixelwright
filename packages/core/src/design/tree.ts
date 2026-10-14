@@ -24,6 +24,29 @@ export interface DesignTree extends Omit<DesignRead, "xml"> {
   readonly root: DesignElement | null;
 }
 
+/**
+ * A text's content as its XML reads back: the characters between two spans in one piece, and no empty piece. A text
+ * is built run by run, and runs that read alike are written side by side.
+ */
+export function joinedContent(content: readonly DesignContent[]): DesignContent[] {
+  const joined: DesignContent[] = [];
+
+  for (const piece of content) {
+    const last = joined.at(-1);
+
+    if (piece.kind === "text" && last?.kind === "text") {
+      joined[joined.length - 1] = {
+        kind: "text",
+        value: last.value + piece.value,
+      };
+    } else if (piece.kind === "span" || piece.value !== "") {
+      joined.push(piece);
+    }
+  }
+
+  return joined;
+}
+
 /** An attribute's value, when the element has it. */
 export function attributeOf(element: DesignElement, name: string): string | undefined {
   return element.attributes.find(([attribute]) => attribute === name)?.[1];

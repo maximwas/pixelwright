@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { designHints, designXml, type Snapshot, type SnapshotNode } from "../src/index.ts";
+import { designHints, designTree, type Snapshot, type SnapshotNode } from "../src/index.ts";
 
 const frame = (id: string, fields: Partial<SnapshotNode> = {}): SnapshotNode => ({
   id,
@@ -42,7 +42,7 @@ const read = (...children: SnapshotNode[]): Snapshot => ({
   },
 });
 
-const hintsOf = (snapshot: Snapshot) => designHints(snapshot, designXml(snapshot));
+const hintsOf = (snapshot: Snapshot) => designHints(snapshot, designTree(snapshot));
 
 describe("Figma's own variable match", () => {
   it("names the token Figma matches a raw spacing to, once for every layer using it", () => {

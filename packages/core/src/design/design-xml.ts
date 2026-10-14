@@ -9,12 +9,20 @@ export function designTree(snapshot: Snapshot, options: DesignXmlOptions = {}): 
   return new DesignBuilder(snapshot, options).build();
 }
 
+/** A design tree as design_read answers with it: the XML, and the tokens, text styles, fonts and assets it names. */
+export function designReadOf({ root, ...refers }: DesignTree): DesignRead {
+  return {
+    xml: serializeDesign(root).xml,
+    ...refers,
+  };
+}
+
 /**
  * A snapshot as Pixelwright's XML: Figma's layer types as tags (Image and Icon for true assets), metadata, and the
  * CSS of the one mapping table; with the tokens, text styles and fonts it refers to and the assets it plans.
  */
 export function designXml(snapshot: Snapshot, options: DesignXmlOptions = {}): DesignRead {
-  return renderDesign(snapshot, options).read;
+  return designReadOf(designTree(snapshot, options));
 }
 
 /** The read with the lines it is made of and where each layer sits in them (fitting measures branches with it). */
