@@ -170,6 +170,15 @@ export default {
     expect(renderInstance(button(), [BUTTON])).toMatchObject({ snippet: "<Button></Button>" });
   });
 
+  it("finds a layer with options of null as with none", () => {
+    const BUTTON = template(
+      "Button",
+      "const i = figma.selectedInstance\nexport default { example: figma.code`${i.findInstance('Icon', null).name} ${i.findText('Label', null).textContent} ${i.findLayers(() => true, null).length}` }",
+    );
+
+    expect(renderInstance(button(), [BUTTON])).toMatchObject({ snippet: expect.stringMatching(/^Icon Save \d+$/) });
+  });
+
   it("makes a missing layer the instance's error only when the template uses it", () => {
     const unused = template(
       "Button",

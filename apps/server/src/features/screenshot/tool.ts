@@ -1,4 +1,5 @@
 import { MAX_IMAGE_SIDE_PX } from "../../constants/mcp.ts";
+import { pngPath } from "../../images/png-files.ts";
 import { takeScreenshot } from "../../images/screenshot.ts";
 import type { ContentToolDefinition, ToolContext } from "../../types/mcp.ts";
 import { ScreenshotInputSchema } from "./schemas.ts";
@@ -14,6 +15,13 @@ export function screenshotTool({ plugin }: ToolContext): ContentToolDefinition<t
       idempotentHint: true,
       openWorldHint: false,
     },
-    run: ({ file, ...shot }) => takeScreenshot(plugin.session(file), shot),
+    run: async ({ file, ...shot }) => {
+      // A bad save path is said first, before the file is looked for.
+      if (shot.save !== undefined) {
+        await pngPath(shot.save);
+      }
+
+      return takeScreenshot(plugin.session(file), shot);
+    },
   };
 }

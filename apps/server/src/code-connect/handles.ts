@@ -191,23 +191,26 @@ export class InstanceHandle {
     );
   }
 
-  findInstance(name: string, options: SelectorOptions = {}): InstanceHandle | ErrorHandle {
+  findInstance(name: string, options: SelectorOptions | null = {}): InstanceHandle | ErrorHandle {
     const found = this.#layers(options).find(({ node }) => node.type === "INSTANCE" && node.name === name);
 
     return found === undefined ? this.#notFound("instance", name) : new InstanceHandle(found.node, this.#run);
   }
 
-  findText(name: string, options: SelectorOptions = {}): TextHandle | ErrorHandle {
+  findText(name: string, options: SelectorOptions | null = {}): TextHandle | ErrorHandle {
     const found = this.#layers(options).find(({ node }) => node.type === "TEXT" && node.name === name);
 
     return found === undefined ? this.#notFound("text", name) : new TextHandle(found.node);
   }
 
-  findConnectedInstance(id: string, options: SelectorOptions = {}): InstanceHandle | null {
+  findConnectedInstance(id: string, options: SelectorOptions | null = {}): InstanceHandle | null {
     return this.findConnectedInstances((instance) => instance.codeConnectId() === id, options)[0] ?? null;
   }
 
-  findConnectedInstances(test: (instance: InstanceHandle) => boolean, options: SelectorOptions = {}): InstanceHandle[] {
+  findConnectedInstances(
+    test: (instance: InstanceHandle) => boolean,
+    options: SelectorOptions | null = {},
+  ): InstanceHandle[] {
     return this.#layers(options)
       .filter(({ node }) => node.type === "INSTANCE" && this.#run.connected(node))
       .map(({ node }) => new InstanceHandle(node, this.#run))
@@ -216,7 +219,7 @@ export class InstanceHandle {
 
   findLayers(
     test: (layer: InstanceHandle | TextHandle) => boolean,
-    options: SelectorOptions = {},
+    options: SelectorOptions | null = {},
   ): (InstanceHandle | TextHandle)[] {
     return this.#layers(options)
       .flatMap(({ node }) => this.#handle(node) ?? [])
@@ -322,7 +325,9 @@ export class InstanceHandle {
    * The visible layers inside the instance, in layer order, each with the instances it sits in (outer first). Nested
    * instances are entered only with traverseInstances, or along `path`: the instances a layer must sit in, exactly.
    */
-  #layers(options: SelectorOptions): { node: SnapshotNode; within: string[] }[] {
+  #layers(given: SelectorOptions | null): { node: SnapshotNode; within: string[] }[] {
+    // A template may pass null for no options, as it may in Figma.
+    const options = given ?? {};
     const { path } = options;
     const found: { node: SnapshotNode; within: string[] }[] = [];
     const walk = (node: SnapshotNode, within: string[]) => {

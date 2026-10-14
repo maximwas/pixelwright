@@ -112,6 +112,10 @@ How to write this file (people and agents alike):
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 - The plugin window names a saved version in plain words, not its internal operation name.
 - `code_connect_read` no longer counts the instances inside a connected instance as unconnected.
+- `screenshot` says a bad `save` path before it looks for the file to shoot, so that error comes first.
+- The shared log keeps being written when its folder is deleted while servers run, and a full log that cannot be set
+  aside is written on instead of being tried again on every line.
+- A Code Connect template's `findInstance`, `findText` and `findLayers` take `null` options as none.
 - The Orbit example names its code component as Figma's Code Connect defines it (`component=PlanCard`) and passes the
   card's description.
 

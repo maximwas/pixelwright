@@ -143,6 +143,10 @@ Two servers starting at once no longer leave one of them logging to stderr alone
 missing part as whole; a piece past the end of a file gets a clear error instead of a bare <code>RangeError</code>.</li>
 <li>The plugin window names a saved version in plain words, not its internal operation name.</li>
 <li><code>code_connect_read</code> no longer counts the instances inside a connected instance as unconnected.</li>
+<li><code>screenshot</code> says a bad <code>save</code> path before it looks for the file to shoot, so that error comes first.</li>
+<li>The shared log keeps being written when its folder is deleted while servers run, and a full log that cannot be set
+aside is written on instead of being tried again on every line.</li>
+<li>A Code Connect template&#39;s <code>findInstance</code>, <code>findText</code> and <code>findLayers</code> take <code>null</code> options as none.</li>
 <li>The Orbit example names its code component as Figma&#39;s Code Connect defines it (<code>component=PlanCard</code>) and passes the
 card&#39;s description.</li>
 </ul>

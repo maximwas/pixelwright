@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EXPORT_CHUNK_BYTES } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
+import { screenshotTool } from "../src/features/screenshot/tool.ts";
 import { takeScreenshot } from "../src/images/screenshot.ts";
 import { exportBytes } from "../src/plugin/export-bytes.ts";
 import { PluginClient } from "../src/plugin/plugin-client.ts";
@@ -156,6 +157,29 @@ describe("screenshot", () => {
 });
 
 describe("screenshot review fixes", () => {
+  it("says a bad save path first, before it looks for the file to shoot", async () => {
+    const empty: BridgeView = {
+      status: () => {
+        throw new Error("not used");
+      },
+      pairing: () => null,
+      plugins: () => [],
+      request: async () => {
+        throw new Error("no plugin");
+      },
+    };
+    const tool = screenshotTool({ plugin: new PluginClient(empty) } as never);
+
+    await expect(
+      tool.run({
+        node: "1:1",
+        scale: 1,
+        effects: true,
+        save: "shot.txt",
+      } as never),
+    ).rejects.toThrow(/save must be a \.png path/);
+  });
+
   it("saves only to a .png path and never over a file that is not a PNG", async () => {
     const { writeFile } = await import("node:fs/promises");
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-"));

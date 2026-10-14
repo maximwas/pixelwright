@@ -11,6 +11,8 @@ import { LOG_FILE_MAX_BYTES } from "../constants/logging.ts";
 export class SharedLog {
   readonly #path: string;
   #fd: number;
+  /** The full file could not be set aside (its .1 cannot be replaced): written on, tried again once it changes. */
+  #stuck = false;
 
   constructor(path: string, fd: number) {
     this.#path = path;
@@ -49,7 +51,7 @@ export class SharedLog {
 
     if (current === undefined || current.ino !== fstatSync(this.#fd).ino) {
       this.#reopen();
-    } else if (current.size > LOG_FILE_MAX_BYTES) {
+    } else if (current.size > LOG_FILE_MAX_BYTES && !this.#stuck) {
       this.#setAside();
     }
   }
@@ -57,17 +59,30 @@ export class SharedLog {
   #setAside(): void {
     try {
       renameSync(this.#path, `${this.#path}.1`);
-    } catch {
-      // Another process set it aside first: its new file is the one to write to.
+    } catch (error) {
+      // Another process set it aside first: its new file is the one to write to. Any other refusal leaves the file
+      // where it is: written on, and not tried on every line.
+      if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) {
+        this.#stuck = true;
+
+        return;
+      }
     }
 
     this.#reopen();
   }
 
+  /** The file at the path opened again, its folder made again if someone deleted it. */
   #reopen(): void {
+    mkdirSync(dirname(this.#path), {
+      recursive: true,
+      mode: 0o700,
+    });
+
     const fd = openSync(this.#path, "a", 0o600);
 
     closeSync(this.#fd);
     this.#fd = fd;
+    this.#stuck = false;
   }
 }
