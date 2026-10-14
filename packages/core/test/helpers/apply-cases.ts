@@ -742,6 +742,13 @@ export const CHANGE_CASES: Readonly<Record<string, ChangeCase>> = {
     xml: '<Text id="1:1" text-underline-offset="4px"/>',
     now: { current: { "text-decoration": "underline" } },
   },
+  "a span's run completes its decoration from what the layer has": {
+    xml: '<Text id="1:1">a<Span text-underline-offset="2px">b</Span></Text>',
+    now: {
+      unchanged: ["id"],
+      current: { "text-decoration": "underline" },
+    },
+  },
   "a new size keeps the edge the layer is pinned to": {
     xml: '<Frame id="1:1" width="320px"/>',
     now: { current: PINNED_RIGHT },
@@ -786,6 +793,14 @@ export const CHANGE_CASES: Readonly<Record<string, ChangeCase>> = {
     now: {
       unchanged: ["id", "textStyle", "font"],
       text: true,
+    },
+  },
+  "a new text style writes a decoration again from the element's own values, not the layer's": {
+    xml: '<Text id="1:1" textStyle="h2" text-underline-offset="2px"/>',
+    now: {
+      unchanged: ["id", "text-underline-offset"],
+      text: true,
+      current: { "text-decoration": "underline" },
     },
   },
   "span problems ranked among the element's own, by the element's attribute order": {

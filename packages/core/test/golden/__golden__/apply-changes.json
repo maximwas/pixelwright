@@ -5281,6 +5281,41 @@
       "errors": []
     }
   ],
+  "a span's run completes its decoration from what the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "ab",
+          "runs": [
+            {
+              "start": 1,
+              "end": 2,
+              "props": {
+                "textDecoration": {
+                  "line": "UNDERLINE",
+                  "offset": {
+                    "unit": "PIXELS",
+                    "value": 2
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
   "a new size keeps the edge the layer is pinned to": [
     {
       "change": {
@@ -5443,6 +5478,35 @@
         "index": 0,
         "props": {},
         "sources": {}
+      },
+      "errors": []
+    }
+  ],
+  "a new text style writes a decoration again from the element's own values, not the layer's": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "textStyle": "h2",
+          "textDecoration": {
+            "line": "NONE",
+            "offset": {
+              "unit": "PIXELS",
+              "value": 2
+            }
+          }
+        },
+        "sources": {
+          "textStyle": "textStyle",
+          "textDecoration": "text-decoration"
+        }
       },
       "errors": []
     }
