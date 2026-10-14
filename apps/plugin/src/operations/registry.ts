@@ -5,15 +5,17 @@ import {
   type OperationName,
   type OperationOutput,
 } from "@pixelwright/core";
-import { components } from "../figma/components.ts";
 import { execute } from "../figma/execute.ts";
 import { exportNode, originalImage } from "../figma/export-node.ts";
-import { fileMap, flows, screens } from "../figma/flows.ts";
-import { inspect } from "../figma/inspect.ts";
 import { saveVersion } from "../figma/save-version.ts";
 import type { PluginServices } from "../services/plugin-services.ts";
 import { applyChanges } from "./apply/apply-changes.ts";
+import { components } from "./components/read-components.ts";
 import { deleteNodes } from "./delete/delete-nodes.ts";
+import { fileMap } from "./flows/file-map.ts";
+import { flows } from "./flows/read-flows.ts";
+import { screens } from "./flows/screens.ts";
+import { inspect } from "./inspect/inspect-layers.ts";
 import { find } from "./read/find.ts";
 import { outline } from "./read/outline.ts";
 import { selection } from "./read/selection.ts";

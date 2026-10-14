@@ -98,14 +98,8 @@ export const CHANGES_MAX = 5_000;
 /** How long after one of Pixelwright's writes a change still counts as its own: Figma reports changes a moment later. */
 export const OWN_WRITE_ECHO_MS = 1_000;
 
-/** The most prototype links flow_read lists. */
-export const FLOW_MAX_LINKS = 500;
-
 /** The most layers tokens_usage lists. */
 export const USAGE_MAX_LAYERS = 500;
-
-/** The most layers file_map lists in all: past it, a page says how many it has. */
-export const FILE_MAP_MAX_NODES = 1_500;
 
 /** How close two colour channels count as the same: CSS shows a P3 file's channels to 4 decimals. */
 export const COLOR_EPSILON = 0.0005;
