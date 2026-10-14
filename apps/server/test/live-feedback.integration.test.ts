@@ -14,7 +14,7 @@ const WAIT = Number(process.env.PIXELWRIGHT_LIVE_WAIT ?? "30") * 1_000;
 const FILE = process.env.PIXELWRIGHT_LIVE_FILE ?? "Test MCP";
 
 /** Two screens of one page, a gradient style, a chip with a hover state, a light/dark theme: made, read, taken back. */
-const MAKE = String.raw`
+const MAKE = `
 await figma.loadFontAsync({ family: "Inter", style: "Regular" });
 const gradient = figma.createPaintStyle();
 gradient.name = "PW8 Gradient";

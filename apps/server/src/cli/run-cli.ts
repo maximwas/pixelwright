@@ -29,45 +29,13 @@ export async function runCli(args: readonly string[]): Promise<void> {
 
       return;
     case "setup":
-      if (command.print) {
-        try {
-          process.stdout.write(
-            await printSetup({
-              from: packagedPlugin(),
-              pluginHome,
-              platform: process.platform,
-            }),
-          );
-        } catch (error) {
-          process.stderr.write(`${errorMessage(error)}\n`);
-          process.exitCode = 1;
-        }
-
-        return;
-      }
-
-      try {
-        await runWizard({
-          home: homedir(),
-          pluginHome,
-        });
-      } catch (error) {
-        if (!(error instanceof SetupCancelled)) {
-          throw error;
-        }
-
-        cancel(error.message);
-        process.exitCode = 1;
-      }
+      await (command.print ? printSetupText(pluginHome) : runSetupWizard(pluginHome));
 
       return;
-    case "logs": {
-      const { followLog } = await import("../logging/follow-log.ts");
-
-      await followLog(readConfig(process.env).logFile, (line) => process.stdout.write(`${line}\n`));
+    case "logs":
+      await followLogs();
 
       return;
-    }
     case "version":
       process.stdout.write(`${serverPackage.version}\n`);
 
@@ -80,4 +48,44 @@ export async function runCli(args: readonly string[]): Promise<void> {
       process.stderr.write(`Unknown command: ${command.argument}\n\n${HELP_TEXT}`);
       process.exitCode = 2;
   }
+}
+
+/** The setup as text, for a person to follow by hand. */
+async function printSetupText(pluginHome: string): Promise<void> {
+  try {
+    process.stdout.write(
+      await printSetup({
+        from: packagedPlugin(),
+        pluginHome,
+        platform: process.platform,
+      }),
+    );
+  } catch (error) {
+    process.stderr.write(`${errorMessage(error)}\n`);
+    process.exitCode = 1;
+  }
+}
+
+/** The setup's questions, at a terminal; a person who cancels gets a word and exit code 1. */
+async function runSetupWizard(pluginHome: string): Promise<void> {
+  try {
+    await runWizard({
+      home: homedir(),
+      pluginHome,
+    });
+  } catch (error) {
+    if (!(error instanceof SetupCancelled)) {
+      throw error;
+    }
+
+    cancel(error.message);
+    process.exitCode = 1;
+  }
+}
+
+/** The shared log, followed until Ctrl+C. */
+async function followLogs(): Promise<void> {
+  const { followLog } = await import("../logging/follow-log.ts");
+
+  await followLog(readConfig(process.env).logFile, (line) => process.stdout.write(`${line}\n`));
 }

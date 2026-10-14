@@ -12,19 +12,37 @@ export function toRgba(png: DecodedPng): RgbaImage {
     return {
       width,
       height,
-      data: widen(rgb, channels, 8, width, height),
+      data: widen(rgb, {
+        channels,
+        depth: 8,
+        width,
+        height,
+      }),
     };
   }
 
   return {
     width,
     height,
-    data: widen(png.data, png.channels, png.depth, width, height),
+    data: widen(png.data, {
+      channels: png.channels,
+      depth: png.depth,
+      width,
+      height,
+    }),
   };
 }
 
+/** How a PNG's samples lie: channels a pixel, bits a sample, and the image's size. */
+interface SampleLayout {
+  readonly channels: number;
+  readonly depth: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 /** Samples of any depth (1, 2, 4, 8 or 16 bits, rows packed to whole bytes) as 8-bit RGBA. */
-function widen(data: ArrayLike<number>, channels: number, depth: number, width: number, height: number): Uint8Array {
+function widen(data: ArrayLike<number>, { channels, depth, width, height }: SampleLayout): Uint8Array {
   const out = new Uint8Array(width * height * 4);
   const rowBytes = Math.ceil((width * channels * depth) / 8);
   const top = 2 ** Math.min(depth, 8) - 1;
