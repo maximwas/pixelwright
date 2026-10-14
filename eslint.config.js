@@ -22,6 +22,8 @@ const REWRITTEN = [
   "apps/plugin/src/services/**",
   "apps/plugin/src/main.ts",
   "apps/plugin/src/figma/tokens/**",
+  "apps/plugin/src/figma/assign.ts",
+  "apps/plugin/src/figma/capabilities.ts",
   "apps/plugin/src/figma/paints.ts",
   "apps/plugin/src/figma/effects.ts",
   "apps/plugin/src/figma/component-index.ts",
