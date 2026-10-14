@@ -1,11 +1,7 @@
 import * as z from "zod";
-import {
-  EffectSchema,
-  ReactionSchema,
-  SnapshotFieldsSchema,
-  SnapshotStyleSchema,
-  SnapshotVariableSchema,
-} from "./snapshot.ts";
+import { SnapshotStyleSchema, SnapshotVariableSchema } from "./snapshot.ts";
+import { SnapshotFieldsSchema } from "./snapshot-fields.ts";
+import { EffectSchema, ReactionSchema } from "./snapshot-values.ts";
 
 /** A box in px, from the origin inspect measures from. */
 export const InspectBoxSchema = z.object({

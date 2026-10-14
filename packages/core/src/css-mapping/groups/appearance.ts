@@ -1,5 +1,5 @@
 import { decimal } from "../../kernel/numbers.ts";
-import { MIXED } from "../../schemas/snapshot.ts";
+import { MIXED } from "../../schemas/snapshot-values.ts";
 import type { SnapshotNode } from "../../types/snapshot.ts";
 import type { CssDeclarations } from "../css-declarations.ts";
 import type { Rule, WriteInput, WriteOutput } from "../property-group.ts";

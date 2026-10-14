@@ -1,5 +1,5 @@
 import { sameValue } from "../../../kernel/equality.ts";
-import { MIXED } from "../../../schemas/snapshot.ts";
+import { MIXED } from "../../../schemas/snapshot-values.ts";
 import type { CssContext } from "../../../types/css.ts";
 import type { SnapshotNode } from "../../../types/snapshot.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";

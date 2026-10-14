@@ -1,6 +1,6 @@
 import { type Channels, Color, isChannels } from "../../kernel/color/color.ts";
 import { styleTokenName, variableTokenName } from "../../kernel/names.ts";
-import { MIXED } from "../../schemas/snapshot.ts";
+import { MIXED } from "../../schemas/snapshot-values.ts";
 import type { CssContext } from "../../types/css.ts";
 import type { SnapshotNode, SnapshotPaint } from "../../types/snapshot.ts";
 import type { PaintSpec } from "../figma-props.ts";

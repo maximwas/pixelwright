@@ -21,25 +21,8 @@ function pairOf(first: MeasuredLayer, second: MeasuredLayer, painted: boolean): 
   const b = sides(painted ? (second.paintedBox ?? second.box) : second.box);
   const gapX = Math.max(b.left - a.right, a.left - b.right);
   const gapY = Math.max(b.top - a.bottom, a.top - b.bottom);
-  const edges = {
-    left: round(b.left - a.left),
-    right: round(b.right - a.right),
-    top: round(b.top - a.top),
-    bottom: round(b.bottom - a.bottom),
-    centerX: round((b.left + b.right - a.left - a.right) / 2),
-    centerY: round((b.top + b.bottom - a.top - a.bottom) / 2),
-  };
-  const contains = within(b, a) ? "a" : within(a, b) ? "b" : null;
-  const [outer, inner] = contains === "b" ? [b, a] : [a, b];
-  const inset =
-    contains === null
-      ? null
-      : {
-          top: round(inner.top - outer.top),
-          right: round(outer.right - inner.right),
-          bottom: round(outer.bottom - inner.bottom),
-          left: round(inner.left - outer.left),
-        };
+  const edges = edgesOf(a, b);
+  const { contains, inset } = containmentOf(a, b);
   const refA = {
     id: first.id,
     name: first.name,
@@ -72,6 +55,42 @@ function pairOf(first: MeasuredLayer, second: MeasuredLayer, painted: boolean): 
           contains,
           inset,
         }),
+  };
+}
+
+type Sides = ReturnType<typeof sides>;
+
+/** How far each of b's edges, and its centre, lies from a's. */
+function edgesOf(a: Sides, b: Sides): MeasuredPair["edges"] {
+  return {
+    left: round(b.left - a.left),
+    right: round(b.right - a.right),
+    top: round(b.top - a.top),
+    bottom: round(b.bottom - a.bottom),
+    centerX: round((b.left + b.right - a.left - a.right) / 2),
+    centerY: round((b.top + b.bottom - a.top - a.bottom) / 2),
+  };
+}
+
+/** Which box holds the other ("a" or "b"), and how far in the inner one sits; null for neither. */
+function containmentOf(
+  a: Sides,
+  b: Sides,
+): { contains: "a" | "b" | null; inset: { top: number; right: number; bottom: number; left: number } | null } {
+  const contains = within(b, a) ? "a" : within(a, b) ? "b" : null;
+  const [outer, inner] = contains === "b" ? [b, a] : [a, b];
+
+  return {
+    contains,
+    inset:
+      contains === null
+        ? null
+        : {
+            top: round(inner.top - outer.top),
+            right: round(outer.right - inner.right),
+            bottom: round(outer.bottom - inner.bottom),
+            left: round(inner.left - outer.left),
+          },
   };
 }
 

@@ -60,7 +60,7 @@ function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: Col
 
   for (const segment of segments) {
     const paint = topSolid(segment.fills);
-    const visible = segment.fills.filter((fill) => fill.visible !== false);
+    const visible = segment.fills.filter((fill) => fill.visible ?? true);
 
     if (paint === null && visible.length === 0) {
       continue;
@@ -69,7 +69,11 @@ function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: Col
     const rated =
       paint === null
         ? unknownColor(node, segment, KINDS[visible.at(-1)?.type ?? ""] ?? "a fill CSS cannot hold")
-        : rateSegment(node, segment, paint, behind, space);
+        : rateSegment(node, segment, {
+            paint,
+            behind,
+            space,
+          });
 
     if (worst === null || (rated.ratio ?? Infinity) < (worst.ratio ?? Infinity)) {
       worst = rated;
@@ -79,13 +83,14 @@ function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: Col
   return worst;
 }
 
-function rateSegment(
-  node: SnapshotNode,
-  segment: TextSegment,
-  paint: { color: Channels; alpha: number },
-  behind: Color | string,
-  space: ColorSpace,
-): ContrastText {
+/** What a run's colour is measured against: its top paint, what is behind the text (or why it is not known), the space. */
+interface Measured {
+  readonly paint: { color: Channels; alpha: number };
+  readonly behind: Color | string;
+  readonly space: ColorSpace;
+}
+
+function rateSegment(node: SnapshotNode, segment: TextSegment, { paint, behind, space }: Measured): ContrastText {
   const size = segment.fontSize;
   const weight = segment.fontWeight;
   const large = size >= 24 || (size >= 18.66 && weight >= 700);
@@ -256,7 +261,7 @@ function paintLayers(node: SnapshotNode): Layer[] {
   const opacity = node.opacity ?? 1;
 
   return fills
-    .filter((paint) => paint.visible !== false)
+    .filter((paint) => paint.visible ?? true)
     .toReversed()
     .map((paint): Layer => {
       const solid = solidOf(paint);
@@ -271,7 +276,7 @@ function paintLayers(node: SnapshotNode): Layer[] {
 }
 
 function topSolid(paints: readonly SnapshotPaint[]): { color: Channels; alpha: number } | null {
-  const visible = paints.filter((paint) => paint.visible !== false);
+  const visible = paints.filter((paint) => paint.visible ?? true);
 
   return solidOf(visible.at(-1));
 }

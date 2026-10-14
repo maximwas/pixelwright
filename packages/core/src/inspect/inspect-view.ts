@@ -5,7 +5,7 @@ import { interactionSummary } from "../design/interactions.ts";
 import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
 import { styleTokenName } from "../kernel/names.ts";
-import { MIXED } from "../schemas/snapshot.ts";
+import { MIXED } from "../schemas/snapshot-values.ts";
 import type { InspectBox, InspectedLayer, InspectedLayerView, InspectRaw, InspectView } from "../types/inspect.ts";
 import type { TextSegment } from "../types/snapshot.ts";
 
@@ -40,11 +40,7 @@ function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
   const strokes = strokesOf(layer, colorSpaceOf(raw.colorProfile));
   const text = textOf(layer);
   const fills = fillsOf(layer, raw);
-  const interactions = (layer.reactions ?? []).map((reaction) => ({
-    trigger: reaction.trigger?.type ?? "NONE",
-    summary: interactionSummary(reaction),
-    reaction,
-  }));
+  const interactions = interactionsOf(layer);
 
   if (layer.paintedBox !== null && !sameBox(layer.paintedBox, layer.box)) {
     view.paintedBox = layer.paintedBox;
@@ -78,21 +74,33 @@ function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
     view.interactions = interactions;
   }
 
-  const instance = layer.instance;
-
-  if (instance !== undefined) {
-    view.component = {
-      name: instance.componentName,
-      ...(instance.setName === undefined ? {} : { set: instance.setName }),
-      variant: Object.fromEntries(
-        Object.entries(instance.properties)
-          .filter(([, property]) => property.type === "VARIANT")
-          .map(([name, property]) => [name, String(property.value)]),
-      ),
-    };
+  if (layer.instance !== undefined) {
+    view.component = componentOf(layer.instance);
   }
 
   return view;
+}
+
+/** The layer's prototype interactions, each with its trigger and a summary. */
+function interactionsOf(layer: InspectedLayer): NonNullable<InspectedLayerView["interactions"]> {
+  return (layer.reactions ?? []).map((reaction) => ({
+    trigger: reaction.trigger?.type ?? "NONE",
+    summary: interactionSummary(reaction),
+    reaction,
+  }));
+}
+
+/** An instance's component: its name, its set's, and its variant's values. */
+function componentOf(instance: NonNullable<InspectedLayer["instance"]>): NonNullable<InspectedLayerView["component"]> {
+  return {
+    name: instance.componentName,
+    ...(instance.setName === undefined ? {} : { set: instance.setName }),
+    variant: Object.fromEntries(
+      Object.entries(instance.properties)
+        .filter(([, property]) => property.type === "VARIANT")
+        .map(([name, property]) => [name, String(property.value)]),
+    ),
+  };
 }
 
 /**
@@ -100,7 +108,7 @@ function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
  * a gradient as Figma writes it for the layer. Null when nothing visible fills it.
  */
 function fillsOf(layer: InspectedLayer, raw: InspectRaw): NonNullable<InspectedLayerView["fills"]> | null {
-  if (!Array.isArray(layer.fills) || !layer.fills.some((paint) => paint.visible !== false)) {
+  if (!Array.isArray(layer.fills) || !layer.fills.some((paint) => paint.visible ?? true)) {
     return null;
   }
 
