@@ -1,5 +1,10 @@
 import type { FigmaProps, TextRunSpec } from "../css-mapping/figma-props.ts";
-import type { XmlChild } from "./xml.ts";
+import type { TextPiece } from "../css-mapping/write-element.ts";
+import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
+import type { XmlLocation } from "../types/xml.ts";
+
+/** A piece of a Text element's content as design_apply reads it, and where in the XML it starts. */
+export type ContentPiece = XmlLocation & TextPiece;
 
 /** One element of a design_apply XML: an existing layer to change (id) or a new one to create (ref "new:<line>"). */
 export interface ApplyElement {
@@ -15,8 +20,8 @@ export interface ApplyElement {
   readonly index: number;
   /** Attributes as written, without the read-only $ ones and without those that were refused. */
   readonly attributes: Readonly<Record<string, string>>;
-  /** A Text's content: text and Span elements, as parsed. */
-  readonly content?: readonly XmlChild[];
+  /** A Text's content, piece by piece: its characters, and its spans' with what each sets. */
+  readonly content?: readonly ContentPiece[];
   /**
    * Inside a copy (copyOf) or a new instance: the layer this element stands for (the source's, or another instance's
    * of the same component), written onto its counterpart in the copy or the new instance.
@@ -34,18 +39,6 @@ export interface ApplyError {
   readonly attribute?: string;
   readonly message: string;
   readonly hint?: string;
-}
-
-/** What a layer has now, measured against an element (unchangedAttributes). */
-export interface LayerNow {
-  /** The element's attributes the layer already has, as design_read writes them: they are not written again. */
-  readonly attributes: ReadonlySet<string>;
-  /** Whether the layer's text already reads as the element's. */
-  readonly text: boolean;
-  /** Whether the layer is visible: a hidden one is shown again by a display other than none. */
-  readonly visible: boolean;
-  /** The layer's attributes as design_read writes them now: they complete what Figma keeps in one property. */
-  readonly current: Readonly<Record<string, string>>;
 }
 
 /** One layer to create or change, in Figma's terms. */
@@ -75,3 +68,12 @@ export interface ApplyChange {
   /** An update placed again, as a create is: another parent, before/after, or another order. */
   readonly move?: boolean;
 }
+
+/** A layer an element is compared with: the layer, and the parent it sits in. */
+export interface LayerEntry {
+  readonly node: SnapshotNode;
+  readonly parent: SnapshotNode | null;
+}
+
+/** What a read of layers needs besides them: the tokens, and the file's colour profile its colours are written in. */
+export type ReadTokens = Pick<Snapshot, "styles" | "variables" | "colorProfile">;

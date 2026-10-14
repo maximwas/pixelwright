@@ -1,10 +1,10 @@
 import * as z from "zod";
+import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "../apply/schemas.ts";
 import { EXPORT_CHUNK_BYTES, SELECTION_WAIT_MAX_MS } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schemas.ts";
 import { RawTokensSchema } from "../tokens/raw-tokens.ts";
 import type { OutlineNode } from "../types/operations.ts";
-import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "./apply.ts";
 import { ScreensRawSchema } from "./breakpoints.ts";
 import { InspectRawSchema } from "./inspect.ts";
 import { SnapshotSchema } from "./snapshot.ts";

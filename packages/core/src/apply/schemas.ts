@@ -1,7 +1,7 @@
 import * as z from "zod";
 import type { FigmaProps, TextRunSpec } from "../css-mapping/figma-props.ts";
-import type { ApplyChange, ApplyError } from "../types/apply.ts";
-import { SnapshotNodeSchema, SnapshotSchema } from "./snapshot.ts";
+import { SnapshotNodeSchema, SnapshotSchema } from "../schemas/snapshot.ts";
+import type { ApplyChange, ApplyError } from "./types.ts";
 
 const RefSchema = z.string().min(1).max(200);
 

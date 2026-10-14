@@ -75,9 +75,9 @@ describe("readApply", () => {
       id: "2:1",
       gap: "24px",
     });
-    expect(elements[1]?.content?.map((child) => (child.kind === "text" ? child.value : child.type))).toEqual([
+    expect(elements[1]?.content?.map((piece) => (piece.kind === "text" ? piece.value : piece.kind))).toEqual([
       "Hello ",
-      "Span",
+      "span",
     ]);
   });
 

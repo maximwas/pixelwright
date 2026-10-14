@@ -1,12 +1,12 @@
 import { withoutUrls } from "../css-mapping/values/css-values.ts";
+import type { LayerNow } from "../css-mapping/write-element.ts";
 import { designTree } from "../design/design-xml.ts";
 import { attributeOf, type DesignContent, type DesignElement, findElement, joinedContent } from "../design/tree.ts";
 import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
 import { sameValue } from "../kernel/equality.ts";
-import type { ApplyElement, LayerNow } from "../types/apply.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
-import type { XmlChild } from "../types/xml.ts";
+import type { ApplyElement, ContentPiece } from "./types.ts";
 
 /** A layer to compare with an element: the layer, and the parent it sits in. */
 type Item = { node: SnapshotNode; parent: SnapshotNode | null };
@@ -136,21 +136,17 @@ function render(snapshot: Snapshot, id: string, layout: string | null): DesignEl
 }
 
 /** A Text element's content in the tree's terms, as design_apply writes it: a span's characters with its attributes. */
-function contentOf(children: readonly XmlChild[]): DesignContent[] {
-  return children.map((child) =>
-    child.kind === "text"
+function contentOf(pieces: readonly ContentPiece[]): DesignContent[] {
+  return pieces.map((piece) =>
+    piece.kind === "text"
       ? {
           kind: "text",
-          value: child.value,
+          value: piece.value,
         }
       : {
           kind: "span",
-          attributes: Object.entries(child.props),
-          value: charactersOf(child.children),
+          attributes: Object.entries(piece.attributes),
+          value: piece.value,
         },
   );
-}
-
-function charactersOf(children: readonly XmlChild[]): string {
-  return children.map((child) => (child.kind === "text" ? child.value : charactersOf(child.children))).join("");
 }

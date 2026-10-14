@@ -8,7 +8,6 @@ import {
   type Snapshot,
   type SnapshotNode,
   unchangedAttributes,
-  type XmlChild,
 } from "../../src/index.ts";
 import { CHANGE_CASES, EDIT_CASES, type NowCase, READ_CASES } from "../helpers/apply-cases.ts";
 import { everyHintSnapshot } from "../helpers/every-hint.ts";
@@ -49,7 +48,7 @@ describe("golden apply", () => {
         return [
           name,
           {
-            elements: elements.map(elementView),
+            elements: elements,
             errors,
           },
         ];
@@ -194,38 +193,4 @@ function layerNow(now: NowCase | undefined): LayerNow | undefined {
         visible: now.visible ?? true,
         current: now.current ?? {},
       };
-}
-
-/**
- * An element as the golden keeps it: a Text's content as the pieces design_apply writes (a text, or a span's
- * attributes and characters, each where it starts), so the golden pins what the reader reads, not how it holds it.
- */
-function elementView(element: ApplyElement) {
-  return element.content === undefined
-    ? element
-    : {
-        ...element,
-        content: element.content.map(pieceOf),
-      };
-}
-
-function pieceOf(child: XmlChild) {
-  return child.kind === "text"
-    ? {
-        line: child.line,
-        column: child.column,
-        kind: "text",
-        value: child.value,
-      }
-    : {
-        line: child.line,
-        column: child.column,
-        kind: "span",
-        attributes: child.props,
-        value: charactersOf(child.children),
-      };
-}
-
-function charactersOf(children: readonly XmlChild[]): string {
-  return children.map((child) => (child.kind === "text" ? child.value : charactersOf(child.children))).join("");
 }

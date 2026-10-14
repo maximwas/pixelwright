@@ -1,5 +1,4 @@
 import { BridgeError } from "../bridge/protocol.ts";
-import { CREATABLE_TAGS, KNOWN_TAGS, LATER_TAGS, LAYER_ID, META_ATTRIBUTES, SHAPE_TAGS } from "../constants/apply.ts";
 import {
   BOX_PAINT,
   CSS_ATTRIBUTES,
@@ -8,10 +7,11 @@ import {
   SPAN_ATTRIBUTES,
   TEXT_ATTRIBUTES,
 } from "../css-mapping/vocabulary.ts";
-import type { ApplyElement, ApplyError } from "../types/apply.ts";
 import type { XmlChild, XmlElementNode, XmlLocation } from "../types/xml.ts";
 import { closest } from "../utils/closest.ts";
 import { parseXml } from "../xml/parse/parse-xml.ts";
+import type { ApplyElement, ApplyError, ContentPiece } from "./types.ts";
+import { CREATABLE_TAGS, KNOWN_TAGS, LAYER_ID, META_ATTRIBUTES, SHAPE_TAGS, UNDRAWN_TAGS } from "./vocabulary.ts";
 
 /**
  * A design_apply XML as a flat list of elements in document order, each with its parent's ref and its attributes,
@@ -289,13 +289,21 @@ class ApplyReader {
     return ref;
   }
 
-  /** A Text's runs: text, and Spans holding text and run attributes only. */
-  #content(node: XmlElementNode): XmlChild[] {
-    const content: XmlChild[] = [];
+  /**
+   * A Text's content as pieces: its characters, and its Spans' with the run attributes they set (a nested span's
+   * characters belong to the span that holds it).
+   */
+  #content(node: XmlElementNode): ContentPiece[] {
+    const content: ContentPiece[] = [];
 
     for (const child of node.children) {
       if (child.kind === "text") {
-        content.push(child);
+        content.push({
+          line: child.line,
+          column: child.column,
+          kind: "text",
+          value: child.value,
+        });
       } else if (child.type !== "Span") {
         this.errors.push({
           line: child.line,
@@ -315,8 +323,11 @@ class ApplyReader {
         }
 
         content.push({
-          ...child,
-          props: Object.fromEntries(Object.entries(child.props).filter(([name]) => SPAN_ATTRIBUTES.has(name))),
+          line: child.line,
+          column: child.column,
+          kind: "span",
+          attributes: Object.fromEntries(Object.entries(child.props).filter(([name]) => SPAN_ATTRIBUTES.has(name))),
+          value: charactersOf(child.children),
         });
       }
     }
@@ -337,7 +348,7 @@ function missingFor(node: XmlElementNode): { message: string; hint?: string } | 
           message: "A group is made by grouping layers in Figma.",
           hint: "Create a <Frame> instead, or change the group by its id.",
         }
-      : LATER_TAGS.has(node.type)
+      : UNDRAWN_TAGS.has(node.type)
         ? {
             message: `A <${node.type}> is not drawn from XML.`,
             hint: 'Draw it as an <Icon src="…svg">, or change it by its id.',
@@ -426,4 +437,9 @@ function refusalOf(
   }
 
   return null;
+}
+
+/** The characters of a span's content, a nested span's included. */
+function charactersOf(children: readonly XmlChild[]): string {
+  return children.map((child) => (child.kind === "text" ? child.value : charactersOf(child.children))).join("");
 }

@@ -15,7 +15,7 @@ export const CREATABLE_TAGS: ReadonlySet<string> = new Set([
 ]);
 
 /** Tags whose layers can be changed by id but not created: vectors come as an Icon from an SVG, groups by grouping. */
-export const LATER_TAGS: ReadonlySet<string> = new Set([
+export const UNDRAWN_TAGS: ReadonlySet<string> = new Set([
   "Group",
   "Vector",
   "Star",
@@ -28,7 +28,7 @@ export const LATER_TAGS: ReadonlySet<string> = new Set([
 /** Every tag design_read writes: the ones above and the rarer Figma types, changed by id. */
 export const KNOWN_TAGS: ReadonlySet<string> = new Set([
   ...CREATABLE_TAGS,
-  ...LATER_TAGS,
+  ...UNDRAWN_TAGS,
   "Span",
   "Table",
   "TableCell",
