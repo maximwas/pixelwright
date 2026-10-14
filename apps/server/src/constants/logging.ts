@@ -17,7 +17,7 @@ export const LOG_LEVEL_COLORS: Readonly<Record<string, string>> = {
 
 export const ANSI_RESET = "\u001b[0m";
 
-/** The shared log file is set aside (as .1) once it grows past this, when a process starts. */
+/** The shared log file is set aside (as .1) by the first write that finds it grown past this. */
 export const LOG_FILE_MAX_BYTES = 5 * 1024 * 1024;
 
 /**

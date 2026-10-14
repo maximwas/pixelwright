@@ -11,12 +11,16 @@ interface PendingCall {
 
 /**
  * The MCP transport with every tool call written to the log as it is answered: the tool, the file it named and how
- * long it took, at info; a failed call at warn with the first line of its message. Arguments and results stay out.
+ * long it took, at info; a failed call at warn with the first line of its message; a call the client cancelled at info,
+ * forgotten. Arguments and results stay out. What the wrapped transport can do besides sending, it still can.
  */
 export class ToolCallLog implements Transport {
   onclose?: (() => void) | undefined;
   onerror?: ((error: Error) => void) | undefined;
   onmessage?: (<T extends JSONRPCMessage>(message: T, extra?: MessageExtraInfo) => void) | undefined;
+  readonly hasPerRequestStream?: boolean;
+  readonly setProtocolVersion?: (version: string) => void;
+  readonly setSupportedProtocolVersions?: (versions: string[]) => void;
 
   readonly #inner: Transport;
   readonly #logger: ToolCallLogger;
@@ -25,6 +29,18 @@ export class ToolCallLog implements Transport {
   constructor(inner: Transport, logger: ToolCallLogger) {
     this.#inner = inner;
     this.#logger = logger;
+
+    if (inner.hasPerRequestStream !== undefined) {
+      this.hasPerRequestStream = inner.hasPerRequestStream;
+    }
+
+    if (inner.setProtocolVersion !== undefined) {
+      this.setProtocolVersion = (version) => inner.setProtocolVersion?.(version);
+    }
+
+    if (inner.setSupportedProtocolVersions !== undefined) {
+      this.setSupportedProtocolVersions = (versions) => inner.setSupportedProtocolVersions?.(versions);
+    }
   }
 
   get sessionId(): string | undefined {
@@ -51,6 +67,12 @@ export class ToolCallLog implements Transport {
   }
 
   #received(message: JSONRPCMessage): void {
+    if ("method" in message && message.method === "notifications/cancelled") {
+      this.#cancelled((message.params as { requestId?: string | number } | undefined)?.requestId);
+
+      return;
+    }
+
     if (!("method" in message) || message.method !== "tools/call" || !("id" in message)) {
       return;
     }
@@ -74,10 +96,7 @@ export class ToolCallLog implements Transport {
 
     this.#pending.delete(id);
 
-    const fields = {
-      ...(call.file === undefined ? {} : { file: call.file }),
-      ms: Date.now() - call.started,
-    };
+    const fields = fieldsOf(call);
     const failure = failureOf(message);
 
     if (failure === null) {
@@ -92,6 +111,26 @@ export class ToolCallLog implements Transport {
       );
     }
   }
+
+  /** A call the client cancelled: it gets no answer, so it is logged and forgotten now. */
+  #cancelled(id: string | number | undefined): void {
+    const call = id === undefined ? undefined : this.#pending.get(id);
+
+    if (id === undefined || call === undefined) {
+      return;
+    }
+
+    this.#pending.delete(id);
+    this.#logger.info(fieldsOf(call), `tool ${call.tool} cancelled`);
+  }
+}
+
+/** The file a call named, and how long it has taken. */
+function fieldsOf(call: PendingCall): { file?: string; ms: number } {
+  return {
+    ...(call.file === undefined ? {} : { file: call.file }),
+    ms: Date.now() - call.started,
+  };
 }
 
 /** The first line of a failed call's message: a JSON-RPC error, or a tool result marked isError. Null: it worked. */

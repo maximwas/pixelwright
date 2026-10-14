@@ -71,6 +71,10 @@ How to write this file (people and agents alike):
 - An attribute `design_apply` cannot write leaves its layer as it was: a padding, corner radius or size with an
   unknown token, or a border per side on a layer without one, no longer writes half of itself, and what a call writes
   is always one undo step.
+- `pixelwright logs` keeps showing every server's lines: the shared log is set aside by whichever server writes past
+  its size, at any time, and a server whose log another one set aside writes to the new file instead of the old one.
+  Two servers starting at once no longer leave one of them logging to stderr alone.
+- The log names a tool call the client cancelled, instead of keeping it as waiting for an answer forever.
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 

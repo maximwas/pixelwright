@@ -117,4 +117,55 @@ describe("every tool call in the log", () => {
       },
     ]);
   });
+
+  it("logs a call the client cancelled as cancelled, and forgets it", async () => {
+    const inner = new FakeTransport();
+    const { logger, lines } = logged();
+    const transport = new ToolCallLog(inner, logger);
+
+    await transport.start();
+    inner.receive(call(1, "design_read", "Test MCP"));
+    inner.receive({
+      jsonrpc: "2.0",
+      method: "notifications/cancelled",
+      params: { requestId: 1 },
+    });
+    await transport.send({
+      jsonrpc: "2.0",
+      id: 1,
+      result: { content: [] },
+    });
+
+    expect(lines).toEqual([
+      {
+        level: "info",
+        message: "tool design_read cancelled",
+        fields: {
+          file: "Test MCP",
+          ms: expect.any(Number),
+        },
+      },
+    ]);
+  });
+
+  it("passes on what the transport it wraps can do besides sending", async () => {
+    const inner = Object.assign(new FakeTransport(), {
+      versions: [] as string[],
+      hasPerRequestStream: true,
+      setProtocolVersion(version: string) {
+        this.versions.push(version);
+      },
+      setSupportedProtocolVersions(versions: string[]) {
+        this.versions.push(...versions);
+      },
+    });
+    const transport = new ToolCallLog(inner, logged().logger);
+
+    transport.setProtocolVersion?.("2025-06-18");
+    transport.setSupportedProtocolVersions?.(["2025-03-26"]);
+
+    expect(inner.versions).toEqual(["2025-06-18", "2025-03-26"]);
+    expect(transport.hasPerRequestStream).toBe(true);
+    expect(new ToolCallLog(new FakeTransport(), logged().logger).setProtocolVersion).toBeUndefined();
+  });
 });

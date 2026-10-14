@@ -6,79 +6,104 @@ import { prettyLine } from "./pretty-line.ts";
 
 /**
  * Prints the last lines of the shared log, then every line any pixelwright process appends, until the signal stops it
- * (Ctrl+C ends the command). A file that got shorter was set aside by a starting process: it is followed from its start.
+ * (Ctrl+C ends the command). A file that got shorter was set aside by a writing process: it is followed from its start.
  */
 export async function followLog(file: string, print: (line: string) => void, signal?: AbortSignal): Promise<void> {
-  let offset = 0;
-  let pending = "";
-  let reading = Promise.resolve();
+  await new LogFollower(file, print).follow(signal);
+}
 
-  const readNew = async () => {
-    const size = (await stat(file).catch(() => null))?.size ?? 0;
+/** One follow of the shared log: how far it has read, the start of a line not ended yet, and the read in flight. */
+class LogFollower {
+  readonly #file: string;
+  readonly #print: (line: string) => void;
+  #offset = 0;
+  #partial = "";
+  #reading: Promise<void> = Promise.resolve();
 
-    if (size < offset) {
-      offset = 0;
-      pending = "";
+  constructor(file: string, print: (line: string) => void) {
+    this.#file = file;
+    this.#print = print;
+  }
+
+  async follow(signal?: AbortSignal): Promise<void> {
+    const file = this.#file;
+
+    // A machine whose servers have not written yet has no logs folder: made here, so it can be watched.
+    mkdirSync(dirname(file), {
+      recursive: true,
+      mode: 0o700,
+    });
+
+    this.#offset = await sizeOf(file);
+    await printTail(file, this.#offset, this.#print);
+    this.#print(`— following ${file} (Ctrl+C to stop) —`);
+
+    const read = () => {
+      this.#reading = this.#reading.then(
+        () => this.#readNew(),
+        () => this.#readNew(),
+      );
+    };
+    // The folder watch sees a file set aside or made anew at once; the poll sees lines written through an open file.
+    const watcher = watch(dirname(file), (_event, changed) => {
+      if (changed === null || changed === basename(file)) {
+        read();
+      }
+    });
+
+    watchFile(file, { interval: LOG_POLL_MS }, read);
+    await stopped(signal);
+    watcher.close();
+    unwatchFile(file, read);
+    await this.#reading;
+  }
+
+  async #readNew(): Promise<void> {
+    const size = await sizeOf(this.#file);
+
+    if (size < this.#offset) {
+      this.#offset = 0;
+      this.#partial = "";
     }
 
-    if (size === offset) {
+    if (size === this.#offset) {
       return;
     }
 
-    const handle = await open(file, "r");
+    const handle = await open(this.#file, "r");
 
     try {
-      const buffer = Buffer.alloc(size - offset);
+      const buffer = Buffer.alloc(size - this.#offset);
 
-      await handle.read(buffer, 0, buffer.length, offset);
-      offset = size;
+      await handle.read(buffer, 0, buffer.length, this.#offset);
+      this.#offset = size;
 
-      const lines = `${pending}${buffer.toString("utf8")}`.split("\n");
+      const lines = `${this.#partial}${buffer.toString("utf8")}`.split("\n");
 
-      pending = lines.pop() ?? "";
+      this.#partial = lines.pop() ?? "";
 
       for (const line of lines.filter((candidate) => candidate.trim() !== "")) {
-        print(prettyLine(line));
+        this.#print(prettyLine(line));
       }
     } finally {
       await handle.close();
     }
-  };
+  }
+}
 
-  // A machine whose servers have not written yet has no logs folder: made here, so it can be watched.
-  mkdirSync(dirname(file), {
-    recursive: true,
-    mode: 0o700,
-  });
+async function sizeOf(file: string): Promise<number> {
+  return (await stat(file).catch(() => null))?.size ?? 0;
+}
 
-  const size = (await stat(file).catch(() => null))?.size ?? 0;
-
-  offset = size;
-  await printTail(file, size, print);
-  print(`— following ${file} (Ctrl+C to stop) —`);
-
-  const read = () => {
-    reading = reading.then(readNew, readNew);
-  };
-  // The folder watch sees a file set aside or made anew at once; the poll sees lines written through an open file.
-  const watcher = watch(dirname(file), (_event, changed) => {
-    if (changed === null || changed === basename(file)) {
-      read();
-    }
-  });
-
-  watchFile(file, { interval: LOG_POLL_MS }, read);
-
-  await new Promise<void>((resolve) => {
+/** Resolves when the signal stops the follow: at once when it already has. */
+function stopped(signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
     if (signal?.aborted) {
       resolve();
     }
 
     signal?.addEventListener("abort", () => resolve(), { once: true });
   });
-  watcher.close();
-  unwatchFile(file, read);
-  await reading;
 }
 
 async function printTail(file: string, size: number, print: (line: string) => void): Promise<void> {
