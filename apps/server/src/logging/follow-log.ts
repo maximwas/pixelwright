@@ -1,7 +1,7 @@
-import { watch } from "node:fs";
+import { unwatchFile, watch, watchFile } from "node:fs";
 import { open, stat } from "node:fs/promises";
 import { basename, dirname } from "node:path";
-import { LOG_TAIL_LINES } from "../constants/logging.ts";
+import { LOG_POLL_MS, LOG_TAIL_LINES } from "../constants/logging.ts";
 import { prettyLine } from "./pretty-line.ts";
 
 /**
@@ -51,11 +51,17 @@ export async function followLog(file: string, print: (line: string) => void, sig
   await printTail(file, size, print);
   print(`— following ${file} (Ctrl+C to stop) —`);
 
+  const read = () => {
+    reading = reading.then(readNew, readNew);
+  };
+  // The folder watch sees a file set aside or made anew at once; the poll sees lines written through an open file.
   const watcher = watch(dirname(file), (_event, changed) => {
     if (changed === null || changed === basename(file)) {
-      reading = reading.then(readNew, readNew);
+      read();
     }
   });
+
+  watchFile(file, { interval: LOG_POLL_MS }, read);
 
   await new Promise<void>((resolve) => {
     if (signal?.aborted) {
@@ -65,6 +71,7 @@ export async function followLog(file: string, print: (line: string) => void, sig
     signal?.addEventListener("abort", () => resolve(), { once: true });
   });
   watcher.close();
+  unwatchFile(file, read);
   await reading;
 }
 

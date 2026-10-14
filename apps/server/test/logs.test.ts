@@ -1,4 +1,4 @@
-import { appendFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, mkdtempSync, openSync, readFileSync, writeFileSync, writeSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -53,7 +53,7 @@ describe("pixelwright logs", () => {
     expect(existsSync(file)).toBe(false);
   });
 
-  it("prints the log's last lines, then what any server writes after, until stopped", async () => {
+  it("prints the log's last lines, then what a server writes after through its open file, until stopped", async () => {
     const file = join(mkdtempSync(join(tmpdir(), "pw-follow-")), "pixelwright.log");
     const printed: string[] = [];
     const stop = new AbortController();
@@ -63,8 +63,12 @@ describe("pixelwright logs", () => {
     const following = followLog(file, (line) => printed.push(line), stop.signal);
 
     await new Promise((resolve) => setTimeout(resolve, 100));
-    appendFileSync(
-      file,
+
+    // A server's logger keeps the file open and writes through it, which a folder watch on macOS does not see.
+    const writer = openSync(file, "a");
+
+    writeSync(
+      writer,
       `${record({
         msg: "tool outline",
         ms: 4,
@@ -81,6 +85,7 @@ describe("pixelwright logs", () => {
 
     stop.abort();
     await following;
+    closeSync(writer);
 
     expect(printed[0]).toContain("pixelwright ready on stdio");
     expect(printed.some((line) => line.includes("following"))).toBe(true);

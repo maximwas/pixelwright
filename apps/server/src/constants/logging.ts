@@ -20,6 +20,12 @@ export const ANSI_RESET = "\u001b[0m";
 /** The shared log file is set aside (as .1) once it grows past this, when a process starts. */
 export const LOG_FILE_MAX_BYTES = 5 * 1024 * 1024;
 
+/**
+ * How often `pixelwright logs` checks the file's size as well: a server's logger keeps the file open and writes through
+ * it, which a folder watch on macOS does not report.
+ */
+export const LOG_POLL_MS = 250;
+
 /** How many lines `pixelwright logs` shows from before it started. */
 export const LOG_TAIL_LINES = 40;
 
