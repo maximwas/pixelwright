@@ -1,6 +1,8 @@
 import { BridgeError } from "@pixelwright/core";
+import { VERSION_BEFORE_DESCRIPTION } from "../baselines/constants.ts";
 import type { PluginSession } from "../plugin/plugin-session.ts";
 import { errorMessage } from "../utils/error-message.ts";
+import { saveVersion } from "./save-version.ts";
 
 /**
  * The named version a write saves in the file's history first, when it was given a title: none for a dry run. A save
@@ -15,7 +17,10 @@ export async function versionBefore(
   }
 
   try {
-    const { id } = await session.run("save_version", { title });
+    const { id } = await saveVersion(session, {
+      title,
+      description: VERSION_BEFORE_DESCRIPTION,
+    });
 
     return {
       id,

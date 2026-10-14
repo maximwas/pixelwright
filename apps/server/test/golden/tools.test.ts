@@ -1,6 +1,8 @@
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../../src/assets/written-files.ts";
+import { memoryBaselines } from "../../src/baselines/baseline-store.ts";
+import { SeenDesigns } from "../../src/baselines/seen-designs.ts";
 import { createMcpServer } from "../../src/mcp/mcp-server.ts";
 import { PluginClient } from "../../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../../src/types/mcp.ts";
@@ -30,6 +32,8 @@ describe("golden tool contract", () => {
       files: memoryFiles(),
       projectRoot: "/golden",
       support: { due: async () => null },
+      baselines: memoryBaselines(),
+      seen: new SeenDesigns(),
     });
     const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
     const client = new Client({

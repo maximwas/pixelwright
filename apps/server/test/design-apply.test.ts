@@ -42,7 +42,10 @@ describe("design_apply", () => {
     });
 
     expect(written.requests.map(({ op }) => op)).toEqual(["entries", "save_version", "apply"]);
-    expect(written.requests[1]?.input).toEqual({ title: "Before the gap" });
+    expect(written.requests[1]?.input).toEqual({
+      title: "Before the gap",
+      description: "Saved by Pixelwright before it changed the file.",
+    });
     expect(result.version).toEqual({
       id: "v-1",
       title: "Before the gap",

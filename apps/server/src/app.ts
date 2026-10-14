@@ -2,6 +2,8 @@ import { join } from "node:path";
 import { SUPPORT_LINKS } from "@pixelwright/core";
 import serverPackage from "../package.json" with { type: "json" };
 import { fileStore } from "./assets/written-files.ts";
+import { folderBaselines } from "./baselines/baseline-store.ts";
+import { SeenDesigns } from "./baselines/seen-designs.ts";
 import { bridgeConfigFile, homeDir, loadOrCreateBridgeConfig } from "./bridge/bridge-config.ts";
 import { BridgeServer } from "./bridge/bridge-server.ts";
 import { OwnerClient } from "./bridge/owner-client.ts";
@@ -25,17 +27,20 @@ export async function createApp(): Promise<App> {
   const config = readConfig(process.env);
   const logger = createLogger(config.logLevel, config.logFile);
   const bridge = await createBridge(config, logger);
+  const projectRoot = config.projectRoot ?? process.cwd();
   const server = createMcpServer({
     bridge,
     plugin: new PluginClient(bridge),
     version: serverPackage.version,
     files: fileStore(),
-    projectRoot: config.projectRoot ?? process.cwd(),
+    projectRoot,
     support: new SupportReminder({
       file: join(homeDir(), SUPPORT_STATE_FILE),
       enabled: config.supportReminders,
       links: SUPPORT_LINKS,
     }),
+    baselines: folderBaselines(projectRoot),
+    seen: new SeenDesigns(),
   });
 
   return {

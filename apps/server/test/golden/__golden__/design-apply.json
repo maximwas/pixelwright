@@ -381,7 +381,8 @@
       {
         "op": "save_version",
         "input": {
-          "title": "Before the gap"
+          "title": "Before the gap",
+          "description": "Saved by Pixelwright before it changed the file."
         },
         "session": "s1"
       },
@@ -488,7 +489,8 @@
       {
         "op": "save_version",
         "input": {
-          "title": "fails"
+          "title": "fails",
+          "description": "Saved by Pixelwright before it changed the file."
         },
         "session": "s1"
       }
@@ -513,7 +515,8 @@
       {
         "op": "save_version",
         "input": {
-          "title": "old plugin"
+          "title": "old plugin",
+          "description": "Saved by Pixelwright before it changed the file."
         },
         "session": "s1"
       }

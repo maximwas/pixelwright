@@ -1,6 +1,8 @@
 import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/server";
 import type * as z from "zod";
 import type { WrittenFiles } from "../assets/written-files.ts";
+import type { BaselineStore } from "../baselines/baseline-store.ts";
+import type { SeenDesigns } from "../baselines/seen-designs.ts";
 import type { StatusOutputSchema } from "../features/status/schemas.ts";
 import type { PluginClient } from "../plugin/plugin-client.ts";
 import type { BridgeStatus, ConnectedPlugin, PairingStatus, RequestOptions } from "./bridge.ts";
@@ -25,6 +27,10 @@ export interface ToolContext {
   readonly projectRoot: string;
   /** The weekly support note, added to a write's result after a change that worked. */
   readonly support: SupportNotes;
+  /** The project's baselines (`.pixelwright/baselines`): what code was built from. */
+  readonly baselines: BaselineStore;
+  /** The designs one-baseline diffs compared, kept for their accept. */
+  readonly seen: SeenDesigns;
 }
 
 export interface ToolDefinition<I extends z.ZodObject, O extends z.ZodObject> {
