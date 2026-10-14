@@ -1,6 +1,7 @@
-import { OPERATION_SCHEMAS, type OperationName, type OperationRequest, type OperationResult } from "@pixelwright/core";
+import type { OperationName, OperationRequest, OperationResult } from "@pixelwright/core";
 import { resolveTarget } from "../bridge/target.ts";
 import type { BridgeView } from "../types/mcp.ts";
+import { PluginSession } from "./plugin-session.ts";
 
 /**
  * The plugin as the server's features call it: one operation on the file a tool targets (the active one, or the one
@@ -13,11 +14,13 @@ export class PluginClient {
     this.#bridge = bridge;
   }
 
-  async run<N extends OperationName>(op: N, input: OperationRequest<N>, file?: string): Promise<OperationResult<N>> {
-    const target = resolveTarget(this.#bridge.plugins(), file);
-    const answer = await this.#bridge.request(op, input, target);
+  /** The plugin in the file a tool call targets, found once: a call of several operations keeps to that file. */
+  session(file?: string): PluginSession {
+    return new PluginSession(this.#bridge, resolveTarget(this.#bridge.plugins(), file).session);
+  }
 
-    // TypeScript cannot narrow the schema map by a type parameter; the parse is what checks the answer.
-    return OPERATION_SCHEMAS[op].output.parse(answer) as OperationResult<N>;
+  /** One operation on the file a tool targets. */
+  run<N extends OperationName>(op: N, input: OperationRequest<N>, file?: string): Promise<OperationResult<N>> {
+    return this.session(file).run(op, input);
   }
 }

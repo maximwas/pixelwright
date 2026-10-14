@@ -4,7 +4,6 @@ import {
   type ApplyElement,
   type ApplyError,
   changeOf,
-  OPERATION_SCHEMAS,
   type PaintSpec,
   readApply,
   type Snapshot,
@@ -16,7 +15,6 @@ import type * as z from "zod";
 import { imageInfo } from "../assets/image-info.ts";
 import { readSource, type SourceFile } from "../assets/read-source.ts";
 import { memoryFiles, type WrittenFiles } from "../assets/written-files.ts";
-import { resolveTarget } from "../bridge/target.ts";
 import { MAX_FIGMA_IMAGE_SIDE, UPLOAD_CHUNK_BYTES } from "../constants/mcp.ts";
 import { versionBefore } from "../history/version-before.ts";
 import { PluginClient } from "../plugin/plugin-client.ts";
@@ -56,7 +54,8 @@ export async function applyDesign(
     };
   }
 
-  const target = resolveTarget(bridge.plugins(), file);
+  // Every operation of the call goes to this one file, whatever file comes to the front meanwhile.
+  const session = new PluginClient(bridge).session(file);
   const byRef = new Map(read.elements.map((element) => [element.ref, element]));
   // Inside a new instance the layers are the component's at their defaults, whatever the instance named has: all its
   // element gives is written. Inside a copy they start as the copied ones.
@@ -80,7 +79,7 @@ export async function applyDesign(
   };
 
   if (ids.length > 0) {
-    const entries = OPERATION_SCHEMAS.entries.output.parse(await bridge.request("entries", { ids }, target));
+    const entries = await session.run("entries", { ids });
 
     tokens.styles = entries.styles;
     tokens.variables = entries.variables;
@@ -179,7 +178,7 @@ export async function applyDesign(
       cwd,
       dryRun,
       chunkBytes,
-      send: (input) => bridge.request("upload", input, target),
+      send: (input) => session.run("upload", input),
     },
   );
 
@@ -207,23 +206,15 @@ export async function applyDesign(
     };
   }
 
-  // design_apply still holds the bridge; its own feature folder will take the PluginClient from the context.
-  const version = await versionBefore(new PluginClient(bridge), {
+  const version = await versionBefore(session, {
     title,
     dryRun,
-    file,
   });
-  const applied = OPERATION_SCHEMAS.apply.output.parse(
-    await bridge.request(
-      "apply",
-      {
-        changes: sent,
-        ...(parent === undefined ? {} : { parent }),
-        dryRun,
-      },
-      target,
-    ),
-  );
+  const applied = await session.run("apply", {
+    changes: sent,
+    ...(parent === undefined ? {} : { parent }),
+    dryRun,
+  });
 
   return {
     created: applied.created,

@@ -45,6 +45,10 @@ How to write this file (people and agents alike):
   holds a word like `#FFF`.
 - `design_read`'s hints no longer take a text's own words, or a colour in a layer's name, note or link, for CSS that
   should use a token.
+- `design_apply` and `tokens_apply` save their version, check and write in the file the call started on, even when
+  another Figma file comes to the front while they run.
+- `design_apply` and `tokens_apply` save their version, check and write in the file the call started on, even when
+  another Figma file comes to the front while they run.
 
 ## 0.2.0 — 2026-10-14
 

@@ -17,6 +17,8 @@ export interface RecordingOptions {
   readonly missing?: readonly string[];
   /** Errors the plugin's apply answers with, besides what it writes. */
   readonly pluginErrors?: readonly ApplyError[];
+  /** Two files are open (s1 and s2), and the second comes to the front after the first request. */
+  readonly switching?: boolean;
 }
 
 /**
@@ -26,6 +28,7 @@ export interface RecordingOptions {
  */
 export function recordingBridge(snapshot: Snapshot, options: RecordingOptions = {}) {
   const requests: RecordedRequest[] = [];
+  const switched = () => (options.switching ?? false) && requests.length > 0;
   const bridge: BridgeView = {
     status: () => {
       throw new Error("not used");
@@ -35,8 +38,23 @@ export function recordingBridge(snapshot: Snapshot, options: RecordingOptions = 
       {
         session: "s1",
         info: pluginInfo(),
-        active: true,
+        active: !switched(),
       },
+      ...((options.switching ?? false)
+        ? [
+            {
+              session: "s2",
+              info: pluginInfo({
+                instanceId: "window-b",
+                file: {
+                  name: "Other",
+                  key: null,
+                },
+              }),
+              active: switched(),
+            },
+          ]
+        : []),
     ],
     request: async (op, input, requestOptions) => {
       requests.push({

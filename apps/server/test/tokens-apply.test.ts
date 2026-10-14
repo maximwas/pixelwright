@@ -8,8 +8,11 @@ import { pluginInfo } from "./helpers/fake-plugin.ts";
  * A plugin that saves versions (refusing one named "fails") and, for any tokens, makes one variable unless `writes` is
  * false (the file holds them already). Each request is recorded by its operation, a dry run said so.
  */
-function plugin({ writes = true }: { writes?: boolean } = {}) {
+function plugin({ writes = true, switching = false }: { writes?: boolean; switching?: boolean } = {}) {
   const ops: string[] = [];
+  const sessions: string[] = [];
+  // With switching, a second file comes to the front after the first request.
+  const front = () => (switching && ops.length > 0 ? "s2" : "s1");
   const bridge: BridgeView = {
     status: () => {
       throw new Error("not used");
@@ -19,10 +22,22 @@ function plugin({ writes = true }: { writes?: boolean } = {}) {
       {
         session: "s1",
         info: pluginInfo(),
-        active: true,
+        active: front() === "s1",
+      },
+      {
+        session: "s2",
+        info: pluginInfo({
+          instanceId: "window-b",
+          file: {
+            name: "Other",
+            key: null,
+          },
+        }),
+        active: front() === "s2",
       },
     ],
-    request: async (op, input) => {
+    request: async (op, input, options) => {
+      sessions.push(options?.session ?? "none");
       ops.push((input as { dryRun?: boolean }).dryRun ? `${op} (dry run)` : op);
 
       if (op === "save_version") {
@@ -52,6 +67,7 @@ function plugin({ writes = true }: { writes?: boolean } = {}) {
   return {
     bridge,
     ops,
+    sessions,
   };
 }
 
@@ -75,6 +91,18 @@ const TOKENS = {
 };
 
 describe("tokens_apply with a version", () => {
+  it("checks, saves and writes in the file it started on, though another file comes to the front", async () => {
+    const switching = plugin({ switching: true });
+
+    await applyTokens(new PluginClient(switching.bridge), {
+      ...TOKENS,
+      dryRun: false,
+      version: "Before the tokens",
+    });
+
+    expect(switching.sessions).toEqual(["s1", "s1", "s1"]);
+  });
+
   it("saves it before writing, never in a dry run, and writes nothing when the save fails", async () => {
     const written = plugin();
     const result = await applyTokens(new PluginClient(written.bridge), {

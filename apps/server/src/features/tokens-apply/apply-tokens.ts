@@ -17,15 +17,13 @@ export async function applyTokens(
   { dryRun, file, version: title, ...input }: TokensApplyArgs,
 ): Promise<TokensApplied> {
   const { plan, errors } = tokensPlan(input);
+  // The check, the version and the write go to one file, whatever comes to the front meanwhile.
+  const session = plugin.session(file);
   const write = (dry: boolean) =>
-    plugin.run(
-      "tokens_apply",
-      {
-        plan,
-        dryRun: dry,
-      },
-      file,
-    );
+    session.run("tokens_apply", {
+      plan,
+      dryRun: dry,
+    });
   const probe = title === undefined || dryRun ? null : await write(true);
 
   if (probe !== null && probe.created.length + probe.updated.length === 0) {
@@ -33,10 +31,9 @@ export async function applyTokens(
     return answer(probe, errors, false);
   }
 
-  const version = await versionBefore(plugin, {
+  const version = await versionBefore(session, {
     title,
     dryRun,
-    file,
   });
 
   return {

@@ -68,6 +68,22 @@ describe("design_apply", () => {
     expect(refused.requests.map(({ op }) => op)).not.toContain("apply");
   });
 
+  it("keeps every request of a call on the file it started on, though another file comes to the front", async () => {
+    const { bridge, requests } = recordingBridge(ROW, { switching: true });
+
+    await applyDesign(bridge, {
+      xml: '<Frame id="54:227" gap="48px"/>',
+      dryRun: false,
+      version: "Before the gap",
+    });
+
+    expect(requests.map(({ op, session }) => `${op} in ${session}`)).toEqual([
+      "entries in s1",
+      "save_version in s1",
+      "apply in s1",
+    ]);
+  });
+
   it("says the plugin is older than the server when it cannot save versions yet", async () => {
     const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
     const old = recordingBridge(ROW);
