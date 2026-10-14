@@ -13,6 +13,16 @@ export interface Capture {
   readonly notes: string[];
 }
 
+/** A hidden layer, which a read gives as a name and a box only: a baseline of it has nothing to keep. */
+export class HiddenLayerError extends BridgeError {
+  constructor(node: string) {
+    super(
+      "OP_FAILED",
+      `${node} is hidden in Figma, and a hidden layer is read as a name and a box only: show it, or read a visible one.`,
+    );
+  }
+}
+
 /** Reads a layer for a baseline on one session: its snapshot, then the tokens it uses. A hidden root is refused. */
 export async function captureLayer(session: PluginSession, node: string): Promise<Capture> {
   const capturedAt = new Date().toISOString();
@@ -23,10 +33,7 @@ export async function captureLayer(session: PluginSession, node: string): Promis
   });
 
   if (!snapshot.root.visible) {
-    throw new BridgeError(
-      "OP_FAILED",
-      `${node} is hidden in Figma, and a hidden layer is read as a name and a box only: show it, or read a visible one.`,
-    );
+    throw new HiddenLayerError(node);
   }
 
   const notes: string[] = [];
