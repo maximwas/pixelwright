@@ -91,3 +91,8 @@ export function indexIn(parent: BaseNode, child: { readonly id: string }): numbe
 export function instancePath(id: string): string {
   return id.replace(/^I[^;]+;/, "");
 }
+
+/** A layer on a page: anything but the document and its pages. */
+export function isLayer(node: BaseNode): node is SceneNode {
+  return node.type !== "DOCUMENT" && node.type !== "PAGE";
+}

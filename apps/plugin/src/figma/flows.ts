@@ -8,7 +8,7 @@ import {
 import { FILE_MAP_MAX_NODES, FLOW_MAX_LINKS, OP_BUDGET_MS } from "../constants/plugin.ts";
 import { devStatusOf } from "./dev-status.ts";
 import { pageOf, requireNode } from "./nodes.ts";
-import { reactionsOf } from "./snapshot.ts";
+import { reactionsOf } from "./reactions.ts";
 import { loaded } from "./used-tokens.ts";
 import { layersUntil } from "./walk.ts";
 

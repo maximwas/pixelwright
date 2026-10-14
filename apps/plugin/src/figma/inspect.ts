@@ -1,14 +1,9 @@
 import { type OperationInput, type OperationOutput, roundTo } from "@pixelwright/core";
 import { colorProfile } from "./color-profile.ts";
-import { pageOf, requireNode } from "./nodes.ts";
-import {
-  annotationCategories,
-  entryOf,
-  isLayer,
-  type References,
-  resolveStyles,
-  resolveVariables,
-} from "./snapshot.ts";
+import { annotationCategories } from "./layer-read/fields/notes.ts";
+import { entryOf } from "./layer-read/read-layer.ts";
+import { References } from "./layer-read/references.ts";
+import { isLayer, pageOf, requireNode } from "./nodes.ts";
 
 type Box = { x: number; y: number; width: number; height: number };
 
@@ -32,10 +27,7 @@ export async function inspect({ nodes, relativeTo }: OperationInput<"inspect">):
           width: roundTo(box.width, 2),
           height: roundTo(box.height, 2),
         };
-  const references: References = {
-    styles: new Set(),
-    variables: new Map(),
-  };
+  const references = new References();
   const categories = await annotationCategories();
   const layers: OperationOutput<"inspect">["layers"] = [];
   const pages = new Set<PageNode | null>();
@@ -105,8 +97,8 @@ export async function inspect({ nodes, relativeTo }: OperationInput<"inspect">):
           },
     layers,
     missing,
-    styles: await resolveStyles(references.styles, pages),
-    variables: await resolveVariables(references.variables),
+    styles: await references.styles(pages),
+    variables: await references.variables(),
     ...colorProfile(),
   };
 }

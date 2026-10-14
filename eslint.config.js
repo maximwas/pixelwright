@@ -36,6 +36,8 @@ const REWRITTEN = [
   "apps/plugin/src/figma/variants.ts",
   "apps/plugin/src/figma/nodes.ts",
   "apps/plugin/src/figma/fonts.ts",
+  "apps/plugin/src/figma/layer-read/**",
+  "apps/plugin/src/figma/reactions.ts",
 ];
 
 const BANNED_SYNTAX = [
