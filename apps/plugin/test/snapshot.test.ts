@@ -321,6 +321,49 @@ describe("snapshot", () => {
     expect(inner?.children?.[0]?.overrides).toEqual(["fills", "opacity"]);
   });
 
+  it("finds what an instance above the read changed on it, when the read starts inside the instance", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "9:1",
+            type: "INSTANCE",
+            mainComponent: {
+              id: "5:0",
+              key: "card",
+              name: "Card",
+              parent: null,
+            },
+            componentProperties: {},
+            overrides: [
+              {
+                id: "I9:1;5:2",
+                overriddenFields: ["fills"],
+              },
+              {
+                id: "I9:1;5:2;6:1",
+                overriddenFields: ["characters"],
+              },
+            ],
+            children: [
+              {
+                id: "I9:1;5:2",
+                children: [{ id: "I9:1;5:2;6:1" }],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", { node: "I9:1;5:2" })) as Shot;
+
+    expect(root.overrides).toEqual(["fills"]);
+    expect(root.children?.[0]?.overrides).toEqual(["characters"]);
+  });
+
   it("keeps Figma's own variable match for an unbound spacing field when it found exactly one", async () => {
     const alias = (id: string) => ({
       type: "VARIABLE_ALIAS",
