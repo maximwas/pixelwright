@@ -5210,7 +5210,7 @@
   {
     "name": "components_read",
     "title": "Read the components",
-    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants (a set lists its variant names, \"Size=Large, State=Default\"), properties with their type, default and options, and description. Use it to map Figma components to the project's code components; design_read writes instances with component, variant and props.",
+    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description, `exposed` (the nested instances whose properties its instances show: in code they are its props too) and `code`: the project's Code Connect template or batch row that connects it ({component, source, template, by}), or null. `mapped: false` lists only the components without code yet: connect each with a batch row keyed by its key (guide topic code-connect). `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5240,6 +5240,15 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 500
+        },
+        "mapped": {
+          "description": "true: only components a Code Connect file connects; false: only those none connects. Default: all.",
+          "type": "boolean"
+        },
+        "links": {
+          "default": false,
+          "description": "Also read the links people attached in Dev Mode (Figma's servers, paid plans only).",
+          "type": "boolean"
         },
         "file": {
           "description": "The file to work on: its session from status or its name. Default: the active file.",
@@ -5416,6 +5425,11 @@
                       "type": "string"
                     },
                     "on": {
+                      "description": "The variant of a set the link is on.",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "The project file a code link points at.",
                       "type": "string"
                     }
                   },
@@ -5428,6 +5442,50 @@
               },
               "error": {
                 "type": "string"
+              },
+              "code": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "component": {
+                        "type": "string",
+                        "description": "The code component's name."
+                      },
+                      "source": {
+                        "description": "Its file or package, as the Code Connect file writes it.",
+                        "type": "string"
+                      },
+                      "missing": {
+                        "description": "The source names a file that does not exist.",
+                        "type": "boolean",
+                        "const": true
+                      },
+                      "template": {
+                        "type": "string",
+                        "description": "The template file, or the batch row as <batch file>#<n>."
+                      },
+                      "by": {
+                        "type": "string",
+                        "enum": [
+                          "key",
+                          "id",
+                          "name"
+                        ],
+                        "description": "How it matched: the component's key, the id its url names, or the name."
+                      }
+                    },
+                    "required": [
+                      "component",
+                      "template",
+                      "by"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -5437,7 +5495,8 @@
               "name",
               "page",
               "remote",
-              "properties"
+              "properties",
+              "code"
             ],
             "additionalProperties": false
           }
@@ -5445,12 +5504,11 @@
         "more": {
           "type": "boolean"
         },
-        "linksRead": {
-          "type": "boolean",
-          "const": true
-        },
-        "linksNote": {
-          "type": "string"
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [

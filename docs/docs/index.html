@@ -213,12 +213,14 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-components_read">
   <h3><code>components_read</code></h3>
-  <p>Lists components: scope used (default) gives the ones the instances on the current page, or inside <code>within</code>, come from (a library&#39;s among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants (a set lists its variant names, &quot;Size=Large, State=Default&quot;), properties with their type, default and options, and description. Use it to map Figma components to the project&#39;s code components; design_read writes instances with component, variant and props.</p>
+  <p>Lists components: scope used (default) gives the ones the instances on the current page, or inside <code>within</code>, come from (a library&#39;s among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description, <code>exposed</code> (the nested instances whose properties its instances show: in code they are its props too) and <code>code</code>: the project&#39;s Code Connect template or batch row that connects it ({component, source, template, by}), or null. <code>mapped: false</code> lists only the components without code yet: connect each with a batch row keyed by its key (guide topic code-connect). <code>links: true</code> also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>scope</code><span class="optional">optional</span></td><td><code>&quot;local&quot; | &quot;used&quot;</code><br /><span class="default">default &quot;used&quot;</span></td><td>used: what the page (or within) uses; local: what the file defines.</td></tr>
 <tr><td><code>within</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer or page id to look in. Default: the current page (used) or every page (local).</td></tr>
 <tr><td><code>query</code><span class="optional">optional</span></td><td><code>string</code></td><td>Only components whose name contains this.</td></tr>
 <tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 100</span></td><td></td></tr>
+<tr><td><code>mapped</code><span class="optional">optional</span></td><td><code>boolean</code></td><td>true: only components a Code Connect file connects; false: only those none connects. Default: all.</td></tr>
+<tr><td><code>links</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also read the links people attached in Dev Mode (Figma&#39;s servers, paid plans only).</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
