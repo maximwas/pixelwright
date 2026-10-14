@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { applyTokens } from "../../server/src/features/tokens-apply/apply-tokens.ts";
 import { TokensApplyToolInputSchema } from "../../server/src/features/tokens-apply/schemas.ts";
 import { readTokens } from "../../server/src/features/tokens-read/read-tokens.ts";
@@ -486,6 +486,73 @@ describe("tokens_apply: library tokens", () => {
         type: "VARIABLE_ALIAS",
         id: "L:blue",
       },
+    ]);
+  });
+
+  it("checks a variable alias and a paint style that use a library's colour without importing it", async () => {
+    onTwoPages();
+
+    const importing = vi.spyOn(figma.variables, "importVariableByKeyAsync");
+    const result = await applyTokens(
+      pluginClient(),
+      TokensApplyToolInputSchema.parse({
+        collections: [
+          {
+            name: "Semantic",
+            variables: [
+              {
+                name: "accent",
+                type: "COLOR",
+                values: { Value: "var(--blue-500)" },
+              },
+            ],
+          },
+        ],
+        styles: {
+          paint: [
+            {
+              name: "Accent",
+              value: "var(--blue-500)",
+            },
+          ],
+        },
+        dryRun: true,
+      }),
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.created).toContainEqual({
+      kind: "paint",
+      name: "Accent",
+    });
+    expect(importing).not.toHaveBeenCalled();
+    expect(await figma.getLocalPaintStylesAsync()).toEqual([]);
+  });
+
+  it("names a paint style's token that is nowhere, on a dry run", async () => {
+    onTwoPages();
+
+    const result = await applyTokens(
+      pluginClient(),
+      TokensApplyToolInputSchema.parse({
+        styles: {
+          paint: [
+            {
+              name: "Lost",
+              value: "var(--nowhere)",
+            },
+          ],
+        },
+        dryRun: true,
+      }),
+    );
+
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        kind: "paint",
+        name: "Lost",
+        message: expect.stringMatching(/No paint style or colour variable is named --nowhere/),
+      }),
     ]);
   });
 });
