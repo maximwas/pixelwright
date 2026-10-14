@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { designHints, fitDesign, type Snapshot, type SnapshotNode } from "../src/index.ts";
 import { fixture } from "./helpers/fixtures.ts";
-import { textLayer } from "./helpers/odd-text.ts";
+import { textLayer } from "./helpers/layers.ts";
 
 const layer = (fields: Partial<SnapshotNode> & { id: string }): SnapshotNode => ({
   name: `Layer ${fields.id}`,

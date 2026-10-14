@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { designDiff, type Snapshot, type SnapshotNode } from "../src/index.ts";
-import { BOLD, type Run, textLayer } from "./helpers/odd-text.ts";
+import { BOLD, type Run, textLayer } from "./helpers/layers.ts";
 
 /** Two A/B screens as a client file has them: the same layout, one icon or one colour apart. */
 

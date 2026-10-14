@@ -1,0 +1,6 @@
+[
+  "#FF6B3D is written raw once (color of 54:457) and equals --color-accent: use the token.",
+  "1 layer keeps Figma's default name (54:458 \"Rectangle 1\"): name it by its role in the code.",
+  "A frame has no auto layout, so its children are placed absolutely (54:434 \"Customers\" with 12 children): build them as a flow if they are meant to resize.",
+  "line-height normal is Figma's Auto line height: the font's own spacing, about 1.2× the font size for most fonts (54:436 \"Trusted\"; 54:457 \"★★★★★\"); give it in px where the build must match to the pixel (inspect shows each text's)."
+]

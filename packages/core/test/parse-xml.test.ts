@@ -154,10 +154,12 @@ describe("parseXml", () => {
   });
 
   it("keeps no-break and other spaces XML does not count as whitespace, alone on a line or below others", () => {
-    const [alone, below] = elements(parseXml('<Text id="1:2">  </Text>\n<Text id="1:3">\n  Hello\n   \n</Text>'));
+    const [alone, below] = elements(
+      parseXml('<Text id="1:2">\u00a0\u2003</Text>\n<Text id="1:3">\n  Hello\n  \u00a0\n</Text>'),
+    );
 
-    expect(alone?.children).toEqual([expect.objectContaining({ value: "  " })]);
-    expect(below?.children).toEqual([expect.objectContaining({ value: "Hello  " })]);
+    expect(alone?.children).toEqual([expect.objectContaining({ value: "\u00a0\u2003" })]);
+    expect(below?.children).toEqual([expect.objectContaining({ value: "Hello \u00a0" })]);
   });
 
   it("names the line and column of what is wrong", () => {

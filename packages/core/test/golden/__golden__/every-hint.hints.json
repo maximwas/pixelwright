@@ -1,0 +1,17 @@
+[
+  "--White-2 is another paint style named White (#FFF); --White is not used here: they are two styles, keep each where the layer names it.",
+  "#FFF is written raw 2 times (background of 1:3, background of 1:7) and equals --White-2: use the token.",
+  "#F00 is written raw 2 times (background of 1:4, border of 1:7) and equals --Accent: use the token.",
+  "2 layers keep Figma's default names (1:2 \"Frame 12\", 1:4 \"Rectangle 7\"): name the elements by their role in the code.",
+  "A frame has no auto layout, so its children are placed absolutely (1:2 \"Frame 12\" with 2 children, Figma reads it as display: flex; flex-direction: column; padding: 10px 0 0 10px; align-items: center; gap: 8px): build them as a flow if they are meant to resize.",
+  "A rectangle covers its parent under the content (1:3 \"Backdrop\" covers 1:2 \"Frame 12\"): write each as its parent's background, not as an element.",
+  "A frame only wraps one layer (1:5 \"Wrapper\" only wraps 1:6): they may not need elements of their own.",
+  "line-height normal is Figma's Auto line height: the font's own spacing, about 1.2× the font size for most fonts (1:6 \"Note\"; I1:9;2:1 \"Label\"); give it in px where the build must match to the pixel (inspect shows each text's).",
+  "&#8232; is a line break inside a paragraph (Shift+Enter in Figma, <br> in HTML), not spaces (1:6 \"Note\").",
+  "A layer has a stroke centred on its edge (1:7 \"Card\"): Figma paints half of it outside the box, a CSS border all inside; where it must match to the pixel, use an outline with outline-offset of minus half its width.",
+  "A frame was detached from a component (1:8 \"Detached card\"): check whether the component fits instead.",
+  "A layer is wider or taller than the room their auto layout parent gives them, so they overflow it in Figma too (1:8 \"Detached card\" 500px wide in 400px): decide whether the build wraps, clips or lets them out.",
+  "A layer inside an instance differs from its component outside its properties (I1:9;2:1 \"Label\": color): give the component a property or a variant for them, or build them as one-offs.",
+  "Fonts missing on this machine (Inter) in I1:9;2:1 \"Label\": Figma could not lay these texts out, so their sizes may be off.",
+  "gap 16px on 1 layer (1:10 \"Stack\") matches --space-16, Figma's own match for that field: use the token."
+]
