@@ -9,8 +9,10 @@ import {
   type TextSegment,
   unchangedAttributes,
 } from "../src/index.ts";
+import { everyHintSnapshot } from "./helpers/every-hint.ts";
 import { fixture, nodesOf } from "./helpers/fixtures.ts";
 import { BOLD, textLayer as runsText } from "./helpers/layers.ts";
+import { everyMotionSnapshot } from "./helpers/motion.ts";
 import { oddTextSnapshot } from "./helpers/odd-text.ts";
 
 describe("readApply", () => {
@@ -252,6 +254,12 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
       expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
     });
   }
+
+  it("with every hint's layers and every case of Figma Motion", () => {
+    for (const snapshot of [everyHintSnapshot(), everyMotionSnapshot()]) {
+      expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
+    }
+  });
 
   it("with quotes, line breaks, U+2028 and texts of odd spaces", () => {
     const snapshot = oddTextSnapshot();

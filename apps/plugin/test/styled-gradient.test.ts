@@ -94,6 +94,7 @@ describe("a layer filled with a gradient paint style", () => {
     ).resolves.toMatchObject({
       created: [],
       changed: [],
+      errors: [],
     });
   });
 });
