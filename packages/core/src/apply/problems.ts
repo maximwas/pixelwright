@@ -13,3 +13,8 @@ export function errorAt(where: XmlLocation, id: string | null, problem: WritePro
     ...(problem.hint === undefined ? {} : { hint: problem.hint }),
   };
 }
+
+/** Errors in the XML's order, by line then column; errors at one place keep theirs. */
+export function sortedErrors(errors: readonly ApplyError[]): ApplyError[] {
+  return errors.toSorted((a, b) => a.line - b.line || a.column - b.column);
+}

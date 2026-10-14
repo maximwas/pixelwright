@@ -80,3 +80,6 @@ export const EntriesSchema = SnapshotSchema.omit({ root: true }).extend({
   /** Asked for but not found, or not a layer. */
   missing: z.array(z.string()),
 });
+
+/** The layers design_apply reads before it writes, as the plugin answers. */
+export type EntriesRead = z.output<typeof EntriesSchema>;
