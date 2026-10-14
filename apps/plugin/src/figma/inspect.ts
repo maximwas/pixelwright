@@ -1,4 +1,5 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
+import { colorProfile } from "./color-profile.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import {
   annotationCategories,
@@ -106,6 +107,7 @@ export async function inspect({ nodes, relativeTo }: OperationInput<"inspect">):
     missing,
     styles: await resolveStyles(references.styles, pages),
     variables: await resolveVariables(references.variables),
+    ...colorProfile(),
   };
 }
 

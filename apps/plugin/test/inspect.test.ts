@@ -217,6 +217,15 @@ describe("inspect", () => {
       height: 0,
     });
   });
+  it("says the file's colour profile, so a P3 file's colours are written as such", async () => {
+    const { figma } = installFigma(page());
+
+    expect(await runOperation("inspect", { nodes: ["2:4"] })).not.toHaveProperty("colorProfile");
+
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    expect(await runOperation("inspect", { nodes: ["2:4"] })).toMatchObject({ colorProfile: "DISPLAY_P3" });
+  });
 });
 
 describe("inspect fills", () => {

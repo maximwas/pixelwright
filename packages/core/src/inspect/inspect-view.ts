@@ -1,9 +1,10 @@
-import { colorCss } from "../css/color.ts";
+import { colorCss, colorSpaceOf } from "../css/color.ts";
 import { px } from "../css/format.ts";
 import { interactionSummary } from "../css/interactions.ts";
 import { paintsCss } from "../css/paint.ts";
 import { styleTokenName } from "../css/tokens.ts";
 import { MIXED } from "../schemas/snapshot.ts";
+import type { ColorSpace } from "../types/css.ts";
 import type { InspectBox, InspectedLayer, InspectedLayerView, InspectRaw, InspectView } from "../types/inspect.ts";
 import type { TextSegment } from "../types/snapshot.ts";
 import { unwrapVar } from "../utils/css-value.ts";
@@ -36,7 +37,7 @@ function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
     box: layer.box,
   };
   const overflow = overflowOf(layer);
-  const strokes = strokesOf(layer);
+  const strokes = strokesOf(layer, colorSpaceOf(raw.colorProfile));
   const text = textOf(layer);
   const fills = fillsOf(layer, raw);
   const interactions = (layer.reactions ?? []).map((reaction) => ({
@@ -108,6 +109,7 @@ function fillsOf(layer: InspectedLayer, raw: InspectRaw): NonNullable<InspectedL
     variables: raw.variables ?? {},
     tokens: new Map<string, string>(),
     root: layer,
+    colorSpace: colorSpaceOf(raw.colorProfile),
   };
   const value = paintsCss(layer.fills, undefined, layer, context);
   const style =
@@ -166,7 +168,7 @@ function overflowOf(layer: InspectedLayer): NonNullable<InspectedLayerView["over
   return past.length === 0 ? null : Object.fromEntries(past.map(([side, value]) => [side, round(value)]));
 }
 
-function strokesOf(layer: InspectedLayer): NonNullable<InspectedLayerView["strokes"]> | null {
+function strokesOf(layer: InspectedLayer, space: ColorSpace): NonNullable<InspectedLayerView["strokes"]> | null {
   if (!Array.isArray(layer.strokes) || layer.strokes.length === 0) {
     return null;
   }
@@ -175,7 +177,7 @@ function strokesOf(layer: InspectedLayer): NonNullable<InspectedLayerView["strok
     align: (layer.strokeAlign ?? "INSIDE").toLowerCase(),
     colors: layer.strokes.map((paint) =>
       paint.type === "SOLID" && paint.color !== undefined
-        ? colorCss(paint.color, paint.opacity ?? 1)
+        ? colorCss(paint.color, paint.opacity ?? 1, space)
         : paint.type.toLowerCase(),
     ),
   };
