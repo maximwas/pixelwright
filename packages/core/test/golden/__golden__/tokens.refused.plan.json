@@ -1,0 +1,67 @@
+{
+  "plan": {
+    "collections": [
+      {
+        "name": "Refused",
+        "modes": [
+          "Default"
+        ],
+        "variables": []
+      }
+    ],
+    "styles": {
+      "paint": [],
+      "text": [],
+      "effect": []
+    }
+  },
+  "errors": [
+    {
+      "kind": "variable",
+      "collection": "Refused",
+      "name": "Curve",
+      "message": "EASING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "collection": "Refused",
+      "name": "Width",
+      "mode": "Default",
+      "message": "12em is not a FLOAT value."
+    },
+    {
+      "kind": "variable",
+      "collection": "Refused",
+      "name": "Guess",
+      "mode": "Default",
+      "message": "nothing at all is not a colour, a length, a number, a quoted string, true/false or var(--token)."
+    },
+    {
+      "kind": "variable",
+      "collection": "Refused",
+      "name": "Flag",
+      "mode": "Default",
+      "message": "yes is not a BOOLEAN value."
+    },
+    {
+      "kind": "paint",
+      "name": "Picture",
+      "message": "url(a.png) is an image: a paint style holds colours and colour variables."
+    },
+    {
+      "kind": "paint",
+      "name": "Nothing",
+      "message": "A paint style holds at least one colour."
+    },
+    {
+      "kind": "text",
+      "name": "Loud",
+      "message": "font=\"bold\" is not \"[italic] weight size/line-height 'Family'\"."
+    },
+    {
+      "kind": "effect",
+      "name": "Borrowed",
+      "message": "var(--Shadow-Card) names another style: an effect style holds its shadows."
+    }
+  ]
+}

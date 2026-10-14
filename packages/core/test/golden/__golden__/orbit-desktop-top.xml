@@ -1,0 +1,7 @@
+<Frame id="54:227" name="Pricing – Desktop" display="flex" flex-direction="column" width="1440px" height="1620px" padding="var(--space-64) var(--space-120) var(--space-120)" gap="var(--space-64)" overflow="hidden" background="var(--color-canvas)" $css="layout-grid: 12 columns stretch, gutter 24px, margin 120px">
+  <Frame id="54:228" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden" $children="3"/>
+  <Frame id="54:238" name="Hero" display="flex" align-self="stretch" align-items="center" gap="var(--space-64)" overflow="hidden" $children="2"/>
+  <Frame id="54:243" name="Plans" display="flex" align-self="stretch" gap="var(--space-24)" $children="3"/>
+  <Frame id="54:434" name="Customers" height="360px" align-self="stretch" overflow="hidden" border-radius="24px" background="var(--color-surface)" $children="12"/>
+  <Text id="54:316" name="Footnote" textStyle="Body Small" align-self="stretch" text-align="center" color="#B5B9C4">Prices in USD. Taxes may apply.</Text>
+</Frame>

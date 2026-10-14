@@ -1,0 +1,243 @@
+{
+  "trees": {
+    "brand-colors.light": {
+      "Surface": {
+        "Base": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#FFFFFF"
+          },
+          "$description": "The page background."
+        }
+      },
+      "Ink": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.078,
+            0.086,
+            0.122
+          ],
+          "hex": "#14161F"
+        }
+      },
+      "Veil": {
+        "$type": "color",
+        "$value": {
+          "color": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 1
+          },
+          "opacity": 0.4
+        }
+      }
+    },
+    "brand-colors.dark": {
+      "Surface": {
+        "Base": {
+          "$type": "color",
+          "$value": "{Ink}",
+          "$description": "The page background."
+        }
+      },
+      "Ink": {
+        "$type": "color",
+        "$value": "{Accent}"
+      },
+      "Veil": {
+        "$type": "color",
+        "$value": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "V:ink"
+          },
+          "opacity": 64
+        }
+      },
+      "Lost": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "hex": "#808080"
+        }
+      }
+    },
+    "brand-colors.dark-2": {
+      "Surface": {
+        "Base": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.1,
+              0.1,
+              0.12
+            ],
+            "hex": "#1A1A1F"
+          },
+          "$description": "The page background."
+        }
+      },
+      "Ink": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.9,
+            0.2,
+            0.35
+          ],
+          "alpha": 0.5,
+          "hex": "#E63359"
+        }
+      },
+      "Veil": {
+        "$type": "color",
+        "$value": {
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          },
+          "opacity": {
+            "type": "VARIABLE_ALIAS",
+            "id": "V:half"
+          }
+        }
+      },
+      "Lost": {
+        "$type": "color",
+        "$value": "not a colour"
+      }
+    },
+    "spacing": {
+      "Gap": {
+        "Small": {
+          "$type": "dimension",
+          "$value": {
+            "value": 8,
+            "unit": "px"
+          }
+        },
+        "None": {
+          "$type": "dimension",
+          "$value": {
+            "value": 0,
+            "unit": "px"
+          }
+        }
+      },
+      "Radius": {
+        "$type": "number",
+        "$value": 13.5
+      },
+      "Opacity": {
+        "Half": {
+          "$type": "number",
+          "$value": 50
+        },
+        "Faint": {
+          "$type": "number",
+          "$value": 0.25
+        }
+      },
+      "Weight": {
+        "Bold": {
+          "$type": "fontWeight",
+          "$value": 700
+        }
+      },
+      "Font": {
+        "Family": {
+          "$type": "fontFamily",
+          "$value": "Inter 'Display' \\ Pro"
+        }
+      }
+    },
+    "motion": {},
+    "styles": {
+      "White": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#FFFFFF"
+        }
+      },
+      "White-2": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.98,
+            0.98,
+            0.98
+          ],
+          "alpha": 0.8,
+          "hex": "#FAFAFA"
+        }
+      },
+      "Heading": {
+        "H1": {
+          "$type": "typography",
+          "$value": {
+            "fontFamily": "Inter",
+            "fontSize": {
+              "value": 48,
+              "unit": "px"
+            },
+            "fontWeight": 700,
+            "lineHeight": 1.2,
+            "letterSpacing": {
+              "value": -0.96,
+              "unit": "px"
+            }
+          }
+        }
+      },
+      "Body": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "Open Sans",
+          "fontSize": {
+            "value": 16,
+            "unit": "px"
+          },
+          "fontWeight": 400,
+          "lineHeight": 1.2,
+          "letterSpacing": {
+            "value": 0,
+            "unit": "px"
+          }
+        }
+      }
+    }
+  },
+  "notes": [
+    "5 variables have no DTCG type and are left out: Feature/On (BOOLEAN), Ease/Out (EASING), Ease/Curve (EASING), Ease/Spring (EASING), Duration (TIMING).",
+    "Lost points at a variable that is neither in this file nor in a library it uses: left out.",
+    "Ink points at Accent from a library (Library Colors): no file here defines it, so add that library's tokens for the reference to resolve.",
+    "White has the same DTCG path as another token: written as White-2.",
+    "Glow (paint), Photo (paint), Shadow/Card (effect), Frost (effect): no DTCG type for these styles, left out.",
+    "Body: Auto line height, written as 1.2 (CSS's normal); give the style a line height in Figma to match exactly."
+  ]
+}
