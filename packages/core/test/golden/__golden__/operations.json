@@ -6658,6 +6658,11 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 100
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
         }
       },
       "required": [
@@ -6673,6 +6678,9 @@
             "string",
             "null"
           ]
+        },
+        "description": {
+          "type": "string"
         }
       },
       "required": [

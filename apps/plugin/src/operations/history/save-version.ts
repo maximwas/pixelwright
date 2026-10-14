@@ -1,14 +1,23 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
-import type { EditsGuard } from "../../services/edits-guard.ts";
+import type { PluginServices } from "../../services/plugin-services.ts";
+import { VERSION_SETTLE_MS } from "./constants.ts";
 
-/** A named version in the file's history, before a write: it changes the file's history, so it needs Allow edits. */
+/**
+ * A named version in the file's history, with its description: it changes the file's history, so it needs Allow edits.
+ * It waits for Pixelwright's last write to settle first, so the version holds it. The description comes back, so the
+ * server knows this plugin passed it on.
+ */
 export async function saveVersion(
-  { title }: OperationInput<"save_version">,
-  edits: EditsGuard,
+  { title, description }: OperationInput<"save_version">,
+  { edits, journal }: Pick<PluginServices, "edits" | "journal">,
 ): Promise<OperationOutput<"save_version">> {
   edits.require();
+  await journal.settled(VERSION_SETTLE_MS);
 
-  const saved = await figma.saveVersionHistoryAsync(title);
+  const saved = await figma.saveVersionHistoryAsync(title, description);
 
-  return { id: saved?.id ?? null };
+  return {
+    id: saved?.id ?? null,
+    ...(description === undefined ? {} : { description }),
+  };
 }

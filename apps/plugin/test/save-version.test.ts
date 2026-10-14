@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
 import { testPlugin } from "./helpers/test-plugin.ts";
 
@@ -34,4 +34,74 @@ describe("save_version", () => {
     expect(saved).toEqual(["Before hero"]);
     plugin.services.edits.allow(false);
   });
+
+  it("passes the description on to Figma and gives it back", async () => {
+    const { figma } = installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+      }),
+    );
+    const saved: unknown[][] = [];
+
+    Object.assign(figma, {
+      saveVersionHistoryAsync: async (...args: unknown[]) => {
+        saved.push(args);
+
+        return { id: "v-43" };
+      },
+    });
+    plugin.services.edits.allow(true);
+
+    expect(
+      await plugin.run("save_version", {
+        title: "Built: pricing",
+        description: "Saved by Pixelwright.",
+      }),
+    ).toEqual({
+      id: "v-43",
+      description: "Saved by Pixelwright.",
+    });
+    expect(saved).toEqual([["Built: pricing", "Saved by Pixelwright."]]);
+    plugin.services.edits.allow(false);
+  });
+
+  it("waits until Pixelwright's last write has settled before it saves, and not when there was none", async () => {
+    vi.useFakeTimers();
+
+    const { figma } = installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+      }),
+    );
+    const savedAt: number[] = [];
+
+    Object.assign(figma, {
+      saveVersionHistoryAsync: async () => {
+        savedAt.push(Date.now());
+
+        return { id: "v-44" };
+      },
+    });
+    plugin.services.edits.allow(true);
+
+    const start = Date.now();
+
+    await plugin.run("save_version", { title: "Nothing written" });
+    plugin.services.journal.noteOwnWrite();
+
+    const waiting = plugin.run("save_version", { title: "Right after a write" });
+
+    await vi.advanceTimersByTimeAsync(1_100);
+    await waiting;
+
+    expect(savedAt[0]).toBe(start);
+    expect((savedAt[1] ?? 0) - start).toBeGreaterThanOrEqual(1_000);
+    plugin.services.edits.allow(false);
+  });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });

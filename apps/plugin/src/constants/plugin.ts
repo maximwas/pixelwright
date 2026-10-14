@@ -54,6 +54,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   delete: "Deleted layers",
   execute: "Ran code",
   tokens_apply: "Wrote tokens",
+  save_version: "Saved a version",
 };
 
 /** Steps of another action the activity leaves out: status probes, the reads before a write, files on their way in. */
@@ -97,6 +98,9 @@ export const CHANGES_MAX = 5_000;
 
 /** How long after one of Pixelwright's writes a change still counts as its own: Figma reports changes a moment later. */
 export const OWN_WRITE_ECHO_MS = 1_000;
+
+/** How often a wait for Pixelwright's own write to end looks again. */
+export const SETTLE_POLL_MS = 50;
 
 /** The most layers tokens_usage lists. */
 export const USAGE_MAX_LAYERS = 500;

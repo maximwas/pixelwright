@@ -732,6 +732,10 @@
           "remote": false,
           "value": 16
         }
+      },
+      "page": {
+        "id": "0:1",
+        "name": "Page 1"
       }
     }
   },
@@ -1472,6 +1476,10 @@
           "remote": false,
           "value": 16
         }
+      },
+      "page": {
+        "id": "0:1",
+        "name": "Page 1"
       }
     }
   },
@@ -2212,6 +2220,10 @@
           "remote": false,
           "value": 16
         }
+      },
+      "page": {
+        "id": "0:1",
+        "name": "Page 1"
       }
     }
   },
@@ -2856,6 +2868,10 @@
           "remote": false,
           "value": 16
         }
+      },
+      "page": {
+        "id": "0:1",
+        "name": "Page 1"
       }
     }
   },
@@ -2897,7 +2913,11 @@
       },
       "devStatus": "ready",
       "styles": {},
-      "variables": {}
+      "variables": {},
+      "page": {
+        "id": "0:1",
+        "name": "Page 1"
+      }
     }
   },
   "the instance's text": {
@@ -2975,7 +2995,11 @@
       },
       "devStatus": "ready",
       "styles": {},
-      "variables": {}
+      "variables": {},
+      "page": {
+        "id": "0:1",
+        "name": "Page 1"
+      }
     }
   },
   "the apply document's card": {
@@ -3145,7 +3169,11 @@
         ]
       },
       "styles": {},
-      "variables": {}
+      "variables": {},
+      "page": {
+        "id": "0:1",
+        "name": "0:1"
+      }
     }
   },
   "a page": {

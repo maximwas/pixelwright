@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "../apply/schemas.ts";
-import { EXPORT_CHUNK_BYTES, UPLOAD_MAX_BYTES } from "../constants/bridge.ts";
+import { EXPORT_CHUNK_BYTES, UPLOAD_MAX_BYTES, VERSION_DESCRIPTION_CHARS } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schemas.ts";
 import { RawTokensSchema } from "../tokens/raw-tokens.ts";
@@ -118,8 +118,16 @@ export const CONTENT_OPERATIONS = {
   },
   /** A named version in the file's history, saved before a write for the designer to go back to. */
   save_version: {
-    input: z.object({ title: z.string().min(1).max(100) }),
-    output: z.object({ id: z.string().nullable() }),
+    input: z.object({
+      title: z.string().min(1).max(100),
+      /** Shown under the title; plugins before stage 11 drop it. */
+      description: z.string().min(1).max(VERSION_DESCRIPTION_CHARS).exactOptional(),
+    }),
+    /** The description comes back when the plugin passed it on: an older one saves the title only. */
+    output: z.object({
+      id: z.string().nullable(),
+      description: z.string().exactOptional(),
+    }),
   },
   /** Variables and styles written by name, as tokens_apply planned them; a dry run only checks. */
   tokens_apply: {

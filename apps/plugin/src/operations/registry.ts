@@ -60,7 +60,7 @@ const HANDLERS: Handlers = {
   inspect,
   execute: (input, { edits }) => execute(input, edits),
   tokens_apply: (input, services) => applyTokens(input, services),
-  save_version: (input, { edits }) => saveVersion(input, edits),
+  save_version: (input, services) => saveVersion(input, services),
   upload: async (input, { uploads }) => uploads.receive(input),
 };
 

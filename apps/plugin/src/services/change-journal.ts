@@ -1,5 +1,5 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
-import { CHANGES_MAX, OWN_WRITE_ECHO_MS } from "../constants/plugin.ts";
+import { CHANGES_MAX, OWN_WRITE_ECHO_MS, SETTLE_POLL_MS } from "../constants/plugin.ts";
 
 type Change = OperationOutput<"changes">["changes"][number];
 type Entry = Change & { seq: number };
@@ -37,6 +37,17 @@ export class ChangeJournal {
   /** Pixelwright is writing (or has just written): the changes Figma reports now are its own. */
   noteOwnWrite(): void {
     this.#echoUntil = Date.now() + OWN_WRITE_ECHO_MS;
+  }
+
+  /** Resolves once Pixelwright's writes have settled, none running and the last one's moment over; at most `limitMs`. */
+  async settled(limitMs: number): Promise<void> {
+    const deadline = Date.now() + limitMs;
+
+    while ((this.#writing > 0 || Date.now() < this.#echoUntil) && Date.now() < deadline) {
+      const wait = this.#writing > 0 ? SETTLE_POLL_MS : this.#echoUntil - Date.now();
+
+      await new Promise((resolve) => setTimeout(resolve, Math.max(1, Math.min(wait, deadline - Date.now()))));
+    }
   }
 
   /** Runs one of Pixelwright's writes, its changes marked as its own until a moment after it ends. */

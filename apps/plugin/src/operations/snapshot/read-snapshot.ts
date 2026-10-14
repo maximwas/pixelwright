@@ -45,13 +45,22 @@ export async function snapshot({
   });
   const measurements = measurementsOf(root);
   const devStatus = nearestDevStatus(root);
+  const page = pageOf(root);
 
   return {
     root: top,
     ...(devStatus === undefined ? {} : { devStatus }),
     ...colorProfile(),
-    styles: await references.styles([pageOf(root)]),
+    styles: await references.styles([page]),
     variables: await references.variables(),
     ...(measurements.length === 0 ? {} : { measurements }),
+    ...(page === null
+      ? {}
+      : {
+          page: {
+            id: page.id,
+            name: page.name,
+          },
+        }),
   };
 }
