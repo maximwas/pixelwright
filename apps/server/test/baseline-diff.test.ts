@@ -121,7 +121,7 @@ describe("baseline_diff: one baseline", () => {
 
     const found = await diff({ name: "pricing" });
 
-    // Every layer was made again: each one is a change with what it was, so code naming the old ids follows.
+    // The frame was made again: it is a change with what it was, so code naming the old id follows; under it every id is new.
     expect(found.baselines[0]).toMatchObject({
       status: "changed",
       now: {
@@ -129,11 +129,7 @@ describe("baseline_diff: one baseline", () => {
         name: "Pricing",
       },
     });
-    expect(found.changes?.changed.map(({ id, was }) => [id, was])).toEqual([
-      ["9:9", "1:1"],
-      ["9:10", "1:2"],
-      ["9:11", "1:3"],
-    ]);
+    expect(found.changes?.changed.map(({ id, was }) => [id, was])).toEqual([["9:9", "1:1"]]);
     expect(found.notes).toContain("1:1 is gone: compared with Pricing (9:9), the one layer of its name.");
 
     fake.snapshot = page(node("9:9", "Pricing v2", [node("9:8", "Pricing v3")]));
@@ -142,6 +138,23 @@ describe("baseline_diff: one baseline", () => {
       status: "missing",
       reason: expect.stringMatching(/Pricing \(1:1\) is gone; layers like it: Pricing v2 \(9:9\), Pricing v3 \(9:8\)/),
     });
+  });
+
+  it("looks on the current page when the root's page was deleted, and says missing when it is not there", async () => {
+    const { fake, save, diff } = setup();
+
+    await save("pricing");
+    fake.deletedPage = "0:1";
+    fake.snapshot = page(node("9:9", "Pricing", [text("9:10", "Plans"), text("9:11", "Taxes may apply.")]));
+
+    expect((await diff({ name: "pricing" })).baselines[0]).toMatchObject({
+      status: "changed",
+      now: { id: "9:9" },
+    });
+
+    fake.snapshot = page(node("9:9", "Checkout", []));
+
+    expect((await diff({ name: "pricing" })).baselines[0]).toMatchObject({ status: "missing" });
   });
 
   it("says hidden for a hidden root, unavailable when the id names another layer, and compares node when given", async () => {

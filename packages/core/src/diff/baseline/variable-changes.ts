@@ -16,11 +16,14 @@ interface SideVariable {
   value(modeId: string): string | null;
 }
 
-/** What a variable change is about: its id, and whether each side's layers use it. */
+/**
+ * What a variable change is about: its id, and on each side the bound variables it is reached through ([] when the
+ * layers are bound to it), or undefined when that side's layers do not use it.
+ */
 export interface VariableUse {
   readonly id: string;
-  readonly before: boolean;
-  readonly after: boolean;
+  readonly before: readonly string[] | undefined;
+  readonly after: readonly string[] | undefined;
 }
 
 /** One side's variables by id, written as tokens_read writes them (an alias as var()). */
@@ -74,15 +77,18 @@ export function variableChanges(
   sides: { before: SideVariables; after: SideVariables },
   uses: { before: TokenUses; after: TokenUses },
 ): TokenEntry[] {
-  const before = use.before ? sides.before.get(use.id) : undefined;
-  const after = use.after ? sides.after.get(use.id) : undefined;
+  const before = use.before === undefined ? undefined : sides.before.get(use.id);
+  const after = use.after === undefined ? undefined : sides.after.get(use.id);
   const shown = after ?? before;
 
   if (shown === undefined) {
     return [];
   }
 
-  const layers = after === undefined ? uses.before.count(shown.token) : uses.after.count(shown.token);
+  const layers =
+    after === undefined
+      ? layersOf(shown, use.before, sides.before, uses.before)
+      : layersOf(shown, use.after, sides.after, uses.after);
   const was = before !== undefined && after !== undefined && before.name !== after.name ? before.name : undefined;
   const modes = modesOf(before, after);
   const entries = modes.flatMap((mode) => {
@@ -114,6 +120,19 @@ export function variableChanges(
   }
 
   return entries;
+}
+
+/** The elements that use a variable: bound to it, or to an alias reaching it. */
+function layersOf(
+  variable: SideVariable,
+  through: readonly string[] | undefined,
+  side: SideVariables,
+  uses: TokenUses,
+): number {
+  return (through ?? []).reduce(
+    (count, id) => count + uses.count(side.get(id)?.token ?? ""),
+    uses.count(variable.token),
+  );
 }
 
 /** The modes of both sides' collections, by id, the live side's names first. */

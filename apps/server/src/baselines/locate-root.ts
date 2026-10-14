@@ -70,17 +70,15 @@ async function layerAt(session: PluginSession, id: string): Promise<{ name: stri
   }
 }
 
-/** The one layer on the baseline's page with its root's exact name and type, else missing with the look-alikes. */
+/**
+ * The one layer on the baseline's page (the current page when that page is gone too) with its root's exact name and
+ * type, else missing with the look-alikes.
+ */
 async function byName(
   session: PluginSession,
   baseline: Pick<BaselineFile, "name" | "node" | "page">,
 ): Promise<RootNow> {
-  const { nodes } = await session.run("find", {
-    name: baseline.node.name,
-    type: baseline.node.type,
-    ...(baseline.page === null ? {} : { within: baseline.page.id }),
-    limit: 50,
-  });
+  const { nodes } = await lookAlikes(session, baseline);
   const exact = nodes.filter((found) => found.name === baseline.node.name && found.type === baseline.node.type);
   const [only] = exact;
 
@@ -100,6 +98,35 @@ async function byName(
     status: "missing",
     reason: missingReason(baseline, exact.length === 0 ? nodes : exact),
   };
+}
+
+/** The layers named like the root on its page; on the current page when its page was deleted with it. */
+async function lookAlikes(
+  session: PluginSession,
+  baseline: Pick<BaselineFile, "node" | "page">,
+): Promise<OperationResult<"find">> {
+  const query = {
+    name: baseline.node.name,
+    type: baseline.node.type,
+    limit: 50,
+  };
+
+  if (baseline.page === null) {
+    return session.run("find", query);
+  }
+
+  try {
+    return await session.run("find", {
+      ...query,
+      within: baseline.page.id,
+    });
+  } catch (error) {
+    if (error instanceof BridgeError && error.code === "NODE_NOT_FOUND") {
+      return session.run("find", query);
+    }
+
+    throw error;
+  }
 }
 
 function missingReason(

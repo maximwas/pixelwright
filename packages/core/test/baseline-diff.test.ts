@@ -572,3 +572,141 @@ describe("baselineDiff: tokens only matched", () => {
     expect(result.changes.tokens).toEqual([]);
   });
 });
+
+describe("baselineDiff: review fixes", () => {
+  it("compares the primitive a bound alias points to: changing it changes the design", () => {
+    const blue = {
+      r: 0,
+      g: 0,
+      b: 1,
+      a: 1,
+    };
+    const red = {
+      r: 1,
+      g: 0,
+      b: 0,
+      a: 1,
+    };
+    const one = (id: string, name: string) => ({
+      id,
+      name,
+      remote: false,
+      defaultModeId: id,
+      modes: [
+        {
+          modeId: id,
+          name: "Default",
+        },
+      ],
+    });
+    const raw = (primitive: typeof blue): RawTokens => ({
+      collections: [one("VC:1", "Theme"), one("VC:2", "Brand")],
+      variables: [
+        {
+          id: "V:1",
+          name: "color/primary",
+          collectionId: "VC:1",
+          resolvedType: "COLOR",
+          scopes: [],
+          valuesByMode: {
+            "VC:1": {
+              type: "VARIABLE_ALIAS",
+              id: "V:2",
+            },
+          },
+        },
+        {
+          id: "V:2",
+          name: "brand/500",
+          collectionId: "VC:2",
+          resolvedType: "COLOR",
+          scopes: [],
+          valuesByMode: { "VC:2": primitive },
+        },
+      ],
+      external: {},
+      styles: [],
+    });
+    const swatch = (color: typeof blue) =>
+      snap(
+        column("1:1", "Page", [
+          layer({
+            id: "1:2",
+            name: "Swatch",
+            fills: [
+              {
+                type: "SOLID",
+                color: {
+                  r: color.r,
+                  g: color.g,
+                  b: color.b,
+                },
+                boundVariables: {
+                  color: {
+                    type: "VARIABLE_ALIAS",
+                    id: "V:1",
+                  },
+                },
+              },
+            ],
+          }),
+        ]),
+        {
+          variables: {
+            "V:1": {
+              name: "color/primary",
+              collection: "Theme",
+              resolvedType: "COLOR",
+              remote: false,
+              value: color,
+            },
+          },
+        },
+      );
+    const result = baselineDiff(
+      {
+        snapshot: swatch(blue),
+        tokens: raw(blue),
+      },
+      {
+        snapshot: swatch(red),
+        tokens: raw(red),
+      },
+      { sameReader: true },
+    );
+
+    expect(result.same).toBe(false);
+    expect(result.changes.tokens).toEqual([
+      {
+        token: "--brand-500",
+        name: "brand/500",
+        before: "#00F",
+        after: "#F00",
+        layers: 1,
+      },
+    ]);
+  });
+
+  it("lists only the topmost layer made again, not every layer under it, when the ids changed", () => {
+    const page = (offset: number) =>
+      column(`${1 + offset}:1`, "Pricing", [
+        column(`${1 + offset}:2`, "Plans", [text(`${1 + offset}:3`, "Title"), card(`${1 + offset}:4`)]),
+      ]);
+    const result = diff(snap(page(0)), snap(page(9000)));
+
+    expect(
+      result.changes.changed.map(({ path, id, was }) => ({
+        path,
+        id,
+        was,
+      })),
+    ).toEqual([
+      {
+        path: "(root)",
+        id: "9001:1",
+        was: "1:1",
+      },
+    ]);
+    expect(result.changes.components).toEqual([]);
+  });
+});

@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { type BaselineFile, BridgeError, baselineFileOf } from "@pixelwright/core";
 import writeFileAtomic from "write-file-atomic";
 import { errorMessage } from "../utils/error-message.ts";
-import { BASELINES_DIR } from "./constants.ts";
+import { BASELINE_NAME, BASELINES_DIR } from "./constants.ts";
 
 /** A baseline in the project: its file, or why it cannot be read. */
 export type StoredBaseline = { readonly name: string; readonly path: string } & (
@@ -64,8 +64,8 @@ export function folderBaselines(project: string): BaselineStore {
       return found.file;
     },
     write: async (file) => {
+      const path = pathOf(nameOf(file));
       const made = await mkdir(folder(), { recursive: true });
-      const path = pathOf(file.name);
 
       await writeFileAtomic(path, serialized(file));
 
@@ -94,7 +94,7 @@ export function memoryBaselines(
           return {
             name,
             path: pathOf(name),
-            file: baselineFileOf(JSON.parse(files.get(name) ?? "")),
+            file: named(baselineFileOf(JSON.parse(files.get(name) ?? "")), name),
           };
         } catch (error) {
           return {
@@ -107,12 +107,12 @@ export function memoryBaselines(
     read: async (name) => {
       const text = files.get(name);
 
-      return text === undefined ? null : baselineFileOf(JSON.parse(text));
+      return text === undefined ? null : named(baselineFileOf(JSON.parse(text)), name);
     },
     write: async (file) => {
       const madeFolder = files.size === 0;
 
-      files.set(file.name, serialized(file));
+      files.set(nameOf(file), serialized(file));
 
       return {
         path: pathOf(file.name),
@@ -143,7 +143,7 @@ async function stored(name: string, path: string): Promise<StoredBaseline> {
     return {
       name,
       path,
-      file: baselineFileOf(JSON.parse(text)),
+      file: named(baselineFileOf(JSON.parse(text)), name),
     };
   } catch (error) {
     return {
@@ -152,6 +152,25 @@ async function stored(name: string, path: string): Promise<StoredBaseline> {
       error: errorMessage(error),
     };
   }
+}
+
+/** A baseline as its file names it: the name inside a file someone renamed or copied is not where it lives. */
+function named(file: BaselineFile, name: string): BaselineFile {
+  return file.name === name
+    ? file
+    : {
+        ...file,
+        name,
+      };
+}
+
+/** The name a baseline is written under; refused unless it is a baseline name, which no path can be. */
+function nameOf(file: BaselineFile): string {
+  if (!BASELINE_NAME.test(file.name)) {
+    throw new BridgeError("OP_FAILED", `${JSON.stringify(file.name)} is not a baseline name (pricing, plan-card).`);
+  }
+
+  return file.name;
 }
 
 /** Compact JSON, the header first and the read after it, with a final newline. */

@@ -5,7 +5,7 @@ import { styleTokens } from "../../tokens/model/style-tokens.ts";
 import { Notes } from "../../tokens/notes.ts";
 import type { RawTokens } from "../../tokens/raw-tokens.ts";
 import type { Snapshot, SnapshotStyle } from "../../types/snapshot.ts";
-import { boundVariables } from "./bound-variables.ts";
+import { aliasedVariables, boundVariables } from "./bound-variables.ts";
 import { TokenUses } from "./token-uses.ts";
 import type { BaselineChanges } from "./types.ts";
 import { SideVariables, variableChanges } from "./variable-changes.ts";
@@ -42,17 +42,16 @@ export function tokenChanges(before: TokenSide, after: TokenSide, notes: string[
     before: new SideVariables(before.raw),
     after: new SideVariables(after.raw),
   };
-  // Bound variables only: the ones Figma merely matches a raw value to are hints, not what the layers use.
-  const bound = {
-    before: boundVariables(before.snapshot.root),
-    after: boundVariables(after.snapshot.root),
+  const used = {
+    before: usedVariables(before.snapshot, before.raw),
+    after: usedVariables(after.snapshot, after.raw),
   };
-  const variables = unique([...bound.after, ...bound.before]).flatMap((id) =>
+  const variables = unique([...used.after.keys(), ...used.before.keys()]).flatMap((id) =>
     variableChanges(
       {
         id,
-        before: bound.before.has(id),
-        after: bound.after.has(id),
+        before: used.before.get(id),
+        after: used.after.get(id),
       },
       sides,
       uses,
@@ -60,6 +59,19 @@ export function tokenChanges(before: TokenSide, after: TokenSide, notes: string[
   );
 
   return [...variables, ...styleChanges(before.snapshot, after.snapshot, uses)];
+}
+
+/**
+ * The variables a side's layers use, each with the bound ones it is reached through (none for a bound one): bound
+ * variables and the ones they alias. The ones Figma merely matches a raw value to are hints, not what the layers use.
+ */
+function usedVariables(snapshot: Snapshot, raw: RawTokens): Map<string, readonly string[]> {
+  const bound = boundVariables(snapshot.root);
+
+  return new Map<string, readonly string[]>([
+    ...[...bound].map((id) => [id, []] as const),
+    ...[...aliasedVariables(bound, raw)].map(([id, through]) => [id, [...through]] as const),
+  ]);
 }
 
 /** The styles either side uses, compared as their token values (a text style as its font shorthand), by id. */

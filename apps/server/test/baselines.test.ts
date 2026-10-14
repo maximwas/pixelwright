@@ -102,6 +102,35 @@ describe("folderBaselines", () => {
     await expect(store.read("future")).rejects.toThrow(/future\.json cannot be read: saved by a newer Pixelwright/);
   });
 
+  it("goes by the file's name, never the name inside it: a renamed or copied file is written back where it is", async () => {
+    const root = await project();
+    const store = folderBaselines(root);
+
+    await store.write(baseline("pricing"));
+    await writeFile(join(store.folder(), "plans.json"), JSON.stringify(baseline("pricing")));
+    await writeFile(join(store.folder(), "odd.json"), JSON.stringify(baseline("../../package")));
+
+    const plans = await store.read("plans");
+    const odd = await store.read("odd");
+
+    expect(plans?.name).toBe("plans");
+    expect(odd?.name).toBe("odd");
+    expect((await store.list()).map(({ name, ...entry }) => [name, "file" in entry ? entry.file.name : null])).toEqual([
+      ["odd", "odd"],
+      ["plans", "plans"],
+      ["pricing", "pricing"],
+    ]);
+
+    await store.write({
+      ...(plans as BaselineFile),
+      code: ["src/plans.tsx"],
+    });
+
+    expect((await store.read("pricing"))?.code).toEqual(["src/pricing.tsx"]);
+    expect((await store.read("plans"))?.code).toEqual(["src/plans.tsx"]);
+    await expect(store.write(baseline("../../package"))).rejects.toThrow(/not a baseline name/);
+  });
+
   it("refuses the home folder and the disk's root, which are no project", () => {
     for (const root of [homedir(), "/"]) {
       expect(() => folderBaselines(root).folder()).toThrow(/is no project folder, so baselines have nowhere to live/);

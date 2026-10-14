@@ -117,6 +117,7 @@ function pairChanges(pairs: LayerPairs, sources: PairSources): Pick<BaselineChan
     const change = pairChange(before, now, {
       sources,
       drawingChecked: !unchecked,
+      parentRemade: now.parent !== null && pairs.beforeOf(now.parent) !== now.parent,
     });
 
     if (unchecked) {
@@ -134,11 +135,14 @@ function pairChanges(pairs: LayerPairs, sources: PairSources): Pick<BaselineChan
   };
 }
 
-/** One pair's change: its attributes as [before, now] and whether it is drawn anew; null when nothing changed. */
+/**
+ * One pair's change: its attributes as [before, now] and whether it is drawn anew; null when nothing changed. A layer
+ * made again (another id) is a change of its own, but only the topmost: under a parent made again every id is new.
+ */
 function pairChange(
   before: Placed,
   now: Placed,
-  { sources, drawingChecked }: { sources: PairSources; drawingChecked: boolean },
+  { sources, drawingChecked, parentRemade }: { sources: PairSources; drawingChecked: boolean; parentRemade: boolean },
 ): BaselineChanges["changed"][number] | null {
   const attributes = changedAttributes(before.element, now.element, now.parent === null);
   const drawing = drawingChecked && drawnAnew(before.element.id, now.element.id, now.element.tag, sources);
@@ -148,7 +152,7 @@ function pairChange(
   }
 
   // A layer made again (another id) is a change of its own: code that names the old id must follow.
-  if (Object.keys(attributes).length === 0 && !drawing && before.element.id === now.element.id) {
+  if (Object.keys(attributes).length === 0 && !drawing && (before.element.id === now.element.id || parentRemade)) {
     return null;
   }
 

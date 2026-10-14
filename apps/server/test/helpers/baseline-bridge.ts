@@ -10,6 +10,8 @@ export interface BaselineFakeState {
   tokens: RawTokens | Error;
   selection: string[];
   allowEdits?: boolean;
+  /** A page deleted with the layer: a find within it answers NODE_NOT_FOUND, as the plugin does. */
+  deletedPage?: string;
   /** Figma's answer to save_version: an id, an error, or none echoed back (an older plugin). */
   version?: { id: string | null; echo: boolean } | Error;
   file?: { name: string; key: string | null };
@@ -77,6 +79,10 @@ function answer(state: BaselineFakeState, op: string, input: Record<string, unkn
     case "outline":
       return outlineOf(layers, String(input.node));
     case "find":
+      if (input.within !== undefined && input.within === state.deletedPage) {
+        throw new BridgeError("NODE_NOT_FOUND", `No node ${state.deletedPage} in this file.`);
+      }
+
       return {
         nodes: layers
           .filter((layer) => layer.name.toLowerCase().includes(String(input.name ?? "").toLowerCase()))
