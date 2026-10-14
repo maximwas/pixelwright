@@ -118,6 +118,8 @@ export interface FakeLibrary {
   readonly pages?: FakeNode[];
   /** How many modes a collection may have (Figma's plan limit): addMode refuses past it. Default 4. */
   readonly modeLimit?: number;
+  /** Fonts listed but that loadFontAsync cannot load (a missing file, a broken font). */
+  readonly unloadable?: readonly { family: string; style: string }[];
   /** An enabled library's variables as importVariableByKeyAsync brings them in, by key. */
   readonly importable?: Record<string, Record<string, unknown> & { id: string }>;
 }
@@ -147,6 +149,29 @@ export function variantOf(name: string): Record<string, string> {
       .filter((pair): pair is [string, string] => pair.length === 2),
   );
 }
+
+/** How strictly the fake behaves; by default as loosely as it always did. */
+export interface FakeOptions {
+  /**
+   * Refuse what Figma refuses where the plain fake lets it through: insertChild on a layer that holds no children, a
+   * section's resize (Figma gives sections resizeWithoutConstraints only), createImage of other than PNG, JPEG or GIF
+   * bytes, or of a PNG over 4096 px a side.
+   */
+  readonly strict?: boolean;
+}
+
+/** Layers Figma lets insertChild put children in; an instance takes them only through its slots. */
+const CONTAINERS: ReadonlySet<string> = new Set([
+  "PAGE",
+  "FRAME",
+  "GROUP",
+  "SECTION",
+  "COMPONENT",
+  "COMPONENT_SET",
+  "BOOLEAN_OPERATION",
+  "SLOT",
+  "TRANSFORM_GROUP",
+]);
 
 /** What the writing calls did: undo steps, fonts loaded, calls by node, the layers made. */
 export interface FakeWrites {
@@ -219,7 +244,12 @@ const RANGE_METHODS: Readonly<Record<string, string>> = {
 };
 
 /** Gives a node Figma's writing methods, recording each call; a text refuses new characters until its font loads. */
-function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode) => void): void {
+function writable(
+  node: FakeNode,
+  writes: FakeWrites,
+  register: (node: FakeNode) => void,
+  options: FakeOptions = {},
+): void {
   const define = (name: string, value: unknown) =>
     Object.defineProperty(node, name, {
       value,
@@ -234,6 +264,10 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
       args,
     });
   const insert = (index: number, child: FakeNode) => {
+    if ((options.strict ?? false) && !CONTAINERS.has(node.type)) {
+      throw new Error(`in insertChild: a ${node.type} holds no children`);
+    }
+
     const old = child.parent?.children;
     // As Figma (checked live): the index is read in the list as it is, a child of this layer still in its place, so
     // one moved further along lands just before the layer that was at the index.
@@ -253,6 +287,10 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
   define("appendChild", (child: FakeNode) => insert(node.children?.length ?? 0, child));
   define("insertChild", insert);
   define("resize", (width: number, height: number) => {
+    if ((options.strict ?? false) && node.type === "SECTION") {
+      throw new Error("in resize: a SECTION has no resize: use resizeWithoutConstraints");
+    }
+
     if (node.type === "TEXT" && !writes.loaded.has(fontKey(node.fontName as { family: string; style: string }))) {
       throw new Error(
         `Cannot resize a text with unloaded font "${fontKey(node.fontName as { family: string; style: string })}"`,
@@ -444,6 +482,23 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
     });
   }
 
+  define("setRangeBoundVariable", (start: number, end: number, field: string, variable: { id: string } | null) => {
+    // A run over the whole text binds the text's own field, as Figma reports it.
+    if (start === 0 && end === characters.length) {
+      node.boundVariables = {
+        ...((node.boundVariables as object | undefined) ?? {}),
+        [field]:
+          variable === null
+            ? undefined
+            : {
+                type: "VARIABLE_ALIAS",
+                id: variable.id,
+              },
+      };
+    }
+
+    record("setRangeBoundVariable", [start, end, field, variable?.id ?? null]);
+  });
   define("getRangeAllFontNames", (start: number, end: number) => {
     // As Figma: a range of no characters is refused, so an empty text is read through its own fontName.
     if (end <= start) {
@@ -468,7 +523,7 @@ function writable(node: FakeNode, writes: FakeWrites, register: (node: FakeNode)
 }
 
 /** Installs a fake `figma` global over a page tree and returns what the operations changed. */
-export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
+export function installFigma(page: FakeNode, library: FakeLibrary = {}, options: FakeOptions = {}) {
   const byId = new Map<string, FakeNode>();
   const all: FakeNode[] = [page];
 
@@ -492,7 +547,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     byId.set(node.id, node);
 
     if (Object.getOwnPropertyDescriptor(node, "resize") === undefined) {
-      writable(node, writes, register);
+      writable(node, writes, register, options);
       copyable(node);
     }
   };
@@ -843,7 +898,12 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     currentPage: page as FakeNode & { selection?: FakeNode[] },
     mixed: FAKE_MIXED,
     getNodeByIdAsync: async (id: string) => byId.get(id) ?? null,
-    getStyleByIdAsync: async (id: string) => library.styles?.[id] ?? null,
+    getStyleByIdAsync: async (id: string) =>
+      library.styles?.[id] ??
+      [...localStyles.paint, ...localStyles.text, ...localStyles.effect].find(
+        (style) => (style as { id?: string }).id === id,
+      ) ??
+      null,
     variables: {
       getVariableByIdAsync: async (id: string) => {
         const variable = library.variables?.[id];
@@ -977,7 +1037,13 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     createRectangle: create("RECTANGLE"),
     createEllipse: create("ELLIPSE"),
     createLine: create("LINE"),
-    createImage: (bytes: Uint8Array) => ({ hash: `hash-${bytes.length}` }),
+    createImage: (bytes: Uint8Array) => {
+      if (options.strict ?? false) {
+        checkImage(bytes);
+      }
+
+      return { hash: `hash-${bytes.length}` };
+    },
     createNodeFromSvg: (svg: string) => {
       const frame = create("FRAME")();
       const vector = create("VECTOR")();
@@ -1095,6 +1161,10 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
       },
     },
     loadFontAsync: async (font: { family: string; style: string }) => {
+      if (library.unloadable?.some((unloadable) => fontKey(unloadable) === fontKey(font))) {
+        throw new Error(`The font "${fontKey(font)}" could not be loaded`);
+      }
+
       writes.loaded.add(fontKey(font));
     },
     listAvailableFontsAsync: async () => (library.fonts ?? []).map((fontName) => ({ fontName })),
@@ -1131,4 +1201,20 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
     writes,
     emit,
   };
+}
+
+/** As Figma's createImage: PNG, JPEG or GIF bytes only, and no side over 4096 px (read from a PNG's header). */
+function checkImage(bytes: Uint8Array): void {
+  const starts = (...signature: number[]) => signature.every((byte, index) => bytes[index] === byte);
+  const png = starts(0x89, 0x50, 0x4e, 0x47);
+
+  if (!png && !starts(0xff, 0xd8, 0xff) && !starts(0x47, 0x49, 0x46)) {
+    throw new Error("Image type is unsupported");
+  }
+
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+
+  if (png && bytes.length >= 24 && (view.getUint32(16) > 4096 || view.getUint32(20) > 4096)) {
+    throw new Error("Image is too large");
+  }
 }
