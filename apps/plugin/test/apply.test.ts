@@ -448,6 +448,17 @@ describe("apply: colours in a Display P3 file", () => {
     expect(paint?.color.g).toBeCloseTo(0.2003, 3);
     Object.assign(figma.root, { documentColorProfile: "SRGB" });
   });
+
+  it("writes an underline's colour in the file's space too", async () => {
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    await apply('<Text id="1:2" text-decoration="underline solid #FF0000"/>');
+
+    const decoration = byId("1:2")?.textDecorationColor as { value: { color: { r: number } } } | undefined;
+
+    expect(decoration?.value.color.r).toBeCloseTo(0.9175, 3);
+    Object.assign(figma.root, { documentColorProfile: "SRGB" });
+  });
 });
 
 describe("apply: tokens, fonts and errors", () => {

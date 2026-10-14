@@ -1,6 +1,7 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import type { TextLayer, WriteContext } from "../types/apply.ts";
 import { paintsOf, set } from "./apply-props.ts";
+import { documentColor } from "./color-profile.ts";
 import { fontKey } from "./fonts.ts";
 import { WriteError } from "./write-error.ts";
 
@@ -353,18 +354,19 @@ function decorate(
     throw new WriteError("Figma underlines solid, wavy or dotted: it has no dashed decoration.");
   }
 
+  const written = decoration.color === undefined ? null : documentColor(decoration.color);
   const color: TextDecorationColor = {
     value:
-      decoration.color === undefined
+      written === null
         ? "AUTO"
         : {
             type: "SOLID",
             color: {
-              r: decoration.color.r,
-              g: decoration.color.g,
-              b: decoration.color.b,
+              r: written.r,
+              g: written.g,
+              b: written.b,
             },
-            opacity: decoration.color.a,
+            opacity: written.a,
           },
   };
   const offset = { ...(decoration.offset ?? { unit: "AUTO" }) } as TextDecorationOffset;
