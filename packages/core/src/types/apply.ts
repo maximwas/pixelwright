@@ -54,12 +54,16 @@ export interface TokenRef {
 
 export type LengthValue = number | TokenRef;
 
-/** A colour as design_apply writes it: channels and alpha from 0 to 1. */
+/**
+ * A colour as design_apply writes it: channels and alpha from 0 to 1, sRGB unless `space` says the channels are
+ * Display P3 (written as `color(display-p3 …)`). The plugin turns it into the document's own space as it writes.
+ */
 export interface ColorValue {
   readonly r: number;
   readonly g: number;
   readonly b: number;
   readonly a: number;
+  readonly space?: "display-p3";
 }
 
 /** One paint layer: a colour, a token (a paint style or a colour variable) at an opacity, or an image file. */

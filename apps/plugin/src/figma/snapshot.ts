@@ -204,6 +204,7 @@ export async function entries({ ids }: OperationInput<"entries">): Promise<Opera
 
   return {
     roots,
+    ...colorProfile(),
     missing,
     styles: await resolveStyles(references.styles, pages),
     variables: await resolveVariables(references.variables),

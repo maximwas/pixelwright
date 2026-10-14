@@ -7,6 +7,7 @@ import {
   OPERATION_SCHEMAS,
   type PaintSpec,
   readApply,
+  type Snapshot,
   type SnapshotNode,
   unchangedAttributes,
   urlsOf,
@@ -72,7 +73,7 @@ export async function applyDesign(
   ];
   const layers = new Map<string, Layer>();
   const missing = new Set<string>();
-  const tokens = {
+  const tokens: Pick<Snapshot, "styles" | "variables" | "colorProfile"> = {
     styles: {},
     variables: {},
   };
@@ -82,6 +83,10 @@ export async function applyDesign(
 
     tokens.styles = entries.styles;
     tokens.variables = entries.variables;
+
+    if (entries.colorProfile !== undefined) {
+      tokens.colorProfile = entries.colorProfile;
+    }
 
     for (const root of entries.roots) {
       index(root.node, root.parent, layers);

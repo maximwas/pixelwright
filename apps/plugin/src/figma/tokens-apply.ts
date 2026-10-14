@@ -18,6 +18,7 @@ import {
 } from "@pixelwright/core";
 import { errorMessage } from "../utils/error-message.ts";
 import { effectKey, effectsOf, mergedEffects, paintsOf } from "./apply-props.ts";
+import { documentColor } from "./color-profile.ts";
 import { requireEdits } from "./edits.ts";
 import { fontNameOf } from "./fonts.ts";
 import { type TokenIndex, tokenIndex } from "./token-index.ts";
@@ -595,7 +596,7 @@ function figmaValue(
       };
     }
     case "color":
-      return { value: { ...spec.color } };
+      return { value: documentColor(spec.color) };
     default:
       return { value: spec.value };
   }

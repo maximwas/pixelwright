@@ -15,7 +15,7 @@ import { withoutUrls } from "./css-values.ts";
 export function unchangedAttributes(
   element: ApplyElement,
   item: { node: SnapshotNode; parent: SnapshotNode | null },
-  tokens: Pick<Snapshot, "styles" | "variables">,
+  tokens: Pick<Snapshot, "styles" | "variables" | "colorProfile">,
 ): LayerNow {
   const node = item.node.visible
     ? item.node
@@ -92,10 +92,14 @@ function same(name: string, written: string | undefined, value: string): boolean
   );
 }
 
-function pick(tokens: Pick<Snapshot, "styles" | "variables">): Pick<Snapshot, "styles" | "variables"> {
+/** What a render needs besides the layers: the tokens, and the file's colour profile its colours are written in. */
+function pick(
+  tokens: Pick<Snapshot, "styles" | "variables" | "colorProfile">,
+): Pick<Snapshot, "styles" | "variables" | "colorProfile"> {
   return {
     styles: tokens.styles,
     variables: tokens.variables,
+    ...(tokens.colorProfile === undefined ? {} : { colorProfile: tokens.colorProfile }),
   };
 }
 

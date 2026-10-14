@@ -2,12 +2,14 @@ import { clampRgb, converter, modeP3, modeRgb, useMode, wcagContrast } from "cul
 import { describe, expect, it } from "vitest";
 import {
   colorCss,
+  colorOf,
   contrastCheck,
   designXml,
   dtcgTrees,
   type RawTokens,
   type Snapshot,
   type SnapshotNode,
+  toDocumentColor,
   tokenModel,
   tokensCss,
 } from "../src/index.ts";
@@ -290,5 +292,45 @@ describe("colours of a Display P3 file", () => {
 
     expect(rated?.ratio).toBeCloseTo(expected, 1);
     expect(rated?.color).toBe("color(display-p3 0.2 0.6 0.3)");
+  });
+
+  it("are read from design_apply's input as P3 channels, kept apart from sRGB ones", () => {
+    expect(colorOf("color(display-p3 1 0 0)")).toEqual({
+      r: 1,
+      g: 0,
+      b: 0,
+      a: 1,
+      space: "display-p3",
+    });
+    expect(colorOf("#F00")).toEqual({
+      r: 1,
+      g: 0,
+      b: 0,
+      a: 1,
+    });
+  });
+
+  it("are written in the document's own space: P3 as it is in a P3 file, sRGB converted; P3 clipped in an sRGB file", () => {
+    const p3Red = {
+      r: 1,
+      g: 0,
+      b: 0,
+      a: 1,
+      space: "display-p3" as const,
+    };
+    const srgbRed = {
+      r: 1,
+      g: 0,
+      b: 0,
+      a: 1,
+    };
+    const converted = toDocumentColor(srgbRed, "display-p3");
+
+    expect(toDocumentColor(p3Red, "display-p3")).toEqual(srgbRed);
+    expect(converted.r).toBeCloseTo(0.9175, 3);
+    expect(converted.g).toBeCloseTo(0.2003, 3);
+    expect(converted.b).toBeCloseTo(0.1386, 3);
+    expect(toDocumentColor(p3Red, "srgb")).toEqual(srgbRed);
+    expect(toDocumentColor(srgbRed, "srgb")).toEqual(srgbRed);
   });
 });

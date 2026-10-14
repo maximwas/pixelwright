@@ -231,16 +231,29 @@ export function percentOf(value: string): number | null {
   return match === null ? null : Number(match[1]);
 }
 
-/** Any CSS colour Figma can hold: hex, rgb(), hsl(), a name. */
+/**
+ * Any CSS colour Figma can hold: hex, rgb(), hsl(), a name, as sRGB channels; `color(display-p3 …)` keeps its P3
+ * channels, marked, for a Display P3 document to take as they are.
+ */
 export function colorOf(value: string): ColorValue | null {
   const parsed = parse(value.trim());
+  const clamp = (channel: number) => Math.min(1, Math.max(0, channel));
+
+  if (parsed?.mode === "p3") {
+    return {
+      r: clamp(parsed.r),
+      g: clamp(parsed.g),
+      b: clamp(parsed.b),
+      a: clamp(parsed.alpha ?? 1),
+      space: "display-p3",
+    };
+  }
+
   const rgb = parsed === undefined ? undefined : toRgb(parsed);
 
   if (rgb === undefined) {
     return null;
   }
-
-  const clamp = (channel: number) => Math.min(1, Math.max(0, channel));
 
   return {
     r: clamp(rgb.r),

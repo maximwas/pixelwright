@@ -1,5 +1,6 @@
 import type { AxisPlacement, EffectSpec, FigmaProps, GridTrack, LengthValue, PaintSpec } from "@pixelwright/core";
 import type { Layer, WriteContext } from "../types/apply.ts";
+import { documentColor } from "./color-profile.ts";
 import { WriteError } from "./write-error.ts";
 
 /** One step of writing a layer: the properties it takes. */
@@ -553,14 +554,16 @@ export async function paintsOf(
 
   for (const spec of specs) {
     if (spec.kind === "color") {
+      const { r, g, b, a } = documentColor(spec.color);
+
       paints.push({
         type: "SOLID",
         color: {
-          r: spec.color.r,
-          g: spec.color.g,
-          b: spec.color.b,
+          r,
+          g,
+          b,
         },
-        opacity: spec.color.a,
+        opacity: a,
       });
       continue;
     }
@@ -786,7 +789,7 @@ export function effectsOf(specs: readonly EffectSpec[]): Effect[] {
 
     return {
       type: effect.type,
-      color: { ...effect.color },
+      color: documentColor(effect.color),
       offset: {
         x: effect.x,
         y: effect.y,

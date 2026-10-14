@@ -6,6 +6,7 @@ useMode(modeRgb);
 useMode(modeP3);
 
 const toRgb = converter("rgb");
+const toP3 = converter("p3");
 
 export interface Rgba {
   readonly r: number;
@@ -70,5 +71,42 @@ export function srgbOf(color: Rgba, space: ColorSpace = "srgb"): Rgba {
     g,
     b,
     ...(color.a === undefined ? {} : { a: color.a }),
+  };
+}
+
+/**
+ * A colour design_apply was given, in the document's own space: in a Display P3 file a P3 colour as it is and an sRGB
+ * one converted to P3; in an sRGB file a P3 colour converted and clipped, an sRGB one as it is.
+ */
+export function toDocumentColor(
+  color: Rgba & { readonly space?: "display-p3" },
+  document: ColorSpace,
+): { r: number; g: number; b: number; a: number } {
+  const a = color.a ?? 1;
+  const clamp = (channel: number) => Math.min(1, Math.max(0, channel));
+
+  if (document === "display-p3" && color.space !== "display-p3") {
+    const { r, g, b } = toP3({
+      mode: "rgb",
+      r: color.r,
+      g: color.g,
+      b: color.b,
+    });
+
+    return {
+      r: clamp(r),
+      g: clamp(g),
+      b: clamp(b),
+      a,
+    };
+  }
+
+  const { r, g, b } = document === "srgb" && color.space === "display-p3" ? srgbOf(color, "display-p3") : color;
+
+  return {
+    r,
+    g,
+    b,
+    a,
   };
 }

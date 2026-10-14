@@ -61,6 +61,7 @@ function bridgeOver(snapshot: Snapshot, { cut = false }: { cut?: boolean } = {})
           missing: [],
           styles: snapshot.styles,
           variables: snapshot.variables,
+          ...(snapshot.colorProfile === undefined ? {} : { colorProfile: snapshot.colorProfile }),
         };
       }
 
@@ -94,6 +95,22 @@ const ROW = SnapshotSchema.parse(
 );
 
 describe("design_apply", () => {
+  it("writes nothing for a Display P3 file's read sent back as it was", async () => {
+    const p3 = {
+      ...ROW,
+      colorProfile: "DISPLAY_P3",
+    };
+    const { bridge, requests } = bridgeOver(p3);
+    const result = await applyDesign(bridge, {
+      xml: designXml(p3).xml,
+      dryRun: false,
+    });
+
+    expect(designXml(p3).xml).toContain("color(display-p3 ");
+    expect(result.changed).toEqual([]);
+    expect(requests.map(({ op }) => op)).toEqual(["entries"]);
+  });
+
   it("saves a named version before it writes, never in a dry run, and writes nothing when the save fails", async () => {
     const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
     const written = bridgeOver(ROW);

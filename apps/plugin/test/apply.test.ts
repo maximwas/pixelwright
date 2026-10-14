@@ -426,6 +426,30 @@ describe("apply: changing", () => {
   });
 });
 
+describe("apply: colours in a Display P3 file", () => {
+  it("writes a P3 colour as it is and an sRGB one converted to P3", async () => {
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    await apply('<Frame id="3:1" background="color(display-p3 1 0 0)"/>');
+
+    const fillsOf = () => (byId("3:1")?.fills ?? []) as { color: { r: number; g: number; b: number } }[];
+
+    expect(fillsOf()[0]?.color).toEqual({
+      r: 1,
+      g: 0,
+      b: 0,
+    });
+
+    await apply('<Frame id="3:1" background="#FF0000"/>');
+
+    const [paint] = fillsOf();
+
+    expect(paint?.color.r).toBeCloseTo(0.9175, 3);
+    expect(paint?.color.g).toBeCloseTo(0.2003, 3);
+    Object.assign(figma.root, { documentColorProfile: "SRGB" });
+  });
+});
+
 describe("apply: tokens, fonts and errors", () => {
   it("binds var() to the style the page uses, and names close tokens for one that matches nothing", async () => {
     await apply('<Frame id="3:1" background="var(--Dark)"/>');
