@@ -1,9 +1,9 @@
-import { CSS_ORDER } from "../constants/css.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotNode } from "../types/snapshot.ts";
 import { withoutFallbacks } from "./values/css-values.ts";
 import { px } from "./values/format.ts";
 import { lengthCss } from "./values/lengths.ts";
+import { CSS_ORDER } from "./vocabulary.ts";
 
 /**
  * A layer's CSS as it is read: what design_apply can write back, put in the one order every read writes, and what it

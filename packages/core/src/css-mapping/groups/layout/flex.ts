@@ -153,9 +153,7 @@ function readWrappedLines(node: SnapshotNode, css: CssDeclarations): void {
 
 /** A flex layout: the direction, wrap and the gaps along and across it; grid tracks are an error. */
 export function flexLayout(input: WriteInput, out: WriteOutput): void {
-  const { merged, changed } = input;
-
-  const direction = merged("flex-direction") ?? "row";
+  const direction = input.merged("flex-direction") ?? "row";
 
   if (direction !== "row" && direction !== "column") {
     out.fail(
@@ -167,23 +165,35 @@ export function flexLayout(input: WriteInput, out: WriteOutput): void {
   }
 
   const vertical = direction === "column";
-  const wrap = merged("flex-wrap");
+  const wrap = input.merged("flex-wrap");
 
   out.set(
     "layoutMode",
     vertical ? "VERTICAL" : "HORIZONTAL",
-    merged("flex-direction") === undefined ? "display" : "flex-direction",
+    input.merged("flex-direction") === undefined ? "display" : "flex-direction",
   );
+  writeWrap(wrap, out);
+  writeFlexGaps(input, out, vertical, wrap === "wrap");
 
-  if (wrap !== undefined) {
-    if (wrap === "wrap" || wrap === "nowrap") {
-      out.set("layoutWrap", wrap === "wrap" ? "WRAP" : "NO_WRAP", "flex-wrap");
-    } else {
-      out.fail("flex-wrap", `flex-wrap="${wrap}" is not one Figma has: wrap or nowrap.`);
-    }
+  for (const name of ["grid-template-columns", "grid-template-rows"].filter(input.changed)) {
+    out.fail(name, `${name} needs display="grid".`);
+  }
+}
+
+function writeWrap(wrap: string | undefined, out: WriteOutput): void {
+  if (wrap === undefined) {
+    return;
   }
 
-  // As in CSS: along a row the columns are spaced, along a column the rows; the other gap is between wrapped lines.
+  if (wrap === "wrap" || wrap === "nowrap") {
+    out.set("layoutWrap", wrap === "wrap" ? "WRAP" : "NO_WRAP", "flex-wrap");
+  } else {
+    out.fail("flex-wrap", `flex-wrap="${wrap}" is not one Figma has: wrap or nowrap.`);
+  }
+}
+
+/** As in CSS: along a row the columns are spaced, along a column the rows; the other gap is between wrapped lines. */
+function writeFlexGaps(input: WriteInput, out: WriteOutput, vertical: boolean, wraps: boolean): void {
   const { row, column } = gapsOf(input, out);
   const along = vertical ? row : column;
   const across = vertical ? column : row;
@@ -192,11 +202,7 @@ export function flexLayout(input: WriteInput, out: WriteOutput): void {
     out.set("itemSpacing", along.value, along.attribute);
   }
 
-  if (across !== undefined && wrap === "wrap") {
+  if (across !== undefined && wraps) {
     out.set("counterAxisSpacing", across.value, across.attribute);
-  }
-
-  for (const name of ["grid-template-columns", "grid-template-rows"].filter(changed)) {
-    out.fail(name, `${name} needs display="grid".`);
   }
 }

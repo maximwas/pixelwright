@@ -1,4 +1,4 @@
-import { changeOf } from "../../apply/css-to-figma.ts";
+import { attributeProps } from "../../css-mapping/write-element.ts";
 import type { EffectSpec, FigmaProps, FontSpec, PaintSpec } from "../../types/apply.ts";
 
 /** The kinds of style tokens_apply writes. */
@@ -45,28 +45,6 @@ export function styleValueOf(kind: StyleKind, value: string): StyleValue {
   const { props, errors } = attributeProps(reader.tag, reader.attribute, value);
 
   return errors.length > 0 ? { error: errors.join(" ") } : reader.read(props, value);
-}
-
-/**
- * What design_apply makes of one attribute, on an element made only to carry it: the same CSS means the same on a
- * style as on a layer. The css-mapping module will read one attribute without the element.
- */
-function attributeProps(tag: string, attribute: string, value: string): { props: FigmaProps; errors: string[] } {
-  const { change, errors } = changeOf({
-    line: 1,
-    column: 1,
-    tag,
-    id: null,
-    ref: "token",
-    parent: null,
-    index: 0,
-    attributes: { [attribute]: value },
-  });
-
-  return {
-    props: change.props,
-    errors: errors.map(({ message }) => message),
-  };
 }
 
 function paintValue({ fills }: FigmaProps, value: string): StyleValue {

@@ -80,33 +80,39 @@ export function gridLayout(input: WriteInput, out: WriteOutput): void {
 }
 
 function tracksOf(value: string): GridTrack[] | null {
-  const tracks: GridTrack[] = [];
+  const items = splitTop(value, " ").flatMap(repeated);
+  const tracks = items.map(trackOf);
 
-  for (const part of splitTop(value, " ")) {
-    const repeat = /^repeat\(\s*(\d+)\s*,\s*(.+)\)$/.exec(part);
-    const items = repeat === null ? [part] : Array.from({ length: Number(repeat[1]) }, () => (repeat[2] ?? "").trim());
+  return tracks.length === 0 || tracks.includes(null) ? null : (tracks as GridTrack[]);
+}
 
-    for (const item of items) {
-      const fraction = /^(\d*\.?\d+)fr$/.exec(item);
-      const pixels = lengthOf(item);
+/** A track list's part, with repeat(N, track) written out. */
+function repeated(part: string): string[] {
+  const repeat = /^repeat\(\s*(\d+)\s*,\s*(.+)\)$/.exec(part);
 
-      if (fraction !== null) {
-        tracks.push({
-          type: "FLEX",
-          value: Number(fraction[1]),
-        });
-      } else if (item === "auto") {
-        tracks.push({ type: "HUG" });
-      } else if (typeof pixels === "number") {
-        tracks.push({
-          type: "FIXED",
-          value: pixels,
-        });
-      } else {
-        return null;
-      }
-    }
+  return repeat === null ? [part] : Array.from({ length: Number(repeat[1]) }, () => (repeat[2] ?? "").trim());
+}
+
+/** One track: fr is a flexible one, auto hugs its content, px is fixed; null for anything else. */
+function trackOf(item: string): GridTrack | null {
+  const fraction = /^(\d*\.?\d+)fr$/.exec(item);
+  const pixels = lengthOf(item);
+
+  if (fraction !== null) {
+    return {
+      type: "FLEX",
+      value: Number(fraction[1]),
+    };
   }
 
-  return tracks.length === 0 ? null : tracks;
+  if (item === "auto") {
+    return { type: "HUG" };
+  }
+
+  return typeof pixels === "number"
+    ? {
+        type: "FIXED",
+        value: pixels,
+      }
+    : null;
 }

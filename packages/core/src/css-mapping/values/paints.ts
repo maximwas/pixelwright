@@ -1,4 +1,4 @@
-import { Color, isChannels } from "../../kernel/color/color.ts";
+import { type Channels, Color, isChannels } from "../../kernel/color/color.ts";
 import { styleTokenName, variableTokenName } from "../../kernel/names.ts";
 import { MIXED } from "../../schemas/snapshot.ts";
 import type { PaintSpec } from "../../types/apply.ts";
@@ -57,7 +57,7 @@ export function paintsCss(
 
 function layersCss(paints: readonly SnapshotPaint[], node: SnapshotNode, context: CssContext): PaintCss {
   const layers = paints
-    .filter((paint) => paint.visible !== false)
+    .filter((paint) => paint.visible ?? true)
     .toReversed()
     .map((paint) => layerCss(paint, node, context));
 
@@ -81,39 +81,6 @@ function layersCss(paints: readonly SnapshotPaint[], node: SnapshotNode, context
 
 function isColor(value: string): boolean {
   return !value.startsWith("url(") && !value.includes("gradient(");
-}
-
-function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext): string | typeof UNMAPPED {
-  if (paint.type === "SOLID" && paint.color !== undefined) {
-    const variable = boundVariable(paint.boundVariables?.color, context);
-
-    if (variable !== null) {
-      const name = variableTokenName(variable);
-
-      if (isChannels(variable.value)) {
-        context.tokens.set(name, Color.of(variable.value, context.colorSpace).css());
-      }
-
-      const opacity = paint.opacity ?? 1;
-
-      // The paint's own opacity on top of the variable's color: mixed with transparent, so it still names the token.
-      return opacity < 1
-        ? `color-mix(in ${context.colorSpace ?? "srgb"}, var(${name}) ${Math.round(opacity * 100)}%, transparent)`
-        : `var(${name})`;
-    }
-
-    return Color.of(paint.color, context.colorSpace)
-      .faded(paint.opacity ?? 1)
-      .css();
-  }
-
-  if (paint.type === "IMAGE") {
-    const url = context.imageUrl?.(node, paint) ?? `assets/${paint.imageHash ?? "image"}.png`;
-
-    return `${cssUrl(url)} ${SCALE_MODES[paint.scaleMode ?? "FILL"] ?? SCALE_MODES.FILL}`;
-  }
-
-  return UNMAPPED;
 }
 
 /** A style id the layer really uses: none for an empty id, or mixed ones (a text's runs). */
@@ -163,4 +130,41 @@ export function paintOf(value: string): PaintSpec | null {
         kind: "color",
         color: color.value(),
       };
+}
+
+function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext): string | typeof UNMAPPED {
+  if (paint.type === "SOLID" && paint.color !== undefined) {
+    return solidCss(paint, paint.color, context);
+  }
+
+  if (paint.type === "IMAGE") {
+    const url = context.imageUrl?.(node, paint) ?? `assets/${paint.imageHash ?? "image"}.png`;
+
+    return `${cssUrl(url)} ${SCALE_MODES[paint.scaleMode ?? "FILL"] ?? SCALE_MODES.FILL}`;
+  }
+
+  return UNMAPPED;
+}
+
+/**
+ * A solid paint: the token of the colour variable bound to it (its own opacity on top as a mix with transparent, so
+ * it still names the token), else its colour.
+ */
+function solidCss(paint: SnapshotPaint, color: Channels, context: CssContext): string {
+  const variable = boundVariable(paint.boundVariables?.color, context);
+  const opacity = paint.opacity ?? 1;
+
+  if (variable === null) {
+    return Color.of(color, context.colorSpace).faded(opacity).css();
+  }
+
+  const name = variableTokenName(variable);
+
+  if (isChannels(variable.value)) {
+    context.tokens.set(name, Color.of(variable.value, context.colorSpace).css());
+  }
+
+  return opacity < 1
+    ? `color-mix(in ${context.colorSpace ?? "srgb"}, var(${name}) ${Math.round(opacity * 100)}%, transparent)`
+    : `var(${name})`;
 }

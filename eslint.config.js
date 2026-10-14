@@ -13,6 +13,7 @@ const BLOCKS = ["if", "for", "while", "do", "switch", "try"];
 const REWRITTEN = [
   "packages/core/src/kernel/**",
   "packages/core/src/tokens/**",
+  "packages/core/src/css-mapping/**",
   "apps/server/src/features/**",
   "apps/server/src/plugin/**",
   "apps/plugin/src/operations/**",

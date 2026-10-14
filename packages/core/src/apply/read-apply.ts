@@ -1,18 +1,20 @@
 import { BridgeError } from "../bridge/protocol.ts";
 import {
-  BOX_PAINT,
   CREATABLE_TAGS,
-  CSS_ATTRIBUTES,
   KNOWN_TAGS,
   LATER_TAGS,
   LAYER_ID,
-  LAYOUT_ATTRIBUTES,
   LAYOUT_TAGS,
   META_ATTRIBUTES,
   SHAPE_TAGS,
+} from "../constants/apply.ts";
+import {
+  BOX_PAINT,
+  CSS_ATTRIBUTES,
+  LAYOUT_ATTRIBUTES,
   SPAN_ATTRIBUTES,
   TEXT_ATTRIBUTES,
-} from "../constants/apply.ts";
+} from "../css-mapping/vocabulary.ts";
 import type { ApplyElement, ApplyError } from "../types/apply.ts";
 import type { XmlChild, XmlElementNode, XmlLocation } from "../types/xml.ts";
 import { closest } from "../utils/closest.ts";

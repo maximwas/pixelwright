@@ -1,15 +1,15 @@
 import { VECTOR_TYPES } from "../constants/css.ts";
-import { CssDeclarations } from "../css-mapping/css-declarations.ts";
-import { readAppearance, readLayoutGrids, readRadius } from "../css-mapping/groups/appearance.ts";
-import { readEffects } from "../css-mapping/groups/effects.ts";
-import { readGeometry } from "../css-mapping/groups/geometry/geometry.ts";
-import { readLayout } from "../css-mapping/groups/layout/layout.ts";
-import { readBackground } from "../css-mapping/groups/paint/fills.ts";
-import { readLine } from "../css-mapping/groups/paint/line.ts";
-import { readStrokes } from "../css-mapping/groups/paint/strokes.ts";
-import { readText } from "../css-mapping/groups/text/block.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotNode } from "../types/snapshot.ts";
+import { CssDeclarations } from "./css-declarations.ts";
+import { readAppearance, readLayoutGrids, readRadius } from "./groups/appearance.ts";
+import { readEffects } from "./groups/effects.ts";
+import { readGeometry } from "./groups/geometry/geometry.ts";
+import { readLayout } from "./groups/layout/layout.ts";
+import { readBackground } from "./groups/paint/fills.ts";
+import { readLine } from "./groups/paint/line.ts";
+import { readStrokes } from "./groups/paint/strokes.ts";
+import { readText } from "./groups/text/block.ts";
 
 /**
  * A layer's CSS from its raw Figma properties, through the one mapping table design_apply reads back. `parent` decides

@@ -1,24 +1,7 @@
-import { APPEARANCE_RULES } from "../css-mapping/groups/appearance.ts";
-import { EFFECTS_RULE } from "../css-mapping/groups/effects.ts";
-import { ELEMENT_RULES, HREF_RULE } from "../css-mapping/groups/element.ts";
-import { GEOMETRY_RULES } from "../css-mapping/groups/geometry/geometry.ts";
-import { LAYOUT_RULES } from "../css-mapping/groups/layout/layout.ts";
-import { BACKGROUND_RULE } from "../css-mapping/groups/paint/fills.ts";
-import { STROKES_RULE } from "../css-mapping/groups/paint/strokes.ts";
-import { TEXT_RULES } from "../css-mapping/groups/text/rules.ts";
-import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../css-mapping/property-group.ts";
 import type { ApplyChange, ApplyElement, ApplyError, FigmaProps, LayerNow, TextRunSpec } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
-
-const RULES: readonly Rule[] = [
-  ...ELEMENT_RULES,
-  ...LAYOUT_RULES,
-  ...GEOMETRY_RULES,
-  ...APPEARANCE_RULES,
-  BACKGROUND_RULE,
-  STROKES_RULE,
-  EFFECTS_RULE,
-];
+import type { AttributeReader, Rule, WriteInput, WriteOutput } from "./property-group.ts";
+import { BOX_RULES, SPAN_RULES, TEXT_RULES } from "./registry.ts";
 
 /**
  * An element as a change in Figma's terms, through the mapping table backwards. With `now` (unchangedAttributes), only
@@ -28,8 +11,6 @@ const RULES: readonly Rule[] = [
  */
 export function changeOf(element: ApplyElement, now?: LayerNow): { change: ApplyChange; errors: ApplyError[] } {
   const errors: ApplyError[] = [];
-  const props: FigmaProps = {};
-  const sources: Partial<Record<keyof FigmaProps, string>> = {};
   const attributes = element.attributes;
   const current = now?.current ?? {};
   const changed = (name: string) =>
@@ -41,11 +22,11 @@ export function changeOf(element: ApplyElement, now?: LayerNow): { change: Apply
     changed,
     hidden: now !== undefined && !now.visible,
   };
-  const out = output(element, element.id, props, sources, errors);
+  const out = new ChangeOutput(element, element.id, errors);
   // Applying a text style resets what it covers: the element's own overrides and its runs are written again.
   const restyled = element.tag === "Text" && changed("textStyle");
 
-  translate(RULES, input, out, false);
+  translate(BOX_RULES, input, out, false);
   translate(TEXT_RULES, input, out, restyled);
 
   const text =
@@ -71,8 +52,8 @@ export function changeOf(element: ApplyElement, now?: LayerNow): { change: Apply
       index: element.index,
       ...(attributes.before === undefined ? {} : { before: attributes.before }),
       ...(attributes.after === undefined ? {} : { after: attributes.after }),
-      props,
-      sources,
+      props: out.props,
+      sources: out.sources,
       ...(text === undefined ? {} : { text }),
       ...(attributes.copyOf === undefined ? {} : { copyOf: attributes.copyOf }),
       ...(element.source === undefined ? {} : { source: element.source }),
@@ -100,31 +81,6 @@ function translate(rules: readonly Rule[], input: WriteInput, out: WriteOutput, 
   }
 }
 
-function output(
-  location: { readonly line: number; readonly column: number },
-  id: string | null,
-  props: FigmaProps,
-  sources: Partial<Record<keyof FigmaProps, string>>,
-  errors: ApplyError[],
-): WriteOutput {
-  return {
-    set(key, value, attribute) {
-      (props as Record<string, unknown>)[key] = value;
-      sources[key] = attribute;
-    },
-    fail(attribute, message, hint) {
-      errors.push({
-        line: location.line,
-        column: location.column,
-        ...(id === null ? {} : { id }),
-        attribute,
-        message,
-        ...(hint === undefined ? {} : { hint }),
-      });
-    },
-  };
-}
-
 /** Characters from text and spans, and a run per span with what it sets over the text's own. */
 function textOf(
   content: readonly XmlChild[],
@@ -142,11 +98,11 @@ function textOf(
     }
 
     const start = characters.length;
-    const props: FigmaProps = {};
+    const out = new ChangeOutput(child, id, errors);
 
     characters += textIn(child.children);
     translate(
-      [HREF_RULE, ...TEXT_RULES],
+      SPAN_RULES,
       {
         tag: "Span",
         own: (name) => child.props[name],
@@ -154,13 +110,13 @@ function textOf(
         changed: (name) => child.props[name] !== undefined,
         hidden: false,
       },
-      output(child, id, props, {}, errors),
+      out,
       false,
     );
     runs.push({
       start,
       end: characters.length,
-      props,
+      props: out.props,
     });
   }
 
@@ -172,4 +128,68 @@ function textOf(
 
 function textIn(children: readonly XmlChild[]): string {
   return children.map((child) => (child.kind === "text" ? child.value : textIn(child.children))).join("");
+}
+
+/**
+ * What the mapping writes for one attribute of an element with this tag, on no layer in particular: the Figma props it
+ * gives and the messages of its errors. A style's value is read with it: the same CSS means the same on a style as on
+ * a layer.
+ */
+export function attributeProps(tag: string, attribute: string, value: string): { props: FigmaProps; errors: string[] } {
+  const errors: ApplyError[] = [];
+  const own = (name: string) => (name === attribute ? value : undefined);
+  const input: WriteInput = {
+    tag,
+    own,
+    merged: own,
+    changed: (name) => name === attribute,
+    hidden: false,
+  };
+  const out = new ChangeOutput(
+    {
+      line: 1,
+      column: 1,
+    },
+    null,
+    errors,
+  );
+
+  translate(BOX_RULES, input, out, false);
+  translate(TEXT_RULES, input, out, false);
+
+  return {
+    props: out.props,
+    errors: errors.map(({ message }) => message),
+  };
+}
+
+/** Where a write's rules put Figma properties and the attribute each came from, and where its errors go. */
+class ChangeOutput implements WriteOutput {
+  readonly props: FigmaProps = {};
+  readonly sources: Partial<Record<keyof FigmaProps, string>> = {};
+  readonly #location: { readonly line: number; readonly column: number };
+  readonly #id: string | null;
+  readonly #errors: ApplyError[];
+
+  constructor(location: { readonly line: number; readonly column: number }, id: string | null, errors: ApplyError[]) {
+    this.#location = location;
+    this.#id = id;
+    this.#errors = errors;
+  }
+
+  set<K extends keyof FigmaProps>(key: K, value: Exclude<FigmaProps[K], undefined>, attribute: string): void {
+    this.props[key] = value;
+    this.sources[key] = attribute;
+  }
+
+  fail(attribute: string, message: string, hint?: string): void {
+    this.#errors.push({
+      line: this.#location.line,
+      column: this.#location.column,
+      ...(this.#id === null ? {} : { id: this.#id }),
+      attribute,
+      message,
+      ...(hint === undefined ? {} : { hint }),
+    });
+  }
 }

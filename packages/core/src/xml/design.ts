@@ -2,9 +2,9 @@ import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../constants/annotations.
 import { DEV_STATUS_WORDS, INVISIBLE_TYPES } from "../constants/css.ts";
 import { interactionAttributes } from "../css/interactions.ts";
 import { motionSummary } from "../css/motion.ts";
-import { nodeCss } from "../css/node-css.ts";
 import { baseSegment, segmentCss } from "../css-mapping/groups/text/run.ts";
 import { textStyleCss } from "../css-mapping/groups/text/styles.ts";
+import { nodeCss } from "../css-mapping/read-node.ts";
 import { splitTop } from "../css-mapping/values/css-values.ts";
 import { px } from "../css-mapping/values/format.ts";
 import { colorSpaceOf } from "../kernel/color/color-space.ts";
