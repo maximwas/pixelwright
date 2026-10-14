@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { designHints, designXml } from "../../src/index.ts";
+import { designHints, designXml, fitPlan } from "../../src/index.ts";
 import { everyHintSnapshot } from "../helpers/every-hint.ts";
 import { fixture } from "../helpers/fixtures.ts";
 
 /**
- * design_read's XML, the rest of its read (assets, tokens) and its hints for each Orbit fixture, as the code before
- * the rewrite wrote them. A rewrite must reproduce them byte for byte.
+ * design_read's XML, the rest of its read (assets, tokens), the cuts that fit it into small budgets and its hints for
+ * each Orbit fixture, as the code before the rewrite wrote them. A rewrite must reproduce them byte for byte.
  */
 describe.each(["orbit-customers", "orbit-desktop-top", "orbit-plans", "orbit-pricing"])(
   "golden design (%s)",
@@ -19,6 +19,20 @@ describe.each(["orbit-customers", "orbit-desktop-top", "orbit-plans", "orbit-pri
 
     it("keeps the rest of the read", async () => {
       await expect(`${JSON.stringify(rest, null, 2)}\n`).toMatchFileSnapshot(`__golden__/${name}.read.json`);
+    });
+
+    it("keeps the cuts that fit it into small budgets", async () => {
+      const plans = [300, 800, 2_000, 6_000].map((maxChars) => {
+        const { cut, limits } = fitPlan(snapshot, maxChars);
+
+        return {
+          maxChars,
+          cut: [...cut],
+          limits: Object.fromEntries(limits),
+        };
+      });
+
+      await expect(`${JSON.stringify(plans, null, 2)}\n`).toMatchFileSnapshot(`__golden__/${name}.fit.json`);
     });
 
     it("keeps the hints", async () => {
