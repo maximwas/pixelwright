@@ -100,4 +100,36 @@ describe("what an instance changed outside its component's properties", () => {
       ),
     );
   });
+
+  it("says nothing for what does not show (a layer's lock, its panel state, plugin data), and names style changes", () => {
+    const { xml } = designXml({
+      root: layer({
+        id: "9:1",
+        type: "INSTANCE",
+        layoutMode: "VERTICAL",
+        instance: {
+          componentId: "5:0",
+          componentName: "Card",
+          properties: {},
+        },
+        children: [
+          layer({
+            id: "I9:1;1:1",
+            overrides: ["expanded", "locked", "pluginData", "relativeTransform", "constraints", "layoutSizingHorizontal"],
+          }),
+          layer({
+            id: "I9:1;1:2",
+            overrides: ["fillStyleId", "effectStyleId", "minWidth"],
+          }),
+          text("I9:1;1:3", ["fillStyleId"]),
+        ],
+      }),
+      styles: {},
+      variables: {},
+    });
+
+    expect(line(xml, "I9:1;1:1")).not.toContain("$override");
+    expect(line(xml, "I9:1;1:2")).toContain('$override="background, box-shadow, size"');
+    expect(line(xml, "I9:1;1:3")).toContain('$override="color"');
+  });
 });
