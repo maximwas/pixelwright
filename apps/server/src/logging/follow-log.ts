@@ -1,4 +1,4 @@
-import { unwatchFile, watch, watchFile } from "node:fs";
+import { mkdirSync, unwatchFile, watch, watchFile } from "node:fs";
 import { open, stat } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import { LOG_POLL_MS, LOG_TAIL_LINES } from "../constants/logging.ts";
@@ -44,6 +44,12 @@ export async function followLog(file: string, print: (line: string) => void, sig
       await handle.close();
     }
   };
+
+  // A machine whose servers have not written yet has no logs folder: made here, so it can be watched.
+  mkdirSync(dirname(file), {
+    recursive: true,
+    mode: 0o700,
+  });
 
   const size = (await stat(file).catch(() => null))?.size ?? 0;
 

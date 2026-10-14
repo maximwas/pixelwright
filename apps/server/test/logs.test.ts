@@ -92,4 +92,27 @@ describe("pixelwright logs", () => {
     expect(printed.at(-1)).toContain("tool outline  ms=4");
     expect(readFileSync(file, "utf8")).toContain("tool outline");
   });
+
+  it("follows a log whose folder no server has made yet, from its first line", async () => {
+    const file = join(mkdtempSync(join(tmpdir(), "pw-none-")), "logs", "pixelwright.log");
+    const printed: string[] = [];
+    const stop = new AbortController();
+    const following = followLog(file, (line) => printed.push(line), stop.signal);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    writeFileSync(file, `${record({ msg: "pixelwright ready on stdio" })}\n`);
+
+    for (const until = Date.now() + 3_000; !printed.some((line) => line.includes("ready on stdio")); ) {
+      if (Date.now() > until) {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    stop.abort();
+    await following;
+
+    expect(printed.at(-1)).toContain("pixelwright ready on stdio");
+  });
 });
