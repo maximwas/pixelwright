@@ -1,7 +1,8 @@
 import type { SnapshotNode } from "@pixelwright/core";
 import type * as z from "zod";
+import { ConnectionIndex } from "../../code-connect/connection-index.ts";
 import { renderInstance } from "../../code-connect/render-session.ts";
-import { findTemplates, templateFor } from "../../code-connect/templates.ts";
+import { findTemplates } from "../../code-connect/templates.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import type { SnapshotInstance, TemplateFile } from "../../types/code-connect.ts";
 import type { CodeConnectReadInputSchema, CodeConnectReadOutputSchema } from "./schemas.ts";
@@ -20,7 +21,7 @@ export async function readCodeConnect(
     node: node ?? session.info()?.page.id ?? "",
     css: "none",
   });
-  const uses = new TemplateUses(templates);
+  const uses = new TemplateUses(templates, session.info()?.file.key ?? null);
 
   uses.visit(snapshot.root);
 
@@ -45,14 +46,16 @@ export async function readCodeConnect(
 /** The visible instances of a read by template: how many of each component it connects, and the first one to try. */
 class TemplateUses {
   readonly #templates: readonly TemplateFile[];
+  readonly #connections: ConnectionIndex;
   readonly #matched = new Map<TemplateFile, { counts: Map<string, number>; first: SnapshotNode }>();
   /** The instances no template connects, by component. */
   readonly unconnected = new Map<string, number>();
   /** A visible layer was read without all its children. */
   cut = false;
 
-  constructor(templates: readonly TemplateFile[]) {
+  constructor(templates: readonly TemplateFile[], fileKey: string | null) {
     this.#templates = templates;
+    this.#connections = new ConnectionIndex(templates, { fileKey });
   }
 
   visit(layer: SnapshotNode): void {
@@ -87,7 +90,7 @@ class TemplateUses {
 
   #count(layer: SnapshotNode, instance: SnapshotInstance): void {
     const name = instance.setName ?? instance.componentName;
-    const template = templateFor(instance, this.#templates);
+    const template = this.#connections.match(instance)?.template ?? null;
 
     if (template === null) {
       this.unconnected.set(name, (this.unconnected.get(name) ?? 0) + 1);

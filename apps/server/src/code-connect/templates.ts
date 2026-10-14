@@ -4,9 +4,9 @@ import { basename, matchesGlob, resolve } from "node:path";
 import { BATCH_GLOB, BATCH_SUFFIX, PRUNED_FOLDERS, TEMPLATE_SUFFIXES } from "../constants/code-connect.ts";
 import type { SnapshotInstance, TemplateFile } from "../types/code-connect.ts";
 import { readBatch } from "./batch-files.ts";
+import { ConnectionIndex } from "./connection-index.ts";
 import { type CodeConnectConfig, configOf, relativeGlob } from "./figma-config.ts";
 import { KeptConnections } from "./kept-connections.ts";
-import { comparable, templateName } from "./names.ts";
 import { readTemplate } from "./template-files.ts";
 
 export { templateName } from "./names.ts";
@@ -88,31 +88,7 @@ async function skippedBatches(root: string, config: CodeConnectConfig, found: re
     .map((path) => `${path}: not in figma.config.json's include, so Figma skips it too: add ${BATCH_GLOB}.`);
 }
 
-/**
- * The template for an instance: one whose node-id is the instance's main component or set (when that lives in this
- * file) and whose name is its name; else one by name (a library's component, whose id here is not the library's); else
- * one by id alone (a component renamed since). Names are compared as code names: the template's is its `component`
- * comment (the code component's name, as Figma has it) or its file's name, the instance's the last part of its
- * component's or set's name; case, spaces and punctuation aside.
- */
+/** The connection for an instance, by ConnectionIndex's rules: for a lookup alone (a read builds its index once). */
 export function templateFor(instance: SnapshotInstance, templates: readonly TemplateFile[]): TemplateFile | null {
-  const keyed = templates.find(
-    ({ key }) => key !== undefined && (key === instance.setKey || key === instance.componentKey),
-  );
-
-  if (keyed !== undefined) {
-    return keyed;
-  }
-
-  const keyless = templates.filter(({ key }) => key === undefined);
-  const name = comparable(instance.setName ?? instance.componentName);
-  const byId = (template: TemplateFile) =>
-    !instance.remote &&
-    template.nodeId !== undefined &&
-    (template.nodeId === instance.componentId || template.nodeId === instance.setId);
-  const byName = (template: TemplateFile) => comparable(templateName(template)) === name;
-
-  return (
-    keyless.find((template) => byId(template) && byName(template)) ?? keyless.find(byName) ?? keyless.find(byId) ?? null
-  );
+  return new ConnectionIndex(templates).match(instance)?.template ?? null;
 }

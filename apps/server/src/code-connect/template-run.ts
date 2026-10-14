@@ -3,18 +3,18 @@ import type { SnapshotNode } from "@pixelwright/core";
 import { NESTED_TIMEOUT_MARGIN_MS, QUIET_CONSOLE } from "../constants/code-connect.ts";
 import type { Compiled, Executed, ResultSection, TemplateFile } from "../types/code-connect.ts";
 import { compile } from "./compile.ts";
+import type { ConnectionIndex } from "./connection-index.ts";
 import { figmaApi } from "./figma-api.ts";
 import type { Runner } from "./handles.ts";
 import { HelperModules } from "./helper-modules.ts";
 import { TemplateError, templateErrorOf } from "./template-error.ts";
 import { exported, metadataOf } from "./template-exports.ts";
-import { templateFor } from "./templates.ts";
 
 const CALL = new vm.Script("__run(...__args)", { filename: "pixelwright:template-call" });
 
-/** What one instance's render runs within: the read's templates and the ones it gave up on, and the render's time. */
+/** What one instance's render runs within: the read's connections and the ones it gave up on, and the render's time. */
 export interface RunLimits {
-  readonly templates: readonly TemplateFile[];
+  readonly connections: ConnectionIndex;
   /** Templates the read gave up on, with why: shared by every render of the read. */
   readonly failed: Map<TemplateFile, TemplateError>;
   /** When the render stops, on Date.now()'s clock. */
@@ -130,7 +130,7 @@ export class TemplateRun implements Runner {
   }
 
   #templateOf(node: SnapshotNode): TemplateFile | null {
-    return node.instance === undefined ? null : templateFor(node.instance, this.#limits.templates);
+    return node.instance === undefined ? null : (this.#limits.connections.match(node.instance)?.template ?? null);
   }
 
   /** The template compiled; one that does not compile is given up on for the read. */

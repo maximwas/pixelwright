@@ -1,7 +1,6 @@
 import type { SnapshotNode } from "@pixelwright/core";
 import type { RenderedInstance, TemplateFile } from "../types/code-connect.ts";
 import { RenderSession } from "./render-session.ts";
-import { templateFor } from "./templates.ts";
 
 /** Connected instances whose code is the same: listed once, with all their ids. */
 export interface CodeGroup {
@@ -37,14 +36,18 @@ export interface CodeRead {
  * on with its children; their errors are listed once per template. Snippets and imports take at most `room`
  * characters: the instances past it are read as layers.
  */
-export function connectSnapshot(root: SnapshotNode, templates: readonly TemplateFile[], room: number): CodeRead {
-  return new CodeConnector(root, templates, room).read();
+export function connectSnapshot(
+  root: SnapshotNode,
+  templates: readonly TemplateFile[],
+  room: number,
+  fileKey: string | null = null,
+): CodeRead {
+  return new CodeConnector(root, new RenderSession(templates, { fileKey }), room).read();
 }
 
 /** One read's walk for code: the code found so far, grouped, its errors, and the room it has taken. */
 class CodeConnector {
   readonly #root: SnapshotNode;
-  readonly #templates: readonly TemplateFile[];
   readonly #room: number;
   readonly #session: RenderSession;
   readonly #connected = new Map<string, string>();
@@ -53,11 +56,10 @@ class CodeConnector {
   #used = 0;
   #left = 0;
 
-  constructor(root: SnapshotNode, templates: readonly TemplateFile[], room: number) {
+  constructor(root: SnapshotNode, session: RenderSession, room: number) {
     this.#root = root;
-    this.#templates = templates;
     this.#room = room;
-    this.#session = new RenderSession(templates);
+    this.#session = session;
   }
 
   read(): CodeRead {
@@ -84,7 +86,7 @@ class CodeConnector {
 
   /** Whether the instance is written as $code, its children with it; whatever keeps it out is counted or listed. */
   #connects(node: SnapshotNode): boolean {
-    const template = node.instance === undefined ? null : templateFor(node.instance, this.#templates);
+    const template = this.#session.connectionOf(node)?.template ?? null;
 
     if (template === null) {
       return false;

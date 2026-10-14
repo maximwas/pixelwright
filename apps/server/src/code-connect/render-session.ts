@@ -1,10 +1,10 @@
 import type { SnapshotNode } from "@pixelwright/core";
 import { CODE_CONNECT_BUDGET_MS, TEMPLATE_TIMEOUT_MS } from "../constants/code-connect.ts";
 import type { Executed, RenderedInstance, SnapshotInstance, TemplateFile } from "../types/code-connect.ts";
+import { ConnectionIndex, type ConnectionMatch } from "./connection-index.ts";
 import { firstError, nestedImports, renderSections } from "./sections.ts";
 import { type TemplateError, templateErrorOf } from "./template-error.ts";
 import { TemplateRun } from "./template-run.ts";
-import { templateFor } from "./templates.ts";
 
 /**
  * The templates of one read, run instance by instance as Figma's Dev Mode would: each instance's code is the snippet
@@ -15,7 +15,7 @@ import { templateFor } from "./templates.ts";
  * and stops a runaway one, but it is no wall against a hostile template.
  */
 export class RenderSession {
-  readonly #templates: readonly TemplateFile[];
+  readonly #connections: ConnectionIndex;
   readonly #timeout: number;
   readonly #budget: number;
   readonly #ends: number;
@@ -24,16 +24,25 @@ export class RenderSession {
 
   constructor(
     templates: readonly TemplateFile[],
-    { timeout = TEMPLATE_TIMEOUT_MS, budget = CODE_CONNECT_BUDGET_MS }: { timeout?: number; budget?: number } = {},
+    {
+      timeout = TEMPLATE_TIMEOUT_MS,
+      budget = CODE_CONNECT_BUDGET_MS,
+      fileKey = null,
+    }: { timeout?: number; budget?: number; fileKey?: string | null } = {},
   ) {
-    this.#templates = templates;
+    this.#connections = new ConnectionIndex(templates, { fileKey });
     this.#timeout = timeout;
     this.#budget = budget;
     this.#ends = Date.now() + budget;
   }
 
+  /** The connection for an instance, and how it matched; null when none connects it. */
+  connectionOf(node: SnapshotNode): ConnectionMatch | null {
+    return node.instance === undefined ? null : this.#connections.match(node.instance);
+  }
+
   render(node: SnapshotNode): RenderedInstance | null {
-    const template = node.instance === undefined ? null : templateFor(node.instance, this.#templates);
+    const template = this.connectionOf(node)?.template ?? null;
 
     if (template === null || node.instance === undefined) {
       return null;
@@ -48,7 +57,7 @@ export class RenderSession {
 
     const own = Date.now() + this.#timeout;
     const run = new TemplateRun({
-      templates: this.#templates,
+      connections: this.#connections,
       failed: this.failed,
       deadline: Math.min(own, this.#ends),
       timeout: this.#timeout,
