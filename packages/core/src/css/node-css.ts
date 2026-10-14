@@ -2,24 +2,17 @@ import { VECTOR_TYPES } from "../constants/css.ts";
 import { CssDeclarations } from "../css-mapping/css-declarations.ts";
 import { readAppearance, readLayoutGrids, readRadius } from "../css-mapping/groups/appearance.ts";
 import { readGeometry } from "../css-mapping/groups/geometry/geometry.ts";
-import { readPlacement } from "../css-mapping/groups/geometry/placement.ts";
-import { hasLayout, readLayout } from "../css-mapping/groups/layout/layout.ts";
+import { readLayout } from "../css-mapping/groups/layout/layout.ts";
+import { readBackground } from "../css-mapping/groups/paint/fills.ts";
+import { readLine } from "../css-mapping/groups/paint/line.ts";
+import { readStrokes } from "../css-mapping/groups/paint/strokes.ts";
 import { px } from "../css-mapping/values/format.ts";
-import { paintsCss, UNMAPPED } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import type { ColorSpace } from "../kernel/color/color-space.ts";
 import { styleTokenName } from "../kernel/names.ts";
-import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
 import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
-
-const SIDES = [
-  ["strokeTopWeight", "border-top"],
-  ["strokeRightWeight", "border-right"],
-  ["strokeBottomWeight", "border-bottom"],
-  ["strokeLeftWeight", "border-left"],
-] as const;
 
 /**
  * A layer's CSS from its raw Figma properties, through the one mapping table design_apply reads back. `parent` decides
@@ -38,16 +31,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
   readLayout(node, css);
 
   if (node.type === "LINE") {
-    lineCss(node, parent, css, context);
-
-    if (Array.isArray(node.strokes) && node.strokes.some((paint) => paint.visible !== false)) {
-      centredStroke(node, css);
-    }
-
-    // A CSS border has square ends: Figma's round or square caps reach past the line's length.
-    if (node.strokeCap === "ROUND" || node.strokeCap === "SQUARE") {
-      css.readOnly("stroke-linecap", node.strokeCap.toLowerCase());
-    }
+    readLine(scope);
   } else {
     readGeometry(scope);
   }
@@ -58,104 +42,14 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
     textStyle = textCss(node, css, context);
   } else if (!VECTOR_TYPES.has(node.type) && node.type !== "LINE") {
     readRadius(node, css);
-    borderCss(node, css, context);
-
-    const background = paintsCss(node.fills, styleIdOf(node.fillStyleId), node, context);
-
-    if (background === UNMAPPED) {
-      css.readOnly("background", node.css?.background ?? "a gradient or other fill the table cannot write yet");
-    } else if (background !== null) {
-      css.set("background", background);
-    }
+    readStrokes(node, css, context);
+    readBackground(node, css, context);
   }
 
   effectsCss(node, css, context);
   readLayoutGrids(node, css);
 
   return css.build(textStyle);
-}
-
-/**
- * A line is a box with one border: across when it lies flat, down its left side when it stands (within half a degree
- * of a right angle); any other angle is a flat line turned about its centre.
- */
-function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: CssDeclarations, context: CssContext): void {
-  const angle = (((node.rotation ?? 0) % 180) + 180) % 180;
-  const standing = Math.abs(angle - 90) <= 0.5;
-  const flat = angle <= 0.5 || angle >= 179.5;
-  const color = paintsCss(node.strokes, node.strokeStyleId, node, context);
-  const weight = typeof node.strokeWeight === "number" ? node.strokeWeight : 1;
-  const border = `${px(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${typeof color === "string" ? color : "currentColor"}`;
-
-  if (!standing && !flat) {
-    readPlacement({
-      node,
-      parent,
-      context,
-      css,
-    });
-    css.set("width", px(node.width));
-    css.set("border-top", border);
-
-    return;
-  }
-
-  if (parent !== null && node !== context.root && (node.layoutPositioning === "ABSOLUTE" || !hasLayout(parent))) {
-    const box = node.bounds ?? node;
-
-    css.set("position", "absolute");
-    css.set("left", px(box.x - parent.x));
-    css.set("top", px(box.y - parent.y));
-  }
-
-  if (standing) {
-    css.set("height", px(node.width));
-    css.set("border-left", border);
-  } else {
-    css.set("width", px(node.width));
-    css.set("border-top", border);
-  }
-}
-
-function borderCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
-  const color = paintsCss(node.strokes, node.strokeStyleId, node, context);
-
-  if (color === null) {
-    return;
-  }
-
-  if (color === UNMAPPED) {
-    css.readOnly("border", node.css?.border ?? "a gradient or other stroke the table cannot write yet");
-
-    return;
-  }
-
-  const line = (weight: number) => `${px(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${color}`;
-
-  if (node.strokeWeight === MIXED) {
-    for (const [key, property] of SIDES) {
-      const weight = node[key] ?? 0;
-
-      if (weight > 0) {
-        css.set(property, line(weight));
-      }
-    }
-
-    centredStroke(node, css);
-
-    return;
-  }
-
-  // An inside or centred stroke is a border (with box-sizing: border-box it keeps the size); outside, an outline.
-  css.set(node.strokeAlign === "OUTSIDE" ? "outline" : "border", line(node.strokeWeight ?? 1));
-  centredStroke(node, css);
-}
-
-/** A centred stroke paints half of itself outside the layer's box, which a border-box border cannot. */
-function centredStroke(node: SnapshotNode, css: CssDeclarations): void {
-  if (node.strokeAlign === "CENTER") {
-    css.readOnly("stroke-align", "center");
-  }
 }
 
 function effectsCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
@@ -339,8 +233,4 @@ function textBlockCss(node: SnapshotNode, base: TextSegment, css: CssDeclaration
   if (text.hangingPunctuation) {
     css.readOnly("hanging-punctuation", "first");
   }
-}
-
-function styleIdOf(id: string | undefined): string | undefined {
-  return id === undefined || id === "" || id === MIXED ? undefined : id;
 }

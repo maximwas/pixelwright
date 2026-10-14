@@ -2,11 +2,12 @@ import { APPEARANCE_RULES } from "../css-mapping/groups/appearance.ts";
 import { ELEMENT_RULES, HREF_RULE } from "../css-mapping/groups/element.ts";
 import { GEOMETRY_RULES } from "../css-mapping/groups/geometry/geometry.ts";
 import { LAYOUT_RULES } from "../css-mapping/groups/layout/layout.ts";
+import { BACKGROUND_RULE, TEXT_COLOR_RULE } from "../css-mapping/groups/paint/fills.ts";
+import { STROKES_RULE } from "../css-mapping/groups/paint/strokes.ts";
 import { keywordRule } from "../css-mapping/keyword-rule.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../css-mapping/property-group.ts";
-import { imageOf, lengthOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
+import { lengthOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
 import { fontOf, textLengthOf } from "../css-mapping/values/fonts.ts";
-import { paintOf } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import { roundTo } from "../kernel/numbers.ts";
 import type {
@@ -16,20 +17,11 @@ import type {
   EffectSpec,
   FigmaProps,
   LayerNow,
-  PaintSpec,
   TextLength,
   TextRunSpec,
 } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
 
-interface Side {
-  readonly weight: number;
-  readonly dash: boolean;
-  readonly paint: PaintSpec;
-}
-
-const SIDES = ["top", "right", "bottom", "left"] as const;
-const STROKES = ["border", "border-top", "border-right", "border-bottom", "border-left", "outline"];
 const EFFECTS = ["box-shadow", "text-shadow", "filter", "backdrop-filter"];
 const DECORATION = ["text-decoration", "text-underline-offset", "text-decoration-thickness"];
 
@@ -68,21 +60,13 @@ const DECORATION_STYLES: Readonly<Record<string, "SOLID" | "WAVY" | "DOTTED" | "
   dashed: "DASHED",
 };
 
-const BORDER_STYLES = new Set(["solid", "dashed", "dotted", "none", "hidden"]);
-
 const RULES: readonly Rule[] = [
   ...ELEMENT_RULES,
   ...LAYOUT_RULES,
   ...GEOMETRY_RULES,
   ...APPEARANCE_RULES,
-  {
-    attributes: ["background"],
-    write: paintRule("background", "fills"),
-  },
-  {
-    attributes: STROKES,
-    write: strokesRule,
-  },
+  BACKGROUND_RULE,
+  STROKES_RULE,
   {
     attributes: EFFECTS,
     write: effectsRule,
@@ -123,10 +107,7 @@ const TEXT_RULES: readonly Rule[] = [
     attributes: ["text-wrap"],
     write: keywordRule("text-wrap", TEXT_WRAPS, "textWrapStyle"),
   },
-  {
-    attributes: ["color"],
-    write: paintRule("color", "textFills"),
-  },
+  TEXT_COLOR_RULE,
 ];
 
 /**
@@ -231,180 +212,6 @@ function output(
         ...(hint === undefined ? {} : { hint }),
       });
     },
-  };
-}
-
-function paintRule(attribute: "background" | "color", key: "fills" | "textFills"): Rule["write"] {
-  return ({ own }, out) => {
-    const layers = layersOf(attribute, own(attribute) ?? "", out);
-
-    if (layers !== null) {
-      out.set(key, layers, attribute);
-    }
-  };
-}
-
-/** Paint layers, top first in CSS and bottom first in Figma; a flat gradient is a colour layer. */
-function layersOf(attribute: string, value: string, out: WriteOutput): PaintSpec[] | null {
-  if (value === "none" || value === "transparent") {
-    return [];
-  }
-
-  const layers: PaintSpec[] = [];
-
-  for (const layer of splitTop(value, ",")) {
-    const stops = /^linear-gradient\((.+)\)$/s.exec(layer)?.[1];
-    const flat = stops === undefined ? null : splitTop(stops, ",");
-    const paint = flat !== null && flat.length === 2 && flat[0] === flat[1] ? paintOf(flat[0] ?? "") : paintOf(layer);
-
-    const image = paint === null ? imageOf(layer) : null;
-
-    if (paint !== null) {
-      layers.push(paint);
-    } else if (image === "unquoted") {
-      out.fail(
-        attribute,
-        `${layer.slice(0, 40)}: url() without quotes cannot hold spaces, quotes, brackets or var().`,
-        'Write the file in quotes: url("my photo.png").',
-      );
-
-      return null;
-    } else if (image !== null && attribute === "background") {
-      // design_read's fits: cover is FILL, contain FIT, a repeat TILE.
-      const fit = image.rest;
-
-      layers.push({
-        kind: "image",
-        src: image.src,
-        scaleMode: fit.includes("contain") ? "FIT" : /(^|\s)repeat(\s|$)/.test(fit) ? "TILE" : "FILL",
-      });
-    } else if (image !== null) {
-      out.fail(attribute, "A text is coloured with paint, not an image.", "Use a colour or a token.");
-
-      return null;
-    } else if (layer.includes("gradient(")) {
-      out.fail(attribute, `${layer.slice(0, 40)}…: a gradient is not written yet.`, "Use a colour or a token.");
-
-      return null;
-    } else {
-      out.fail(
-        attribute,
-        `${attribute}="${value}" is not a colour, a token or color-mix(in srgb, var(--x) N%, transparent) (in display-p3 in a Display P3 file).`,
-      );
-
-      return null;
-    }
-  }
-
-  return layers.toReversed();
-}
-
-/**
- * Figma strokes a layer once, every side in one colour and style. A border or outline in the element resets every
- * side, as the CSS shorthands do; a side alone changes only itself, the others kept from what the layer has.
- */
-function strokesRule({ own, merged }: WriteInput, out: WriteOutput): void {
-  const read = own("border") !== undefined || own("outline") !== undefined ? own : merged;
-  const border = read("border");
-  const outline = read("outline");
-  const source = STROKES.find((name) => own(name) !== undefined) ?? "border";
-
-  if (border !== undefined && outline !== undefined && border !== "none" && outline !== "none") {
-    out.fail("outline", "Figma strokes a layer once: write border (inside) or outline (outside), not both.");
-
-    return;
-  }
-
-  const outside = outline !== undefined && outline !== "none";
-  const all = outside ? sideOf("outline", outline, out) : border === undefined ? null : sideOf("border", border, out);
-  const sides = SIDES.map((side) => {
-    const value = read(`border-${side}`);
-
-    return value === undefined ? all : sideOf(`border-${side}`, value, out);
-  });
-
-  if (all === INVALID || sides.includes(INVALID)) {
-    return;
-  }
-
-  const drawn = sides.filter((side): side is Side => side !== null && side !== INVALID);
-  const [first] = drawn;
-  const align = outside ? "OUTSIDE" : "INSIDE";
-
-  if (first === undefined) {
-    out.set(
-      "strokes",
-      {
-        paints: [],
-        align,
-        dash: false,
-      },
-      source,
-    );
-
-    return;
-  }
-
-  if (drawn.some((side) => side.dash !== first.dash || JSON.stringify(side.paint) !== JSON.stringify(first.paint))) {
-    out.fail(
-      STROKES.find((name) => name.startsWith("border-") && own(name) !== undefined) ?? source,
-      "Figma draws every side of a stroke in one colour and style: give the sides the same ones.",
-    );
-
-    return;
-  }
-
-  const [top = 0, right = 0, bottom = 0, left = 0] = sides.map((side) => (side === null ? 0 : (side as Side).weight));
-
-  out.set(
-    "strokes",
-    {
-      paints: [first.paint],
-      ...(top === right && right === bottom && bottom === left
-        ? { weight: top }
-        : {
-            sides: {
-              top,
-              right,
-              bottom,
-              left,
-            },
-          }),
-      align,
-      dash: first.dash,
-    },
-    source,
-  );
-}
-
-/** A side that could not be read: its error is out already. */
-const INVALID = Symbol("invalid");
-
-/** One side of a border, in any order CSS allows: `1px solid #000`; null when none is drawn. */
-function sideOf(attribute: string, value: string, out: WriteOutput): Side | null | typeof INVALID {
-  if (value === "none" || value === "0") {
-    return null;
-  }
-
-  const words = splitTop(value, " ");
-  const width = words.find((word) => typeof lengthOf(word) === "number");
-  const style = words.find((word) => BORDER_STYLES.has(word));
-  const paint = paintOf(words.filter((word) => word !== width && word !== style).join(" "));
-
-  if (style === "none" || style === "hidden" || lengthOf(width ?? "") === 0) {
-    return null;
-  }
-
-  if (width === undefined || style === undefined || paint === null) {
-    out.fail(attribute, `${attribute}="${value}" is not "Npx solid|dashed <colour or token>".`);
-
-    return INVALID;
-  }
-
-  return {
-    weight: lengthOf(width) as number,
-    dash: style !== "solid",
-    paint,
   };
 }
 

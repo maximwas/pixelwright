@@ -116,6 +116,11 @@ function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext)
   return UNMAPPED;
 }
 
+/** A style id the layer really uses: none for an empty id, or mixed ones (a text's runs). */
+export function styleIdOf(id: string | undefined): string | undefined {
+  return id === undefined || id === "" || id === MIXED ? undefined : id;
+}
+
 /** The variable an alias (`{type: "VARIABLE_ALIAS", id}`) points at, when the snapshot resolved it. */
 export function boundVariable(alias: unknown, context: CssContext) {
   if (typeof alias !== "object" || alias === null || !("id" in alias) || typeof alias.id !== "string") {
