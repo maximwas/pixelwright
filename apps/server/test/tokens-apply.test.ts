@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyTokens } from "../src/tokens/tokens.ts";
+import { applyTokens } from "../src/features/tokens-apply/apply-tokens.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -65,7 +66,7 @@ const TOKENS = {
 describe("tokens_apply with a version", () => {
   it("saves it before writing, never in a dry run, and writes nothing when the save fails", async () => {
     const written = plugin();
-    const result = await applyTokens(written.bridge, {
+    const result = await applyTokens(new PluginClient(written.bridge), {
       ...TOKENS,
       dryRun: false,
       version: "Before the brand change",
@@ -79,7 +80,7 @@ describe("tokens_apply with a version", () => {
 
     const checked = plugin();
 
-    await applyTokens(checked.bridge, {
+    await applyTokens(new PluginClient(checked.bridge), {
       ...TOKENS,
       dryRun: true,
       version: "Before the brand change",
@@ -89,7 +90,7 @@ describe("tokens_apply with a version", () => {
     const refused = plugin();
 
     await expect(
-      applyTokens(refused.bridge, {
+      applyTokens(new PluginClient(refused.bridge), {
         ...TOKENS,
         dryRun: false,
         version: "fails",

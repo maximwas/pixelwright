@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { TokensApplyToolInputSchema, TokensReadInputSchema } from "../../server/src/schemas/tools.ts";
-import { applyTokens, readTokens } from "../../server/src/tokens/tokens.ts";
+import { applyTokens } from "../../server/src/features/tokens-apply/apply-tokens.ts";
+import { TokensApplyToolInputSchema } from "../../server/src/features/tokens-apply/schemas.ts";
+import { readTokens } from "../../server/src/features/tokens-read/read-tokens.ts";
+import { TokensReadInputSchema } from "../../server/src/features/tokens-read/schemas.ts";
 import { setEditsAllowed } from "../src/figma/edits.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
-import { pluginBridge } from "./helpers/plugin-bridge.ts";
+import { pluginClient } from "./helpers/plugin-bridge.ts";
 
 const text = (id: string, name: string, family: string, style: string, fontSize: number, lineHeight: object) => ({
   id,
@@ -212,10 +214,10 @@ describe("tokens_apply: what CSS cannot show survives", () => {
     lossy();
     setEditsAllowed(true);
 
-    const bridge = pluginBridge();
-    const read = await readTokens(bridge, TokensReadInputSchema.parse({ format: "json" }));
+    const plugin = pluginClient();
+    const read = await readTokens(plugin, TokensReadInputSchema.parse({ format: "json" }));
 
-    expect(await applyTokens(bridge, TokensApplyToolInputSchema.parse({ ...read.tokens }))).toEqual({
+    expect(await applyTokens(plugin, TokensApplyToolInputSchema.parse({ ...read.tokens }))).toEqual({
       created: [],
       updated: [],
       errors: [],
@@ -255,7 +257,7 @@ describe("tokens_apply: what CSS cannot show survives", () => {
     setEditsAllowed(true);
 
     const result = await applyTokens(
-      pluginBridge(),
+      pluginClient(),
       TokensApplyToolInputSchema.parse({
         collections: [
           {
@@ -442,12 +444,12 @@ describe("tokens_apply: library tokens", () => {
 
     setEditsAllowed(true);
 
-    const bridge = pluginBridge();
-    const read = await readTokens(bridge, TokensReadInputSchema.parse({ format: "json" }));
+    const plugin = pluginClient();
+    const read = await readTokens(plugin, TokensReadInputSchema.parse({ format: "json" }));
 
     figma.currentPage = pageB as never;
 
-    expect(await applyTokens(bridge, TokensApplyToolInputSchema.parse({ ...read.tokens }))).toMatchObject({
+    expect(await applyTokens(plugin, TokensApplyToolInputSchema.parse({ ...read.tokens }))).toMatchObject({
       created: [],
       updated: [],
       errors: [],
@@ -461,7 +463,7 @@ describe("tokens_apply: library tokens", () => {
     setEditsAllowed(true);
 
     const result = await applyTokens(
-      pluginBridge(),
+      pluginClient(),
       TokensApplyToolInputSchema.parse({
         collections: [
           {
@@ -501,7 +503,7 @@ describe("tokens_apply: Figma refusing one item", () => {
     setEditsAllowed(true);
 
     const result = await applyTokens(
-      pluginBridge(),
+      pluginClient(),
       TokensApplyToolInputSchema.parse({
         collections: [
           {

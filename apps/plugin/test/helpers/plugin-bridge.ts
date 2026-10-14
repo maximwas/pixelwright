@@ -1,3 +1,4 @@
+import { PluginClient } from "../../../server/src/plugin/plugin-client.ts";
 import type { BridgeView } from "../../../server/src/types/mcp.ts";
 import { runOperation } from "../../src/figma/operations.ts";
 
@@ -34,4 +35,9 @@ export function pluginBridge(): BridgeView {
     ],
     request: async (op, input) => await runOperation(op, input),
   };
+}
+
+/** The server's PluginClient over pluginBridge: a feature's server side runs against this plugin. */
+export function pluginClient(): PluginClient {
+  return new PluginClient(pluginBridge());
 }

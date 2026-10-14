@@ -1,6 +1,7 @@
 import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/server";
 import type * as z from "zod";
 import type { WrittenFiles } from "../assets/written-files.ts";
+import type { PluginClient } from "../plugin/plugin-client.ts";
 import type { StatusOutputSchema } from "../schemas/status.ts";
 import type { BridgeStatus, ConnectedPlugin, PairingStatus, RequestOptions } from "./bridge.ts";
 import type { SupportNotes } from "./support.ts";
@@ -15,6 +16,8 @@ export interface BridgeView {
 
 export interface ToolContext {
   readonly bridge: BridgeView;
+  /** The plugin as features call it: an operation on the file a tool targets, its answer checked. */
+  readonly plugin: PluginClient;
   readonly version: string;
   /** The files design_read and assets_export wrote, which design_apply knows again. */
   readonly files: WrittenFiles;

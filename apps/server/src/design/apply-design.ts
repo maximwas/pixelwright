@@ -19,6 +19,7 @@ import { memoryFiles, type WrittenFiles } from "../assets/written-files.ts";
 import { resolveTarget } from "../bridge/target.ts";
 import { MAX_FIGMA_IMAGE_SIDE, UPLOAD_CHUNK_BYTES } from "../constants/mcp.ts";
 import { versionBefore } from "../history/version-before.ts";
+import { PluginClient } from "../plugin/plugin-client.ts";
 import type { DesignApplyInputSchema, DesignApplyOutputSchema } from "../schemas/tools.ts";
 import type { ToolContext } from "../types/mcp.ts";
 
@@ -206,7 +207,8 @@ export async function applyDesign(
     };
   }
 
-  const version = await versionBefore(bridge, {
+  // design_apply still holds the bridge; its own feature folder will take the PluginClient from the context.
+  const version = await versionBefore(new PluginClient(bridge), {
     title,
     dryRun,
     file,

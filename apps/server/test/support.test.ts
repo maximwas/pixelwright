@@ -8,10 +8,10 @@ import * as z from "zod";
 import { readConfig } from "../src/config/config.ts";
 import { SERVER_INSTRUCTIONS } from "../src/constants/mcp.ts";
 import { SUPPORT_REMINDER_INTERVAL_MS } from "../src/constants/support.ts";
+import { tokensApplyTool } from "../src/features/tokens-apply/tool.ts";
 import { registerTool } from "../src/mcp/register-tool.ts";
 import { registerApplyTool } from "../src/mcp/tools/apply.ts";
 import { registerNodeTools } from "../src/mcp/tools/nodes.ts";
-import { registerTokensTool } from "../src/mcp/tools/tokens.ts";
 import { SupportReminder } from "../src/support/support-reminder.ts";
 import type { ToolContext } from "../src/types/mcp.ts";
 
@@ -113,7 +113,7 @@ describe("the support note", () => {
     const context = { support: { due: async () => null } } as unknown as ToolContext;
 
     registerApplyTool(server, context);
-    registerTokensTool(server, context);
+    registerTool(server, tokensApplyTool(context), context.support);
     registerNodeTools(server, context);
 
     for (const name of ["design_apply", "tokens_apply", "nodes_delete"]) {

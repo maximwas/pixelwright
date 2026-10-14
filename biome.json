@@ -35,7 +35,12 @@
       }
     },
     {
-      "includes": ["packages/core/src/kernel/**", "packages/core/src/tokens/**"],
+      "includes": [
+        "packages/core/src/kernel/**",
+        "packages/core/src/tokens/**",
+        "apps/server/src/features/**",
+        "apps/server/src/plugin/**"
+      ],
       "linter": {
         "rules": {
           "complexity": {

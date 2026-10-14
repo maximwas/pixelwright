@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { readTokens } from "../src/tokens/tokens.ts";
+import { readTokens } from "../src/features/tokens-read/read-tokens.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -49,36 +50,38 @@ const RAW = {
   styles: [],
 };
 
-function bridgeAnswering(answer: object): { bridge: BridgeView; inputs: unknown[] } {
+function pluginAnswering(answer: object): { plugin: PluginClient; inputs: unknown[] } {
   const inputs: unknown[] = [];
 
-  return {
-    inputs,
-    bridge: {
-      status: () => {
-        throw new Error("not used");
-      },
-      pairing: () => null,
-      plugins: () => [
-        {
-          session: "s1",
-          info: pluginInfo(),
-          active: true,
-        },
-      ],
-      request: async (_op, input) => {
-        inputs.push(input);
-
-        return answer;
-      },
+  const bridge: BridgeView = {
+    status: () => {
+      throw new Error("not used");
     },
+    pairing: () => null,
+    plugins: () => [
+      {
+        session: "s1",
+        info: pluginInfo(),
+        active: true,
+      },
+    ],
+    request: async (_op, input) => {
+      inputs.push(input);
+
+      return answer;
+    },
+  };
+
+  return {
+    plugin: new PluginClient(bridge),
+    inputs,
   };
 }
 
 describe("tokens_read", () => {
   it("returns CSS with a summary by default, and the token model as JSON when asked", async () => {
-    const { bridge } = bridgeAnswering(RAW);
-    const css = await readTokens(bridge, {
+    const { plugin } = pluginAnswering(RAW);
+    const css = await readTokens(plugin, {
       libraries: false,
       used: true,
       format: "css",
@@ -101,7 +104,7 @@ describe("tokens_read", () => {
       },
     });
 
-    const json = await readTokens(bridge, {
+    const json = await readTokens(plugin, {
       libraries: false,
       used: true,
       format: "json",
@@ -116,8 +119,8 @@ describe("tokens_read", () => {
   });
 
   it("returns DTCG trees per collection mode when asked, with what DTCG cannot hold in notes", async () => {
-    const { bridge } = bridgeAnswering(RAW);
-    const read = await readTokens(bridge, {
+    const { plugin } = pluginAnswering(RAW);
+    const read = await readTokens(plugin, {
       libraries: false,
       used: true,
       format: "dtcg",
@@ -147,7 +150,7 @@ describe("tokens_read", () => {
         name: `color/shade-${index}`,
       })),
     };
-    const read = await readTokens(bridgeAnswering(many).bridge, {
+    const read = await readTokens(pluginAnswering(many).plugin, {
       libraries: false,
       used: true,
       format: "dtcg",
@@ -160,8 +163,8 @@ describe("tokens_read", () => {
   });
 
   it("says which collections exist when a filter matches none", async () => {
-    const { bridge } = bridgeAnswering(RAW);
-    const read = await readTokens(bridge, {
+    const { plugin } = pluginAnswering(RAW);
+    const read = await readTokens(plugin, {
       libraries: false,
       used: true,
       format: "css",
@@ -174,10 +177,10 @@ describe("tokens_read", () => {
 
   it("keeps the local tokens when the libraries cannot be read, and lists a big library only in part", async () => {
     const failed = await readTokens(
-      bridgeAnswering({
+      pluginAnswering({
         ...RAW,
         libraryError: "The libraries could not be read: Offline",
-      }).bridge,
+      }).plugin,
       {
         libraries: true,
         used: true,
@@ -190,7 +193,7 @@ describe("tokens_read", () => {
     expect(failed.notes).toContainEqual(expect.stringMatching(/Offline/));
 
     const big = await readTokens(
-      bridgeAnswering({
+      pluginAnswering({
         ...RAW,
         library: [
           {
@@ -204,7 +207,7 @@ describe("tokens_read", () => {
             })),
           },
         ],
-      }).bridge,
+      }).plugin,
       {
         libraries: true,
         used: true,
@@ -228,7 +231,7 @@ describe("tokens_read review fixes", () => {
         name: `color/${index}`,
       })),
     };
-    const read = await readTokens(bridgeAnswering(many).bridge, {
+    const read = await readTokens(pluginAnswering(many).plugin, {
       libraries: false,
       used: true,
       format: "css",
@@ -248,10 +251,10 @@ describe("tokens_read review fixes", () => {
 
   it("says when no library with variables is enabled", async () => {
     const read = await readTokens(
-      bridgeAnswering({
+      pluginAnswering({
         ...RAW,
         library: [],
-      }).bridge,
+      }).plugin,
       {
         libraries: true,
         used: true,

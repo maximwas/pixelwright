@@ -10,7 +10,12 @@ const BLOCKS = ["if", "for", "while", "do", "switch", "try"];
 // The folders the rewrite has rebuilt (docs/superpowers/specs/2026-10-14-pixelwright-rewrite-design.md): there the
 // limits below are errors; everywhere else they warn, so the remaining debt stays visible. Keep the same list in
 // biome.json's last override (cognitive complexity).
-const REWRITTEN = ["packages/core/src/kernel/**", "packages/core/src/tokens/**"];
+const REWRITTEN = [
+  "packages/core/src/kernel/**",
+  "packages/core/src/tokens/**",
+  "apps/server/src/features/**",
+  "apps/server/src/plugin/**",
+];
 
 const BANNED_SYNTAX = [
   {

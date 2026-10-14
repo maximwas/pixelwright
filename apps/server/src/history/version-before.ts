@@ -1,6 +1,5 @@
 import { BridgeError } from "@pixelwright/core";
-import { runOp } from "../mcp/run-op.ts";
-import type { ToolContext } from "../types/mcp.ts";
+import type { PluginClient } from "../plugin/plugin-client.ts";
 import { errorMessage } from "../utils/error-message.ts";
 
 /**
@@ -8,7 +7,7 @@ import { errorMessage } from "../utils/error-message.ts";
  * that fails stops the write, so a write never goes ahead without the version it was promised.
  */
 export async function versionBefore(
-  bridge: ToolContext["bridge"],
+  plugin: PluginClient,
   { title, dryRun, file }: { title: string | undefined; dryRun: boolean; file?: string | undefined },
 ): Promise<{ id: string | null; title: string } | undefined> {
   if (title === undefined || dryRun) {
@@ -16,7 +15,7 @@ export async function versionBefore(
   }
 
   try {
-    const { id } = await runOp(bridge, "save_version", { title }, file);
+    const { id } = await plugin.run("save_version", { title }, file);
 
     return {
       id,

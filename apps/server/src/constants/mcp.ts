@@ -28,9 +28,6 @@ export const WRITE_ANNOTATIONS = {
   openWorldHint: false,
 } as const;
 
-/** The most library variables tokens_read lists by name; the rest are counted. */
-export const MAX_LIBRARY_VARIABLES = 500;
-
 /** Rasters at 2x, so they stay sharp on high-density screens; vectors as they are. */
 export const RASTER_SCALE = 2;
 

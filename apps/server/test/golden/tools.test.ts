@@ -2,6 +2,7 @@ import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../../src/assets/written-files.ts";
 import { createMcpServer } from "../../src/mcp/mcp-server.ts";
+import { PluginClient } from "../../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../../src/types/mcp.ts";
 
 const unused = () => {
@@ -24,6 +25,7 @@ describe("golden tool contract", () => {
   it("keeps every tool as clients list it", async () => {
     const server = createMcpServer({
       bridge: BRIDGE,
+      plugin: new PluginClient(BRIDGE),
       version: "0.0.0-golden",
       files: memoryFiles(),
       projectRoot: "/golden",

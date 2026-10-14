@@ -13,16 +13,16 @@ export interface TokenSource {
 }
 
 /** A format's part of tokens_read's answer. */
-export interface FormattedTokens {
+export interface FormattedTokens<Body extends object> {
   /** The fields the format adds to the answer. */
-  readonly body: Readonly<Record<string, unknown>>;
+  readonly body: Body;
   /** What this format could not hold, beyond the model's own notes. */
   readonly notes: readonly string[];
   /** The characters the answer's tokens take, which maxChars is measured against. */
   readonly size: number;
 }
 
-/** One way of writing the tokens (a strategy tokens_read picks by name). */
-export interface TokenFormat {
-  write(source: TokenSource): FormattedTokens;
+/** One way of writing the tokens (a strategy tokens_read picks by name), giving answers of its own shape. */
+export interface TokenFormat<Body extends object> {
+  write(source: TokenSource): FormattedTokens<Body>;
 }

@@ -1,4 +1,4 @@
-import { modelSummary } from "../model/model-summary.ts";
+import { type ModelSummary, modelSummary } from "../model/model-summary.ts";
 import type { StyleToken, TokenModel } from "../model/types.ts";
 import type { TokenFormat } from "./types.ts";
 
@@ -12,7 +12,7 @@ const STYLE_GROUPS = [
 ] as const;
 
 /** Ready CSS custom properties, with a summary of what they hold. */
-export const CSS_FORMAT: TokenFormat = {
+export const CSS_FORMAT: TokenFormat<{ css: string; summary: ModelSummary }> = {
   write: ({ model }) => {
     const css = tokensCss(model);
 

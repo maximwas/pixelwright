@@ -6,11 +6,10 @@ import {
   EXECUTE_DEFAULT_MS,
   EXECUTE_MAX_MS,
   OPERATION_SCHEMAS,
-  TokensApplyInputSchema,
-  TokensApplyResultSchema,
 } from "@pixelwright/core";
 import * as z from "zod";
 import { MAX_EXPORT_NODES } from "../constants/mcp.ts";
+import { VersionInputSchema, VersionSavedSchema } from "../history/schemas.ts";
 
 /** Which connected file a tool works on: its session from status, or its name; the active file when left out. */
 export const FileSchema = z
@@ -83,127 +82,6 @@ export const DesignReadInputSchema = z.object({
       "Run the project's Code Connect templates, giving connected instances as $code with their code (default); false reads them as layers.",
     ),
   file: FileSchema,
-});
-
-export const TokensReadInputSchema = z.object({
-  collections: z
-    .array(z.string().min(1).max(200))
-    .min(1)
-    .max(50)
-    .exactOptional()
-    .describe("Only these variable collections, by name (case does not matter). Default: all of them."),
-  libraries: z
-    .boolean()
-    .default(false)
-    .describe(
-      "Also list the enabled libraries' variables, by name and type: their values are read only once the file uses them.",
-    ),
-  used: z
-    .boolean()
-    .default(true)
-    .describe(
-      "Also take the styles and variables the layers on the current page (or within) use, a team library's among them. A file that uses a library has its tokens there.",
-    ),
-  within: z
-    .string()
-    .min(1)
-    .max(200)
-    .exactOptional()
-    .describe("The layer or page whose used tokens to take. Default: the current page."),
-  format: z
-    .enum(["css", "json", "dtcg"])
-    .default("css")
-    .describe(
-      "css: ready custom properties, a block per extra mode. json: the token model, per collection and mode. dtcg: Design Tokens Format (DTCG 2025.10) trees, one per collection mode (`<collection>.<mode>`) and one of styles, each to save as its own .json file.",
-    ),
-  maxChars: z
-    .number()
-    .int()
-    .min(2_000)
-    .max(400_000)
-    .default(80_000)
-    .describe("Longest output; past it, only the summary comes back and you read collections one at a time."),
-  file: FileSchema,
-});
-
-const StyleTokenSchema = z.object({
-  name: z.string(),
-  token: z.string(),
-  value: z.string(),
-  also: z
-    .array(
-      z.object({
-        token: z.string(),
-        value: z.string(),
-      }),
-    )
-    .exactOptional()
-    .describe("A text style's letter spacing and case, as tokens of their own."),
-});
-
-const LibrarySchema = z.array(
-  z.object({
-    libraryName: z.string(),
-    collection: z.string(),
-    key: z.string(),
-    variables: z.array(
-      z.object({
-        name: z.string(),
-        key: z.string(),
-        resolvedType: z.string(),
-      }),
-    ),
-  }),
-);
-
-export const TokensReadOutputSchema = z.object({
-  format: z.enum(["css", "json", "dtcg"]),
-  css: z.string().exactOptional(),
-  dtcg: z.record(z.string(), z.record(z.string(), z.unknown())).exactOptional(),
-  summary: z
-    .object({
-      collections: z.array(
-        z.object({
-          name: z.string(),
-          modes: z.array(z.string()),
-          variables: z.number(),
-        }),
-      ),
-      styles: z.object({
-        paint: z.number(),
-        text: z.number(),
-        effect: z.number(),
-      }),
-    })
-    .exactOptional(),
-  tokens: z
-    .object({
-      collections: z.array(
-        z.object({
-          name: z.string(),
-          modes: z.array(z.string()),
-          defaultMode: z.string(),
-          selectors: z.record(z.string(), z.string()),
-          variables: z.array(
-            z.object({
-              name: z.string(),
-              token: z.string(),
-              type: z.string(),
-              values: z.record(z.string(), z.string()),
-              description: z.string().exactOptional(),
-            }),
-          ),
-        }),
-      ),
-      styles: z.object({
-        paint: z.array(StyleTokenSchema),
-        text: z.array(StyleTokenSchema),
-        effect: z.array(StyleTokenSchema),
-      }),
-    })
-    .exactOptional(),
-  library: LibrarySchema.exactOptional(),
-  notes: z.array(z.string()),
 });
 
 export const AssetsExportInputSchema = z.object({
@@ -281,24 +159,6 @@ export const AssetsExportOutputSchema = z.object({
   ),
 });
 
-/** The name of a version a write saves in the file's history first, for design_apply and tokens_apply. */
-const VersionInputSchema = z
-  .string()
-  .min(1)
-  .max(100)
-  .exactOptional()
-  .describe(
-    "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.",
-  );
-
-/** The version a write saved, as its result gives it. */
-const VersionSavedSchema = z
-  .object({
-    id: z.string().nullable(),
-    title: z.string(),
-  })
-  .exactOptional();
-
 export const DesignApplyInputSchema = z.object({
   xml: z
     .string()
@@ -346,21 +206,6 @@ export const ExecuteInputSchema = z.object({
 });
 
 export const ExecuteOutputSchema = OPERATION_SCHEMAS.execute.output;
-
-export const TokensApplyToolInputSchema = TokensApplyInputSchema.extend({
-  dryRun: z
-    .boolean()
-    .default(false)
-    .describe("Check names, types, modes and aliases without writing; works with Allow edits off."),
-  version: VersionInputSchema,
-  file: FileSchema,
-});
-
-export const TokensApplyOutputSchema = TokensApplyResultSchema.extend({
-  dryRun: z.boolean(),
-  /** The version saved in the file's history before the write, when one was asked for. */
-  version: VersionSavedSchema,
-});
 
 export const CodeConnectReadInputSchema = z.object({
   node: z
@@ -540,16 +385,6 @@ export const ContrastInputSchema = z.object({
     .max(200)
     .exactOptional()
     .describe("The layer whose texts to check (a section, a screen). Default: the one layer selected in Figma."),
-  file: FileSchema,
-});
-
-export const TokensUsageInputSchema = z.object({
-  token: OPERATION_SCHEMAS.usage.input.shape.token.describe(
-    "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg.",
-  ),
-  within: OPERATION_SCHEMAS.usage.input.shape.within.describe(
-    "The layer or page to look in. Default: the current page.",
-  ),
   file: FileSchema,
 });
 

@@ -13,6 +13,7 @@ import { BRIDGE_INFO_EVENTS } from "./constants/logging.ts";
 import { SUPPORT_STATE_FILE } from "./constants/support.ts";
 import { createLogger } from "./logging/logger.ts";
 import { createMcpServer } from "./mcp/mcp-server.ts";
+import { PluginClient } from "./plugin/plugin-client.ts";
 import { SupportReminder } from "./support/support-reminder.ts";
 import type { App } from "./types/app.ts";
 import type { BridgeConfig } from "./types/bridge.ts";
@@ -26,6 +27,7 @@ export async function createApp(): Promise<App> {
   const bridge = await createBridge(config, logger);
   const server = createMcpServer({
     bridge,
+    plugin: new PluginClient(bridge),
     version: serverPackage.version,
     files: fileStore(),
     projectRoot: config.projectRoot ?? process.cwd(),
