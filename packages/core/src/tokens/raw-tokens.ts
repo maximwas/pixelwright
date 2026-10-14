@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { SnapshotStyleSchema } from "./snapshot.ts";
+import { SnapshotStyleSchema } from "../schemas/snapshot.ts";
 
 /** A variable collection with its modes. */
 export const RawCollectionSchema = z.object({
@@ -67,3 +67,12 @@ export const RawTokensSchema = z.object({
   /** Why the library catalogue is missing although it was asked for. */
   libraryError: z.string().optional(),
 });
+
+/** The file's tokens as Figma keeps them, as the plugin's `variables` operation returns them. */
+export type RawTokens = z.output<typeof RawTokensSchema>;
+
+export type RawCollection = RawTokens["collections"][number];
+
+export type RawVariable = RawTokens["variables"][number];
+
+export type RawStyle = RawTokens["styles"][number];

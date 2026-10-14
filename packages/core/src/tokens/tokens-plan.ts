@@ -3,8 +3,8 @@ import { changeOf } from "../apply/css-to-figma.ts";
 import { lengthOf, numberOf, tokenOf } from "../apply/css-values.ts";
 import { Color } from "../kernel/color/color.ts";
 import { tokenName } from "../kernel/names.ts";
-import type { TokensApplyInputSchema } from "../schemas/tokens-apply.ts";
 import type { EffectSpec, FigmaProps, FontSpec, PaintSpec } from "../types/apply.ts";
+import type { TokensApplyInputSchema } from "./plan/schemas.ts";
 import type {
   CollectionPlan,
   EffectStylePlan,
@@ -15,7 +15,7 @@ import type {
   VariablePlan,
   VariableValueSpec,
   WritableVariableType,
-} from "../types/tokens-apply.ts";
+} from "./plan/types.ts";
 
 type TokensApplyInput = z.output<typeof TokensApplyInputSchema>;
 

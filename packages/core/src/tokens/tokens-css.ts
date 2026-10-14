@@ -1,4 +1,4 @@
-import type { TokenModel } from "../types/tokens.ts";
+import type { TokenModel } from "./model/types.ts";
 
 const INDENT = "  ";
 

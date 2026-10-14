@@ -8,8 +8,9 @@ import {
 import { type Channels, Color, isChannels } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
 import { roundTo } from "../kernel/numbers.ts";
-import type { DtcgGroup, DtcgResult, DtcgToken, RawTokens } from "../types/tokens.ts";
 import { weightOf } from "../utils/font-weight.ts";
+import type { DtcgGroup, DtcgResult, DtcgToken } from "./formats/dtcg/types.ts";
+import type { RawTokens } from "./raw-tokens.ts";
 
 type RawVariable = RawTokens["variables"][number];
 type RawStyle = RawTokens["styles"][number];

@@ -1,5 +1,5 @@
-import type { ColorValue } from "../kernel/color/color.ts";
-import type { EffectSpec, FontSpec, PaintSpec } from "./apply.ts";
+import type { ColorValue } from "../../kernel/color/color.ts";
+import type { EffectSpec, FontSpec, PaintSpec } from "../../types/apply.ts";
 
 /** The variable types tokens_apply writes. */
 export type WritableVariableType = "COLOR" | "FLOAT" | "STRING" | "BOOLEAN";
