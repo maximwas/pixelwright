@@ -1,5 +1,6 @@
 import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { samePaints } from "../src/figma/paints.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
 import { testPlugin } from "./helpers/test-plugin.ts";
 
@@ -210,6 +211,63 @@ describe("apply: images and icons", () => {
     ]);
     expect(created.map(({ line }) => line)).toEqual([1]);
     expect(made("RECTANGLE")).toHaveLength(1);
+  });
+
+  it("swaps a background's image for another file's", async () => {
+    const side = byId("1:3");
+
+    if (side !== undefined) {
+      side.fills = [
+        {
+          type: "IMAGE",
+          imageHash: "hash-7",
+          scaleMode: "FILL",
+        },
+      ];
+    }
+
+    await send("bg-5", 5);
+
+    const { errors, changed } = await apply(
+      changesOf('<Frame id="1:3" background="url(b.png)"/>', {
+        "1:3": (change) => ({
+          ...change,
+          props: {
+            ...change.props,
+            fills: (change.props.fills ?? []).map((paint) =>
+              paint.kind === "image"
+                ? {
+                    ...paint,
+                    stream: "bg-5",
+                  }
+                : paint,
+            ),
+          },
+        }),
+      }),
+    );
+
+    expect(errors).toEqual([]);
+    expect(changed).toEqual(["1:3"]);
+    expect(byId("1:3")?.fills).toEqual([
+      {
+        type: "IMAGE",
+        imageHash: "hash-5",
+        scaleMode: "FILL",
+      },
+    ]);
+  });
+
+  it("tells paints of another image or another fit from the same ones", () => {
+    const image = (imageHash: string, scaleMode: ImagePaint["scaleMode"]): ImagePaint => ({
+      type: "IMAGE",
+      imageHash,
+      scaleMode,
+    });
+
+    expect(samePaints([image("a", "FILL")], [image("a", "FILL")])).toBe(true);
+    expect(samePaints([image("a", "FILL")], [image("b", "FILL")])).toBe(false);
+    expect(samePaints([image("a", "FIT")], [image("a", "FILL")])).toBe(false);
   });
 
   it("swaps an image by id and keeps how it fits", async () => {

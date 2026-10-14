@@ -58,6 +58,8 @@ How to write this file (people and agents alike):
   place, so delete it and create it again from the file.
 - `design_read`'s XML sent back to `design_apply` no longer reports its own image and icon files as missing when
   several layers share a name and the read numbered their files (`photo-2.png`).
+- `design_apply` writes a background's new image: a `url()` naming another file, or another fit, was reported as
+  changed but left the old image in place.
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 

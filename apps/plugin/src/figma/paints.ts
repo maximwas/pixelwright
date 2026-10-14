@@ -101,9 +101,10 @@ export function imagePaint(spec: Extract<PaintSpec, { kind: "image" }>, sources:
   };
 }
 
-/** The parts of a paint that make it look as it does, to tell an equal one from a changed one. */
+/** The parts of a paint that make it look as it does, to tell an equal one from a changed one: an image's too. */
 export function paintKey(paint: Paint): string {
   const solid = paint as Partial<SolidPaint>;
+  const image = paint as Partial<ImagePaint>;
   const round = (value: number | undefined) => Math.round((value ?? 0) * 10_000);
 
   return JSON.stringify([
@@ -112,6 +113,8 @@ export function paintKey(paint: Paint): string {
     round(paint.opacity ?? 1),
     solid.color === undefined ? null : [round(solid.color.r), round(solid.color.g), round(solid.color.b)],
     solid.boundVariables?.color?.id ?? null,
+    image.imageHash ?? null,
+    image.scaleMode ?? null,
   ]);
 }
 
