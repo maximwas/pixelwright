@@ -13,31 +13,25 @@ const WAIT = Number(process.env.PIXELWRIGHT_LIVE_WAIT ?? "30") * 1_000;
 /** Maxim's test file ("Test MCP"): anything may be done in it. Nothing is written anywhere else. */
 const FILE = process.env.PIXELWRIGHT_LIVE_FILE ?? "Test MCP";
 
-/** A collection the check makes and takes back: a colour in two modes, a length, and an alias to the colour. */
+/**
+ * A collection the check makes and takes back: a colour mixed with transparent, a length, and an alias to the colour.
+ * One mode: the test file's plan allows one mode per collection (Figma refuses a second, which is that mode's error).
+ */
 const PILOT = {
   name: "PW Pilot",
-  modes: ["Light", "Dark"],
+  modes: ["Value"],
   variables: [
     {
       name: "pw/brand",
-      values: {
-        Light: "#3B2FD9",
-        Dark: "color-mix(in srgb, #3B2FD9 50%, transparent)",
-      },
+      values: { Value: "color-mix(in srgb, #3B2FD9 50%, transparent)" },
     },
     {
       name: "pw/gap",
-      values: {
-        Light: "12px",
-        Dark: "16px",
-      },
+      values: { Value: "12px" },
     },
     {
       name: "pw/ink",
-      values: {
-        Light: "var(--pw-brand)",
-        Dark: "var(--pw-brand)",
-      },
+      values: { Value: "var(--pw-brand)" },
     },
   ],
 };
@@ -129,7 +123,7 @@ describe.skipIf(OUT === "" || !WRITE)("the tokens pilot on the test file", () =>
       })) as Applied;
 
       expect(checked.errors).toEqual([]);
-      expect(checked.created).toHaveLength(6);
+      expect(checked.created).toHaveLength(5);
 
       const made = (await call("tokens_apply", { collections: [PILOT] })) as Applied;
 
@@ -144,10 +138,7 @@ describe.skipIf(OUT === "" || !WRITE)("the tokens pilot on the test file", () =>
         .collections[0];
 
       expect(written?.variables.map((variable) => variable.token)).toEqual(["--pw-brand", "--pw-gap", "--pw-ink"]);
-      expect(written?.variables[2]?.values).toEqual({
-        Light: "var(--pw-brand)",
-        Dark: "var(--pw-brand)",
-      });
+      expect(written?.variables[2]?.values).toEqual({ Value: "var(--pw-brand)" });
       expect(
         (await call("tokens_apply", {
           ...(pilot.tokens as object),
