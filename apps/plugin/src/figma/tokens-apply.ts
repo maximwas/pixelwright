@@ -16,6 +16,7 @@ import {
   variableValueOf,
   weightOf,
 } from "@pixelwright/core";
+import { COLOR_EPSILON } from "../constants/plugin.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import { effectKey, effectsOf, mergedEffects, paintsOf } from "./apply-props.ts";
 import { documentColor } from "./color-profile.ts";
@@ -550,8 +551,22 @@ function shownVariable(model: TokenModel, collection: string, name: string) {
 }
 
 /** Whether two values read from CSS are the same. */
+/**
+ * Two values the same as Figma would hold them: colours compared in the file's own space (an sRGB colour written into
+ * a Display P3 file is held converted), to the 4 decimals CSS shows; other values as they are.
+ */
 function sameSpec(a: unknown, b: unknown): boolean {
+  if (isColorSpec(a) && isColorSpec(b)) {
+    const [held, wanted] = [documentColor(a.color), documentColor(b.color)];
+
+    return (["r", "g", "b", "a"] as const).every((key) => Math.abs(held[key] - wanted[key]) < COLOR_EPSILON);
+  }
+
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function isColorSpec(value: unknown): value is Extract<VariableValueSpec, { kind: "color" }> {
+  return typeof value === "object" && value !== null && (value as { kind?: unknown }).kind === "color";
 }
 
 /** A variable whose opacity scope Figma fills with percents: tokens_read shows its values divided by 100. */

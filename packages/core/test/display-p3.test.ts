@@ -8,6 +8,7 @@ import {
   dtcgTrees,
   paintOf,
   type RawTokens,
+  readApply,
   type Snapshot,
   type SnapshotNode,
   TokensApplyInputSchema,
@@ -15,6 +16,7 @@ import {
   tokenModel,
   tokensCss,
   tokensPlan,
+  unchangedAttributes,
 } from "../src/index.ts";
 import { fixture } from "./helpers/fixtures.ts";
 
@@ -371,5 +373,59 @@ describe("colours of a Display P3 file", () => {
         space: "display-p3",
       },
     });
+  });
+});
+
+describe("design_apply in a Display P3 file", () => {
+  it("takes an sRGB colour the layer already holds as P3 as unchanged", () => {
+    const [element] = readApply('<Frame id="1:2" background="#FF0000"/>').elements;
+    const held = toDocumentColor(
+      {
+        r: 1,
+        g: 0,
+        b: 0,
+        a: 1,
+      },
+      "display-p3",
+    );
+    const node: SnapshotNode = {
+      id: "1:2",
+      name: "Alert",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      childCount: 0,
+      fills: [
+        {
+          type: "SOLID",
+          visible: true,
+          color: {
+            r: held.r,
+            g: held.g,
+            b: held.b,
+          },
+        },
+      ],
+    };
+
+    expect(
+      element === undefined
+        ? null
+        : unchangedAttributes(
+            element,
+            {
+              node,
+              parent: null,
+            },
+            {
+              styles: {},
+              variables: {},
+              colorProfile: "DISPLAY_P3",
+            },
+          ).attributes.has("background"),
+    ).toBe(true);
   });
 });

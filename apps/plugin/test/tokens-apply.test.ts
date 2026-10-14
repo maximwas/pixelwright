@@ -278,6 +278,32 @@ describe("tokens_apply: variables", () => {
     Object.assign(fake.figma.root, { documentColorProfile: "SRGB" });
   });
 
+  it("takes an sRGB colour written into a P3 file as held once written, not as a change every time", async () => {
+    Object.assign(fake.figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    const input = {
+      collections: [
+        {
+          name: "Brand",
+          variables: [
+            {
+              name: "color/alert",
+              values: { Light: "#FF0000" },
+            },
+          ],
+        },
+      ],
+    };
+
+    await apply(input);
+    expect(await apply(input)).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+    Object.assign(fake.figma.root, { documentColorProfile: "SRGB" });
+  });
+
   it("points an alias at a variable made in the same call or the file's, whatever the order", async () => {
     const result = await apply({
       collections: [

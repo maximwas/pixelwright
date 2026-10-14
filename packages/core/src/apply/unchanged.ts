@@ -1,9 +1,11 @@
+import { colorCss, colorSpaceOf, toDocumentColor } from "../css/color.ts";
 import type { ApplyElement, LayerNow } from "../types/apply.ts";
+import type { ColorSpace } from "../types/css.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import type { XmlChild, XmlElementNode } from "../types/xml.ts";
 import { designXml } from "../xml/design.ts";
 import { parseXml } from "../xml/parse/parse-xml.ts";
-import { withoutUrls } from "./css-values.ts";
+import { colorOf, withoutUrls } from "./css-values.ts";
 
 /**
  * Which of an element's attributes the layer already has, as design_read would write them (the reader's rounding
@@ -56,8 +58,11 @@ export function unchangedAttributes(
   }
 
   const attributes = new Set<string>();
+  const space = colorSpaceOf(tokens.colorProfile);
 
-  for (const [name, value] of Object.entries(element.attributes)) {
+  for (const [name, given] of Object.entries(element.attributes)) {
+    const value = inDocumentSpace(given, space);
+
     // A file's name depends on where design_read wrote it (folder, -2 suffixes): the server compares the bytes of a
     // file that exists with the layer's image, and swaps it only when they differ.
     if (name === "src" || renders.some((rendered) => same(name, rendered?.props[name], value))) {
@@ -83,6 +88,22 @@ export function unchangedAttributes(
       Object.entries(shown?.props ?? {}).filter(([name]) => name !== "id" && !name.startsWith("$")),
     ),
   };
+}
+
+/**
+ * A value with its sRGB colours (hex, rgb()) as a Display P3 file holds and design_read writes them, so a colour the
+ * layer already has compares equal; an sRGB file's values are as given.
+ */
+function inDocumentSpace(value: string, space: ColorSpace): string {
+  if (space === "srgb") {
+    return value;
+  }
+
+  return value.replace(/#[0-9A-Fa-f]{3,8}\b|rgba?\([^)]*\)/g, (literal) => {
+    const color = colorOf(literal);
+
+    return color === null ? literal : colorCss(toDocumentColor(color, space), 1, space);
+  });
 }
 
 /** Equal as design_read writes it; an image's file name aside, which depends on where the read wrote it. */

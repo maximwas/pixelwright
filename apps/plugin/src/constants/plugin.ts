@@ -121,3 +121,6 @@ export const USAGE_MAX_LAYERS = 500;
 
 /** The most layers file_map lists in all: past it, a page says how many it has. */
 export const FILE_MAP_MAX_NODES = 1_500;
+
+/** How close two colour channels count as the same: CSS shows a P3 file's channels to 4 decimals. */
+export const COLOR_EPSILON = 0.0005;
