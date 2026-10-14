@@ -514,3 +514,61 @@ function hex(value: string): { r: number; g: number; b: number; a: number } {
     a: 1,
   };
 }
+
+describe("baselineDiff: tokens only matched", () => {
+  it("leaves out a variable Figma only matches a raw value to: no layer uses it", () => {
+    const inferred = (id: string, value: string) =>
+      snap(column("1:1", "Page", [text("1:2", "A"), text("1:3", "B")]), {
+        variables: {
+          [id]: {
+            name: value,
+            collection: "Space",
+            resolvedType: "FLOAT",
+            remote: false,
+            value: Number.parseInt(value.split("/")[1] ?? "0", 10),
+          },
+        },
+      });
+    const before = inferred("V:12", "space/12");
+    const after = inferred("V:8", "space/8");
+    const raw = (snapshot: Snapshot): RawTokens => ({
+      collections: [
+        {
+          id: "VC:s",
+          name: "Space",
+          remote: false,
+          defaultModeId: "m",
+          modes: [
+            {
+              modeId: "m",
+              name: "Default",
+            },
+          ],
+        },
+      ],
+      variables: Object.entries(snapshot.variables).map(([id, variable]) => ({
+        id,
+        name: variable.name,
+        collectionId: "VC:s",
+        resolvedType: "FLOAT",
+        scopes: [],
+        valuesByMode: { m: variable.value },
+      })),
+      external: {},
+      styles: [],
+    });
+    const result = baselineDiff(
+      {
+        snapshot: before,
+        tokens: raw(before),
+      },
+      {
+        snapshot: after,
+        tokens: raw(after),
+      },
+      { sameReader: true },
+    );
+
+    expect(result.changes.tokens).toEqual([]);
+  });
+});

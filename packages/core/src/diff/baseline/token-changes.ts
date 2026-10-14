@@ -5,6 +5,7 @@ import { styleTokens } from "../../tokens/model/style-tokens.ts";
 import { Notes } from "../../tokens/notes.ts";
 import type { RawTokens } from "../../tokens/raw-tokens.ts";
 import type { Snapshot, SnapshotStyle } from "../../types/snapshot.ts";
+import { boundVariables } from "./bound-variables.ts";
 import { TokenUses } from "./token-uses.ts";
 import type { BaselineChanges } from "./types.ts";
 import { SideVariables, variableChanges } from "./variable-changes.ts";
@@ -41,15 +42,17 @@ export function tokenChanges(before: TokenSide, after: TokenSide, notes: string[
     before: new SideVariables(before.raw),
     after: new SideVariables(after.raw),
   };
-  const variables = unique([
-    ...Object.keys(after.snapshot.variables),
-    ...Object.keys(before.snapshot.variables),
-  ]).flatMap((id) =>
+  // Bound variables only: the ones Figma merely matches a raw value to are hints, not what the layers use.
+  const bound = {
+    before: boundVariables(before.snapshot.root),
+    after: boundVariables(after.snapshot.root),
+  };
+  const variables = unique([...bound.after, ...bound.before]).flatMap((id) =>
     variableChanges(
       {
         id,
-        before: before.snapshot.variables[id] !== undefined,
-        after: after.snapshot.variables[id] !== undefined,
+        before: bound.before.has(id),
+        after: bound.after.has(id),
       },
       sides,
       uses,
