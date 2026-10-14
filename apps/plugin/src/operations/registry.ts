@@ -5,16 +5,17 @@ import {
   type OperationName,
   type OperationOutput,
 } from "@pixelwright/core";
-import { execute } from "../figma/execute.ts";
-import { exportNode, originalImage } from "../figma/export-node.ts";
-import { saveVersion } from "../figma/save-version.ts";
 import type { PluginServices } from "../services/plugin-services.ts";
 import { applyChanges } from "./apply/apply-changes.ts";
 import { components } from "./components/read-components.ts";
 import { deleteNodes } from "./delete/delete-nodes.ts";
+import { execute } from "./execute/execute-code.ts";
+import { exportNode } from "./export/export-node.ts";
+import { originalImage } from "./export/original-image.ts";
 import { fileMap } from "./flows/file-map.ts";
 import { flows } from "./flows/read-flows.ts";
 import { screens } from "./flows/screens.ts";
+import { saveVersion } from "./history/save-version.ts";
 import { inspect } from "./inspect/inspect-layers.ts";
 import { find } from "./read/find.ts";
 import { outline } from "./read/outline.ts";
@@ -49,7 +50,7 @@ const HANDLERS: Handlers = {
   find,
   outline,
   export: (input, services) => exportNode(input, services),
-  image: originalImage,
+  image: (input, services) => originalImage(input, services),
   snapshot,
   variables: readTokens,
   components,

@@ -6,6 +6,22 @@ import { EXECUTE_RESULT_DEPTH } from "@pixelwright/core";
  * and become null in arrays and on their own.
  */
 export function jsonValue(value: unknown, path: Set<object> = new Set(), depth = 0): unknown {
+  if (typeof value !== "object" || value === null) {
+    return scalarValue(value);
+  }
+
+  if (path.has(value)) {
+    return "[circular]";
+  }
+
+  if (depth >= EXECUTE_RESULT_DEPTH) {
+    return "[…]";
+  }
+
+  return knownObject(value) ?? walked(value, path, depth);
+}
+
+function scalarValue(value: unknown): unknown {
   if (value === null || typeof value === "boolean" || typeof value === "string") {
     return value;
   }
@@ -22,18 +38,11 @@ export function jsonValue(value: unknown, path: Set<object> = new Set(), depth =
     return value === figma.mixed ? "mixed" : value.toString();
   }
 
-  if (typeof value !== "object") {
-    return null;
-  }
+  return null;
+}
 
-  if (path.has(value)) {
-    return "[circular]";
-  }
-
-  if (depth >= EXECUTE_RESULT_DEPTH) {
-    return "[…]";
-  }
-
+/** What JSON cannot walk as it is: a Figma layer, bytes, a date, an error; undefined for data to walk. */
+function knownObject(value: object): unknown {
   const layer = value as { id?: unknown; type?: unknown; name?: unknown; remove?: unknown };
 
   // Figma's own layers only (they can be removed): plain data with an id and a type is walked as data.
@@ -53,10 +62,11 @@ export function jsonValue(value: unknown, path: Set<object> = new Set(), depth =
     return value.toISOString();
   }
 
-  if (value instanceof Error) {
-    return `${value.name}: ${value.message}`;
-  }
+  return value instanceof Error ? `${value.name}: ${value.message}` : undefined;
+}
 
+/** An array, set, map or object, its items made JSON-safe one level deeper. */
+function walked(value: object, path: Set<object>, depth: number): unknown {
   path.add(value);
 
   try {

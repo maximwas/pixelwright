@@ -5,8 +5,8 @@ import {
   type OperationInput,
   type OperationOutput,
 } from "@pixelwright/core";
-import type { EditsGuard } from "../services/edits-guard.ts";
-import { jsonValue } from "../utils/json-value.ts";
+import type { EditsGuard } from "../../services/edits-guard.ts";
+import { jsonValue } from "./json-value.ts";
 
 type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<unknown>;
 
@@ -27,36 +27,29 @@ export async function execute(
 ): Promise<OperationOutput<"execute">> {
   edits.require();
 
-  const logs: string[] = [];
-  let dropped = 0;
-  const print =
-    (prefix: string) =>
-    (...values: unknown[]) => {
-      if (logs.length >= EXECUTE_MAX_LOGS) {
-        dropped += 1;
-
-        return;
-      }
-
-      logs.push(`${prefix}${values.map(printed).join(" ")}`.slice(0, EXECUTE_LOG_CHARS));
-    };
-  const capture = {
-    log: print(""),
-    info: print(""),
-    debug: print(""),
-    warn: print("warn: "),
-    error: print("error: "),
-  };
-  const kept = () => (dropped === 0 ? logs : [...logs, `…and ${dropped} more lines`]);
-  let timer: ReturnType<typeof setTimeout> | undefined;
   // The window's messages (Allow edits among them) come through this handler: code may not keep it.
   const ui = (figma as { ui?: { onmessage?: unknown } }).ui;
   const handler = ui?.onmessage;
 
   try {
+    return await ran(code, timeoutMs, new CapturedConsole());
+  } finally {
+    if (ui !== undefined && ui.onmessage !== handler) {
+      ui.onmessage = handler;
+    }
+
+    figma.commitUndo();
+  }
+}
+
+/** The code's answer: its value, what it threw, or that it ran past its time; with what it printed. */
+async function ran(code: string, timeoutMs: number, output: CapturedConsole): Promise<OperationOutput<"execute">> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  try {
     const run = new AsyncFunction("figma", "console", code);
     const value = await Promise.race([
-      run(figma, capture),
+      run(figma, output.console()),
       new Promise((resolve) => {
         timer = setTimeout(() => resolve(TIMED_OUT), timeoutMs);
       }),
@@ -65,29 +58,56 @@ export async function execute(
     if (value === TIMED_OUT) {
       return {
         result: null,
-        logs: kept(),
+        logs: output.kept(),
         error: `The code ran past ${timeoutMs} ms: it may still be running, and what it changed so far stays (read the layers again).`,
       };
     }
 
     return {
       result: capped(jsonValue(value) ?? null),
-      logs: kept(),
+      logs: output.kept(),
     };
   } catch (error) {
     return {
       result: null,
-      logs: kept(),
+      logs: output.kept(),
       error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
     };
   } finally {
     clearTimeout(timer);
+  }
+}
 
-    if (ui !== undefined && ui.onmessage !== handler) {
-      ui.onmessage = handler;
-    }
+/** The console code gets: it keeps the first lines printed, each cut to length, and counts the rest. */
+class CapturedConsole {
+  readonly #logs: string[] = [];
+  #dropped = 0;
 
-    figma.commitUndo();
+  console(): Record<"log" | "info" | "debug" | "warn" | "error", (...values: unknown[]) => void> {
+    return {
+      log: this.#print(""),
+      info: this.#print(""),
+      debug: this.#print(""),
+      warn: this.#print("warn: "),
+      error: this.#print("error: "),
+    };
+  }
+
+  /** The lines kept, and how many more there were. */
+  kept(): string[] {
+    return this.#dropped === 0 ? this.#logs : [...this.#logs, `…and ${this.#dropped} more lines`];
+  }
+
+  #print(prefix: string): (...values: unknown[]) => void {
+    return (...values) => {
+      if (this.#logs.length >= EXECUTE_MAX_LOGS) {
+        this.#dropped += 1;
+
+        return;
+      }
+
+      this.#logs.push(`${prefix}${values.map(printed).join(" ")}`.slice(0, EXECUTE_LOG_CHARS));
+    };
   }
 }
 
