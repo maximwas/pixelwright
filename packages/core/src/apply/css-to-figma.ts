@@ -1,4 +1,5 @@
 import { LAYOUT_TAGS } from "../constants/apply.ts";
+import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../css-mapping/property-group.ts";
 import { imageOf, lengthOf, numberOf, percentOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
 import { fontOf, textLengthOf } from "../css-mapping/values/fonts.ts";
 import { paintOf } from "../css-mapping/values/paints.ts";
@@ -20,31 +21,6 @@ import type {
   TextRunSpec,
 } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
-
-type Read = (name: string) => string | undefined;
-
-/** What a rule reads: the element's own attributes, and the same over what the layer has now. */
-interface Input {
-  readonly tag: string;
-  readonly own: Read;
-  /** The element's value, else the layer's: for what Figma keeps in one property (a gap needs the direction). */
-  readonly merged: Read;
-  readonly changed: (name: string) => boolean;
-  readonly hidden: boolean;
-}
-
-interface Output {
-  set<K extends keyof FigmaProps>(key: K, value: Exclude<FigmaProps[K], undefined>, attribute: string): void;
-  fail(attribute: string, message: string, hint?: string): void;
-}
-
-/** One line of the mapping table, backwards: the attributes it reads, run when one of them changed. */
-interface Rule {
-  readonly attributes: readonly string[];
-  /** A text style covers it: applying a style resets it, so the element's own value is written again. */
-  readonly styled?: boolean;
-  readonly write: (input: Input, out: Output) => void;
-}
 
 interface Axis {
   readonly start: "left" | "top";
@@ -394,7 +370,7 @@ export function changeOf(element: ApplyElement, now?: LayerNow): { change: Apply
   const current = now?.current ?? {};
   const changed = (name: string) =>
     name !== "id" && attributes[name] !== undefined && !(now?.attributes.has(name) ?? false);
-  const input: Input = {
+  const input: WriteInput = {
     tag: element.tag,
     own: (name) => attributes[name],
     merged: (name) => attributes[name] ?? current[name],
@@ -442,7 +418,7 @@ export function changeOf(element: ApplyElement, now?: LayerNow): { change: Apply
   };
 }
 
-function translate(rules: readonly Rule[], input: Input, out: Output, restyled: boolean): void {
+function translate(rules: readonly Rule[], input: WriteInput, out: WriteOutput, restyled: boolean): void {
   for (const rule of rules) {
     const forced = restyled && rule.styled && rule.attributes.some((name) => input.own(name) !== undefined);
 
@@ -466,7 +442,7 @@ function output(
   props: FigmaProps,
   sources: Partial<Record<keyof FigmaProps, string>>,
   errors: ApplyError[],
-): Output {
+): WriteOutput {
   return {
     set(key, value, attribute) {
       (props as Record<string, unknown>)[key] = value;
@@ -503,7 +479,7 @@ function keywordRule<K extends keyof FigmaProps>(
 }
 
 /** Auto layout: the direction, wrap and gaps, read together since a gap means another axis in another direction. */
-function layoutRule(input: Input, out: Output): void {
+function layoutRule(input: WriteInput, out: WriteOutput): void {
   const { merged, changed } = input;
   const display = merged("display");
   const mode = display === undefined ? "block" : DISPLAYS[display];
@@ -543,7 +519,7 @@ function layoutRule(input: Input, out: Output): void {
   }
 }
 
-function flexLayout(input: Input, out: Output): void {
+function flexLayout(input: WriteInput, out: WriteOutput): void {
   const { merged, changed } = input;
 
   const direction = merged("flex-direction") ?? "row";
@@ -592,7 +568,7 @@ function flexLayout(input: Input, out: Output): void {
   }
 }
 
-function gridLayout(input: Input, out: Output): void {
+function gridLayout(input: WriteInput, out: WriteOutput): void {
   const { merged, changed } = input;
 
   out.set("layoutMode", "GRID", "display");
@@ -628,8 +604,8 @@ function gridLayout(input: Input, out: Output): void {
 
 /** The row and column gaps: `gap` gives both (or row then column), row-gap and column-gap one each. */
 function gapsOf(
-  { own, merged }: Pick<Input, "own" | "merged">,
-  out: Output,
+  { own, merged }: Pick<WriteInput, "own" | "merged">,
+  out: WriteOutput,
 ): { row?: { value: LengthValue; attribute: string }; column?: { value: LengthValue; attribute: string } } {
   // A gap the element gives resets the row and column gaps the layer has, as the CSS shorthand does.
   const shorthand = own("gap") !== undefined;
@@ -678,7 +654,7 @@ function gapsOf(
   return result;
 }
 
-function paddingRule({ own }: Input, out: Output): void {
+function paddingRule({ own }: WriteInput, out: WriteOutput): void {
   const value = own("padding") ?? "";
   const sides = boxOf(splitTop(value, " ").map(lengthOf));
 
@@ -689,7 +665,7 @@ function paddingRule({ own }: Input, out: Output): void {
   }
 }
 
-function positionRule({ own }: Input, out: Output): void {
+function positionRule({ own }: WriteInput, out: WriteOutput): void {
   const value = own("position");
 
   if (value === "absolute") {
@@ -870,7 +846,7 @@ function limitRule(attribute: string, key: "minWidth" | "maxWidth" | "minHeight"
   };
 }
 
-function growRule({ own }: Input, out: Output): void {
+function growRule({ own }: WriteInput, out: WriteOutput): void {
   const value = (own("flex") ?? "").trim().replace(/\s+/g, " ");
   const grow = value === "none" || value === "initial" ? 0 : value === "auto" ? 1 : numberOf(value.split(" ")[0] ?? "");
 
@@ -907,7 +883,7 @@ function spanRule(attribute: string, key: "gridRow" | "gridColumn"): Rule["write
 }
 
 /** The whole transform: a turn without scaleX(-1) also takes a mirror away. */
-function transformRule({ own }: Input, out: Output): void {
+function transformRule({ own }: WriteInput, out: WriteOutput): void {
   const value = own("transform") ?? "";
   let rotation = 0;
   let mirror = false;
@@ -931,7 +907,7 @@ function transformRule({ own }: Input, out: Output): void {
   out.set("mirror", mirror, "transform");
 }
 
-function opacityRule({ own }: Input, out: Output): void {
+function opacityRule({ own }: WriteInput, out: WriteOutput): void {
   const value = own("opacity") ?? "";
   const percent = percentOf(value);
   const opacity = percent === null ? numberOf(value) : percent / 100;
@@ -944,7 +920,7 @@ function opacityRule({ own }: Input, out: Output): void {
 }
 
 /** A frame clips its content or not; a text truncates on one line with an ellipsis, all three attributes together. */
-function overflowRule({ tag, own, merged, changed }: Input, out: Output): void {
+function overflowRule({ tag, own, merged, changed }: WriteInput, out: WriteOutput): void {
   if (tag === "Text") {
     out.set(
       "truncate",
@@ -975,7 +951,7 @@ function overflowRule({ tag, own, merged, changed }: Input, out: Output): void {
   }
 }
 
-function radiusRule({ tag, own }: Input, out: Output): void {
+function radiusRule({ tag, own }: WriteInput, out: WriteOutput): void {
   const value = own("border-radius") ?? "";
 
   if (tag === "Ellipse" && value === "50%") {
@@ -1003,7 +979,7 @@ function paintRule(attribute: "background" | "color", key: "fills" | "textFills"
 }
 
 /** Paint layers, top first in CSS and bottom first in Figma; a flat gradient is a colour layer. */
-function layersOf(attribute: string, value: string, out: Output): PaintSpec[] | null {
+function layersOf(attribute: string, value: string, out: WriteOutput): PaintSpec[] | null {
   if (value === "none" || value === "transparent") {
     return [];
   }
@@ -1061,7 +1037,7 @@ function layersOf(attribute: string, value: string, out: Output): PaintSpec[] | 
  * Figma strokes a layer once, every side in one colour and style. A border or outline in the element resets every
  * side, as the CSS shorthands do; a side alone changes only itself, the others kept from what the layer has.
  */
-function strokesRule({ own, merged }: Input, out: Output): void {
+function strokesRule({ own, merged }: WriteInput, out: WriteOutput): void {
   const read = own("border") !== undefined || own("outline") !== undefined ? own : merged;
   const border = read("border");
   const outline = read("outline");
@@ -1139,7 +1115,7 @@ function strokesRule({ own, merged }: Input, out: Output): void {
 const INVALID = Symbol("invalid");
 
 /** One side of a border, in any order CSS allows: `1px solid #000`; null when none is drawn. */
-function sideOf(attribute: string, value: string, out: Output): Side | null | typeof INVALID {
+function sideOf(attribute: string, value: string, out: WriteOutput): Side | null | typeof INVALID {
   if (value === "none" || value === "0") {
     return null;
   }
@@ -1167,7 +1143,7 @@ function sideOf(attribute: string, value: string, out: Output): Side | null | ty
 }
 
 /** Shadows and blurs are one list in Figma: an attribute the element leaves out keeps what the layer has. */
-function effectsRule({ own, merged, changed }: Input, out: Output): void {
+function effectsRule({ own, merged, changed }: WriteInput, out: WriteOutput): void {
   const shadowAttribute = merged("box-shadow") === undefined ? "text-shadow" : "box-shadow";
   const shadows = merged(shadowAttribute);
   const token = shadows === undefined ? null : tokenOf(shadows);
@@ -1238,7 +1214,7 @@ function effectsRule({ own, merged, changed }: Input, out: Output): void {
   out.set("effects", [...effects, ...list.toReversed()], source);
 }
 
-function fontRule({ own }: Input, out: Output): void {
+function fontRule({ own }: WriteInput, out: WriteOutput): void {
   const value = own("font") ?? "";
   const font = fontOf(value);
 
@@ -1249,7 +1225,7 @@ function fontRule({ own }: Input, out: Output): void {
   }
 }
 
-function letterSpacingRule({ own }: Input, out: Output): void {
+function letterSpacingRule({ own }: WriteInput, out: WriteOutput): void {
   const value = own("letter-spacing") ?? "";
   const em = /^(-?\d*\.?\d+)em$/.exec(value);
   const pixels = value === "normal" ? 0 : lengthOf(value);
@@ -1278,7 +1254,7 @@ function letterSpacingRule({ own }: Input, out: Output): void {
 }
 
 /** The decoration as one: the shorthand's line, style and colour, with the offset and thickness beside it. */
-function decorationRule({ merged, changed }: Input, out: Output): void {
+function decorationRule({ merged, changed }: WriteInput, out: WriteOutput): void {
   const value = merged("text-decoration");
   const words = value === undefined ? [] : splitTop(value, " ");
   const line = words.find((word) => LINES[word] !== undefined);
@@ -1328,7 +1304,7 @@ function decorationRule({ merged, changed }: Input, out: Output): void {
 /** Characters from text and spans, and a run per span with what it sets over the text's own. */
 function textOf(
   content: readonly XmlChild[],
-  base: Read,
+  base: AttributeReader,
   id: string | null,
   errors: ApplyError[],
 ): { characters: string; runs: TextRunSpec[] } {

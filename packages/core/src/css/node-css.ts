@@ -1,7 +1,6 @@
-import { CSS_ORDER, VECTOR_TYPES } from "../constants/css.ts";
-import { withoutFallbacks } from "../css-mapping/values/css-values.ts";
+import { VECTOR_TYPES } from "../constants/css.ts";
+import { CssDeclarations } from "../css-mapping/css-declarations.ts";
 import { boxShorthand, px } from "../css-mapping/values/format.ts";
-import { lengthCss } from "../css-mapping/values/lengths.ts";
 import { paintsCss, UNMAPPED } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import type { ColorSpace } from "../kernel/color/color-space.ts";
@@ -51,22 +50,21 @@ const SIDES = [
  * how the layer sits (flowing in auto layout, or placed absolutely); the read's root always gets its size.
  */
 export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context: CssContext): NodeCss {
-  const css = new Map<string, string>();
-  const readOnly: [string, string][] = [];
+  const css = new CssDeclarations(node, context);
   let textStyle: string | undefined;
 
-  layoutCss(node, css, readOnly, context);
+  layoutCss(node, css, context);
 
   if (node.type === "LINE") {
     lineCss(node, parent, css, context);
 
     if (Array.isArray(node.strokes) && node.strokes.some((paint) => paint.visible !== false)) {
-      centredStroke(node, readOnly);
+      centredStroke(node, css);
     }
 
     // A CSS border has square ends: Figma's round or square caps reach past the line's length.
     if (node.strokeCap === "ROUND" || node.strokeCap === "SQUARE") {
-      readOnly.push(["stroke-linecap", node.strokeCap.toLowerCase()]);
+      css.readOnly("stroke-linecap", node.strokeCap.toLowerCase());
     }
   } else {
     sizeCss(node, parent, context, css, positionCss(node, parent, context, css));
@@ -83,45 +81,32 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
 
   if (node.isMask) {
     // A mask among other layers clips the ones above it; a mask group as a whole is exported as one image.
-    readOnly.push(["mask", "clips the layers above it"]);
+    css.readOnly("mask", "clips the layers above it");
   }
 
   if (node.blendMode !== undefined) {
-    readOnly.push([
-      "mix-blend-mode",
-      node.css?.["mix-blend-mode"] ?? node.blendMode.toLowerCase().replaceAll("_", "-"),
-    ]);
+    css.readOnly("mix-blend-mode", node.css?.["mix-blend-mode"] ?? node.blendMode.toLowerCase().replaceAll("_", "-"));
   }
 
   if (node.type === "TEXT") {
-    textStyle = textCss(node, css, readOnly, context);
+    textStyle = textCss(node, css, context);
   } else if (!VECTOR_TYPES.has(node.type) && node.type !== "LINE") {
     radiusCss(node, css, context);
-    borderCss(node, css, readOnly, context);
+    borderCss(node, css, context);
 
     const background = paintsCss(node.fills, styleIdOf(node.fillStyleId), node, context);
 
     if (background === UNMAPPED) {
-      readOnly.push(["background", node.css?.background ?? "a gradient or other fill the table cannot write yet"]);
+      css.readOnly("background", node.css?.background ?? "a gradient or other fill the table cannot write yet");
     } else if (background !== null) {
       css.set("background", background);
     }
   }
 
-  effectsCss(node, css, readOnly, context);
-  layoutGridsCss(node, readOnly);
+  effectsCss(node, css, context);
+  layoutGridsCss(node, css);
 
-  return {
-    properties: [...css].sort(([a], [b]) => order(a) - order(b)),
-    readOnly: readOnly.map(([property, value]) => [property, cleanOracle(value)]),
-    ...(textStyle === undefined ? {} : { textStyle }),
-  };
-}
-
-function order(property: string): number {
-  const index = (CSS_ORDER as readonly string[]).indexOf(property);
-
-  return index === -1 ? CSS_ORDER.length : index;
+  return css.build(textStyle);
 }
 
 function isFlex(node: SnapshotNode | null): boolean {
@@ -132,12 +117,7 @@ function hasLayout(node: SnapshotNode | null): boolean {
   return isFlex(node) || node?.layoutMode === "GRID";
 }
 
-function layoutCss(
-  node: SnapshotNode,
-  css: Map<string, string>,
-  readOnly: [string, string][],
-  context: CssContext,
-): void {
+function layoutCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
   if (node.layoutMode === "GRID") {
     css.set("display", "grid");
 
@@ -154,8 +134,8 @@ function layoutCss(
       css.set("grid-template-rows", rows);
     }
 
-    setLength(css, "column-gap", node, "gridColumnGap", node.gridColumnGap, context);
-    setLength(css, "row-gap", node, "gridRowGap", node.gridRowGap, context);
+    css.setLength("column-gap", "gridColumnGap", node.gridColumnGap);
+    css.setLength("row-gap", "gridRowGap", node.gridRowGap);
 
     return;
   }
@@ -175,7 +155,7 @@ function layoutCss(
   }
 
   const sides = (["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"] as const).map((key) =>
-    lengthCss(node, key, node[key] ?? 0, context),
+    css.length(key, node[key] ?? 0),
   );
 
   if (sides.some((side) => side !== "0")) {
@@ -199,9 +179,9 @@ function layoutCss(
   if (!SPREAD.has(node.primaryAxisAlignItems ?? "MIN") && spaced >= 2) {
     if ((node.itemSpacing ?? 0) < 0) {
       // Figma lets children overlap by a negative spacing (avatar stacks); CSS gap cannot be negative.
-      readOnly.push(["gap", `${px(node.itemSpacing ?? 0)} (the children overlap)`]);
+      css.readOnly("gap", `${px(node.itemSpacing ?? 0)} (the children overlap)`);
     } else {
-      setLength(css, "gap", node, "itemSpacing", node.itemSpacing, context);
+      css.setLength("gap", "itemSpacing", node.itemSpacing);
     }
   }
 
@@ -211,7 +191,7 @@ function layoutCss(
     const between = node.layoutMode === "VERTICAL" ? "column-gap" : "row-gap";
     const lines =
       typeof node.counterAxisSpacing === "number"
-        ? lengthCss(node, "counterAxisSpacing", node.counterAxisSpacing, context)
+        ? css.length("counterAxisSpacing", node.counterAxisSpacing)
         : undefined;
 
     if (lines !== undefined && lines !== (css.get("gap") ?? "0")) {
@@ -241,7 +221,7 @@ function tracksCss(tracks: SnapshotNode["gridColumnSizes"]): string | null {
 }
 
 /** Where a grid's child sits (1-based lines in CSS) and how it aligns in its cell. */
-function gridChildCss(node: SnapshotNode, parent: SnapshotNode | null, css: Map<string, string>): void {
+function gridChildCss(node: SnapshotNode, parent: SnapshotNode | null, css: CssDeclarations): void {
   if (parent?.layoutMode !== "GRID" || node.layoutPositioning === "ABSOLUTE") {
     return;
   }
@@ -269,7 +249,7 @@ function sizeCss(
   node: SnapshotNode,
   parent: SnapshotNode | null,
   context: CssContext,
-  css: Map<string, string>,
+  css: CssDeclarations,
   override: SizeOverride,
 ): void {
   const isRoot = node === context.root;
@@ -287,20 +267,17 @@ function sizeCss(
         css.set(property, decided);
       }
     } else if (isRoot || sizing === "FIXED" || sizing === undefined) {
-      setLength(css, property, node, property, value, context);
+      css.setLength(property, property, value);
     } else if (sizing === "FILL" && flowing) {
       css.set(mainAxis ? "flex" : "align-self", mainAxis ? "1" : "stretch");
     }
   }
 
   for (const key of ["minWidth", "maxWidth", "minHeight", "maxHeight"] as const) {
-    setLength(
-      css,
+    css.setLength(
       key.replace(/[A-Z]/, (letter) => `-${letter.toLowerCase()}`),
-      node,
       key,
       node[key],
-      context,
     );
   }
 }
@@ -309,7 +286,7 @@ function positionCss(
   node: SnapshotNode,
   parent: SnapshotNode | null,
   context: CssContext,
-  css: Map<string, string>,
+  css: CssDeclarations,
 ): SizeOverride {
   const transform = transformCss(node);
   const override: SizeOverride = {};
@@ -348,7 +325,7 @@ function positionCss(
  * offset from the centre, stretched between both edges, or scaled as percents of the parent.
  */
 function pin(
-  css: Map<string, string>,
+  css: CssDeclarations,
   override: SizeOverride,
   constraint: string,
   [start, end, size]: readonly ["left" | "top", "right" | "bottom", "width" | "height"],
@@ -397,7 +374,7 @@ function transformCss(node: SnapshotNode): string | null {
  * A line is a box with one border: across when it lies flat, down its left side when it stands (within half a degree
  * of a right angle); any other angle is a flat line turned about its centre.
  */
-function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: Map<string, string>, context: CssContext): void {
+function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: CssDeclarations, context: CssContext): void {
   const angle = (((node.rotation ?? 0) % 180) + 180) % 180;
   const standing = Math.abs(angle - 90) <= 0.5;
   const flat = angle <= 0.5 || angle >= 179.5;
@@ -430,7 +407,7 @@ function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: Map<strin
   }
 }
 
-function radiusCss(node: SnapshotNode, css: Map<string, string>, context: CssContext): void {
+function radiusCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
   if (node.type === "ELLIPSE") {
     css.set("border-radius", "50%");
 
@@ -438,18 +415,13 @@ function radiusCss(node: SnapshotNode, css: Map<string, string>, context: CssCon
   }
 
   if (node.cornerRadius === MIXED) {
-    css.set("border-radius", RADII.map((key) => lengthCss(node, key, node[key] ?? 0, context)).join(" "));
+    css.set("border-radius", RADII.map((key) => css.length(key, node[key] ?? 0)).join(" "));
   } else if (node.cornerRadius !== undefined) {
-    setLength(css, "border-radius", node, "topLeftRadius", node.cornerRadius, context);
+    css.setLength("border-radius", "topLeftRadius", node.cornerRadius);
   }
 }
 
-function borderCss(
-  node: SnapshotNode,
-  css: Map<string, string>,
-  readOnly: [string, string][],
-  context: CssContext,
-): void {
+function borderCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
   const color = paintsCss(node.strokes, node.strokeStyleId, node, context);
 
   if (color === null) {
@@ -457,7 +429,7 @@ function borderCss(
   }
 
   if (color === UNMAPPED) {
-    readOnly.push(["border", node.css?.border ?? "a gradient or other stroke the table cannot write yet"]);
+    css.readOnly("border", node.css?.border ?? "a gradient or other stroke the table cannot write yet");
 
     return;
   }
@@ -473,22 +445,22 @@ function borderCss(
       }
     }
 
-    centredStroke(node, readOnly);
+    centredStroke(node, css);
 
     return;
   }
 
   // An inside or centred stroke is a border (with box-sizing: border-box it keeps the size); outside, an outline.
   css.set(node.strokeAlign === "OUTSIDE" ? "outline" : "border", line(node.strokeWeight ?? 1));
-  centredStroke(node, readOnly);
+  centredStroke(node, css);
 }
 
 /** A frame's visible layout grids, read-only: the columns, rows or square grid the design is laid on. */
-function layoutGridsCss(node: SnapshotNode, readOnly: [string, string][]): void {
+function layoutGridsCss(node: SnapshotNode, css: CssDeclarations): void {
   const grids = (node.layoutGrids ?? []).filter((grid) => grid.visible !== false).map(layoutGridText);
 
   if (grids.length > 0) {
-    readOnly.push(["layout-grid", grids.join(" + ")]);
+    css.readOnly("layout-grid", grids.join(" + "));
   }
 }
 
@@ -507,18 +479,13 @@ function layoutGridText(grid: NonNullable<SnapshotNode["layoutGrids"]>[number]):
 }
 
 /** A centred stroke paints half of itself outside the layer's box, which a border-box border cannot. */
-function centredStroke(node: SnapshotNode, readOnly: [string, string][]): void {
+function centredStroke(node: SnapshotNode, css: CssDeclarations): void {
   if (node.strokeAlign === "CENTER") {
-    readOnly.push(["stroke-align", "center"]);
+    css.readOnly("stroke-align", "center");
   }
 }
 
-function effectsCss(
-  node: SnapshotNode,
-  css: Map<string, string>,
-  readOnly: [string, string][],
-  context: CssContext,
-): void {
+function effectsCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
   const effects = (node.effects ?? []).filter((effect) => effect.visible !== false);
   const style = node.effectStyleId === undefined ? undefined : context.styles[node.effectStyleId];
   const isText = node.type === "TEXT";
@@ -546,18 +513,18 @@ function effectsCss(
   for (const effect of effects) {
     if (effect.type === "LAYER_BLUR" && effect.radius !== undefined) {
       css.set("filter", `blur(${px(effect.radius / 2)})`);
-      progressiveBlur(effect, "blur", readOnly);
+      progressiveBlur(effect, "blur", css);
     }
 
     if (effect.type === "BACKGROUND_BLUR" && effect.radius !== undefined) {
       css.set("backdrop-filter", `blur(${px(effect.radius / 2)})`);
-      progressiveBlur(effect, "backdrop-blur", readOnly);
+      progressiveBlur(effect, "backdrop-blur", css);
     }
   }
 }
 
 /** A progressive blur's run, in CSS radii, from where it starts to where it ends (percents of the box). */
-function progressiveBlur(effect: SnapshotEffect, property: string, readOnly: [string, string][]): void {
+function progressiveBlur(effect: SnapshotEffect, property: string, css: CssDeclarations): void {
   if (effect.blurType !== "PROGRESSIVE") {
     return;
   }
@@ -569,7 +536,7 @@ function progressiveBlur(effect: SnapshotEffect, property: string, readOnly: [st
   };
   const radius = (value: number) => `${Math.round(value / 2)}px`;
 
-  readOnly.push([
+  css.readOnly(
     property,
     `progressive from ${radius(effect.startRadius ?? 0)} at ${at(effect.startOffset, {
       x: 0.5,
@@ -578,7 +545,7 @@ function progressiveBlur(effect: SnapshotEffect, property: string, readOnly: [st
       x: 0.5,
       y: 1,
     })}`,
-  ]);
+  );
 }
 
 /** Shadows as a box-shadow list, top first (an effect style's value, for the tokens). */
@@ -603,12 +570,7 @@ function shadowCss(effect: SnapshotEffect, isText: boolean, space: ColorSpace | 
   return parts.filter((part) => part !== null).join(" ");
 }
 
-function textCss(
-  node: SnapshotNode,
-  css: Map<string, string>,
-  readOnly: [string, string][],
-  context: CssContext,
-): string | undefined {
+function textCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): string | undefined {
   const base = node.text === undefined ? undefined : baseSegment(node.text.segments);
   const align = textAlignCss(node);
 
@@ -620,13 +582,18 @@ function textCss(
     return undefined;
   }
 
-  const { css: run, textStyle } = segmentCss(base, node, context, readOnly);
+  const notes: [string, string][] = [];
+  const { css: run, textStyle } = segmentCss(base, node, context, notes);
+
+  for (const [property, value] of notes) {
+    css.readOnly(property, value);
+  }
 
   for (const [property, value] of run) {
     css.set(property, value);
   }
 
-  textBlockCss(node, base, css, readOnly);
+  textBlockCss(node, base, css);
 
   return textStyle;
 }
@@ -642,12 +609,7 @@ const LIST_STYLES: Readonly<Record<string, string>> = {
 };
 
 /** What a text box does as a whole: wrapping, truncation, vertical alignment, lists and paragraphs. */
-function textBlockCss(
-  node: SnapshotNode,
-  base: TextSegment,
-  css: Map<string, string>,
-  readOnly: [string, string][],
-): void {
+function textBlockCss(node: SnapshotNode, base: TextSegment, css: CssDeclarations): void {
   const text = node.text;
 
   if (text === undefined) {
@@ -666,7 +628,7 @@ function textBlockCss(
       css.set("text-overflow", "ellipsis");
       css.set("white-space", "nowrap");
     } else {
-      readOnly.push(["line-clamp", String(text.maxLines)]);
+      css.readOnly("line-clamp", String(text.maxLines));
     }
   }
 
@@ -674,7 +636,7 @@ function textBlockCss(
     node.layoutSizingVertical === "FIXED" &&
     (text.textAlignVertical === "CENTER" || text.textAlignVertical === "BOTTOM")
   ) {
-    readOnly.push(["align-content", text.textAlignVertical === "CENTER" ? "center" : "end"]);
+    css.readOnly("align-content", text.textAlignVertical === "CENTER" ? "center" : "end");
   }
 
   const list = text.segments
@@ -682,56 +644,30 @@ function textBlockCss(
     .find((style) => style !== undefined);
 
   if (list !== undefined) {
-    readOnly.push(["list-style", list]);
+    css.readOnly("list-style", list);
   }
 
   if (typeof text.paragraphSpacing === "number" && text.paragraphSpacing > 0) {
-    readOnly.push(["paragraph-spacing", px(text.paragraphSpacing)]);
+    css.readOnly("paragraph-spacing", px(text.paragraphSpacing));
   }
 
   if ((text.listSpacing ?? 0) > 0) {
-    readOnly.push(["list-spacing", px(text.listSpacing ?? 0)]);
+    css.readOnly("list-spacing", px(text.listSpacing ?? 0));
   }
 
   if ((base.paragraphIndent ?? 0) > 0) {
-    readOnly.push(["text-indent", px(base.paragraphIndent ?? 0)]);
+    css.readOnly("text-indent", px(base.paragraphIndent ?? 0));
   }
 
   if (text.leadingTrim === "CAP_HEIGHT") {
-    readOnly.push(["text-box", "trim-both cap alphabetic"]);
+    css.readOnly("text-box", "trim-both cap alphabetic");
   }
 
   if (text.hangingPunctuation) {
-    readOnly.push(["hanging-punctuation", "first"]);
+    css.readOnly("hanging-punctuation", "first");
   }
 }
 
 function styleIdOf(id: string | undefined): string | undefined {
   return id === undefined || id === "" || id === MIXED ? undefined : id;
-}
-
-function setLength(
-  css: Map<string, string>,
-  property: string,
-  node: SnapshotNode,
-  key: string,
-  value: number | undefined,
-  context: CssContext,
-): void {
-  if (value === undefined) {
-    return;
-  }
-
-  const written = lengthCss(node, key, value, context);
-
-  if (written !== "0" || property === "width" || property === "height") {
-    css.set(property, written);
-  }
-}
-
-/** getCSSAsync's value made like ours: no fallbacks inside var(), no comments, whole pixels. */
-export function cleanOracle(value: string): string {
-  return withoutFallbacks(value)
-    .replace(/(-?\d+\.\d+)px/g, (_match, number: string) => px(Number(number)))
-    .trim();
 }
