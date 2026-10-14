@@ -136,7 +136,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 - \`$on-click\`, \`$on-hover\`, \`$on-press\`, \`$on-drag\`, \`$on-mouse-enter\`, \`$on-mouse-leave\`,
   \`$on-mouse-down\`, \`$on-mouse-up\`, \`$on-key\`, \`$after-timeout\`, \`$on-media-hit\`, \`$on-media-end\` (any other trigger
   as \`$on-<trigger>\`): the layer's prototype interactions, e.g. \`$on-hover="change to Type=Hover; smart animate 300ms
-  ease-out"\` (a variant to switch to on hover, and how: build it as the hover state). A link stays \`href\`.
+  ease-out"\` (a variant to switch to on hover, and how: build it as the hover state); the easing is valid CSS, a spring
+  drawn as \`linear()\`. A link stays \`href\`.
 
 ## Text
 
@@ -226,7 +227,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 
 - Colours as hex (rgba when see-through); a colour with an opacity variable as \`color-mix(in srgb, … N%, transparent)\` (\`in display-p3\` in a Display P3 file).
 - Numbers in px, except opacity and font weight, which have no unit.
-- Strings quoted; booleans as true/false (CSS has no booleans); easings as CSS easing functions (springs as ease);
+- Strings quoted; booleans as true/false (CSS has no booleans); easings as CSS easing functions (a keyword, cubic-bezier(), or a spring
+  drawn as linear());
   durations in seconds.
 - An alias is \`var(--other)\`. One that points nowhere is a comment and a note.
 

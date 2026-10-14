@@ -1,5 +1,6 @@
 import { Color, isChannels } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
+import { easingCss as kernelEasingCss } from "../../kernel/easing.ts";
 import { decimal } from "../../kernel/numbers.ts";
 import { aliasOf } from "../aliases.ts";
 import type { Notes } from "../notes.ts";
@@ -17,18 +18,6 @@ type ValueCss = (value: unknown, variable: RawVariable, context: VariableCssCont
 
 /** Scopes a number is used for without a unit; anything else (or no scope) is a length in pixels. */
 const UNITLESS_SCOPES: ReadonlySet<string> = new Set(["OPACITY", "COLOR_OPACITY", "FONT_WEIGHT"]);
-
-/** Figma's named easings as CSS keywords or curves. */
-const EASINGS: ReadonlyMap<string, string> = new Map([
-  ["LINEAR", "linear"],
-  ["EASE_IN", "ease-in"],
-  ["EASE_OUT", "ease-out"],
-  ["EASE_IN_AND_OUT", "ease-in-out"],
-  ["EASE_IN_BACK", "cubic-bezier(0.36, 0, 0.66, -0.56)"],
-  ["EASE_OUT_BACK", "cubic-bezier(0.34, 1.56, 0.64, 1)"],
-  ["EASE_IN_AND_OUT_BACK", "cubic-bezier(0.68, -0.6, 0.32, 1.6)"],
-  ["HOLD", "step-end"],
-]);
 
 /** A writer per variable type; a type without one is written as a comment, with a note. */
 const VALUE_CSS: ReadonlyMap<string, ValueCss> = new Map<string, ValueCss>([
@@ -126,35 +115,18 @@ function booleanCss(value: unknown, variable: RawVariable, context: VariableCssC
   return String(value);
 }
 
-function easingCss(value: unknown, variable: RawVariable, context: VariableCssContext): string {
-  if (typeof value !== "object" || value === null || !("type" in value)) {
-    return unknownCss(value, variable, context);
-  }
-
-  const bezier =
-    "easingFunctionCubicBezier" in value
-      ? (value.easingFunctionCubicBezier as Record<string, number> | undefined)
-      : undefined;
-
-  if (value.type === "CUSTOM_CUBIC_BEZIER" && bezier !== undefined) {
-    return `cubic-bezier(${[bezier.x1, bezier.y1, bezier.x2, bezier.y2].map((point) => decimal(point ?? 0)).join(", ")})`;
-  }
-
-  const named = EASINGS.get(String(value.type));
-
-  if (named !== undefined) {
-    return named;
-  }
-
-  context.notes.add(
-    `${variable.name} is a spring easing (${String(value.type)}): CSS has no springs, it is written as ease.`,
-  );
-
-  return "ease";
-}
-
 function unknownCss(value: unknown, variable: RawVariable, context: VariableCssContext): string {
   context.notes.add(`${variable.name} has a ${variable.resolvedType} value CSS cannot hold: ${JSON.stringify(value)}.`);
 
   return `/* ${JSON.stringify(value)} */`;
+}
+
+/** An easing as valid CSS (a spring as linear()); a value no easing Figma has is written as a comment, with a note. */
+function easingCss(value: unknown, variable: RawVariable, context: VariableCssContext): string {
+  const css =
+    typeof value === "object" && value !== null && typeof (value as { type?: unknown }).type === "string"
+      ? kernelEasingCss(value as { type: string })
+      : null;
+
+  return css ?? unknownCss(value, variable, context);
 }

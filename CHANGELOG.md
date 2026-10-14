@@ -32,6 +32,8 @@ How to write this file (people and agents alike):
 
 ### Changed
 
+- Every easing is valid CSS: `tokens_read`, the prototype interactions `design_read` shows and Figma Motion write a
+  keyword or `cubic-bezier()`, and a spring as `linear()` drawn from the spring itself (it used to be `ease` or a word).
 - In a Display P3 file, colours are written as `color(display-p3 …)` by `design_read`, `tokens_read` (in CSS and in
   DTCG files) and the checks, and colours written to it are converted to P3: they show as the designer chose them.
 

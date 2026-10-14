@@ -283,7 +283,7 @@ describe("Figma Motion in a read", () => {
         ),
       )?.css ?? "";
 
-    expect(css).toContain("0% { opacity: 0; animation-timing-function: steps(1, end); }");
+    expect(css).toContain("0% { opacity: 0; animation-timing-function: step-end; }");
     expect(css).toContain("25% { opacity: 1; animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }");
   });
 

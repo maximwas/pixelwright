@@ -1,14 +1,7 @@
-import {
-  CSS_EASING_KEYWORDS,
-  MOTION_AXES,
-  MOTION_BEZIERS,
-  MOTION_NAMES,
-  MOTION_PROPERTIES,
-  MOTION_SPRINGS,
-  MOTION_UNCOVERED,
-} from "../constants/motion.ts";
+import { MOTION_AXES, MOTION_NAMES, MOTION_PROPERTIES, MOTION_SPRINGS, MOTION_UNCOVERED } from "../constants/motion.ts";
 import { type Channels, Color, isChannels } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { easingCss as kernelEasingCss } from "../kernel/easing.ts";
 import { decimal } from "../kernel/numbers.ts";
 import type { MotionEasing, MotionLayer, MotionTrack, MotionView, SnapshotMotion } from "../types/motion.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
@@ -481,23 +474,6 @@ function componentOf(value: unknown, axis: "x" | "y"): number | null {
   return isVector(value) ? value[axis] : null;
 }
 
-/** A keyframe's easing as CSS: a keyword when CSS has one, else cubic-bezier(); a hold steps; a spring eases out. */
-function easingCss(easing: MotionEasing): string {
-  if (easing.type === "HOLD") {
-    return "steps(1, end)";
-  }
-
-  const bezier = easing.bezier ?? MOTION_BEZIERS[easing.type];
-
-  if (bezier?.length === 4) {
-    const numbers = bezier.map(decimal).join(", ");
-
-    return CSS_EASING_KEYWORDS[numbers] ?? `cubic-bezier(${numbers})`;
-  }
-
-  return MOTION_SPRINGS.has(easing.type) ? `ease-out /* Figma's ${springName(easing)} */` : "linear";
-}
-
 /** An easing in a summary's words: a hold, a spring by its name, else as CSS writes it. */
 function easingWord(easing: MotionEasing): string {
   if (easing.type === "HOLD") {
@@ -560,4 +536,9 @@ function isVector(value: unknown): value is { x: number; y: number } {
     typeof (value as { x?: unknown }).x === "number" &&
     typeof (value as { y?: unknown }).y === "number"
   );
+}
+
+/** A keyframe's easing as valid CSS (a spring as linear() over the keyframe's own time); linear when unknown. */
+function easingCss(easing: MotionEasing): string {
+  return kernelEasingCss(easing) ?? "linear";
 }

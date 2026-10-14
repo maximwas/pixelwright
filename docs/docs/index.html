@@ -576,7 +576,8 @@ style&#39;s name when one made it. The JSON&#39;s <code>motion</code> has it as 
 for the class it names (<code>layers</code>), keyframes placed over the timeline; what CSS cannot animate is a comment.</li>
 <li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>,
 <code>$on-mouse-down</code>, <code>$on-mouse-up</code>, <code>$on-key</code>, <code>$after-timeout</code>, <code>$on-media-hit</code>, <code>$on-media-end</code> (any other trigger
-as <code>$on-&lt;trigger&gt;</code>): the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state). A link stays <code>href</code>.</li>
+as <code>$on-&lt;trigger&gt;</code>): the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state); the easing is valid CSS, a spring
+drawn as <code>linear()</code>. A link stays <code>href</code>.</li>
 </ul>
 <h3>Text</h3>
 <ul>
@@ -661,7 +662,8 @@ something.</li>
 <ul>
 <li>Colours as hex (rgba when see-through); a colour with an opacity variable as <code>color-mix(in srgb, … N%, transparent)</code> (<code>in display-p3</code> in a Display P3 file).</li>
 <li>Numbers in px, except opacity and font weight, which have no unit.</li>
-<li>Strings quoted; booleans as true/false (CSS has no booleans); easings as CSS easing functions (springs as ease);
+<li>Strings quoted; booleans as true/false (CSS has no booleans); easings as CSS easing functions (a keyword, cubic-bezier(), or a spring
+drawn as linear());
 durations in seconds.</li>
 <li>An alias is <code>var(--other)</code>. One that points nowhere is a comment and a note.</li>
 </ul>

@@ -1,3 +1,4 @@
+import { easingCss } from "../kernel/easing.ts";
 import type { SnapshotReaction } from "../types/snapshot.ts";
 
 /** The read-only attribute each trigger is written as. */
@@ -25,27 +26,11 @@ const NAVIGATIONS: Readonly<Record<string, string>> = {
   SCROLL_TO: "scroll to",
 };
 
-/** Figma's named curves as CSS names them; its spring presets by name. */
-const EASINGS: Readonly<Record<string, string>> = {
-  EASE_IN: "ease-in",
-  EASE_OUT: "ease-out",
-  EASE_IN_AND_OUT: "ease-in-out",
-  LINEAR: "linear",
-  EASE_IN_BACK: "ease-in-back",
-  EASE_OUT_BACK: "ease-out-back",
-  EASE_IN_AND_OUT_BACK: "ease-in-out-back",
-  GENTLE: "spring gentle",
-  QUICK: "spring quick",
-  BOUNCY: "spring bouncy",
-  SLOW: "spring slow",
-};
-
 type Action = NonNullable<SnapshotReaction["actions"]>[number];
 type Transition = NonNullable<Action["transition"]>;
 
 const ms = (seconds: number) => `${Math.round(seconds * 1000)}ms`;
 const words = (constant: string) => constant.toLowerCase().replaceAll("_", " ");
-const decimal = (value: number) => String(Math.round(value * 1000) / 1000);
 
 /**
  * A layer's prototype interactions as read-only attributes, one per trigger: `$on-hover="change to Type=Hover; smart
@@ -106,20 +91,5 @@ function actionText(action: Action): string {
 function transitionText(transition: Transition): string {
   const direction = transition.direction === undefined ? "" : ` ${transition.direction.toLowerCase()}`;
 
-  return `${words(transition.type)}${direction} ${ms(transition.duration)} ${easingText(transition.easing)}`;
-}
-
-function easingText(easing: Transition["easing"]): string {
-  const bezier = easing.easingFunctionCubicBezier;
-  const spring = easing.easingFunctionSpring;
-
-  if (easing.type === "CUSTOM_CUBIC_BEZIER" && bezier !== undefined) {
-    return `cubic-bezier(${[bezier.x1, bezier.y1, bezier.x2, bezier.y2].map(decimal).join(", ")})`;
-  }
-
-  if (easing.type === "CUSTOM_SPRING" && spring !== undefined) {
-    return `spring(mass ${decimal(spring.mass)}, stiffness ${decimal(spring.stiffness)}, damping ${decimal(spring.damping)})`;
-  }
-
-  return EASINGS[easing.type] ?? words(easing.type);
+  return `${words(transition.type)}${direction} ${ms(transition.duration)} ${easingCss(transition.easing) ?? words(transition.easing.type)}`;
 }
