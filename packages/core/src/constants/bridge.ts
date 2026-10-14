@@ -22,6 +22,9 @@ export const MAX_MESSAGE_BYTES = 4 * 1024 * 1024;
 /** The most bytes of an export one answer carries: base64 makes them a third bigger, still under MAX_MESSAGE_BYTES. */
 export const EXPORT_CHUNK_BYTES = 2 * 1024 * 1024;
 
+/** The largest file one upload stream carries to the plugin: an image design_apply writes. */
+export const UPLOAD_MAX_BYTES = 32 * 1024 * 1024;
+
 /** WebSocket close codes of the bridge; 4xxx are its own. */
 export const CloseCode = {
   GoingAway: 1001,

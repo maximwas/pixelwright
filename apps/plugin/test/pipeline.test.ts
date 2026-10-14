@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { applyDesign } from "../../server/src/design/apply-design.ts";
+import { applyDesign } from "../../server/src/features/design-apply/apply-design.ts";
 import { setEditsAllowed } from "../src/figma/edits.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
-import { pluginBridge } from "./helpers/plugin-bridge.ts";
+import { pluginClient } from "./helpers/plugin-bridge.ts";
 
 /** design_apply end to end: the server's applyDesign over the plugin on the fake Figma. */
 function pipeline() {
-  const bridge = pluginBridge();
+  const plugin = pluginClient();
 
   return (xml: string, options: { parent?: string; dryRun?: boolean } = {}) =>
-    applyDesign(bridge, {
+    applyDesign(plugin, {
       xml,
       dryRun: options.dryRun ?? false,
       ...(options.parent === undefined ? {} : { parent: options.parent }),

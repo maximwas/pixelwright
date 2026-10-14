@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { applyDesign } from "../../server/src/design/apply-design.ts";
 import { readDesign } from "../../server/src/design/read-design.ts";
+import { applyDesign } from "../../server/src/features/design-apply/apply-design.ts";
+import { PluginClient } from "../../server/src/plugin/plugin-client.ts";
 import { setEditsAllowed } from "../src/figma/edits.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
 import { pluginBridge } from "./helpers/plugin-bridge.ts";
@@ -87,7 +88,7 @@ describe("a layer filled with a gradient paint style", () => {
     expect(xml).toContain('background="var(--Brand-Gradient)"');
     expect(meta.tokens["--Brand-Gradient"]).toBe("linear-gradient(90deg, #F00 0%, #00F 100%)");
     await expect(
-      applyDesign(bridge, {
+      applyDesign(new PluginClient(bridge), {
         xml,
         dryRun: false,
       }),

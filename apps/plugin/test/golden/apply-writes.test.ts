@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { applyDesign } from "../../../server/src/design/apply-design.ts";
+import { applyDesign } from "../../../server/src/features/design-apply/apply-design.ts";
 import { setEditsAllowed } from "../../src/figma/edits.ts";
 import { applyDocument } from "../helpers/apply-document.ts";
 import type { FakeNode } from "../helpers/fake-figma.ts";
-import { pluginBridge } from "../helpers/plugin-bridge.ts";
+import { pluginClient } from "../helpers/plugin-bridge.ts";
 
 /**
  * What design_apply does to a Figma document, call by call, as the plugin before the apply pipeline's rewrite does it:
@@ -275,7 +275,7 @@ const GROUPS: Readonly<Record<string, readonly Case[]>> = {
 
 /** How a call runs: the one place the apply pipeline's rewrite changes in this file. */
 function run(testCase: Case, dryRun: boolean) {
-  return applyDesign(pluginBridge(), {
+  return applyDesign(pluginClient(), {
     xml: testCase.xml,
     dryRun,
     ...(testCase.parent === undefined ? {} : { parent: testCase.parent }),

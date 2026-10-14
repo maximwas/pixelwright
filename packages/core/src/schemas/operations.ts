@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "../apply/schemas.ts";
-import { EXPORT_CHUNK_BYTES, SELECTION_WAIT_MAX_MS } from "../constants/bridge.ts";
+import { EXPORT_CHUNK_BYTES, SELECTION_WAIT_MAX_MS, UPLOAD_MAX_BYTES } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schemas.ts";
 import { RawTokensSchema } from "../tokens/raw-tokens.ts";
@@ -391,11 +391,7 @@ export const OPERATION_SCHEMAS = {
       offset: z.number().int().min(0),
       /** Base64, at most UPLOAD_CHUNK_BYTES raw bytes. */
       chunk: z.string().max(4 * 1024 * 1024),
-      total: z
-        .number()
-        .int()
-        .min(1)
-        .max(32 * 1024 * 1024),
+      total: z.number().int().min(1).max(UPLOAD_MAX_BYTES),
     }),
     output: z.object({ received: z.number().int() }),
   },

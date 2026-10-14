@@ -5,7 +5,8 @@ import { join } from "node:path";
 import { designXml, type Snapshot, SnapshotSchema } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../src/assets/written-files.ts";
-import { applyDesign } from "../src/design/apply-design.ts";
+import { applyDesign } from "../src/features/design-apply/apply-design.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import { pngHeader } from "./helpers/images.ts";
 import { recordingBridge } from "./helpers/recording-bridge.ts";
 
@@ -21,7 +22,7 @@ describe("design_apply", () => {
       colorProfile: "DISPLAY_P3",
     };
     const { bridge, requests } = recordingBridge(p3);
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: designXml(p3).xml,
       dryRun: false,
     });
@@ -34,7 +35,7 @@ describe("design_apply", () => {
   it("saves a named version before it writes, never in a dry run, and writes nothing when the save fails", async () => {
     const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
     const written = recordingBridge(ROW);
-    const result = await applyDesign(written.bridge, {
+    const result = await applyDesign(new PluginClient(written.bridge), {
       xml,
       dryRun: false,
       version: "Before the gap",
@@ -49,7 +50,7 @@ describe("design_apply", () => {
 
     const checked = recordingBridge(ROW);
 
-    await applyDesign(checked.bridge, {
+    await applyDesign(new PluginClient(checked.bridge), {
       xml,
       dryRun: true,
       version: "Before the gap",
@@ -59,7 +60,7 @@ describe("design_apply", () => {
     const refused = recordingBridge(ROW);
 
     await expect(
-      applyDesign(refused.bridge, {
+      applyDesign(new PluginClient(refused.bridge), {
         xml,
         dryRun: false,
         version: "fails",
@@ -71,7 +72,7 @@ describe("design_apply", () => {
   it("keeps every request of a call on the file it started on, though another file comes to the front", async () => {
     const { bridge, requests } = recordingBridge(ROW, { switching: true });
 
-    await applyDesign(bridge, {
+    await applyDesign(new PluginClient(bridge), {
       xml: '<Frame id="54:227" gap="48px"/>',
       dryRun: false,
       version: "Before the gap",
@@ -89,7 +90,7 @@ describe("design_apply", () => {
     const old = recordingBridge(ROW);
 
     await expect(
-      applyDesign(old.bridge, {
+      applyDesign(new PluginClient(old.bridge), {
         xml,
         dryRun: false,
         version: "old plugin",
@@ -102,7 +103,7 @@ describe("design_apply", () => {
 
   it("writes nothing for the XML design_read returned, sent back as it was", async () => {
     const { bridge, requests } = recordingBridge(ROW);
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: designXml(ROW).xml,
       dryRun: false,
     });
@@ -119,7 +120,7 @@ describe("design_apply", () => {
   it("sends only what changed, in Figma's terms, with the layer's own layout around it", async () => {
     const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
     const { bridge, sent } = recordingBridge(ROW);
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml,
       dryRun: false,
     });
@@ -136,7 +137,7 @@ describe("design_apply", () => {
 
   it("returns a parse error with its line and column and asks the plugin for nothing", async () => {
     const { bridge, requests } = recordingBridge(ROW);
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: '<Frame id="54:227">\n  <Text>Hi</Frame>',
       dryRun: false,
     });
@@ -152,7 +153,7 @@ describe("design_apply", () => {
 
   it("keeps writing the rest when an element has a bad attribute, and passes a dry run on", async () => {
     const { bridge, sent, requests } = recordingBridge(ROW);
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: '<Frame id="54:227" gapp="8px" opacity="0.5"/>\n<Frame name="New" background="#FFF"/>',
       parent: "54:226",
       dryRun: true,
@@ -183,7 +184,7 @@ describe("design_apply", () => {
 
   it("marks moves, into a new layer, into another parent, next to another, in another order, with their siblings", async () => {
     const { bridge, sent } = recordingBridge(ROW);
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: [
         '<Frame name="Row" display="flex"><Frame id="54:228"/></Frame>',
         '<Frame id="54:227"><Frame id="54:239" opacity="0.5"/></Frame>',
@@ -205,7 +206,7 @@ describe("design_apply", () => {
 
     const reordered = recordingBridge(ROW);
 
-    await applyDesign(reordered.bridge, {
+    await applyDesign(new PluginClient(reordered.bridge), {
       xml: '<Frame id="54:227"><Frame id="54:238"/><Frame id="54:228"/></Frame>',
       dryRun: false,
     });
@@ -220,7 +221,7 @@ describe("design_apply", () => {
 
   it("refuses a layer whose state the read could not take, instead of writing it whole", async () => {
     const { bridge, sent } = recordingBridge(ROW, { cut: true });
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: '<Frame id="54:227" opacity="0.9"><Frame id="54:228" opacity="0.5"/></Frame>',
       dryRun: false,
     });
@@ -299,7 +300,7 @@ describe("design_apply: files", () => {
     const xml = designXml(snapshot).xml;
     const same = recordingBridge(snapshot);
     const kept = await applyDesign(
-      same.bridge,
+      new PluginClient(same.bridge),
       {
         xml: xml.replace(/src="[^"]+"/, 'src="photo.png"'),
         dryRun: false,
@@ -313,7 +314,7 @@ describe("design_apply: files", () => {
     const swapped = recordingBridge(snapshot);
 
     await applyDesign(
-      swapped.bridge,
+      new PluginClient(swapped.bridge),
       {
         xml: xml.replace(/src="[^"]+"/, 'src="other.png"'),
         dryRun: false,
@@ -346,7 +347,7 @@ describe("design_apply: files", () => {
 
     const { bridge, requests } = recordingBridge(snapshot);
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: designXml(snapshot).xml.replace(/src="[^"]+"/, 'src="moved/hero.png"'),
         dryRun: false,
@@ -380,7 +381,7 @@ describe("design_apply: files", () => {
     const { bridge, requests } = recordingBridge(snapshot);
 
     await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: designXml(snapshot).xml.replace(/src="[^"]+"/, 'src="photo-2.png"'),
         dryRun: false,
@@ -400,7 +401,7 @@ describe("design_apply: files", () => {
     const xml = designXml(snapshot).xml;
     const planned = recordingBridge(snapshot);
     const kept = await applyDesign(
-      planned.bridge,
+      new PluginClient(planned.bridge),
       {
         xml,
         dryRun: false,
@@ -412,7 +413,7 @@ describe("design_apply: files", () => {
 
     const { bridge } = recordingBridge(snapshot);
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: xml.replace(/src="[^"]+"/, 'src="gone.png"'),
         dryRun: false,
@@ -436,7 +437,7 @@ describe("design_apply: files", () => {
 
     const { bridge, requests } = recordingBridge(photoSnapshot(PNG));
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: '<Image src="wide.png"/>',
         parent: "1:1",
@@ -464,7 +465,7 @@ describe("design_apply: files", () => {
 
     const { bridge } = recordingBridge(photoSnapshot(PNG));
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: '<Image src="photo.webp"/>',
         parent: "1:1",
@@ -485,7 +486,7 @@ describe("design_apply: files", () => {
     const dir = folder();
     const { bridge, requests, sent } = recordingBridge(photoSnapshot(PNG));
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: '<Image src="photo.png" width="10px"/>\n<Image src="photo.png" width="20px"/>\n<Icon src="arrow.svg"/>',
         parent: "1:1",
@@ -508,7 +509,7 @@ describe("design_apply: files", () => {
     const dir = folder();
     const { bridge, sent } = recordingBridge(photoSnapshot(PNG));
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: '<Image src="nowhere.png"/>\n<Icon src="photo.png"/>\n<Frame name="Kept"/>',
         parent: "1:1",
@@ -584,7 +585,7 @@ describe("design_apply on a big read", () => {
     const { xml } = designXml(snapshot);
     const { bridge, requests } = recordingBridge(snapshot);
     const started = performance.now();
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml,
       dryRun: false,
     });

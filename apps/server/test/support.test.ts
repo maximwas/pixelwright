@@ -8,9 +8,9 @@ import * as z from "zod";
 import { readConfig } from "../src/config/config.ts";
 import { SERVER_INSTRUCTIONS } from "../src/constants/mcp.ts";
 import { SUPPORT_REMINDER_INTERVAL_MS } from "../src/constants/support.ts";
+import { designApplyTool } from "../src/features/design-apply/tool.ts";
 import { tokensApplyTool } from "../src/features/tokens-apply/tool.ts";
 import { registerTool } from "../src/mcp/register-tool.ts";
-import { registerApplyTool } from "../src/mcp/tools/apply.ts";
 import { registerNodeTools } from "../src/mcp/tools/nodes.ts";
 import { SupportReminder } from "../src/support/support-reminder.ts";
 import type { ToolContext } from "../src/types/mcp.ts";
@@ -108,11 +108,51 @@ describe("the support note", () => {
     expect(SERVER_INSTRUCTIONS).toContain("When a result carries support");
   });
 
+  it("counts design_apply as a change only when a real call made or changed a layer", () => {
+    const { changed } = designApplyTool({ support: { due: async () => null } } as unknown as ToolContext);
+    const applied = (fields: {
+      created?: { line: number; ref: string; id: string; tag: string }[];
+      changed?: string[];
+      dryRun?: boolean;
+    }) => ({
+      created: [],
+      changed: [],
+      errors: [],
+      dryRun: false,
+      ...fields,
+    });
+
+    expect(changed?.(applied({ changed: ["1:2"] }))).toBe(true);
+    expect(
+      changed?.(
+        applied({
+          created: [
+            {
+              line: 1,
+              ref: "new:1",
+              id: "9:1",
+              tag: "Frame",
+            },
+          ],
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      changed?.(
+        applied({
+          changed: ["1:2"],
+          dryRun: true,
+        }),
+      ),
+    ).toBe(false);
+    expect(changed?.(applied({}))).toBe(false);
+  });
+
   it("can ride on every tool that writes", () => {
     const { server, tools } = recordingServer();
     const context = { support: { due: async () => null } } as unknown as ToolContext;
 
-    registerApplyTool(server, context);
+    registerTool(server, designApplyTool(context), context.support);
     registerTool(server, tokensApplyTool(context), context.support);
     registerNodeTools(server, context);
 

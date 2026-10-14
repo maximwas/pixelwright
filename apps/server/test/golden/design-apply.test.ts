@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { designXml, fitPlan, type Snapshot, SnapshotSchema } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
-import { applyDesign } from "../../src/design/apply-design.ts";
+import { applyDesign } from "../../src/features/design-apply/apply-design.ts";
+import { PluginClient } from "../../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../../src/types/mcp.ts";
 import { PNG, pngHeader } from "../helpers/images.ts";
 import { type RecordingOptions, recordingBridge } from "../helpers/recording-bridge.ts";
@@ -326,7 +327,7 @@ function folder(): string {
 /** How a case runs: the one place the apply pipeline's rewrite changes in this file. */
 function run(bridge: BridgeView, testCase: Case, cwd: string) {
   return applyDesign(
-    bridge,
+    new PluginClient(bridge),
     {
       xml: testCase.xml,
       dryRun: testCase.dryRun ?? false,

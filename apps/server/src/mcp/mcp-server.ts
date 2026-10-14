@@ -1,11 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import { SERVER_INSTRUCTIONS } from "../constants/mcp.ts";
+import { designApplyTool } from "../features/design-apply/tool.ts";
 import { tokensApplyTool } from "../features/tokens-apply/tool.ts";
 import { tokensReadTool } from "../features/tokens-read/tool.ts";
 import { tokensUsageTool } from "../features/tokens-usage/tool.ts";
 import type { ToolContext } from "../types/mcp.ts";
 import { registerTool } from "./register-tool.ts";
-import { registerApplyTool } from "./tools/apply.ts";
 import { registerAssetsTool } from "./tools/assets.ts";
 import { registerChecksTools } from "./tools/checks.ts";
 import { registerCodeConnectTool } from "./tools/code-connect.ts";
@@ -43,7 +43,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerFlowsTool(server, context);
   registerChecksTools(server, context);
   registerTool(server, tokensUsageTool(context));
-  registerApplyTool(server, context);
+  registerTool(server, designApplyTool(context), context.support);
   registerExecuteTool(server, context);
   registerTool(server, tokensReadTool(context));
   registerTool(server, tokensApplyTool(context), context.support);
