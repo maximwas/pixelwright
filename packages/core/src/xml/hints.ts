@@ -107,7 +107,8 @@ function inferredHints(snapshot: Snapshot, nodes: readonly SnapshotNode[]): stri
       const variable = snapshot.variables[id];
       const raw: unknown = node[field as keyof SnapshotNode];
 
-      if (word === undefined || variable === undefined || typeof raw !== "number") {
+      // A zero is what a layout without that padding or gap has: a hint there would only be noise.
+      if (word === undefined || variable === undefined || typeof raw !== "number" || raw === 0) {
         continue;
       }
 

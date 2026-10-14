@@ -32,6 +32,13 @@ const read = (...children: SnapshotNode[]): Snapshot => ({
       remote: false,
       value: 16,
     },
+    "V:0": {
+      name: "space/0",
+      collection: "Orbit",
+      resolvedType: "FLOAT",
+      remote: false,
+      value: 0,
+    },
   },
 });
 
@@ -65,5 +72,22 @@ describe("Figma's own variable match", () => {
     );
 
     expect(hints.join("\n")).not.toMatch(/matches --space-16/);
+  });
+
+  it("leaves out a zero, which every layout without a padding or a gap has", () => {
+    const hints = hintsOf(
+      read(
+        frame("1:2", {
+          paddingLeft: 0,
+          itemSpacing: 0,
+          inferred: {
+            paddingLeft: "V:0",
+            itemSpacing: "V:0",
+          },
+        }),
+      ),
+    );
+
+    expect(hints.join("\n")).not.toMatch(/--space-0/);
   });
 });

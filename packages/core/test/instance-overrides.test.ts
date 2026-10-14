@@ -115,7 +115,14 @@ describe("what an instance changed outside its component's properties", () => {
         children: [
           layer({
             id: "I9:1;1:1",
-            overrides: ["expanded", "locked", "pluginData", "relativeTransform", "constraints", "layoutSizingHorizontal"],
+            overrides: [
+              "expanded",
+              "locked",
+              "pluginData",
+              "relativeTransform",
+              "constraints",
+              "layoutSizingHorizontal",
+            ],
           }),
           layer({
             id: "I9:1;1:2",
