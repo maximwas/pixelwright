@@ -1,6 +1,6 @@
+import { designXml, renderDesign } from "../design/design-xml.ts";
 import type { DesignRead, DesignSpan, DesignXmlOptions } from "../types/design.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
-import { designXml, renderDesign } from "./design.ts";
 
 /** What a cut branch still costs: its own opening tag stays, with `$truncated="true"`. */
 const STUB_EXTRA = ' $truncated="true"/>'.length;

@@ -1,10 +1,10 @@
 import { withoutUrls } from "../css-mapping/values/css-values.ts";
+import { designXml } from "../design/design-xml.ts";
 import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
 import type { ApplyElement, LayerNow } from "../types/apply.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import type { XmlChild, XmlElementNode } from "../types/xml.ts";
-import { designXml } from "../xml/design.ts";
 import { parseXml } from "../xml/parse/parse-xml.ts";
 
 /**

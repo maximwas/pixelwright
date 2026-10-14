@@ -1,12 +1,12 @@
 import { INFERRED_WORDS } from "../constants/inferred.ts";
 import { boxShorthand, px } from "../css-mapping/values/format.ts";
+import { designXml } from "../design/design-xml.ts";
 import { type Channels, Color } from "../kernel/color/color.ts";
 import { colorSpaceOf } from "../kernel/color/color-space.ts";
 import { styleTokenName, variableTokenName } from "../kernel/names.ts";
 import { decimal } from "../kernel/numbers.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import { classify, visibleChildren } from "./classify.ts";
-import { designXml } from "./design.ts";
 import { overrideWords } from "./overrides.ts";
 
 /** Figma's names for layers nobody named: `Frame 427`, `Rectangle 22957`. */

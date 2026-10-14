@@ -1,7 +1,7 @@
+import { designXml } from "../design/design-xml.ts";
 import type { DesignDiff, DiffChange } from "../types/diff.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import type { XmlElementNode } from "../types/xml.ts";
-import { designXml } from "../xml/design.ts";
 import { parseXml } from "../xml/parse/parse-xml.ts";
 
 /** What names a root or says where it is: two variants side by side differ there by nature (src follows the name). */
