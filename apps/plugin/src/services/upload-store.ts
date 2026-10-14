@@ -1,9 +1,10 @@
-import type { OperationInput, OperationOutput } from "@pixelwright/core";
+import { BridgeError, type OperationInput, type OperationOutput } from "@pixelwright/core";
 import { UPLOAD_BYTES, UPLOAD_TTL_MS } from "../constants/plugin.ts";
 
 interface Upload {
   readonly bytes: Uint8Array;
-  received: number;
+  /** How many of the file's bytes each chunk brought, by its offset: a chunk sent again counts once. */
+  readonly chunks: Map<number, number>;
   readonly at: number;
 }
 
@@ -23,24 +24,28 @@ export class UploadStore {
   }
 
   receive({ stream, offset, chunk, total }: OperationInput<"upload">): OperationOutput<"upload"> {
+    if (offset >= total) {
+      throw new BridgeError("OP_FAILED", `upload: a chunk at byte ${offset} starts past the file's ${total} bytes.`);
+    }
+
     const now = Date.now();
 
     this.#expire(now);
 
     const held = this.#held(stream, total, now);
-    const bytes = figma.base64Decode(chunk);
+    const bytes = figma.base64Decode(chunk).subarray(0, total - offset);
 
-    held.bytes.set(bytes.subarray(0, Math.max(0, total - offset)), offset);
-    held.received += bytes.length;
+    held.bytes.set(bytes, offset);
+    held.chunks.set(offset, bytes.length);
 
-    return { received: held.received };
+    return { received: receivedOf(held) };
   }
 
   /** A complete upload's bytes, or undefined while it is not all there. */
   bytes(stream: string): Uint8Array | undefined {
     const held = this.#uploads.get(stream);
 
-    return held !== undefined && held.received >= held.bytes.length ? held.bytes : undefined;
+    return held !== undefined && receivedOf(held) >= held.bytes.length ? held.bytes : undefined;
   }
 
   /** Streams an apply used, dropped once it is done. */
@@ -68,7 +73,7 @@ export class UploadStore {
 
     const fresh = {
       bytes: new Uint8Array(total),
-      received: 0,
+      chunks: new Map<number, number>(),
       at: now,
     };
 
@@ -90,4 +95,8 @@ export class UploadStore {
       waiting -= upload.bytes.length;
     }
   }
+}
+
+function receivedOf(upload: Upload): number {
+  return [...upload.chunks.values()].reduce((sum, length) => sum + length, 0);
 }

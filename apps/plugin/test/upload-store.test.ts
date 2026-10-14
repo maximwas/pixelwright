@@ -45,6 +45,53 @@ describe("UploadStore", () => {
     expect(text(uploads.bytes("s"))).toBe("abcdef");
   });
 
+  it("counts a chunk sent again once, so a file is whole only when every part came", () => {
+    const uploads = store();
+
+    uploads.receive({
+      stream: "s",
+      offset: 0,
+      chunk: chunk("abc"),
+      total: 6,
+    });
+
+    expect(
+      uploads.receive({
+        stream: "s",
+        offset: 0,
+        chunk: chunk("abc"),
+        total: 6,
+      }),
+    ).toEqual({ received: 3 });
+    expect(uploads.bytes("s")).toBeUndefined();
+  });
+
+  it("refuses a chunk that starts past the file's end, and counts only the bytes inside it", () => {
+    const uploads = store();
+
+    expect(() =>
+      uploads.receive({
+        stream: "s",
+        offset: 9,
+        chunk: chunk("abc"),
+        total: 6,
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "OP_FAILED",
+        message: "upload: a chunk at byte 9 starts past the file's 6 bytes.",
+      }),
+    );
+    expect(
+      uploads.receive({
+        stream: "s",
+        offset: 4,
+        chunk: chunk("efgh"),
+        total: 6,
+      }),
+    ).toEqual({ received: 2 });
+  });
+
   it("starts a stream again when it comes with another size", () => {
     const uploads = store();
 
