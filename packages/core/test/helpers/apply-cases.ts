@@ -2,8 +2,11 @@
  * The design_apply inputs the apply goldens (test/golden/apply.test.ts) pin, each named for what it shows. READ_CASES
  * walk the reader: every admission branch, every attribute refusal with its hint, unknown attributes, `$` ones, a
  * Text's content, text outside a Text, ref clashes, parse errors, skipped and refused parents, copies and new
- * instances. CHANGE_CASES walk changeOf: every attribute on its natural tag, the change's envelope, the order of
- * errors, and what the layer holds completing what Figma keeps in one property.
+ * instances. They also pin the order of the admission checks, through elements that fail two of them at once (the
+ * earlier check decides; every other pair follows from these or cannot meet), and where an id is taken: only once its
+ * element passes every check, before its children are read. CHANGE_CASES walk changeOf: every attribute on its natural
+ * tag, the change's envelope, the order of errors, and what the layer holds completing what Figma keeps in one
+ * property.
  */
 
 /** A snippet of several lines. */
@@ -82,6 +85,12 @@ export const READ_CASES: Readonly<Record<string, string>> = {
     '<Instance component="Card"><Instance component="Badge"><Text id="I1:1;1:2">Inner</Text></Instance></Instance>',
     '<Frame copyOf="2:1"><Instance id="2:5"><Text id="I2:5;3:1">Kept</Text></Instance></Frame>',
   ),
+  "in a copy, a refused layer's new layers and counterparts take the source's id as their parent":
+    '<Frame copyOf="2:1"><Fram id="2:2"><Frame name="New"/><Frame id="2:3"/></Fram></Frame>',
+  "in a new instance, a refused layer's new layers take the other instance's id as their parent":
+    '<Instance component="Card"><Fram id="I1:1;1:2"><Frame name="New"/></Fram></Instance>',
+  "in a copy, a skipped layer's layers are not created, counterparts too":
+    '<Frame copyOf="2:1"><Frame id="2:2"/><Frame id="2:2"><Frame name="New"/><Frame id="2:3"/></Frame></Frame>',
   "a create of every tag that can be made": lines(
     '<Frame name="F"/>',
     '<Section name="S"/>',
@@ -130,6 +139,32 @@ export const READ_CASES: Readonly<Record<string, string>> = {
     '<Frame id="bad"><Frame name="New"><Frame id="1:5" opacity="0.5"/><Text>x</Text></Frame></Frame>',
   "a Span outside a Text drops what it holds, and takes a place among its siblings":
     '<Frame id="2:1"><Span color="#F00">x<Frame id="2:2"/></Span><Frame id="2:3" name="After"/></Frame>',
+  "a Span under a skipped parent is not created, before it is outside a Text": '<Frame id="bad"><Span>x</Span></Frame>',
+  "a Span under a refused parent is not created, before it is outside a Text": "<Wigdet><Span>x</Span></Wigdet>",
+  "an unknown tag under a skipped parent is not created, before it is unknown": '<Frame id="bad"><Wigdet/></Frame>',
+  "a Span outside a Text is refused before its id is checked": '<Span id="hero">x</Span>',
+  "an unknown tag is refused before its id is checked; its new layers take that id as their parent":
+    '<Wigdet id="hero"><Frame name="In"/></Wigdet>',
+  "an id that is no Figma id is refused before copyOf, in either attribute order": lines(
+    '<Frame copyOf="2:1" id="hero"/>',
+    '<Frame id="hero" copyOf="2:1"/>',
+  ),
+  "copyOf with an id is refused before the id counts as given twice": lines(
+    '<Frame id="2:2"/>',
+    '<Frame copyOf="2:1" id="2:2"/>',
+  ),
+  "an unknown tag leaves its id to a later element": lines('<Fram id="2:1"/>', '<Frame id="2:1" name="Kept"/>'),
+  "a Span outside a Text leaves its id to a later element": lines(
+    '<Span id="2:3">x</Span>',
+    '<Frame id="2:3" name="Kept"/>',
+  ),
+  "copyOf with an id leaves the id to a later element": lines(
+    '<Frame copyOf="2:1" id="2:2"/>',
+    '<Frame id="2:2" name="Kept"/>',
+  ),
+  "in a copy, a layer not created leaves its source's id to a later one":
+    '<Frame copyOf="2:1"><Frame id="hero"><Frame id="2:3"/></Frame><Frame id="2:3" name="Kept"/></Frame>',
+  "an id is taken before its element's children are read": '<Frame id="2:1"><Frame id="2:1" name="Inner"/></Frame>',
   "prop and visibleProp outside a new Component": lines(
     '<Frame name="F"><Text prop="Label" visibleProp="Shown">x</Text></Frame>',
     '<Component id="1:1"><Text id="1:2" prop="Label">x</Text></Component>',

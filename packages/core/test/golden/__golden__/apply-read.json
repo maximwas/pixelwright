@@ -1058,6 +1058,143 @@
     ],
     "errors": []
   },
+  "in a copy, a refused layer's new layers and counterparts take the source's id as their parent": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 36,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:36",
+        "parent": "2:2",
+        "index": 0,
+        "attributes": {
+          "name": "New"
+        }
+      },
+      {
+        "line": 1,
+        "column": 55,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:55",
+        "parent": "2:2",
+        "index": 1,
+        "attributes": {
+          "id": "2:3"
+        },
+        "source": "2:3",
+        "copy": "new:1"
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 21,
+        "id": "2:2",
+        "message": "<Fram> is not a Pixelwright tag.",
+        "hint": "Did you mean <Frame>?"
+      }
+    ]
+  },
+  "in a new instance, a refused layer's new layers take the other instance's id as their parent": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Instance",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "component": "Card"
+        }
+      },
+      {
+        "line": 1,
+        "column": 48,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:48",
+        "parent": "I1:1;1:2",
+        "index": 0,
+        "attributes": {
+          "name": "New"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 28,
+        "id": "I1:1;1:2",
+        "message": "<Fram> is not a Pixelwright tag.",
+        "hint": "Did you mean <Frame>?"
+      }
+    ]
+  },
+  "in a copy, a skipped layer's layers are not created, counterparts too": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 21,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:21",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        },
+        "source": "2:2",
+        "copy": "new:1"
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 38,
+        "id": "2:2",
+        "message": "2:2 is named twice in one copy: each of the source's layers has one element."
+      },
+      {
+        "line": 1,
+        "column": 54,
+        "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
+      },
+      {
+        "line": 1,
+        "column": 73,
+        "id": "2:3",
+        "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
   "a create of every tag that can be made": {
     "elements": [
       {
@@ -1499,6 +1636,276 @@
         "line": 1,
         "column": 17,
         "message": "A <Span> belongs inside a Text: it is a run of the text's characters."
+      }
+    ]
+  },
+  "a Span under a skipped parent is not created, before it is outside a Text": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "bad",
+        "message": "id=\"bad\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "message": "<Span> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
+  "a Span under a refused parent is not created, before it is outside a Text": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "<Wigdet> is not a Pixelwright tag.",
+        "hint": "Tags are Figma layer types: Frame, Text, Rectangle…"
+      },
+      {
+        "line": 1,
+        "column": 9,
+        "message": "<Span> is not created: its parent <Wigdet> at line 1 was not applied."
+      }
+    ]
+  },
+  "an unknown tag under a skipped parent is not created, before it is unknown": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "bad",
+        "message": "id=\"bad\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "message": "<Wigdet> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
+  "a Span outside a Text is refused before its id is checked": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "hero",
+        "message": "A <Span> belongs inside a Text: it is a run of the text's characters."
+      }
+    ]
+  },
+  "an unknown tag is refused before its id is checked; its new layers take that id as their parent": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 19,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": "hero",
+        "index": 0,
+        "attributes": {
+          "name": "In"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "hero",
+        "message": "<Wigdet> is not a Pixelwright tag.",
+        "hint": "Tags are Figma layer types: Frame, Text, Rectangle…"
+      }
+    ]
+  },
+  "an id that is no Figma id is refused before copyOf, in either attribute order": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "hero",
+        "message": "id=\"hero\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "id": "hero",
+        "message": "id=\"hero\" is not a Figma layer id (like 54:243): a new layer has no id."
+      }
+    ]
+  },
+  "copyOf with an id is refused before the id counts as given twice": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 2,
+        "column": 1,
+        "id": "2:2",
+        "message": "A copy is a new layer: an element with copyOf has no id (2:2)."
+      }
+    ]
+  },
+  "an unknown tag leaves its id to a later element": {
+    "elements": [
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:1",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:1",
+        "message": "<Fram> is not a Pixelwright tag.",
+        "hint": "Did you mean <Frame>?"
+      }
+    ]
+  },
+  "a Span outside a Text leaves its id to a later element": {
+    "elements": [
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:3",
+        "ref": "2:3",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:3",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:3",
+        "message": "A <Span> belongs inside a Text: it is a run of the text's characters."
+      }
+    ]
+  },
+  "copyOf with an id leaves the id to a later element": {
+    "elements": [
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:2",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:2",
+        "message": "A copy is a new layer: an element with copyOf has no id (2:2)."
+      }
+    ]
+  },
+  "in a copy, a layer not created leaves its source's id to a later one": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 63,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:63",
+        "parent": "new:1",
+        "index": 1,
+        "attributes": {
+          "id": "2:3",
+          "name": "Kept"
+        },
+        "source": "2:3",
+        "copy": "new:1"
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 21,
+        "id": "hero",
+        "message": "id=\"hero\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 1,
+        "column": 38,
+        "id": "2:3",
+        "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
+  "an id is taken before its element's children are read": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:1"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 17,
+        "id": "2:1",
+        "message": "id 2:1 is given twice: a new layer has no id, so copy an element without its ids."
       }
     ]
   },
