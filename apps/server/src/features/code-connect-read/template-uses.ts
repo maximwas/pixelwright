@@ -2,9 +2,9 @@ import type { SnapshotNode } from "@pixelwright/core";
 import type { ConnectionIndex, MatchRule } from "../../code-connect/connection-index.ts";
 import type { SnapshotInstance, TemplateFile } from "../../types/code-connect.ts";
 
-/** What one connection matched in the read: instances by component with the rule that matched, and the first one. */
+/** What one connection matched in the read: instances by component and the rule that matched, and the first one. */
 export interface TemplateMatches {
-  readonly counts: Map<string, { instances: number; by: MatchRule }>;
+  readonly counts: Map<string, { component: string; instances: number; by: MatchRule }>;
   readonly first: SnapshotNode;
 }
 
@@ -66,11 +66,13 @@ export class TemplateUses {
       counts: new Map(),
       first: layer,
     };
-    const count = entry.counts.get(name);
+    // One component name can match two ways (this file's by its id, a library's by its name): each counted apart.
+    const key = `${name}\n${match.by}`;
 
-    entry.counts.set(name, {
-      instances: (count?.instances ?? 0) + 1,
-      by: count?.by ?? match.by,
+    entry.counts.set(key, {
+      component: name,
+      instances: (entry.counts.get(key)?.instances ?? 0) + 1,
+      by: match.by,
     });
     this.matched.set(match.template, entry);
 

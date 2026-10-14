@@ -13,7 +13,7 @@ export async function exposedOf(owner: ComponentOwner): Promise<Exposed[]> {
   }
 
   const variants = owner.children.filter((child): child is ComponentNode => child.type === "COMPONENT");
-  const combined = new Map<string, { entry: Exposed; variants: string[] }>();
+  const combined = new Map<string, { entry: Exposed; variants: Set<string> }>();
 
   for (const variant of variants) {
     for (const instance of exposedIn(variant)) {
@@ -21,20 +21,21 @@ export async function exposedOf(owner: ComponentOwner): Promise<Exposed[]> {
       const key = `${entry.name}\n${entry.component}`;
       const found = combined.get(key) ?? {
         entry,
-        variants: [],
+        variants: new Set<string>(),
       };
 
-      found.variants.push(variant.name);
+      // A variant exposing two such layers is still one variant.
+      found.variants.add(variant.name);
       combined.set(key, found);
     }
   }
 
   return [...combined.values()].map(({ entry, variants: exposing }) =>
-    exposing.length === variants.length
+    exposing.size === variants.length
       ? entry
       : {
           ...entry,
-          variants: exposing,
+          variants: [...exposing],
         },
   );
 }

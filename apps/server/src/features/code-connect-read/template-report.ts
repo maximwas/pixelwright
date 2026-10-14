@@ -68,7 +68,7 @@ async function reportOf(template: TemplateFile, sources: ReportSources): Promise
       ...(template.component === undefined ? {} : { component: template.component }),
       ...(template.codeSource === undefined ? {} : { source: template.codeSource }),
       ...(missing ? { missing: true as const } : {}),
-      matches: [...(entry?.counts ?? [])].map(([component, { instances, by }]) => ({
+      matches: [...(entry?.counts.values() ?? [])].map(({ component, instances, by }) => ({
         component,
         instances,
         by,

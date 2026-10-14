@@ -267,6 +267,24 @@ describe("the nested instances a component exposes", () => {
     ]);
   });
 
+  it("names the one variant that exposes two layers of one name and component, not every variant", async () => {
+    const variant = find(page, "8:1") as FakeNode;
+    const twin = tree({
+      ...badge("8:9", "Ribbon", true),
+    });
+
+    twin.parent = variant;
+    twin.getMainComponentAsync = async () => find(badgeSet, "4:1") as never;
+    variant.children = [...(variant.children ?? []), twin];
+
+    const { components } = await run({
+      scope: "local",
+      query: "Plan",
+    });
+
+    expect(components[0]?.exposed?.find(({ name }) => name === "Ribbon")?.variants).toEqual(["Tier=A"]);
+  });
+
   it("leaves exposed out where nothing is exposed, and links out where they were not asked for", async () => {
     const answer = await run({
       scope: "used",

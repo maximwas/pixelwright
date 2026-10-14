@@ -203,6 +203,34 @@ describe("code_connect_read's connections", () => {
     expect(unconnected).toEqual([]);
   });
 
+  it("says how each instance matched, apart, when one component name matched two ways", async () => {
+    const root = await project({
+      "PlanCard.figma.ts":
+        "// url=https://www.figma.com/design/KIT/Orbit?node-id=54-202\n// component=Plan Card\nimport figma from 'figma'\nexport default { example: figma.code`<PlanCard />` }\n",
+    });
+    // The Pro card from a library: another id, so only its name matches.
+    const { plugin } = orbit((find) => {
+      Object.assign(find("54:268").instance as object, {
+        componentId: "77:1",
+        remote: true,
+      });
+    });
+    const { templates } = await readCodeConnect(plugin, { node: "54:243" }, root);
+
+    expect(templates[0]?.matches).toEqual([
+      {
+        component: "Plan Card",
+        instances: 2,
+        by: "id",
+      },
+      {
+        component: "Plan Card",
+        instances: 1,
+        by: "name",
+      },
+    ]);
+  });
+
   it("gives each unconnected component's id, key and library, and counts only instances shown as layers", async () => {
     const root = await project({
       "rows.figma.batch.json": JSON.stringify({

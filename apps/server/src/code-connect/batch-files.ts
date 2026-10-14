@@ -5,7 +5,7 @@ import type { SharedTemplate, TemplateFile } from "../types/code-connect.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import type { CodeConnectConfig } from "./figma-config.ts";
 import { linkOf, sourceOf } from "./template-files.ts";
-import { given } from "./top-comments.ts";
+import { given, topComments } from "./top-comments.ts";
 
 /** Why a group's rows are left out, as Figma's CLI would refuse the whole file for it. */
 const REJECTED = "its rows are left out (Figma's CLI rejects the whole file)";
@@ -119,11 +119,7 @@ class BatchRows {
       return null;
     }
 
-    const shared = this.#shared.get(file) ?? {
-      path: relative(root, file).split("\\").join("/"),
-      file,
-      source: refusal.source,
-    };
+    const shared = this.#shared.get(file) ?? sharedTemplate(root, file, refusal.source);
 
     this.#shared.set(file, shared);
 
@@ -132,11 +128,11 @@ class BatchRows {
 
   #addRow(row: Record<string, unknown>, number: number, template: SharedTemplate): void {
     const { path, config, problems } = this.#source;
-    const component = given(row.component);
+    const own = given(row.component);
     const key = given(row.key);
     const url = given(row.url);
-    const name = component ?? `row ${number}`;
-    const label = component === undefined ? name : `row ${name}`;
+    const name = own ?? `row ${number}`;
+    const label = own === undefined ? name : `row ${name}`;
 
     if (url === undefined && key === undefined) {
       problems.push(`${path}: ${label} has neither url nor key; it is left out (Figma's CLI rejects the whole file).`);
@@ -154,7 +150,8 @@ class BatchRows {
       this.#keyOnly.push(name);
     }
 
-    const codeSource = given(row.source);
+    const component = own ?? template.component;
+    const codeSource = given(row.source) ?? template.codeSource;
 
     this.#connections.push({
       path: `${path}#${number}`,
@@ -169,6 +166,21 @@ class BatchRows {
       shared: template,
     });
   }
+}
+
+/** A shared template with its own component and source comments, which rows without theirs take. */
+function sharedTemplate(root: string, file: string, source: string): SharedTemplate {
+  const comments = topComments(source);
+  const component = given(comments.get("component"));
+  const codeSource = given(comments.get("source"));
+
+  return {
+    path: relative(root, file).split("\\").join("/"),
+    file,
+    source,
+    ...(component === undefined ? {} : { component }),
+    ...(codeSource === undefined ? {} : { codeSource }),
+  };
 }
 
 /** The shared template's text, or why Figma's CLI refuses it: missing, misnamed, or a group without rows. */

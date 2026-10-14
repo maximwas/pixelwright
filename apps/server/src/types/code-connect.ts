@@ -34,6 +34,9 @@ export interface SharedTemplate {
   readonly path: string;
   readonly file: string;
   readonly source: string;
+  /** Its own `// component=` and `// source=` comments: a row without its own takes them, as Figma's CLI does. */
+  readonly component?: string;
+  readonly codeSource?: string;
 }
 
 /** What design_read knows of an instance's component. */

@@ -184,6 +184,29 @@ describe("Code Connect batch files", () => {
     expect(templates[0]?.source).toBe(SHARED);
   });
 
+  it("gives a row without component or source the shared template's own, as Figma's CLI does", async () => {
+    const root = await project({
+      "component.figma.batch.ts": `// component=Generic\n// source=src/Generic.tsx\n${SHARED}`,
+      "rows.figma.batch.json": JSON.stringify({
+        templateFile: "./component.figma.batch.ts",
+        components: [
+          { key: "a" },
+          {
+            key: "b",
+            component: "Own",
+            source: "src/Own.tsx",
+          },
+        ],
+      }),
+    });
+    const { templates } = await findTemplates(root);
+
+    expect(templates.map(({ component, codeSource }) => [component, codeSource])).toEqual([
+      ["Generic", "src/Generic.tsx"],
+      ["Own", "src/Own.tsx"],
+    ]);
+  });
+
   it("skips a broken group or row with why, reads the file's other groups, and says Figma's CLI rejects the file", async () => {
     const root = await project({
       "component.figma.batch.ts": SHARED,
