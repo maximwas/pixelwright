@@ -3,10 +3,11 @@ import {
   type ApplyError,
   BridgeError,
   type FigmaProps,
-  type LengthValue,
   type OperationInput,
   type OperationOutput,
-  type PaintSpec,
+  PlannedComponents,
+  type TokenUse,
+  tokenUsesOf,
 } from "@pixelwright/core";
 import type { PluginServices } from "../services/plugin-services.ts";
 import type { KnownFont, Layer, TextLayer, WriteContext } from "../types/apply.ts";
@@ -75,7 +76,7 @@ export async function apply(
   /** Each copy's and new instance's layers, by its ref and the layer an element inside it names. */
   const copies = new Map<string, BaseNode>();
   /** On a dry run, what the XML makes for the instances after it: components by name, a set with its variants. */
-  const planned = new Map<string, Record<string, string>[] | null>();
+  const planned = new PlannedComponents();
   const sets: Pending[] = [];
   /**
    * New sets whose XML has ended (none holds `next`), combined from their variants, laid out and written; then the
@@ -821,7 +822,7 @@ async function write(
 async function check(
   change: ApplyChange,
   nodes: Map<string, Layer | null>,
-  planned: Map<string, Record<string, string>[] | null>,
+  planned: PlannedComponents,
   byRef: ReadonlyMap<string, ApplyChange>,
   context: WriteContext,
   fail: (error: unknown, attribute?: string) => void,
@@ -839,14 +840,17 @@ async function check(
     nodes.set(change.ref, null);
   } else if (change.tag === "Instance") {
     const name = change.props.component ?? "";
-    const made = planned.get(name);
 
     // The component and variant it names, found without making anything: one this XML makes, or the file's. A library
     // one named by key is checked on a real run: finding it imports it, which writes to the file.
-    if (made === undefined && !name.startsWith("key:")) {
+    if (!planned.has(name) && !name.startsWith("key:")) {
       variantFor(await context.components.find(name), change.props.variant ?? {});
-    } else if (made !== undefined && made !== null) {
-      plannedVariant(name, made, change.props.variant ?? {});
+    }
+
+    const missing = planned.missingVariant(name, change.props.variant ?? {});
+
+    if (missing !== null) {
+      throw new WriteError(missing);
     }
 
     nodes.set(change.ref, null);
@@ -867,7 +871,7 @@ async function check(
     );
   }
 
-  plan(change, byRef, planned);
+  planned.record(change, byRef);
 
   for (const props of [change.props, ...(change.text?.runs ?? []).map((run) => run.props)]) {
     const font = props.font === undefined ? undefined : context.fonts.get(fontKey(props.font));
@@ -876,9 +880,9 @@ async function check(
       fail(font, change.sources.font ?? "font");
     }
 
-    for (const [key, resolve] of tokensIn(props)) {
+    for (const { key, token, kind } of tokenUsesOf(props)) {
       try {
-        await resolve(await context.tokens());
+        await TOKEN_CHECKS[kind](await context.tokens(), token);
       } catch (error) {
         fail(error, change.sources[key] ?? key);
       }
@@ -886,120 +890,17 @@ async function check(
   }
 }
 
-/**
- * On a dry run, what a create makes for the instances after it: a set by its name (its variants as they come), a lone
- * component by its; a copied one is there, its variants unknown.
- */
-function plan(
-  change: ApplyChange,
-  byRef: ReadonlyMap<string, ApplyChange>,
-  planned: Map<string, Record<string, string>[] | null>,
-): void {
-  const name = change.props.name;
-  const holder = byRef.get(change.parent ?? "");
-
-  if (change.kind !== "create") {
-    return;
-  }
-
-  if (change.tag === "Component" && holder?.tag === "ComponentSet") {
-    const set = holder.kind === "create" ? planned.get(holder.props.name ?? "") : undefined;
-
-    set?.push({ ...(change.props.variant ?? {}) });
-  } else if ((change.tag === "ComponentSet" || change.tag === "Component") && name !== undefined) {
-    planned.set(name, change.tag === "ComponentSet" && change.copyOf === undefined ? [] : null);
-  }
-}
-
-/** A variant of a set the XML makes: the one with these values, the rest its first variant's (the set's default). */
-function plannedVariant(
-  name: string,
-  variants: readonly Record<string, string>[],
-  wanted: Record<string, string>,
-): void {
-  const target = {
-    ...variants[0],
-    ...wanted,
-  };
-
-  if (!variants.some((values) => Object.entries(target).every(([key, value]) => values[key] === value))) {
-    throw new WriteError(
-      `${name} has no variant ${variantName(wanted)}: it has ${variants.map((values) => variantName(values)).join("; ")}.`,
-    );
-  }
-}
-
-type Resolve = (index: TokenIndex) => Promise<unknown>;
-
-/** Every token a change's properties name, with how it resolves. */
-function tokensIn(props: FigmaProps): [keyof FigmaProps, Resolve][] {
-  const found: [keyof FigmaProps, Resolve][] = [];
-  const length = (key: keyof FigmaProps, value: LengthValue | "HUG" | null | undefined) => {
-    if (typeof value === "object" && value !== null) {
-      found.push([key, (index) => index.find(value.token, "FLOAT")]);
+/** How a dry run checks each kind of token a change names, without importing anything. */
+const TOKEN_CHECKS: Readonly<Record<TokenUse["kind"], (index: TokenIndex, token: string) => Promise<unknown>>> = {
+  FLOAT: (index, token) => index.find(token, "FLOAT"),
+  PAINT: async (index, token) => (await index.style(token, "PAINT")) ?? (await index.find(token, "COLOR")),
+  EFFECT_STYLE: async (index, token) => {
+    if ((await index.style(token, "EFFECT")) === null) {
+      throw new WriteError(`No effect style is named ${token} in this file or the libraries its page uses.`);
     }
-  };
-  const paints = (key: keyof FigmaProps, specs: readonly PaintSpec[] | undefined) => {
-    for (const spec of specs ?? []) {
-      if (spec.kind === "token") {
-        found.push([
-          key,
-          async (index) => (await index.style(spec.token, "PAINT")) ?? (await index.find(spec.token, "COLOR")),
-        ]);
-      }
-    }
-  };
-
-  for (const key of [
-    "itemSpacing",
-    "counterAxisSpacing",
-    "gridColumnGap",
-    "gridRowGap",
-    "width",
-    "height",
-    "minWidth",
-    "maxWidth",
-    "minHeight",
-    "maxHeight",
-  ] as const) {
-    length(key, props[key]);
-  }
-
-  for (const value of props.padding ?? []) {
-    length("padding", value);
-  }
-
-  for (const value of Array.isArray(props.cornerRadius) ? props.cornerRadius : [props.cornerRadius]) {
-    length("cornerRadius", value as LengthValue | undefined);
-  }
-
-  paints("fills", props.fills);
-  paints("strokes", props.strokes?.paints);
-  paints("textFills", props.textFills);
-
-  const effects = props.effects;
-
-  if (effects !== undefined && !Array.isArray(effects)) {
-    const token = (effects as { token: string }).token;
-
-    found.push([
-      "effects",
-      async (index) => {
-        if ((await index.style(token, "EFFECT")) === null) {
-          throw new WriteError(`No effect style is named ${token} in this file or the libraries its page uses.`);
-        }
-      },
-    ]);
-  }
-
-  if (props.textStyle !== undefined && props.textStyle !== "") {
-    const name = props.textStyle;
-
-    found.push(["textStyle", async (index) => await index.textStyle(name)]);
-  }
-
-  return found;
-}
+  },
+  TEXT_STYLE: async (index, name) => await index.textStyle(name),
+};
 
 /** The upload streams a change names: its asset's and its image paints'. */
 function streamsOf(change: ApplyChange): string[] {

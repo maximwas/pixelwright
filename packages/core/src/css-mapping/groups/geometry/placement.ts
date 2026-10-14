@@ -331,3 +331,33 @@ function pixels(value: string | undefined): number | null | undefined {
 
   return typeof length === "object" ? null : length;
 }
+
+/**
+ * Where a layer starts on one axis of its parent, and how long it is there, from its placement: what design_read's
+ * edges said, given the parent's length and the layer's own.
+ */
+export function placementSpan(spec: AxisPlacement, parentSpan: number, size: number): { start: number; size: number } {
+  if (spec.kind === "STRETCH") {
+    return {
+      start: spec.start,
+      size: parentSpan - spec.start - spec.end,
+    };
+  }
+
+  if (spec.kind === "SCALE") {
+    return {
+      start: (parentSpan * spec.start) / 100,
+      size: (parentSpan * spec.size) / 100,
+    };
+  }
+
+  return {
+    start:
+      spec.kind === "MIN"
+        ? spec.offset
+        : spec.kind === "MAX"
+          ? parentSpan - spec.offset - size
+          : parentSpan / 2 + spec.offset,
+    size,
+  };
+}

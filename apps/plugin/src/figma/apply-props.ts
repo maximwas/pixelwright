@@ -1,4 +1,16 @@
-import type { AxisPlacement, EffectSpec, FigmaProps, GridTrack, LengthValue } from "@pixelwright/core";
+import {
+  type AxisPlacement,
+  centredAlong,
+  coveredLength,
+  differs,
+  type EffectSpec,
+  type FigmaProps,
+  type GridTrack,
+  type LengthValue,
+  type Matrix,
+  placementSpan,
+  turnedAbout,
+} from "@pixelwright/core";
 import type { Layer, WriteContext } from "../types/apply.ts";
 import { effectsOf, mergedEffects } from "./effects.ts";
 import { paintsOf, samePaints } from "./paints.ts";
@@ -409,33 +421,13 @@ function cell(node: Layer, { gridRow, gridColumn }: FigmaProps): void {
   }
 }
 
-/**
- * The turn and the mirror, about the layer's centre as CSS turns. Figma's matrix for a turn of r degrees is
- * [[cos r, sin r], [-sin r, cos r]]; a mirror flips the layer's own x first (design_read reads it back the same way).
- */
+/** The turn and the mirror, about the layer's centre as CSS turns (kernel turnedAbout). */
 function transform(node: Layer, { rotation = 0, mirror = false }: FigmaProps): void {
-  const [[a0 = 1, b0 = 0, x0 = 0], [c0 = 0, d0 = 1, y0 = 0]] = node.relativeTransform;
-  const half = [node.width / 2, node.height / 2] as const;
-  const centre = [a0 * half[0] + b0 * half[1] + x0, c0 * half[0] + d0 * half[1] + y0] as const;
-  const turn = (rotation * Math.PI) / 180;
-  const cos = snap(Math.cos(turn));
-  const sin = snap(Math.sin(turn));
-  const [a, b, c, d] = mirror ? [-cos, sin, sin, cos] : [cos, sin, -sin, cos];
-
-  setTransform(node, [
-    [a, b, centre[0] - (a * half[0] + b * half[1])],
-    [c, d, centre[1] - (c * half[0] + d * half[1])],
-  ]);
+  setTransform(node, turnedAbout(node.relativeTransform, node, rotation, mirror));
 }
 
-function snap(value: number): number {
-  return Math.abs(value) < 1e-10 ? 0 : value;
-}
-
-function setTransform(node: Layer, next: Transform): void {
-  const live = node.relativeTransform.flat();
-
-  if (next.flat().some((value, index) => Math.abs(value - (live[index] ?? 0)) > 1e-6)) {
+function setTransform(node: Layer, next: Matrix): void {
+  if (differs(next, node.relativeTransform)) {
     node.relativeTransform = next;
   }
 }
@@ -470,24 +462,8 @@ function place(axis: "horizontal" | "vertical"): Step["write"] {
 
     // design_read places a level or standing line by the box it covers; other layers by their unturned box's centre.
     const line = node.type === "LINE" && (standing(node) || Math.abs(node.relativeTransform[0]?.[1] ?? 0) < 1e-6);
-    const [[a0 = 1, b0 = 0], [c0 = 0, d0 = 1]] = node.relativeTransform;
-    const covered =
-      axis === "horizontal"
-        ? Math.abs(a0) * node.width + Math.abs(b0) * node.height
-        : Math.abs(c0) * node.width + Math.abs(d0) * node.height;
-    let start: number;
-    let size = line ? covered : node[length];
-
-    if (spec.kind === "STRETCH") {
-      start = spec.start;
-      size = span - spec.start - spec.end;
-    } else if (spec.kind === "SCALE") {
-      start = (span * spec.start) / 100;
-      size = (span * spec.size) / 100;
-    } else {
-      start =
-        spec.kind === "MIN" ? spec.offset : spec.kind === "MAX" ? span - spec.offset - size : span / 2 + spec.offset;
-    }
+    const covered = coveredLength(node.relativeTransform, node, axis);
+    const { start, size } = placementSpan(spec, span, line ? covered : node[length]);
 
     if (!line && size !== node[length]) {
       resizeKeeping(
@@ -507,22 +483,9 @@ function place(axis: "horizontal" | "vertical"): Step["write"] {
     }
 
     const origin = group ? (parent[axis === "horizontal" ? "x" : "y"] as number) : 0;
-    const [[a = 1, b = 0, x = 0], [c = 0, d = 1, y = 0]] = node.relativeTransform;
-    const half = [node.width / 2, node.height / 2] as const;
-    const centre = origin + start + (line ? covered / 2 : axis === "horizontal" ? half[0] : half[1]);
+    const centre = origin + start + (line ? covered / 2 : (axis === "horizontal" ? node.width : node.height) / 2);
 
-    setTransform(
-      node,
-      axis === "horizontal"
-        ? [
-            [a, b, centre - (a * half[0] + b * half[1])],
-            [c, d, y],
-          ]
-        : [
-            [a, b, x],
-            [c, d, centre - (c * half[0] + d * half[1])],
-          ],
-    );
+    setTransform(node, centredAlong(node.relativeTransform, node, axis, centre));
   };
 }
 
