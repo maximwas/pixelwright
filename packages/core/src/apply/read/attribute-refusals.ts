@@ -65,7 +65,10 @@ const ATTRIBUTE_REFUSALS: readonly Refusal[] = [
   },
   {
     applies: ({ tag, name }) =>
-      (tag === "Line" || tag === "Group") && BOX_PAINT.has(name) && !(tag === "Line" && name.startsWith("border")),
+      (tag === "Line" || tag === "Group") &&
+      BOX_PAINT.has(name) &&
+      // A line is drawn by its border; it has no corners to round.
+      !(tag === "Line" && name.startsWith("border") && name !== "border-radius"),
     message: ({ tag, name }) => `A <${tag}> has no ${name}.`,
     hint: ({ tag }) =>
       tag === "Line" ? "A line is drawn by its border-top (or border-left when it stands)." : "Paint its layers.",

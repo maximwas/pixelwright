@@ -114,6 +114,9 @@ How to write this file (people and agents alike):
 - The shared log keeps being written when its folder is deleted while servers run, and a full log that cannot be set
   aside is written on instead of being tried again on every line.
 - A Code Connect template's `findInstance`, `findText` and `findLayers` take `null` options as none.
+- `design_apply` refuses a corner radius on a `<Line>`, which has none, before anything is written, and says it has no
+  properties when `props` is given to a layer that is no instance, instead of counting that as a write.
+- `design_apply` places an error for text outside a `<Text>` where its words start, not at the end of the line before.
 - The Orbit example names its code component as Figma's Code Connect defines it (`component=PlanCard`) and passes the
   card's description.
 

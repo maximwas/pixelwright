@@ -26,7 +26,9 @@ export function componentSteps(node: SceneNode, change: ApplyChange, components:
     ...(node.type !== "INSTANCE" && node.type !== "COMPONENT" && (component !== undefined || variant !== undefined)
       ? [step(component === undefined ? "variant" : "component", () => refuseComponent(node))]
       : []),
-    ...(props === undefined ? [] : [step("props", () => setProps(node, props, components))]),
+    ...(props === undefined
+      ? []
+      : [step("props", () => (node.type === "INSTANCE" ? setProps(node, props, components) : refuseProps(node)))]),
   ];
 }
 
@@ -52,6 +54,10 @@ const step = (key: keyof FigmaProps, run: ComponentStep["run"]): ComponentStep =
   key,
   run,
 });
+
+function refuseProps(node: SceneNode): never {
+  throw new WriteError(`A ${node.type.toLowerCase()} has no properties: props set an <Instance>'s.`);
+}
 
 function refuseComponent(node: SceneNode): never {
   throw new WriteError(`A ${node.type.toLowerCase()} has no component: component and variant make an <Instance>.`);
@@ -118,11 +124,11 @@ async function setVariant(node: InstanceNode, wanted: Readonly<Record<string, st
 
 /** An instance's properties by the names design_read writes (without #id): text, "true"/"false", a component's name. */
 async function setProps(
-  node: SceneNode,
+  node: InstanceNode,
   wanted: Readonly<Record<string, string>>,
   index: ComponentIndex,
 ): Promise<void> {
-  const own = node.type === "INSTANCE" ? node.componentProperties : {};
+  const own = node.componentProperties;
   const keys = new Map(Object.keys(own).map((key) => [key.replace(/#[^#]*$/, ""), key]));
   const values: Record<string, string | boolean> = {};
 
@@ -141,9 +147,7 @@ async function setProps(
     values[key] = await propertyValue(own[key]?.type, value, index);
   }
 
-  if (node.type === "INSTANCE") {
-    node.setProperties(values);
-  }
+  node.setProperties(values);
 }
 
 /** A property's value as Figma takes it: a swap names a component by its id, a boolean is true or false. */

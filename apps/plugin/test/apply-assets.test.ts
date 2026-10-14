@@ -153,6 +153,20 @@ afterEach(() => {
   plugin.services.edits.allow(false);
 });
 
+describe("apply refused while Allow edits is off", () => {
+  it("drops the files the call uploaded, as a finished call does", async () => {
+    await send("img-off", 12);
+    plugin.services.edits.allow(false);
+
+    const changes = changesOf('<Image name="Photo" src="a.png" width="200px" height="100px"/>', {
+      "new:1": withAsset({ stream: "img-off" }),
+    });
+
+    await expect(apply(changes, { parent: "3:1" })).rejects.toThrow(/Allow edits/);
+    expect(plugin.services.uploads.bytes("img-off")).toBeUndefined();
+  });
+});
+
 describe("apply: images and icons", () => {
   it("makes an image from its uploaded file and an icon from its SVG, sized as the XML says", async () => {
     await send("img-1", 12);

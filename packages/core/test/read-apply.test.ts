@@ -299,6 +299,33 @@ describe("readApply", () => {
   });
 });
 
+describe("text outside a Text", () => {
+  it("is placed where its words start, not where the run of spaces before them does", () => {
+    const { errors } = readApply('<Frame id="2:1"/>\n  stray words');
+
+    expect(errors.map(({ line, column, message }) => [line, column, message])).toEqual([
+      [2, 3, 'Text "stray words" outside a <Text>: text belongs in a Text element.'],
+    ]);
+  });
+});
+
+describe("a Line's attributes", () => {
+  it("refuses a corner radius, which a line has none of, and keeps its border", () => {
+    const { elements, errors } = readApply('<Line id="1:1" border-top="1px solid #000" border-radius="2px"/>');
+
+    expect(errors).toEqual([
+      expect.objectContaining({
+        attribute: "border-radius",
+        message: "A <Line> has no border-radius.",
+      }),
+    ]);
+    expect(elements[0]?.attributes).toEqual({
+      id: "1:1",
+      "border-top": "1px solid #000",
+    });
+  });
+});
+
 describe("the round trip: design_read's XML sent back changes nothing", () => {
   for (const name of ["orbit-plans", "orbit-pricing", "orbit-customers", "orbit-desktop-top"]) {
     it(name, () => {

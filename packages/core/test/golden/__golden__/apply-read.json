@@ -185,8 +185,8 @@
         "message": "Text \"more \" outside a <Text>: text belongs in a Text element."
       },
       {
-        "line": 1,
-        "column": 77,
+        "line": 2,
+        "column": 1,
         "message": "Text \"stray\" outside a <Text>: text belongs in a Text element."
       }
     ]
@@ -2558,8 +2558,7 @@
           "id": "1:1",
           "border-top": "1px solid #000",
           "border-left": "1px solid #000",
-          "border": "1px solid #000",
-          "border-radius": "2px"
+          "border": "1px solid #000"
         }
       },
       {
@@ -2583,6 +2582,14 @@
         "id": "1:1",
         "attribute": "background",
         "message": "A <Line> has no background.",
+        "hint": "A line is drawn by its border-top (or border-left when it stands)."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "border-radius",
+        "message": "A <Line> has no border-radius.",
         "hint": "A line is drawn by its border-top (or border-left when it stands)."
       },
       {

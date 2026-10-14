@@ -145,6 +145,9 @@ missing part as whole; a piece past the end of a file gets a clear error instead
 <li>The shared log keeps being written when its folder is deleted while servers run, and a full log that cannot be set
 aside is written on instead of being tried again on every line.</li>
 <li>A Code Connect template&#39;s <code>findInstance</code>, <code>findText</code> and <code>findLayers</code> take <code>null</code> options as none.</li>
+<li><code>design_apply</code> refuses a corner radius on a <code>&lt;Line&gt;</code>, which has none, before anything is written, and says it has no
+properties when <code>props</code> is given to a layer that is no instance, instead of counting that as a write.</li>
+<li><code>design_apply</code> places an error for text outside a <code>&lt;Text&gt;</code> where its words start, not at the end of the line before.</li>
 <li>The Orbit example names its code component as Figma&#39;s Code Connect defines it (<code>component=PlanCard</code>) and passes the
 card&#39;s description.</li>
 </ul>

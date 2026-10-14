@@ -66,7 +66,10 @@ class XmlReader {
   }
 
   #pushText(children: XmlChild[], raw: string, start: number): void {
-    const at = this.#locate(start);
+    // A text is where its first character that is not a space is (a line break before it is the markup's); a text of
+    // spaces alone, where it starts.
+    const words = raw.trimStart();
+    const at = this.#locate(words === "" ? start : start + raw.length - words.length);
     const value = decodeEntities(cleanMarkupText(raw), at);
 
     if (value !== "") {

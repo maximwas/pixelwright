@@ -209,6 +209,17 @@ describe("apply: instances", () => {
   });
 });
 
+describe("apply: props on a layer that is no instance", () => {
+  it("refuses them, even empty, and counts nothing as written", async () => {
+    const { changed, errors } = await apply('<Frame id="3:1" props=""/>');
+
+    expect(errors.map(({ attribute, message }) => [attribute, message])).toEqual([
+      ["props", expect.stringMatching(/has no properties: props set an <Instance>'s/)],
+    ]);
+    expect(changed).not.toContain("3:1");
+  });
+});
+
 describe("apply: a dry run of instances", () => {
   it("checks the component and variant an instance names without making it", async () => {
     const result = (await plugin.run("apply", {

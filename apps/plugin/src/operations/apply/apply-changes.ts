@@ -10,17 +10,18 @@ import { topLayer } from "./targets.ts";
 /**
  * The `apply` operation: design_apply's changes written in Figma, each element on its own; one undo step for the call.
  * Refused while Allow edits is off; a dry run checks ids, parents, tokens and fonts and writes nothing. The files the
- * call uploaded are dropped once it is done.
+ * call uploaded are dropped once it is done, refused or not.
  */
 export async function applyChanges(
   { changes, parent, dryRun }: OperationInput<"apply">,
   services: PluginServices,
 ): Promise<OperationOutput<"apply">> {
-  if (!dryRun) {
-    services.edits.require();
-  }
-
   try {
+    // Inside the try: a call refused while Allow edits is off drops its uploads too.
+    if (!dryRun) {
+      services.edits.require();
+    }
+
     const top = parent === undefined ? null : await topLayer(parent);
     const tokens = lazyTokens();
     const fonts = await ApplyFonts.prepare(changes, {
