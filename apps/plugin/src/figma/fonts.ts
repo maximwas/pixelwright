@@ -1,7 +1,12 @@
 import { closest, type FontSpec, weightOf } from "@pixelwright/core";
 import { NEAR_FONT_WEIGHT } from "../constants/plugin.ts";
-import type { KnownFont } from "../types/apply.ts";
 import { WriteError } from "./write-error.ts";
+
+/** A font a text uses now, with the weight Figma reports for it (a variable font's own, like 590). */
+export interface KnownFont {
+  readonly fontName: FontName;
+  readonly weight: number;
+}
 
 /** A font as a key for maps: family, weight and slant. */
 export function fontKey(spec: Pick<FontSpec, "family" | "weight" | "italic">): string {

@@ -5,7 +5,6 @@ import {
   type OperationName,
   type OperationOutput,
 } from "@pixelwright/core";
-import { apply } from "../figma/apply.ts";
 import { components } from "../figma/components.ts";
 import { execute } from "../figma/execute.ts";
 import { exportNode, originalImage } from "../figma/export-node.ts";
@@ -16,6 +15,7 @@ import { saveVersion } from "../figma/save-version.ts";
 import { selectionWait } from "../figma/selection-wait.ts";
 import { entries, snapshot } from "../figma/snapshot.ts";
 import type { PluginServices } from "../services/plugin-services.ts";
+import { applyChanges } from "./apply/apply-changes.ts";
 import { deleteNodes } from "./delete/delete-nodes.ts";
 import { applyTokens } from "./tokens/apply-tokens.ts";
 import { readTokens } from "./tokens/read-tokens.ts";
@@ -46,7 +46,7 @@ const HANDLERS: Handlers = {
   variables: readTokens,
   components,
   entries,
-  apply: (input, services) => apply(input, services),
+  apply: (input, services) => applyChanges(input, services),
   delete: (input, { edits }) => deleteNodes(input, edits),
   inspect,
   execute: (input, { edits }) => execute(input, edits),

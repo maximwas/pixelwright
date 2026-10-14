@@ -81,8 +81,10 @@ export function insideInstance(node: Nested): boolean {
 }
 
 /** Where a child stands among its parent's children; -1 when it is not one of them. */
-export function indexIn(parent: { readonly children?: readonly { id: string }[] }, child: { id: string }): number {
-  return (parent.children ?? []).findIndex((node) => node.id === child.id);
+export function indexIn(parent: BaseNode, child: { readonly id: string }): number {
+  const children: readonly BaseNode[] = "children" in parent ? parent.children : [];
+
+  return children.findIndex((node) => node.id === child.id);
 }
 
 /** A layer's id inside the instance holding it, I<instance>;<path>, as the same in every instance of the component. */
