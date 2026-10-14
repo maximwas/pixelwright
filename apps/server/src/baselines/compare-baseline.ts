@@ -1,11 +1,11 @@
 import { type BaselineDiff, type BaselineFile, baselineDiff, type PluginInfo } from "@pixelwright/core";
-import { baselineTarget } from "../../baselines/baseline-target.ts";
-import { type Capture, captureLayer, HiddenLayerError } from "../../baselines/capture.ts";
-import { locateRoot } from "../../baselines/locate-root.ts";
-import { MAX_DIFF_ENTRIES } from "../../constants/mcp.ts";
-import type { PluginClient } from "../../plugin/plugin-client.ts";
-import type { PluginSession } from "../../plugin/plugin-session.ts";
-import type { BridgeView } from "../../types/mcp.ts";
+import { MAX_DIFF_ENTRIES } from "../constants/mcp.ts";
+import type { PluginClient } from "../plugin/plugin-client.ts";
+import type { PluginSession } from "../plugin/plugin-session.ts";
+import type { BridgeView } from "../types/mcp.ts";
+import { baselineTarget } from "./baseline-target.ts";
+import { type Capture, captureLayer, HiddenLayerError } from "./capture.ts";
+import { locateRoot } from "./locate-root.ts";
 
 /** What comparing a baseline needs: the plugin, and the bridge's connected files. */
 export interface CompareContext {

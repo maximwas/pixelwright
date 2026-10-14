@@ -1,7 +1,7 @@
 import type { BaselineFile } from "@pixelwright/core";
 import type * as z from "zod";
 import type { StoredBaseline } from "../../baselines/baseline-store.ts";
-import type { Comparison } from "./compare-baseline.ts";
+import type { Comparison } from "../../baselines/compare-baseline.ts";
 import type { BaselineEntrySchema } from "./schemas.ts";
 
 type Entry = z.output<typeof BaselineEntrySchema>;

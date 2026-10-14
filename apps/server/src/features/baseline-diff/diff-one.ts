@@ -1,9 +1,9 @@
 import { BridgeError } from "@pixelwright/core";
 import type * as z from "zod";
 import type { BaselineStore } from "../../baselines/baseline-store.ts";
+import { type CompareContext, compareBaseline } from "../../baselines/compare-baseline.ts";
 import type { SeenDesigns } from "../../baselines/seen-designs.ts";
 import { entryOf } from "./baseline-entry.ts";
-import { type CompareContext, compareBaseline } from "./compare-baseline.ts";
 import type { BaselineDiffOutputSchema } from "./schemas.ts";
 import { changeSummary } from "./summary.ts";
 

@@ -1,10 +1,10 @@
 import type * as z from "zod";
 import type { StoredBaseline } from "../../baselines/baseline-store.ts";
+import { compareBaseline } from "../../baselines/compare-baseline.ts";
 import { MAX_BASELINES, OVERVIEW_MS } from "../../baselines/constants.ts";
 import { resolveTarget } from "../../bridge/target.ts";
 import { errorMessage } from "../../utils/error-message.ts";
 import { entryOf, plainEntry } from "./baseline-entry.ts";
-import { compareBaseline } from "./compare-baseline.ts";
 import type { DiffContext } from "./diff-one.ts";
 import type { BaselineDiffOutputSchema, BaselineEntrySchema } from "./schemas.ts";
 import { overviewSummary } from "./summary.ts";
