@@ -1,5 +1,5 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
-import { selection } from "./read-ops.ts";
+import { selection } from "./selection.ts";
 
 /**
  * Waits until the user selects something other than `from` (the selection now when null), or the time runs out; the

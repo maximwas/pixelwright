@@ -64,9 +64,6 @@ export const RECONNECT = {
   maxMs: 10_000,
 } as const;
 
-/** The most nodes one outline lists, far below the bridge's message limit; children past it are counted, not listed. */
-export const OUTLINE_MAX_NODES = 2_000;
-
 /**
  * How long one operation may walk a big file before it answers with what it has (and more: true): under the server's
  * 30 s request timeout, which would lose everything.
@@ -94,9 +91,6 @@ export const UPLOAD_TTL_MS = 5 * 60 * 1000;
 /** Pixelwright's mark, as on the website and its tab icon: a blue tile with a white selection frame. */
 export const MARK_SVG =
   '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d99ff"/><rect x="9" y="9" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.2"/><g fill="#0d99ff" stroke="#fff" stroke-width="1.8"><rect x="6.2" y="6.2" width="5.6" height="5.6"/><rect x="20.2" y="6.2" width="5.6" height="5.6"/><rect x="6.2" y="20.2" width="5.6" height="5.6"/><rect x="20.2" y="20.2" width="5.6" height="5.6"/></g></svg>';
-
-/** The most layers viewport lists as in view. */
-export const VIEWPORT_MAX_LAYERS = 50;
 
 /** The most layers the change journal remembers; older ones are dropped first. */
 export const CHANGES_MAX = 5_000;
