@@ -412,3 +412,31 @@ describe("Dev Mode links, on request", () => {
     expect(answer.components.some((entry) => "links" in entry)).toBe(false);
   });
 });
+
+describe("a page Figma cannot load", () => {
+  it("is left out with Figma's words, and the other pages' components are still listed", async () => {
+    const other = tree({
+      id: "0:2",
+      type: "PAGE",
+      name: "Community",
+      children: [],
+    });
+
+    other.loadAsync = async () => {
+      throw new Error(
+        "Unable to establish connection to Figma after 10 seconds. Please check your internet connection.",
+      );
+    };
+    figma.root = { children: [page, other] };
+
+    const answer = await run({ scope: "local" });
+
+    expect(answer.components.map(({ name }) => name)).toEqual(["Card", "Plan"]);
+    expect(answer.pagesNotRead).toEqual([
+      {
+        name: "Community",
+        error: "Unable to establish connection to Figma after 10 seconds. Please check your internet connection.",
+      },
+    ]);
+  });
+});

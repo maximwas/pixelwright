@@ -32,6 +32,9 @@ export async function readComponents(plugin: PluginClient, input: Input, root: s
   const joined = await Promise.all(answer.components.map((entry) => joinedEntry(entry, index, root)));
   const kept = mapped === undefined ? joined : joined.filter(({ code }) => (code !== null) === mapped);
   const notes = [
+    ...(answer.pagesNotRead ?? []).map(
+      ({ name, error }) => `The page ${name} could not be read (${error}): its components are not listed.`,
+    ),
     ...problems.map((problem) => `Code Connect: ${problem}`),
     ...(answer.linksNote === undefined ? [] : [answer.linksNote]),
     ...(input.links && answer.linksRead === undefined

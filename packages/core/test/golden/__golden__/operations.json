@@ -1529,6 +1529,24 @@
         },
         "linksNote": {
           "type": "string"
+        },
+        "pagesNotRead": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "error"
+            ]
+          }
         }
       },
       "required": [

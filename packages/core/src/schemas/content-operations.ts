@@ -63,6 +63,15 @@ export const CONTENT_OPERATIONS = {
       linksRead: z.literal(true).exactOptional(),
       /** Why some or all links were not read: Figma refused them, gave no answer, or the time ran out. */
       linksNote: z.string().exactOptional(),
+      /** Pages Figma could not load (offline, say), with its words: their components are not listed. */
+      pagesNotRead: z
+        .array(
+          z.object({
+            name: z.string(),
+            error: z.string(),
+          }),
+        )
+        .exactOptional(),
     }),
   },
   variables: {

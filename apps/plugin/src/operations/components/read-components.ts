@@ -1,6 +1,7 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
 import { MAIN_COMPONENT_BATCH, OP_BUDGET_MS } from "../../constants/plugin.ts";
 import { requireNode } from "../../figma/nodes.ts";
+import { errorMessage } from "../../utils/error-message.ts";
 import { type ComponentEntry, type ComponentOwner, componentEntryOf } from "./component-entry.ts";
 import { type LinkSources, withLinks } from "./component-links.ts";
 import { exposedOf } from "./exposed-instances.ts";
@@ -25,12 +26,15 @@ export async function components({
   const wanted = query?.toLowerCase();
   const matching = found.entries().filter((entry) => wanted === undefined || entry.name.toLowerCase().includes(wanted));
   const listed = await found.withExposed(matching.slice(0, limit));
-  const more = found.cut || matching.length > limit;
+  const answer = {
+    more: found.cut || matching.length > limit,
+    ...(found.pagesNotRead.length === 0 ? {} : { pagesNotRead: found.pagesNotRead }),
+  };
 
   if (!links) {
     return {
       components: listed,
-      more,
+      ...answer,
     };
   }
 
@@ -38,7 +42,7 @@ export async function components({
 
   return {
     components: linked.entries,
-    more,
+    ...answer,
     linksRead: true,
     ...(linked.note === undefined ? {} : { linksNote: linked.note }),
   };
@@ -47,6 +51,8 @@ export async function components({
 /** The components found by id, with their nodes and an instance of each used one, and whether the time ran out first. */
 class FoundComponents implements LinkSources {
   cut = false;
+  /** The pages Figma could not load, with its words. */
+  readonly pagesNotRead: { name: string; error: string }[] = [];
   readonly started = Date.now();
   readonly #found = new Map<string, ComponentEntry>();
   readonly #owners = new Map<string, ComponentOwner>();
@@ -91,7 +97,16 @@ class FoundComponents implements LinkSources {
         break;
       }
 
-      await loaded(root);
+      try {
+        await loaded(root);
+      } catch (error) {
+        // A page Figma cannot fetch (offline, say) is left out; the other pages are still read.
+        this.pagesNotRead.push({
+          name: root.name,
+          error: errorMessage(error),
+        });
+        continue;
+      }
 
       for (const node of [root, ...descendants(root, ["COMPONENT_SET", "COMPONENT"])]) {
         if (node.type === "COMPONENT_SET" || (node.type === "COMPONENT" && node.parent?.type !== "COMPONENT_SET")) {
