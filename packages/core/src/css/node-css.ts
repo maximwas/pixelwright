@@ -1,6 +1,8 @@
 import { VECTOR_TYPES } from "../constants/css.ts";
 import { CssDeclarations } from "../css-mapping/css-declarations.ts";
-import { hasLayout, isFlex, readLayout } from "../css-mapping/groups/layout/layout.ts";
+import { readGeometry } from "../css-mapping/groups/geometry/geometry.ts";
+import { readPlacement } from "../css-mapping/groups/geometry/placement.ts";
+import { hasLayout, readLayout } from "../css-mapping/groups/layout/layout.ts";
 import { px } from "../css-mapping/values/format.ts";
 import { paintsCss, UNMAPPED } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
@@ -11,15 +13,6 @@ import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
 import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
-
-const SELF_ALIGN: Readonly<Record<string, string>> = {
-  MIN: "start",
-  CENTER: "center",
-  MAX: "end",
-};
-
-/** A size the constraints decide instead of the layer's own: left out (stretched) or a percent (scaled). */
-type SizeOverride = Partial<Record<"width" | "height", string | null>>;
 
 const RADII = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
 const SIDES = [
@@ -35,6 +28,12 @@ const SIDES = [
  */
 export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context: CssContext): NodeCss {
   const css = new CssDeclarations(node, context);
+  const scope = {
+    node,
+    parent,
+    context,
+    css,
+  };
   let textStyle: string | undefined;
 
   readLayout(node, css);
@@ -51,8 +50,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
       css.readOnly("stroke-linecap", node.strokeCap.toLowerCase());
     }
   } else {
-    sizeCss(node, parent, context, css, positionCss(node, parent, context, css));
-    gridChildCss(node, parent, css);
+    readGeometry(scope);
   }
 
   if (node.opacity !== undefined) {
@@ -93,156 +91,6 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
   return css.build(textStyle);
 }
 
-/** Where a grid's child sits (1-based lines in CSS) and how it aligns in its cell. */
-function gridChildCss(node: SnapshotNode, parent: SnapshotNode | null, css: CssDeclarations): void {
-  if (parent?.layoutMode !== "GRID" || node.layoutPositioning === "ABSOLUTE") {
-    return;
-  }
-
-  const place = (anchor: number | undefined, span: number | undefined) =>
-    anchor === undefined ? undefined : (span ?? 1) > 1 ? `${anchor + 1} / span ${span}` : String(anchor + 1);
-  const row = place(node.gridRowAnchorIndex, node.gridRowSpan);
-  const column = place(node.gridColumnAnchorIndex, node.gridColumnSpan);
-  const justify = SELF_ALIGN[node.gridChildHorizontalAlign ?? "AUTO"];
-  const align = SELF_ALIGN[node.gridChildVerticalAlign ?? "AUTO"];
-
-  for (const [property, value] of [
-    ["grid-row", row],
-    ["grid-column", column],
-    ["justify-self", justify],
-    ["align-self", align],
-  ] as const) {
-    if (value !== undefined) {
-      css.set(property, value);
-    }
-  }
-}
-
-function sizeCss(
-  node: SnapshotNode,
-  parent: SnapshotNode | null,
-  context: CssContext,
-  css: CssDeclarations,
-  override: SizeOverride,
-): void {
-  const isRoot = node === context.root;
-  const flowing = isFlex(parent) && node.layoutPositioning !== "ABSOLUTE";
-  const axes = [
-    ["width", node.layoutSizingHorizontal, node.width, parent?.layoutMode === "HORIZONTAL"],
-    ["height", node.layoutSizingVertical, node.height, parent?.layoutMode === "VERTICAL"],
-  ] as const;
-
-  for (const [property, sizing, value, mainAxis] of axes) {
-    const decided = override[property];
-
-    if (decided !== undefined) {
-      if (decided !== null) {
-        css.set(property, decided);
-      }
-    } else if (isRoot || sizing === "FIXED" || sizing === undefined) {
-      css.setLength(property, property, value);
-    } else if (sizing === "FILL" && flowing) {
-      css.set(mainAxis ? "flex" : "align-self", mainAxis ? "1" : "stretch");
-    }
-  }
-
-  for (const key of ["minWidth", "maxWidth", "minHeight", "maxHeight"] as const) {
-    css.setLength(
-      key.replace(/[A-Z]/, (letter) => `-${letter.toLowerCase()}`),
-      key,
-      node[key],
-    );
-  }
-}
-
-function positionCss(
-  node: SnapshotNode,
-  parent: SnapshotNode | null,
-  context: CssContext,
-  css: CssDeclarations,
-): SizeOverride {
-  const transform = transformCss(node);
-  const override: SizeOverride = {};
-
-  if (transform !== null) {
-    css.set("transform", transform);
-  }
-
-  if (parent === null || node === context.root || !(node.layoutPositioning === "ABSOLUTE" || !hasLayout(parent))) {
-    return override;
-  }
-
-  // A rotated or mirrored layer turns about its centre in CSS: place the unrotated box so the centres meet (Figma's
-  // own x and y are the transformed corner, the far one at -180).
-  const centre =
-    node.bounds !== undefined
-      ? {
-          x: node.bounds.x + node.bounds.width / 2,
-          y: node.bounds.y + node.bounds.height / 2,
-        }
-      : null;
-  const left = (centre === null ? node.x : centre.x - node.width / 2) - parent.x;
-  const top = (centre === null ? node.y : centre.y - node.height / 2) - parent.y;
-  // A group is no frame: its layers keep their place in it whatever their constraints say.
-  const constraints = parent.type === "GROUP" ? undefined : node.constraints;
-
-  css.set("position", "absolute");
-  pin(css, override, constraints?.horizontal ?? "MIN", ["left", "right", "width"], left, node.width, parent.width);
-  pin(css, override, constraints?.vertical ?? "MIN", ["top", "bottom", "height"], top, node.height, parent.height);
-
-  return override;
-}
-
-/**
- * One axis of an absolutely placed layer from its constraint: pinned to the start (MIN) or the end (MAX), held at its
- * offset from the centre, stretched between both edges, or scaled as percents of the parent.
- */
-function pin(
-  css: CssDeclarations,
-  override: SizeOverride,
-  constraint: string,
-  [start, end, size]: readonly ["left" | "top", "right" | "bottom", "width" | "height"],
-  offset: number,
-  length: number,
-  parentLength: number,
-): void {
-  const toEnd = parentLength - offset - length;
-
-  if (constraint === "MAX") {
-    css.set(end, px(toEnd));
-  } else if (constraint === "CENTER") {
-    const fromCentre = Math.round(offset - parentLength / 2);
-
-    css.set(start, fromCentre === 0 ? "50%" : `calc(50% ${fromCentre < 0 ? "-" : "+"} ${Math.abs(fromCentre)}px)`);
-  } else if (constraint === "STRETCH") {
-    css.set(start, px(offset));
-    css.set(end, px(toEnd));
-    override[size] = null;
-  } else if (constraint === "SCALE" && parentLength > 0) {
-    css.set(start, `${decimal((offset / parentLength) * 100)}%`);
-    override[size] = `${decimal((length / parentLength) * 100)}%`;
-  } else {
-    css.set(start, px(offset));
-  }
-}
-
-/**
- * CSS turns clockwise, Figma counter-clockwise. A mirrored layer is its matrix times a horizontal flip: the angle left
- * once the flip is taken out, then scaleX(-1).
- */
-function transformCss(node: SnapshotNode): string | null {
-  if (node.mirrorTransform !== undefined) {
-    const [a = -1, b = 0] = node.mirrorTransform;
-    const angle = Math.round(((Math.atan2(b, -a) * 180) / Math.PI) * 100) / 100;
-
-    return angle === 0 ? "scaleX(-1)" : `rotate(${decimal(-angle)}deg) scaleX(-1)`;
-  }
-
-  const rotation = node.rotation ?? 0;
-
-  return rotation === 0 ? null : `rotate(${decimal(-rotation)}deg)`;
-}
-
 /**
  * A line is a box with one border: across when it lies flat, down its left side when it stands (within half a degree
  * of a right angle); any other angle is a flat line turned about its centre.
@@ -256,7 +104,12 @@ function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: CssDeclar
   const border = `${px(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${typeof color === "string" ? color : "currentColor"}`;
 
   if (!standing && !flat) {
-    positionCss(node, parent, context, css);
+    readPlacement({
+      node,
+      parent,
+      context,
+      css,
+    });
     css.set("width", px(node.width));
     css.set("border-top", border);
 

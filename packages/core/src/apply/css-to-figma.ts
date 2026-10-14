@@ -1,4 +1,5 @@
 import { ELEMENT_RULES, HREF_RULE } from "../css-mapping/groups/element.ts";
+import { GEOMETRY_RULES } from "../css-mapping/groups/geometry/geometry.ts";
 import { LAYOUT_RULES } from "../css-mapping/groups/layout/layout.ts";
 import { keywordRule } from "../css-mapping/keyword-rule.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../css-mapping/property-group.ts";
@@ -11,23 +12,14 @@ import type {
   ApplyChange,
   ApplyElement,
   ApplyError,
-  AxisPlacement,
   EffectSpec,
   FigmaProps,
   LayerNow,
   PaintSpec,
-  SelfAlign,
   TextLength,
   TextRunSpec,
 } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
-
-interface Axis {
-  readonly start: "left" | "top";
-  readonly end: "right" | "bottom";
-  readonly size: "width" | "height";
-  readonly key: "horizontal" | "vertical";
-}
 
 interface Side {
   readonly weight: number;
@@ -39,19 +31,6 @@ const SIDES = ["top", "right", "bottom", "left"] as const;
 const STROKES = ["border", "border-top", "border-right", "border-bottom", "border-left", "outline"];
 const EFFECTS = ["box-shadow", "text-shadow", "filter", "backdrop-filter"];
 const DECORATION = ["text-decoration", "text-underline-offset", "text-decoration-thickness"];
-
-const SELF: Readonly<Record<string, SelfAlign>> = {
-  auto: "AUTO",
-  normal: "AUTO",
-  start: "MIN",
-  "flex-start": "MIN",
-  "self-start": "MIN",
-  center: "CENTER",
-  end: "MAX",
-  "flex-end": "MAX",
-  "self-end": "MAX",
-  stretch: "STRETCH",
-};
 
 const CASES: Readonly<Record<string, Exclude<FigmaProps["textCase"], undefined>>> = {
   none: "ORIGINAL",
@@ -90,72 +69,10 @@ const DECORATION_STYLES: Readonly<Record<string, "SOLID" | "WAVY" | "DOTTED" | "
 
 const BORDER_STYLES = new Set(["solid", "dashed", "dotted", "none", "hidden"]);
 
-const HORIZONTAL: Axis = {
-  start: "left",
-  end: "right",
-  size: "width",
-  key: "horizontal",
-};
-
-const VERTICAL: Axis = {
-  start: "top",
-  end: "bottom",
-  size: "height",
-  key: "vertical",
-};
-
 const RULES: readonly Rule[] = [
   ...ELEMENT_RULES,
   ...LAYOUT_RULES,
-  {
-    attributes: ["position"],
-    write: positionRule,
-  },
-  {
-    attributes: ["position", "left", "right", "width"],
-    write: axisRule(HORIZONTAL),
-  },
-  {
-    attributes: ["position", "top", "bottom", "height"],
-    write: axisRule(VERTICAL),
-  },
-  ...(
-    [
-      ["min-width", "minWidth"],
-      ["max-width", "maxWidth"],
-      ["min-height", "minHeight"],
-      ["max-height", "maxHeight"],
-    ] as const
-  ).map(
-    ([attribute, key]): Rule => ({
-      attributes: [attribute],
-      write: limitRule(attribute, key),
-    }),
-  ),
-  {
-    attributes: ["flex"],
-    write: growRule,
-  },
-  {
-    attributes: ["align-self"],
-    write: keywordRule("align-self", SELF, "alignSelf"),
-  },
-  {
-    attributes: ["justify-self"],
-    write: keywordRule("justify-self", SELF, "justifySelf"),
-  },
-  {
-    attributes: ["grid-row"],
-    write: spanRule("grid-row", "gridRow"),
-  },
-  {
-    attributes: ["grid-column"],
-    write: spanRule("grid-column", "gridColumn"),
-  },
-  {
-    attributes: ["transform"],
-    write: transformRule,
-  },
+  ...GEOMETRY_RULES,
   {
     attributes: ["opacity"],
     write: opacityRule,
@@ -325,248 +242,6 @@ function output(
       });
     },
   };
-}
-
-function positionRule({ own }: WriteInput, out: WriteOutput): void {
-  const value = own("position");
-
-  if (value === "absolute") {
-    out.set("absolute", true, "position");
-  } else if (value === "relative" || value === "static") {
-    out.set("absolute", false, "position");
-  } else {
-    out.fail("position", `position="${value}" is not one Figma has: absolute, or relative to flow in the parent.`);
-  }
-}
-
-/**
- * One axis of a layer: its edges and its size. The element's edges replace the layer's as a pair, so a new right edge
- * unpins the left one; a new size alone keeps the edge the layer is pinned to.
- */
-function axisRule({ start, end, size, key }: Axis): Rule["write"] {
-  return ({ own, merged, changed }, out) => {
-    const ownEdges = own(start) !== undefined || own(end) !== undefined;
-    const edge = (name: string) => {
-      const value = ownEdges ? own(name) : merged(name);
-
-      return value === "auto" ? undefined : value;
-    };
-    const from = edge(start);
-    const to = edge(end);
-    let placed: AxisPlacement | null = null;
-
-    if (from !== undefined || to !== undefined) {
-      if (merged("position") === "absolute") {
-        const result = placementOf(start, end, from, to, merged(size));
-
-        if ("error" in result) {
-          out.fail(result.attribute, result.error);
-        } else {
-          placed = result.placement;
-          out.set(key, placed, from === undefined ? end : start);
-        }
-      } else {
-        for (const name of [start, end].filter((name) => changed(name) && own(name) !== "auto")) {
-          out.fail(
-            name,
-            `${name} places a layer with position="absolute"; this one flows in its parent.`,
-            `Add position="absolute", or leave ${name} out.`,
-          );
-        }
-      }
-    }
-
-    if (!changed(size) || placed?.kind === "SCALE") {
-      // A scaled layer's size is its placement's percent.
-      return;
-    }
-
-    const value = own(size) ?? "";
-
-    if (placed?.kind === "STRETCH") {
-      out.fail(
-        size,
-        `${size} comes from ${start} and ${end} when both are set: set one of them to auto to size the layer.`,
-      );
-    } else if (value === "auto" || value === "fit-content" || value === "max-content") {
-      out.set(size, "HUG", size);
-    } else {
-      const length = lengthOf(value);
-
-      if (length === null) {
-        out.fail(
-          size,
-          `${size}="${value}" is not a length in px, a token or auto.`,
-          percentOf(value) === null
-            ? undefined
-            : `A percent scales with the parent: it needs ${start} in percents too.`,
-        );
-      } else {
-        out.set(size, length, size);
-      }
-    }
-  };
-}
-
-function placementOf(
-  start: string,
-  end: string,
-  from: string | undefined,
-  to: string | undefined,
-  size: string | undefined,
-): { placement: AxisPlacement } | { attribute: string; error: string } {
-  if (from !== undefined) {
-    const centre = from === "50%" ? ["", "+", "0"] : /^calc\(\s*50%\s*([+-])\s*(\d*\.?\d+)px\s*\)$/.exec(from);
-
-    if (centre !== null) {
-      return {
-        placement: {
-          kind: "CENTER",
-          offset: (centre[1] === "-" ? -1 : 1) * Number(centre[2]) || 0,
-        },
-      };
-    }
-
-    const percent = percentOf(from);
-
-    if (percent !== null) {
-      const sizePercent = size === undefined ? null : percentOf(size);
-
-      return sizePercent === null
-        ? {
-            attribute: start,
-            error: `${start} in percents scales the layer with its parent: give its size in percents too.`,
-          }
-        : {
-            placement: {
-              kind: "SCALE",
-              start: percent,
-              size: sizePercent,
-            },
-          };
-    }
-  }
-
-  const pixels = (value: string | undefined) => {
-    const length = value === undefined ? undefined : lengthOf(value);
-
-    return typeof length === "object" ? null : length;
-  };
-  const first = pixels(from);
-  const last = pixels(to);
-
-  if (first === null) {
-    return {
-      attribute: start,
-      error: `${start}="${from}" is not a length in px, a percent, calc(50% ± Npx) or auto.`,
-    };
-  }
-
-  if (last === null) {
-    return {
-      attribute: end,
-      error: `${end}="${to}" is not a length in px or auto.`,
-    };
-  }
-
-  if (first !== undefined && last !== undefined) {
-    return {
-      placement: {
-        kind: "STRETCH",
-        start: first,
-        end: last,
-      },
-    };
-  }
-
-  return {
-    placement:
-      first === undefined
-        ? {
-            kind: "MAX",
-            offset: last ?? 0,
-          }
-        : {
-            kind: "MIN",
-            offset: first,
-          },
-  };
-}
-
-function limitRule(attribute: string, key: "minWidth" | "maxWidth" | "minHeight" | "maxHeight"): Rule["write"] {
-  return ({ own }, out) => {
-    const value = own(attribute) ?? "";
-    const length = lengthOf(value);
-
-    if (value === "none" || value === "auto" || length === 0) {
-      out.set(key, null, attribute);
-    } else if (length === null) {
-      out.fail(attribute, `${attribute}="${value}" is not a length in px, a token or none.`);
-    } else {
-      out.set(key, length, attribute);
-    }
-  };
-}
-
-function growRule({ own }: WriteInput, out: WriteOutput): void {
-  const value = (own("flex") ?? "").trim().replace(/\s+/g, " ");
-  const grow = value === "none" || value === "initial" ? 0 : value === "auto" ? 1 : numberOf(value.split(" ")[0] ?? "");
-
-  if (grow === 0 || grow === 1) {
-    out.set("grow", grow === 1, "flex");
-  } else {
-    out.fail(
-      "flex",
-      `flex="${value}": a layer fills its parent's direction or not, flex="1" or flex="none" (Figma has no grow weights).`,
-    );
-  }
-}
-
-function spanRule(attribute: string, key: "gridRow" | "gridColumn"): Rule["write"] {
-  return ({ own }, out) => {
-    const value = (own(attribute) ?? "").trim();
-    const match = /^(\d+)(?:\s*\/\s*(?:span\s+(\d+)|(\d+)))?$/.exec(value);
-    const first = Number(match?.[1]);
-    const span = match?.[2] !== undefined ? Number(match[2]) : match?.[3] !== undefined ? Number(match[3]) - first : 1;
-
-    if (match === null || first < 1 || span < 1) {
-      out.fail(attribute, `${attribute}="${value}" is not "N", "N / span M" or "N / M", lines counted from 1.`);
-    } else {
-      out.set(
-        key,
-        {
-          anchor: first - 1,
-          span,
-        },
-        attribute,
-      );
-    }
-  };
-}
-
-/** The whole transform: a turn without scaleX(-1) also takes a mirror away. */
-function transformRule({ own }: WriteInput, out: WriteOutput): void {
-  const value = own("transform") ?? "";
-  let rotation = 0;
-  let mirror = false;
-
-  for (const part of value === "none" ? [] : splitTop(value, " ")) {
-    const turn = /^rotate\(\s*(-?\d*\.?\d+)deg\s*\)$/.exec(part);
-
-    if (turn !== null) {
-      // CSS turns clockwise, Figma counter-clockwise.
-      rotation = roundTo(-Number(turn[1]), 4);
-    } else if (part === "scaleX(-1)") {
-      mirror = true;
-    } else {
-      out.fail("transform", `transform part ${part} is not rotate(Ndeg) or scaleX(-1), which is all Figma keeps.`);
-
-      return;
-    }
-  }
-
-  out.set("rotation", rotation, "transform");
-  out.set("mirror", mirror, "transform");
 }
 
 function opacityRule({ own }: WriteInput, out: WriteOutput): void {
