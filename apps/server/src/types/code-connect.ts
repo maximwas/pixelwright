@@ -1,21 +1,30 @@
 import type { Context } from "node:vm";
 import type { SnapshotNode } from "@pixelwright/core";
 
-/** A Code Connect template file of the project, with what the comments at its top say. */
+/**
+ * A connection of the project's Code Connect files: a template file with what the comments at its top say, or one row
+ * of a batch file, run through the batch's shared template.
+ */
 export interface TemplateFile {
-  /** Relative to the project root, with forward slashes. */
+  /** Relative to the project root, with forward slashes; a batch row's is `<batch file>#<n>`. */
   readonly path: string;
-  /** The file's absolute path, which its relative imports start from. */
+  /** The template's absolute path, which its relative imports start from. */
   readonly file?: string;
   readonly source: string;
   readonly url?: string;
   /** The url's node-id as the Plugin API writes ids: 1-2 → 1:2. */
   readonly nodeId?: string;
   readonly fileKey?: string;
-  /** The `component` comment: the Figma component's or component set's name. */
+  /** The component's or component set's key (Pixelwright's `// key=`, a row's "key"): it matches by key only. */
+  readonly key?: string;
+  /** The `component` comment or a row's: the code component's name, as Figma's Code Connect defines it. */
   readonly component?: string;
-  /** The `source` comment: the code component's file. */
+  /** The `source` comment or a row's: the code component's file or package. */
   readonly codeSource?: string;
+  /** A batch row as written, frozen: what its template reads as figma.batch. */
+  readonly batch?: Readonly<Record<string, unknown>>;
+  /** The batch file a row comes from, relative to the project root. */
+  readonly batchFile?: string;
 }
 
 /** What design_read knows of an instance's component. */
