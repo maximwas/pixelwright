@@ -1,11 +1,20 @@
-import { chmodSync, closeSync, existsSync, mkdtempSync, openSync, readFileSync, writeFileSync, writeSync } from "node:fs";
+import {
+  chmodSync,
+  closeSync,
+  existsSync,
+  mkdtempSync,
+  openSync,
+  readFileSync,
+  writeFileSync,
+  writeSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readConfig } from "../src/config/config.ts";
 import { followLog } from "../src/logging/follow-log.ts";
-import { createLogger } from "../src/logging/logger.ts";
 import { prepareLogFile } from "../src/logging/log-file.ts";
+import { createLogger } from "../src/logging/logger.ts";
 import { prettyLine } from "../src/logging/pretty-line.ts";
 
 const record = (fields: Record<string, unknown>) =>

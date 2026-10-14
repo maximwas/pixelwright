@@ -275,9 +275,10 @@ export function paintOf(value: string): PaintSpec | null {
     };
   }
 
-  const mixed = /^color-mix\(\s*in\s+(?:srgb|display-p3)\s*,\s*var\(\s*(--[^)\s]+)\s*\)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/.exec(
-    value.trim(),
-  );
+  const mixed =
+    /^color-mix\(\s*in\s+(?:srgb|display-p3)\s*,\s*var\(\s*(--[^)\s]+)\s*\)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/.exec(
+      value.trim(),
+    );
 
   if (mixed?.[1] !== undefined) {
     return {

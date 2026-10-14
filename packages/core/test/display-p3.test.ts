@@ -6,15 +6,15 @@ import {
   contrastCheck,
   designXml,
   dtcgTrees,
-  type RawTokens,
   paintOf,
+  type RawTokens,
   type Snapshot,
   type SnapshotNode,
-  toDocumentColor,
   TokensApplyInputSchema,
-  tokensPlan,
+  toDocumentColor,
   tokenModel,
   tokensCss,
+  tokensPlan,
 } from "../src/index.ts";
 import { fixture } from "./helpers/fixtures.ts";
 

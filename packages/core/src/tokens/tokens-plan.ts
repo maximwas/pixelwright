@@ -239,7 +239,9 @@ export function variableValueOf(css: string, type: WritableVariableType | null):
 
 /** A colour, or a colour mixed with transparent at a percentage (how tokens_read writes a colour with opacity). */
 function colorValue(value: string): VariableValueSpec | null {
-  const mixed = /^color-mix\(\s*in\s+(?:srgb|display-p3)\s*,\s*(.+?)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/s.exec(value);
+  const mixed = /^color-mix\(\s*in\s+(?:srgb|display-p3)\s*,\s*(.+?)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/s.exec(
+    value,
+  );
   const color = colorOf(mixed?.[1] ?? value);
 
   if (color === null) {
