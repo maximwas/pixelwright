@@ -105,8 +105,8 @@ export default [
     files: REWRITTEN,
     rules: limits("error"),
   },
-  // Dependency rules: core's kernel depends on nothing; server features never import mcp/ or each other; plugin
-  // operations never import each other.
+  // Dependency rules: core's kernel depends on nothing; design/ never imports the features that compare against it;
+  // server features never import mcp/ or each other; plugin operations never import each other.
   {
     files: ["packages/core/src/kernel/*.ts"],
     rules: {
@@ -122,6 +122,23 @@ export default [
       "no-restricted-imports": [
         "error",
         { patterns: [{ regex: "^\\.\\./\\.\\./", message: "The kernel depends on nothing." }] },
+      ],
+    },
+  },
+  {
+    files: ["packages/core/src/design/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^(\\.\\./)+(apply|diff|inspect|checks|tokens)/",
+              message:
+                "design/ is the read that apply, diff, inspect, checks and tokens stand on: it never imports them.",
+            },
+          ],
+        },
       ],
     },
   },
