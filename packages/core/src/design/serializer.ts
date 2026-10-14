@@ -1,7 +1,7 @@
-import type { DesignSpan } from "../types/design.ts";
 import { escapeAttribute } from "../xml/escape.ts";
 import { inlineText } from "../xml/parse/entities.ts";
 import type { DesignAttribute, DesignContent, DesignElement } from "./tree.ts";
+import type { DesignSpan } from "./types.ts";
 
 const INDENT = "  ";
 

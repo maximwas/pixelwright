@@ -1,5 +1,5 @@
-import { OVERRIDE_NOISE, OVERRIDE_ORDER, OVERRIDE_WORDS, TEXT_OVERRIDE_WORDS } from "../constants/overrides.ts";
 import type { SnapshotNode } from "../types/snapshot.ts";
+import { OVERRIDE_NOISE, OVERRIDE_ORDER, OVERRIDE_WORDS, TEXT_OVERRIDE_WORDS } from "./vocabulary.ts";
 
 /** What an instance changed on this layer outside its component's properties, in CSS words, each once, in one order. */
 export function overrideWords(node: SnapshotNode): string[] {

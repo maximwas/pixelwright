@@ -1,4 +1,4 @@
-import type { DesignRead } from "../types/design.ts";
+import type { DesignRead } from "./types.ts";
 
 /** An attribute as design_read writes it: its name and its value, unescaped. */
 export type DesignAttribute = readonly [name: string, value: string];

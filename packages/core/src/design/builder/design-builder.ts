@@ -1,20 +1,23 @@
-import { DEV_STATUS_WORDS, INVISIBLE_TYPES } from "../../constants/css.ts";
 import { interactionAttributes } from "../../css/interactions.ts";
 import { motionSummary } from "../../css/motion.ts";
 import { nodeCss } from "../../css-mapping/read-node.ts";
 import { colorSpaceOf } from "../../kernel/color/color-space.ts";
 import type { CssContext } from "../../types/css.ts";
-import type { DesignXmlOptions } from "../../types/design.ts";
 import type { Snapshot, SnapshotNode } from "../../types/snapshot.ts";
-import { type Classified, classify, visibleChildren } from "../../xml/classify.ts";
-import { overrideWords } from "../../xml/overrides.ts";
 import { tagFor } from "../../xml/tags.ts";
+import { assetCss } from "../assets/asset-css.ts";
+import { AssetPlanner } from "../assets/asset-planner.ts";
+import { type Classified, classify, visibleChildren } from "../assets/classify.ts";
+import { overrideWords } from "../overrides.ts";
 import type { DesignAttribute, DesignElement, DesignTree } from "../tree.ts";
-import { assetCss } from "./asset-css.ts";
-import { AssetPlanner } from "./asset-planner.ts";
+import type { DesignXmlOptions } from "../types.ts";
+import { DEV_STATUS_WORDS } from "../vocabulary.ts";
 import { componentAttributes, cutCount, noteOf, pinsOf, readOnlyOf, urlOf } from "./layer-attributes.ts";
 import { ReadCatalogue } from "./read-catalogue.ts";
 import { textContent } from "./text-content.ts";
+
+/** Layer types design_read leaves out: they draw nothing. */
+const INVISIBLE_TYPES: ReadonlySet<string> = new Set(["SLICE"]);
 
 /** An attribute, or nothing when the layer has none of it. */
 type MaybeAttribute = readonly [string, string | undefined];

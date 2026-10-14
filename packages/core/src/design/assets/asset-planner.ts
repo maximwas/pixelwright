@@ -1,7 +1,7 @@
-import type { DesignXmlOptions, PlannedAsset } from "../../types/design.ts";
 import type { SnapshotNode, SnapshotPaint } from "../../types/snapshot.ts";
 import { slug } from "../../utils/slug.ts";
-import type { Classified } from "../../xml/classify.ts";
+import type { DesignXmlOptions, PlannedAsset } from "../types.ts";
+import type { Classified } from "./classify.ts";
 
 /**
  * The files a read plans: a render per asset layer and the original image behind content, one file per image however

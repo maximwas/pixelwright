@@ -1,5 +1,5 @@
-import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../../constants/annotations.ts";
 import type { SnapshotNode, TextSegment } from "../../types/snapshot.ts";
+import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../vocabulary.ts";
 
 /** A metadata attribute, or nothing when the layer has none of it. */
 type MaybeAttribute = readonly [string, string | undefined];
