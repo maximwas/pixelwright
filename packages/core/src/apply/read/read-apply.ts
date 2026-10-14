@@ -33,6 +33,14 @@ export function readApply(xml: string): { elements: ApplyElement[]; errors: Appl
 
   reader.read(roots);
 
+  if (reader.elements.length === 0 && reader.errors.length === 0) {
+    reader.errors.push({
+      line: 1,
+      column: 1,
+      message: "The XML holds no element: there is nothing to write.",
+    });
+  }
+
   return {
     elements: reader.elements,
     errors: reader.errors,

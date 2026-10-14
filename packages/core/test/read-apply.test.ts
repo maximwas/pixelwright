@@ -85,7 +85,7 @@ describe("readApply", () => {
     const { elements, errors } = readApply(
       [
         '<Frame id="2:1" gapp="24px"/>',
-        '<Widget id="2:2"/>',
+        '<Widgit id="2:2"/>',
         '<Frame id="2:3" gap="8px"><Span>x</Span></Frame>',
         '<Frame id="2:4" width="10px"/>',
       ].join("\n"),
@@ -102,7 +102,8 @@ describe("readApply", () => {
       expect.objectContaining({
         line: 2,
         id: "2:2",
-        message: expect.stringMatching(/Widget/),
+        message: expect.stringMatching(/Widgit/),
+        hint: expect.stringMatching(/Widget/),
       }),
       expect.objectContaining({
         line: 3,
@@ -233,6 +234,58 @@ describe("readApply", () => {
     expect(empty).not.toHaveProperty("content");
     expect(closed).not.toHaveProperty("content");
     expect(written?.content).toHaveLength(1);
+  });
+
+  it("never parents a new layer under the source's layer when an element above it inside a copy is refused", () => {
+    const { elements, errors } = readApply(
+      '<Frame copyOf="1:1" name="Card copy"><Fram id="1:5"><Frame name="New"/></Fram></Frame>',
+    );
+
+    expect(elements.map(({ tag, parent }) => `${tag} under ${parent}`)).toEqual(["Frame under null"]);
+    expect(errors.map(({ message }) => message)).toContainEqual(expect.stringMatching(/<Frame> is not created/));
+  });
+
+  it("reads a layer named by id below a new element that is not created", () => {
+    const { elements } = readApply('<Fram name="Wrapper"><Frame name="Inner"><Text id="1:2">Hi</Text></Frame></Fram>');
+
+    expect(elements.map(({ id }) => id)).toEqual(["1:2"]);
+  });
+
+  it("reads the layers inside a Span that stands outside a Text", () => {
+    const { elements } = readApply('<Frame id="1:1"><Span><Text id="1:2">Hi</Text></Span></Frame>');
+
+    expect(elements.map(({ id }) => id)).toEqual(["1:1", "1:2"]);
+  });
+
+  it("says what a Span inside a Span sets is left out", () => {
+    const { errors } = readApply(
+      '<Text id="1:2">a<Span color="#F00">b<Span font="700 16px/normal \'Inter\'">c</Span></Span></Text>',
+    );
+
+    expect(errors).toEqual([
+      expect.objectContaining({
+        attribute: "font",
+        message: expect.stringMatching(/inside a <Span>/),
+      }),
+    ]);
+  });
+
+  it("says when the XML holds no element", () => {
+    expect(readApply("").errors).toEqual([
+      {
+        line: 1,
+        column: 1,
+        message: expect.stringMatching(/no element/),
+      },
+    ]);
+    expect(readApply("<!-- nothing -->").errors).toHaveLength(1);
+  });
+
+  it("changes a layer of any Figma type design_read writes, by its id", () => {
+    const { elements, errors } = readApply('<Widget id="1:2" name="Poll"/>\n<Sticky id="1:3" name="Note"/>');
+
+    expect(errors).toEqual([]);
+    expect(elements.map(({ tag }) => tag)).toEqual(["Widget", "Sticky"]);
   });
 
   it("returns a parse error with its line and column instead of throwing", () => {

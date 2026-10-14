@@ -35,6 +35,8 @@ export function piecesOf(node: XmlElementNode, errors: ApplyError[]): ContentPie
 }
 
 function spanOf(span: XmlElementNode, errors: ApplyError[]): ContentPiece {
+  nestedProblems(span.children, errors);
+
   for (const name of Object.keys(span.props)) {
     if (!SPAN_ATTRIBUTES.has(name)) {
       errors.push({
@@ -58,4 +60,33 @@ function spanOf(span: XmlElementNode, errors: ApplyError[]): ContentPiece {
 /** The characters of a span's content, a nested span's included. */
 function charactersOf(children: readonly XmlChild[]): string {
   return children.map((child) => (child.kind === "text" ? child.value : charactersOf(child.children))).join("");
+}
+
+/** What a span's content holds besides characters: a nested span's attributes and other elements are left out. */
+function nestedProblems(children: readonly XmlChild[], errors: ApplyError[]): void {
+  for (const child of children) {
+    if (child.kind === "text") {
+      continue;
+    }
+
+    if (child.type !== "Span") {
+      errors.push({
+        line: child.line,
+        column: child.column,
+        message: `<${child.type}> inside a <Span>: a run holds only characters, so it is left out.`,
+      });
+      continue;
+    }
+
+    for (const name of Object.keys(child.props)) {
+      errors.push({
+        line: child.line,
+        column: child.column,
+        attribute: name,
+        message: `${name} is set on a <Span> inside a <Span>: runs do not nest, so it is left out.`,
+      });
+    }
+
+    nestedProblems(child.children, errors);
+  }
 }

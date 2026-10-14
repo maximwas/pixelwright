@@ -102,11 +102,17 @@ export class ApplyReader {
       ...(admission.hint === undefined ? {} : { hint: admission.hint }),
     });
 
-    if (admission.action === "skip") {
-      this.read(node.children, skippedScope(scope, node));
-    } else if (admission.action === "refuse") {
-      // The layer it changes: the one its id names, none inside a copy (where the id names the source's layer).
-      this.read(node.children, refusedScope(scope, node, scope.copy === null ? (node.props.id ?? null) : null));
+    // A text's or a span's own characters are its content, not layers: only the elements in it are read.
+    const children =
+      node.type === "Text" || node.type === "Span"
+        ? node.children.filter(({ kind }) => kind === "element")
+        : node.children;
+
+    // Inside a copy a refused element's id names the source's layer: a new layer under it would land in the original.
+    if (admission.action === "skip" || scope.copy !== null) {
+      this.read(children, skippedScope(scope, node));
+    } else {
+      this.read(children, refusedScope(scope, node, node.props.id ?? null));
     }
   }
 

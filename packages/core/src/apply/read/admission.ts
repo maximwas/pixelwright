@@ -4,11 +4,11 @@ import { CREATABLE_TAGS, KNOWN_TAGS, LAYER_ID, UNDRAWN_TAGS } from "../vocabular
 import type { Scope } from "./scope.ts";
 
 /**
- * What happens to an element that is not read: dropped with its children, skipped (its children with ids still
- * read, new ones not created), or refused (its children read as if it were made, so new ones fail where it does).
+ * What happens to an element that is not read: skipped (its children with ids still read, new ones not created), or
+ * refused (its children read as if it were made, so new ones fail where it does).
  */
 export interface Admission {
-  readonly action: "drop" | "skip" | "refuse";
+  readonly action: "skip" | "refuse";
   readonly message: string;
   readonly hint?: string;
 }
@@ -46,10 +46,11 @@ export function admissionOf(candidate: Candidate): Admission | null {
   return null;
 }
 
-const notCreated: Check = ({ node, scope, id }) =>
-  scope.skippedParent !== null && id === null && scope.skippedParent.props.id === undefined
+/** A new layer under a new parent that was not made; a layer the element names (a copy's counterpart too) still reads. */
+const notCreated: Check = ({ node, scope, named }) =>
+  scope.skippedParent !== null && named === null && scope.skippedParent.props.id === undefined
     ? {
-        action: "drop",
+        action: "skip",
         message: `<${node.type}> is not created: its parent <${scope.skippedParent.type}> at line ${scope.skippedParent.line} was not applied.`,
       }
     : null;
@@ -57,7 +58,7 @@ const notCreated: Check = ({ node, scope, id }) =>
 const spanOutsideText: Check = ({ node }) =>
   node.type === "Span"
     ? {
-        action: "drop",
+        action: "skip",
         message: "A <Span> belongs inside a Text: it is a run of the text's characters.",
       }
     : null;

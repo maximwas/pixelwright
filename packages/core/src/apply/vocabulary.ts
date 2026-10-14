@@ -25,7 +25,10 @@ export const UNDRAWN_TAGS: ReadonlySet<string> = new Set([
   "TransformGroup",
 ]);
 
-/** Every tag design_read writes: the ones above and the rarer Figma types, changed by id. */
+/**
+ * Every tag design_read writes: the ones above and every other Figma layer type (FigJam's, Slides', widgets), changed
+ * by id, never created.
+ */
 export const KNOWN_TAGS: ReadonlySet<string> = new Set([
   ...CREATABLE_TAGS,
   ...UNDRAWN_TAGS,
@@ -36,6 +39,18 @@ export const KNOWN_TAGS: ReadonlySet<string> = new Set([
   "Embed",
   "LinkUnfurl",
   "Slice",
+  "Widget",
+  "Sticky",
+  "Connector",
+  "ShapeWithText",
+  "CodeBlock",
+  "Stamp",
+  "Highlight",
+  "WashiTape",
+  "Slide",
+  "SlideRow",
+  "SlideGrid",
+  "InteractiveSlideElement",
 ]);
 
 /** Metadata attributes: what the layer is, not how it looks. */

@@ -44,7 +44,8 @@ export const READ_CASES: Readonly<Record<string, string>> = {
     '  <Text name="New">Fails in the plugin</Text>',
     "</Fram>",
   ),
-  "an unknown tag near none": '<Widget id="2:2"/>',
+  "an unknown tag near none": '<Xyzzy id="2:2"/>',
+  "a Figma type design_read writes, changed by id": '<Widget id="2:2"/>',
   "an unknown new tag: its layers with ids stand alone, its new ones are not created":
     '<Wigdet><Frame id="2:5"/><Frame name="Lost"/></Wigdet>',
   "an id that is no Figma id: skipped, its layers with ids stand alone, its new ones are not created":
@@ -87,11 +88,11 @@ export const READ_CASES: Readonly<Record<string, string>> = {
     '<Instance component="Card"><Instance component="Badge"><Text id="I1:1;1:2">Inner</Text></Instance></Instance>',
     '<Frame copyOf="2:1"><Instance id="2:5"><Text id="I2:5;3:1">Kept</Text></Instance></Frame>',
   ),
-  "in a copy, a refused layer's new layers and counterparts take the source's id as their parent":
+  "in a copy, a refused layer's new layers are not created, and its counterparts stand alone":
     '<Frame copyOf="2:1"><Fram id="2:2"><Frame name="New"/><Frame id="2:3"/></Fram></Frame>',
-  "in a new instance, a refused layer's new layers take the other instance's id as their parent":
+  "in a new instance, a refused layer's new layers are not created":
     '<Instance component="Card"><Fram id="I1:1;1:2"><Frame name="New"/></Fram></Instance>',
-  "in a copy, a skipped layer's layers are not created, counterparts too":
+  "in a copy, a skipped layer's new layers are not created, and its counterparts stand alone":
     '<Frame copyOf="2:1"><Frame id="2:2"/><Frame id="2:2"><Frame name="New"/><Frame id="2:3"/></Frame></Frame>',
   "a create of every tag that can be made": lines(
     '<Frame name="F"/>',
@@ -137,9 +138,9 @@ export const READ_CASES: Readonly<Record<string, string>> = {
     '<Media id="1:5" name="M"/>',
   ),
   "a copy of a tag that cannot be drawn": '<Group copyOf="1:1" name="G2"/>',
-  "a new layer under a skipped new one: not created, nor anything in it":
+  "a new layer under a skipped new one is not created, and the layers it names stand alone":
     '<Frame id="bad"><Frame name="New"><Frame id="1:5" opacity="0.5"/><Text>x</Text></Frame></Frame>',
-  "a Span outside a Text drops what it holds, and takes a place among its siblings":
+  "a Span outside a Text: the layers in it are read, and it takes a place among its siblings":
     '<Frame id="2:1"><Span color="#F00">x<Frame id="2:2"/></Span><Frame id="2:3" name="After"/></Frame>',
   "a Span under a skipped parent is not created, before it is outside a Text": '<Frame id="bad"><Span>x</Span></Frame>',
   "a Span under a refused parent is not created, before it is outside a Text": "<Wigdet><Span>x</Span></Wigdet>",
@@ -164,7 +165,7 @@ export const READ_CASES: Readonly<Record<string, string>> = {
     '<Frame copyOf="2:1" id="2:2"/>',
     '<Frame id="2:2" name="Kept"/>',
   ),
-  "in a copy, a layer not created leaves its source's id to a later one":
+  "in a copy, a counterpart under a skipped layer takes its source's id before a later one":
     '<Frame copyOf="2:1"><Frame id="hero"><Frame id="2:3"/></Frame><Frame id="2:3" name="Kept"/></Frame>',
   "an id is taken before its element's children are read": '<Frame id="2:1"><Frame id="2:1" name="Inner"/></Frame>',
   "prop and visibleProp outside a new Component": lines(
@@ -218,7 +219,7 @@ export const READ_CASES: Readonly<Record<string, string>> = {
   "a Span keeps run attributes only":
     '<Text id="1:1">a<Span color="#F00" background="#000" opacity="0.5" text-align="center">b</Span></Text>',
   "another element inside a Text is dropped": '<Text id="1:1">a<Frame id="1:2">b</Frame>c<Text>d</Text></Text>',
-  "a nested Span's characters join its Span, its attributes unread":
+  "a nested Span's characters join its Span, and what it sets is an error":
     '<Text id="1:1">a<Span color="#F00">b<Span font="700 16px/normal \'Inter\'" bogus="1">c</Span>d</Span>e</Text>',
   "no content leaves the text as it is; spaces alone on one line are content": lines(
     '<Text id="1:2" color="#F00"/>',

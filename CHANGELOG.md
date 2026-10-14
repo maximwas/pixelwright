@@ -47,8 +47,13 @@ How to write this file (people and agents alike):
   should use a token.
 - `design_apply` and `tokens_apply` save their version, check and write in the file the call started on, even when
   another Figma file comes to the front while they run.
-- `design_apply` and `tokens_apply` save their version, check and write in the file the call started on, even when
-  another Figma file comes to the front while they run.
+- `design_apply` no longer writes a new layer into the original when a mistyped tag inside a copy or a new instance
+  holds it: the new layer is refused, and the copy's own layers named there are still written.
+- `design_apply` reads the layers named by id inside an element it does not create, or inside a `<Span>` outside a
+  text, instead of dropping them, and says so when a `<Span>` inside a `<Span>` sets something (runs do not nest).
+- `design_apply` says when the XML holds no element, instead of answering as if it had written something.
+- `design_apply` changes layers of every Figma type `design_read` writes by their id (widgets, stickies, connectors,
+  slides…), instead of refusing their tags.
 
 ## 0.2.0 — 2026-10-14
 

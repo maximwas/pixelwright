@@ -332,10 +332,27 @@
         "line": 1,
         "column": 1,
         "id": "2:2",
-        "message": "<Widget> is not a Pixelwright tag.",
+        "message": "<Xyzzy> is not a Pixelwright tag.",
         "hint": "Tags are Figma layer types: Frame, Text, Rectangle…"
       }
     ]
+  },
+  "a Figma type design_read writes, changed by id": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Widget",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        }
+      }
+    ],
+    "errors": []
   },
   "an unknown new tag: its layers with ids stand alone, its new ones are not created": {
     "elements": [
@@ -357,7 +374,7 @@
         "line": 1,
         "column": 1,
         "message": "<Wigdet> is not a Pixelwright tag.",
-        "hint": "Tags are Figma layer types: Frame, Text, Rectangle…"
+        "hint": "Did you mean <Widget>?"
       },
       {
         "line": 1,
@@ -1058,7 +1075,7 @@
     ],
     "errors": []
   },
-  "in a copy, a refused layer's new layers and counterparts take the source's id as their parent": {
+  "in a copy, a refused layer's new layers are not created, and its counterparts stand alone": {
     "elements": [
       {
         "line": 1,
@@ -1074,23 +1091,11 @@
       },
       {
         "line": 1,
-        "column": 36,
-        "tag": "Frame",
-        "id": null,
-        "ref": "new:1:36",
-        "parent": "2:2",
-        "index": 0,
-        "attributes": {
-          "name": "New"
-        }
-      },
-      {
-        "line": 1,
         "column": 55,
         "tag": "Frame",
         "id": null,
         "ref": "new:1:55",
-        "parent": "2:2",
+        "parent": null,
         "index": 1,
         "attributes": {
           "id": "2:3"
@@ -1106,10 +1111,15 @@
         "id": "2:2",
         "message": "<Fram> is not a Pixelwright tag.",
         "hint": "Did you mean <Frame>?"
+      },
+      {
+        "line": 1,
+        "column": 36,
+        "message": "<Frame> is not created: its parent <Fram> at line 1 was not applied."
       }
     ]
   },
-  "in a new instance, a refused layer's new layers take the other instance's id as their parent": {
+  "in a new instance, a refused layer's new layers are not created": {
     "elements": [
       {
         "line": 1,
@@ -1122,18 +1132,6 @@
         "attributes": {
           "component": "Card"
         }
-      },
-      {
-        "line": 1,
-        "column": 48,
-        "tag": "Frame",
-        "id": null,
-        "ref": "new:1:48",
-        "parent": "I1:1;1:2",
-        "index": 0,
-        "attributes": {
-          "name": "New"
-        }
       }
     ],
     "errors": [
@@ -1143,10 +1141,15 @@
         "id": "I1:1;1:2",
         "message": "<Fram> is not a Pixelwright tag.",
         "hint": "Did you mean <Frame>?"
+      },
+      {
+        "line": 1,
+        "column": 48,
+        "message": "<Frame> is not created: its parent <Fram> at line 1 was not applied."
       }
     ]
   },
-  "in a copy, a skipped layer's layers are not created, counterparts too": {
+  "in a copy, a skipped layer's new layers are not created, and its counterparts stand alone": {
     "elements": [
       {
         "line": 1,
@@ -1173,6 +1176,20 @@
         },
         "source": "2:2",
         "copy": "new:1"
+      },
+      {
+        "line": 1,
+        "column": 73,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:73",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:3"
+        },
+        "source": "2:3",
+        "copy": "new:1"
       }
     ],
     "errors": [
@@ -1185,12 +1202,6 @@
       {
         "line": 1,
         "column": 54,
-        "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
-      },
-      {
-        "line": 1,
-        "column": 73,
-        "id": "2:3",
         "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
       }
     ]
@@ -1587,8 +1598,22 @@
     ],
     "errors": []
   },
-  "a new layer under a skipped new one: not created, nor anything in it": {
-    "elements": [],
+  "a new layer under a skipped new one is not created, and the layers it names stand alone": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 35,
+        "tag": "Frame",
+        "id": "1:5",
+        "ref": "1:5",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:5",
+          "opacity": "0.5"
+        }
+      }
+    ],
     "errors": [
       {
         "line": 1,
@@ -1600,10 +1625,15 @@
         "line": 1,
         "column": 17,
         "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
+      },
+      {
+        "line": 1,
+        "column": 66,
+        "message": "<Text> is not created: its parent <Frame> at line 1 was not applied."
       }
     ]
   },
-  "a Span outside a Text drops what it holds, and takes a place among its siblings": {
+  "a Span outside a Text: the layers in it are read, and it takes a place among its siblings": {
     "elements": [
       {
         "line": 1,
@@ -1615,6 +1645,18 @@
         "index": 0,
         "attributes": {
           "id": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 37,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
         }
       },
       {
@@ -1662,7 +1704,7 @@
         "line": 1,
         "column": 1,
         "message": "<Wigdet> is not a Pixelwright tag.",
-        "hint": "Tags are Figma layer types: Frame, Text, Rectangle…"
+        "hint": "Did you mean <Widget>?"
       },
       {
         "line": 1,
@@ -1719,7 +1761,7 @@
         "column": 1,
         "id": "hero",
         "message": "<Wigdet> is not a Pixelwright tag.",
-        "hint": "Tags are Figma layer types: Frame, Text, Rectangle…"
+        "hint": "Did you mean <Widget>?"
       }
     ]
   },
@@ -1840,7 +1882,7 @@
       }
     ]
   },
-  "in a copy, a layer not created leaves its source's id to a later one": {
+  "in a copy, a counterpart under a skipped layer takes its source's id before a later one": {
     "elements": [
       {
         "line": 1,
@@ -1856,15 +1898,14 @@
       },
       {
         "line": 1,
-        "column": 63,
+        "column": 38,
         "tag": "Frame",
         "id": null,
-        "ref": "new:1:63",
-        "parent": "new:1",
-        "index": 1,
+        "ref": "new:1:38",
+        "parent": null,
+        "index": 0,
         "attributes": {
-          "id": "2:3",
-          "name": "Kept"
+          "id": "2:3"
         },
         "source": "2:3",
         "copy": "new:1"
@@ -1879,9 +1920,9 @@
       },
       {
         "line": 1,
-        "column": 38,
+        "column": 63,
         "id": "2:3",
-        "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
+        "message": "2:3 is named twice in one copy: each of the source's layers has one element."
       }
     ]
   },
@@ -2788,7 +2829,7 @@
       }
     ]
   },
-  "a nested Span's characters join its Span, its attributes unread": {
+  "a nested Span's characters join its Span, and what it sets is an error": {
     "elements": [
       {
         "line": 1,
@@ -2826,7 +2867,20 @@
         ]
       }
     ],
-    "errors": []
+    "errors": [
+      {
+        "line": 1,
+        "column": 37,
+        "attribute": "font",
+        "message": "font is set on a <Span> inside a <Span>: runs do not nest, so it is left out."
+      },
+      {
+        "line": 1,
+        "column": 37,
+        "attribute": "bogus",
+        "message": "bogus is set on a <Span> inside a <Span>: runs do not nest, so it is left out."
+      }
+    ]
   },
   "no content leaves the text as it is; spaces alone on one line are content": {
     "elements": [
@@ -3046,10 +3100,22 @@
   },
   "an empty XML": {
     "elements": [],
-    "errors": []
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "The XML holds no element: there is nothing to write."
+      }
+    ]
   },
   "whitespace only": {
     "elements": [],
-    "errors": []
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "The XML holds no element: there is nothing to write."
+      }
+    ]
   }
 }
