@@ -1,83 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { designMotion, motionSummary, type Snapshot, type SnapshotNode } from "../src/index.ts";
-
-type Motion = NonNullable<SnapshotNode["motion"]>;
-type Track = Motion["tracks"][number];
-
-const EASE_OUT = [0, 0, 0.58, 1];
-const LINEAR = [0, 0, 1, 1];
-
-const at = (t: number, value: unknown, easing = "LINEAR", bezier: number[] | undefined = LINEAR) => ({
-  t,
-  value:
-    typeof value === "number"
-      ? {
-          type: "FLOAT",
-          value,
-        }
-      : (value as { type: string; value: unknown }),
-  easing: {
-    type: easing,
-    ...(bezier === undefined ? {} : { bezier }),
-  },
-});
-
-const track = (field: string, keyframes: Track["keyframes"], extra: Partial<Track> = {}): Track => ({
-  field,
-  operation: "SET",
-  base: {
-    type: "FLOAT",
-    value: 0,
-  },
-  keyframes,
-  ...extra,
-});
-
-const animated = (
-  id: string,
-  name: string,
-  tracks: Track[],
-  { timeline = 1.2 as number | null, type = "FRAME" } = {},
-): SnapshotNode => ({
-  id,
-  name,
-  type,
-  visible: true,
-  x: 0,
-  y: 0,
-  width: 100,
-  height: 100,
-  childCount: 0,
-  motion: {
-    ...(timeline === null ? {} : { timeline }),
-    styles: [],
-    tracks,
-  },
-});
-
-const read = (...children: SnapshotNode[]): Snapshot => ({
-  root: {
-    id: "1:1",
-    name: "Hero",
-    type: "FRAME",
-    visible: true,
-    x: 0,
-    y: 0,
-    width: 400,
-    height: 300,
-    childCount: children.length,
-    children,
-  },
-  styles: {},
-  variables: {},
-});
-
-const fade = () => track("OPACITY", [at(0, 0, "EASE_OUT", EASE_OUT), at(0.6, 1, "EASE_OUT", EASE_OUT)]);
+import { designMotion, motionSummary, type SnapshotNode } from "../src/index.ts";
+import { animated, at, EASE_OUT, fade, type Motion, screenOf, track } from "./helpers/motion.ts";
 
 describe("Figma Motion in a read", () => {
   it("writes a layer's keyframes at their times over the timeline, each easing on the keyframe it leaves", () => {
     const card = animated("1:2", "Card", [fade()]);
-    const view = designMotion(read(card));
+    const view = designMotion(screenOf(card));
 
     expect(motionSummary(card)).toBe("opacity 0→1; 0–0.6s ease-out");
     expect(view?.timeline).toBe("1.2s");
@@ -124,7 +52,7 @@ describe("Figma Motion in a read", () => {
         style: "motion.preset_name.opacity",
       }),
     ]);
-    const css = designMotion(read(title))?.css ?? "";
+    const css = designMotion(screenOf(title))?.css ?? "";
 
     expect(motionSummary(title)).toBe(
       "Position, Opacity: translate-x -200→0px 0.2–0.8s ease-out, opacity 0→0.8 0–0.6s linear",
@@ -177,7 +105,7 @@ describe("Figma Motion in a read", () => {
       track("strokes.0", [at(0, white), at(0.6, blue)]),
     ]);
     const label = animated("1:3", "Label", [track("fills.0", [at(0, white), at(0.6, blue)])], { type: "TEXT" });
-    const css = designMotion(read(badge, label))?.css ?? "";
+    const css = designMotion(screenOf(badge, label))?.css ?? "";
 
     expect(css).toContain("  0% { rotate: 0deg; scale: 1; background-color: #FFF; border-color: #FFF; }");
     expect(css).toContain("  50% { rotate: -90deg; scale: 1.2; background-color: #3B2FD9; border-color: #3B2FD9; }");
@@ -200,7 +128,7 @@ describe("Figma Motion in a read", () => {
         },
       }),
     ]);
-    const css = designMotion(read(badge))?.css ?? "";
+    const css = designMotion(screenOf(badge))?.css ?? "";
 
     expect(motionSummary(badge)).toBe("rotate -180→0deg, translate-y 0→-24px; 0–0.5s linear");
     expect(css).toContain("  0% { rotate: -180deg; translate: 0 0; }");
@@ -232,14 +160,14 @@ describe("Figma Motion in a read", () => {
     };
 
     expect(motionSummary(card)).toBe("Bounce in, Text stagger: opacity 0→1; 0–0.6s ease-out after its style's start");
-    expect(designMotion(read(card))?.css).toContain(
+    expect(designMotion(screenOf(card))?.css).toContain(
       "/* opacity: Figma gives these keyframes from their animation style's start, not the timeline's: delay them by when the style starts */",
     );
   });
 
   it("says in a comment what CSS cannot animate this way, never writing it as a property", () => {
     const line = animated("1:2", "Line", [track("PATH_TRIM_END", [at(0, 0), at(0.6, 1)]), fade()]);
-    const css = designMotion(read(line))?.css ?? "";
+    const css = designMotion(screenOf(line))?.css ?? "";
 
     expect(css).toContain("/* path-trim-end 0→1: draw the stroke with stroke-dasharray and stroke-dashoffset */");
     expect(css).not.toMatch(/path-trim-end:/);
@@ -247,11 +175,12 @@ describe("Figma Motion in a read", () => {
   });
 
   it("times keyframes by the longest track when the timeline is missing or zero, never writing NaN", () => {
-    const short = designMotion(read(animated("1:2", "Dot", [track("OPACITY", [at(0, 0), at(0.5, 1)])], {}))) ?? null;
+    const short =
+      designMotion(screenOf(animated("1:2", "Dot", [track("OPACITY", [at(0, 0), at(0.5, 1)])], {}))) ?? null;
     const untimed = designMotion(
-      read(animated("1:2", "Dot", [track("OPACITY", [at(0, 0), at(0.5, 1)])], { timeline: null })),
+      screenOf(animated("1:2", "Dot", [track("OPACITY", [at(0, 0), at(0.5, 1)])], { timeline: null })),
     );
-    const still = designMotion(read(animated("1:2", "Dot", [track("OPACITY", [at(0, 1)])], { timeline: 0 })));
+    const still = designMotion(screenOf(animated("1:2", "Dot", [track("OPACITY", [at(0, 1)])], { timeline: 0 })));
 
     expect(short?.css).toContain("100% { opacity: 1; }");
     expect(untimed?.css).toContain("  100% { opacity: 1; }");
@@ -263,7 +192,7 @@ describe("Figma Motion in a read", () => {
 
   it("names each class after its layer, suffixing a second layer of the same name, and never with a digit first", () => {
     const view = designMotion(
-      read(animated("1:2", "Card", [fade()]), animated("1:3", "Card", [fade()]), animated("1:4", "3D", [fade()])),
+      screenOf(animated("1:2", "Card", [fade()]), animated("1:3", "Card", [fade()]), animated("1:4", "3D", [fade()])),
     );
 
     expect(view?.layers.map((layer) => layer.class)).toEqual(["card", "card-2", "layer-3d"]);
@@ -272,7 +201,7 @@ describe("Figma Motion in a read", () => {
   it("writes a hold as steps and a custom curve as cubic-bezier", () => {
     const css =
       designMotion(
-        read(
+        screenOf(
           animated("1:2", "Dot", [
             track("OPACITY", [
               at(0, 0, "HOLD", undefined),
@@ -301,6 +230,6 @@ describe("Figma Motion in a read", () => {
     };
 
     expect(motionSummary(plain)).toBeUndefined();
-    expect(designMotion(read(plain))).toBeNull();
+    expect(designMotion(screenOf(plain))).toBeNull();
   });
 });
