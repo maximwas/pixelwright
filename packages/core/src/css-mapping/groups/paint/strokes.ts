@@ -1,9 +1,9 @@
 import { sameValue } from "../../../kernel/equality.ts";
 import { MIXED } from "../../../schemas/snapshot.ts";
-import type { PaintSpec, StrokeSpec } from "../../../types/apply.ts";
 import type { CssContext } from "../../../types/css.ts";
 import type { SnapshotNode } from "../../../types/snapshot.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";
+import type { PaintSpec, StrokeSpec } from "../../figma-props.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../../property-group.ts";
 import { lengthOf, splitTop } from "../../values/css-values.ts";
 import { px } from "../../values/format.ts";

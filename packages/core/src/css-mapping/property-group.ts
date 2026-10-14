@@ -1,7 +1,7 @@
-import type { FigmaProps } from "../types/apply.ts";
 import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode } from "../types/snapshot.ts";
 import type { CssDeclarations } from "./css-declarations.ts";
+import type { FigmaProps } from "./figma-props.ts";
 
 /** Reads one attribute of the element being written. */
 export type AttributeReader = (name: string) => string | undefined;

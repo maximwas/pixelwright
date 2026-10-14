@@ -1,6 +1,6 @@
-import type { FigmaProps } from "../../../types/apply.ts";
 import type { SnapshotNode } from "../../../types/snapshot.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";
+import type { FigmaProps } from "../../figma-props.ts";
 import { keywordRule } from "../../keyword-rule.ts";
 import type { Rule, WriteInput, WriteOutput } from "../../property-group.ts";
 import { boxShorthand, px } from "../../values/format.ts";

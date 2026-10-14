@@ -1,6 +1,6 @@
 import { decimal } from "../../../kernel/numbers.ts";
-import type { AxisPlacement } from "../../../types/apply.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";
+import type { AxisPlacement } from "../../figma-props.ts";
 import type { ReadScope, Rule, WriteInput, WriteOutput } from "../../property-group.ts";
 import { lengthOf, percentOf } from "../../values/css-values.ts";
 import { px } from "../../values/format.ts";

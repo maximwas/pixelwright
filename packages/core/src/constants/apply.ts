@@ -60,9 +60,6 @@ export const META_ATTRIBUTES: ReadonlySet<string> = new Set([
 /** A Figma layer id: 54:243, or an instance's layer I54:268;54:211. */
 export const LAYER_ID = /^I?\d+:\d+(?:;\d+:\d+)*$/;
 
-/** Tags whose layers can hold a layout of their own. */
-export const LAYOUT_TAGS: ReadonlySet<string> = new Set(["Frame", "Component", "ComponentSet", "Instance", "Slot"]);
-
 /** Shapes and assets: they clip nothing and hold no layout. */
 export const SHAPE_TAGS: ReadonlySet<string> = new Set([
   "Rectangle",

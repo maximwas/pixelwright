@@ -1,8 +1,8 @@
-import { LAYOUT_TAGS } from "../../../constants/apply.ts";
 import type { SnapshotNode } from "../../../types/snapshot.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";
 import type { Rule, WriteInput, WriteOutput } from "../../property-group.ts";
 import { boxOf, lengthOf, splitTop } from "../../values/css-values.ts";
+import { LAYOUT_TAGS } from "../../vocabulary.ts";
 import { FLEX_ALIGNMENT_RULES, flexLayout, readFlex } from "./flex.ts";
 import { gridLayout, readGrid } from "./grid.ts";
 

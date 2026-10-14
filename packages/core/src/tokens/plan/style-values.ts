@@ -1,5 +1,5 @@
+import type { EffectSpec, FigmaProps, FontSpec, PaintSpec } from "../../css-mapping/figma-props.ts";
 import { attributeProps } from "../../css-mapping/write-element.ts";
-import type { EffectSpec, FigmaProps, FontSpec, PaintSpec } from "../../types/apply.ts";
 
 /** The kinds of style tokens_apply writes. */
 export type StyleKind = "paint" | "text" | "effect";

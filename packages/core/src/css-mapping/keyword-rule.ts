@@ -1,4 +1,4 @@
-import type { FigmaProps } from "../types/apply.ts";
+import type { FigmaProps } from "./figma-props.ts";
 import type { Rule } from "./property-group.ts";
 
 /** A rule that writes a CSS keyword as the Figma value its table gives it; any other value is the attribute's error. */

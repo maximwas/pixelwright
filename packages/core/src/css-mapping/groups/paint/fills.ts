@@ -1,7 +1,7 @@
-import type { PaintSpec } from "../../../types/apply.ts";
 import type { CssContext } from "../../../types/css.ts";
 import type { SnapshotNode } from "../../../types/snapshot.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";
+import type { PaintSpec } from "../../figma-props.ts";
 import type { Rule, WriteOutput } from "../../property-group.ts";
 import { imageOf, splitTop } from "../../values/css-values.ts";
 import { paintOf, paintsCss, styleIdOf, UNMAPPED } from "../../values/paints.ts";

@@ -1,7 +1,7 @@
 import { decimal, roundTo } from "../../kernel/numbers.ts";
-import type { FontSpec, TextLength } from "../../types/apply.ts";
 import type { TextSegment } from "../../types/snapshot.ts";
 import { weightOf } from "../../utils/font-weight.ts";
+import type { FontSpec, TextLength } from "../figma-props.ts";
 import { lengthOf, numberOf, percentOf, splitTop } from "./css-values.ts";
 import { px } from "./format.ts";
 

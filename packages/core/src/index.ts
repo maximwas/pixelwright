@@ -11,6 +11,7 @@ export * from "./constants/execute.ts";
 export * from "./constants/inferred.ts";
 export * from "./constants/support.ts";
 export * from "./css-mapping/css-declarations.ts";
+export type * from "./css-mapping/figma-props.ts";
 export * from "./css-mapping/groups/effects.ts";
 export * from "./css-mapping/groups/text/block.ts";
 export * from "./css-mapping/groups/text/run.ts";

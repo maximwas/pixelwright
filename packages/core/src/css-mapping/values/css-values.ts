@@ -17,7 +17,7 @@ import {
   isTokenURL,
   tokenize,
 } from "@csstools/css-tokenizer";
-import type { LengthValue, TokenRef } from "../../types/apply.ts";
+import type { LengthValue, TokenRef } from "../figma-props.ts";
 
 /** A value as CSS parses it: its component values (functions with their arguments, strings, words, spaces). */
 function componentsOf(value: string): ComponentValue[] {

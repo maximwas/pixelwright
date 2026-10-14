@@ -1,6 +1,6 @@
 import { Color } from "../../../kernel/color/color.ts";
 import { roundTo } from "../../../kernel/numbers.ts";
-import type { FigmaProps, TextLength } from "../../../types/apply.ts";
+import type { FigmaProps, TextLength } from "../../figma-props.ts";
 import { keywordRule } from "../../keyword-rule.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../../property-group.ts";
 import { lengthOf, splitTop } from "../../values/css-values.ts";

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import type { EffectSpec, FontSpec, PaintSpec } from "../../types/apply.ts";
+import type { EffectSpec, FontSpec, PaintSpec } from "../../css-mapping/figma-props.ts";
 import type { CollectionPlan, TokenError, TokenItem, TokensPlan, VariableValueSpec } from "./types.ts";
 
 const NameSchema = z.string().min(1).max(512);

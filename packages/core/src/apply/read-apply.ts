@@ -1,17 +1,10 @@
 import { BridgeError } from "../bridge/protocol.ts";
-import {
-  CREATABLE_TAGS,
-  KNOWN_TAGS,
-  LATER_TAGS,
-  LAYER_ID,
-  LAYOUT_TAGS,
-  META_ATTRIBUTES,
-  SHAPE_TAGS,
-} from "../constants/apply.ts";
+import { CREATABLE_TAGS, KNOWN_TAGS, LATER_TAGS, LAYER_ID, META_ATTRIBUTES, SHAPE_TAGS } from "../constants/apply.ts";
 import {
   BOX_PAINT,
   CSS_ATTRIBUTES,
   LAYOUT_ATTRIBUTES,
+  LAYOUT_TAGS,
   SPAN_ATTRIBUTES,
   TEXT_ATTRIBUTES,
 } from "../css-mapping/vocabulary.ts";

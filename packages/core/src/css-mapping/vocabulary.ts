@@ -120,3 +120,6 @@ export const BOX_PAINT: ReadonlySet<string> = new Set([
   "border-radius",
   "box-shadow",
 ]);
+
+/** Tags whose layers can hold a layout of their own. */
+export const LAYOUT_TAGS: ReadonlySet<string> = new Set(["Frame", "Component", "ComponentSet", "Instance", "Slot"]);

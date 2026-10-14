@@ -1,4 +1,4 @@
-import type { SelfAlign } from "../../../types/apply.ts";
+import type { SelfAlign } from "../../figma-props.ts";
 
 /** A grid child's alignment in its cell as CSS; AUTO (the cell's own) is left out. */
 export const SELF_CSS: Readonly<Record<string, string>> = {

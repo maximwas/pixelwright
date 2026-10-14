@@ -1,7 +1,7 @@
 import { decimal } from "../../../kernel/numbers.ts";
-import type { GridTrack } from "../../../types/apply.ts";
 import type { SnapshotNode } from "../../../types/snapshot.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";
+import type { GridTrack } from "../../figma-props.ts";
 import type { WriteInput, WriteOutput } from "../../property-group.ts";
 import { lengthOf, splitTop } from "../../values/css-values.ts";
 import { px } from "../../values/format.ts";

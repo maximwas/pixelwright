@@ -1,5 +1,6 @@
-import type { ApplyChange, ApplyElement, ApplyError, FigmaProps, LayerNow, TextRunSpec } from "../types/apply.ts";
+import type { ApplyChange, ApplyElement, ApplyError, LayerNow } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
+import type { FigmaProps, TextRunSpec } from "./figma-props.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "./property-group.ts";
 import { BOX_RULES, SPAN_RULES, TEXT_RULES } from "./registry.ts";
 
