@@ -15,6 +15,7 @@ const REWRITTEN = [
   "packages/core/src/tokens/**",
   "packages/core/src/css-mapping/**",
   "packages/core/src/design/**",
+  "packages/core/src/apply/**",
   "apps/server/src/features/**",
   "apps/server/src/plugin/**",
   "apps/plugin/src/operations/**",
@@ -105,8 +106,9 @@ export default [
     files: REWRITTEN,
     rules: limits("error"),
   },
-  // Dependency rules: core's kernel depends on nothing; design/ never imports the features that compare against it;
-  // server features never import mcp/ or each other; plugin operations never import each other.
+  // Dependency rules: core's kernel depends on nothing; css-mapping/ never imports what is built on it; design/ never
+  // imports the features that compare against it; server features never import mcp/ or each other; plugin operations
+  // never import each other.
   {
     files: ["packages/core/src/kernel/*.ts"],
     rules: {
@@ -122,6 +124,22 @@ export default [
       "no-restricted-imports": [
         "error",
         { patterns: [{ regex: "^\\.\\./\\.\\./", message: "The kernel depends on nothing." }] },
+      ],
+    },
+  },
+  {
+    files: ["packages/core/src/css-mapping/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^(\\.\\./)+(apply|design|tokens)/",
+              message: "css-mapping/ is the vocabulary apply, design and tokens stand on: it never imports them.",
+            },
+          ],
+        },
       ],
     },
   },
