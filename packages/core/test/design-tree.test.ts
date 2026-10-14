@@ -9,6 +9,7 @@ import {
   type XmlChild,
 } from "../src/index.ts";
 import { fixture } from "./helpers/fixtures.ts";
+import { layer } from "./helpers/layers.ts";
 import { oddTextSnapshot } from "./helpers/odd-text.ts";
 
 /** An element as XML reads it back: its tag, its attributes by name, then its text, spans and child elements. */
@@ -63,4 +64,33 @@ describe("the design tree", () => {
       expect(root === null ? [] : [fromTree(root)]).toEqual(parseXml(designXml(snapshot).xml).map(fromXml));
     });
   }
+
+  it("writes a frame holding only slices as one empty element, with nothing said cut", () => {
+    const snapshot: Snapshot = {
+      root: layer({
+        id: "1:1",
+        name: "Screen",
+        layoutMode: "VERTICAL",
+        children: [
+          layer({
+            id: "1:2",
+            name: "Marks",
+            children: [
+              layer({
+                id: "1:3",
+                name: "Export area",
+                type: "SLICE",
+              }),
+            ],
+          }),
+        ],
+      }),
+      styles: {},
+      variables: {},
+    };
+    const { xml } = designXml(snapshot);
+
+    expect(xml).toMatch(/^ {2}<Frame id="1:2" [^\n]*\/>$/m);
+    expect(xml).not.toContain("$truncated");
+  });
 });

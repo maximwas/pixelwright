@@ -26,7 +26,10 @@ export function designHints(
   ];
 }
 
-/** The layers the read shows as layers, in document order: an asset is one file, and how it is built never reaches the code. */
+/**
+ * Every visible layer of the snapshot that is no asset, in document order: hints speak of the design, branches the read
+ * cut to fit included; an asset is one file, and how it is built never reaches the code.
+ */
 function shownLayers(snapshot: Snapshot): ShownLayer[] {
   const layers: ShownLayer[] = [];
   const walk = (node: SnapshotNode, parent: SnapshotNode | null) => {
