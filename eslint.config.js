@@ -7,39 +7,6 @@ import tsParser from "@typescript-eslint/parser";
 const DECLARATIONS = ["const", "let", "var"];
 const BLOCKS = ["if", "for", "while", "do", "switch", "try"];
 
-// The folders the rewrite has rebuilt (docs/superpowers/specs/2026-10-14-pixelwright-rewrite-design.md): there the
-// limits below are errors; everywhere else they warn, so the remaining debt stays visible. Keep the same list in
-// biome.json's last override (cognitive complexity).
-const REWRITTEN = [
-  "packages/core/src/kernel/**",
-  "packages/core/src/tokens/**",
-  "packages/core/src/css-mapping/**",
-  "packages/core/src/design/**",
-  "packages/core/src/apply/**",
-  "apps/server/src/features/**",
-  "apps/server/src/plugin/**",
-  "apps/server/src/logging/**",
-  "apps/server/src/code-connect/**",
-  "apps/server/src/mcp/**",
-  "apps/server/src/assets/**",
-  "apps/server/src/history/**",
-  "apps/server/src/images/**",
-  "apps/plugin/src/operations/**",
-  "apps/plugin/src/services/**",
-  "apps/plugin/src/main.ts",
-  "apps/plugin/src/figma/tokens/**",
-  "apps/plugin/src/figma/assign.ts",
-  "apps/plugin/src/figma/capabilities.ts",
-  "apps/plugin/src/figma/paints.ts",
-  "apps/plugin/src/figma/effects.ts",
-  "apps/plugin/src/figma/component-index.ts",
-  "apps/plugin/src/figma/variants.ts",
-  "apps/plugin/src/figma/nodes.ts",
-  "apps/plugin/src/figma/fonts.ts",
-  "apps/plugin/src/figma/layer-read/**",
-  "apps/plugin/src/figma/reactions.ts",
-];
-
 const BANNED_SYNTAX = [
   {
     selector: "TSAsExpression[expression.type='TSAsExpression'][expression.typeAnnotation.type='TSUnknownKeyword']",
@@ -60,13 +27,17 @@ const BANNED_SYNTAX = [
   },
 ];
 
-/** The principles' size limits: a function fits on a screen, a file is one cohesive module. */
-const limits = (level) => ({
-  "max-lines-per-function": [level, { max: 50, skipBlankLines: true, skipComments: true }],
-  "max-lines": [level, { max: 300, skipBlankLines: true, skipComments: true }],
-  "max-params": [level, 4],
-  "no-restricted-syntax": [level, ...BANNED_SYNTAX],
-});
+/**
+ * The principles' size limits (docs/superpowers/specs/2026-10-14-pixelwright-rewrite-design.md): a function fits on a
+ * screen, a file is one cohesive module, more than four parameters go in an options object. Biome holds the matching
+ * cognitive complexity limit.
+ */
+const LIMITS = {
+  "max-lines-per-function": ["error", { max: 50, skipBlankLines: true, skipComments: true }],
+  "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
+  "max-params": ["error", 4],
+  "no-restricted-syntax": ["error", ...BANNED_SYNTAX],
+};
 
 /** An import of a sibling folder (`../other/…`): one feature never reaches into another's internals. */
 const SIBLING_FOLDER = { regex: "^\\.\\./[^./]", message: "A feature never imports another feature's internals." };
@@ -118,11 +89,7 @@ export default [
   },
   {
     files: ["**/src/**/*.ts"],
-    rules: limits("warn"),
-  },
-  {
-    files: REWRITTEN,
-    rules: limits("error"),
+    rules: LIMITS,
   },
   // Dependency rules: core's kernel depends on nothing; css-mapping/ never imports what is built on it; design/ never
   // imports the features that compare against it; server features never import mcp/ or each other; plugin operations
