@@ -1,5 +1,5 @@
 import { INFERRED_WORDS } from "../constants/inferred.ts";
-import { boxShorthand, px } from "../css/format.ts";
+import { boxShorthand, px } from "../css-mapping/values/format.ts";
 import { type Channels, Color } from "../kernel/color/color.ts";
 import { colorSpaceOf } from "../kernel/color/color-space.ts";
 import { styleTokenName, variableTokenName } from "../kernel/names.ts";

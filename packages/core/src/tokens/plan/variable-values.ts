@@ -1,4 +1,4 @@
-import { lengthOf, numberOf, tokenOf } from "../../apply/css-values.ts";
+import { lengthOf, numberOf, tokenOf } from "../../css-mapping/values/css-values.ts";
 import { Color } from "../../kernel/color/color.ts";
 import type { VariableValueSpec, WritableVariableType } from "./types.ts";
 

@@ -1,4 +1,7 @@
 import { LAYOUT_TAGS } from "../constants/apply.ts";
+import { imageOf, lengthOf, numberOf, percentOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
+import { fontOf, textLengthOf } from "../css-mapping/values/fonts.ts";
+import { paintOf } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import { roundTo } from "../kernel/numbers.ts";
 import type {
@@ -8,7 +11,6 @@ import type {
   AxisPlacement,
   EffectSpec,
   FigmaProps,
-  FontSpec,
   GridTrack,
   LayerNow,
   LengthValue,
@@ -18,7 +20,6 @@ import type {
   TextRunSpec,
 } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
-import { imageOf, lengthOf, numberOf, paintOf, percentOf, splitTop, tokenOf } from "./css-values.ts";
 
 type Read = (name: string) => string | undefined;
 
@@ -1322,88 +1323,6 @@ function decorationRule({ merged, changed }: Input, out: Output): void {
     },
     source,
   );
-}
-
-function textLengthOf(value: string): TextLength | null {
-  if (value === "auto") {
-    return { unit: "AUTO" };
-  }
-
-  const em = /^(-?\d*\.?\d+)em$/.exec(value);
-  const pixels = lengthOf(value);
-
-  if (em !== null) {
-    return {
-      unit: "PERCENT",
-      value: roundTo(Number(em[1]) * 100, 4),
-    };
-  }
-
-  return typeof pixels === "number"
-    ? {
-        unit: "PIXELS",
-        value: pixels,
-      }
-    : null;
-}
-
-/** `[italic] weight size/line-height 'Family'`, the shorthand design_read writes; a fallback list keeps its first. */
-function fontOf(value: string): FontSpec | null {
-  const match =
-    /^(?:(italic|oblique|normal)\s+)?(?:(\d{1,4}|normal|bold)\s+)?(\d*\.?\d+)px(?:\s*\/\s*(\S+))?\s+(.+)$/.exec(
-      value.trim(),
-    );
-
-  if (match === null) {
-    return null;
-  }
-
-  const [, slant, weight, size, height, families] = match;
-  const family = (splitTop(families ?? "", ",")[0] ?? "").replace(/^['"]|['"]$/g, "");
-  const lineHeight = lineHeightOf(height);
-
-  if (family === "" || lineHeight === null) {
-    return null;
-  }
-
-  return {
-    family,
-    weight: weight === undefined || weight === "normal" ? 400 : weight === "bold" ? 700 : Number(weight),
-    italic: slant === "italic" || slant === "oblique",
-    size: Number(size),
-    lineHeight,
-  };
-}
-
-function lineHeightOf(value: string | undefined): FontSpec["lineHeight"] | null {
-  if (value === undefined || value === "normal") {
-    return { unit: "AUTO" };
-  }
-
-  const pixels = /^(\d*\.?\d+)px$/.exec(value);
-  const percent = percentOf(value);
-  const multiple = numberOf(value.replace(/em$/, ""));
-
-  if (pixels !== null) {
-    return {
-      unit: "PIXELS",
-      value: Number(pixels[1]),
-    };
-  }
-
-  if (percent !== null) {
-    return {
-      unit: "PERCENT",
-      value: percent,
-    };
-  }
-
-  return multiple === null
-    ? null
-    : {
-        unit: "PERCENT",
-        value: roundTo(multiple * 100, 4),
-      };
 }
 
 /** Characters from text and spans, and a run per span with what it sets over the text's own. */

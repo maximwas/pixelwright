@@ -17,8 +17,7 @@ import {
   isTokenURL,
   tokenize,
 } from "@csstools/css-tokenizer";
-import { Color } from "../kernel/color/color.ts";
-import type { LengthValue, PaintSpec, TokenRef } from "../types/apply.ts";
+import type { LengthValue, TokenRef } from "../../types/apply.ts";
 
 /** A value as CSS parses it: its component values (functions with their arguments, strings, words, spaces). */
 function componentsOf(value: string): ComponentValue[] {
@@ -191,37 +190,9 @@ export function percentOf(value: string): number | null {
   return match === null ? null : Number(match[1]);
 }
 
-/** A paint: a colour, a token, or a token mixed with transparent at an opacity (how design_read writes those). */
-export function paintOf(value: string): PaintSpec | null {
-  const token = tokenOf(value);
+/** A CSS value without the `var(--name, …)` Figma may wrap around it: the fallback inside, else the value as given. */
+export function unwrapVar(value: string | undefined): string | undefined {
+  const match = /^var\(\s*--[^,()]+,\s*([\s\S]+)\)$/.exec(value?.trim() ?? "");
 
-  if (token !== null) {
-    return {
-      kind: "token",
-      token: token.token,
-      opacity: 1,
-    };
-  }
-
-  const mixed =
-    /^color-mix\(\s*in\s+(?:srgb|display-p3)\s*,\s*var\(\s*(--[^)\s]+)\s*\)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/.exec(
-      value.trim(),
-    );
-
-  if (mixed?.[1] !== undefined) {
-    return {
-      kind: "token",
-      token: mixed[1],
-      opacity: Number(mixed[2]) / 100,
-    };
-  }
-
-  const color = Color.parse(value);
-
-  return color === null
-    ? null
-    : {
-        kind: "color",
-        color: color.value(),
-      };
+  return match?.[1]?.trim() ?? value;
 }

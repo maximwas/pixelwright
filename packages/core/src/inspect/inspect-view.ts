@@ -1,13 +1,13 @@
-import { px } from "../css/format.ts";
 import { interactionSummary } from "../css/interactions.ts";
-import { paintsCss } from "../css/paint.ts";
+import { unwrapVar } from "../css-mapping/values/css-values.ts";
+import { px } from "../css-mapping/values/format.ts";
+import { paintsCss } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
 import { styleTokenName } from "../kernel/names.ts";
 import { MIXED } from "../schemas/snapshot.ts";
 import type { InspectBox, InspectedLayer, InspectedLayerView, InspectRaw, InspectView } from "../types/inspect.ts";
 import type { TextSegment } from "../types/snapshot.ts";
-import { unwrapVar } from "../utils/css-value.ts";
 
 /** How far two boxes may differ and still be the same box. */
 const SAME = 0.01;

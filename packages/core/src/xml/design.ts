@@ -1,11 +1,11 @@
-import { splitTop } from "../apply/css-values.ts";
 import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../constants/annotations.ts";
 import { DEV_STATUS_WORDS, INVISIBLE_TYPES } from "../constants/css.ts";
-import { px } from "../css/format.ts";
 import { interactionAttributes } from "../css/interactions.ts";
 import { motionSummary } from "../css/motion.ts";
 import { nodeCss } from "../css/node-css.ts";
 import { baseSegment, segmentCss, textStyleCss } from "../css/text.ts";
+import { splitTop } from "../css-mapping/values/css-values.ts";
+import { px } from "../css-mapping/values/format.ts";
 import { colorSpaceOf } from "../kernel/color/color-space.ts";
 import { styleName } from "../kernel/names.ts";
 import type { CssContext } from "../types/css.ts";

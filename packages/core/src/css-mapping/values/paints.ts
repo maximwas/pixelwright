@@ -1,9 +1,10 @@
-import { Color, isChannels } from "../kernel/color/color.ts";
-import { styleTokenName, variableTokenName } from "../kernel/names.ts";
-import { MIXED } from "../schemas/snapshot.ts";
-import type { CssContext } from "../types/css.ts";
-import type { SnapshotNode, SnapshotPaint } from "../types/snapshot.ts";
-import { unwrapVar } from "../utils/css-value.ts";
+import { Color, isChannels } from "../../kernel/color/color.ts";
+import { styleTokenName, variableTokenName } from "../../kernel/names.ts";
+import { MIXED } from "../../schemas/snapshot.ts";
+import type { PaintSpec } from "../../types/apply.ts";
+import type { CssContext } from "../../types/css.ts";
+import type { SnapshotNode, SnapshotPaint } from "../../types/snapshot.ts";
+import { tokenOf, unwrapVar } from "./css-values.ts";
 import { cssUrl } from "./format.ts";
 
 /** A paint the mapping table cannot write back yet (gradients, video, patterns): read-only CSS instead. */
@@ -122,4 +123,39 @@ export function boundVariable(alias: unknown, context: CssContext) {
   }
 
   return context.variables[alias.id] ?? null;
+}
+
+/** A paint: a colour, a token, or a token mixed with transparent at an opacity (how design_read writes those). */
+export function paintOf(value: string): PaintSpec | null {
+  const token = tokenOf(value);
+
+  if (token !== null) {
+    return {
+      kind: "token",
+      token: token.token,
+      opacity: 1,
+    };
+  }
+
+  const mixed =
+    /^color-mix\(\s*in\s+(?:srgb|display-p3)\s*,\s*var\(\s*(--[^)\s]+)\s*\)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/.exec(
+      value.trim(),
+    );
+
+  if (mixed?.[1] !== undefined) {
+    return {
+      kind: "token",
+      token: mixed[1],
+      opacity: Number(mixed[2]) / 100,
+    };
+  }
+
+  const color = Color.parse(value);
+
+  return color === null
+    ? null
+    : {
+        kind: "color",
+        color: color.value(),
+      };
 }

@@ -1,14 +1,15 @@
-import { withoutFallbacks } from "../apply/css-values.ts";
 import { CSS_ORDER, VECTOR_TYPES } from "../constants/css.ts";
+import { withoutFallbacks } from "../css-mapping/values/css-values.ts";
+import { boxShorthand, px } from "../css-mapping/values/format.ts";
+import { lengthCss } from "../css-mapping/values/lengths.ts";
+import { paintsCss, UNMAPPED } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import type { ColorSpace } from "../kernel/color/color-space.ts";
-import { styleTokenName, variableTokenName } from "../kernel/names.ts";
+import { styleTokenName } from "../kernel/names.ts";
 import { decimal } from "../kernel/numbers.ts";
 import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
-import { boxShorthand, px } from "./format.ts";
-import { boundVariable, paintsCss, UNMAPPED } from "./paint.ts";
 import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
 
 const JUSTIFY: Readonly<Record<string, string>> = {
@@ -174,7 +175,7 @@ function layoutCss(
   }
 
   const sides = (["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"] as const).map((key) =>
-    length(node, key, node[key] ?? 0, context),
+    lengthCss(node, key, node[key] ?? 0, context),
   );
 
   if (sides.some((side) => side !== "0")) {
@@ -210,7 +211,7 @@ function layoutCss(
     const between = node.layoutMode === "VERTICAL" ? "column-gap" : "row-gap";
     const lines =
       typeof node.counterAxisSpacing === "number"
-        ? length(node, "counterAxisSpacing", node.counterAxisSpacing, context)
+        ? lengthCss(node, "counterAxisSpacing", node.counterAxisSpacing, context)
         : undefined;
 
     if (lines !== undefined && lines !== (css.get("gap") ?? "0")) {
@@ -437,7 +438,7 @@ function radiusCss(node: SnapshotNode, css: Map<string, string>, context: CssCon
   }
 
   if (node.cornerRadius === MIXED) {
-    css.set("border-radius", RADII.map((key) => length(node, key, node[key] ?? 0, context)).join(" "));
+    css.set("border-radius", RADII.map((key) => lengthCss(node, key, node[key] ?? 0, context)).join(" "));
   } else if (node.cornerRadius !== undefined) {
     setLength(css, "border-radius", node, "topLeftRadius", node.cornerRadius, context);
   }
@@ -709,23 +710,6 @@ function styleIdOf(id: string | undefined): string | undefined {
   return id === undefined || id === "" || id === MIXED ? undefined : id;
 }
 
-/** A length, or the token of the variable bound to it. */
-function length(node: SnapshotNode, key: string, value: number, context: CssContext): string {
-  const variable = boundVariable(node.boundVariables?.[key], context);
-
-  if (variable === null) {
-    return px(value);
-  }
-
-  const name = variableTokenName(variable);
-
-  if (typeof variable.value === "number") {
-    context.tokens.set(name, px(variable.value));
-  }
-
-  return `var(${name})`;
-}
-
 function setLength(
   css: Map<string, string>,
   property: string,
@@ -738,7 +722,7 @@ function setLength(
     return;
   }
 
-  const written = length(node, key, value, context);
+  const written = lengthCss(node, key, value, context);
 
   if (written !== "0" || property === "width" || property === "height") {
     css.set(property, written);

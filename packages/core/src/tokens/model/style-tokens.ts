@@ -1,5 +1,6 @@
 import { shadowListCss } from "../../css/node-css.ts";
-import { fontShorthand, textStyleExtras } from "../../css/text.ts";
+import { textStyleExtras } from "../../css/text.ts";
+import { fontShorthand } from "../../css-mapping/values/fonts.ts";
 import { Color } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
 import { styleTokenName } from "../../kernel/names.ts";

@@ -1,4 +1,4 @@
-import { boundVariable } from "../css/paint.ts";
+import { boundVariable } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import { colorSpaceOf } from "../kernel/color/color-space.ts";
 import { styleTokenName, variableTokenName } from "../kernel/names.ts";

@@ -1,13 +1,12 @@
 import { DEFAULT_FONT_AXES } from "../constants/css.ts";
+import { decorationLength, fontShorthand, letterSpacingCss } from "../css-mapping/values/fonts.ts";
+import { paintsCss, UNMAPPED } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import type { ColorSpace } from "../kernel/color/color-space.ts";
 import { styleName } from "../kernel/names.ts";
 import { decimal } from "../kernel/numbers.ts";
 import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotStyle, TextSegment } from "../types/snapshot.ts";
-import { weightOf } from "../utils/font-weight.ts";
-import { px } from "./format.ts";
-import { paintsCss, UNMAPPED } from "./paint.ts";
 
 const TEXT_TRANSFORMS: Readonly<Record<string, string>> = {
   UPPER: "uppercase",
@@ -152,29 +151,9 @@ function decorationCss(
   }
 }
 
-function decorationLength(length: TextSegment["textDecorationOffset"]): string | null {
-  if (length?.value === undefined) {
-    return null;
-  }
-
-  return length.unit === "PERCENT" ? `${decimal(length.value / 100)}em` : `${decimal(length.value)}px`;
-}
-
 /** The text's alignment: left is the default and is left out. */
 export function textAlignCss(node: SnapshotNode): string | undefined {
   return node.text === undefined ? undefined : TEXT_ALIGNS[node.text.textAlignHorizontal];
-}
-
-/** `[italic] weight size/line-height 'Family'`, for a run or a text style. */
-export function fontShorthand(
-  parts: Pick<TextSegment, "fontName" | "fontSize" | "lineHeight"> & {
-    fontWeight?: number | undefined;
-  },
-): string {
-  const italic = /italic/i.test(parts.fontName.style) ? "italic " : "";
-  const weight = parts.fontWeight ?? weightOf(parts.fontName.style);
-
-  return `${italic}${weight} ${px(parts.fontSize)}/${lineHeightCss(parts.lineHeight, parts.fontSize)} '${parts.fontName.family}'`;
 }
 
 /** A text style as the textStyles map shows it: its font shorthand plus its spacing and case. */
@@ -202,28 +181,6 @@ export function textStyleExtras(style: SnapshotStyle): [string, string][] {
     ...(spacing === null ? [] : [["letter-spacing", spacing] as [string, string]]),
     ...(transform === undefined ? [] : [["text-transform", transform] as [string, string]]),
   ];
-}
-
-/** A line height as CSS writes it at this font size: px, or normal. */
-export function lineHeightCss(lineHeight: TextSegment["lineHeight"], fontSize: number): string {
-  if (lineHeight.unit === "PIXELS" && lineHeight.value !== undefined) {
-    return px(lineHeight.value);
-  }
-
-  if (lineHeight.unit === "PERCENT" && lineHeight.value !== undefined) {
-    return px((fontSize * lineHeight.value) / 100);
-  }
-
-  return "normal";
-}
-
-function letterSpacingCss(spacing: TextSegment["letterSpacing"]): string | null {
-  if (spacing.value === 0) {
-    return null;
-  }
-
-  // Not whole pixels: letter spacing lives in fractions.
-  return spacing.unit === "PERCENT" ? `${decimal(spacing.value / 100)}em` : `${decimal(spacing.value)}px`;
 }
 
 function sameAsStyle(style: SnapshotStyle, segment: TextSegment, key: keyof FontParts): boolean {
