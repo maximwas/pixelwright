@@ -10,9 +10,13 @@ type TextFail = (key: keyof FigmaProps | "text", error: unknown) => void;
 
 const BOX_KEYS = ["textAlignHorizontal", "textWrapStyle", "truncate"] as const;
 
-const TEXT_KEYS: readonly (keyof FigmaProps)[] = [...RUN_FIELDS.map(([key]) => key), ...BOX_KEYS];
+/** What only a text has; a link on another layer is refused by its own step. */
+const TEXT_KEYS: readonly (keyof FigmaProps)[] = [
+  ...RUN_FIELDS.map(([key]) => key).filter((key) => key !== "hyperlink"),
+  ...BOX_KEYS,
+];
 
-/** Whether a change writes anything of a text. */
+/** Whether a change writes anything only a text has. */
 export function hasTextProps(props: FigmaProps): boolean {
   return TEXT_KEYS.some((key) => props[key] !== undefined);
 }

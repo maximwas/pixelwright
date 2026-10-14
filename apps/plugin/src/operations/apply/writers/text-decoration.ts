@@ -5,18 +5,20 @@ import type { TextRange } from "./text-range.ts";
 
 /** The whole decoration, as the CSS shorthand resets it: no style is solid, no colour, offset or thickness Figma's own. */
 export function decorate(range: TextRange, decoration: NonNullable<FigmaProps["textDecoration"]>): void {
-  range.decorationLine(decoration.line);
-
   if (decoration.line === "NONE") {
+    range.decorationLine("NONE");
+
     return;
   }
 
   const style = decoration.style ?? "SOLID";
 
+  // Refused before any of it is written: a dashed line would otherwise be left solid.
   if (style === "DASHED") {
     throw new WriteError("Figma underlines solid, wavy or dotted: it has no dashed decoration.");
   }
 
+  range.decorationLine(decoration.line);
   range.decorationLook({
     style,
     color: decorationColor(decoration.color),

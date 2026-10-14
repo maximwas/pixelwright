@@ -62,6 +62,8 @@ How to write this file (people and agents alike):
   changed but left the old image in place.
 - `design_apply` makes a `<Section>` of the size the XML gives: Figma has no `resize` for sections, so a sized new
   section failed, and moving or stretching one now sizes it the way Figma allows.
+- `design_apply` refuses a dashed underline without writing a solid one in its place, and gives one error, not two,
+  for a link on a frame.
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 

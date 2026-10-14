@@ -325,6 +325,25 @@ describe("apply: the safety catch", () => {
   });
 });
 
+describe("apply: refusals that write nothing", () => {
+  it("refuses a dashed underline before writing any of it", async () => {
+    const result = await apply('<Text id="1:2" text-decoration="underline dashed"/>');
+
+    expect(result.errors.map(({ attribute, message }) => `${attribute}: ${message}`)).toEqual([
+      "text-decoration: Figma underlines solid, wavy or dotted: it has no dashed decoration.",
+    ]);
+    expect(byId("1:2")?.textDecoration ?? "NONE").toBe("NONE");
+  });
+
+  it("gives one error for a link on a frame", async () => {
+    const result = await apply('<Frame id="1:1" href="https://example.com"/>');
+
+    expect(result.errors.map(({ message }) => message)).toEqual([
+      "A link on a frame is a prototype reaction: it is written in the next stage.",
+    ]);
+  });
+});
+
 describe("apply: sections", () => {
   it("sizes a new section as Figma lets it, without constraints", async () => {
     root = page();
