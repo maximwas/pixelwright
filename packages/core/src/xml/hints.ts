@@ -1,5 +1,6 @@
+import { INFERRED_WORDS } from "../constants/inferred.ts";
 import { colorCss } from "../css/color.ts";
-import { boxShorthand, px } from "../css/format.ts";
+import { boxShorthand, decimal, px } from "../css/format.ts";
 import { styleTokenName, variableTokenName } from "../css/tokens.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import { classify, visibleChildren } from "./classify.ts";
@@ -58,6 +59,10 @@ export function designHints(
     ...defaultNameHints(all.map(({ node }) => node)),
     ...[...found].map(([kind, examples]) => LAYER_HINTS[kind](examples)),
     ...missingFontHints(all.map(({ node }) => node)),
+    ...inferredHints(
+      snapshot,
+      all.map(({ node }) => node),
+    ),
   ];
 }
 
@@ -88,6 +93,47 @@ const LAYER_HINTS = {
 } as const;
 
 type LayerHint = keyof typeof LAYER_HINTS;
+
+/**
+ * Raw spacing, radii, strokes and opacity Figma itself matches to one token (inferredVariables): one hint per token,
+ * field word and value, with the layers that use it.
+ */
+function inferredHints(snapshot: Snapshot, nodes: readonly SnapshotNode[]): string[] {
+  const found = new Map<string, { word: string; value: string; token: string; examples: string[] }>();
+
+  for (const node of nodes) {
+    for (const [field, id] of Object.entries(node.inferred ?? {})) {
+      const word = INFERRED_WORDS[field];
+      const variable = snapshot.variables[id];
+      const raw: unknown = node[field as keyof SnapshotNode];
+
+      if (word === undefined || variable === undefined || typeof raw !== "number") {
+        continue;
+      }
+
+      const value = field === "opacity" ? decimal(raw) : px(raw);
+      const token = variableTokenName(variable);
+      const key = `${word}|${value}|${token}`;
+      const entry = found.get(key) ?? {
+        word,
+        value,
+        token,
+        examples: [],
+      };
+
+      if (!entry.examples.includes(label(node))) {
+        entry.examples.push(label(node));
+      }
+
+      found.set(key, entry);
+    }
+  }
+
+  return [...found.values()].map(
+    ({ word, value, token, examples }) =>
+      `${word} ${value} on ${examples.length === 1 ? "1 layer" : `${examples.length} layers`} (${listed(examples)}) matches ${token}, Figma's own match for that field: use the token.`,
+  );
+}
 
 /** Paint styles the XML names whose value no layer here could give: a var() the build cannot resolve on its own. */
 function valuelessTokenHints(

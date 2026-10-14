@@ -321,6 +321,58 @@ describe("snapshot", () => {
     expect(inner?.children?.[0]?.overrides).toEqual(["fills", "opacity"]);
   });
 
+  it("keeps Figma's own variable match for an unbound spacing field when it found exactly one", async () => {
+    const alias = (id: string) => ({
+      type: "VARIABLE_ALIAS",
+      id,
+    });
+    const frame = (id: string, boundVariables: object) => ({
+      id,
+      type: "FRAME",
+      layoutMode: "VERTICAL",
+      paddingLeft: 16,
+      itemSpacing: 8,
+      boundVariables,
+      inferredVariables: {
+        paddingLeft: [alias("V:16")],
+        itemSpacing: [alias("V:8"), alias("V:8b")],
+        height: [alias("V:16")],
+      },
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "6:0",
+            type: "FRAME",
+            children: [frame("6:1", {}), frame("6:2", { paddingLeft: alias("V:16") })],
+          },
+        ],
+      }),
+      {
+        variables: {
+          "V:16": {
+            name: "space/16",
+            variableCollectionId: "C:1",
+            resolvedType: "FLOAT",
+            value: 16,
+          },
+        },
+        collections: { "C:1": { name: "Orbit" } },
+      },
+    );
+
+    const { root, variables } = (await runOperation("snapshot", { node: "6:0" })) as Shot;
+    const [free, bound] = root.children ?? [];
+
+    expect(free?.inferred).toEqual({ paddingLeft: "V:16" });
+    expect(bound).not.toHaveProperty("inferred");
+    expect(variables["V:16"]).toMatchObject({ name: "space/16" });
+  });
+
   it("marks an instance of a library's component, whose id in this file is not the library's", async () => {
     installFigma(
       tree({

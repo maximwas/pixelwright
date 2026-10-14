@@ -1,6 +1,7 @@
 import {
   BridgeError,
   fnv1a,
+  INFERRED_WORDS,
   MIXED,
   type OperationInput,
   type OperationOutput,
@@ -449,6 +450,12 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
     entry.boundVariables = plain(layer.boundVariables);
   }
 
+  const inferred = inferredOf(layer, context.references);
+
+  if (Object.keys(inferred).length > 0) {
+    entry.inferred = inferred;
+  }
+
   if (Array.isArray(layer.exportSettings) && layer.exportSettings.length > 0) {
     entry.exportSettings = plain(layer.exportSettings);
   }
@@ -777,6 +784,34 @@ function putPaints(entry: Record<string, unknown>, key: string, value: unknown):
   } else if (Array.isArray(value) && value.length > 0) {
     entry[key] = plain(value);
   }
+}
+
+/**
+ * Figma's own variable match for the layer's unbound spacing, radius, stroke and opacity fields, where it found exactly
+ * one variable; each joins the read's variables.
+ */
+function inferredOf(layer: SceneNode & Record<string, unknown>, references: References): Record<string, string> {
+  const matches = layer.inferredVariables as Record<string, unknown> | undefined;
+  const bound = (layer.boundVariables ?? {}) as Record<string, unknown>;
+  const inferred: Record<string, string> = {};
+
+  for (const field of Object.keys(INFERRED_WORDS)) {
+    const found = matches?.[field];
+
+    if (Array.isArray(found) && found.length === 1 && bound[field] === undefined) {
+      const [alias] = found as { id?: unknown }[];
+
+      if (typeof alias?.id === "string") {
+        inferred[field] = alias.id;
+
+        if (!references.variables.has(alias.id)) {
+          references.variables.set(alias.id, layer);
+        }
+      }
+    }
+  }
+
+  return inferred;
 }
 
 /** Every style id and variable alias inside an entry: its own fields, paints, effects and text segments. */

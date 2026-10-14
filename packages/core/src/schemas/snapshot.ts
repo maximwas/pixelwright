@@ -358,6 +358,8 @@ export const SnapshotFieldsSchema = z.object({
    * the instance changed that its component's properties do not say.
    */
   overrides: z.array(z.string()).optional(),
+  /** Figma's own variable match for an unbound field (inferredVariables), where it found exactly one: field → its id. */
+  inferred: z.record(z.string(), z.string()).optional(),
   /**
    * Figma Motion: the animation styles on the layer (each starting `start` seconds into the timeline) and every
    * keyframe track, a style's keyframes moved to where the style starts. A field is a property (`OPACITY`), a paint
