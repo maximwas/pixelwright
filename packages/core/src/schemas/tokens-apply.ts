@@ -3,11 +3,13 @@ import type { EffectSpec, FontSpec, PaintSpec } from "../types/apply.ts";
 import type { CollectionPlan, TokenError, TokenItem, TokensPlan, VariableValueSpec } from "../types/tokens-apply.ts";
 
 const NameSchema = z.string().min(1).max(512);
+/** A colour on the wire: sRGB channels, or Display P3 ones when `space` says so (the plugin writes it in the file's). */
 const ColorSchema = z.object({
   r: z.number(),
   g: z.number(),
   b: z.number(),
   a: z.number(),
+  space: z.literal("display-p3").exactOptional(),
 });
 
 /**

@@ -243,6 +243,41 @@ describe("tokens_apply: variables", () => {
     expect(fake.writes.undo).toBe(1);
   });
 
+  it("keeps a Display P3 colour as it is in a P3 file, so the same tokens again change nothing", async () => {
+    Object.assign(fake.figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    const input = {
+      collections: [
+        {
+          name: "Brand",
+          variables: [
+            {
+              name: "color/accent",
+              values: { Light: "color(display-p3 0.9 0.2 0.1)" },
+            },
+          ],
+        },
+      ],
+    };
+
+    await apply(input);
+
+    const stored = Object.values((await variableNamed("color/accent"))?.valuesByMode ?? {})[0];
+
+    expect(stored).toEqual({
+      r: 0.9,
+      g: 0.2,
+      b: 0.1,
+      a: 1,
+    });
+    expect(await apply(input)).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+    Object.assign(fake.figma.root, { documentColorProfile: "SRGB" });
+  });
+
   it("points an alias at a variable made in the same call or the file's, whatever the order", async () => {
     const result = await apply({
       collections: [
