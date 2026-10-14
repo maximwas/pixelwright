@@ -14,6 +14,7 @@ const REWRITTEN = [
   "packages/core/src/kernel/**",
   "packages/core/src/tokens/**",
   "packages/core/src/css-mapping/**",
+  "packages/core/src/design/**",
   "apps/server/src/features/**",
   "apps/server/src/plugin/**",
   "apps/plugin/src/operations/**",
