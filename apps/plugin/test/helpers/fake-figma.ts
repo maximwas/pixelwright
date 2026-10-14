@@ -286,11 +286,8 @@ function writable(
 
   define("appendChild", (child: FakeNode) => insert(node.children?.length ?? 0, child));
   define("insertChild", insert);
+  // A section takes resize as Figma does (seen live on 2026-10-15), as well as resizeWithoutConstraints.
   define("resize", (width: number, height: number) => {
-    if ((options.strict ?? false) && node.type === "SECTION") {
-      throw new Error("in resize: a SECTION has no resize: use resizeWithoutConstraints");
-    }
-
     if (node.type === "TEXT" && !writes.loaded.has(fontKey(node.fontName as { family: string; style: string }))) {
       throw new Error(
         `Cannot resize a text with unloaded font "${fontKey(node.fontName as { family: string; style: string })}"`,

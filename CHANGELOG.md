@@ -93,8 +93,6 @@ How to write this file (people and agents alike):
   several layers share a name and the read numbered their files (`photo-2.png`).
 - `design_apply` writes a background's new image: a `url()` naming another file, or another fit, was reported as
   changed but left the old image in place.
-- `design_apply` makes a `<Section>` of the size the XML gives: Figma has no `resize` for sections, so a sized new
-  section failed, and moving or stretching one now sizes it the way Figma allows.
 - `design_apply` refuses a dashed underline without writing a solid one in its place, and gives one error, not two,
   for a link on a frame.
 - `design_apply` places a new component set made on the page beside the page's layers, as it places any new layer,
