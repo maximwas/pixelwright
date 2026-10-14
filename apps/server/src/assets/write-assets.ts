@@ -15,6 +15,13 @@ export interface WrittenAsset {
   readonly bytes: number;
 }
 
+/** Where assets are written: the folder, the path the XML names it by, and the store remembering them. */
+export interface AssetPlace {
+  readonly dir: string;
+  readonly srcBase: string;
+  readonly files: WrittenFiles;
+}
+
 /** The key designXml looks an asset's final path up by: the layer, and the image hash for a background. */
 export function assetKey(asset: Pick<PlannedAsset, "node" | "imageHash">): string {
   return asset.imageHash === undefined ? asset.node : `${asset.node}#${asset.imageHash}`;
@@ -28,9 +35,7 @@ export function assetKey(asset: Pick<PlannedAsset, "node" | "imageHash">): strin
 export async function writeAssets(
   assets: readonly PlannedAsset[],
   fetch: (asset: PlannedAsset) => Promise<Buffer>,
-  dir: string,
-  srcBase: string,
-  files: WrittenFiles,
+  { dir, srcBase, files }: AssetPlace,
 ): Promise<{ srcByKey: Map<string, string>; written: WrittenAsset[] }> {
   const srcByKey = new Map<string, string>();
   const written: WrittenAsset[] = [];

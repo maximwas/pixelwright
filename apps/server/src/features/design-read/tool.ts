@@ -1,12 +1,13 @@
-import type { McpServer } from "@modelcontextprotocol/server";
-import { readDesign } from "../../design/read-design.ts";
-import { DesignReadInputSchema } from "../../schemas/tools.ts";
-import type { ToolContext } from "../../types/mcp.ts";
-import { registerContentTool } from "../register-tool.ts";
+import type { ContentToolDefinition, ToolContext } from "../../types/mcp.ts";
+import { readDesign } from "./read-design.ts";
+import { DesignReadInputSchema } from "./schemas.ts";
 
-/** No outputSchema on purpose: the XML reads best as plain text, and an asked-for screenshot is an image block. */
-export function registerDesignTool(server: McpServer, { bridge, files, projectRoot }: ToolContext): void {
-  registerContentTool(server, {
+export function designReadTool({
+  plugin,
+  files,
+  projectRoot,
+}: ToolContext): ContentToolDefinition<typeof DesignReadInputSchema> {
+  return {
     name: "design_read",
     title: "Read a design",
     description:
@@ -17,6 +18,6 @@ export function registerDesignTool(server: McpServer, { bridge, files, projectRo
       idempotentHint: true,
       openWorldHint: false,
     },
-    run: (args) => readDesign(bridge, args, files, projectRoot),
-  });
+    run: (args) => readDesign(plugin, args, files, projectRoot),
+  };
 }

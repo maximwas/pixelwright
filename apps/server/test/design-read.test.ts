@@ -7,7 +7,7 @@ import type { PlannedAsset } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { writeAssets } from "../src/assets/write-assets.ts";
 import { memoryFiles } from "../src/assets/written-files.ts";
-import { readDesign } from "../src/design/read-design.ts";
+import { readDesign } from "../src/features/design-read/read-design.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 import { JPEG, PNG } from "./helpers/images.ts";
@@ -97,7 +97,7 @@ describe("design_read", () => {
   it("writes each asset once and points the XML at the files", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-assets-"));
     const { bridge } = orbit();
-    const result = await readDesign(bridge, {
+    const result = await readDesign(new PluginClient(bridge), {
       node: "54:434",
       assetsDir: dir,
       screenshot: false,
@@ -129,7 +129,7 @@ describe("design_read", () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-assets-"));
     const files = memoryFiles();
     const result = await readDesign(
-      orbit().bridge,
+      new PluginClient(orbit().bridge),
       {
         node: "54:434",
         assetsDir: dir,
@@ -154,7 +154,7 @@ describe("design_read", () => {
 
   it("plans the assets without writing them when no folder is given, and says so", async () => {
     const { bridge, ops } = orbit();
-    const result = await readDesign(bridge, {
+    const result = await readDesign(new PluginClient(bridge), {
       node: "54:434",
       screenshot: false,
       maxChars: 80_000,
@@ -170,13 +170,13 @@ describe("design_read", () => {
 
   it("reads the selected layer when none is named, and refuses to guess between several", async () => {
     await expect(
-      readDesign(orbit(CUSTOMERS, ["54:434", "54:435"]).bridge, {
+      readDesign(new PluginClient(orbit(CUSTOMERS, ["54:434", "54:435"]).bridge), {
         screenshot: false,
         maxChars: 80_000,
       }),
     ).rejects.toThrow(/2 layers are selected/);
 
-    const result = await readDesign(orbit(CUSTOMERS, ["54:434"]).bridge, {
+    const result = await readDesign(new PluginClient(orbit(CUSTOMERS, ["54:434"]).bridge), {
       screenshot: false,
       maxChars: 80_000,
     });
@@ -208,7 +208,7 @@ describe("design_read", () => {
       code: false,
     };
 
-    expect(JSON.parse(textOf(await readDesign(orbit(measured).bridge, args), 1))).toMatchObject({
+    expect(JSON.parse(textOf(await readDesign(new PluginClient(orbit(measured).bridge), args), 1))).toMatchObject({
       measurements: [
         {
           from: "54:268 right",
@@ -218,7 +218,9 @@ describe("design_read", () => {
         },
       ],
     });
-    expect(JSON.parse(textOf(await readDesign(orbit(PLANS).bridge, args), 1))).not.toHaveProperty("measurements");
+    expect(JSON.parse(textOf(await readDesign(new PluginClient(orbit(PLANS).bridge), args), 1))).not.toHaveProperty(
+      "measurements",
+    );
   });
 
   it("gives Figma Motion as CSS keyframes when a layer animates", async () => {
@@ -263,7 +265,7 @@ describe("design_read", () => {
       maxChars: 80_000,
       code: false,
     };
-    const result = await readDesign(orbit(animated).bridge, args);
+    const result = await readDesign(new PluginClient(orbit(animated).bridge), args);
 
     expect(textOf(result, 0)).toContain('$motion="opacity 0→1; 0–0.6s ease-out"');
     expect(JSON.parse(textOf(result, 1))).toMatchObject({
@@ -278,11 +280,13 @@ describe("design_read", () => {
         ],
       },
     });
-    expect(JSON.parse(textOf(await readDesign(orbit(PLANS).bridge, args), 1))).not.toHaveProperty("motion");
+    expect(JSON.parse(textOf(await readDesign(new PluginClient(orbit(PLANS).bridge), args), 1))).not.toHaveProperty(
+      "motion",
+    );
   });
 
   it("cuts a read past maxChars and tells how to read the rest", async () => {
-    const result = await readDesign(orbit().bridge, {
+    const result = await readDesign(new PluginClient(orbit().bridge), {
       node: "54:434",
       screenshot: false,
       maxChars: 2_000,
@@ -317,13 +321,11 @@ describe("writeAssets", () => {
       "1:1": JPEG,
       "1:2": Buffer.concat([PNG, Buffer.from("other")]),
     };
-    const { written } = await writeAssets(
-      assets,
-      async (asset) => bytes[asset.node] ?? PNG,
+    const { written } = await writeAssets(assets, async (asset) => bytes[asset.node] ?? PNG, {
       dir,
-      "assets",
-      memoryFiles(),
-    );
+      srcBase: "assets",
+      files: memoryFiles(),
+    });
 
     expect(written.map((asset) => asset.src)).toEqual(["assets/hero-background.jpg", "assets/hero-background.png"]);
     expect((await readFile(join(dir, "hero-background.jpg"))).equals(JPEG)).toBe(true);
@@ -354,9 +356,11 @@ describe("writeAssets into a folder an earlier read wrote", () => {
         },
       ],
       async (asset) => Buffer.from(asset.node === "1:1" ? "<svg>second read</svg>" : "<svg>logo</svg>"),
-      dir,
-      "assets",
-      memoryFiles(),
+      {
+        dir,
+        srcBase: "assets",
+        files: memoryFiles(),
+      },
     );
 
     expect(written.map((asset) => asset.src)).toEqual(["assets/icon-2.svg", "assets/logo.svg"]);
@@ -378,7 +382,7 @@ describe("design_read review fixes", () => {
       return request(op, input, options);
     };
 
-    await readDesign(bridge, {
+    await readDesign(new PluginClient(bridge), {
       node: "54:434",
       assetsDir: await mkdtemp(join(tmpdir(), "pixelwright-assets-")),
       screenshot: false,
@@ -414,7 +418,7 @@ describe("design_read review fixes", () => {
         : request(op, input, options);
 
     await expect(
-      readDesign(bridge, {
+      readDesign(new PluginClient(bridge), {
         node: "54:434",
         screenshot: false,
         maxChars: 80_000,
@@ -460,7 +464,7 @@ describe("design_read review fixes", () => {
         : request(op, input, options);
     };
 
-    await readDesign(bridge, {
+    await readDesign(new PluginClient(bridge), {
       node: "54:434",
       screenshot: true,
       maxChars: 80_000,
@@ -485,6 +489,8 @@ export default {
   id: 'plan-card',
 }
 `;
+
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 
 /** A project folder with these template files. */
 async function project(files: Record<string, string>): Promise<string> {
@@ -537,7 +543,7 @@ describe("design_read with the project's Code Connect templates", () => {
 
   it("gives each connected instance's code and collapses it in the XML", async () => {
     const root = await project({ "PlanCard.figma.ts": PLAN_CARD });
-    const result = await readDesign(plans(), args, memoryFiles(), root);
+    const result = await readDesign(new PluginClient(plans()), args, memoryFiles(), root);
     const xml = textOf(result, 0);
     const meta = JSON.parse(textOf(result, 1)) as Record<string, unknown>;
     const imports = ['import { PlanCard } from "@/components/PlanCard"'];
@@ -578,7 +584,7 @@ describe("design_read with the project's Code Connect templates", () => {
         .replace("${price}", "")
         .replace("${popular ? ' popular' : ''}", ""),
     });
-    const meta = JSON.parse(textOf(await readDesign(plans(), args, memoryFiles(), root), 1)) as {
+    const meta = JSON.parse(textOf(await readDesign(new PluginClient(plans()), args, memoryFiles(), root), 1)) as {
       codeComponents: { ids: string[]; snippet: string }[];
     };
 
@@ -592,7 +598,7 @@ describe("design_read with the project's Code Connect templates", () => {
 
   it("keeps an instance whose template fails as it is, and lists the error once per template", async () => {
     const root = await project({ "PlanCard.figma.ts": PLAN_CARD.replace("getString('Name')", "getString('Title')") });
-    const result = await readDesign(plans(), args, memoryFiles(), root);
+    const result = await readDesign(new PluginClient(plans()), args, memoryFiles(), root);
     const meta = JSON.parse(textOf(result, 1)) as Record<string, unknown>;
 
     expect(meta.codeComponents).toEqual([]);
@@ -616,7 +622,7 @@ describe("design_read with the project's Code Connect templates", () => {
 
       return row;
     });
-    const result = await readDesign(bridge, args, memoryFiles(), root);
+    const result = await readDesign(new PluginClient(bridge), args, memoryFiles(), root);
     const meta = JSON.parse(textOf(result, 1)) as {
       codeComponents: { ids: string[] }[];
       codeErrors: { error: string; ids: string[] }[];
@@ -639,7 +645,7 @@ describe("design_read with the project's Code Connect templates", () => {
       root: layerOf(row.root, "54:244"),
     }));
     const own = await readDesign(
-      starter,
+      new PluginClient(starter),
       {
         ...args,
         node: "54:244",
@@ -648,7 +654,7 @@ describe("design_read with the project's Code Connect templates", () => {
       root,
     );
     const off = await readDesign(
-      plans(),
+      new PluginClient(plans()),
       {
         ...args,
         code: false,
@@ -670,7 +676,7 @@ describe("design_read with the project's Code Connect templates", () => {
       "PlanCard.figma.ts": PLAN_CARD.replace('name="${name}"', "name=\"${name} ${'x'.repeat(3000)}\""),
     });
     const result = await readDesign(
-      plans(),
+      new PluginClient(plans()),
       {
         ...args,
         maxChars: 12_000,
@@ -685,8 +691,13 @@ describe("design_read with the project's Code Connect templates", () => {
   });
 
   it("reads as before in a project without templates", async () => {
-    const plain = await readDesign(plans(), args);
-    const empty = await readDesign(plans(), args, memoryFiles(), await project({ "README.md": "hi" }));
+    const plain = await readDesign(new PluginClient(plans()), args);
+    const empty = await readDesign(
+      new PluginClient(plans()),
+      args,
+      memoryFiles(),
+      await project({ "README.md": "hi" }),
+    );
 
     expect(empty.content).toEqual(plain.content);
     expect(JSON.parse(textOf(empty, 1))).not.toHaveProperty("codeComponents");

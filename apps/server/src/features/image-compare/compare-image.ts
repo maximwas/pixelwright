@@ -3,14 +3,14 @@ import { dirname, resolve } from "node:path";
 import { BridgeError } from "@pixelwright/core";
 import { decode, encode } from "fast-png";
 import type * as z from "zod";
-import { resolveTarget } from "../bridge/target.ts";
-import { REFERENCE_MAX_BYTES } from "../constants/images.ts";
-import type { ImageCompareInputSchema, ImageCompareOutputSchema } from "../schemas/tools.ts";
-import type { RgbaImage } from "../types/images.ts";
-import type { ToolContext } from "../types/mcp.ts";
-import { compareImages, differenceImage } from "../utils/image-compare.ts";
-import { toRgba } from "../utils/rgba.ts";
-import { pngPath, renderPng } from "./screenshot.ts";
+import { REFERENCE_MAX_BYTES } from "../../constants/images.ts";
+import { pngPath } from "../../images/png-files.ts";
+import { renderPng } from "../../images/render-png.ts";
+import type { PluginClient } from "../../plugin/plugin-client.ts";
+import type { RgbaImage } from "../../types/images.ts";
+import { compareImages, differenceImage } from "../../utils/image-compare.ts";
+import { toRgba } from "../../utils/rgba.ts";
+import type { ImageCompareInputSchema, ImageCompareOutputSchema } from "./schemas.ts";
 
 type ImageCompareArgs = z.output<typeof ImageCompareInputSchema>;
 type ImageCompare = z.output<typeof ImageCompareOutputSchema>;
@@ -19,21 +19,17 @@ const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 /** The layer rendered, the reference read, both compared; the difference written when asked. */
 export async function compareImage(
-  bridge: ToolContext["bridge"],
+  plugin: PluginClient,
   { node, reference, scale, effects, clip, modes, diff, file }: ImageCompareArgs,
 ): Promise<ImageCompare> {
   const wanted = await referenceImage(reference);
-  const { png, scale: used } = await renderPng(
-    bridge,
-    {
-      node,
-      scale,
-      effects,
-      clip,
-      modes,
-    },
-    resolveTarget(bridge.plugins(), file),
-  );
+  const { png, scale: used } = await renderPng(plugin.session(file), {
+    node,
+    scale,
+    effects,
+    clip,
+    modes,
+  });
   const rendered = toRgba(decode(png));
   const result = compareImages(rendered, wanted);
   const size = {

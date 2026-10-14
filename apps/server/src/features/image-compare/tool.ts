@@ -1,12 +1,12 @@
-import type { McpServer } from "@modelcontextprotocol/server";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
-import { compareImage } from "../../images/compare-image.ts";
-import { ImageCompareInputSchema, ImageCompareOutputSchema } from "../../schemas/tools.ts";
-import type { ToolContext } from "../../types/mcp.ts";
-import { registerTool } from "../register-tool.ts";
+import type { ToolContext, ToolDefinition } from "../../types/mcp.ts";
+import { compareImage } from "./compare-image.ts";
+import { ImageCompareInputSchema, ImageCompareOutputSchema } from "./schemas.ts";
 
-export function registerImageCompareTool(server: McpServer, { bridge }: ToolContext): void {
-  registerTool(server, {
+export function imageCompareTool({
+  plugin,
+}: ToolContext): ToolDefinition<typeof ImageCompareInputSchema, typeof ImageCompareOutputSchema> {
+  return {
     name: "image_compare",
     title: "Compare a layer with an image",
     description:
@@ -14,6 +14,6 @@ export function registerImageCompareTool(server: McpServer, { bridge }: ToolCont
     input: ImageCompareInputSchema,
     output: ImageCompareOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (args) => compareImage(bridge, args),
-  });
+    run: (args) => compareImage(plugin, args),
+  };
 }

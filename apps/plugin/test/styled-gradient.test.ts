@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { readDesign } from "../../server/src/design/read-design.ts";
 import { applyDesign } from "../../server/src/features/design-apply/apply-design.ts";
+import { readDesign } from "../../server/src/features/design-read/read-design.ts";
 import { PluginClient } from "../../server/src/plugin/plugin-client.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
 import { pluginBridge } from "./helpers/plugin-bridge.ts";
@@ -79,7 +79,7 @@ describe("a layer filled with a gradient paint style", () => {
     plugin.services.edits.allow(true);
 
     const bridge = pluginBridge(plugin);
-    const read = await readDesign(bridge, {
+    const read = await readDesign(new PluginClient(bridge), {
       node: "1:1",
       screenshot: false,
       maxChars: 80_000,

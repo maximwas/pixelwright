@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../src/assets/written-files.ts";
 import { findTemplates } from "../src/code-connect/templates.ts";
-import { readDesign } from "../src/design/read-design.ts";
+import { readDesign } from "../src/features/design-read/read-design.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -43,7 +44,7 @@ describe("the Orbit example's Code Connect templates", () => {
 
   it("give the Plans row's cards their code with their buttons inside, as the README shows", async () => {
     const result = await readDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         node: "54:243",
         screenshot: false,

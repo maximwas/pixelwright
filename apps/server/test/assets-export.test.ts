@@ -5,8 +5,9 @@ import { join } from "node:path";
 import { BridgeError } from "@pixelwright/core";
 import { encode } from "fast-png";
 import { describe, expect, it } from "vitest";
-import { exportAssets } from "../src/assets/export-assets.ts";
 import { memoryFiles } from "../src/assets/written-files.ts";
+import { exportAssets } from "../src/features/assets-export/export-assets.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 import { JPEG, PNG } from "./helpers/images.ts";
@@ -108,7 +109,7 @@ describe("assets_export", () => {
   it("writes each named layer once, the same bytes in one file, a clash suffixed, and reports the bad ids apart", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
     const nodes = [...Array.from({ length: 28 }, (_, index) => `1:${index + 1}`), "0:1", "9:9"];
-    const result = await exportAssets(file().bridge, {
+    const result = await exportAssets(new PluginClient(file().bridge), {
       nodes,
       dir,
       original: false,
@@ -135,7 +136,7 @@ describe("assets_export", () => {
 
   it("says which path design_read planned whenever a layer's file got another name", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
-    const result = await exportAssets(file().bridge, {
+    const result = await exportAssets(new PluginClient(file().bridge), {
       nodes: ["1:1", "1:2", "1:3", "1:4"],
       dir,
       original: false,
@@ -158,7 +159,7 @@ describe("assets_export", () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
     const files = memoryFiles();
     const result = await exportAssets(
-      file().bridge,
+      new PluginClient(file().bridge),
       {
         nodes: ["1:3", "1:4"],
         dir,
@@ -185,19 +186,19 @@ describe("assets_export", () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
     const { bridge, exported } = file();
 
-    await exportAssets(bridge, {
+    await exportAssets(new PluginClient(bridge), {
       nodes: ["1:5"],
       dir,
       original: false,
     });
-    await exportAssets(bridge, {
+    await exportAssets(new PluginClient(bridge), {
       nodes: ["1:6"],
       dir,
       format: "JPG",
       scale: 3,
       original: false,
     });
-    await exportAssets(bridge, {
+    await exportAssets(new PluginClient(bridge), {
       nodes: ["1:7"],
       dir,
       format: "PDF",
@@ -213,7 +214,7 @@ describe("assets_export", () => {
 
   it("writes the images as placed with their real extension when asked for originals", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
-    const result = await exportAssets(file().bridge, {
+    const result = await exportAssets(new PluginClient(file().bridge), {
       nodes: ["1:5"],
       dir,
       original: true,
@@ -234,7 +235,7 @@ describe("assets_export", () => {
 
   it("exports every true asset inside a layer, like design_read plans them", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
-    const result = await exportAssets(file().bridge, {
+    const result = await exportAssets(new PluginClient(file().bridge), {
       from: "54:434",
       dir,
       original: false,
@@ -254,7 +255,7 @@ describe("assets_export", () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
 
     await expect(
-      exportAssets(file().bridge, {
+      exportAssets(new PluginClient(file().bridge), {
         nodes: ["1:1"],
         from: "54:434",
         dir,
@@ -262,7 +263,7 @@ describe("assets_export", () => {
       }),
     ).rejects.toThrow(/nodes or from/);
     await expect(
-      exportAssets(file().bridge, {
+      exportAssets(new PluginClient(file().bridge), {
         dir,
         original: false,
       }),
@@ -294,7 +295,7 @@ describe("assets_export review fixes", () => {
           })
         : request(op, input, options);
 
-    const result = await exportAssets(bridge, {
+    const result = await exportAssets(new PluginClient(bridge), {
       nodes: ["7:1"],
       dir,
       format: "PNG",
@@ -365,7 +366,7 @@ describe("assets_export sizes and WebP", () => {
   it("renders at the CSS width asked, times the density", async () => {
     const { bridge, exported } = translucent();
 
-    await exportAssets(bridge, {
+    await exportAssets(new PluginClient(bridge), {
       nodes: ["5:1"],
       dir: await mkdtemp(join(tmpdir(), "pixelwright-export-")),
       format: "PNG",
@@ -378,7 +379,7 @@ describe("assets_export sizes and WebP", () => {
   });
 
   it("refuses a CSS width Figma cannot render, naming the largest", async () => {
-    const result = await exportAssets(translucent().bridge, {
+    const result = await exportAssets(new PluginClient(translucent().bridge), {
       nodes: ["5:1"],
       dir: await mkdtemp(join(tmpdir(), "pixelwright-export-")),
       width: 220,
@@ -392,7 +393,7 @@ describe("assets_export sizes and WebP", () => {
   it("writes WebP, keeping the transparency", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
     const { bridge, exported } = translucent();
-    const result = await exportAssets(bridge, {
+    const result = await exportAssets(new PluginClient(bridge), {
       nodes: ["5:1"],
       dir,
       format: "WEBP",

@@ -1,12 +1,17 @@
-import type { McpServer } from "@modelcontextprotocol/server";
-import { exportAssets } from "../../assets/export-assets.ts";
+import { WebpEncoder } from "../../assets/webp.ts";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
-import { AssetsExportInputSchema, AssetsExportOutputSchema } from "../../schemas/tools.ts";
-import type { ToolContext } from "../../types/mcp.ts";
-import { registerTool } from "../register-tool.ts";
+import type { ToolContext, ToolDefinition } from "../../types/mcp.ts";
+import { exportAssets } from "./export-assets.ts";
+import { AssetsExportInputSchema, AssetsExportOutputSchema } from "./schemas.ts";
 
-export function registerAssetsTool(server: McpServer, { bridge, files }: ToolContext): void {
-  registerTool(server, {
+export function assetsExportTool({
+  plugin,
+  files,
+}: ToolContext): ToolDefinition<typeof AssetsExportInputSchema, typeof AssetsExportOutputSchema> {
+  // One encoder for the server: its wasm is read once.
+  const webp = new WebpEncoder();
+
+  return {
     name: "assets_export",
     title: "Export assets",
     description:
@@ -14,6 +19,6 @@ export function registerAssetsTool(server: McpServer, { bridge, files }: ToolCon
     input: AssetsExportInputSchema,
     output: AssetsExportOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (args) => exportAssets(bridge, args, files),
-  });
+    run: (args) => exportAssets(plugin, args, files, webp),
+  };
 }

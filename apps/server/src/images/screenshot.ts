@@ -1,113 +1,73 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, extname, resolve } from "node:path";
 import type { CallToolResult } from "@modelcontextprotocol/server";
-import { BridgeError, OPERATION_SCHEMAS } from "@pixelwright/core";
-import type * as z from "zod";
-import { imageInfo } from "../assets/image-info.ts";
-import { resolveTarget } from "../bridge/target.ts";
-import {
-  EDGE_PX,
-  INLINE_ATTEMPTS,
-  MAX_CLIP_RENDER_PX,
-  MAX_IMAGE_SIDE_PX,
-  MAX_INLINE_IMAGE_BYTES,
-} from "../constants/mcp.ts";
-import { exportBytes } from "../mcp/export-bytes.ts";
-import type { ScreenshotInputSchema } from "../schemas/tools.ts";
-import type { ToolContext } from "../types/mcp.ts";
-import { cropPng } from "../utils/crop-png.ts";
+import { BridgeError } from "@pixelwright/core";
+import { INLINE_ATTEMPTS, MAX_IMAGE_SIDE_PX, MAX_INLINE_IMAGE_BYTES } from "../constants/mcp.ts";
+import { exportBytes } from "../plugin/export-bytes.ts";
+import type { PluginSession } from "../plugin/plugin-session.ts";
+import { assertFitsInline, megabytes, pngPath, pngSize, writePng } from "./png-files.ts";
+import { type Clip, pngRequest, type RenderSpec, renderPng } from "./render-png.ts";
 
-type ScreenshotArgs = z.output<typeof ScreenshotInputSchema>;
+/** A screenshot to take: a layer rendered, written to a file when save names one, cut to a clip when one is given. */
+export interface ShotSpec extends RenderSpec {
+  readonly save?: string | undefined;
+}
 
-export async function takeScreenshot(
-  bridge: ToolContext["bridge"],
-  { node, scale, effects, save, file, clip, modes }: ScreenshotArgs,
-  target?: { session: string },
-): Promise<CallToolResult> {
-  const request = {
-    node,
-    format: "PNG" as const,
-    scale,
-    effects,
-    ...(modes === undefined ? {} : { modes }),
-  };
-  const where = {
-    file,
-    target,
-  };
-
-  if (clip !== undefined) {
-    return clippedShot(
-      bridge,
-      {
-        node,
-        scale,
-        effects,
-        clip,
-        ...(save === undefined ? {} : { save }),
-        ...(file === undefined ? {} : { file }),
-        ...(modes === undefined ? {} : { modes }),
-      },
-      target,
-    );
+/** A layer's screenshot from the session's file: inline, scaled down to fit when it must, or saved full size. */
+export async function takeScreenshot(session: PluginSession, spec: ShotSpec): Promise<CallToolResult> {
+  if (spec.clip !== undefined) {
+    return await clippedShot(session, spec, spec.clip);
   }
 
-  if (save !== undefined) {
-    const path = await pngPath(save);
-    const { bytes } = await exportBytes(bridge, request, where);
-
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, bytes);
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            node,
-            path,
-            ...sizeOf(bytes, node),
-            bytes: bytes.length,
-          }),
-        },
-      ],
-    };
+  if (spec.save !== undefined) {
+    return await savedShot(session, spec, spec.save);
   }
 
-  // The plugin lowers the scale to fit 2000 px; a render too heavy for an inline image is made again smaller.
-  let asked = scale;
+  return await inlineShot(session, spec);
+}
+
+async function savedShot(session: PluginSession, spec: ShotSpec, save: string): Promise<CallToolResult> {
+  const path = await pngPath(save);
+  const { bytes } = await exportBytes(session, pngRequest(spec));
+
+  await writePng(path, bytes);
+
+  return textResult({
+    node: spec.node,
+    path,
+    ...pngSize(bytes, spec.node),
+    bytes: bytes.length,
+  });
+}
+
+/** The plugin lowers the scale to fit 2000 px; a render too heavy for an inline image is made again smaller. */
+async function inlineShot(session: PluginSession, spec: ShotSpec): Promise<CallToolResult> {
+  let asked = spec.scale;
   let heavy: number | null = null;
 
   for (let attempt = 1; ; attempt++) {
     try {
-      const { bytes, scale: used } = await exportBytes(
-        bridge,
+      const { bytes, scale } = await exportBytes(
+        session,
         {
-          ...request,
+          ...pngRequest(spec),
           scale: asked,
           maxSide: MAX_IMAGE_SIDE_PX,
         },
-        {
-          ...where,
-          onFirstChunk: (first, rendered, totalBytes) => {
-            assertFitsInline(sizeOf(first, node), node, rendered);
-
-            if (totalBytes > MAX_INLINE_IMAGE_BYTES) {
-              throw new TooHeavy(totalBytes, rendered);
-            }
-          },
-        },
+        (first, rendered, totalBytes) =>
+          refuseHeavy(first, spec.node, {
+            rendered,
+            totalBytes,
+          }),
       );
 
-      return inlineShot(bytes, node, scale, used, heavy);
+      return inlineResult(bytes, {
+        node: spec.node,
+        asked: spec.scale,
+        used: scale,
+        heavy,
+      });
     } catch (error) {
       if (!(error instanceof TooHeavy) || attempt >= INLINE_ATTEMPTS) {
-        throw error instanceof TooHeavy
-          ? new BridgeError(
-              "RESULT_TOO_LARGE",
-              `${node} renders to ${megabytes(error.totalBytes)} even at scale ${error.scale}, too much to return inline: screenshot one section of it (outline lists them), or pass save with a .png path.`,
-            )
-          : error;
+        throw error instanceof TooHeavy ? tooHeavyError(spec.node, error) : error;
       }
 
       heavy = error.totalBytes;
@@ -117,170 +77,58 @@ export async function takeScreenshot(
   }
 }
 
-type Clip = NonNullable<ScreenshotArgs["clip"]>;
-type Modes = NonNullable<ScreenshotArgs["modes"]>;
+function refuseHeavy(
+  first: Buffer,
+  node: string,
+  { rendered, totalBytes }: { rendered: number; totalBytes: number },
+): void {
+  assertFitsInline(pngSize(first, node), node, rendered);
 
-/**
- * A layer rendered to PNG at the scale, full size; with a clip, a region of it: the whole layer rendered, then cut to
- * the clip, which is measured from the layer's box (inspect says where that box sits in the render: with effects, the
- * render covers what paints around it, and may cover less than the box, as a text's glyphs do). The clip may reach
- * anywhere in the box and what paints around it; the parts of that the render does not cover are transparent.
- */
-export async function renderPng(
-  bridge: ToolContext["bridge"],
-  {
-    node,
-    scale,
-    effects,
-    clip,
-    modes,
-  }: { node: string; scale: number; effects: boolean; clip?: Clip | undefined; modes?: Modes | undefined },
-  session: { session: string },
-): Promise<{ png: Buffer; scale: number }> {
-  const request = {
-    node,
-    format: "PNG" as const,
-    scale,
-    effects,
-    ...(modes === undefined ? {} : { modes }),
-  };
-
-  if (clip === undefined) {
-    const { bytes, scale: used } = await exportBytes(bridge, request, { target: session });
-
-    return {
-      png: bytes,
-      scale: used,
-    };
+  if (totalBytes > MAX_INLINE_IMAGE_BYTES) {
+    throw new TooHeavy(totalBytes, rendered);
   }
+}
 
-  const inspected = OPERATION_SCHEMAS.inspect.output.parse(await bridge.request("inspect", { nodes: [node] }, session));
-  const layer = inspected.layers[0];
-
-  if (layer === undefined) {
-    throw new BridgeError("NODE_NOT_FOUND", `${node} is not a layer of this file.`);
-  }
-
-  const rendered = effects ? (layer.paintedBox ?? layer.box) : layer.box;
-  // Where the clip may reach, from the box's top left: the box and what paints around it.
-  const reach = {
-    left: Math.min(0, rendered.x - layer.box.x),
-    top: Math.min(0, rendered.y - layer.box.y),
-    right: Math.max(layer.box.width, rendered.x - layer.box.x + rendered.width),
-    bottom: Math.max(layer.box.height, rendered.y - layer.box.y + rendered.height),
-  };
-  const within =
-    clip.x >= reach.left - EDGE_PX &&
-    clip.y >= reach.top - EDGE_PX &&
-    clip.x + clip.width <= reach.right + EDGE_PX &&
-    clip.y + clip.height <= reach.bottom + EDGE_PX;
-
-  if (!within) {
-    const painted =
-      rendered === layer.box
-        ? ""
-        : `, and with effects it paints from ${round(reach.left)}, ${round(reach.top)} to ${round(reach.right)}, ${round(reach.bottom)}`;
-
-    throw new BridgeError(
-      "OP_FAILED",
-      `The clip does not lie within ${node}: its box is ${layer.box.width}×${layer.box.height} px${painted}.`,
-    );
-  }
-
-  const [renderWidth, renderHeight] = [Math.round(rendered.width * scale), Math.round(rendered.height * scale)];
-
-  if (renderWidth * renderHeight > MAX_CLIP_RENDER_PX) {
-    throw new BridgeError(
-      "RESULT_TOO_LARGE",
-      `A clip renders the whole layer first: ${renderWidth}×${renderHeight} px at scale ${scale} is too much for ${node}. Clip a layer inside it (outline or inspect gives their boxes), or lower the scale.`,
-    );
-  }
-
-  const { bytes, scale: used } = await exportBytes(bridge, request, { target: session });
-  const cropped = cropPng(bytes, {
-    x: Math.round((layer.box.x - rendered.x + clip.x) * used),
-    y: Math.round((layer.box.y - rendered.y + clip.y) * used),
-    width: Math.round(clip.width * used),
-    height: Math.round(clip.height * used),
-  });
-
-  if (cropped === null) {
-    throw new BridgeError("OP_FAILED", `The clip is under a pixel at scale ${used}: give a bigger region or scale.`);
-  }
-
-  return {
-    png: Buffer.from(cropped),
-    scale: used,
-  };
+function tooHeavyError(node: string, { totalBytes, scale }: TooHeavy): BridgeError {
+  return new BridgeError(
+    "RESULT_TOO_LARGE",
+    `${node} renders to ${megabytes(totalBytes)} even at scale ${scale}, too much to return inline: screenshot one section of it (outline lists them), or pass save with a .png path.`,
+  );
 }
 
 /** A region of a layer (renderPng with a clip), saved or returned inline. */
-async function clippedShot(
-  bridge: ToolContext["bridge"],
-  { node, scale, effects, save, file, clip, modes }: ScreenshotArgs & { clip: Clip },
-  target?: { session: string },
-): Promise<CallToolResult> {
-  const session = target ?? resolveTarget(bridge.plugins(), file);
-  const { png, scale: used } = await renderPng(
-    bridge,
-    {
-      node,
-      scale,
-      effects,
+async function clippedShot(session: PluginSession, spec: ShotSpec, clip: Clip): Promise<CallToolResult> {
+  const { png, scale } = await renderPng(session, spec);
+  const size = pngSize(png, spec.node);
+
+  if (spec.save !== undefined) {
+    const path = await pngPath(spec.save);
+
+    await writePng(path, png);
+
+    return textResult({
+      node: spec.node,
       clip,
-      modes,
-    },
-    session,
-  );
-  const size = sizeOf(png, node);
-
-  if (save !== undefined) {
-    const path = await pngPath(save);
-
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, png);
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            node,
-            clip,
-            path,
-            ...size,
-            bytes: png.length,
-          }),
-        },
-      ],
-    };
+      path,
+      ...size,
+      bytes: png.length,
+    });
   }
 
-  assertFitsInline(size, node, used);
+  assertFitsInline(size, spec.node, scale);
 
   if (png.length > MAX_INLINE_IMAGE_BYTES) {
     throw new BridgeError(
       "RESULT_TOO_LARGE",
-      `The clip of ${node} is ${megabytes(png.length)}, too much to return inline: a smaller clip or scale, or pass save.`,
+      `The clip of ${spec.node} is ${megabytes(png.length)}, too much to return inline: a smaller clip or scale, or pass save.`,
     );
   }
 
-  return {
-    content: [
-      {
-        type: "image",
-        data: png.toString("base64"),
-        mimeType: "image/png",
-      },
-      {
-        type: "text",
-        text: `Screenshot of ${node}, ${clip.width}×${clip.height} px from ${clip.x}, ${clip.y} of its box: ${size.width}×${size.height} px at scale ${used}.`,
-      },
-    ],
-  };
+  return imageResult(
+    png,
+    `Screenshot of ${spec.node}, ${clip.width}×${clip.height} px from ${clip.x}, ${clip.y} of its box: ${size.width}×${size.height} px at scale ${scale}.`,
+  );
 }
-
-const round = (value: number) => Math.round(value * 100) / 100;
 
 /** A render too heavy to return inline, found on its first chunk. */
 class TooHeavy extends Error {
@@ -294,8 +142,11 @@ class TooHeavy extends Error {
   }
 }
 
-function inlineShot(bytes: Buffer, node: string, asked: number, used: number, heavy: number | null): CallToolResult {
-  const { width, height } = sizeOf(bytes, node);
+function inlineResult(
+  bytes: Buffer,
+  { node, asked, used, heavy }: { node: string; asked: number; used: number; heavy: number | null },
+): CallToolResult {
+  const { width, height } = pngSize(bytes, node);
   const why =
     heavy === null
       ? `fit ${MAX_IMAGE_SIDE_PX} px`
@@ -305,65 +156,32 @@ function inlineShot(bytes: Buffer, node: string, asked: number, used: number, he
       ? ` Scaled down to ${why}: at scale ${asked} it is ${Math.round((width / used) * asked)}×${Math.round((height / used) * asked)} px; screenshot a section, or pass save, for the details.`
       : "";
 
+  return imageResult(bytes, `Screenshot of ${node}: ${width}×${height} px at scale ${used}.${full}`);
+}
+
+function imageResult(png: Buffer, text: string): CallToolResult {
   return {
     content: [
       {
         type: "image",
-        data: bytes.toString("base64"),
+        data: png.toString("base64"),
         mimeType: "image/png",
       },
       {
         type: "text",
-        text: `Screenshot of ${node}: ${width}×${height} px at scale ${used}.${full}`,
+        text,
       },
     ],
   };
 }
 
-const megabytes = (bytes: number) => `${Math.round((bytes / 1024 / 1024) * 10) / 10} MB`;
-
-/**
- * Where save writes: a .png path, never over a file that is not a PNG (a tool that only reads Figma must not destroy
- * a file the user keeps); an earlier screenshot is replaced.
- */
-export async function pngPath(save: string): Promise<string> {
-  const path = resolve(save);
-
-  if (extname(path).toLowerCase() !== ".png") {
-    throw new BridgeError("OP_FAILED", `save must be a .png path, not ${save}.`);
-  }
-
-  const existing = await readFile(path).catch(() => null);
-
-  if (existing !== null && imageInfo(existing)?.format !== "png") {
-    throw new BridgeError("OP_FAILED", `${path} exists and is not a PNG: choose another path, it is not overwritten.`);
-  }
-
-  return path;
-}
-
-function sizeOf(bytes: Uint8Array, node: string): { width: number; height: number } {
-  const info = imageInfo(bytes);
-  const size = info?.format === "png" ? info : null;
-
-  if (size === null) {
-    throw new BridgeError("OP_FAILED", `Figma's export of ${node} is not a PNG.`);
-  }
-
-  return size;
-}
-
-function assertFitsInline({ width, height }: { width: number; height: number }, node: string, scale: number): void {
-  const side = Math.max(width, height);
-
-  if (side <= MAX_IMAGE_SIDE_PX) {
-    return;
-  }
-
-  const fit = Math.floor((MAX_IMAGE_SIDE_PX / side) * scale * 100) / 100;
-
-  throw new BridgeError(
-    "RESULT_TOO_LARGE",
-    `${node} renders at ${width}×${height} px at scale ${scale}, over the ${MAX_IMAGE_SIDE_PX} px returned inline: use scale ${fit}, screenshot one section of it (outline lists them), or pass save with a file path to get it full size.`,
-  );
+function textResult(value: object): CallToolResult {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(value),
+      },
+    ],
+  };
 }
