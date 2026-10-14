@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type ApplyChange, designXml, type Snapshot, SnapshotSchema } from "@pixelwright/core";
+import { type ApplyChange, BridgeError, designXml, type Snapshot, SnapshotSchema } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../src/assets/written-files.ts";
 import { applyDesign } from "../src/design/apply-design.ts";
@@ -34,6 +34,10 @@ function bridgeOver(snapshot: Snapshot, { cut = false }: { cut?: boolean } = {})
       if (op === "save_version") {
         if ((input as { title: string }).title === "fails") {
           throw new Error("Figma refused the version");
+        }
+
+        if ((input as { title: string }).title === "old plugin") {
+          throw new BridgeError("UNKNOWN_OP", "Unknown operation: save_version");
         }
 
         return { id: "v-1" };
@@ -146,6 +150,22 @@ describe("design_apply", () => {
       }),
     ).rejects.toThrow(/The version "fails" could not be saved, so nothing was written: Figma refused the version/);
     expect(refused.requests.map(({ op }) => op)).not.toContain("apply");
+  });
+
+  it("says the plugin is older than the server when it cannot save versions yet", async () => {
+    const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
+    const old = bridgeOver(ROW);
+
+    await expect(
+      applyDesign(old.bridge, {
+        xml,
+        dryRun: false,
+        version: "old plugin",
+      }),
+    ).rejects.toThrow(
+      /The Pixelwright plugin in this file is older than the server and cannot save versions: run npx -y pixelwright@latest to update it, or write without version\./,
+    );
+    expect(old.requests.map(({ op }) => op)).not.toContain("apply");
   });
 
   it("writes nothing for the XML design_read returned, sent back as it was", async () => {
