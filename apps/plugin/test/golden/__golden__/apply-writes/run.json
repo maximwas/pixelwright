@@ -1,0 +1,151 @@
+{
+  "Allow edits off": {
+    "real": {
+      "thrown": {
+        "code": "EDITS_DISABLED",
+        "message": "Allow edits is off in the Pixelwright plugin window: turn it on there to write to this file (dryRun checks changes without it)."
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "an id the file does not hold": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "dryRun": false,
+        "errors": [
+          {
+            "line": 1,
+            "column": 1,
+            "id": "99:9",
+            "attribute": "gap",
+            "message": "gap needs display=\"flex\" or display=\"grid\": without auto layout it spaces nothing."
+          }
+        ]
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "dryRun": true,
+        "errors": [
+          {
+            "line": 1,
+            "column": 1,
+            "id": "99:9",
+            "attribute": "gap",
+            "message": "gap needs display=\"flex\" or display=\"grid\": without auto layout it spaces nothing."
+          }
+        ]
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "one good and one refused attribute": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [
+          {
+            "line": 1,
+            "column": 1,
+            "id": "1:1",
+            "attribute": "padding",
+            "message": "No variable is named --nope in this file or the libraries it uses.",
+            "hint": "tokens_read lists the file's tokens."
+          }
+        ],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "0:0",
+          "method": "loadAllPagesAsync",
+          "args": []
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "paddingTop": [
+            null,
+            8
+          ],
+          "itemSpacing": [
+            null,
+            8
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [
+          {
+            "line": 1,
+            "column": 1,
+            "id": "1:1",
+            "attribute": "padding",
+            "message": "No variable is named --nope in this file or the libraries it uses.",
+            "hint": "tokens_read lists the file's tokens."
+          },
+          {
+            "line": 1,
+            "column": 1,
+            "id": "1:1",
+            "attribute": "padding",
+            "message": "No variable is named --nope in this file or the libraries it uses.",
+            "hint": "tokens_read lists the file's tokens."
+          }
+        ],
+        "dryRun": true
+      },
+      "calls": [
+        {
+          "node": "0:0",
+          "method": "loadAllPagesAsync",
+          "args": []
+        }
+      ],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}

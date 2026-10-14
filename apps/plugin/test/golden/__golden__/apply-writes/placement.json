@@ -1,0 +1,216 @@
+{
+  "absolute on a board": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "3:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "3:2": {
+          "relativeTransform": [
+            [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                1,
+                0,
+                16
+              ],
+              [
+                0,
+                1,
+                24
+              ]
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "pinned right and bottom": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "3:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "3:2": {
+          "relativeTransform": [
+            [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                1,
+                0,
+                60
+              ],
+              [
+                0,
+                1,
+                60
+              ]
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "absolute in auto layout": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:3"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "9:3": {
+          "layoutPositioning": [
+            null,
+            "ABSOLUTE"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "turned": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:4"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "9:4": {
+          "relativeTransform": [
+            [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                0.707106781,
+                -0.707106781,
+                50
+              ],
+              [
+                0.707106781,
+                0.707106781,
+                -20.710678119
+              ]
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}

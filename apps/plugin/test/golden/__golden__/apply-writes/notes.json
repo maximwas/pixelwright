@@ -1,0 +1,136 @@
+{
+  "a note": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "annotations": [
+            null,
+            [
+              {
+                "label": "keep the 24px gap",
+                "categoryId": "cat-2"
+              }
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a link on a text": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:6"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:6",
+          "method": "setRangeHyperlink",
+          "args": [
+            0,
+            9,
+            {
+              "type": "URL",
+              "value": "https://example.com"
+            }
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:6": {
+          "hyperlink": [
+            null,
+            {
+              "type": "URL",
+              "value": "https://example.com"
+            }
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Space Grotesk Medium"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a rename": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:5"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:5": {
+          "name": [
+            "Heading and link",
+            "Header"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}

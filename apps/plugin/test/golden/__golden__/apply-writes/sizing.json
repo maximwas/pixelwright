@@ -1,0 +1,322 @@
+{
+  "fixed width": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:1",
+          "method": "resize",
+          "args": [
+            320,
+            100
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "width": [
+            100,
+            320
+          ],
+          "layoutSizingHorizontal": [
+            null,
+            "FIXED"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "hug": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "layoutSizingHorizontal": [
+            null,
+            "HUG"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "fill along the row": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "9:2": {
+          "layoutSizingHorizontal": [
+            null,
+            "FILL"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "stretch across": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:5"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:5": {
+          "layoutSizingHorizontal": [
+            null,
+            "FILL"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "min and max": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "minWidth": [
+            null,
+            200
+          ],
+          "maxWidth": [
+            null,
+            600
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a line's length": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "6:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "6:1",
+          "method": "resize",
+          "args": [
+            200,
+            0
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "6:1": {
+          "width": [
+            100,
+            200
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a standing line's length": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "6:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "6:2",
+          "method": "resize",
+          "args": [
+            150,
+            0
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "6:2": {
+          "width": [
+            80,
+            150
+          ],
+          "relativeTransform": [
+            [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                -1,
+                75
+              ],
+              [
+                1,
+                0,
+                -75
+              ]
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}

@@ -1,0 +1,634 @@
+{
+  "characters": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:2",
+          "method": "characters",
+          "args": [
+            "Hi there"
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:2": {
+          "characters": [
+            "Hello",
+            "Hi there"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a font": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:2",
+          "method": "setRangeFontName",
+          "args": [
+            0,
+            5,
+            {
+              "family": "Inter",
+              "style": "Bold"
+            }
+          ]
+        },
+        {
+          "node": "1:2",
+          "method": "setRangeFontSize",
+          "args": [
+            0,
+            5,
+            20
+          ]
+        },
+        {
+          "node": "1:2",
+          "method": "setRangeLineHeight",
+          "args": [
+            0,
+            5,
+            {
+              "unit": "PIXELS",
+              "value": 28
+            }
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:2": {
+          "fontName": [
+            {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            {
+              "family": "Inter",
+              "style": "Bold"
+            }
+          ],
+          "fontSize": [
+            16,
+            20
+          ],
+          "lineHeight": [
+            {
+              "unit": "AUTO"
+            },
+            {
+              "unit": "PIXELS",
+              "value": 28
+            }
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Bold",
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a colour": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:2",
+          "method": "setRangeFills",
+          "args": [
+            0,
+            5,
+            [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 0.231372549,
+                  "g": 0.184313725,
+                  "b": 0.850980392
+                },
+                "opacity": 1
+              }
+            ]
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:2": {
+          "fills": [
+            [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 0.231372549,
+                  "g": 0.184313725,
+                  "b": 0.850980392
+                },
+                "opacity": 1
+              }
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a span": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:2",
+          "method": "setRangeFills",
+          "args": [
+            3,
+            5,
+            [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 1,
+                  "g": 0,
+                  "b": 0
+                },
+                "opacity": 1
+              }
+            ]
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {},
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "an underline": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:6"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:6",
+          "method": "setRangeTextDecoration",
+          "args": [
+            0,
+            9,
+            "UNDERLINE"
+          ]
+        },
+        {
+          "node": "1:6",
+          "method": "setRangeTextDecorationStyle",
+          "args": [
+            0,
+            9,
+            "SOLID"
+          ]
+        },
+        {
+          "node": "1:6",
+          "method": "setRangeTextDecorationColor",
+          "args": [
+            0,
+            9,
+            {
+              "value": "AUTO"
+            }
+          ]
+        },
+        {
+          "node": "1:6",
+          "method": "setRangeTextDecorationOffset",
+          "args": [
+            0,
+            9,
+            {
+              "unit": "AUTO"
+            }
+          ]
+        },
+        {
+          "node": "1:6",
+          "method": "setRangeTextDecorationThickness",
+          "args": [
+            0,
+            9,
+            {
+              "unit": "AUTO"
+            }
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:6": {
+          "textDecoration": [
+            "NONE",
+            "UNDERLINE"
+          ],
+          "textDecorationStyle": [
+            null,
+            "SOLID"
+          ],
+          "textDecorationColor": [
+            null,
+            {
+              "value": "AUTO"
+            }
+          ],
+          "textDecorationOffset": [
+            null,
+            {
+              "unit": "AUTO"
+            }
+          ],
+          "textDecorationThickness": [
+            null,
+            {
+              "unit": "AUTO"
+            }
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Space Grotesk Medium"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "centred": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:2": {
+          "textAlignHorizontal": [
+            "LEFT",
+            "CENTER"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "spacing and case": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:2",
+          "method": "setRangeLetterSpacing",
+          "args": [
+            0,
+            5,
+            {
+              "unit": "PIXELS",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "node": "1:2",
+          "method": "setRangeTextCase",
+          "args": [
+            0,
+            5,
+            "UPPER"
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:2": {
+          "textCase": [
+            "ORIGINAL",
+            "UPPER"
+          ],
+          "letterSpacing": [
+            {
+              "unit": "PIXELS",
+              "value": 0
+            },
+            {
+              "unit": "PIXELS",
+              "value": 1
+            }
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a new text": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:1",
+            "tag": "Text"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:5",
+          "method": "insertChild",
+          "args": [
+            2,
+            "90:1"
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "textAutoResize",
+          "args": [
+            "WIDTH_AND_HEIGHT"
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "characters",
+          "args": [
+            "New text"
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": "1:5",
+          "state": {
+            "name": "Text",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "characters": "New text",
+            "fontName": {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            "fontSize": 12,
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100
+          }
+        }
+      ],
+      "changed": {
+        "1:5": {
+          "children": [
+            [
+              "1:2",
+              "1:6"
+            ],
+            [
+              "1:2",
+              "1:6",
+              "90:1"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}
