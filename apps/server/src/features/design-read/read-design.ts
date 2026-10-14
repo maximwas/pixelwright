@@ -22,13 +22,14 @@ import { CODE_CONNECT_SHARE } from "../../constants/code-connect.ts";
 import { takeScreenshot } from "../../images/screenshot.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import type { PluginSession } from "../../plugin/plugin-session.ts";
+import { codeHints } from "./code-hints.ts";
 import { codeOutput } from "./code-output.ts";
 import type { DesignReadInputSchema } from "./schemas.ts";
 
 /** The tool's input; `code` may be left out by callers that skip the schema (it is on by default). */
 type DesignReadArgs = Omit<z.output<typeof DesignReadInputSchema>, "code"> & { code?: boolean };
 
-/** Code Connect's part of a read: the connected instances' code, or none, and what kept the templates from running. */
+/** Code Connect's part of a read: the connected instances' code, or none, and what it says of the project's files. */
 interface Connected {
   readonly code: CodeRead | null;
   readonly problems: readonly string[];
@@ -45,7 +46,7 @@ export async function readDesign(
   const session = plugin.session(args.file);
   const node = args.node ?? (await selectedLayer(session));
   const snapshot = await visibleSnapshot(session, node, args.depth);
-  const connected = await connectedCode(snapshot, args, project);
+  const connected = await connectedCode(session, snapshot, args, project);
   const { tree, assets } = await treeWithAssets(session, snapshot, {
     args,
     code: connected.code,
@@ -121,22 +122,45 @@ async function visibleSnapshot(session: PluginSession, node: string, depth: numb
   return snapshot;
 }
 
-/** The code the project's Code Connect templates give the read's connected instances, within their share of maxChars. */
-async function connectedCode(snapshot: Snapshot, args: DesignReadArgs, project: string | null): Promise<Connected> {
-  const { templates, problems } =
-    project === null || !(args.code ?? true)
-      ? {
-          templates: [],
-          problems: [],
-        }
-      : await findTemplates(project);
+/**
+ * The code the project's Code Connect files give the read's connected instances, within their share of maxChars, and
+ * what to say of them: the files' problems, the components shown without code, sources gone, an old plugin.
+ */
+async function connectedCode(
+  session: PluginSession,
+  snapshot: Snapshot,
+  args: DesignReadArgs,
+  project: string | null,
+): Promise<Connected> {
+  if (project === null || !(args.code ?? true)) {
+    return {
+      code: null,
+      problems: [],
+    };
+  }
+
+  const { templates, problems } = await findTemplates(project);
+
+  if (templates.length === 0) {
+    return {
+      code: null,
+      problems,
+    };
+  }
+
+  const room = Math.floor(args.maxChars * CODE_CONNECT_SHARE);
+  const code = connectSnapshot(snapshot.root, templates, room, session.info()?.file.key ?? null);
 
   return {
-    code:
-      templates.length === 0
-        ? null
-        : connectSnapshot(snapshot.root, templates, Math.floor(args.maxChars * CODE_CONNECT_SHARE)),
-    problems,
+    code,
+    problems: [
+      ...problems,
+      ...(await codeHints(code, {
+        templates,
+        project,
+        node: snapshot.root.id,
+      })),
+    ],
   };
 }
 

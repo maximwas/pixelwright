@@ -555,6 +555,7 @@ describe("design_read with the project's Code Connect templates", () => {
         template: "PlanCard.figma.ts",
         snippet: '<PlanCard name="Starter" price="$0" />',
         imports,
+        unread: ["Description"],
       },
       {
         ids: ["54:268"],
@@ -562,6 +563,7 @@ describe("design_read with the project's Code Connect templates", () => {
         template: "PlanCard.figma.ts",
         snippet: '<PlanCard name="Pro" price="$12" popular />',
         imports,
+        unread: ["Description"],
       },
       {
         ids: ["54:292"],
@@ -569,6 +571,7 @@ describe("design_read with the project's Code Connect templates", () => {
         template: "PlanCard.figma.ts",
         snippet: '<PlanCard name="Team" price="$29" />',
         imports,
+        unread: ["Description"],
       },
     ]);
     expect(meta.imports).toEqual(imports);
@@ -688,6 +691,58 @@ describe("design_read with the project's Code Connect templates", () => {
 
     expect(meta.codeComponents.map(({ ids }) => ids)).toEqual([["54:244"]]);
     expect(meta.hints).toContainEqual(expect.stringMatching(/^Code Connect: 2 more connected instances/));
+  });
+
+  it("gives each group's source and the properties its code never reads, and says when the source is gone", async () => {
+    const root = await project({
+      "PlanCard.figma.ts": PLAN_CARD.replace("// component=", "// source=src/PlanCard.tsx\n// component="),
+    });
+    const meta = JSON.parse(textOf(await readDesign(new PluginClient(plans()), args, memoryFiles(), root), 1)) as {
+      codeComponents: { source?: string; unread?: string[] }[];
+      hints: string[];
+    };
+
+    expect(meta.codeComponents.map(({ source, unread }) => [source, unread])).toEqual([
+      ["src/PlanCard.tsx", ["Description"]],
+      ["src/PlanCard.tsx", ["Description"]],
+      ["src/PlanCard.tsx", ["Description"]],
+    ]);
+    expect(meta.hints).toContain(
+      "Code Connect: src/PlanCard.tsx, the source PlanCard.figma.ts names, does not exist: the code moved or was deleted; correct it there.",
+    );
+  });
+
+  it("names the components shown without code, and collapses a batch row's icons so no icon file is planned", async () => {
+    const without = JSON.parse(
+      textOf(await readDesign(new PluginClient(plans()), args, memoryFiles(), await project({ "README.md": "" })), 1),
+    ) as { assets: { src: string }[] };
+    const root = await project({
+      "component.figma.batch.ts": "import figma from 'figma'\nexport default { example: figma.code`<CheckIcon />` }\n",
+      "icons.figma.batch.json": JSON.stringify({
+        templateFile: "./component.figma.batch.ts",
+        components: [
+          {
+            key: "778d139f52be557106d2db2a415cebc8ba2197b0",
+            component: "CheckIcon",
+          },
+        ],
+      }),
+    });
+    const meta = JSON.parse(textOf(await readDesign(new PluginClient(plans()), args, memoryFiles(), root), 1)) as {
+      assets: { src: string }[];
+      hints: string[];
+      codeComponents: { ids: string[] }[];
+    };
+
+    expect(without.assets.length - meta.assets.length).toBe(9);
+    expect(meta.codeComponents[0]?.ids).toHaveLength(9);
+    expect(meta.hints).toContain(
+      "Code Connect: 3 components shown here have no code: Plan Card (3), Button (3), Badge (1). components_read within=54:243 mapped=false gives their keys and properties: connect each with a batch row or a template (guide code-connect), or build it.",
+    );
+    // The Plans fixture was read before sets had keys: a keyed file cannot match its Button set.
+    expect(meta.hints).toContain(
+      "Code Connect: The Pixelwright plugin in this file is older than the server, so keyed Code Connect files cannot match it: update it (npx -y pixelwright@latest).",
+    );
   });
 
   it("reads as before in a project without templates", async () => {

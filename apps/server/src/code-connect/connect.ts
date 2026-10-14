@@ -7,8 +7,12 @@ export interface CodeGroup {
   readonly ids: string[];
   readonly component: string;
   readonly template: string;
+  /** The code component's file or package, as its Code Connect file writes it. */
+  readonly source?: string;
   readonly snippet: string;
   readonly imports: string[];
+  /** The properties of its instances that their code never reads, all of them together. */
+  readonly unread?: string[];
 }
 
 /** Instances one template failed on, with the first of their errors. */
@@ -27,6 +31,10 @@ export interface CodeRead {
   readonly left: number;
   /** The characters the code takes. */
   readonly used: number;
+  /** The components of the instances shown as layers that no connection connects, with how many. */
+  readonly unconnected: ReadonlyMap<string, number>;
+  /** Some instance's set has no key in the read: a plugin older than the server, which keyed files cannot match. */
+  readonly setKeysMissing: boolean;
 }
 
 /**
@@ -53,6 +61,8 @@ class CodeConnector {
   readonly #connected = new Map<string, string>();
   readonly #groups = new Map<string, CodeGroup>();
   readonly #errors = new Map<string, CodeErrorGroup>();
+  readonly #unconnected = new Map<string, number>();
+  #setKeysMissing = false;
   #used = 0;
   #left = 0;
 
@@ -71,6 +81,8 @@ class CodeConnector {
       errors: [...this.#errors.values()],
       left: this.#left,
       used: Math.min(this.#used, this.#room),
+      unconnected: this.#unconnected,
+      setKeysMissing: this.#setKeysMissing,
     };
   }
 
@@ -88,7 +100,17 @@ class CodeConnector {
   #connects(node: SnapshotNode): boolean {
     const template = this.#session.connectionOf(node)?.template ?? null;
 
+    if (node.instance !== undefined) {
+      this.#setKeysMissing ||= node.instance.setId !== undefined && node.instance.setKey === undefined;
+    }
+
     if (template === null) {
+      if (node.instance !== undefined) {
+        const name = node.instance.setName ?? node.instance.componentName;
+
+        this.#unconnected.set(name, (this.#unconnected.get(name) ?? 0) + 1);
+      }
+
       return false;
     }
 
@@ -121,7 +143,7 @@ class CodeConnector {
       return false;
     }
 
-    if (!this.#fits(node, outcome) || node === this.#root) {
+    if (!this.#fits(node, outcome, template) || node === this.#root) {
       return false;
     }
 
@@ -131,7 +153,7 @@ class CodeConnector {
   }
 
   /** Whether the code fits in the room left, taken when it does: a group's snippet once, then each id it adds. */
-  #fits(node: SnapshotNode, outcome: Exclude<RenderedInstance, { error: string }>): boolean {
+  #fits(node: SnapshotNode, outcome: Exclude<RenderedInstance, { error: string }>, template: TemplateFile): boolean {
     const key = `${outcome.template}\n${outcome.snippet}`;
     const group = this.#groups.get(key);
     const size = group === undefined ? outcome.snippet.length + outcome.imports.join("\n").length : node.id.length;
@@ -145,16 +167,21 @@ class CodeConnector {
 
     this.#used += size;
 
+    const unread = this.#session.coverage(node.id)?.unread ?? [];
+
     if (group === undefined) {
       this.#groups.set(key, {
         ids: [node.id],
         component: outcome.component,
         template: outcome.template,
+        ...(template.codeSource === undefined ? {} : { source: template.codeSource }),
         snippet: outcome.snippet,
         imports: outcome.imports,
+        ...(unread.length === 0 ? {} : { unread }),
       });
     } else {
       group.ids.push(node.id);
+      this.#groups.set(key, withUnread(group, unread));
     }
 
     return true;
@@ -175,6 +202,18 @@ class CodeConnector {
       group.ids.push(id);
     }
   }
+}
+
+/** A group with more of its instances' unread properties, each once. */
+function withUnread(group: CodeGroup, unread: readonly string[]): CodeGroup {
+  const all = [...new Set([...(group.unread ?? []), ...unread])];
+
+  return all.length === 0
+    ? group
+    : {
+        ...group,
+        unread: all,
+      };
 }
 
 /** The read left out layers inside this instance: a visible layer in it lists fewer children than it has. */

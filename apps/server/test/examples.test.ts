@@ -63,8 +63,11 @@ describe("the Orbit example's Code Connect templates", () => {
       ids: [id],
       component: "Plan Card",
       template: "components/PlanCard.figma.ts",
+      source: "src/components/PlanCard.tsx",
       snippet: `<PlanCard ${props}>\n  <Button variant="primary">${label}</Button>\n</PlanCard>`,
       imports,
+      // The example leaves the card's description out of its code.
+      unread: ["Description"],
     });
 
     expect(meta.codeComponents).toEqual([
