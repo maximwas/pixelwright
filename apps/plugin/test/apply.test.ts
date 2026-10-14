@@ -325,6 +325,19 @@ describe("apply: the safety catch", () => {
   });
 });
 
+describe("apply: sections", () => {
+  it("sizes a new section as Figma lets it, without constraints", async () => {
+    root = page();
+    fake = installFigma(root, LIBRARY, { strict: true });
+
+    const result = await apply('<Section name="Area" width="400px" height="300px"/>');
+    const [made] = fake.writes.created;
+
+    expect(result.errors).toEqual([]);
+    expect([made?.type, made?.width, made?.height]).toEqual(["SECTION", 400, 300]);
+  });
+});
+
 describe("apply: creating", () => {
   it("creates a frame with a text in auto layout under the parent, the font loaded before the characters", async () => {
     const result = await apply(

@@ -1,5 +1,5 @@
 import type { FigmaProps } from "@pixelwright/core";
-import type { Layer, WriteContext } from "../types/apply.ts";
+import type { WriteContext } from "../types/apply.ts";
 import { instancePath } from "./nodes.ts";
 import { WriteError } from "./write-error.ts";
 
@@ -23,13 +23,7 @@ export function svgOf(props: FigmaProps): string {
  * The image an Image's file makes, made once per file: before its layer, so a file Figma refuses (too big, not PNG,
  * JPEG or GIF) leaves no empty layer behind.
  */
-export function imageOf(props: FigmaProps, context: WriteContext): Image {
-  const asset = props.asset;
-
-  if (asset?.kind !== "image") {
-    throw new WriteError("An icon's SVG makes new vector layers: delete the icon and create it again to replace it.");
-  }
-
+export function imageOf(asset: { readonly src: string; readonly stream?: string }, context: WriteContext): Image {
   const made = asset.stream === undefined ? undefined : context.images.get(asset.stream);
 
   if (made !== undefined) {
@@ -47,50 +41,6 @@ export function imageOf(props: FigmaProps, context: WriteContext): Image {
   context.images.set(asset.stream, image);
 
   return image;
-}
-
-/**
- * An Image's file: its first image paint takes the new image, keeping how it fits and is cropped; a layer without one
- * gets one that fills it.
- */
-export function writeImage(node: Layer, props: FigmaProps, context: WriteContext): void {
-  if (props.asset === undefined) {
-    return;
-  }
-
-  const hash = imageOf(props, context).hash;
-  const fills = Array.isArray(node.fills) ? (node.fills as Paint[]) : [];
-  const at = fills.findIndex((paint) => paint.type === "IMAGE");
-
-  node.fills =
-    at === -1
-      ? [
-          {
-            type: "IMAGE",
-            imageHash: hash,
-            scaleMode: "FILL",
-          },
-        ]
-      : fills.map((paint, index) =>
-          index === at
-            ? {
-                ...paint,
-                imageHash: hash,
-              }
-            : paint,
-        );
-}
-
-/** A new Icon sized as the XML says, scaled with its vectors (a resize would leave them as they are). */
-export function fitIcon(node: Layer, props: FigmaProps): FigmaProps {
-  const { width, height, ...rest } = props;
-  const wanted = typeof width === "number" ? width / node.width : typeof height === "number" ? height / node.height : 1;
-
-  if (wanted !== 1 && Number.isFinite(wanted) && wanted > 0) {
-    (node as unknown as FrameNode).rescale(wanted);
-  }
-
-  return rest;
 }
 
 /** A new instance's layers by their ids inside it: another instance's ids of the same component name the same ones. */

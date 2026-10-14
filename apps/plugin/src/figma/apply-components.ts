@@ -1,106 +1,10 @@
-import { closest, type FigmaProps } from "@pixelwright/core";
+import type { FigmaProps } from "@pixelwright/core";
 import { SET_GAP } from "../constants/plugin.ts";
 import type { Layer } from "../types/apply.ts";
-import type { ComponentIndex } from "./component-index.ts";
-import { type ComponentOwner, ownerOf, valuesOf, variantFor, variantName } from "./variants.ts";
+import { type ComponentOwner, ownerOf, valuesOf, variantName } from "./variants.ts";
 import { WriteError } from "./write-error.ts";
 
 type Owner = ComponentOwner;
-
-/** An instance's own component, and what holds its properties. */
-async function mainOf(node: Layer): Promise<{ main: ComponentNode; owner: Owner }> {
-  const main = await (node as unknown as InstanceNode).getMainComponentAsync();
-
-  if (main === null) {
-    throw new WriteError(`${node.id}'s component is gone: Figma cannot change its variant or props.`);
-  }
-
-  return {
-    main,
-    owner: ownerOf(main),
-  };
-}
-
-/** An instance swapped to another component: the variant it has where the new one has the same values. */
-export async function swapTo(
-  node: Layer,
-  name: string,
-  wanted: FigmaProps["variant"],
-  index: ComponentIndex,
-): Promise<void> {
-  const owner = await index.find(name);
-  const { main } = await mainOf(node);
-  const keep = owner.type === "COMPONENT_SET" && main.parent?.id === owner.id ? valuesOf(main) : {};
-
-  (node as unknown as InstanceNode).swapComponent(
-    variantFor(owner, {
-      ...keep,
-      ...wanted,
-    }),
-  );
-}
-
-/** An instance's variant values, each checked against its set's options. */
-export async function setVariant(node: Layer, wanted: Readonly<Record<string, string>>): Promise<void> {
-  const { owner } = await mainOf(node);
-
-  if (owner.type !== "COMPONENT_SET") {
-    throw new WriteError(`${owner.name} is a component without variants: give no variant.`);
-  }
-
-  const definitions = owner.componentPropertyDefinitions;
-  const variants = Object.keys(definitions).filter((name) => definitions[name]?.type === "VARIANT");
-
-  for (const [name, value] of Object.entries(wanted)) {
-    const options = definitions[name]?.variantOptions;
-
-    if (definitions[name]?.type !== "VARIANT" || options === undefined) {
-      throw new WriteError(`${owner.name} has no variant property ${name}: it has ${variants.join(", ")}.`);
-    }
-
-    if (!options.includes(value)) {
-      throw new WriteError(`${name} has no value ${value}: it has ${options.join(", ")}.`);
-    }
-  }
-
-  node.setProperties({ ...wanted });
-}
-
-/** An instance's properties by the names design_read writes (without #id): text, "true"/"false", a component's name. */
-export async function setProps(
-  node: Layer,
-  wanted: Readonly<Record<string, string>>,
-  index: ComponentIndex,
-): Promise<void> {
-  const own = (node.componentProperties ?? {}) as Record<string, { type: string }>;
-  const keys = new Map(Object.keys(own).map((key) => [key.replace(/#[^#]*$/, ""), key]));
-  const values: Record<string, string | boolean> = {};
-
-  for (const [name, value] of Object.entries(wanted)) {
-    const key = keys.get(name);
-
-    if (key === undefined) {
-      const near = closest(name, keys.keys());
-
-      throw new WriteError(
-        `${node.name} has no property ${name}: it has ${[...keys.keys()].join(", ")}.`,
-        near === null ? undefined : `Did you mean ${near}?`,
-      );
-    }
-
-    const type = own[key]?.type;
-
-    if (type === "INSTANCE_SWAP") {
-      const owner = await index.find(value);
-
-      values[key] = (owner.type === "COMPONENT_SET" ? owner.defaultVariant : owner).id;
-    } else {
-      values[key] = type === "BOOLEAN" ? value === "true" : value;
-    }
-  }
-
-  node.setProperties(values);
-}
 
 /**
  * Properties a new component's layers make, bound once the component (or the set it joined) is complete: one the

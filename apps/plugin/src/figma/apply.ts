@@ -9,18 +9,21 @@ import {
   type TokenUse,
   tokenUsesOf,
 } from "@pixelwright/core";
+// eslint-disable-next-line no-restricted-imports -- until the apply run moves into operations/apply (module 4, T18)
+import { LayerWriter } from "../operations/apply/writers/layer-writer.ts";
+// eslint-disable-next-line no-restricted-imports -- until the apply run moves into operations/apply (module 4, T18)
+import type { WriteScope } from "../operations/apply/writers/write-scope.ts";
 import type { PluginServices } from "../services/plugin-services.ts";
-import type { KnownFont, Layer, TextLayer, WriteContext } from "../types/apply.ts";
+import type { KnownFont, Layer, WriteContext } from "../types/apply.ts";
 import { errorMessage } from "../utils/error-message.ts";
-import { fileName, fitIcon, imageOf, pairCopy, pairInstance, svgOf, writeImage } from "./apply-assets.ts";
-import { bindProperties, layOut, setProps, setVariant, swapTo } from "./apply-components.ts";
-import { STEPS, set } from "./apply-props.ts";
-import { hasTextProps, writeText } from "./apply-text.ts";
+import { fileName, imageOf, pairCopy, pairInstance, svgOf } from "./apply-assets.ts";
+import { bindProperties, layOut } from "./apply-components.ts";
+import { assign } from "./assign.ts";
 import { ComponentIndex } from "./component-index.ts";
 import { fontKey } from "./fonts.ts";
 import { indexIn, insideInstance, instancePath, loadPageOf } from "./nodes.ts";
 import { TokenIndex } from "./tokens/token-index.ts";
-import { variantFor, variantName } from "./variants.ts";
+import { variantFor } from "./variants.ts";
 import { WriteError } from "./write-error.ts";
 
 const MAKERS: Readonly<Record<string, () => SceneNode>> = {
@@ -484,7 +487,13 @@ async function makeNode(change: ApplyChange, parent: Layer, context: WriteContex
 
   if (change.tag === "Image") {
     // Its file first: one that did not come, or that Figma refuses, leaves no empty rectangle.
-    imageOf(change.props, context);
+    const asset = change.props.asset;
+
+    if (asset === undefined) {
+      throw new WriteError("An <Image> is made from its file: give it src.");
+    }
+
+    imageOf(asset, context);
 
     return figma.createRectangle();
   }
@@ -705,11 +714,11 @@ function finish(node: Layer, change: ApplyChange): void {
       props[axis]?.kind === "SCALE";
 
     if (props.width === undefined && !fills("horizontal")) {
-      set(node, "layoutSizingHorizontal", "HUG");
+      assign(node, "layoutSizingHorizontal", "HUG");
     }
 
     if (props.height === undefined && !fills("vertical")) {
-      set(node, "layoutSizingVertical", "HUG");
+      assign(node, "layoutSizingVertical", "HUG");
     }
   }
 
@@ -729,93 +738,26 @@ async function write(
   context: WriteContext,
   fail: (error: unknown, attribute?: string) => void,
 ): Promise<boolean> {
-  let wrote = false;
-  const source = (keys: readonly (keyof FigmaProps)[]) =>
-    keys.map((key) => change.sources[key]).find((attribute) => attribute !== undefined) ?? keys[0];
-  const { component, variant, props, property } = change.props;
+  return await new LayerWriter(scopeOf(context)).write(node as unknown as SceneNode, change, fail);
+}
 
-  if (change.props.asset !== undefined && change.tag !== "Icon") {
-    try {
-      writeImage(node, change.props, context);
-      wrote = true;
-    } catch (error) {
-      fail(error, source(["asset"]));
-    }
-  }
-
-  // A new icon is sized by scaling it with its vectors; a resize would leave them as they are.
-  const stepped = change.tag === "Icon" && change.kind === "create" ? fitIcon(node, change.props) : change.props;
-  // A new instance is made of its component and variant; an existing one or a copy swaps them. Then its properties.
-  const made = change.kind === "create" && change.copyOf === undefined;
-  const own: (readonly [keyof FigmaProps, () => Promise<void> | void])[] = [
-    ...(node.type === "INSTANCE" && !made && component !== undefined
-      ? [["component", () => swapTo(node, component, variant, context.components)] as const]
-      : []),
-    ...(node.type === "INSTANCE" && !made && component === undefined && variant !== undefined
-      ? [["variant", () => setVariant(node, variant)] as const]
-      : []),
-    ...(node.type === "COMPONENT" && variant !== undefined
-      ? [["variant", () => set(node, "name", variantName(variant))] as const]
-      : []),
-    ...(node.type !== "INSTANCE" && node.type !== "COMPONENT" && (component !== undefined || variant !== undefined)
-      ? [
-          [
-            component === undefined ? "variant" : "component",
-            () => {
-              throw new WriteError(
-                `A ${node.type.toLowerCase()} has no component: component and variant make an <Instance>.`,
-              );
-            },
-          ] as const,
-        ]
-      : []),
-    ...(props !== undefined ? [["props", () => setProps(node, props, context.components)] as const] : []),
-  ];
-
-  for (const [key, step] of own) {
-    try {
-      await step();
-      wrote = true;
-    } catch (error) {
-      fail(error, source([key]));
-    }
-  }
-
-  if (property !== undefined) {
-    context.marks.push({
-      node,
-      property,
-      fail: (error) => fail(error, source(["property"])),
-    });
-  }
-
-  for (const step of STEPS) {
-    if (
-      !step.keys.some((key) => stepped[key] !== undefined) ||
-      (step.keys[0] === "hyperlink" && node.type === "TEXT")
-    ) {
-      continue;
-    }
-
-    try {
-      await step.write(node, stepped, context);
-      wrote = true;
-    } catch (error) {
-      fail(error, source(step.keys));
-    }
-  }
-
-  if (node.type === "TEXT") {
-    const text = await writeText(node as TextLayer, change, context, (key, error) =>
-      fail(error, key === "text" ? undefined : source([key])),
-    );
-
-    wrote ||= text;
-  } else if (change.text !== undefined || hasTextProps(change.props)) {
-    fail(new WriteError(`A ${node.type.toLowerCase()} holds no text: text and its styles go on a Text inside it.`));
-  }
-
-  return wrote;
+/** The writers' view of the call's context, until the apply run gives them its own. */
+function scopeOf(context: WriteContext): WriteScope {
+  return {
+    tokens: context.tokens,
+    ...(context.uploads === undefined ? {} : { uploads: context.uploads }),
+    font: (spec) => context.fonts.get(fontKey(spec)),
+    isUnloaded: (font) => context.unloaded.has(`${font.family} ${font.style}`),
+    image: (asset) => imageOf(asset, context),
+    components: context.components,
+    mark: ({ node, property, fail }) => {
+      context.marks.push({
+        node: node as unknown as Layer,
+        property,
+        fail,
+      });
+    },
+  };
 }
 
 /** A dry run: the layer or the parent exists, and every token and font the change names is there. */

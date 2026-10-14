@@ -189,6 +189,22 @@ export default [
     },
   },
   {
+    files: ["apps/plugin/src/operations/apply/writers/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^\\.\\./(?!\\.\\./)",
+              message: "Writers write one layer: they import each other and figma/ adapters, never the apply run.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["apps/plugin/src/figma/**/*.ts", "apps/plugin/src/services/**/*.ts"],
     rules: {
       "no-restricted-imports": [

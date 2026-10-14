@@ -1200,7 +1200,7 @@
         },
         {
           "node": "90:1",
-          "method": "resize",
+          "method": "resizeWithoutConstraints",
           "args": [
             400,
             100
@@ -1208,7 +1208,7 @@
         },
         {
           "node": "90:1",
-          "method": "resize",
+          "method": "resizeWithoutConstraints",
           "args": [
             400,
             300

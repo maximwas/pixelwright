@@ -60,6 +60,8 @@ How to write this file (people and agents alike):
   several layers share a name and the read numbered their files (`photo-2.png`).
 - `design_apply` writes a background's new image: a `url()` naming another file, or another fit, was reported as
   changed but left the old image in place.
+- `design_apply` makes a `<Section>` of the size the XML gives: Figma has no `resize` for sections, so a sized new
+  section failed, and moving or stretching one now sizes it the way Figma allows.
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 
