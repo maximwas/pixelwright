@@ -22,6 +22,12 @@ const REWRITTEN = [
   "apps/plugin/src/services/**",
   "apps/plugin/src/main.ts",
   "apps/plugin/src/figma/tokens/**",
+  "apps/plugin/src/figma/paints.ts",
+  "apps/plugin/src/figma/effects.ts",
+  "apps/plugin/src/figma/component-index.ts",
+  "apps/plugin/src/figma/variants.ts",
+  "apps/plugin/src/figma/nodes.ts",
+  "apps/plugin/src/figma/fonts.ts",
 ];
 
 const BANNED_SYNTAX = [
@@ -110,7 +116,7 @@ export default [
   },
   // Dependency rules: core's kernel depends on nothing; css-mapping/ never imports what is built on it; design/ never
   // imports the features that compare against it; server features never import mcp/ or each other; plugin operations
-  // never import each other.
+  // never import each other, and the plugin's figma/ adapters and services never import an operation.
   {
     files: ["packages/core/src/kernel/*.ts"],
     rules: {
@@ -180,6 +186,22 @@ export default [
     files: ["apps/plugin/src/operations/*/**/*.ts"],
     rules: {
       "no-restricted-imports": ["error", { patterns: [SIBLING_FOLDER] }],
+    },
+  },
+  {
+    files: ["apps/plugin/src/figma/**/*.ts", "apps/plugin/src/services/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "(^|/)operations/",
+              message: "figma/ and services/ are what operations stand on: they never import an operation.",
+            },
+          ],
+        },
+      ],
     },
   },
 ];

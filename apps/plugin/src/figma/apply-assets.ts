@@ -1,5 +1,6 @@
 import type { FigmaProps } from "@pixelwright/core";
 import type { Layer, WriteContext } from "../types/apply.ts";
+import { instancePath } from "./nodes.ts";
 import { WriteError } from "./write-error.ts";
 
 /** A file's name without its folder and extension: a new Image's or Icon's layer name when the XML gives none. */
@@ -92,15 +93,10 @@ export function fitIcon(node: Layer, props: FigmaProps): FigmaProps {
   return rest;
 }
 
-/** A layer's id inside the instance holding it, I<instance>;<path>, as the same in every instance of the component. */
-export function pathOf(id: string): string {
-  return id.replace(/^I[^;]+;/, "");
-}
-
 /** A new instance's layers by their ids inside it: another instance's ids of the same component name the same ones. */
 export function pairInstance(instance: BaseNode, into: Map<string, BaseNode>, scope: string): void {
   for (const layer of "children" in instance ? instance.children : []) {
-    into.set(`${scope} ${pathOf(layer.id)}`, layer);
+    into.set(`${scope} ${instancePath(layer.id)}`, layer);
     pairInstance(layer, into, scope);
   }
 }
@@ -119,15 +115,4 @@ export function pairCopy(source: BaseNode, copy: BaseNode, into: Map<string, Bas
       pairCopy(child, twin, into, scope);
     }
   });
-}
-
-/** Whether a layer comes from a component through an instance (its place and layers are the component's). */
-export function insideInstance(node: Layer): boolean {
-  for (let current = node.parent; current !== null; current = current.parent) {
-    if (current.type === "INSTANCE") {
-      return true;
-    }
-  }
-
-  return false;
 }

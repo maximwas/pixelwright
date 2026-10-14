@@ -8,7 +8,8 @@ import {
   type TextStylePlan,
   weightOf,
 } from "@pixelwright/core";
-import { effectKey, effectsOf, mergedEffects, paintsOf } from "../../../figma/apply-props.ts";
+import { effectKey, effectsOf, mergedEffects } from "../../../figma/effects.ts";
+import { paintsOf } from "../../../figma/paints.ts";
 import type { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import type { TokenRun } from "./token-run.ts";

@@ -11,32 +11,15 @@ import {
 import type { PluginServices } from "../services/plugin-services.ts";
 import type { KnownFont, Layer, TextLayer, WriteContext } from "../types/apply.ts";
 import { errorMessage } from "../utils/error-message.ts";
-import {
-  fileName,
-  fitIcon,
-  imageOf,
-  insideInstance,
-  pairCopy,
-  pairInstance,
-  pathOf,
-  svgOf,
-  writeImage,
-} from "./apply-assets.ts";
-import {
-  bindProperties,
-  componentIndex,
-  layOut,
-  setProps,
-  setVariant,
-  swapTo,
-  variantFor,
-  variantName,
-} from "./apply-components.ts";
+import { fileName, fitIcon, imageOf, pairCopy, pairInstance, svgOf, writeImage } from "./apply-assets.ts";
+import { bindProperties, layOut, setProps, setVariant, swapTo } from "./apply-components.ts";
 import { STEPS, set } from "./apply-props.ts";
 import { hasTextProps, writeText } from "./apply-text.ts";
+import { ComponentIndex } from "./component-index.ts";
 import { fontKey } from "./fonts.ts";
-import { pageOf } from "./nodes.ts";
+import { indexIn, insideInstance, instancePath, loadPageOf } from "./nodes.ts";
 import { TokenIndex } from "./tokens/token-index.ts";
+import { variantFor, variantName } from "./variants.ts";
 import { WriteError } from "./write-error.ts";
 
 const MAKERS: Readonly<Record<string, () => SceneNode>> = {
@@ -311,15 +294,6 @@ async function layerOf(id: string): Promise<Layer> {
   return node as unknown as Layer;
 }
 
-/** dynamic-page: a page the user is not on has its layers once loaded. */
-async function loadPageOf(node: BaseNode): Promise<void> {
-  const page = node.type === "PAGE" ? node : pageOf(node);
-
-  if (page !== null && page !== figma.currentPage) {
-    await page.loadAsync();
-  }
-}
-
 /** Every font the changes ask for, found and loaded up front, with the fonts of the texts they change. */
 async function prepare(
   changes: readonly ApplyChange[],
@@ -384,7 +358,7 @@ async function prepare(
     unloaded,
     uploads: (stream) => uploads.bytes(stream),
     images: new Map(),
-    components: componentIndex(),
+    components: new ComponentIndex(),
     marks: [],
   };
 }
@@ -440,11 +414,8 @@ async function existing(change: ApplyChange, load = true): Promise<Layer> {
     );
   }
 
-  const page = pageOf(node);
-
-  if (load && page !== null && page !== figma.currentPage) {
-    // dynamic-page: a page the user is not on has its layers once loaded.
-    await page.loadAsync();
+  if (load) {
+    await loadPageOf(node);
   }
 
   return node as unknown as Layer;
@@ -552,7 +523,9 @@ async function counterpart(
     throw new WriteError(`The ${inCopy ? "copy" : "instance"} it is in was not made: fix that element's error first.`);
   }
 
-  const node = copies.get(`${scope} ${inCopy ? change.source : pathOf(change.source ?? "")}`) as Layer | undefined;
+  const node = copies.get(`${scope} ${inCopy ? change.source : instancePath(change.source ?? "")}`) as
+    | Layer
+    | undefined;
 
   if (node === undefined) {
     throw inCopy
@@ -655,10 +628,6 @@ async function whereTo(
     parent: into,
     index: await indexAmong(change, changes, nodes, into),
   };
-}
-
-function indexIn(parent: Layer, child: Layer): number {
-  return (parent.children ?? []).findIndex((node) => node.id === child.id);
 }
 
 /** After the element before it in the XML, else before the existing layer after it, else last. */

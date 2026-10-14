@@ -1,6 +1,7 @@
-import type { AxisPlacement, EffectSpec, FigmaProps, GridTrack, LengthValue, PaintSpec } from "@pixelwright/core";
+import type { AxisPlacement, EffectSpec, FigmaProps, GridTrack, LengthValue } from "@pixelwright/core";
 import type { Layer, WriteContext } from "../types/apply.ts";
-import { documentColor } from "./color-profile.ts";
+import { effectsOf, mergedEffects } from "./effects.ts";
+import { paintsOf, samePaints } from "./paints.ts";
 import { WriteError } from "./write-error.ts";
 
 /** One step of writing a layer: the properties it takes. */
@@ -535,110 +536,6 @@ async function radius(node: Layer, { cornerRadius }: FigmaProps, context: WriteC
   }
 }
 
-/** Paints as Figma takes them: one paint style alone, or layers of colours and colour variables. */
-export async function paintsOf(
-  specs: readonly PaintSpec[],
-  context: Pick<WriteContext, "tokens" | "uploads">,
-): Promise<{ style: string } | { paints: Paint[] }> {
-  const [only] = specs;
-
-  if (specs.length === 1 && only?.kind === "token" && only.opacity === 1) {
-    const style = await (await context.tokens()).style(only.token, "PAINT");
-
-    if (style !== null) {
-      return { style };
-    }
-  }
-
-  const paints: Paint[] = [];
-
-  for (const spec of specs) {
-    if (spec.kind === "color") {
-      const { r, g, b, a } = documentColor(spec.color);
-
-      paints.push({
-        type: "SOLID",
-        color: {
-          r,
-          g,
-          b,
-        },
-        opacity: a,
-      });
-      continue;
-    }
-
-    if (spec.kind === "image") {
-      paints.push(imagePaint(spec, context));
-      continue;
-    }
-
-    const index = await context.tokens();
-
-    if ((await index.style(spec.token, "PAINT")) !== null) {
-      throw new WriteError(
-        `${spec.token} is a paint style, which is the whole list of a layer's paints.`,
-        "Use it as the only layer, without color-mix().",
-      );
-    }
-
-    paints.push(
-      figma.variables.setBoundVariableForPaint(
-        {
-          type: "SOLID",
-          color: {
-            r: 0,
-            g: 0,
-            b: 0,
-          },
-          opacity: spec.opacity,
-        },
-        "color",
-        await index.variable(spec.token, "COLOR"),
-      ),
-    );
-  }
-
-  return { paints };
-}
-
-/** An image layer from its uploaded file (Task 2 sends the bytes; until then a background image cannot be written). */
-function imagePaint(spec: Extract<PaintSpec, { kind: "image" }>, context: Pick<WriteContext, "uploads">): ImagePaint {
-  const bytes = spec.stream === undefined ? undefined : context.uploads?.(spec.stream);
-
-  if (bytes === undefined) {
-    throw new WriteError(`${spec.src} did not reach the plugin.`, "Give the file's path as design_read wrote it.");
-  }
-
-  return {
-    type: "IMAGE",
-    imageHash: figma.createImage(bytes).hash,
-    scaleMode: spec.scaleMode,
-  };
-}
-
-/** The parts of a paint that make it look as it does, to tell an equal one from a changed one. */
-function paintKey(paint: Paint): string {
-  const solid = paint as Partial<SolidPaint>;
-  const round = (value: number | undefined) => Math.round((value ?? 0) * 10_000);
-
-  return JSON.stringify([
-    paint.type,
-    paint.visible ?? true,
-    round(paint.opacity ?? 1),
-    solid.color === undefined ? null : [round(solid.color.r), round(solid.color.g), round(solid.color.b)],
-    solid.boundVariables?.color?.id ?? null,
-  ]);
-}
-
-export function samePaints(live: unknown, wanted: readonly Paint[]): boolean {
-  return (
-    Array.isArray(live) &&
-    live.length === wanted.length &&
-    live.every((paint: Paint, index) => paintKey(paint) === paintKey(wanted[index] as Paint))
-  );
-}
-
 async function fills(node: Layer, { fills: specs }: FigmaProps, context: WriteContext): Promise<void> {
   const paints = await paintsOf(specs ?? [], context);
 
@@ -726,81 +623,6 @@ async function effects(node: Layer, { effects: spec }: FigmaProps, context: Writ
       effectsOf(spec as readonly EffectSpec[]),
     ),
   );
-}
-
-/** The effects CSS writes: shadows and plain blurs. */
-const CSS_EFFECTS: ReadonlySet<string> = new Set(["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR", "BACKGROUND_BLUR"]);
-
-/**
- * The effects CSS wrote, each one the layer already has kept as it is (a shadow's colour variable, blend mode and
- * show-behind, a progressive blur of that radius), with what CSS cannot write and design_read never shows (noise,
- * texture, glass, hidden effects) kept where they were.
- */
-export function mergedEffects(
-  current: readonly Effect[],
-  written: readonly Effect[],
-  covered: ReadonlySet<string> = CSS_EFFECTS,
-): Effect[] {
-  const unused = current.filter((effect) => covered.has(effect.type) && (effect.visible ?? true));
-  const merged = written.map((effect) => {
-    const at = unused.findIndex((held) => effectKey(held) === effectKey(effect));
-
-    return at === -1 ? effect : (unused.splice(at, 1)[0] as Effect);
-  });
-
-  // What CSS does not write stays where it was in the list.
-  current.forEach((effect, index) => {
-    if (!covered.has(effect.type) || !(effect.visible ?? true)) {
-      merged.splice(Math.min(index, merged.length), 0, effect);
-    }
-  });
-
-  return merged;
-}
-
-/** The parts of an effect CSS writes, rounded as it writes them: equal keys look the same in a read. */
-export function effectKey(effect: Effect): string {
-  const shadow = effect as Partial<DropShadowEffect>;
-  const round = (value: number | undefined) => Math.round((value ?? 0) * 1_000);
-
-  return JSON.stringify([
-    effect.type,
-    round((effect as { radius?: number }).radius),
-    round(shadow.spread),
-    round(shadow.offset?.x),
-    round(shadow.offset?.y),
-    shadow.color === undefined
-      ? null
-      : [shadow.color.r, shadow.color.g, shadow.color.b, shadow.color.a].map((channel) => Math.round(channel * 255)),
-  ]);
-}
-
-/** Shadows and blurs as Figma holds them, in Figma's order. */
-export function effectsOf(specs: readonly EffectSpec[]): Effect[] {
-  return specs.map((effect): Effect => {
-    if (!("color" in effect)) {
-      return {
-        type: effect.type,
-        radius: effect.radius,
-        visible: true,
-        blurType: "NORMAL",
-      };
-    }
-
-    return {
-      type: effect.type,
-      color: documentColor(effect.color),
-      offset: {
-        x: effect.x,
-        y: effect.y,
-      },
-      radius: effect.radius,
-      // Figma takes a spread only on boxes that clip their fill: a 0 is left out.
-      ...(effect.spread === 0 ? {} : { spread: effect.spread }),
-      visible: true,
-      blendMode: "NORMAL",
-    };
-  });
 }
 
 /**

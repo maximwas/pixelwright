@@ -1,5 +1,5 @@
 import type { FigmaProps } from "@pixelwright/core";
-import type { ComponentIndex } from "../figma/apply-components.ts";
+import type { ComponentIndex } from "../figma/component-index.ts";
 import type { TokenIndex } from "../figma/tokens/token-index.ts";
 import type { WriteError } from "../figma/write-error.ts";
 

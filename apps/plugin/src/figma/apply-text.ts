@@ -1,8 +1,9 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import type { TextLayer, WriteContext } from "../types/apply.ts";
-import { paintsOf, set } from "./apply-props.ts";
+import { set } from "./apply-props.ts";
 import { documentColor } from "./color-profile.ts";
 import { fontKey } from "./fonts.ts";
+import { paintsOf } from "./paints.ts";
 import { WriteError } from "./write-error.ts";
 
 type TextKey = "textStyle" | "font" | "letterSpacing" | "textCase" | "textDecoration" | "textFills" | "hyperlink";

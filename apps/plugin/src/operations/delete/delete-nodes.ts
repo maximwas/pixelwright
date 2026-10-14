@@ -1,5 +1,5 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
-import { pageOf } from "../../figma/nodes.ts";
+import { insideInstance, pageOf } from "../../figma/nodes.ts";
 import type { EditsGuard } from "../../services/edits-guard.ts";
 import { errorMessage } from "../../utils/error-message.ts";
 
@@ -54,14 +54,4 @@ export async function deleteNodes(
     deleted,
     errors,
   };
-}
-
-function insideInstance(node: BaseNode): boolean {
-  for (let current = node.parent; current !== null; current = current.parent) {
-    if (current.type === "INSTANCE") {
-      return true;
-    }
-  }
-
-  return false;
 }
