@@ -16,6 +16,25 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## Unreleased
+
+### Added
+
+- `design_read` shows what an instance changed outside its component's properties (`$override`: a rewritten text, a
+  recoloured icon), so the code knows which instances need a new property, a variant or a one-off.
+- `outline`, `file_map` and `design_read` show what the designer marked ready for dev (or completed) in Dev Mode.
+- `design_read` names the token Figma itself matches a raw spacing, radius, stroke or opacity to.
+- `design_apply` and `tokens_apply` take a `version`: a named version is saved in Figma's history before they write,
+  for the designer to go back to.
+- `pixelwright logs` follows the logs of every running Pixelwright server on the computer in real time: tool calls,
+  plugins connecting, errors. The bug report form asks for its output.
+- `design_read` keeps a list's item spacing, a line's round or square ends and a frame's grid style.
+
+### Changed
+
+- In a Display P3 file, colours are written as `color(display-p3 …)` by `design_read`, `tokens_read` (in CSS and in
+  DTCG files) and the checks, and colours written to it are converted to P3: they show as the designer chose them.
+
 ## 0.2.0 — 2026-10-14
 
 ### Added

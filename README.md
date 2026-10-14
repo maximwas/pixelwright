@@ -50,7 +50,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `file_map`, `outline`, `nodes_find` | Every page with its frames and sections in one call; a frame's layer tree (instances name their component); layers by name, type, text or component |
 | `selection_get`, `selection_wait`, `viewport_get`, `node_show` | What the user picked, or waiting for them to pick; what they are looking at; showing layers, fitted or at a zoom |
 | `changes_since` | What the designer changed since the agent last looked, by whom |
-| `design_read` | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files; the designer's Dev Mode notes, pinned properties and measurements; Figma Motion as CSS keyframes |
+| `design_read` | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files; the designer's Dev Mode notes, pinned properties and measurements; Figma Motion as CSS keyframes; what an instance changed outside its component's properties; what is ready for dev |
 | `inspect`, `measure` | Layers as Figma has them, without code: layout and painted boxes, the fill with its style or variables, how strokes paint, every effect's parameters, a text's lines and line heights, overflow, interactions; the distances between layers |
 | `nodes_diff`, `variants_read`, `breakpoints_find` | How one layer differs from another (A/B variants); a component's states as differences from its default; a screen at its other widths |
 | `flow_read` | The prototype as screens and the links between them, for an app's routes |
@@ -59,7 +59,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `tokens_read`, `tokens_usage`, `components_read` | Variables with every mode and styles, as CSS, JSON or DTCG token files; the layers a token is used on; the components a page uses, with variants and properties |
 | `design_audit`, `contrast_check`, `fonts_check` | The scale a design uses and what is off it; every text's WCAG contrast; where the build gets each font |
 | `code_connect_read` | The project's Figma Code Connect templates, what each connects, what has none |
-| `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images |
+| `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images; a named version in Figma's history first, when asked |
 | `tokens_apply` | Variables (collections, modes, aliases) and styles, in `tokens_read`'s shape |
 | `nodes_delete`, `execute` | Delete layers; run plugin code for what the XML cannot say |
 | `guide` | The XML format, writing, tokens, assets, Code Connect and HTML email, for the agent |

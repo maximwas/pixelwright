@@ -128,10 +128,12 @@ not tested yet.</li>
 <pre><code class="language-text">pixelwright                 in a terminal: the setup; started by an MCP client: the MCP server on stdio
 pixelwright setup --print   no questions: the plugin put in place, the commands and config blocks printed
 pixelwright serve           the MCP server, however it is started
+pixelwright logs            follow the logs of every running server on this machine: tool calls, plugins, errors
 pixelwright --version
 </code></pre>
-<p><code>PIXELWRIGHT_HOME</code> moves <code>~/.pixelwright</code> (the plugin, pairing keys, written-files.json); <code>CLAUDE_PROJECT_DIR</code> names the
-project for Code Connect; <code>PIXELWRIGHT_SUPPORT_REMINDERS=off</code> turns off the weekly support note (see Support).</p>
+<p><code>PIXELWRIGHT_HOME</code> moves <code>~/.pixelwright</code> (the plugin, pairing keys, written-files.json, the shared log in <code>logs/</code>);
+<code>CLAUDE_PROJECT_DIR</code> names the project for Code Connect; <code>PIXELWRIGHT_SUPPORT_REMINDERS=off</code> turns off the weekly
+support note (see Support); <code>PIXELWRIGHT_LOG_LEVEL=debug</code> adds the bridge&#39;s details to the log.</p>
 
         </section>
         <section id="updating">
@@ -214,6 +216,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>xml</code></td><td><code>string</code></td><td>Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer.</td></tr>
 <tr><td><code>parent</code><span class="optional">optional</span></td><td><code>string</code></td><td>Where top-level new layers go: a frame&#39;s or page&#39;s id. Default: the current page, beside its layers.</td></tr>
 <tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check ids, tokens and fonts without writing; works with Allow edits off.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -402,6 +405,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>collections</code><span class="optional">optional</span></td><td><code>object[]</code><br /><span class="default">default []</span></td><td></td></tr>
 <tr><td><code>styles</code><span class="optional">optional</span></td><td><code>object</code><br /><span class="default">default {&quot;paint&quot;:[],&quot;text&quot;:[],&quot;effect&quot;:[]}</span></td><td></td></tr>
 <tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check names, types, modes and aliases without writing; works with Allow edits off.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -453,12 +457,14 @@ tool takes <code>file</code> (a session id from <code>status</code>, or a file n
 Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code status
 shows into the plugin window).</li>
 <li><strong>Find what to read.</strong><ul>
-<li><code>file_map</code>: every page with its frames, sections and components, in one call: where to start in a big file.</li>
+<li><code>file_map</code>: every page with its frames, sections and components, in one call: where to start in a big file.
+<code>devStatus</code> says what the designer marked ready for dev (or completed): build those first, not drafts.</li>
 <li><code>selection_get</code>: what the user selected (&quot;this&quot;, &quot;the selected one&quot;). <code>selection_wait</code>: ask the user to select
 something, then wait for it. <code>viewport_get</code>: what the user is looking at, when &quot;this&quot; comes with no selection.</li>
 <li><code>outline</code>: the layer tree with boxes, x and y relative to the outlined layer; <code>node: &quot;0:0&quot;</code> lists the pages.
 A layer with <code>$children=&quot;N&quot;</code> has more children than listed: outline it on its own. An instance names its
-<code>component</code> and <code>variant</code>, so repeated cards show without a read.</li>
+<code>component</code> and <code>variant</code>, so repeated cards show without a read; <code>dev=&quot;ready&quot;</code> marks what the designer
+handed over for development.</li>
 <li><code>nodes_find</code>: layers by name, type, text or component.</li>
 <li><code>node_show</code>: brings layers into view (fitted or at a zoom) and selects them, so the user sees which you mean.</li>
 <li><code>changes_since</code>: what the designer changed since you last looked (a cursor), to read again only that.</li>
@@ -498,8 +504,9 @@ connected instance as <code>$code</code> with its code in <code>codeComponents</
 shows what is connected and what is not (see <code>guide code-connect</code>).</li>
 </ol>
 <p>Build the code from the XML with the project&#39;s own components, tokens and layout conventions: the XML is the spec, not
-the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, unnamed layers,
-frames without auto layout).</p>
+the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, raw spacing, radii
+and strokes Figma itself matches to a token, unnamed layers, frames without auto layout) and what instances changed
+outside their component&#39;s properties.</p>
 
         </section>
         <section id="guide-xml">
@@ -540,7 +547,8 @@ parent element: give that parent <code>position: relative</code>. Constraints: r
 <code>calc(50% ± n px)</code> when centred, left and right without a width when stretched, percents when scaled.</li>
 <li>A turned layer has <code>transform: rotate()</code> and is placed by its centre; a mirrored one <code>scaleX(-1)</code>.</li>
 <li>Colours bound to a style or variable are <code>var(--Name)</code> (see <code>guide tokens</code>); values for them are in the JSON
-<code>tokens</code>. A text with a <code>textStyle</code> carries only what differs from the style; <code>textStyles</code> holds the style&#39;s font.</li>
+<code>tokens</code>. In a Display P3 file every colour is <code>color(display-p3 r g b)</code> (as tokens_read writes it too): keep
+it so, it is what the designer chose. A text with a <code>textStyle</code> carries only what differs from the style; <code>textStyles</code> holds the style&#39;s font.</li>
 <li>Lengths are whole pixels; letter spacing keeps fractions.</li>
 </ul>
 <h3>Read-only attributes (start with $)</h3>
@@ -552,7 +560,15 @@ a negative gap (&quot;children overlap&quot;), a mask among layers.</li>
 <li><code>$code=&quot;Button&quot;</code>: an instance the project&#39;s Code Connect template renders, written without its children; its code
 is in <code>codeComponents</code> (see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
 <li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
-of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box).</li>
+of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box),
+<code>list-spacing: 8px</code> (the space between a list&#39;s items, apart from paragraph spacing) and
+<code>stroke-linecap: round</code> (a line&#39;s round or square ends, which a CSS border does not draw).</li>
+<li><code>$override=&quot;text, background&quot;</code>: what this layer of an instance changes that its component&#39;s properties do not
+say (a feature text rewritten, an icon recoloured). Code built from the component cannot show it: give the
+component a property or a variant for it, or build that instance as a one-off. A hint lists them all.</li>
+<li><code>$dev=&quot;ready for dev&quot;</code> on the read&#39;s root: the designer marked it (or a frame or section around it) ready for
+development (or <code>completed</code>).</li>
+<li><code>$grid-style=&quot;Desktop 12&quot;</code>: the grid style the frame&#39;s <code>layout-grid</code> comes from.</li>
 <li><code>$pins=&quot;width, padding&quot;</code>: the properties the designer pinned in the layer&#39;s Dev Mode annotations, in CSS words:
 take those values exactly.</li>
 <li><code>$motion=&quot;opacity 0→1, translate-y 24→0px; 0–0.6s ease-out&quot;</code>: the layer&#39;s Figma Motion, led by the animation
@@ -638,7 +654,7 @@ shorthand, an effect style&#39;s as a <code>box-shadow</code> list.</li>
 send only what you change. Nothing is ever deleted (use <code>execute</code> to remove a token).</li>
 <li>A library&#39;s collection or style the file uses is never copied into the file: change it in the library.</li>
 <li>More modes than the file&#39;s Figma plan allows: that mode&#39;s error comes back and the other modes are written.</li>
-<li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing.</li>
+<li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing. <code>version: &quot;Before the brand change&quot;</code> first saves a named version in the file&#39;s history, for the designer to go back to.</li>
 </ul>
 <h3>Values</h3>
 <ul>
@@ -697,7 +713,11 @@ never overwritten with other bytes.</p>
           <h2>Guide: write</h2>
 <p class="topic-about">design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML. The agent reads this with <code>guide</code> topic <code>write</code>.</p>
 <p><code>design_apply</code> takes the XML <code>design_read</code> returns. The user turns <strong>Allow edits</strong> on in the plugin window first;
-until then every call is refused (<code>dryRun: true</code> checks a call without writing, switch on or off).</p>
+until then every call is refused (<code>dryRun: true</code> checks a call without writing, switch on or off). Before a write
+that changes many layers, pass <code>version: &quot;Before the hero rewrite&quot;</code>: a named version is saved in the file&#39;s history
+first (not in a dry run), and the designer can go back to it; if it cannot be saved, nothing is written. In a
+Display P3 file, <code>color(display-p3 …)</code> (as design_read writes it) is written as it is, and hex, rgb() or hsl() are
+taken as sRGB and converted to P3.</p>
 <h3>Changing a layer</h3>
 <ul>
 <li>An element with <code>id</code> changes that layer, and only the attributes it gives: <code>&lt;Frame id=&quot;54:243&quot; gap=&quot;48px&quot;/&gt;</code>

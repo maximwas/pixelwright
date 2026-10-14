@@ -12,11 +12,13 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    shows into the plugin window).
 2. **Find what to read.**
    - \`file_map\`: every page with its frames, sections and components, in one call: where to start in a big file.
+     \`devStatus\` says what the designer marked ready for dev (or completed): build those first, not drafts.
    - \`selection_get\`: what the user selected ("this", "the selected one"). \`selection_wait\`: ask the user to select
      something, then wait for it. \`viewport_get\`: what the user is looking at, when "this" comes with no selection.
    - \`outline\`: the layer tree with boxes, x and y relative to the outlined layer; \`node: "0:0"\` lists the pages.
      A layer with \`$children="N"\` has more children than listed: outline it on its own. An instance names its
-     \`component\` and \`variant\`, so repeated cards show without a read.
+     \`component\` and \`variant\`, so repeated cards show without a read; \`dev="ready"\` marks what the designer
+     handed over for development.
    - \`nodes_find\`: layers by name, type, text or component.
    - \`node_show\`: brings layers into view (fitted or at a zoom) and selects them, so the user sees which you mean.
    - \`changes_since\`: what the designer changed since you last looked (a cursor), to read again only that.
@@ -55,8 +57,9 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    shows what is connected and what is not (see \`guide code-connect\`).
 
 Build the code from the XML with the project's own components, tokens and layout conventions: the XML is the spec, not
-the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, unnamed layers,
-frames without auto layout).
+the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, raw spacing, radii
+and strokes Figma itself matches to a token, unnamed layers, frames without auto layout) and what instances changed
+outside their component's properties.
 `,
   },
   xml: {
@@ -102,7 +105,8 @@ text-decoration-thickness), text-align, text-wrap, color.
   \`calc(50% ± n px)\` when centred, left and right without a width when stretched, percents when scaled.
 - A turned layer has \`transform: rotate()\` and is placed by its centre; a mirrored one \`scaleX(-1)\`.
 - Colours bound to a style or variable are \`var(--Name)\` (see \`guide tokens\`); values for them are in the JSON
-  \`tokens\`. A text with a \`textStyle\` carries only what differs from the style; \`textStyles\` holds the style's font.
+  \`tokens\`. In a Display P3 file every colour is \`color(display-p3 r g b)\` (as tokens_read writes it too): keep
+  it so, it is what the designer chose. A text with a \`textStyle\` carries only what differs from the style; \`textStyles\` holds the style's font.
 - Lengths are whole pixels; letter spacing keeps fractions.
 
 ## Read-only attributes (start with $)
@@ -115,7 +119,15 @@ text-decoration-thickness), text-align, text-wrap, color.
   is in \`codeComponents\` (see \`guide code-connect\`). design_apply leaves its children alone.
 - \`$css\` holds \`property: value\` pairs only, explained in hints: \`blur: progressive from 0px at 50% 0% to 8px at
   50% 100%\` (a blur that changes across the layer; \`filter\` holds its end radius) and \`stroke-align: center\` (half
-  of the stroke paints outside the box, which a border-box border does not; \`inspect\` gives the painted box).
+  of the stroke paints outside the box, which a border-box border does not; \`inspect\` gives the painted box),
+  \`list-spacing: 8px\` (the space between a list's items, apart from paragraph spacing) and
+  \`stroke-linecap: round\` (a line's round or square ends, which a CSS border does not draw).
+- \`$override="text, background"\`: what this layer of an instance changes that its component's properties do not
+  say (a feature text rewritten, an icon recoloured). Code built from the component cannot show it: give the
+  component a property or a variant for it, or build that instance as a one-off. A hint lists them all.
+- \`$dev="ready for dev"\` on the read's root: the designer marked it (or a frame or section around it) ready for
+  development (or \`completed\`).
+- \`$grid-style="Desktop 12"\`: the grid style the frame's \`layout-grid\` comes from.
 - \`$pins="width, padding"\`: the properties the designer pinned in the layer's Dev Mode annotations, in CSS words:
   take those values exactly.
 - \`$motion="opacity 0→1, translate-y 24→0px; 0–0.6s ease-out"\`: the layer's Figma Motion, led by the animation
@@ -206,7 +218,8 @@ text-decoration-thickness), text-align, text-wrap, color.
   send only what you change. Nothing is ever deleted (use \`execute\` to remove a token).
 - A library's collection or style the file uses is never copied into the file: change it in the library.
 - More modes than the file's Figma plan allows: that mode's error comes back and the other modes are written.
-- One undo step; \`dryRun\` checks names, types, modes and aliases without writing.
+- One undo step; \`dryRun\` checks names, types, modes and aliases without writing. \`version: "Before the brand
+  change"\` first saves a named version in the file's history, for the designer to go back to.
 
 ## Values
 
@@ -272,7 +285,11 @@ never overwritten with other bytes.
     markdown: `# Writing with design_apply
 
 \`design_apply\` takes the XML \`design_read\` returns. The user turns **Allow edits** on in the plugin window first;
-until then every call is refused (\`dryRun: true\` checks a call without writing, switch on or off).
+until then every call is refused (\`dryRun: true\` checks a call without writing, switch on or off). Before a write
+that changes many layers, pass \`version: "Before the hero rewrite"\`: a named version is saved in the file's history
+first (not in a dry run), and the designer can go back to it; if it cannot be saved, nothing is written. In a
+Display P3 file, \`color(display-p3 …)\` (as design_read writes it) is written as it is, and hex, rgb() or hsl() are
+taken as sRGB and converted to P3.
 
 ## Changing a layer
 
