@@ -54,6 +54,15 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
 8. **Code Connect.** Where the project has Figma Code Connect templates (\`*.figma.ts\`), \`design_read\` gives each
    connected instance as \`$code\` with its code in \`codeComponents\`: use that code as it is. \`code_connect_read\`
    shows what is connected and what is not (see \`guide code-connect\`).
+9. **Keep the code in step with the design.** Right after the \`design_read\` you build a screen or section from,
+   \`baseline_save {node, name, code}\` keeps it in the project (\`.pixelwright/baselines/\`: commit it to share, or
+   leave it out of git, since it holds the design's texts). When a session starts, or the user says the design
+   changed, \`baseline_diff\` without a name says which baselines changed; with \`name\` it lists the changes in the
+   XML's terms. Change only the code they name: a \`components\` entry whose \`instances\` cover \`of\` goes into the
+   component's code once; export again what is marked \`drawing\`; build added layers from their \`xml\` (or
+   \`design_read\` when it is left out). Then \`baseline_save {name, accept}\` with the \`accept\` the diff gave. Your own
+   \`design_apply\` writes show up too: accept them once the code follows. \`version_save\` leaves the designer a named
+   version, only when the user asks. \`changes_since\` stays the live view while the plugin is open.
 
 Build the code from the XML with the project's own components, tokens and layout conventions: the XML is the spec, not
 the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, raw spacing, radii

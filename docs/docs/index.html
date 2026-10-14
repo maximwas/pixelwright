@@ -166,6 +166,27 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-baseline_diff">
+  <h3><code>baseline_diff</code></h3>
+  <p>What the designer changed since baseline_save, in design_read&#39;s terms: each layer changed (its attributes as [before, after], a text&#39;s content as XML), added (with its XML when short), removed or hidden, moved to another parent or reordered; a change made in a component once, with the instances it reached and how many were compared (of); tokens whose value changed in any mode, renamed, newly used or no longer used; icons and images drawn anew (drawing: export them again). Layers are followed by id, a replaced one by its name. It sees what changes_since and Figma&#39;s own Changed mark miss: edits made while the plugin was closed, accepted library updates, variable and style values. Without name: every baseline in the project with how much changed; call it when a session starts or the user says the design changed. It reads the file the baseline came from and works while Allow edits is off. Change only the code it names (code lists the files), then call baseline_save with the accept it gives.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td>One baseline in detail. Without it: every baseline in the project, with how much changed.</td></tr>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>Compare with this layer instead of the baseline&#39;s own, e.g. a v2 the designer made beside it. Needs name.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>With name: compare in this file (a session from status, or a file name). Without name: only this file&#39;s baselines. Default: the file each baseline came from.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-baseline_save">
+  <h3><code>baseline_save</code></h3>
+  <p>Keeps a layer as you build code from it, so baseline_diff can tell later what the designer changed: its read and the values of the tokens it uses, in every mode, go into .pixelwright/baselines/&lt;name&gt;.json in the project (it holds the design&#39;s texts: commit the folder to share it, or leave it out of git). Save right after the design_read you build a screen or section from; name it after your code (pricing, plan-card) and list in code the files you build from it. Once your code has the changes a baseline_diff listed, pass the accept it gave: exactly the design it compared is kept, so what the designer changed after it still shows next time. An existing name is replaced only with accept or replace: true; code alone changes its file list. Writes nothing to Figma, so it works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer the code is built from: a frame, section, component or instance. Default: the one selected layer. Not with accept.</td></tr>
+<tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td>Named after the code: pricing, plan-card. Default: the layer&#39;s name as a slug. Required with accept.</td></tr>
+<tr><td><code>code</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The project&#39;s files built from the layer, relative to the project. Default: the list the baseline already has.</td></tr>
+<tr><td><code>accept</code><span class="optional">optional</span></td><td><code>string</code></td><td>The accept a baseline_diff answer gave: keeps exactly the design that diff compared.</td></tr>
+<tr><td><code>replace</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Start the named baseline over from the layer as it is now. Not with accept.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-breakpoints_find">
   <h3><code>breakpoints_find</code></h3>
   <p>Finds the screen a layer is on at the page&#39;s other widths (Desktop, Tablet, Mobile): the page&#39;s frames, and those in its sections, whose names match once size words are left out (Desktop, Mobile, 1440, 375px) and whose children share names with it, narrowest first, each with a score. Compare them with nodes_diff to write the media queries.</p>
@@ -176,7 +197,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-changes_since">
   <h3><code>changes_since</code></h3>
-  <p>What changed in the file since the plugin started watching (its window opened) or since an earlier answer&#39;s cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed. Only pages the user had open while the plugin ran are watched; an edit made while one of Pixelwright&#39;s writes runs (or within a second after) counts as Pixelwright&#39;s, and changes from code execute left running count as the user&#39;s.</p>
+  <p>What changed in the file since the plugin started watching (its window opened) or since an earlier answer&#39;s cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed. Only pages the user had open while the plugin ran are watched; an edit made while one of Pixelwright&#39;s writes runs (or within a second after) counts as Pixelwright&#39;s, and changes from code execute left running count as the user&#39;s. What changed while the plugin was closed, and token values, baseline_diff tells against a saved baseline.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>cursor</code><span class="optional">optional</span></td><td><code>integer</code></td><td>The cursor an earlier answer gave: only what changed after it. Default: all the plugin has seen.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
@@ -333,7 +354,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-nodes_diff">
   <h3><code>nodes_diff</code></h3>
-  <p>Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A&#39;s, B&#39;s] (text as $text, an instance&#39;s variant and props too) and whether an icon&#39;s or image&#39;s own drawing differs (paths, colours, inner layers). Ids and the two roots&#39; own names and places are left out. Works while Allow edits is off.</p>
+  <p>Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A&#39;s, B&#39;s] (text as $text, an instance&#39;s variant and props too) and whether an icon&#39;s or image&#39;s own drawing differs (paths, colours, inner layers). Ids and the two roots&#39; own names and places are left out. Works while Allow edits is off. To compare a layer with how it was when you built it, use baseline_diff.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>a</code></td><td><code>string</code></td><td>The first layer&#39;s id (variant A), e.g. 54:243.</td></tr>
 <tr><td><code>b</code></td><td><code>string</code></td><td>The second layer&#39;s id (variant B).</td></tr>
@@ -439,6 +460,16 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-version_save">
+  <h3><code>version_save</code><span class="writes">writes</span></h3>
+  <p>Saves a named version in the file&#39;s Figma version history, for people: the designer can open the design as it was, and developers on a paid plan can pick it in Dev Mode&#39;s Compare changes. Save one only when the user asks: Figma&#39;s plugin API cannot list, read or delete a version, so it stays in the history. baselines: the baselines it goes with; it is saved only while the design still matches them, and they record it. Needs edit access to the file and the plugin&#39;s Allow edits; the same title is refused twice within ten minutes.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>title</code></td><td><code>string</code></td><td>The version&#39;s name in Version history, e.g. &quot;Built: pricing&quot;.</td></tr>
+<tr><td><code>description</code><span class="optional">optional</span></td><td><code>string</code></td><td>Shown under the title. Everyone with the file sees it: no local paths or private repository names.</td></tr>
+<tr><td><code>baselines</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The baselines this version goes with: it is saved only while the design still matches each one, and they record it.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>A session from status, or a file name. Default: the file of the first baseline, else the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-viewport_get">
   <h3><code>viewport_get</code></h3>
   <p>What the user is looking at in Figma now: the page, the zoom, the part of the page in view (page px), and the page&#39;s layers and their children that meet it, outermost first. Use it when the user says &quot;this&quot; or &quot;here&quot; without selecting anything; selection_get gives what is selected.</p>
@@ -502,6 +533,15 @@ scale 2: 220 px). When a file gets another name than design_read planned (<code>
 <li><strong>Code Connect.</strong> Where the project has Figma Code Connect templates (<code>*.figma.ts</code>), <code>design_read</code> gives each
 connected instance as <code>$code</code> with its code in <code>codeComponents</code>: use that code as it is. <code>code_connect_read</code>
 shows what is connected and what is not (see <code>guide code-connect</code>).</li>
+<li><strong>Keep the code in step with the design.</strong> Right after the <code>design_read</code> you build a screen or section from,
+<code>baseline_save {node, name, code}</code> keeps it in the project (<code>.pixelwright/baselines/</code>: commit it to share, or
+leave it out of git, since it holds the design&#39;s texts). When a session starts, or the user says the design
+changed, <code>baseline_diff</code> without a name says which baselines changed; with <code>name</code> it lists the changes in the
+XML&#39;s terms. Change only the code they name: a <code>components</code> entry whose <code>instances</code> cover <code>of</code> goes into the
+component&#39;s code once; export again what is marked <code>drawing</code>; build added layers from their <code>xml</code> (or
+<code>design_read</code> when it is left out). Then <code>baseline_save {name, accept}</code> with the <code>accept</code> the diff gave. Your own
+<code>design_apply</code> writes show up too: accept them once the code follows. <code>version_save</code> leaves the designer a named
+version, only when the user asks. <code>changes_since</code> stays the live view while the plugin is open.</li>
 </ol>
 <p>Build the code from the XML with the project&#39;s own components, tokens and layout conventions: the XML is the spec, not
 the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, raw spacing, radii
@@ -718,7 +758,8 @@ never overwritten with other bytes.</p>
 <p><code>design_apply</code> takes the XML <code>design_read</code> returns. The user turns <strong>Allow edits</strong> on in the plugin window first;
 until then every call is refused (<code>dryRun: true</code> checks a call without writing, switch on or off). Before a write
 that changes many layers, pass <code>version: &quot;Before the hero rewrite&quot;</code>: a named version is saved in the file&#39;s history
-first (not in a dry run), and the designer can go back to it; if it cannot be saved, nothing is written. In a
+first (not in a dry run), and the designer can go back to it; if it cannot be saved, nothing is written
+(<code>version_save</code> saves one on its own, when the user asks). In a
 Display P3 file, <code>color(display-p3 …)</code> (as design_read writes it) is written as it is, and hex, rgb() or hsl() are
 taken as sRGB and converted to P3.</p>
 <h3>Changing a layer</h3>

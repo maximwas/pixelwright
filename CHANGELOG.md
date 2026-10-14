@@ -29,6 +29,15 @@ How to write this file (people and agents alike):
 - `pixelwright logs` follows the logs of every running Pixelwright server on the computer in real time: tool calls,
   plugins connecting, errors. The bug report form asks for its output.
 - `design_read` keeps a list's item spacing, a line's round or square ends and a frame's grid style.
+- `baseline_save` keeps a screen or section as your code was built from it, in the project beside the code
+  (`.pixelwright/baselines/`), with the files you built from it. Nothing is written to Figma.
+- `baseline_diff` tells what the designer changed since then, in `design_read`'s terms: layers changed, added (with
+  their XML), removed, hidden, moved or reordered; a change made in a component, once, with the instances it reached;
+  token values in every mode; icons and images to export again. It sees edits made while the plugin was closed, library
+  updates and variable values. Without a name it checks every baseline in the project. Accept what you built with
+  `baseline_save` and the `accept` the diff gives.
+- `version_save` saves a named version in Figma's history when you ask for one, so the designer can open the design
+  your code was built from; the baselines it names remember it. It needs edit access and Allow edits.
 
 ### Changed
 
@@ -36,6 +45,8 @@ How to write this file (people and agents alike):
   keyword or `cubic-bezier()`, and a spring as `linear()` drawn from the spring itself (it used to be `ease` or a word).
 - In a Display P3 file, colours are written as `color(display-p3 …)` by `design_read`, `tokens_read` (in CSS and in
   DTCG files) and the checks, and colours written to it are converted to P3: they show as the designer chose them.
+- A version saved before a `design_apply` or `tokens_apply` write says in Figma that Pixelwright saved it, and waits a
+  moment so Pixelwright's previous change is in it.
 
 ### Fixed
 
@@ -79,6 +90,7 @@ How to write this file (people and agents alike):
 - The log names a tool call the client cancelled, instead of keeping it as waiting for an answer forever.
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
+- The plugin window names a saved version in plain words, not its internal operation name.
 
 ## 0.2.0 — 2026-10-14
 

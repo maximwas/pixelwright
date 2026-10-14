@@ -495,7 +495,7 @@
   {
     "name": "changes_since",
     "title": "What changed",
-    "description": "What changed in the file since the plugin started watching (its window opened) or since an earlier answer's cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed. Only pages the user had open while the plugin ran are watched; an edit made while one of Pixelwright's writes runs (or within a second after) counts as Pixelwright's, and changes from code execute left running count as the user's.",
+    "description": "What changed in the file since the plugin started watching (its window opened) or since an earlier answer's cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed. Only pages the user had open while the plugin ran are watched; an edit made while one of Pixelwright's writes runs (or within a second after) counts as Pixelwright's, and changes from code execute left running count as the user's. What changed while the plugin was closed, and token values, baseline_diff tells against a saved baseline.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1943,7 +1943,7 @@
   {
     "name": "nodes_diff",
     "title": "Compare two layers",
-    "description": "Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A's, B's] (text as $text, an instance's variant and props too) and whether an icon's or image's own drawing differs (paths, colours, inner layers). Ids and the two roots' own names and places are left out. Works while Allow edits is off.",
+    "description": "Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A's, B's] (text as $text, an instance's variant and props too) and whether an icon's or image's own drawing differs (paths, colours, inner layers). Ids and the two roots' own names and places are left out. Works while Allow edits is off. To compare a layer with how it was when you built it, use baseline_diff.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -2093,6 +2093,840 @@
         "onlyInB",
         "changed",
         "summary"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "baseline_save",
+    "title": "Keep a baseline",
+    "description": "Keeps a layer as you build code from it, so baseline_diff can tell later what the designer changed: its read and the values of the tokens it uses, in every mode, go into .pixelwright/baselines/<name>.json in the project (it holds the design's texts: commit the folder to share it, or leave it out of git). Save right after the design_read you build a screen or section from; name it after your code (pricing, plan-card) and list in code the files you build from it. Once your code has the changes a baseline_diff listed, pass the accept it gave: exactly the design it compared is kept, so what the designer changed after it still shows next time. An existing name is replaced only with accept or replace: true; code alone changes its file list. Writes nothing to Figma, so it works while Allow edits is off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "node": {
+          "description": "The layer the code is built from: a frame, section, component or instance. Default: the one selected layer. Not with accept.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "name": {
+          "description": "Named after the code: pricing, plan-card. Default: the layer's name as a slug. Required with accept.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "code": {
+          "description": "The project's files built from the layer, relative to the project. Default: the list the baseline already has.",
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        },
+        "accept": {
+          "description": "The accept a baseline_diff answer gave: keeps exactly the design that diff compared.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "replace": {
+          "default": false,
+          "description": "Start the named baseline over from the layer as it is now. Not with accept.",
+          "type": "boolean"
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "description": "The baseline's file, absolute."
+        },
+        "node": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        "file": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "key": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "key"
+          ],
+          "additionalProperties": false
+        },
+        "page": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null from a plugin older than this server."
+        },
+        "capturedAt": {
+          "type": "string",
+          "description": "When the design it keeps was read (the diff's read, with accept)."
+        },
+        "code": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "layers": {
+          "type": "number",
+          "description": "Layers read."
+        },
+        "tokens": {
+          "type": "number",
+          "description": "Variables and styles kept with their values in every mode."
+        },
+        "cut": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "children": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "children"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Branches the read did not hold whole: baseline_diff does not compare inside them."
+        },
+        "replaced": {
+          "description": "With replace: what the baseline it replaced kept, and how much the new read took in.",
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ],
+              "additionalProperties": false
+            },
+            "capturedAt": {
+              "type": "string"
+            },
+            "counts": {
+              "type": "object",
+              "properties": {
+                "changed": {
+                  "type": "number"
+                },
+                "added": {
+                  "type": "number"
+                },
+                "removed": {
+                  "type": "number"
+                },
+                "moved": {
+                  "type": "number"
+                },
+                "reordered": {
+                  "type": "number"
+                },
+                "components": {
+                  "type": "number"
+                },
+                "tokens": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "changed",
+                "added",
+                "removed",
+                "moved",
+                "reordered",
+                "components",
+                "tokens"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "node",
+            "capturedAt",
+            "counts"
+          ],
+          "additionalProperties": false
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "path",
+        "node",
+        "file",
+        "page",
+        "capturedAt",
+        "code",
+        "layers",
+        "tokens",
+        "cut",
+        "notes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "baseline_diff",
+    "title": "What changed since a baseline",
+    "description": "What the designer changed since baseline_save, in design_read's terms: each layer changed (its attributes as [before, after], a text's content as XML), added (with its XML when short), removed or hidden, moved to another parent or reordered; a change made in a component once, with the instances it reached and how many were compared (of); tokens whose value changed in any mode, renamed, newly used or no longer used; icons and images drawn anew (drawing: export them again). Layers are followed by id, a replaced one by its name. It sees what changes_since and Figma's own Changed mark miss: edits made while the plugin was closed, accepted library updates, variable and style values. Without name: every baseline in the project with how much changed; call it when a session starts or the user says the design changed. It reads the file the baseline came from and works while Allow edits is off. Change only the code it names (code lists the files), then call baseline_save with the accept it gives.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "One baseline in detail. Without it: every baseline in the project, with how much changed.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "node": {
+          "description": "Compare with this layer instead of the baseline's own, e.g. a v2 the designer made beside it. Needs name.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "file": {
+          "description": "With name: compare in this file (a session from status, or a file name). Without name: only this file's baselines. Default: the file each baseline came from.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "baselines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "node": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              "file": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "key"
+                ],
+                "additionalProperties": false
+              },
+              "page": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "capturedAt": {
+                "type": "string"
+              },
+              "code": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "version": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "savedAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "savedAt"
+                ],
+                "additionalProperties": false
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "same",
+                  "changed",
+                  "missing",
+                  "hidden",
+                  "unavailable",
+                  "unchecked"
+                ]
+              },
+              "now": {
+                "description": "Compared with another layer: node, or the root found again by name.",
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "reason": {
+                "description": "Missing, hidden, unavailable: what happened, and what to do.",
+                "type": "string"
+              },
+              "counts": {
+                "type": "object",
+                "properties": {
+                  "changed": {
+                    "type": "number"
+                  },
+                  "added": {
+                    "type": "number"
+                  },
+                  "removed": {
+                    "type": "number"
+                  },
+                  "moved": {
+                    "type": "number"
+                  },
+                  "reordered": {
+                    "type": "number"
+                  },
+                  "components": {
+                    "type": "number"
+                  },
+                  "tokens": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "changed",
+                  "added",
+                  "removed",
+                  "moved",
+                  "reordered",
+                  "components",
+                  "tokens"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "name",
+              "path",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "changes": {
+          "type": "object",
+          "properties": {
+            "changed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "was": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  },
+                  "drawing": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "path",
+                  "id",
+                  "tag",
+                  "attributes"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "added": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  },
+                  "was": {
+                    "type": "string",
+                    "const": "hidden"
+                  },
+                  "xml": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "id",
+                  "tag"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "removed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  },
+                  "now": {
+                    "type": "string",
+                    "const": "hidden"
+                  }
+                },
+                "required": [
+                  "path",
+                  "id",
+                  "tag"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "moved": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "id",
+                  "from"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "reordered": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "before": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "after": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "path",
+                  "id",
+                  "before",
+                  "after"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "component": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "change": {
+                    "type": "string",
+                    "enum": [
+                      "changed",
+                      "added",
+                      "removed"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  },
+                  "drawing": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "xml": {
+                    "type": "string"
+                  },
+                  "instances": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "of": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "component",
+                  "path",
+                  "change",
+                  "instances",
+                  "of"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "tokens": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "was": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string"
+                  },
+                  "before": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "after": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "layers": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "token",
+                  "name",
+                  "before",
+                  "after",
+                  "layers"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "notCompared": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "what": {
+                    "type": "string",
+                    "enum": [
+                      "children",
+                      "drawing"
+                    ]
+                  }
+                },
+                "required": [
+                  "path",
+                  "id",
+                  "what"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "changed",
+            "added",
+            "removed",
+            "moved",
+            "reordered",
+            "components",
+            "tokens",
+            "notCompared"
+          ],
+          "additionalProperties": false
+        },
+        "accept": {
+          "description": "Pass it to baseline_save once your code has these changes.",
+          "type": "string"
+        },
+        "more": {
+          "description": "Baselines past 50, or entries past 200 in one list.",
+          "type": "number"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "summary",
+        "baselines",
+        "notes"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false
@@ -4253,6 +5087,115 @@
         "updated",
         "errors",
         "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "version_save",
+    "title": "Save a named version",
+    "description": "Saves a named version in the file's Figma version history, for people: the designer can open the design as it was, and developers on a paid plan can pick it in Dev Mode's Compare changes. Save one only when the user asks: Figma's plugin API cannot list, read or delete a version, so it stays in the history. baselines: the baselines it goes with; it is saved only while the design still matches them, and they record it. Needs edit access to the file and the plugin's Allow edits; the same title is refused twice within ten minutes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The version's name in Version history, e.g. \"Built: pricing\"."
+        },
+        "description": {
+          "description": "Shown under the title. Everyone with the file sees it: no local paths or private repository names.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "baselines": {
+          "description": "The baselines this version goes with: it is saved only while the design still matches each one, and they record it.",
+          "minItems": 1,
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "file": {
+          "description": "A session from status, or a file name. Default: the file of the first baseline, else the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "The version's id; null when Figma gave none.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "file": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "key": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "key"
+          ],
+          "additionalProperties": false
+        },
+        "baselines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The baselines that recorded the version."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "file",
+        "baselines",
+        "notes"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false

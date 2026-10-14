@@ -1,6 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import { SERVER_INSTRUCTIONS } from "../constants/mcp.ts";
 import { assetsExportTool } from "../features/assets-export/tool.ts";
+import { baselineDiffTool } from "../features/baseline-diff/tool.ts";
+import { baselineSaveTool } from "../features/baseline-save/tool.ts";
 import { breakpointsFindTool } from "../features/breakpoints-find/tool.ts";
 import { changesSinceTool } from "../features/changes-since/tool.ts";
 import { codeConnectReadTool } from "../features/code-connect-read/tool.ts";
@@ -30,6 +32,7 @@ import { tokensApplyTool } from "../features/tokens-apply/tool.ts";
 import { tokensReadTool } from "../features/tokens-read/tool.ts";
 import { tokensUsageTool } from "../features/tokens-usage/tool.ts";
 import { variantsReadTool } from "../features/variants-read/tool.ts";
+import { versionSaveTool } from "../features/version-save/tool.ts";
 import { viewportGetTool } from "../features/viewport-get/tool.ts";
 import type { ToolContext } from "../types/mcp.ts";
 import { registerContentTool, registerTool } from "./register-tool.ts";
@@ -57,6 +60,8 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerContentTool(server, designReadTool(context));
   registerTool(server, inspectTool(context));
   registerTool(server, nodesDiffTool(context));
+  registerTool(server, baselineSaveTool(context));
+  registerTool(server, baselineDiffTool(context));
   registerTool(server, breakpointsFindTool(context));
   registerTool(server, imageCompareTool(context));
   registerTool(server, measureTool(context));
@@ -69,6 +74,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTool(server, executeTool(context));
   registerTool(server, tokensReadTool(context));
   registerTool(server, tokensApplyTool(context), context.support);
+  registerTool(server, versionSaveTool(context), context.support);
   registerTool(server, componentsReadTool(context));
   registerTool(server, variantsReadTool(context));
   registerTool(server, assetsExportTool(context));

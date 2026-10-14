@@ -7,7 +7,8 @@ export const WRITE = {
 \`design_apply\` takes the XML \`design_read\` returns. The user turns **Allow edits** on in the plugin window first;
 until then every call is refused (\`dryRun: true\` checks a call without writing, switch on or off). Before a write
 that changes many layers, pass \`version: "Before the hero rewrite"\`: a named version is saved in the file's history
-first (not in a dry run), and the designer can go back to it; if it cannot be saved, nothing is written. In a
+first (not in a dry run), and the designer can go back to it; if it cannot be saved, nothing is written
+(\`version_save\` saves one on its own, when the user asks). In a
 Display P3 file, \`color(display-p3 …)\` (as design_read writes it) is written as it is, and hex, rgb() or hsl() are
 taken as sRGB and converted to P3.
 

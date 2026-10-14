@@ -49,6 +49,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `design_read` | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files; the designer's Dev Mode notes, pinned properties and measurements; Figma Motion as CSS keyframes; what an instance changed outside its component's properties; what is ready for dev |
 | `inspect`, `measure` | Layers as Figma has them, without code: layout and painted boxes, the fill with its style or variables, how strokes paint, every effect's parameters, a text's lines and line heights, overflow, interactions; the distances between layers |
 | `nodes_diff`, `variants_read`, `breakpoints_find` | How one layer differs from another (A/B variants); a component's states as differences from its default; a screen at its other widths |
+| `baseline_save`, `baseline_diff` | Keep a section as your code was built from it, in the project; later, what the designer changed since, in the XML's terms: layers, a component's change once, tokens in every mode, icons to export again |
 | `flow_read` | The prototype as screens and the links between them, for an app's routes |
 | `screenshot`, `image_compare` | A layer, or a region of it, as PNG, in a variable mode if you like; the same render compared with a PNG of your build (rmse, differing pixels, edges off by N px) |
 | `assets_export` | Icons and images as SVG, PNG, JPG, WebP or PDF, sized by a CSS width if you like, originals included |
@@ -57,6 +58,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `code_connect_read` | The project's Figma Code Connect templates, what each connects, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images; a named version in Figma's history first, when asked |
 | `tokens_apply` | Variables (collections, modes, aliases) and styles, in `tokens_read`'s shape |
+| `version_save` | A named version in Figma's history, with the baselines it goes with, when you ask for one |
 | `nodes_delete`, `execute` | Delete layers; run plugin code for what the XML cannot say |
 | `guide` | The XML format, writing, tokens, assets, Code Connect and HTML email, for the agent |
 
