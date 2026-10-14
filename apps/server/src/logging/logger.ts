@@ -20,15 +20,11 @@ export function createLogger(level: LogLevel, file: string | null = null) {
     sync: true,
   });
 
-  if (file === null || !prepareLogFile(file)) {
+  const shared = file === null || !prepareLogFile(file) ? null : openShared(file);
+
+  if (shared === null) {
     return pino(options, stderr);
   }
-
-  const shared = pino.destination({
-    dest: file,
-    sync: true,
-    mode: 0o600,
-  });
 
   return pino(
     options,
@@ -43,4 +39,17 @@ export function createLogger(level: LogLevel, file: string | null = null) {
       },
     ]),
   );
+}
+
+/** The shared log opened for appending; null when it cannot be (no permission, say): logs then go to stderr only. */
+function openShared(file: string): ReturnType<typeof pino.destination> | null {
+  try {
+    return pino.destination({
+      dest: file,
+      sync: true,
+      mode: 0o600,
+    });
+  } catch {
+    return null;
+  }
 }

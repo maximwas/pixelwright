@@ -1,9 +1,10 @@
-import { closeSync, existsSync, mkdtempSync, openSync, readFileSync, writeFileSync, writeSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, mkdtempSync, openSync, readFileSync, writeFileSync, writeSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readConfig } from "../src/config/config.ts";
 import { followLog } from "../src/logging/follow-log.ts";
+import { createLogger } from "../src/logging/logger.ts";
 import { prepareLogFile } from "../src/logging/log-file.ts";
 import { prettyLine } from "../src/logging/pretty-line.ts";
 
@@ -114,5 +115,15 @@ describe("pixelwright logs", () => {
     await following;
 
     expect(printed.at(-1)).toContain("pixelwright ready on stdio");
+  });
+
+  it("starts the server with stderr alone when the shared log cannot be opened", () => {
+    const file = join(mkdtempSync(join(tmpdir(), "pw-locked-")), "pixelwright.log");
+
+    writeFileSync(file, "");
+    chmodSync(file, 0o000);
+
+    expect(() => createLogger("info", file).info("still logging")).not.toThrow();
+    chmodSync(file, 0o600);
   });
 });
