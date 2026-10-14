@@ -1,6 +1,7 @@
 import {
   BridgeError,
   fnv1a,
+  INFERRED_GROUPS,
   INFERRED_WORDS,
   MIXED,
   type OperationInput,
@@ -96,6 +97,7 @@ export async function snapshot({
         references,
         categories,
         overrides,
+        inferred: true,
       }),
     { used: 0 },
   );
@@ -299,6 +301,8 @@ export interface EntryContext {
   readonly whole?: boolean;
   /** What the read's instances (and those above it) override, by layer: an instance is recorded before its layers. */
   readonly overrides?: InstanceOverrides;
+  /** Ask Figma which variable a raw value matches: a read wants it for its hints; design_apply's own read does not. */
+  readonly inferred?: boolean;
 }
 
 export async function entryOf(node: SceneNode, context: EntryContext): Promise<SnapshotNode> {
@@ -455,7 +459,7 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
     entry.boundVariables = plain(layer.boundVariables);
   }
 
-  const inferred = inferredOf(layer, context.references);
+  const inferred = context.inferred ? inferredOf(layer, context.references) : {};
 
   if (Object.keys(inferred).length > 0) {
     entry.inferred = inferred;
@@ -783,11 +787,14 @@ function inferredOf(layer: SceneNode & Record<string, unknown>, references: Refe
   const matches = layer.inferredVariables as Record<string, unknown> | undefined;
   const bound = (layer.boundVariables ?? {}) as Record<string, unknown>;
   const inferred: Record<string, string> = {};
+  // A field is bound when it, or a field bound together with it (a radius and its corners), has a variable.
+  const isBound = (field: string) =>
+    (INFERRED_GROUPS.find((group) => group.includes(field)) ?? [field]).some((member) => bound[member] !== undefined);
 
   for (const field of Object.keys(INFERRED_WORDS)) {
     const found = matches?.[field];
 
-    if (Array.isArray(found) && found.length === 1 && bound[field] === undefined) {
+    if (Array.isArray(found) && found.length === 1 && !isBound(field)) {
       const [alias] = found as { id?: unknown }[];
 
       if (typeof alias?.id === "string") {

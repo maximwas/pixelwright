@@ -321,6 +321,49 @@ describe("snapshot", () => {
     expect(inner?.children?.[0]?.overrides).toEqual(["fills", "opacity"]);
   });
 
+  it("asks no match for a radius whose corners are bound, nor any match for design_apply's own read", async () => {
+    const alias = (id: string) => ({
+      type: "VARIABLE_ALIAS",
+      id,
+    });
+    let asked = 0;
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "6:1",
+          type: "FRAME",
+          cornerRadius: 8,
+          boundVariables: { topLeftRadius: alias("V:r") },
+          inferredVariables: {
+            cornerRadius: [alias("V:r")],
+            itemSpacing: [alias("V:8")],
+          },
+        },
+      ],
+    });
+    const [frame] = page.children ?? [];
+    const matches = frame?.inferredVariables;
+
+    Object.defineProperty(frame, "inferredVariables", {
+      get: () => {
+        asked += 1;
+
+        return matches;
+      },
+    });
+    installFigma(page);
+
+    const { root } = (await runOperation("snapshot", { node: "6:1" })) as Shot;
+
+    expect(root.inferred).toEqual({ itemSpacing: "V:8" });
+
+    asked = 0;
+    await runOperation("entries", { ids: ["6:1"] });
+    expect(asked).toBe(0);
+  });
+
   it("finds what an instance above the read changed on it, when the read starts inside the instance", async () => {
     installFigma(
       tree({

@@ -23,3 +23,9 @@ export const INFERRED_WORDS: Readonly<Record<string, string>> = {
   gridColumnGap: "column-gap",
   opacity: "opacity",
 };
+
+/** Fields bound as one: when a variable is bound to any of them, Figma's match for the others says nothing new. */
+export const INFERRED_GROUPS: readonly (readonly string[])[] = [
+  ["cornerRadius", "topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"],
+  ["strokeWeight", "strokeTopWeight", "strokeRightWeight", "strokeBottomWeight", "strokeLeftWeight"],
+];
