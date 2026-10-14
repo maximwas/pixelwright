@@ -13,6 +13,7 @@ import type { Snapshot, SnapshotNode, SnapshotPaint, SnapshotStyle, TextSegment 
 import { slug } from "../utils/slug.ts";
 import { type Classified, classify, visibleChildren } from "./classify.ts";
 import { escapeAttribute } from "./escape.ts";
+import { overrideWords } from "./overrides.ts";
 import { inlineText } from "./parse/entities.ts";
 import { tagFor } from "./tags.ts";
 
@@ -174,6 +175,7 @@ class DesignWriter {
       ["description", node.description === "" ? undefined : node.description],
       ["note", noteOf(node)],
       ["$pins", pinsOf(node)],
+      ["$override", overrideWords(node).join(", ") || undefined],
       ["href", node.href ?? (node.type === "TEXT" ? urlOf(node.text?.segments ?? []) : undefined)],
       ["textStyle", this.useTextStyle(css.textStyle)],
       ["src", asset === null ? undefined : this.plan(node, asset)],

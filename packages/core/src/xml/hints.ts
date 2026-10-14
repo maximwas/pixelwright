@@ -4,6 +4,7 @@ import { styleTokenName, variableTokenName } from "../css/tokens.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import { classify, visibleChildren } from "./classify.ts";
 import { designXml } from "./design.ts";
+import { overrideWords } from "./overrides.ts";
 
 /** Figma's names for layers nobody named: `Frame 427`, `Rectangle 22957`. */
 const DEFAULT_NAME =
@@ -80,6 +81,8 @@ const LAYER_HINTS = {
     `&#8232; is a line break inside a paragraph (Shift+Enter in Figma, <br> in HTML), not spaces (${listed(examples)}).`,
   centredStroke: (examples: readonly string[]) =>
     `${examples.length === 1 ? "A layer has a stroke centred on its edge" : `${examples.length} layers have strokes centred on their edges`} (${listed(examples)}): Figma paints half of it outside the box, a CSS border all inside; where it must match to the pixel, use an outline with outline-offset of minus half its width.`,
+  overridden: (examples: readonly string[]) =>
+    `${examples.length === 1 ? "A layer inside an instance differs from its" : `${examples.length} layers inside instances differ from their`} component outside its properties (${listed(examples)}): give the component a property or a variant for them, or build them as one-offs.`,
   overflow: (examples: readonly string[]) =>
     `${examples.length === 1 ? "A layer is" : `${examples.length} layers are`} wider or taller than the room their auto layout parent gives them, so they overflow it in Figma too (${listed(examples)}): decide whether the build wraps, clips or lets them out.`,
 } as const;
@@ -200,6 +203,12 @@ function layerHints(node: SnapshotNode, parent: SnapshotNode | null, root: Snaps
       node.inferredLayout === undefined ? "" : `, Figma reads it as ${guessCss(node.inferredLayout, children.length)}`;
 
     hints.push(["manual", `${label(node)} with ${children.length} children${guess}`]);
+  }
+
+  const overridden = overrideWords(node);
+
+  if (overridden.length > 0) {
+    hints.push(["overridden", `${label(node)}: ${overridden.join(", ")}`]);
   }
 
   const [first] = children;

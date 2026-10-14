@@ -354,6 +354,11 @@ export const SnapshotFieldsSchema = z.object({
     )
     .optional(),
   /**
+   * The fields an instance overrides on this layer (Figma's names), those a component property carries left out: what
+   * the instance changed that its component's properties do not say.
+   */
+  overrides: z.array(z.string()).optional(),
+  /**
    * Figma Motion: the animation styles on the layer (each starting `start` seconds into the timeline) and every
    * keyframe track, a style's keyframes moved to where the style starts. A field is a property (`OPACITY`), a paint
    * (`fills.0`) or an effect's parameter (`effects.0.RADIUS`); `operation` says how a keyframe's value meets `base`.

@@ -230,6 +230,7 @@ describe("snapshot", () => {
   it("names the component of an instance and its properties", async () => {
     const { root } = (await runOperation("snapshot", { node: "2:4869" })) as Shot;
 
+    expect(root.children?.[2]).not.toHaveProperty("overrides");
     expect(root.children?.[2]?.instance).toEqual({
       componentId: "330:291",
       componentName: "Property 1=Black",
@@ -243,6 +244,81 @@ describe("snapshot", () => {
         },
       },
     });
+  });
+
+  it("puts what an instance overrides on the layers it belongs to, an inner instance's too, not what a property carries", async () => {
+    const main = (id: string) => ({
+      id,
+      key: id,
+      name: id,
+      parent: null,
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "9:1",
+            name: "Card",
+            type: "INSTANCE",
+            mainComponent: main("5:0"),
+            componentProperties: {},
+            overrides: [
+              {
+                id: "9:1",
+                overriddenFields: ["width", "strokes"],
+              },
+              {
+                id: "I9:1;5:2",
+                overriddenFields: ["characters", "styledTextSegments"],
+              },
+              {
+                id: "I9:1;5:4",
+                overriddenFields: ["characters", "fills", "visible"],
+              },
+              {
+                id: "I9:1;5:3;7:1",
+                overriddenFields: ["fills"],
+              },
+            ],
+            children: [
+              { id: "I9:1;5:2" },
+              {
+                id: "I9:1;5:4",
+                componentPropertyReferences: {
+                  characters: "Label#1:0",
+                  visible: "Show#1:1",
+                },
+              },
+              {
+                id: "I9:1;5:3",
+                type: "INSTANCE",
+                mainComponent: main("7:0"),
+                componentProperties: {},
+                overrides: [
+                  {
+                    id: "I9:1;5:3;7:1",
+                    overriddenFields: ["opacity"],
+                  },
+                ],
+                children: [{ id: "I9:1;5:3;7:1" }],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await runOperation("snapshot", { node: "9:1" })) as Shot;
+    const [title, label, inner] = root.children ?? [];
+
+    expect(root.overrides).toEqual(["width", "strokes"]);
+    expect(title?.overrides).toEqual(["characters", "styledTextSegments"]);
+    expect(label?.overrides).toEqual(["fills"]);
+    expect(inner).not.toHaveProperty("overrides");
+    expect(inner?.children?.[0]?.overrides).toEqual(["fills", "opacity"]);
   });
 
   it("marks an instance of a library's component, whose id in this file is not the library's", async () => {

@@ -286,6 +286,23 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
     expect(changesOf(snapshot, xml)).toEqual([]);
   });
 
+  it("with what an instance overrides", () => {
+    const plans = fixture("orbit-plans");
+    const overridden = (node: SnapshotNode): SnapshotNode => ({
+      ...node,
+      ...(node.id === "I54:244;54:217" ? { overrides: ["characters", "styledTextSegments"] } : {}),
+      ...(node.children === undefined ? {} : { children: node.children.map(overridden) }),
+    });
+    const snapshot: Snapshot = {
+      ...plans,
+      root: overridden(plans.root),
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain('$override="text"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
+
   it("with Figma Motion on a layer", () => {
     const plans = fixture("orbit-plans");
     const [first, ...rest] = plans.root.children ?? [];

@@ -79,6 +79,7 @@ export async function snapshot({
     variables: new Map(),
   };
   const categories = await annotationCategories();
+  const overrides = new Map<string, string[]>();
   const top = await subtree(
     root,
     depth,
@@ -90,6 +91,7 @@ export async function snapshot({
         paths,
         references,
         categories,
+        overrides,
       }),
     { used: 0 },
   );
@@ -287,6 +289,11 @@ export interface EntryContext {
   readonly categories: ReadonlyMap<string, string>;
   /** A hidden layer read whole, not as a name and a box: design_apply changes it. */
   readonly whole?: boolean;
+  /**
+   * The fields each instance read so far overrides, by the overridden layer's id: an instance comes before its layers,
+   * so a layer finds what its instances (an outer one's included) changed on it.
+   */
+  readonly overrides?: Map<string, string[]>;
 }
 
 export async function entryOf(node: SceneNode, context: EntryContext): Promise<SnapshotNode> {
@@ -474,6 +481,12 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
   put("detached", layer.detachedInfo === null || layer.detachedInfo === undefined ? undefined : true);
   put("missingFont", node.type === "TEXT" && node.hasMissingFont ? true : undefined);
 
+  const overridden = overridesOf(node, context.overrides);
+
+  if (overridden.length > 0) {
+    entry.overrides = overridden;
+  }
+
   const notes = annotationsOf(node, context.categories);
 
   if (notes.length > 0) {
@@ -573,6 +586,28 @@ export async function annotationCategories(): Promise<ReadonlyMap<string, string
   const categories = await figma.annotations?.getAnnotationCategoriesAsync().catch(() => []);
 
   return new Map((categories ?? []).map((category) => [category.id, category.label]));
+}
+
+/**
+ * What the instances read so far override on this layer, the fields a component property carries left out. An instance
+ * first records what it overrides, its own layers' and inner instances' layers' included.
+ */
+function overridesOf(node: SceneNode, overrides: Map<string, string[]> | undefined): string[] {
+  if (overrides === undefined) {
+    return [];
+  }
+
+  if (node.type === "INSTANCE" && Array.isArray(node.overrides)) {
+    for (const { id, overriddenFields } of node.overrides) {
+      overrides.set(id, [...new Set([...(overrides.get(id) ?? []), ...overriddenFields])]);
+    }
+  }
+
+  const bound = new Set(
+    Object.keys(("componentPropertyReferences" in node ? node.componentPropertyReferences : null) ?? {}),
+  );
+
+  return (overrides.get(node.id) ?? []).filter((field) => !bound.has(field));
 }
 
 /** The layer's annotations that say something: a note, pinned properties, or both. */
