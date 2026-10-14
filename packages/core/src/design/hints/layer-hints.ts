@@ -96,7 +96,9 @@ const LAYER_HINTS: Readonly<Record<string, LayerHint>> = {
   overflow: {
     find: overflowing,
     say: (examples) =>
-      `${examples.length === 1 ? "A layer is" : `${examples.length} layers are`} wider or taller than the room their auto layout parent gives them, so they overflow it in Figma too (${listed(examples)}): decide whether the build wraps, clips or lets them out.`,
+      examples.length === 1
+        ? `A layer is wider or taller than the room its auto layout parent gives it, so it overflows the parent in Figma too (${listed(examples)}): decide whether the build wraps, clips or lets it out.`
+        : `${examples.length} layers are wider or taller than the room their auto layout parent gives them, so they overflow it in Figma too (${listed(examples)}): decide whether the build wraps, clips or lets them out.`,
   },
 };
 
