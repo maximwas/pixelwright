@@ -1,4 +1,5 @@
 import { LAYOUT_TAGS } from "../constants/apply.ts";
+import { ELEMENT_RULES, HREF_RULE } from "../css-mapping/groups/element.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../css-mapping/property-group.ts";
 import { imageOf, lengthOf, numberOf, percentOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
 import { fontOf, textLengthOf } from "../css-mapping/values/fonts.ts";
@@ -153,74 +154,8 @@ const VERTICAL: Axis = {
   key: "vertical",
 };
 
-const HREF: Rule = {
-  attributes: ["href"],
-  write: ({ own }, out) => out.set("hyperlink", own("href") ?? "", "href"),
-};
-
 const RULES: readonly Rule[] = [
-  {
-    attributes: ["name"],
-    write: ({ own }, out) => out.set("name", own("name") ?? "", "name"),
-  },
-  HREF,
-  {
-    attributes: ["component"],
-    write: ({ own }, out) => out.set("component", own("component") ?? "", "component"),
-  },
-  {
-    attributes: ["variant"],
-    write: listRule("variant"),
-  },
-  {
-    attributes: ["props"],
-    write: listRule("props"),
-  },
-  {
-    attributes: ["description"],
-    write: ({ own }, out) => out.set("description", own("description") ?? "", "description"),
-  },
-  {
-    attributes: ["note"],
-    write: ({ own }, out) => out.set("notes", notesOf(own("note") ?? ""), "note"),
-  },
-  {
-    attributes: ["prop", "visibleProp"],
-    write: ({ own }, out) => {
-      const text = own("prop");
-      const visible = own("visibleProp");
-
-      out.set(
-        "property",
-        {
-          ...(text === undefined ? {} : { text }),
-          ...(visible === undefined ? {} : { visible }),
-        },
-        text === undefined ? "visibleProp" : "prop",
-      );
-    },
-  },
-  {
-    attributes: ["src"],
-    write: ({ tag, own }, out) => {
-      if (tag === "Image" || tag === "Icon") {
-        out.set(
-          "asset",
-          {
-            kind: tag === "Image" ? "image" : "icon",
-            src: own("src") ?? "",
-          },
-          "src",
-        );
-      } else {
-        out.fail(
-          "src",
-          `src makes an <Image> or an <Icon>, not a <${tag}>.`,
-          "A frame's image is its background: url(…).",
-        );
-      }
-    },
-  },
+  ...ELEMENT_RULES,
   {
     attributes: LAYOUT,
     write: layoutRule,
@@ -1322,7 +1257,7 @@ function textOf(
 
     characters += textIn(child.children);
     translate(
-      [HREF, ...TEXT_RULES],
+      [HREF_RULE, ...TEXT_RULES],
       {
         tag: "Span",
         own: (name) => child.props[name],
@@ -1391,97 +1326,4 @@ function boxOf<T>(parts: readonly (T | null)[]): [T, T, T, T] | null {
   const [a, b = a, c = a, d = b] = parts as T[];
 
   return [a as T, b as T, c as T, d as T];
-}
-
-/** design_read's list `Name=Value, Other=Value`, a comma, equals sign or backslash in it escaped with a backslash. */
-function listRule(key: "variant" | "props"): Rule["write"] {
-  return ({ own }, out) => {
-    const value = own(key) ?? "";
-    const items = listOf(value);
-
-    if (items === null) {
-      out.fail(
-        key,
-        `${key}="${value}" is not a list of Name=Value, separated by commas.`,
-        "Escape a comma or = in a name or value with a backslash.",
-      );
-    } else {
-      out.set(key, items, key);
-    }
-  };
-}
-
-function listOf(value: string): Record<string, string> | null {
-  const items: [string, string][] = [];
-  let name: string | null = null;
-  let current = "";
-
-  for (let index = 0; index < value.length; index++) {
-    const char = value[index] ?? "";
-
-    if (char === "\\" && index + 1 < value.length) {
-      index += 1;
-      current += value[index] ?? "";
-    } else if (char === "=" && name === null) {
-      name = current.trim();
-      current = "";
-    } else if (char === ",") {
-      if (name === null) {
-        return null;
-      }
-
-      items.push([name, current.trim()]);
-      name = null;
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  if (name !== null) {
-    items.push([name, current.trim()]);
-  } else if (current.trim() !== "") {
-    return null;
-  }
-
-  return Object.fromEntries(items);
-}
-
-/** design_read's notes: `Category: note | Another`, a bar or backslash in a note escaped with a backslash. */
-function notesOf(value: string): { category: string | null; label: string }[] {
-  const items: string[] = [];
-  let current = "";
-
-  for (let index = 0; index < value.length; index++) {
-    const char = value[index] ?? "";
-
-    if (char === "\\" && index + 1 < value.length) {
-      index += 1;
-      current += value[index] ?? "";
-    } else if (char === "|") {
-      items.push(current);
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  items.push(current);
-
-  return items
-    .map((item) => item.trim())
-    .filter((item) => item !== "")
-    .map((item) => {
-      const at = item.indexOf(": ");
-
-      return at === -1
-        ? {
-            category: null,
-            label: item,
-          }
-        : {
-            category: item.slice(0, at),
-            label: item.slice(at + 2),
-          };
-    });
 }
