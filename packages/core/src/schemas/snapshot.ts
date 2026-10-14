@@ -291,6 +291,10 @@ export const SnapshotFieldsSchema = z.object({
   strokeBottomWeight: z.number().optional(),
   strokeLeftWeight: z.number().optional(),
   strokeAlign: z.string().optional(),
+  /** How a line's or a vector's ends are drawn: NONE, ROUND, SQUARE, or an arrow. */
+  strokeCap: z.string().optional(),
+  /** The grid style the frame's layout grids come from. */
+  gridStyleId: z.string().optional(),
   dashPattern: z.array(z.number()).optional(),
   effects: z.array(EffectSchema).optional(),
   cornerRadius: NumberOrMixed.optional(),
@@ -315,6 +319,8 @@ export const SnapshotFieldsSchema = z.object({
       textTruncation: z.string().optional(),
       maxLines: z.number().nullable().optional(),
       paragraphSpacing: NumberOrMixed.optional(),
+      /** The space between a list's items, apart from paragraph spacing. */
+      listSpacing: z.number().optional(),
       leadingTrim: z.string().optional(),
       hangingPunctuation: z.boolean().optional(),
       segments: z.array(TextSegmentSchema),

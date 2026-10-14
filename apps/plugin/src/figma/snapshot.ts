@@ -430,6 +430,7 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
     }
 
     put("strokeAlign", layer.strokeAlign);
+    put("strokeCap", layer.strokeCap, "NONE");
 
     if (Array.isArray(layer.dashPattern) && layer.dashPattern.length > 0) {
       entry.dashPattern = [...layer.dashPattern];
@@ -447,7 +448,7 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
 
   put("cornerSmoothing", layer.cornerSmoothing, 0);
 
-  for (const key of ["fillStyleId", "strokeStyleId", "effectStyleId", "textStyleId"]) {
+  for (const key of ["fillStyleId", "strokeStyleId", "effectStyleId", "textStyleId", "gridStyleId"]) {
     put(key, layer[key], "");
   }
 
@@ -731,6 +732,10 @@ function textOf(node: TextNode): Record<string, unknown> {
 
   if (node.paragraphSpacing !== 0) {
     text.paragraphSpacing = node.paragraphSpacing === figma.mixed ? MIXED : node.paragraphSpacing;
+  }
+
+  if (typeof node.listSpacing === "number" && node.listSpacing > 0) {
+    text.listSpacing = node.listSpacing;
   }
 
   return text;

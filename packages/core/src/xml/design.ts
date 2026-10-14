@@ -185,6 +185,7 @@ class DesignWriter {
       ...properties,
       ["$code", code],
       ["$css", readOnlyOf(css.readOnly, asset !== null)],
+      ["$grid-style", node.gridStyleId === undefined ? undefined : this.snapshot.styles[node.gridStyleId]?.name],
       ...interactionAttributes(node.reactions ?? []),
       ["$motion", motionSummary(node, this.context.colorSpace)],
       ["$children", asset === null && code === undefined && !isCut && !clipped ? cutCount(node, limit) : undefined],

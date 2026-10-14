@@ -381,6 +381,66 @@ describe("snapshot", () => {
     expect(await runOperation("snapshot", { node: "2:4869" })).toMatchObject({ colorProfile: "DISPLAY_P3" });
   });
 
+  it("reads a list's item spacing, a line's caps and a frame's grid style", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "7:1",
+            type: "FRAME",
+            gridStyleId: "S:grid",
+            children: [
+              {
+                id: "7:2",
+                type: "LINE",
+                strokeCap: "ROUND",
+                strokeWeight: 2,
+                strokes: [
+                  {
+                    type: "SOLID",
+                    visible: true,
+                    color: DARK,
+                  },
+                ],
+              },
+              {
+                id: "7:3",
+                type: "TEXT",
+                characters: "One",
+                listSpacing: 8,
+                segments: [
+                  {
+                    ...segment,
+                    characters: "One",
+                    end: 3,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      {
+        styles: {
+          "S:grid": {
+            name: "Desktop 12",
+            type: "GRID",
+          },
+        },
+      },
+    );
+
+    const { root, styles } = (await runOperation("snapshot", { node: "7:1" })) as Shot;
+    const [line, text] = root.children ?? [];
+
+    expect(root.gridStyleId).toBe("S:grid");
+    expect(styles["S:grid"]).toMatchObject({ name: "Desktop 12" });
+    expect(line?.strokeCap).toBe("ROUND");
+    expect((text?.text as { listSpacing?: number } | undefined)?.listSpacing).toBe(8);
+  });
+
   it("marks an instance of a library's component, whose id in this file is not the library's", async () => {
     installFigma(
       tree({

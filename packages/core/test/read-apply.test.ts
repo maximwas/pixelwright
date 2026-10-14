@@ -303,6 +303,29 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
     expect(changesOf(snapshot, xml)).toEqual([]);
   });
 
+  it("with a grid style on the root", () => {
+    const plans = fixture("orbit-plans");
+    const snapshot: Snapshot = {
+      ...plans,
+      root: {
+        ...plans.root,
+        gridStyleId: "S:grid",
+      },
+      styles: {
+        ...plans.styles,
+        "S:grid": {
+          name: "Desktop 12",
+          type: "GRID",
+          remote: false,
+        },
+      },
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain('$grid-style="Desktop 12"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
+
   it("with the read marked ready for dev", () => {
     const snapshot: Snapshot = {
       ...fixture("orbit-plans"),

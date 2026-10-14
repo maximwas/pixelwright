@@ -60,6 +60,11 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
     if (Array.isArray(node.strokes) && node.strokes.some((paint) => paint.visible !== false)) {
       centredStroke(node, readOnly);
     }
+
+    // A CSS border has square ends: Figma's round or square caps reach past the line's length.
+    if (node.strokeCap === "ROUND" || node.strokeCap === "SQUARE") {
+      readOnly.push(["stroke-linecap", node.strokeCap.toLowerCase()]);
+    }
   } else {
     sizeCss(node, parent, context, css, positionCss(node, parent, context, css));
     gridChildCss(node, parent, css);
@@ -679,6 +684,10 @@ function textBlockCss(
 
   if (typeof text.paragraphSpacing === "number" && text.paragraphSpacing > 0) {
     readOnly.push(["paragraph-spacing", px(text.paragraphSpacing)]);
+  }
+
+  if ((text.listSpacing ?? 0) > 0) {
+    readOnly.push(["list-spacing", px(text.listSpacing ?? 0)]);
   }
 
   if ((base.paragraphIndent ?? 0) > 0) {
