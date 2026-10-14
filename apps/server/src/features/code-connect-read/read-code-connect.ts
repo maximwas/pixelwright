@@ -1,15 +1,17 @@
-import type { SnapshotNode } from "@pixelwright/core";
 import type * as z from "zod";
 import { ConnectionIndex } from "../../code-connect/connection-index.ts";
-import { renderInstance } from "../../code-connect/render-session.ts";
 import { findTemplates } from "../../code-connect/templates.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
-import type { SnapshotInstance, TemplateFile } from "../../types/code-connect.ts";
 import type { CodeConnectReadInputSchema, CodeConnectReadOutputSchema } from "./schemas.ts";
+import { reportsOf, withValues } from "./template-report.ts";
+import { TemplateUses } from "./template-uses.ts";
 
 type Output = z.output<typeof CodeConnectReadOutputSchema>;
 
-/** The project's templates against the instances of a page or layer: what each connects, what none does, why. */
+/**
+ * The project's connections against the instances of a page or layer, as design_read shows them: what each connects
+ * and how, what a trial run gives (its error, what its code leaves out), what none connects, and why a file is out.
+ */
 export async function readCodeConnect(
   plugin: PluginClient,
   { node, file }: z.output<typeof CodeConnectReadInputSchema>,
@@ -17,22 +19,39 @@ export async function readCodeConnect(
 ): Promise<Output> {
   const { templates, problems } = await findTemplates(root);
   const session = plugin.session(file);
+  const within = node ?? session.info()?.page.id ?? "";
   const snapshot = await session.run("snapshot", {
-    node: node ?? session.info()?.page.id ?? "",
+    node: within,
     css: "none",
   });
-  const uses = new TemplateUses(templates, session.info()?.file.key ?? null);
+  const fileKey = session.info()?.file.key ?? null;
+  const uses = new TemplateUses(new ConnectionIndex(templates, { fileKey }));
 
   uses.visit(snapshot.root);
 
+  const reports = await reportsOf({
+    templates,
+    uses,
+    root,
+    fileKey,
+  });
+  // One read of the components the page uses gives the variant options every getEnum mapping is checked against.
+  const components = reports.some(({ enums }) => enums.length > 0)
+    ? await session.run("components", {
+        scope: "used",
+        within,
+        limit: 500,
+      })
+    : null;
+
   return {
     root,
-    templates: templates.map((template) => uses.report(template)),
-    unconnected: counted(uses.unconnected),
+    templates: withValues(reports, components),
+    unconnected: [...uses.unconnected.values()],
     problems: [
       ...(templates.length === 0 && problems.length === 0
         ? [
-            `No Code Connect templates (*.figma.ts, *.figma.js) in ${root}: write one per component as Figma documents them (guide topic code-connect).`,
+            `No Code Connect templates (*.figma.ts, *.figma.js) or batch files (*.figma.batch.json) in ${root}: write them as Figma documents them (guide topic code-connect).`,
           ]
         : []),
       ...problems,
@@ -41,76 +60,4 @@ export async function readCodeConnect(
         : []),
     ],
   };
-}
-
-/** The visible instances of a read by template: how many of each component it connects, and the first one to try. */
-class TemplateUses {
-  readonly #templates: readonly TemplateFile[];
-  readonly #connections: ConnectionIndex;
-  readonly #matched = new Map<TemplateFile, { counts: Map<string, number>; first: SnapshotNode }>();
-  /** The instances no template connects, by component. */
-  readonly unconnected = new Map<string, number>();
-  /** A visible layer was read without all its children. */
-  cut = false;
-
-  constructor(templates: readonly TemplateFile[], fileKey: string | null) {
-    this.#templates = templates;
-    this.#connections = new ConnectionIndex(templates, { fileKey });
-  }
-
-  visit(layer: SnapshotNode): void {
-    if (!layer.visible) {
-      return;
-    }
-
-    this.cut ||= layer.childCount > (layer.children?.length ?? 0);
-
-    if (layer.instance !== undefined) {
-      this.#count(layer, layer.instance);
-    }
-
-    for (const child of layer.children ?? []) {
-      this.visit(child);
-    }
-  }
-
-  /** A template with what it connects, and the error a trial run on its first instance gives. */
-  report(template: TemplateFile): Output["templates"][number] {
-    const entry = this.#matched.get(template);
-    const trial = entry === undefined ? null : renderInstance(entry.first, this.#templates);
-
-    return {
-      path: template.path,
-      ...(template.url === undefined ? {} : { url: template.url }),
-      ...(template.component === undefined ? {} : { component: template.component }),
-      matches: counted(entry?.counts ?? new Map()),
-      ...(trial !== null && "error" in trial ? { error: trial.error } : {}),
-    };
-  }
-
-  #count(layer: SnapshotNode, instance: SnapshotInstance): void {
-    const name = instance.setName ?? instance.componentName;
-    const template = this.#connections.match(instance)?.template ?? null;
-
-    if (template === null) {
-      this.unconnected.set(name, (this.unconnected.get(name) ?? 0) + 1);
-
-      return;
-    }
-
-    const entry = this.#matched.get(template) ?? {
-      counts: new Map<string, number>(),
-      first: layer,
-    };
-
-    entry.counts.set(name, (entry.counts.get(name) ?? 0) + 1);
-    this.#matched.set(template, entry);
-  }
-}
-
-function counted(counts: ReadonlyMap<string, number>): { component: string; instances: number }[] {
-  return [...counts].map(([component, instances]) => ({
-    component,
-    instances,
-  }));
 }

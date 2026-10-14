@@ -87,24 +87,15 @@ describe("code_connect_read", () => {
             {
               component: "Plan Card",
               instances: 3,
+              by: "name",
             },
           ],
+          // The template writes the name alone.
+          unread: ["Price", "Popular", "Description"],
         },
       ],
-      unconnected: [
-        {
-          component: "Button",
-          instances: 3,
-        },
-        {
-          component: "Icon/Check",
-          instances: 9,
-        },
-        {
-          component: "Badge",
-          instances: 1,
-        },
-      ],
+      // What sits inside the connected cards is their code's, never a layer of the read.
+      unconnected: [],
       problems: [],
     });
     // The current page, read without Figma's CSS.
@@ -132,18 +123,25 @@ describe("code_connect_read", () => {
         {
           component: "Plan Card",
           instances: 3,
+          id: "54:202",
+          key: "2f31fdc95b9804804df14c93a7f9c8913d611c17",
         },
         {
           component: "Button",
           instances: 3,
+          id: "54:201",
         },
         {
           component: "Icon/Check",
           instances: 9,
+          id: "54:185",
+          key: "778d139f52be557106d2db2a415cebc8ba2197b0",
         },
         {
           component: "Badge",
           instances: 1,
+          id: "54:187",
+          key: "3f9fe0719b313ebf477e6b5b5f67e3d594ab72fc",
         },
       ],
       problems: [expect.stringMatching(/^No Code Connect templates/)],

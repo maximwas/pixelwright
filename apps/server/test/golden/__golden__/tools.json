@@ -5875,7 +5875,7 @@
   {
     "name": "code_connect_read",
     "title": "Read the Code Connect templates",
-    "description": "Lists the project's Figma Code Connect templates (*.figma.ts and *.figma.js, as figma.config.json's globs name them) with what each connects on the current page, or inside `node`: components with how many instances, and the error a trial run on the first one gives. Also the components used there that no template connects, and what keeps a template out. design_read returns the code these templates give as codeComponents. Templates are code: write them with your file tools as Figma documents them (guide topic code-connect).",
+    "description": "Lists the project's Figma Code Connect files (templates *.figma.ts and *.figma.js, batch files *.figma.batch.json, as figma.config.json's globs name them) with what each connects on the current page, or inside `node`: components with how many instances and how each matched (by key, id or name), and what a trial run on the first gives: its error, the properties its code never reads (`unread`) and the variant values its mapping misses (`values`); `missing` marks a source file that does not exist. Also the components shown there that none connects, with the id and key a new one needs, and what keeps a file out. design_read returns their code as codeComponents. Write them with your file tools as Figma documents them (guide topic code-connect).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5899,7 +5899,7 @@
       "properties": {
         "root": {
           "type": "string",
-          "description": "The project folder the templates were looked for in."
+          "description": "The project folder the Code Connect files were looked for in."
         },
         "templates": {
           "type": "array",
@@ -5907,13 +5907,26 @@
             "type": "object",
             "properties": {
               "path": {
-                "type": "string"
+                "type": "string",
+                "description": "A template file, a batch row (<batch file>#<n>), or a batch file none of whose rows is used here."
               },
               "url": {
                 "type": "string"
               },
+              "key": {
+                "type": "string"
+              },
               "component": {
                 "type": "string"
+              },
+              "source": {
+                "description": "The code component's file or package, as written.",
+                "type": "string"
+              },
+              "missing": {
+                "description": "The source names a file that does not exist.",
+                "type": "boolean",
+                "const": true
               },
               "matches": {
                 "type": "array",
@@ -5926,11 +5939,21 @@
                     },
                     "instances": {
                       "type": "number"
+                    },
+                    "by": {
+                      "type": "string",
+                      "enum": [
+                        "key",
+                        "id",
+                        "name"
+                      ],
+                      "description": "How it matched: the component's key, the id its url names, or the name."
                     }
                   },
                   "required": [
                     "component",
-                    "instances"
+                    "instances",
+                    "by"
                   ],
                   "additionalProperties": false
                 }
@@ -5938,6 +5961,26 @@
               "error": {
                 "description": "What a trial run on the first instance it matches gave.",
                 "type": "string"
+              },
+              "unread": {
+                "description": "Properties of that instance its code never reads: its own (Description), a nested one's (Button.Label).",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "values": {
+                "description": "Variant values its getEnum mappings miss, by property: Figma renders them as undefined.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
               }
             },
             "required": [
@@ -5958,15 +6001,29 @@
               },
               "instances": {
                 "type": "number"
+              },
+              "id": {
+                "type": "string",
+                "description": "The component's or set's id."
+              },
+              "key": {
+                "description": "The key a batch row or // key= needs; a set's for a variant.",
+                "type": "string"
+              },
+              "remote": {
+                "description": "It comes from a library.",
+                "type": "boolean",
+                "const": true
               }
             },
             "required": [
               "component",
-              "instances"
+              "instances",
+              "id"
             ],
             "additionalProperties": false
           },
-          "description": "Components used here that no template connects."
+          "description": "Components shown here as layers that no Code Connect file connects."
         },
         "problems": {
           "type": "array",

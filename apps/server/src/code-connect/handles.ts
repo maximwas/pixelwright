@@ -1,5 +1,7 @@
 import type { SnapshotNode } from "@pixelwright/core";
 import type { ResultSection } from "../types/code-connect.ts";
+import { propertyName as bare } from "./names.ts";
+import type { PropertyReads } from "./property-reads.ts";
 import { sectionsOf } from "./sections.ts";
 import { TemplateError } from "./template-error.ts";
 
@@ -11,6 +13,8 @@ export interface Runner {
   example(node: SnapshotNode): { sections: ResultSection[]; metadata: Record<string, unknown> };
   /** The `id` the instance's template exports, or null. */
   connectedId(node: SnapshotNode): string | null;
+  /** The properties the render's code read so far. */
+  readonly reads: PropertyReads;
 }
 
 interface SelectorOptions {
@@ -107,6 +111,10 @@ export class InstanceHandle {
   }
 
   get properties(): Record<string, { value: string | boolean }> {
+    for (const name of Object.keys(this.#node.instance?.properties ?? {})) {
+      this.#run.reads.read(this.#node.id, bare(name));
+    }
+
     return Object.fromEntries(
       Object.entries(this.#node.instance?.properties ?? {}).map(([name, property]) => [
         bare(name),
@@ -139,7 +147,11 @@ export class InstanceHandle {
   }
 
   getEnum(name: string, mapping: Record<string, unknown>): unknown {
-    return mapping[String(this.#property(name).value)];
+    const value = mapping[String(this.#property(name).value)];
+
+    this.#run.reads.readEnum(this.#node.id, bare(name), mapping);
+
+    return value;
   }
 
   getPropertyValue(name: string): string | boolean | ErrorHandle {
@@ -264,10 +276,18 @@ export class InstanceHandle {
         : null;
   }
 
+  /** The property of this name, written as Figma shows it or with its #id; the read is logged. */
   #find(name: string): Property | null {
     const properties = Object.entries(this.#node.instance?.properties ?? {});
+    const found = properties.find(([key]) => key === name) ?? properties.find(([key]) => bare(key) === name);
 
-    return (properties.find(([key]) => key === name) ?? properties.find(([key]) => bare(key) === name))?.[1] ?? null;
+    if (found === undefined) {
+      return null;
+    }
+
+    this.#run.reads.read(this.#node.id, bare(found[0]));
+
+    return found[1];
   }
 
   #property(name: string): Property {
@@ -328,11 +348,4 @@ export class InstanceHandle {
 /** Whether a find goes into a nested instance, at these instances deep: with traverseInstances, or along its path. */
 function enters(within: readonly string[], { path, traverseInstances = false }: SelectorOptions): boolean {
   return traverseInstances || (path !== undefined && path.slice(0, within.length).join("\n") === within.join("\n"));
-}
-
-/** A property's name as Figma shows it: TEXT, BOOLEAN and INSTANCE_SWAP keys end in #<id>. */
-function bare(name: string): string {
-  const hash = name.lastIndexOf("#");
-
-  return hash === -1 ? name : name.slice(0, hash);
 }

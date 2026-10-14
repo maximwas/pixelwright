@@ -10,3 +10,10 @@ export function templateName(template: TemplateFile): string {
 export function comparable(name: string): string {
   return (name.split("/").pop() ?? name).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
 }
+
+/** A property's name as Figma shows it: TEXT, BOOLEAN and INSTANCE_SWAP keys end in #<id>. */
+export function propertyName(name: string): string {
+  const hash = name.lastIndexOf("#");
+
+  return hash === -1 ? name : name.slice(0, hash);
+}

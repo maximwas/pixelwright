@@ -11,7 +11,7 @@ export function codeConnectReadTool({
     name: "code_connect_read",
     title: "Read the Code Connect templates",
     description:
-      "Lists the project's Figma Code Connect templates (*.figma.ts and *.figma.js, as figma.config.json's globs name them) with what each connects on the current page, or inside `node`: components with how many instances, and the error a trial run on the first one gives. Also the components used there that no template connects, and what keeps a template out. design_read returns the code these templates give as codeComponents. Templates are code: write them with your file tools as Figma documents them (guide topic code-connect).",
+      "Lists the project's Figma Code Connect files (templates *.figma.ts and *.figma.js, batch files *.figma.batch.json, as figma.config.json's globs name them) with what each connects on the current page, or inside `node`: components with how many instances and how each matched (by key, id or name), and what a trial run on the first gives: its error, the properties its code never reads (`unread`) and the variant values its mapping misses (`values`); `missing` marks a source file that does not exist. Also the components shown there that none connects, with the id and key a new one needs, and what keeps a file out. design_read returns their code as codeComponents. Write them with your file tools as Figma documents them (guide topic code-connect).",
     input: CodeConnectReadInputSchema,
     output: CodeConnectReadOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,

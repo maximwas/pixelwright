@@ -7,6 +7,7 @@ import type { ConnectionIndex } from "./connection-index.ts";
 import { figmaApi } from "./figma-api.ts";
 import type { Runner } from "./handles.ts";
 import { HelperModules } from "./helper-modules.ts";
+import { PropertyReads } from "./property-reads.ts";
 import { TemplateError, templateErrorOf } from "./template-error.ts";
 import { exported, metadataOf } from "./template-exports.ts";
 
@@ -27,6 +28,7 @@ export interface RunLimits {
 
 /** One instance's render: its nested instances' runs, once each, and the instances being rendered (for cycles). */
 export class TemplateRun implements Runner {
+  readonly reads = new PropertyReads();
   readonly #limits: RunLimits;
   readonly #running = new Set<string>();
   readonly #done = new Map<string, Executed | TemplateError>();

@@ -2,6 +2,7 @@ import type { SnapshotNode } from "@pixelwright/core";
 import { CODE_CONNECT_BUDGET_MS, TEMPLATE_TIMEOUT_MS } from "../constants/code-connect.ts";
 import type { Executed, RenderedInstance, SnapshotInstance, TemplateFile } from "../types/code-connect.ts";
 import { ConnectionIndex, type ConnectionMatch } from "./connection-index.ts";
+import { type Coverage, coverageOf } from "./coverage.ts";
 import { firstError, nestedImports, renderSections } from "./sections.ts";
 import { type TemplateError, templateErrorOf } from "./template-error.ts";
 import { TemplateRun } from "./template-run.ts";
@@ -21,6 +22,8 @@ export class RenderSession {
   readonly #ends: number;
   /** Templates this read gave up on, with why. */
   readonly failed = new Map<TemplateFile, TemplateError>();
+  /** What each rendered instance's code left out, by its id. */
+  readonly #coverage = new Map<string, Coverage>();
 
   constructor(
     templates: readonly TemplateFile[],
@@ -34,6 +37,11 @@ export class RenderSession {
     this.#timeout = timeout;
     this.#budget = budget;
     this.#ends = Date.now() + budget;
+  }
+
+  /** What an instance's code left out, once it rendered. */
+  coverage(id: string): Coverage | undefined {
+    return this.#coverage.get(id);
   }
 
   /** The connection for an instance, and how it matched; null when none connects it. */
@@ -65,7 +73,13 @@ export class RenderSession {
     });
 
     try {
-      return rendered(template, node.instance, run.execute(node, template));
+      const outcome = rendered(template, node.instance, run.execute(node, template));
+
+      if ("snippet" in outcome) {
+        this.#coverage.set(node.id, coverageOf(node, run.reads, outcome.snippet));
+      }
+
+      return outcome;
     } catch (error) {
       const failure = templateErrorOf(error, template, this.#timeout);
 
