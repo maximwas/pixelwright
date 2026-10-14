@@ -1,0 +1,2495 @@
+{
+  "54:243": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plans",
+        "display": "flex",
+        "width": "1200px",
+        "height": "394px",
+        "gap": "var(--space-24)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plans",
+        "display": "flex",
+        "width": "1200px",
+        "height": "394px",
+        "gap": "var(--space-24)"
+      }
+    }
+  },
+  "54:244": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border",
+        "border-radius",
+        "box-shadow",
+        "component",
+        "display",
+        "flex",
+        "flex-direction",
+        "gap",
+        "id",
+        "name",
+        "padding",
+        "props"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plan – Starter",
+        "component": "Plan Card",
+        "props": "Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter",
+        "display": "flex",
+        "flex-direction": "column",
+        "flex": "1",
+        "padding": "var(--space-32)",
+        "gap": "var(--space-24)",
+        "border-radius": "var(--radius-lg)",
+        "border": "1px solid var(--color-line)",
+        "background": "var(--color-surface)",
+        "box-shadow": "var(--Shadow-Card)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border",
+        "border-radius",
+        "box-shadow",
+        "component",
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "padding",
+        "props",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plan – Starter",
+        "component": "Plan Card",
+        "props": "Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter",
+        "display": "flex",
+        "flex-direction": "column",
+        "flex": "1",
+        "padding": "var(--space-32)",
+        "gap": "var(--space-24)",
+        "border-radius": "var(--radius-lg)",
+        "border": "1px solid var(--color-line)",
+        "background": "var(--color-surface)",
+        "box-shadow": "var(--Shadow-Card)"
+      }
+    }
+  },
+  "I54:244;54:203": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "align-self",
+        "display",
+        "id",
+        "justify-content",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Header",
+        "display": "flex",
+        "align-self": "stretch",
+        "justify-content": "space-between",
+        "align-items": "center",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "height",
+        "id",
+        "justify-content",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Header",
+        "display": "flex",
+        "align-self": "stretch",
+        "justify-content": "space-between",
+        "align-items": "center",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:244;54:204": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Name",
+        "textStyle": "Heading/H3",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Name",
+        "textStyle": "Heading/H3",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:244;54:207": {
+    "inRead": {
+      "attributes": [
+        "align-self",
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Description",
+        "textStyle": "Body Small",
+        "align-self": "stretch",
+        "color": "var(--color-ink-muted)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Description",
+        "textStyle": "Body Small",
+        "align-self": "stretch",
+        "color": "var(--color-ink-muted)"
+      }
+    }
+  },
+  "I54:244;54:208": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Price",
+        "display": "flex",
+        "align-items": "baseline",
+        "gap": "var(--space-4)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Price",
+        "display": "flex",
+        "align-items": "baseline",
+        "gap": "var(--space-4)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:244;54:209": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Amount",
+        "textStyle": "Price",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Amount",
+        "textStyle": "Price",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:244;54:210": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Period",
+        "textStyle": "Body",
+        "color": "var(--color-ink-muted)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Period",
+        "textStyle": "Body",
+        "color": "var(--color-ink-muted)"
+      }
+    }
+  },
+  "I54:244;54:211": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "align-self",
+        "background",
+        "border-radius",
+        "component",
+        "display",
+        "id",
+        "justify-content",
+        "name",
+        "padding",
+        "props",
+        "variant"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "component": "Button",
+        "variant": "Variant=Primary, State=Default",
+        "props": "Label=Start free",
+        "display": "flex",
+        "align-self": "stretch",
+        "padding": "var(--space-12) var(--space-24)",
+        "justify-content": "center",
+        "align-items": "center",
+        "border-radius": "var(--radius-md)",
+        "background": "var(--color-brand)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "background",
+        "border-radius",
+        "component",
+        "display",
+        "height",
+        "id",
+        "justify-content",
+        "name",
+        "padding",
+        "props",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "component": "Button",
+        "variant": "Variant=Primary, State=Default",
+        "props": "Label=Start free",
+        "display": "flex",
+        "align-self": "stretch",
+        "padding": "var(--space-12) var(--space-24)",
+        "justify-content": "center",
+        "align-items": "center",
+        "border-radius": "var(--radius-md)",
+        "background": "var(--color-brand)"
+      }
+    }
+  },
+  "I54:244;54:211;54:190": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "textStyle": "Button",
+        "color": "var(--color-on-brand)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "textStyle": "Button",
+        "color": "var(--color-on-brand)"
+      }
+    }
+  },
+  "I54:244;54:213": {
+    "inRead": {
+      "attributes": [
+        "align-self",
+        "display",
+        "flex-direction",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Features",
+        "display": "flex",
+        "flex-direction": "column",
+        "align-self": "stretch",
+        "gap": "var(--space-12)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Features",
+        "display": "flex",
+        "flex-direction": "column",
+        "align-self": "stretch",
+        "gap": "var(--space-12)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:244;54:214": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:244;54:215": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:244;54:217": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:244;54:218": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:244;54:219": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:244;54:221": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:244;54:222": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:244;54:223": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:244;54:225": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "54:268": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border",
+        "border-radius",
+        "box-shadow",
+        "component",
+        "display",
+        "flex",
+        "flex-direction",
+        "gap",
+        "id",
+        "name",
+        "note",
+        "padding",
+        "props"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plan – Pro",
+        "component": "Plan Card",
+        "props": "Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro",
+        "note": "The price comes from the billing API. Show the Popular badge only on the plan the API marks popular.",
+        "display": "flex",
+        "flex-direction": "column",
+        "flex": "1",
+        "padding": "var(--space-32)",
+        "gap": "var(--space-24)",
+        "border-radius": "var(--radius-lg)",
+        "border": "2px solid var(--color-brand)",
+        "background": "var(--color-surface)",
+        "box-shadow": "var(--Shadow-Card)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border",
+        "border-radius",
+        "box-shadow",
+        "component",
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "note",
+        "padding",
+        "props",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plan – Pro",
+        "component": "Plan Card",
+        "props": "Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro",
+        "note": "The price comes from the billing API. Show the Popular badge only on the plan the API marks popular.",
+        "display": "flex",
+        "flex-direction": "column",
+        "flex": "1",
+        "padding": "var(--space-32)",
+        "gap": "var(--space-24)",
+        "border-radius": "var(--radius-lg)",
+        "border": "2px solid var(--color-brand)",
+        "background": "var(--color-surface)",
+        "box-shadow": "var(--Shadow-Card)"
+      }
+    }
+  },
+  "I54:268;54:203": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "align-self",
+        "display",
+        "id",
+        "justify-content",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Header",
+        "display": "flex",
+        "align-self": "stretch",
+        "justify-content": "space-between",
+        "align-items": "center",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "height",
+        "id",
+        "justify-content",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Header",
+        "display": "flex",
+        "align-self": "stretch",
+        "justify-content": "space-between",
+        "align-items": "center",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:268;54:204": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Name",
+        "textStyle": "Heading/H3",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Name",
+        "textStyle": "Heading/H3",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:268;54:205": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "background",
+        "border-radius",
+        "component",
+        "display",
+        "id",
+        "name",
+        "padding",
+        "props"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Badge",
+        "component": "Badge",
+        "props": "Label=Popular",
+        "display": "flex",
+        "padding": "var(--space-4) var(--space-12)",
+        "align-items": "center",
+        "border-radius": "var(--radius-pill)",
+        "background": "var(--color-accent)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "background",
+        "border-radius",
+        "component",
+        "display",
+        "height",
+        "id",
+        "name",
+        "padding",
+        "props",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Badge",
+        "component": "Badge",
+        "props": "Label=Popular",
+        "display": "flex",
+        "padding": "var(--space-4) var(--space-12)",
+        "align-items": "center",
+        "border-radius": "var(--radius-pill)",
+        "background": "var(--color-accent)"
+      }
+    }
+  },
+  "I54:268;54:205;54:188": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "textStyle": "Label",
+        "color": "var(--color-on-brand)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "textStyle": "Label",
+        "color": "var(--color-on-brand)"
+      }
+    }
+  },
+  "I54:268;54:207": {
+    "inRead": {
+      "attributes": [
+        "align-self",
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Description",
+        "textStyle": "Body Small",
+        "align-self": "stretch",
+        "color": "var(--color-ink-muted)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Description",
+        "textStyle": "Body Small",
+        "align-self": "stretch",
+        "color": "var(--color-ink-muted)"
+      }
+    }
+  },
+  "I54:268;54:208": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Price",
+        "display": "flex",
+        "align-items": "baseline",
+        "gap": "var(--space-4)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Price",
+        "display": "flex",
+        "align-items": "baseline",
+        "gap": "var(--space-4)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:268;54:209": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Amount",
+        "textStyle": "Price",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Amount",
+        "textStyle": "Price",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:268;54:210": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Period",
+        "textStyle": "Body",
+        "color": "var(--color-ink-muted)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Period",
+        "textStyle": "Body",
+        "color": "var(--color-ink-muted)"
+      }
+    }
+  },
+  "I54:268;54:211": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "align-self",
+        "background",
+        "border-radius",
+        "component",
+        "display",
+        "id",
+        "justify-content",
+        "name",
+        "padding",
+        "props",
+        "variant"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "component": "Button",
+        "variant": "Variant=Primary, State=Default",
+        "props": "Label=Get started",
+        "display": "flex",
+        "align-self": "stretch",
+        "padding": "var(--space-12) var(--space-24)",
+        "justify-content": "center",
+        "align-items": "center",
+        "border-radius": "var(--radius-md)",
+        "background": "var(--color-brand)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "background",
+        "border-radius",
+        "component",
+        "display",
+        "height",
+        "id",
+        "justify-content",
+        "name",
+        "padding",
+        "props",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "component": "Button",
+        "variant": "Variant=Primary, State=Default",
+        "props": "Label=Get started",
+        "display": "flex",
+        "align-self": "stretch",
+        "padding": "var(--space-12) var(--space-24)",
+        "justify-content": "center",
+        "align-items": "center",
+        "border-radius": "var(--radius-md)",
+        "background": "var(--color-brand)"
+      }
+    }
+  },
+  "I54:268;54:211;54:190": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "textStyle": "Button",
+        "color": "var(--color-on-brand)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "textStyle": "Button",
+        "color": "var(--color-on-brand)"
+      }
+    }
+  },
+  "I54:268;54:213": {
+    "inRead": {
+      "attributes": [
+        "align-self",
+        "display",
+        "flex-direction",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Features",
+        "display": "flex",
+        "flex-direction": "column",
+        "align-self": "stretch",
+        "gap": "var(--space-12)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Features",
+        "display": "flex",
+        "flex-direction": "column",
+        "align-self": "stretch",
+        "gap": "var(--space-12)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:268;54:214": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:268;54:215": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:268;54:217": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:268;54:218": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:268;54:219": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:268;54:221": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:268;54:222": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:268;54:223": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:268;54:225": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "54:292": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border",
+        "border-radius",
+        "box-shadow",
+        "component",
+        "display",
+        "flex",
+        "flex-direction",
+        "gap",
+        "id",
+        "name",
+        "padding",
+        "props"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plan – Team",
+        "component": "Plan Card",
+        "props": "Price=$29, Popular=false, Description=For growing teams that ship together., Name=Team",
+        "display": "flex",
+        "flex-direction": "column",
+        "flex": "1",
+        "padding": "var(--space-32)",
+        "gap": "var(--space-24)",
+        "border-radius": "var(--radius-lg)",
+        "border": "1px solid var(--color-line)",
+        "background": "var(--color-surface)",
+        "box-shadow": "var(--Shadow-Card)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border",
+        "border-radius",
+        "box-shadow",
+        "component",
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "padding",
+        "props",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plan – Team",
+        "component": "Plan Card",
+        "props": "Price=$29, Popular=false, Description=For growing teams that ship together., Name=Team",
+        "display": "flex",
+        "flex-direction": "column",
+        "flex": "1",
+        "padding": "var(--space-32)",
+        "gap": "var(--space-24)",
+        "border-radius": "var(--radius-lg)",
+        "border": "1px solid var(--color-line)",
+        "background": "var(--color-surface)",
+        "box-shadow": "var(--Shadow-Card)"
+      }
+    }
+  },
+  "I54:292;54:203": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "align-self",
+        "display",
+        "id",
+        "justify-content",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Header",
+        "display": "flex",
+        "align-self": "stretch",
+        "justify-content": "space-between",
+        "align-items": "center",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "height",
+        "id",
+        "justify-content",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Header",
+        "display": "flex",
+        "align-self": "stretch",
+        "justify-content": "space-between",
+        "align-items": "center",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:292;54:204": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Name",
+        "textStyle": "Heading/H3",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Name",
+        "textStyle": "Heading/H3",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:292;54:207": {
+    "inRead": {
+      "attributes": [
+        "align-self",
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Description",
+        "textStyle": "Body Small",
+        "align-self": "stretch",
+        "color": "var(--color-ink-muted)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Description",
+        "textStyle": "Body Small",
+        "align-self": "stretch",
+        "color": "var(--color-ink-muted)"
+      }
+    }
+  },
+  "I54:292;54:208": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Price",
+        "display": "flex",
+        "align-items": "baseline",
+        "gap": "var(--space-4)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Price",
+        "display": "flex",
+        "align-items": "baseline",
+        "gap": "var(--space-4)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:292;54:209": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Amount",
+        "textStyle": "Price",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Amount",
+        "textStyle": "Price",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:292;54:210": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Period",
+        "textStyle": "Body",
+        "color": "var(--color-ink-muted)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Period",
+        "textStyle": "Body",
+        "color": "var(--color-ink-muted)"
+      }
+    }
+  },
+  "I54:292;54:211": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "align-self",
+        "background",
+        "border-radius",
+        "component",
+        "display",
+        "id",
+        "justify-content",
+        "name",
+        "padding",
+        "props",
+        "variant"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "component": "Button",
+        "variant": "Variant=Primary, State=Default",
+        "props": "Label=Contact sales",
+        "display": "flex",
+        "align-self": "stretch",
+        "padding": "var(--space-12) var(--space-24)",
+        "justify-content": "center",
+        "align-items": "center",
+        "border-radius": "var(--radius-md)",
+        "background": "var(--color-brand)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "background",
+        "border-radius",
+        "component",
+        "display",
+        "height",
+        "id",
+        "justify-content",
+        "name",
+        "padding",
+        "props",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "component": "Button",
+        "variant": "Variant=Primary, State=Default",
+        "props": "Label=Contact sales",
+        "display": "flex",
+        "align-self": "stretch",
+        "padding": "var(--space-12) var(--space-24)",
+        "justify-content": "center",
+        "align-items": "center",
+        "border-radius": "var(--radius-md)",
+        "background": "var(--color-brand)"
+      }
+    }
+  },
+  "I54:292;54:211;54:190": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "textStyle": "Button",
+        "color": "var(--color-on-brand)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "textStyle": "Button",
+        "color": "var(--color-on-brand)"
+      }
+    }
+  },
+  "I54:292;54:213": {
+    "inRead": {
+      "attributes": [
+        "align-self",
+        "display",
+        "flex-direction",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Features",
+        "display": "flex",
+        "flex-direction": "column",
+        "align-self": "stretch",
+        "gap": "var(--space-12)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Features",
+        "display": "flex",
+        "flex-direction": "column",
+        "align-self": "stretch",
+        "gap": "var(--space-12)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:292;54:214": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:292;54:215": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:292;54:217": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:292;54:218": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:292;54:219": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:292;54:221": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "I54:292;54:222": {
+    "inRead": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "id",
+        "name",
+        "overflow"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "align-items",
+        "display",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Feature",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "var(--space-8)",
+        "overflow": "hidden"
+      }
+    }
+  },
+  "I54:292;54:223": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Icon/Check",
+        "component": "Icon/Check",
+        "src": "assets/icon-check.svg",
+        "width": "20px",
+        "height": "20px"
+      }
+    }
+  },
+  "I54:292;54:225": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "name",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Text",
+        "textStyle": "Body Small",
+        "color": "var(--color-ink)"
+      }
+    }
+  }
+}

@@ -1,0 +1,669 @@
+{
+  "54:434": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Customers",
+        "width": "1200px",
+        "height": "360px",
+        "overflow": "hidden",
+        "border-radius": "24px",
+        "background": "var(--color-surface)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Customers",
+        "width": "1200px",
+        "height": "360px",
+        "overflow": "hidden",
+        "border-radius": "24px",
+        "background": "var(--color-surface)"
+      }
+    }
+  },
+  "54:435": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "textStyle",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Title",
+        "textStyle": "Heading/H3",
+        "position": "absolute",
+        "left": "40px",
+        "top": "40px",
+        "width": "251px",
+        "height": "30px",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "name",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Title",
+        "textStyle": "Heading/H3",
+        "position": "absolute",
+        "left": "40px",
+        "top": "40px",
+        "width": "251px",
+        "height": "30px",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "54:436": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "font",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Trusted",
+        "position": "absolute",
+        "left": "40px",
+        "top": "80px",
+        "width": "170px",
+        "height": "17px",
+        "font": "500 14px/normal 'Inter'",
+        "color": "var(--color-ink-muted)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Trusted",
+        "position": "absolute",
+        "left": "40px",
+        "top": "80px",
+        "width": "170px",
+        "height": "17px",
+        "font": "500 14px/normal 'Inter'",
+        "color": "var(--color-ink-muted)"
+      }
+    }
+  },
+  "54:437": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "src",
+        "top",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Logo",
+        "component": "Logo",
+        "variant": "Brand=Nova",
+        "src": "assets/logo-nova.svg",
+        "position": "absolute",
+        "left": "40px",
+        "top": "124px",
+        "width": "120px",
+        "height": "32px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Logo",
+        "component": "Logo",
+        "variant": "Brand=Nova",
+        "src": "assets/logo-nova.svg",
+        "position": "absolute",
+        "left": "40px",
+        "top": "124px",
+        "width": "120px",
+        "height": "32px"
+      }
+    }
+  },
+  "54:441": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "src",
+        "top",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Logo",
+        "component": "Logo",
+        "variant": "Brand=Lumen",
+        "src": "assets/logo-lumen.svg",
+        "position": "absolute",
+        "left": "190px",
+        "top": "124px",
+        "width": "120px",
+        "height": "32px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Logo",
+        "component": "Logo",
+        "variant": "Brand=Lumen",
+        "src": "assets/logo-lumen.svg",
+        "position": "absolute",
+        "left": "190px",
+        "top": "124px",
+        "width": "120px",
+        "height": "32px"
+      }
+    }
+  },
+  "54:445": {
+    "inRead": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "src",
+        "top",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Logo",
+        "component": "Logo",
+        "variant": "Brand=Nova",
+        "src": "assets/logo-nova.svg",
+        "position": "absolute",
+        "left": "340px",
+        "top": "124px",
+        "width": "120px",
+        "height": "32px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "component",
+        "height",
+        "id",
+        "name",
+        "src",
+        "variant",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Logo",
+        "component": "Logo",
+        "variant": "Brand=Nova",
+        "src": "assets/logo-nova.svg",
+        "position": "absolute",
+        "left": "340px",
+        "top": "124px",
+        "width": "120px",
+        "height": "32px"
+      }
+    }
+  },
+  "54:449": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "font",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Quote",
+        "position": "absolute",
+        "left": "112px",
+        "top": "230px",
+        "width": "520px",
+        "height": "48px",
+        "font": "400 16px/24px 'Inter'",
+        "color": "var(--color-ink)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Quote",
+        "position": "absolute",
+        "left": "112px",
+        "top": "230px",
+        "width": "520px",
+        "height": "48px",
+        "font": "400 16px/24px 'Inter'",
+        "color": "var(--color-ink)"
+      }
+    }
+  },
+  "54:450": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "display",
+        "id",
+        "left",
+        "name",
+        "overflow",
+        "padding",
+        "position",
+        "top",
+        "transform"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Sticker",
+        "display": "flex",
+        "position": "absolute",
+        "left": "521px",
+        "top": "282px",
+        "padding": "6px 12px",
+        "transform": "rotate(-8deg)",
+        "overflow": "hidden",
+        "border-radius": "999px",
+        "background": "var(--color-accent)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "display",
+        "height",
+        "id",
+        "name",
+        "overflow",
+        "padding",
+        "transform",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Sticker",
+        "display": "flex",
+        "position": "absolute",
+        "left": "521px",
+        "top": "282px",
+        "padding": "6px 12px",
+        "transform": "rotate(-8deg)",
+        "overflow": "hidden",
+        "border-radius": "999px",
+        "background": "var(--color-accent)"
+      }
+    }
+  },
+  "54:451": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "id",
+        "textStyle"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "textStyle": "Label",
+        "color": "var(--color-on-brand)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "height",
+        "id",
+        "textStyle",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "textStyle": "Label",
+        "color": "var(--color-on-brand)"
+      }
+    }
+  },
+  "54:452": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "src",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Arrow",
+        "src": "assets/arrow.svg",
+        "position": "absolute",
+        "left": "670px",
+        "top": "257px",
+        "width": "80px",
+        "height": "42px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Arrow",
+        "src": "assets/arrow.svg",
+        "position": "absolute",
+        "left": "670px",
+        "top": "257px",
+        "width": "80px",
+        "height": "42px"
+      }
+    }
+  },
+  "54:454": {
+    "inRead": {
+      "attributes": [
+        "border-radius",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "src",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Product shot",
+        "src": "assets/product-shot.png",
+        "position": "absolute",
+        "left": "760px",
+        "top": "56px",
+        "width": "400px",
+        "height": "248px",
+        "border-radius": "12px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "src",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Product shot",
+        "src": "assets/product-shot.png",
+        "position": "absolute",
+        "left": "760px",
+        "top": "56px",
+        "width": "400px",
+        "height": "248px",
+        "border-radius": "12px"
+      }
+    }
+  },
+  "54:456": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "src",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Avatar",
+        "src": "assets/avatar.png",
+        "position": "absolute",
+        "left": "40px",
+        "top": "226px",
+        "width": "56px",
+        "height": "56px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Avatar",
+        "src": "assets/avatar.png",
+        "position": "absolute",
+        "left": "40px",
+        "top": "226px",
+        "width": "56px",
+        "height": "56px"
+      }
+    }
+  },
+  "54:457": {
+    "inRead": {
+      "attributes": [
+        "color",
+        "font",
+        "height",
+        "id",
+        "left",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "position": "absolute",
+        "left": "112px",
+        "top": "204px",
+        "width": "74px",
+        "height": "17px",
+        "font": "400 14px/normal 'Inter'",
+        "color": "#FF6B3D"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "color",
+        "font",
+        "height",
+        "id",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "position": "absolute",
+        "left": "112px",
+        "top": "204px",
+        "width": "74px",
+        "height": "17px",
+        "font": "400 14px/normal 'Inter'",
+        "color": "#FF6B3D"
+      }
+    }
+  },
+  "54:458": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Rectangle 1",
+        "position": "absolute",
+        "left": "40px",
+        "top": "188px",
+        "width": "560px",
+        "height": "1px",
+        "background": "#E1E5EE"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Rectangle 1",
+        "position": "absolute",
+        "left": "40px",
+        "top": "188px",
+        "width": "560px",
+        "height": "1px",
+        "background": "#E1E5EE"
+      }
+    }
+  }
+}

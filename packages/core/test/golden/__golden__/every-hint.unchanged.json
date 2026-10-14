@@ -1,0 +1,1016 @@
+{
+  "1:1": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Screen",
+        "display": "flex",
+        "flex-direction": "column",
+        "width": "400px",
+        "height": "900px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Screen",
+        "display": "flex",
+        "flex-direction": "column",
+        "width": "400px",
+        "height": "900px"
+      }
+    }
+  },
+  "1:2": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Frame 12",
+        "width": "400px",
+        "height": "200px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Frame 12",
+        "width": "400px",
+        "height": "200px"
+      }
+    }
+  },
+  "1:3": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Backdrop",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "400px",
+        "height": "200px",
+        "background": "#FFF"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Backdrop",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "400px",
+        "height": "200px",
+        "background": "#FFF"
+      }
+    }
+  },
+  "1:4": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Rectangle 7",
+        "position": "absolute",
+        "left": "10px",
+        "top": "10px",
+        "width": "50px",
+        "height": "50px",
+        "background": "#F00"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Rectangle 7",
+        "position": "absolute",
+        "left": "10px",
+        "top": "10px",
+        "width": "50px",
+        "height": "50px",
+        "background": "#F00"
+      }
+    }
+  },
+  "1:5": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Wrapper",
+        "width": "200px",
+        "height": "40px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Wrapper",
+        "width": "200px",
+        "height": "40px"
+      }
+    }
+  },
+  "1:6": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Note",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Note",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  },
+  "1:7": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Card",
+        "width": "120px",
+        "height": "80px",
+        "border": "1px solid #F00",
+        "background": "#FFF"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Card",
+        "width": "120px",
+        "height": "80px",
+        "border": "1px solid #F00",
+        "background": "#FFF"
+      }
+    }
+  },
+  "1:8": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Detached card",
+        "display": "flex",
+        "width": "500px",
+        "height": "60px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Detached card",
+        "display": "flex",
+        "width": "500px",
+        "height": "60px"
+      }
+    }
+  },
+  "1:9": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "display": "flex",
+        "width": "120px",
+        "height": "40px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "display": "flex",
+        "width": "120px",
+        "height": "40px"
+      }
+    }
+  },
+  "I1:9;2:1": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "width": "40px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "width": "40px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  },
+  "1:10": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Stack",
+        "display": "flex",
+        "flex-direction": "column",
+        "width": "400px",
+        "height": "100px",
+        "gap": "16px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Stack",
+        "display": "flex",
+        "flex-direction": "column",
+        "width": "400px",
+        "height": "100px",
+        "gap": "16px"
+      }
+    }
+  },
+  "1:11": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Swatch",
+        "width": "40px",
+        "height": "40px",
+        "background": "var(--White-2)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Swatch",
+        "width": "40px",
+        "height": "40px",
+        "background": "var(--White-2)"
+      }
+    }
+  },
+  "1:12": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Dot",
+        "width": "40px",
+        "height": "40px",
+        "border-radius": "50%",
+        "background": "var(--Accent)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Dot",
+        "width": "40px",
+        "height": "40px",
+        "border-radius": "50%",
+        "background": "var(--Accent)"
+      }
+    }
+  },
+  "2:2": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Frame 12",
+        "width": "400px",
+        "height": "200px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Frame 12",
+        "width": "400px",
+        "height": "200px"
+      }
+    }
+  },
+  "2:3": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Backdrop",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "400px",
+        "height": "200px",
+        "background": "#FFF"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Backdrop",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "400px",
+        "height": "200px",
+        "background": "#FFF"
+      }
+    }
+  },
+  "2:4": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Rectangle 7",
+        "position": "absolute",
+        "left": "10px",
+        "top": "10px",
+        "width": "50px",
+        "height": "50px",
+        "background": "#F00"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Rectangle 7",
+        "position": "absolute",
+        "left": "10px",
+        "top": "10px",
+        "width": "50px",
+        "height": "50px",
+        "background": "#F00"
+      }
+    }
+  },
+  "2:5": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Wrapper",
+        "width": "200px",
+        "height": "40px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Wrapper",
+        "width": "200px",
+        "height": "40px"
+      }
+    }
+  },
+  "2:6": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Note",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Note",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  },
+  "2:7": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Card",
+        "width": "120px",
+        "height": "80px",
+        "border": "1px solid #F00",
+        "background": "#FFF"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Card",
+        "width": "120px",
+        "height": "80px",
+        "border": "1px solid #F00",
+        "background": "#FFF"
+      }
+    }
+  },
+  "2:8": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Detached card",
+        "display": "flex",
+        "width": "500px",
+        "height": "60px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Detached card",
+        "display": "flex",
+        "width": "500px",
+        "height": "60px"
+      }
+    }
+  },
+  "2:9": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "display": "flex",
+        "width": "120px",
+        "height": "40px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Button",
+        "display": "flex",
+        "width": "120px",
+        "height": "40px"
+      }
+    }
+  },
+  "I2:9;2:1": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "width": "40px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "width": "40px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  },
+  "2:10": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Stack",
+        "display": "flex",
+        "flex-direction": "column",
+        "width": "400px",
+        "height": "100px",
+        "gap": "16px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "gap",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Stack",
+        "display": "flex",
+        "flex-direction": "column",
+        "width": "400px",
+        "height": "100px",
+        "gap": "16px"
+      }
+    }
+  },
+  "2:11": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Swatch",
+        "width": "40px",
+        "height": "40px",
+        "background": "var(--White-2)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Swatch",
+        "width": "40px",
+        "height": "40px",
+        "background": "var(--White-2)"
+      }
+    }
+  },
+  "2:12": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Dot",
+        "width": "40px",
+        "height": "40px",
+        "border-radius": "50%",
+        "background": "var(--Accent)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Dot",
+        "width": "40px",
+        "height": "40px",
+        "border-radius": "50%",
+        "background": "var(--Accent)"
+      }
+    }
+  },
+  "3:1": {
+    "inRead": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Mark",
+        "width": "32px",
+        "height": "32px",
+        "border-radius": "50%",
+        "background": "var(--Orbit-Gradient)"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "background",
+        "border-radius",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Mark",
+        "width": "32px",
+        "height": "32px",
+        "border-radius": "50%",
+        "background": "var(--Orbit-Gradient)"
+      }
+    }
+  }
+}

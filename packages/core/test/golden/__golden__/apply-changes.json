@@ -1,0 +1,5562 @@
+{
+  "name": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "name": "Card & co"
+        },
+        "sources": {
+          "name": "name"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a link on a frame": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "hyperlink": "https://example.com"
+        },
+        "sources": {
+          "hyperlink": "href"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "component, variant and props with design_read's escapes": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Instance",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "component": "Heading",
+          "variant": {
+            "Property 1": "Green",
+            "Size=XL": "Large"
+          },
+          "props": {
+            "Label": "Hello, world",
+            "Has icon": "false",
+            "Trailing": "1"
+          }
+        },
+        "sources": {
+          "component": "component",
+          "variant": "variant",
+          "props": "props"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a library component by key": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Instance",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "component": "key:abc123",
+          "variant": {}
+        },
+        "sources": {
+          "component": "component",
+          "variant": "variant"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "lists that are not Name=Value": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Instance",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "variant",
+          "message": "variant=\"Large\" is not a list of Name=Value, separated by commas.",
+          "hint": "Escape a comma or = in a name or value with a backslash."
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "props",
+          "message": "props=\"A=1,,B=2\" is not a list of Name=Value, separated by commas.",
+          "hint": "Escape a comma or = in a name or value with a backslash."
+        }
+      ]
+    }
+  ],
+  "a description and notes with categories": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Component",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "description": "A card.",
+          "notes": [
+            {
+              "category": "Behavior",
+              "label": "opens the modal"
+            },
+            {
+              "category": null,
+              "label": "Plain note with a | bar"
+            },
+            {
+              "category": "Copy",
+              "label": "Hi"
+            }
+          ]
+        },
+        "sources": {
+          "description": "description",
+          "notes": "note"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "an empty note takes the notes away": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "notes": []
+        },
+        "sources": {
+          "notes": "note"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the properties a new component's layers make": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Component",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "name": "Badge"
+        },
+        "sources": {
+          "name": "name"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 1,
+        "column": 25,
+        "kind": "create",
+        "ref": "new:1:25",
+        "id": null,
+        "tag": "Text",
+        "parent": "new:1",
+        "index": 0,
+        "props": {
+          "property": {
+            "text": "Label",
+            "visible": "Shown"
+          }
+        },
+        "sources": {
+          "property": "prop"
+        },
+        "text": {
+          "characters": "New",
+          "runs": []
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 1,
+        "column": 74,
+        "kind": "create",
+        "ref": "new:1:74",
+        "id": null,
+        "tag": "Frame",
+        "parent": "new:1",
+        "index": 1,
+        "props": {
+          "property": {
+            "visible": "Icon shown"
+          }
+        },
+        "sources": {
+          "property": "visibleProp"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "an image's and an icon's file": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Image",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "asset": {
+            "kind": "image",
+            "src": "assets/photo.png"
+          },
+          "width": 20,
+          "height": 10
+        },
+        "sources": {
+          "asset": "src",
+          "width": "width",
+          "height": "height"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Icon",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "asset": {
+            "kind": "icon",
+            "src": "assets/arrow.svg"
+          }
+        },
+        "sources": {
+          "asset": "src"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "src on a frame": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "src",
+          "message": "src makes an <Image> or an <Icon>, not a <Frame>.",
+          "hint": "A frame's image is its background: url(…)."
+        }
+      ]
+    }
+  ],
+  "flex: direction, wrap, gaps, padding and alignment": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "VERTICAL",
+          "layoutWrap": "WRAP",
+          "itemSpacing": 12,
+          "counterAxisSpacing": 40,
+          "padding": [
+            8,
+            16,
+            8,
+            16
+          ],
+          "primaryAxisAlignItems": "SPACE_BETWEEN",
+          "counterAxisAlignItems": "CENTER",
+          "counterAxisAlignContent": "SPACE_BETWEEN"
+        },
+        "sources": {
+          "layoutMode": "flex-direction",
+          "layoutWrap": "flex-wrap",
+          "itemSpacing": "gap",
+          "counterAxisSpacing": "column-gap",
+          "padding": "padding",
+          "primaryAxisAlignItems": "justify-content",
+          "counterAxisAlignItems": "align-items",
+          "counterAxisAlignContent": "align-content"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "display none hides, the layout left as it is": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "visible": false
+        },
+        "sources": {
+          "visible": "display"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "display block takes auto layout away; a gap needs flex or grid": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "NONE"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "gap",
+          "message": "gap needs display=\"flex\" or display=\"grid\": without auto layout it spaces nothing."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "gap",
+          "message": "gap needs display=\"flex\" or display=\"grid\": without auto layout it spaces nothing."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    }
+  ],
+  "displays Figma has and one it has not": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "layoutMode": "GRID"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "layoutMode": "NONE"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "display",
+          "message": "display=\"contents\" is not one Figma has: flex, grid, block (no auto layout) or none (hidden)."
+        }
+      ]
+    }
+  ],
+  "a reversed direction and a reversed wrap": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "flex-direction",
+          "message": "flex-direction=\"row-reverse\" is not one Figma has: row or column (auto layout has no reverse order)."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "layoutMode": "flex-direction"
+        }
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "flex-wrap",
+          "message": "flex-wrap=\"wrap-reverse\" is not one Figma has: wrap or nowrap."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "layoutWrap": "NO_WRAP"
+        },
+        "sources": {
+          "layoutMode": "display",
+          "layoutWrap": "flex-wrap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "column-gap along a row, row-gap along a column": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 20
+        },
+        "sources": {
+          "layoutMode": "display",
+          "itemSpacing": "column-gap"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:2",
+        "id": null,
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 20
+        },
+        "sources": {
+          "layoutMode": "flex-direction",
+          "itemSpacing": "row-gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a gap of two lengths, and a normal one": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "layoutWrap": "WRAP",
+          "itemSpacing": {
+            "token": "--space-s"
+          },
+          "counterAxisSpacing": 10
+        },
+        "sources": {
+          "layoutMode": "display",
+          "layoutWrap": "flex-wrap",
+          "itemSpacing": "gap",
+          "counterAxisSpacing": "gap"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 0
+        },
+        "sources": {
+          "layoutMode": "display",
+          "itemSpacing": "column-gap"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 20
+        },
+        "sources": {
+          "layoutMode": "display",
+          "itemSpacing": "gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "gaps that are no lengths": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "gap",
+          "message": "gap=\"big\" is not one or two lengths in px or tokens (rows, then columns)."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "gap",
+          "message": "gap=\"1px 2px 3px\" is not one or two lengths in px or tokens (rows, then columns)."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "column-gap",
+          "message": "column-gap=\"wide\" is not a length in px or a token."
+        }
+      ]
+    }
+  ],
+  "grid tracks and gaps": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "GRID",
+          "gridColumns": [
+            {
+              "type": "FLEX",
+              "value": 1
+            },
+            {
+              "type": "FLEX",
+              "value": 1
+            },
+            {
+              "type": "FIXED",
+              "value": 200
+            }
+          ],
+          "gridRows": [
+            {
+              "type": "HUG"
+            },
+            {
+              "type": "HUG"
+            }
+          ],
+          "gridColumnGap": 16,
+          "gridRowGap": 8
+        },
+        "sources": {
+          "layoutMode": "display",
+          "gridColumns": "grid-template-columns",
+          "gridRows": "grid-template-rows",
+          "gridColumnGap": "column-gap",
+          "gridRowGap": "row-gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a grid's gap shorthand, tracks it cannot read, and flex attributes on it": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "GRID",
+          "gridRows": [
+            {
+              "type": "FLEX",
+              "value": 1.5
+            }
+          ],
+          "gridColumnGap": 10,
+          "gridRowGap": 10
+        },
+        "sources": {
+          "layoutMode": "display",
+          "gridRows": "grid-template-rows",
+          "gridColumnGap": "gap",
+          "gridRowGap": "gap"
+        }
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "grid-template-columns",
+          "message": "grid-template-columns=\"1fr minmax(0, 1fr)\" is not tracks in fr, px or auto (repeat() allowed)."
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "flex-direction",
+          "message": "flex-direction needs display=\"flex\": a grid places its children in tracks."
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "flex-wrap",
+          "message": "flex-wrap needs display=\"flex\": a grid places its children in tracks."
+        }
+      ]
+    }
+  ],
+  "grid tracks on a flex frame": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "grid-template-columns",
+          "message": "grid-template-columns needs display=\"grid\"."
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "grid-template-rows",
+          "message": "grid-template-rows needs display=\"grid\"."
+        }
+      ]
+    }
+  ],
+  "padding of one to four lengths and tokens": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "padding": [
+            8,
+            {
+              "token": "--space-m"
+            },
+            8,
+            {
+              "token": "--space-m"
+            }
+          ]
+        },
+        "sources": {
+          "padding": "padding"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "padding": [
+            1,
+            2,
+            3,
+            2
+          ]
+        },
+        "sources": {
+          "padding": "padding"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "padding": "padding"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "padding",
+          "message": "padding=\"1em\" is not 1 to 4 lengths in px or tokens."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 5,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:5",
+        "id": "1:5",
+        "tag": "Frame",
+        "parent": null,
+        "index": 4,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 5,
+          "column": 1,
+          "id": "1:5",
+          "attribute": "padding",
+          "message": "padding=\"1px 2px 3px 4px 5px\" is not 1 to 4 lengths in px or tokens."
+        }
+      ]
+    }
+  ],
+  "the flex alignments": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "primaryAxisAlignItems": "SPACE_EVENLY",
+          "counterAxisAlignItems": "BASELINE",
+          "counterAxisAlignContent": "AUTO"
+        },
+        "sources": {
+          "primaryAxisAlignItems": "justify-content",
+          "counterAxisAlignItems": "align-items",
+          "counterAxisAlignContent": "align-content"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "primaryAxisAlignItems": "MAX",
+          "counterAxisAlignItems": "MAX",
+          "counterAxisAlignContent": "SPACE_BETWEEN"
+        },
+        "sources": {
+          "primaryAxisAlignItems": "justify-content",
+          "counterAxisAlignItems": "align-items",
+          "counterAxisAlignContent": "align-content"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "justify-content",
+          "message": "justify-content=\"stretch\" is not one Figma has: normal, flex-start, start, center, flex-end, end, space-between, space-evenly, space-around."
+        },
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "align-items",
+          "message": "align-items=\"self-start\" is not one Figma has: normal, flex-start, start, center, flex-end, end, baseline."
+        },
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "align-content",
+          "message": "align-content=\"center\" is not one Figma has: normal, flex-start, start, space-between."
+        }
+      ]
+    }
+  ],
+  "position absolute from the left and the top": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "absolute": true,
+          "horizontal": {
+            "kind": "MIN",
+            "offset": 10
+          },
+          "vertical": {
+            "kind": "MIN",
+            "offset": 20
+          }
+        },
+        "sources": {
+          "absolute": "position",
+          "horizontal": "left",
+          "vertical": "top"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "positions Figma has and one it has not": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "absolute": false
+        },
+        "sources": {
+          "absolute": "position"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "absolute": false
+        },
+        "sources": {
+          "absolute": "position"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "position",
+          "message": "position=\"fixed\" is not one Figma has: absolute, or relative to flow in the parent."
+        }
+      ]
+    }
+  ],
+  "pinned to the right and the bottom": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "absolute": true,
+          "horizontal": {
+            "kind": "MAX",
+            "offset": 20
+          },
+          "vertical": {
+            "kind": "MAX",
+            "offset": 0
+          }
+        },
+        "sources": {
+          "absolute": "position",
+          "horizontal": "right",
+          "vertical": "bottom"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "from the centre, and stretched between two edges": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "absolute": true,
+          "horizontal": {
+            "kind": "CENTER",
+            "offset": -30
+          },
+          "vertical": {
+            "kind": "STRETCH",
+            "start": 10,
+            "end": 10
+          }
+        },
+        "sources": {
+          "absolute": "position",
+          "horizontal": "left",
+          "vertical": "top"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "absolute": true,
+          "horizontal": {
+            "kind": "CENTER",
+            "offset": 0
+          },
+          "vertical": {
+            "kind": "CENTER",
+            "offset": 4.5
+          }
+        },
+        "sources": {
+          "absolute": "position",
+          "horizontal": "left",
+          "vertical": "top"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "scaled in percents of the parent": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "absolute": true,
+          "horizontal": {
+            "kind": "SCALE",
+            "start": 10,
+            "size": 50
+          },
+          "vertical": {
+            "kind": "SCALE",
+            "start": 60,
+            "size": 25
+          }
+        },
+        "sources": {
+          "absolute": "position",
+          "horizontal": "left",
+          "vertical": "top"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "placements CSS would not apply": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "left",
+          "message": "left places a layer with position=\"absolute\"; this one flows in its parent.",
+          "hint": "Add position=\"absolute\", or leave left out."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "absolute": true,
+          "horizontal": {
+            "kind": "STRETCH",
+            "start": 0,
+            "end": 0
+          }
+        },
+        "sources": {
+          "absolute": "position",
+          "horizontal": "left"
+        }
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "width",
+          "message": "width comes from left and right when both are set: set one of them to auto to size the layer."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "absolute": true
+        },
+        "sources": {
+          "absolute": "position"
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "left",
+          "message": "left in percents scales the layer with its parent: give its size in percents too."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {
+          "absolute": true
+        },
+        "sources": {
+          "absolute": "position"
+        }
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "left",
+          "message": "left=\"var(--x)\" is not a length in px, a percent, calc(50% ± Npx) or auto."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 5,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:5",
+        "id": "1:5",
+        "tag": "Frame",
+        "parent": null,
+        "index": 4,
+        "props": {
+          "absolute": true
+        },
+        "sources": {
+          "absolute": "position"
+        }
+      },
+      "errors": [
+        {
+          "line": 5,
+          "column": 1,
+          "id": "1:5",
+          "attribute": "right",
+          "message": "right=\"1em\" is not a length in px or auto."
+        }
+      ]
+    }
+  ],
+  "sizes: a length, a token, hugging": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "width": 300,
+          "height": {
+            "token": "--card-h"
+          }
+        },
+        "sources": {
+          "width": "width",
+          "height": "height"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "width": "HUG",
+          "height": "HUG"
+        },
+        "sources": {
+          "width": "width",
+          "height": "height"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "width": "HUG",
+          "height": 0
+        },
+        "sources": {
+          "width": "width",
+          "height": "height"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "sizes that are no lengths": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "width",
+          "message": "width=\"50%\" is not a length in px, a token or auto.",
+          "hint": "A percent scales with the parent: it needs left in percents too."
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "height",
+          "message": "height=\"tall\" is not a length in px, a token or auto."
+        }
+      ]
+    }
+  ],
+  "limits: lengths, tokens and none": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "minWidth": 120,
+          "maxWidth": null,
+          "minHeight": null,
+          "maxHeight": {
+            "token": "--max-h"
+          }
+        },
+        "sources": {
+          "minWidth": "min-width",
+          "maxWidth": "max-width",
+          "minHeight": "min-height",
+          "maxHeight": "max-height"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "minWidth": null
+        },
+        "sources": {
+          "minWidth": "min-width"
+        }
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "max-width",
+          "message": "max-width=\"10em\" is not a length in px, a token or none."
+        }
+      ]
+    }
+  ],
+  "flex fills its parent's direction or not": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "grow": true
+        },
+        "sources": {
+          "grow": "flex"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "grow": false
+        },
+        "sources": {
+          "grow": "flex"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "grow": true
+        },
+        "sources": {
+          "grow": "flex"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {
+          "grow": true
+        },
+        "sources": {
+          "grow": "flex"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 5,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:5",
+        "id": "1:5",
+        "tag": "Frame",
+        "parent": null,
+        "index": 4,
+        "props": {
+          "grow": false
+        },
+        "sources": {
+          "grow": "flex"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 6,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:6",
+        "id": "1:6",
+        "tag": "Frame",
+        "parent": null,
+        "index": 5,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 6,
+          "column": 1,
+          "id": "1:6",
+          "attribute": "flex",
+          "message": "flex=\"2\": a layer fills its parent's direction or not, flex=\"1\" or flex=\"none\" (Figma has no grow weights)."
+        }
+      ]
+    }
+  ],
+  "align-self and justify-self": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "alignSelf": "STRETCH",
+          "justifySelf": "CENTER"
+        },
+        "sources": {
+          "alignSelf": "align-self",
+          "justifySelf": "justify-self"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "alignSelf": "AUTO",
+          "justifySelf": "MAX"
+        },
+        "sources": {
+          "alignSelf": "align-self",
+          "justifySelf": "justify-self"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "align-self",
+          "message": "align-self=\"baseline\" is not one Figma has: auto, normal, start, flex-start, self-start, center, end, flex-end, self-end, stretch."
+        },
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "justify-self",
+          "message": "justify-self=\"left\" is not one Figma has: auto, normal, start, flex-start, self-start, center, end, flex-end, self-end, stretch."
+        }
+      ]
+    }
+  ],
+  "grid cells": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "gridRow": {
+            "anchor": 0,
+            "span": 1
+          },
+          "gridColumn": {
+            "anchor": 1,
+            "span": 2
+          }
+        },
+        "sources": {
+          "gridRow": "grid-row",
+          "gridColumn": "grid-column"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "gridRow": {
+            "anchor": 1,
+            "span": 2
+          }
+        },
+        "sources": {
+          "gridRow": "grid-row"
+        }
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "grid-column",
+          "message": "grid-column=\"0\" is not \"N\", \"N / span M\" or \"N / M\", lines counted from 1."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "grid-row",
+          "message": "grid-row=\"span 2\" is not \"N\", \"N / span M\" or \"N / M\", lines counted from 1."
+        },
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "grid-column",
+          "message": "grid-column=\"3 / 2\" is not \"N\", \"N / span M\" or \"N / M\", lines counted from 1."
+        }
+      ]
+    }
+  ],
+  "turns and mirrors": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "rotation": 30,
+          "mirror": false
+        },
+        "sources": {
+          "rotation": "transform",
+          "mirror": "transform"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "rotation": -45.5,
+          "mirror": true
+        },
+        "sources": {
+          "rotation": "transform",
+          "mirror": "transform"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "rotation": 0,
+          "mirror": false
+        },
+        "sources": {
+          "rotation": "transform",
+          "mirror": "transform"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "transform",
+          "message": "transform part skewX(10deg) is not rotate(Ndeg) or scaleX(-1), which is all Figma keeps."
+        }
+      ]
+    }
+  ],
+  "opacity": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "opacity": 0.5
+        },
+        "sources": {
+          "opacity": "opacity"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "opacity": 0.4
+        },
+        "sources": {
+          "opacity": "opacity"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "opacity": 1
+        },
+        "sources": {
+          "opacity": "opacity"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "opacity",
+          "message": "opacity=\"half\" is not a number from 0 to 1 or a percent."
+        }
+      ]
+    }
+  ],
+  "overflow on a frame": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "clipsContent": true
+        },
+        "sources": {
+          "clipsContent": "overflow"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "clipsContent": false
+        },
+        "sources": {
+          "clipsContent": "overflow"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "clipsContent": true
+        },
+        "sources": {
+          "clipsContent": "overflow"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "overflow",
+          "message": "overflow=\"scroll\": Figma clips a frame's content or not, hidden or visible (scrolling is a prototype setting)."
+        }
+      ]
+    }
+  ],
+  "truncating a text": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "truncate": true
+        },
+        "sources": {
+          "truncate": "text-overflow"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "truncate": false
+        },
+        "sources": {
+          "truncate": "text-overflow"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "truncate": false
+        },
+        "sources": {
+          "truncate": "overflow"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "corner radii": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "cornerRadius": 8
+        },
+        "sources": {
+          "cornerRadius": "border-radius"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "cornerRadius": [
+            8,
+            8,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "cornerRadius": "border-radius"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "cornerRadius": [
+            {
+              "token": "--radius-m"
+            },
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "cornerRadius": "border-radius"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Ellipse",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 5,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:5",
+        "id": "1:5",
+        "tag": "Rectangle",
+        "parent": null,
+        "index": 4,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 5,
+          "column": 1,
+          "id": "1:5",
+          "attribute": "border-radius",
+          "message": "border-radius=\"50%\" is not 1 to 4 lengths in px or tokens."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 6,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:6",
+        "id": "1:6",
+        "tag": "Frame",
+        "parent": null,
+        "index": 5,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 6,
+          "column": 1,
+          "id": "1:6",
+          "attribute": "border-radius",
+          "message": "border-radius=\"1em\" is not 1 to 4 lengths in px or tokens."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 7,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:7",
+        "id": "1:7",
+        "tag": "Frame",
+        "parent": null,
+        "index": 6,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 7,
+          "column": 1,
+          "id": "1:7",
+          "attribute": "border-radius",
+          "message": "border-radius=\"10px / 20px\" is not 1 to 4 lengths in px or tokens."
+        }
+      ]
+    }
+  ],
+  "background colours and tokens": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.09803921568627451,
+                "g": 0.10196078431372549,
+                "b": 0.13725490196078433,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "fills": [
+            {
+              "kind": "token",
+              "token": "--Dark",
+              "opacity": 1
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "fills": [
+            {
+              "kind": "token",
+              "token": "--Dark",
+              "opacity": 0.5
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {
+          "fills": [
+            {
+              "kind": "token",
+              "token": "--Dark",
+              "opacity": 0.25
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 5,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:5",
+        "id": "1:5",
+        "tag": "Frame",
+        "parent": null,
+        "index": 4,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 0,
+                "b": 0,
+                "a": 1,
+                "space": "display-p3"
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 6,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:6",
+        "id": "1:6",
+        "tag": "Frame",
+        "parent": null,
+        "index": 5,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.09803921568627451,
+                "g": 0.10196078431372549,
+                "b": 0.13725490196078433,
+                "a": 0.5
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 7,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:7",
+        "id": "1:7",
+        "tag": "Frame",
+        "parent": null,
+        "index": 6,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 8,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:8",
+        "id": "1:8",
+        "tag": "Frame",
+        "parent": null,
+        "index": 7,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "background layers bottom first, a flat gradient, none": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            },
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.09803921568627451,
+                "g": 0.10196078431372549,
+                "b": 0.13725490196078433,
+                "a": 0.5
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "fills": []
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "fills": []
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "image backgrounds and their fit": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            },
+            {
+              "kind": "image",
+              "src": "assets/hero.png",
+              "scaleMode": "FIT"
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "fills": [
+            {
+              "kind": "image",
+              "src": "my photo.png",
+              "scaleMode": "FILL"
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "fills": [
+            {
+              "kind": "image",
+              "src": "tile.png",
+              "scaleMode": "TILE"
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "backgrounds that cannot be written": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "background",
+          "message": "linear-gradient(90deg, #000, #FFF)…: a gradient is not written yet.",
+          "hint": "Use a colour or a token."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "background",
+          "message": "url(my photo.png): url() without quotes cannot hold spaces, quotes, brackets or var().",
+          "hint": "Write the file in quotes: url(\"my photo.png\")."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "background",
+          "message": "background=\"paper\" is not a colour, a token or color-mix(in srgb, var(--x) N%, transparent) (in display-p3 in a Display P3 file)."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "background",
+          "message": "background=\"#FFF, url(a.png), nonsense\" is not a colour, a token or color-mix(in srgb, var(--x) N%, transparent) (in display-p3 in a Display P3 file)."
+        }
+      ]
+    }
+  ],
+  "a text's colour": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "textFills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "textFills": "color"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "textFills": [
+            {
+              "kind": "token",
+              "token": "--Black",
+              "opacity": 0.6
+            }
+          ]
+        },
+        "sources": {
+          "textFills": "color"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "color",
+          "message": "A text is coloured with paint, not an image.",
+          "hint": "Use a colour or a token."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Text",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "color",
+          "message": "linear-gradient(#000, #FFF)…: a gradient is not written yet.",
+          "hint": "Use a colour or a token."
+        }
+      ]
+    }
+  ],
+  "a border inside, an outline outside, dashed and dotted": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "token",
+                "token": "--Dark",
+                "opacity": 1
+              }
+            ],
+            "weight": 1,
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "color",
+                "color": {
+                  "r": 0.09803921568627451,
+                  "g": 0.10196078431372549,
+                  "b": 0.13725490196078433,
+                  "a": 1
+                }
+              }
+            ],
+            "weight": 2,
+            "align": "OUTSIDE",
+            "dash": true
+          }
+        },
+        "sources": {
+          "strokes": "outline"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "color",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 1
+                }
+              }
+            ],
+            "weight": 1.5,
+            "align": "INSIDE",
+            "dash": true
+          }
+        },
+        "sources": {
+          "strokes": "border"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "border sides, and none": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "color",
+                "color": {
+                  "r": 0.09803921568627451,
+                  "g": 0.10196078431372549,
+                  "b": 0.13725490196078433,
+                  "a": 1
+                }
+              }
+            ],
+            "sides": {
+              "top": 0,
+              "right": 0,
+              "bottom": 1,
+              "left": 0
+            },
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border-bottom"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "color",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 1
+                }
+              }
+            ],
+            "sides": {
+              "top": 2,
+              "right": 0,
+              "bottom": 1,
+              "left": 0
+            },
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border-top"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "strokes": {
+            "paints": [],
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {
+          "strokes": {
+            "paints": [],
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 5,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:5",
+        "id": "1:5",
+        "tag": "Frame",
+        "parent": null,
+        "index": 4,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "color",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 1
+                }
+              }
+            ],
+            "sides": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 0
+            },
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 6,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:6",
+        "id": "1:6",
+        "tag": "Frame",
+        "parent": null,
+        "index": 5,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "color",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 1
+                }
+              }
+            ],
+            "sides": {
+              "top": 0,
+              "right": 1,
+              "bottom": 0,
+              "left": 1
+            },
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border-right"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "strokes Figma cannot draw": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "outline",
+          "message": "Figma strokes a layer once: write border (inside) or outline (outside), not both."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "border-top",
+          "message": "Figma draws every side of a stroke in one colour and style: give the sides the same ones."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "border",
+          "message": "border=\"thick\" is not \"Npx solid|dashed <colour or token>\"."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "border-left",
+          "message": "Figma draws every side of a stroke in one colour and style: give the sides the same ones."
+        }
+      ]
+    }
+  ],
+  "a line's border": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Line",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "color",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 1
+                }
+              }
+            ],
+            "sides": {
+              "top": 2,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            },
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border-top"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Line",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "token",
+                "token": "--Dark",
+                "opacity": 1
+              }
+            ],
+            "sides": {
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 1
+            },
+            "align": "INSIDE",
+            "dash": true
+          }
+        },
+        "sources": {
+          "strokes": "border-left"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "shadows bottom first, inset ones inner, blurs at Figma's double radius": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "effects": [
+            {
+              "type": "LAYER_BLUR",
+              "radius": 2.5
+            },
+            {
+              "type": "BACKGROUND_BLUR",
+              "radius": 20
+            },
+            {
+              "type": "DROP_SHADOW",
+              "color": {
+                "r": 0.09803921568627451,
+                "g": 0.10196078431372549,
+                "b": 0.13725490196078433,
+                "a": 0.25
+              },
+              "x": 0,
+              "y": 4,
+              "radius": 8,
+              "spread": 0
+            },
+            {
+              "type": "INNER_SHADOW",
+              "color": {
+                "r": 0.09803921568627451,
+                "g": 0.10196078431372549,
+                "b": 0.13725490196078433,
+                "a": 1
+              },
+              "x": 0,
+              "y": -1,
+              "radius": 0,
+              "spread": 0
+            }
+          ]
+        },
+        "sources": {
+          "effects": "box-shadow"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "an effect style, and a blur beside it": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "effects": {
+            "token": "--Card-shadow"
+          }
+        },
+        "sources": {
+          "effects": "box-shadow"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "effects": {
+            "token": "--Card-shadow"
+          }
+        },
+        "sources": {
+          "effects": "box-shadow"
+        }
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "filter",
+          "message": "The effect style --Card-shadow holds every effect: change the style, or write its shadows out."
+        }
+      ]
+    }
+  ],
+  "none takes shadows and blurs away": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "effects": []
+        },
+        "sources": {
+          "effects": "box-shadow"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a text's shadow": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "effects": [
+            {
+              "type": "DROP_SHADOW",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "x": 0,
+              "y": 1,
+              "radius": 2,
+              "spread": 0
+            }
+          ]
+        },
+        "sources": {
+          "effects": "text-shadow"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "effects": {
+            "token": "--Glow"
+          }
+        },
+        "sources": {
+          "effects": "text-shadow"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "effects Figma has not": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "filter",
+          "message": "filter=\"grayscale(1)\" is not blur(Npx), the one filter Figma has."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "box-shadow",
+          "message": "\"0 1px\" is not a shadow: [inset] x y [blur] [spread] and a colour."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "box-shadow",
+          "message": "\"1px 2px 3px 4px 5px #000\" is not a shadow: [inset] x y [blur] [spread] and a colour."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Frame",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "backdrop-filter",
+          "message": "backdrop-filter=\"blur(1em)\" is not blur(Npx), the one filter Figma has."
+        }
+      ]
+    }
+  ],
+  "the font shorthand and its line heights": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "font": {
+            "family": "Inter",
+            "weight": 700,
+            "italic": true,
+            "size": 16,
+            "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+            }
+          }
+        },
+        "sources": {
+          "font": "font"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "font": {
+            "family": "Space Grotesk",
+            "weight": 400,
+            "italic": false,
+            "size": 20,
+            "lineHeight": {
+              "unit": "AUTO"
+            }
+          }
+        },
+        "sources": {
+          "font": "font"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "font": {
+            "family": "Inter",
+            "weight": 700,
+            "italic": false,
+            "size": 12,
+            "lineHeight": {
+              "unit": "PERCENT",
+              "value": 150
+            }
+          }
+        },
+        "sources": {
+          "font": "font"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Text",
+        "parent": null,
+        "index": 3,
+        "props": {
+          "font": {
+            "family": "Roboto Mono",
+            "weight": 400,
+            "italic": false,
+            "size": 14,
+            "lineHeight": {
+              "unit": "PERCENT",
+              "value": 150
+            }
+          }
+        },
+        "sources": {
+          "font": "font"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 5,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:5",
+        "id": "1:5",
+        "tag": "Text",
+        "parent": null,
+        "index": 4,
+        "props": {
+          "font": {
+            "family": "A",
+            "weight": 400,
+            "italic": true,
+            "size": 10.5,
+            "lineHeight": {
+              "unit": "AUTO"
+            }
+          }
+        },
+        "sources": {
+          "font": "font"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 6,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:6",
+        "id": "1:6",
+        "tag": "Text",
+        "parent": null,
+        "index": 5,
+        "props": {
+          "font": {
+            "family": "B",
+            "weight": 300,
+            "italic": false,
+            "size": 18,
+            "lineHeight": {
+              "unit": "PERCENT",
+              "value": 120
+            }
+          }
+        },
+        "sources": {
+          "font": "font"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "fonts that cannot be read": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "font",
+          "message": "font=\"bold\" is not \"[italic] weight size/line-height 'Family'\"."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "font",
+          "message": "font=\"16px\" is not \"[italic] weight size/line-height 'Family'\"."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "font",
+          "message": "font=\"16px/tall 'Inter'\" is not \"[italic] weight size/line-height 'Family'\"."
+        }
+      ]
+    }
+  ],
+  "letter spacing": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 7
+          }
+        },
+        "sources": {
+          "letterSpacing": "letter-spacing"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "letterSpacing": {
+            "unit": "PIXELS",
+            "value": -1.5
+          }
+        },
+        "sources": {
+          "letterSpacing": "letter-spacing"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "letterSpacing": {
+            "unit": "PIXELS",
+            "value": 0
+          }
+        },
+        "sources": {
+          "letterSpacing": "letter-spacing"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Text",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "letter-spacing",
+          "message": "letter-spacing=\"wide\" is not in em or px."
+        }
+      ]
+    }
+  ],
+  "case, alignment and wrapping": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "textCase": "UPPER",
+          "textAlignHorizontal": "CENTER",
+          "textWrapStyle": "BALANCE"
+        },
+        "sources": {
+          "textCase": "text-transform",
+          "textAlignHorizontal": "text-align",
+          "textWrapStyle": "text-wrap"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "textCase": "TITLE",
+          "textAlignHorizontal": "JUSTIFIED",
+          "textWrapStyle": "PRETTY"
+        },
+        "sources": {
+          "textCase": "text-transform",
+          "textAlignHorizontal": "text-align",
+          "textWrapStyle": "text-wrap"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "textCase": "ORIGINAL",
+          "textAlignHorizontal": "RIGHT",
+          "textWrapStyle": "AUTO"
+        },
+        "sources": {
+          "textCase": "text-transform",
+          "textAlignHorizontal": "text-align",
+          "textWrapStyle": "text-wrap"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Text",
+        "parent": null,
+        "index": 3,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "text-transform",
+          "message": "text-transform=\"small-caps\" is not one Figma has: none, uppercase, lowercase, capitalize."
+        },
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "text-align",
+          "message": "text-align=\"middle\" is not one Figma has: left, start, center, right, end, justify."
+        },
+        {
+          "line": 4,
+          "column": 1,
+          "id": "1:4",
+          "attribute": "text-wrap",
+          "message": "text-wrap=\"nowrap\" is not one Figma has: wrap, balance, pretty."
+        }
+      ]
+    }
+  ],
+  "the decoration: line, style, colour, offset and thickness": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "textDecoration": {
+            "line": "UNDERLINE",
+            "style": "WAVY",
+            "color": {
+              "r": 1,
+              "g": 0,
+              "b": 0,
+              "a": 1
+            },
+            "offset": {
+              "unit": "PIXELS",
+              "value": 3
+            },
+            "thickness": {
+              "unit": "PERCENT",
+              "value": 10
+            }
+          }
+        },
+        "sources": {
+          "textDecoration": "text-decoration"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "textDecoration": {
+            "line": "STRIKETHROUGH"
+          }
+        },
+        "sources": {
+          "textDecoration": "text-decoration"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {
+          "textDecoration": {
+            "line": "NONE"
+          }
+        },
+        "sources": {
+          "textDecoration": "text-decoration"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 4,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:4",
+        "id": "1:4",
+        "tag": "Text",
+        "parent": null,
+        "index": 3,
+        "props": {
+          "textDecoration": {
+            "line": "NONE",
+            "offset": {
+              "unit": "AUTO"
+            }
+          }
+        },
+        "sources": {
+          "textDecoration": "text-underline-offset"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "decorations that cannot be read": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "text-decoration",
+          "message": "text-decoration=\"overline\" is not \"underline|line-through|none [style] [colour]\"."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 2,
+          "column": 1,
+          "id": "1:2",
+          "attribute": "text-decoration",
+          "message": "text-decoration=\"underline nocolour\" is not \"underline|line-through|none [style] [colour]\"."
+        }
+      ]
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:3",
+        "id": "1:3",
+        "tag": "Text",
+        "parent": null,
+        "index": 2,
+        "props": {},
+        "sources": {}
+      },
+      "errors": [
+        {
+          "line": 3,
+          "column": 1,
+          "id": "1:3",
+          "attribute": "text-decoration-thickness",
+          "message": "text-decoration-thickness=\"thin\" is not a length in px or em, or auto."
+        }
+      ]
+    }
+  ],
+  "a text style and a link on a text": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "hyperlink": "https://example.com",
+          "textStyle": "h3"
+        },
+        "sources": {
+          "hyperlink": "href",
+          "textStyle": "textStyle"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:2",
+        "id": "1:2",
+        "tag": "Text",
+        "parent": null,
+        "index": 1,
+        "props": {
+          "textStyle": ""
+        },
+        "sources": {
+          "textStyle": "textStyle"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "characters and runs": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "Hello world!",
+          "runs": [
+            {
+              "start": 6,
+              "end": 11,
+              "props": {
+                "hyperlink": "https://x.y",
+                "font": {
+                  "family": "Inter",
+                  "weight": 700,
+                  "italic": false,
+                  "size": 16,
+                  "lineHeight": {
+                    "unit": "AUTO"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a span's run over the text's own values": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "font": {
+            "family": "Inter",
+            "weight": 400,
+            "italic": false,
+            "size": 16,
+            "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+            }
+          },
+          "textDecoration": {
+            "line": "UNDERLINE",
+            "offset": {
+              "unit": "PIXELS",
+              "value": 2
+            }
+          },
+          "textFills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "font": "font",
+          "textDecoration": "text-decoration",
+          "textFills": "color"
+        },
+        "text": {
+          "characters": "abcd",
+          "runs": [
+            {
+              "start": 1,
+              "end": 2,
+              "props": {
+                "textDecoration": {
+                  "line": "STRIKETHROUGH",
+                  "offset": {
+                    "unit": "PIXELS",
+                    "value": 1
+                  }
+                },
+                "textFills": [
+                  {
+                    "kind": "token",
+                    "token": "--Brand",
+                    "opacity": 1
+                  }
+                ]
+              }
+            },
+            {
+              "start": 2,
+              "end": 3,
+              "props": {
+                "textStyle": "Caption"
+              }
+            },
+            {
+              "start": 3,
+              "end": 4,
+              "props": {
+                "letterSpacing": {
+                  "unit": "PERCENT",
+                  "value": 10
+                },
+                "textCase": "UPPER",
+                "textDecoration": {
+                  "line": "UNDERLINE",
+                  "offset": {
+                    "unit": "PIXELS",
+                    "value": 2
+                  },
+                  "thickness": {
+                    "unit": "PIXELS",
+                    "value": 3
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a nested span's characters join its run": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "abcde",
+          "runs": [
+            {
+              "start": 1,
+              "end": 4,
+              "props": {
+                "textFills": [
+                  {
+                    "kind": "color",
+                    "color": {
+                      "r": 1,
+                      "g": 0,
+                      "b": 0,
+                      "a": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "entities, CDATA and line breaks in a text": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "a & b c <raw>",
+          "runs": []
+        }
+      },
+      "errors": []
+    }
+  ],
+  "an empty span": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "ab",
+          "runs": [
+            {
+              "start": 1,
+              "end": 1,
+              "props": {
+                "textFills": [
+                  {
+                    "kind": "color",
+                    "color": {
+                      "r": 1,
+                      "g": 0,
+                      "b": 0,
+                      "a": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new layer and its children: kind, ref, parent and index": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "name": "Card",
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "name": "name",
+          "layoutMode": "display"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 3,
+        "kind": "create",
+        "ref": "new:2",
+        "id": null,
+        "tag": "Text",
+        "parent": "new:1",
+        "index": 0,
+        "props": {
+          "name": "Title"
+        },
+        "sources": {
+          "name": "name"
+        },
+        "text": {
+          "characters": "Hi",
+          "runs": []
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 3,
+        "kind": "create",
+        "ref": "new:3",
+        "id": null,
+        "tag": "Rectangle",
+        "parent": "new:1",
+        "index": 1,
+        "props": {
+          "name": "Bar",
+          "width": 10
+        },
+        "sources": {
+          "name": "name",
+          "width": "width"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a layer that holds every attribute already": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "2:1",
+        "id": "2:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    }
+  ],
+  "what the layer does not hold yet": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "2:1",
+        "id": "2:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 8
+        },
+        "sources": {
+          "layoutMode": "display",
+          "itemSpacing": "gap"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 1,
+        "column": 41,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Text",
+        "parent": "2:1",
+        "index": 0,
+        "props": {
+          "name": "Title"
+        },
+        "sources": {
+          "name": "name"
+        },
+        "text": {
+          "characters": "Hi",
+          "runs": []
+        }
+      },
+      "errors": []
+    }
+  ],
+  "new layers placed before and after existing ones": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "before": "2:1",
+        "props": {
+          "name": "A"
+        },
+        "sources": {
+          "name": "name"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 2,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:2",
+        "id": null,
+        "tag": "Frame",
+        "parent": null,
+        "index": 1,
+        "after": "2:1",
+        "props": {
+          "name": "B"
+        },
+        "sources": {
+          "name": "name"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 3,
+        "column": 1,
+        "kind": "update",
+        "ref": "2:2",
+        "id": "2:2",
+        "tag": "Frame",
+        "parent": null,
+        "index": 2,
+        "after": "2:1",
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    }
+  ],
+  "a copy, the layers in it and a new one": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "name": "Card 2"
+        },
+        "sources": {
+          "name": "name"
+        },
+        "copyOf": "2:4870"
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 1,
+        "column": 38,
+        "kind": "update",
+        "ref": "new:1:38",
+        "id": null,
+        "tag": "Text",
+        "parent": "new:1",
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "New",
+          "runs": []
+        },
+        "source": "I2:1;3:4",
+        "copy": "new:1"
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 1,
+        "column": 68,
+        "kind": "create",
+        "ref": "new:1:68",
+        "id": null,
+        "tag": "Frame",
+        "parent": "new:1",
+        "index": 1,
+        "props": {
+          "name": "Extra"
+        },
+        "sources": {
+          "name": "name"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new instance's layers": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "create",
+        "ref": "new:1",
+        "id": null,
+        "tag": "Instance",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "component": "Plan Card",
+          "variant": {
+            "Tier": "Pro"
+          }
+        },
+        "sources": {
+          "component": "component",
+          "variant": "variant"
+        }
+      },
+      "errors": []
+    },
+    {
+      "change": {
+        "line": 1,
+        "column": 52,
+        "kind": "update",
+        "ref": "new:1:52",
+        "id": null,
+        "tag": "Text",
+        "parent": "new:1",
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "Pro",
+          "runs": []
+        },
+        "source": "I54:268;54:211",
+        "copy": "new:1"
+      },
+      "errors": []
+    }
+  ],
+  "a hidden layer shown again keeps the layout it has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "5:1",
+        "id": "5:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "visible": true,
+          "layoutMode": "VERTICAL"
+        },
+        "sources": {
+          "visible": "display",
+          "layoutMode": "flex-direction"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a hidden layer shown again without auto layout": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "5:1",
+        "id": "5:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "visible": true,
+          "layoutMode": "NONE"
+        },
+        "sources": {
+          "visible": "display",
+          "layoutMode": "display"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a text the layer already reads is not sent": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "textFills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "textFills": "color"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new gap keeps the direction and wrap the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "VERTICAL",
+          "layoutWrap": "WRAP",
+          "itemSpacing": 12,
+          "counterAxisSpacing": 24
+        },
+        "sources": {
+          "layoutMode": "flex-direction",
+          "layoutWrap": "flex-wrap",
+          "itemSpacing": "gap",
+          "counterAxisSpacing": "column-gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a gap shorthand resets the line gap the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "layoutWrap": "WRAP",
+          "itemSpacing": 20,
+          "counterAxisSpacing": 20
+        },
+        "sources": {
+          "layoutMode": "display",
+          "layoutWrap": "flex-wrap",
+          "itemSpacing": "gap",
+          "counterAxisSpacing": "gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new direction keeps the gap the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 12
+        },
+        "sources": {
+          "layoutMode": "flex-direction",
+          "itemSpacing": "gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a blur keeps the shadows the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "effects": [
+            {
+              "type": "LAYER_BLUR",
+              "radius": 4
+            },
+            {
+              "type": "DROP_SHADOW",
+              "color": {
+                "r": 0.09803921568627451,
+                "g": 0.10196078431372549,
+                "b": 0.13725490196078433,
+                "a": 1
+              },
+              "x": 0,
+              "y": 4,
+              "radius": 8,
+              "spread": 0
+            }
+          ]
+        },
+        "sources": {
+          "effects": "filter"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a shadow keeps the blur the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "effects": [
+            {
+              "type": "BACKGROUND_BLUR",
+              "radius": 10
+            },
+            {
+              "type": "DROP_SHADOW",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "x": 0,
+              "y": 1,
+              "radius": 2,
+              "spread": 0
+            }
+          ]
+        },
+        "sources": {
+          "effects": "box-shadow"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a border side keeps the other sides the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "strokes": {
+            "paints": [
+              {
+                "kind": "color",
+                "color": {
+                  "r": 0.09803921568627451,
+                  "g": 0.10196078431372549,
+                  "b": 0.13725490196078433,
+                  "a": 1
+                }
+              }
+            ],
+            "sides": {
+              "top": 2,
+              "right": 0,
+              "bottom": 2,
+              "left": 0
+            },
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border-bottom"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "border none takes every side away": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "strokes": {
+            "paints": [],
+            "align": "INSIDE",
+            "dash": false
+          }
+        },
+        "sources": {
+          "strokes": "border"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "an underline offset keeps the decoration the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "textDecoration": {
+            "line": "UNDERLINE",
+            "offset": {
+              "unit": "PIXELS",
+              "value": 4
+            }
+          }
+        },
+        "sources": {
+          "textDecoration": "text-underline-offset"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new size keeps the edge the layer is pinned to": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "horizontal": {
+            "kind": "MAX",
+            "offset": 10
+          },
+          "width": 320
+        },
+        "sources": {
+          "horizontal": "right",
+          "width": "width"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new edge replaces the layer's": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "horizontal": {
+            "kind": "MIN",
+            "offset": 0
+          }
+        },
+        "sources": {
+          "horizontal": "left"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new top keeps the layer absolute": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "vertical": {
+            "kind": "MIN",
+            "offset": 5
+          }
+        },
+        "sources": {
+          "vertical": "top"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "truncation keeps the text-overflow the layer has": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "truncate": true
+        },
+        "sources": {
+          "truncate": "overflow"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new text style writes the text's own values and runs again": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "textStyle": "h2",
+          "font": {
+            "family": "Inter",
+            "weight": 700,
+            "italic": false,
+            "size": 16,
+            "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+            }
+          }
+        },
+        "sources": {
+          "textStyle": "textStyle",
+          "font": "font"
+        },
+        "text": {
+          "characters": "Hi there",
+          "runs": [
+            {
+              "start": 3,
+              "end": 8,
+              "props": {
+                "textFills": [
+                  {
+                    "kind": "color",
+                    "color": {
+                      "r": 1,
+                      "g": 0,
+                      "b": 0,
+                      "a": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a text style the layer holds writes nothing again": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    }
+  ],
+  "span problems ranked among the element's own, by the element's attribute order": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "textFills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "textFills": "color"
+        },
+        "text": {
+          "characters": "abc",
+          "runs": [
+            {
+              "start": 1,
+              "end": 2,
+              "props": {}
+            },
+            {
+              "start": 2,
+              "end": 3,
+              "props": {}
+            }
+          ]
+        }
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 42,
+          "id": "1:1",
+          "attribute": "color",
+          "message": "color=\"nope\" is not a colour, a token or color-mix(in srgb, var(--x) N%, transparent) (in display-p3 in a Display P3 file)."
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "font",
+          "message": "font=\"huge\" is not \"[italic] weight size/line-height 'Family'\"."
+        },
+        {
+          "line": 1,
+          "column": 69,
+          "id": "1:1",
+          "attribute": "letter-spacing",
+          "message": "letter-spacing=\"wide\" is not in em or px."
+        }
+      ]
+    }
+  ],
+  "problems in the element's attribute order, not the table's": [
+    {
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "1:1",
+        "id": "1:1",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "layoutMode": "display"
+        }
+      },
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "border-radius",
+          "message": "border-radius=\"1em\" is not 1 to 4 lengths in px or tokens."
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "gap",
+          "message": "gap=\"big\" is not one or two lengths in px or tokens (rows, then columns)."
+        },
+        {
+          "line": 1,
+          "column": 1,
+          "id": "1:1",
+          "attribute": "background",
+          "message": "linear-gradient(90deg, #000, #FFF)…: a gradient is not written yet.",
+          "hint": "Use a colour or a token."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,226 @@
+{
+  "1:1": {
+    "inRead": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "height",
+        "id",
+        "name",
+        "note",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Say \"hi\" & <go>\nnow then",
+        "note": "Pipes \\| and \\\\ slashes\n& more",
+        "display": "flex",
+        "flex-direction": "column",
+        "width": "400px",
+        "height": "300px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "display",
+        "flex-direction",
+        "height",
+        "id",
+        "name",
+        "note",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Say \"hi\" & <go>\nnow then",
+        "note": "Pipes \\| and \\\\ slashes\n& more",
+        "display": "flex",
+        "flex-direction": "column",
+        "width": "400px",
+        "height": "300px"
+      }
+    }
+  },
+  "1:2": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "No-break space",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "No-break space",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  },
+  "1:3": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Escapes",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Escapes",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  },
+  "1:4": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Bold gap",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Bold gap",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  },
+  "1:5": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Spaces",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Spaces",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  },
+  "1:6": {
+    "inRead": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Alike runs",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "font",
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Alike runs",
+        "width": "200px",
+        "height": "20px",
+        "font": "400 16px/normal 'Inter'"
+      }
+    }
+  }
+}
