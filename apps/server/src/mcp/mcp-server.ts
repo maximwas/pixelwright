@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import { SERVER_INSTRUCTIONS } from "../constants/mcp.ts";
 import { designApplyTool } from "../features/design-apply/tool.ts";
+import { nodesDeleteTool } from "../features/nodes-delete/tool.ts";
 import { tokensApplyTool } from "../features/tokens-apply/tool.ts";
 import { tokensReadTool } from "../features/tokens-read/tool.ts";
 import { tokensUsageTool } from "../features/tokens-usage/tool.ts";
@@ -33,6 +34,7 @@ export function createMcpServer(context: ToolContext): McpServer {
 
   registerStatusTool(server, context);
   registerNodeTools(server, context);
+  registerTool(server, nodesDeleteTool(context), context.support);
   registerScreenshotTool(server, context);
   registerDesignTool(server, context);
   registerInspectTool(server, context);
