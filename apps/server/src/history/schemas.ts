@@ -7,7 +7,7 @@ export const VersionInputSchema = z
   .max(100)
   .exactOptional()
   .describe(
-    "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.",
+    "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
   );
 
 /** The version a write saved, as its result gives it. */

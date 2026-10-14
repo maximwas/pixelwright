@@ -216,7 +216,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>xml</code></td><td><code>string</code></td><td>Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer.</td></tr>
 <tr><td><code>parent</code><span class="optional">optional</span></td><td><code>string</code></td><td>Where top-level new layers go: a frame&#39;s or page&#39;s id. Default: the current page, beside its layers.</td></tr>
 <tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check ids, tokens and fonts without writing; works with Allow edits off.</td></tr>
-<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -405,7 +405,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>collections</code><span class="optional">optional</span></td><td><code>object[]</code><br /><span class="default">default []</span></td><td></td></tr>
 <tr><td><code>styles</code><span class="optional">optional</span></td><td><code>object</code><br /><span class="default">default {&quot;paint&quot;:[],&quot;text&quot;:[],&quot;effect&quot;:[]}</span></td><td></td></tr>
 <tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check names, types, modes and aliases without writing; works with Allow edits off.</td></tr>
-<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -654,7 +654,8 @@ shorthand, an effect style&#39;s as a <code>box-shadow</code> list.</li>
 send only what you change. Nothing is ever deleted (use <code>execute</code> to remove a token).</li>
 <li>A library&#39;s collection or style the file uses is never copied into the file: change it in the library.</li>
 <li>More modes than the file&#39;s Figma plan allows: that mode&#39;s error comes back and the other modes are written.</li>
-<li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing. <code>version: &quot;Before the brand change&quot;</code> first saves a named version in the file&#39;s history, for the designer to go back to.</li>
+<li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing. <code>version: &quot;Before the brand change&quot;</code> first saves a named version in the file&#39;s history, for the designer to go back to, when the call changes
+something.</li>
 </ul>
 <h3>Values</h3>
 <ul>

@@ -219,7 +219,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 - A library's collection or style the file uses is never copied into the file: change it in the library.
 - More modes than the file's Figma plan allows: that mode's error comes back and the other modes are written.
 - One undo step; \`dryRun\` checks names, types, modes and aliases without writing. \`version: "Before the brand
-  change"\` first saves a named version in the file's history, for the designer to go back to.
+  change"\` first saves a named version in the file's history, for the designer to go back to, when the call changes
+  something.
 
 ## Values
 

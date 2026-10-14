@@ -24,8 +24,8 @@ How to write this file (people and agents alike):
   recoloured icon), so the code knows which instances need a new property, a variant or a one-off.
 - `outline`, `file_map` and `design_read` show what the designer marked ready for dev (or completed) in Dev Mode.
 - `design_read` names the token Figma itself matches a raw spacing, radius, stroke or opacity to.
-- `design_apply` and `tokens_apply` take a `version`: a named version is saved in Figma's history before they write,
-  for the designer to go back to.
+- `design_apply` and `tokens_apply` take a `version`: a named version is saved in Figma's history before they change
+  anything, for the designer to go back to.
 - `pixelwright logs` follows the logs of every running Pixelwright server on the computer in real time: tool calls,
   plugins connecting, errors. The bug report form asks for its output.
 - `design_read` keeps a list's item spacing, a line's round or square ends and a frame's grid style.

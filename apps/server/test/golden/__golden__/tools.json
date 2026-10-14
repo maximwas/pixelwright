@@ -3320,7 +3320,7 @@
           "type": "boolean"
         },
         "version": {
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.",
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
           "type": "string",
           "minLength": 1,
           "maxLength": 100
@@ -4108,7 +4108,7 @@
           "type": "boolean"
         },
         "version": {
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run). Pass one before a write that changes many layers or tokens.",
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
           "type": "string",
           "minLength": 1,
           "maxLength": 100
