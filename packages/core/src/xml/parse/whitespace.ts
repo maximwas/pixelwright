@@ -1,8 +1,9 @@
 /**
  * Text between tags without the indentation around it: every line is trimmed, lines are joined by one space, and
- * whitespace-only lines vanish. Spaces inside one line stay; `&#32;` keeps an edge space, since entities are decoded
- * after this. "" means the text is dropped. (React's rule for JSX text.) Ported from Sitewright (MIT). Whitespace is
- * XML's: spaces, tabs and line breaks; a no-break or an em space is a character like any other.
+ * whitespace-only lines vanish; a run of spaces alone on one line (between two spans) stays as written. Spaces inside
+ * one line stay; `&#32;` keeps an edge space, since entities are decoded after this. "" means the text is dropped.
+ * (React's rule for JSX text.) Ported from Sitewright (MIT). Whitespace is XML's: spaces, tabs and line breaks; a
+ * no-break or an em space is a character like any other.
  */
 export function cleanMarkupText(raw: string): string {
   const lines = raw.replaceAll("\t", " ").split(/\r\n|\n|\r/);
@@ -21,7 +22,8 @@ export function cleanMarkupText(raw: string): string {
     }
 
     if (trimmed !== "") {
-      text += index === lastContentLine ? trimmed : `${trimmed} `;
+      // A space joins a line to the content after it: none after the last, nor on a line with no content after it.
+      text += index < lastContentLine ? `${trimmed} ` : trimmed;
     }
   });
 

@@ -162,6 +162,18 @@ describe("parseXml", () => {
     expect(below?.children).toEqual([expect.objectContaining({ value: "Hello \u00a0" })]);
   });
 
+  it("keeps a run of only spaces or a tab between tags as one space each, as JSX does", () => {
+    const [alone, spaced, tabbed] = elements(
+      parseXml(
+        '<Text id="1:2"> </Text>\n<Text id="1:3">a<Span font="x">b</Span> <Span font="y">c</Span></Text>\n<Text id="1:4">\t</Text>',
+      ),
+    );
+
+    expect(alone?.children).toEqual([expect.objectContaining({ value: " " })]);
+    expect(spaced?.children[2]).toEqual(expect.objectContaining({ value: " " }));
+    expect(tabbed?.children).toEqual([expect.objectContaining({ value: " " })]);
+  });
+
   it("names the line and column of what is wrong", () => {
     const cases: [string, RegExp][] = [
       ['<Frame id="1:1">\n  <Text>Hi</Text>', /line 1, column 1.*<Frame> is not closed/],

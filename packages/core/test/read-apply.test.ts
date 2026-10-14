@@ -10,6 +10,7 @@ import {
   unchangedAttributes,
 } from "../src/index.ts";
 import { fixture, nodesOf } from "./helpers/fixtures.ts";
+import { BOLD, textLayer as runsText } from "./helpers/layers.ts";
 import { oddTextSnapshot } from "./helpers/odd-text.ts";
 
 describe("readApply", () => {
@@ -254,6 +255,53 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
 
   it("with quotes, line breaks, U+2028 and texts of odd spaces", () => {
     const snapshot = oddTextSnapshot();
+
+    expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
+  });
+
+  it("with a plain space typed between two spans where design_read wrote &#32;", () => {
+    const snapshot: Snapshot = {
+      root: {
+        ...runsText("1:2", "Greeting", [["Hi "], ["Hello", BOLD], [" "], ["world", BOLD]]),
+      },
+      styles: {},
+      variables: {},
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain("&#32;");
+    expect(changesOf(snapshot, xml.replace("&#32;", " "))).toEqual([]);
+  });
+
+  it("with a hex-like word in a name and a note in a Display P3 file", () => {
+    const snapshot: Snapshot = {
+      root: {
+        id: "1:1",
+        name: "Swatch #FFF",
+        type: "FRAME",
+        visible: true,
+        x: 0,
+        y: 0,
+        width: 120,
+        height: 80,
+        childCount: 0,
+        annotations: [{ label: "Brand #3B2FD9" }],
+        fills: [
+          {
+            type: "SOLID",
+            visible: true,
+            color: {
+              r: 1,
+              g: 0,
+              b: 0,
+            },
+          },
+        ],
+      },
+      styles: {},
+      variables: {},
+      colorProfile: "DISPLAY_P3",
+    };
 
     expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
   });

@@ -27,11 +27,15 @@ export function unchangedAttributes(element: ApplyElement, item: Item, tokens: T
   const space = colorSpaceOf(tokens.colorProfile);
 
   for (const [name, given] of Object.entries(element.attributes)) {
-    const value = inDocumentSpace(given, space);
+    // As typed, or with its sRGB colours in the file's space: a name or a note that reads like a hex is no colour.
+    const values = [given, inDocumentSpace(given, space)];
 
     // A file's name depends on where design_read wrote it (folder, -2 suffixes): the server compares the bytes of a
     // file that exists with the layer's image, and swaps it only when they differ.
-    if (name === "src" || renders.some((rendered) => same(name, attributeOf(rendered, name), value))) {
+    if (
+      name === "src" ||
+      renders.some((rendered) => values.some((value) => same(name, attributeOf(rendered, name), value)))
+    ) {
       attributes.add(name);
     }
   }
