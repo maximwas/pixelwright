@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { BATCH_TEMPLATE_SUFFIXES } from "../constants/code-connect.ts";
-import type { TemplateFile } from "../types/code-connect.ts";
+import type { SharedTemplate, TemplateFile } from "../types/code-connect.ts";
 import { errorMessage } from "../utils/error-message.ts";
 import type { CodeConnectConfig } from "./figma-config.ts";
 import { linkOf, sourceOf } from "./template-files.ts";
@@ -65,6 +65,8 @@ class BatchRows {
   readonly #source: BatchSource;
   readonly #connections: TemplateFile[] = [];
   readonly #keyOnly: string[] = [];
+  /** The shared templates read, by absolute path: every row of the file running one shares its object. */
+  readonly #shared = new Map<string, SharedTemplate>();
   #count = 0;
 
   constructor(source: BatchSource) {
@@ -99,11 +101,7 @@ class BatchRows {
   }
 
   /** The group's shared template, read; null, with a problem, for a group Figma's CLI refuses. */
-  async #template(
-    templateFile: unknown,
-    rows: readonly unknown[],
-    number: number,
-  ): Promise<{ file: string; source: string } | null> {
+  async #template(templateFile: unknown, rows: readonly unknown[], number: number): Promise<SharedTemplate | null> {
     const { root, path, problems } = this.#source;
 
     if (typeof templateFile !== "string" || templateFile === "") {
@@ -112,7 +110,8 @@ class BatchRows {
       return null;
     }
 
-    const refusal = await templateRefusal(resolve(root, dirname(path), templateFile), templateFile, rows);
+    const file = resolve(root, dirname(path), templateFile);
+    const refusal = await templateRefusal(file, templateFile, rows);
 
     if (typeof refusal === "string") {
       problems.push(`${path}: group ${number}'s ${refusal}; ${REJECTED}.`);
@@ -120,10 +119,18 @@ class BatchRows {
       return null;
     }
 
-    return refusal;
+    const shared = this.#shared.get(file) ?? {
+      path: relative(root, file).split("\\").join("/"),
+      file,
+      source: refusal.source,
+    };
+
+    this.#shared.set(file, shared);
+
+    return shared;
   }
 
-  #addRow(row: Record<string, unknown>, number: number, template: { file: string; source: string }): void {
+  #addRow(row: Record<string, unknown>, number: number, template: SharedTemplate): void {
     const { path, config, problems } = this.#source;
     const component = given(row.component);
     const key = given(row.key);
@@ -159,6 +166,7 @@ class BatchRows {
       ...(codeSource === undefined ? {} : { codeSource }),
       batch: frozen(row),
       batchFile: path,
+      shared: template,
     });
   }
 }
@@ -168,7 +176,7 @@ async function templateRefusal(
   file: string,
   written: string,
   rows: readonly unknown[],
-): Promise<{ file: string; source: string } | string> {
+): Promise<{ source: string } | string> {
   let source: string;
 
   try {
@@ -185,10 +193,7 @@ async function templateRefusal(
     return "components must be a non-empty array";
   }
 
-  return {
-    file: join(file),
-    source,
-  };
+  return { source };
 }
 
 function recordOf(value: unknown): Record<string, unknown> {

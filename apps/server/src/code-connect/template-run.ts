@@ -145,7 +145,7 @@ export class TemplateRun implements Runner {
   }
 
   #call(program: Compiled, template: TemplateFile, node: SnapshotNode, exports: { default?: unknown }): void {
-    const figma = figmaApi(node, this);
+    const figma = figmaApi(node, this, template.batch);
 
     program.context.__args = [
       figma,

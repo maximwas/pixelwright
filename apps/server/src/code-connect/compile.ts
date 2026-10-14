@@ -4,8 +4,11 @@ import type { Compiled, TemplateFile } from "../types/code-connect.ts";
 import { TemplateError, templateErrorOf } from "./template-error.ts";
 import { transform } from "./transform.ts";
 
-/** Each template compiled once, or the error that kept it from compiling: kept as long as the template is. */
-const compiled = new WeakMap<TemplateFile, Compiled | TemplateError>();
+/**
+ * Each template compiled once, or the error that kept it from compiling: kept as long as the template is. A batch
+ * file's rows share their template's compile.
+ */
+const compiled = new WeakMap<object, Compiled | TemplateError>();
 
 /**
  * A template's source as a function of (figma, require, exports, console), in a context of its own: TypeScript types
@@ -13,7 +16,8 @@ const compiled = new WeakMap<TemplateFile, Compiled | TemplateError>();
  * context per template, never per call, with no code generation from strings and its promises settled within the run.
  */
 export function compile(template: TemplateFile): Compiled {
-  const cached = compiled.get(template);
+  const key = template.shared ?? template;
+  const cached = compiled.get(key);
 
   if (cached instanceof TemplateError) {
     throw cached;
@@ -26,13 +30,13 @@ export function compile(template: TemplateFile): Compiled {
   try {
     const program = programOf(template);
 
-    compiled.set(template, program);
+    compiled.set(key, program);
 
     return program;
   } catch (error) {
     const failed = templateErrorOf(error, template, 0);
 
-    compiled.set(template, failed);
+    compiled.set(key, failed);
 
     throw failed;
   }
@@ -57,7 +61,8 @@ export function helperFunction(program: Compiled, file: string): (...args: unkno
 }
 
 function programOf(template: TemplateFile): Compiled {
-  const { code, id } = transform(template.source, template.path, "template");
+  const path = template.shared?.path ?? template.path;
+  const { code, id } = transform(template.source, path, "template");
   const program: Compiled = {
     id,
     helpers: new Map(),
@@ -75,7 +80,7 @@ function programOf(template: TemplateFile): Compiled {
   };
 
   new vm.Script(`__run = (function (__figma, require, __template, console) {${code}\n});`, {
-    filename: template.path,
+    filename: path,
   }).runInContext(program.context);
 
   return program;

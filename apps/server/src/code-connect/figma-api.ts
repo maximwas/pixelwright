@@ -3,8 +3,8 @@ import { InstanceHandle, type Runner } from "./handles.ts";
 import { reactHelpers } from "./react-helpers.ts";
 import { sectionsOf, templateTag } from "./sections.ts";
 
-/** The `figma` a template imports, for this instance (figma-types.d.ts Figma). */
-export function figmaApi(node: SnapshotNode, run: Runner) {
+/** The `figma` a template imports, for this instance (figma-types.d.ts Figma); `batch` is a batch row's own. */
+export function figmaApi(node: SnapshotNode, run: Runner, batch: Readonly<Record<string, unknown>> = {}) {
   const selected = new InstanceHandle(node, run);
   const tsx = templateTag("tsx");
 
@@ -12,7 +12,7 @@ export function figmaApi(node: SnapshotNode, run: Runner) {
     selectedInstance: selected,
     currentLayer: selected,
     properties: selected.__properties__,
-    batch: {},
+    batch,
     code: templateTag("raw"),
     tsx,
     html: templateTag("html"),

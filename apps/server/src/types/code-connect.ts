@@ -25,6 +25,15 @@ export interface TemplateFile {
   readonly batch?: Readonly<Record<string, unknown>>;
   /** The batch file a row comes from, relative to the project root. */
   readonly batchFile?: string;
+  /** The shared template a batch file's rows run, one object for them all: it is compiled once. */
+  readonly shared?: SharedTemplate;
+}
+
+/** A batch file's shared template: its path from the project root, its absolute path and its text. */
+export interface SharedTemplate {
+  readonly path: string;
+  readonly file: string;
+  readonly source: string;
 }
 
 /** What design_read knows of an instance's component. */
