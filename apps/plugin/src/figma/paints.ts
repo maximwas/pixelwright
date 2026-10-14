@@ -14,7 +14,7 @@ export async function paintsOf(
   specs: readonly PaintSpec[],
   sources: PaintSources,
 ): Promise<{ style: string } | { paints: Paint[] }> {
-  const style = await onlyStyle(specs, sources);
+  const style = await onlyStyle(specs, () => sources.tokens());
 
   if (style !== null) {
     return { style };
@@ -29,15 +29,45 @@ export async function paintsOf(
   return { paints };
 }
 
+/**
+ * Why paints cannot be written, found without importing anything (a dry run): the rule paintsOf follows. A paint
+ * style is the whole list alone, at full opacity; every other token is a colour variable.
+ */
+export async function checkPaints(specs: readonly PaintSpec[], index: TokenIndex): Promise<void> {
+  if ((await onlyStyle(specs, index)) !== null) {
+    return;
+  }
+
+  for (const spec of specs) {
+    if (spec.kind === "token") {
+      await refusePaintStyle(spec.token, index);
+      await index.find(spec.token, "COLOR");
+    }
+  }
+}
+
 /** The paint style a single token at full opacity names, if it names one rather than a colour variable. */
-async function onlyStyle(specs: readonly PaintSpec[], sources: PaintSources): Promise<string | null> {
+async function onlyStyle(
+  specs: readonly PaintSpec[],
+  index: TokenIndex | (() => Promise<TokenIndex>),
+): Promise<string | null> {
   const [only] = specs;
 
   if (specs.length !== 1 || only?.kind !== "token" || only.opacity !== 1) {
     return null;
   }
 
-  return await (await sources.tokens()).style(only.token, "PAINT");
+  return await (typeof index === "function" ? await index() : index).style(only.token, "PAINT");
+}
+
+/** A paint style is the whole list of a layer's paints: no layer of one. */
+async function refusePaintStyle(token: string, index: TokenIndex): Promise<void> {
+  if ((await index.style(token, "PAINT")) !== null) {
+    throw new WriteError(
+      `${token} is a paint style, which is the whole list of a layer's paints.`,
+      "Use it as the only layer, without color-mix().",
+    );
+  }
 }
 
 async function paintOf(spec: PaintSpec, sources: PaintSources): Promise<Paint> {
@@ -64,12 +94,7 @@ async function paintOf(spec: PaintSpec, sources: PaintSources): Promise<Paint> {
 
 /** A colour variable's paint: a paint style is the whole list of a layer's paints, so it is no layer of one. */
 async function variablePaint(spec: Extract<PaintSpec, { kind: "token" }>, index: TokenIndex): Promise<Paint> {
-  if ((await index.style(spec.token, "PAINT")) !== null) {
-    throw new WriteError(
-      `${spec.token} is a paint style, which is the whole list of a layer's paints.`,
-      "Use it as the only layer, without color-mix().",
-    );
-  }
+  await refusePaintStyle(spec.token, index);
 
   return figma.variables.setBoundVariableForPaint(
     {

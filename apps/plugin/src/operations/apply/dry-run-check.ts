@@ -2,11 +2,13 @@ import {
   type ApplyChange,
   type FigmaProps,
   type OperationOutput,
+  type PaintSpec,
   PlannedComponents,
   type TokenUse,
   tokenUsesOf,
 } from "@pixelwright/core";
 import { ComponentIndex } from "../../figma/component-index.ts";
+import { checkPaints } from "../../figma/paints.ts";
 import type { TokenIndex } from "../../figma/tokens/token-index.ts";
 import { variantFor } from "../../figma/variants.ts";
 import { WriteError } from "../../figma/write-error.ts";
@@ -17,17 +19,31 @@ import { existingLayer } from "./targets.ts";
 
 type Fail = (error: unknown, attribute?: string) => void;
 
-/** How a dry run checks each kind of token a change names, without importing anything. */
-const TOKEN_CHECKS: Readonly<Record<TokenUse["kind"], (index: TokenIndex, token: string) => Promise<unknown>>> = {
-  FLOAT: (index, token) => index.find(token, "FLOAT"),
-  PAINT: async (index, token) => (await index.style(token, "PAINT")) ?? (await index.find(token, "COLOR")),
-  EFFECT_STYLE: async (index, token) => {
+type TokenCheck = (index: TokenIndex, use: TokenUse, props: FigmaProps) => Promise<unknown>;
+
+/**
+ * How a dry run checks each kind of token a change names, without importing anything. Paints are checked as a list,
+ * by the rule the real run writes them with.
+ */
+const TOKEN_CHECKS: Readonly<Record<TokenUse["kind"], TokenCheck>> = {
+  FLOAT: (index, { token }) => index.find(token, "FLOAT"),
+  PAINT: (index, { key }, props) => checkPaints(paintsAt(props, key), index),
+  EFFECT_STYLE: async (index, { token }) => {
     if ((await index.style(token, "EFFECT")) === null) {
       throw new WriteError(`No effect style is named ${token} in this file or the libraries its page uses.`);
     }
   },
-  TEXT_STYLE: async (index, name) => await index.textStyle(name),
+  TEXT_STYLE: async (index, { token: name }) => await index.textStyle(name),
 };
+
+/** The list of paints a property holds. */
+function paintsAt(props: FigmaProps, key: keyof FigmaProps): readonly PaintSpec[] {
+  if (key === "strokes") {
+    return props.strokes?.paints ?? [];
+  }
+
+  return (key === "fills" ? props.fills : props.textFills) ?? [];
+}
 
 /**
  * A dry run: for each change, the layer or the parent exists, the component and variant an instance names are there
@@ -122,16 +138,28 @@ export class DryRunCheck {
     }
   }
 
-  /** Every font and token the change and its runs name. */
+  /** Every font and token the change and its runs name: one error a property at most, as the real run's step gives. */
   async #props(change: ApplyChange, fail: Fail): Promise<void> {
     for (const props of [change.props, ...(change.text?.runs ?? []).map((run) => run.props)]) {
       this.#font(change, props, fail);
 
-      for (const { key, token, kind } of tokenUsesOf(props)) {
+      const done = new Set<keyof FigmaProps>();
+
+      for (const use of tokenUsesOf(props)) {
+        if (done.has(use.key)) {
+          continue;
+        }
+
         try {
-          await TOKEN_CHECKS[kind](await this.#tokens(), token);
+          await TOKEN_CHECKS[use.kind](await this.#tokens(), use, props);
         } catch (error) {
-          fail(error, change.sources[key] ?? key);
+          done.add(use.key);
+          fail(error, change.sources[use.key] ?? use.key);
+        }
+
+        // A list of paints is checked whole at its first token.
+        if (use.kind === "PAINT") {
+          done.add(use.key);
         }
       }
     }

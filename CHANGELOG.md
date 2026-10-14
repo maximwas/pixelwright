@@ -66,6 +66,8 @@ How to write this file (people and agents alike):
   for a link on a frame.
 - `design_apply` places a new component set made on the page beside the page's layers, as it places any new layer,
   instead of on top of them at the page's corner.
+- A `design_apply` dry run finds what the real run would: a paint style inside a list of paints is refused, and a
+  property with several unknown tokens gives one error, not one per token.
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 

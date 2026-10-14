@@ -344,6 +344,30 @@ describe("apply: refusals that write nothing", () => {
   });
 });
 
+describe("apply: a dry run finds what the real run would", () => {
+  const messages = (result: Applied) => result.errors.map(({ attribute, message }) => `${attribute}: ${message}`);
+
+  it("refuses a paint style inside a list of paints, as the real run does", async () => {
+    const xml = '<Frame id="1:1" background="color-mix(in srgb, var(--Dark) 50%, transparent)"/>';
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    expect(messages(real)).toEqual([
+      "background: --Dark is a paint style, which is the whole list of a layer's paints.",
+    ]);
+    expect(messages(dry)).toEqual(messages(real));
+  });
+
+  it("gives one error for a property, as the real run's step does", async () => {
+    const xml = '<Frame id="1:1" padding="8px var(--nope)"/>';
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    expect(messages(real)).toHaveLength(1);
+    expect(messages(dry)).toEqual(messages(real));
+  });
+});
+
 describe("apply: new component sets", () => {
   it("places a new set on the page beside what is there, as any new layer", async () => {
     const placed = async (xml: string) => {
