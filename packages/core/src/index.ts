@@ -1,6 +1,6 @@
 export * from "./apply/change-of.ts";
 export * from "./apply/problems.ts";
-export * from "./apply/read-apply.ts";
+export * from "./apply/read/read-apply.ts";
 export * from "./apply/schemas.ts";
 export type * from "./apply/types.ts";
 export * from "./apply/unchanged.ts";
