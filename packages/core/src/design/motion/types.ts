@@ -1,4 +1,4 @@
-import type { SnapshotNode } from "./snapshot.ts";
+import type { SnapshotNode } from "../../types/snapshot.ts";
 
 export type SnapshotMotion = NonNullable<SnapshotNode["motion"]>;
 export type MotionTrack = SnapshotMotion["tracks"][number];

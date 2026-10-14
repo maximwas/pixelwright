@@ -1,7 +1,7 @@
-import { interactionSummary } from "../css/interactions.ts";
 import { unwrapVar } from "../css-mapping/values/css-values.ts";
 import { px } from "../css-mapping/values/format.ts";
 import { paintsCss } from "../css-mapping/values/paints.ts";
+import { interactionSummary } from "../design/interactions.ts";
 import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
 import { styleTokenName } from "../kernel/names.ts";

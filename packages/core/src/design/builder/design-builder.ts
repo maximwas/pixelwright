@@ -1,5 +1,3 @@
-import { interactionAttributes } from "../../css/interactions.ts";
-import { motionSummary } from "../../css/motion.ts";
 import { nodeCss } from "../../css-mapping/read-node.ts";
 import { colorSpaceOf } from "../../kernel/color/color-space.ts";
 import type { CssContext } from "../../types/css.ts";
@@ -8,6 +6,8 @@ import { tagFor } from "../../xml/tags.ts";
 import { assetCss } from "../assets/asset-css.ts";
 import { AssetPlanner } from "../assets/asset-planner.ts";
 import { type Classified, classify, visibleChildren } from "../assets/classify.ts";
+import { interactionAttributes } from "../interactions.ts";
+import { motionSummary } from "../motion/summary.ts";
 import { overrideWords } from "../overrides.ts";
 import type { DesignAttribute, DesignElement, DesignTree } from "../tree.ts";
 import type { DesignXmlOptions } from "../types.ts";
