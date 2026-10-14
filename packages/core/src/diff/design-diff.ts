@@ -1,24 +1,12 @@
-import { designTree } from "../design/design-xml.ts";
-import { type DesignElement, joinedContent } from "../design/tree.ts";
 import type { DesignDiff, DiffChange } from "../types/diff.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
+import { type Compared, comparedRoot, labelOf } from "./compare/compared.ts";
+import { fingerprint, nodesOf } from "./compare/fingerprint.ts";
 
 /** What names a root or says where it is: two variants side by side differ there by nature (src follows the name). */
 const ROOT_PLACEMENT = new Set(["name", "src", "position", "left", "top", "right", "bottom", "transform"]);
 /** Tags whose look is a file of its own: compared by what draws them too. */
 const DRAWN = new Set(["Icon", "Image"]);
-/** Snapshot fields that name or place a layer rather than draw it. */
-const NOT_DRAWING = new Set(["id", "name", "x", "y", "bounds", "renderBounds", "css"]);
-
-/** A layer as the diff compares it, or a run of a text's (a span, with no id): its layers or runs are its children. */
-interface Compared {
-  readonly id: string;
-  readonly tag: string;
-  readonly attributes: Readonly<Record<string, string>>;
-  /** A text's characters outside its spans; null when it has none. */
-  readonly text: string | null;
-  readonly children: readonly Compared[];
-}
 
 /**
  * How layer B differs from layer A as design_read reads them: layers matched by their path of names below the roots
@@ -32,7 +20,7 @@ export function designDiff(a: Snapshot, b: Snapshot): DesignDiff {
     changed: [],
   };
 
-  compare(rootOf(a), rootOf(b), "", {
+  compare(comparedRoot(a), comparedRoot(b), "", {
     a: nodesOf(a.root),
     b: nodesOf(b.root),
     diff,
@@ -128,43 +116,6 @@ function compareChildren(x: Compared, y: Compared, path: string, walk: Walk): vo
   }
 }
 
-function rootOf(snapshot: Snapshot): Compared {
-  const { root } = designTree(snapshot);
-
-  if (root === null) {
-    throw new Error("design_read wrote no element for the layer");
-  }
-
-  return comparedOf(root);
-}
-
-/** An element as the diff compares it: a text's spans become its children, in order. */
-function comparedOf(element: DesignElement): Compared {
-  const content = joinedContent(element.content ?? []);
-  const texts = content.flatMap((piece) => (piece.kind === "text" ? [piece.value] : []));
-  const spans = content.flatMap((piece) =>
-    piece.kind === "span"
-      ? [
-          {
-            id: "",
-            tag: "Span",
-            attributes: Object.fromEntries(piece.attributes),
-            text: piece.value === "" ? null : piece.value,
-            children: [],
-          },
-        ]
-      : [],
-  );
-
-  return {
-    id: element.id,
-    tag: element.tag,
-    attributes: Object.fromEntries(element.attributes),
-    text: texts.length === 0 ? null : texts.join(""),
-    children: [...element.children.map(comparedOf), ...spans],
-  };
-}
-
 /** Children by tag and name, each list in document order. */
 function keyed(element: Compared): Map<string, Compared[]> {
   const groups = new Map<string, Compared[]>();
@@ -176,42 +127,4 @@ function keyed(element: Compared): Map<string, Compared[]> {
   }
 
   return groups;
-}
-
-function labelOf(element: Compared, index: number): string {
-  return `${element.tag} "${element.attributes.name ?? ""}"${index > 0 ? `[${index + 1}]` : ""}`;
-}
-
-function nodesOf(root: SnapshotNode): Map<string, SnapshotNode> {
-  const nodes = new Map<string, SnapshotNode>();
-  const walk = (node: SnapshotNode) => {
-    nodes.set(node.id, node);
-    node.children?.forEach(walk);
-  };
-
-  walk(root);
-
-  return nodes;
-}
-
-/** What draws a layer, without what names or places it: equal for two copies of one icon. */
-function fingerprint(node: SnapshotNode | undefined): string {
-  const strip = (value: unknown): unknown => {
-    if (Array.isArray(value)) {
-      return value.map(strip);
-    }
-
-    if (typeof value !== "object" || value === null) {
-      return value;
-    }
-
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([key]) => !NOT_DRAWING.has(key))
-        .toSorted(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-        .map(([key, item]) => [key, strip(item)]),
-    );
-  };
-
-  return JSON.stringify(strip(node ?? null));
 }

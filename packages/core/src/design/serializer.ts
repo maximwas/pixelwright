@@ -51,7 +51,7 @@ function writeElement(element: DesignElement, place: Place): void {
   const open = `${indent}<${element.tag}${attributesXml(element.attributes)}`;
 
   if (element.content !== null) {
-    lines.push(`${open}>${element.content.map(contentXml).join("")}</${element.tag}>`);
+    lines.push(`${open}>${contentXmlOf(element.content)}</${element.tag}>`);
   } else if (element.children.length === 0) {
     lines.push(`${open}/>`);
   } else {
@@ -74,6 +74,11 @@ function writeElement(element: DesignElement, place: Place): void {
     level,
     parent: place.parent,
   });
+}
+
+/** A Text's content as its XML holds it between its tags: its characters and its spans. */
+export function contentXmlOf(content: readonly DesignContent[]): string {
+  return content.map(contentXml).join("");
 }
 
 function attributesXml(attributes: readonly DesignAttribute[]): string {
