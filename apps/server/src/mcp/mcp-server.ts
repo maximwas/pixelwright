@@ -3,6 +3,7 @@ import { SERVER_INSTRUCTIONS } from "../constants/mcp.ts";
 import { assetsExportTool } from "../features/assets-export/tool.ts";
 import { breakpointsFindTool } from "../features/breakpoints-find/tool.ts";
 import { changesSinceTool } from "../features/changes-since/tool.ts";
+import { codeConnectReadTool } from "../features/code-connect-read/tool.ts";
 import { componentsReadTool } from "../features/components-read/tool.ts";
 import { contrastCheckTool } from "../features/contrast-check/tool.ts";
 import { designApplyTool } from "../features/design-apply/tool.ts";
@@ -32,7 +33,6 @@ import { variantsReadTool } from "../features/variants-read/tool.ts";
 import { viewportGetTool } from "../features/viewport-get/tool.ts";
 import type { ToolContext } from "../types/mcp.ts";
 import { registerContentTool, registerTool } from "./register-tool.ts";
-import { registerCodeConnectTool } from "./tools/code-connect.ts";
 
 export function createMcpServer(context: ToolContext): McpServer {
   const server = new McpServer(
@@ -72,7 +72,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTool(server, componentsReadTool(context));
   registerTool(server, variantsReadTool(context));
   registerTool(server, assetsExportTool(context));
-  registerCodeConnectTool(server, context);
+  registerTool(server, codeConnectReadTool(context));
   registerTool(server, guideTool());
 
   return server;

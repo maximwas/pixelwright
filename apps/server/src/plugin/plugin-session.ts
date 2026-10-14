@@ -1,4 +1,10 @@
-import { OPERATION_SCHEMAS, type OperationName, type OperationRequest, type OperationResult } from "@pixelwright/core";
+import {
+  OPERATION_SCHEMAS,
+  type OperationName,
+  type OperationRequest,
+  type OperationResult,
+  type PluginInfo,
+} from "@pixelwright/core";
 import type { BridgeView } from "../types/mcp.ts";
 
 /**
@@ -12,6 +18,11 @@ export class PluginSession {
   constructor(bridge: BridgeView, session: string) {
     this.#bridge = bridge;
     this.#session = session;
+  }
+
+  /** The file as its plugin last told: its name, current page and editor; undefined once the plugin is gone. */
+  info(): PluginInfo | undefined {
+    return this.#bridge.plugins().find((plugin) => plugin.session === this.#session)?.info;
   }
 
   async run<N extends OperationName>(op: N, input: OperationRequest<N>): Promise<OperationResult<N>> {

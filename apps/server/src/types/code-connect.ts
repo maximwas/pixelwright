@@ -1,3 +1,4 @@
+import type { Context } from "node:vm";
 import type { SnapshotNode } from "@pixelwright/core";
 
 /** A Code Connect template file of the project, with what the comments at its top say. */
@@ -38,3 +39,28 @@ export interface TemplateStringResult {
 export type RenderedInstance =
   | { component: string; template: string; snippet: string; imports: string[] }
   | { template: string; error: string };
+
+/** A template's code or a helper module's: a template exports its default and nothing else. */
+export type ModuleKind = "template" | "helper";
+
+/** A module's code as compile runs it, and the id a template's default export writes as a literal. */
+export interface Transformed {
+  readonly code: string;
+  readonly id: string | null;
+}
+
+/** A template compiled once: a context of its own, the function its source became, its relative helpers' functions. */
+export interface Compiled {
+  readonly context: Context;
+  /** The `id` its default export writes as a literal, known without running it. */
+  readonly id: string | null;
+  readonly helpers: Map<string, (...args: unknown[]) => void>;
+}
+
+/** What one run of a template exports. */
+export interface Executed {
+  readonly sections: ResultSection[];
+  readonly imports: string[];
+  readonly id: string | null;
+  readonly metadata?: unknown;
+}

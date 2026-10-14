@@ -301,30 +301,20 @@ export class InstanceHandle {
    * The visible layers inside the instance, in layer order, each with the instances it sits in (outer first). Nested
    * instances are entered only with traverseInstances, or along `path`: the instances a layer must sit in, exactly.
    */
-  #layers({ path, traverseInstances = false }: SelectorOptions): { node: SnapshotNode; within: string[] }[] {
+  #layers(options: SelectorOptions): { node: SnapshotNode; within: string[] }[] {
+    const { path } = options;
     const found: { node: SnapshotNode; within: string[] }[] = [];
     const walk = (node: SnapshotNode, within: string[]) => {
-      for (const child of node.children ?? []) {
-        if (!child.visible) {
-          continue;
-        }
-
+      for (const child of (node.children ?? []).filter((layer) => layer.visible)) {
         found.push({
           node: child,
           within,
         });
 
-        if (child.type === "INSTANCE") {
-          const deeper = [...within, child.name];
+        const deeper = child.type === "INSTANCE" ? [...within, child.name] : within;
 
-          if (
-            traverseInstances ||
-            (path !== undefined && path.slice(0, deeper.length).join("\n") === deeper.join("\n"))
-          ) {
-            walk(child, deeper);
-          }
-        } else {
-          walk(child, within);
+        if (deeper === within || enters(deeper, options)) {
+          walk(child, deeper);
         }
       }
     };
@@ -333,6 +323,11 @@ export class InstanceHandle {
 
     return path === undefined ? found : found.filter(({ within }) => within.join("\n") === path.join("\n"));
   }
+}
+
+/** Whether a find goes into a nested instance, at these instances deep: with traverseInstances, or along its path. */
+function enters(within: readonly string[], { path, traverseInstances = false }: SelectorOptions): boolean {
+  return traverseInstances || (path !== undefined && path.slice(0, within.length).join("\n") === within.join("\n"));
 }
 
 /** A property's name as Figma shows it: TEXT, BOOLEAN and INSTANCE_SWAP keys end in #<id>. */

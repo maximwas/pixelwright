@@ -22,6 +22,11 @@ export const CODE_CONNECT_BUDGET_MS = 5_000;
  */
 export const NESTED_TIMEOUT_MARGIN_MS = 50;
 
+/** The console a template and its helpers get: it says nothing. */
+export const QUIET_CONSOLE = Object.fromEntries(
+  ["log", "info", "warn", "error", "debug"].map((name) => [name, () => {}]),
+);
+
 /** The files a relative import may name, tried in order after the name as written. */
 export const HELPER_EXTENSIONS = [".ts", ".js", ".mts", ".mjs", "/index.ts", "/index.js"];
 

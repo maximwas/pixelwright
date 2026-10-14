@@ -19,6 +19,7 @@ const REWRITTEN = [
   "apps/server/src/features/**",
   "apps/server/src/plugin/**",
   "apps/server/src/logging/**",
+  "apps/server/src/code-connect/**",
   "apps/plugin/src/operations/**",
   "apps/plugin/src/services/**",
   "apps/plugin/src/main.ts",

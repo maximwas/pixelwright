@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { SnapshotNode } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
-import { RenderSession, renderInstance } from "../src/code-connect/runtime.ts";
+import { RenderSession, renderInstance } from "../src/code-connect/render-session.ts";
 import type { SnapshotInstance, TemplateFile } from "../src/types/code-connect.ts";
 
 type Layer = Partial<SnapshotNode> & Pick<SnapshotNode, "id" | "name" | "type">;

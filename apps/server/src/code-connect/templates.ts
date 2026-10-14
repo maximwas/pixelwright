@@ -31,6 +31,24 @@ export async function findTemplates(root: string): Promise<{ templates: Template
 
   const problems: string[] = [];
   const config = await configOf(root, problems);
+  const kept = new KeptTemplates(problems);
+
+  for (const path of await templatePaths(root, config)) {
+    const template = await read(root, path, config, problems);
+
+    if (template !== null) {
+      kept.add(template);
+    }
+  }
+
+  return {
+    templates: kept.templates,
+    problems,
+  };
+}
+
+/** The paths, sorted and once each, of the files the config's globs find that end as a template does. */
+async function templatePaths(root: string, config: Config): Promise<string[]> {
   const paths: string[] = [];
 
   for await (const found of glob(config.include.map(relative), {
@@ -47,44 +65,48 @@ export async function findTemplates(root: string): Promise<{ templates: Template
     }
   }
 
-  const templates: TemplateFile[] = [];
-  const byNode = new Map<string, string>();
-  const byName = new Map<string, string>();
+  return [...new Set(paths)].sort();
+}
 
-  for (const path of [...new Set(paths)].sort()) {
-    const template = await read(root, path, config, problems);
+/**
+ * The templates in use, as they are read: the first for each Figma component, a later one a problem. Two named alike
+ * both stay, the second a problem too: a library's component, matched by name, gets the first.
+ */
+class KeptTemplates {
+  readonly templates: TemplateFile[] = [];
+  readonly #problems: string[];
+  readonly #byNode = new Map<string, string>();
+  readonly #byName = new Map<string, string>();
 
-    if (template === null) {
-      continue;
-    }
-
-    const node = `${template.fileKey ?? ""} ${template.nodeId ?? ""}`;
-    const first = byNode.get(node);
-
-    if (first !== undefined) {
-      problems.push(`${path}: connects the same Figma component as ${first}, which is the one used.`);
-
-      continue;
-    }
-
-    byNode.set(node, path);
-
-    const name = templateName(template);
-    const named = byName.get(comparable(name));
-
-    if (named === undefined) {
-      byName.set(comparable(name), path);
-    } else {
-      problems.push(`${path}: also named ${name}, as ${named}: a library's ${name}, matched by name, gets ${named}.`);
-    }
-
-    templates.push(template);
+  constructor(problems: string[]) {
+    this.#problems = problems;
   }
 
-  return {
-    templates,
-    problems,
-  };
+  add(template: TemplateFile): void {
+    const node = `${template.fileKey ?? ""} ${template.nodeId ?? ""}`;
+    const first = this.#byNode.get(node);
+
+    if (first !== undefined) {
+      this.#problems.push(`${template.path}: connects the same Figma component as ${first}, which is the one used.`);
+
+      return;
+    }
+
+    this.#byNode.set(node, template.path);
+
+    const name = templateName(template);
+    const named = this.#byName.get(comparable(name));
+
+    if (named === undefined) {
+      this.#byName.set(comparable(name), template.path);
+    } else {
+      this.#problems.push(
+        `${template.path}: also named ${name}, as ${named}: a library's ${name}, matched by name, gets ${named}.`,
+      );
+    }
+
+    this.templates.push(template);
+  }
 }
 
 /**
@@ -159,51 +181,17 @@ async function configOf(root: string, problems: string[]): Promise<Config> {
  * made); null for a file that is no template, and a problem with it when it looks like one gone wrong.
  */
 async function read(root: string, path: string, config: Config, problems: string[]): Promise<TemplateFile | null> {
-  let source: string;
+  const source = await sourceOf(root, path, problems);
 
-  try {
-    source = await readFile(join(root, path), "utf8");
-  } catch (error) {
-    // A folder named like a template is none; a file that cannot be read is worth saying.
-    if (typeof error === "object" && error !== null && "code" in error && error.code === "EISDIR") {
-      return null;
-    }
-
-    problems.push(`${path}: cannot be read (${errorMessage(error)}).`);
-
+  if (source === null) {
     return null;
   }
 
-  const comments = new Map<string, string>();
-
-  for (const line of source.split("\n")) {
-    const trimmed = line.trim();
-
-    if (trimmed === "") {
-      continue;
-    }
-
-    if (!trimmed.startsWith("//")) {
-      break;
-    }
-
-    const comment = /^\/\/\s*([a-zA-Z]+)\s*=\s*(.*)$/.exec(trimmed);
-
-    if (comment !== null) {
-      comments.set((comment[1] ?? "").toLowerCase(), (comment[2] ?? "").trim());
-    }
-  }
-
+  const comments = topComments(source);
   const written = comments.get("url");
 
   if (written === undefined) {
-    if (/\bfigma\.connect\s*\(/.test(source)) {
-      problems.push(
-        `${path}: a figma.connect file, which Pixelwright does not run: npx figma connect migrate turns it into a template.`,
-      );
-    } else if (/from\s+["']figma["']|require\(\s*["']figma["']\s*\)/.test(source)) {
-      problems.push(`${path}: no // url= comment at the top: Figma needs the component's link there.`);
-    }
+    problems.push(...unlinked(path, source));
 
     return null;
   }
@@ -232,6 +220,58 @@ async function read(root: string, path: string, config: Config, problems: string
     ...(component === undefined || component === "" ? {} : { component }),
     ...(codeSource === undefined || codeSource === "" ? {} : { codeSource }),
   };
+}
+
+/** A file's text; null for a folder named like a template, and for a file that cannot be read, with a problem. */
+async function sourceOf(root: string, path: string, problems: string[]): Promise<string | null> {
+  try {
+    return await readFile(join(root, path), "utf8");
+  } catch (error) {
+    // A folder named like a template is none; a file that cannot be read is worth saying.
+    if (!(typeof error === "object" && error !== null && "code" in error && error.code === "EISDIR")) {
+      problems.push(`${path}: cannot be read (${errorMessage(error)}).`);
+    }
+
+    return null;
+  }
+}
+
+/** The `// key=value` comments before a file's first code, by key in lower case. */
+function topComments(source: string): Map<string, string> {
+  const comments = new Map<string, string>();
+
+  for (const line of source.split("\n")) {
+    const trimmed = line.trim();
+
+    if (trimmed === "") {
+      continue;
+    }
+
+    if (!trimmed.startsWith("//")) {
+      break;
+    }
+
+    const comment = /^\/\/\s*([a-zA-Z]+)\s*=\s*(.*)$/.exec(trimmed);
+
+    if (comment !== null) {
+      comments.set((comment[1] ?? "").toLowerCase(), (comment[2] ?? "").trim());
+    }
+  }
+
+  return comments;
+}
+
+/** What a file without a url= comment says of itself: an old figma.connect file, or a template missing its link. */
+function unlinked(path: string, source: string): string[] {
+  if (/\bfigma\.connect\s*\(/.test(source)) {
+    return [
+      `${path}: a figma.connect file, which Pixelwright does not run: npx figma connect migrate turns it into a template.`,
+    ];
+  }
+
+  return /from\s+["']figma["']|require\(\s*["']figma["']\s*\)/.test(source)
+    ? [`${path}: no // url= comment at the top: Figma needs the component's link there.`]
+    : [];
 }
 
 /** A Figma link's file key and node id: /design/<key>/ or /file/<key>/, node-id 1-2 or 1:2 → 1:2. */

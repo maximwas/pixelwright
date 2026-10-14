@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { FileSchema } from "../plugin/file-schema.ts";
+import { FileSchema } from "../../plugin/file-schema.ts";
 
 export const CodeConnectReadInputSchema = z.object({
   node: z

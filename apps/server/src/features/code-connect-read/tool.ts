@@ -1,12 +1,13 @@
-import type { McpServer } from "@modelcontextprotocol/server";
-import { readCodeConnect } from "../../code-connect/read-code-connect.ts";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
-import { CodeConnectReadInputSchema, CodeConnectReadOutputSchema } from "../../schemas/tools.ts";
-import type { ToolContext } from "../../types/mcp.ts";
-import { registerTool } from "../register-tool.ts";
+import type { ToolContext, ToolDefinition } from "../../types/mcp.ts";
+import { readCodeConnect } from "./read-code-connect.ts";
+import { CodeConnectReadInputSchema, CodeConnectReadOutputSchema } from "./schemas.ts";
 
-export function registerCodeConnectTool(server: McpServer, { bridge, projectRoot }: ToolContext): void {
-  registerTool(server, {
+export function codeConnectReadTool({
+  plugin,
+  projectRoot,
+}: ToolContext): ToolDefinition<typeof CodeConnectReadInputSchema, typeof CodeConnectReadOutputSchema> {
+  return {
     name: "code_connect_read",
     title: "Read the Code Connect templates",
     description:
@@ -14,6 +15,6 @@ export function registerCodeConnectTool(server: McpServer, { bridge, projectRoot
     input: CodeConnectReadInputSchema,
     output: CodeConnectReadOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (input) => readCodeConnect(bridge, input, projectRoot),
-  });
+    run: (input) => readCodeConnect(plugin, input, projectRoot),
+  };
 }
