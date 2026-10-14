@@ -86,9 +86,7 @@ class LayerFiles {
     renders: KnownRenders,
   ) {
     this.#node = node;
-    this.#planned = new Set(
-      [...(current.src === undefined ? [] : [current.src]), ...urlsOf(current.background ?? "")].map(unnumbered),
-    );
+    this.#planned = new Set([...(current.src === undefined ? [] : [current.src]), ...urlsOf(current.background ?? "")]);
     this.#hashes = new Set(
       (Array.isArray(node.fills) ? node.fills : []).flatMap((paint) =>
         typeof paint.imageHash === "string" ? [paint.imageHash] : [],
@@ -113,16 +111,17 @@ class LayerFiles {
     return !this.#hashes.has(read.file.sha1) && !(await this.#renders.isRenderOf(read.file.sha1, this.#node.id));
   }
 
-  /** An Icon's file: its own (the planned path, or a render of it) or a problem, since its drawing is not replaced. */
+  /**
+   * An Icon's file: a render of it, or its planned path with nothing there; anything else is a problem, since its
+   * drawing is not replaced. A file at the planned path is read too: it may hold another drawing.
+   */
   async checkDrawing(attribute: string, path: string): Promise<void> {
-    if (this.#isPlanned(path)) {
-      return;
-    }
-
     const read = await this.#sources.read(path, "icon");
 
     if ("problem" in read) {
-      this.#problem(attribute, read.message);
+      if (read.problem === "unusable" || !this.#isPlanned(path)) {
+        this.#problem(attribute, read.message);
+      }
     } else if (!(await this.#renders.isRenderOf(read.file.sha1, this.#node.id))) {
       this.#problem(
         attribute,
@@ -131,8 +130,13 @@ class LayerFiles {
     }
   }
 
+  /**
+   * The path planned for the layer, or it with the number a whole read adds to a name taken earlier in it. The layer is
+   * rendered alone in its parent, so its own path has no number, and only the given one loses its last: "Vector 3" is
+   * vector-3.svg, the next one vector-3-2.svg.
+   */
   #isPlanned(path: string): boolean {
-    return this.#planned.has(unnumbered(path));
+    return this.#planned.has(path) || this.#planned.has(unnumbered(path));
   }
 
   #problem(attribute: string, message: string): void {
@@ -143,7 +147,7 @@ class LayerFiles {
   }
 }
 
-/** A planned path without the -2, -3… design_read adds to a file name taken earlier in the same read. */
+/** A path without the -2, -3… design_read adds to a file name taken earlier in the same read. */
 function unnumbered(path: string): string {
   return path.replace(/-\d+(\.[^./\\]+)$/, "$1");
 }

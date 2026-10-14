@@ -355,6 +355,99 @@ describe("design_apply: files", () => {
     });
   });
 
+  it("keeps the files design_read numbers for icons named with a number, and refuses another icon's file", async () => {
+    // Figma names layers "Vector 3": the read plans vector-3.svg for one and numbers the next vector-3-2.svg.
+    const icon = (id: string, name: string) => ({
+      id,
+      name,
+      type: "VECTOR",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 24,
+      height: 24,
+      childCount: 0,
+      fills: [
+        {
+          type: "SOLID",
+          color: {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1,
+          },
+        },
+      ],
+    });
+    const card = (id: string, name: string) => ({
+      id,
+      name: "Card",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      childCount: 3,
+      children: [
+        {
+          id: `${id}0`,
+          name: "Title",
+          type: "TEXT",
+          visible: true,
+          x: 0,
+          y: 0,
+          width: 50,
+          height: 20,
+          childCount: 0,
+          characters: "Hi",
+        },
+        icon(`${id}1`, name),
+        icon(`${id}2`, name),
+      ],
+    });
+    const board: Snapshot = {
+      root: {
+        id: "1:1",
+        name: "Board",
+        type: "FRAME",
+        visible: true,
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 200,
+        childCount: 2,
+        children: [card("2:1", "Vector 3"), card("3:1", "Vector")],
+      },
+      styles: {},
+      variables: {},
+    };
+    const dir = folder();
+    const errors = async (xml: string) =>
+      (
+        await applyDesign(
+          new PluginClient(recordingBridge(board).bridge),
+          {
+            xml,
+            dryRun: false,
+          },
+          { cwd: dir },
+        )
+      ).errors.map(({ attribute, message }) => `${attribute}: ${message}`);
+    const redraws = (path: string) =>
+      `src: ${path} would redraw the icon: an icon's SVG makes new vector layers, so delete the icon and create it again from the file.`;
+
+    expect(designXml(board).xml).toContain('src="assets/vector-3-2.svg"');
+    expect(await errors(designXml(board).xml)).toEqual([]);
+
+    // Other drawings: Vector 7's file for a Vector 3, and Vector 3's for a Vector.
+    mkdirSync(join(dir, "assets"));
+    writeFileSync(join(dir, "assets/vector-7.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="7" height="7"/>');
+    writeFileSync(join(dir, "assets/vector-3.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="3" height="3"/>');
+    expect(await errors('<Icon id="2:12" src="assets/vector-7.svg"/>')).toEqual([redraws("assets/vector-7.svg")]);
+    expect(await errors('<Icon id="3:12" src="assets/vector-3.svg"/>')).toEqual([redraws("assets/vector-3.svg")]);
+  });
+
   it("keeps the paths design_read planned for layers of one name, numbered across the whole read", async () => {
     const photo = photoSnapshot(PNG).root.children?.[0];
     const album = (id: string, hash: string) => ({
