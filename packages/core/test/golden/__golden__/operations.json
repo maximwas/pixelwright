@@ -3664,6 +3664,13 @@
                 "setName": {
                   "type": "string"
                 },
+                "setKey": {
+                  "type": "string"
+                },
+                "exposed": {
+                  "type": "boolean",
+                  "const": true
+                },
                 "properties": {
                   "type": "object",
                   "propertyNames": {
@@ -5855,6 +5862,13 @@
                 },
                 "setName": {
                   "type": "string"
+                },
+                "setKey": {
+                  "type": "string"
+                },
+                "exposed": {
+                  "type": "boolean",
+                  "const": true
                 },
                 "properties": {
                   "type": "object",
@@ -8380,6 +8394,13 @@
                   },
                   "setName": {
                     "type": "string"
+                  },
+                  "setKey": {
+                    "type": "string"
+                  },
+                  "exposed": {
+                    "type": "boolean",
+                    "const": true
                   },
                   "properties": {
                     "type": "object",

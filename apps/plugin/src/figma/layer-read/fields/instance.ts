@@ -1,6 +1,6 @@
 import type { LayerEntry } from "../layer-entry.ts";
 
-/** An instance's main component (and set), and its component properties' values. */
+/** An instance's main component (and set, with its key), whether it is exposed, and its component properties' values. */
 export async function readInstance(entry: LayerEntry): Promise<void> {
   if (entry.node.type !== "INSTANCE") {
     return;
@@ -32,7 +32,10 @@ async function instanceOf(node: InstanceNode): Promise<Record<string, unknown> |
       : {
           setId: set.id,
           setName: set.name,
+          ...(typeof set.key === "string" ? { setKey: set.key } : {}),
         }),
+    // Only where Figma has it: an older Figma, or the fake, leaves it out.
+    ...(node.isExposedInstance ? { exposed: true } : {}),
     // A slot's property has no value: the slot's own layers, read as its children, say what it holds.
     properties: Object.fromEntries(
       Object.entries(node.componentProperties).flatMap(([name, property]) =>

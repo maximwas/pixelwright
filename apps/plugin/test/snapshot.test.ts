@@ -561,6 +561,51 @@ describe("snapshot", () => {
     });
   });
 
+  it("keeps a variant's set key and whether the component around it exposes the instance", async () => {
+    const badge = (id: string, exposed?: boolean) => ({
+      id,
+      name: "Badge",
+      type: "INSTANCE",
+      ...(exposed === undefined ? {} : { isExposedInstance: exposed }),
+      mainComponent: {
+        id: "4:1",
+        key: "variant-key",
+        name: "Style=Solid",
+        parent: {
+          type: "COMPONENT_SET",
+          id: "4:0",
+          key: "set-key",
+          name: "Badge",
+        },
+      },
+      componentProperties: {},
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "6:1",
+            name: "Card",
+            children: [badge("6:2", true), badge("6:3", false), badge("6:4")],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await plugin.run("snapshot", { node: "6:1" })) as Shot;
+
+    const instances = root.children?.map((child) => child.instance as { setKey?: string; exposed?: true } | undefined);
+
+    expect(instances?.map((instance) => [instance?.setKey, instance?.exposed])).toEqual([
+      ["set-key", true],
+      ["set-key", undefined],
+      ["set-key", undefined],
+    ]);
+  });
+
   it("reads an instance with a slot, whose property has no value: the slot's layers say what it holds", async () => {
     installFigma(
       tree({

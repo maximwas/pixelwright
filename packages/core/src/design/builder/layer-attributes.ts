@@ -9,13 +9,13 @@ const VARIANT_PROPERTY: ReadonlySet<string> = new Set(["VARIANT"]);
 /** An instance's own settings: its texts and toggles (a swapped instance and a slot show as children). */
 const OWN_PROPERTIES: ReadonlySet<string> = new Set(["TEXT", "BOOLEAN"]);
 
-/** An instance's component (its set's name for a variant), its variant values and its own properties. */
+/** An instance's component (its set's name for a variant), its variant values, its own properties and its exposure. */
 export function componentAttributes(node: SnapshotNode): MaybeAttribute[] {
   if (node.instance === undefined) {
     return [];
   }
 
-  const { setName, componentName, properties } = node.instance;
+  const { setName, componentName, properties, exposed } = node.instance;
   const listed = (types: ReadonlySet<string>) =>
     Object.entries(properties)
       .filter(([, property]) => types.has(property.type))
@@ -29,6 +29,7 @@ export function componentAttributes(node: SnapshotNode): MaybeAttribute[] {
     ["component", setName ?? componentName],
     ["variant", setName === undefined || variant === "" ? undefined : variant],
     ["props", props === "" ? undefined : props],
+    ["$exposed", exposed ? "true" : undefined],
   ];
 }
 

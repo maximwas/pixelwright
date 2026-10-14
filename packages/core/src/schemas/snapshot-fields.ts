@@ -151,6 +151,10 @@ export const SnapshotFieldsSchema = z.object({
       remote: z.boolean().optional(),
       setId: z.string().optional(),
       setName: z.string().optional(),
+      /** The set's key: the same in every file, a library's included (a variant's own key is componentKey). */
+      setKey: z.string().optional(),
+      /** The component around it exposes this nested instance: its properties are part of that component's API. */
+      exposed: z.literal(true).optional(),
       properties: z.record(
         z.string(),
         z.object({
