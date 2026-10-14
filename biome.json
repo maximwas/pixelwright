@@ -38,6 +38,8 @@
       "includes": [
         "packages/core/src/kernel/**",
         "packages/core/src/tokens/model/**",
+        "packages/core/src/tokens/formats/**",
+        "packages/core/src/tokens/unique-name.ts",
         "packages/core/src/tokens/aliases.ts",
         "packages/core/src/tokens/notes.ts",
         "packages/core/src/tokens/raw-tokens.ts",

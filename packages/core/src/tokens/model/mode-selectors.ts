@@ -1,4 +1,5 @@
 import type { Notes } from "../notes.ts";
+import { uniqueName } from "../unique-name.ts";
 
 /** What a collection's mode selectors are made of. */
 interface ModedCollection {
@@ -15,13 +16,13 @@ export function modeSelectors(collections: readonly ModedCollection[], notes: No
   const attributes = new Set<string>();
 
   return collections.map((collection) => {
-    const attribute = unique(attributeSlug(collection.name), attributes);
+    const attribute = uniqueName(attributeSlug(collection.name), attributes);
     const values = new Set<string>();
     const selectors: Record<string, string> = {};
 
     for (const mode of collection.modes.filter((name) => name !== collection.defaultMode)) {
       const wanted = attributeSlug(mode);
-      const slug = unique(wanted, values);
+      const slug = uniqueName(wanted, values);
 
       if (slug !== wanted) {
         notes.add(`Mode "${mode}" of ${collection.name} would share the selector value "${wanted}": it is "${slug}".`);
@@ -43,17 +44,4 @@ function attributeSlug(name: string): string {
     .replace(/^-+|-+$/g, "");
 
   return cleaned === "" ? "mode" : cleaned;
-}
-
-/** The wanted name, or the first `-2`, `-3`… none has taken; it is taken from then on. */
-function unique(wanted: string, taken: Set<string>): string {
-  let candidate = wanted;
-
-  for (let index = 2; taken.has(candidate); index++) {
-    candidate = `${wanted}-${index}`;
-  }
-
-  taken.add(candidate);
-
-  return candidate;
 }

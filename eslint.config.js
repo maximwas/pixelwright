@@ -13,7 +13,8 @@ const BLOCKS = ["if", "for", "while", "do", "switch", "try"];
 const REWRITTEN = [
   "packages/core/src/kernel/**",
   "packages/core/src/tokens/model/**",
-  "packages/core/src/tokens/{aliases,notes,raw-tokens,style-numbers,token-filter}.ts",
+  "packages/core/src/tokens/formats/**",
+  "packages/core/src/tokens/{aliases,notes,raw-tokens,style-numbers,token-filter,unique-name}.ts",
 ];
 
 const BANNED_SYNTAX = [
