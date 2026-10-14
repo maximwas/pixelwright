@@ -1,17 +1,15 @@
 import { VECTOR_TYPES } from "../constants/css.ts";
 import { CssDeclarations } from "../css-mapping/css-declarations.ts";
 import { readAppearance, readLayoutGrids, readRadius } from "../css-mapping/groups/appearance.ts";
+import { readEffects } from "../css-mapping/groups/effects.ts";
 import { readGeometry } from "../css-mapping/groups/geometry/geometry.ts";
 import { readLayout } from "../css-mapping/groups/layout/layout.ts";
 import { readBackground } from "../css-mapping/groups/paint/fills.ts";
 import { readLine } from "../css-mapping/groups/paint/line.ts";
 import { readStrokes } from "../css-mapping/groups/paint/strokes.ts";
 import { px } from "../css-mapping/values/format.ts";
-import { Color } from "../kernel/color/color.ts";
-import type { ColorSpace } from "../kernel/color/color-space.ts";
-import { styleTokenName } from "../kernel/names.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
-import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
+import type { SnapshotNode, TextSegment } from "../types/snapshot.ts";
 import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
 
 /**
@@ -46,95 +44,10 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
     readBackground(node, css, context);
   }
 
-  effectsCss(node, css, context);
+  readEffects(node, css, context);
   readLayoutGrids(node, css);
 
   return css.build(textStyle);
-}
-
-function effectsCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
-  const effects = (node.effects ?? []).filter((effect) => effect.visible !== false);
-  const style = node.effectStyleId === undefined ? undefined : context.styles[node.effectStyleId];
-  const isText = node.type === "TEXT";
-  const shadows = effects
-    .filter((effect) => effect.type === "DROP_SHADOW" || (effect.type === "INNER_SHADOW" && !isText))
-    .toReversed()
-    .map((effect) => shadowCss(effect, isText, context.colorSpace))
-    .join(", ");
-
-  if (shadows !== "") {
-    const property = isText ? "text-shadow" : "box-shadow";
-
-    if (style !== undefined) {
-      const name = styleTokenName(style);
-
-      context.tokens.set(name, shadows);
-      css.set(property, `var(${name})`);
-    } else {
-      css.set(property, shadows);
-    }
-  }
-
-  // Figma's blur radius is twice the CSS one: Dev Mode writes blur(radius / 2). A progressive blur shows its end
-  // radius, and how it runs is noted: CSS has no blur that changes across a box.
-  for (const effect of effects) {
-    if (effect.type === "LAYER_BLUR" && effect.radius !== undefined) {
-      css.set("filter", `blur(${px(effect.radius / 2)})`);
-      progressiveBlur(effect, "blur", css);
-    }
-
-    if (effect.type === "BACKGROUND_BLUR" && effect.radius !== undefined) {
-      css.set("backdrop-filter", `blur(${px(effect.radius / 2)})`);
-      progressiveBlur(effect, "backdrop-blur", css);
-    }
-  }
-}
-
-/** A progressive blur's run, in CSS radii, from where it starts to where it ends (percents of the box). */
-function progressiveBlur(effect: SnapshotEffect, property: string, css: CssDeclarations): void {
-  if (effect.blurType !== "PROGRESSIVE") {
-    return;
-  }
-
-  const at = (offset: { x: number; y: number } | undefined, fallback: { x: number; y: number }) => {
-    const { x, y } = offset ?? fallback;
-
-    return `${Math.round(x * 100)}% ${Math.round(y * 100)}%`;
-  };
-  const radius = (value: number) => `${Math.round(value / 2)}px`;
-
-  css.readOnly(
-    property,
-    `progressive from ${radius(effect.startRadius ?? 0)} at ${at(effect.startOffset, {
-      x: 0.5,
-      y: 0,
-    })} to ${radius(effect.radius ?? 0)} at ${at(effect.endOffset, {
-      x: 0.5,
-      y: 1,
-    })}`,
-  );
-}
-
-/** Shadows as a box-shadow list, top first (an effect style's value, for the tokens). */
-export function shadowListCss(effects: readonly SnapshotEffect[], space: ColorSpace = "srgb"): string {
-  return effects
-    .filter((effect) => effect.visible !== false && (effect.type === "DROP_SHADOW" || effect.type === "INNER_SHADOW"))
-    .toReversed()
-    .map((effect) => shadowCss(effect, false, space))
-    .join(", ");
-}
-
-function shadowCss(effect: SnapshotEffect, isText: boolean, space: ColorSpace | undefined): string {
-  const parts = [
-    effect.type === "INNER_SHADOW" ? "inset" : null,
-    px(effect.offset?.x ?? 0),
-    px(effect.offset?.y ?? 0),
-    px(effect.radius ?? 0),
-    isText ? null : px(effect.spread ?? 0),
-    effect.color === undefined ? null : Color.of(effect.color, space).css(),
-  ];
-
-  return parts.filter((part) => part !== null).join(" ");
 }
 
 function textCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): string | undefined {

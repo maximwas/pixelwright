@@ -16,6 +16,7 @@ export * from "./css/motion.ts";
 export * from "./css/node-css.ts";
 export * from "./css/text.ts";
 export * from "./css-mapping/css-declarations.ts";
+export * from "./css-mapping/groups/effects.ts";
 export * from "./css-mapping/values/css-values.ts";
 export * from "./css-mapping/values/fonts.ts";
 export * from "./css-mapping/values/format.ts";

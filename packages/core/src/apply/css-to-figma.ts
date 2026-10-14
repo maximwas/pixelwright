@@ -1,4 +1,5 @@
 import { APPEARANCE_RULES } from "../css-mapping/groups/appearance.ts";
+import { EFFECTS_RULE } from "../css-mapping/groups/effects.ts";
 import { ELEMENT_RULES, HREF_RULE } from "../css-mapping/groups/element.ts";
 import { GEOMETRY_RULES } from "../css-mapping/groups/geometry/geometry.ts";
 import { LAYOUT_RULES } from "../css-mapping/groups/layout/layout.ts";
@@ -6,7 +7,7 @@ import { BACKGROUND_RULE, TEXT_COLOR_RULE } from "../css-mapping/groups/paint/fi
 import { STROKES_RULE } from "../css-mapping/groups/paint/strokes.ts";
 import { keywordRule } from "../css-mapping/keyword-rule.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../css-mapping/property-group.ts";
-import { lengthOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
+import { lengthOf, splitTop } from "../css-mapping/values/css-values.ts";
 import { fontOf, textLengthOf } from "../css-mapping/values/fonts.ts";
 import { Color } from "../kernel/color/color.ts";
 import { roundTo } from "../kernel/numbers.ts";
@@ -14,7 +15,6 @@ import type {
   ApplyChange,
   ApplyElement,
   ApplyError,
-  EffectSpec,
   FigmaProps,
   LayerNow,
   TextLength,
@@ -22,7 +22,6 @@ import type {
 } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
 
-const EFFECTS = ["box-shadow", "text-shadow", "filter", "backdrop-filter"];
 const DECORATION = ["text-decoration", "text-underline-offset", "text-decoration-thickness"];
 
 const CASES: Readonly<Record<string, Exclude<FigmaProps["textCase"], undefined>>> = {
@@ -67,10 +66,7 @@ const RULES: readonly Rule[] = [
   ...APPEARANCE_RULES,
   BACKGROUND_RULE,
   STROKES_RULE,
-  {
-    attributes: EFFECTS,
-    write: effectsRule,
-  },
+  EFFECTS_RULE,
 ];
 
 /** What a Text and its spans set; those a text style covers are written again when the style changes. */
@@ -213,78 +209,6 @@ function output(
       });
     },
   };
-}
-
-/** Shadows and blurs are one list in Figma: an attribute the element leaves out keeps what the layer has. */
-function effectsRule({ own, merged, changed }: WriteInput, out: WriteOutput): void {
-  const shadowAttribute = merged("box-shadow") === undefined ? "text-shadow" : "box-shadow";
-  const shadows = merged(shadowAttribute);
-  const token = shadows === undefined ? null : tokenOf(shadows);
-  const source = EFFECTS.find(changed) ?? shadowAttribute;
-
-  if (token !== null) {
-    for (const name of ["filter", "backdrop-filter"].filter((name) => changed(name) && own(name) !== "none")) {
-      out.fail(name, `The effect style ${token.token} holds every effect: change the style, or write its shadows out.`);
-    }
-
-    out.set("effects", token, shadowAttribute);
-
-    return;
-  }
-
-  const effects: EffectSpec[] = [];
-
-  for (const [attribute, type] of [
-    ["filter", "LAYER_BLUR"],
-    ["backdrop-filter", "BACKGROUND_BLUR"],
-  ] as const) {
-    const value = merged(attribute);
-
-    if (value !== undefined && value !== "none") {
-      const blur = /^blur\(\s*(\d*\.?\d+)px\s*\)$/.exec(value);
-
-      if (blur === null) {
-        out.fail(attribute, `${attribute}="${value}" is not blur(Npx), the one filter Figma has.`);
-
-        return;
-      }
-
-      // Figma's blur radius is twice CSS's.
-      effects.push({
-        type,
-        radius: roundTo(Number(blur[1]) * 2, 4),
-      });
-    }
-  }
-
-  const list: EffectSpec[] = [];
-
-  for (const shadow of shadows === undefined || shadows === "none" ? [] : splitTop(shadows, ",")) {
-    const words = splitTop(shadow, " ");
-    const lengths = words.map(lengthOf).filter((length): length is number => typeof length === "number");
-    const color =
-      Color.parse(words.filter((word) => word !== "inset" && typeof lengthOf(word) !== "number").join(" "))?.value() ??
-      null;
-
-    if (lengths.length < 2 || lengths.length > 4 || color === null) {
-      out.fail(shadowAttribute, `"${shadow}" is not a shadow: [inset] x y [blur] [spread] and a colour.`);
-
-      return;
-    }
-
-    const [x = 0, y = 0, radius = 0, spread = 0] = lengths;
-
-    list.push({
-      type: words.includes("inset") ? "INNER_SHADOW" : "DROP_SHADOW",
-      color,
-      x,
-      y,
-      radius,
-      spread,
-    });
-  }
-
-  out.set("effects", [...effects, ...list.toReversed()], source);
 }
 
 function fontRule({ own }: WriteInput, out: WriteOutput): void {
