@@ -38,6 +38,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-3-0">0.3.0 — 2026-10-15</a></li>
           <li><a href="#v0-2-0">0.2.0 — 2026-10-14</a></li>
           <li><a href="#v0-1-1">0.1.1 — 2026-10-13</a></li>
           <li><a href="#v0-1-0">0.1.0 — 2026-10-13</a></li>
@@ -46,6 +47,107 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-3-0">
+          <h2>0.3.0 — 2026-10-15</h2>
+<h4>Added</h4>
+<ul>
+<li><code>design_read</code> shows what an instance changed outside its component&#39;s properties (<code>$override</code>: a rewritten text, a
+recoloured icon), so the code knows which instances need a new property, a variant or a one-off.</li>
+<li><code>outline</code>, <code>file_map</code> and <code>design_read</code> show what the designer marked ready for dev (or completed) in Dev Mode.</li>
+<li><code>design_read</code> names the token Figma itself matches a raw spacing, radius, stroke or opacity to.</li>
+<li><code>design_apply</code> and <code>tokens_apply</code> take a <code>version</code>: a named version is saved in Figma&#39;s history before they change
+anything, for the designer to go back to.</li>
+<li><code>pixelwright logs</code> follows the logs of every running Pixelwright server on the computer in real time: tool calls,
+plugins connecting, errors. The bug report form asks for its output.</li>
+<li><code>design_read</code> keeps a list&#39;s item spacing, a line&#39;s round or square ends and a frame&#39;s grid style.</li>
+<li><code>baseline_save</code> keeps a screen or section as your code was built from it, in the project beside the code
+(<code>.pixelwright/baselines/</code>), with the files you built from it. Nothing is written to Figma.</li>
+<li><code>baseline_diff</code> tells what the designer changed since then, in <code>design_read</code>&#39;s terms: layers changed, added (with
+their XML), removed, hidden, moved or reordered; a change made in a component, once, with the instances it reached;
+token values in every mode; icons and images to export again. It sees edits made while the plugin was closed, library
+updates and variable values. Without a name it checks every baseline in the project. Accept what you built with
+<code>baseline_save</code> and the <code>accept</code> the diff gives.</li>
+<li><code>version_save</code> saves a named version in Figma&#39;s history when you ask for one, so the designer can open the design
+your code was built from; the baselines it names remember it. It needs edit access and Allow edits.</li>
+<li><code>components_read</code> tells which of the project&#39;s components builds each Figma component, from its Code Connect files,
+with the code&#39;s file. <code>mapped: false</code> lists only the components still without code, with the key a new mapping
+needs.</li>
+<li>Code Connect batch files (<code>*.figma.batch.json</code>, Figma&#39;s own format) connect many components through one shared
+template, one row each. The guide gives a ready template whose rows map Figma properties to code props, so a
+component needs no template of its own.</li>
+<li>A Code Connect template (<code>// key=</code>) or batch row (<code>&quot;key&quot;</code>) can name the component&#39;s key. It then connects exactly
+that component in every file, a library&#39;s included, whatever it is called there.</li>
+<li><code>components_read</code> lists the nested instances a component exposes, with their properties: in code they are the
+component&#39;s own props. <code>design_read</code> marks them <code>$exposed</code>.</li>
+<li><code>design_read</code> and <code>code_connect_read</code> name the properties an instance&#39;s code never reads (<code>unread</code>), and
+<code>code_connect_read</code> names the variant values a template&#39;s mapping misses (<code>values</code>), so no value is lost to a
+snippet.</li>
+<li><code>components_read</code> with <code>links: true</code> gives the links people attached to components in Dev Mode, with the project file
+a code link points at, on Figma plans that have them.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>Every easing is valid CSS: <code>tokens_read</code>, the prototype interactions <code>design_read</code> shows and Figma Motion write a
+keyword or <code>cubic-bezier()</code>, and a spring as <code>linear()</code> drawn from the spring itself (it used to be <code>ease</code> or a word).</li>
+<li>In a Display P3 file, colours are written as <code>color(display-p3 …)</code> by <code>design_read</code>, <code>tokens_read</code> (in CSS and in
+DTCG files) and the checks, and colours written to it are converted to P3: they show as the designer chose them.</li>
+<li>A version saved before a <code>design_apply</code> or <code>tokens_apply</code> write says in Figma that Pixelwright saved it, and waits a
+moment so Pixelwright&#39;s previous change is in it.</li>
+<li><code>code_connect_read</code> and <code>design_read</code> give each Code Connect file&#39;s <code>source</code> and say when that file no longer exists.
+<code>code_connect_read</code> says how each file matched (by key, by the component&#39;s link, or by name), and gives the id and
+key of each component none connects.</li>
+<li><code>design_read</code> names the components it shows that have no code yet, when the project has Code Connect files.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li><code>design_apply</code> writes a text of only no-break or em spaces as it is written, and a plain space typed between two
+styled parts of a text as one space: it used to add a space to both.</li>
+<li>In a Display P3 file, <code>design_read</code>&#39;s own XML sent back to <code>design_apply</code> no longer changes a name or a note that
+holds a word like <code>#FFF</code>.</li>
+<li><code>design_read</code>&#39;s hints no longer take a text&#39;s own words, or a colour in a layer&#39;s name, note or link, for CSS that
+should use a token.</li>
+<li><code>design_apply</code> and <code>tokens_apply</code> save their version, check and write in the file the call started on, even when
+another Figma file comes to the front while they run.</li>
+<li><code>inspect</code>, <code>measure</code>, <code>contrast_check</code>, <code>design_audit</code> and <code>fonts_check</code> read the selection and then the layers from
+the same file, even when another Figma file comes to the front between the two.</li>
+<li><code>design_apply</code> no longer writes a new layer into the original when a mistyped tag inside a copy or a new instance
+holds it: the new layer is refused, and the copy&#39;s own layers named there are still written.</li>
+<li><code>design_apply</code> reads the layers named by id inside an element it does not create, or inside a <code>&lt;Span&gt;</code> outside a
+text, instead of dropping them, and says so when a <code>&lt;Span&gt;</code> inside a <code>&lt;Span&gt;</code> sets something (runs do not nest).</li>
+<li><code>design_apply</code> says when the XML holds no element, instead of answering as if it had written something.</li>
+<li><code>design_apply</code> takes the tags of every Figma type <code>design_read</code> writes (widgets, stickies, connectors, slides…) and
+changes those layers by their id, instead of refusing their tags; the paints of FigJam and Slides layers are not
+written yet.</li>
+<li><code>design_apply</code> says when an existing <code>&lt;Icon&gt;</code> names another SVG instead of ignoring it: an icon cannot be redrawn in
+place, so delete it and create it again from the file.</li>
+<li><code>design_read</code>&#39;s XML sent back to <code>design_apply</code> no longer reports its own image and icon files as missing when
+several layers share a name and the read numbered their files (<code>photo-2.png</code>).</li>
+<li><code>design_apply</code> writes a background&#39;s new image: a <code>url()</code> naming another file, or another fit, was reported as
+changed but left the old image in place.</li>
+<li><code>design_apply</code> makes a <code>&lt;Section&gt;</code> of the size the XML gives: Figma has no <code>resize</code> for sections, so a sized new
+section failed, and moving or stretching one now sizes it the way Figma allows.</li>
+<li><code>design_apply</code> refuses a dashed underline without writing a solid one in its place, and gives one error, not two,
+for a link on a frame.</li>
+<li><code>design_apply</code> places a new component set made on the page beside the page&#39;s layers, as it places any new layer,
+instead of on top of them at the page&#39;s corner.</li>
+<li>A <code>design_apply</code> dry run refuses a paint style inside a list of paints, as the real run does, and a property with
+several unknown tokens gives one error, not one per token.</li>
+<li>An attribute <code>design_apply</code> cannot write leaves its layer as it was: a padding, corner radius or size with an
+unknown token, or a border per side on a layer without one, no longer writes half of itself, and what a call writes
+is always one undo step.</li>
+<li><code>pixelwright logs</code> keeps showing every server&#39;s lines: the shared log is set aside by whichever server writes past
+its size, at any time, and a server whose log another one set aside writes to the new file instead of the old one.
+Two servers starting at once no longer leave one of them logging to stderr alone.</li>
+<li>The log names a tool call the client cancelled, instead of keeping it as waiting for an answer forever.</li>
+<li>The plugin counts a piece of an image file sent to it twice only once, so <code>design_apply</code> never takes a file with a
+missing part as whole; a piece past the end of a file gets a clear error instead of a bare <code>RangeError</code>.</li>
+<li>The plugin window names a saved version in plain words, not its internal operation name.</li>
+<li><code>code_connect_read</code> no longer counts the instances inside a connected instance as unconnected.</li>
+<li>The Orbit example names its code component as Figma&#39;s Code Connect defines it (<code>component=PlanCard</code>) and passes the
+card&#39;s description.</li>
+</ul>
+
+        </section>
         <section id="v0-2-0">
           <h2>0.2.0 — 2026-10-14</h2>
 <h4>Added</h4>
