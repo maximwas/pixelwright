@@ -6,7 +6,9 @@
  * earlier check decides; every other pair follows from these or cannot meet), and where an id is taken: only once its
  * element passes every check, before its children are read. CHANGE_CASES walk changeOf: every attribute on its natural
  * tag, the change's envelope, the order of errors, and what the layer holds completing what Figma keeps in one
- * property.
+ * property. EDIT_CASES send edits back against an Orbit fixture's layers, so the comparison is seen to leave a change
+ * in place: a span's look over characters the layer holds, the characters themselves, a value of each kind, a hidden
+ * layer, a nested element.
  */
 
 /** A snippet of several lines. */
@@ -808,5 +810,102 @@ export const CHANGE_CASES: Readonly<Record<string, ChangeCase>> = {
   },
   "problems in the element's attribute order, not the table's": {
     xml: '<Frame id="1:1" border-radius="1em" display="flex" gap="big" background="linear-gradient(90deg, #000, #FFF)"/>',
+  },
+};
+
+/** A snapshot the edits are sent against, by the name its goldens carry. */
+export type EditSnapshot = "orbit-customers" | "orbit-plans" | "orbit-pricing" | "orbit-pricing.p3";
+
+/** An XML sent back against a snapshot's layers, every element naming one, as design_apply compares it. */
+export interface EditCase {
+  readonly snapshot: EditSnapshot;
+  readonly xml: string;
+}
+
+/**
+ * The texts edited: orbit-plans' I54:244;54:207 reads 'For side projects and trying things out.', orbit-customers'
+ * quote 54:449 writes its author in a Span of font 600 and orbit-pricing's lede 54:242 ends in a Span of href,
+ * text-decoration and color, in that order.
+ */
+export const EDIT_CASES: Readonly<Record<string, EditCase>> = {
+  "a span recolouring characters the layer holds": {
+    snapshot: "orbit-plans",
+    xml: '<Text id="I54:244;54:207">For side <Span color="#F00">projects</Span> and trying things out.</Text>',
+  },
+  "the layer's span taken away, its characters kept": {
+    snapshot: "orbit-customers",
+    xml: '<Text id="54:449">“Orbit replaced three tools for us.” Maya Chen, Head of Design at Nova</Text>',
+  },
+  "the layer's span over other characters": {
+    snapshot: "orbit-customers",
+    xml: '<Text id="54:449">“Orbit replaced three tools for us.” <Span font="600 16px/24px \'Inter\'">Maya Chen,</Span> Head of Design at Nova</Text>',
+  },
+  "the layer's span with another look": {
+    snapshot: "orbit-customers",
+    xml: '<Text id="54:449">“Orbit replaced three tools for us.” <Span font="700 16px/24px \'Inter\'">Maya Chen</Span>, Head of Design at Nova</Text>',
+  },
+  "the layer's span split in two of the same look": {
+    snapshot: "orbit-customers",
+    xml: '<Text id="54:449">“Orbit replaced three tools for us.” <Span font="600 16px/24px \'Inter\'">Maya </Span><Span font="600 16px/24px \'Inter\'">Chen</Span>, Head of Design at Nova</Text>',
+  },
+  "the layer's span with its attributes in another order": {
+    snapshot: "orbit-pricing",
+    xml: '<Text id="54:242">Start free, upgrade when your team takes off. Every plan includes unlimited projects and a 14-day trial of Pro. <Span color="var(--color-brand)" href="https://orbit.example/plans" text-decoration="underline">See what\'s included.</Span></Text>',
+  },
+  "other characters": {
+    snapshot: "orbit-plans",
+    xml: '<Text id="I54:244;54:207">For side projects and trying things.</Text>',
+  },
+  "the layer's characters split by a comment, held": {
+    snapshot: "orbit-plans",
+    xml: '<Text id="I54:244;54:207">For side projects <!-- kept -->and trying things out.</Text>',
+  },
+  "the layer's span holding a nested span of no attributes, held": {
+    snapshot: "orbit-customers",
+    xml: '<Text id="54:449">“Orbit replaced three tools for us.” <Span font="600 16px/24px \'Inter\'">Maya <Span>Chen</Span></Span>, Head of Design at Nova</Text>',
+  },
+  "a new gap": {
+    snapshot: "orbit-plans",
+    xml: '<Frame id="54:243" gap="48px"/>',
+  },
+  "another token": {
+    snapshot: "orbit-plans",
+    xml: '<Frame id="54:243" gap="var(--space-32)"/>',
+  },
+  "the layer's token as the number it stands for": {
+    snapshot: "orbit-plans",
+    xml: '<Frame id="54:243" gap="24px"/>',
+  },
+  "a new hex colour": {
+    snapshot: "orbit-customers",
+    xml: '<Rectangle id="54:458" background="#E1E5EF"/>',
+  },
+  "the layer's hex colour in lower case": {
+    snapshot: "orbit-customers",
+    xml: '<Rectangle id="54:458" background="#e1e5ee"/>',
+  },
+  "the layer's numbers as an sRGB hex in a Display P3 file": {
+    snapshot: "orbit-pricing.p3",
+    xml: '<Rectangle id="54:458" background="#E1E5EE"/>',
+  },
+  "an image's file the read did not write, held: the server compares the bytes": {
+    snapshot: "orbit-customers",
+    xml: '<Image id="54:454" src="assets/other.png"/>',
+  },
+  "a shown layer hidden": {
+    snapshot: "orbit-customers",
+    xml: '<Frame id="54:450" display="none"/>',
+  },
+  "a hidden layer shown, compared as shown": {
+    snapshot: "orbit-plans",
+    xml: '<Instance id="I54:244;54:205" name="Badge" display="flex"/>',
+  },
+  "a nested element compared only as its parent holds it: the width its own read writes is new": {
+    snapshot: "orbit-plans",
+    xml: '<Frame id="54:243"><Instance id="54:244" width="383px"/></Frame>',
+  },
+  "the same element at the top, compared as the read's root too": {
+    snapshot: "orbit-plans",
+    xml: '<Instance id="54:244" width="383px"/>',
   },
 };
