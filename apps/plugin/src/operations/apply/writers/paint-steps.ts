@@ -47,6 +47,11 @@ async function strokes(node: Filled, { strokes: spec }: FigmaProps, scope: Write
     return;
   }
 
+  // Refused before the paint is written: a stroke this layer cannot weigh per side is not half written.
+  if (spec.paints.length > 0 && spec.weight === undefined && node.type !== "LINE" && spec.sides !== undefined) {
+    sidedNode(node);
+  }
+
   const paints = await paintsOf(spec.paints, scope);
 
   if ("style" in paints) {
@@ -93,13 +98,20 @@ function strokeWeights(node: Filled, { weight, sides }: StrokeSpec): void {
     return;
   }
 
+  const sided = sidedNode(node);
+
+  for (const side of SIDES) {
+    assign(sided, `stroke${side}Weight`, sides[side.toLowerCase() as "top" | "right" | "bottom" | "left"]);
+  }
+}
+
+/** A layer with a stroke weight per side, or the refusal of one without. */
+function sidedNode(node: Filled): Extract<Filled, { strokeTopWeight: number }> {
   if (!hasStrokeSides(node)) {
     throw refusal(node, "stroke weight per side");
   }
 
-  for (const side of SIDES) {
-    assign(node, `stroke${side}Weight`, sides[side.toLowerCase() as "top" | "right" | "bottom" | "left"]);
-  }
+  return node;
 }
 
 async function effects(node: SceneNode, { effects: spec }: FigmaProps, scope: WriteScope): Promise<void> {

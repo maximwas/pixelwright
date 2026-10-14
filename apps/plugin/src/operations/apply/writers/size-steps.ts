@@ -69,19 +69,20 @@ async function size(node: SceneNode, axis: "width" | "height", props: FigmaProps
     return;
   }
 
+  // The token's variable first: a size that cannot be written changes nothing.
+  const resolved = typeof value === "number" ? value : await (await scope.tokens()).variable(value.token, "FLOAT");
+
   fix(node, axis);
 
-  if (typeof value !== "number") {
-    const variable = await (await scope.tokens()).variable(value.token, "FLOAT");
-
-    if (boundTo(node, axis) !== variable.id) {
-      node.setBoundVariable(axis, variable);
+  if (typeof resolved !== "number") {
+    if (boundTo(node, axis) !== resolved.id) {
+      node.setBoundVariable(axis, resolved);
     }
 
     return;
   }
 
-  resizeTo(node, axis, value);
+  resizeTo(node, axis, resolved);
 }
 
 /** A section has no resize: it is sized without constraints, in pixels, neither hugging nor bound to a token. */

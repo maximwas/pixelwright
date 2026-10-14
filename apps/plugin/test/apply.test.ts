@@ -344,6 +344,27 @@ describe("apply: refusals that write nothing", () => {
   });
 });
 
+describe("apply: a step that fails writes nothing", () => {
+  it("resolves every value of a step before writing any, and closes the call's undo step", async () => {
+    const before = byId("1:1")?.paddingTop;
+    const result = await apply('<Frame id="1:1" padding="8px var(--nope)"/>');
+
+    expect(result.errors.map(({ attribute }) => attribute)).toEqual(["padding"]);
+    expect(byId("1:1")?.paddingTop).toBe(before);
+    expect(fake.writes.undo).toBe(1);
+  });
+
+  it("refuses a stroke weight per side before writing the stroke's paint", async () => {
+    const result = await apply('<Ellipse name="Dot" width="10px" height="10px" border-top="2px solid #000"/>', {
+      parent: "3:1",
+    });
+    const dot = fake.writes.created.find((node) => node.type === "ELLIPSE");
+
+    expect(result.errors.map(({ attribute }) => attribute)).toEqual(["border-top"]);
+    expect(dot?.strokes ?? []).toEqual([]);
+  });
+});
+
 describe("apply: a dry run finds what the real run would", () => {
   const messages = (result: Applied) => result.errors.map(({ attribute, message }) => `${attribute}: ${message}`);
 

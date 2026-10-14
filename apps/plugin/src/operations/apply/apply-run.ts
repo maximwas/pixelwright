@@ -41,6 +41,8 @@ export class ApplyRun implements WriteScope {
   readonly #placement: Placement;
   readonly #sets: PendingSets;
   readonly #writer = new LayerWriter(this);
+  /** Whether any layer was written to, though every step may have failed: the call's undo step closes then too. */
+  #ran = false;
 
   constructor(changes: readonly ApplyChange[], parts: RunParts) {
     this.#changes = changes;
@@ -48,7 +50,7 @@ export class ApplyRun implements WriteScope {
     this.#parts = parts;
     this.#placement = new Placement(changes, this.#layers, parts.top);
     this.#sets = new PendingSets(this.#byRef, {
-      write: (node, change, fail) => this.#writer.write(node, change, fail),
+      write: (node, change, fail) => this.#write(node, change, fail),
       made: (change, node) => this.#report.made(change, node),
       components: this.components,
       marks: this.#marks,
@@ -69,7 +71,7 @@ export class ApplyRun implements WriteScope {
 
     await this.#sets.settle();
 
-    if (this.#report.touched) {
+    if (this.#report.touched || this.#ran) {
       figma.commitUndo();
     }
 
@@ -119,7 +121,13 @@ export class ApplyRun implements WriteScope {
       return;
     }
 
-    this.#record(change, node, (await this.#writer.write(node, change, fail)) || moved);
+    this.#record(change, node, (await this.#write(node, change, fail)) || moved);
+  }
+
+  async #write(node: SceneNode, change: ApplyChange, fail: Fail): Promise<boolean> {
+    this.#ran = true;
+
+    return await this.#writer.write(node, change, fail);
   }
 
   async #target(change: ApplyChange): Promise<SceneNode> {

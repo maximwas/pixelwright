@@ -1,7 +1,7 @@
 import type { FigmaProps, GridTrack } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
 import { type FrameLikeNode, hasAutoLayout } from "../../../figma/capabilities.ts";
-import { guarded, type Step, writeLength } from "./step.ts";
+import { guarded, type Step, writeLength, writeLengths } from "./step.ts";
 import type { WriteScope } from "./write-scope.ts";
 
 type Frame = FrameLikeNode;
@@ -35,11 +35,7 @@ export const LAYOUT_STEPS: readonly Step[] = [
       assign(node, "layoutWrap", layoutWrap);
     }
   }),
-  layoutStep(["padding"], async (node, { padding }, scope) => {
-    for (const [index, field] of PADDING.entries()) {
-      await writeLength(node, field, padding?.[index] ?? 0, scope);
-    }
-  }),
+  layoutStep(["padding"], (node, { padding }, scope) => writeLengths(node, PADDING, padding ?? [], scope)),
   spacingStep("itemSpacing"),
   spacingStep("counterAxisSpacing"),
   layoutStep(["primaryAxisAlignItems"], (node, { primaryAxisAlignItems: align }) => {

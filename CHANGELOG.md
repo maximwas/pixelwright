@@ -68,6 +68,9 @@ How to write this file (people and agents alike):
   instead of on top of them at the page's corner.
 - A `design_apply` dry run finds what the real run would: a paint style inside a list of paints is refused, and a
   property with several unknown tokens gives one error, not one per token.
+- An attribute `design_apply` cannot write leaves its layer as it was: a padding, corner radius or size with an
+  unknown token, or a border per side on a layer without one, no longer writes half of itself, and what a call writes
+  is always one undo step.
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 

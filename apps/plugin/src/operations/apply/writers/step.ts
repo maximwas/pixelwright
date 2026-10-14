@@ -53,27 +53,60 @@ export function boundTo(node: SceneNode, field: VariableBindableNodeField): stri
   return node.boundVariables?.[field]?.id;
 }
 
-/** A length: a number (unbinding a variable it had), or a token bound to its number variable, once. */
+/** A length as written: a number, or the number variable its token names. */
+export type ResolvedLength = number | Variable;
+
+/** A length's value, its token's variable found (a library's imported) before anything is written. */
+export async function resolveLength(value: LengthValue, scope: WriteScope): Promise<ResolvedLength> {
+  return typeof value === "number" ? value : await (await scope.tokens()).variable(value.token, "FLOAT");
+}
+
+/** A resolved length on its field: a number (unbinding a variable it had), or its variable bound, once. */
+export function applyLength<N extends SceneNode, F extends LengthField & keyof N>(
+  node: N,
+  field: F,
+  value: ResolvedLength,
+): void {
+  if (typeof value !== "number") {
+    if (boundTo(node, field) !== value.id) {
+      node.setBoundVariable(field, value);
+    }
+
+    return;
+  }
+
+  if (boundTo(node, field) !== undefined) {
+    node.setBoundVariable(field, null);
+  }
+
+  assign(node, field, value as N[F]);
+}
+
+/** A length: a number, or a token bound to its number variable. */
 export async function writeLength<N extends SceneNode, F extends LengthField & keyof N>(
   node: N,
   field: F,
   value: LengthValue,
   scope: WriteScope,
 ): Promise<void> {
-  if (typeof value === "number") {
-    if (boundTo(node, field) !== undefined) {
-      node.setBoundVariable(field, null);
-    }
+  applyLength(node, field, await resolveLength(value, scope));
+}
 
-    assign(node, field, value as N[F]);
+/** Several lengths of one property: every value resolved before the first is written, so a step fails whole. */
+export async function writeLengths<N extends SceneNode, F extends LengthField & keyof N>(
+  node: N,
+  fields: readonly F[],
+  values: readonly (LengthValue | undefined)[],
+  scope: WriteScope,
+): Promise<void> {
+  const resolved: ResolvedLength[] = [];
 
-    return;
+  for (const [index] of fields.entries()) {
+    resolved.push(await resolveLength(values[index] ?? 0, scope));
   }
 
-  const variable = await (await scope.tokens()).variable(value.token, "FLOAT");
-
-  if (boundTo(node, field) !== variable.id) {
-    node.setBoundVariable(field, variable);
+  for (const [index, field] of fields.entries()) {
+    applyLength(node, field, resolved[index] ?? 0);
   }
 }
 
