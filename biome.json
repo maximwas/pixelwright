@@ -23,6 +23,26 @@
     {
       "includes": ["packages/core/src/**"],
       "linter": { "rules": { "correctness": { "noNodejsModules": "error" } } }
+    },
+    {
+      "includes": ["**/src/**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": { "level": "warn", "options": { "maxAllowedComplexity": 15 } }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/core/src/kernel/**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": { "level": "error", "options": { "maxAllowedComplexity": 15 } }
+          }
+        }
+      }
     }
   ]
 }
