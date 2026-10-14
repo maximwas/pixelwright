@@ -64,6 +64,8 @@ How to write this file (people and agents alike):
   section failed, and moving or stretching one now sizes it the way Figma allows.
 - `design_apply` refuses a dashed underline without writing a solid one in its place, and gives one error, not two,
   for a link on a frame.
+- `design_apply` places a new component set made on the page beside the page's layers, as it places any new layer,
+  instead of on top of them at the page's corner.
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 

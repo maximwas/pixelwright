@@ -344,6 +344,48 @@ describe("apply: refusals that write nothing", () => {
   });
 });
 
+describe("apply: new component sets", () => {
+  it("places a new set on the page beside what is there, as any new layer", async () => {
+    const placed = async (xml: string) => {
+      root = tree({
+        id: "0:1",
+        type: "PAGE",
+        name: "Page 1",
+        children: [
+          {
+            id: "1:1",
+            name: "Card",
+            x: 0,
+            y: 20,
+            width: 600,
+            height: 300,
+          },
+          {
+            id: "3:1",
+            name: "Board",
+            x: 1000,
+            y: 0,
+            width: 400,
+            height: 200,
+          },
+        ],
+      });
+      fake = installFigma(root, LIBRARY);
+
+      const result = await apply(xml);
+      // A set is made last, once its variants are: the first layer the XML names is its own.
+      const made = byId(result.created.find(({ line, ref }) => line === 1 && ref === "new:1")?.id ?? "");
+
+      expect(result.errors).toEqual([]);
+
+      return [made?.x, made?.y];
+    };
+
+    expect(await placed('<Frame name="Free"/>')).toEqual([1500, 0]);
+    expect(await placed('<ComponentSet name="Tag"><Component variant="Tone=Dark"/></ComponentSet>')).toEqual([1500, 0]);
+  });
+});
+
 describe("apply: sections", () => {
   it("sizes a new section as Figma lets it, without constraints", async () => {
     root = page();

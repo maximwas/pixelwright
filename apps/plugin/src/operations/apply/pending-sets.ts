@@ -2,6 +2,7 @@ import type { ApplyChange } from "@pixelwright/core";
 import type { ComponentIndex } from "../../figma/component-index.ts";
 import { indexIn } from "../../figma/nodes.ts";
 import { WriteError } from "../../figma/write-error.ts";
+import { finishNew } from "./new-layers.ts";
 import type { PropertyMarks } from "./property-marks.ts";
 import { layOut } from "./variant-grid.ts";
 
@@ -71,6 +72,8 @@ export class PendingSets {
     try {
       await this.#run.write(made, pending.change, pending.fail);
       layOut(made);
+      // As any new layer: it hugs what the XML did not size, and on the page it goes beside what is there.
+      finishNew(made, pending.change);
       this.#run.components.add(made);
       this.#run.made(pending.change, made);
     } catch (error) {
