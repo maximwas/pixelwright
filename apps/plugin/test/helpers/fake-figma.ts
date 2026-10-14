@@ -927,6 +927,10 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}) {
         type: "VARIABLE_ALIAS",
         id: variable.id,
       }),
+      createVariableAliasByIdAsync: async (id: string) => ({
+        type: "VARIABLE_ALIAS",
+        id,
+      }),
       setBoundVariableForPaint: (paint: object, field: string, variable: { id: string }) => ({
         ...paint,
         boundVariables: {

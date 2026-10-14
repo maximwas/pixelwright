@@ -25,6 +25,11 @@ const TYPE_OF_KIND: Readonly<Record<VariableValueSpec["kind"], WritableVariableT
   alias: null,
 };
 
+/** Whether tokens_apply writes variables of this type. */
+export function isWritableType(type: string): type is WritableVariableType {
+  return Object.hasOwn(VARIABLE_READERS, type);
+}
+
 /** A mode's CSS value as the type takes it, `var(--token)` as an alias; with no type yet, whatever it reads as. */
 export function variableValueOf(css: string, type: WritableVariableType | null): VariableValueSpec | null {
   const value = css.trim();

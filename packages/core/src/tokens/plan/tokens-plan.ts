@@ -12,12 +12,10 @@ import type {
   VariableValueSpec,
   WritableVariableType,
 } from "./types.ts";
-import { variableTypeOf, variableValueOf } from "./variable-values.ts";
+import { isWritableType, variableTypeOf, variableValueOf } from "./variable-values.ts";
 
 type InputCollection = TokensApplyInput["collections"][number];
 type InputVariable = InputCollection["variables"][number];
-
-const WRITABLE: ReadonlySet<string> = new Set<WritableVariableType>(["COLOR", "FLOAT", "STRING", "BOOLEAN"]);
 
 /** The style kinds in the order their errors are listed. */
 const STYLE_KINDS: readonly StyleKind[] = ["paint", "text", "effect"];
@@ -67,7 +65,7 @@ function variablePlan(
   variable: InputVariable,
   fail: (variable: InputVariable, message: string, mode?: string) => void,
 ): VariablePlan | null {
-  if (variable.type !== undefined && !isWritable(variable.type)) {
+  if (variable.type !== undefined && !isWritableType(variable.type)) {
     fail(variable, `${variable.type} variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can.`);
 
     return null;
@@ -109,10 +107,6 @@ function planOf(
     ...(variable.description === undefined ? {} : { description: variable.description }),
     ...(variable.token === undefined || variable.token === tokenName(variable.name) ? {} : { token: variable.token }),
   };
-}
-
-function isWritable(type: string): type is WritableVariableType {
-  return WRITABLE.has(type);
 }
 
 function unreadable(css: string, type: WritableVariableType | null): string {
