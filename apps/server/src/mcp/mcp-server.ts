@@ -12,6 +12,7 @@ import { executeTool } from "../features/execute/tool.ts";
 import { fileMapTool } from "../features/file-map/tool.ts";
 import { flowReadTool } from "../features/flow-read/tool.ts";
 import { fontsCheckTool } from "../features/fonts-check/tool.ts";
+import { guideTool } from "../features/guide/tool.ts";
 import { imageCompareTool } from "../features/image-compare/tool.ts";
 import { inspectTool } from "../features/inspect/tool.ts";
 import { measureTool } from "../features/measure/tool.ts";
@@ -32,7 +33,6 @@ import { viewportGetTool } from "../features/viewport-get/tool.ts";
 import type { ToolContext } from "../types/mcp.ts";
 import { registerContentTool, registerTool } from "./register-tool.ts";
 import { registerCodeConnectTool } from "./tools/code-connect.ts";
-import { registerGuideTool } from "./tools/guide.ts";
 
 export function createMcpServer(context: ToolContext): McpServer {
   const server = new McpServer(
@@ -73,7 +73,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTool(server, variantsReadTool(context));
   registerTool(server, assetsExportTool(context));
   registerCodeConnectTool(server, context);
-  registerGuideTool(server);
+  registerTool(server, guideTool());
 
   return server;
 }
