@@ -1,7 +1,8 @@
 import type * as z from "zod";
 import { changeOf } from "../apply/css-to-figma.ts";
-import { colorOf, lengthOf, numberOf, tokenOf } from "../apply/css-values.ts";
-import { tokenName } from "../css/tokens.ts";
+import { lengthOf, numberOf, tokenOf } from "../apply/css-values.ts";
+import { Color } from "../kernel/color/color.ts";
+import { tokenName } from "../kernel/names.ts";
 import type { TokensApplyInputSchema } from "../schemas/tokens-apply.ts";
 import type { EffectSpec, FigmaProps, FontSpec, PaintSpec } from "../types/apply.ts";
 import type {
@@ -242,7 +243,7 @@ function colorValue(value: string): VariableValueSpec | null {
   const mixed = /^color-mix\(\s*in\s+(?:srgb|display-p3)\s*,\s*(.+?)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/s.exec(
     value,
   );
-  const color = colorOf(mixed?.[1] ?? value);
+  const color = Color.parse(mixed?.[1] ?? value);
 
   if (color === null) {
     return null;
@@ -250,10 +251,7 @@ function colorValue(value: string): VariableValueSpec | null {
 
   return {
     kind: "color",
-    color: {
-      ...color,
-      a: mixed?.[2] === undefined ? color.a : color.a * (Number(mixed[2]) / 100),
-    },
+    color: (mixed?.[2] === undefined ? color : color.faded(Number(mixed[2]) / 100)).value(),
   };
 }
 

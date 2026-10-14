@@ -1,7 +1,9 @@
 import { INFERRED_WORDS } from "../constants/inferred.ts";
-import { colorCss, colorSpaceOf } from "../css/color.ts";
-import { boxShorthand, decimal, px } from "../css/format.ts";
-import { styleTokenName, variableTokenName } from "../css/tokens.ts";
+import { boxShorthand, px } from "../css/format.ts";
+import { type Channels, Color } from "../kernel/color/color.ts";
+import { colorSpaceOf } from "../kernel/color/color-space.ts";
+import { styleTokenName, variableTokenName } from "../kernel/names.ts";
+import { decimal } from "../kernel/numbers.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import { classify, visibleChildren } from "./classify.ts";
 import { designXml } from "./design.ts";
@@ -191,7 +193,12 @@ function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
     const [paint, ...rest] = style.paints ?? [];
 
     if (rest.length === 0 && paint?.type === "SOLID" && paint.color !== undefined) {
-      tokens.set(colorCss(paint.color, paint.opacity ?? 1, space), styleTokenName(style));
+      tokens.set(
+        Color.of(paint.color, space)
+          .faded(paint.opacity ?? 1)
+          .css(),
+        styleTokenName(style),
+      );
     }
   }
 
@@ -199,10 +206,7 @@ function rawTokenHints(snapshot: Snapshot, xml: string): string[] {
     const value = variable.value;
 
     if (variable.resolvedType === "COLOR" && typeof value === "object" && value !== null && "r" in value) {
-      tokens.set(
-        colorCss(value as { r: number; g: number; b: number; a?: number }, 1, space),
-        variableTokenName(variable),
-      );
+      tokens.set(Color.of(value as Channels, space).css(), variableTokenName(variable));
     }
   }
 

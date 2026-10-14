@@ -1,8 +1,7 @@
 import { clampRgb, converter, modeP3, modeRgb, useMode, wcagContrast } from "culori/fn";
 import { describe, expect, it } from "vitest";
 import {
-  colorCss,
-  colorOf,
+  Color,
   contrastCheck,
   designXml,
   dtcgTrees,
@@ -12,7 +11,6 @@ import {
   type Snapshot,
   type SnapshotNode,
   TokensApplyInputSchema,
-  toDocumentColor,
   tokenModel,
   tokensCss,
   tokensPlan,
@@ -82,34 +80,34 @@ const raw = (colorProfile?: string): RawTokens => ({
 describe("colours of a Display P3 file", () => {
   it("are written as color(display-p3 …), with the alpha after a slash, and sRGB ones as before", () => {
     expect(
-      colorCss(
+      Color.of(
         {
           r: 1,
           g: 0,
           b: 0,
         },
-        1,
         "display-p3",
-      ),
+      ).css(),
     ).toBe("color(display-p3 1 0 0)");
     expect(
-      colorCss(
+      Color.of(
         {
           r: 1,
           g: 0,
           b: 0,
         },
-        0.5,
         "display-p3",
-      ),
+      )
+        .faded(0.5)
+        .css(),
     ).toBe("color(display-p3 1 0 0 / 0.5)");
-    expect(colorCss(BRAND, 1, "display-p3")).toBe("color(display-p3 0.2314 0.1843 0.851)");
+    expect(Color.of(BRAND, "display-p3").css()).toBe("color(display-p3 0.2314 0.1843 0.851)");
     expect(
-      colorCss({
+      Color.of({
         r: 1,
         g: 0,
         b: 0,
-      }),
+      }).css(),
     ).toBe("#F00");
   });
 
@@ -300,14 +298,14 @@ describe("colours of a Display P3 file", () => {
   });
 
   it("are read from design_apply's input as P3 channels, kept apart from sRGB ones", () => {
-    expect(colorOf("color(display-p3 1 0 0)")).toEqual({
+    expect(Color.parse("color(display-p3 1 0 0)")?.value()).toEqual({
       r: 1,
       g: 0,
       b: 0,
       a: 1,
       space: "display-p3",
     });
-    expect(colorOf("#F00")).toEqual({
+    expect(Color.parse("#F00")?.value()).toEqual({
       r: 1,
       g: 0,
       b: 0,
@@ -329,14 +327,14 @@ describe("colours of a Display P3 file", () => {
       b: 0,
       a: 1,
     };
-    const converted = toDocumentColor(srgbRed, "display-p3");
+    const converted = Color.fromValue(srgbRed).to("display-p3").channels();
 
-    expect(toDocumentColor(p3Red, "display-p3")).toEqual(srgbRed);
+    expect(Color.fromValue(p3Red).to("display-p3").channels()).toEqual(srgbRed);
     expect(converted.r).toBeCloseTo(0.9175, 3);
     expect(converted.g).toBeCloseTo(0.2003, 3);
     expect(converted.b).toBeCloseTo(0.1386, 3);
-    expect(toDocumentColor(p3Red, "srgb")).toEqual(srgbRed);
-    expect(toDocumentColor(srgbRed, "srgb")).toEqual(srgbRed);
+    expect(Color.fromValue(p3Red).to("srgb").channels()).toEqual(srgbRed);
+    expect(Color.fromValue(srgbRed).to("srgb").channels()).toEqual(srgbRed);
   });
 
   it("are read back from color-mix in display-p3, as design_read and tokens_read mix them in a P3 file", () => {
@@ -379,15 +377,14 @@ describe("colours of a Display P3 file", () => {
 describe("design_apply in a Display P3 file", () => {
   it("takes an sRGB colour the layer already holds as P3 as unchanged", () => {
     const [element] = readApply('<Frame id="1:2" background="#FF0000"/>').elements;
-    const held = toDocumentColor(
-      {
-        r: 1,
-        g: 0,
-        b: 0,
-        a: 1,
-      },
-      "display-p3",
-    );
+    const held = Color.of({
+      r: 1,
+      g: 0,
+      b: 0,
+      a: 1,
+    })
+      .to("display-p3")
+      .channels();
     const node: SnapshotNode = {
       id: "1:2",
       name: "Alert",

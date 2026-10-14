@@ -1,10 +1,10 @@
+import { Color, isChannels } from "../kernel/color/color.ts";
+import { styleTokenName, variableTokenName } from "../kernel/names.ts";
 import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotPaint } from "../types/snapshot.ts";
 import { unwrapVar } from "../utils/css-value.ts";
-import { colorCss, type Rgba } from "./color.ts";
 import { cssUrl } from "./format.ts";
-import { styleTokenName, variableTokenName } from "./tokens.ts";
 
 /** A paint the mapping table cannot write back yet (gradients, video, patterns): read-only CSS instead. */
 export const UNMAPPED = Symbol("unmapped");
@@ -89,8 +89,8 @@ function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext)
     if (variable !== null) {
       const name = variableTokenName(variable);
 
-      if (isRgba(variable.value)) {
-        context.tokens.set(name, colorCss(variable.value, 1, context.colorSpace));
+      if (isChannels(variable.value)) {
+        context.tokens.set(name, Color.of(variable.value, context.colorSpace).css());
       }
 
       const opacity = paint.opacity ?? 1;
@@ -101,7 +101,9 @@ function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext)
         : `var(${name})`;
     }
 
-    return colorCss(paint.color, paint.opacity ?? 1, context.colorSpace);
+    return Color.of(paint.color, context.colorSpace)
+      .faded(paint.opacity ?? 1)
+      .css();
   }
 
   if (paint.type === "IMAGE") {
@@ -120,8 +122,4 @@ export function boundVariable(alias: unknown, context: CssContext) {
   }
 
   return context.variables[alias.id] ?? null;
-}
-
-function isRgba(value: unknown): value is Rgba {
-  return typeof value === "object" && value !== null && "r" in value && "g" in value && "b" in value;
 }

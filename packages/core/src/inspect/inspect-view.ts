@@ -1,10 +1,10 @@
-import { colorCss, colorSpaceOf } from "../css/color.ts";
 import { px } from "../css/format.ts";
 import { interactionSummary } from "../css/interactions.ts";
 import { paintsCss } from "../css/paint.ts";
-import { styleTokenName } from "../css/tokens.ts";
+import { Color } from "../kernel/color/color.ts";
+import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { styleTokenName } from "../kernel/names.ts";
 import { MIXED } from "../schemas/snapshot.ts";
-import type { ColorSpace } from "../types/css.ts";
 import type { InspectBox, InspectedLayer, InspectedLayerView, InspectRaw, InspectView } from "../types/inspect.ts";
 import type { TextSegment } from "../types/snapshot.ts";
 import { unwrapVar } from "../utils/css-value.ts";
@@ -177,7 +177,9 @@ function strokesOf(layer: InspectedLayer, space: ColorSpace): NonNullable<Inspec
     align: (layer.strokeAlign ?? "INSIDE").toLowerCase(),
     colors: layer.strokes.map((paint) =>
       paint.type === "SOLID" && paint.color !== undefined
-        ? colorCss(paint.color, paint.opacity ?? 1, space)
+        ? Color.of(paint.color, space)
+            .faded(paint.opacity ?? 1)
+            .css()
         : paint.type.toLowerCase(),
     ),
   };

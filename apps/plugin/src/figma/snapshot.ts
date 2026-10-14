@@ -6,6 +6,7 @@ import {
   MIXED,
   type OperationInput,
   type OperationOutput,
+  roundTo,
   type SnapshotNode,
   type SnapshotStyle,
   type SnapshotVariable,
@@ -312,10 +313,10 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
     name: node.name,
     type: node.type,
     visible: node.visible,
-    x: round((x ?? 0) - context.x),
-    y: round((y ?? 0) - context.y),
-    width: round(node.width),
-    height: round(node.height),
+    x: roundTo((x ?? 0) - context.x, 2),
+    y: roundTo((y ?? 0) - context.y, 2),
+    width: roundTo(node.width, 2),
+    height: roundTo(node.height, 2),
   };
   const childCount = "children" in node ? node.children.length : 0;
 
@@ -337,17 +338,17 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
   const [[a, b], [c, d]] = node.relativeTransform;
 
   if ((a ?? 1) * (d ?? 1) - (b ?? 0) * (c ?? 0) < 0) {
-    entry.mirrorTransform = [a, b, c, d].map((value) => Math.round((value ?? 0) * 10_000) / 10_000);
+    entry.mirrorTransform = [a, b, c, d].map((value) => roundTo(value ?? 0, 4));
   }
 
   if ((entry.rotation !== undefined || entry.mirrorTransform !== undefined) && node.absoluteBoundingBox !== null) {
     const box = node.absoluteBoundingBox;
 
     entry.bounds = {
-      x: round(box.x - context.x),
-      y: round(box.y - context.y),
-      width: round(box.width),
-      height: round(box.height),
+      x: roundTo(box.x - context.x, 2),
+      y: roundTo(box.y - context.y, 2),
+      width: roundTo(box.width, 2),
+      height: roundTo(box.height, 2),
     };
   }
 
@@ -356,10 +357,10 @@ export async function entryOf(node: SceneNode, context: EntryContext): Promise<S
 
   if (drawn !== null && own !== null && reachesPast(drawn, own)) {
     entry.renderBounds = {
-      x: round(drawn.x - context.x),
-      y: round(drawn.y - context.y),
-      width: round(drawn.width),
-      height: round(drawn.height),
+      x: roundTo(drawn.x - context.x, 2),
+      y: roundTo(drawn.y - context.y, 2),
+      width: roundTo(drawn.width, 2),
+      height: roundTo(drawn.height, 2),
     };
   }
 
@@ -923,9 +924,4 @@ function reachesPast(drawn: Rect, own: Rect): boolean {
     Math.abs(drawn.width - own.width) > 0.5 ||
     Math.abs(drawn.height - own.height) > 0.5
   );
-}
-
-/** Two decimals: whole pixels are core's decision, not the snapshot's. */
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

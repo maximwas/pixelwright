@@ -5,14 +5,14 @@ import {
   DTCG_SHADOWS,
   DTCG_STYLES,
 } from "../constants/tokens.ts";
-import { colorSpaceOf, srgbOf } from "../css/color.ts";
-import type { ColorSpace } from "../types/css.ts";
+import { type Channels, Color, isChannels } from "../kernel/color/color.ts";
+import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { roundTo } from "../kernel/numbers.ts";
 import type { DtcgGroup, DtcgResult, DtcgToken, RawTokens } from "../types/tokens.ts";
 import { weightOf } from "../utils/font-weight.ts";
 
 type RawVariable = RawTokens["variables"][number];
 type RawStyle = RawTokens["styles"][number];
-type Rgba = { r: number; g: number; b: number; a?: number | undefined };
 
 /**
  * The file's tokens in the Design Tokens Format (DTCG 2025.10): a tree per mode of each collection, keyed
@@ -297,7 +297,7 @@ function typeOf(variable: RawVariable): string | null {
 
 function dtcgValue(type: string, value: unknown, space: ColorSpace): unknown {
   if (type === "color") {
-    return isRgba(value) ? colorOf(value, 1, space) : value;
+    return isChannels(value) ? colorOf(value, 1, space) : value;
   }
 
   if (type === "dimension") {
@@ -311,23 +311,15 @@ function dtcgValue(type: string, value: unknown, space: ColorSpace): unknown {
  * A Figma colour as DTCG writes one: its space's components (Display P3 in a P3 file), alpha when see-through, and the
  * sRGB hex fallback (a P3 colour converted and clipped).
  */
-function colorOf(color: Rgba, opacity: number, space: ColorSpace): Record<string, unknown> {
-  const { r, g, b, a = 1 } = color;
-  const alpha = round(a * opacity);
-  const srgb = srgbOf(color, space);
-  const hex = [srgb.r, srgb.g, srgb.b]
-    .map((channel) =>
-      Math.round(channel * 255)
-        .toString(16)
-        .padStart(2, "0"),
-    )
-    .join("");
+function colorOf(channels: Channels, opacity: number, space: ColorSpace): Record<string, unknown> {
+  const color = Color.of(channels, space).faded(opacity);
+  const alpha = round(color.alpha);
 
   return {
     colorSpace: space,
-    components: [round(r), round(g), round(b)],
+    components: [round(color.r), round(color.g), round(color.b)],
     ...(alpha < 1 ? { alpha } : {}),
-    hex: `#${hex.toUpperCase()}`,
+    hex: color.hex(),
   };
 }
 
@@ -383,7 +375,7 @@ function styleToken(style: RawStyle, autoLineHeight: string[], space: ColorSpace
       return null;
     }
 
-    if (paint.type === "SOLID" && isRgba(paint.color)) {
+    if (paint.type === "SOLID" && isChannels(paint.color)) {
       return {
         $type: "color",
         $value: colorOf(paint.color, paint.opacity ?? 1, space),
@@ -441,7 +433,7 @@ function styleToken(style: RawStyle, autoLineHeight: string[], space: ColorSpace
 
     const shadows = effects.map((effect) => ({
       color: colorOf(
-        isRgba(effect.color)
+        isChannels(effect.color)
           ? effect.color
           : {
               r: 0,
@@ -491,7 +483,7 @@ function px(value: number): { value: number; unit: "px" } {
 }
 
 function round(value: number): number {
-  return Math.round(value * 10_000) / 10_000;
+  return roundTo(value, 4);
 }
 
 function aliasOf(value: unknown): string | null {
@@ -501,14 +493,4 @@ function aliasOf(value: unknown): string | null {
     typeof (value as { id?: unknown }).id === "string"
     ? (value as { id: string }).id
     : null;
-}
-
-function isRgba(value: unknown): value is Rgba {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as Rgba).r === "number" &&
-    typeof (value as Rgba).g === "number" &&
-    typeof (value as Rgba).b === "number"
-  );
 }

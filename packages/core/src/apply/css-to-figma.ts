@@ -1,4 +1,6 @@
 import { LAYOUT_TAGS } from "../constants/apply.ts";
+import { Color } from "../kernel/color/color.ts";
+import { roundTo } from "../kernel/numbers.ts";
 import type {
   ApplyChange,
   ApplyElement,
@@ -16,7 +18,7 @@ import type {
   TextRunSpec,
 } from "../types/apply.ts";
 import type { XmlChild } from "../types/xml.ts";
-import { colorOf, imageOf, lengthOf, numberOf, paintOf, percentOf, splitTop, tokenOf } from "./css-values.ts";
+import { imageOf, lengthOf, numberOf, paintOf, percentOf, splitTop, tokenOf } from "./css-values.ts";
 
 type Read = (name: string) => string | undefined;
 
@@ -914,7 +916,7 @@ function transformRule({ own }: Input, out: Output): void {
 
     if (turn !== null) {
       // CSS turns clockwise, Figma counter-clockwise.
-      rotation = round(-Number(turn[1]));
+      rotation = roundTo(-Number(turn[1]), 4);
     } else if (part === "scaleX(-1)") {
       mirror = true;
     } else {
@@ -1200,7 +1202,7 @@ function effectsRule({ own, merged, changed }: Input, out: Output): void {
       // Figma's blur radius is twice CSS's.
       effects.push({
         type,
-        radius: round(Number(blur[1]) * 2),
+        radius: roundTo(Number(blur[1]) * 2, 4),
       });
     }
   }
@@ -1210,7 +1212,9 @@ function effectsRule({ own, merged, changed }: Input, out: Output): void {
   for (const shadow of shadows === undefined || shadows === "none" ? [] : splitTop(shadows, ",")) {
     const words = splitTop(shadow, " ");
     const lengths = words.map(lengthOf).filter((length): length is number => typeof length === "number");
-    const color = colorOf(words.filter((word) => word !== "inset" && typeof lengthOf(word) !== "number").join(" "));
+    const color =
+      Color.parse(words.filter((word) => word !== "inset" && typeof lengthOf(word) !== "number").join(" "))?.value() ??
+      null;
 
     if (lengths.length < 2 || lengths.length > 4 || color === null) {
       out.fail(shadowAttribute, `"${shadow}" is not a shadow: [inset] x y [blur] [spread] and a colour.`);
@@ -1254,7 +1258,7 @@ function letterSpacingRule({ own }: Input, out: Output): void {
       "letterSpacing",
       {
         unit: "PERCENT",
-        value: round(Number(em[1]) * 100),
+        value: roundTo(Number(em[1]) * 100, 4),
       },
       "letter-spacing",
     );
@@ -1279,7 +1283,7 @@ function decorationRule({ merged, changed }: Input, out: Output): void {
   const line = words.find((word) => LINES[word] !== undefined);
   const style = words.find((word) => DECORATION_STYLES[word] !== undefined);
   const rest = words.filter((word) => word !== line && word !== style).join(" ");
-  const color = rest === "" ? null : colorOf(rest);
+  const color = rest === "" ? null : (Color.parse(rest)?.value() ?? null);
   const source = DECORATION.find(changed) ?? "text-decoration";
 
   if (value !== undefined && (line === undefined || (rest !== "" && color === null))) {
@@ -1331,7 +1335,7 @@ function textLengthOf(value: string): TextLength | null {
   if (em !== null) {
     return {
       unit: "PERCENT",
-      value: round(Number(em[1]) * 100),
+      value: roundTo(Number(em[1]) * 100, 4),
     };
   }
 
@@ -1398,7 +1402,7 @@ function lineHeightOf(value: string | undefined): FontSpec["lineHeight"] | null 
     ? null
     : {
         unit: "PERCENT",
-        value: round(multiple * 100),
+        value: roundTo(multiple * 100, 4),
       };
 }
 
@@ -1492,11 +1496,6 @@ function boxOf<T>(parts: readonly (T | null)[]): [T, T, T, T] | null {
   const [a, b = a, c = a, d = b] = parts as T[];
 
   return [a as T, b as T, c as T, d as T];
-}
-
-/** Away from floating-point noise (0.07em is 7.000000000000001 percent), and never -0. */
-function round(value: number): number {
-  return Math.round(value * 10_000) / 10_000 || 0;
 }
 
 /** design_read's list `Name=Value, Other=Value`, a comma, equals sign or backslash in it escaped with a backslash. */

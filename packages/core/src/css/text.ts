@@ -1,11 +1,13 @@
 import { DEFAULT_FONT_AXES } from "../constants/css.ts";
-import type { ColorSpace, CssContext } from "../types/css.ts";
+import { Color } from "../kernel/color/color.ts";
+import type { ColorSpace } from "../kernel/color/color-space.ts";
+import { styleName } from "../kernel/names.ts";
+import { decimal } from "../kernel/numbers.ts";
+import type { CssContext } from "../types/css.ts";
 import type { SnapshotNode, SnapshotStyle, TextSegment } from "../types/snapshot.ts";
 import { weightOf } from "../utils/font-weight.ts";
-import { colorCss } from "./color.ts";
-import { decimal, px } from "./format.ts";
+import { px } from "./format.ts";
 import { paintsCss, UNMAPPED } from "./paint.ts";
-import { styleName } from "./tokens.ts";
 
 const TEXT_TRANSFORMS: Readonly<Record<string, string>> = {
   UPPER: "uppercase",
@@ -133,7 +135,9 @@ function decorationCss(
   const color =
     paint === undefined || paint === "AUTO" || paint.color === undefined
       ? undefined
-      : colorCss(paint.color, paint.opacity ?? 1, space);
+      : Color.of(paint.color, space)
+          .faded(paint.opacity ?? 1)
+          .css();
   const offset = decorationLength(segment.textDecorationOffset);
   const thickness = decorationLength(segment.textDecorationThickness);
 

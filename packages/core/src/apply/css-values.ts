@@ -17,49 +17,8 @@ import {
   isTokenURL,
   tokenize,
 } from "@csstools/css-tokenizer";
-import {
-  converter,
-  modeA98,
-  modeHsl,
-  modeHwb,
-  modeLab,
-  modeLch,
-  modeLrgb,
-  modeOklab,
-  modeOklch,
-  modeP3,
-  modeProphoto,
-  modeRec2020,
-  modeRgb,
-  modeXyz50,
-  modeXyz65,
-  parse,
-  useMode,
-} from "culori/fn";
-import type { ColorValue, LengthValue, PaintSpec, TokenRef } from "../types/apply.ts";
-import { clampUnit } from "../utils/clamp.ts";
-
-// The colour spaces CSS has, color() ones included: the plugin bundle carries none of culori's others.
-for (const mode of [
-  modeRgb,
-  modeHsl,
-  modeHwb,
-  modeLab,
-  modeLch,
-  modeOklab,
-  modeOklch,
-  modeP3,
-  modeLrgb,
-  modeA98,
-  modeProphoto,
-  modeRec2020,
-  modeXyz50,
-  modeXyz65,
-]) {
-  useMode(mode);
-}
-
-const toRgb = converter("rgb");
+import { Color } from "../kernel/color/color.ts";
+import type { LengthValue, PaintSpec, TokenRef } from "../types/apply.ts";
 
 /** A value as CSS parses it: its component values (functions with their arguments, strings, words, spaces). */
 function componentsOf(value: string): ComponentValue[] {
@@ -232,37 +191,6 @@ export function percentOf(value: string): number | null {
   return match === null ? null : Number(match[1]);
 }
 
-/**
- * Any CSS colour Figma can hold: hex, rgb(), hsl(), a name, as sRGB channels; `color(display-p3 …)` keeps its P3
- * channels, marked, for a Display P3 document to take as they are.
- */
-export function colorOf(value: string): ColorValue | null {
-  const parsed = parse(value.trim());
-
-  if (parsed?.mode === "p3") {
-    return {
-      r: clampUnit(parsed.r),
-      g: clampUnit(parsed.g),
-      b: clampUnit(parsed.b),
-      a: clampUnit(parsed.alpha ?? 1),
-      space: "display-p3",
-    };
-  }
-
-  const rgb = parsed === undefined ? undefined : toRgb(parsed);
-
-  if (rgb === undefined) {
-    return null;
-  }
-
-  return {
-    r: clampUnit(rgb.r),
-    g: clampUnit(rgb.g),
-    b: clampUnit(rgb.b),
-    a: clampUnit(rgb.alpha ?? 1),
-  };
-}
-
 /** A paint: a colour, a token, or a token mixed with transparent at an opacity (how design_read writes those). */
 export function paintOf(value: string): PaintSpec | null {
   const token = tokenOf(value);
@@ -288,12 +216,12 @@ export function paintOf(value: string): PaintSpec | null {
     };
   }
 
-  const color = colorOf(value);
+  const color = Color.parse(value);
 
   return color === null
     ? null
     : {
         kind: "color",
-        color,
+        color: color.value(),
       };
 }

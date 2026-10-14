@@ -1,9 +1,9 @@
-import { colorCss, colorSpaceOf, type Rgba } from "../css/color.ts";
-import { decimal } from "../css/format.ts";
 import { shadowListCss } from "../css/node-css.ts";
 import { fontShorthand, textStyleExtras } from "../css/text.ts";
-import { styleTokenName, tokenName, variableTokenName } from "../css/tokens.ts";
-import type { ColorSpace } from "../types/css.ts";
+import { Color, isChannels } from "../kernel/color/color.ts";
+import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { styleTokenName, tokenName, variableTokenName } from "../kernel/names.ts";
+import { decimal } from "../kernel/numbers.ts";
 import type { RawTokens, StyleToken, TokenCollection, TokenModel } from "../types/tokens.ts";
 
 /** Scopes a number is used for without a unit; anything else (or no scope) is a length in pixels. */
@@ -127,13 +127,13 @@ function valueCss(value: unknown, variable: RawTokens["variables"][number], cont
 
 /** A color, or a composed one (a color and an opacity, either of them a variable). */
 function colorValue(value: unknown, variable: RawTokens["variables"][number], context: ValueContext): string {
-  if (isRgba(value)) {
-    return colorCss(value, 1, context.space);
+  if (isChannels(value)) {
+    return Color.of(value, context.space).css();
   }
 
   if (typeof value === "object" && value !== null && "color" in value && "opacity" in value) {
-    const color = isRgba(value.color)
-      ? colorCss(value.color, 1, context.space)
+    const color = isChannels(value.color)
+      ? Color.of(value.color, context.space).css()
       : valueCss(value.color, variable, context);
     // Figma keeps the opacity of a composed colour as a percentage; a value up to 1 is read as a fraction.
     const opacity =
@@ -302,7 +302,9 @@ function stylesOf(styles: RawTokens["styles"], notes: string[], space: ColorSpac
         paint.push({
           name: style.name,
           token,
-          value: colorCss(only.color, only.opacity ?? 1, space),
+          value: Color.of(only.color, space)
+            .faded(only.opacity ?? 1)
+            .css(),
         });
       } else if (style.css !== undefined) {
         paint.push({
@@ -382,8 +384,4 @@ function aliasOf(value: unknown): string | null {
     "id" in value
     ? String(value.id)
     : null;
-}
-
-function isRgba(value: unknown): value is Rgba {
-  return typeof value === "object" && value !== null && "r" in value && "g" in value && "b" in value;
 }

@@ -1,4 +1,4 @@
-import type { OperationInput, OperationOutput } from "@pixelwright/core";
+import { type OperationInput, type OperationOutput, roundTo } from "@pixelwright/core";
 import { colorProfile } from "./color-profile.ts";
 import { pageOf, requireNode } from "./nodes.ts";
 import {
@@ -27,10 +27,10 @@ export async function inspect({ nodes, relativeTo }: OperationInput<"inspect">):
     box === null || box === undefined
       ? null
       : {
-          x: round(box.x - origin.x),
-          y: round(box.y - origin.y),
-          width: round(box.width),
-          height: round(box.height),
+          x: roundTo(box.x - origin.x, 2),
+          y: roundTo(box.y - origin.y, 2),
+          width: roundTo(box.width, 2),
+          height: roundTo(box.height, 2),
         };
   const references: References = {
     styles: new Set(),
@@ -109,9 +109,4 @@ export async function inspect({ nodes, relativeTo }: OperationInput<"inspect">):
     variables: await resolveVariables(references.variables),
     ...colorProfile(),
   };
-}
-
-/** Two decimals, as the snapshot keeps boxes. */
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

@@ -1,7 +1,5 @@
+import type { ColorSpace } from "../kernel/color/color-space.ts";
 import type { SnapshotNode, SnapshotPaint, SnapshotStyle, SnapshotVariable } from "./snapshot.ts";
-
-/** The colour space a file's colours are in: Figma's sRGB (or LEGACY) documents, or Display P3 ones. */
-export type ColorSpace = "srgb" | "display-p3";
 
 export interface CssContext {
   readonly styles: Readonly<Record<string, SnapshotStyle>>;

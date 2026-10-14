@@ -1,4 +1,4 @@
-import type { MotionTrack, MotionEasing as SnapshotEasing, SnapshotMotion } from "@pixelwright/core";
+import { type MotionTrack, roundTo, type MotionEasing as SnapshotEasing, type SnapshotMotion } from "@pixelwright/core";
 import { MOTION_STYLE_FIELDS } from "../constants/motion.ts";
 
 interface RawTrack {
@@ -35,8 +35,8 @@ function readMotion(node: SceneNode & MotionNodeMixin): SnapshotMotion | undefin
   const styles = applied.map((style) => ({
     type: style.type,
     name: style.name,
-    start: round(style.timelineOffset ?? 0),
-    ...("duration" in style && style.duration !== undefined ? { duration: round(style.duration) } : {}),
+    start: roundTo(style.timelineOffset ?? 0, 4),
+    ...("duration" in style && style.duration !== undefined ? { duration: roundTo(style.duration, 4) } : {}),
   }));
   const manual = new Set(bindingsOf(node.manualKeyframeTracks).map(([, binding]) => binding.id));
   const tracks: MotionTrack[] = bindingsOf(node.animations).flatMap(([field, binding]) =>
@@ -52,7 +52,7 @@ function readMotion(node: SceneNode & MotionNodeMixin): SnapshotMotion | undefin
         keyframes: track.keyframes
           .filter((keyframe) => Number.isFinite(keyframe.timelinePosition))
           .map((keyframe) => ({
-            t: round(keyframe.timelinePosition + (style?.timelineOffset ?? 0)),
+            t: roundTo(keyframe.timelinePosition + (style?.timelineOffset ?? 0), 4),
             value: keyframeValue(keyframe.value),
             easing: easingOf(keyframe.easing),
           })),
@@ -66,7 +66,7 @@ function readMotion(node: SceneNode & MotionNodeMixin): SnapshotMotion | undefin
   }
 
   return {
-    ...(timeline === undefined ? {} : { timeline: round(timeline.duration) }),
+    ...(timeline === undefined ? {} : { timeline: roundTo(timeline.duration, 4) }),
     styles,
     tracks,
   };
@@ -127,8 +127,10 @@ function easingOf(easing: ManualKeyframe["easing"]): SnapshotEasing {
 
   return {
     type: easing.type,
-    ...(bezier === undefined ? {} : { bezier: [bezier.x1, bezier.y1, bezier.x2, bezier.y2].map(round) }),
-    ...(easing.easingFunctionSpring === undefined ? {} : { bounce: round(easing.easingFunctionSpring.bounce) }),
+    ...(bezier === undefined
+      ? {}
+      : { bezier: [bezier.x1, bezier.y1, bezier.x2, bezier.y2].map((point) => roundTo(point, 4)) }),
+    ...(easing.easingFunctionSpring === undefined ? {} : { bounce: roundTo(easing.easingFunctionSpring.bounce, 4) }),
   };
 }
 
@@ -142,7 +144,7 @@ function keyframeValue(value: KeyframeValue): { type: string; value: unknown } {
 
 function rounded(value: unknown): unknown {
   if (typeof value === "number") {
-    return round(value);
+    return roundTo(value, 4);
   }
 
   if (typeof value === "object" && value !== null) {
@@ -150,9 +152,4 @@ function rounded(value: unknown): unknown {
   }
 
   return value;
-}
-
-/** Four decimals: Figma keeps times and values as floats (0.4000000059604645). */
-function round(value: number): number {
-  return Math.round(value * 10_000) / 10_000;
 }

@@ -1,13 +1,15 @@
 import { withoutFallbacks } from "../apply/css-values.ts";
 import { CSS_ORDER, VECTOR_TYPES } from "../constants/css.ts";
+import { Color } from "../kernel/color/color.ts";
+import type { ColorSpace } from "../kernel/color/color-space.ts";
+import { styleTokenName, variableTokenName } from "../kernel/names.ts";
+import { decimal } from "../kernel/numbers.ts";
 import { MIXED } from "../schemas/snapshot.ts";
-import type { ColorSpace, CssContext, NodeCss } from "../types/css.ts";
+import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
-import { colorCss } from "./color.ts";
-import { boxShorthand, decimal, px } from "./format.ts";
+import { boxShorthand, px } from "./format.ts";
 import { boundVariable, paintsCss, UNMAPPED } from "./paint.ts";
 import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
-import { styleTokenName, variableTokenName } from "./tokens.ts";
 
 const JUSTIFY: Readonly<Record<string, string>> = {
   CENTER: "center",
@@ -594,7 +596,7 @@ function shadowCss(effect: SnapshotEffect, isText: boolean, space: ColorSpace | 
     px(effect.offset?.y ?? 0),
     px(effect.radius ?? 0),
     isText ? null : px(effect.spread ?? 0),
-    effect.color === undefined ? null : colorCss(effect.color, 1, space),
+    effect.color === undefined ? null : Color.of(effect.color, space).css(),
   ];
 
   return parts.filter((part) => part !== null).join(" ");

@@ -7,12 +7,12 @@ import {
   MOTION_SPRINGS,
   MOTION_UNCOVERED,
 } from "../constants/motion.ts";
-import type { ColorSpace } from "../types/css.ts";
+import { type Channels, Color, isChannels } from "../kernel/color/color.ts";
+import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { decimal } from "../kernel/numbers.ts";
 import type { MotionEasing, MotionLayer, MotionTrack, MotionView, SnapshotMotion } from "../types/motion.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import { slug } from "../utils/slug.ts";
-import { colorCss, colorSpaceOf, type Rgba } from "./color.ts";
-import { decimal } from "./format.ts";
 
 /** A keyframe with its value made absolute from the track's base. */
 interface Point {
@@ -265,7 +265,7 @@ function channelsOf(
       channel(paint).points.push(
         ...points.map((point) => ({
           t: point.t,
-          css: colorCss(point.value as Rgba, 1, space),
+          css: Color.of(point.value as Channels, space).css(),
           easing: point.easing,
         })),
       );
@@ -336,7 +336,7 @@ function axisPoints(
 function paintProperty(node: SnapshotNode, track: MotionTrack, points: readonly Point[]): string | null {
   const [collection] = track.field.split(".");
 
-  if (!/^(fills|strokes)\.\d+$/.test(track.field) || !points.every((point) => isRgba(point.value))) {
+  if (!/^(fills|strokes)\.\d+$/.test(track.field) || !points.every((point) => isChannels(point.value))) {
     return null;
   }
 
@@ -542,8 +542,8 @@ function valueText(value: unknown, space: ColorSpace): string {
     return `(${decimal(value.x)}, ${decimal(value.y)})`;
   }
 
-  if (isRgba(value)) {
-    return colorCss(value, 1, space);
+  if (isChannels(value)) {
+    return Color.of(value, space).css();
   }
 
   return JSON.stringify(value);
@@ -559,15 +559,5 @@ function isVector(value: unknown): value is { x: number; y: number } {
     value !== null &&
     typeof (value as { x?: unknown }).x === "number" &&
     typeof (value as { y?: unknown }).y === "number"
-  );
-}
-
-function isRgba(value: unknown): value is Rgba {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as Rgba).r === "number" &&
-    typeof (value as Rgba).g === "number" &&
-    typeof (value as Rgba).b === "number"
   );
 }
