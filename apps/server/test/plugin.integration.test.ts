@@ -1,4 +1,6 @@
 import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
@@ -7,7 +9,7 @@ import { describe, expect, it } from "vitest";
 const entry = fileURLToPath(new URL("../src/bin.ts", import.meta.url));
 
 /** Where the pairing code goes the moment status shows it, for whoever relays it to the user typing it in Figma. */
-const CODE_FILE = fileURLToPath(new URL("../../../.superpowers/live-pairing-code.txt", import.meta.url));
+const CODE_FILE = join(tmpdir(), "pixelwright-pairing-code.txt");
 
 /** Long enough for a person to read the code and type it into the plugin window. */
 const WAIT_MS = 300_000;
