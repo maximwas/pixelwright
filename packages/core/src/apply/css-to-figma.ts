@@ -1,9 +1,10 @@
+import { APPEARANCE_RULES } from "../css-mapping/groups/appearance.ts";
 import { ELEMENT_RULES, HREF_RULE } from "../css-mapping/groups/element.ts";
 import { GEOMETRY_RULES } from "../css-mapping/groups/geometry/geometry.ts";
 import { LAYOUT_RULES } from "../css-mapping/groups/layout/layout.ts";
 import { keywordRule } from "../css-mapping/keyword-rule.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../css-mapping/property-group.ts";
-import { boxOf, imageOf, lengthOf, numberOf, percentOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
+import { imageOf, lengthOf, splitTop, tokenOf } from "../css-mapping/values/css-values.ts";
 import { fontOf, textLengthOf } from "../css-mapping/values/fonts.ts";
 import { paintOf } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
@@ -73,18 +74,7 @@ const RULES: readonly Rule[] = [
   ...ELEMENT_RULES,
   ...LAYOUT_RULES,
   ...GEOMETRY_RULES,
-  {
-    attributes: ["opacity"],
-    write: opacityRule,
-  },
-  {
-    attributes: ["overflow", "text-overflow", "white-space"],
-    write: overflowRule,
-  },
-  {
-    attributes: ["border-radius"],
-    write: radiusRule,
-  },
+  ...APPEARANCE_RULES,
   {
     attributes: ["background"],
     write: paintRule("background", "fills"),
@@ -242,67 +232,6 @@ function output(
       });
     },
   };
-}
-
-function opacityRule({ own }: WriteInput, out: WriteOutput): void {
-  const value = own("opacity") ?? "";
-  const percent = percentOf(value);
-  const opacity = percent === null ? numberOf(value) : percent / 100;
-
-  if (opacity === null) {
-    out.fail("opacity", `opacity="${value}" is not a number from 0 to 1 or a percent.`);
-  } else {
-    out.set("opacity", Math.min(1, Math.max(0, opacity)), "opacity");
-  }
-}
-
-/** A frame clips its content or not; a text truncates on one line with an ellipsis, all three attributes together. */
-function overflowRule({ tag, own, merged, changed }: WriteInput, out: WriteOutput): void {
-  if (tag === "Text") {
-    out.set(
-      "truncate",
-      merged("text-overflow") === "ellipsis",
-      changed("text-overflow") ? "text-overflow" : "overflow",
-    );
-
-    return;
-  }
-
-  for (const name of ["text-overflow", "white-space"].filter(changed)) {
-    out.fail(name, `${name} truncates a Text; a ${tag} clips its content with overflow="hidden".`);
-  }
-
-  const value = own("overflow");
-
-  if (value === undefined) {
-    return;
-  }
-
-  if (value === "hidden" || value === "clip" || value === "visible") {
-    out.set("clipsContent", value !== "visible", "overflow");
-  } else {
-    out.fail(
-      "overflow",
-      `overflow="${value}": Figma clips a frame's content or not, hidden or visible (scrolling is a prototype setting).`,
-    );
-  }
-}
-
-function radiusRule({ tag, own }: WriteInput, out: WriteOutput): void {
-  const value = own("border-radius") ?? "";
-
-  if (tag === "Ellipse" && value === "50%") {
-    // An ellipse's own shape.
-    return;
-  }
-
-  const corners = value.includes("/") ? null : boxOf(splitTop(value, " ").map(lengthOf));
-
-  if (corners === null) {
-    out.fail("border-radius", `border-radius="${value}" is not 1 to 4 lengths in px or tokens.`);
-  } else {
-    out.set("cornerRadius", corners.every((corner) => corner === corners[0]) ? corners[0] : corners, "border-radius");
-  }
 }
 
 function paintRule(attribute: "background" | "color", key: "fills" | "textFills"): Rule["write"] {

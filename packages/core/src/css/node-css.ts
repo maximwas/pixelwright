@@ -1,5 +1,6 @@
 import { VECTOR_TYPES } from "../constants/css.ts";
 import { CssDeclarations } from "../css-mapping/css-declarations.ts";
+import { readAppearance, readLayoutGrids, readRadius } from "../css-mapping/groups/appearance.ts";
 import { readGeometry } from "../css-mapping/groups/geometry/geometry.ts";
 import { readPlacement } from "../css-mapping/groups/geometry/placement.ts";
 import { hasLayout, readLayout } from "../css-mapping/groups/layout/layout.ts";
@@ -8,13 +9,11 @@ import { paintsCss, UNMAPPED } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import type { ColorSpace } from "../kernel/color/color-space.ts";
 import { styleTokenName } from "../kernel/names.ts";
-import { decimal } from "../kernel/numbers.ts";
 import { MIXED } from "../schemas/snapshot.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotEffect, SnapshotNode, TextSegment } from "../types/snapshot.ts";
 import { baseSegment, segmentCss, textAlignCss } from "./text.ts";
 
-const RADII = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
 const SIDES = [
   ["strokeTopWeight", "border-top"],
   ["strokeRightWeight", "border-right"],
@@ -53,27 +52,12 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
     readGeometry(scope);
   }
 
-  if (node.opacity !== undefined) {
-    css.set("opacity", decimal(node.opacity));
-  }
-
-  if (node.clipsContent) {
-    css.set("overflow", "hidden");
-  }
-
-  if (node.isMask) {
-    // A mask among other layers clips the ones above it; a mask group as a whole is exported as one image.
-    css.readOnly("mask", "clips the layers above it");
-  }
-
-  if (node.blendMode !== undefined) {
-    css.readOnly("mix-blend-mode", node.css?.["mix-blend-mode"] ?? node.blendMode.toLowerCase().replaceAll("_", "-"));
-  }
+  readAppearance(node, css);
 
   if (node.type === "TEXT") {
     textStyle = textCss(node, css, context);
   } else if (!VECTOR_TYPES.has(node.type) && node.type !== "LINE") {
-    radiusCss(node, css, context);
+    readRadius(node, css);
     borderCss(node, css, context);
 
     const background = paintsCss(node.fills, styleIdOf(node.fillStyleId), node, context);
@@ -86,7 +70,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
   }
 
   effectsCss(node, css, context);
-  layoutGridsCss(node, css);
+  readLayoutGrids(node, css);
 
   return css.build(textStyle);
 }
@@ -133,20 +117,6 @@ function lineCss(node: SnapshotNode, parent: SnapshotNode | null, css: CssDeclar
   }
 }
 
-function radiusCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
-  if (node.type === "ELLIPSE") {
-    css.set("border-radius", "50%");
-
-    return;
-  }
-
-  if (node.cornerRadius === MIXED) {
-    css.set("border-radius", RADII.map((key) => css.length(key, node[key] ?? 0)).join(" "));
-  } else if (node.cornerRadius !== undefined) {
-    css.setLength("border-radius", "topLeftRadius", node.cornerRadius);
-  }
-}
-
 function borderCss(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
   const color = paintsCss(node.strokes, node.strokeStyleId, node, context);
 
@@ -179,29 +149,6 @@ function borderCss(node: SnapshotNode, css: CssDeclarations, context: CssContext
   // An inside or centred stroke is a border (with box-sizing: border-box it keeps the size); outside, an outline.
   css.set(node.strokeAlign === "OUTSIDE" ? "outline" : "border", line(node.strokeWeight ?? 1));
   centredStroke(node, css);
-}
-
-/** A frame's visible layout grids, read-only: the columns, rows or square grid the design is laid on. */
-function layoutGridsCss(node: SnapshotNode, css: CssDeclarations): void {
-  const grids = (node.layoutGrids ?? []).filter((grid) => grid.visible !== false).map(layoutGridText);
-
-  if (grids.length > 0) {
-    css.readOnly("layout-grid", grids.join(" + "));
-  }
-}
-
-function layoutGridText(grid: NonNullable<SnapshotNode["layoutGrids"]>[number]): string {
-  if (grid.pattern === "GRID") {
-    return `${px(grid.sectionSize ?? 0)} grid`;
-  }
-
-  const unit = grid.pattern === "ROWS" ? "rows" : "columns";
-  const alignment = (grid.alignment ?? "STRETCH").toLowerCase();
-  const width = alignment === "stretch" ? "" : ` ${px(grid.sectionSize ?? 0)} wide`;
-  const edge =
-    alignment === "center" ? "" : `, ${alignment === "stretch" ? "margin" : "offset"} ${px(grid.offset ?? 0)}`;
-
-  return `${grid.count ?? 1} ${unit} ${alignment}${width}, gutter ${px(grid.gutterSize ?? 0)}${edge}`;
 }
 
 /** A centred stroke paints half of itself outside the layer's box, which a border-box border cannot. */
