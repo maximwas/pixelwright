@@ -1044,7 +1044,7 @@ function layersOf(attribute: string, value: string, out: Output): PaintSpec[] | 
     } else {
       out.fail(
         attribute,
-        `${attribute}="${value}" is not a colour, a token or color-mix(in srgb, var(--x) N%, transparent).`,
+        `${attribute}="${value}" is not a colour, a token or color-mix(in srgb, var(--x) N%, transparent) (in display-p3 in a Display P3 file).`,
       );
 
       return null;

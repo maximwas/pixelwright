@@ -223,7 +223,7 @@ text-decoration-thickness), text-align, text-wrap, color.
 
 ## Values
 
-- Colours as hex (rgba when see-through); a colour with an opacity variable as \`color-mix(in srgb, … N%, transparent)\`.
+- Colours as hex (rgba when see-through); a colour with an opacity variable as \`color-mix(in srgb, … N%, transparent)\` (\`in display-p3\` in a Display P3 file).
 - Numbers in px, except opacity and font weight, which have no unit.
 - Strings quoted; booleans as true/false (CSS has no booleans); easings as CSS easing functions (springs as ease);
   durations in seconds.

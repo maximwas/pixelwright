@@ -7,9 +7,12 @@ import {
   designXml,
   dtcgTrees,
   type RawTokens,
+  paintOf,
   type Snapshot,
   type SnapshotNode,
   toDocumentColor,
+  TokensApplyInputSchema,
+  tokensPlan,
   tokenModel,
   tokensCss,
 } from "../src/index.ts";
@@ -332,5 +335,41 @@ describe("colours of a Display P3 file", () => {
     expect(converted.b).toBeCloseTo(0.1386, 3);
     expect(toDocumentColor(p3Red, "srgb")).toEqual(srgbRed);
     expect(toDocumentColor(srgbRed, "srgb")).toEqual(srgbRed);
+  });
+
+  it("are read back from color-mix in display-p3, as design_read and tokens_read mix them in a P3 file", () => {
+    expect(paintOf("color-mix(in display-p3, var(--color-brand) 50%, transparent)")).toEqual({
+      kind: "token",
+      token: "--color-brand",
+      opacity: 0.5,
+    });
+
+    const { plan, errors } = tokensPlan(
+      TokensApplyInputSchema.parse({
+        collections: [
+          {
+            name: "Orbit",
+            variables: [
+              {
+                name: "color/veil",
+                values: { Light: "color-mix(in display-p3, color(display-p3 0 0 0) 40%, transparent)" },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(errors).toEqual([]);
+    expect(plan.collections[0]?.variables[0]?.values.Light).toMatchObject({
+      kind: "color",
+      color: {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 0.4,
+        space: "display-p3",
+      },
+    });
   });
 });

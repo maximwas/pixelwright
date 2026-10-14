@@ -275,7 +275,7 @@ export function paintOf(value: string): PaintSpec | null {
     };
   }
 
-  const mixed = /^color-mix\(\s*in\s+srgb\s*,\s*var\(\s*(--[^)\s]+)\s*\)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/.exec(
+  const mixed = /^color-mix\(\s*in\s+(?:srgb|display-p3)\s*,\s*var\(\s*(--[^)\s]+)\s*\)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/.exec(
     value.trim(),
   );
 
