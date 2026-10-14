@@ -399,6 +399,11 @@ export const OPERATION_SCHEMAS = {
     }),
     output: z.object({ received: z.number().int() }),
   },
+  /** A named version in the file's history, saved before a write for the designer to go back to. */
+  save_version: {
+    input: z.object({ title: z.string().min(1).max(100) }),
+    output: z.object({ id: z.string().nullable() }),
+  },
   /** Variables and styles written by name, as tokens_apply planned them; a dry run only checks. */
   tokens_apply: {
     input: z.object({

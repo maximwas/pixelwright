@@ -31,6 +31,14 @@ function bridgeOver(snapshot: Snapshot, { cut = false }: { cut?: boolean } = {})
         input: input as Record<string, unknown>,
       });
 
+      if (op === "save_version") {
+        if ((input as { title: string }).title === "fails") {
+          throw new Error("Figma refused the version");
+        }
+
+        return { id: "v-1" };
+      }
+
       if (op === "upload") {
         const { offset, chunk } = input as { offset: number; chunk: string };
 
@@ -86,6 +94,43 @@ const ROW = SnapshotSchema.parse(
 );
 
 describe("design_apply", () => {
+  it("saves a named version before it writes, never in a dry run, and writes nothing when the save fails", async () => {
+    const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
+    const written = bridgeOver(ROW);
+    const result = await applyDesign(written.bridge, {
+      xml,
+      dryRun: false,
+      version: "Before the gap",
+    });
+
+    expect(written.requests.map(({ op }) => op)).toEqual(["entries", "save_version", "apply"]);
+    expect(written.requests[1]?.input).toEqual({ title: "Before the gap" });
+    expect(result.version).toEqual({
+      id: "v-1",
+      title: "Before the gap",
+    });
+
+    const checked = bridgeOver(ROW);
+
+    await applyDesign(checked.bridge, {
+      xml,
+      dryRun: true,
+      version: "Before the gap",
+    });
+    expect(checked.requests.map(({ op }) => op)).not.toContain("save_version");
+
+    const refused = bridgeOver(ROW);
+
+    await expect(
+      applyDesign(refused.bridge, {
+        xml,
+        dryRun: false,
+        version: "fails",
+      }),
+    ).rejects.toThrow(/The version "fails" could not be saved, so nothing was written: Figma refused the version/);
+    expect(refused.requests.map(({ op }) => op)).not.toContain("apply");
+  });
+
   it("writes nothing for the XML design_read returned, sent back as it was", async () => {
     const { bridge, requests } = bridgeOver(ROW);
     const result = await applyDesign(bridge, {

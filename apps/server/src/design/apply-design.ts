@@ -17,6 +17,7 @@ import { readSource, type SourceFile } from "../assets/read-source.ts";
 import { memoryFiles, type WrittenFiles } from "../assets/written-files.ts";
 import { resolveTarget } from "../bridge/target.ts";
 import { MAX_FIGMA_IMAGE_SIDE, UPLOAD_CHUNK_BYTES } from "../constants/mcp.ts";
+import { versionBefore } from "../history/version-before.ts";
 import type { DesignApplyInputSchema, DesignApplyOutputSchema } from "../schemas/tools.ts";
 import type { ToolContext } from "../types/mcp.ts";
 
@@ -31,7 +32,7 @@ type DesignApplied = z.input<typeof DesignApplyOutputSchema>;
  */
 export async function applyDesign(
   bridge: ToolContext["bridge"],
-  { xml, parent, dryRun, file }: DesignApplyArgs,
+  { xml, parent, dryRun, file, version: title }: DesignApplyArgs,
   {
     cwd = process.cwd(),
     chunkBytes = UPLOAD_CHUNK_BYTES,
@@ -200,6 +201,11 @@ export async function applyDesign(
     };
   }
 
+  const version = await versionBefore(bridge, {
+    title,
+    dryRun,
+    file,
+  });
   const applied = OPERATION_SCHEMAS.apply.output.parse(
     await bridge.request(
       "apply",
@@ -217,6 +223,7 @@ export async function applyDesign(
     changed: applied.changed,
     errors: sorted([...errors, ...applied.errors]),
     dryRun,
+    ...(version === undefined ? {} : { version }),
   };
 }
 

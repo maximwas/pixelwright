@@ -1,6 +1,7 @@
 import { dtcgTrees, type RawTokens, tokenModel, tokensCss, tokensPlan } from "@pixelwright/core";
 import type * as z from "zod";
 import { MAX_LIBRARY_VARIABLES } from "../constants/mcp.ts";
+import { versionBefore } from "../history/version-before.ts";
 import { runOp } from "../mcp/run-op.ts";
 import type {
   TokensApplyOutputSchema,
@@ -18,9 +19,14 @@ type TokensApplied = z.input<typeof TokensApplyOutputSchema>;
 /** tokens_apply: the values read in core, written by the plugin; what core could not read comes first among errors. */
 export async function applyTokens(
   bridge: ToolContext["bridge"],
-  { dryRun, file, ...input }: TokensApplyArgs,
+  { dryRun, file, version: title, ...input }: TokensApplyArgs,
 ): Promise<TokensApplied> {
   const { plan, errors } = tokensPlan(input);
+  const version = await versionBefore(bridge, {
+    title,
+    dryRun,
+    file,
+  });
   const applied = await runOp(
     bridge,
     "tokens_apply",
@@ -35,6 +41,7 @@ export async function applyTokens(
     ...applied,
     errors: [...errors, ...applied.errors],
     dryRun,
+    ...(version === undefined ? {} : { version }),
   };
 }
 
