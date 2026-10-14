@@ -88,14 +88,17 @@ connected at once; tools work on the one whose plugin window was in front last, 
         <section id="code-connect">
           <h2>Code Connect</h2>
 <p>Pixelwright runs your project&#39;s <a href="https://www.figma.com/developers/code-connect">Figma Code Connect</a> templates
-(<code>*.figma.ts</code>, written as Figma documents them) itself, on any plan, without publishing anything. <code>design_read</code> then
-gives each connected instance as <code>$code</code> in the XML with its code and imports:</p>
-<pre><code class="language-json">{ &quot;ids&quot;: [&quot;54:268&quot;], &quot;component&quot;: &quot;Plan Card&quot;,
-  &quot;snippet&quot;: &quot;&lt;PlanCard name=\&quot;Pro\&quot; price=\&quot;$12\&quot; popular&gt;\n  &lt;Button variant=\&quot;primary\&quot;&gt;Get started&lt;/Button&gt;\n&lt;/PlanCard&gt;&quot;,
+(<code>*.figma.ts</code>) and batch files (<code>*.figma.batch.json</code>, one row per component through a shared template), written as
+Figma documents them, itself, on any plan, without publishing anything. <code>design_read</code> then gives each connected
+instance as <code>$code</code> in the XML with its code and imports, and names the properties its code leaves out:</p>
+<pre><code class="language-json">{ &quot;ids&quot;: [&quot;54:268&quot;], &quot;component&quot;: &quot;PlanCard&quot;, &quot;source&quot;: &quot;src/components/PlanCard.tsx&quot;,
+  &quot;snippet&quot;: &quot;&lt;PlanCard name=\&quot;Pro\&quot; price=\&quot;$12\&quot; description=\&quot;For freelancers shipping fast.\&quot; popular&gt;\n  &lt;Button variant=\&quot;primary\&quot;&gt;Get started&lt;/Button&gt;\n&lt;/PlanCard&gt;&quot;,
   &quot;imports&quot;: [&quot;import { PlanCard } from \&quot;@/components/PlanCard\&quot;&quot;, &quot;import { Button } from \&quot;@/components/Button\&quot;&quot;] }
 </code></pre>
-<p>See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/orbit">examples/orbit</a> for two templates, one rendering
-the other inside it, and how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
+<p>A row or a template can name the component&#39;s key (<code>components_read</code> gives it), which matches exactly that component
+in every file, a library&#39;s included. <code>components_read mapped=false</code> lists the components still without code, so a
+design system is mapped once, a row each. See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/orbit">examples/orbit</a>
+for two templates, one rendering the other inside it, a batch file, and how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
 
         </section>
         <section id="safety">
@@ -298,7 +301,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-guide">
   <h3><code>guide</code></h3>
-  <p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); code-connect (Figma Code Connect templates: how design_read runs them, writing one, what Pixelwright supports.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.</p>
+  <p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); code-connect (Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot; | &quot;write&quot; | &quot;code-connect&quot; | &quot;email&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
 </tbody></table>
@@ -532,9 +535,11 @@ images as they were placed (originals); <code>width</code> sizes a render by the
 scale 2: 220 px). When a file gets another name than design_read planned (<code>planned</code>), use the path it gives.</li>
 <li><strong>Write.</strong> <code>design_apply</code> writes the same XML back into Figma: change layers by id, create new ones (see <code>guide write</code>); <code>tokens_apply</code> writes variables and styles in tokens_read&#39;s JSON shape (see <code>guide tokens</code>);
 <code>execute</code> runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.</li>
-<li><strong>Code Connect.</strong> Where the project has Figma Code Connect templates (<code>*.figma.ts</code>), <code>design_read</code> gives each
-connected instance as <code>$code</code> with its code in <code>codeComponents</code>: use that code as it is. <code>code_connect_read</code>
-shows what is connected and what is not (see <code>guide code-connect</code>).</li>
+<li><strong>Code Connect.</strong> Where the project has Figma Code Connect templates (<code>*.figma.ts</code>) or batch files
+(<code>*.figma.batch.json</code>), <code>design_read</code> gives each connected instance as <code>$code</code> with its code in
+<code>codeComponents</code>: use that code, adding what <code>unread</code> names. <code>components_read</code> gives each component&#39;s <code>code</code>, and
+<code>mapped: false</code> the ones still without: map them once with a batch row each; <code>code_connect_read</code> checks the files
+(see <code>guide code-connect</code>).</li>
 <li><strong>Keep the code in step with the design.</strong> Right after the <code>design_read</code> you build a screen or section from,
 <code>baseline_save {node, name, code}</code> keeps it in the project (<code>.pixelwright/baselines/</code>: commit it to share, or
 leave it out of git, since it holds the design&#39;s texts). When a session starts, or the user says the design
@@ -599,8 +604,10 @@ it so, it is what the designer chose. A text with a <code>textStyle</code> carri
 a negative gap (&quot;children overlap&quot;), a mask among layers.</li>
 <li><code>$children=&quot;N&quot;</code>: the layer has N children and not all are listed (snapshot budget or maxChars).</li>
 <li><code>$truncated=&quot;true&quot;</code>: the branch was emptied, or the text shortened, to fit maxChars; its id is in <code>truncated</code>.</li>
-<li><code>$code=&quot;Button&quot;</code>: an instance the project&#39;s Code Connect template renders, written without its children; its code
-is in <code>codeComponents</code> (see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
+<li><code>$code=&quot;Button&quot;</code>: an instance the project&#39;s Code Connect template or batch row renders, written without its
+children; its code is in <code>codeComponents</code>, whose <code>unread</code> names the properties that code leaves out: add them
+(see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
+<li><code>$exposed=&quot;true&quot;</code>: a nested instance its component exposes: its properties are the component&#39;s API too.</li>
 <li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
 of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box),
 <code>list-spacing: 8px</code> (the space between a list&#39;s items, apart from paragraph spacing) and
@@ -860,21 +867,77 @@ synchronous or of awaits, freezes Figma until then. Read the result back with th
         </section>
         <section id="guide-code-connect">
           <h2>Guide: code-connect</h2>
-<p class="topic-about">Figma Code Connect templates: how design_read runs them, writing one, what Pixelwright supports. The agent reads this with <code>guide</code> topic <code>code-connect</code>.</p>
-<p>Pixelwright runs the project&#39;s <strong>Figma Code Connect templates</strong> itself, on any Figma plan, without a token and without
-publishing anything: <code>design_read</code> gives each instance a template connects as <code>$code</code> in the XML (no children) and
-its code in <code>codeComponents</code> (<code>{ ids, component, template, snippet, imports }</code>: instances with the same code once),
-with the read&#39;s <code>imports</code> once each and the failures in <code>codeErrors</code> (<code>{ template, error, ids }</code>). Nested connected
-instances are inside their parent&#39;s snippet; the layer the read is of is never collapsed. The code takes at most 40% of
-<code>maxChars</code> (the XML the rest), and all templates of a read five seconds: past either, instances are read as layers.
-<code>code: false</code> reads every instance as layers. <code>code_connect_read</code> lists the templates, what each connects on the
-page, the components none connects, and errors.</p>
-<h3>Where templates are</h3>
+<p class="topic-about">Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system. The agent reads this with <code>guide</code> topic <code>code-connect</code>.</p>
+<p>Pixelwright runs the project&#39;s <strong>Figma Code Connect files</strong> itself, on any Figma plan, without a token and without
+publishing anything: <code>design_read</code> gives each instance a connection builds as <code>$code</code> in the XML (no children) and
+its code in <code>codeComponents</code> (<code>{ ids, component, template, source, snippet, imports, unread }</code>: instances with the
+same code once), with the read&#39;s <code>imports</code> once each and the failures in <code>codeErrors</code> (<code>{ template, error, ids }</code>).
+Nested connected instances are inside their parent&#39;s snippet; the layer the read is of is never collapsed. The code
+takes at most 40% of <code>maxChars</code> (the XML the rest), and all templates of a read five seconds: past either, instances
+are read as layers. <code>code: false</code> reads every instance as layers.</p>
+<h3>Mapping a design system</h3>
+<ol>
+<li><code>design_read</code> the section; its hints name the components shown without code.</li>
+<li><code>components_read within=&lt;id&gt; mapped=false</code> gives each one&#39;s <code>key</code>, properties, variants and <code>exposed</code>
+instances.</li>
+<li>Find the code component that builds it in the project (search the code; <code>links: true</code> reads the links people
+attached in Dev Mode, on paid plans, with the project file a code link points at).</li>
+<li>Confirm each pair with the user.</li>
+<li>Write a batch row (below), or a template for a component that needs logic of its own.</li>
+<li><code>code_connect_read</code> checks it: <code>by</code>, <code>unread</code>, <code>values</code>, <code>missing</code> and the problems.</li>
+<li><code>design_read</code> again: the instances are <code>$code</code> now.</li>
+</ol>
+<h3>Batch files: one row per component</h3>
+<p>A <code>*.figma.batch.json</code> file (Figma&#39;s own format) holds one group <code>{ &quot;templateFile&quot;, &quot;components&quot; }</code>, or an array
+of them; each row runs through the group&#39;s shared template (ending <code>.figma.batch.ts</code> or <code>.js</code>, next to the batch
+file), which reads the row as <code>figma.batch</code>:</p>
+<pre><code class="language-json">{
+  &quot;templateFile&quot;: &quot;./component.figma.batch.ts&quot;,
+  &quot;components&quot;: [
+    { &quot;key&quot;: &quot;2f31fdc95b9804804df14c93a7f9c8913d611c17&quot;, &quot;component&quot;: &quot;PricingTier&quot;,
+      &quot;source&quot;: &quot;src/components/PricingTier.tsx&quot;,
+      &quot;imports&quot;: [&quot;import { PricingTier } from \&quot;@/components/PricingTier\&quot;&quot;],
+      &quot;props&quot;: { &quot;Name&quot;: &quot;name&quot;, &quot;Price&quot;: &quot;price&quot;, &quot;Popular&quot;: &quot;popular&quot;,
+                 &quot;Tier&quot;: { &quot;prop&quot;: &quot;tier&quot;, &quot;values&quot;: { &quot;Pro&quot;: &quot;pro&quot;, &quot;Free&quot;: &quot;free&quot; } },
+                 &quot;Description&quot;: &quot;children&quot; } }
+  ]
+}
+</code></pre>
+<p>The shared template (<code>examples/orbit/components/component.figma.batch.ts</code>) writes the row&#39;s <code>component</code> with
+each <code>props</code> entry: <code>&quot;Name&quot;: &quot;name&quot;</code> passes the value, <code>{ &quot;prop&quot;, &quot;values&quot; }</code> maps a variant&#39;s (<code>getEnum</code>) or a
+toggle&#39;s (<code>getBoolean</code>) value, a prop named <code>children</code> goes between the tags, <code>true</code> is a bare prop, <code>false</code>,
+<code>null</code> and <code>&quot;&quot;</code> write nothing; <code>imports</code> are the row&#39;s, the id its <code>id</code> else the component. For Vue, use
+the same template with <code>figma.code</code> in place of <code>figma.tsx</code>: a Vue template takes the same tags, string props and
+bare toggles. A row is named <code>&lt;batch file&gt;#&lt;n&gt;</code>, n counting from 1 across the file&#39;s groups.</p>
+<h3>Keys and matching</h3>
+<p><code>components_read</code> gives each component&#39;s <code>key</code>, the same in every file, a library&#39;s included. A row&#39;s <code>&quot;key&quot;</code> or
+a template&#39;s <code>// key=</code> (Pixelwright&#39;s addition, which Figma&#39;s CLI skips) connects exactly that component or set:
+a keyed connection matches by key only. Figma&#39;s CLI needs a <code>url</code> (<code>// url=</code>) to publish a file; Pixelwright does
+not, and says so once per file. Without a key, a connection matches by the id its url names (a component this file
+defines) with the names agreeing, then by name (the Figma name&#39;s last part against <code>component</code>, else the file name
+before <code>.figma.</code>, case, spaces and punctuation aside: <code>Buttons/Primary Button</code> matches <code>PrimaryButton</code>), then by
+the id alone. <code>code_connect_read</code> gives the rule each matched by as <code>by</code> (<code>key</code>, <code>id</code>, <code>name</code>). A component made
+again, or copied, gets a new key: its keyed connection then misses, and the component shows as unconnected.</p>
+<h3>What the code leaves out</h3>
+<ul>
+<li><code>unread</code> names the properties no code read: the instance&#39;s own (<code>Description</code>), and those of the nested
+instances it exposes or whose properties it overrides (<code>Button.Label</code>). A text whose value the snippet holds counts
+as read. Write them in, or read the instance with <code>node=&lt;id&gt;</code>: the values are on the element (<code>variant</code>,
+<code>props</code>).</li>
+<li><code>values</code> (code_connect_read) names the variant values a <code>getEnum</code> mapping misses: Figma renders them as
+<code>undefined</code>.</li>
+<li><code>missing</code> marks a <code>source</code> that names a file in neither the project nor beside the Code Connect file (packages and
+URLs are not checked).</li>
+<li><code>exposed</code> (components_read) and <code>$exposed</code> (design_read) mark the nested instances a component exposes: their
+properties are the component&#39;s API too, so in code they are its props.</li>
+</ul>
+<h3>Where the files are</h3>
 <p>The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the server&#39;s working directory (never the home folder or the disk&#39;s
-root). Templates are the files ending in <code>.figma.ts</code>, <code>.figma.js</code>, <code>.figma.template.ts</code> or <code>.figma.template.js</code>
-among those <code>figma.config.json</code>&#39;s <code>codeConnect.include</code> globs name (minus <code>exclude</code>; its
-<code>documentUrlSubstitutions</code> are applied to urls), else all such files; dependency and build folders are never
-searched.</p>
+root). Code Connect files are those ending in <code>.figma.ts</code>, <code>.figma.js</code>, <code>.figma.template.ts</code>,
+<code>.figma.template.js</code> or <code>.figma.batch.json</code> among those <code>figma.config.json</code>&#39;s <code>codeConnect.include</code> globs name
+(minus <code>exclude</code>; its <code>documentUrlSubstitutions</code> are applied to urls), else all such files; dependency and build
+folders are never searched. A batch file a custom <code>include</code> misses is left out, as Figma does, and named in the
+problems.</p>
 <h3>Writing one</h3>
 <p>Write it as Figma documents it, with types from the npm package <code>@figma/code-connect</code> (in tsconfig:
 <code>&quot;types&quot;: [&quot;@figma/code-connect/figma-types&quot;]</code>):</p>
@@ -894,12 +957,8 @@ export default {
 }
 </code></pre>
 <ul>
-<li><code>url</code> (required): the component&#39;s or component set&#39;s link (Copy link in Figma). <code>component</code>: the code component&#39;s
-name, as Figma has it (<code>$code</code> shows it). <code>source</code>: the code component&#39;s file.</li>
-<li><strong>Matching:</strong> the url&#39;s node-id is the instance&#39;s component or set when that lives in the file read; a library&#39;s
-component matches by name: the Figma name&#39;s last part against <code>component</code> (else the file name before <code>.figma.</code>),
-case, spaces and punctuation aside (<code>Buttons/Primary Button</code> matches <code>PrimaryButton</code>). Check with
-<code>code_connect_read</code>.</li>
+<li><code>url</code>: the component&#39;s or component set&#39;s link (Copy link in Figma), or <code>key</code> (above). <code>component</code>: the code
+component&#39;s name, as Figma&#39;s Code Connect defines it (<code>$code</code> shows it). <code>source</code>: the code component&#39;s file.</li>
 <li><strong>Imports:</strong> <code>figma</code> and the template&#39;s own relative helpers (<code>import { sizes } from &#39;./helpers&#39;</code>, TypeScript or
 JavaScript); nothing else.</li>
 <li><strong>The API:</strong> <code>figma.selectedInstance</code> (alias <code>currentLayer</code>) with <code>getString</code>, <code>getBoolean(name, mapping?)</code>,

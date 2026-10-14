@@ -38,6 +38,21 @@ How to write this file (people and agents alike):
   `baseline_save` and the `accept` the diff gives.
 - `version_save` saves a named version in Figma's history when you ask for one, so the designer can open the design
   your code was built from; the baselines it names remember it. It needs edit access and Allow edits.
+- `components_read` tells which of the project's components builds each Figma component, from its Code Connect files,
+  with the code's file. `mapped: false` lists only the components still without code, with the key a new mapping
+  needs.
+- Code Connect batch files (`*.figma.batch.json`, Figma's own format) connect many components through one shared
+  template, one row each. The guide gives a ready template whose rows map Figma properties to code props, so a
+  component needs no template of its own.
+- A Code Connect template (`// key=`) or batch row (`"key"`) can name the component's key. It then connects exactly
+  that component in every file, a library's included, whatever it is called there.
+- `components_read` lists the nested instances a component exposes, with their properties: in code they are the
+  component's own props. `design_read` marks them `$exposed`.
+- `design_read` and `code_connect_read` name the properties an instance's code never reads (`unread`), and
+  `code_connect_read` names the variant values a template's mapping misses (`values`), so no value is lost to a
+  snippet.
+- `components_read` with `links: true` gives the links people attached to components in Dev Mode, with the project file
+  a code link points at, on Figma plans that have them.
 
 ### Changed
 
@@ -47,6 +62,10 @@ How to write this file (people and agents alike):
   DTCG files) and the checks, and colours written to it are converted to P3: they show as the designer chose them.
 - A version saved before a `design_apply` or `tokens_apply` write says in Figma that Pixelwright saved it, and waits a
   moment so Pixelwright's previous change is in it.
+- `code_connect_read` and `design_read` give each Code Connect file's `source` and say when that file no longer exists.
+  `code_connect_read` says how each file matched (by key, by the component's link, or by name), and gives the id and
+  key of each component none connects.
+- `design_read` names the components it shows that have no code yet, when the project has Code Connect files.
 
 ### Fixed
 
@@ -91,6 +110,9 @@ How to write this file (people and agents alike):
 - The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
   missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
 - The plugin window names a saved version in plain words, not its internal operation name.
+- `code_connect_read` no longer counts the instances inside a connected instance as unconnected.
+- The Orbit example names its code component as Figma's Code Connect defines it (`component=PlanCard`) and passes the
+  card's description.
 
 ## 0.2.0 — 2026-10-14
 

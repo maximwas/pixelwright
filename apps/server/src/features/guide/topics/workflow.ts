@@ -51,9 +51,11 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
 7. **Write.** \`design_apply\` writes the same XML back into Figma: change layers by id, create new ones (see \`guide
    write\`); \`tokens_apply\` writes variables and styles in tokens_read's JSON shape (see \`guide tokens\`);
    \`execute\` runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.
-8. **Code Connect.** Where the project has Figma Code Connect templates (\`*.figma.ts\`), \`design_read\` gives each
-   connected instance as \`$code\` with its code in \`codeComponents\`: use that code as it is. \`code_connect_read\`
-   shows what is connected and what is not (see \`guide code-connect\`).
+8. **Code Connect.** Where the project has Figma Code Connect templates (\`*.figma.ts\`) or batch files
+   (\`*.figma.batch.json\`), \`design_read\` gives each connected instance as \`$code\` with its code in
+   \`codeComponents\`: use that code, adding what \`unread\` names. \`components_read\` gives each component's \`code\`, and
+   \`mapped: false\` the ones still without: map them once with a batch row each; \`code_connect_read\` checks the files
+   (see \`guide code-connect\`).
 9. **Keep the code in step with the design.** Right after the \`design_read\` you build a screen or section from,
    \`baseline_save {node, name, code}\` keeps it in the project (\`.pixelwright/baselines/\`: commit it to share, or
    leave it out of git, since it holds the design's texts). When a session starts, or the user says the design

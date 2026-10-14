@@ -53,9 +53,9 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `flow_read` | The prototype as screens and the links between them, for an app's routes |
 | `screenshot`, `image_compare` | A layer, or a region of it, as PNG, in a variable mode if you like; the same render compared with a PNG of your build (rmse, differing pixels, edges off by N px) |
 | `assets_export` | Icons and images as SVG, PNG, JPG, WebP or PDF, sized by a CSS width if you like, originals included |
-| `tokens_read`, `tokens_usage`, `components_read` | Variables with every mode and styles, as CSS, JSON or DTCG token files; the layers a token is used on; the components a page uses, with variants and properties |
+| `tokens_read`, `tokens_usage`, `components_read` | Variables with every mode and styles, as CSS, JSON or DTCG token files; the layers a token is used on; the components a page uses, with variants, properties, the nested instances they expose and the project's code for each |
 | `design_audit`, `contrast_check`, `fonts_check` | The scale a design uses and what is off it; every text's WCAG contrast; where the build gets each font |
-| `code_connect_read` | The project's Figma Code Connect templates, what each connects, what has none |
+| `code_connect_read` | The project's Figma Code Connect templates and batch files, what each connects and how, what its code leaves out, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images; a named version in Figma's history first, when asked |
 | `tokens_apply` | Variables (collections, modes, aliases) and styles, in `tokens_read`'s shape |
 | `version_save` | A named version in Figma's history, with the baselines it goes with, when you ask for one |
@@ -89,17 +89,20 @@ Sending that XML back changes nothing; changing an attribute changes exactly tha
 ## Code Connect
 
 Pixelwright runs your project's [Figma Code Connect](https://www.figma.com/developers/code-connect) templates
-(`*.figma.ts`, written as Figma documents them) itself, on any plan, without publishing anything. `design_read` then
-gives each connected instance as `$code` in the XML with its code and imports:
+(`*.figma.ts`) and batch files (`*.figma.batch.json`, one row per component through a shared template), written as
+Figma documents them, itself, on any plan, without publishing anything. `design_read` then gives each connected
+instance as `$code` in the XML with its code and imports, and names the properties its code leaves out:
 
 ```json
-{ "ids": ["54:268"], "component": "Plan Card",
-  "snippet": "<PlanCard name=\"Pro\" price=\"$12\" popular>\n  <Button variant=\"primary\">Get started</Button>\n</PlanCard>",
+{ "ids": ["54:268"], "component": "PlanCard", "source": "src/components/PlanCard.tsx",
+  "snippet": "<PlanCard name=\"Pro\" price=\"$12\" description=\"For freelancers shipping fast.\" popular>\n  <Button variant=\"primary\">Get started</Button>\n</PlanCard>",
   "imports": ["import { PlanCard } from \"@/components/PlanCard\"", "import { Button } from \"@/components/Button\""] }
 ```
 
-See [examples/orbit](https://github.com/maximwas/pixelwright/tree/main/examples/orbit) in the repository for two
-templates, one rendering the other inside it, and how they match. The project folder is `CLAUDE_PROJECT_DIR`, else the folder your MCP client starts the server in.
+A row or a template can name the component's key (`components_read` gives it), which matches exactly that component
+in every file, a library's included. `components_read mapped=false` lists the components still without code, so a
+design system is mapped once, a row each. See [examples/orbit](https://github.com/maximwas/pixelwright/tree/main/examples/orbit)
+in the repository for two templates, one rendering the other inside it, a batch file, and how they match. The project folder is `CLAUDE_PROJECT_DIR`, else the folder your MCP client starts the server in.
 
 ## Safety
 

@@ -1,15 +1,18 @@
 # Code Connect example: Orbit
 
-Two [Figma Code Connect](https://www.figma.com/developers/code-connect) templates for the Button and Plan Card
-components of Orbit, the demo pricing page Pixelwright's tests run on, written exactly as Figma documents them.
-Pixelwright runs them locally, on any Figma plan, without a token and without publishing anything.
+[Figma Code Connect](https://www.figma.com/developers/code-connect) files for the components of Orbit, the demo
+pricing page Pixelwright's tests run on, written exactly as Figma documents them: two templates (Button, Plan Card)
+and a batch file whose rows map Badge and Icon/Check through one shared template. Pixelwright runs them locally, on
+any Figma plan, without a token and without publishing anything.
 
 ```
 examples/orbit/
-├── figma.config.json          which files are templates, and the file link they point at
+├── figma.config.json                which files are Code Connect files, and the file link they point at
 └── components/
-    ├── Button.figma.ts        Variant and State as props, the Label text property as children
-    └── PlanCard.figma.ts      Name, Price and Popular as props, the Button inside it through its own template
+    ├── Button.figma.ts              Variant and State as props, the Label text property as children
+    ├── PlanCard.figma.ts            Name, Price, Description and Popular as props, the Button inside through its template
+    ├── components.figma.batch.json  one row per component: Badge (its Label as children) and Icon/Check (lucide's)
+    └── component.figma.batch.ts     the shared template the rows run: each row's props table, Figma property to prop
 ```
 
 ## Try it
@@ -27,9 +30,10 @@ examples/orbit/
   "codeComponents": [
     {
       "ids": ["54:268"],
-      "component": "Plan Card",
+      "component": "PlanCard",
       "template": "components/PlanCard.figma.ts",
-      "snippet": "<PlanCard name=\"Pro\" price=\"$12\" popular>\n  <Button variant=\"primary\">Get started</Button>\n</PlanCard>",
+      "source": "src/components/PlanCard.tsx",
+      "snippet": "<PlanCard name=\"Pro\" price=\"$12\" description=\"For freelancers shipping fast.\" popular>\n  <Button variant=\"primary\">Get started</Button>\n</PlanCard>",
       "imports": ["import { PlanCard } from \"@/components/PlanCard\"", "import { Button } from \"@/components/Button\""]
     }
   ]
@@ -40,8 +44,10 @@ examples/orbit/
 
 Each template's `url` points at the component in the Orbit file (`documentUrlSubstitutions` in figma.config.json
 puts your file's link in place of `<ORBIT>`). Where the component lives in the file being read, its id matches; in
-any other file the name does: `component=Button` against the component set's name, `component=Plan Card` against
-the component's. For your own components, copy a template, change the link, the name and what it reads, and check it
+any other file the name does: `component=Button` against the component set's name, `component=PlanCard` against the
+component's ("Plan Card", spaces aside). The batch rows also give each component's `key`, which `components_read`
+lists: a row with a key matches exactly that component, in every file. For your own components, add a row with the
+key, the code component and its props table (or copy a template for one that needs logic of its own), and check it
 with `code_connect_read`.
 
 Types for editing templates come from `npm i -D @figma/code-connect` with

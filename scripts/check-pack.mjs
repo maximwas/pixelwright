@@ -124,7 +124,7 @@ function countTools(command, cwd) {
           clearTimeout(timer);
           child.kill();
 
-          if (!JSON.stringify(message.result ?? {}).includes("# Code Connect templates")) {
+          if (!JSON.stringify(message.result ?? {}).includes("# Code Connect\\n")) {
             reject(new Error(`guide did not answer: ${JSON.stringify(message.result ?? message.error)}`));
           } else {
             resolve(tools);

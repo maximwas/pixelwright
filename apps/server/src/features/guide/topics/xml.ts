@@ -52,8 +52,10 @@ text-decoration-thickness), text-align, text-wrap, color.
   a negative gap ("children overlap"), a mask among layers.
 - \`$children="N"\`: the layer has N children and not all are listed (snapshot budget or maxChars).
 - \`$truncated="true"\`: the branch was emptied, or the text shortened, to fit maxChars; its id is in \`truncated\`.
-- \`$code="Button"\`: an instance the project's Code Connect template renders, written without its children; its code
-  is in \`codeComponents\` (see \`guide code-connect\`). design_apply leaves its children alone.
+- \`$code="Button"\`: an instance the project's Code Connect template or batch row renders, written without its
+  children; its code is in \`codeComponents\`, whose \`unread\` names the properties that code leaves out: add them
+  (see \`guide code-connect\`). design_apply leaves its children alone.
+- \`$exposed="true"\`: a nested instance its component exposes: its properties are the component's API too.
 - \`$css\` holds \`property: value\` pairs only, explained in hints: \`blur: progressive from 0px at 50% 0% to 8px at
   50% 100%\` (a blur that changes across the layer; \`filter\` holds its end radius) and \`stroke-align: center\` (half
   of the stroke paints outside the box, which a border-box border does not; \`inspect\` gives the painted box),

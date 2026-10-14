@@ -39,7 +39,12 @@ describe("the Orbit example's Code Connect templates", () => {
     const { templates, problems } = await findTemplates(EXAMPLE);
 
     expect(problems).toEqual([]);
-    expect(templates.map(({ path }) => path)).toEqual(["components/Button.figma.ts", "components/PlanCard.figma.ts"]);
+    expect(templates.map(({ path }) => path)).toEqual([
+      "components/Button.figma.ts",
+      "components/PlanCard.figma.ts",
+      "components/components.figma.batch.json#1",
+      "components/components.figma.batch.json#2",
+    ]);
   });
 
   it("give the Plans row's cards their code with their buttons inside, as the README shows", async () => {
@@ -61,19 +66,18 @@ describe("the Orbit example's Code Connect templates", () => {
     ];
     const card = (id: string, props: string, label: string) => ({
       ids: [id],
-      component: "Plan Card",
+      component: "PlanCard",
       template: "components/PlanCard.figma.ts",
       source: "src/components/PlanCard.tsx",
       snippet: `<PlanCard ${props}>\n  <Button variant="primary">${label}</Button>\n</PlanCard>`,
       imports,
-      // The example leaves the card's description out of its code.
-      unread: ["Description"],
     });
 
+    // Every property of the cards reaches their code: no unread.
     expect(meta.codeComponents).toEqual([
-      card("54:244", 'name="Starter" price="$0"', "Start free"),
-      card("54:268", 'name="Pro" price="$12" popular', "Get started"),
-      card("54:292", 'name="Team" price="$29"', "Contact sales"),
+      card("54:244", 'name="Starter" price="$0" description="For side projects and trying things out."', "Start free"),
+      card("54:268", 'name="Pro" price="$12" description="For freelancers shipping fast." popular', "Get started"),
+      card("54:292", 'name="Team" price="$29" description="For growing teams that ship together."', "Contact sales"),
     ]);
     expect(meta.imports).toEqual(imports);
     expect(meta).not.toHaveProperty("codeErrors");
