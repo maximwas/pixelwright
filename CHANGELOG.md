@@ -47,6 +47,8 @@ How to write this file (people and agents alike):
   should use a token.
 - `design_apply` and `tokens_apply` save their version, check and write in the file the call started on, even when
   another Figma file comes to the front while they run.
+- `inspect`, `measure`, `contrast_check`, `design_audit` and `fonts_check` read the selection and then the layers from
+  the same file, even when another Figma file comes to the front between the two.
 - `design_apply` no longer writes a new layer into the original when a mistyped tag inside a copy or a new instance
   holds it: the new layer is refused, and the copy's own layers named there are still written.
 - `design_apply` reads the layers named by id inside an element it does not create, or inside a `<Span>` outside a

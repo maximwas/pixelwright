@@ -1,18 +1,18 @@
 import { BridgeError, type MeasureSchema, measureLayers } from "@pixelwright/core";
 import type * as z from "zod";
-import { runOp } from "../mcp/run-op.ts";
-import type { MeasureInputSchema } from "../schemas/tools.ts";
-import type { ToolContext } from "../types/mcp.ts";
+import type { PluginClient } from "../../plugin/plugin-client.ts";
+import type { MeasureInputSchema } from "./schemas.ts";
 
 type MeasureArgs = z.output<typeof MeasureInputSchema>;
 
 /** The layers named (else the selection), read by the inspect op in page px, measured by core. */
 export async function measureNodes(
-  bridge: ToolContext["bridge"],
+  plugin: PluginClient,
   { nodes, painted, file }: MeasureArgs,
 ): Promise<z.output<typeof MeasureSchema>> {
-  const ids = nodes ?? (await runOp(bridge, "selection", null, file)).nodes.map((node) => node.id);
-  const raw = await runOp(bridge, "inspect", { nodes: ids.slice(0, 100) }, file);
+  const session = plugin.session(file);
+  const ids = nodes ?? (await session.run("selection", null)).nodes.map((node) => node.id);
+  const raw = await session.run("inspect", { nodes: ids.slice(0, 100) });
 
   if (raw.layers.length < 2) {
     throw new BridgeError(

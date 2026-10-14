@@ -23,8 +23,9 @@ export interface RecordingOptions {
 
 /**
  * A bridge over one snapshot that records every request. Entries answer with the snapshot (cut below the root when
- * asked); apply answers what it was given, a create with a made-up id; save_version saves, refuses for the title
- * "fails" and is unknown to an "old plugin"; upload takes every chunk.
+ * asked), snapshot with it whole, selection with its root selected; apply answers what it was given, a create with a
+ * made-up id; save_version saves, refuses for the title "fails" and is unknown to an "old plugin"; upload takes every
+ * chunk.
  */
 export function recordingBridge(snapshot: Snapshot, options: RecordingOptions = {}) {
   const requests: RecordedRequest[] = [];
@@ -85,6 +86,19 @@ function answer(snapshot: Snapshot, op: string, input: unknown, options: Recordi
     }
     case "entries":
       return entriesOf(snapshot, options);
+    case "snapshot":
+      return snapshot;
+    case "selection":
+      return {
+        nodes: [
+          {
+            id: snapshot.root.id,
+            name: snapshot.root.name,
+            type: snapshot.root.type,
+            box: null,
+          },
+        ],
+      };
     default:
       return applied((input as { changes: ApplyChange[] }).changes, options.pluginErrors ?? []);
   }

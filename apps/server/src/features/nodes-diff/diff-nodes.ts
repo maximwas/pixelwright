@@ -1,33 +1,23 @@
-import { designDiff, OPERATION_SCHEMAS } from "@pixelwright/core";
+import { designDiff } from "@pixelwright/core";
 import type * as z from "zod";
-import { resolveTarget } from "../bridge/target.ts";
-import { MAX_DIFF_ENTRIES } from "../constants/mcp.ts";
-import type { NodesDiffInputSchema, NodesDiffOutputSchema } from "../schemas/tools.ts";
-import type { ToolContext } from "../types/mcp.ts";
+import { MAX_DIFF_ENTRIES } from "../../constants/mcp.ts";
+import type { PluginClient } from "../../plugin/plugin-client.ts";
+import type { NodesDiffInputSchema, NodesDiffOutputSchema } from "./schemas.ts";
 
 type NodesDiffArgs = z.output<typeof NodesDiffInputSchema>;
 type NodesDiff = z.output<typeof NodesDiffOutputSchema>;
 
 /** Both layers read from one file, compared by core, the lists cut to MAX_DIFF_ENTRIES each. */
-export async function diffNodes(
-  bridge: ToolContext["bridge"],
-  { a, b, depth, file }: NodesDiffArgs,
-): Promise<NodesDiff> {
+export async function diffNodes(plugin: PluginClient, { a, b, depth, file }: NodesDiffArgs): Promise<NodesDiff> {
   // One file for both reads: the user may switch files in between.
-  const target = resolveTarget(bridge.plugins(), file);
-  const read = async (node: string) =>
-    OPERATION_SCHEMAS.snapshot.output.parse(
-      await bridge.request(
-        "snapshot",
-        {
-          node,
-          css: "unmapped",
-          paths: true,
-          ...(depth === undefined ? {} : { depth }),
-        },
-        target,
-      ),
-    );
+  const session = plugin.session(file);
+  const read = (node: string) =>
+    session.run("snapshot", {
+      node,
+      css: "unmapped",
+      paths: true,
+      ...(depth === undefined ? {} : { depth }),
+    });
   const left = await read(a);
   const right = await read(b);
   const diff = designDiff(left, right);

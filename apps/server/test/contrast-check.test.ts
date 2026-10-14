@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { checkContrast } from "../src/checks/contrast-check.ts";
+import { checkContrast } from "../src/features/contrast-check/contrast-check.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -116,7 +117,7 @@ describe("contrast_check", () => {
       },
     };
 
-    await expect(checkContrast(bridge, {})).resolves.toMatchObject({
+    await expect(checkContrast(new PluginClient(bridge), {})).resolves.toMatchObject({
       summary: "1 texts: 0 below AA.",
       texts: [
         {

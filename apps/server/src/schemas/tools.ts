@@ -1,10 +1,4 @@
-import {
-  DesignDiffSchema,
-  EXECUTE_CODE_CHARS,
-  EXECUTE_DEFAULT_MS,
-  EXECUTE_MAX_MS,
-  OPERATION_SCHEMAS,
-} from "@pixelwright/core";
+import { OPERATION_SCHEMAS } from "@pixelwright/core";
 import * as z from "zod";
 import { MAX_EXPORT_NODES } from "../constants/mcp.ts";
 import { FileSchema } from "../plugin/file-schema.ts";
@@ -149,25 +143,6 @@ export const AssetsExportOutputSchema = z.object({
   ),
 });
 
-export const ExecuteInputSchema = z.object({
-  code: z
-    .string()
-    .min(1)
-    .max(EXECUTE_CODE_CHARS)
-    .describe(
-      "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result.",
-    ),
-  timeout: z
-    .number()
-    .min(1)
-    .max(EXECUTE_MAX_MS / 1_000)
-    .default(EXECUTE_DEFAULT_MS / 1_000)
-    .describe("Seconds to wait for the code: 10 by default, 25 at most."),
-  file: FileSchema,
-});
-
-export const ExecuteOutputSchema = OPERATION_SCHEMAS.execute.output;
-
 export const CodeConnectReadInputSchema = z.object({
   node: z
     .string()
@@ -196,38 +171,6 @@ export const CodeConnectReadOutputSchema = z.object({
   ),
   unconnected: z.array(ComponentCountSchema).describe("Components used here that no template connects."),
   problems: z.array(z.string()),
-});
-
-export const InspectInputSchema = z.object({
-  nodes: z
-    .array(z.string().min(1).max(200))
-    .min(1)
-    .max(100)
-    .exactOptional()
-    .describe('The layers\' ids, e.g. ["54:243"]. Default: the layers selected in Figma.'),
-  relativeTo: z
-    .string()
-    .min(1)
-    .max(200)
-    .exactOptional()
-    .describe("A layer (a section, a frame) whose top left the boxes are measured from. Default: the page's."),
-  file: FileSchema,
-});
-
-export const NodesDiffInputSchema = z.object({
-  a: z.string().min(1).max(200).describe("The first layer's id (variant A), e.g. 54:243."),
-  b: z.string().min(1).max(200).describe("The second layer's id (variant B)."),
-  depth: z.number().int().min(0).max(100).exactOptional().describe("Levels below each layer to compare. Default: all."),
-  file: FileSchema,
-});
-
-export const NodesDiffOutputSchema = DesignDiffSchema.extend({
-  summary: z.string(),
-  more: z
-    .number()
-    .int()
-    .exactOptional()
-    .describe("Differences past the ones listed: compare smaller parts of the two layers."),
 });
 
 const EdgeDiffSchema = z.object({
@@ -296,80 +239,4 @@ export const ImageCompareOutputSchema = z.object({
   columns: EdgeDiffSchema.describe("Vertical edges by x: matched, shifted (by: + is further right in the render)."),
   diff: z.string().exactOptional(),
   note: z.string().exactOptional(),
-});
-
-export const MeasureInputSchema = z.object({
-  nodes: z
-    .array(z.string().min(1).max(200))
-    .min(2)
-    .max(100)
-    .exactOptional()
-    .describe(
-      'The layers\' ids in the order to measure, each from the one before, e.g. ["54:244", "54:268"]. Default: the layers selected in Figma.',
-    ),
-  painted: z
-    .boolean()
-    .default(false)
-    .describe("Measure what is painted (centred or outside strokes, shadows, blur) instead of the layout boxes."),
-  file: FileSchema,
-});
-
-export const ContrastInputSchema = z.object({
-  node: z
-    .string()
-    .min(1)
-    .max(200)
-    .exactOptional()
-    .describe("The layer whose texts to check (a section, a screen). Default: the one layer selected in Figma."),
-  file: FileSchema,
-});
-
-export const VariantsInputSchema = z.object({
-  node: z
-    .string()
-    .min(1)
-    .max(200)
-    .describe("A component set's id, or one of its variants', or an instance's: its set is read."),
-  file: FileSchema,
-});
-
-export const BreakpointsInputSchema = z.object({
-  node: z.string().min(1).max(200).describe("A screen's id, or a layer's on it."),
-  file: FileSchema,
-});
-
-export const FontsCheckInputSchema = z.object({
-  node: z
-    .string()
-    .min(1)
-    .max(200)
-    .exactOptional()
-    .describe("The layer whose texts' fonts to check (a section, a screen). Default: the one layer selected in Figma."),
-  file: FileSchema,
-});
-
-export const FontsCheckOutputSchema = z.object({
-  summary: z.string(),
-  fonts: z.array(
-    z.object({
-      family: z.string(),
-      weights: z.array(z.string()).describe('The weights used, "400 italic" for an italic.'),
-      google: z
-        .boolean()
-        .nullable()
-        .describe("Whether Google Fonts serves the family; null when it could not be reached."),
-      css: z.string().exactOptional().describe("The Google Fonts css2 link for the weights used."),
-      note: z.string().exactOptional(),
-    }),
-  ),
-});
-
-export const AuditInputSchema = z.object({
-  node: z
-    .string()
-    .min(1)
-    .max(200)
-    .exactOptional()
-    .describe("The layer to audit (a screen, a section). Default: the one layer selected in Figma."),
-  file: FileSchema,
 });

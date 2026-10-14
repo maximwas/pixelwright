@@ -1,13 +1,13 @@
-import type { McpServer } from "@modelcontextprotocol/server";
 import { VariantsViewSchema } from "@pixelwright/core";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
-import { readVariants } from "../../design/read-variants.ts";
-import { VariantsInputSchema } from "../../schemas/tools.ts";
-import type { ToolContext } from "../../types/mcp.ts";
-import { registerTool } from "../register-tool.ts";
+import type { ToolContext, ToolDefinition } from "../../types/mcp.ts";
+import { readVariants } from "./read-variants.ts";
+import { VariantsInputSchema } from "./schemas.ts";
 
-export function registerVariantsTool(server: McpServer, { bridge }: ToolContext): void {
-  registerTool(server, {
+export function variantsReadTool({
+  plugin,
+}: ToolContext): ToolDefinition<typeof VariantsInputSchema, typeof VariantsViewSchema> {
+  return {
     name: "variants_read",
     title: "Read a component's states",
     description:
@@ -15,6 +15,6 @@ export function registerVariantsTool(server: McpServer, { bridge }: ToolContext)
     input: VariantsInputSchema,
     output: VariantsViewSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (args) => readVariants(bridge, args),
-  });
+    run: (args) => readVariants(plugin, args),
+  };
 }

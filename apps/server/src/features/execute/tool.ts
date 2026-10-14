@@ -1,12 +1,12 @@
-import type { McpServer } from "@modelcontextprotocol/server";
 import { WRITE_ANNOTATIONS } from "../../constants/mcp.ts";
-import { executeCode } from "../../execute/execute-code.ts";
-import { ExecuteInputSchema, ExecuteOutputSchema } from "../../schemas/tools.ts";
-import type { ToolContext } from "../../types/mcp.ts";
-import { registerTool } from "../register-tool.ts";
+import type { ToolContext, ToolDefinition } from "../../types/mcp.ts";
+import { executeCode } from "./execute-code.ts";
+import { ExecuteInputSchema, ExecuteOutputSchema } from "./schemas.ts";
 
-export function registerExecuteTool(server: McpServer, { bridge }: ToolContext): void {
-  registerTool(server, {
+export function executeTool({
+  plugin,
+}: ToolContext): ToolDefinition<typeof ExecuteInputSchema, typeof ExecuteOutputSchema> {
+  return {
     name: "execute",
     title: "Run plugin code",
     description:
@@ -14,6 +14,6 @@ export function registerExecuteTool(server: McpServer, { bridge }: ToolContext):
     input: ExecuteInputSchema,
     output: ExecuteOutputSchema,
     annotations: WRITE_ANNOTATIONS,
-    run: (args) => executeCode(bridge, args),
-  });
+    run: (args) => executeCode(plugin, args),
+  };
 }

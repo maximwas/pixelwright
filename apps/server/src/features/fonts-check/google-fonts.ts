@@ -1,19 +1,21 @@
-import { GOOGLE_FONTS_METADATA_URL, GOOGLE_FONTS_TIMEOUT_MS } from "../constants/fonts.ts";
-
-let catalogue: Promise<Map<string, string[]>> | null = null;
+import { GOOGLE_FONTS_METADATA_URL, GOOGLE_FONTS_TIMEOUT_MS } from "./constants.ts";
 
 /**
- * Google Fonts' families with the weights each has ("400", "400i"…), read once per process; a failed read is
+ * Google Fonts' families with the weights each has ("400", "400i"…), read once for the server; a failed read is
  * forgotten, so the next call tries again.
  */
-export function googleFonts(): Promise<Map<string, string[]>> {
-  catalogue ??= read().catch((error: unknown) => {
-    catalogue = null;
+export class GoogleFontsCatalogue {
+  #families: Promise<Map<string, string[]>> | null = null;
 
-    throw error;
-  });
+  families(): Promise<Map<string, string[]>> {
+    this.#families ??= read().catch((error: unknown) => {
+      this.#families = null;
 
-  return catalogue;
+      throw error;
+    });
+
+    return this.#families;
+  }
 }
 
 async function read(): Promise<Map<string, string[]>> {

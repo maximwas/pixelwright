@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { checkFonts } from "../src/fonts/check-fonts.ts";
+import { checkFonts } from "../src/features/fonts-check/check-fonts.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -82,7 +83,7 @@ const bridge: BridgeView = {
 describe("fonts_check", () => {
   it("says which fonts Google Fonts serves, with a link for the weights used, and which need their own files", async () => {
     const result = await checkFonts(
-      bridge,
+      new PluginClient(bridge),
       { node: "1:1" },
       async () => new Map([["Manrope", ["200", "400", "600", "800"]]]),
     );
@@ -104,7 +105,7 @@ describe("fonts_check", () => {
   });
 
   it("says so when Google Fonts cannot be reached, and still lists the fonts", async () => {
-    const result = await checkFonts(bridge, { node: "1:1" }, async () => {
+    const result = await checkFonts(new PluginClient(bridge), { node: "1:1" }, async () => {
       throw new Error("offline");
     });
 

@@ -1,13 +1,13 @@
-import type { McpServer } from "@modelcontextprotocol/server";
 import { InspectViewSchema } from "@pixelwright/core";
 import { READ_ONLY_ANNOTATIONS } from "../../constants/mcp.ts";
-import { inspectLayers } from "../../layers/inspect-layers.ts";
-import { InspectInputSchema } from "../../schemas/tools.ts";
-import type { ToolContext } from "../../types/mcp.ts";
-import { registerTool } from "../register-tool.ts";
+import type { ToolContext, ToolDefinition } from "../../types/mcp.ts";
+import { inspectLayers } from "./inspect-layers.ts";
+import { InspectInputSchema } from "./schemas.ts";
 
-export function registerInspectTool(server: McpServer, { bridge }: ToolContext): void {
-  registerTool(server, {
+export function inspectTool({
+  plugin,
+}: ToolContext): ToolDefinition<typeof InspectInputSchema, typeof InspectViewSchema> {
+  return {
     name: "inspect",
     title: "Inspect layers",
     description:
@@ -15,6 +15,6 @@ export function registerInspectTool(server: McpServer, { bridge }: ToolContext):
     input: InspectInputSchema,
     output: InspectViewSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (args) => inspectLayers(bridge, args),
-  });
+    run: (args) => inspectLayers(plugin, args),
+  };
 }
