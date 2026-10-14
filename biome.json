@@ -35,17 +35,7 @@
       }
     },
     {
-      "includes": [
-        "packages/core/src/kernel/**",
-        "packages/core/src/tokens/model/**",
-        "packages/core/src/tokens/formats/**",
-        "packages/core/src/tokens/unique-name.ts",
-        "packages/core/src/tokens/aliases.ts",
-        "packages/core/src/tokens/notes.ts",
-        "packages/core/src/tokens/raw-tokens.ts",
-        "packages/core/src/tokens/style-numbers.ts",
-        "packages/core/src/tokens/token-filter.ts"
-      ],
+      "includes": ["packages/core/src/kernel/**", "packages/core/src/tokens/**"],
       "linter": {
         "rules": {
           "complexity": {

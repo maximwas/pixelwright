@@ -50,6 +50,9 @@ export const TokensApplyInputSchema = z.object({
     }),
 });
 
+/** tokens_apply's input after the schema's defaults. */
+export type TokensApplyInput = z.output<typeof TokensApplyInputSchema>;
+
 /** A style as tokens_read lists it: its name and its CSS value (a colour, a font shorthand, a shadow list). */
 function StyleInputSchema() {
   return z.object({
