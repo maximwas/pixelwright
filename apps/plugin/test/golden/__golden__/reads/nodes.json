@@ -1,0 +1,1022 @@
+{
+  "the selection": {
+    "result": {
+      "nodes": [
+        {
+          "id": "10:2",
+          "name": "Hello world",
+          "type": "TEXT",
+          "box": {
+            "x": 124,
+            "y": 232,
+            "width": 300,
+            "height": 40
+          }
+        },
+        {
+          "id": "10:4",
+          "name": "Mask",
+          "type": "RECTANGLE",
+          "box": {
+            "x": 130,
+            "y": 340,
+            "width": 40,
+            "height": 40
+          }
+        }
+      ]
+    }
+  },
+  "show one layer": {
+    "result": {
+      "nodes": [
+        {
+          "id": "10:2",
+          "name": "Hello world"
+        }
+      ],
+      "page": "Page 1",
+      "zoom": 1
+    },
+    "zoomedTo": [
+      "10:2"
+    ]
+  },
+  "show two layers at a zoom without selecting": {
+    "result": {
+      "nodes": [
+        {
+          "id": "10:2",
+          "name": "Hello world"
+        },
+        {
+          "id": "10:4",
+          "name": "Mask"
+        }
+      ],
+      "page": "Page 1",
+      "zoom": 2
+    },
+    "zoomedTo": [
+      "10:2",
+      "10:4"
+    ]
+  },
+  "the viewport": {
+    "result": {
+      "page": "Page 1",
+      "zoom": 1,
+      "center": {
+        "x": 0,
+        "y": 0
+      },
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "layers": [
+        {
+          "id": "10:1",
+          "name": "Hero",
+          "type": "FRAME",
+          "box": {
+            "x": 100,
+            "y": 200,
+            "width": 600,
+            "height": 400
+          }
+        },
+        {
+          "id": "10:2",
+          "name": "Hello world",
+          "type": "TEXT",
+          "box": {
+            "x": 124,
+            "y": 232,
+            "width": 300,
+            "height": 40
+          }
+        },
+        {
+          "id": "10:3",
+          "name": "Button",
+          "type": "INSTANCE",
+          "box": {
+            "x": 124,
+            "y": 280,
+            "width": 120,
+            "height": 40
+          }
+        },
+        {
+          "id": "10:4",
+          "name": "Mask",
+          "type": "RECTANGLE",
+          "box": {
+            "x": 130,
+            "y": 340,
+            "width": 40,
+            "height": 40
+          }
+        },
+        {
+          "id": "10:5",
+          "name": "Arrow",
+          "type": "VECTOR",
+          "box": {
+            "x": 180,
+            "y": 340,
+            "width": 24,
+            "height": 24
+          }
+        },
+        {
+          "id": "10:8",
+          "name": "Grid",
+          "type": "FRAME",
+          "box": {
+            "x": 124,
+            "y": 430,
+            "width": 300,
+            "height": 60
+          }
+        },
+        {
+          "id": "10:11",
+          "name": "Docs",
+          "type": "TEXT",
+          "box": {
+            "x": 124,
+            "y": 500,
+            "width": 40,
+            "height": 20
+          }
+        },
+        {
+          "id": "10:12",
+          "name": "Loose row",
+          "type": "FRAME",
+          "box": {
+            "x": 124,
+            "y": 530,
+            "width": 200,
+            "height": 40
+          }
+        },
+        {
+          "id": "10:9",
+          "name": "Detail",
+          "type": "FRAME",
+          "box": {
+            "x": 800,
+            "y": 200,
+            "width": 600,
+            "height": 400
+          }
+        },
+        {
+          "id": "20:1",
+          "name": "Chip",
+          "type": "COMPONENT",
+          "box": {
+            "x": 0,
+            "y": 700,
+            "width": 80,
+            "height": 24
+          }
+        },
+        {
+          "id": "20:2",
+          "name": "Chip",
+          "type": "TEXT",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100
+          }
+        }
+      ],
+      "more": false
+    }
+  },
+  "find by name": {
+    "result": {
+      "nodes": [
+        {
+          "id": "10:1",
+          "name": "Hero",
+          "type": "FRAME",
+          "box": {
+            "x": 100,
+            "y": 200,
+            "width": 600,
+            "height": 400
+          },
+          "path": []
+        }
+      ],
+      "more": false
+    }
+  },
+  "find texts": {
+    "result": {
+      "nodes": [
+        {
+          "id": "10:2",
+          "name": "Hello world",
+          "type": "TEXT",
+          "box": {
+            "x": 124,
+            "y": 232,
+            "width": 300,
+            "height": 40
+          },
+          "path": [
+            "Hero"
+          ]
+        },
+        {
+          "id": "I10:3;30:21",
+          "name": "Go",
+          "type": "TEXT",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100
+          },
+          "path": [
+            "Hero",
+            "Button"
+          ]
+        },
+        {
+          "id": "10:11",
+          "name": "Docs",
+          "type": "TEXT",
+          "box": {
+            "x": 124,
+            "y": 500,
+            "width": 40,
+            "height": 20
+          },
+          "path": [
+            "Hero"
+          ]
+        },
+        {
+          "id": "20:2",
+          "name": "Chip",
+          "type": "TEXT",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100
+          },
+          "path": [
+            "Chip"
+          ]
+        },
+        {
+          "id": "30:21",
+          "name": "Go",
+          "type": "TEXT",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100
+          },
+          "path": [
+            "Button",
+            "Size=Large"
+          ]
+        },
+        {
+          "id": "30:31",
+          "name": "Go",
+          "type": "TEXT",
+          "box": {
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100
+          },
+          "path": [
+            "Button",
+            "Size=Small"
+          ]
+        }
+      ],
+      "more": false
+    }
+  },
+  "find by text inside a layer": {
+    "result": {
+      "nodes": [
+        {
+          "id": "10:2",
+          "name": "Hello world",
+          "type": "TEXT",
+          "box": {
+            "x": 124,
+            "y": 232,
+            "width": 300,
+            "height": 40
+          },
+          "path": [
+            "Hero"
+          ]
+        }
+      ],
+      "more": false
+    }
+  },
+  "find instances of a component": {
+    "result": {
+      "nodes": [
+        {
+          "id": "10:3",
+          "name": "Button",
+          "type": "INSTANCE",
+          "box": {
+            "x": 124,
+            "y": 280,
+            "width": 120,
+            "height": 40
+          },
+          "path": [
+            "Hero"
+          ]
+        }
+      ],
+      "more": false
+    }
+  },
+  "the hero's outline": {
+    "result": {
+      "root": {
+        "id": "10:1",
+        "name": "Hero",
+        "type": "FRAME",
+        "x": 0,
+        "y": 0,
+        "width": 600,
+        "height": 400,
+        "dev": "ready",
+        "childCount": 8,
+        "children": [
+          {
+            "id": "10:2",
+            "name": "Hello world",
+            "type": "TEXT",
+            "x": 24,
+            "y": 32,
+            "width": 300,
+            "height": 40,
+            "childCount": 0
+          },
+          {
+            "id": "10:3",
+            "name": "Button",
+            "type": "INSTANCE",
+            "x": 24,
+            "y": 80,
+            "width": 120,
+            "height": 40,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "I10:3;30:21",
+                "name": "Go",
+                "type": "TEXT",
+                "x": -100,
+                "y": -200,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              }
+            ],
+            "component": "Button",
+            "variant": "Size=Large"
+          },
+          {
+            "id": "10:4",
+            "name": "Mask",
+            "type": "RECTANGLE",
+            "x": 30,
+            "y": 140,
+            "width": 40,
+            "height": 40,
+            "childCount": 0
+          },
+          {
+            "id": "10:5",
+            "name": "Arrow",
+            "type": "VECTOR",
+            "x": 80,
+            "y": 140,
+            "width": 24,
+            "height": 24,
+            "childCount": 0
+          },
+          {
+            "id": "10:6",
+            "name": "Hidden",
+            "type": "FRAME",
+            "x": 24,
+            "y": 180,
+            "width": 40,
+            "height": 40,
+            "hidden": true,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "10:7",
+                "name": "Inside hidden",
+                "type": "RECTANGLE",
+                "x": -100,
+                "y": -200,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "10:8",
+            "name": "Grid",
+            "type": "FRAME",
+            "x": 24,
+            "y": 230,
+            "width": 300,
+            "height": 60,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "10:10",
+                "name": "Cell",
+                "type": "RECTANGLE",
+                "x": -100,
+                "y": -200,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "10:11",
+            "name": "Docs",
+            "type": "TEXT",
+            "x": 24,
+            "y": 300,
+            "width": 40,
+            "height": 20,
+            "childCount": 0
+          },
+          {
+            "id": "10:12",
+            "name": "Loose row",
+            "type": "FRAME",
+            "x": 24,
+            "y": 330,
+            "width": 200,
+            "height": 40,
+            "childCount": 0
+          }
+        ]
+      }
+    }
+  },
+  "the pages": {
+    "thrown": {
+      "code": "NODE_NOT_FOUND",
+      "message": "No node 0:0 in this file: find ids with nodes_find, outline or selection_get."
+    }
+  },
+  "the current page": {
+    "result": {
+      "root": {
+        "id": "0:1",
+        "name": "Page 1",
+        "type": "PAGE",
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 100,
+        "childCount": 5,
+        "children": [
+          {
+            "id": "10:1",
+            "name": "Hero",
+            "type": "FRAME",
+            "x": 100,
+            "y": 200,
+            "width": 600,
+            "height": 400,
+            "dev": "ready",
+            "childCount": 8,
+            "children": [
+              {
+                "id": "10:2",
+                "name": "Hello world",
+                "type": "TEXT",
+                "x": 124,
+                "y": 232,
+                "width": 300,
+                "height": 40,
+                "childCount": 0
+              },
+              {
+                "id": "10:3",
+                "name": "Button",
+                "type": "INSTANCE",
+                "x": 124,
+                "y": 280,
+                "width": 120,
+                "height": 40,
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "I10:3;30:21",
+                    "name": "Go",
+                    "type": "TEXT",
+                    "x": 0,
+                    "y": 0,
+                    "width": 100,
+                    "height": 100,
+                    "childCount": 0
+                  }
+                ],
+                "component": "Button",
+                "variant": "Size=Large"
+              },
+              {
+                "id": "10:4",
+                "name": "Mask",
+                "type": "RECTANGLE",
+                "x": 130,
+                "y": 340,
+                "width": 40,
+                "height": 40,
+                "childCount": 0
+              },
+              {
+                "id": "10:5",
+                "name": "Arrow",
+                "type": "VECTOR",
+                "x": 180,
+                "y": 340,
+                "width": 24,
+                "height": 24,
+                "childCount": 0
+              },
+              {
+                "id": "10:6",
+                "name": "Hidden",
+                "type": "FRAME",
+                "x": 124,
+                "y": 380,
+                "width": 40,
+                "height": 40,
+                "hidden": true,
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "10:7",
+                    "name": "Inside hidden",
+                    "type": "RECTANGLE",
+                    "x": 0,
+                    "y": 0,
+                    "width": 100,
+                    "height": 100,
+                    "childCount": 0
+                  }
+                ]
+              },
+              {
+                "id": "10:8",
+                "name": "Grid",
+                "type": "FRAME",
+                "x": 124,
+                "y": 430,
+                "width": 300,
+                "height": 60,
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "10:10",
+                    "name": "Cell",
+                    "type": "RECTANGLE",
+                    "x": 0,
+                    "y": 0,
+                    "width": 100,
+                    "height": 100,
+                    "childCount": 0
+                  }
+                ]
+              },
+              {
+                "id": "10:11",
+                "name": "Docs",
+                "type": "TEXT",
+                "x": 124,
+                "y": 500,
+                "width": 40,
+                "height": 20,
+                "childCount": 0
+              },
+              {
+                "id": "10:12",
+                "name": "Loose row",
+                "type": "FRAME",
+                "x": 124,
+                "y": 530,
+                "width": 200,
+                "height": 40,
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "10:9",
+            "name": "Detail",
+            "type": "FRAME",
+            "x": 800,
+            "y": 200,
+            "width": 600,
+            "height": 400,
+            "childCount": 0
+          },
+          {
+            "id": "20:1",
+            "name": "Chip",
+            "type": "COMPONENT",
+            "x": 0,
+            "y": 700,
+            "width": 80,
+            "height": 24,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "20:2",
+                "name": "Chip",
+                "type": "TEXT",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "40:1",
+            "name": "Screens",
+            "type": "SECTION",
+            "x": 0,
+            "y": 1200,
+            "width": 1600,
+            "height": 900,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "40:2",
+                "name": "Home",
+                "type": "FRAME",
+                "x": 0,
+                "y": 1200,
+                "width": 1440,
+                "height": 900,
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "30:1",
+            "name": "Button",
+            "type": "COMPONENT_SET",
+            "x": 0,
+            "y": 900,
+            "width": 300,
+            "height": 100,
+            "childCount": 2,
+            "children": [
+              {
+                "id": "30:2",
+                "name": "Size=Large",
+                "type": "COMPONENT",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "30:21",
+                    "name": "Go",
+                    "type": "TEXT",
+                    "x": 0,
+                    "y": 0,
+                    "width": 100,
+                    "height": 100,
+                    "childCount": 0
+                  }
+                ]
+              },
+              {
+                "id": "30:3",
+                "name": "Size=Small",
+                "type": "COMPONENT",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "30:31",
+                    "name": "Go",
+                    "type": "TEXT",
+                    "x": 0,
+                    "y": 0,
+                    "width": 100,
+                    "height": 100,
+                    "childCount": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "the apply document's page": {
+    "result": {
+      "root": {
+        "id": "0:1",
+        "name": "0:1",
+        "type": "PAGE",
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 100,
+        "childCount": 10,
+        "children": [
+          {
+            "id": "1:1",
+            "name": "Card",
+            "type": "FRAME",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "1:5",
+                "name": "Heading and link",
+                "type": "FRAME",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 2,
+                "children": [
+                  {
+                    "id": "1:2",
+                    "name": "Hello",
+                    "type": "TEXT",
+                    "x": 0,
+                    "y": 0,
+                    "width": 100,
+                    "height": 100,
+                    "childCount": 0
+                  },
+                  {
+                    "id": "1:6",
+                    "name": "Read more",
+                    "type": "TEXT",
+                    "x": 0,
+                    "y": 0,
+                    "width": 100,
+                    "height": 100,
+                    "childCount": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "3:1",
+            "name": "Board",
+            "type": "FRAME",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "3:2",
+                "name": "Sticker",
+                "type": "RECTANGLE",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "9:1",
+            "name": "Row",
+            "type": "FRAME",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 3,
+            "children": [
+              {
+                "id": "9:2",
+                "name": "A",
+                "type": "RECTANGLE",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              },
+              {
+                "id": "9:3",
+                "name": "B",
+                "type": "RECTANGLE",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              },
+              {
+                "id": "9:4",
+                "name": "C",
+                "type": "RECTANGLE",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "2:1",
+            "name": "Heading",
+            "type": "INSTANCE",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "I2:1;3:4",
+                "name": "Label box",
+                "type": "FRAME",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 1,
+                "children": [
+                  {
+                    "id": "I2:1;3:5",
+                    "name": "Search engine",
+                    "type": "TEXT",
+                    "x": 0,
+                    "y": 0,
+                    "width": 100,
+                    "height": 100,
+                    "childCount": 0
+                  }
+                ]
+              }
+            ],
+            "component": "Heading",
+            "variant": "Property 1=Default"
+          },
+          {
+            "id": "4:1",
+            "name": "Badge group",
+            "type": "GROUP",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "4:2",
+                "name": "Dot",
+                "type": "ELLIPSE",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              }
+            ]
+          },
+          {
+            "id": "5:1",
+            "name": "Area",
+            "type": "SECTION",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 0
+          },
+          {
+            "id": "6:1",
+            "name": "Rule",
+            "type": "LINE",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 0
+          },
+          {
+            "id": "6:2",
+            "name": "Divider",
+            "type": "LINE",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 0
+          },
+          {
+            "id": "8:1",
+            "name": "Photo",
+            "type": "RECTANGLE",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 0
+          },
+          {
+            "id": "11:1",
+            "name": "Chip",
+            "type": "COMPONENT",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "childCount": 1,
+            "children": [
+              {
+                "id": "11:2",
+                "name": "Chip",
+                "type": "TEXT",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "childCount": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "the set of an instance": {
+    "result": {
+      "id": "30:1",
+      "name": "Button"
+    }
+  },
+  "the set of a variant": {
+    "result": {
+      "id": "30:1",
+      "name": "Button"
+    }
+  },
+  "the set of a text": {
+    "thrown": {
+      "code": "OP_FAILED",
+      "message": "10:2 \"Hello world\" is not a component set, a variant or an instance of one."
+    }
+  }
+}

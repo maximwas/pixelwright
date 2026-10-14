@@ -1,0 +1,152 @@
+{
+  "local components": {
+    "result": {
+      "components": [
+        {
+          "id": "20:1",
+          "key": "key-20:1",
+          "type": "COMPONENT",
+          "name": "Chip",
+          "page": "Page 1",
+          "description": "A small label",
+          "properties": {}
+        },
+        {
+          "id": "30:1",
+          "key": "key-30:1",
+          "type": "COMPONENT_SET",
+          "name": "Button",
+          "page": "Page 1",
+          "description": "A button",
+          "variants": [
+            {
+              "id": "30:2",
+              "name": "Size=Large"
+            },
+            {
+              "id": "30:3",
+              "name": "Size=Small"
+            }
+          ],
+          "properties": {
+            "Size": {
+              "type": "VARIANT",
+              "default": "Large",
+              "options": [
+                "Large",
+                "Small"
+              ]
+            }
+          }
+        }
+      ],
+      "more": false
+    }
+  },
+  "used components": {
+    "result": {
+      "components": [
+        {
+          "id": "30:1",
+          "key": "key-30:1",
+          "type": "COMPONENT_SET",
+          "name": "Button",
+          "page": "Page 1",
+          "description": "A button",
+          "variants": [
+            {
+              "id": "30:2",
+              "name": "Size=Large"
+            },
+            {
+              "id": "30:3",
+              "name": "Size=Small"
+            }
+          ],
+          "properties": {
+            "Size": {
+              "type": "VARIANT",
+              "default": "Large",
+              "options": [
+                "Large",
+                "Small"
+              ]
+            }
+          },
+          "instances": 1
+        }
+      ],
+      "more": false
+    }
+  },
+  "used in the hero": {
+    "result": {
+      "components": [
+        {
+          "id": "30:1",
+          "key": "key-30:1",
+          "type": "COMPONENT_SET",
+          "name": "Button",
+          "page": "Page 1",
+          "description": "A button",
+          "variants": [
+            {
+              "id": "30:2",
+              "name": "Size=Large"
+            },
+            {
+              "id": "30:3",
+              "name": "Size=Small"
+            }
+          ],
+          "properties": {
+            "Size": {
+              "type": "VARIANT",
+              "default": "Large",
+              "options": [
+                "Large",
+                "Small"
+              ]
+            }
+          },
+          "instances": 1
+        }
+      ],
+      "more": false
+    }
+  },
+  "used in the apply document": {
+    "result": {
+      "components": [
+        {
+          "id": "7:1",
+          "type": "COMPONENT_SET",
+          "name": "Heading",
+          "page": null,
+          "variants": [
+            {
+              "id": "7:2",
+              "name": "Property 1=Default"
+            },
+            {
+              "id": "7:3",
+              "name": "Property 1=Green"
+            }
+          ],
+          "properties": {
+            "Property 1": {
+              "type": "VARIANT",
+              "default": "Default",
+              "options": [
+                "Default",
+                "Green"
+              ]
+            }
+          },
+          "instances": 1
+        }
+      ],
+      "more": false
+    }
+  }
+}

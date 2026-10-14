@@ -1,0 +1,269 @@
+{
+  "the screens of a section": {
+    "thrown": {
+      "code": "OP_FAILED",
+      "message": "40:1 \"Screens\" is on no screen: give a frame on the page or a layer in one."
+    }
+  },
+  "the screens around a frame": {
+    "result": {
+      "target": {
+        "id": "40:2",
+        "name": "Home",
+        "width": 1440,
+        "height": 900,
+        "children": []
+      },
+      "screens": [
+        {
+          "id": "10:1",
+          "name": "Hero",
+          "width": 600,
+          "height": 400,
+          "children": [
+            "Hello world",
+            "Button",
+            "Mask",
+            "Arrow",
+            "Hidden",
+            "Grid",
+            "Docs",
+            "Loose row"
+          ]
+        },
+        {
+          "id": "10:9",
+          "name": "Detail",
+          "width": 600,
+          "height": 400,
+          "children": []
+        },
+        {
+          "id": "20:1",
+          "name": "Chip",
+          "width": 80,
+          "height": 24,
+          "children": [
+            "Chip"
+          ]
+        }
+      ]
+    }
+  },
+  "the flows of the page": {
+    "result": {
+      "page": "Page 1",
+      "starts": [
+        {
+          "id": "10:1",
+          "name": "Main flow"
+        }
+      ],
+      "screens": [
+        {
+          "id": "10:1",
+          "name": "Hero",
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "10:9",
+          "name": "Detail",
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "20:1",
+          "name": "Chip",
+          "width": 80,
+          "height": 24
+        },
+        {
+          "id": "40:2",
+          "name": "Home",
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "links": [
+        {
+          "from": {
+            "id": "10:1",
+            "name": "Hero"
+          },
+          "layer": {
+            "id": "10:1",
+            "name": "Hero"
+          },
+          "trigger": "ON_CLICK",
+          "action": "NAVIGATE",
+          "to": {
+            "id": "10:9",
+            "name": "Detail"
+          },
+          "summary": "go to Detail; instant"
+        },
+        {
+          "from": {
+            "id": "10:1",
+            "name": "Hero"
+          },
+          "layer": {
+            "id": "10:11",
+            "name": "Docs"
+          },
+          "trigger": "ON_CLICK",
+          "action": "URL",
+          "to": null,
+          "url": "https://pixelwright.dev/docs",
+          "summary": "open https://pixelwright.dev/docs"
+        }
+      ],
+      "more": false
+    }
+  },
+  "the file map": {
+    "result": {
+      "pages": [
+        {
+          "id": "0:1",
+          "name": "Page 1",
+          "current": true,
+          "nodes": [
+            {
+              "id": "10:1",
+              "name": "Hero",
+              "type": "FRAME",
+              "width": 600,
+              "height": 400,
+              "devStatus": "ready"
+            },
+            {
+              "id": "10:9",
+              "name": "Detail",
+              "type": "FRAME",
+              "width": 600,
+              "height": 400
+            },
+            {
+              "id": "20:1",
+              "name": "Chip",
+              "type": "COMPONENT",
+              "width": 80,
+              "height": 24
+            },
+            {
+              "id": "40:1",
+              "name": "Screens",
+              "type": "SECTION",
+              "width": 1600,
+              "height": 900,
+              "children": [
+                {
+                  "id": "40:2",
+                  "name": "Home",
+                  "type": "FRAME",
+                  "width": 1440,
+                  "height": 900
+                }
+              ]
+            },
+            {
+              "id": "30:1",
+              "name": "Button",
+              "type": "COMPONENT_SET",
+              "width": 300,
+              "height": 100
+            }
+          ]
+        }
+      ],
+      "more": false
+    }
+  },
+  "the apply document's map": {
+    "result": {
+      "pages": [
+        {
+          "id": "0:1",
+          "name": "0:1",
+          "current": true,
+          "nodes": [
+            {
+              "id": "1:1",
+              "name": "Card",
+              "type": "FRAME",
+              "width": 100,
+              "height": 100
+            },
+            {
+              "id": "3:1",
+              "name": "Board",
+              "type": "FRAME",
+              "width": 100,
+              "height": 100
+            },
+            {
+              "id": "9:1",
+              "name": "Row",
+              "type": "FRAME",
+              "width": 100,
+              "height": 100
+            },
+            {
+              "id": "2:1",
+              "name": "Heading",
+              "type": "INSTANCE",
+              "width": 100,
+              "height": 100
+            },
+            {
+              "id": "4:1",
+              "name": "Badge group",
+              "type": "GROUP",
+              "width": 100,
+              "height": 100
+            },
+            {
+              "id": "5:1",
+              "name": "Area",
+              "type": "SECTION",
+              "width": 100,
+              "height": 100,
+              "children": []
+            },
+            {
+              "id": "6:1",
+              "name": "Rule",
+              "type": "LINE",
+              "width": 100,
+              "height": 0
+            },
+            {
+              "id": "6:2",
+              "name": "Divider",
+              "type": "LINE",
+              "width": 80,
+              "height": 0
+            },
+            {
+              "id": "8:1",
+              "name": "Photo",
+              "type": "RECTANGLE",
+              "width": 120,
+              "height": 80
+            },
+            {
+              "id": "11:1",
+              "name": "Chip",
+              "type": "COMPONENT",
+              "width": 100,
+              "height": 100
+            }
+          ]
+        }
+      ],
+      "more": false
+    }
+  }
+}
