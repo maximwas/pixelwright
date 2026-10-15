@@ -12,6 +12,7 @@
       "!.claude",
       "!.superpowers",
       "!packages/core/test/fixtures",
+      "!**/.pixelwright",
       "!**/__golden__"
     ]
   },
