@@ -23,8 +23,9 @@ examples/orbit/
 
 ## Try it
 
-1. Open the Orbit demo file in Figma (a copy from the Figma Community, or any file with the same components), and
-   run the Pixelwright plugin in it. Its **Start here** page lists what every tool shows on which layer.
+1. Open the [Orbit demo file in Figma](https://www.figma.com/design/JHfoyeEnpNChVEtjBGwhIo/Test-MCP?node-id=81-1541), duplicate it to your drafts (or use any file with the same
+   components) and run the Pixelwright plugin in it. Its **Start here** page lists what every tool shows on which
+   layer.
 2. Start your MCP client in this folder (or set `CLAUDE_PROJECT_DIR` to it), so the Code Connect files and the
    baseline are found.
 3. Ask it to read the Plans row of **Pricing – Desktop**.

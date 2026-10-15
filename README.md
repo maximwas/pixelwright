@@ -32,6 +32,14 @@ It connects Claude Code and Cursor, shows what to paste for Codex and other MCP 
 `npx -y pixelwright@latest setup --print` asks nothing: it puts the plugin in place and prints the commands and config
 blocks, for scripts.
 
+## Try it on the demo
+
+[Open the Orbit demo in Figma](https://www.figma.com/design/JHfoyeEnpNChVEtjBGwhIo/Test-MCP?node-id=81-1541): a small pricing site made for Pixelwright. Duplicate it to your drafts, run
+the plugin in your copy and follow its **Start here** page, which names the layer each tool shows best: three
+breakpoints, an A/B hero, a prototype flow, Dev Mode notes and measurements, Motion, components with an exposed
+instance and a slot, and the deliberate mistakes the audits find. [examples/orbit](https://github.com/maximwas/pixelwright/tree/main/examples/orbit)
+is the code an agent builds from it: the tokens, the components, the Code Connect files and a baseline.
+
 ## How it works
 
 ```text
