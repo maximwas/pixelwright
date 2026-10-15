@@ -142,6 +142,7 @@ Two servers starting at once no longer leave one of them logging to stderr alone
 missing part as whole; a piece past the end of a file gets a clear error instead of a bare <code>RangeError</code>.</li>
 <li>The plugin window names a saved version in plain words, not its internal operation name.</li>
 <li><code>code_connect_read</code> no longer counts the instances inside a connected instance as unconnected.</li>
+<li><code>nodes_diff</code> no longer calls an icon or image drawn anew when only its notes, link, prototype or animation differ.</li>
 <li><code>screenshot</code> says a bad <code>save</code> path before it looks for the file to shoot, so that error comes first.</li>
 <li>The shared log keeps being written when its folder is deleted while servers run, and a full log that cannot be set
 aside is written on instead of being tried again on every line.</li>

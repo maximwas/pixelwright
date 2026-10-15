@@ -127,6 +127,52 @@ describe("nodes_diff", () => {
     ]);
   });
 
+  it("does not call an icon drawn anew for what it says or does: a note, a link, an animation", () => {
+    const b = screen("20:1", 0, [
+      layer({
+        id: "20:2",
+        name: "Card",
+        fills: [RED],
+      }),
+      {
+        ...icon("20:3", "path-a"),
+        annotations: [
+          {
+            label: "Spins while loading.",
+          },
+        ],
+        href: "https://example.com",
+        motion: {
+          styles: [],
+          tracks: [
+            {
+              field: "OPACITY",
+              operation: "REPLACE",
+              base: {
+                type: "FLOAT",
+                value: 1,
+              },
+              keyframes: [
+                {
+                  t: 0,
+                  value: {
+                    type: "FLOAT",
+                    value: 0,
+                  },
+                  easing: {
+                    type: "LINEAR",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(designDiff(variantA(), b).changed.filter(({ drawing }) => drawing === true)).toEqual([]);
+  });
+
   it("lists the layers only one side has", () => {
     const b = screen("20:1", 0, [
       layer({

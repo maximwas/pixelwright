@@ -1,7 +1,26 @@
 import type { SnapshotNode } from "../../types/snapshot.ts";
 
-/** Snapshot fields that name or place a layer rather than draw it. */
-const NOT_DRAWING = new Set(["id", "name", "x", "y", "bounds", "renderBounds", "css"]);
+/**
+ * Snapshot fields that name or place a layer, or say what it does, rather than draw it: its notes and description,
+ * its link and prototype reactions, its animation, its export settings, Figma's own matches and overrides list.
+ */
+const NOT_DRAWING = new Set([
+  "id",
+  "name",
+  "x",
+  "y",
+  "bounds",
+  "renderBounds",
+  "css",
+  "description",
+  "annotations",
+  "href",
+  "reactions",
+  "motion",
+  "exportSettings",
+  "inferred",
+  "overrides",
+]);
 
 /**
  * What draws a layer, without what names or places it: equal for two copies of one icon. With `keeps`, only the fields
