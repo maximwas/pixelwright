@@ -11,7 +11,16 @@ import { marked } from "marked";
 import { GUIDE_TOPICS } from "../apps/server/src/features/guide/topics.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const README_SECTIONS = ["Quick start", "How it works", "Code Connect", "Safety", "Limits", "Commands", "Updating"];
+const README_SECTIONS = [
+  "Quick start",
+  "Try it on the demo",
+  "How it works",
+  "Code Connect",
+  "Safety",
+  "Limits",
+  "Commands",
+  "Updating",
+];
 
 const escapeHtml = (text) =>
   String(text).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
