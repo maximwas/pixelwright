@@ -164,8 +164,7 @@ pnpm check:pack       # packs the server, installs it in an empty folder and run
 
 Figma Desktop is not allowed to read the folders macOS protects (Desktop, Documents, Downloads) unless you grant it
 access, and it loads a development plugin's code from disk on every run. `plugin:install` puts the plugin outside them,
-so the repository can live anywhere. Run it again after every change to the plugin. `pnpm test:integration` pairs
-with the plugin running in a file and pings it (`apps/server/test/plugin.integration.test.ts`).
+so the repository can live anywhere. Run it again after every change to the plugin.
 
 The monorepo: `packages/core` (the XML, CSS and tokens, shared), `apps/server` (the npm package), `apps/plugin` (the
 Figma plugin), `examples/`, and `docs/` (the website, served by GitHub Pages).
