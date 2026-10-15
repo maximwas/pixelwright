@@ -1,8 +1,12 @@
 import { decode, encode } from "fast-png";
 import { describe, expect, it } from "vitest";
 import { takeScreenshot } from "../src/images/screenshot.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
+
+/** The plugin session a call works on, over a test bridge. */
+const sessionOf = (bridge: BridgeView) => new PluginClient(bridge).session();
 
 /** A 20×10 layer at (100, 100) whose shadow paints 2 px around it: the export with effects covers 24×14. */
 const BOX = {
@@ -105,7 +109,7 @@ const imageOf = (result: Awaited<ReturnType<typeof takeScreenshot>>) => {
 describe("screenshot clip", () => {
   it("crops the asked region of the layer, measured from its box, at the scale", async () => {
     const { bridge } = clippingBridge();
-    const result = await takeScreenshot(bridge, {
+    const result = await takeScreenshot(sessionOf(bridge), {
       node: "1:2",
       scale: 2,
       effects: true,
@@ -131,7 +135,7 @@ describe("screenshot clip", () => {
       height: 4,
     });
     const png = imageOf(
-      await takeScreenshot(bridge, {
+      await takeScreenshot(sessionOf(bridge), {
         node: "1:2",
         scale: 1,
         effects: true,
@@ -157,7 +161,7 @@ describe("screenshot clip", () => {
     const { bridge } = clippingBridge();
 
     await expect(
-      takeScreenshot(bridge, {
+      takeScreenshot(sessionOf(bridge), {
         node: "1:2",
         scale: 1,
         effects: true,
@@ -201,7 +205,7 @@ describe("screenshot in a variable mode", () => {
       },
     };
 
-    await takeScreenshot(bridge, {
+    await takeScreenshot(sessionOf(bridge), {
       node: "1:2",
       scale: 1,
       effects: true,
@@ -259,7 +263,7 @@ describe("screenshot clip of a huge layer", () => {
     };
 
     await expect(
-      takeScreenshot(bridge, {
+      takeScreenshot(sessionOf(bridge), {
         node: "1:2",
         scale: 2,
         effects: true,

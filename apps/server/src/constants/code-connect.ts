@@ -1,5 +1,20 @@
-/** Figma's Code Connect template files, where figma.config.json names no others. */
-export const TEMPLATE_GLOBS = ["**/*.figma.ts", "**/*.figma.js", "**/*.figma.template.ts", "**/*.figma.template.js"];
+/** Figma's Code Connect files, templates and batch files, where figma.config.json names no others. */
+export const TEMPLATE_GLOBS = [
+  "**/*.figma.ts",
+  "**/*.figma.js",
+  "**/*.figma.template.ts",
+  "**/*.figma.template.js",
+  "**/*.figma.batch.json",
+];
+
+/** A batch file's ending: rows of components run through one shared template. */
+export const BATCH_SUFFIX = ".figma.batch.json";
+
+/** The glob that finds batch files a custom include leaves out. */
+export const BATCH_GLOB = "**/*.figma.batch.json";
+
+/** The endings a batch file's shared template must have (Figma's CLI refuses others). */
+export const BATCH_TEMPLATE_SUFFIXES = [".figma.batch.ts", ".figma.batch.js"];
 
 /** The endings Figma takes a template by, whatever the include globs found. */
 export const TEMPLATE_SUFFIXES = [".figma.ts", ".figma.js", ".figma.template.ts", ".figma.template.js"];
@@ -21,6 +36,11 @@ export const CODE_CONNECT_BUDGET_MS = 5_000;
  * V8's watchdog fires late on a busy machine, and 5 ms let the outer one go first now and then.
  */
 export const NESTED_TIMEOUT_MARGIN_MS = 50;
+
+/** The console a template and its helpers get: it says nothing. */
+export const QUIET_CONSOLE = Object.fromEntries(
+  ["log", "info", "warn", "error", "debug"].map((name) => [name, () => {}]),
+);
 
 /** The files a relative import may name, tried in order after the name as written. */
 export const HELPER_EXTENSIONS = [".ts", ".js", ".mts", ".mjs", "/index.ts", "/index.js"];

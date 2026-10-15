@@ -9,39 +9,41 @@ const SIMD_PROBE = new Uint8Array([
   0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11,
 ]);
 
-let ready: Promise<unknown> | null = null;
+/** Encodes PNGs as WebP, its wasm read from the package once, when first needed: Node cannot fetch it as a browser. */
+export class WebpEncoder {
+  #ready: Promise<unknown> | null = null;
 
-/** The encoder's wasm, read from its package once: Node cannot fetch it the way a browser would. */
-function loaded(): Promise<unknown> {
-  ready ??= (async () => {
-    const build = WebAssembly.validate(SIMD_PROBE) ? "webp_enc_simd" : "webp_enc";
-    const path = createRequire(import.meta.url).resolve(`@jsquash/webp/codec/enc/${build}.wasm`);
+  /** A PNG as WebP at this quality (1–100), its transparency kept. */
+  async encode(png: Uint8Array, quality: number): Promise<Buffer> {
+    await this.#loaded();
 
-    return init(await WebAssembly.compile(await readFile(path)));
-  })().catch((error: unknown) => {
-    // Forgotten, so the next export tries again.
-    ready = null;
+    const image = toRgba(decode(png));
+    const webp = await encode(
+      {
+        data: new Uint8ClampedArray(image.data.buffer, image.data.byteOffset, image.data.byteLength),
+        width: image.width,
+        height: image.height,
+        colorSpace: "srgb",
+      } as Parameters<typeof encode>[0],
+      { quality },
+    );
 
-    throw error;
-  });
+    return Buffer.from(webp);
+  }
 
-  return ready;
-}
+  #loaded(): Promise<unknown> {
+    this.#ready ??= (async () => {
+      const build = WebAssembly.validate(SIMD_PROBE) ? "webp_enc_simd" : "webp_enc";
+      const path = createRequire(import.meta.url).resolve(`@jsquash/webp/codec/enc/${build}.wasm`);
 
-/** A PNG as WebP at this quality (1–100), its transparency kept. */
-export async function pngToWebp(png: Uint8Array, quality: number): Promise<Buffer> {
-  await loaded();
+      return init(await WebAssembly.compile(await readFile(path)));
+    })().catch((error: unknown) => {
+      // Forgotten, so the next export tries again.
+      this.#ready = null;
 
-  const image = toRgba(decode(png));
-  const webp = await encode(
-    {
-      data: new Uint8ClampedArray(image.data.buffer, image.data.byteOffset, image.data.byteLength),
-      width: image.width,
-      height: image.height,
-      colorSpace: "srgb",
-    } as Parameters<typeof encode>[0],
-    { quality },
-  );
+      throw error;
+    });
 
-  return Buffer.from(webp);
+    return this.#ready;
+  }
 }

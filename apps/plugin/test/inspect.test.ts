@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const DARK = {
   r: 0.098,
@@ -139,7 +142,7 @@ describe("inspect", () => {
   it("reads layers from a section's top left, with Allow edits off, and names the ids it could not find", async () => {
     installFigma(page());
 
-    const raw = (await runOperation("inspect", {
+    const raw = (await plugin.run("inspect", {
       nodes: ["2:3", "2:4", "9:9"],
       relativeTo: "2:1",
     })) as {
@@ -204,7 +207,7 @@ describe("inspect", () => {
   it("measures from the page without relativeTo", async () => {
     installFigma(page());
 
-    const raw = (await runOperation("inspect", { nodes: ["2:4"] })) as {
+    const raw = (await plugin.run("inspect", { nodes: ["2:4"] })) as {
       origin: unknown;
       layers: { box: unknown }[];
     };
@@ -216,6 +219,15 @@ describe("inspect", () => {
       width: 100,
       height: 0,
     });
+  });
+  it("says the file's colour profile, so a P3 file's colours are written as such", async () => {
+    const { figma } = installFigma(page());
+
+    expect(await plugin.run("inspect", { nodes: ["2:4"] })).not.toHaveProperty("colorProfile");
+
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    expect(await plugin.run("inspect", { nodes: ["2:4"] })).toMatchObject({ colorProfile: "DISPLAY_P3" });
   });
 });
 
@@ -262,7 +274,7 @@ describe("inspect fills", () => {
       },
     );
 
-    const raw = (await runOperation("inspect", { nodes: ["3:1"] })) as { styles?: Record<string, { name: string }> };
+    const raw = (await plugin.run("inspect", { nodes: ["3:1"] })) as { styles?: Record<string, { name: string }> };
 
     expect(raw.styles?.["S:d"]?.name).toBe("Dark");
   });

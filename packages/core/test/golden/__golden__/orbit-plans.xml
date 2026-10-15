@@ -1,0 +1,86 @@
+<Frame id="54:243" name="Plans" display="flex" width="1200px" height="394px" gap="var(--space-24)">
+  <Instance id="54:244" name="Plan – Starter" component="Plan Card" props="Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter" display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="1px solid var(--color-line)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
+    <Frame id="I54:244;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+      <Text id="I54:244;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Starter</Text>
+    </Frame>
+    <Text id="I54:244;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For side projects and trying things out.</Text>
+    <Frame id="I54:244;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">
+      <Text id="I54:244;54:209" name="Amount" textStyle="Price" color="var(--color-ink)">$0</Text>
+      <Text id="I54:244;54:210" name="Period" textStyle="Body" color="var(--color-ink-muted)">/ month</Text>
+    </Frame>
+    <Instance id="I54:244;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Start free" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+      <Text id="I54:244;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Start free</Text>
+    </Instance>
+    <Frame id="I54:244;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+      <Frame id="I54:244;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:244;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check.svg" width="20px" height="20px"/>
+        <Text id="I54:244;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+      </Frame>
+      <Frame id="I54:244;54:218" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:244;54:219" name="Icon/Check" component="Icon/Check" src="assets/icon-check-2.svg" width="20px" height="20px"/>
+        <Text id="I54:244;54:221" name="Text" textStyle="Body Small" color="var(--color-ink)">Version history for 30 days</Text>
+      </Frame>
+      <Frame id="I54:244;54:222" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:244;54:223" name="Icon/Check" component="Icon/Check" src="assets/icon-check-3.svg" width="20px" height="20px"/>
+        <Text id="I54:244;54:225" name="Text" textStyle="Body Small" color="var(--color-ink)">Email support</Text>
+      </Frame>
+    </Frame>
+  </Instance>
+  <Instance id="54:268" name="Plan – Pro" component="Plan Card" props="Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro" note="The price comes from the billing API. Show the Popular badge only on the plan the API marks popular." display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="2px solid var(--color-brand)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)" $on-click="go to Checkout – Desktop; dissolve 300ms ease-out">
+    <Frame id="I54:268;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+      <Text id="I54:268;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Pro</Text>
+      <Instance id="I54:268;54:205" name="Badge" component="Badge" props="Label=Popular" display="flex" padding="var(--space-4) var(--space-12)" align-items="center" border-radius="var(--radius-pill)" background="var(--color-accent)">
+        <Text id="I54:268;54:205;54:188" name="Label" textStyle="Label" color="var(--color-on-brand)">Popular</Text>
+      </Instance>
+    </Frame>
+    <Text id="I54:268;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For freelancers shipping fast.</Text>
+    <Frame id="I54:268;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">
+      <Text id="I54:268;54:209" name="Amount" textStyle="Price" color="var(--color-ink)">$12</Text>
+      <Text id="I54:268;54:210" name="Period" textStyle="Body" color="var(--color-ink-muted)">/ month</Text>
+    </Frame>
+    <Instance id="I54:268;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Get started" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+      <Text id="I54:268;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Get started</Text>
+    </Instance>
+    <Frame id="I54:268;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+      <Frame id="I54:268;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:268;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check-4.svg" width="20px" height="20px"/>
+        <Text id="I54:268;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+      </Frame>
+      <Frame id="I54:268;54:218" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:268;54:219" name="Icon/Check" component="Icon/Check" src="assets/icon-check-5.svg" width="20px" height="20px"/>
+        <Text id="I54:268;54:221" name="Text" textStyle="Body Small" color="var(--color-ink)">Version history for 30 days</Text>
+      </Frame>
+      <Frame id="I54:268;54:222" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:268;54:223" name="Icon/Check" component="Icon/Check" src="assets/icon-check-6.svg" width="20px" height="20px"/>
+        <Text id="I54:268;54:225" name="Text" textStyle="Body Small" color="var(--color-ink)">Email support</Text>
+      </Frame>
+    </Frame>
+  </Instance>
+  <Instance id="54:292" name="Plan – Team" component="Plan Card" props="Price=$29, Popular=false, Description=For growing teams that ship together., Name=Team" display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="1px solid var(--color-line)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
+    <Frame id="I54:292;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+      <Text id="I54:292;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Team</Text>
+    </Frame>
+    <Text id="I54:292;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For growing teams that ship together.</Text>
+    <Frame id="I54:292;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">
+      <Text id="I54:292;54:209" name="Amount" textStyle="Price" color="var(--color-ink)">$29</Text>
+      <Text id="I54:292;54:210" name="Period" textStyle="Body" color="var(--color-ink-muted)">/ month</Text>
+    </Frame>
+    <Instance id="I54:292;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Contact sales" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+      <Text id="I54:292;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Contact sales</Text>
+    </Instance>
+    <Frame id="I54:292;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+      <Frame id="I54:292;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:292;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check-7.svg" width="20px" height="20px"/>
+        <Text id="I54:292;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+      </Frame>
+      <Frame id="I54:292;54:218" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:292;54:219" name="Icon/Check" component="Icon/Check" src="assets/icon-check-8.svg" width="20px" height="20px"/>
+        <Text id="I54:292;54:221" name="Text" textStyle="Body Small" color="var(--color-ink)">Version history for 30 days</Text>
+      </Frame>
+      <Frame id="I54:292;54:222" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+        <Icon id="I54:292;54:223" name="Icon/Check" component="Icon/Check" src="assets/icon-check-9.svg" width="20px" height="20px"/>
+        <Text id="I54:292;54:225" name="Text" textStyle="Body Small" color="var(--color-ink)">Email support</Text>
+      </Frame>
+    </Frame>
+  </Instance>
+</Frame>

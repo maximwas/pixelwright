@@ -9,7 +9,11 @@ import {
   type TextSegment,
   unchangedAttributes,
 } from "../src/index.ts";
+import { everyHintSnapshot } from "./helpers/every-hint.ts";
 import { fixture, nodesOf } from "./helpers/fixtures.ts";
+import { BOLD, textLayer as runsText } from "./helpers/layers.ts";
+import { everyMotionSnapshot } from "./helpers/motion.ts";
+import { oddTextSnapshot } from "./helpers/odd-text.ts";
 
 describe("readApply", () => {
   it("lists every element with its parent, position and attributes, $ ones left out", () => {
@@ -71,9 +75,9 @@ describe("readApply", () => {
       id: "2:1",
       gap: "24px",
     });
-    expect(elements[1]?.content?.map((child) => (child.kind === "text" ? child.value : child.type))).toEqual([
+    expect(elements[1]?.content?.map((piece) => (piece.kind === "text" ? piece.value : piece.kind))).toEqual([
       "Hello ",
-      "Span",
+      "span",
     ]);
   });
 
@@ -81,7 +85,7 @@ describe("readApply", () => {
     const { elements, errors } = readApply(
       [
         '<Frame id="2:1" gapp="24px"/>',
-        '<Widget id="2:2"/>',
+        '<Widgit id="2:2"/>',
         '<Frame id="2:3" gap="8px"><Span>x</Span></Frame>',
         '<Frame id="2:4" width="10px"/>',
       ].join("\n"),
@@ -98,7 +102,8 @@ describe("readApply", () => {
       expect.objectContaining({
         line: 2,
         id: "2:2",
-        message: expect.stringMatching(/Widget/),
+        message: expect.stringMatching(/Widgit/),
+        hint: expect.stringMatching(/Widget/),
       }),
       expect.objectContaining({
         line: 3,
@@ -231,6 +236,58 @@ describe("readApply", () => {
     expect(written?.content).toHaveLength(1);
   });
 
+  it("never parents a new layer under the source's layer when an element above it inside a copy is refused", () => {
+    const { elements, errors } = readApply(
+      '<Frame copyOf="1:1" name="Card copy"><Fram id="1:5"><Frame name="New"/></Fram></Frame>',
+    );
+
+    expect(elements.map(({ tag, parent }) => `${tag} under ${parent}`)).toEqual(["Frame under null"]);
+    expect(errors.map(({ message }) => message)).toContainEqual(expect.stringMatching(/<Frame> is not created/));
+  });
+
+  it("reads a layer named by id below a new element that is not created", () => {
+    const { elements } = readApply('<Fram name="Wrapper"><Frame name="Inner"><Text id="1:2">Hi</Text></Frame></Fram>');
+
+    expect(elements.map(({ id }) => id)).toEqual(["1:2"]);
+  });
+
+  it("reads the layers inside a Span that stands outside a Text", () => {
+    const { elements } = readApply('<Frame id="1:1"><Span><Text id="1:2">Hi</Text></Span></Frame>');
+
+    expect(elements.map(({ id }) => id)).toEqual(["1:1", "1:2"]);
+  });
+
+  it("says what a Span inside a Span sets is left out", () => {
+    const { errors } = readApply(
+      '<Text id="1:2">a<Span color="#F00">b<Span font="700 16px/normal \'Inter\'">c</Span></Span></Text>',
+    );
+
+    expect(errors).toEqual([
+      expect.objectContaining({
+        attribute: "font",
+        message: expect.stringMatching(/inside a <Span>/),
+      }),
+    ]);
+  });
+
+  it("says when the XML holds no element", () => {
+    expect(readApply("").errors).toEqual([
+      {
+        line: 1,
+        column: 1,
+        message: expect.stringMatching(/no element/),
+      },
+    ]);
+    expect(readApply("<!-- nothing -->").errors).toHaveLength(1);
+  });
+
+  it("changes a layer of any Figma type design_read writes, by its id", () => {
+    const { elements, errors } = readApply('<Widget id="1:2" name="Poll"/>\n<Sticky id="1:3" name="Note"/>');
+
+    expect(errors).toEqual([]);
+    expect(elements.map(({ tag }) => tag)).toEqual(["Widget", "Sticky"]);
+  });
+
   it("returns a parse error with its line and column instead of throwing", () => {
     expect(readApply('<Frame id="2:1">\n<Text>hi</Frame>').errors).toEqual([
       expect.objectContaining({
@@ -242,6 +299,33 @@ describe("readApply", () => {
   });
 });
 
+describe("text outside a Text", () => {
+  it("is placed where its words start, not where the run of spaces before them does", () => {
+    const { errors } = readApply('<Frame id="2:1"/>\n  stray words');
+
+    expect(errors.map(({ line, column, message }) => [line, column, message])).toEqual([
+      [2, 3, 'Text "stray words" outside a <Text>: text belongs in a Text element.'],
+    ]);
+  });
+});
+
+describe("a Line's attributes", () => {
+  it("refuses a corner radius, which a line has none of, and keeps its border", () => {
+    const { elements, errors } = readApply('<Line id="1:1" border-top="1px solid #000" border-radius="2px"/>');
+
+    expect(errors).toEqual([
+      expect.objectContaining({
+        attribute: "border-radius",
+        message: "A <Line> has no border-radius.",
+      }),
+    ]);
+    expect(elements[0]?.attributes).toEqual({
+      id: "1:1",
+      "border-top": "1px solid #000",
+    });
+  });
+});
+
 describe("the round trip: design_read's XML sent back changes nothing", () => {
   for (const name of ["orbit-plans", "orbit-pricing", "orbit-customers", "orbit-desktop-top"]) {
     it(name, () => {
@@ -250,6 +334,65 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
       expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
     });
   }
+
+  it("with every hint's layers and every case of Figma Motion", () => {
+    for (const snapshot of [everyHintSnapshot(), everyMotionSnapshot()]) {
+      expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
+    }
+  });
+
+  it("with quotes, line breaks, U+2028 and texts of odd spaces", () => {
+    const snapshot = oddTextSnapshot();
+
+    expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
+  });
+
+  it("with a plain space typed between two spans where design_read wrote &#32;", () => {
+    const snapshot: Snapshot = {
+      root: {
+        ...runsText("1:2", "Greeting", [["Hi "], ["Hello", BOLD], [" "], ["world", BOLD]]),
+      },
+      styles: {},
+      variables: {},
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain("&#32;");
+    expect(changesOf(snapshot, xml.replace("&#32;", " "))).toEqual([]);
+  });
+
+  it("with a hex-like word in a name and a note in a Display P3 file", () => {
+    const snapshot: Snapshot = {
+      root: {
+        id: "1:1",
+        name: "Swatch #FFF",
+        type: "FRAME",
+        visible: true,
+        x: 0,
+        y: 0,
+        width: 120,
+        height: 80,
+        childCount: 0,
+        annotations: [{ label: "Brand #3B2FD9" }],
+        fills: [
+          {
+            type: "SOLID",
+            visible: true,
+            color: {
+              r: 1,
+              g: 0,
+              b: 0,
+            },
+          },
+        ],
+      },
+      styles: {},
+      variables: {},
+      colorProfile: "DISPLAY_P3",
+    };
+
+    expect(changesOf(snapshot, designXml(snapshot).xml)).toEqual([]);
+  });
 
   it("with instances a Code Connect template renders written without their children", () => {
     const snapshot = fixture("orbit-plans");
@@ -283,6 +426,58 @@ describe("the round trip: design_read's XML sent back changes nothing", () => {
     const xml = designXml(snapshot).xml;
 
     expect(xml).toContain('$pins="gap, padding, width"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
+
+  it("with what an instance overrides", () => {
+    const plans = fixture("orbit-plans");
+    const overridden = (node: SnapshotNode): SnapshotNode => ({
+      ...node,
+      ...(node.id === "I54:244;54:217" ? { overrides: ["characters", "styledTextSegments"] } : {}),
+      ...(node.children === undefined ? {} : { children: node.children.map(overridden) }),
+    });
+    const snapshot: Snapshot = {
+      ...plans,
+      root: overridden(plans.root),
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain('$override="text"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
+
+  it("with a grid style on the root", () => {
+    const plans = fixture("orbit-plans");
+    const snapshot: Snapshot = {
+      ...plans,
+      root: {
+        ...plans.root,
+        gridStyleId: "S:grid",
+      },
+      styles: {
+        ...plans.styles,
+        "S:grid": {
+          name: "Desktop 12",
+          type: "GRID",
+          remote: false,
+        },
+      },
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml).toContain('$grid-style="Desktop 12"');
+    expect(changesOf(snapshot, xml)).toEqual([]);
+  });
+
+  it("with the read marked ready for dev", () => {
+    const snapshot: Snapshot = {
+      ...fixture("orbit-plans"),
+      devStatus: "ready",
+    };
+    const xml = designXml(snapshot).xml;
+
+    expect(xml.split("\n")[0]).toContain('$dev="ready for dev"');
+    expect(xml.split("\n").slice(1).join("\n")).not.toContain("$dev");
     expect(changesOf(snapshot, xml)).toEqual([]);
   });
 

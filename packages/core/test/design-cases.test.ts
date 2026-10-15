@@ -442,6 +442,86 @@ describe("text beyond font and color", () => {
 
     expect(xml).toContain('$css="line-clamp: 3; list-style: disc; paragraph-spacing: 12px"');
   });
+
+  it("keeps a list's item spacing, a line's round caps and a grid style's name as read-only", () => {
+    const listed = xmlOf(
+      text(
+        {
+          text: {
+            characters: "One\nTwo",
+            textAutoResize: "HEIGHT",
+            textAlignHorizontal: "LEFT",
+            textAlignVertical: "TOP",
+            listSpacing: 8,
+            segments: [
+              segment({
+                characters: "One\nTwo",
+                end: 7,
+                listOptions: { type: "UNORDERED" },
+              }),
+            ],
+          },
+        },
+        [],
+      ),
+    );
+    const lines = designXml({
+      root: box(
+        [
+          layer({
+            id: "1:2",
+            type: "LINE",
+            height: 0,
+            strokeCap: "ROUND",
+            strokes: [
+              {
+                type: "SOLID",
+                visible: true,
+                color: {
+                  r: 0,
+                  g: 0,
+                  b: 0,
+                },
+              },
+            ],
+            strokeWeight: 2,
+          }),
+          layer({
+            id: "1:3",
+            type: "LINE",
+            height: 0,
+            strokeCap: "NONE",
+          }),
+        ],
+        {
+          gridStyleId: "S:grid",
+          layoutGrids: [
+            {
+              pattern: "COLUMNS",
+              alignment: "STRETCH",
+              count: 12,
+              gutterSize: 24,
+              offset: 80,
+              visible: true,
+            },
+          ],
+        },
+      ),
+      styles: {
+        "S:grid": {
+          name: "Desktop 12",
+          type: "GRID",
+          remote: false,
+        },
+      },
+      variables: {},
+    }).xml;
+
+    expect(listed).toContain("list-spacing: 8px");
+    expect(line(lines, "1:2")).toContain("stroke-linecap: round");
+    expect(line(lines, "1:3")).not.toContain("stroke-linecap");
+    expect(line(lines, "1:1")).toContain('$grid-style="Desktop 12"');
+  });
 });
 
 describe("what designers tell developers", () => {

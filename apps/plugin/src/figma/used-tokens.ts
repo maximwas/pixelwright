@@ -33,17 +33,23 @@ function usedBy(layer: BaseNode, styleIds: Set<string>, variableIds: string[]): 
     }
   }
 
-  if (layer.type === "TEXT" && (layer.fillStyleId === figma.mixed || layer.textStyleId === figma.mixed)) {
-    for (const segment of layer.getStyledTextSegments(["fillStyleId", "textStyleId"])) {
-      for (const id of [segment.fillStyleId, segment.textStyleId]) {
-        if (id !== "") {
-          styleIds.add(id);
-        }
-      }
-    }
+  for (const id of runStyles(layer)) {
+    styleIds.add(id);
   }
 
   variableIds.push(...aliasesIn([record.boundVariables, record.fills, record.strokes, record.effects]));
+}
+
+/** The styles a text's runs use, where the text's own say mixed. */
+function runStyles(layer: BaseNode): string[] {
+  if (layer.type !== "TEXT" || (layer.fillStyleId !== figma.mixed && layer.textStyleId !== figma.mixed)) {
+    return [];
+  }
+
+  return layer
+    .getStyledTextSegments(["fillStyleId", "textStyleId"])
+    .flatMap((segment) => [segment.fillStyleId, segment.textStyleId])
+    .filter((id) => id !== "");
 }
 
 /** Every variable alias inside a value, however deep (paints, effects, bound fields, composed colours). */

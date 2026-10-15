@@ -88,14 +88,17 @@ connected at once; tools work on the one whose plugin window was in front last, 
         <section id="code-connect">
           <h2>Code Connect</h2>
 <p>Pixelwright runs your project&#39;s <a href="https://www.figma.com/developers/code-connect">Figma Code Connect</a> templates
-(<code>*.figma.ts</code>, written as Figma documents them) itself, on any plan, without publishing anything. <code>design_read</code> then
-gives each connected instance as <code>$code</code> in the XML with its code and imports:</p>
-<pre><code class="language-json">{ &quot;ids&quot;: [&quot;54:268&quot;], &quot;component&quot;: &quot;Plan Card&quot;,
-  &quot;snippet&quot;: &quot;&lt;PlanCard name=\&quot;Pro\&quot; price=\&quot;$12\&quot; popular&gt;\n  &lt;Button variant=\&quot;primary\&quot;&gt;Get started&lt;/Button&gt;\n&lt;/PlanCard&gt;&quot;,
+(<code>*.figma.ts</code>) and batch files (<code>*.figma.batch.json</code>, one row per component through a shared template), written as
+Figma documents them, itself, on any plan, without publishing anything. <code>design_read</code> then gives each connected
+instance as <code>$code</code> in the XML with its code and imports, and names the properties its code leaves out:</p>
+<pre><code class="language-json">{ &quot;ids&quot;: [&quot;54:268&quot;], &quot;component&quot;: &quot;PlanCard&quot;, &quot;source&quot;: &quot;src/components/PlanCard.tsx&quot;,
+  &quot;snippet&quot;: &quot;&lt;PlanCard name=\&quot;Pro\&quot; price=\&quot;$12\&quot; description=\&quot;For freelancers shipping fast.\&quot; popular&gt;\n  &lt;Button variant=\&quot;primary\&quot;&gt;Get started&lt;/Button&gt;\n&lt;/PlanCard&gt;&quot;,
   &quot;imports&quot;: [&quot;import { PlanCard } from \&quot;@/components/PlanCard\&quot;&quot;, &quot;import { Button } from \&quot;@/components/Button\&quot;&quot;] }
 </code></pre>
-<p>See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/orbit">examples/orbit</a> for two templates, one rendering
-the other inside it, and how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
+<p>A row or a template can name the component&#39;s key (<code>components_read</code> gives it), which matches exactly that component
+in every file, a library&#39;s included. <code>components_read mapped=false</code> lists the components still without code, so a
+design system is mapped once, a row each. See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/orbit">examples/orbit</a>
+for two templates, one rendering the other inside it, a batch file, and how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
 
         </section>
         <section id="safety">
@@ -128,10 +131,12 @@ not tested yet.</li>
 <pre><code class="language-text">pixelwright                 in a terminal: the setup; started by an MCP client: the MCP server on stdio
 pixelwright setup --print   no questions: the plugin put in place, the commands and config blocks printed
 pixelwright serve           the MCP server, however it is started
+pixelwright logs            follow the logs of every running server on this machine: tool calls, plugins, errors
 pixelwright --version
 </code></pre>
-<p><code>PIXELWRIGHT_HOME</code> moves <code>~/.pixelwright</code> (the plugin, pairing keys, written-files.json); <code>CLAUDE_PROJECT_DIR</code> names the
-project for Code Connect; <code>PIXELWRIGHT_SUPPORT_REMINDERS=off</code> turns off the weekly support note (see Support).</p>
+<p><code>PIXELWRIGHT_HOME</code> moves <code>~/.pixelwright</code> (the plugin, pairing keys, written-files.json, the shared log in <code>logs/</code>);
+<code>CLAUDE_PROJECT_DIR</code> names the project for Code Connect; <code>PIXELWRIGHT_SUPPORT_REMINDERS=off</code> turns off the weekly
+support note (see Support); <code>PIXELWRIGHT_LOG_LEVEL=debug</code> adds the bridge&#39;s details to the log.</p>
 
         </section>
         <section id="updating">
@@ -164,6 +169,27 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-baseline_diff">
+  <h3><code>baseline_diff</code></h3>
+  <p>What the designer changed since baseline_save, in design_read&#39;s terms: each layer changed (its attributes as [before, after], a text&#39;s content as XML), added (with its XML when short), removed or hidden, moved to another parent or reordered; a change made in a component once, with the instances it reached and how many were compared (of); tokens whose value changed in any mode, renamed, newly used or no longer used; icons and images drawn anew (drawing: export them again). Layers are followed by id, a replaced one by its name. It sees what changes_since and Figma&#39;s own Changed mark miss: edits made while the plugin was closed, accepted library updates, variable and style values. Without name: every baseline in the project with how much changed; call it when a session starts or the user says the design changed. It reads the file the baseline came from and works while Allow edits is off. Change only the code it names (code lists the files), then call baseline_save with the accept it gives.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td>One baseline in detail. Without it: every baseline in the project, with how much changed.</td></tr>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>Compare with this layer instead of the baseline&#39;s own, e.g. a v2 the designer made beside it. Needs name.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>With name: compare in this file (a session from status, or a file name). Without name: only this file&#39;s baselines. Default: the file each baseline came from.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-baseline_save">
+  <h3><code>baseline_save</code></h3>
+  <p>Keeps a layer as you build code from it, so baseline_diff can tell later what the designer changed: its read and the values of the tokens it uses, in every mode, go into .pixelwright/baselines/&lt;name&gt;.json in the project (it holds the design&#39;s texts: commit the folder to share it, or leave it out of git). Save right after the design_read you build a screen or section from; name it after your code (pricing, plan-card) and list in code the files you build from it. Once your code has the changes a baseline_diff listed, pass the accept it gave: exactly the design it compared is kept, so what the designer changed after it still shows next time. An existing name is replaced only with accept or replace: true; code alone changes its file list. Writes nothing to Figma, so it works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer the code is built from: a frame, section, component or instance. Default: the one selected layer. Not with accept.</td></tr>
+<tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td>Named after the code: pricing, plan-card. Default: the layer&#39;s name as a slug. Required with accept.</td></tr>
+<tr><td><code>code</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The project&#39;s files built from the layer, relative to the project. Default: the list the baseline already has.</td></tr>
+<tr><td><code>accept</code><span class="optional">optional</span></td><td><code>string</code></td><td>The accept a baseline_diff answer gave: keeps exactly the design that diff compared.</td></tr>
+<tr><td><code>replace</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Start the named baseline over from the layer as it is now. Not with accept.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-breakpoints_find">
   <h3><code>breakpoints_find</code></h3>
   <p>Finds the screen a layer is on at the page&#39;s other widths (Desktop, Tablet, Mobile): the page&#39;s frames, and those in its sections, whose names match once size words are left out (Desktop, Mobile, 1440, 375px) and whose children share names with it, narrowest first, each with a score. Compare them with nodes_diff to write the media queries.</p>
@@ -174,7 +200,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-changes_since">
   <h3><code>changes_since</code></h3>
-  <p>What changed in the file since the plugin started watching (its window opened) or since an earlier answer&#39;s cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed. Only pages the user had open while the plugin ran are watched; an edit made while one of Pixelwright&#39;s writes runs (or within a second after) counts as Pixelwright&#39;s, and changes from code execute left running count as the user&#39;s.</p>
+  <p>What changed in the file since the plugin started watching (its window opened) or since an earlier answer&#39;s cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed. Only pages the user had open while the plugin ran are watched; an edit made while one of Pixelwright&#39;s writes runs (or within a second after) counts as Pixelwright&#39;s, and changes from code execute left running count as the user&#39;s. What changed while the plugin was closed, and token values, baseline_diff tells against a saved baseline.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>cursor</code><span class="optional">optional</span></td><td><code>integer</code></td><td>The cursor an earlier answer gave: only what changed after it. Default: all the plugin has seen.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
@@ -182,7 +208,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-code_connect_read">
   <h3><code>code_connect_read</code></h3>
-  <p>Lists the project&#39;s Figma Code Connect templates (*.figma.ts and *.figma.js, as figma.config.json&#39;s globs name them) with what each connects on the current page, or inside <code>node</code>: components with how many instances, and the error a trial run on the first one gives. Also the components used there that no template connects, and what keeps a template out. design_read returns the code these templates give as codeComponents. Templates are code: write them with your file tools as Figma documents them (guide topic code-connect).</p>
+  <p>Lists the project&#39;s Figma Code Connect files (templates *.figma.ts and *.figma.js, batch files *.figma.batch.json, as figma.config.json&#39;s globs name them) with what each connects on the current page, or inside <code>node</code>: components with how many instances and how each matched (by key, id or name), and what a trial run on the first gives: its error, the properties its code never reads (<code>unread</code>) and the variant values its mapping misses (<code>values</code>); <code>missing</code> marks a source file that does not exist. Also the components shown there that none connects, with the id and key a new one needs, and what keeps a file out. design_read returns their code as codeComponents. Write them with your file tools as Figma documents them (guide topic code-connect).</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer or page id to look in, e.g. 54:243. Default: the current page.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
@@ -190,12 +216,14 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-components_read">
   <h3><code>components_read</code></h3>
-  <p>Lists components: scope used (default) gives the ones the instances on the current page, or inside <code>within</code>, come from (a library&#39;s among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants (a set lists its variant names, &quot;Size=Large, State=Default&quot;), properties with their type, default and options, and description. Use it to map Figma components to the project&#39;s code components; design_read writes instances with component, variant and props.</p>
+  <p>Lists components: scope used (default) gives the ones the instances on the current page, or inside <code>within</code>, come from (a library&#39;s among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description, <code>exposed</code> (the nested instances whose properties its instances show: in code they are its props too) and <code>code</code>: the project&#39;s Code Connect template or batch row that connects it ({component, source, template, by}), or null. <code>mapped: false</code> lists only the components without code yet: connect each with a batch row keyed by its key (guide topic code-connect). <code>links: true</code> also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>scope</code><span class="optional">optional</span></td><td><code>&quot;local&quot; | &quot;used&quot;</code><br /><span class="default">default &quot;used&quot;</span></td><td>used: what the page (or within) uses; local: what the file defines.</td></tr>
 <tr><td><code>within</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer or page id to look in. Default: the current page (used) or every page (local).</td></tr>
 <tr><td><code>query</code><span class="optional">optional</span></td><td><code>string</code></td><td>Only components whose name contains this.</td></tr>
 <tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 100</span></td><td></td></tr>
+<tr><td><code>mapped</code><span class="optional">optional</span></td><td><code>boolean</code></td><td>true: only components a Code Connect file connects; false: only those none connects. Default: all.</td></tr>
+<tr><td><code>links</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also read the links people attached in Dev Mode (Figma&#39;s servers, paid plans only).</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -214,6 +242,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>xml</code></td><td><code>string</code></td><td>Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer.</td></tr>
 <tr><td><code>parent</code><span class="optional">optional</span></td><td><code>string</code></td><td>Where top-level new layers go: a frame&#39;s or page&#39;s id. Default: the current page, beside its layers.</td></tr>
 <tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check ids, tokens and fonts without writing; works with Allow edits off.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -227,7 +256,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-design_read">
   <h3><code>design_read</code></h3>
-  <p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer&#39;s Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer&#39;s summary being $motion in the XML) when there are any, and, where the project has Figma Code Connect templates (*.figma.ts), codeComponents: the code connected instances render to ({ids, component, template, snippet, imports}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code as it is (code: false reads it as layers). A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project&#39;s own components and tokens.</p>
+  <p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer&#39;s Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer&#39;s summary being $motion in the XML) when there are any, and, where the project has Figma Code Connect templates (<em>.figma.ts) or batch files (</em>.figma.batch.json), codeComponents: the code connected instances render to ({ids, component, template, source, snippet, imports, unread}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code and add what unread names (its own values are its variant and props; read it with node=&lt;its id&gt; for a nested one&#39;s); code: false reads it as layers. A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project&#39;s own components and tokens.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243. Default: the one layer selected in Figma.</td></tr>
 <tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below the layer to read. Default: all.</td></tr>
@@ -272,7 +301,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-guide">
   <h3><code>guide</code></h3>
-  <p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); code-connect (Figma Code Connect templates: how design_read runs them, writing one, what Pixelwright supports.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.</p>
+  <p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); code-connect (Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot; | &quot;write&quot; | &quot;code-connect&quot; | &quot;email&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
 </tbody></table>
@@ -330,7 +359,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-nodes_diff">
   <h3><code>nodes_diff</code></h3>
-  <p>Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A&#39;s, B&#39;s] (text as $text, an instance&#39;s variant and props too) and whether an icon&#39;s or image&#39;s own drawing differs (paths, colours, inner layers). Ids and the two roots&#39; own names and places are left out. Works while Allow edits is off.</p>
+  <p>Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A&#39;s, B&#39;s] (text as $text, an instance&#39;s variant and props too) and whether an icon&#39;s or image&#39;s own drawing differs (paths, colours, inner layers). Ids and the two roots&#39; own names and places are left out. Works while Allow edits is off. To compare a layer with how it was when you built it, use baseline_diff.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>a</code></td><td><code>string</code></td><td>The first layer&#39;s id (variant A), e.g. 54:243.</td></tr>
 <tr><td><code>b</code></td><td><code>string</code></td><td>The second layer&#39;s id (variant B).</td></tr>
@@ -402,6 +431,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>collections</code><span class="optional">optional</span></td><td><code>object[]</code><br /><span class="default">default []</span></td><td></td></tr>
 <tr><td><code>styles</code><span class="optional">optional</span></td><td><code>object</code><br /><span class="default">default {&quot;paint&quot;:[],&quot;text&quot;:[],&quot;effect&quot;:[]}</span></td><td></td></tr>
 <tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check names, types, modes and aliases without writing; works with Allow edits off.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -435,6 +465,16 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-version_save">
+  <h3><code>version_save</code><span class="writes">writes</span></h3>
+  <p>Saves a named version in the file&#39;s Figma version history, for people: the designer can open the design as it was, and developers on a paid plan can pick it in Dev Mode&#39;s Compare changes. Save one only when the user asks: Figma&#39;s plugin API cannot list, read or delete a version, so it stays in the history. baselines: the baselines it goes with; it is saved only while the design still matches them, and they record it. Needs edit access to the file and the plugin&#39;s Allow edits; the same title is refused twice within ten minutes.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>title</code></td><td><code>string</code></td><td>The version&#39;s name in Version history, e.g. &quot;Built: pricing&quot;.</td></tr>
+<tr><td><code>description</code><span class="optional">optional</span></td><td><code>string</code></td><td>Shown under the title. Everyone with the file sees it: no local paths or private repository names.</td></tr>
+<tr><td><code>baselines</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The baselines this version goes with: it is saved only while the design still matches each one, and they record it.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>A session from status, or a file name. Default: the file of the first baseline, else the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-viewport_get">
   <h3><code>viewport_get</code></h3>
   <p>What the user is looking at in Figma now: the page, the zoom, the part of the page in view (page px), and the page&#39;s layers and their children that meet it, outermost first. Use it when the user says &quot;this&quot; or &quot;here&quot; without selecting anything; selection_get gives what is selected.</p>
@@ -453,12 +493,14 @@ tool takes <code>file</code> (a session id from <code>status</code>, or a file n
 Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code status
 shows into the plugin window).</li>
 <li><strong>Find what to read.</strong><ul>
-<li><code>file_map</code>: every page with its frames, sections and components, in one call: where to start in a big file.</li>
+<li><code>file_map</code>: every page with its frames, sections and components, in one call: where to start in a big file.
+<code>devStatus</code> says what the designer marked ready for dev (or completed): build those first, not drafts.</li>
 <li><code>selection_get</code>: what the user selected (&quot;this&quot;, &quot;the selected one&quot;). <code>selection_wait</code>: ask the user to select
 something, then wait for it. <code>viewport_get</code>: what the user is looking at, when &quot;this&quot; comes with no selection.</li>
 <li><code>outline</code>: the layer tree with boxes, x and y relative to the outlined layer; <code>node: &quot;0:0&quot;</code> lists the pages.
 A layer with <code>$children=&quot;N&quot;</code> has more children than listed: outline it on its own. An instance names its
-<code>component</code> and <code>variant</code>, so repeated cards show without a read.</li>
+<code>component</code> and <code>variant</code>, so repeated cards show without a read; <code>dev=&quot;ready&quot;</code> marks what the designer
+handed over for development.</li>
 <li><code>nodes_find</code>: layers by name, type, text or component.</li>
 <li><code>node_show</code>: brings layers into view (fitted or at a zoom) and selects them, so the user sees which you mean.</li>
 <li><code>changes_since</code>: what the designer changed since you last looked (a cursor), to read again only that.</li>
@@ -493,13 +535,25 @@ images as they were placed (originals); <code>width</code> sizes a render by the
 scale 2: 220 px). When a file gets another name than design_read planned (<code>planned</code>), use the path it gives.</li>
 <li><strong>Write.</strong> <code>design_apply</code> writes the same XML back into Figma: change layers by id, create new ones (see <code>guide write</code>); <code>tokens_apply</code> writes variables and styles in tokens_read&#39;s JSON shape (see <code>guide tokens</code>);
 <code>execute</code> runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.</li>
-<li><strong>Code Connect.</strong> Where the project has Figma Code Connect templates (<code>*.figma.ts</code>), <code>design_read</code> gives each
-connected instance as <code>$code</code> with its code in <code>codeComponents</code>: use that code as it is. <code>code_connect_read</code>
-shows what is connected and what is not (see <code>guide code-connect</code>).</li>
+<li><strong>Code Connect.</strong> Where the project has Figma Code Connect templates (<code>*.figma.ts</code>) or batch files
+(<code>*.figma.batch.json</code>), <code>design_read</code> gives each connected instance as <code>$code</code> with its code in
+<code>codeComponents</code>: use that code, adding what <code>unread</code> names. <code>components_read</code> gives each component&#39;s <code>code</code>, and
+<code>mapped: false</code> the ones still without: map them once with a batch row each; <code>code_connect_read</code> checks the files
+(see <code>guide code-connect</code>).</li>
+<li><strong>Keep the code in step with the design.</strong> Right after the <code>design_read</code> you build a screen or section from,
+<code>baseline_save {node, name, code}</code> keeps it in the project (<code>.pixelwright/baselines/</code>: commit it to share, or
+leave it out of git, since it holds the design&#39;s texts). When a session starts, or the user says the design
+changed, <code>baseline_diff</code> without a name says which baselines changed; with <code>name</code> it lists the changes in the
+XML&#39;s terms. Change only the code they name: a <code>components</code> entry whose <code>instances</code> cover <code>of</code> goes into the
+component&#39;s code once; export again what is marked <code>drawing</code>; build added layers from their <code>xml</code> (or
+<code>design_read</code> when it is left out). Then <code>baseline_save {name, accept}</code> with the <code>accept</code> the diff gave. Your own
+<code>design_apply</code> writes show up too: accept them once the code follows. <code>version_save</code> leaves the designer a named
+version, only when the user asks. <code>changes_since</code> stays the live view while the plugin is open.</li>
 </ol>
 <p>Build the code from the XML with the project&#39;s own components, tokens and layout conventions: the XML is the spec, not
-the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, unnamed layers,
-frames without auto layout).</p>
+the code to paste. Hints in design_read say what Figma left unbound (raw colours equal to tokens, raw spacing, radii
+and strokes Figma itself matches to a token, unnamed layers, frames without auto layout) and what instances changed
+outside their component&#39;s properties.</p>
 
         </section>
         <section id="guide-xml">
@@ -540,7 +594,8 @@ parent element: give that parent <code>position: relative</code>. Constraints: r
 <code>calc(50% ± n px)</code> when centred, left and right without a width when stretched, percents when scaled.</li>
 <li>A turned layer has <code>transform: rotate()</code> and is placed by its centre; a mirrored one <code>scaleX(-1)</code>.</li>
 <li>Colours bound to a style or variable are <code>var(--Name)</code> (see <code>guide tokens</code>); values for them are in the JSON
-<code>tokens</code>. A text with a <code>textStyle</code> carries only what differs from the style; <code>textStyles</code> holds the style&#39;s font.</li>
+<code>tokens</code>. In a Display P3 file every colour is <code>color(display-p3 r g b)</code> (as tokens_read writes it too): keep
+it so, it is what the designer chose. A text with a <code>textStyle</code> carries only what differs from the style; <code>textStyles</code> holds the style&#39;s font.</li>
 <li>Lengths are whole pixels; letter spacing keeps fractions.</li>
 </ul>
 <h3>Read-only attributes (start with $)</h3>
@@ -549,10 +604,20 @@ parent element: give that parent <code>position: relative</code>. Constraints: r
 a negative gap (&quot;children overlap&quot;), a mask among layers.</li>
 <li><code>$children=&quot;N&quot;</code>: the layer has N children and not all are listed (snapshot budget or maxChars).</li>
 <li><code>$truncated=&quot;true&quot;</code>: the branch was emptied, or the text shortened, to fit maxChars; its id is in <code>truncated</code>.</li>
-<li><code>$code=&quot;Button&quot;</code>: an instance the project&#39;s Code Connect template renders, written without its children; its code
-is in <code>codeComponents</code> (see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
+<li><code>$code=&quot;Button&quot;</code>: an instance the project&#39;s Code Connect template or batch row renders, written without its
+children; its code is in <code>codeComponents</code>, whose <code>unread</code> names the properties that code leaves out: add them
+(see <code>guide code-connect</code>). design_apply leaves its children alone.</li>
+<li><code>$exposed=&quot;true&quot;</code>: a nested instance its component exposes: its properties are the component&#39;s API too.</li>
 <li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
-of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box).</li>
+of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box),
+<code>list-spacing: 8px</code> (the space between a list&#39;s items, apart from paragraph spacing) and
+<code>stroke-linecap: round</code> (a line&#39;s round or square ends, which a CSS border does not draw).</li>
+<li><code>$override=&quot;text, background&quot;</code>: what this layer of an instance changes that its component&#39;s properties do not
+say (a feature text rewritten, an icon recoloured). Code built from the component cannot show it: give the
+component a property or a variant for it, or build that instance as a one-off. A hint lists them all.</li>
+<li><code>$dev=&quot;ready for dev&quot;</code> on the read&#39;s root: the designer marked it (or a frame or section around it) ready for
+development (or <code>completed</code>).</li>
+<li><code>$grid-style=&quot;Desktop 12&quot;</code>: the grid style the frame&#39;s <code>layout-grid</code> comes from.</li>
 <li><code>$pins=&quot;width, padding&quot;</code>: the properties the designer pinned in the layer&#39;s Dev Mode annotations, in CSS words:
 take those values exactly.</li>
 <li><code>$motion=&quot;opacity 0→1, translate-y 24→0px; 0–0.6s ease-out&quot;</code>: the layer&#39;s Figma Motion, led by the animation
@@ -560,7 +625,8 @@ style&#39;s name when one made it. The JSON&#39;s <code>motion</code> has it as 
 for the class it names (<code>layers</code>), keyframes placed over the timeline; what CSS cannot animate is a comment.</li>
 <li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>,
 <code>$on-mouse-down</code>, <code>$on-mouse-up</code>, <code>$on-key</code>, <code>$after-timeout</code>, <code>$on-media-hit</code>, <code>$on-media-end</code> (any other trigger
-as <code>$on-&lt;trigger&gt;</code>): the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state). A link stays <code>href</code>.</li>
+as <code>$on-&lt;trigger&gt;</code>): the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state); the easing is valid CSS, a spring
+drawn as <code>linear()</code>. A link stays <code>href</code>.</li>
 </ul>
 <h3>Text</h3>
 <ul>
@@ -638,13 +704,15 @@ shorthand, an effect style&#39;s as a <code>box-shadow</code> list.</li>
 send only what you change. Nothing is ever deleted (use <code>execute</code> to remove a token).</li>
 <li>A library&#39;s collection or style the file uses is never copied into the file: change it in the library.</li>
 <li>More modes than the file&#39;s Figma plan allows: that mode&#39;s error comes back and the other modes are written.</li>
-<li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing.</li>
+<li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing. <code>version: &quot;Before the brand change&quot;</code> first saves a named version in the file&#39;s history, for the designer to go back to, when the call changes
+something.</li>
 </ul>
 <h3>Values</h3>
 <ul>
-<li>Colours as hex (rgba when see-through); a colour with an opacity variable as <code>color-mix(in srgb, … N%, transparent)</code>.</li>
+<li>Colours as hex (rgba when see-through); a colour with an opacity variable as <code>color-mix(in srgb, … N%, transparent)</code> (<code>in display-p3</code> in a Display P3 file).</li>
 <li>Numbers in px, except opacity and font weight, which have no unit.</li>
-<li>Strings quoted; booleans as true/false (CSS has no booleans); easings as CSS easing functions (springs as ease);
+<li>Strings quoted; booleans as true/false (CSS has no booleans); easings as CSS easing functions (a keyword, cubic-bezier(), or a spring
+drawn as linear());
 durations in seconds.</li>
 <li>An alias is <code>var(--other)</code>. One that points nowhere is a comment and a note.</li>
 </ul>
@@ -697,7 +765,12 @@ never overwritten with other bytes.</p>
           <h2>Guide: write</h2>
 <p class="topic-about">design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML. The agent reads this with <code>guide</code> topic <code>write</code>.</p>
 <p><code>design_apply</code> takes the XML <code>design_read</code> returns. The user turns <strong>Allow edits</strong> on in the plugin window first;
-until then every call is refused (<code>dryRun: true</code> checks a call without writing, switch on or off).</p>
+until then every call is refused (<code>dryRun: true</code> checks a call without writing, switch on or off). Before a write
+that changes many layers, pass <code>version: &quot;Before the hero rewrite&quot;</code>: a named version is saved in the file&#39;s history
+first (not in a dry run), and the designer can go back to it; if it cannot be saved, nothing is written
+(<code>version_save</code> saves one on its own, when the user asks). In a
+Display P3 file, <code>color(display-p3 …)</code> (as design_read writes it) is written as it is, and hex, rgb() or hsl() are
+taken as sRGB and converted to P3.</p>
 <h3>Changing a layer</h3>
 <ul>
 <li>An element with <code>id</code> changes that layer, and only the attributes it gives: <code>&lt;Frame id=&quot;54:243&quot; gap=&quot;48px&quot;/&gt;</code>
@@ -794,21 +867,77 @@ synchronous or of awaits, freezes Figma until then. Read the result back with th
         </section>
         <section id="guide-code-connect">
           <h2>Guide: code-connect</h2>
-<p class="topic-about">Figma Code Connect templates: how design_read runs them, writing one, what Pixelwright supports. The agent reads this with <code>guide</code> topic <code>code-connect</code>.</p>
-<p>Pixelwright runs the project&#39;s <strong>Figma Code Connect templates</strong> itself, on any Figma plan, without a token and without
-publishing anything: <code>design_read</code> gives each instance a template connects as <code>$code</code> in the XML (no children) and
-its code in <code>codeComponents</code> (<code>{ ids, component, template, snippet, imports }</code>: instances with the same code once),
-with the read&#39;s <code>imports</code> once each and the failures in <code>codeErrors</code> (<code>{ template, error, ids }</code>). Nested connected
-instances are inside their parent&#39;s snippet; the layer the read is of is never collapsed. The code takes at most 40% of
-<code>maxChars</code> (the XML the rest), and all templates of a read five seconds: past either, instances are read as layers.
-<code>code: false</code> reads every instance as layers. <code>code_connect_read</code> lists the templates, what each connects on the
-page, the components none connects, and errors.</p>
-<h3>Where templates are</h3>
+<p class="topic-about">Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system. The agent reads this with <code>guide</code> topic <code>code-connect</code>.</p>
+<p>Pixelwright runs the project&#39;s <strong>Figma Code Connect files</strong> itself, on any Figma plan, without a token and without
+publishing anything: <code>design_read</code> gives each instance a connection builds as <code>$code</code> in the XML (no children) and
+its code in <code>codeComponents</code> (<code>{ ids, component, template, source, snippet, imports, unread }</code>: instances with the
+same code once), with the read&#39;s <code>imports</code> once each and the failures in <code>codeErrors</code> (<code>{ template, error, ids }</code>).
+Nested connected instances are inside their parent&#39;s snippet; the layer the read is of is never collapsed. The code
+takes at most 40% of <code>maxChars</code> (the XML the rest), and all templates of a read five seconds: past either, instances
+are read as layers. <code>code: false</code> reads every instance as layers.</p>
+<h3>Mapping a design system</h3>
+<ol>
+<li><code>design_read</code> the section; its hints name the components shown without code.</li>
+<li><code>components_read within=&lt;id&gt; mapped=false</code> gives each one&#39;s <code>key</code>, properties, variants and <code>exposed</code>
+instances.</li>
+<li>Find the code component that builds it in the project (search the code; <code>links: true</code> reads the links people
+attached in Dev Mode, on paid plans, with the project file a code link points at).</li>
+<li>Confirm each pair with the user.</li>
+<li>Write a batch row (below), or a template for a component that needs logic of its own.</li>
+<li><code>code_connect_read</code> checks it: <code>by</code>, <code>unread</code>, <code>values</code>, <code>missing</code> and the problems.</li>
+<li><code>design_read</code> again: the instances are <code>$code</code> now.</li>
+</ol>
+<h3>Batch files: one row per component</h3>
+<p>A <code>*.figma.batch.json</code> file (Figma&#39;s own format) holds one group <code>{ &quot;templateFile&quot;, &quot;components&quot; }</code>, or an array
+of them; each row runs through the group&#39;s shared template (ending <code>.figma.batch.ts</code> or <code>.js</code>, next to the batch
+file), which reads the row as <code>figma.batch</code>:</p>
+<pre><code class="language-json">{
+  &quot;templateFile&quot;: &quot;./component.figma.batch.ts&quot;,
+  &quot;components&quot;: [
+    { &quot;key&quot;: &quot;2f31fdc95b9804804df14c93a7f9c8913d611c17&quot;, &quot;component&quot;: &quot;PricingTier&quot;,
+      &quot;source&quot;: &quot;src/components/PricingTier.tsx&quot;,
+      &quot;imports&quot;: [&quot;import { PricingTier } from \&quot;@/components/PricingTier\&quot;&quot;],
+      &quot;props&quot;: { &quot;Name&quot;: &quot;name&quot;, &quot;Price&quot;: &quot;price&quot;, &quot;Popular&quot;: &quot;popular&quot;,
+                 &quot;Tier&quot;: { &quot;prop&quot;: &quot;tier&quot;, &quot;values&quot;: { &quot;Pro&quot;: &quot;pro&quot;, &quot;Free&quot;: &quot;free&quot; } },
+                 &quot;Description&quot;: &quot;children&quot; } }
+  ]
+}
+</code></pre>
+<p>The shared template (<code>examples/orbit/components/component.figma.batch.ts</code>) writes the row&#39;s <code>component</code> with
+each <code>props</code> entry: <code>&quot;Name&quot;: &quot;name&quot;</code> passes the value, <code>{ &quot;prop&quot;, &quot;values&quot; }</code> maps a variant&#39;s (<code>getEnum</code>) or a
+toggle&#39;s (<code>getBoolean</code>) value, a prop named <code>children</code> goes between the tags, <code>true</code> is a bare prop, <code>false</code>,
+<code>null</code> and <code>&quot;&quot;</code> write nothing; <code>imports</code> are the row&#39;s, the id its <code>id</code> else the component. For Vue, use
+the same template with <code>figma.code</code> in place of <code>figma.tsx</code>: a Vue template takes the same tags, string props and
+bare toggles. A row is named <code>&lt;batch file&gt;#&lt;n&gt;</code>, n counting from 1 across the file&#39;s groups.</p>
+<h3>Keys and matching</h3>
+<p><code>components_read</code> gives each component&#39;s <code>key</code>, the same in every file, a library&#39;s included. A row&#39;s <code>&quot;key&quot;</code> or
+a template&#39;s <code>// key=</code> (Pixelwright&#39;s addition, which Figma&#39;s CLI skips) connects exactly that component or set:
+a keyed connection matches by key only. Figma&#39;s CLI needs a <code>url</code> (<code>// url=</code>) to publish a file; Pixelwright does
+not, and says so once per file. Without a key, a connection matches by the id its url names (a component this file
+defines) with the names agreeing, then by name (the Figma name&#39;s last part against <code>component</code>, else the file name
+before <code>.figma.</code>, case, spaces and punctuation aside: <code>Buttons/Primary Button</code> matches <code>PrimaryButton</code>), then by
+the id alone. <code>code_connect_read</code> gives the rule each matched by as <code>by</code> (<code>key</code>, <code>id</code>, <code>name</code>). A component made
+again, or copied, gets a new key: its keyed connection then misses, and the component shows as unconnected.</p>
+<h3>What the code leaves out</h3>
+<ul>
+<li><code>unread</code> names the properties no code read: the instance&#39;s own (<code>Description</code>), and those of the nested
+instances it exposes or whose properties it overrides (<code>Button.Label</code>). A text whose value the snippet holds counts
+as read. Write them in, or read the instance with <code>node=&lt;id&gt;</code>: the values are on the element (<code>variant</code>,
+<code>props</code>).</li>
+<li><code>values</code> (code_connect_read) names the variant values a <code>getEnum</code> mapping misses: Figma renders them as
+<code>undefined</code>.</li>
+<li><code>missing</code> marks a <code>source</code> that names a file in neither the project nor beside the Code Connect file (packages and
+URLs are not checked).</li>
+<li><code>exposed</code> (components_read) and <code>$exposed</code> (design_read) mark the nested instances a component exposes: their
+properties are the component&#39;s API too, so in code they are its props.</li>
+</ul>
+<h3>Where the files are</h3>
 <p>The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the server&#39;s working directory (never the home folder or the disk&#39;s
-root). Templates are the files ending in <code>.figma.ts</code>, <code>.figma.js</code>, <code>.figma.template.ts</code> or <code>.figma.template.js</code>
-among those <code>figma.config.json</code>&#39;s <code>codeConnect.include</code> globs name (minus <code>exclude</code>; its
-<code>documentUrlSubstitutions</code> are applied to urls), else all such files; dependency and build folders are never
-searched.</p>
+root). Code Connect files are those ending in <code>.figma.ts</code>, <code>.figma.js</code>, <code>.figma.template.ts</code>,
+<code>.figma.template.js</code> or <code>.figma.batch.json</code> among those <code>figma.config.json</code>&#39;s <code>codeConnect.include</code> globs name
+(minus <code>exclude</code>; its <code>documentUrlSubstitutions</code> are applied to urls), else all such files; dependency and build
+folders are never searched. A batch file a custom <code>include</code> misses is left out, as Figma does, and named in the
+problems.</p>
 <h3>Writing one</h3>
 <p>Write it as Figma documents it, with types from the npm package <code>@figma/code-connect</code> (in tsconfig:
 <code>&quot;types&quot;: [&quot;@figma/code-connect/figma-types&quot;]</code>):</p>
@@ -828,12 +957,8 @@ export default {
 }
 </code></pre>
 <ul>
-<li><code>url</code> (required): the component&#39;s or component set&#39;s link (Copy link in Figma). <code>component</code>: the code component&#39;s
-name, as Figma has it (<code>$code</code> shows it). <code>source</code>: the code component&#39;s file.</li>
-<li><strong>Matching:</strong> the url&#39;s node-id is the instance&#39;s component or set when that lives in the file read; a library&#39;s
-component matches by name: the Figma name&#39;s last part against <code>component</code> (else the file name before <code>.figma.</code>),
-case, spaces and punctuation aside (<code>Buttons/Primary Button</code> matches <code>PrimaryButton</code>). Check with
-<code>code_connect_read</code>.</li>
+<li><code>url</code>: the component&#39;s or component set&#39;s link (Copy link in Figma), or <code>key</code> (above). <code>component</code>: the code
+component&#39;s name, as Figma&#39;s Code Connect defines it (<code>$code</code> shows it). <code>source</code>: the code component&#39;s file.</li>
 <li><strong>Imports:</strong> <code>figma</code> and the template&#39;s own relative helpers (<code>import { sizes } from &#39;./helpers&#39;</code>, TypeScript or
 JavaScript); nothing else.</li>
 <li><strong>The API:</strong> <code>figma.selectedInstance</code> (alias <code>currentLayer</code>) with <code>getString</code>, <code>getBoolean(name, mapping?)</code>,

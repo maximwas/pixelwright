@@ -355,3 +355,60 @@ describe("inspect fills", () => {
     ).toEqual({ css: "linear-gradient(90deg, #FFF 0%, #000 100%)" });
   });
 });
+
+describe("inspect of a Display P3 file", () => {
+  it("writes fills and strokes in the file's colours, as design_read does", () => {
+    const red = {
+      r: 1,
+      g: 0,
+      b: 0,
+    };
+    const view = inspectView({
+      origin: null,
+      missing: [],
+      colorProfile: "DISPLAY_P3",
+      layers: [
+        {
+          id: "3:1",
+          name: "Badge",
+          type: "RECTANGLE",
+          visible: true,
+          x: 0,
+          y: 0,
+          width: 40,
+          height: 20,
+          childCount: 0,
+          parent: null,
+          box: {
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 20,
+          },
+          paintedBox: null,
+          parentBox: null,
+          parentPadding: null,
+          fills: [
+            {
+              type: "SOLID",
+              visible: true,
+              color: red,
+            },
+          ],
+          strokes: [
+            {
+              type: "SOLID",
+              visible: true,
+              color: red,
+            },
+          ],
+          strokeWeight: 1,
+        },
+      ],
+    });
+    const [badge] = view.layers;
+
+    expect(badge?.fills?.css).toBe("color(display-p3 1 0 0)");
+    expect(badge?.strokes?.colors).toEqual(["color(display-p3 1 0 0)"]);
+  });
+});

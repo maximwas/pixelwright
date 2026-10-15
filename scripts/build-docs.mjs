@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { marked } from "marked";
-import { GUIDE_TOPICS } from "../apps/server/src/guide/topics.ts";
+import { GUIDE_TOPICS } from "../apps/server/src/features/guide/topics.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const README_SECTIONS = ["Quick start", "How it works", "Code Connect", "Safety", "Limits", "Commands", "Updating"];

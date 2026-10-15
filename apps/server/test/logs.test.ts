@@ -1,0 +1,157 @@
+import {
+  appendFileSync,
+  chmodSync,
+  closeSync,
+  mkdtempSync,
+  openSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+  writeSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { readConfig } from "../src/config/config.ts";
+import { followLog } from "../src/logging/follow-log.ts";
+import { createLogger } from "../src/logging/logger.ts";
+import { prettyLine } from "../src/logging/pretty-line.ts";
+
+const record = (fields: Record<string, unknown>) =>
+  JSON.stringify({
+    level: 30,
+    time: new Date(2026, 9, 14, 13, 22, 44).getTime(),
+    pid: 58063,
+    hostname: "mac",
+    name: "pixelwright",
+    ...fields,
+  });
+
+describe("pixelwright logs", () => {
+  it("prints a log line for people: time, level, process, message and its fields", () => {
+    expect(
+      prettyLine(
+        record({
+          msg: "tool design_read",
+          file: "Test MCP",
+          ms: 31,
+        }),
+      ),
+    ).toBe("13:22:44 info  [58063] tool design_read  file=Test MCP ms=31");
+    expect(
+      prettyLine(
+        record({
+          level: 40,
+          msg: "tool design_apply failed",
+          err: { message: "Allow edits is off" },
+        }),
+      ),
+    ).toContain("warn  [58063] tool design_apply failed  error=Allow edits is off");
+    expect(prettyLine("not json")).toBe("not json");
+  });
+
+  it("keeps the shared log in the Pixelwright folder, and sets it aside when a write finds it full", () => {
+    const home = mkdtempSync(join(tmpdir(), "pw-logs-"));
+    const file = readConfig({ PIXELWRIGHT_HOME: home }).logFile;
+    const logger = createLogger("info", file);
+
+    expect(file).toBe(join(home, "logs", "pixelwright.log"));
+
+    logger.info("first");
+    // Other servers wrote a lot meanwhile: this one, running all along, sets the log aside on its next line.
+    appendFileSync(file, "x".repeat(6 * 1024 * 1024));
+    logger.info("later");
+
+    expect(readFileSync(`${file}.1`, "utf8")).toContain("first");
+    expect(readFileSync(file, "utf8")).toContain("later");
+    expect(readFileSync(file, "utf8").length).toBeLessThan(1024);
+  });
+
+  it("keeps writing to the log people follow after another server set it aside", () => {
+    const file = join(mkdtempSync(join(tmpdir(), "pw-logs-")), "logs", "pixelwright.log");
+    const logger = createLogger("info", file);
+    const other = createLogger("info", file);
+
+    logger.info("before");
+    renameSync(file, `${file}.1`);
+    logger.info("after");
+    other.info("from the other");
+
+    expect(readFileSync(file, "utf8")).toContain("after");
+    expect(readFileSync(file, "utf8")).toContain("from the other");
+    expect(readFileSync(`${file}.1`, "utf8")).not.toContain("after");
+  });
+
+  it("prints the log's last lines, then what a server writes after through its open file, until stopped", async () => {
+    const file = join(mkdtempSync(join(tmpdir(), "pw-follow-")), "pixelwright.log");
+    const printed: string[] = [];
+    const stop = new AbortController();
+
+    writeFileSync(file, `${record({ msg: "pixelwright ready on stdio" })}\n`);
+
+    const following = followLog(file, (line) => printed.push(line), stop.signal);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // A server's logger keeps the file open and writes through it, which a folder watch on macOS does not see.
+    const writer = openSync(file, "a");
+
+    writeSync(
+      writer,
+      `${record({
+        msg: "tool outline",
+        ms: 4,
+      })}\n`,
+    );
+
+    for (const until = Date.now() + 3_000; !printed.some((line) => line.includes("tool outline")); ) {
+      if (Date.now() > until) {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    stop.abort();
+    await following;
+    closeSync(writer);
+
+    expect(printed[0]).toContain("pixelwright ready on stdio");
+    expect(printed.some((line) => line.includes("following"))).toBe(true);
+    expect(printed.at(-1)).toContain("tool outline  ms=4");
+    expect(readFileSync(file, "utf8")).toContain("tool outline");
+  });
+
+  it("follows a log whose folder no server has made yet, from its first line", async () => {
+    const file = join(mkdtempSync(join(tmpdir(), "pw-none-")), "logs", "pixelwright.log");
+    const printed: string[] = [];
+    const stop = new AbortController();
+    const following = followLog(file, (line) => printed.push(line), stop.signal);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    writeFileSync(file, `${record({ msg: "pixelwright ready on stdio" })}\n`);
+
+    for (const until = Date.now() + 3_000; !printed.some((line) => line.includes("ready on stdio")); ) {
+      if (Date.now() > until) {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    stop.abort();
+    await following;
+
+    expect(printed.at(-1)).toContain("pixelwright ready on stdio");
+  });
+
+  it("starts the server with stderr alone when the shared log cannot be opened", () => {
+    const file = join(mkdtempSync(join(tmpdir(), "pw-locked-")), "pixelwright.log");
+
+    writeFileSync(file, "");
+    chmodSync(file, 0o000);
+
+    expect(() => createLogger("info", file).info("still logging")).not.toThrow();
+    chmodSync(file, 0o600);
+  });
+});

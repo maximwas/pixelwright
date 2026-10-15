@@ -1,0 +1,526 @@
+{
+  "1:1": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Hero",
+        "width": "400px",
+        "height": "300px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Hero",
+        "width": "400px",
+        "height": "300px"
+      }
+    }
+  },
+  "1:2": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Card",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Card",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:3": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Title",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Title",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:4": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Badge",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Badge",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:5": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Label",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:6": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Turn",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Turn",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:7": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Card",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Card",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:8": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Line",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Line",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:9": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Dot",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Dot",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:10": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Dot",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Dot",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:11": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "3D",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "3D",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:12": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Hold",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Hold",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "100px",
+        "height": "100px"
+      }
+    }
+  },
+  "1:13": {
+    "inRead": {
+      "attributes": [
+        "height",
+        "id",
+        "left",
+        "name",
+        "position",
+        "top",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plain",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "10px",
+        "height": "10px"
+      }
+    },
+    "alone": {
+      "attributes": [
+        "height",
+        "id",
+        "name",
+        "width"
+      ],
+      "text": true,
+      "visible": true,
+      "current": {
+        "name": "Plain",
+        "position": "absolute",
+        "left": "0",
+        "top": "0",
+        "width": "10px",
+        "height": "10px"
+      }
+    }
+  }
+}

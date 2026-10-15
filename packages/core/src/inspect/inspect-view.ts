@@ -1,12 +1,13 @@
-import { colorCss } from "../css/color.ts";
-import { px } from "../css/format.ts";
-import { interactionSummary } from "../css/interactions.ts";
-import { paintsCss } from "../css/paint.ts";
-import { styleTokenName } from "../css/tokens.ts";
-import { MIXED } from "../schemas/snapshot.ts";
+import { unwrapVar } from "../css-mapping/values/css-values.ts";
+import { px } from "../css-mapping/values/format.ts";
+import { paintsCss } from "../css-mapping/values/paints.ts";
+import { interactionSummary } from "../design/interactions.ts";
+import { Color } from "../kernel/color/color.ts";
+import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { styleTokenName } from "../kernel/names.ts";
+import { MIXED } from "../schemas/snapshot-values.ts";
 import type { InspectBox, InspectedLayer, InspectedLayerView, InspectRaw, InspectView } from "../types/inspect.ts";
 import type { TextSegment } from "../types/snapshot.ts";
-import { unwrapVar } from "../utils/css-value.ts";
 
 /** How far two boxes may differ and still be the same box. */
 const SAME = 0.01;
@@ -36,14 +37,10 @@ function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
     box: layer.box,
   };
   const overflow = overflowOf(layer);
-  const strokes = strokesOf(layer);
+  const strokes = strokesOf(layer, colorSpaceOf(raw.colorProfile));
   const text = textOf(layer);
   const fills = fillsOf(layer, raw);
-  const interactions = (layer.reactions ?? []).map((reaction) => ({
-    trigger: reaction.trigger?.type ?? "NONE",
-    summary: interactionSummary(reaction),
-    reaction,
-  }));
+  const interactions = interactionsOf(layer);
 
   if (layer.paintedBox !== null && !sameBox(layer.paintedBox, layer.box)) {
     view.paintedBox = layer.paintedBox;
@@ -77,21 +74,33 @@ function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
     view.interactions = interactions;
   }
 
-  const instance = layer.instance;
-
-  if (instance !== undefined) {
-    view.component = {
-      name: instance.componentName,
-      ...(instance.setName === undefined ? {} : { set: instance.setName }),
-      variant: Object.fromEntries(
-        Object.entries(instance.properties)
-          .filter(([, property]) => property.type === "VARIANT")
-          .map(([name, property]) => [name, String(property.value)]),
-      ),
-    };
+  if (layer.instance !== undefined) {
+    view.component = componentOf(layer.instance);
   }
 
   return view;
+}
+
+/** The layer's prototype interactions, each with its trigger and a summary. */
+function interactionsOf(layer: InspectedLayer): NonNullable<InspectedLayerView["interactions"]> {
+  return (layer.reactions ?? []).map((reaction) => ({
+    trigger: reaction.trigger?.type ?? "NONE",
+    summary: interactionSummary(reaction),
+    reaction,
+  }));
+}
+
+/** An instance's component: its name, its set's, and its variant's values. */
+function componentOf(instance: NonNullable<InspectedLayer["instance"]>): NonNullable<InspectedLayerView["component"]> {
+  return {
+    name: instance.componentName,
+    ...(instance.setName === undefined ? {} : { set: instance.setName }),
+    variant: Object.fromEntries(
+      Object.entries(instance.properties)
+        .filter(([, property]) => property.type === "VARIANT")
+        .map(([name, property]) => [name, String(property.value)]),
+    ),
+  };
 }
 
 /**
@@ -99,7 +108,7 @@ function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
  * a gradient as Figma writes it for the layer. Null when nothing visible fills it.
  */
 function fillsOf(layer: InspectedLayer, raw: InspectRaw): NonNullable<InspectedLayerView["fills"]> | null {
-  if (!Array.isArray(layer.fills) || !layer.fills.some((paint) => paint.visible !== false)) {
+  if (!Array.isArray(layer.fills) || !layer.fills.some((paint) => paint.visible ?? true)) {
     return null;
   }
 
@@ -108,6 +117,7 @@ function fillsOf(layer: InspectedLayer, raw: InspectRaw): NonNullable<InspectedL
     variables: raw.variables ?? {},
     tokens: new Map<string, string>(),
     root: layer,
+    colorSpace: colorSpaceOf(raw.colorProfile),
   };
   const value = paintsCss(layer.fills, undefined, layer, context);
   const style =
@@ -166,7 +176,7 @@ function overflowOf(layer: InspectedLayer): NonNullable<InspectedLayerView["over
   return past.length === 0 ? null : Object.fromEntries(past.map(([side, value]) => [side, round(value)]));
 }
 
-function strokesOf(layer: InspectedLayer): NonNullable<InspectedLayerView["strokes"]> | null {
+function strokesOf(layer: InspectedLayer, space: ColorSpace): NonNullable<InspectedLayerView["strokes"]> | null {
   if (!Array.isArray(layer.strokes) || layer.strokes.length === 0) {
     return null;
   }
@@ -175,7 +185,9 @@ function strokesOf(layer: InspectedLayer): NonNullable<InspectedLayerView["strok
     align: (layer.strokeAlign ?? "INSIDE").toLowerCase(),
     colors: layer.strokes.map((paint) =>
       paint.type === "SOLID" && paint.color !== undefined
-        ? colorCss(paint.color, paint.opacity ?? 1)
+        ? Color.of(paint.color, space)
+            .faded(paint.opacity ?? 1)
+            .css()
         : paint.type.toLowerCase(),
     ),
   };

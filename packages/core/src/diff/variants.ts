@@ -26,6 +26,25 @@ export function variantsView(snapshot: Snapshot): VariantsView {
     throw new Error(`${snapshot.root.name} has no variants.`);
   }
 
+  const others = variants.filter((variant) => variant !== first);
+
+  return {
+    set: {
+      id: snapshot.root.id,
+      name: snapshot.root.name,
+    },
+    properties: propertiesOf(variants),
+    default: {
+      id: first.id,
+      name: first.name,
+    },
+    variants: others.slice(0, VARIANTS_MAX).map((variant) => variantDiff(snapshot, variant, variants, first)),
+    ...(others.length > VARIANTS_MAX ? { more: others.length - VARIANTS_MAX } : {}),
+  };
+}
+
+/** Each variant property's values across the set, in the order the variants give them. */
+function propertiesOf(variants: readonly SnapshotNode[]): Record<string, string[]> {
   const properties: Record<string, string[]> = {};
 
   for (const variant of variants) {
@@ -34,48 +53,41 @@ export function variantsView(snapshot: Snapshot): VariantsView {
     }
   }
 
+  return properties;
+}
+
+/** A variant against the one it differs from by a single property (else the default): what changes, and its state. */
+function variantDiff(
+  snapshot: Snapshot,
+  variant: SnapshotNode,
+  variants: readonly SnapshotNode[],
+  first: SnapshotNode,
+): VariantsView["variants"][number] {
+  const props = propsOf(variant);
+  const against = baselineOf(variant, props, variants, propsOf(first)) ?? first;
   const of = (root: SnapshotNode): Snapshot => ({
     ...snapshot,
     root,
   });
-  const base = propsOf(first);
-  const others = variants.filter((variant) => variant !== first);
+  const diff = designDiff(of(against), of(variant));
+  const pseudo = Object.entries(props)
+    .filter(([name, value]) => propsOf(against)[name] !== value)
+    .map(([, value]) => pseudoOf(value))
+    .find((found) => found !== undefined);
 
   return {
-    set: {
-      id: snapshot.root.id,
-      name: snapshot.root.name,
+    id: variant.id,
+    name: variant.name,
+    props,
+    against: {
+      id: against.id,
+      name: against.name,
     },
-    properties,
-    default: {
-      id: first.id,
-      name: first.name,
-    },
-    variants: others.slice(0, VARIANTS_MAX).map((variant) => {
-      const props = propsOf(variant);
-      const against = baselineOf(variant, props, variants, base) ?? first;
-      const diff = designDiff(of(against), of(variant));
-      const pseudo = Object.entries(props)
-        .filter(([name, value]) => propsOf(against)[name] !== value)
-        .map(([, value]) => pseudoOf(value))
-        .find((found) => found !== undefined);
-
-      return {
-        id: variant.id,
-        name: variant.name,
-        props,
-        against: {
-          id: against.id,
-          name: against.name,
-        },
-        ...(pseudo === undefined ? {} : { pseudo }),
-        same: diff.same,
-        changed: diff.changed.slice(0, DIFF_MAX),
-        onlyInDefault: diff.onlyInA.slice(0, DIFF_MAX),
-        onlyInVariant: diff.onlyInB.slice(0, DIFF_MAX),
-      };
-    }),
-    ...(others.length > VARIANTS_MAX ? { more: others.length - VARIANTS_MAX } : {}),
+    ...(pseudo === undefined ? {} : { pseudo }),
+    same: diff.same,
+    changed: diff.changed.slice(0, DIFF_MAX),
+    onlyInDefault: diff.onlyInA.slice(0, DIFF_MAX),
+    onlyInVariant: diff.onlyInB.slice(0, DIFF_MAX),
   };
 }
 

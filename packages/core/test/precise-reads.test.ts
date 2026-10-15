@@ -298,7 +298,8 @@ describe("prototype interactions", () => {
     expect(line(xml, "1:2")).toContain(
       '$after-timeout="after 800ms; go to Step 2; move in left 200ms cubic-bezier(0.4, 0, 0.2, 1)"',
     );
-    expect(line(xml, "1:2")).toContain('$on-click="open overlay Menu; dissolve 250ms spring gentle"');
+    // A spring is drawn as CSS's linear(): every easing is valid CSS.
+    expect(line(xml, "1:2")).toMatch(/\$on-click="open overlay Menu; dissolve 250ms linear\(0, [^"]*, 1\)"/);
   });
 
   it("leaves a link to its href, and design_apply leaves the interactions alone", () => {

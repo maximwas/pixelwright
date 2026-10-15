@@ -1,0 +1,46 @@
+:root {
+  /* Brand Colors */
+  --surface: color(display-p3 1 1 1);
+  --Ink: color(display-p3 0.078 0.086 0.122);
+  --Veil: color-mix(in srgb, color(display-p3 0 0 0) 40%, transparent);
+  --Lost: /* unresolved alias V:missing */;
+  /* Spacing */
+  --Gap-Small: 8px;
+  --Gap-None: 0;
+  --Radius: 13.5px;
+  --Opacity-Half: 0.5;
+  --Opacity-Faint: 0.25;
+  --Weight-Bold: 700;
+  --Font-Family: 'Inter \'Display\' \\ Pro';
+  --Feature-On: true;
+  /* Motion */
+  --Ease-Out: ease-out;
+  --Ease-Curve: cubic-bezier(0.2, 0, 0, 1);
+  --Ease-Spring: linear(0, 0.005 1.25%, 0.024 2.92%, 0.056 4.58%, 0.108 6.67%, 0.158 8.33%, 0.212 10%, 0.444 16.67%, 0.555 20%, 0.655 23.33%, 0.742 26.67%, 0.807 29.58%, 0.869 32.92%, 0.912 35.83%, 0.951 39.17%, 0.983 42.92%, 1.005 46.67%, 1.019 50.83%, 1.027 55.83%, 1.027 63.75%, 1.009 84.17%, 1);
+  --Duration: 0.3s;
+  /* Paint styles */
+  --White: color(display-p3 1 1 1);
+  --White-2: color(display-p3 0.98 0.98 0.98 / 0.8);
+  --Glow: linear-gradient(90deg, #FFF 0%, #000 100%);
+  /* Effect styles */
+  --Shadow-Card: inset 0 1px 2px 1px color(display-p3 1 1 1 / 0.5), 0 8px 24px 0 color(display-p3 0 0 0 / 0.12);
+  /* Text styles: font: var(--name-font) */
+  --Heading-H1-font: italic 700 48px/58px 'Inter';
+  --Heading-H1-letter-spacing: -0.02em;
+  --Heading-H1-text-transform: uppercase;
+  --Body-font: 400 16px/normal 'Open Sans';
+}
+
+[data-brand-colors="dark"] {
+  --surface: var(--Ink);
+  --Ink: var(--Accent);
+  --Veil: color-mix(in srgb, var(--Ink) 64%, transparent);
+  --Lost: color(display-p3 0.5 0.5 0.5);
+}
+
+[data-brand-colors="dark-2"] {
+  --surface: color(display-p3 0.1 0.1 0.12);
+  --Ink: color(display-p3 0.9 0.2 0.35 / 0.5);
+  --Veil: color-mix(in srgb, color(display-p3 1 1 1) calc(var(--Opacity-Half) * 1%), transparent);
+  --Lost: /* "not a colour" */;
+}

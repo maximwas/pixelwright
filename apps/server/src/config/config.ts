@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import { homeDir } from "../bridge/bridge-config.ts";
 import { DEFAULT_PLUGIN_ORIGINS } from "../constants/bridge.ts";
 import type { AppConfig } from "../types/config.ts";
 import type { LogLevel } from "../types/logging.ts";
@@ -20,5 +22,6 @@ export function readConfig(env: Record<string, string | undefined>): AppConfig {
     pluginOrigins: [...new Set([...DEFAULT_PLUGIN_ORIGINS, ...extraOrigins])],
     projectRoot: env.CLAUDE_PROJECT_DIR?.trim() || null,
     supportReminders: env.PIXELWRIGHT_SUPPORT_REMINDERS?.trim().toLowerCase() !== "off",
+    logFile: join(homeDir(env), "logs", "pixelwright.log"),
   };
 }

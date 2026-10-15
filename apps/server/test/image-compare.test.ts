@@ -3,7 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { decode, encode } from "fast-png";
 import { describe, expect, it } from "vitest";
-import { compareImage } from "../src/images/compare-image.ts";
+import { compareImage } from "../src/features/image-compare/compare-image.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -62,7 +63,7 @@ async function reference(png: Uint8Array): Promise<string> {
 }
 
 const ask = async (render: Uint8Array, wanted: Uint8Array, extra: object = {}) =>
-  compareImage(rendering(render), {
+  compareImage(new PluginClient(rendering(render)), {
     node: "1:2",
     reference: await reference(wanted),
     scale: 1,

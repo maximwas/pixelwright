@@ -1,9 +1,9 @@
-import { colorCss } from "../css/color.ts";
+import { type Channels, Color } from "../kernel/color/color.ts";
+import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
 import type { Contrast, ContrastText } from "../types/contrast.ts";
 import type { Snapshot, SnapshotNode, SnapshotPaint, TextSegment } from "../types/snapshot.ts";
 
-type Rgb = { r: number; g: number; b: number };
-type Layer = { color: Rgb; alpha: number } | { kind: string };
+type Layer = { color: Channels; alpha: number } | { kind: string };
 
 /** What a fill CSS cannot reduce to one colour is, in words. */
 const KINDS: Readonly<Record<string, string>> = {
@@ -20,6 +20,7 @@ const KINDS: Readonly<Record<string, string>> = {
  * ancestors' fills, see-through ones laid over what is below them. An image or a gradient behind is said, not guessed.
  */
 export function contrastCheck(snapshot: Snapshot): Contrast {
+  const space = colorSpaceOf(snapshot.colorProfile);
   const texts: ContrastText[] = [];
   const walk = (node: SnapshotNode, ancestors: readonly SnapshotNode[]) => {
     if (!node.visible) {
@@ -27,7 +28,7 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
     }
 
     if (node.type === "TEXT") {
-      const rated = rate(node, ancestors);
+      const rated = rate(node, ancestors, space);
 
       if (rated !== null) {
         texts.push(rated);
@@ -52,14 +53,14 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
   };
 }
 
-function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[]): ContrastText | null {
+function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): ContrastText | null {
   const segments = node.text?.segments ?? [];
-  const behind = backdropOf(node, ancestors);
+  const behind = backdropOf(node, ancestors, space);
   let worst: ContrastText | null = null;
 
   for (const segment of segments) {
     const paint = topSolid(segment.fills);
-    const visible = segment.fills.filter((fill) => fill.visible !== false);
+    const visible = segment.fills.filter((fill) => fill.visible ?? true);
 
     if (paint === null && visible.length === 0) {
       continue;
@@ -68,7 +69,11 @@ function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[]): ContrastT
     const rated =
       paint === null
         ? unknownColor(node, segment, KINDS[visible.at(-1)?.type ?? ""] ?? "a fill CSS cannot hold")
-        : rateSegment(node, segment, paint, behind);
+        : rateSegment(node, segment, {
+            paint,
+            behind,
+            space,
+          });
 
     if (worst === null || (rated.ratio ?? Infinity) < (worst.ratio ?? Infinity)) {
       worst = rated;
@@ -78,12 +83,14 @@ function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[]): ContrastT
   return worst;
 }
 
-function rateSegment(
-  node: SnapshotNode,
-  segment: TextSegment,
-  paint: { color: Rgb; alpha: number },
-  behind: Rgb | string,
-): ContrastText {
+/** What a run's colour is measured against: its top paint, what is behind the text (or why it is not known), the space. */
+interface Measured {
+  readonly paint: { color: Channels; alpha: number };
+  readonly behind: Color | string;
+  readonly space: ColorSpace;
+}
+
+function rateSegment(node: SnapshotNode, segment: TextSegment, { paint, behind, space }: Measured): ContrastText {
   const size = segment.fontSize;
   const weight = segment.fontWeight;
   const large = size >= 24 || (size >= 18.66 && weight >= 700);
@@ -100,7 +107,7 @@ function rateSegment(
   if (typeof behind === "string") {
     return {
       ...base,
-      color: colorCss(paint.color, alpha),
+      color: Color.of(paint.color, space).faded(alpha).css(),
       backdrop: behind,
       ratio: null,
       aa: null,
@@ -108,13 +115,21 @@ function rateSegment(
     };
   }
 
-  const color = over(paint.color, alpha, behind);
-  const ratio = contrastRatio(color, behind);
+  // The text's colour laid over what is behind it; Color measures WCAG contrast on the sRGB form.
+  const ratio = Color.of(
+    {
+      ...paint.color,
+      a: alpha,
+    },
+    space,
+  )
+    .over(behind)
+    .contrast(behind);
 
   return {
     ...base,
-    color: colorCss(paint.color, alpha),
-    backdrop: colorCss(behind, 1),
+    color: Color.of(paint.color, space).faded(alpha).css(),
+    backdrop: behind.css(),
     ratio: Math.round(ratio * 100) / 100,
     aa: ratio >= (large ? 3 : 4.5),
     aaa: ratio >= (large ? 4.5 : 7),
@@ -125,7 +140,7 @@ function rateSegment(
  * The colour behind a layer, or what it is in words when it is not one colour: the layers below it in each parent
  * (their own children included) that paint under it, then the parent's fills, top first, until an opaque one.
  */
-function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Rgb | string {
+function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Color | string {
   const layers: Layer[] = [];
   let current = node;
 
@@ -155,17 +170,27 @@ function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Rgb
     return "nothing opaque behind it in the layer read: check it inside its screen";
   }
 
-  let color: Rgb | null = null;
+  let color: Color | null = null;
 
   for (const layer of layers.slice(0, opaque + 1).toReversed()) {
     if ("kind" in layer) {
       return layer.kind;
     }
 
-    color = color === null ? layer.color : over(layer.color, layer.alpha, color);
+    // Laid over in the document's own space, as Figma composites them.
+    color =
+      color === null
+        ? Color.of(layer.color, space)
+        : Color.of(
+            {
+              ...layer.color,
+              a: layer.alpha,
+            },
+            space,
+          ).over(color);
   }
 
-  return color as Rgb;
+  return color as Color;
 }
 
 /**
@@ -236,7 +261,7 @@ function paintLayers(node: SnapshotNode): Layer[] {
   const opacity = node.opacity ?? 1;
 
   return fills
-    .filter((paint) => paint.visible !== false)
+    .filter((paint) => paint.visible ?? true)
     .toReversed()
     .map((paint): Layer => {
       const solid = solidOf(paint);
@@ -250,13 +275,13 @@ function paintLayers(node: SnapshotNode): Layer[] {
     });
 }
 
-function topSolid(paints: readonly SnapshotPaint[]): { color: Rgb; alpha: number } | null {
-  const visible = paints.filter((paint) => paint.visible !== false);
+function topSolid(paints: readonly SnapshotPaint[]): { color: Channels; alpha: number } | null {
+  const visible = paints.filter((paint) => paint.visible ?? true);
 
   return solidOf(visible.at(-1));
 }
 
-function solidOf(paint: SnapshotPaint | undefined): { color: Rgb; alpha: number } | null {
+function solidOf(paint: SnapshotPaint | undefined): { color: Channels; alpha: number } | null {
   if (paint?.type !== "SOLID" || paint.color === undefined) {
     return null;
   }
@@ -274,25 +299,4 @@ function covers(outer: SnapshotNode, inner: SnapshotNode): boolean {
     outer.x + outer.width >= inner.x + inner.width &&
     outer.y + outer.height >= inner.y + inner.height
   );
-}
-
-function over(top: Rgb, alpha: number, bottom: Rgb): Rgb {
-  return {
-    r: top.r * alpha + bottom.r * (1 - alpha),
-    g: top.g * alpha + bottom.g * (1 - alpha),
-    b: top.b * alpha + bottom.b * (1 - alpha),
-  };
-}
-
-/** WCAG 2's contrast ratio of two colours, 1 to 21. */
-function contrastRatio(a: Rgb, b: Rgb): number {
-  const [light, dark] = [luminance(a), luminance(b)].toSorted((x, y) => y - x) as [number, number];
-
-  return (light + 0.05) / (dark + 0.05);
-}
-
-function luminance({ r, g, b }: Rgb): number {
-  const linear = (channel: number) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
-
-  return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
 }

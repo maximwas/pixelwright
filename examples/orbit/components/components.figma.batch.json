@@ -1,0 +1,20 @@
+{
+  "templateFile": "./component.figma.batch.ts",
+  "components": [
+    {
+      "url": "<ORBIT>?node-id=54-187",
+      "component": "Badge",
+      "source": "src/components/Badge.tsx",
+      "imports": ["import { Badge } from \"@/components/Badge\""],
+      "props": {
+        "Label": "children"
+      }
+    },
+    {
+      "url": "<ORBIT>?node-id=54-185",
+      "component": "CheckIcon",
+      "source": "lucide-react",
+      "imports": ["import { CheckIcon } from \"lucide-react\""]
+    }
+  ]
+}

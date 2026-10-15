@@ -1,4 +1,4 @@
-import type { MotionTrack, MotionEasing as SnapshotEasing, SnapshotMotion } from "@pixelwright/core";
+import { type MotionTrack, roundTo, type MotionEasing as SnapshotEasing, type SnapshotMotion } from "@pixelwright/core";
 import { MOTION_STYLE_FIELDS } from "../constants/motion.ts";
 
 interface RawTrack {
@@ -7,7 +7,9 @@ interface RawTrack {
   readonly keyframes: readonly ManualKeyframe[];
 }
 
-interface RawBinding {
+/** A field's keyframes as the beta Motion API gives them: its value at rest and its tracks. */
+interface Binding {
+  readonly id?: string;
   readonly baseValue: KeyframeValue;
   readonly tracks: readonly RawTrack[];
 }
@@ -35,24 +37,24 @@ function readMotion(node: SceneNode & MotionNodeMixin): SnapshotMotion | undefin
   const styles = applied.map((style) => ({
     type: style.type,
     name: style.name,
-    start: round(style.timelineOffset ?? 0),
-    ...("duration" in style && style.duration !== undefined ? { duration: round(style.duration) } : {}),
+    start: roundTo(style.timelineOffset ?? 0, 4),
+    ...("duration" in style && style.duration !== undefined ? { duration: roundTo(style.duration, 4) } : {}),
   }));
   const manual = new Set(bindingsOf(node.manualKeyframeTracks).map(([, binding]) => binding.id));
   const tracks: MotionTrack[] = bindingsOf(node.animations).flatMap(([field, binding]) =>
-    (binding as unknown as RawBinding).tracks.map((track) => {
+    binding.tracks.map((track) => {
       const style = manual.has(track.id) ? undefined : styleOf(field, applied);
 
       return {
         field,
         operation: track.keyframeOperation,
-        base: keyframeValue((binding as unknown as RawBinding).baseValue),
+        base: keyframeValue(binding.baseValue),
         ...(style === undefined ? {} : { style: style.name }),
         ...(style === undefined && !manual.has(track.id) ? { unplaced: true } : {}),
         keyframes: track.keyframes
           .filter((keyframe) => Number.isFinite(keyframe.timelinePosition))
           .map((keyframe) => ({
-            t: round(keyframe.timelinePosition + (style?.timelineOffset ?? 0)),
+            t: roundTo(keyframe.timelinePosition + (style?.timelineOffset ?? 0), 4),
             value: keyframeValue(keyframe.value),
             easing: easingOf(keyframe.easing),
           })),
@@ -66,14 +68,14 @@ function readMotion(node: SceneNode & MotionNodeMixin): SnapshotMotion | undefin
   }
 
   return {
-    ...(timeline === undefined ? {} : { timeline: round(timeline.duration) }),
+    ...(timeline === undefined ? {} : { timeline: roundTo(timeline.duration, 4) }),
     styles,
     tracks,
   };
 }
 
 /** Every binding with its field: a property (`OPACITY`), a paint (`fills.0`), an effect's parameter (`effects.0.RADIUS`). */
-function bindingsOf(animations: object): [string, { readonly id?: string }][] {
+function bindingsOf(animations: object): [string, Binding][] {
   return Object.entries(animations).flatMap(([key, value]: [string, unknown]) => {
     if (value === undefined || value === null) {
       return [];
@@ -81,7 +83,7 @@ function bindingsOf(animations: object): [string, { readonly id?: string }][] {
 
     if (key === "fills" || key === "strokes") {
       return Object.entries(value as object).flatMap(([index, binding]: [string, unknown]) =>
-        isBinding(binding) ? [[`${key}.${index}`, binding] as [string, { readonly id?: string }]] : [],
+        isBinding(binding) ? [[`${key}.${index}`, binding] as [string, Binding]] : [],
       );
     }
 
@@ -89,22 +91,21 @@ function bindingsOf(animations: object): [string, { readonly id?: string }][] {
       return Object.entries(value as object).flatMap(([index, fields]: [string, unknown]) =>
         Object.entries((fields ?? {}) as object).flatMap(([name, binding]: [string, unknown]) =>
           name !== "properties" && isBinding(binding)
-            ? [[`effects.${index}.${name}`, binding] as [string, { readonly id?: string }]]
+            ? [[`effects.${index}.${name}`, binding] as [string, Binding]]
             : [],
         ),
       );
     }
 
-    return isBinding(value) ? [[key, value as { readonly id?: string }] as [string, { readonly id?: string }]] : [];
+    return isBinding(value) ? [[key, value] as [string, Binding]] : [];
   });
 }
 
 /** A binding of keyframes, not a component property's map of them. */
-function isBinding(value: unknown): value is { readonly id?: string } {
+function isBinding(value: unknown): value is Binding {
   return typeof value === "object" && value !== null && "baseValue" in value;
 }
 
-/** The animation style that made a track of this field: the first of Figma's styles that animates it. */
 /**
  * The animation style that made a track of this field: the first of Figma's styles that animates it, else the one
  * style whose fields are not known (a custom style, a text stagger) when there is just one. Undefined: not known.
@@ -127,8 +128,10 @@ function easingOf(easing: ManualKeyframe["easing"]): SnapshotEasing {
 
   return {
     type: easing.type,
-    ...(bezier === undefined ? {} : { bezier: [bezier.x1, bezier.y1, bezier.x2, bezier.y2].map(round) }),
-    ...(easing.easingFunctionSpring === undefined ? {} : { bounce: round(easing.easingFunctionSpring.bounce) }),
+    ...(bezier === undefined
+      ? {}
+      : { bezier: [bezier.x1, bezier.y1, bezier.x2, bezier.y2].map((point) => roundTo(point, 4)) }),
+    ...(easing.easingFunctionSpring === undefined ? {} : { bounce: roundTo(easing.easingFunctionSpring.bounce, 4) }),
   };
 }
 
@@ -142,7 +145,7 @@ function keyframeValue(value: KeyframeValue): { type: string; value: unknown } {
 
 function rounded(value: unknown): unknown {
   if (typeof value === "number") {
-    return round(value);
+    return roundTo(value, 4);
   }
 
   if (typeof value === "object" && value !== null) {
@@ -150,9 +153,4 @@ function rounded(value: unknown): unknown {
   }
 
   return value;
-}
-
-/** Four decimals: Figma keeps times and values as floats (0.4000000059604645). */
-function round(value: number): number {
-  return Math.round(value * 10_000) / 10_000;
 }

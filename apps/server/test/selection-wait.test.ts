@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { waitForSelection } from "../src/features/selection-wait/wait-selection.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
-import { waitForSelection } from "../src/watch/wait-selection.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
 const TITLE = {
@@ -42,7 +43,7 @@ describe("selection_wait", () => {
       },
     };
 
-    await expect(waitForSelection(bridge, { timeout: 60 })).resolves.toEqual({
+    await expect(waitForSelection(new PluginClient(bridge), { timeout: 60 })).resolves.toEqual({
       changed: true,
       nodes: [TITLE],
     });
@@ -93,7 +94,7 @@ describe("selection_wait cancelled", () => {
       },
     };
 
-    await expect(waitForSelection(bridge, { timeout: 300 }, cancel.signal)).resolves.toEqual({
+    await expect(waitForSelection(new PluginClient(bridge), { timeout: 300 }, cancel.signal)).resolves.toEqual({
       changed: false,
       nodes: [],
     });

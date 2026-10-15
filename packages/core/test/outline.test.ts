@@ -2,6 +2,32 @@ import { describe, expect, it } from "vitest";
 import { outlineXml, tagFor } from "../src/index.ts";
 
 describe("outline XML", () => {
+  it("marks what the designer marked ready for dev or completed", () => {
+    const xml = outlineXml({
+      id: "0:1",
+      name: "App",
+      type: "PAGE",
+      childCount: 2,
+      children: [
+        {
+          id: "3:1",
+          name: "Checkout",
+          type: "SECTION",
+          dev: "ready",
+        },
+        {
+          id: "4:1",
+          name: "Home",
+          type: "FRAME",
+          dev: "completed",
+        },
+      ],
+    });
+
+    expect(xml).toContain('<Section id="3:1" name="Checkout" dev="ready"/>');
+    expect(xml).toContain('<Frame id="4:1" name="Home" dev="completed"/>');
+  });
+
   it("names tags after Figma's node types", () => {
     expect(tagFor("FRAME")).toBe("Frame");
     expect(tagFor("BOOLEAN_OPERATION")).toBe("BooleanOperation");

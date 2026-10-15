@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { readVariants } from "../src/design/read-variants.ts";
+import { readVariants } from "../src/features/variants-read/read-variants.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -58,7 +59,7 @@ describe("variants_read", () => {
       },
     };
 
-    await expect(readVariants(bridge, { node: "5:9" })).resolves.toMatchObject({
+    await expect(readVariants(new PluginClient(bridge), { node: "5:9" })).resolves.toMatchObject({
       set: { name: "Button" },
       variants: [
         {

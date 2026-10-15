@@ -1,7 +1,10 @@
 import { OPERATION_SCHEMAS } from "@pixelwright/core";
 import { beforeEach, describe, expect, it } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { FAKE_MIXED, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const DARK = {
   r: 0.098,
@@ -176,7 +179,7 @@ interface Shot {
 
 describe("snapshot", () => {
   it("answers what the server's schema expects", async () => {
-    const answer = await runOperation("snapshot", {
+    const answer = await plugin.run("snapshot", {
       node: "2:4869",
       css: "all",
     });
@@ -185,7 +188,7 @@ describe("snapshot", () => {
   });
 
   it("measures every layer from the root and leaves Figma's defaults out", async () => {
-    const { root } = (await runOperation("snapshot", { node: "2:4869" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "2:4869" })) as Shot;
     const [card] = root.children ?? [];
 
     expect(root).toMatchObject({
@@ -212,7 +215,7 @@ describe("snapshot", () => {
   });
 
   it("keeps a hidden layer as a name and a box, without its properties or children", async () => {
-    const { root } = (await runOperation("snapshot", { node: "2:4869" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "2:4869" })) as Shot;
 
     expect(root.children?.[1]).toEqual({
       id: "2:4872",
@@ -228,8 +231,9 @@ describe("snapshot", () => {
   });
 
   it("names the component of an instance and its properties", async () => {
-    const { root } = (await runOperation("snapshot", { node: "2:4869" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "2:4869" })) as Shot;
 
+    expect(root.children?.[2]).not.toHaveProperty("overrides");
     expect(root.children?.[2]?.instance).toEqual({
       componentId: "330:291",
       componentName: "Property 1=Black",
@@ -243,6 +247,287 @@ describe("snapshot", () => {
         },
       },
     });
+  });
+
+  it("puts what an instance overrides on the layers it belongs to, an inner instance's too, not what a property carries", async () => {
+    const main = (id: string) => ({
+      id,
+      key: id,
+      name: id,
+      parent: null,
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "9:1",
+            name: "Card",
+            type: "INSTANCE",
+            mainComponent: main("5:0"),
+            componentProperties: {},
+            overrides: [
+              {
+                id: "9:1",
+                overriddenFields: ["width", "strokes"],
+              },
+              {
+                id: "I9:1;5:2",
+                overriddenFields: ["characters", "styledTextSegments"],
+              },
+              {
+                id: "I9:1;5:4",
+                overriddenFields: ["characters", "fills", "visible"],
+              },
+              {
+                id: "I9:1;5:3;7:1",
+                overriddenFields: ["fills"],
+              },
+            ],
+            children: [
+              { id: "I9:1;5:2" },
+              {
+                id: "I9:1;5:4",
+                componentPropertyReferences: {
+                  characters: "Label#1:0",
+                  visible: "Show#1:1",
+                },
+              },
+              {
+                id: "I9:1;5:3",
+                type: "INSTANCE",
+                mainComponent: main("7:0"),
+                componentProperties: {},
+                overrides: [
+                  {
+                    id: "I9:1;5:3;7:1",
+                    overriddenFields: ["opacity"],
+                  },
+                ],
+                children: [{ id: "I9:1;5:3;7:1" }],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await plugin.run("snapshot", { node: "9:1" })) as Shot;
+    const [title, label, inner] = root.children ?? [];
+
+    expect(root.overrides).toEqual(["width", "strokes"]);
+    expect(title?.overrides).toEqual(["characters", "styledTextSegments"]);
+    expect(label?.overrides).toEqual(["fills"]);
+    expect(inner).not.toHaveProperty("overrides");
+    expect(inner?.children?.[0]?.overrides).toEqual(["fills", "opacity"]);
+  });
+
+  it("asks no match for a radius whose corners are bound, nor any match for design_apply's own read", async () => {
+    const alias = (id: string) => ({
+      type: "VARIABLE_ALIAS",
+      id,
+    });
+    let asked = 0;
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "6:1",
+          type: "FRAME",
+          cornerRadius: 8,
+          boundVariables: { topLeftRadius: alias("V:r") },
+          inferredVariables: {
+            cornerRadius: [alias("V:r")],
+            itemSpacing: [alias("V:8")],
+          },
+        },
+      ],
+    });
+    const [frame] = page.children ?? [];
+    const matches = frame?.inferredVariables;
+
+    Object.defineProperty(frame, "inferredVariables", {
+      get: () => {
+        asked += 1;
+
+        return matches;
+      },
+    });
+    installFigma(page);
+
+    const { root } = (await plugin.run("snapshot", { node: "6:1" })) as Shot;
+
+    expect(root.inferred).toEqual({ itemSpacing: "V:8" });
+
+    asked = 0;
+    await plugin.run("entries", { ids: ["6:1"] });
+    expect(asked).toBe(0);
+  });
+
+  it("finds what an instance above the read changed on it, when the read starts inside the instance", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "9:1",
+            type: "INSTANCE",
+            mainComponent: {
+              id: "5:0",
+              key: "card",
+              name: "Card",
+              parent: null,
+            },
+            componentProperties: {},
+            overrides: [
+              {
+                id: "I9:1;5:2",
+                overriddenFields: ["fills"],
+              },
+              {
+                id: "I9:1;5:2;6:1",
+                overriddenFields: ["characters"],
+              },
+            ],
+            children: [
+              {
+                id: "I9:1;5:2",
+                children: [{ id: "I9:1;5:2;6:1" }],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await plugin.run("snapshot", { node: "I9:1;5:2" })) as Shot;
+
+    expect(root.overrides).toEqual(["fills"]);
+    expect(root.children?.[0]?.overrides).toEqual(["characters"]);
+  });
+
+  it("keeps Figma's own variable match for an unbound spacing field when it found exactly one", async () => {
+    const alias = (id: string) => ({
+      type: "VARIABLE_ALIAS",
+      id,
+    });
+    const frame = (id: string, boundVariables: object) => ({
+      id,
+      type: "FRAME",
+      layoutMode: "VERTICAL",
+      paddingLeft: 16,
+      itemSpacing: 8,
+      boundVariables,
+      inferredVariables: {
+        paddingLeft: [alias("V:16")],
+        itemSpacing: [alias("V:8"), alias("V:8b")],
+        height: [alias("V:16")],
+      },
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "6:0",
+            type: "FRAME",
+            children: [frame("6:1", {}), frame("6:2", { paddingLeft: alias("V:16") })],
+          },
+        ],
+      }),
+      {
+        variables: {
+          "V:16": {
+            name: "space/16",
+            variableCollectionId: "C:1",
+            resolvedType: "FLOAT",
+            value: 16,
+          },
+        },
+        collections: { "C:1": { name: "Orbit" } },
+      },
+    );
+
+    const { root, variables } = (await plugin.run("snapshot", { node: "6:0" })) as Shot;
+    const [free, bound] = root.children ?? [];
+
+    expect(free?.inferred).toEqual({ paddingLeft: "V:16" });
+    expect(bound).not.toHaveProperty("inferred");
+    expect(variables["V:16"]).toMatchObject({ name: "space/16" });
+  });
+
+  it("says the file's colour profile, and nothing where Figma does not give one", async () => {
+    expect(await plugin.run("snapshot", { node: "2:4869" })).not.toHaveProperty("colorProfile");
+
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    expect(await plugin.run("snapshot", { node: "2:4869" })).toMatchObject({ colorProfile: "DISPLAY_P3" });
+  });
+
+  it("reads a list's item spacing, a line's caps and a frame's grid style", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "7:1",
+            type: "FRAME",
+            gridStyleId: "S:grid",
+            children: [
+              {
+                id: "7:2",
+                type: "LINE",
+                strokeCap: "ROUND",
+                strokeWeight: 2,
+                strokes: [
+                  {
+                    type: "SOLID",
+                    visible: true,
+                    color: DARK,
+                  },
+                ],
+              },
+              {
+                id: "7:3",
+                type: "TEXT",
+                characters: "One",
+                listSpacing: 8,
+                segments: [
+                  {
+                    ...segment,
+                    characters: "One",
+                    end: 3,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      {
+        styles: {
+          "S:grid": {
+            name: "Desktop 12",
+            type: "GRID",
+          },
+        },
+      },
+    );
+
+    const { root, styles } = (await plugin.run("snapshot", { node: "7:1" })) as Shot;
+    const [line, text] = root.children ?? [];
+
+    expect(root.gridStyleId).toBe("S:grid");
+    expect(styles["S:grid"]).toMatchObject({ name: "Desktop 12" });
+    expect(line?.strokeCap).toBe("ROUND");
+    expect((text?.text as { listSpacing?: number } | undefined)?.listSpacing).toBe(8);
   });
 
   it("marks an instance of a library's component, whose id in this file is not the library's", async () => {
@@ -268,12 +553,57 @@ describe("snapshot", () => {
       }),
     );
 
-    const { root } = (await runOperation("snapshot", { node: "5:1" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "5:1" })) as Shot;
 
     expect(root.instance).toMatchObject({
       componentId: "5:9",
       remote: true,
     });
+  });
+
+  it("keeps a variant's set key and whether the component around it exposes the instance", async () => {
+    const badge = (id: string, exposed?: boolean) => ({
+      id,
+      name: "Badge",
+      type: "INSTANCE",
+      ...(exposed === undefined ? {} : { isExposedInstance: exposed }),
+      mainComponent: {
+        id: "4:1",
+        key: "variant-key",
+        name: "Style=Solid",
+        parent: {
+          type: "COMPONENT_SET",
+          id: "4:0",
+          key: "set-key",
+          name: "Badge",
+        },
+      },
+      componentProperties: {},
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "6:1",
+            name: "Card",
+            children: [badge("6:2", true), badge("6:3", false), badge("6:4")],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await plugin.run("snapshot", { node: "6:1" })) as Shot;
+
+    const instances = root.children?.map((child) => child.instance as { setKey?: string; exposed?: true } | undefined);
+
+    expect(instances?.map((instance) => [instance?.setKey, instance?.exposed])).toEqual([
+      ["set-key", true],
+      ["set-key", undefined],
+      ["set-key", undefined],
+    ]);
   });
 
   it("reads an instance with a slot, whose property has no value: the slot's layers say what it holds", async () => {
@@ -307,7 +637,7 @@ describe("snapshot", () => {
       }),
     );
 
-    const answer = await runOperation("snapshot", { node: "5:1" });
+    const answer = await plugin.run("snapshot", { node: "5:1" });
 
     expect(() => OPERATION_SCHEMAS.snapshot.output.parse(answer)).not.toThrow();
     expect((answer as Shot).root.instance).toMatchObject({
@@ -322,7 +652,7 @@ describe("snapshot", () => {
   });
 
   it("resolves the styles and variables the layers use, once each", async () => {
-    const { styles, variables } = (await runOperation("snapshot", { node: "2:4869" })) as Shot;
+    const { styles, variables } = (await plugin.run("snapshot", { node: "2:4869" })) as Shot;
 
     expect(Object.keys(styles).sort()).toEqual(["S:grey", "S:h3"]);
     expect(styles["S:h3"]).toMatchObject({
@@ -343,7 +673,7 @@ describe("snapshot", () => {
   });
 
   it("stops at the depth asked for, and adds Figma's CSS only when asked", async () => {
-    const { root } = (await runOperation("snapshot", {
+    const { root } = (await plugin.run("snapshot", {
       node: "2:4869",
       depth: 0,
       css: "all",
@@ -373,7 +703,7 @@ describe("snapshot of more than one answer can carry", () => {
       }),
     );
 
-    const { root } = (await runOperation("snapshot", { node: "1:1" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "1:1" })) as Shot;
 
     expect(root.childCount).toBe(2_000);
     expect(root.children?.length).toBeGreaterThan(500);
@@ -410,7 +740,7 @@ describe("snapshot of a mirrored layer", () => {
       }),
     );
 
-    const { root } = (await runOperation("snapshot", { node: "2:4893" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "2:4893" })) as Shot;
 
     expect(root).toMatchObject({
       rotation: -180,
@@ -489,7 +819,7 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
       },
     });
 
-    const { root } = (await runOperation("snapshot", { node: "3:1" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "3:1" })) as Shot;
 
     expect(root).toMatchObject({
       gridColumnSizes: [
@@ -536,7 +866,7 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
       }),
     );
 
-    const { root } = (await runOperation("snapshot", { node: "5:1" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "5:1" })) as Shot;
 
     expect(root.annotations).toEqual([
       {
@@ -586,7 +916,7 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     ];
     installFigma(page);
 
-    const shot = (await runOperation("snapshot", { node: "6:1" })) as Shot & { measurements?: unknown };
+    const shot = (await plugin.run("snapshot", { node: "6:1" })) as Shot & { measurements?: unknown };
 
     expect(shot.measurements).toEqual([
       {
@@ -621,10 +951,10 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     });
 
     installFigma(page);
-    expect(await runOperation("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
+    expect(await plugin.run("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
 
     page.getMeasurements = () => [];
-    expect(await runOperation("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
+    expect(await plugin.run("snapshot", { node: "6:1" })).not.toHaveProperty("measurements");
   });
 
   it("reads Figma Motion where the API is, a style's keyframes moved to where the style starts", async () => {
@@ -748,7 +1078,7 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
       }),
     );
 
-    const read = async () => ((await runOperation("snapshot", { node: "8:1" })) as Shot).root.children?.[0];
+    const read = async () => ((await plugin.run("snapshot", { node: "8:1" })) as Shot).root.children?.[0];
 
     expect(await read()).not.toHaveProperty("motion");
 
@@ -894,7 +1224,7 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     );
     Object.assign(figma, { motion: {} });
 
-    const { root } = (await runOperation("snapshot", { node: "8:1" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "8:1" })) as Shot;
     const [single, double, manual] = (root.children ?? []).map(
       (child) => (child.motion as { tracks: Record<string, unknown>[] }).tracks[0],
     );
@@ -932,7 +1262,7 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     installFigma(page);
     Object.assign(figma, { motion: {} });
 
-    const answer = await runOperation("snapshot", { node: "8:1" });
+    const answer = await plugin.run("snapshot", { node: "8:1" });
 
     expect(answer).not.toHaveProperty("measurements");
     expect((answer as Shot).root).not.toHaveProperty("motion");
@@ -978,7 +1308,7 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
       }),
     );
 
-    const { root } = (await runOperation("snapshot", {
+    const { root } = (await plugin.run("snapshot", {
       node: "4:1",
       css: "unmapped",
     })) as Shot;
@@ -1037,7 +1367,7 @@ describe("snapshot of a layer that draws past its box", () => {
       }),
     );
 
-    const { root } = (await runOperation("snapshot", { node: "5:1" })) as Shot;
+    const { root } = (await plugin.run("snapshot", { node: "5:1" })) as Shot;
 
     expect(root.children?.[0]?.renderBounds).toEqual({
       x: 9,
@@ -1075,7 +1405,7 @@ describe("vector paths in a snapshot", () => {
       ["7:1", "7:2", "7:3"].map(
         async (node) =>
           (
-            (await runOperation("snapshot", {
+            (await plugin.run("snapshot", {
               node,
               paths: true,
             })) as { root: { pathHash?: string } }
@@ -1088,7 +1418,7 @@ describe("vector paths in a snapshot", () => {
     expect(hashes[2]).not.toBe(hashes[0]);
     // Only nodes_diff asks: a read does not pay for hashing every vector.
     expect(
-      ((await runOperation("snapshot", { node: "7:1" })) as { root: { pathHash?: string } }).root.pathHash,
+      ((await plugin.run("snapshot", { node: "7:1" })) as { root: { pathHash?: string } }).root.pathHash,
     ).toBeUndefined();
   });
 });
@@ -1119,7 +1449,7 @@ describe("layout grids in a snapshot", () => {
       }),
     );
 
-    const { root } = (await runOperation("snapshot", { node: "7:9" })) as { root: { layoutGrids?: unknown[] } };
+    const { root } = (await plugin.run("snapshot", { node: "7:9" })) as { root: { layoutGrids?: unknown[] } };
 
     expect(root.layoutGrids).toEqual([
       expect.objectContaining({

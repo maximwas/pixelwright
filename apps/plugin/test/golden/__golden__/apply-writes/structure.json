@@ -1,0 +1,1313 @@
+{
+  "creates of each shape": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:1",
+            "tag": "Frame"
+          },
+          {
+            "line": 2,
+            "ref": "new:2",
+            "id": "90:2",
+            "tag": "Rectangle"
+          },
+          {
+            "line": 3,
+            "ref": "new:3",
+            "id": "90:3",
+            "tag": "Ellipse"
+          },
+          {
+            "line": 4,
+            "ref": "new:4",
+            "id": "90:4",
+            "tag": "Line"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:1"
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "resize",
+          "args": [
+            100,
+            40
+          ]
+        },
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            2,
+            "90:2"
+          ]
+        },
+        {
+          "node": "90:2",
+          "method": "resize",
+          "args": [
+            10,
+            100
+          ]
+        },
+        {
+          "node": "90:2",
+          "method": "resize",
+          "args": [
+            10,
+            10
+          ]
+        },
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            3,
+            "90:3"
+          ]
+        },
+        {
+          "node": "90:3",
+          "method": "resize",
+          "args": [
+            8,
+            100
+          ]
+        },
+        {
+          "node": "90:3",
+          "method": "resize",
+          "args": [
+            8,
+            8
+          ]
+        },
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            4,
+            "90:4"
+          ]
+        },
+        {
+          "node": "90:4",
+          "method": "resize",
+          "args": [
+            60,
+            0
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "New",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "fills": [],
+            "clipsContent": false,
+            "layoutMode": "NONE",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 40,
+            "children": []
+          }
+        },
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Box",
+            "type": "RECTANGLE",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:2",
+            "fills": [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                },
+                "opacity": 1
+              }
+            ],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 10,
+            "height": 10
+          }
+        },
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Round",
+            "type": "ELLIPSE",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:3",
+            "fills": [],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 8,
+            "height": 8
+          }
+        },
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Line",
+            "type": "LINE",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:4",
+            "strokes": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "strokeWeight": 1,
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 60,
+            "height": 0
+          }
+        }
+      ],
+      "changed": {
+        "3:1": {
+          "children": [
+            [
+              "3:2"
+            ],
+            [
+              "3:2",
+              "90:1",
+              "90:2",
+              "90:3",
+              "90:4"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a reorder": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "9:1",
+          "method": "insertChild",
+          "args": [
+            3,
+            "9:2"
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "9:1": {
+          "children": [
+            [
+              "9:2",
+              "9:3",
+              "9:4"
+            ],
+            [
+              "9:3",
+              "9:4",
+              "9:2"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a move before": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:6"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "1:5",
+          "method": "insertChild",
+          "args": [
+            0,
+            "1:6"
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "1:5": {
+          "children": [
+            [
+              "1:2",
+              "1:6"
+            ],
+            [
+              "1:6",
+              "1:2"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Space Grotesk Medium"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a move into another parent": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "9:2"
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "3:1": {
+          "children": [
+            [
+              "3:2"
+            ],
+            [
+              "3:2",
+              "9:2"
+            ]
+          ]
+        },
+        "9:1": {
+          "children": [
+            [
+              "9:2",
+              "9:3",
+              "9:4"
+            ],
+            [
+              "9:3",
+              "9:4"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a copy of a frame with a retyped text": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:1",
+            "tag": "Frame"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:1"
+          ]
+        },
+        {
+          "node": "90:3",
+          "method": "characters",
+          "args": [
+            "Copied title"
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Card 2",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "layoutMode": "VERTICAL",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": [
+              "90:2"
+            ]
+          }
+        },
+        {
+          "parent": "90:1",
+          "state": {
+            "name": "Heading and link",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:2",
+            "layoutMode": "VERTICAL",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": [
+              "90:3",
+              "90:4"
+            ]
+          }
+        },
+        {
+          "parent": "90:2",
+          "state": {
+            "name": "Hello",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:3",
+            "characters": "Copied title",
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "fontName": {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            "fontSize": 16,
+            "fontWeight": 400,
+            "fillStyleId": "",
+            "textStyleId": "",
+            "hyperlink": null,
+            "textAlignHorizontal": "LEFT",
+            "textAlignVertical": "TOP",
+            "textDecoration": "NONE",
+            "textCase": "ORIGINAL",
+            "lineHeight": {
+              "unit": "AUTO"
+            },
+            "letterSpacing": {
+              "unit": "PIXELS",
+              "value": 0
+            },
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": []
+          }
+        },
+        {
+          "parent": "90:2",
+          "state": {
+            "name": "Read more",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:4",
+            "characters": "Read more",
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "fontName": {
+              "family": "Space Grotesk",
+              "style": "Medium"
+            },
+            "fontSize": 16,
+            "fontWeight": 500,
+            "fillStyleId": "",
+            "textStyleId": "",
+            "hyperlink": null,
+            "textAlignHorizontal": "LEFT",
+            "textAlignVertical": "TOP",
+            "textDecoration": "NONE",
+            "textCase": "ORIGINAL",
+            "lineHeight": {
+              "unit": "AUTO"
+            },
+            "letterSpacing": {
+              "unit": "PIXELS",
+              "value": 0
+            },
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": []
+          }
+        }
+      ],
+      "changed": {
+        "3:1": {
+          "children": [
+            [
+              "3:2"
+            ],
+            [
+              "3:2",
+              "90:1"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a copy retyping a text in another font": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:1",
+            "tag": "Frame"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:1"
+          ]
+        },
+        {
+          "node": "90:4",
+          "method": "characters",
+          "args": [
+            "More"
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Card",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "layoutMode": "VERTICAL",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": [
+              "90:2"
+            ]
+          }
+        },
+        {
+          "parent": "90:1",
+          "state": {
+            "name": "Heading and link",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:2",
+            "layoutMode": "VERTICAL",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": [
+              "90:3",
+              "90:4"
+            ]
+          }
+        },
+        {
+          "parent": "90:2",
+          "state": {
+            "name": "Hello",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:3",
+            "characters": "Hello",
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "fontName": {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            "fontSize": 16,
+            "fontWeight": 400,
+            "fillStyleId": "",
+            "textStyleId": "",
+            "hyperlink": null,
+            "textAlignHorizontal": "LEFT",
+            "textAlignVertical": "TOP",
+            "textDecoration": "NONE",
+            "textCase": "ORIGINAL",
+            "lineHeight": {
+              "unit": "AUTO"
+            },
+            "letterSpacing": {
+              "unit": "PIXELS",
+              "value": 0
+            },
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": []
+          }
+        },
+        {
+          "parent": "90:2",
+          "state": {
+            "name": "Read more",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:4",
+            "characters": "More",
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "fontName": {
+              "family": "Space Grotesk",
+              "style": "Medium"
+            },
+            "fontSize": 16,
+            "fontWeight": 500,
+            "fillStyleId": "",
+            "textStyleId": "",
+            "hyperlink": null,
+            "textAlignHorizontal": "LEFT",
+            "textAlignVertical": "TOP",
+            "textDecoration": "NONE",
+            "textCase": "ORIGINAL",
+            "lineHeight": {
+              "unit": "AUTO"
+            },
+            "letterSpacing": {
+              "unit": "PIXELS",
+              "value": 0
+            },
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": []
+          }
+        }
+      ],
+      "changed": {
+        "3:1": {
+          "children": [
+            [
+              "3:2"
+            ],
+            [
+              "3:2",
+              "90:1"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Space Grotesk Medium"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "hidden": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "visible": [
+            true,
+            false
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a new section": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:1",
+            "tag": "Section"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "0:1",
+          "method": "insertChild",
+          "args": [
+            10,
+            "90:1"
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "resizeWithoutConstraints",
+          "args": [
+            400,
+            100
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "resizeWithoutConstraints",
+          "args": [
+            400,
+            300
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": "0:1",
+          "state": {
+            "name": "New area",
+            "type": "SECTION",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "fills": [],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 400,
+            "height": 300,
+            "children": [],
+            "x": null,
+            "y": null
+          }
+        }
+      ],
+      "changed": {
+        "0:1": {
+          "children": [
+            [
+              "1:1",
+              "3:1",
+              "9:1",
+              "2:1",
+              "4:1",
+              "5:1",
+              "6:1",
+              "6:2",
+              "8:1",
+              "11:1"
+            ],
+            [
+              "1:1",
+              "3:1",
+              "9:1",
+              "2:1",
+              "4:1",
+              "5:1",
+              "6:1",
+              "6:2",
+              "8:1",
+              "11:1",
+              "90:1"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}

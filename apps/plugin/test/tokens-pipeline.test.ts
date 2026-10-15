@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { TokensApplyToolInputSchema, TokensReadInputSchema } from "../../server/src/schemas/tools.ts";
-import { applyTokens, readTokens } from "../../server/src/tokens/tokens.ts";
-import { setEditsAllowed } from "../src/figma/edits.ts";
+import { applyTokens } from "../../server/src/features/tokens-apply/apply-tokens.ts";
+import { TokensApplyToolInputSchema } from "../../server/src/features/tokens-apply/schemas.ts";
+import { readTokens } from "../../server/src/features/tokens-read/read-tokens.ts";
+import { TokensReadInputSchema } from "../../server/src/features/tokens-read/schemas.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
-import { pluginBridge } from "./helpers/plugin-bridge.ts";
+import { pluginClient } from "./helpers/plugin-bridge.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 const BLACK = {
   r: 0,
@@ -228,18 +233,18 @@ beforeEach(() => {
       ],
     },
   );
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("tokens_apply end to end", () => {
   it("writes nothing when given what tokens_read returned, variables and styles", async () => {
-    const bridge = pluginBridge();
-    const read = await readTokens(bridge, TokensReadInputSchema.parse({ format: "json" }));
-    const applied = await applyTokens(bridge, TokensApplyToolInputSchema.parse({ ...read.tokens }));
+    const client = pluginClient(plugin);
+    const read = await readTokens(client, TokensReadInputSchema.parse({ format: "json" }));
+    const applied = await applyTokens(client, TokensApplyToolInputSchema.parse({ ...read.tokens }));
 
     expect(read.tokens?.styles).toMatchObject({
       paint: [{ name: "Veil" }],
@@ -257,7 +262,7 @@ describe("tokens_apply end to end", () => {
 
   it("returns the values it could not read with the plugin's errors, and writes the rest", async () => {
     const applied = await applyTokens(
-      pluginBridge(),
+      pluginClient(plugin),
       TokensApplyToolInputSchema.parse({
         collections: [
           {

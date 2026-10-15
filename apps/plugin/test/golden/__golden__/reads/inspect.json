@@ -1,0 +1,713 @@
+{
+  "the hero and its layers, from the hero": {
+    "result": {
+      "origin": {
+        "id": "10:1",
+        "name": "Hero"
+      },
+      "layers": [
+        {
+          "id": "10:1",
+          "name": "Hero",
+          "type": "FRAME",
+          "visible": true,
+          "x": 0,
+          "y": 0,
+          "width": 600,
+          "height": 400,
+          "renderBounds": {
+            "x": -4,
+            "y": 0,
+            "width": 608,
+            "height": 410
+          },
+          "opacity": 0.9,
+          "blendMode": "MULTIPLY",
+          "clipsContent": true,
+          "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "MIN"
+          },
+          "layoutMode": "VERTICAL",
+          "layoutWrap": "NO_WRAP",
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "MIN",
+          "counterAxisAlignContent": "AUTO",
+          "itemSpacing": 24,
+          "counterAxisSpacing": 0,
+          "paddingTop": 32,
+          "paddingRight": 24,
+          "paddingBottom": 32,
+          "paddingLeft": 24,
+          "itemReverseZIndex": false,
+          "strokesIncludedInLayout": false,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "HUG",
+          "minWidth": 320,
+          "fills": [
+            {
+              "type": "SOLID",
+              "visible": true,
+              "opacity": 1,
+              "blendMode": "NORMAL",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1
+              }
+            },
+            {
+              "type": "GRADIENT_LINEAR",
+              "visible": true,
+              "opacity": 1,
+              "blendMode": "NORMAL",
+              "gradientStops": [
+                {
+                  "position": 0,
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                },
+                {
+                  "position": 1,
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "gradientTransform": [
+                [
+                  1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  0
+                ]
+              ]
+            }
+          ],
+          "strokes": [
+            {
+              "type": "SOLID",
+              "visible": true,
+              "opacity": 1,
+              "blendMode": "NORMAL",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ],
+          "layoutGrids": [
+            {
+              "pattern": "COLUMNS",
+              "alignment": "STRETCH",
+              "gutterSize": 16,
+              "count": 4,
+              "offset": 0,
+              "visible": true
+            }
+          ],
+          "strokeWeight": "mixed",
+          "strokeTopWeight": 1,
+          "strokeRightWeight": 0,
+          "strokeBottomWeight": 2,
+          "strokeLeftWeight": 0,
+          "strokeAlign": "INSIDE",
+          "dashPattern": [
+            4,
+            2
+          ],
+          "effects": [
+            {
+              "type": "DROP_SHADOW",
+              "visible": true,
+              "radius": 8,
+              "spread": 0,
+              "offset": {
+                "x": 0,
+                "y": 4
+              },
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.25
+              },
+              "blendMode": "NORMAL",
+              "showShadowBehindNode": false
+            }
+          ],
+          "cornerRadius": "mixed",
+          "topLeftRadius": 8,
+          "topRightRadius": 8,
+          "bottomRightRadius": 0,
+          "bottomLeftRadius": 0,
+          "cornerSmoothing": 0.6,
+          "fillStyleId": "S:surface",
+          "effectStyleId": "S:shadow",
+          "boundVariables": {
+            "itemSpacing": {
+              "type": "VARIABLE_ALIAS",
+              "id": "V:gap"
+            }
+          },
+          "exportSettings": [
+            {
+              "format": "PNG",
+              "suffix": "",
+              "constraint": {
+                "type": "SCALE",
+                "value": 2
+              }
+            }
+          ],
+          "annotations": [
+            {
+              "label": "Hero note",
+              "category": "Development",
+              "pins": [
+                "width"
+              ]
+            }
+          ],
+          "reactions": [
+            {
+              "trigger": {
+                "type": "ON_CLICK"
+              },
+              "actions": [
+                {
+                  "type": "NODE",
+                  "destinationId": "10:9",
+                  "navigation": "NAVIGATE",
+                  "transition": null,
+                  "destinationName": "Detail"
+                }
+              ]
+            }
+          ],
+          "css": {
+            "display": "flex",
+            "background": "linear-gradient(#000, #fff)"
+          },
+          "childCount": 8,
+          "parent": {
+            "id": "0:1",
+            "name": "Page 1",
+            "type": "PAGE"
+          },
+          "box": {
+            "x": 0,
+            "y": 0,
+            "width": 600,
+            "height": 400
+          },
+          "paintedBox": {
+            "x": -4,
+            "y": 0,
+            "width": 608,
+            "height": 410
+          },
+          "parentBox": null,
+          "parentPadding": null
+        },
+        {
+          "id": "10:2",
+          "name": "Hello world",
+          "type": "TEXT",
+          "visible": true,
+          "x": 24,
+          "y": 32,
+          "width": 300,
+          "height": 40,
+          "fills": [
+            {
+              "type": "SOLID",
+              "visible": true,
+              "opacity": 1,
+              "blendMode": "NORMAL",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ],
+          "text": {
+            "characters": "Hello world",
+            "textAutoResize": "HEIGHT",
+            "textAlignHorizontal": "CENTER",
+            "textAlignVertical": "TOP",
+            "segments": [
+              {
+                "characters": "Hello ",
+                "start": 0,
+                "end": 6,
+                "fontName": {
+                  "family": "Inter",
+                  "style": "Regular"
+                },
+                "fontSize": 16,
+                "fontWeight": 400,
+                "fontStyle": "REGULAR",
+                "textDecoration": "NONE",
+                "textCase": "ORIGINAL",
+                "lineHeight": {
+                  "unit": "AUTO"
+                },
+                "letterSpacing": {
+                  "unit": "PIXELS",
+                  "value": 0
+                },
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    }
+                  }
+                ],
+                "fillStyleId": "",
+                "textStyleId": "S:body",
+                "hyperlink": null,
+                "boundVariables": {}
+              },
+              {
+                "characters": "world",
+                "start": 6,
+                "end": 11,
+                "fontName": {
+                  "family": "Inter",
+                  "style": "Regular"
+                },
+                "fontSize": 16,
+                "fontWeight": 700,
+                "fontStyle": "REGULAR",
+                "textDecoration": "NONE",
+                "textCase": "ORIGINAL",
+                "lineHeight": {
+                  "unit": "AUTO"
+                },
+                "letterSpacing": {
+                  "unit": "PIXELS",
+                  "value": 0
+                },
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    }
+                  }
+                ],
+                "fillStyleId": "",
+                "textStyleId": "",
+                "hyperlink": {
+                  "type": "URL",
+                  "value": "https://pixelwright.dev"
+                },
+                "boundVariables": {
+                  "fontSize": {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "V:size"
+                  }
+                }
+              }
+            ],
+            "textTruncation": "ENDING",
+            "maxLines": 2,
+            "leadingTrim": "CAP_HEIGHT",
+            "hangingPunctuation": true,
+            "paragraphSpacing": 4,
+            "listSpacing": 2
+          },
+          "childCount": 0,
+          "parent": {
+            "id": "10:1",
+            "name": "Hero",
+            "type": "FRAME"
+          },
+          "box": {
+            "x": 24,
+            "y": 32,
+            "width": 300,
+            "height": 40
+          },
+          "paintedBox": null,
+          "parentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 600,
+            "height": 400
+          },
+          "parentPadding": {
+            "top": 32,
+            "right": 24,
+            "bottom": 32,
+            "left": 24
+          }
+        },
+        {
+          "id": "10:4",
+          "name": "Mask",
+          "type": "RECTANGLE",
+          "visible": true,
+          "x": 30,
+          "y": 140,
+          "width": 40,
+          "height": 40,
+          "rotation": 30,
+          "mirrorTransform": [
+            -1,
+            0,
+            0,
+            1
+          ],
+          "bounds": {
+            "x": 30,
+            "y": 140,
+            "width": 40,
+            "height": 40
+          },
+          "isMask": true,
+          "maskType": "ALPHA",
+          "fills": [
+            {
+              "type": "SOLID",
+              "visible": true,
+              "opacity": 1,
+              "blendMode": "NORMAL",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ],
+          "childCount": 0,
+          "parent": {
+            "id": "10:1",
+            "name": "Hero",
+            "type": "FRAME"
+          },
+          "box": {
+            "x": 30,
+            "y": 140,
+            "width": 40,
+            "height": 40
+          },
+          "paintedBox": null,
+          "parentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 600,
+            "height": 400
+          },
+          "parentPadding": {
+            "top": 32,
+            "right": 24,
+            "bottom": 32,
+            "left": 24
+          }
+        },
+        {
+          "id": "10:5",
+          "name": "Arrow",
+          "type": "VECTOR",
+          "visible": true,
+          "x": 80,
+          "y": 140,
+          "width": 24,
+          "height": 24,
+          "renderBounds": {
+            "x": 79,
+            "y": 139,
+            "width": 26,
+            "height": 26
+          },
+          "strokes": [
+            {
+              "type": "SOLID",
+              "visible": true,
+              "opacity": 1,
+              "blendMode": "NORMAL",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ],
+          "strokeWeight": 2,
+          "strokeAlign": "CENTER",
+          "strokeCap": "ROUND",
+          "childCount": 0,
+          "parent": {
+            "id": "10:1",
+            "name": "Hero",
+            "type": "FRAME"
+          },
+          "box": {
+            "x": 80,
+            "y": 140,
+            "width": 24,
+            "height": 24
+          },
+          "paintedBox": {
+            "x": 79,
+            "y": 139,
+            "width": 26,
+            "height": 26
+          },
+          "parentBox": {
+            "x": 0,
+            "y": 0,
+            "width": 600,
+            "height": 400
+          },
+          "parentPadding": {
+            "top": 32,
+            "right": 24,
+            "bottom": 32,
+            "left": 24
+          }
+        }
+      ],
+      "missing": [],
+      "styles": {
+        "S:surface": {
+          "name": "Surface",
+          "type": "PAINT",
+          "remote": false,
+          "paints": [
+            {
+              "type": "SOLID",
+              "visible": true,
+              "opacity": 1,
+              "blendMode": "NORMAL",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1
+              }
+            }
+          ]
+        },
+        "S:shadow": {
+          "name": "Shadow/Card",
+          "type": "EFFECT",
+          "remote": false,
+          "effects": []
+        },
+        "S:body": {
+          "name": "Body",
+          "type": "TEXT",
+          "remote": false,
+          "fontName": {
+            "family": "Inter",
+            "style": "Regular"
+          },
+          "fontSize": 16,
+          "lineHeight": {
+            "unit": "AUTO"
+          },
+          "letterSpacing": {
+            "unit": "PIXELS",
+            "value": 0
+          },
+          "textCase": "ORIGINAL",
+          "textDecoration": "NONE"
+        }
+      },
+      "variables": {
+        "V:gap": {
+          "name": "space/gap",
+          "collection": "Tokens",
+          "resolvedType": "FLOAT",
+          "remote": false,
+          "value": 24
+        },
+        "V:size": {
+          "name": "type/size",
+          "collection": "Tokens",
+          "resolvedType": "FLOAT",
+          "remote": false,
+          "value": 16
+        }
+      }
+    }
+  },
+  "a text and a grid cell, from the page": {
+    "result": {
+      "origin": null,
+      "layers": [
+        {
+          "id": "10:11",
+          "name": "Docs",
+          "type": "TEXT",
+          "visible": true,
+          "x": 124,
+          "y": 500,
+          "width": 40,
+          "height": 20,
+          "fills": [
+            {
+              "type": "SOLID",
+              "visible": true,
+              "opacity": 1,
+              "blendMode": "NORMAL",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ],
+          "href": "https://pixelwright.dev/docs",
+          "reactions": [
+            {
+              "trigger": {
+                "type": "ON_CLICK"
+              },
+              "actions": [
+                {
+                  "type": "URL",
+                  "url": "https://pixelwright.dev/docs"
+                }
+              ]
+            }
+          ],
+          "text": {
+            "characters": "Docs",
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "textAlignHorizontal": "LEFT",
+            "textAlignVertical": "TOP",
+            "segments": [
+              {
+                "characters": "Docs",
+                "start": 0,
+                "end": 4,
+                "fontName": {
+                  "family": "Inter",
+                  "style": "Regular"
+                },
+                "fontSize": 16,
+                "fontWeight": 400,
+                "textDecoration": "NONE",
+                "textCase": "ORIGINAL",
+                "lineHeight": {
+                  "unit": "AUTO"
+                },
+                "letterSpacing": {
+                  "unit": "PIXELS",
+                  "value": 0
+                },
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "visible": true,
+                    "opacity": 1,
+                    "blendMode": "NORMAL",
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    }
+                  }
+                ],
+                "fillStyleId": "",
+                "textStyleId": "",
+                "hyperlink": null
+              }
+            ]
+          },
+          "childCount": 0,
+          "parent": {
+            "id": "10:1",
+            "name": "Hero",
+            "type": "FRAME"
+          },
+          "box": {
+            "x": 124,
+            "y": 500,
+            "width": 40,
+            "height": 20
+          },
+          "paintedBox": null,
+          "parentBox": {
+            "x": 100,
+            "y": 200,
+            "width": 600,
+            "height": 400
+          },
+          "parentPadding": {
+            "top": 32,
+            "right": 24,
+            "bottom": 32,
+            "left": 24
+          }
+        },
+        {
+          "id": "10:10",
+          "name": "Cell",
+          "type": "RECTANGLE",
+          "visible": true,
+          "x": 0,
+          "y": 0,
+          "width": 100,
+          "height": 100,
+          "gridRowAnchorIndex": 0,
+          "gridColumnAnchorIndex": 1,
+          "gridRowSpan": 1,
+          "gridColumnSpan": 1,
+          "gridChildHorizontalAlign": "AUTO",
+          "gridChildVerticalAlign": "CENTER",
+          "childCount": 0,
+          "parent": {
+            "id": "10:8",
+            "name": "Grid",
+            "type": "FRAME"
+          },
+          "box": {
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100
+          },
+          "paintedBox": null,
+          "parentBox": {
+            "x": 124,
+            "y": 430,
+            "width": 300,
+            "height": 60
+          },
+          "parentPadding": {}
+        }
+      ],
+      "missing": [],
+      "styles": {},
+      "variables": {}
+    }
+  }
+}

@@ -1,9 +1,10 @@
 import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
-import { uploaded } from "../src/figma/uploads.ts";
 import { type FakeLibrary, type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 interface Applied {
   created: { line: number; ref: string; id: string; tag: string }[];
@@ -21,7 +22,7 @@ function changesOf(xml: string): ApplyChange[] {
 }
 
 const apply = async (xml: string, options: { parent?: string; dryRun?: boolean } = {}) =>
-  (await runOperation("apply", {
+  (await plugin.run("apply", {
     changes: changesOf(xml),
     ...options,
   })) as Applied;
@@ -298,16 +299,16 @@ const byId = (id: string, from: FakeNode = root): FakeNode | undefined =>
 beforeEach(() => {
   root = page();
   fake = installFigma(root, LIBRARY);
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("apply: the safety catch", () => {
   it("refuses every write while Allow edits is off, and checks without writing on a dry run", async () => {
-    setEditsAllowed(false);
+    plugin.services.edits.allow(false);
 
     await expect(apply('<Frame id="1:1" opacity="0.5"/>')).rejects.toMatchObject({ code: "EDITS_DISABLED" });
     expect(byId("1:1")?.opacity).toBe(1);
@@ -321,6 +322,143 @@ describe("apply: the safety catch", () => {
     expect(byId("1:1")?.opacity).toBe(1);
     expect(fake.writes.calls).toEqual([]);
     expect(fake.writes.undo).toBe(0);
+  });
+});
+
+describe("apply: refusals that write nothing", () => {
+  it("refuses a dashed underline before writing any of it", async () => {
+    const result = await apply('<Text id="1:2" text-decoration="underline dashed"/>');
+
+    expect(result.errors.map(({ attribute, message }) => `${attribute}: ${message}`)).toEqual([
+      "text-decoration: Figma underlines solid, wavy or dotted: it has no dashed decoration.",
+    ]);
+    expect(byId("1:2")?.textDecoration ?? "NONE").toBe("NONE");
+  });
+
+  it("gives one error for a link on a frame", async () => {
+    const result = await apply('<Frame id="1:1" href="https://example.com"/>');
+
+    expect(result.errors.map(({ message }) => message)).toEqual([
+      "A link on a frame is a prototype reaction: it is written in the next stage.",
+    ]);
+  });
+});
+
+describe("apply: a step that fails writes nothing", () => {
+  it("resolves every value of a step before writing any, and closes the call's undo step", async () => {
+    const before = byId("1:1")?.paddingTop;
+    const result = await apply('<Frame id="1:1" padding="8px var(--nope)"/>');
+
+    expect(result.errors.map(({ attribute }) => attribute)).toEqual(["padding"]);
+    expect(byId("1:1")?.paddingTop).toBe(before);
+    expect(fake.writes.undo).toBe(1);
+  });
+
+  it("refuses a stroke weight per side before writing the stroke's paint", async () => {
+    const result = await apply('<Ellipse name="Dot" width="10px" height="10px" border-top="2px solid #000"/>', {
+      parent: "3:1",
+    });
+    const dot = fake.writes.created.find((node) => node.type === "ELLIPSE");
+
+    expect(result.errors.map(({ attribute }) => attribute)).toEqual(["border-top"]);
+    expect(dot?.strokes ?? []).toEqual([]);
+  });
+});
+
+describe("apply: a dry run finds what the real run would", () => {
+  const messages = (result: Applied) => result.errors.map(({ attribute, message }) => `${attribute}: ${message}`);
+
+  it("refuses a paint style inside a list of paints, as the real run does", async () => {
+    const xml = '<Frame id="1:1" background="color-mix(in srgb, var(--Dark) 50%, transparent)"/>';
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    expect(messages(real)).toEqual([
+      "background: --Dark is a paint style, which is the whole list of a layer's paints.",
+    ]);
+    expect(messages(dry)).toEqual(messages(real));
+  });
+
+  it("refuses for what each layer is, as the real run does: a frame's description and link, a dashed underline, a section's opacity", async () => {
+    const xml = [
+      '<Frame id="1:1" description="A card." href="https://example.com/pricing"/>',
+      '<Text id="1:2" text-decoration="underline dashed">Hello</Text>',
+      '<Section name="Notes" opacity="0.5"/>',
+    ].join("\n");
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    expect(messages(real)).toEqual([
+      "description: A description belongs to a component or a component set.",
+      "href: A link on a frame is a prototype reaction: it is written in the next stage.",
+      "text-decoration: Figma underlines solid, wavy or dotted: it has no dashed decoration.",
+      "opacity: A section has no opacity.",
+    ]);
+    expect(messages(dry)).toEqual(messages(real));
+  });
+
+  it("gives one error for a property, as the real run's step does", async () => {
+    const xml = '<Frame id="1:1" padding="8px var(--nope)"/>';
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    expect(messages(real)).toHaveLength(1);
+    expect(messages(dry)).toEqual(messages(real));
+  });
+});
+
+describe("apply: new component sets", () => {
+  it("places a new set on the page beside what is there, as any new layer", async () => {
+    const placed = async (xml: string) => {
+      root = tree({
+        id: "0:1",
+        type: "PAGE",
+        name: "Page 1",
+        children: [
+          {
+            id: "1:1",
+            name: "Card",
+            x: 0,
+            y: 20,
+            width: 600,
+            height: 300,
+          },
+          {
+            id: "3:1",
+            name: "Board",
+            x: 1000,
+            y: 0,
+            width: 400,
+            height: 200,
+          },
+        ],
+      });
+      fake = installFigma(root, LIBRARY);
+
+      const result = await apply(xml);
+      // A set is made last, once its variants are: the first layer the XML names is its own.
+      const made = byId(result.created.find(({ line, ref }) => line === 1 && ref === "new:1")?.id ?? "");
+
+      expect(result.errors).toEqual([]);
+
+      return [made?.x, made?.y];
+    };
+
+    expect(await placed('<Frame name="Free"/>')).toEqual([1500, 0]);
+    expect(await placed('<ComponentSet name="Tag"><Component variant="Tone=Dark"/></ComponentSet>')).toEqual([1500, 0]);
+  });
+});
+
+describe("apply: sections", () => {
+  it("sizes a new section as Figma lets it, without constraints", async () => {
+    root = page();
+    fake = installFigma(root, LIBRARY, { strict: true });
+
+    const result = await apply('<Section name="Area" width="400px" height="300px"/>');
+    const [made] = fake.writes.created;
+
+    expect(result.errors).toEqual([]);
+    expect([made?.type, made?.width, made?.height]).toEqual(["SECTION", 400, 300]);
   });
 });
 
@@ -426,6 +564,41 @@ describe("apply: changing", () => {
   });
 });
 
+describe("apply: colours in a Display P3 file", () => {
+  it("writes a P3 colour as it is and an sRGB one converted to P3", async () => {
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    await apply('<Frame id="3:1" background="color(display-p3 1 0 0)"/>');
+
+    const fillsOf = () => (byId("3:1")?.fills ?? []) as { color: { r: number; g: number; b: number } }[];
+
+    expect(fillsOf()[0]?.color).toEqual({
+      r: 1,
+      g: 0,
+      b: 0,
+    });
+
+    await apply('<Frame id="3:1" background="#FF0000"/>');
+
+    const [paint] = fillsOf();
+
+    expect(paint?.color.r).toBeCloseTo(0.9175, 3);
+    expect(paint?.color.g).toBeCloseTo(0.2003, 3);
+    Object.assign(figma.root, { documentColorProfile: "SRGB" });
+  });
+
+  it("writes an underline's colour in the file's space too", async () => {
+    Object.assign(figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    await apply('<Text id="1:2" text-decoration="underline solid #FF0000"/>');
+
+    const decoration = byId("1:2")?.textDecorationColor as { value: { color: { r: number } } } | undefined;
+
+    expect(decoration?.value.color.r).toBeCloseTo(0.9175, 3);
+    Object.assign(figma.root, { documentColorProfile: "SRGB" });
+  });
+});
+
 describe("apply: tokens, fonts and errors", () => {
   it("binds var() to the style the page uses, and names close tokens for one that matches nothing", async () => {
     await apply('<Frame id="3:1" background="var(--Dark)"/>');
@@ -472,7 +645,7 @@ describe("apply: tokens, fonts and errors", () => {
 
 describe("entries", () => {
   it("gives each layer asked for with its descendants and its parent, those inside another one within it", async () => {
-    const result = (await runOperation("entries", { ids: ["1:1", "1:2", "3:2", "9:9"] })) as {
+    const result = (await plugin.run("entries", { ids: ["1:1", "1:2", "3:2", "9:9"] })) as {
       roots: { node: { id: string; children?: { id: string }[] }; parent: { id: string; x: number } | null }[];
       missing: string[];
     };
@@ -489,7 +662,7 @@ describe("entries", () => {
 
 describe("delete", () => {
   it("deletes layers, refuses one inside an instance and a missing one, one undo step, never without Allow edits", async () => {
-    const result = (await runOperation("delete", { nodes: ["3:2", "I2:1;3:4", "9:9"] })) as {
+    const result = (await plugin.run("delete", { nodes: ["3:2", "I2:1;3:4", "9:9"] })) as {
       deleted: string[];
       errors: { id: string; message: string }[];
     };
@@ -500,9 +673,9 @@ describe("delete", () => {
     expect(result.errors[0]?.message).toMatch(/instance/);
     expect(fake.writes.undo).toBe(1);
 
-    setEditsAllowed(false);
+    plugin.services.edits.allow(false);
 
-    await expect(runOperation("delete", { nodes: ["1:2"] })).rejects.toMatchObject({ code: "EDITS_DISABLED" });
+    await expect(plugin.run("delete", { nodes: ["1:2"] })).rejects.toMatchObject({ code: "EDITS_DISABLED" });
   });
 });
 
@@ -511,7 +684,7 @@ describe("apply: review fixes", () => {
     fake.writes.calls.filter((call) => call.node === node && (method === undefined || call.method === method));
 
   it("reads a hidden layer asked for whole, with its layers", async () => {
-    const result = (await runOperation("entries", { ids: ["4:1"] })) as {
+    const result = (await plugin.run("entries", { ids: ["4:1"] })) as {
       roots: { node: { layoutMode?: string; children?: { id: string }[] } }[];
     };
 
@@ -607,22 +780,22 @@ describe("upload", () => {
     const bytes = Uint8Array.from({ length: 10 }, (_, index) => index);
     const chunk = (from: number, to: number) => btoa(String.fromCharCode(...bytes.subarray(from, to)));
 
-    await runOperation("upload", {
+    await plugin.run("upload", {
       stream: "s-1",
       offset: 0,
       chunk: chunk(0, 6),
       total: 10,
     });
 
-    expect(uploaded("s-1")).toBeUndefined();
+    expect(plugin.services.uploads.bytes("s-1")).toBeUndefined();
 
-    await runOperation("upload", {
+    await plugin.run("upload", {
       stream: "s-1",
       offset: 6,
       chunk: chunk(6, 10),
       total: 10,
     });
 
-    expect([...(uploaded("s-1") ?? [])]).toEqual([...bytes]);
+    expect([...(plugin.services.uploads.bytes("s-1") ?? [])]).toEqual([...bytes]);
   });
 });

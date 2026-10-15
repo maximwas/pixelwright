@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { runOperation } from "../src/figma/operations.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 let page: FakeNode;
 let installed: ReturnType<typeof installFigma>;
@@ -62,7 +65,7 @@ describe("read operations", () => {
   it("lists the selection with boxes", async () => {
     installed.figma.currentPage.selection = [page.children?.[0] as FakeNode];
 
-    await expect(runOperation("selection", null)).resolves.toEqual({
+    await expect(plugin.run("selection", null)).resolves.toEqual({
       nodes: [
         {
           id: "2:4868",
@@ -80,18 +83,18 @@ describe("read operations", () => {
   });
 
   it("finds nodes by name, type, text and component, with their ancestors", async () => {
-    const byText = (await runOperation("find", { text: "learn" })) as { nodes: { id: string; path: string[] }[] };
+    const byText = (await plugin.run("find", { text: "learn" })) as { nodes: { id: string; path: string[] }[] };
 
     expect(byText.nodes.map((node) => node.id)).toEqual(["I2:4873;334:1481"]);
     expect(byText.nodes[0]?.path).toEqual(["Services block", "Link"]);
-    await expect(runOperation("find", { type: "GROUP" })).resolves.toMatchObject({ nodes: [{ id: "2:4907" }] });
-    await expect(runOperation("find", { name: "TOKYO" })).resolves.toMatchObject({ nodes: [{ id: "2:4875" }] });
-    await expect(runOperation("find", { component: "link" })).resolves.toMatchObject({ nodes: [{ id: "2:4873" }] });
+    await expect(plugin.run("find", { type: "GROUP" })).resolves.toMatchObject({ nodes: [{ id: "2:4907" }] });
+    await expect(plugin.run("find", { name: "TOKYO" })).resolves.toMatchObject({ nodes: [{ id: "2:4875" }] });
+    await expect(plugin.run("find", { component: "link" })).resolves.toMatchObject({ nodes: [{ id: "2:4873" }] });
   });
 
   it("searches only inside within, and says when the limit cut the list", async () => {
     await expect(
-      runOperation("find", {
+      plugin.run("find", {
         within: "2:4868",
         type: "GROUP",
       }),
@@ -99,11 +102,11 @@ describe("read operations", () => {
       nodes: [],
       more: false,
     });
-    await expect(runOperation("find", { limit: 1 })).resolves.toMatchObject({ more: true });
+    await expect(plugin.run("find", { limit: 1 })).resolves.toMatchObject({ more: true });
   });
 
   it("selects and zooms to a node, and fails on an id that does not exist", async () => {
-    await expect(runOperation("show", { node: "2:4875" })).resolves.toEqual({
+    await expect(plugin.run("show", { node: "2:4875" })).resolves.toEqual({
       nodes: [
         {
           id: "2:4875",
@@ -114,13 +117,13 @@ describe("read operations", () => {
       zoom: 1,
     });
     expect(installed.state.zoomedTo.map((node) => node.id)).toEqual(["2:4875"]);
-    await expect(runOperation("show", { node: "9:9" })).rejects.toMatchObject({ code: "NODE_NOT_FOUND" });
+    await expect(plugin.run("show", { node: "9:9" })).rejects.toMatchObject({ code: "NODE_NOT_FOUND" });
   });
 });
 
 describe("outline", () => {
   it("returns the tree to a depth, with boxes relative to the root and child counts where it stops", async () => {
-    const outline = (await runOperation("outline", {
+    const outline = (await plugin.run("outline", {
       node: "2:4868",
       depth: 1,
     })) as {
@@ -153,7 +156,7 @@ describe("outline of a frame with more children than one outline lists", () => {
       }),
     );
 
-    const outline = (await runOperation("outline", { node: "1:1" })) as {
+    const outline = (await plugin.run("outline", { node: "1:1" })) as {
       root: { childCount: number; children: unknown[] };
     };
 
@@ -185,7 +188,7 @@ describe("outline of the document", () => {
       }),
     );
 
-    const outline = (await runOperation("outline", { node: "0:0" })) as { root: unknown };
+    const outline = (await plugin.run("outline", { node: "0:0" })) as { root: unknown };
 
     expect(outline.root).toEqual({
       id: "0:0",
@@ -244,7 +247,7 @@ describe("find on a page the user has not opened", () => {
       getNodeByIdAsync: async (id: string) => (id === "0:2" ? other : null),
     });
 
-    const found = (await runOperation("find", {
+    const found = (await plugin.run("find", {
       name: "Button",
       within: "0:2",
     })) as { nodes: { id: string }[] };
@@ -286,7 +289,7 @@ describe("outline of repeated components", () => {
       }),
     );
 
-    const outline = (await runOperation("outline", { depth: 1 })) as {
+    const outline = (await plugin.run("outline", { depth: 1 })) as {
       root: { children: { id: string; component?: string; variant?: string }[] };
     };
 
@@ -359,7 +362,7 @@ describe("the view", () => {
     installed.figma.currentPage.selection = [];
 
     await expect(
-      runOperation("show", {
+      plugin.run("show", {
         nodes: ["8:2", "8:3"],
         zoom: 0.5,
         select: false,
@@ -395,7 +398,7 @@ describe("the view", () => {
       },
     });
 
-    const view = (await runOperation("viewport", null)) as {
+    const view = (await plugin.run("viewport", null)) as {
       page: string;
       zoom: number;
       layers: { id: string }[];
@@ -452,12 +455,12 @@ describe("a component's set", () => {
     );
 
     for (const node of ["5:1", "5:2", "5:9"]) {
-      await expect(runOperation("set_of", { node })).resolves.toEqual({
+      await expect(plugin.run("set_of", { node })).resolves.toEqual({
         id: "5:1",
         name: "Button",
       });
     }
 
-    await expect(runOperation("set_of", { node: "5:8" })).rejects.toThrow(/not a component set/);
+    await expect(plugin.run("set_of", { node: "5:8" })).rejects.toThrow(/not a component set/);
   });
 });

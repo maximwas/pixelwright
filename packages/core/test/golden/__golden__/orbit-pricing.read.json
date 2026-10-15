@@ -1,0 +1,143 @@
+{
+  "tokens": {
+    "--color-accent": "#FF6B3D",
+    "--color-brand": "#3B2FD9",
+    "--color-canvas": "#EEF1F6",
+    "--color-ink": "#14161F",
+    "--color-ink-muted": "#4A4F5E",
+    "--color-line": "#E1E5EE",
+    "--color-on-brand": "#FFF",
+    "--color-surface": "#FFF",
+    "--radius-lg": "24px",
+    "--radius-md": "12px",
+    "--radius-pill": "999px",
+    "--Shadow-Card": "0 12px 32px -8px rgba(20, 22, 31, 0.12)",
+    "--space-12": "12px",
+    "--space-120": "120px",
+    "--space-24": "24px",
+    "--space-32": "32px",
+    "--space-4": "4px",
+    "--space-64": "64px",
+    "--space-8": "8px"
+  },
+  "textStyles": {
+    "Body": "400 16px/24px 'Inter'",
+    "Body Small": "400 14px/20px 'Inter'",
+    "Button": "600 15px/20px 'Inter'",
+    "Display": "700 56px/60px 'Space Grotesk'; letter-spacing: -0.02em",
+    "Heading/H3": "500 24px/30px 'Space Grotesk'; letter-spacing: -0.01em",
+    "Label": "600 12px/16px 'Inter'; letter-spacing: 0.06em; text-transform: uppercase",
+    "Price": "700 48px/52px 'Space Grotesk'; letter-spacing: -0.02em"
+  },
+  "fonts": {
+    "Space Grotesk": [
+      "500",
+      "700"
+    ],
+    "Inter": [
+      "400",
+      "500",
+      "600"
+    ]
+  },
+  "assets": [
+    {
+      "node": "54:317",
+      "kind": "image",
+      "format": "PNG",
+      "src": "assets/planet.png"
+    },
+    {
+      "node": "I54:244;54:215",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check.svg"
+    },
+    {
+      "node": "I54:244;54:219",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check-2.svg"
+    },
+    {
+      "node": "I54:244;54:223",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check-3.svg"
+    },
+    {
+      "node": "I54:268;54:215",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check-4.svg"
+    },
+    {
+      "node": "I54:268;54:219",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check-5.svg"
+    },
+    {
+      "node": "I54:268;54:223",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check-6.svg"
+    },
+    {
+      "node": "I54:292;54:215",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check-7.svg"
+    },
+    {
+      "node": "I54:292;54:219",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check-8.svg"
+    },
+    {
+      "node": "I54:292;54:223",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/icon-check-9.svg"
+    },
+    {
+      "node": "54:437",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/logo-nova.svg"
+    },
+    {
+      "node": "54:441",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/logo-lumen.svg"
+    },
+    {
+      "node": "54:445",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/logo-nova-2.svg"
+    },
+    {
+      "node": "54:452",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/arrow.svg"
+    },
+    {
+      "node": "54:454",
+      "kind": "image",
+      "format": "PNG",
+      "src": "assets/product-shot.png",
+      "scale": 2
+    },
+    {
+      "node": "54:456",
+      "kind": "image",
+      "format": "PNG",
+      "src": "assets/avatar.png"
+    }
+  ],
+  "truncated": []
+}

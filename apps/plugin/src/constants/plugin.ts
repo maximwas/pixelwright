@@ -54,6 +54,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   delete: "Deleted layers",
   execute: "Ran code",
   tokens_apply: "Wrote tokens",
+  save_version: "Saved a version",
 };
 
 /** Steps of another action the activity leaves out: status probes, the reads before a write, files on their way in. */
@@ -63,15 +64,6 @@ export const RECONNECT = {
   firstMs: 500,
   maxMs: 10_000,
 } as const;
-
-/** The most nodes one outline lists, far below the bridge's message limit; children past it are counted, not listed. */
-export const OUTLINE_MAX_NODES = 2_000;
-
-/**
- * The most JSON one snapshot builds before it stops adding layers: a third of the bridge's message limit, as text in
- * other scripts takes up to three bytes a character. design_read shows far less than this anyway.
- */
-export const SNAPSHOT_MAX_CHARS = 1_000_000;
 
 /**
  * How long one operation may walk a big file before it answers with what it has (and more: true): under the server's
@@ -85,6 +77,12 @@ export const LIBRARY_BUDGET_MS = 10_000;
 /** Main components looked up at once for components_read. */
 export const MAIN_COMPONENT_BATCH = 25;
 
+/** Components whose Dev Mode links are asked for at once: each ask goes to Figma's servers. */
+export const LINKS_BATCH = 25;
+
+/** How long one ask for Dev Mode links may wait for Figma's servers before the links are given up on. */
+export const LINKS_TIMEOUT_MS = 5_000;
+
 /**
  * How far a font's weight may be from the one asked for and still be taken (CSS takes the nearest; a variable font
  * reports weights like SF Pro Semibold's 590): a style further off is an error naming the family's styles.
@@ -97,15 +95,9 @@ export const UPLOAD_BYTES = 128 * 1024 * 1024;
 /** How long a file sent for an apply waits for it. */
 export const UPLOAD_TTL_MS = 5 * 60 * 1000;
 
-/** Room around and between a new component set's variants. */
-export const SET_GAP = 40;
-
 /** Pixelwright's mark, as on the website and its tab icon: a blue tile with a white selection frame. */
 export const MARK_SVG =
   '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d99ff"/><rect x="9" y="9" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.2"/><g fill="#0d99ff" stroke="#fff" stroke-width="1.8"><rect x="6.2" y="6.2" width="5.6" height="5.6"/><rect x="20.2" y="6.2" width="5.6" height="5.6"/><rect x="6.2" y="20.2" width="5.6" height="5.6"/><rect x="20.2" y="20.2" width="5.6" height="5.6"/></g></svg>';
-
-/** The most layers viewport lists as in view. */
-export const VIEWPORT_MAX_LAYERS = 50;
 
 /** The most layers the change journal remembers; older ones are dropped first. */
 export const CHANGES_MAX = 5_000;
@@ -113,11 +105,11 @@ export const CHANGES_MAX = 5_000;
 /** How long after one of Pixelwright's writes a change still counts as its own: Figma reports changes a moment later. */
 export const OWN_WRITE_ECHO_MS = 1_000;
 
-/** The most prototype links flow_read lists. */
-export const FLOW_MAX_LINKS = 500;
+/** How often a wait for Pixelwright's own write to end looks again. */
+export const SETTLE_POLL_MS = 50;
 
 /** The most layers tokens_usage lists. */
 export const USAGE_MAX_LAYERS = 500;
 
-/** The most layers file_map lists in all: past it, a page says how many it has. */
-export const FILE_MAP_MAX_NODES = 1_500;
+/** How close two colour channels count as the same: CSS shows a P3 file's channels to 4 decimals. */
+export const COLOR_EPSILON = 0.0005;

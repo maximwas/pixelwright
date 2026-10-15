@@ -1,0 +1,895 @@
+{
+  "motion": {
+    "timeline": "1.2s",
+    "css": "@keyframes card {\n  0% { opacity: 0; animation-timing-function: ease-out; }\n  50% { opacity: 1; }\n  100% { opacity: 1; }\n}\n.card { animation: card 1.2s linear both; }\n\n@keyframes title {\n  0% { translate: -200px 0; opacity: 0; }\n  16.67% { translate: -200px 0; animation-timing-function: ease-out; }\n  50% { opacity: 0.8; }\n  66.67% { translate: 0 0; }\n  100% { translate: 0 0; opacity: 0.8; }\n}\n.title { animation: title 1.2s linear both; }\n\n@keyframes badge {\n  0% { rotate: 0deg; scale: 1; background-color: #FFF; border-color: #FFF; }\n  50% { rotate: -90deg; scale: 1.2; background-color: #3B2FD9; border-color: #3B2FD9; }\n  100% { rotate: -90deg; scale: 1.2; background-color: #3B2FD9; border-color: #3B2FD9; }\n}\n.badge { animation: badge 1.2s linear both; }\n\n@keyframes label {\n  0% { color: #FFF; }\n  50% { color: #3B2FD9; }\n  100% { color: #3B2FD9; }\n}\n.label { animation: label 1.2s linear both; }\n\n@keyframes turn {\n  0% { rotate: -180deg; translate: 0 0; }\n  41.67% { rotate: 0deg; translate: 0 -24px; }\n  100% { rotate: 0deg; translate: 0 -24px; }\n}\n.turn { animation: turn 1.2s linear both; }\n\n@keyframes card-2 {\n  /* opacity: Figma gives these keyframes from their animation style's start, not the timeline's: delay them by when the style starts */\n  0% { opacity: 0; animation-timing-function: ease-out; }\n  50% { opacity: 1; }\n  100% { opacity: 1; }\n}\n.card-2 { animation: card-2 1.2s linear both; }\n\n@keyframes line {\n  /* path-trim-end 0→1: draw the stroke with stroke-dasharray and stroke-dashoffset */\n  0% { opacity: 0; animation-timing-function: ease-out; }\n  50% { opacity: 1; }\n  100% { opacity: 1; }\n}\n.line { animation: line 1.2s linear both; }\n\n@keyframes dot {\n  0% { opacity: 0; }\n  100% { opacity: 1; }\n}\n.dot { animation: dot 0.5s linear both; }\n\n@keyframes dot-2 {\n  0% { opacity: 1; }\n  100% { opacity: 1; }\n}\n.dot-2 { animation: dot-2 0s linear both; }\n\n@keyframes layer-3d {\n  0% { opacity: 0; animation-timing-function: ease-out; }\n  50% { opacity: 1; }\n  100% { opacity: 1; }\n}\n.layer-3d { animation: layer-3d 1.2s linear both; }\n\n@keyframes hold {\n  0% { opacity: 0; animation-timing-function: step-end; }\n  25% { opacity: 1; animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }\n  50% { opacity: 0; }\n  100% { opacity: 0; }\n}\n.hold { animation: hold 1.2s linear both; }",
+    "layers": [
+      {
+        "id": "1:2",
+        "name": "Card",
+        "class": "card",
+        "tracks": [
+          {
+            "field": "OPACITY",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1:3",
+        "name": "Title",
+        "class": "title",
+        "tracks": [
+          {
+            "field": "TRANSLATION_X",
+            "operation": "OFFSET",
+            "base": {
+              "type": "FLOAT",
+              "value": 10
+            },
+            "keyframes": [
+              {
+                "t": 0.2,
+                "value": {
+                  "type": "FLOAT",
+                  "value": -200
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.8,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              }
+            ],
+            "style": "motion.preset_name.position"
+          },
+          {
+            "field": "TRANSLATION_Y",
+            "operation": "OFFSET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0.2,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.8,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              }
+            ],
+            "style": "motion.preset_name.position"
+          },
+          {
+            "field": "OPACITY",
+            "operation": "SCALE",
+            "base": {
+              "type": "FLOAT",
+              "value": 0.8
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ],
+            "style": "motion.preset_name.opacity"
+          }
+        ]
+      },
+      {
+        "id": "1:4",
+        "name": "Badge",
+        "class": "badge",
+        "tracks": [
+          {
+            "field": "ROTATION",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 90
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "field": "SCALE_XY",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "VECTOR",
+                  "value": {
+                    "x": 1,
+                    "y": 1
+                  }
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "VECTOR",
+                  "value": {
+                    "x": 1.2,
+                    "y": 1.2
+                  }
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "field": "fills.0",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "COLOR",
+                  "value": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "COLOR",
+                  "value": {
+                    "r": 0.2314,
+                    "g": 0.1843,
+                    "b": 0.851,
+                    "a": 1
+                  }
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "field": "strokes.0",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "COLOR",
+                  "value": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "COLOR",
+                  "value": {
+                    "r": 0.2314,
+                    "g": 0.1843,
+                    "b": 0.851,
+                    "a": 1
+                  }
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1:5",
+        "name": "Label",
+        "class": "label",
+        "tracks": [
+          {
+            "field": "fills.0",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "COLOR",
+                  "value": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "COLOR",
+                  "value": {
+                    "r": 0.2314,
+                    "g": 0.1843,
+                    "b": 0.851,
+                    "a": 1
+                  }
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1:6",
+        "name": "Turn",
+        "class": "turn",
+        "tracks": [
+          {
+            "field": "ROTATION",
+            "operation": "OFFSET",
+            "base": {
+              "type": "FLOAT",
+              "value": 30
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 180
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.5,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "field": "TRANSLATION_Y",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 120
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 120
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.5,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 96
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1:7",
+        "name": "Card",
+        "class": "card-2",
+        "tracks": [
+          {
+            "field": "OPACITY",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              }
+            ],
+            "unplaced": true
+          }
+        ]
+      },
+      {
+        "id": "1:8",
+        "name": "Line",
+        "class": "line",
+        "tracks": [
+          {
+            "field": "PATH_TRIM_END",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "field": "OPACITY",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1:9",
+        "name": "Dot",
+        "class": "dot",
+        "tracks": [
+          {
+            "field": "OPACITY",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.5,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1:10",
+        "name": "Dot",
+        "class": "dot-2",
+        "tracks": [
+          {
+            "field": "OPACITY",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1:11",
+        "name": "3D",
+        "class": "layer-3d",
+        "tracks": [
+          {
+            "field": "OPACITY",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "EASE_OUT",
+                  "bezier": [
+                    0,
+                    0,
+                    0.58,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "1:12",
+        "name": "Hold",
+        "class": "hold",
+        "tracks": [
+          {
+            "field": "OPACITY",
+            "operation": "SET",
+            "base": {
+              "type": "FLOAT",
+              "value": 0
+            },
+            "keyframes": [
+              {
+                "t": 0,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "HOLD",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.3,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 1
+                },
+                "easing": {
+                  "type": "CUSTOM_CUBIC_BEZIER",
+                  "bezier": [
+                    0.3,
+                    0,
+                    0.2,
+                    1
+                  ]
+                }
+              },
+              {
+                "t": 0.6,
+                "value": {
+                  "type": "FLOAT",
+                  "value": 0
+                },
+                "easing": {
+                  "type": "LINEAR",
+                  "bezier": [
+                    0,
+                    0,
+                    1,
+                    1
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "summaries": {
+    "1:2": "opacity 0→1; 0–0.6s ease-out",
+    "1:3": "Position, Opacity: translate-x -200→0px 0.2–0.8s ease-out, opacity 0→0.8 0–0.6s linear",
+    "1:4": "rotate 0→-90deg, scale (1, 1)→(1.2, 1.2), background #FFF→#3B2FD9, border-color #FFF→#3B2FD9; 0–0.6s linear",
+    "1:5": "color #FFF→#3B2FD9; 0–0.6s linear",
+    "1:6": "rotate -180→0deg, translate-y 0→-24px; 0–0.5s linear",
+    "1:7": "Bounce in, Text stagger: opacity 0→1; 0–0.6s ease-out after its style's start",
+    "1:8": "path-trim-end 0→1 0–0.6s linear, opacity 0→1 0–0.6s ease-out",
+    "1:9": "opacity 0→1; 0–0.5s linear",
+    "1:10": "opacity 1; at 0s",
+    "1:11": "opacity 0→1; 0–0.6s ease-out",
+    "1:12": "opacity 0→1→0; 0–0.6s mixed easing",
+    "1:13": null
+  }
+}

@@ -1,5 +1,7 @@
 import type { SnapshotNode } from "@pixelwright/core";
 import type { ResultSection } from "../types/code-connect.ts";
+import { propertyName as bare } from "./names.ts";
+import type { PropertyReads } from "./property-reads.ts";
 import { sectionsOf } from "./sections.ts";
 import { TemplateError } from "./template-error.ts";
 
@@ -11,6 +13,8 @@ export interface Runner {
   example(node: SnapshotNode): { sections: ResultSection[]; metadata: Record<string, unknown> };
   /** The `id` the instance's template exports, or null. */
   connectedId(node: SnapshotNode): string | null;
+  /** The properties the render's code read so far. */
+  readonly reads: PropertyReads;
 }
 
 interface SelectorOptions {
@@ -107,6 +111,10 @@ export class InstanceHandle {
   }
 
   get properties(): Record<string, { value: string | boolean }> {
+    for (const name of Object.keys(this.#node.instance?.properties ?? {})) {
+      this.#run.reads.read(this.#node.id, bare(name));
+    }
+
     return Object.fromEntries(
       Object.entries(this.#node.instance?.properties ?? {}).map(([name, property]) => [
         bare(name),
@@ -139,7 +147,11 @@ export class InstanceHandle {
   }
 
   getEnum(name: string, mapping: Record<string, unknown>): unknown {
-    return mapping[String(this.#property(name).value)];
+    const value = mapping[String(this.#property(name).value)];
+
+    this.#run.reads.readEnum(this.#node.id, bare(name), mapping);
+
+    return value;
   }
 
   getPropertyValue(name: string): string | boolean | ErrorHandle {
@@ -179,23 +191,26 @@ export class InstanceHandle {
     );
   }
 
-  findInstance(name: string, options: SelectorOptions = {}): InstanceHandle | ErrorHandle {
+  findInstance(name: string, options: SelectorOptions | null = {}): InstanceHandle | ErrorHandle {
     const found = this.#layers(options).find(({ node }) => node.type === "INSTANCE" && node.name === name);
 
     return found === undefined ? this.#notFound("instance", name) : new InstanceHandle(found.node, this.#run);
   }
 
-  findText(name: string, options: SelectorOptions = {}): TextHandle | ErrorHandle {
+  findText(name: string, options: SelectorOptions | null = {}): TextHandle | ErrorHandle {
     const found = this.#layers(options).find(({ node }) => node.type === "TEXT" && node.name === name);
 
     return found === undefined ? this.#notFound("text", name) : new TextHandle(found.node);
   }
 
-  findConnectedInstance(id: string, options: SelectorOptions = {}): InstanceHandle | null {
+  findConnectedInstance(id: string, options: SelectorOptions | null = {}): InstanceHandle | null {
     return this.findConnectedInstances((instance) => instance.codeConnectId() === id, options)[0] ?? null;
   }
 
-  findConnectedInstances(test: (instance: InstanceHandle) => boolean, options: SelectorOptions = {}): InstanceHandle[] {
+  findConnectedInstances(
+    test: (instance: InstanceHandle) => boolean,
+    options: SelectorOptions | null = {},
+  ): InstanceHandle[] {
     return this.#layers(options)
       .filter(({ node }) => node.type === "INSTANCE" && this.#run.connected(node))
       .map(({ node }) => new InstanceHandle(node, this.#run))
@@ -204,7 +219,7 @@ export class InstanceHandle {
 
   findLayers(
     test: (layer: InstanceHandle | TextHandle) => boolean,
-    options: SelectorOptions = {},
+    options: SelectorOptions | null = {},
   ): (InstanceHandle | TextHandle)[] {
     return this.#layers(options)
       .flatMap(({ node }) => this.#handle(node) ?? [])
@@ -264,10 +279,18 @@ export class InstanceHandle {
         : null;
   }
 
+  /** The property of this name, written as Figma shows it or with its #id; the read is logged. */
   #find(name: string): Property | null {
     const properties = Object.entries(this.#node.instance?.properties ?? {});
+    const found = properties.find(([key]) => key === name) ?? properties.find(([key]) => bare(key) === name);
 
-    return (properties.find(([key]) => key === name) ?? properties.find(([key]) => bare(key) === name))?.[1] ?? null;
+    if (found === undefined) {
+      return null;
+    }
+
+    this.#run.reads.read(this.#node.id, bare(found[0]));
+
+    return found[1];
   }
 
   #property(name: string): Property {
@@ -284,8 +307,9 @@ export class InstanceHandle {
     return new ErrorHandle("PROPERTY_NOT_FOUND", this.#lacks(name));
   }
 
+  /** Names the instance's properties without counting them as read: an error message is no code reading them. */
   #lacks(name: string): string {
-    const names = Object.keys(this.properties);
+    const names = Object.keys(this.#node.instance?.properties ?? {}).map((key) => bare(key));
 
     return `${this.#node.name} (${this.#node.id}) has no property ${name}${names.length === 0 ? "" : `; it has ${names.join(", ")}`}.`;
   }
@@ -301,30 +325,22 @@ export class InstanceHandle {
    * The visible layers inside the instance, in layer order, each with the instances it sits in (outer first). Nested
    * instances are entered only with traverseInstances, or along `path`: the instances a layer must sit in, exactly.
    */
-  #layers({ path, traverseInstances = false }: SelectorOptions): { node: SnapshotNode; within: string[] }[] {
+  #layers(given: SelectorOptions | null): { node: SnapshotNode; within: string[] }[] {
+    // A template may pass null for no options, as it may in Figma.
+    const options = given ?? {};
+    const { path } = options;
     const found: { node: SnapshotNode; within: string[] }[] = [];
     const walk = (node: SnapshotNode, within: string[]) => {
-      for (const child of node.children ?? []) {
-        if (!child.visible) {
-          continue;
-        }
-
+      for (const child of (node.children ?? []).filter((layer) => layer.visible)) {
         found.push({
           node: child,
           within,
         });
 
-        if (child.type === "INSTANCE") {
-          const deeper = [...within, child.name];
+        const deeper = child.type === "INSTANCE" ? [...within, child.name] : within;
 
-          if (
-            traverseInstances ||
-            (path !== undefined && path.slice(0, deeper.length).join("\n") === deeper.join("\n"))
-          ) {
-            walk(child, deeper);
-          }
-        } else {
-          walk(child, within);
+        if (deeper === within || enters(deeper, options)) {
+          walk(child, deeper);
         }
       }
     };
@@ -335,9 +351,7 @@ export class InstanceHandle {
   }
 }
 
-/** A property's name as Figma shows it: TEXT, BOOLEAN and INSTANCE_SWAP keys end in #<id>. */
-function bare(name: string): string {
-  const hash = name.lastIndexOf("#");
-
-  return hash === -1 ? name : name.slice(0, hash);
+/** Whether a find goes into a nested instance, at these instances deep: with traverseInstances, or along its path. */
+function enters(within: readonly string[], { path, traverseInstances = false }: SelectorOptions): boolean {
+  return traverseInstances || (path !== undefined && path.slice(0, within.length).join("\n") === within.join("\n"));
 }

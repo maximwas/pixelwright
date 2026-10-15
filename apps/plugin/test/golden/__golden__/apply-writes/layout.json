@@ -1,0 +1,256 @@
+{
+  "gap": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "itemSpacing": [
+            null,
+            24
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "padding": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "paddingTop": [
+            null,
+            16
+          ],
+          "paddingRight": [
+            null,
+            24
+          ],
+          "paddingBottom": [
+            null,
+            16
+          ],
+          "paddingLeft": [
+            null,
+            24
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a row with its alignment": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "layoutMode": [
+            "VERTICAL",
+            "HORIZONTAL"
+          ],
+          "primaryAxisAlignItems": [
+            null,
+            "SPACE_BETWEEN"
+          ],
+          "counterAxisAlignItems": [
+            null,
+            "CENTER"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "wrap with two gaps": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "9:1": {
+          "layoutWrap": [
+            null,
+            "WRAP"
+          ],
+          "itemSpacing": [
+            null,
+            12
+          ],
+          "counterAxisSpacing": [
+            null,
+            8
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "auto layout off": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "1:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "1:1": {
+          "layoutMode": [
+            "VERTICAL",
+            "NONE"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "auto layout on a board": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "3:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "3:1": {
+          "layoutMode": [
+            "NONE",
+            "VERTICAL"
+          ],
+          "itemSpacing": [
+            null,
+            4
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}

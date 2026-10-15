@@ -1,0 +1,234 @@
+{
+  "collections": [
+    {
+      "name": "Brand Colors",
+      "modes": [
+        "Light",
+        "Dark",
+        "dark"
+      ],
+      "defaultMode": "Light",
+      "selectors": {
+        "Dark": "[data-brand-colors=\"dark\"]",
+        "dark": "[data-brand-colors=\"dark-2\"]"
+      },
+      "variables": [
+        {
+          "name": "Surface/Base",
+          "token": "--surface",
+          "type": "COLOR",
+          "values": {
+            "Light": "color(display-p3 1 1 1)",
+            "Dark": "var(--Ink)",
+            "dark": "color(display-p3 0.1 0.1 0.12)"
+          },
+          "description": "The page background."
+        },
+        {
+          "name": "Ink",
+          "token": "--Ink",
+          "type": "COLOR",
+          "values": {
+            "Light": "color(display-p3 0.078 0.086 0.122)",
+            "Dark": "var(--Accent)",
+            "dark": "color(display-p3 0.9 0.2 0.35 / 0.5)"
+          }
+        },
+        {
+          "name": "Veil",
+          "token": "--Veil",
+          "type": "COLOR",
+          "values": {
+            "Light": "color-mix(in srgb, color(display-p3 0 0 0) 40%, transparent)",
+            "Dark": "color-mix(in srgb, var(--Ink) 64%, transparent)",
+            "dark": "color-mix(in srgb, color(display-p3 1 1 1) calc(var(--Opacity-Half) * 1%), transparent)"
+          }
+        },
+        {
+          "name": "Lost",
+          "token": "--Lost",
+          "type": "COLOR",
+          "values": {
+            "Light": "/* unresolved alias V:missing */",
+            "Dark": "color(display-p3 0.5 0.5 0.5)",
+            "dark": "/* \"not a colour\" */"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Spacing",
+      "modes": [
+        "Base"
+      ],
+      "defaultMode": "Base",
+      "selectors": {},
+      "variables": [
+        {
+          "name": "Gap/Small",
+          "token": "--Gap-Small",
+          "type": "FLOAT",
+          "values": {
+            "Base": "8px"
+          }
+        },
+        {
+          "name": "Gap/None",
+          "token": "--Gap-None",
+          "type": "FLOAT",
+          "values": {
+            "Base": "0"
+          }
+        },
+        {
+          "name": "Radius",
+          "token": "--Radius",
+          "type": "FLOAT",
+          "values": {
+            "Base": "13.5px"
+          }
+        },
+        {
+          "name": "Opacity/Half",
+          "token": "--Opacity-Half",
+          "type": "FLOAT",
+          "values": {
+            "Base": "0.5"
+          }
+        },
+        {
+          "name": "Opacity/Faint",
+          "token": "--Opacity-Faint",
+          "type": "FLOAT",
+          "values": {
+            "Base": "0.25"
+          }
+        },
+        {
+          "name": "Weight/Bold",
+          "token": "--Weight-Bold",
+          "type": "FLOAT",
+          "values": {
+            "Base": "700"
+          }
+        },
+        {
+          "name": "Font/Family",
+          "token": "--Font-Family",
+          "type": "STRING",
+          "values": {
+            "Base": "'Inter \\'Display\\' \\\\ Pro'"
+          }
+        },
+        {
+          "name": "Feature/On",
+          "token": "--Feature-On",
+          "type": "BOOLEAN",
+          "values": {
+            "Base": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Motion",
+      "modes": [
+        "Default"
+      ],
+      "defaultMode": "Default",
+      "selectors": {},
+      "variables": [
+        {
+          "name": "Ease/Out",
+          "token": "--Ease-Out",
+          "type": "EASING",
+          "values": {
+            "Default": "ease-out"
+          }
+        },
+        {
+          "name": "Ease/Curve",
+          "token": "--Ease-Curve",
+          "type": "EASING",
+          "values": {
+            "Default": "cubic-bezier(0.2, 0, 0, 1)"
+          }
+        },
+        {
+          "name": "Ease/Spring",
+          "token": "--Ease-Spring",
+          "type": "EASING",
+          "values": {
+            "Default": "linear(0, 0.005 1.25%, 0.024 2.92%, 0.056 4.58%, 0.108 6.67%, 0.158 8.33%, 0.212 10%, 0.444 16.67%, 0.555 20%, 0.655 23.33%, 0.742 26.67%, 0.807 29.58%, 0.869 32.92%, 0.912 35.83%, 0.951 39.17%, 0.983 42.92%, 1.005 46.67%, 1.019 50.83%, 1.027 55.83%, 1.027 63.75%, 1.009 84.17%, 1)"
+          }
+        },
+        {
+          "name": "Duration",
+          "token": "--Duration",
+          "type": "TIMING",
+          "values": {
+            "Default": "0.3s"
+          }
+        }
+      ]
+    }
+  ],
+  "styles": {
+    "paint": [
+      {
+        "name": "White",
+        "token": "--White",
+        "value": "color(display-p3 1 1 1)"
+      },
+      {
+        "name": "White",
+        "token": "--White-2",
+        "value": "color(display-p3 0.98 0.98 0.98 / 0.8)"
+      },
+      {
+        "name": "Glow",
+        "token": "--Glow",
+        "value": "linear-gradient(90deg, #FFF 0%, #000 100%)"
+      }
+    ],
+    "text": [
+      {
+        "name": "Heading/H1",
+        "token": "--Heading-H1-font",
+        "value": "italic 700 48px/58px 'Inter'",
+        "also": [
+          {
+            "token": "--Heading-H1-letter-spacing",
+            "value": "-0.02em"
+          },
+          {
+            "token": "--Heading-H1-text-transform",
+            "value": "uppercase"
+          }
+        ]
+      },
+      {
+        "name": "Body",
+        "token": "--Body-font",
+        "value": "400 16px/normal 'Open Sans'"
+      }
+    ],
+    "effect": [
+      {
+        "name": "Shadow/Card",
+        "token": "--Shadow-Card",
+        "value": "inset 0 1px 2px 1px color(display-p3 1 1 1 / 0.5), 0 8px 24px 0 color(display-p3 0 0 0 / 0.12)"
+      }
+    ]
+  },
+  "notes": [
+    "Lost points at variable V:missing, which is neither in this file nor in a library it uses.",
+    "Lost has a COLOR value CSS cannot hold: \"not a colour\".",
+    "Feature/On is a boolean: CSS has no booleans, it is written as true or false.",
+    "Mode \"dark\" of Brand Colors would share the selector value \"dark\": it is \"dark-2\".",
+    "--Accent is used but not in this output: it is in Library Colors (a library); add that collection to collections.",
+    "Paint style Photo is image: CSS for it comes from a layer that uses it, and none read here does (an image has none).",
+    "Effect style Frost holds no shadow: blurs are not tokens yet.",
+    "Paint styles named White are 2 different styles: --White color(display-p3 1 1 1), --White-2 color(display-p3 0.98 0.98 0.98 / 0.8)."
+  ]
+}

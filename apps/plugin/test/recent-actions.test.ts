@@ -30,6 +30,7 @@ describe("the window's activity", () => {
         ["selection", {}],
         ["show", {}],
         ["inspect", {}],
+        ["save_version", { title: "Built: pricing" }],
       ].map(([op, input]) => text(op as string, input, ok({}))),
     ).toEqual([
       "Read a design",
@@ -42,6 +43,7 @@ describe("the window's activity", () => {
       "Read the selection",
       "Showed layers",
       "Inspected layers",
+      "Saved a version",
     ]);
   });
 

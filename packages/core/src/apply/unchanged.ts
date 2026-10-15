@@ -1,9 +1,18 @@
-import type { ApplyElement, LayerNow } from "../types/apply.ts";
+import { withoutUrls } from "../css-mapping/values/css-values.ts";
+import type { LayerNow } from "../css-mapping/write-element.ts";
+import { designTree } from "../design/design-xml.ts";
+import { attributeOf, type DesignContent, type DesignElement, findElement, joinedContent } from "../design/tree.ts";
+import { Color } from "../kernel/color/color.ts";
+import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { sameValue } from "../kernel/equality.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
-import type { XmlChild, XmlElementNode } from "../types/xml.ts";
-import { designXml } from "../xml/design.ts";
-import { parseXml } from "../xml/parse/parse-xml.ts";
-import { withoutUrls } from "./css-values.ts";
+import type { ApplyElement, ContentPiece } from "./types.ts";
+
+/** A layer to compare with an element: the layer, and the parent it sits in. */
+type Item = { node: SnapshotNode; parent: SnapshotNode | null };
+
+/** What a render needs besides the layers: the tokens, and the file's colour profile its colours are written in. */
+type Tokens = Pick<Snapshot, "styles" | "variables" | "colorProfile">;
 
 /**
  * Which of an element's attributes the layer already has, as design_read would write them (the reader's rounding
@@ -12,55 +21,21 @@ import { withoutUrls } from "./css-values.ts";
  * one only as its parent holds it (the root's own size would hide a size that is new). A hidden layer is rendered as
  * shown, so what it has is known when it is shown again.
  */
-export function unchangedAttributes(
-  element: ApplyElement,
-  item: { node: SnapshotNode; parent: SnapshotNode | null },
-  tokens: Pick<Snapshot, "styles" | "variables">,
-): LayerNow {
-  const node = item.node.visible
-    ? item.node
-    : {
-        ...item.node,
-        visible: true,
-      };
-  const nested = element.parent !== null && item.parent !== null;
-  const renders: (XmlElementNode | null)[] = [];
-
-  if (!nested) {
-    renders.push(
-      render(
-        {
-          root: node,
-          ...pick(tokens),
-        },
-        node.id,
-        null,
-      ),
-    );
-  }
-
-  if (item.parent !== null) {
-    renders.push(
-      render(
-        {
-          root: {
-            ...item.parent,
-            children: [node],
-          },
-          ...pick(tokens),
-        },
-        node.id,
-        item.parent.id,
-      ),
-    );
-  }
-
+export function unchangedAttributes(element: ApplyElement, item: Item, tokens: Tokens): LayerNow {
+  const renders = rendersOf(element, item, tokens);
   const attributes = new Set<string>();
+  const space = colorSpaceOf(tokens.colorProfile);
 
-  for (const [name, value] of Object.entries(element.attributes)) {
+  for (const [name, given] of Object.entries(element.attributes)) {
+    // As typed, or with its sRGB colours in the file's space: a name or a note that reads like a hex is no colour.
+    const values = [given, inDocumentSpace(given, space)];
+
     // A file's name depends on where design_read wrote it (folder, -2 suffixes): the server compares the bytes of a
     // file that exists with the layer's image, and swaps it only when they differ.
-    if (name === "src" || renders.some((rendered) => same(name, rendered?.props[name], value))) {
+    if (
+      name === "src" ||
+      renders.some((rendered) => values.some((value) => same(name, attributeOf(rendered, name), value)))
+    ) {
       attributes.add(name);
     }
   }
@@ -70,19 +45,72 @@ export function unchangedAttributes(
     attributes.delete("display");
   }
 
+  const wanted = element.content === undefined ? null : joinedContent(contentOf(element.content));
   // As its parent holds it when it has one: that render places it.
-  const shown = renders.findLast((rendered) => rendered !== null);
-
-  const wanted = element.content === undefined ? null : canonical(element.content);
+  const shown = renders.at(-1);
 
   return {
     attributes,
-    text: wanted === null || renders.some((rendered) => rendered !== null && canonical(rendered.children) === wanted),
+    text:
+      wanted === null ||
+      renders.some((rendered) => rendered.content !== null && sameValue(joinedContent(rendered.content), wanted)),
     visible: item.node.visible,
-    current: Object.fromEntries(
-      Object.entries(shown?.props ?? {}).filter(([name]) => name !== "id" && !name.startsWith("$")),
-    ),
+    current: Object.fromEntries((shown?.attributes ?? []).filter(([name]) => name !== "id" && !name.startsWith("$"))),
   };
+}
+
+/** The elements design_read writes for the layer: as the read's root unless nested, then as its parent holds it. */
+function rendersOf(element: ApplyElement, item: Item, tokens: Tokens): DesignElement[] {
+  const node = item.node.visible
+    ? item.node
+    : {
+        ...item.node,
+        visible: true,
+      };
+  const nested = element.parent !== null && item.parent !== null;
+  const renders = [
+    nested
+      ? null
+      : render(
+          {
+            root: node,
+            ...pick(tokens),
+          },
+          node.id,
+          null,
+        ),
+    item.parent === null
+      ? null
+      : render(
+          {
+            root: {
+              ...item.parent,
+              children: [node],
+            },
+            ...pick(tokens),
+          },
+          node.id,
+          item.parent.id,
+        ),
+  ];
+
+  return renders.filter((rendered) => rendered !== null);
+}
+
+/**
+ * A value with its sRGB colours (hex, rgb()) as a Display P3 file holds and design_read writes them, so a colour the
+ * layer already has compares equal; an sRGB file's values are as given.
+ */
+function inDocumentSpace(value: string, space: ColorSpace): string {
+  if (space === "srgb") {
+    return value;
+  }
+
+  return value.replace(/#[0-9A-Fa-f]{3,8}\b|rgba?\([^)]*\)/g, (literal) => {
+    const color = Color.parse(literal);
+
+    return color === null ? literal : color.to(space).css();
+  });
 }
 
 /** Equal as design_read writes it; an image's file name aside, which depends on where the read wrote it. */
@@ -92,48 +120,33 @@ function same(name: string, written: string | undefined, value: string): boolean
   );
 }
 
-function pick(tokens: Pick<Snapshot, "styles" | "variables">): Pick<Snapshot, "styles" | "variables"> {
+function pick(tokens: Tokens): Tokens {
   return {
     styles: tokens.styles,
     variables: tokens.variables,
+    ...(tokens.colorProfile === undefined ? {} : { colorProfile: tokens.colorProfile }),
   };
 }
 
 /** The element design_read writes for a layer in this snapshot; its parent is kept a layout, never an asset. */
-function render(snapshot: Snapshot, id: string, layout: string | null): XmlElementNode | null {
-  const { xml } = designXml(snapshot, layout === null ? {} : { notAssets: new Set([layout]) });
+function render(snapshot: Snapshot, id: string, layout: string | null): DesignElement | null {
+  const { root } = designTree(snapshot, layout === null ? {} : { notAssets: new Set([layout]) });
 
-  return find(parseXml(xml), id);
+  return findElement(root, id);
 }
 
-function find(nodes: readonly XmlChild[], id: string): XmlElementNode | null {
-  for (const node of nodes) {
-    if (node.kind === "element") {
-      if (node.props.id === id) {
-        return node;
-      }
-
-      const inside = find(node.children, id);
-
-      if (inside !== null) {
-        return inside;
-      }
-    }
-  }
-
-  return null;
-}
-
-/** A text's content in one comparable form: text values and spans with their attributes, positions left out. */
-function canonical(children: readonly XmlChild[]): string {
-  return JSON.stringify(
-    children.map((child) =>
-      child.kind === "text"
-        ? child.value
-        : {
-            span: child.props,
-            text: canonical(child.children),
-          },
-    ),
+/** A Text element's content in the tree's terms, as design_apply writes it: a span's characters with its attributes. */
+function contentOf(pieces: readonly ContentPiece[]): DesignContent[] {
+  return pieces.map((piece) =>
+    piece.kind === "text"
+      ? {
+          kind: "text",
+          value: piece.value,
+        }
+      : {
+          kind: "span",
+          attributes: Object.entries(piece.attributes),
+          value: piece.value,
+        },
   );
 }

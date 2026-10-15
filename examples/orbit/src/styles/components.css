@@ -1,0 +1,187 @@
+/* Orbit's components, built from design_read's XML: every value is one of the file's tokens. */
+
+.button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-12) var(--space-24);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font: var(--Button-font);
+  cursor: pointer;
+}
+
+.button--primary {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+.button--primary:hover {
+  background: var(--color-brand-hover);
+}
+
+.button--secondary {
+  border-color: var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.button:disabled {
+  background: var(--color-disabled);
+  color: var(--color-on-brand);
+  cursor: not-allowed;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-brand);
+  font: var(--Label-font);
+  letter-spacing: var(--Label-letter-spacing);
+  text-transform: var(--Label-text-transform);
+}
+
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  padding: var(--space-32);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--Shadow-Card);
+}
+
+.plan-card--popular {
+  border: 2px solid var(--color-brand);
+}
+
+.plan-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-card__name {
+  margin: 0;
+  color: var(--color-ink);
+  font: var(--Heading-H3-font);
+  letter-spacing: var(--Heading-H3-letter-spacing);
+}
+
+.plan-card__description {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font: var(--Body-Small-font);
+}
+
+.plan-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin: 0;
+  color: var(--color-ink-muted);
+  font: var(--Body-font);
+}
+
+.plan-card__amount {
+  color: var(--color-ink);
+  font: var(--Price-font);
+  letter-spacing: var(--Price-letter-spacing);
+}
+
+.plan-card__features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-ink);
+  font: var(--Body-Small-font);
+}
+
+.plan-card__features li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.plan-card__features svg {
+  color: var(--color-brand);
+}
+
+.callout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-32);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.callout__title {
+  margin: 0;
+  color: var(--color-ink);
+  font: var(--Heading-H3-font);
+  letter-spacing: var(--Heading-H3-letter-spacing);
+}
+
+.callout__body {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font: var(--Body-font);
+}
+
+.callout__actions {
+  display: flex;
+  gap: var(--space-12);
+}
+
+.pricing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-64);
+  padding: var(--space-64) var(--space-120) var(--space-120);
+  background: var(--color-canvas);
+}
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-24);
+}
+
+.footnote {
+  margin: 0;
+  color: var(--color-ink-subtle);
+  font: var(--Body-Small-font);
+  text-align: center;
+}
+
+/* Pricing – Tablet: the cards wrap two to a row. */
+@media (max-width: 1023px) {
+  .pricing {
+    padding: var(--space-48);
+  }
+
+  .plans {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Pricing – Mobile: one column. */
+@media (max-width: 599px) {
+  .pricing {
+    gap: var(--space-48);
+    padding: var(--space-24);
+  }
+
+  .plans {
+    grid-template-columns: 1fr;
+  }
+}

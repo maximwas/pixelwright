@@ -1,15 +1,12 @@
 import type { DesignDiff, DiffChange } from "../types/diff.ts";
 import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
-import type { XmlElementNode } from "../types/xml.ts";
-import { designXml } from "../xml/design.ts";
-import { parseXml } from "../xml/parse/parse-xml.ts";
+import { type Compared, comparedRoot, labelOf } from "./compare/compared.ts";
+import { fingerprint, nodesOf } from "./compare/fingerprint.ts";
 
 /** What names a root or says where it is: two variants side by side differ there by nature (src follows the name). */
 const ROOT_PLACEMENT = new Set(["name", "src", "position", "left", "top", "right", "bottom", "transform"]);
 /** Tags whose look is a file of its own: compared by what draws them too. */
 const DRAWN = new Set(["Icon", "Image"]);
-/** Snapshot fields that name or place a layer rather than draw it. */
-const NOT_DRAWING = new Set(["id", "name", "x", "y", "bounds", "renderBounds", "css"]);
 
 /**
  * How layer B differs from layer A as design_read reads them: layers matched by their path of names below the roots
@@ -23,7 +20,7 @@ export function designDiff(a: Snapshot, b: Snapshot): DesignDiff {
     changed: [],
   };
 
-  compare(rootOf(a), rootOf(b), "", true, {
+  compare(comparedRoot(a), comparedRoot(b), "", {
     a: nodesOf(a.root),
     b: nodesOf(b.root),
     diff,
@@ -41,59 +38,68 @@ interface Walk {
   readonly diff: Omit<DesignDiff, "same">;
 }
 
-function compare(x: XmlElementNode, y: XmlElementNode, path: string, root: boolean, walk: Walk): void {
+/** Two matched elements and, below them, their children; the path is empty at the roots. */
+function compare(x: Compared, y: Compared, path: string, walk: Walk): void {
+  const attributes = changedAttributes(x, y, path === "");
+  const drawing = DRAWN.has(x.tag) && fingerprint(walk.a.get(x.id)) !== fingerprint(walk.b.get(y.id));
+
+  if (Object.keys(attributes).length > 0 || drawing) {
+    walk.diff.changed.push({
+      path: path === "" ? "(root)" : path,
+      a: x.id,
+      b: y.id,
+      attributes,
+      ...(drawing ? { drawing: true as const } : {}),
+    });
+  }
+
+  compareChildren(x, y, path, walk);
+}
+
+/** The attributes and the text that differ, as [A, B]; ids, and a root's own name and place, aside. */
+function changedAttributes(x: Compared, y: Compared, root: boolean): DiffChange["attributes"] {
   const attributes: DiffChange["attributes"] = {};
 
-  for (const key of new Set([...Object.keys(x.props), ...Object.keys(y.props)])) {
+  for (const key of new Set([...Object.keys(x.attributes), ...Object.keys(y.attributes)])) {
     if (key === "id" || (root && ROOT_PLACEMENT.has(key))) {
       continue;
     }
 
-    const left = x.props[key] ?? null;
-    const right = y.props[key] ?? null;
+    const left = x.attributes[key] ?? null;
+    const right = y.attributes[key] ?? null;
 
     if (left !== right) {
       attributes[key] = [left, right];
     }
   }
 
-  const [textA, textB] = [textOf(x), textOf(y)];
-
-  if (textA !== textB) {
-    attributes.$text = [textA, textB];
+  if (x.text !== y.text) {
+    attributes.$text = [x.text, y.text];
   }
 
-  const drawing =
-    DRAWN.has(x.type) && fingerprint(walk.a.get(x.props.id ?? "")) !== fingerprint(walk.b.get(y.props.id ?? ""));
+  return attributes;
+}
 
-  if (Object.keys(attributes).length > 0 || drawing) {
-    walk.diff.changed.push({
-      path: path === "" ? "(root)" : path,
-      a: x.props.id ?? "",
-      b: y.props.id ?? "",
-      attributes,
-      ...(drawing ? { drawing: true as const } : {}),
-    });
-  }
-
+/** Children matched by tag and name, in order; the ones past the other side's count are only on one side. */
+function compareChildren(x: Compared, y: Compared, path: string, walk: Walk): void {
   const left = keyed(x);
   const right = keyed(y);
+  const pathOf = (element: Compared, index: number) =>
+    path === "" ? labelOf(element, index) : `${path} / ${labelOf(element, index)}`;
 
   for (const [key, elements] of left) {
     const others = right.get(key) ?? [];
 
     elements.forEach((element, index) => {
-      const label = labelOf(element, index);
-      const childPath = path === "" ? label : `${path} / ${label}`;
       const other = others[index];
 
       if (other === undefined) {
         walk.diff.onlyInA.push({
-          path: childPath,
-          id: element.props.id ?? "",
+          path: pathOf(element, index),
+          id: element.id,
         });
       } else {
-        compare(element, other, childPath, false, walk);
+        compare(element, other, pathOf(element, index), walk);
       }
     });
   }
@@ -102,81 +108,23 @@ function compare(x: XmlElementNode, y: XmlElementNode, path: string, root: boole
     const count = left.get(key)?.length ?? 0;
 
     elements.slice(count).forEach((element, index) => {
-      const label = labelOf(element, count + index);
-
       walk.diff.onlyInB.push({
-        path: path === "" ? label : `${path} / ${label}`,
-        id: element.props.id ?? "",
+        path: pathOf(element, count + index),
+        id: element.id,
       });
     });
   }
 }
 
-function rootOf(snapshot: Snapshot): XmlElementNode {
-  const [root] = parseXml(designXml(snapshot).xml).filter((child) => child.kind === "element");
-
-  if (root === undefined || root.kind !== "element") {
-    throw new Error("design_read wrote no element for the layer");
-  }
-
-  return root;
-}
-
-/** Element children by tag and name, each list in document order. */
-function keyed(element: XmlElementNode): Map<string, XmlElementNode[]> {
-  const groups = new Map<string, XmlElementNode[]>();
+/** Children by tag and name, each list in document order. */
+function keyed(element: Compared): Map<string, Compared[]> {
+  const groups = new Map<string, Compared[]>();
 
   for (const child of element.children) {
-    if (child.kind === "element") {
-      const key = `${child.type} ${child.props.name ?? ""}`;
+    const key = `${child.tag} ${child.attributes.name ?? ""}`;
 
-      groups.set(key, [...(groups.get(key) ?? []), child]);
-    }
+    groups.set(key, [...(groups.get(key) ?? []), child]);
   }
 
   return groups;
-}
-
-function labelOf(element: XmlElementNode, index: number): string {
-  return `${element.type} "${element.props.name ?? ""}"${index > 0 ? `[${index + 1}]` : ""}`;
-}
-
-function textOf(element: XmlElementNode): string | null {
-  const texts = element.children.filter((child) => child.kind === "text").map((child) => child.value);
-
-  return texts.length === 0 ? null : texts.join("");
-}
-
-function nodesOf(root: SnapshotNode): Map<string, SnapshotNode> {
-  const nodes = new Map<string, SnapshotNode>();
-  const walk = (node: SnapshotNode) => {
-    nodes.set(node.id, node);
-    node.children?.forEach(walk);
-  };
-
-  walk(root);
-
-  return nodes;
-}
-
-/** What draws a layer, without what names or places it: equal for two copies of one icon. */
-function fingerprint(node: SnapshotNode | undefined): string {
-  const strip = (value: unknown): unknown => {
-    if (Array.isArray(value)) {
-      return value.map(strip);
-    }
-
-    if (typeof value !== "object" || value === null) {
-      return value;
-    }
-
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([key]) => !NOT_DRAWING.has(key))
-        .toSorted(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-        .map(([key, item]) => [key, strip(item)]),
-    );
-  };
-
-  return JSON.stringify(strip(node ?? null));
 }

@@ -1,6 +1,7 @@
 import type { InspectRaw } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
-import { inspectLayers } from "../src/layers/inspect-layers.ts";
+import { inspectLayers } from "../src/features/inspect/inspect-layers.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -80,7 +81,7 @@ function bridge(selected: string[]) {
 describe("the inspect tool", () => {
   it("inspects the selection when no layers are named, and gives the view", async () => {
     const { view, requests } = bridge(["2:4"]);
-    const result = await inspectLayers(view, {});
+    const result = await inspectLayers(new PluginClient(view), {});
 
     expect(requests.map(({ op, input }) => [op, input])).toEqual([
       ["selection", null],
@@ -98,14 +99,14 @@ describe("the inspect tool", () => {
   it("says what to do when nothing is selected and no layers are named", async () => {
     const { view } = bridge([]);
 
-    await expect(inspectLayers(view, {})).rejects.toThrow(/select|nodes/i);
+    await expect(inspectLayers(new PluginClient(view), {})).rejects.toThrow(/select|nodes/i);
   });
 });
 
 describe("inspect of a big selection", () => {
   it("reads the first 100 layers and says how many it left", async () => {
     const { view, requests } = bridge(Array.from({ length: 103 }, (_, index) => `3:${index + 1}`));
-    const result = await inspectLayers(view, {});
+    const result = await inspectLayers(new PluginClient(view), {});
 
     expect((requests[1]?.input as { nodes: string[] } | undefined)?.nodes).toHaveLength(100);
     expect(result.left).toBe(3);

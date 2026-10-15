@@ -1,14 +1,8 @@
 import type * as z from "zod";
-import type {
-  EffectSchema,
-  PaintSchema,
-  ReactionSchema,
-  SnapshotFieldsSchema,
-  SnapshotSchema,
-  SnapshotStyleSchema,
-  SnapshotVariableSchema,
-  TextSegmentSchema,
-} from "../schemas/snapshot.ts";
+import type { SnapshotSchema, SnapshotStyleSchema, SnapshotVariableSchema } from "../schemas/snapshot.ts";
+import type { SnapshotFieldsSchema } from "../schemas/snapshot-fields.ts";
+import type { TextSegmentSchema } from "../schemas/snapshot-text.ts";
+import type { EffectSchema, PaintSchema, ReactionSchema } from "../schemas/snapshot-values.ts";
 
 /** A snapshot node with its children (SnapshotNodeSchema): zod cannot infer the recursive type itself. */
 export interface SnapshotNode extends z.output<typeof SnapshotFieldsSchema> {

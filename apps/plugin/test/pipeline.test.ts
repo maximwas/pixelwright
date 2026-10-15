@@ -1,15 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { applyDesign } from "../../server/src/design/apply-design.ts";
-import { setEditsAllowed } from "../src/figma/edits.ts";
+import { applyDesign } from "../../server/src/features/design-apply/apply-design.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
-import { pluginBridge } from "./helpers/plugin-bridge.ts";
+import { pluginClient } from "./helpers/plugin-bridge.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 /** design_apply end to end: the server's applyDesign over the plugin on the fake Figma. */
 function pipeline() {
-  const bridge = pluginBridge();
+  const client = pluginClient(plugin);
 
   return (xml: string, options: { parent?: string; dryRun?: boolean } = {}) =>
-    applyDesign(bridge, {
+    applyDesign(client, {
       xml,
       dryRun: options.dryRun ?? false,
       ...(options.parent === undefined ? {} : { parent: options.parent }),
@@ -188,11 +191,11 @@ beforeEach(() => {
     ],
   });
   apply = pipeline();
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("design_apply end to end: copies and new instances", () => {

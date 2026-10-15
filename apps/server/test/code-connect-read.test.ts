@@ -3,7 +3,8 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readCodeConnect } from "../src/code-connect/read-code-connect.ts";
+import { readCodeConnect } from "../src/features/code-connect-read/read-code-connect.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -70,7 +71,7 @@ describe("code_connect_read", () => {
     });
     const { bridge, asked } = orbit();
 
-    expect(await readCodeConnect(bridge, {}, root)).toEqual({
+    expect(await readCodeConnect(new PluginClient(bridge), {}, root)).toEqual({
       root,
       templates: [
         {
@@ -86,24 +87,15 @@ describe("code_connect_read", () => {
             {
               component: "Plan Card",
               instances: 3,
+              by: "name",
             },
           ],
+          // The template writes the name alone.
+          unread: ["Price", "Popular", "Description"],
         },
       ],
-      unconnected: [
-        {
-          component: "Button",
-          instances: 3,
-        },
-        {
-          component: "Icon/Check",
-          instances: 9,
-        },
-        {
-          component: "Badge",
-          instances: 1,
-        },
-      ],
+      // What sits inside the connected cards is their code's, never a layer of the read.
+      unconnected: [],
       problems: [],
     });
     // The current page, read without Figma's CSS.
@@ -117,7 +109,7 @@ describe("code_connect_read", () => {
 
   it("gives a template's error from a trial run on the first instance it matches", async () => {
     const root = await project({ "PlanCard.figma.ts": PLAN_CARD.replace("getString('Name')", "getString('Title')") });
-    const { templates } = await readCodeConnect(orbit().bridge, { node: "54:243" }, root);
+    const { templates } = await readCodeConnect(new PluginClient(orbit().bridge), { node: "54:243" }, root);
 
     expect(templates[0]?.error).toMatch(/^PROPERTY_NOT_FOUND: Plan – Starter \(54:244\) has no property Title/);
   });
@@ -125,24 +117,31 @@ describe("code_connect_read", () => {
   it("says why when the project has no templates", async () => {
     const root = await project({ "README.md": "hi" });
 
-    expect(await readCodeConnect(orbit().bridge, {}, root)).toMatchObject({
+    expect(await readCodeConnect(new PluginClient(orbit().bridge), {}, root)).toMatchObject({
       templates: [],
       unconnected: [
         {
           component: "Plan Card",
           instances: 3,
+          id: "54:202",
+          key: "2f31fdc95b9804804df14c93a7f9c8913d611c17",
         },
         {
           component: "Button",
           instances: 3,
+          id: "54:201",
         },
         {
           component: "Icon/Check",
           instances: 9,
+          id: "54:185",
+          key: "778d139f52be557106d2db2a415cebc8ba2197b0",
         },
         {
           component: "Badge",
           instances: 1,
+          id: "54:187",
+          key: "3f9fe0719b313ebf477e6b5b5f67e3d594ab72fc",
         },
       ],
       problems: [expect.stringMatching(/^No Code Connect templates/)],

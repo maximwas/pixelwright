@@ -1,0 +1,321 @@
+{
+  "plan": {
+    "collections": [
+      {
+        "name": "Brand Colors",
+        "modes": [
+          "Light",
+          "Dark",
+          "dark"
+        ],
+        "variables": [
+          {
+            "name": "Surface/Base",
+            "type": "COLOR",
+            "values": {
+              "Light": {
+                "kind": "color",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1,
+                  "a": 1
+                }
+              },
+              "Dark": {
+                "kind": "alias",
+                "token": "--Ink"
+              },
+              "dark": {
+                "kind": "color",
+                "color": {
+                  "r": 0.10196078431372549,
+                  "g": 0.10196078431372549,
+                  "b": 0.12156862745098039,
+                  "a": 1
+                }
+              }
+            },
+            "description": "The page background.",
+            "token": "--surface"
+          },
+          {
+            "name": "Ink",
+            "type": "COLOR",
+            "values": {
+              "Light": {
+                "kind": "color",
+                "color": {
+                  "r": 0.0784313725490196,
+                  "g": 0.08627450980392157,
+                  "b": 0.12156862745098039,
+                  "a": 1
+                }
+              },
+              "Dark": {
+                "kind": "alias",
+                "token": "--Accent"
+              },
+              "dark": {
+                "kind": "color",
+                "color": {
+                  "r": 0.9019607843137255,
+                  "g": 0.2,
+                  "b": 0.34901960784313724,
+                  "a": 0.5
+                }
+              }
+            }
+          },
+          {
+            "name": "Lost",
+            "type": "COLOR",
+            "values": {
+              "Dark": {
+                "kind": "color",
+                "color": {
+                  "r": 0.5019607843137255,
+                  "g": 0.5019607843137255,
+                  "b": 0.5019607843137255,
+                  "a": 1
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Spacing",
+        "modes": [
+          "Base"
+        ],
+        "variables": [
+          {
+            "name": "Gap/Small",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 8
+              }
+            }
+          },
+          {
+            "name": "Gap/None",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 0
+              }
+            }
+          },
+          {
+            "name": "Radius",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 13.5
+              }
+            }
+          },
+          {
+            "name": "Opacity/Half",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 0.5
+              }
+            }
+          },
+          {
+            "name": "Opacity/Faint",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 0.25
+              }
+            }
+          },
+          {
+            "name": "Weight/Bold",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 700
+              }
+            }
+          },
+          {
+            "name": "Font/Family",
+            "type": "STRING",
+            "values": {
+              "Base": {
+                "kind": "string",
+                "value": "Inter 'Display' \\ Pro"
+              }
+            }
+          },
+          {
+            "name": "Feature/On",
+            "type": "BOOLEAN",
+            "values": {
+              "Base": {
+                "kind": "boolean",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Motion",
+        "modes": [
+          "Default"
+        ],
+        "variables": []
+      }
+    ],
+    "styles": {
+      "paint": [
+        {
+          "name": "White",
+          "paints": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            }
+          ]
+        },
+        {
+          "name": "White",
+          "paints": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.9803921568627451,
+                "g": 0.9803921568627451,
+                "b": 0.9803921568627451,
+                "a": 0.8
+              }
+            }
+          ]
+        }
+      ],
+      "text": [
+        {
+          "name": "Heading/H1",
+          "font": {
+            "family": "Inter",
+            "weight": 700,
+            "italic": true,
+            "size": 48,
+            "lineHeight": {
+              "unit": "PIXELS",
+              "value": 58
+            }
+          }
+        },
+        {
+          "name": "Body",
+          "font": {
+            "family": "Open Sans",
+            "weight": 400,
+            "italic": false,
+            "size": 16,
+            "lineHeight": {
+              "unit": "AUTO"
+            }
+          }
+        }
+      ],
+      "effect": [
+        {
+          "name": "Shadow/Card",
+          "effects": [
+            {
+              "type": "DROP_SHADOW",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.12
+              },
+              "x": 0,
+              "y": 8,
+              "radius": 24,
+              "spread": 0
+            },
+            {
+              "type": "INNER_SHADOW",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0.5
+              },
+              "x": 0,
+              "y": 1,
+              "radius": 2,
+              "spread": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "errors": [
+    {
+      "kind": "variable",
+      "collection": "Brand Colors",
+      "name": "Veil",
+      "mode": "Dark",
+      "message": "color-mix(in srgb, var(--Ink) 64%, transparent) is not a COLOR value."
+    },
+    {
+      "kind": "variable",
+      "collection": "Brand Colors",
+      "name": "Veil",
+      "mode": "dark",
+      "message": "color-mix(in srgb, #FFF calc(var(--Opacity-Half) * 1%), transparent) is not a COLOR value."
+    },
+    {
+      "kind": "variable",
+      "collection": "Motion",
+      "name": "Ease/Out",
+      "message": "EASING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "collection": "Motion",
+      "name": "Ease/Curve",
+      "message": "EASING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "collection": "Motion",
+      "name": "Ease/Spring",
+      "message": "EASING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "collection": "Motion",
+      "name": "Duration",
+      "message": "TIMING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "paint",
+      "name": "Glow",
+      "message": "linear-gradient(90deg, #FFF 0%, #000 100…: a gradient is not written yet."
+    }
+  ]
+}

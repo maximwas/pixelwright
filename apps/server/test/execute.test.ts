@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { executeCode } from "../src/execute/execute-code.ts";
-import { ExecuteInputSchema } from "../src/schemas/tools.ts";
+import { executeCode } from "../src/features/execute/execute-code.ts";
+import { ExecuteInputSchema } from "../src/features/execute/schemas.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -34,7 +35,7 @@ describe("execute", () => {
 
     expect(
       await executeCode(
-        bridge,
+        new PluginClient(bridge),
         ExecuteInputSchema.parse({
           code: "return 42;",
           timeout: 3,

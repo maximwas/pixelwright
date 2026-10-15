@@ -1,8 +1,11 @@
 import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
+import { samePaints } from "../src/figma/paints.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 interface Applied {
   created: { line: number; ref: string; id: string; tag: string }[];
@@ -24,14 +27,14 @@ function changesOf(xml: string, extra: Record<string, (change: ApplyChange) => A
 }
 
 const apply = async (changes: ApplyChange[], options: { parent?: string } = {}) =>
-  (await runOperation("apply", {
+  (await plugin.run("apply", {
     changes,
     ...options,
   })) as Applied;
 
 /** A file's bytes sent the way the server sends them, in one chunk. */
 async function send(stream: string, length: number): Promise<void> {
-  await runOperation("upload", {
+  await plugin.run("upload", {
     stream,
     offset: 0,
     chunk: btoa("x".repeat(length)),
@@ -143,11 +146,25 @@ beforeEach(() => {
       },
     ],
   });
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
+});
+
+describe("apply refused while Allow edits is off", () => {
+  it("drops the files the call uploaded, as a finished call does", async () => {
+    await send("img-off", 12);
+    plugin.services.edits.allow(false);
+
+    const changes = changesOf('<Image name="Photo" src="a.png" width="200px" height="100px"/>', {
+      "new:1": withAsset({ stream: "img-off" }),
+    });
+
+    await expect(apply(changes, { parent: "3:1" })).rejects.toThrow(/Allow edits/);
+    expect(plugin.services.uploads.bytes("img-off")).toBeUndefined();
+  });
 });
 
 describe("apply: images and icons", () => {
@@ -210,6 +227,63 @@ describe("apply: images and icons", () => {
     expect(made("RECTANGLE")).toHaveLength(1);
   });
 
+  it("swaps a background's image for another file's", async () => {
+    const side = byId("1:3");
+
+    if (side !== undefined) {
+      side.fills = [
+        {
+          type: "IMAGE",
+          imageHash: "hash-7",
+          scaleMode: "FILL",
+        },
+      ];
+    }
+
+    await send("bg-5", 5);
+
+    const { errors, changed } = await apply(
+      changesOf('<Frame id="1:3" background="url(b.png)"/>', {
+        "1:3": (change) => ({
+          ...change,
+          props: {
+            ...change.props,
+            fills: (change.props.fills ?? []).map((paint) =>
+              paint.kind === "image"
+                ? {
+                    ...paint,
+                    stream: "bg-5",
+                  }
+                : paint,
+            ),
+          },
+        }),
+      }),
+    );
+
+    expect(errors).toEqual([]);
+    expect(changed).toEqual(["1:3"]);
+    expect(byId("1:3")?.fills).toEqual([
+      {
+        type: "IMAGE",
+        imageHash: "hash-5",
+        scaleMode: "FILL",
+      },
+    ]);
+  });
+
+  it("tells paints of another image or another fit from the same ones", () => {
+    const image = (imageHash: string, scaleMode: ImagePaint["scaleMode"]): ImagePaint => ({
+      type: "IMAGE",
+      imageHash,
+      scaleMode,
+    });
+
+    expect(samePaints([image("a", "FILL")], [image("a", "FILL")])).toBe(true);
+    expect(samePaints([image("a", "FILL")], [image("b", "FILL")])).toBe(false);
+    expect(samePaints([image("a", "FIT")], [image("a", "FILL")])).toBe(false);
+  });
+
   it("swaps an image by id and keeps how it fits", async () => {
     await send("img-2", 20);
     await apply(
@@ -254,7 +328,7 @@ describe("apply: copies, slots and moves", () => {
   });
 
   it("checks a copy on a dry run without its own ids", async () => {
-    const result = (await runOperation("apply", {
+    const result = (await plugin.run("apply", {
       changes: changesOf('<Frame copyOf="1:1" name="Card 2"><Text id="1:2">New title</Text></Frame>'),
       parent: "3:1",
       dryRun: true,

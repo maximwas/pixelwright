@@ -1,8 +1,10 @@
 import { TokensApplyInputSchema, tokensPlan } from "@pixelwright/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setEditsAllowed } from "../src/figma/edits.ts";
-import { runOperation } from "../src/figma/operations.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { testPlugin } from "./helpers/test-plugin.ts";
+
+/** The plugin these tests run, over the fake Figma. */
+const plugin = testPlugin();
 
 interface Applied {
   created: { kind: string; name: string; collection?: string }[];
@@ -29,7 +31,7 @@ const apply = async (input: unknown, dryRun = false) => {
 
   expect(errors).toEqual([]);
 
-  return (await runOperation("tokens_apply", {
+  return (await plugin.run("tokens_apply", {
     plan,
     dryRun,
   })) as Applied;
@@ -144,11 +146,11 @@ beforeEach(() => {
       },
     },
   );
-  setEditsAllowed(true);
+  plugin.services.edits.allow(true);
 });
 
 afterEach(() => {
-  setEditsAllowed(false);
+  plugin.services.edits.allow(false);
 });
 
 describe("tokens_apply: variables", () => {
@@ -241,6 +243,67 @@ describe("tokens_apply: variables", () => {
       errors: [],
     });
     expect(fake.writes.undo).toBe(1);
+  });
+
+  it("keeps a Display P3 colour as it is in a P3 file, so the same tokens again change nothing", async () => {
+    Object.assign(fake.figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    const input = {
+      collections: [
+        {
+          name: "Brand",
+          variables: [
+            {
+              name: "color/accent",
+              values: { Light: "color(display-p3 0.9 0.2 0.1)" },
+            },
+          ],
+        },
+      ],
+    };
+
+    await apply(input);
+
+    const stored = Object.values((await variableNamed("color/accent"))?.valuesByMode ?? {})[0];
+
+    expect(stored).toEqual({
+      r: 0.9,
+      g: 0.2,
+      b: 0.1,
+      a: 1,
+    });
+    expect(await apply(input)).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+    Object.assign(fake.figma.root, { documentColorProfile: "SRGB" });
+  });
+
+  it("takes an sRGB colour written into a P3 file as held once written, not as a change every time", async () => {
+    Object.assign(fake.figma.root, { documentColorProfile: "DISPLAY_P3" });
+
+    const input = {
+      collections: [
+        {
+          name: "Brand",
+          variables: [
+            {
+              name: "color/alert",
+              values: { Light: "#FF0000" },
+            },
+          ],
+        },
+      ],
+    };
+
+    await apply(input);
+    expect(await apply(input)).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+    Object.assign(fake.figma.root, { documentColorProfile: "SRGB" });
   });
 
   it("points an alias at a variable made in the same call or the file's, whatever the order", async () => {
@@ -408,7 +471,7 @@ describe("tokens_apply: variables", () => {
   });
 
   it("checks without writing on a dry run, which needs no Allow edits; a real run does", async () => {
-    setEditsAllowed(false);
+    plugin.services.edits.allow(false);
 
     const checked = await apply(
       {

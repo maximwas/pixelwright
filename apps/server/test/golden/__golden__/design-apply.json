@@ -1,0 +1,2199 @@
+{
+  "round trip: pricing": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227",
+            "54:228",
+            "54:229",
+            "54:230",
+            "54:231",
+            "54:232",
+            "54:233",
+            "54:234",
+            "54:235",
+            "54:236",
+            "I54:236;54:196",
+            "54:238",
+            "54:239",
+            "54:240",
+            "54:241",
+            "54:242",
+            "54:317",
+            "54:243",
+            "54:244",
+            "I54:244;54:203",
+            "I54:244;54:204",
+            "I54:244;54:207",
+            "I54:244;54:208",
+            "I54:244;54:209",
+            "I54:244;54:210",
+            "I54:244;54:211",
+            "I54:244;54:211;54:190",
+            "I54:244;54:213",
+            "I54:244;54:214",
+            "I54:244;54:215",
+            "I54:244;54:217",
+            "I54:244;54:218",
+            "I54:244;54:219",
+            "I54:244;54:221",
+            "I54:244;54:222",
+            "I54:244;54:223",
+            "I54:244;54:225",
+            "54:268",
+            "I54:268;54:203",
+            "I54:268;54:204",
+            "I54:268;54:205",
+            "I54:268;54:205;54:188",
+            "I54:268;54:207",
+            "I54:268;54:208",
+            "I54:268;54:209",
+            "I54:268;54:210",
+            "I54:268;54:211",
+            "I54:268;54:211;54:190",
+            "I54:268;54:213",
+            "I54:268;54:214",
+            "I54:268;54:215",
+            "I54:268;54:217",
+            "I54:268;54:218",
+            "I54:268;54:219",
+            "I54:268;54:221",
+            "I54:268;54:222",
+            "I54:268;54:223",
+            "I54:268;54:225",
+            "54:292",
+            "I54:292;54:203",
+            "I54:292;54:204",
+            "I54:292;54:207",
+            "I54:292;54:208",
+            "I54:292;54:209",
+            "I54:292;54:210",
+            "I54:292;54:211",
+            "I54:292;54:211;54:190",
+            "I54:292;54:213",
+            "I54:292;54:214",
+            "I54:292;54:215",
+            "I54:292;54:217",
+            "I54:292;54:218",
+            "I54:292;54:219",
+            "I54:292;54:221",
+            "I54:292;54:222",
+            "I54:292;54:223",
+            "I54:292;54:225",
+            "54:434",
+            "54:435",
+            "54:436",
+            "54:437",
+            "54:441",
+            "54:445",
+            "54:449",
+            "54:450",
+            "54:451",
+            "54:452",
+            "54:454",
+            "54:456",
+            "54:457",
+            "54:458",
+            "54:316"
+          ]
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": []
+    }
+  },
+  "round trip: pricing in Display P3": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227",
+            "54:228",
+            "54:229",
+            "54:230",
+            "54:231",
+            "54:232",
+            "54:233",
+            "54:234",
+            "54:235",
+            "54:236",
+            "I54:236;54:196",
+            "54:238",
+            "54:239",
+            "54:240",
+            "54:241",
+            "54:242",
+            "54:317",
+            "54:243",
+            "54:244",
+            "I54:244;54:203",
+            "I54:244;54:204",
+            "I54:244;54:207",
+            "I54:244;54:208",
+            "I54:244;54:209",
+            "I54:244;54:210",
+            "I54:244;54:211",
+            "I54:244;54:211;54:190",
+            "I54:244;54:213",
+            "I54:244;54:214",
+            "I54:244;54:215",
+            "I54:244;54:217",
+            "I54:244;54:218",
+            "I54:244;54:219",
+            "I54:244;54:221",
+            "I54:244;54:222",
+            "I54:244;54:223",
+            "I54:244;54:225",
+            "54:268",
+            "I54:268;54:203",
+            "I54:268;54:204",
+            "I54:268;54:205",
+            "I54:268;54:205;54:188",
+            "I54:268;54:207",
+            "I54:268;54:208",
+            "I54:268;54:209",
+            "I54:268;54:210",
+            "I54:268;54:211",
+            "I54:268;54:211;54:190",
+            "I54:268;54:213",
+            "I54:268;54:214",
+            "I54:268;54:215",
+            "I54:268;54:217",
+            "I54:268;54:218",
+            "I54:268;54:219",
+            "I54:268;54:221",
+            "I54:268;54:222",
+            "I54:268;54:223",
+            "I54:268;54:225",
+            "54:292",
+            "I54:292;54:203",
+            "I54:292;54:204",
+            "I54:292;54:207",
+            "I54:292;54:208",
+            "I54:292;54:209",
+            "I54:292;54:210",
+            "I54:292;54:211",
+            "I54:292;54:211;54:190",
+            "I54:292;54:213",
+            "I54:292;54:214",
+            "I54:292;54:215",
+            "I54:292;54:217",
+            "I54:292;54:218",
+            "I54:292;54:219",
+            "I54:292;54:221",
+            "I54:292;54:222",
+            "I54:292;54:223",
+            "I54:292;54:225",
+            "54:434",
+            "54:435",
+            "54:436",
+            "54:437",
+            "54:441",
+            "54:445",
+            "54:449",
+            "54:450",
+            "54:451",
+            "54:452",
+            "54:454",
+            "54:456",
+            "54:457",
+            "54:458",
+            "54:316"
+          ]
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": []
+    }
+  },
+  "round trip: plans": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:243",
+            "54:244",
+            "I54:244;54:203",
+            "I54:244;54:204",
+            "I54:244;54:207",
+            "I54:244;54:208",
+            "I54:244;54:209",
+            "I54:244;54:210",
+            "I54:244;54:211",
+            "I54:244;54:211;54:190",
+            "I54:244;54:213",
+            "I54:244;54:214",
+            "I54:244;54:215",
+            "I54:244;54:217",
+            "I54:244;54:218",
+            "I54:244;54:219",
+            "I54:244;54:221",
+            "I54:244;54:222",
+            "I54:244;54:223",
+            "I54:244;54:225",
+            "54:268",
+            "I54:268;54:203",
+            "I54:268;54:204",
+            "I54:268;54:205",
+            "I54:268;54:205;54:188",
+            "I54:268;54:207",
+            "I54:268;54:208",
+            "I54:268;54:209",
+            "I54:268;54:210",
+            "I54:268;54:211",
+            "I54:268;54:211;54:190",
+            "I54:268;54:213",
+            "I54:268;54:214",
+            "I54:268;54:215",
+            "I54:268;54:217",
+            "I54:268;54:218",
+            "I54:268;54:219",
+            "I54:268;54:221",
+            "I54:268;54:222",
+            "I54:268;54:223",
+            "I54:268;54:225",
+            "54:292",
+            "I54:292;54:203",
+            "I54:292;54:204",
+            "I54:292;54:207",
+            "I54:292;54:208",
+            "I54:292;54:209",
+            "I54:292;54:210",
+            "I54:292;54:211",
+            "I54:292;54:211;54:190",
+            "I54:292;54:213",
+            "I54:292;54:214",
+            "I54:292;54:215",
+            "I54:292;54:217",
+            "I54:292;54:218",
+            "I54:292;54:219",
+            "I54:292;54:221",
+            "I54:292;54:222",
+            "I54:292;54:223",
+            "I54:292;54:225"
+          ]
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": []
+    }
+  },
+  "round trip: plans cut to 2000 characters": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:243",
+            "54:244",
+            "54:268",
+            "54:292"
+          ]
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": []
+    }
+  },
+  "edit: gap": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:227",
+              "id": "54:227",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 48
+              },
+              "sources": {
+                "layoutMode": "flex-direction",
+                "itemSpacing": "gap"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:227"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: gap with a version": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "save_version",
+        "input": {
+          "title": "Before the gap",
+          "description": "Saved by Pixelwright before it changed the file."
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:227",
+              "id": "54:227",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 48
+              },
+              "sources": {
+                "layoutMode": "flex-direction",
+                "itemSpacing": "gap"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:227"
+      ],
+      "errors": [],
+      "dryRun": false,
+      "version": {
+        "id": "v-1",
+        "title": "Before the gap"
+      }
+    }
+  },
+  "edit: gap as a dry run with a version": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:227",
+              "id": "54:227",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 48
+              },
+              "sources": {
+                "layoutMode": "flex-direction",
+                "itemSpacing": "gap"
+              }
+            }
+          ],
+          "dryRun": true
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:227"
+      ],
+      "errors": [],
+      "dryRun": true
+    }
+  },
+  "edit: gap with a version Figma refuses": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "save_version",
+        "input": {
+          "title": "fails",
+          "description": "Saved by Pixelwright before it changed the file."
+        },
+        "session": "s1"
+      }
+    ],
+    "thrown": {
+      "name": "BridgeError",
+      "code": "OP_FAILED",
+      "message": "The version \"fails\" could not be saved, so nothing was written: Figma refused the version"
+    }
+  },
+  "edit: gap with a version an old plugin cannot save": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "save_version",
+        "input": {
+          "title": "old plugin",
+          "description": "Saved by Pixelwright before it changed the file."
+        },
+        "session": "s1"
+      }
+    ],
+    "thrown": {
+      "name": "BridgeError",
+      "code": "UNKNOWN_OP",
+      "message": "The Pixelwright plugin in this file is older than the server and cannot save versions: run npx -y pixelwright@latest to update it, or write without version."
+    }
+  },
+  "edit: padding from tokens to px": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:227",
+              "id": "54:227",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "padding": [
+                  64,
+                  120,
+                  120,
+                  120
+                ]
+              },
+              "sources": {
+                "padding": "padding"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:227"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: a hex colour for a token": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:240"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:240",
+              "id": "54:240",
+              "tag": "Text",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "textFills": [
+                  {
+                    "kind": "color",
+                    "color": {
+                      "r": 0.23137254901960785,
+                      "g": 0.1843137254901961,
+                      "b": 0.8509803921568627,
+                      "a": 1
+                    }
+                  }
+                ]
+              },
+              "sources": {
+                "textFills": "color"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:240"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: text": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:241"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:241",
+              "id": "54:241",
+              "tag": "Text",
+              "parent": null,
+              "index": 0,
+              "props": {},
+              "sources": {},
+              "text": {
+                "characters": "Plans for every orbit",
+                "runs": []
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:241"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: a span's colour over the same characters": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:241"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:241",
+              "id": "54:241",
+              "tag": "Text",
+              "parent": null,
+              "index": 0,
+              "props": {},
+              "sources": {},
+              "text": {
+                "characters": "Plans that grow with your orbit",
+                "runs": [
+                  {
+                    "start": 21,
+                    "end": 31,
+                    "props": {
+                      "textFills": [
+                        {
+                          "kind": "color",
+                          "color": {
+                            "r": 1,
+                            "g": 0.4196078431372549,
+                            "b": 0.23921568627450981,
+                            "a": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:241"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: text style": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:233"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:233",
+              "id": "54:233",
+              "tag": "Text",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "textStyle": "Label"
+              },
+              "sources": {
+                "textStyle": "textStyle"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:233"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: note": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:238"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:238",
+              "id": "54:238",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "notes": [
+                  {
+                    "category": "Hero",
+                    "label": "keep the planet on the right"
+                  }
+                ]
+              },
+              "sources": {
+                "notes": "note"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:238"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: variant": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:236"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:236",
+              "id": "54:236",
+              "tag": "Instance",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "variant": {
+                  "Variant": "Primary",
+                  "State": "Default"
+                }
+              },
+              "sources": {
+                "variant": "variant"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:236"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: props": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:236"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:236",
+              "id": "54:236",
+              "tag": "Instance",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "props": {
+                  "Label": "Log in"
+                }
+              },
+              "sources": {
+                "props": "props"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:236"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: component swap": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:236"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:236",
+              "id": "54:236",
+              "tag": "Instance",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "component": "Plan Card"
+              },
+              "sources": {
+                "component": "component"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:236"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: display none": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:232"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:232",
+              "id": "54:232",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "visible": false
+              },
+              "sources": {
+                "visible": "display"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:232"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "edit: rename": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:229"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:229",
+              "id": "54:229",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "name": "Brand"
+              },
+              "sources": {
+                "name": "name"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:229"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "structure: a create of each creatable tag": {
+    "requests": [
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:1",
+              "id": null,
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "name": "New frame",
+                "width": 100,
+                "height": 40
+              },
+              "sources": {
+                "name": "name",
+                "width": "width",
+                "height": "height"
+              }
+            },
+            {
+              "line": 2,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:2",
+              "id": null,
+              "tag": "Text",
+              "parent": null,
+              "index": 1,
+              "props": {},
+              "sources": {},
+              "text": {
+                "characters": "Hello",
+                "runs": []
+              }
+            },
+            {
+              "line": 3,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:3",
+              "id": null,
+              "tag": "Rectangle",
+              "parent": null,
+              "index": 2,
+              "props": {
+                "name": "Box",
+                "width": 10,
+                "height": 10,
+                "fills": [
+                  {
+                    "kind": "color",
+                    "color": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 1
+                    }
+                  }
+                ]
+              },
+              "sources": {
+                "name": "name",
+                "width": "width",
+                "height": "height",
+                "fills": "background"
+              }
+            },
+            {
+              "line": 4,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:4",
+              "id": null,
+              "tag": "Ellipse",
+              "parent": null,
+              "index": 3,
+              "props": {
+                "name": "Dot",
+                "width": 8,
+                "height": 8
+              },
+              "sources": {
+                "name": "name",
+                "width": "width",
+                "height": "height"
+              }
+            },
+            {
+              "line": 5,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:5",
+              "id": null,
+              "tag": "Line",
+              "parent": null,
+              "index": 4,
+              "props": {
+                "name": "Rule",
+                "width": 100,
+                "strokes": {
+                  "paints": [
+                    {
+                      "kind": "color",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "sides": {
+                    "top": 1,
+                    "right": 0,
+                    "bottom": 0,
+                    "left": 0
+                  },
+                  "align": "INSIDE",
+                  "dash": false
+                }
+              },
+              "sources": {
+                "name": "name",
+                "width": "width",
+                "strokes": "border-top"
+              }
+            }
+          ],
+          "parent": "54:238",
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [
+        {
+          "line": 1,
+          "ref": "new:1",
+          "id": "90:1",
+          "tag": "Frame"
+        },
+        {
+          "line": 2,
+          "ref": "new:2",
+          "id": "90:2",
+          "tag": "Text"
+        },
+        {
+          "line": 3,
+          "ref": "new:3",
+          "id": "90:3",
+          "tag": "Rectangle"
+        },
+        {
+          "line": 4,
+          "ref": "new:4",
+          "id": "90:4",
+          "tag": "Ellipse"
+        },
+        {
+          "line": 5,
+          "ref": "new:5",
+          "id": "90:5",
+          "tag": "Line"
+        }
+      ],
+      "changed": [],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "structure: the nav's texts in another order": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:232",
+            "54:235",
+            "54:233",
+            "54:234"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:232",
+              "id": "54:232",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {},
+              "sources": {}
+            },
+            {
+              "line": 1,
+              "column": 20,
+              "kind": "update",
+              "ref": "54:235",
+              "id": "54:235",
+              "tag": "Text",
+              "parent": "54:232",
+              "index": 0,
+              "props": {},
+              "sources": {}
+            },
+            {
+              "line": 1,
+              "column": 39,
+              "kind": "update",
+              "ref": "54:233",
+              "id": "54:233",
+              "tag": "Text",
+              "parent": "54:232",
+              "index": 1,
+              "props": {},
+              "sources": {},
+              "move": true
+            },
+            {
+              "line": 1,
+              "column": 58,
+              "kind": "update",
+              "ref": "54:234",
+              "id": "54:234",
+              "tag": "Text",
+              "parent": "54:232",
+              "index": 2,
+              "props": {},
+              "sources": {},
+              "move": true
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:232",
+        "54:235",
+        "54:233",
+        "54:234"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "structure: a move into a new parent": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:238",
+            "54:240"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:238",
+              "id": "54:238",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {},
+              "sources": {}
+            },
+            {
+              "line": 1,
+              "column": 20,
+              "kind": "create",
+              "ref": "new:1",
+              "id": null,
+              "tag": "Frame",
+              "parent": "54:238",
+              "index": 0,
+              "props": {
+                "name": "Wrap"
+              },
+              "sources": {
+                "name": "name"
+              }
+            },
+            {
+              "line": 1,
+              "column": 39,
+              "kind": "update",
+              "ref": "54:240",
+              "id": "54:240",
+              "tag": "Text",
+              "parent": "new:1",
+              "index": 0,
+              "props": {},
+              "sources": {},
+              "move": true
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [
+        {
+          "line": 1,
+          "ref": "new:1",
+          "id": "90:1",
+          "tag": "Frame"
+        }
+      ],
+      "changed": [
+        "54:238",
+        "54:240"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "structure: a create after a layer": {
+    "requests": [
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:1",
+              "id": null,
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "after": "54:228",
+              "props": {
+                "name": "Spacer",
+                "height": 8
+              },
+              "sources": {
+                "name": "name",
+                "height": "height"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [
+        {
+          "line": 1,
+          "ref": "new:1",
+          "id": "90:1",
+          "tag": "Frame"
+        }
+      ],
+      "changed": [],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "structure: a copy with its source's ids": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:268",
+            "I54:268;54:203"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:1",
+              "id": null,
+              "tag": "Instance",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "name": "Plan – Pro copy"
+              },
+              "sources": {
+                "name": "name"
+              },
+              "copyOf": "54:268"
+            },
+            {
+              "line": 1,
+              "column": 50,
+              "kind": "update",
+              "ref": "new:1:50",
+              "id": null,
+              "tag": "Text",
+              "parent": "new:1",
+              "index": 0,
+              "props": {},
+              "sources": {},
+              "text": {
+                "characters": "Copied text",
+                "runs": []
+              },
+              "source": "I54:268;54:203",
+              "copy": "new:1"
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [
+        {
+          "line": 1,
+          "ref": "new:1",
+          "id": "90:1",
+          "tag": "Instance"
+        }
+      ],
+      "changed": [],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "structure: a new instance named by another instance's ids": {
+    "requests": [
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:1",
+              "id": null,
+              "tag": "Instance",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "name": "Plan – Team",
+                "component": "Plan Card"
+              },
+              "sources": {
+                "name": "name",
+                "component": "component"
+              }
+            },
+            {
+              "line": 1,
+              "column": 52,
+              "kind": "update",
+              "ref": "new:1:52",
+              "id": null,
+              "tag": "Text",
+              "parent": "new:1",
+              "index": 0,
+              "props": {},
+              "sources": {},
+              "text": {
+                "characters": "For teams.",
+                "runs": []
+              },
+              "source": "I54:244;54:207",
+              "copy": "new:1"
+            }
+          ],
+          "parent": "54:243",
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [
+        {
+          "line": 1,
+          "ref": "new:1",
+          "id": "90:1",
+          "tag": "Instance"
+        }
+      ],
+      "changed": [],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "reads: a layer the read's budget cut": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227",
+            "54:228"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:227",
+              "id": "54:227",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "opacity": 0.9
+              },
+              "sources": {
+                "opacity": "opacity"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:227"
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "column": 34,
+          "id": "54:228",
+          "message": "design_apply could not read 54:228's current state: the call holds too many layers at once.",
+          "hint": "Send fewer layers in one call, or this one on its own."
+        }
+      ],
+      "dryRun": false
+    }
+  },
+  "reads: an id the file does not hold": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "99:99"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "99:99",
+              "id": "99:99",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "opacity": 0.5
+              },
+              "sources": {
+                "opacity": "opacity"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "99:99"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "files: the same bytes": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "1:1",
+            "1:2"
+          ]
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": []
+    }
+  },
+  "files: other bytes": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "1:1",
+            "1:2"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "upload",
+        "input": {
+          "stream": "stream-1",
+          "offset": 0,
+          "chunk": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAIB4dfwpQAAAABJRU5ErkJggng=",
+          "total": 71
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 2,
+              "column": 3,
+              "kind": "update",
+              "ref": "1:2",
+              "id": "1:2",
+              "tag": "Image",
+              "parent": "1:1",
+              "index": 0,
+              "props": {
+                "asset": {
+                  "kind": "image",
+                  "src": "other.png",
+                  "stream": "stream-1"
+                }
+              },
+              "sources": {
+                "asset": "src"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "1:2"
+      ],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "files: a file that is not there": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "1:1",
+            "1:2"
+          ]
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": [
+        {
+          "line": 2,
+          "column": 3,
+          "id": "1:2",
+          "attribute": "src",
+          "message": "nowhere.png is not a file the server can read (paths are from its folder: <dir>)."
+        }
+      ]
+    }
+  },
+  "files: two images of one file and an icon": {
+    "requests": [
+      {
+        "op": "upload",
+        "input": {
+          "stream": "stream-2",
+          "offset": 0,
+          "chunk": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAIB4dfwpQAAAABJRU5ErkJggg==",
+          "total": 70
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:1",
+              "id": null,
+              "tag": "Image",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "asset": {
+                  "kind": "image",
+                  "src": "photo.png",
+                  "stream": "stream-2"
+                },
+                "width": 10
+              },
+              "sources": {
+                "asset": "src",
+                "width": "width"
+              }
+            },
+            {
+              "line": 2,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:2",
+              "id": null,
+              "tag": "Image",
+              "parent": null,
+              "index": 1,
+              "props": {
+                "asset": {
+                  "kind": "image",
+                  "src": "photo.png",
+                  "stream": "stream-2"
+                },
+                "width": 20
+              },
+              "sources": {
+                "asset": "src",
+                "width": "width"
+              }
+            },
+            {
+              "line": 3,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:3",
+              "id": null,
+              "tag": "Icon",
+              "parent": null,
+              "index": 2,
+              "props": {
+                "asset": {
+                  "kind": "icon",
+                  "src": "arrow.svg",
+                  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"/>"
+                }
+              },
+              "sources": {
+                "asset": "src"
+              }
+            }
+          ],
+          "parent": "1:1",
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [
+        {
+          "line": 1,
+          "ref": "new:1",
+          "id": "90:1",
+          "tag": "Image"
+        },
+        {
+          "line": 2,
+          "ref": "new:2",
+          "id": "90:2",
+          "tag": "Image"
+        },
+        {
+          "line": 3,
+          "ref": "new:3",
+          "id": "90:3",
+          "tag": "Icon"
+        }
+      ],
+      "changed": [],
+      "errors": [],
+      "dryRun": false
+    }
+  },
+  "files: two images of one file and an icon, dry run": {
+    "requests": [
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:1",
+              "id": null,
+              "tag": "Image",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "asset": {
+                  "kind": "image",
+                  "src": "photo.png"
+                },
+                "width": 10
+              },
+              "sources": {
+                "asset": "src",
+                "width": "width"
+              }
+            },
+            {
+              "line": 2,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:2",
+              "id": null,
+              "tag": "Image",
+              "parent": null,
+              "index": 1,
+              "props": {
+                "asset": {
+                  "kind": "image",
+                  "src": "photo.png"
+                },
+                "width": 20
+              },
+              "sources": {
+                "asset": "src",
+                "width": "width"
+              }
+            },
+            {
+              "line": 3,
+              "column": 1,
+              "kind": "create",
+              "ref": "new:3",
+              "id": null,
+              "tag": "Icon",
+              "parent": null,
+              "index": 2,
+              "props": {
+                "asset": {
+                  "kind": "icon",
+                  "src": "arrow.svg",
+                  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"/>"
+                }
+              },
+              "sources": {
+                "asset": "src"
+              }
+            }
+          ],
+          "parent": "1:1",
+          "dryRun": true
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [
+        {
+          "line": 1,
+          "ref": "new:1",
+          "id": "90:1",
+          "tag": "Image"
+        },
+        {
+          "line": 2,
+          "ref": "new:2",
+          "id": "90:2",
+          "tag": "Image"
+        },
+        {
+          "line": 3,
+          "ref": "new:3",
+          "id": "90:3",
+          "tag": "Icon"
+        }
+      ],
+      "changed": [],
+      "errors": [],
+      "dryRun": true
+    }
+  },
+  "files: a WebP image": {
+    "requests": [],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "attribute": "src",
+          "message": "photo.webp is not a PNG, JPG, GIF or WebP image."
+        }
+      ]
+    }
+  },
+  "files: an image wider than Figma takes": {
+    "requests": [],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "attribute": "src",
+          "message": "wide.png is 4100×2 px: Figma takes images up to 4096 px a side, so scale it down first."
+        }
+      ]
+    }
+  },
+  "errors: XML that does not parse": {
+    "requests": [],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": [
+        {
+          "line": 2,
+          "column": 11,
+          "message": "Invalid XML at line 2, column 11: Expected </Text> for the tag at line 2, found </Frame>."
+        }
+      ]
+    }
+  },
+  "errors: only refused elements": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:228"
+          ]
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [],
+      "dryRun": false,
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "54:227",
+          "message": "<Fram> is not a Pixelwright tag.",
+          "hint": "Did you mean <Frame>?"
+        },
+        {
+          "line": 2,
+          "column": 1,
+          "id": "54:228",
+          "attribute": "gapp",
+          "message": "gapp is not an attribute of <Frame>: left out.",
+          "hint": "Did you mean gap?"
+        }
+      ]
+    }
+  },
+  "errors: the plugin's errors merged with the reader's": {
+    "requests": [
+      {
+        "op": "entries",
+        "input": {
+          "ids": [
+            "54:227",
+            "54:228"
+          ]
+        },
+        "session": "s1"
+      },
+      {
+        "op": "apply",
+        "input": {
+          "changes": [
+            {
+              "line": 1,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:227",
+              "id": "54:227",
+              "tag": "Frame",
+              "parent": null,
+              "index": 0,
+              "props": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 48
+              },
+              "sources": {
+                "layoutMode": "flex-direction",
+                "itemSpacing": "gap"
+              }
+            },
+            {
+              "line": 2,
+              "column": 1,
+              "kind": "update",
+              "ref": "54:228",
+              "id": "54:228",
+              "tag": "Frame",
+              "parent": null,
+              "index": 1,
+              "props": {
+                "opacity": 0.5
+              },
+              "sources": {
+                "opacity": "opacity"
+              }
+            }
+          ],
+          "dryRun": false
+        },
+        "session": "s1"
+      }
+    ],
+    "result": {
+      "created": [],
+      "changed": [
+        "54:227",
+        "54:228"
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "column": 1,
+          "id": "54:227",
+          "attribute": "gap",
+          "message": "Figma refused the gap"
+        },
+        {
+          "line": 2,
+          "column": 1,
+          "id": "54:228",
+          "attribute": "gapp",
+          "message": "gapp is not an attribute of <Frame>: left out.",
+          "hint": "Did you mean gap?"
+        }
+      ],
+      "dryRun": false
+    }
+  },
+  "errors: a file named that is not open": {
+    "requests": [],
+    "thrown": {
+      "name": "BridgeError",
+      "code": "FILE_NOT_FOUND",
+      "message": "No connected file is named Another file. Connected: Orbit."
+    }
+  }
+}

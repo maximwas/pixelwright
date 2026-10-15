@@ -16,6 +16,112 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## 0.3.0 — 2026-10-15
+
+### Added
+
+- `design_read` shows what an instance changed outside its component's properties (`$override`: a rewritten text, a
+  recoloured icon), so the code knows which instances need a new property, a variant or a one-off.
+- `outline`, `file_map` and `design_read` show what the designer marked ready for dev (or completed) in Dev Mode.
+- `design_read` names the token Figma itself matches a raw spacing, radius, stroke or opacity to.
+- `design_apply` and `tokens_apply` take a `version`: a named version is saved in Figma's history before they change
+  anything, for the designer to go back to.
+- `pixelwright logs` follows the logs of every running Pixelwright server on the computer in real time: tool calls,
+  plugins connecting, errors. The bug report form asks for its output.
+- `design_read` keeps a list's item spacing, a line's round or square ends and a frame's grid style.
+- `baseline_save` keeps a screen or section as your code was built from it, in the project beside the code
+  (`.pixelwright/baselines/`), with the files you built from it. Nothing is written to Figma.
+- `baseline_diff` tells what the designer changed since then, in `design_read`'s terms: layers changed, added (with
+  their XML), removed, hidden, moved or reordered; a change made in a component, once, with the instances it reached;
+  token values in every mode; icons and images to export again. It sees edits made while the plugin was closed, library
+  updates and variable values. Without a name it checks every baseline in the project. Accept what you built with
+  `baseline_save` and the `accept` the diff gives.
+- `version_save` saves a named version in Figma's history when you ask for one, so the designer can open the design
+  your code was built from; the baselines it names remember it. It needs edit access and Allow edits.
+- `components_read` tells which of the project's components builds each Figma component, from its Code Connect files,
+  with the code's file. `mapped: false` lists only the components still without code, with the key a new mapping
+  needs.
+- Code Connect batch files (`*.figma.batch.json`, Figma's own format) connect many components through one shared
+  template, one row each. The guide gives a ready template whose rows map Figma properties to code props, so a
+  component needs no template of its own.
+- A Code Connect template (`// key=`) or batch row (`"key"`) can name the component's key. It then connects exactly
+  that component in every file, a library's included, whatever it is called there.
+- `components_read` lists the nested instances a component exposes, with their properties: in code they are the
+  component's own props. `design_read` marks them `$exposed`.
+- `design_read` and `code_connect_read` name the properties an instance's code never reads (`unread`), and
+  `code_connect_read` names the variant values a template's mapping misses (`values`), so no value is lost to a
+  snippet.
+- `components_read` with `links: true` gives the links people attached to components in Dev Mode, with the project file
+  a code link points at, on Figma plans that have them.
+
+### Changed
+
+- Every easing is valid CSS: `tokens_read`, the prototype interactions `design_read` shows and Figma Motion write a
+  keyword or `cubic-bezier()`, and a spring as `linear()` drawn from the spring itself (it used to be `ease` or a word).
+- In a Display P3 file, colours are written as `color(display-p3 …)` by `design_read`, `tokens_read` (in CSS and in
+  DTCG files) and the checks, and colours written to it are converted to P3: they show as the designer chose them.
+- A version saved before a `design_apply` or `tokens_apply` write says in Figma that Pixelwright saved it, and waits a
+  moment so Pixelwright's previous change is in it.
+- `code_connect_read` and `design_read` give each Code Connect file's `source` and say when that file no longer exists.
+  `code_connect_read` says how each file matched (by key, by the component's link, or by name), and gives the id and
+  key of each component none connects.
+- `design_read` names the components it shows that have no code yet, when the project has Code Connect files.
+
+### Fixed
+
+- `design_apply` writes a text of only no-break or em spaces as it is written, and a plain space typed between two
+  styled parts of a text as one space: it used to add a space to both.
+- In a Display P3 file, `design_read`'s own XML sent back to `design_apply` no longer changes a name or a note that
+  holds a word like `#FFF`.
+- `design_read`'s hints no longer take a text's own words, or a colour in a layer's name, note or link, for CSS that
+  should use a token.
+- `design_apply` and `tokens_apply` save their version, check and write in the file the call started on, even when
+  another Figma file comes to the front while they run.
+- `inspect`, `measure`, `contrast_check`, `design_audit` and `fonts_check` read the selection and then the layers from
+  the same file, even when another Figma file comes to the front between the two.
+- `design_apply` no longer writes a new layer into the original when a mistyped tag inside a copy or a new instance
+  holds it: the new layer is refused, and the copy's own layers named there are still written.
+- `design_apply` reads the layers named by id inside an element it does not create, or inside a `<Span>` outside a
+  text, instead of dropping them, and says so when a `<Span>` inside a `<Span>` sets something (runs do not nest).
+- `design_apply` says when the XML holds no element, instead of answering as if it had written something.
+- `design_apply` changes layers of every Figma type `design_read` writes by their id (widgets, stickies, connectors,
+  slides…), instead of refusing their tags: each takes what Figma gives its type (a sticky's fill and opacity, a
+  connector's stroke, a stamp's size), and the rest is refused in plain words.
+- `design_apply` says when an existing `<Icon>` names another SVG instead of ignoring it: an icon cannot be redrawn in
+  place, so delete it and create it again from the file.
+- `design_read`'s XML sent back to `design_apply` no longer reports its own image and icon files as missing when
+  several layers share a name and the read numbered their files (`photo-2.png`).
+- `design_apply` writes a background's new image: a `url()` naming another file, or another fit, was reported as
+  changed but left the old image in place.
+- `design_apply` refuses a dashed underline without writing a solid one in its place, and gives one error, not two,
+  for a link on a frame.
+- `design_apply` places a new component set made on the page beside the page's layers, as it places any new layer,
+  instead of on top of them at the page's corner.
+- A `design_apply` dry run refuses what the real run refuses for a layer's type (a description on a frame, a dashed
+  underline, a fill on a group) and a paint style inside a list of paints, and a property with several unknown tokens
+  gives one error, not one per token.
+- An attribute `design_apply` cannot write leaves its layer as it was: a padding, corner radius or size with an
+  unknown token, or a border per side on a layer without one, no longer writes half of itself, and what a call writes
+  is always one undo step.
+- `pixelwright logs` keeps showing every server's lines: the shared log is set aside by whichever server writes past
+  its size, at any time, and a server whose log another one set aside writes to the new file instead of the old one.
+  Two servers starting at once no longer leave one of them logging to stderr alone.
+- The log names a tool call the client cancelled, instead of keeping it as waiting for an answer forever.
+- The plugin counts a piece of an image file sent to it twice only once, so `design_apply` never takes a file with a
+  missing part as whole; a piece past the end of a file gets a clear error instead of a bare `RangeError`.
+- The plugin window names a saved version in plain words, not its internal operation name.
+- `code_connect_read` no longer counts the instances inside a connected instance as unconnected.
+- `nodes_diff` no longer calls an icon or image drawn anew when only its notes, link, prototype or animation differ.
+- `screenshot` says a bad `save` path before it looks for the file to shoot, so that error comes first.
+- The shared log keeps being written when its folder is deleted while servers run, and a full log that cannot be set
+  aside is written on instead of being tried again on every line.
+- A Code Connect template's `findInstance`, `findText` and `findLayers` take `null` options as none.
+- `design_apply` refuses a corner radius on a `<Line>`, which has none, before anything is written, and says it has no
+  properties when `props` is given to a layer that is no instance, instead of counting that as a write.
+- `design_apply` places an error for text outside a `<Text>` where its words start, not at the end of the line before.
+- The Orbit example names its code component as Figma's Code Connect defines it (`component=PlanCard`) and passes the
+  card's description.
+
 ## 0.2.0 — 2026-10-14
 
 ### Added

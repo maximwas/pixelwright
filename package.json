@@ -13,7 +13,6 @@
     "dev:plugin": "pnpm --filter @pixelwright/plugin dev",
     "plugin:install": "pnpm --filter @pixelwright/plugin build && mkdir -p ~/.pixelwright/plugin && rsync -a --delete apps/plugin/manifest.json apps/plugin/build ~/.pixelwright/plugin/",
     "test": "vitest run --project core --project server --project plugin",
-    "test:integration": "vitest run --project integration",
     "lint": "biome check . && eslint .",
     "lint:fix": "biome lint --write --unsafe --only=style/useBlockStatements --only=correctness/noUnusedImports . && biome check --write . && eslint --fix . && biome format --write .",
     "typecheck": "pnpm -r typecheck"

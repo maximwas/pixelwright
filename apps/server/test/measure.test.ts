@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { measureNodes } from "../src/layers/measure-layers.ts";
+import { measureNodes } from "../src/features/measure/measure-layers.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -52,7 +53,7 @@ const bridge: BridgeView = {
 
 describe("measure", () => {
   it("measures the layers named in order, from their layout boxes, and names the missing ones", async () => {
-    const result = await measureNodes(bridge, {
+    const result = await measureNodes(new PluginClient(bridge), {
       nodes: ["1:1", "1:2", "9:9"],
       painted: false,
     });

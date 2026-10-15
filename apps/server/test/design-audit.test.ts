@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { auditDesign } from "../src/checks/audit-design.ts";
+import { auditDesign } from "../src/features/design-audit/audit-design.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -41,7 +42,7 @@ describe("design_audit", () => {
       },
     };
 
-    await expect(auditDesign(bridge, { node: "1:1" })).resolves.toMatchObject({
+    await expect(auditDesign(new PluginClient(bridge), { node: "1:1" })).resolves.toMatchObject({
       spacing: [
         {
           value: 10,

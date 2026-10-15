@@ -1,0 +1,119 @@
+{
+  "same": false,
+  "changes": {
+    "changed": [
+      {
+        "path": "Frame \"Plans\" / Instance \"Plan – Pro\"",
+        "id": "54:268",
+        "tag": "Instance",
+        "attributes": {
+          "props": [
+            "Price=$12",
+            "Price=$14"
+          ]
+        }
+      },
+      {
+        "path": "Text \"Footnote\"",
+        "id": "54:316",
+        "tag": "Text",
+        "attributes": {
+          "$text": [
+            "Prices in USD. Taxes may apply.",
+            "Prices in USD, billed yearly."
+          ]
+        }
+      }
+    ],
+    "added": [
+      {
+        "path": "Frame \"Hero\" / Frame \"Copy\" / Text \"Trial\"",
+        "id": "61:12",
+        "tag": "Text",
+        "xml": "<Text id=\"61:12\" name=\"Trial\" textStyle=\"Body\" align-self=\"stretch\" color=\"var(--color-ink-muted)\">14-day free trial of Pro.</Text>"
+      }
+    ],
+    "removed": [
+      {
+        "path": "Frame \"Customers\" / Frame \"Sticker\"",
+        "id": "54:450",
+        "tag": "Frame"
+      }
+    ],
+    "moved": [],
+    "reordered": [
+      {
+        "path": "Frame \"Header\" / Frame \"Nav\"",
+        "id": "54:232",
+        "before": [
+          "Text \"Product\"",
+          "Text \"Pricing\"",
+          "Text \"Docs\""
+        ],
+        "after": [
+          "Text \"Pricing\"",
+          "Text \"Product\"",
+          "Text \"Docs\""
+        ]
+      }
+    ],
+    "components": [
+      {
+        "component": "Plan Card",
+        "path": "Frame \"Features\"",
+        "change": "changed",
+        "attributes": {
+          "gap": [
+            "var(--space-12)",
+            "var(--space-8)"
+          ]
+        },
+        "instances": [
+          "54:244",
+          "54:268",
+          "54:292"
+        ],
+        "of": 3
+      },
+      {
+        "component": "Icon/Check",
+        "path": "(instance)",
+        "change": "changed",
+        "drawing": true,
+        "instances": [
+          "I54:244;54:215",
+          "I54:244;54:219",
+          "I54:244;54:223",
+          "I54:268;54:215",
+          "I54:268;54:219",
+          "I54:268;54:223",
+          "I54:292;54:215",
+          "I54:292;54:219",
+          "I54:292;54:223"
+        ],
+        "of": 9
+      }
+    ],
+    "tokens": [
+      {
+        "token": "--color-brand",
+        "name": "color/brand",
+        "before": "#3B2FD9",
+        "after": "#43E",
+        "layers": 6
+      }
+    ],
+    "notCompared": []
+  },
+  "counts": {
+    "changed": 2,
+    "added": 1,
+    "removed": 1,
+    "moved": 0,
+    "reordered": 1,
+    "components": 2,
+    "tokens": 1
+  },
+  "more": 0,
+  "notes": []
+}

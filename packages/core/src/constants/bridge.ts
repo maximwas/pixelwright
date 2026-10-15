@@ -22,6 +22,9 @@ export const MAX_MESSAGE_BYTES = 4 * 1024 * 1024;
 /** The most bytes of an export one answer carries: base64 makes them a third bigger, still under MAX_MESSAGE_BYTES. */
 export const EXPORT_CHUNK_BYTES = 2 * 1024 * 1024;
 
+/** The largest file one upload stream carries to the plugin: an image design_apply writes. */
+export const UPLOAD_MAX_BYTES = 32 * 1024 * 1024;
+
 /** WebSocket close codes of the bridge; 4xxx are its own. */
 export const CloseCode = {
   GoingAway: 1001,
@@ -50,3 +53,6 @@ export const PAIRING_CODE_LENGTH = 6;
 
 /** One round of waiting for the selection: the bridge gives a request 30 s, and the plugin must answer first. */
 export const SELECTION_WAIT_MAX_MS = 25_000;
+
+/** The longest description a named version takes: Figma shows it under the title in Version history. */
+export const VERSION_DESCRIPTION_CHARS = 1_000;

@@ -1,11 +1,7 @@
 import * as z from "zod";
-import {
-  EffectSchema,
-  ReactionSchema,
-  SnapshotFieldsSchema,
-  SnapshotStyleSchema,
-  SnapshotVariableSchema,
-} from "./snapshot.ts";
+import { SnapshotStyleSchema, SnapshotVariableSchema } from "./snapshot.ts";
+import { SnapshotFieldsSchema } from "./snapshot-fields.ts";
+import { EffectSchema, ReactionSchema } from "./snapshot-values.ts";
 
 /** A box in px, from the origin inspect measures from. */
 export const InspectBoxSchema = z.object({
@@ -53,6 +49,8 @@ export const InspectRawSchema = z.object({
   /** The styles and variables the layers use, as a snapshot gives them. */
   styles: z.record(z.string(), SnapshotStyleSchema).optional(),
   variables: z.record(z.string(), SnapshotVariableSchema).optional(),
+  /** Figma's colour profile of the file: a Display P3 file's colours are P3 values. */
+  colorProfile: z.string().optional(),
 });
 
 /** The inspect tool's answer, per layer (inspectView). */

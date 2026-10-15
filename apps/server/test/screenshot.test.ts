@@ -3,10 +3,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EXPORT_CHUNK_BYTES } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
+import { screenshotTool } from "../src/features/screenshot/tool.ts";
 import { takeScreenshot } from "../src/images/screenshot.ts";
-import { exportBytes } from "../src/mcp/export-bytes.ts";
+import { exportBytes } from "../src/plugin/export-bytes.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
+
+/** The plugin session a call works on, over a test bridge. */
+const sessionOf = (bridge: BridgeView) => new PluginClient(bridge).session();
 
 /** A PNG's signature and IHDR chunk with the given size, padded with filler bytes to `length`. */
 function fakePng(width: number, height: number, length = 64): Buffer {
@@ -67,7 +72,7 @@ describe("exportBytes", () => {
     }
 
     const { bridge, requests } = exportingBridge(image);
-    const { bytes } = await exportBytes(bridge, {
+    const { bytes } = await exportBytes(sessionOf(bridge), {
       node: "2:4868",
       format: "PNG",
       scale: 1,
@@ -84,7 +89,7 @@ describe("screenshot", () => {
     const { bridge } = exportingBridge(fakePng(1440, 8000));
 
     await expect(
-      takeScreenshot(bridge, {
+      takeScreenshot(sessionOf(bridge), {
         node: "2:4766",
         scale: 1,
         effects: true,
@@ -96,7 +101,7 @@ describe("screenshot", () => {
     const image = fakePng(1440, 8000);
     const { bridge } = exportingBridge(image);
     const save = join(await mkdtemp(join(tmpdir(), "pixelwright-")), "shots", "landing.png");
-    const result = await takeScreenshot(bridge, {
+    const result = await takeScreenshot(sessionOf(bridge), {
       node: "2:4766",
       scale: 1,
       effects: true,
@@ -115,7 +120,7 @@ describe("screenshot", () => {
 
   it("asks the plugin to fit the image into 2000 px and says when it had to scale down", async () => {
     const { bridge, requests } = exportingBridge(fakePng(360, 2000), 0.25);
-    const result = await takeScreenshot(bridge, {
+    const result = await takeScreenshot(sessionOf(bridge), {
       node: "2:4766",
       scale: 1,
       effects: true,
@@ -131,7 +136,7 @@ describe("screenshot", () => {
   it("returns a small image inline with a line naming the node and its size", async () => {
     const image = fakePng(600, 310);
     const { bridge } = exportingBridge(image);
-    const result = await takeScreenshot(bridge, {
+    const result = await takeScreenshot(sessionOf(bridge), {
       node: "2:4869",
       scale: 1,
       effects: true,
@@ -152,6 +157,29 @@ describe("screenshot", () => {
 });
 
 describe("screenshot review fixes", () => {
+  it("says a bad save path first, before it looks for the file to shoot", async () => {
+    const empty: BridgeView = {
+      status: () => {
+        throw new Error("not used");
+      },
+      pairing: () => null,
+      plugins: () => [],
+      request: async () => {
+        throw new Error("no plugin");
+      },
+    };
+    const tool = screenshotTool({ plugin: new PluginClient(empty) } as never);
+
+    await expect(
+      tool.run({
+        node: "1:1",
+        scale: 1,
+        effects: true,
+        save: "shot.txt",
+      } as never),
+    ).rejects.toThrow(/save must be a \.png path/);
+  });
+
   it("saves only to a .png path and never over a file that is not a PNG", async () => {
     const { writeFile } = await import("node:fs/promises");
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-"));
@@ -161,7 +189,7 @@ describe("screenshot review fixes", () => {
     await writeFile(notes, "my notes");
 
     await expect(
-      takeScreenshot(bridge, {
+      takeScreenshot(sessionOf(bridge), {
         node: "1:1",
         scale: 1,
         effects: true,
@@ -169,7 +197,7 @@ describe("screenshot review fixes", () => {
       }),
     ).rejects.toThrow(/\.png/);
     await expect(
-      takeScreenshot(bridge, {
+      takeScreenshot(sessionOf(bridge), {
         node: "1:1",
         scale: 1,
         effects: true,
@@ -180,13 +208,13 @@ describe("screenshot review fixes", () => {
 
     const shot = join(dir, "shot.png");
 
-    await takeScreenshot(bridge, {
+    await takeScreenshot(sessionOf(bridge), {
       node: "1:1",
       scale: 1,
       effects: true,
       save: shot,
     });
-    await takeScreenshot(bridge, {
+    await takeScreenshot(sessionOf(bridge), {
       node: "1:1",
       scale: 1,
       effects: true,
@@ -226,7 +254,7 @@ describe("screenshot review fixes", () => {
         };
       },
     };
-    const result = await takeScreenshot(bridge, {
+    const result = await takeScreenshot(sessionOf(bridge), {
       node: "1:1",
       scale: 1,
       effects: true,

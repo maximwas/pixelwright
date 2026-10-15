@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { diffNodes } from "../src/design/diff-nodes.ts";
+import { diffNodes } from "../src/features/nodes-diff/diff-nodes.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -75,7 +76,7 @@ function bridgeOf(asked: { op: string; node: string; session: string | undefined
 describe("nodes_diff", () => {
   it("reads both layers from one file and says how the second differs", async () => {
     const asked: { op: string; node: string; session: string | undefined }[] = [];
-    const result = await diffNodes(bridgeOf(asked), {
+    const result = await diffNodes(new PluginClient(bridgeOf(asked)), {
       a: "1:1",
       b: "2:1",
     });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changeOf, cleanOracle, closest, colorOf, fontShorthand, slug, splitTop, urlsOf } from "../src/index.ts";
+import { Color, changeOf, cleanOracle, closest, fontShorthand, slug, splitTop, urlsOf } from "../src/index.ts";
 
 const props = (tag: string, attributes: Record<string, string>) =>
   changeOf({
@@ -82,7 +82,7 @@ describe("CSS values, read as CSS reads them", () => {
 describe("colours", () => {
   it("reads every syntax it read before: hex, rgb, hsl, hwb, lab, lch, oklab, oklch, display-p3, names, transparent", () => {
     const rgb = (value: string) => {
-      const color = colorOf(value);
+      const color = Color.parse(value)?.value() ?? null;
 
       return color === null ? null : [color.r, color.g, color.b, color.a].map((channel) => Math.round(channel * 255));
     };
@@ -121,7 +121,7 @@ describe("colours in color()", () => {
       "color(xyz-d65 0.9505 1 1.089)",
       "color(xyz-d50 0.9642 1 0.8252)",
     ]) {
-      const color = colorOf(white);
+      const color = Color.parse(white)?.value() ?? null;
 
       expect(color, white).not.toBeNull();
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { designDiff, type Snapshot, type SnapshotNode } from "../src/index.ts";
+import { BOLD, type Run, textLayer } from "./helpers/layers.ts";
 
 /** Two A/B screens as a client file has them: the same layout, one icon or one colour apart. */
 
@@ -126,6 +127,52 @@ describe("nodes_diff", () => {
     ]);
   });
 
+  it("does not call an icon drawn anew for what it says or does: a note, a link, an animation", () => {
+    const b = screen("20:1", 0, [
+      layer({
+        id: "20:2",
+        name: "Card",
+        fills: [RED],
+      }),
+      {
+        ...icon("20:3", "path-a"),
+        annotations: [
+          {
+            label: "Spins while loading.",
+          },
+        ],
+        href: "https://example.com",
+        motion: {
+          styles: [],
+          tracks: [
+            {
+              field: "OPACITY",
+              operation: "REPLACE",
+              base: {
+                type: "FLOAT",
+                value: 1,
+              },
+              keyframes: [
+                {
+                  t: 0,
+                  value: {
+                    type: "FLOAT",
+                    value: 0,
+                  },
+                  easing: {
+                    type: "LINEAR",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(designDiff(variantA(), b).changed.filter(({ drawing }) => drawing === true)).toEqual([]);
+  });
+
   it("lists the layers only one side has", () => {
     const b = screen("20:1", 0, [
       layer({
@@ -153,5 +200,32 @@ describe("nodes_diff", () => {
       },
     ]);
     expect(diff.same).toBe(false);
+  });
+
+  it("compares a text's characters around its spans, and its spans in order as layers of the text", () => {
+    const promo = (id: string, runs: readonly Run[]) => screen(`${id}:1`, 0, [textLayer(`${id}:2`, "Promo", runs)]);
+    const diff = designDiff(
+      promo("10", [["Save "], ["20%", BOLD], [" today"]]),
+      promo("20", [["Save "], ["30%", BOLD], [" today"], ["!", BOLD]]),
+    );
+
+    expect(diff).toEqual({
+      same: false,
+      onlyInA: [],
+      onlyInB: [
+        {
+          path: 'Text "Promo" / Span ""[2]',
+          id: "",
+        },
+      ],
+      changed: [
+        {
+          path: 'Text "Promo" / Span ""',
+          a: "",
+          b: "",
+          attributes: { $text: ["20%", "30%"] },
+        },
+      ],
+    });
   });
 });

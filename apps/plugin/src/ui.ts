@@ -18,7 +18,7 @@ import type {
   SavePairingHandler,
 } from "./types/messages.ts";
 import type { RecentAction } from "./types/window.ts";
-import { createPluginWindow } from "./view/plugin-window.ts";
+import { PluginWindow } from "./view/plugin-window.ts";
 import { describeAction, withAction } from "./view/recent-actions.ts";
 
 /**
@@ -26,87 +26,113 @@ import { describeAction, withAction } from "./view/recent-actions.ts";
  * data, says READY, gets the stored key and the file's context by message, and only then connects.
  */
 export default function (root: HTMLElement): void {
-  const instanceId = newInstanceId();
-  const relay = new MainRelay((id, op, input) => emit<RequestHandler>("REQUEST", id, op, input));
-  let storedKey: PluginKey | null = null;
-  let context: PluginContext | null = null;
-  let link: LinkState = { kind: "connecting" };
-  let actions: readonly RecentAction[] = [];
-  // A write came while Allow edits was off: the window asks for it until it is on.
-  let refused = false;
-  // execute ran: code it started may outlive the switch until the window closes.
-  let ranCode = false;
-  let socket: SocketLink | null = null;
-  const view = createPluginWindow(root, {
-    onAllowEdits: (value) => emit<AllowEditsHandler>("ALLOW_EDITS", value),
-    onPair: (code) => socket?.pair(code),
-    onOpenLink: (url) => emit<OpenLinkHandler>("OPEN_LINK", url),
-  });
-  const render = () => {
-    if (context !== null) {
-      view.render({
-        context,
-        link,
-        actions,
-        refused,
-        ranCode,
+  new PluginUi(root).start();
+}
+
+/** The iframe's state: the stored key, the file's context, the link, what the AI did, and the socket once it connects. */
+class PluginUi {
+  readonly #root: HTMLElement;
+  readonly #instanceId = newInstanceId();
+  readonly #relay = new MainRelay((id, op, input) => emit<RequestHandler>("REQUEST", id, op, input));
+  readonly #view: PluginWindow;
+  #storedKey: PluginKey | null = null;
+  #context: PluginContext | null = null;
+  #link: LinkState = { kind: "connecting" };
+  #actions: readonly RecentAction[] = [];
+  /** A write came while Allow edits was off: the window asks for it until it is on. */
+  #refused = false;
+  /** execute ran: code it started may outlive the switch until the window closes. */
+  #ranCode = false;
+  #socket: SocketLink | null = null;
+
+  constructor(root: HTMLElement) {
+    this.#root = root;
+    this.#view = new PluginWindow(root, {
+      onAllowEdits: (value) => emit<AllowEditsHandler>("ALLOW_EDITS", value),
+      onPair: (code) => this.#socket?.pair(code),
+      onOpenLink: (url) => emit<OpenLinkHandler>("OPEN_LINK", url),
+    });
+  }
+
+  start(): void {
+    on<ResponseHandler>("RESPONSE", (id, outcome) => this.#relay.settle(id, outcome));
+    on<PairingHandler>("PAIRING", (key) => {
+      this.#storedKey = key;
+    });
+    on<ContextHandler>("CONTEXT", (next) => this.#contextChanged(next));
+    document.addEventListener("visibilitychange", () => this.#socket?.sendInfo());
+    // The window is as tall as what it shows: the pairing field and the hint come and go.
+    new ResizeObserver(() => emit<ResizeHandler>("RESIZE", this.#root.getBoundingClientRect().height)).observe(
+      this.#root,
+    );
+    emit<ReadyHandler>("READY");
+  }
+
+  /** The file's context came (or changed): the window shows it, and the socket connects or tells the server. */
+  #contextChanged(next: PluginContext): void {
+    this.#context = next;
+    this.#refused &&= !next.allowEdits;
+    this.#render();
+
+    if (this.#socket === null) {
+      this.#socket = this.#connect(next);
+      this.#socket.start();
+    } else {
+      this.#socket.sendInfo();
+    }
+  }
+
+  #render(): void {
+    if (this.#context !== null) {
+      this.#view.render({
+        context: this.#context,
+        link: this.#link,
+        actions: this.#actions,
+        refused: this.#refused,
+        ranCode: this.#ranCode,
       });
     }
-  };
-  const info = (current: PluginContext): PluginInfo => ({
-    instanceId,
-    ...current,
-    visible: document.visibilityState === "visible",
-  });
-  const connect = (current: PluginContext): SocketLink =>
-    new SocketLink({
+  }
+
+  #connect(current: PluginContext): SocketLink {
+    return new SocketLink({
       url: BRIDGE_URL,
-      info: () => info(context ?? current),
-      key: storedKey,
-      onRequest: async (request: RequestMessage): Promise<RequestOutcome> => {
-        ranCode ||= request.op === "execute";
-
-        const outcome = await relay.call(request.op, request.input ?? null);
-        const line = describeAction(request.op, request.input, outcome);
-
-        // Listed once answered, with what it did.
-        if (line !== null) {
-          actions = withAction(actions, {
-            text: line.text,
-            at: Date.now(),
-            warning: line.warning,
-          });
-          refused ||= line.refused;
-          render();
-        }
-
-        return outcome;
-      },
+      info: () => this.#info(this.#context ?? current),
+      key: this.#storedKey,
+      onRequest: (request) => this.#request(request),
       onState: (state) => {
-        link = state;
-        render();
+        this.#link = state;
+        this.#render();
       },
       onPaired: (key) => emit<SavePairingHandler>("SAVE_PAIRING", key),
     });
+  }
 
-  on<ResponseHandler>("RESPONSE", (id, outcome) => relay.settle(id, outcome));
-  on<PairingHandler>("PAIRING", (key) => {
-    storedKey = key;
-  });
-  on<ContextHandler>("CONTEXT", (next) => {
-    context = next;
-    refused &&= !next.allowEdits;
-    render();
+  #info(current: PluginContext): PluginInfo {
+    return {
+      instanceId: this.#instanceId,
+      ...current,
+      visible: document.visibilityState === "visible",
+    };
+  }
 
-    if (socket === null) {
-      socket = connect(next);
-      socket.start();
-    } else {
-      socket.sendInfo();
+  /** A server request, run by main; listed once answered, with what it did. */
+  async #request(request: RequestMessage): Promise<RequestOutcome> {
+    this.#ranCode ||= request.op === "execute";
+
+    const outcome = await this.#relay.call(request.op, request.input ?? null);
+    const line = describeAction(request.op, request.input, outcome);
+
+    if (line !== null) {
+      this.#actions = withAction(this.#actions, {
+        text: line.text,
+        at: Date.now(),
+        warning: line.warning,
+      });
+      this.#refused ||= line.refused;
+      this.#render();
     }
-  });
-  document.addEventListener("visibilitychange", () => socket?.sendInfo());
-  // The window is as tall as what it shows: the pairing field and the hint come and go.
-  new ResizeObserver(() => emit<ResizeHandler>("RESIZE", root.getBoundingClientRect().height)).observe(root);
-  emit<ReadyHandler>("READY");
+
+    return outcome;
+  }
 }

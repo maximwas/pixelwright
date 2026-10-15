@@ -1,0 +1,3128 @@
+{
+  "elements in document order, each with its parent, position and ref": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:1",
+          "gap": "24px"
+        }
+      },
+      {
+        "line": 2,
+        "column": 3,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:2",
+        "parent": "2:1",
+        "index": 0,
+        "attributes": {
+          "name": "Title"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 22,
+            "kind": "text",
+            "value": "Hello "
+          },
+          {
+            "line": 2,
+            "column": 28,
+            "kind": "span",
+            "attributes": {
+              "color": "#F00"
+            },
+            "value": "world"
+          }
+        ]
+      },
+      {
+        "line": 3,
+        "column": 3,
+        "tag": "Rectangle",
+        "id": null,
+        "ref": "new:3",
+        "parent": "2:1",
+        "index": 1,
+        "attributes": {
+          "width": "10px",
+          "height": "10px"
+        }
+      },
+      {
+        "line": 5,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:5",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "name": "Card",
+          "width": "300px"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "$ attributes left out without a word": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:1",
+          "name": "Card"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "before, after and copyOf kept as attributes": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "name": "A",
+          "before": "2:1"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "name": "B",
+          "after": "2:1"
+        }
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:3",
+        "parent": null,
+        "index": 2,
+        "attributes": {
+          "copyOf": "2:1",
+          "name": "C"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "text outside a Text, an error that takes no place among its siblings": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 28,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": "2:1",
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        }
+      },
+      {
+        "line": 1,
+        "column": 50,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": "2:1",
+        "index": 1,
+        "attributes": {
+          "name": "New"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 17,
+        "message": "Text \"loose words\" outside a <Text>: text belongs in a Text element."
+      },
+      {
+        "line": 1,
+        "column": 45,
+        "message": "Text \"more \" outside a <Text>: text belongs in a Text element."
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "message": "Text \"stray\" outside a <Text>: text belongs in a Text element."
+      }
+    ]
+  },
+  "refs of new layers on one line, told apart by their column": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "name": "A"
+        }
+      },
+      {
+        "line": 1,
+        "column": 18,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:18",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "name": "B"
+        }
+      },
+      {
+        "line": 1,
+        "column": 35,
+        "tag": "Rectangle",
+        "id": null,
+        "ref": "new:1:35",
+        "parent": null,
+        "index": 2,
+        "attributes": {}
+      }
+    ],
+    "errors": []
+  },
+  "an unknown attribute near a known one, and one near none": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:1",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:1",
+        "attribute": "gapp",
+        "message": "gapp is not an attribute of <Frame>: left out.",
+        "hint": "Did you mean gap?"
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:1",
+        "attribute": "colour",
+        "message": "colour is not an attribute of <Frame>: left out.",
+        "hint": "Did you mean color?"
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:1",
+        "attribute": "background-color",
+        "message": "background-color is not an attribute of <Frame>: left out."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:1",
+        "attribute": "zzzzzzzz",
+        "message": "zzzzzzzz is not an attribute of <Frame>: left out."
+      }
+    ]
+  },
+  "an unknown tag near a known one, its children still read under it": {
+    "elements": [
+      {
+        "line": 2,
+        "column": 3,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": "2:1",
+        "index": 0,
+        "attributes": {
+          "id": "2:2",
+          "name": "Kept"
+        }
+      },
+      {
+        "line": 3,
+        "column": 3,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:3",
+        "parent": "2:1",
+        "index": 1,
+        "attributes": {
+          "name": "New"
+        },
+        "content": [
+          {
+            "line": 3,
+            "column": 20,
+            "kind": "text",
+            "value": "Fails in the plugin"
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:1",
+        "message": "<Fram> is not a Pixelwright tag.",
+        "hint": "Did you mean <Frame>?"
+      }
+    ]
+  },
+  "an unknown tag near none": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:2",
+        "message": "<Xyzzy> is not a Pixelwright tag.",
+        "hint": "Tags are Figma layer types: Frame, Text, Rectangle…"
+      }
+    ]
+  },
+  "a Figma type design_read writes, changed by id": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Widget",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "an unknown new tag: its layers with ids stand alone, its new ones are not created": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 9,
+        "tag": "Frame",
+        "id": "2:5",
+        "ref": "2:5",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:5"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "<Wigdet> is not a Pixelwright tag.",
+        "hint": "Did you mean <Widget>?"
+      },
+      {
+        "line": 1,
+        "column": 26,
+        "message": "<Frame> is not created: its parent <Wigdet> at line 1 was not applied."
+      }
+    ]
+  },
+  "an id that is no Figma id: skipped, its layers with ids stand alone, its new ones are not created": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 18,
+        "tag": "Frame",
+        "id": "2:5",
+        "ref": "2:5",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:5",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "hero",
+        "message": "id=\"hero\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 1,
+        "column": 47,
+        "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
+  "an id given twice: skipped with what it holds": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:4870",
+        "ref": "2:4870",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:4870",
+          "name": "Card"
+        }
+      },
+      {
+        "line": 2,
+        "column": 53,
+        "tag": "Frame",
+        "id": "2:9",
+        "ref": "2:9",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:9",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 2,
+        "column": 1,
+        "id": "2:4870",
+        "message": "id 2:4870 is given twice: a new layer has no id, so copy an element without its ids."
+      },
+      {
+        "line": 2,
+        "column": 32,
+        "message": "<Frame> is not created: its parent <Frame> at line 2 was not applied."
+      }
+    ]
+  },
+  "an instance's layer ids": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "I54:244;54:217",
+        "ref": "I54:244;54:217",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "I54:244;54:217",
+          "color": "#F00"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": "I54:268;54:211;54:7",
+        "ref": "I54:268;54:211;54:7",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "I54:268;54:211;54:7"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "copyOf with an id: skipped": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 30,
+        "tag": "Frame",
+        "id": "2:3",
+        "ref": "2:3",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:3",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:2",
+        "message": "A copy is a new layer: an element with copyOf has no id (2:2)."
+      }
+    ]
+  },
+  "ids inside a copy name the source's layers, each copy on its own": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:4870",
+          "name": "Card One"
+        }
+      },
+      {
+        "line": 1,
+        "column": 40,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:40",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {
+          "id": "2:4871"
+        },
+        "source": "2:4871",
+        "copy": "new:1"
+      },
+      {
+        "line": 1,
+        "column": 59,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:1:59",
+        "parent": "new:1:40",
+        "index": 0,
+        "attributes": {
+          "id": "I2:4872;330:292"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 86,
+            "kind": "text",
+            "value": "One"
+          }
+        ],
+        "source": "I2:4872;330:292",
+        "copy": "new:1"
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "copyOf": "2:4870",
+          "name": "Card Two"
+        }
+      },
+      {
+        "line": 2,
+        "column": 40,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:2:40",
+        "parent": "new:2",
+        "index": 0,
+        "attributes": {
+          "id": "2:4871"
+        },
+        "source": "2:4871",
+        "copy": "new:2"
+      },
+      {
+        "line": 2,
+        "column": 59,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:2:59",
+        "parent": "new:2:40",
+        "index": 0,
+        "attributes": {
+          "id": "I2:4872;330:292"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 86,
+            "kind": "text",
+            "value": "Two"
+          }
+        ],
+        "source": "I2:4872;330:292",
+        "copy": "new:2"
+      }
+    ],
+    "errors": []
+  },
+  "a source's layer named twice in one copy": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 21,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:21",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        },
+        "source": "2:2",
+        "copy": "new:1"
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 38,
+        "id": "2:2",
+        "message": "2:2 is named twice in one copy: each of the source's layers has one element."
+      }
+    ]
+  },
+  "an id both inside a copy and outside it": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:2",
+          "name": "Outside before"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 2,
+        "column": 21,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:2:21",
+        "parent": "new:2",
+        "index": 0,
+        "attributes": {
+          "id": "2:2",
+          "name": "Inside"
+        },
+        "source": "2:2",
+        "copy": "new:2"
+      },
+      {
+        "line": 2,
+        "column": 52,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:2:52",
+        "parent": "new:2",
+        "index": 1,
+        "attributes": {
+          "id": "2:3",
+          "name": "Inside too"
+        },
+        "source": "2:3",
+        "copy": "new:2"
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:3",
+        "ref": "2:3",
+        "parent": null,
+        "index": 2,
+        "attributes": {
+          "id": "2:3",
+          "name": "Outside after"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "a copy in a copy, and new layers in a copy": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 2,
+        "column": 3,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:2",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        },
+        "source": "2:2",
+        "copy": "new:1"
+      },
+      {
+        "line": 3,
+        "column": 5,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:3",
+        "parent": "new:2",
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:3",
+          "name": "Inner"
+        }
+      },
+      {
+        "line": 3,
+        "column": 38,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:3:38",
+        "parent": "new:3",
+        "index": 0,
+        "attributes": {
+          "id": "2:4"
+        },
+        "content": [
+          {
+            "line": 3,
+            "column": 53,
+            "kind": "text",
+            "value": "Deep"
+          }
+        ],
+        "source": "2:4",
+        "copy": "new:3"
+      },
+      {
+        "line": 4,
+        "column": 5,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:4",
+        "parent": "new:2",
+        "index": 1,
+        "attributes": {
+          "name": "New"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "a new instance's ids name another instance's layers": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Instance",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "component": "Plan Card",
+          "variant": "Tier=Pro"
+        }
+      },
+      {
+        "line": 2,
+        "column": 3,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:2",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {
+          "id": "I54:268;54:211"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 29,
+            "kind": "text",
+            "value": "Pro"
+          }
+        ],
+        "source": "I54:268;54:211",
+        "copy": "new:1"
+      },
+      {
+        "line": 3,
+        "column": 3,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:3",
+        "parent": "new:1",
+        "index": 1,
+        "attributes": {
+          "id": "I54:268;54:212"
+        },
+        "source": "I54:268;54:212",
+        "copy": "new:1"
+      },
+      {
+        "line": 3,
+        "column": 30,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:3:30",
+        "parent": "new:3",
+        "index": 0,
+        "attributes": {
+          "id": "I54:268;54:213"
+        },
+        "content": [
+          {
+            "line": 3,
+            "column": 56,
+            "kind": "text",
+            "value": "$29"
+          }
+        ],
+        "source": "I54:268;54:213",
+        "copy": "new:1"
+      }
+    ],
+    "errors": []
+  },
+  "an existing instance's ids are its own layers": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Instance",
+        "id": "54:268",
+        "ref": "54:268",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "54:268"
+        }
+      },
+      {
+        "line": 1,
+        "column": 23,
+        "tag": "Text",
+        "id": "I54:268;54:211",
+        "ref": "I54:268;54:211",
+        "parent": "54:268",
+        "index": 0,
+        "attributes": {
+          "id": "I54:268;54:211"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 49,
+            "kind": "text",
+            "value": "Pro"
+          }
+        ]
+      }
+    ],
+    "errors": []
+  },
+  "new instances in a copy and in a new instance, an existing one in a copy": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 21,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:21",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        },
+        "source": "2:2",
+        "copy": "new:1"
+      },
+      {
+        "line": 1,
+        "column": 37,
+        "tag": "Instance",
+        "id": null,
+        "ref": "new:1:37",
+        "parent": "new:1:21",
+        "index": 0,
+        "attributes": {
+          "component": "Badge"
+        }
+      },
+      {
+        "line": 1,
+        "column": 65,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:1:65",
+        "parent": "new:1:37",
+        "index": 0,
+        "attributes": {
+          "id": "I9:1;9:2"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 85,
+            "kind": "text",
+            "value": "New"
+          }
+        ],
+        "source": "I9:1;9:2",
+        "copy": "new:1:37"
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Instance",
+        "id": null,
+        "ref": "new:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "component": "Card"
+        }
+      },
+      {
+        "line": 2,
+        "column": 28,
+        "tag": "Instance",
+        "id": null,
+        "ref": "new:2:28",
+        "parent": "new:2",
+        "index": 0,
+        "attributes": {
+          "component": "Badge"
+        }
+      },
+      {
+        "line": 2,
+        "column": 56,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:2:56",
+        "parent": "new:2:28",
+        "index": 0,
+        "attributes": {
+          "id": "I1:1;1:2"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 76,
+            "kind": "text",
+            "value": "Inner"
+          }
+        ],
+        "source": "I1:1;1:2",
+        "copy": "new:2:28"
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:3",
+        "parent": null,
+        "index": 2,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 3,
+        "column": 21,
+        "tag": "Instance",
+        "id": null,
+        "ref": "new:3:21",
+        "parent": "new:3",
+        "index": 0,
+        "attributes": {
+          "id": "2:5"
+        },
+        "source": "2:5",
+        "copy": "new:3"
+      },
+      {
+        "line": 3,
+        "column": 40,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:3:40",
+        "parent": "new:3:21",
+        "index": 0,
+        "attributes": {
+          "id": "I2:5;3:1"
+        },
+        "content": [
+          {
+            "line": 3,
+            "column": 60,
+            "kind": "text",
+            "value": "Kept"
+          }
+        ],
+        "source": "I2:5;3:1",
+        "copy": "new:3"
+      }
+    ],
+    "errors": []
+  },
+  "in a copy, a refused layer's new layers are not created, and its counterparts stand alone": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 55,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:55",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:3"
+        },
+        "source": "2:3",
+        "copy": "new:1"
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 21,
+        "id": "2:2",
+        "message": "<Fram> is not a Pixelwright tag.",
+        "hint": "Did you mean <Frame>?"
+      },
+      {
+        "line": 1,
+        "column": 36,
+        "message": "<Frame> is not created: its parent <Fram> at line 1 was not applied."
+      }
+    ]
+  },
+  "in a new instance, a refused layer's new layers are not created": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Instance",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "component": "Card"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 28,
+        "id": "I1:1;1:2",
+        "message": "<Fram> is not a Pixelwright tag.",
+        "hint": "Did you mean <Frame>?"
+      },
+      {
+        "line": 1,
+        "column": 48,
+        "message": "<Frame> is not created: its parent <Fram> at line 1 was not applied."
+      }
+    ]
+  },
+  "in a copy, a skipped layer's new layers are not created, and its counterparts stand alone": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 21,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:21",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        },
+        "source": "2:2",
+        "copy": "new:1"
+      },
+      {
+        "line": 1,
+        "column": 73,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:73",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:3"
+        },
+        "source": "2:3",
+        "copy": "new:1"
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 38,
+        "id": "2:2",
+        "message": "2:2 is named twice in one copy: each of the source's layers has one element."
+      },
+      {
+        "line": 1,
+        "column": 54,
+        "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
+  "a create of every tag that can be made": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "name": "F"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Section",
+        "id": null,
+        "ref": "new:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "name": "S"
+        }
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:3",
+        "parent": null,
+        "index": 2,
+        "attributes": {},
+        "content": [
+          {
+            "line": 3,
+            "column": 7,
+            "kind": "text",
+            "value": "T"
+          }
+        ]
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "tag": "Rectangle",
+        "id": null,
+        "ref": "new:4",
+        "parent": null,
+        "index": 3,
+        "attributes": {}
+      },
+      {
+        "line": 5,
+        "column": 1,
+        "tag": "Ellipse",
+        "id": null,
+        "ref": "new:5",
+        "parent": null,
+        "index": 4,
+        "attributes": {}
+      },
+      {
+        "line": 6,
+        "column": 1,
+        "tag": "Line",
+        "id": null,
+        "ref": "new:6",
+        "parent": null,
+        "index": 5,
+        "attributes": {}
+      },
+      {
+        "line": 7,
+        "column": 1,
+        "tag": "Instance",
+        "id": null,
+        "ref": "new:7",
+        "parent": null,
+        "index": 6,
+        "attributes": {
+          "component": "Button"
+        }
+      },
+      {
+        "line": 8,
+        "column": 1,
+        "tag": "Component",
+        "id": null,
+        "ref": "new:8",
+        "parent": null,
+        "index": 7,
+        "attributes": {
+          "name": "K"
+        }
+      },
+      {
+        "line": 9,
+        "column": 1,
+        "tag": "ComponentSet",
+        "id": null,
+        "ref": "new:9",
+        "parent": null,
+        "index": 8,
+        "attributes": {
+          "name": "KS"
+        }
+      },
+      {
+        "line": 10,
+        "column": 1,
+        "tag": "Image",
+        "id": null,
+        "ref": "new:10",
+        "parent": null,
+        "index": 9,
+        "attributes": {
+          "src": "assets/photo.png"
+        }
+      },
+      {
+        "line": 11,
+        "column": 1,
+        "tag": "Icon",
+        "id": null,
+        "ref": "new:11",
+        "parent": null,
+        "index": 10,
+        "attributes": {
+          "src": "assets/arrow.svg"
+        }
+      },
+      {
+        "line": 12,
+        "column": 1,
+        "tag": "Slot",
+        "id": null,
+        "ref": "new:12",
+        "parent": null,
+        "index": 11,
+        "attributes": {
+          "name": "Sl"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "what a create lacks: a component, a file": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 32,
+        "tag": "Text",
+        "id": "1:2",
+        "ref": "1:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:2"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 47,
+            "kind": "text",
+            "value": "Kept"
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "An <Instance> is made from a component.",
+        "hint": "Give component=\"Name\" and variant=\"Property=Value\"; components_read lists them."
+      },
+      {
+        "line": 1,
+        "column": 58,
+        "message": "<Text> is not created: its parent <Instance> at line 1 was not applied."
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "message": "An <Image> is made from a file: give it src.",
+        "hint": "Give src=\"path/to/file.png\"."
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "message": "An <Icon> is made from a file: give it src.",
+        "hint": "Give src=\"path/to/file.svg\"."
+      }
+    ]
+  },
+  "a group is made by grouping": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 17,
+        "tag": "Frame",
+        "id": "2:5",
+        "ref": "2:5",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:5",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "A group is made by grouping layers in Figma.",
+        "hint": "Create a <Frame> instead, or change the group by its id."
+      },
+      {
+        "line": 1,
+        "column": 46,
+        "message": "<Frame> is not created: its parent <Group> at line 1 was not applied."
+      }
+    ]
+  },
+  "shapes not drawn from XML": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "A <Vector> is not drawn from XML.",
+        "hint": "Draw it as an <Icon src=\"…svg\">, or change it by its id."
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "message": "A <Star> is not drawn from XML.",
+        "hint": "Draw it as an <Icon src=\"…svg\">, or change it by its id."
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "message": "A <Polygon> is not drawn from XML.",
+        "hint": "Draw it as an <Icon src=\"…svg\">, or change it by its id."
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "message": "A <BooleanOperation> is not drawn from XML.",
+        "hint": "Draw it as an <Icon src=\"…svg\">, or change it by its id."
+      },
+      {
+        "line": 5,
+        "column": 1,
+        "message": "A <TextPath> is not drawn from XML.",
+        "hint": "Draw it as an <Icon src=\"…svg\">, or change it by its id."
+      },
+      {
+        "line": 6,
+        "column": 1,
+        "message": "A <TransformGroup> is not drawn from XML.",
+        "hint": "Draw it as an <Icon src=\"…svg\">, or change it by its id."
+      }
+    ]
+  },
+  "other known tags that cannot be created": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "<Table> cannot be created."
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "message": "<TableCell> cannot be created."
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "message": "<Media> cannot be created."
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "message": "<Embed> cannot be created."
+      },
+      {
+        "line": 5,
+        "column": 1,
+        "message": "<LinkUnfurl> cannot be created."
+      },
+      {
+        "line": 6,
+        "column": 1,
+        "message": "<Slice> cannot be created."
+      }
+    ]
+  },
+  "known tags changed by id": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Group",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1",
+          "opacity": "0.5"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Vector",
+        "id": "1:2",
+        "ref": "1:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "1:2",
+          "opacity": "0.5"
+        }
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Slice",
+        "id": "1:3",
+        "ref": "1:3",
+        "parent": null,
+        "index": 2,
+        "attributes": {
+          "id": "1:3",
+          "width": "10px"
+        }
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "tag": "Table",
+        "id": "1:4",
+        "ref": "1:4",
+        "parent": null,
+        "index": 3,
+        "attributes": {
+          "id": "1:4",
+          "name": "T"
+        }
+      },
+      {
+        "line": 5,
+        "column": 1,
+        "tag": "Media",
+        "id": "1:5",
+        "ref": "1:5",
+        "parent": null,
+        "index": 4,
+        "attributes": {
+          "id": "1:5",
+          "name": "M"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "a copy of a tag that cannot be drawn": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Group",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "1:1",
+          "name": "G2"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "a new layer under a skipped new one is not created, and the layers it names stand alone": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 35,
+        "tag": "Frame",
+        "id": "1:5",
+        "ref": "1:5",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:5",
+          "opacity": "0.5"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "bad",
+        "message": "id=\"bad\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "message": "<Frame> is not created: its parent <Frame> at line 1 was not applied."
+      },
+      {
+        "line": 1,
+        "column": 66,
+        "message": "<Text> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
+  "a Span outside a Text: the layers in it are read, and it takes a place among its siblings": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 37,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        }
+      },
+      {
+        "line": 1,
+        "column": 61,
+        "tag": "Frame",
+        "id": "2:3",
+        "ref": "2:3",
+        "parent": "2:1",
+        "index": 1,
+        "attributes": {
+          "id": "2:3",
+          "name": "After"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 17,
+        "message": "A <Span> belongs inside a Text: it is a run of the text's characters."
+      }
+    ]
+  },
+  "a Span under a skipped parent is not created, before it is outside a Text": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "bad",
+        "message": "id=\"bad\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "message": "<Span> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
+  "a Span under a refused parent is not created, before it is outside a Text": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "<Wigdet> is not a Pixelwright tag.",
+        "hint": "Did you mean <Widget>?"
+      },
+      {
+        "line": 1,
+        "column": 9,
+        "message": "<Span> is not created: its parent <Wigdet> at line 1 was not applied."
+      }
+    ]
+  },
+  "an unknown tag under a skipped parent is not created, before it is unknown": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "bad",
+        "message": "id=\"bad\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "message": "<Wigdet> is not created: its parent <Frame> at line 1 was not applied."
+      }
+    ]
+  },
+  "a Span outside a Text is refused before its id is checked": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "hero",
+        "message": "A <Span> belongs inside a Text: it is a run of the text's characters."
+      }
+    ]
+  },
+  "an unknown tag is refused before its id is checked; its new layers take that id as their parent": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 19,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": "hero",
+        "index": 0,
+        "attributes": {
+          "name": "In"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "hero",
+        "message": "<Wigdet> is not a Pixelwright tag.",
+        "hint": "Did you mean <Widget>?"
+      }
+    ]
+  },
+  "an id that is no Figma id is refused before copyOf, in either attribute order": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "hero",
+        "message": "id=\"hero\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "id": "hero",
+        "message": "id=\"hero\" is not a Figma layer id (like 54:243): a new layer has no id."
+      }
+    ]
+  },
+  "copyOf with an id is refused before the id counts as given twice": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:2"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 2,
+        "column": 1,
+        "id": "2:2",
+        "message": "A copy is a new layer: an element with copyOf has no id (2:2)."
+      }
+    ]
+  },
+  "an unknown tag leaves its id to a later element": {
+    "elements": [
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:1",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:1",
+        "message": "<Fram> is not a Pixelwright tag.",
+        "hint": "Did you mean <Frame>?"
+      }
+    ]
+  },
+  "a Span outside a Text leaves its id to a later element": {
+    "elements": [
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:3",
+        "ref": "2:3",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:3",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:3",
+        "message": "A <Span> belongs inside a Text: it is a run of the text's characters."
+      }
+    ]
+  },
+  "copyOf with an id leaves the id to a later element": {
+    "elements": [
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:2",
+        "ref": "2:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "2:2",
+          "name": "Kept"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "2:2",
+        "message": "A copy is a new layer: an element with copyOf has no id (2:2)."
+      }
+    ]
+  },
+  "in a copy, a counterpart under a skipped layer takes its source's id before a later one": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "copyOf": "2:1"
+        }
+      },
+      {
+        "line": 1,
+        "column": 38,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1:38",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:3"
+        },
+        "source": "2:3",
+        "copy": "new:1"
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 21,
+        "id": "hero",
+        "message": "id=\"hero\" is not a Figma layer id (like 54:243): a new layer has no id."
+      },
+      {
+        "line": 1,
+        "column": 63,
+        "id": "2:3",
+        "message": "2:3 is named twice in one copy: each of the source's layers has one element."
+      }
+    ]
+  },
+  "an id is taken before its element's children are read": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "2:1",
+        "ref": "2:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "2:1"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 17,
+        "id": "2:1",
+        "message": "id 2:1 is given twice: a new layer has no id, so copy an element without its ids."
+      }
+    ]
+  },
+  "prop and visibleProp outside a new Component": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "name": "F"
+        }
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:1:17",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {},
+        "content": [
+          {
+            "line": 1,
+            "column": 56,
+            "kind": "text",
+            "value": "x"
+          }
+        ]
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Component",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "1:1"
+        }
+      },
+      {
+        "line": 2,
+        "column": 21,
+        "tag": "Text",
+        "id": "1:2",
+        "ref": "1:2",
+        "parent": "1:1",
+        "index": 0,
+        "attributes": {
+          "id": "1:2"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 49,
+            "kind": "text",
+            "value": "x"
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 17,
+        "attribute": "prop",
+        "message": "prop makes a property of a new <Component>: this layer is in none.",
+        "hint": "Use it on the layers inside a <Component> you create."
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "attribute": "visibleProp",
+        "message": "visibleProp makes a property of a new <Component>: this layer is in none.",
+        "hint": "Use it on the layers inside a <Component> you create."
+      },
+      {
+        "line": 2,
+        "column": 21,
+        "id": "1:2",
+        "attribute": "prop",
+        "message": "prop makes a property of a new <Component>: this layer is in none.",
+        "hint": "Use it on the layers inside a <Component> you create."
+      }
+    ]
+  },
+  "prop and visibleProp inside a new Component, however deep, and in a copied one": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "ComponentSet",
+        "id": null,
+        "ref": "new:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "name": "Badge"
+        }
+      },
+      {
+        "line": 2,
+        "column": 3,
+        "tag": "Component",
+        "id": null,
+        "ref": "new:2",
+        "parent": "new:1",
+        "index": 0,
+        "attributes": {
+          "variant": "Tone=Dark"
+        }
+      },
+      {
+        "line": 2,
+        "column": 34,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:2:34",
+        "parent": "new:2",
+        "index": 0,
+        "attributes": {
+          "name": "Row"
+        }
+      },
+      {
+        "line": 2,
+        "column": 52,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:2:52",
+        "parent": "new:2:34",
+        "index": 0,
+        "attributes": {
+          "prop": "Label",
+          "visibleProp": "Shown"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 91,
+            "kind": "text",
+            "value": "New"
+          }
+        ]
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "tag": "Component",
+        "id": null,
+        "ref": "new:4",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "copyOf": "1:1"
+        }
+      },
+      {
+        "line": 4,
+        "column": 25,
+        "tag": "Text",
+        "id": null,
+        "ref": "new:4:25",
+        "parent": "new:4",
+        "index": 0,
+        "attributes": {
+          "id": "1:2",
+          "prop": "Title"
+        },
+        "content": [
+          {
+            "line": 4,
+            "column": 53,
+            "kind": "text",
+            "value": "Copied"
+          }
+        ],
+        "source": "1:2",
+        "copy": "new:4"
+      }
+    ],
+    "errors": []
+  },
+  "display on a layer without auto layout: none or block only": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Rectangle",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:2",
+        "ref": "1:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "1:2",
+          "display": "none"
+        }
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:3",
+        "ref": "1:3",
+        "parent": null,
+        "index": 2,
+        "attributes": {
+          "id": "1:3",
+          "display": "block"
+        }
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "tag": "Ellipse",
+        "id": "1:4",
+        "ref": "1:4",
+        "parent": null,
+        "index": 3,
+        "attributes": {
+          "id": "1:4"
+        }
+      },
+      {
+        "line": 5,
+        "column": 1,
+        "tag": "Instance",
+        "id": "1:5",
+        "ref": "1:5",
+        "parent": null,
+        "index": 4,
+        "attributes": {
+          "id": "1:5",
+          "display": "flex"
+        }
+      },
+      {
+        "line": 6,
+        "column": 1,
+        "tag": "Slot",
+        "id": "1:6",
+        "ref": "1:6",
+        "parent": null,
+        "index": 5,
+        "attributes": {
+          "id": "1:6",
+          "display": "grid"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "display",
+        "message": "A <Rectangle> has no auto layout: display takes none (hidden) or block here.",
+        "hint": "Put the layers in a <Frame display=\"flex\">."
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "id": "1:4",
+        "attribute": "display",
+        "message": "A <Ellipse> has no auto layout: display takes none (hidden) or block here.",
+        "hint": "Put the layers in a <Frame display=\"flex\">."
+      }
+    ]
+  },
+  "layout attributes on a layer that lays out nothing": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Rectangle",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        }
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "tag": "ComponentSet",
+        "id": "1:2",
+        "ref": "1:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "1:2",
+          "display": "flex",
+          "gap": "40px"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "gap",
+        "message": "gap lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "padding",
+        "message": "padding lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "flex-direction",
+        "message": "flex-direction lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "flex-wrap",
+        "message": "flex-wrap lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "justify-content",
+        "message": "justify-content lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "align-items",
+        "message": "align-items lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "align-content",
+        "message": "align-content lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "row-gap",
+        "message": "row-gap lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "column-gap",
+        "message": "column-gap lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "grid-template-columns",
+        "message": "grid-template-columns lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "grid-template-rows",
+        "message": "grid-template-rows lays out a frame's children: a <Rectangle> has none.",
+        "hint": "Put the layers in a <Frame display=\"flex\"> and give it there."
+      }
+    ]
+  },
+  "text attributes on a layer that is no Text": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Frame",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "font",
+        "message": "font styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "color",
+        "message": "color styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "textStyle",
+        "message": "textStyle styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "letter-spacing",
+        "message": "letter-spacing styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "text-transform",
+        "message": "text-transform styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "text-decoration",
+        "message": "text-decoration styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "text-underline-offset",
+        "message": "text-underline-offset styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "text-decoration-thickness",
+        "message": "text-decoration-thickness styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "text-align",
+        "message": "text-align styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "text-wrap",
+        "message": "text-wrap styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "text-overflow",
+        "message": "text-overflow styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "white-space",
+        "message": "white-space styles a text: a <Frame> holds none.",
+        "hint": "Give it on the <Text> inside."
+      }
+    ]
+  },
+  "a Text has no box to paint": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1",
+          "color": "#FFF"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 69,
+            "kind": "text",
+            "value": "x"
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "background",
+        "message": "A <Text> has no box to paint: background is not written on it.",
+        "hint": "A text's colour is color; a background goes on a <Frame> around it."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "box-shadow",
+        "message": "A <Text> has no box to paint: box-shadow is not written on it.",
+        "hint": "A text's shadow is text-shadow."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "border",
+        "message": "A <Text> has no box to paint: border is not written on it.",
+        "hint": "Put the text in a <Frame> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "border-radius",
+        "message": "A <Text> has no box to paint: border-radius is not written on it.",
+        "hint": "Put the text in a <Frame> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "outline",
+        "message": "A <Text> has no box to paint: outline is not written on it.",
+        "hint": "Put the text in a <Frame> and give it there."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "border-top",
+        "message": "A <Text> has no box to paint: border-top is not written on it.",
+        "hint": "Put the text in a <Frame> and give it there."
+      }
+    ]
+  },
+  "a Line has its border only, a Group no paint": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Line",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1",
+          "border-top": "1px solid #000",
+          "border-left": "1px solid #000",
+          "border": "1px solid #000"
+        }
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Group",
+        "id": "1:2",
+        "ref": "1:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "1:2",
+          "opacity": "0.5"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "background",
+        "message": "A <Line> has no background.",
+        "hint": "A line is drawn by its border-top (or border-left when it stands)."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "border-radius",
+        "message": "A <Line> has no border-radius.",
+        "hint": "A line is drawn by its border-top (or border-left when it stands)."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "box-shadow",
+        "message": "A <Line> has no box-shadow.",
+        "hint": "A line is drawn by its border-top (or border-left when it stands)."
+      },
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "outline",
+        "message": "A <Line> has no outline.",
+        "hint": "A line is drawn by its border-top (or border-left when it stands)."
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "id": "1:2",
+        "attribute": "background",
+        "message": "A <Group> has no background.",
+        "hint": "Paint its layers."
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "id": "1:2",
+        "attribute": "border",
+        "message": "A <Group> has no border.",
+        "hint": "Paint its layers."
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "id": "1:2",
+        "attribute": "box-shadow",
+        "message": "A <Group> has no box-shadow.",
+        "hint": "Paint its layers."
+      }
+    ]
+  },
+  "overflow on a shape that holds no layers": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Rectangle",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Image",
+        "id": "1:2",
+        "ref": "1:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "1:2"
+        }
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Frame",
+        "id": "1:3",
+        "ref": "1:3",
+        "parent": null,
+        "index": 2,
+        "attributes": {
+          "id": "1:3",
+          "overflow": "hidden"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "id": "1:1",
+        "attribute": "overflow",
+        "message": "A <Rectangle> holds no layers to clip.",
+        "hint": "overflow clips a frame's content."
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "id": "1:2",
+        "attribute": "overflow",
+        "message": "A <Image> holds no layers to clip.",
+        "hint": "overflow clips a frame's content."
+      }
+    ]
+  },
+  "a Text's content: text and Spans with their run attributes": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 16,
+            "kind": "text",
+            "value": "Hello "
+          },
+          {
+            "line": 1,
+            "column": 22,
+            "kind": "span",
+            "attributes": {
+              "color": "#F00",
+              "font": "700 16px/normal 'Inter'",
+              "href": "https://x.y",
+              "textStyle": "Bold",
+              "letter-spacing": "1px",
+              "text-transform": "uppercase",
+              "text-decoration": "underline",
+              "text-underline-offset": "2px",
+              "text-decoration-thickness": "1px"
+            },
+            "value": "world"
+          },
+          {
+            "line": 3,
+            "column": 47,
+            "kind": "text",
+            "value": "!"
+          }
+        ]
+      }
+    ],
+    "errors": []
+  },
+  "a Span keeps run attributes only": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 16,
+            "kind": "text",
+            "value": "a"
+          },
+          {
+            "line": 1,
+            "column": 17,
+            "kind": "span",
+            "attributes": {
+              "color": "#F00"
+            },
+            "value": "b"
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 17,
+        "attribute": "background",
+        "message": "background is not an attribute of <Span>: left out."
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "attribute": "opacity",
+        "message": "opacity is not an attribute of <Span>: left out."
+      },
+      {
+        "line": 1,
+        "column": 17,
+        "attribute": "text-align",
+        "message": "text-align is not an attribute of <Span>: left out."
+      }
+    ]
+  },
+  "another element inside a Text is dropped": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 16,
+            "kind": "text",
+            "value": "a"
+          },
+          {
+            "line": 1,
+            "column": 42,
+            "kind": "text",
+            "value": "c"
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 17,
+        "message": "<Frame> inside a Text: a text holds only text and <Span> runs."
+      },
+      {
+        "line": 1,
+        "column": 43,
+        "message": "<Text> inside a Text: a text holds only text and <Span> runs."
+      }
+    ]
+  },
+  "a nested Span's characters join its Span, and what it sets is an error": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 16,
+            "kind": "text",
+            "value": "a"
+          },
+          {
+            "line": 1,
+            "column": 17,
+            "kind": "span",
+            "attributes": {
+              "color": "#F00"
+            },
+            "value": "bcd"
+          },
+          {
+            "line": 1,
+            "column": 100,
+            "kind": "text",
+            "value": "e"
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 37,
+        "attribute": "font",
+        "message": "font is set on a <Span> inside a <Span>: runs do not nest, so it is left out."
+      },
+      {
+        "line": 1,
+        "column": 37,
+        "attribute": "bogus",
+        "message": "bogus is set on a <Span> inside a <Span>: runs do not nest, so it is left out."
+      }
+    ]
+  },
+  "no content leaves the text as it is; spaces alone on one line are content": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:2",
+        "ref": "1:2",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:2",
+          "color": "#F00"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:3",
+        "ref": "1:3",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "1:3"
+        }
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:4",
+        "ref": "1:4",
+        "parent": null,
+        "index": 2,
+        "attributes": {
+          "id": "1:4"
+        },
+        "content": [
+          {
+            "line": 3,
+            "column": 16,
+            "kind": "text",
+            "value": "   "
+          }
+        ]
+      },
+      {
+        "line": 4,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:5",
+        "ref": "1:5",
+        "parent": null,
+        "index": 3,
+        "attributes": {
+          "id": "1:5"
+        }
+      }
+    ],
+    "errors": []
+  },
+  "a text design_read shortened is left as it is": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:5",
+        "ref": "1:5",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:5"
+        }
+      },
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:6",
+        "ref": "1:6",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "id": "1:6"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 35,
+            "kind": "text",
+            "value": "Kept"
+          }
+        ]
+      }
+    ],
+    "errors": []
+  },
+  "entities, CDATA, comments and line breaks in a text": {
+    "elements": [
+      {
+        "line": 1,
+        "column": 1,
+        "tag": "Text",
+        "id": "1:1",
+        "ref": "1:1",
+        "parent": null,
+        "index": 0,
+        "attributes": {
+          "id": "1:1"
+        },
+        "content": [
+          {
+            "line": 1,
+            "column": 16,
+            "kind": "text",
+            "value": "a & b c "
+          },
+          {
+            "line": 1,
+            "column": 34,
+            "kind": "text",
+            "value": "<raw> & "
+          },
+          {
+            "line": 1,
+            "column": 67,
+            "kind": "text",
+            "value": "d e"
+          }
+        ]
+      }
+    ],
+    "errors": []
+  },
+  "a closing tag that does not match": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 2,
+        "column": 9,
+        "message": "Invalid XML at line 2, column 9: Expected </Text> for the tag at line 2, found </Frame>."
+      }
+    ]
+  },
+  "a tag left open": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "Invalid XML at line 1, column 1: <Frame> is not closed."
+      }
+    ]
+  },
+  "a closing tag that closes nothing": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 2,
+        "column": 1,
+        "message": "Invalid XML at line 2, column 1: </Frame> closes nothing."
+      }
+    ]
+  },
+  "a bare ampersand": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 16,
+        "message": "Invalid XML at line 1, column 16: \"& chips…\" is no entity: write & as &amp;."
+      }
+    ]
+  },
+  "an attribute given twice": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 26,
+        "message": "Invalid XML at line 1, column 26: Attribute name is given twice."
+      }
+    ]
+  },
+  "an attribute value without quotes": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 11,
+        "message": "Invalid XML at line 1, column 11: The value of id needs quotes: id=\"…\"."
+      }
+    ]
+  },
+  "an attribute value holding a <": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 17,
+        "message": "Invalid XML at line 1, column 17: The value of name is not closed with \", or holds a < (write &lt;)."
+      }
+    ]
+  },
+  "a comment left open": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 18,
+        "message": "Invalid XML at line 1, column 18: <!-- is not closed with -->."
+      }
+    ]
+  },
+  "an empty XML": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "The XML holds no element: there is nothing to write."
+      }
+    ]
+  },
+  "whitespace only": {
+    "elements": [],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "The XML holds no element: there is nothing to write."
+      }
+    ]
+  }
+}

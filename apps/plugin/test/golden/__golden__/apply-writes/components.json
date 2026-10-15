@@ -1,0 +1,1658 @@
+{
+  "a variant": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "2:1"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "2:1",
+          "method": "setProperties",
+          "args": [
+            {
+              "Property 1": "Green"
+            }
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "2:1": {
+          "mainComponent": [
+            "node:7:2",
+            "node:7:3"
+          ],
+          "componentProperties": [
+            {
+              "Property 1": {
+                "type": "VARIANT",
+                "value": "Default"
+              }
+            },
+            {
+              "Property 1": {
+                "type": "VARIANT",
+                "value": "Green"
+              }
+            }
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "an instance's text": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "I2:1;3:5"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "I2:1;3:5",
+          "method": "characters",
+          "args": [
+            "Search"
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "I2:1;3:5": {
+          "characters": [
+            "Search engine",
+            "Search"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a new instance": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:1",
+            "tag": "Instance"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:1"
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Heading",
+            "type": "INSTANCE",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "layoutMode": "VERTICAL",
+            "width": 100,
+            "height": 100,
+            "mainComponent": "node:7:3",
+            "componentProperties": {
+              "Property 1": {
+                "type": "VARIANT",
+                "value": "Green"
+              }
+            },
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "children": [
+              "I90:1;3:6"
+            ]
+          }
+        }
+      ],
+      "changed": {
+        "3:1": {
+          "children": [
+            [
+              "3:2"
+            ],
+            [
+              "3:2",
+              "90:1"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a new component set": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1:26",
+            "id": "90:2",
+            "tag": "Component"
+          },
+          {
+            "line": 1,
+            "ref": "new:1:57",
+            "id": "90:3",
+            "tag": "Text"
+          },
+          {
+            "line": 1,
+            "ref": "new:1:96",
+            "id": "90:4",
+            "tag": "Component"
+          },
+          {
+            "line": 1,
+            "ref": "new:1:128",
+            "id": "90:5",
+            "tag": "Text"
+          },
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:6",
+            "tag": "ComponentSet"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:1"
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "insertChild",
+          "args": [
+            0,
+            "90:2"
+          ]
+        },
+        {
+          "node": "90:2",
+          "method": "insertChild",
+          "args": [
+            0,
+            "90:3"
+          ]
+        },
+        {
+          "node": "90:3",
+          "method": "textAutoResize",
+          "args": [
+            "WIDTH_AND_HEIGHT"
+          ]
+        },
+        {
+          "node": "90:3",
+          "method": "characters",
+          "args": [
+            "A"
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:4"
+          ]
+        },
+        {
+          "node": "90:4",
+          "method": "insertChild",
+          "args": [
+            0,
+            "90:5"
+          ]
+        },
+        {
+          "node": "90:5",
+          "method": "textAutoResize",
+          "args": [
+            "WIDTH_AND_HEIGHT"
+          ]
+        },
+        {
+          "node": "90:5",
+          "method": "characters",
+          "args": [
+            "B"
+          ]
+        },
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:6"
+          ]
+        },
+        {
+          "node": "90:6",
+          "method": "insertChild",
+          "args": [
+            0,
+            "90:2"
+          ]
+        },
+        {
+          "node": "90:6",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:4"
+          ]
+        },
+        {
+          "node": "90:6",
+          "method": "combineAsVariants",
+          "args": [
+            [
+              "90:2",
+              "90:4"
+            ]
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "remove",
+          "args": []
+        },
+        {
+          "node": "90:6",
+          "method": "resizeWithoutConstraints",
+          "args": [
+            320,
+            180
+          ]
+        },
+        {
+          "node": "90:6",
+          "method": "addComponentProperty",
+          "args": [
+            "Label",
+            "TEXT",
+            "A"
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": null,
+          "state": {
+            "name": "Frame",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "fills": [],
+            "clipsContent": false,
+            "layoutMode": "NONE",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": []
+          }
+        },
+        {
+          "parent": "90:6",
+          "state": {
+            "name": "Tone=Dark",
+            "type": "COMPONENT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:2",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "componentPropertyDefinitions": {},
+            "fills": [],
+            "children": [
+              "90:3"
+            ],
+            "x": 40,
+            "y": 40
+          }
+        },
+        {
+          "parent": "90:2",
+          "state": {
+            "name": "Text",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:3",
+            "characters": "A",
+            "fontName": {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            "fontSize": 12,
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "componentPropertyReferences": {
+              "characters": "Label#2:0"
+            }
+          }
+        },
+        {
+          "parent": "90:6",
+          "state": {
+            "name": "Tone=Light",
+            "type": "COMPONENT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:4",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "componentPropertyDefinitions": {},
+            "fills": [],
+            "children": [
+              "90:5"
+            ],
+            "x": 180,
+            "y": 40
+          }
+        },
+        {
+          "parent": "90:4",
+          "state": {
+            "name": "Text",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:5",
+            "characters": "B",
+            "fontName": {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            "fontSize": 12,
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "componentPropertyReferences": {
+              "characters": "Label#2:0"
+            }
+          }
+        },
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Tag",
+            "type": "COMPONENT_SET",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:6",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 320,
+            "height": 180,
+            "componentPropertyDefinitions": {
+              "Tone": {
+                "type": "VARIANT",
+                "defaultValue": "Dark",
+                "variantOptions": [
+                  "Dark",
+                  "Light"
+                ]
+              },
+              "Label#2:0": {
+                "type": "TEXT",
+                "defaultValue": "A"
+              }
+            },
+            "children": [
+              "90:2",
+              "90:4"
+            ],
+            "defaultVariant": "node:90:2"
+          }
+        }
+      ],
+      "changed": {
+        "3:1": {
+          "children": [
+            [
+              "3:2"
+            ],
+            [
+              "3:2",
+              "90:6"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a copy of an instance in another variant": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:1",
+            "tag": "Instance"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:1"
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "setProperties",
+          "args": [
+            {
+              "Property 1": "Green"
+            }
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Heading",
+            "type": "INSTANCE",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "layoutMode": "VERTICAL",
+            "componentProperties": {
+              "Property 1": {
+                "type": "VARIANT",
+                "value": "Green"
+              }
+            },
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "mainComponent": "node:7:3",
+            "children": [
+              "I90:1;3:4"
+            ]
+          }
+        },
+        {
+          "parent": "90:1",
+          "state": {
+            "name": "Label box",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "I90:1;3:4",
+            "layoutMode": "HORIZONTAL",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": [
+              "I90:1;3:5"
+            ]
+          }
+        },
+        {
+          "parent": "I90:1;3:4",
+          "state": {
+            "name": "Search engine",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "I90:1;3:5",
+            "characters": "Search engine",
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "fontName": {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            "fontSize": 16,
+            "fontWeight": 400,
+            "fillStyleId": "",
+            "textStyleId": "",
+            "hyperlink": null,
+            "textAlignHorizontal": "LEFT",
+            "textAlignVertical": "TOP",
+            "textDecoration": "NONE",
+            "textCase": "ORIGINAL",
+            "lineHeight": {
+              "unit": "AUTO"
+            },
+            "letterSpacing": {
+              "unit": "PIXELS",
+              "value": 0
+            },
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": []
+          }
+        }
+      ],
+      "changed": {
+        "3:1": {
+          "children": [
+            [
+              "3:2"
+            ],
+            [
+              "3:2",
+              "90:1"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a local component's text": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "11:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "11:2",
+          "method": "characters",
+          "args": [
+            "Tag"
+          ]
+        }
+      ],
+      "created": [],
+      "changed": {
+        "11:2": {
+          "characters": [
+            "Chip",
+            "Tag"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a set, an instance of it and a copy of an instance at once": {
+    "real": {
+      "result": {
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1:26",
+            "id": "90:2",
+            "tag": "Component"
+          },
+          {
+            "line": 1,
+            "ref": "new:1:57",
+            "id": "90:3",
+            "tag": "Text"
+          },
+          {
+            "line": 1,
+            "ref": "new:1",
+            "id": "90:4",
+            "tag": "ComponentSet"
+          },
+          {
+            "line": 2,
+            "ref": "new:2",
+            "id": "90:5",
+            "tag": "Instance"
+          },
+          {
+            "line": 3,
+            "ref": "new:3",
+            "id": "90:6",
+            "tag": "Instance"
+          }
+        ],
+        "changed": [],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:1"
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "insertChild",
+          "args": [
+            0,
+            "90:2"
+          ]
+        },
+        {
+          "node": "90:2",
+          "method": "insertChild",
+          "args": [
+            0,
+            "90:3"
+          ]
+        },
+        {
+          "node": "90:3",
+          "method": "textAutoResize",
+          "args": [
+            "WIDTH_AND_HEIGHT"
+          ]
+        },
+        {
+          "node": "90:3",
+          "method": "characters",
+          "args": [
+            "A"
+          ]
+        },
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            1,
+            "90:4"
+          ]
+        },
+        {
+          "node": "90:4",
+          "method": "insertChild",
+          "args": [
+            0,
+            "90:2"
+          ]
+        },
+        {
+          "node": "90:4",
+          "method": "combineAsVariants",
+          "args": [
+            [
+              "90:2"
+            ]
+          ]
+        },
+        {
+          "node": "90:1",
+          "method": "remove",
+          "args": []
+        },
+        {
+          "node": "90:4",
+          "method": "resizeWithoutConstraints",
+          "args": [
+            180,
+            180
+          ]
+        },
+        {
+          "node": "90:4",
+          "method": "addComponentProperty",
+          "args": [
+            "Label",
+            "TEXT",
+            "A"
+          ]
+        },
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            2,
+            "90:5"
+          ]
+        },
+        {
+          "node": "3:1",
+          "method": "insertChild",
+          "args": [
+            3,
+            "90:6"
+          ]
+        }
+      ],
+      "created": [
+        {
+          "parent": null,
+          "state": {
+            "name": "Frame",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:1",
+            "fills": [],
+            "clipsContent": false,
+            "layoutMode": "NONE",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": []
+          }
+        },
+        {
+          "parent": "90:4",
+          "state": {
+            "name": "Tone=Dark",
+            "type": "COMPONENT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:2",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "componentPropertyDefinitions": {},
+            "fills": [],
+            "children": [
+              "90:3"
+            ],
+            "x": 40,
+            "y": 40
+          }
+        },
+        {
+          "parent": "90:2",
+          "state": {
+            "name": "Text",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:3",
+            "characters": "A",
+            "fontName": {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            "fontSize": 12,
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "componentPropertyReferences": {
+              "characters": "Label#2:0"
+            }
+          }
+        },
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Tag",
+            "type": "COMPONENT_SET",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:4",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 180,
+            "height": 180,
+            "componentPropertyDefinitions": {
+              "Tone": {
+                "type": "VARIANT",
+                "defaultValue": "Dark",
+                "variantOptions": [
+                  "Dark"
+                ]
+              },
+              "Label#2:0": {
+                "type": "TEXT",
+                "defaultValue": "A"
+              }
+            },
+            "children": [
+              "90:2"
+            ],
+            "defaultVariant": "node:90:2"
+          }
+        },
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Tag",
+            "type": "INSTANCE",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:5",
+            "layoutMode": "NONE",
+            "fills": [],
+            "width": 100,
+            "height": 100,
+            "mainComponent": "node:90:2",
+            "componentProperties": {
+              "Tone": {
+                "type": "VARIANT",
+                "value": "Dark"
+              },
+              "Label#2:0": {
+                "type": "TEXT",
+                "value": "A"
+              }
+            },
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "children": [
+              "I90:5;90:3"
+            ]
+          }
+        },
+        {
+          "parent": "3:1",
+          "state": {
+            "name": "Heading",
+            "type": "INSTANCE",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "90:6",
+            "layoutMode": "VERTICAL",
+            "componentProperties": {
+              "Property 1": {
+                "type": "VARIANT",
+                "value": "Default"
+              }
+            },
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "mainComponent": "node:7:2",
+            "children": [
+              "I90:6;3:4"
+            ]
+          }
+        },
+        {
+          "parent": "90:6",
+          "state": {
+            "name": "Label box",
+            "type": "FRAME",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "I90:6;3:4",
+            "layoutMode": "HORIZONTAL",
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": [
+              "I90:6;3:5"
+            ]
+          }
+        },
+        {
+          "parent": "I90:6;3:4",
+          "state": {
+            "name": "Search engine",
+            "type": "TEXT",
+            "visible": true,
+            "absoluteBoundingBox": {
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 100
+            },
+            "id": "I90:6;3:5",
+            "characters": "Search engine",
+            "textAutoResize": "WIDTH_AND_HEIGHT",
+            "fontName": {
+              "family": "Inter",
+              "style": "Regular"
+            },
+            "fontSize": 16,
+            "fontWeight": 400,
+            "fillStyleId": "",
+            "textStyleId": "",
+            "hyperlink": null,
+            "textAlignHorizontal": "LEFT",
+            "textAlignVertical": "TOP",
+            "textDecoration": "NONE",
+            "textCase": "ORIGINAL",
+            "lineHeight": {
+              "unit": "AUTO"
+            },
+            "letterSpacing": {
+              "unit": "PIXELS",
+              "value": 0
+            },
+            "fills": [
+              {
+                "type": "SOLID",
+                "visible": true,
+                "opacity": 1,
+                "blendMode": "NORMAL",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                }
+              }
+            ],
+            "absoluteTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "relativeTransform": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "width": 100,
+            "height": 100,
+            "children": []
+          }
+        }
+      ],
+      "changed": {
+        "3:1": {
+          "children": [
+            [
+              "3:2"
+            ],
+            [
+              "3:2",
+              "90:4",
+              "90:5",
+              "90:6"
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": [
+        "Inter Regular"
+      ]
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}

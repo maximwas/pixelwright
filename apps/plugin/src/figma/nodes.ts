@@ -53,3 +53,46 @@ export function pathOf(node: BaseNode): string[] {
 
   return names;
 }
+
+/** dynamic-page: a page the user is not on has its layers once loaded. */
+export async function loadPageOf(node: BaseNode): Promise<void> {
+  const page = node.type === "PAGE" ? node : pageOf(node);
+
+  if (page !== null && page !== figma.currentPage) {
+    await page.loadAsync();
+  }
+}
+
+/** A node with its parents, as Figma's nodes and the layers design_apply writes both have. */
+interface Nested {
+  readonly type: string;
+  readonly parent: Nested | null;
+}
+
+/** Whether a layer comes from a component through an instance (its place and layers are the component's). */
+export function insideInstance(node: Nested): boolean {
+  for (let current = node.parent; current !== null; current = current.parent) {
+    if (current.type === "INSTANCE") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/** Where a child stands among its parent's children; -1 when it is not one of them. */
+export function indexIn(parent: BaseNode, child: { readonly id: string }): number {
+  const children: readonly BaseNode[] = "children" in parent ? parent.children : [];
+
+  return children.findIndex((node) => node.id === child.id);
+}
+
+/** A layer's id inside the instance holding it, I<instance>;<path>, as the same in every instance of the component. */
+export function instancePath(id: string): string {
+  return id.replace(/^I[^;]+;/, "");
+}
+
+/** A layer on a page: anything but the document and its pages. */
+export function isLayer(node: BaseNode): node is SceneNode {
+  return node.type !== "DOCUMENT" && node.type !== "PAGE";
+}

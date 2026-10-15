@@ -2,83 +2,13 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type ApplyChange, designXml, type Snapshot, SnapshotSchema } from "@pixelwright/core";
+import { designXml, type Snapshot, SnapshotSchema } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { memoryFiles } from "../src/assets/written-files.ts";
-import { applyDesign } from "../src/design/apply-design.ts";
-import type { BridgeView } from "../src/types/mcp.ts";
-import { pluginInfo } from "./helpers/fake-plugin.ts";
+import { applyDesign } from "../src/features/design-apply/apply-design.ts";
+import { PluginClient } from "../src/plugin/plugin-client.ts";
 import { pngHeader } from "./helpers/images.ts";
-
-/** A bridge over one snapshot: entries come from it (cut below the root when asked), apply answers what it was given. */
-function bridgeOver(snapshot: Snapshot, { cut = false }: { cut?: boolean } = {}) {
-  const requests: { op: string; input: Record<string, unknown> }[] = [];
-  const bridge: BridgeView = {
-    status: () => {
-      throw new Error("not used");
-    },
-    pairing: () => null,
-    plugins: () => [
-      {
-        session: "s1",
-        info: pluginInfo(),
-        active: true,
-      },
-    ],
-    request: async (op, input) => {
-      requests.push({
-        op,
-        input: input as Record<string, unknown>,
-      });
-
-      if (op === "upload") {
-        const { offset, chunk } = input as { offset: number; chunk: string };
-
-        return { received: offset + Buffer.from(chunk, "base64").length };
-      }
-
-      if (op === "entries") {
-        return {
-          roots: [
-            {
-              node: cut
-                ? {
-                    ...snapshot.root,
-                    children: [],
-                  }
-                : snapshot.root,
-              parent: null,
-            },
-          ],
-          missing: [],
-          styles: snapshot.styles,
-          variables: snapshot.variables,
-        };
-      }
-
-      const { changes } = input as { changes: ApplyChange[] };
-
-      return {
-        created: changes
-          .filter((change) => change.kind === "create")
-          .map((change) => ({
-            line: change.line,
-            ref: change.ref,
-            id: `90:${change.line}`,
-            tag: change.tag,
-          })),
-        changed: changes.flatMap((change) => (change.id === null ? [] : [change.id])),
-        errors: [],
-      };
-    },
-  };
-
-  return {
-    bridge,
-    requests,
-    sent: () => (requests.find(({ op }) => op === "apply")?.input.changes ?? []) as ApplyChange[],
-  };
-}
+import { recordingBridge } from "./helpers/recording-bridge.ts";
 
 /** Orbit's desktop pricing screen, core's fixture. */
 const ROW = SnapshotSchema.parse(
@@ -86,9 +16,97 @@ const ROW = SnapshotSchema.parse(
 );
 
 describe("design_apply", () => {
+  it("writes nothing for a Display P3 file's read sent back as it was", async () => {
+    const p3 = {
+      ...ROW,
+      colorProfile: "DISPLAY_P3",
+    };
+    const { bridge, requests } = recordingBridge(p3);
+    const result = await applyDesign(new PluginClient(bridge), {
+      xml: designXml(p3).xml,
+      dryRun: false,
+    });
+
+    expect(designXml(p3).xml).toContain("color(display-p3 ");
+    expect(result.changed).toEqual([]);
+    expect(requests.map(({ op }) => op)).toEqual(["entries"]);
+  });
+
+  it("saves a named version before it writes, never in a dry run, and writes nothing when the save fails", async () => {
+    const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
+    const written = recordingBridge(ROW);
+    const result = await applyDesign(new PluginClient(written.bridge), {
+      xml,
+      dryRun: false,
+      version: "Before the gap",
+    });
+
+    expect(written.requests.map(({ op }) => op)).toEqual(["entries", "save_version", "apply"]);
+    expect(written.requests[1]?.input).toEqual({
+      title: "Before the gap",
+      description: "Saved by Pixelwright before it changed the file.",
+    });
+    expect(result.version).toEqual({
+      id: "v-1",
+      title: "Before the gap",
+    });
+
+    const checked = recordingBridge(ROW);
+
+    await applyDesign(new PluginClient(checked.bridge), {
+      xml,
+      dryRun: true,
+      version: "Before the gap",
+    });
+    expect(checked.requests.map(({ op }) => op)).not.toContain("save_version");
+
+    const refused = recordingBridge(ROW);
+
+    await expect(
+      applyDesign(new PluginClient(refused.bridge), {
+        xml,
+        dryRun: false,
+        version: "fails",
+      }),
+    ).rejects.toThrow(/The version "fails" could not be saved, so nothing was written: Figma refused the version/);
+    expect(refused.requests.map(({ op }) => op)).not.toContain("apply");
+  });
+
+  it("keeps every request of a call on the file it started on, though another file comes to the front", async () => {
+    const { bridge, requests } = recordingBridge(ROW, { switching: true });
+
+    await applyDesign(new PluginClient(bridge), {
+      xml: '<Frame id="54:227" gap="48px"/>',
+      dryRun: false,
+      version: "Before the gap",
+    });
+
+    expect(requests.map(({ op, session }) => `${op} in ${session}`)).toEqual([
+      "entries in s1",
+      "save_version in s1",
+      "apply in s1",
+    ]);
+  });
+
+  it("says the plugin is older than the server when it cannot save versions yet", async () => {
+    const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
+    const old = recordingBridge(ROW);
+
+    await expect(
+      applyDesign(new PluginClient(old.bridge), {
+        xml,
+        dryRun: false,
+        version: "old plugin",
+      }),
+    ).rejects.toThrow(
+      /The Pixelwright plugin in this file is older than the server and cannot save versions: run npx -y pixelwright@latest to update it, or write without version\./,
+    );
+    expect(old.requests.map(({ op }) => op)).not.toContain("apply");
+  });
+
   it("writes nothing for the XML design_read returned, sent back as it was", async () => {
-    const { bridge, requests } = bridgeOver(ROW);
-    const result = await applyDesign(bridge, {
+    const { bridge, requests } = recordingBridge(ROW);
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: designXml(ROW).xml,
       dryRun: false,
     });
@@ -104,8 +122,8 @@ describe("design_apply", () => {
 
   it("sends only what changed, in Figma's terms, with the layer's own layout around it", async () => {
     const xml = designXml(ROW).xml.replace('gap="var(--space-64)"', 'gap="48px"');
-    const { bridge, sent } = bridgeOver(ROW);
-    const result = await applyDesign(bridge, {
+    const { bridge, sent } = recordingBridge(ROW);
+    const result = await applyDesign(new PluginClient(bridge), {
       xml,
       dryRun: false,
     });
@@ -121,8 +139,8 @@ describe("design_apply", () => {
   });
 
   it("returns a parse error with its line and column and asks the plugin for nothing", async () => {
-    const { bridge, requests } = bridgeOver(ROW);
-    const result = await applyDesign(bridge, {
+    const { bridge, requests } = recordingBridge(ROW);
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: '<Frame id="54:227">\n  <Text>Hi</Frame>',
       dryRun: false,
     });
@@ -137,8 +155,8 @@ describe("design_apply", () => {
   });
 
   it("keeps writing the rest when an element has a bad attribute, and passes a dry run on", async () => {
-    const { bridge, sent, requests } = bridgeOver(ROW);
-    const result = await applyDesign(bridge, {
+    const { bridge, sent, requests } = recordingBridge(ROW);
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: '<Frame id="54:227" gapp="8px" opacity="0.5"/>\n<Frame name="New" background="#FFF"/>',
       parent: "54:226",
       dryRun: true,
@@ -168,8 +186,8 @@ describe("design_apply", () => {
   });
 
   it("marks moves, into a new layer, into another parent, next to another, in another order, with their siblings", async () => {
-    const { bridge, sent } = bridgeOver(ROW);
-    const result = await applyDesign(bridge, {
+    const { bridge, sent } = recordingBridge(ROW);
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: [
         '<Frame name="Row" display="flex"><Frame id="54:228"/></Frame>',
         '<Frame id="54:227"><Frame id="54:239" opacity="0.5"/></Frame>',
@@ -189,9 +207,9 @@ describe("design_apply", () => {
     // What the layer itself was asked for goes in with the move.
     expect(sent().find((change) => change.id === "54:239")?.props).toEqual({ opacity: 0.5 });
 
-    const reordered = bridgeOver(ROW);
+    const reordered = recordingBridge(ROW);
 
-    await applyDesign(reordered.bridge, {
+    await applyDesign(new PluginClient(reordered.bridge), {
       xml: '<Frame id="54:227"><Frame id="54:238"/><Frame id="54:228"/></Frame>',
       dryRun: false,
     });
@@ -205,8 +223,8 @@ describe("design_apply", () => {
   });
 
   it("refuses a layer whose state the read could not take, instead of writing it whole", async () => {
-    const { bridge, sent } = bridgeOver(ROW, { cut: true });
-    const result = await applyDesign(bridge, {
+    const { bridge, sent } = recordingBridge(ROW, { cut: true });
+    const result = await applyDesign(new PluginClient(bridge), {
       xml: '<Frame id="54:227" opacity="0.9"><Frame id="54:228" opacity="0.5"/></Frame>',
       dryRun: false,
     });
@@ -268,6 +286,13 @@ const PNG = Buffer.from(
   "hex",
 );
 
+/** Orbit's customers screen: its brand logos are design_read's Icons. */
+const CUSTOMERS = SnapshotSchema.parse(
+  JSON.parse(
+    readFileSync(new URL("../../../packages/core/test/fixtures/orbit-customers.json", import.meta.url), "utf8"),
+  ),
+);
+
 describe("design_apply: files", () => {
   const folder = () => {
     const dir = mkdtempSync(join(tmpdir(), "pixelwright-apply-"));
@@ -279,13 +304,207 @@ describe("design_apply: files", () => {
     return dir;
   };
 
+  it("refuses a new drawing for an existing icon, and keeps the file design_read planned or wrote for it", async () => {
+    const dir = folder();
+    const files = memoryFiles();
+    const logo = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="32"><path d="M0 0h1v1z"/></svg>';
+    const planned = /id="54:437"[^>]* src="([^"]+)"/.exec(designXml(CUSTOMERS).xml)?.[1];
+    const apply = async (src: string) => {
+      const { bridge, requests } = recordingBridge(CUSTOMERS);
+      const result = await applyDesign(
+        new PluginClient(bridge),
+        {
+          xml: `<Icon id="54:437" src="${src}"/>`,
+          dryRun: false,
+        },
+        {
+          cwd: dir,
+          files,
+        },
+      );
+
+      return {
+        errors: result.errors.map(({ attribute, message }) => `${attribute}: ${message}`),
+        ops: requests.map(({ op }) => op),
+      };
+    };
+
+    writeFileSync(join(dir, "logo.svg"), logo);
+    await files.add([
+      {
+        sha1: createHash("sha1").update(logo).digest("hex"),
+        node: "54:437",
+      },
+    ]);
+
+    expect(planned).toBe("assets/logo-nova.svg");
+    expect(await apply("arrow.svg")).toEqual({
+      errors: [
+        "src: arrow.svg would redraw the icon: an icon's SVG makes new vector layers, so delete the icon and create it again from the file.",
+      ],
+      ops: ["entries"],
+    });
+    expect(await apply("gone.svg")).toEqual({
+      errors: [`src: gone.svg is not a file the server can read (paths are from its folder: ${dir}).`],
+      ops: ["entries"],
+    });
+    expect(await apply("assets/logo-nova.svg")).toEqual({
+      errors: [],
+      ops: ["entries"],
+    });
+    expect(await apply("logo.svg")).toEqual({
+      errors: [],
+      ops: ["entries"],
+    });
+  });
+
+  it("keeps the files design_read numbers for icons named with a number, and refuses another icon's file", async () => {
+    // Figma names layers "Vector 3": the read plans vector-3.svg for one and numbers the next vector-3-2.svg.
+    const icon = (id: string, name: string) => ({
+      id,
+      name,
+      type: "VECTOR",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 24,
+      height: 24,
+      childCount: 0,
+      fills: [
+        {
+          type: "SOLID",
+          color: {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1,
+          },
+        },
+      ],
+    });
+    const card = (id: string, name: string) => ({
+      id,
+      name: "Card",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      childCount: 3,
+      children: [
+        {
+          id: `${id}0`,
+          name: "Title",
+          type: "TEXT",
+          visible: true,
+          x: 0,
+          y: 0,
+          width: 50,
+          height: 20,
+          childCount: 0,
+          characters: "Hi",
+        },
+        icon(`${id}1`, name),
+        icon(`${id}2`, name),
+      ],
+    });
+    const board: Snapshot = {
+      root: {
+        id: "1:1",
+        name: "Board",
+        type: "FRAME",
+        visible: true,
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 200,
+        childCount: 2,
+        children: [card("2:1", "Vector 3"), card("3:1", "Vector")],
+      },
+      styles: {},
+      variables: {},
+    };
+    const dir = folder();
+    const errors = async (xml: string) =>
+      (
+        await applyDesign(
+          new PluginClient(recordingBridge(board).bridge),
+          {
+            xml,
+            dryRun: false,
+          },
+          { cwd: dir },
+        )
+      ).errors.map(({ attribute, message }) => `${attribute}: ${message}`);
+    const redraws = (path: string) =>
+      `src: ${path} would redraw the icon: an icon's SVG makes new vector layers, so delete the icon and create it again from the file.`;
+
+    expect(designXml(board).xml).toContain('src="assets/vector-3-2.svg"');
+    expect(await errors(designXml(board).xml)).toEqual([]);
+
+    // Other drawings: Vector 7's file for a Vector 3, and Vector 3's for a Vector.
+    mkdirSync(join(dir, "assets"));
+    writeFileSync(join(dir, "assets/vector-7.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="7" height="7"/>');
+    writeFileSync(join(dir, "assets/vector-3.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="3" height="3"/>');
+    expect(await errors('<Icon id="2:12" src="assets/vector-7.svg"/>')).toEqual([redraws("assets/vector-7.svg")]);
+    expect(await errors('<Icon id="3:12" src="assets/vector-3.svg"/>')).toEqual([redraws("assets/vector-3.svg")]);
+  });
+
+  it("keeps the paths design_read planned for layers of one name, numbered across the whole read", async () => {
+    const photo = photoSnapshot(PNG).root.children?.[0];
+    const album = (id: string, hash: string) => ({
+      ...photoSnapshot(PNG).root,
+      id,
+      name: "Album",
+      children:
+        photo === undefined
+          ? []
+          : [
+              {
+                ...photo,
+                id: `${id}0`,
+                fills: [
+                  {
+                    type: "IMAGE",
+                    imageHash: hash,
+                    scaleMode: "FILL",
+                  },
+                ],
+              },
+            ],
+    });
+    const snapshot: Snapshot = {
+      ...photoSnapshot(PNG),
+      root: {
+        ...photoSnapshot(PNG).root,
+        childCount: 2,
+        children: [album("2:1", "a".repeat(40)), album("3:1", "b".repeat(40))],
+      },
+    };
+    const xml = designXml(snapshot).xml;
+    const { bridge } = recordingBridge(snapshot);
+
+    expect(xml).toContain('src="assets/photo-2.png"');
+    await expect(
+      applyDesign(
+        new PluginClient(bridge),
+        {
+          xml,
+          dryRun: false,
+        },
+        { cwd: folder() },
+      ),
+    ).resolves.toMatchObject({ errors: [] });
+  });
+
   it("leaves an image as it is when its file holds the same bytes, and swaps it when they differ", async () => {
     const dir = folder();
     const snapshot = photoSnapshot(PNG);
     const xml = designXml(snapshot).xml;
-    const same = bridgeOver(snapshot);
+    const same = recordingBridge(snapshot);
     const kept = await applyDesign(
-      same.bridge,
+      new PluginClient(same.bridge),
       {
         xml: xml.replace(/src="[^"]+"/, 'src="photo.png"'),
         dryRun: false,
@@ -296,10 +515,10 @@ describe("design_apply: files", () => {
     expect(kept.errors).toEqual([]);
     expect(same.requests.map(({ op }) => op)).toEqual(["entries"]);
 
-    const swapped = bridgeOver(snapshot);
+    const swapped = recordingBridge(snapshot);
 
     await applyDesign(
-      swapped.bridge,
+      new PluginClient(swapped.bridge),
       {
         xml: xml.replace(/src="[^"]+"/, 'src="other.png"'),
         dryRun: false,
@@ -330,9 +549,9 @@ describe("design_apply: files", () => {
       },
     ]);
 
-    const { bridge, requests } = bridgeOver(snapshot);
+    const { bridge, requests } = recordingBridge(snapshot);
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: designXml(snapshot).xml.replace(/src="[^"]+"/, 'src="moved/hero.png"'),
         dryRun: false,
@@ -363,10 +582,10 @@ describe("design_apply: files", () => {
     ]);
     writeFileSync(join(dir, "photo-2.png"), Buffer.concat([PNG, Buffer.from("new picture")]));
 
-    const { bridge, requests } = bridgeOver(snapshot);
+    const { bridge, requests } = recordingBridge(snapshot);
 
     await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: designXml(snapshot).xml.replace(/src="[^"]+"/, 'src="photo-2.png"'),
         dryRun: false,
@@ -384,9 +603,9 @@ describe("design_apply: files", () => {
     const dir = folder();
     const snapshot = photoSnapshot(PNG);
     const xml = designXml(snapshot).xml;
-    const planned = bridgeOver(snapshot);
+    const planned = recordingBridge(snapshot);
     const kept = await applyDesign(
-      planned.bridge,
+      new PluginClient(planned.bridge),
       {
         xml,
         dryRun: false,
@@ -396,9 +615,9 @@ describe("design_apply: files", () => {
 
     expect(kept.errors).toEqual([]);
 
-    const { bridge } = bridgeOver(snapshot);
+    const { bridge } = recordingBridge(snapshot);
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: xml.replace(/src="[^"]+"/, 'src="gone.png"'),
         dryRun: false,
@@ -420,9 +639,9 @@ describe("design_apply: files", () => {
 
     writeFileSync(join(dir, "wide.png"), pngHeader(4_100, 2));
 
-    const { bridge, requests } = bridgeOver(photoSnapshot(PNG));
+    const { bridge, requests } = recordingBridge(photoSnapshot(PNG));
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: '<Image src="wide.png"/>',
         parent: "1:1",
@@ -448,9 +667,9 @@ describe("design_apply: files", () => {
       Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WEBPVP8 "), Buffer.alloc(8)]),
     );
 
-    const { bridge } = bridgeOver(photoSnapshot(PNG));
+    const { bridge } = recordingBridge(photoSnapshot(PNG));
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: '<Image src="photo.webp"/>',
         parent: "1:1",
@@ -469,9 +688,9 @@ describe("design_apply: files", () => {
 
   it("uploads a file in chunks once for every element naming it, and sends an icon's SVG inline", async () => {
     const dir = folder();
-    const { bridge, requests, sent } = bridgeOver(photoSnapshot(PNG));
+    const { bridge, requests, sent } = recordingBridge(photoSnapshot(PNG));
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: '<Image src="photo.png" width="10px"/>\n<Image src="photo.png" width="20px"/>\n<Icon src="arrow.svg"/>',
         parent: "1:1",
@@ -492,9 +711,9 @@ describe("design_apply: files", () => {
 
   it("refuses a missing or wrong file on the element that names it, and writes the rest", async () => {
     const dir = folder();
-    const { bridge, sent } = bridgeOver(photoSnapshot(PNG));
+    const { bridge, sent } = recordingBridge(photoSnapshot(PNG));
     const result = await applyDesign(
-      bridge,
+      new PluginClient(bridge),
       {
         xml: '<Image src="nowhere.png"/>\n<Icon src="photo.png"/>\n<Frame name="Kept"/>',
         parent: "1:1",
@@ -568,9 +787,9 @@ describe("design_apply on a big read", () => {
       variables: {},
     });
     const { xml } = designXml(snapshot);
-    const { bridge, requests } = bridgeOver(snapshot);
+    const { bridge, requests } = recordingBridge(snapshot);
     const started = performance.now();
-    const result = await applyDesign(bridge, {
+    const result = await applyDesign(new PluginClient(bridge), {
       xml,
       dryRun: false,
     });

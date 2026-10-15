@@ -95,6 +95,34 @@ describe("hints", () => {
     expect(hints.join("\n")).not.toMatch(/--White-2 is/);
   });
 
+  it("say of one layer that overflows that it overflows, in the singular", () => {
+    const hints = designHints(
+      snapshotOf(
+        layer({
+          id: "1:1",
+          type: "FRAME",
+          layoutMode: "VERTICAL",
+          width: 100,
+          height: 300,
+          children: [
+            layer({
+              id: "1:2",
+              type: "FRAME",
+              width: 200,
+              height: 20,
+            }),
+          ],
+        }),
+      ),
+    );
+
+    expect(hints).toContainEqual(
+      expect.stringMatching(
+        /^A layer is wider or taller than the room its auto layout parent gives it, so it overflows the parent in Figma too \(.*\): decide whether the build wraps, clips or lets it out\.$/,
+      ),
+    );
+  });
+
   it("leave a turned layer's overflow alone: its box is not its width", () => {
     const hints = designHints(
       snapshotOf(

@@ -1,0 +1,47 @@
+/* Written by tokens_read (format css) from the Orbit demo file: the Orbit variables and the text and effect styles. */
+:root {
+  /* Orbit */
+  --color-ink: #14161f;
+  --color-ink-muted: #4a4f5e;
+  --color-ink-subtle: #8a8f9c;
+  --color-canvas: #eef1f6;
+  --color-surface: #fff;
+  --color-line: #e1e5ee;
+  --color-brand: #3b2fd9;
+  --color-brand-hover: #2a20b8;
+  --color-brand-soft: #eceaff;
+  --color-accent: #ff6b3d;
+  --color-on-brand: #fff;
+  --color-disabled: #c9ccd6;
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-80: 80px;
+  --space-120: 120px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  /* Effect styles */
+  --Shadow-Card: 0 12px 32px -8px rgba(20, 22, 31, 0.12);
+  /* Text styles: font: var(--name-font) */
+  --Display-font: 700 56px / 60px "Space Grotesk";
+  --Display-letter-spacing: -0.02em;
+  --Price-font: 700 48px / 52px "Space Grotesk";
+  --Price-letter-spacing: -0.02em;
+  --Body-font: 400 16px / 24px "Inter";
+  --Body-Small-font: 400 14px / 20px "Inter";
+  --Label-font: 600 12px / 16px "Inter";
+  --Label-letter-spacing: 0.06em;
+  --Label-text-transform: uppercase;
+  --Button-font: 600 15px / 20px "Inter";
+  --Heading-H2-font: 700 40px / 44px "Space Grotesk";
+  --Heading-H2-letter-spacing: -0.01em;
+  --Heading-H3-font: 500 24px / 30px "Space Grotesk";
+  --Heading-H3-letter-spacing: -0.01em;
+}

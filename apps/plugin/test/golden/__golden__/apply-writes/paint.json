@@ -1,0 +1,289 @@
+{
+  "a background": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "9:2": {
+          "fills": [
+            null,
+            [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 1,
+                  "g": 0,
+                  "b": 0
+                },
+                "opacity": 1
+              }
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "no background": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "9:2": {
+          "fills": [
+            null,
+            []
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a border": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:3"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "9:3": {
+          "strokes": [
+            null,
+            [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0
+                },
+                "opacity": 1
+              }
+            ]
+          ],
+          "strokeWeight": [
+            null,
+            2
+          ],
+          "strokeAlign": [
+            null,
+            "INSIDE"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "an outline": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "9:4"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "9:4": {
+          "strokes": [
+            null,
+            [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 0.231372549,
+                  "g": 0.184313725,
+                  "b": 0.850980392
+                },
+                "opacity": 1
+              }
+            ]
+          ],
+          "strokeWeight": [
+            null,
+            1
+          ],
+          "strokeAlign": [
+            null,
+            "OUTSIDE"
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a gradient": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "dryRun": false,
+        "errors": [
+          {
+            "line": 1,
+            "column": 1,
+            "id": "9:2",
+            "attribute": "background",
+            "message": "linear-gradient(90deg, #FF0000, #0000FF)…: a gradient is not written yet.",
+            "hint": "Use a colour or a token."
+          }
+        ]
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "dryRun": true,
+        "errors": [
+          {
+            "line": 1,
+            "column": 1,
+            "id": "9:2",
+            "attribute": "background",
+            "message": "linear-gradient(90deg, #FF0000, #0000FF)…: a gradient is not written yet.",
+            "hint": "Use a colour or a token."
+          }
+        ]
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  },
+  "a group's child": {
+    "real": {
+      "result": {
+        "created": [],
+        "changed": [
+          "4:2"
+        ],
+        "errors": [],
+        "dryRun": false
+      },
+      "calls": [],
+      "created": [],
+      "changed": {
+        "4:2": {
+          "fills": [
+            null,
+            [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 0,
+                  "g": 1,
+                  "b": 0
+                },
+                "opacity": 1
+              }
+            ]
+          ]
+        }
+      },
+      "undo": 1,
+      "fonts": []
+    },
+    "dry": {
+      "result": {
+        "created": [],
+        "changed": [],
+        "errors": [],
+        "dryRun": true
+      },
+      "calls": [],
+      "created": [],
+      "changed": {},
+      "undo": 0,
+      "fonts": []
+    }
+  }
+}

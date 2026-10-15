@@ -26,150 +26,19 @@ import type { ResultSection, TemplateStringResult } from "../types/code-connect.
 type Tag = (strings: TemplateStringsArray, ...values: unknown[]) => TemplateStringResult;
 type FccValue = { $value: unknown; $type: string };
 
+/** The kinds of value whose $value is code as it is. */
+const CODE_TYPES = ["function", "identifier", "jsx-element", "react-component"];
+
+/** figma.helpers.react for a template: what renders with JSX takes the template's own figma.tsx tag. */
 export function reactHelpers(tsx: Tag) {
-  const isReactComponentArray = (prop: unknown): prop is ResultSection[] =>
-    Array.isArray(prop) &&
-    prop.every(
-      (item: any) =>
-        item?.type === "INSTANCE" || item?.type === "SLOT" || item?.type === "CODE" || item?.type === "ERROR",
-    );
   const wrap = ($type: string) => ($value: unknown) => ({
     $value,
     $type,
   });
 
-  // A value inside an object literal: <Button sx={{ key: value }} />.
-  const renderPropValue = (prop: any): any => {
-    if (isReactComponentArray(prop)) {
-      return prop;
-    }
-
-    if (prop === undefined) {
-      return "undefined";
-    }
-
-    if (typeof prop === "string") {
-      return `"${prop.replaceAll("\n", "\\n").replaceAll('"', '\\"')}"`;
-    }
-
-    if (typeof prop === "boolean" || typeof prop === "number") {
-      return prop;
-    }
-
-    if (["function", "identifier", "jsx-element", "react-component"].includes(prop.$type)) {
-      return prop.$value;
-    }
-
-    if (prop.$type === "array") {
-      return `[${prop.$value.map((element: unknown) => renderPropValue(element))}]`;
-    }
-
-    if (prop.$type === "object") {
-      return `{${Object.keys(prop.$value)
-        .map((key) => ` ${key}: ${renderPropValue(prop.$value[key])} `)
-        .join(",")}}`;
-    }
-
-    if (prop.$type === "template-string") {
-      return `\`${prop.$value}\``;
-    }
-
-    return "undefined";
-  };
-
-  // A React prop: a name alone for true, nothing for false or undefined, quotes for strings, braces for the rest.
-  const renderProp = (name: string, prop: any): TemplateStringResult | string => {
-    if (isReactComponentArray(prop)) {
-      return prop.length > 1 ? tsx` ${name}={<>${prop}</>}` : tsx` ${name}={${prop}}`;
-    }
-
-    if (typeof prop === "boolean") {
-      return prop ? ` ${name}` : "";
-    }
-
-    if (typeof prop === "string") {
-      const escaped = prop.replaceAll("\n", "\\n").replaceAll('"', '\\"');
-
-      return escaped === "" ? "" : ` ${name}="${escaped}"`;
-    }
-
-    if (typeof prop === "number") {
-      return ` ${name}={${prop}}`;
-    }
-
-    if (prop === undefined) {
-      return "";
-    }
-
-    if (["function", "identifier", "jsx-element", "react-component"].includes(prop.$type)) {
-      return ` ${name}={${prop.$value}}`;
-    }
-
-    if (prop.$type === "array" || prop.$type === "object") {
-      return ` ${name}={${renderPropValue(prop)}}`;
-    }
-
-    if (prop.$type === "template-string") {
-      return ` ${name}={\`${prop.$value}\`}`;
-    }
-
-    return "";
-  };
-
-  // React children: sections as they are, scalars as text, the other values wrapped as JSX wants them.
-  const renderChildren = (prop: any): any => {
-    if (isReactComponentArray(prop)) {
-      return prop;
-    }
-
-    if (typeof prop === "string" || typeof prop === "number" || typeof prop === "boolean") {
-      return prop;
-    }
-
-    if (prop === undefined) {
-      return "";
-    }
-
-    if (prop.$type === "template-string") {
-      return tsx`{\`${prop.$value}\`}`;
-    }
-
-    if (prop.$type === "jsx-element") {
-      return prop.$value;
-    }
-
-    if (prop.$type === "function" || prop.$type === "identifier") {
-      return `{${prop.$value}}`;
-    }
-
-    if (prop.$type === "array" || prop.$type === "object") {
-      return `{${renderPropValue(prop)}}`;
-    }
-
-    if (prop.$type === "react-component") {
-      return `<${prop.$value} />`;
-    }
-
-    return undefined;
-  };
-
-  const stringifyObject = (value: unknown): string => {
-    if (Array.isArray(value)) {
-      return `[${value.map((element) => stringifyObject(element)).join(",")}]`;
-    }
-
-    if (typeof value !== "object" || value instanceof Date || value === null) {
-      return JSON.stringify(value);
-    }
-
-    return `{${Object.keys(value)
-      .map((key) => ` ${key}: ${stringifyObject((value as Record<string, unknown>)[key])} `)
-      .join(",")}}`;
-  };
-
   return {
-    renderProp,
-    renderChildren,
+    renderProp: (name: string, prop: any) => renderProp(tsx, name, prop),
+    renderChildren: (prop: any) => renderChildren(tsx, prop),
     renderPropValue,
     stringifyObject,
     jsxElement: wrap("jsx-element"),
@@ -185,4 +54,142 @@ export function reactHelpers(tsx: Tag) {
     array: wrap("array"),
     isReactComponentArray,
   };
+}
+
+function isReactComponentArray(prop: unknown): prop is ResultSection[] {
+  return (
+    Array.isArray(prop) &&
+    prop.every(
+      (item: any) =>
+        item?.type === "INSTANCE" || item?.type === "SLOT" || item?.type === "CODE" || item?.type === "ERROR",
+    )
+  );
+}
+
+/** A value inside an object literal: <Button sx={{ key: value }} />. */
+function renderPropValue(prop: any): any {
+  if (isReactComponentArray(prop)) {
+    return prop;
+  }
+
+  if (prop === undefined) {
+    return "undefined";
+  }
+
+  if (typeof prop === "string") {
+    return `"${escaped(prop)}"`;
+  }
+
+  if (typeof prop === "boolean" || typeof prop === "number") {
+    return prop;
+  }
+
+  return typedValue(prop);
+}
+
+/** A wrapped value (figma.helpers.react.array(…) and the like) inside an object literal. */
+function typedValue(prop: any): any {
+  if (CODE_TYPES.includes(prop.$type)) {
+    return prop.$value;
+  }
+
+  if (prop.$type === "array") {
+    return `[${prop.$value.map((element: unknown) => renderPropValue(element))}]`;
+  }
+
+  if (prop.$type === "object") {
+    return `{${Object.keys(prop.$value)
+      .map((key) => ` ${key}: ${renderPropValue(prop.$value[key])} `)
+      .join(",")}}`;
+  }
+
+  return prop.$type === "template-string" ? `\`${prop.$value}\`` : "undefined";
+}
+
+/** A React prop: a name alone for true, nothing for false or undefined, quotes for strings, braces for the rest. */
+function renderProp(tsx: Tag, name: string, prop: any): TemplateStringResult | string {
+  if (isReactComponentArray(prop)) {
+    return prop.length > 1 ? tsx` ${name}={<>${prop}</>}` : tsx` ${name}={${prop}}`;
+  }
+
+  if (typeof prop === "boolean") {
+    return prop ? ` ${name}` : "";
+  }
+
+  if (typeof prop === "string") {
+    const text = escaped(prop);
+
+    return text === "" ? "" : ` ${name}="${text}"`;
+  }
+
+  if (typeof prop === "number") {
+    return ` ${name}={${prop}}`;
+  }
+
+  return prop === undefined ? "" : typedProp(name, prop);
+}
+
+/** A wrapped value as a React prop. */
+function typedProp(name: string, prop: any): string {
+  if (CODE_TYPES.includes(prop.$type)) {
+    return ` ${name}={${prop.$value}}`;
+  }
+
+  if (prop.$type === "array" || prop.$type === "object") {
+    return ` ${name}={${renderPropValue(prop)}}`;
+  }
+
+  return prop.$type === "template-string" ? ` ${name}={\`${prop.$value}\`}` : "";
+}
+
+/** React children: sections as they are, scalars as text, the other values wrapped as JSX wants them. */
+function renderChildren(tsx: Tag, prop: any): any {
+  if (isReactComponentArray(prop)) {
+    return prop;
+  }
+
+  if (typeof prop === "string" || typeof prop === "number" || typeof prop === "boolean") {
+    return prop;
+  }
+
+  if (prop === undefined) {
+    return "";
+  }
+
+  return prop.$type === "template-string" ? tsx`{\`${prop.$value}\`}` : typedChild(prop);
+}
+
+/** A wrapped value as React children. */
+function typedChild(prop: any): any {
+  if (prop.$type === "jsx-element") {
+    return prop.$value;
+  }
+
+  if (prop.$type === "function" || prop.$type === "identifier") {
+    return `{${prop.$value}}`;
+  }
+
+  if (prop.$type === "array" || prop.$type === "object") {
+    return `{${renderPropValue(prop)}}`;
+  }
+
+  return prop.$type === "react-component" ? `<${prop.$value} />` : undefined;
+}
+
+function stringifyObject(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((element) => stringifyObject(element)).join(",")}]`;
+  }
+
+  if (typeof value !== "object" || value instanceof Date || value === null) {
+    return JSON.stringify(value);
+  }
+
+  return `{${Object.keys(value)
+    .map((key) => ` ${key}: ${stringifyObject((value as Record<string, unknown>)[key])} `)
+    .join(",")}}`;
+}
+
+function escaped(text: string): string {
+  return text.replaceAll("\n", "\\n").replaceAll('"', '\\"');
 }
