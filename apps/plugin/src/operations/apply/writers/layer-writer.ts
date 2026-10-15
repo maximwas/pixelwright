@@ -1,5 +1,4 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
-import { WriteError } from "../../../figma/write-error.ts";
 import { fitIcon, writeImage } from "./asset-steps.ts";
 import { componentSteps } from "./component-steps.ts";
 import { stepsFor } from "./steps.ts";
