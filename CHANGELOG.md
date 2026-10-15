@@ -16,6 +16,16 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## 0.3.1 — 2026-10-15
+
+### Added
+
+- The website links the Orbit demo file in Figma, a small pricing site to try every tool on.
+
+### Fixed
+
+- The npm page's homepage is the website, not the GitHub readme.
+
 ## 0.3.0 — 2026-10-15
 
 ### Added
