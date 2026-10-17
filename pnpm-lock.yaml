@@ -156,6 +156,9 @@ importers:
       leven:
         specifier: 4.1.0
         version: 4.1.0
+      semver:
+        specifier: 7.8.5
+        version: 7.8.5
       slugify:
         specifier: 1.6.9
         version: 1.6.9
@@ -169,6 +172,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.0
+      '@types/semver':
+        specifier: 7.8.0
+        version: 7.8.0
       '@typescript/native':
         specifier: 'catalog:'
         version: typescript@7.0.2
@@ -830,6 +836,9 @@ packages:
 
   '@types/node@24.19.0':
     resolution: {integrity: sha512-zY+5tKxXdhGh1PYI0ac+7juvEu4OI6vWtVVoj5i2m42jxAY1U+zHGt6QCyOFwykdP62sM3MJ9stoYYUw5aCWew==}
+
+  '@types/semver@7.8.0':
+    resolution: {integrity: sha512-1mAINjtQCXXeLkJ9ehXkwOcBpqtLxiVtKhpUf83DdRNdQKV0iXZpaHYqRr7nj+wvxuJzoAmAwXI+sCNMv1CzLQ==}
 
   '@types/write-file-atomic@4.0.3':
     resolution: {integrity: sha512-qdo+vZRchyJIHNeuI1nrpsLw+hnkgqP/8mlaN6Wle/NKhydHmUN9l4p3ZE8yP90AJNJW4uB8HQhedb4f1vNayQ==}
@@ -3138,6 +3147,8 @@ snapshots:
   '@types/node@24.19.0':
     dependencies:
       undici-types: 7.24.6
+
+  '@types/semver@7.8.0': {}
 
   '@types/write-file-atomic@4.0.3':
     dependencies:

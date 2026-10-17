@@ -1,18 +1,10 @@
-/** A released version's numbers, "0.3.10" → [0, 3, 10]; null for a prerelease or anything else. */
-function releaseOf(version: string): number[] | null {
-  return /^\d+\.\d+\.\d+$/.test(version.trim()) ? version.trim().split(".").map(Number) : null;
-}
+import gt from "semver/functions/gt.js";
+import prerelease from "semver/functions/prerelease.js";
+import valid from "semver/functions/valid.js";
 
-/** Whether a released version is newer than another, part by part as numbers; never for one it cannot read. */
+/** Whether a released version is newer than another, in semver's order; never a prerelease, nor one it cannot read. */
 export function isNewerVersion(candidate: string, current: string): boolean {
-  const next = releaseOf(candidate);
-  const now = releaseOf(current);
-
-  if (next === null || now === null) {
-    return false;
-  }
-
-  const index = next.findIndex((part, at) => part !== now[at]);
-
-  return index !== -1 && (next[index] ?? 0) > (now[index] ?? 0);
+  return (
+    valid(candidate) !== null && valid(current) !== null && prerelease(candidate) === null && gt(candidate, current)
+  );
 }

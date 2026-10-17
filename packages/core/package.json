@@ -16,12 +16,14 @@
     "@noble/hashes": "2.4.0",
     "culori": "4.0.2",
     "leven": "4.1.0",
+    "semver": "7.8.5",
     "slugify": "1.6.9",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@types/culori": "4.0.1",
     "@types/node": "catalog:",
+    "@types/semver": "7.8.0",
     "@typescript/native": "catalog:",
     "vitest": "catalog:"
   }
