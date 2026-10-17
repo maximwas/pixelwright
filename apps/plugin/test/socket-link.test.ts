@@ -5,6 +5,7 @@ import {
   type PluginInfo,
   type PluginKey,
   proofFor,
+  UPDATE_EVENT,
 } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { reconnectDelay } from "../src/link/backoff.ts";
@@ -81,6 +82,7 @@ const ack = {
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 interface Setup {
+  readonly onUpdate?: (version: string) => void;
   readonly answer?: () => Promise<RequestOutcome>;
   readonly key?: PluginKey | null;
 }
@@ -91,6 +93,7 @@ function setup({
     result: { pong: true },
   }),
   key = KEY,
+  onUpdate,
 }: Setup = {}) {
   const sockets: FakeSocket[] = [];
   const states: LinkState[] = [];
@@ -103,6 +106,7 @@ function setup({
     onRequest: answer,
     onState: (state) => states.push(state),
     onPaired: (next) => paired.push(next),
+    ...(onUpdate === undefined ? {} : { onUpdate }),
     createSocket: () => {
       const socket = new FakeSocket();
 
@@ -162,6 +166,25 @@ function connect(socket: FakeSocket | undefined) {
 }
 
 describe("SocketLink", () => {
+  it("passes on the newest Pixelwright the server heard of from npm, and nothing it cannot read", () => {
+    const updates: string[] = [];
+    const { sockets } = setup({ onUpdate: (version) => updates.push(version) });
+
+    connect(sockets[0]);
+    sockets[0]?.receive({
+      type: "event",
+      name: UPDATE_EVENT,
+      data: { version: "0.4.0" },
+    });
+    sockets[0]?.receive({
+      type: "event",
+      name: UPDATE_EVENT,
+      data: { version: 4 },
+    });
+
+    expect(updates).toEqual(["0.4.0"]);
+  });
+
   it("says hello with its key id and a fresh nonce", () => {
     const { sockets } = setup();
 

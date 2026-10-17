@@ -8,6 +8,8 @@ export interface AppConfig {
   readonly projectRoot: string | null;
   /** The weekly support note after a change that worked: on unless PIXELWRIGHT_SUPPORT_REMINDERS is off. */
   readonly supportReminders: boolean;
+  /** Whether npm is asked once a day for a newer Pixelwright: on unless PIXELWRIGHT_NO_UPDATE_CHECK is set. */
+  readonly updateCheck: boolean;
   /** The log every pixelwright process on this machine also writes to, which `pixelwright logs` follows. */
   readonly logFile: string;
 }

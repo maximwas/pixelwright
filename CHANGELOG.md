@@ -18,6 +18,12 @@ How to write this file (people and agents alike):
 
 ## Unreleased
 
+### Added
+
+- The plugin's window says when a newer Pixelwright is out, with links to what is new and to the steps to update.
+  Closed, it stays closed until the next version. The server asks npm once a day; `PIXELWRIGHT_NO_UPDATE_CHECK=1`
+  turns that off.
+
 ### Fixed
 
 - `design_apply` answers `x` and `y` with `left` and `top`, and Figma's own names (`fill`, `stroke`, `rotation`,

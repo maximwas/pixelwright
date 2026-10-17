@@ -82,6 +82,7 @@ describe("the plugin's main code", () => {
 
     expect(posted).toEqual([
       ["PAIRING", STORED_KEY],
+      ["DISMISSED_UPDATE", null],
       [
         "CONTEXT",
         expect.objectContaining({
@@ -122,5 +123,29 @@ describe("the plugin's main code", () => {
       "https://send.monobank.ua/jar/7o9oMrbXTj",
       "https://github.com/maximwas/pixelwright/discussions",
     ]);
+  });
+
+  it("opens the update steps and a version's changes from the banner, and no look-alike", async () => {
+    opened.length = 0;
+    fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://github.com/maximwas/pixelwright#updating"]);
+    fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://maximwas.github.io/pixelwright/changelog/#v0-4-0"]);
+    fakeFigma.ui.onmessage?.(["OPEN_LINK", "https://maximwas.github.io/pixelwright/changelog/#v0-4-0/../x"]);
+    await tick();
+
+    expect(opened).toEqual([
+      "https://github.com/maximwas/pixelwright#updating",
+      "https://maximwas.github.io/pixelwright/changelog/#v0-4-0",
+    ]);
+  });
+
+  it("keeps the version whose banner was closed, and tells the window at READY", async () => {
+    fakeFigma.ui.onmessage?.(["DISMISS_UPDATE", "0.4.0"]);
+    await tick();
+    expect(stored.get("pixelwright.updateDismissed")).toBe("0.4.0");
+
+    posted.length = 0;
+    fakeFigma.ui.onmessage?.(["READY"]);
+    await tick();
+    expect(posted).toContainEqual(["DISMISSED_UPDATE", "0.4.0"]);
   });
 });

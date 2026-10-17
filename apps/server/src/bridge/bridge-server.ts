@@ -27,6 +27,7 @@ import type {
 } from "../types/bridge.ts";
 import { pickActive } from "../utils/active-session.ts";
 import { closeGracefully, listenOnLoopback } from "./http-lifecycle.ts";
+import { LatestAnnouncer } from "./latest-announcer.ts";
 import { PairingCodes } from "./pairing-codes.ts";
 import { PeerConnection } from "./peer-connection.ts";
 import { PluginConnection, sendMessage } from "./plugin-connection.ts";
@@ -62,12 +63,15 @@ export class BridgeServer
   readonly #peers = new Set<PeerConnection>();
   /** Unpaired plugins waiting for the user to type the code: never listed, never asked. */
   readonly #pending = new Set<unknown>();
+  /** npm's newest Pixelwright, told to plugin windows; its log is #log, declared after. */
+  readonly #latest = new LatestAnnouncer((message, data) => this.#log(message, data));
   readonly #pairing: PairingCodesLike;
   /** What peers last heard about pairing, and the timer that tells them when the code or the pause runs out. */
   #pairingSnapshot = "";
   #pairingTimer: ReturnType<typeof setTimeout> | undefined;
   #policy: UpgradePolicy;
   #sequence = 0;
+
   #requests = 0;
   #heartbeat: ReturnType<typeof setInterval> | undefined;
   #port: number | null = null;
@@ -312,6 +316,11 @@ export class BridgeServer
   }
 
   /** A newer server joined: it gets the port, the plugins reconnect to it, and this process's bridge goes off. */
+  /** npm has this Pixelwright: every plugin window hears it (its banner says whether it is newer than the window). */
+  announceLatest(version: string): void {
+    this.#latest.announce(version, this.#sessions.values());
+  }
+
   async #handOver(newer: WebSocket): Promise<void> {
     this.#log("handing the port to a newer server");
     clearInterval(this.#heartbeat);
@@ -330,6 +339,7 @@ export class BridgeServer
     }
 
     this.#sessions.set(session.id, session);
+    this.#latest.tell(session);
     this.#log("plugin connected", {
       file: session.info.file.name,
       sessions: this.#sessions.size,

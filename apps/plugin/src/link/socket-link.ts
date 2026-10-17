@@ -19,6 +19,7 @@ import {
 import type { RequestOutcome, SocketLike, SocketLinkOptions } from "../types/link.ts";
 import { reconnectDelay } from "./backoff.ts";
 import { browserSocket } from "./browser-socket.ts";
+import { tellUpdate } from "./update-event.ts";
 
 const OPEN = 1;
 
@@ -202,6 +203,8 @@ export class SocketLink {
 
         break;
       case "event":
+        tellUpdate(message.name, message.data, this.#options.onUpdate);
+
         break;
     }
   }

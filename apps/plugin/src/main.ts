@@ -1,6 +1,6 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
-import { FEEDBACK_LINK, SUPPORT_LINKS, toWireError } from "@pixelwright/core";
-import { PLUGIN_WINDOW, WINDOW_HEIGHT } from "./constants/plugin.ts";
+import { FEEDBACK_LINK, isUpdateLink, SUPPORT_LINKS, toWireError } from "@pixelwright/core";
+import { PLUGIN_WINDOW, UPDATE_DISMISSED_STORAGE_KEY, WINDOW_HEIGHT } from "./constants/plugin.ts";
 import { readContext } from "./figma/context.ts";
 import { readPairing, savePairing } from "./figma/pairing-store.ts";
 import { OperationRegistry } from "./operations/registry.ts";
@@ -9,6 +9,8 @@ import { createServices, type PluginServices } from "./services/plugin-services.
 import type {
   AllowEditsHandler,
   ContextHandler,
+  DismissedUpdateHandler,
+  DismissUpdateHandler,
   OpenLinkHandler,
   PairingHandler,
   ReadyHandler,
@@ -43,9 +45,13 @@ export default function (): void {
     void store.save(value).catch(() => {});
   });
   on<SavePairingHandler>("SAVE_PAIRING", (key) => void savePairing(key).catch(() => {}));
-  // Only the project's own support and feedback links: the window is ours, but an address it passes is still checked.
+  on<DismissUpdateHandler>(
+    "DISMISS_UPDATE",
+    (version) => void figma.clientStorage.setAsync(UPDATE_DISMISSED_STORAGE_KEY, version).catch(() => {}),
+  );
+  // Only the project's own links (support, feedback, updating, a version's changes): an address is still checked.
   on<OpenLinkHandler>("OPEN_LINK", (url) => {
-    if ([...SUPPORT_LINKS, FEEDBACK_LINK].some((link) => link.url === url)) {
+    if ([...SUPPORT_LINKS, FEEDBACK_LINK].some((link) => link.url === url) || isUpdateLink(url)) {
       figma.openExternal(url);
     }
   });
@@ -58,8 +64,16 @@ export default function (): void {
 /** The window is listening: first the stored key, then the context it starts the connection with. */
 async function start(services: PluginServices, store: EditsStore, sendContext: () => void): Promise<void> {
   emit<PairingHandler>("PAIRING", await readPairing().catch(() => null));
+  emit<DismissedUpdateHandler>("DISMISSED_UPDATE", await dismissedUpdate());
   services.edits.allow(await store.read().catch(() => false));
   sendContext();
+}
+
+/** The version whose update banner the user closed, or null. */
+async function dismissedUpdate(): Promise<string | null> {
+  const stored: unknown = await figma.clientStorage.getAsync(UPDATE_DISMISSED_STORAGE_KEY).catch(() => null);
+
+  return typeof stored === "string" ? stored : null;
 }
 
 async function answer(registry: OperationRegistry, id: string, op: string, input: unknown): Promise<void> {

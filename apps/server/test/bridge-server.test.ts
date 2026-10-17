@@ -1,4 +1,5 @@
 import { once } from "node:events";
+import { UPDATE_EVENT } from "@pixelwright/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { BridgeServer } from "../src/bridge/bridge-server.ts";
 import { MAX_PLUGIN_SESSIONS } from "../src/constants/bridge.ts";
@@ -26,6 +27,13 @@ async function startServer(requestTimeoutMs = 1_000) {
   };
 }
 
+/** Waits until the condition holds, at most a second. */
+async function until(condition: () => boolean): Promise<void> {
+  for (let tries = 0; tries < 100 && !condition(); tries++) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}
+
 afterEach(async () => {
   await Promise.all(servers.splice(0).map((server) => server.close()));
 });
@@ -45,6 +53,38 @@ describe("BridgeServer", () => {
     ]);
     await expect(server.request("ping", null)).resolves.toEqual({ op: "ping" });
     expect(plugin.received).toContainEqual(expect.objectContaining({ type: "hello_ack" }));
+  });
+
+  it("tells every plugin window the newest Pixelwright on npm, one there before and one that comes after", async () => {
+    const { server, port } = await startServer();
+    const updates = (received: Record<string, unknown>[]) =>
+      received.filter((message) => message.type === "event" && message.name === UPDATE_EVENT);
+    const changed = once(server, "changed");
+    const early = await connectPlugin(port, pluginInfo());
+
+    await changed;
+    server.announceLatest("0.4.0");
+    await until(() => updates(early.received).length > 0);
+
+    const joined = once(server, "changed");
+    const late = await connectPlugin(port, pluginInfo({ instanceId: "window-b" }));
+
+    await joined;
+    await until(() => updates(late.received).length > 0);
+    expect(updates(early.received)).toEqual([
+      {
+        type: "event",
+        name: UPDATE_EVENT,
+        data: { version: "0.4.0" },
+      },
+    ]);
+    expect(updates(late.received)).toEqual([
+      {
+        type: "event",
+        name: UPDATE_EVENT,
+        data: { version: "0.4.0" },
+      },
+    ]);
   });
 
   it("closes a plugin of another protocol version with 4426", async () => {

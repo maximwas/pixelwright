@@ -114,6 +114,7 @@ export * from "./utils/closest.ts";
 export * from "./utils/font-weight.ts";
 export * from "./utils/protocol-reason.ts";
 export * from "./utils/slug.ts";
+export * from "./utils/versions.ts";
 export * from "./xml/escape.ts";
 export * from "./xml/outline.ts";
 export * from "./xml/parse/entities.ts";

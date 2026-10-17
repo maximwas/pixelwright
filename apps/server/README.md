@@ -143,7 +143,8 @@ pixelwright --version
 
 `PIXELWRIGHT_HOME` moves `~/.pixelwright` (the plugin, pairing keys, written-files.json, the shared log in `logs/`);
 `CLAUDE_PROJECT_DIR` names the project for Code Connect; `PIXELWRIGHT_SUPPORT_REMINDERS=off` turns off the weekly
-support note (see Support); `PIXELWRIGHT_LOG_LEVEL=debug` adds the bridge's details to the log.
+support note (see Support); `PIXELWRIGHT_NO_UPDATE_CHECK=1` stops asking npm for a newer version (see Updating);
+`PIXELWRIGHT_LOG_LEVEL=debug` adds the bridge's details to the log.
 
 ## Updating
 
@@ -151,6 +152,11 @@ MCP clients start `pixelwright@latest`, so a client started again runs the newes
 computer: run `npx -y pixelwright@latest` again (or `setup --print`) to put the matching one in `~/.pixelwright/plugin`.
 Figma Desktop loads it the next time you run the plugin. When the plugin's window says the protocol versions differ,
 this is the fix.
+
+When a newer version is out, the plugin's window says so at the top, with what is new in it and a link to these steps.
+Close it, and it stays closed until the next version. The server asks npm for the newest version once a day (the
+answer kept in `~/.pixelwright/latest.json`); `PIXELWRIGHT_NO_UPDATE_CHECK=1` turns that off, and the plugin itself
+never goes online.
 
 Every MCP client session runs its own server, and they share one bridge port. When a newer server starts while an older
 one (another client's, still open) holds the port, the older one hands the port over and switches its bridge off: its
