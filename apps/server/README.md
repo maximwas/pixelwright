@@ -1,7 +1,8 @@
 # Pixelwright
 
-An MCP server that lets AI agents (Claude Code, Cursor, Codex) read and edit the Figma files you have open in Figma
-Desktop, through a Figma plugin: no REST API, no access token, no API rate limits, any Figma plan.
+An open-source MCP server that lets AI agents (Claude Code, Cursor, Codex) read and edit the Figma files you have
+open in Figma Desktop, through a Figma plugin: no REST API, no access token, no API rate limits, any Figma plan. Its
+code is open under the MIT license.
 
 [Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [Changelog](https://maximwas.github.io/pixelwright/changelog/) · [npm](https://www.npmjs.com/package/pixelwright)
 
@@ -183,14 +184,12 @@ system and the lines `npx -y pixelwright@latest logs` shows around the problem. 
 
 ## Support
 
-Pixelwright is free, and its code is public. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a
+Pixelwright is free and open source. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a
 [monobank jar](https://send.monobank.ua/jar/7o9oMrbXTj). At most once a week, after a change that worked, your agent may
 mention it; turn that off with `PIXELWRIGHT_SUPPORT_REMINDERS=off`.
 
 ## License
 
-[FSL-1.1-MIT](https://github.com/maximwas/pixelwright/blob/main/LICENSE), the Functional Source License with an MIT
-future license. Use Pixelwright for anything, at work and for clients, and change it for your own use; do not build a
-competing product or service from its code. Each version becomes MIT two years after its release. The bundled
-third-party packages' licences ship in the package (`dist/THIRD-PARTY-NOTICES.md`) and at the end of the plugin's
-bundles.
+[MIT](https://github.com/maximwas/pixelwright/blob/main/LICENSE): Pixelwright is open source. Use it, change it and
+share it for anything, keeping the copyright and licence notice. The bundled third-party packages' licences ship in the
+package (`dist/THIRD-PARTY-NOTICES.md`) and at the end of the plugin's bundles.

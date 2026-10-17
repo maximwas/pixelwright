@@ -57,6 +57,8 @@ How to write this file (people and agents alike):
 
 ### Changed
 
+- Pixelwright is open source under the MIT license, which was the license each version would have become two years
+  after its release under FSL-1.1-MIT.
 - `tokens_read`'s CSS gives the default mode of a collection with several modes a `[data-<collection>="<mode>"]`
   block too, so an element in the default mode inside another mode's element takes the default values back.
 

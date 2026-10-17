@@ -227,7 +227,7 @@ ${intro}${parts.map(({ id, title: label, html }) => `        <section id="${id}"
     <footer class="bottom">
       <div class="bottom-inner">
         <div>
-          <p>${footerNote} Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
+          <p>${footerNote} Pixelwright is open source under the <a href="https://github.com/maximwas/pixelwright/blob/main/LICENSE">MIT license</a>. Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
         </div>
         <p class="footer-links">
           <a href="../">Home</a>
