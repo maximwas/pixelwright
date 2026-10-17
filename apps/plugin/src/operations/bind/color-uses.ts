@@ -1,7 +1,8 @@
 import { type BindCandidate, type BindScope, colorValue, fillScope, type ModeMap } from "@pixelwright/core";
+import { loadTextFonts } from "../../figma/fonts.ts";
 import { opacitiesAgain } from "../../figma/paints.ts";
 import { variableColor } from "../../figma/variable-color.ts";
-import { type BindContext, loadTextFonts } from "./bind-context.ts";
+import type { BindContext } from "./bind-context.ts";
 import { merged, type RawUse } from "./raw-use.ts";
 
 type PaintKey = "fills" | "strokes";
@@ -220,7 +221,7 @@ async function bindRun(
   snapped: boolean,
   context: BindContext,
 ): Promise<void> {
-  await loadTextFonts(text);
+  await loadTextFonts([text]);
 
   if (candidate.source === "style") {
     await text.setRangeFillStyleIdAsync(start, end, candidate.id);

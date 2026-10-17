@@ -71,6 +71,8 @@ How to write this file (people and agents alike):
 
 ### Fixed
 
+- `texts_replace` walks a page or the whole file within the plugin's time limit and says `more` when it stops,
+  instead of reading every text first, which on a big file could outlast the request.
 - `tokens_read` writes a number that font weights or opacities point at without px, as they read it (a hidden
   `weight/700` primitive is `700`, not `700px`), and a number shown as text too. `tokens_apply` keeps a new opacity
   as the percent Figma's opacity fields take (0.4 is stored as 40), and its `notes` say when a number written

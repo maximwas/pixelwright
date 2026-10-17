@@ -1,5 +1,5 @@
 import type { ApplyChange, FontSpec } from "@pixelwright/core";
-import { type FontCatalog, fontKey, type KnownFont } from "../../figma/fonts.ts";
+import { type FontCatalog, fontKey, type KnownFont, textFonts } from "../../figma/fonts.ts";
 import type { TokenIndex } from "../../figma/tokens/token-index.ts";
 import { WriteError } from "../../figma/write-error.ts";
 import { errorMessage } from "../../utils/error-message.ts";
@@ -33,7 +33,7 @@ export class ApplyFonts {
 
   static async prepare(changes: readonly ApplyChange[], { dryRun, catalog, tokens }: Preparing): Promise<ApplyFonts> {
     const wanted: FontName[] = [];
-    const known = await textFonts(changes, wanted);
+    const known = await changedTextFonts(changes, wanted);
     const found = await specFonts(changes, {
       catalog,
       tokens,
@@ -55,7 +55,7 @@ export class ApplyFonts {
 
   /** A text that exists only now, in a copy or a new instance: its fonts (its component's) load before it is written. */
   async loadFor(text: TextNode): Promise<void> {
-    for (const font of currentFonts(text)) {
+    for (const font of textFonts(text)) {
       await figma.loadFontAsync(font).catch(() => this.#unloaded.add(keyOf(font)));
     }
   }
@@ -65,7 +65,7 @@ export class ApplyFonts {
  * A text being changed has its fonts loaded whatever changes (sizing it needs them too), and the fonts it uses are the
  * first choice for the weights design_read wrote: a copy's are its source's. A new text starts in Inter.
  */
-async function textFonts(changes: readonly ApplyChange[], wanted: FontName[]): Promise<KnownFont[]> {
+async function changedTextFonts(changes: readonly ApplyChange[], wanted: FontName[]): Promise<KnownFont[]> {
   const known: KnownFont[] = [];
 
   for (const change of changes) {
@@ -73,7 +73,7 @@ async function textFonts(changes: readonly ApplyChange[], wanted: FontName[]): P
     const node = id === null ? null : await figma.getNodeByIdAsync(id);
 
     if (node?.type === "TEXT") {
-      wanted.push(...currentFonts(node));
+      wanted.push(...textFonts(node));
       known.push(...knownFonts(node));
     } else if (change.kind === "create" && change.copyOf === undefined && change.tag === "Text") {
       wanted.push(NEW_TEXT_FONT);
@@ -151,12 +151,4 @@ function knownFonts(node: TextNode): KnownFont[] {
     fontName: segment.fontName,
     weight: segment.fontWeight,
   }));
-}
-
-function currentFonts(node: TextNode): FontName[] {
-  if (node.characters.length > 0) {
-    return node.getRangeAllFontNames(0, node.characters.length);
-  }
-
-  return node.fontName === figma.mixed ? [] : [node.fontName];
 }

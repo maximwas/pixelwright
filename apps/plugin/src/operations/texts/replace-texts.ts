@@ -1,10 +1,11 @@
 import { applyTextEdits, type TextEdit, type TextsInput, type TextsOutput, textEdits } from "@pixelwright/core";
 import { OP_BUDGET_MS } from "../../constants/plugin.ts";
 import { type BoundProperty, boundProperty, propertyName } from "../../figma/component-properties.ts";
+import { textFonts } from "../../figma/fonts.ts";
 import { requireRoots } from "../../figma/nodes.ts";
+import { layersUntil } from "../../figma/walk.ts";
 import type { PluginServices } from "../../services/plugin-services.ts";
 import { errorMessage } from "../../utils/error-message.ts";
-import { textsUnder } from "./text-walk.ts";
 
 /** The most texts the answer lists; the totals count them all. */
 const MAX_LISTED = 200;
@@ -38,7 +39,11 @@ export async function replaceTexts(input: TextsInput, { edits }: PluginServices)
     set: new Set(),
   };
 
-  for (const text of textsUnder(await requireRoots(input.roots))) {
+  const walked = layersUntil(await requireRoots(input.roots), deadline);
+
+  output.more = !walked.finished;
+
+  for (const text of walked.layers.filter((node): node is TextNode => node.type === "TEXT")) {
     if (Date.now() > deadline) {
       output.more = true;
       break;
@@ -136,13 +141,7 @@ async function write(
 
 /** The text's fonts loaded (only checked in a dry run); one missing is an error naming it. */
 async function fontsOf(text: TextNode, dryRun: boolean): Promise<void> {
-  const fonts = text.characters.length === 0 ? [text.fontName] : text.getRangeAllFontNames(0, text.characters.length);
-
-  for (const font of fonts) {
-    if (typeof font !== "object") {
-      continue;
-    }
-
+  for (const font of textFonts(text)) {
     const missing = dryRun
       ? text.hasMissingFont
       : await figma.loadFontAsync(font).then(

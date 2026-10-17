@@ -106,13 +106,3 @@ export class BindContext {
     return variable;
   }
 }
-
-/** Loads every font a text uses, and the font of a text style about to be set on it: Figma refuses text writes otherwise. */
-export async function loadTextFonts(text: TextNode, style?: BaseStyle): Promise<void> {
-  const fonts = text.characters.length === 0 ? [text.fontName] : text.getRangeAllFontNames(0, text.characters.length);
-  const all = [...fonts, ...(style?.type === "TEXT" ? [(style as TextStyle).fontName] : [])];
-
-  await Promise.all(
-    all.filter((font): font is FontName => typeof font === "object").map((font) => figma.loadFontAsync(font)),
-  );
-}

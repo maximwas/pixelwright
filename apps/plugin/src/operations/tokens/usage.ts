@@ -47,7 +47,7 @@ export async function usage({ token, within }: OperationInput<"usage">): Promise
 
   await loaded(root);
 
-  const { layers: all, finished } = layersUntil(root, Date.now() + OP_BUDGET_MS);
+  const { layers: all, finished } = layersUntil([root], Date.now() + OP_BUDGET_MS);
   const layers: Usage["layers"] = [];
   let more = !finished;
 

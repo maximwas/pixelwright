@@ -1,6 +1,7 @@
 import type { BindCandidate, BindIndex, BindInput } from "@pixelwright/core";
+import { loadTextFonts, styleFonts } from "../../figma/fonts.ts";
 import { opacitiesAgain } from "../../figma/paints.ts";
-import { type BindContext, loadTextFonts } from "./bind-context.ts";
+import type { BindContext } from "./bind-context.ts";
 import type { BindReport } from "./bind-report.ts";
 
 /** One token's uses to rebind to another, both found: as the call named them, and the style or variable each is. */
@@ -121,7 +122,7 @@ async function remapStyle(layer: Fields, { pair, context, dryRun }: RemapRun): P
 
       if (!dryRun) {
         if (key === "textStyleId") {
-          await loadTextFonts(layer as TextNode, await context.style(pair.target.id));
+          await loadTextFonts([layer as TextNode], styleFonts(await context.style(pair.target.id)));
         }
 
         await (layer[setter] as (id: string) => Promise<void>).call(layer, pair.target.id);
@@ -155,7 +156,7 @@ async function remapRunStyles(layer: Fields, { pair, context, dryRun }: RemapRun
     count += Number(fill) + Number(style);
 
     if (!dryRun && (fill || style)) {
-      await loadTextFonts(text, style ? await context.style(pair.target.id) : undefined);
+      await loadTextFonts([text], style ? styleFonts(await context.style(pair.target.id)) : []);
       await (fill
         ? text.setRangeFillStyleIdAsync(segment.start, segment.end, pair.target.id)
         : text.setRangeTextStyleIdAsync(segment.start, segment.end, pair.target.id));

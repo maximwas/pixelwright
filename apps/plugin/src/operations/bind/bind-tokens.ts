@@ -1,12 +1,12 @@
 import type { BindInput, BindKind, OperationOutput } from "@pixelwright/core";
 import { OP_BUDGET_MS } from "../../constants/plugin.ts";
-import { requireRoots } from "../../figma/nodes.ts";
+import { isLayer, requireRoots } from "../../figma/nodes.ts";
+import { layersUntil } from "../../figma/walk.ts";
 import type { PluginServices } from "../../services/plugin-services.ts";
 import { errorMessage } from "../../utils/error-message.ts";
 import { BindChoices } from "./bind-choices.ts";
 import { BindContext } from "./bind-context.ts";
 import { BindReport } from "./bind-report.ts";
-import { bindableLayers } from "./bind-walk.ts";
 import { colorUses } from "./color-uses.ts";
 import { numberUses } from "./number-uses.ts";
 import type { RawUse } from "./raw-use.ts";
@@ -117,4 +117,18 @@ async function settle(use: RawUse, choices: BindChoices, { input, report }: Bind
       report.error(use.layer.id, errorMessage(error));
     }
   }
+}
+
+/**
+ * The layers a bind call goes through, the roots among them, and how many instances it left to their components: what
+ * binds there belongs to the main component, and an instance's own would be overrides.
+ */
+function bindableLayers(roots: readonly BaseNode[], deadline: number) {
+  const { layers, finished } = layersUntil(roots, deadline, (node) => node.type !== "INSTANCE");
+
+  return {
+    layers: layers.filter((node): node is SceneNode => node.type !== "INSTANCE" && isLayer(node)),
+    instances: layers.filter((node) => node.type === "INSTANCE").length,
+    finished,
+  };
 }

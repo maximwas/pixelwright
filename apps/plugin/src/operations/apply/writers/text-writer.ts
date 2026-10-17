@@ -1,6 +1,8 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
 import type { TypedLayer } from "../../../figma/capabilities.ts";
+import { boundProperty } from "../../../figma/component-properties.ts";
+import { textFonts } from "../../../figma/fonts.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import { BASE_FIELDS, inherit, longest, restoreLook } from "./text-look.ts";
 import { TextRange } from "./text-range.ts";
@@ -91,7 +93,7 @@ export class TextWriter {
   }
 
   #refuseUnloaded(): void {
-    const unloaded = fontsOf(this.#node).find((font) => this.#scope.isUnloaded(font));
+    const unloaded = textFonts(this.#node).find((font) => this.#scope.isUnloaded(font));
 
     if (unloaded !== undefined) {
       throw new WriteError(
@@ -182,29 +184,16 @@ export class TextWriter {
   }
 }
 
-/** The fonts a text uses: an empty one through its own fontName, since Figma refuses a range of no characters. */
-function fontsOf(node: TextNode): FontName[] {
-  if (node.characters.length > 0) {
-    return node.getRangeAllFontNames(0, node.characters.length);
-  }
-
-  return typeof node.fontName === "object" && node.fontName !== null ? [node.fontName] : [];
-}
-
 /**
  * Characters through the component property they are bound to, when an instance holds it (written on the text itself
  * they would not stick); otherwise on the text, an override inside an instance.
  */
 function setCharacters(node: TextNode, characters: string): void {
-  const key = node.componentPropertyReferences?.characters;
+  const property = boundProperty(node, "characters");
 
-  for (let owner = node.parent; key !== undefined && owner !== null; owner = owner.parent) {
-    if (owner.type === "INSTANCE" && Object.hasOwn(owner.componentProperties ?? {}, key)) {
-      owner.setProperties({ [key]: characters });
-
-      return;
-    }
+  if (property === null) {
+    node.characters = characters;
+  } else {
+    property.instance.setProperties({ [property.key]: characters });
   }
-
-  node.characters = characters;
 }

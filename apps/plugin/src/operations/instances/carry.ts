@@ -1,4 +1,5 @@
 import { boundProperty } from "../../figma/component-properties.ts";
+import { loadTextFonts } from "../../figma/fonts.ts";
 import { plain } from "../../utils/plain.ts";
 
 /** What a detached frame has that its instance takes over: a text, an image, a layer hidden or shown. */
@@ -108,7 +109,7 @@ export async function carry({ kind, source, target }: Carry): Promise<void> {
 
   // A text changes, through its property or not, only with its fonts loaded.
   if (kind === "text" && target.type === "TEXT") {
-    await loadFonts(target);
+    await loadTextFonts([target]);
   }
 
   if (property !== null) {
@@ -118,12 +119,4 @@ export async function carry({ kind, source, target }: Carry): Promise<void> {
   } else {
     target.visible = Boolean(value);
   }
-}
-
-async function loadFonts(text: TextNode): Promise<void> {
-  const fonts = text.characters.length === 0 ? [text.fontName] : text.getRangeAllFontNames(0, text.characters.length);
-
-  await Promise.all(
-    fonts.filter((font): font is FontName => typeof font === "object").map((font) => figma.loadFontAsync(font)),
-  );
 }

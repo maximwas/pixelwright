@@ -1,6 +1,7 @@
 import { effectsValue, type SnapshotEffect, type TextParts, textValue } from "@pixelwright/core";
+import { loadTextFonts, styleFonts } from "../../figma/fonts.ts";
 import { plain } from "../../utils/plain.ts";
-import { type BindContext, loadTextFonts } from "./bind-context.ts";
+import type { BindContext } from "./bind-context.ts";
 import type { RawUse } from "./raw-use.ts";
 
 /** The text parts a text style sets, as getStyledTextSegments reads them. */
@@ -33,7 +34,7 @@ export function textUses(layer: SceneNode, context: BindContext): RawUse[] {
         value,
         candidates: context.index.texts(value),
         bind: async (candidate) => {
-          await loadTextFonts(layer, await context.style(candidate.id));
+          await loadTextFonts([layer], styleFonts(await context.style(candidate.id)));
           await layer.setRangeTextStyleIdAsync(segment.start, segment.end, candidate.id);
         },
       };

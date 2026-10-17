@@ -1,4 +1,5 @@
 import { type InstancesOutput, LOOK_OVERRIDES } from "@pixelwright/core";
+import { loadTextFonts } from "../../figma/fonts.ts";
 import { plain } from "../../utils/plain.ts";
 
 type Reset = InstancesOutput["reset"][number];
@@ -78,11 +79,8 @@ async function keptOverrides(instance: InstanceNode): Promise<KeptOverride[]> {
 async function putBack({ layer, field, value }: KeptOverride): Promise<void> {
   if (field === "characters" && layer.type === "TEXT") {
     const text = layer as TextNode;
-    const fonts = text.characters.length === 0 ? [text.fontName] : text.getRangeAllFontNames(0, text.characters.length);
 
-    await Promise.all(
-      fonts.filter((font): font is FontName => typeof font === "object").map((font) => figma.loadFontAsync(font)),
-    );
+    await loadTextFonts([text]);
     text.characters = String(value);
   } else if ((field === "width" || field === "height") && "resize" in layer) {
     (layer as FrameNode).resize(
