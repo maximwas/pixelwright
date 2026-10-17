@@ -60,7 +60,10 @@ export async function renderPng(session: PluginSession, spec: RenderSpec): Promi
   const rendered = spec.effects ? (layer.paintedBox ?? layer.box) : layer.box;
 
   refuseClipOutside(spec.node, layer.box, rendered, spec.clip);
-  refuseHeavyRender(spec, rendered);
+
+  if (tooHeavy(spec, rendered)) {
+    return await coveredClip(session, spec, spec.clip, rendered);
+  }
 
   const { bytes, scale } = await exportBytes(session, pngRequest(spec));
 
@@ -105,16 +108,86 @@ function refuseClipOutside(node: string, box: Box, rendered: Box, clip: Clip): v
   );
 }
 
-/** A clip renders the whole layer first: one too big for that is refused before it is rendered. */
-function refuseHeavyRender({ node, scale }: RenderSpec, rendered: Box): void {
+/** Whether rendering the whole layer for a clip is too much. */
+function tooHeavy({ scale }: RenderSpec, rendered: Box): boolean {
+  return Math.round(rendered.width * scale) * Math.round(rendered.height * scale) > MAX_CLIP_RENDER_PX;
+}
+
+/**
+ * A clip of a layer too big to render whole: the smallest layer inside it that shows the region the same (an opaque
+ * one with nothing over the region, as the plugin's cover finds), rendered alone on its own box and cut there. When
+ * there is none, or the plugin is older than cover, the clip is refused before Figma renders anything.
+ */
+async function coveredClip(
+  session: PluginSession,
+  spec: RenderSpec,
+  clip: Clip,
+  rendered: Box,
+): Promise<{ png: Buffer; scale: number }> {
+  const cover = await coverOf(session, spec.node, clip);
+
+  if (cover === null || cover.node === spec.node) {
+    throw heavyError(spec, rendered);
+  }
+
+  const own = {
+    x: 0,
+    y: 0,
+    width: cover.width,
+    height: cover.height,
+  };
+
+  if (tooHeavy(spec, own)) {
+    throw heavyError(spec, rendered);
+  }
+
+  const { bytes, scale } = await exportBytes(
+    session,
+    pngRequest({
+      ...spec,
+      node: cover.node,
+      effects: false,
+    }),
+  );
+  const region = {
+    x: clip.x - cover.x,
+    y: clip.y - cover.y,
+    width: clip.width,
+    height: clip.height,
+  };
+
+  return {
+    png: croppedTo(bytes, own, own, {
+      clip: region,
+      scale,
+    }),
+    scale,
+  };
+}
+
+/** The plugin's cover of the region, or null from a plugin that does not know the operation. */
+async function coverOf(session: PluginSession, node: string, clip: Clip): Promise<OperationOutput<"cover"> | null> {
+  try {
+    return await session.run("cover", {
+      node,
+      clip,
+    });
+  } catch (error) {
+    if (error instanceof BridgeError && error.code === "UNKNOWN_OP") {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+function heavyError({ node, scale }: RenderSpec, rendered: Box): BridgeError {
   const [width, height] = [Math.round(rendered.width * scale), Math.round(rendered.height * scale)];
 
-  if (width * height > MAX_CLIP_RENDER_PX) {
-    throw new BridgeError(
-      "RESULT_TOO_LARGE",
-      `A clip renders the whole layer first: ${width}×${height} px at scale ${scale} is too much for ${node}. Clip a layer inside it (outline or inspect gives their boxes), or lower the scale.`,
-    );
-  }
+  return new BridgeError(
+    "RESULT_TOO_LARGE",
+    `A clip renders the whole layer first: ${width}×${height} px at scale ${scale} is too much for ${node}, and no opaque layer inside it holds the region alone. Clip a layer inside it (outline or inspect gives their boxes), or lower the scale.`,
+  );
 }
 
 function croppedTo(bytes: Buffer, box: Box, rendered: Box, { clip, scale }: { clip: Clip; scale: number }): Buffer {

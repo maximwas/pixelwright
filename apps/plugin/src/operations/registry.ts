@@ -10,6 +10,7 @@ import { applyChanges } from "./apply/apply-changes.ts";
 import { components } from "./components/read-components.ts";
 import { deleteNodes } from "./delete/delete-nodes.ts";
 import { execute } from "./execute/execute-code.ts";
+import { clipCover } from "./export/clip-cover.ts";
 import { exportNode } from "./export/export-node.ts";
 import { originalImage } from "./export/original-image.ts";
 import { fileMap } from "./flows/file-map.ts";
@@ -58,6 +59,7 @@ const HANDLERS: Handlers = {
   apply: (input, services) => applyChanges(input, services),
   delete: (input, { edits }) => deleteNodes(input, edits),
   inspect,
+  cover: clipCover,
   execute: (input, { edits }) => execute(input, edits),
   tokens_apply: (input, services) => applyTokens(input, services),
   save_version: (input, services) => saveVersion(input, services),

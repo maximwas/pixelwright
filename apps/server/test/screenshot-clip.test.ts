@@ -240,6 +240,14 @@ describe("screenshot clip of a huge layer", () => {
       request: async (op) => {
         ops.push(op);
 
+        if (op === "cover") {
+          // Nothing inside covers the region: the layer itself.
+          return {
+            node: "1:2",
+            ...huge,
+          };
+        }
+
         return {
           origin: null,
           missing: [],
@@ -275,6 +283,101 @@ describe("screenshot clip of a huge layer", () => {
         },
       }),
     ).rejects.toThrow(/renders the whole layer first: 2880×120000 px/);
-    expect(ops).toEqual(["inspect"]);
+    expect(ops).toEqual(["inspect", "cover"]);
+  });
+});
+
+describe("screenshot clip of a huge layer with an opaque section over the region", () => {
+  it("renders that section alone, which shows the region as the whole layer would", async () => {
+    const asked: { op: string; input: Record<string, unknown> }[] = [];
+    const huge = {
+      x: 0,
+      y: 0,
+      width: 1440,
+      height: 60_000,
+    };
+    const bridge: BridgeView = {
+      status: () => {
+        throw new Error("not used");
+      },
+      pairing: () => null,
+      plugins: () => [
+        {
+          session: "s1",
+          info: pluginInfo(),
+          active: true,
+        },
+      ],
+      request: async (op, input) => {
+        asked.push({
+          op,
+          input: input as Record<string, unknown>,
+        });
+
+        if (op === "inspect") {
+          return {
+            origin: null,
+            missing: [],
+            layers: [
+              {
+                id: "1:2",
+                name: "Page",
+                type: "FRAME",
+                visible: true,
+                ...huge,
+                childCount: 1,
+                parent: null,
+                box: huge,
+                paintedBox: null,
+                parentBox: null,
+                parentPadding: null,
+              },
+            ],
+          };
+        }
+
+        if (op === "cover") {
+          return {
+            node: "1:9",
+            x: 0,
+            y: 1200,
+            width: 400,
+            height: 300,
+          };
+        }
+
+        const { scale, offset, length } = input as { scale: number; offset: number; length: number };
+        const image = Buffer.from(coordinatePng(400 * scale, 300 * scale));
+
+        return {
+          scale,
+          totalBytes: image.length,
+          bytes: image.subarray(offset, offset + length).toString("base64"),
+        };
+      },
+    };
+
+    const image = imageOf(
+      await takeScreenshot(sessionOf(bridge), {
+        node: "1:2",
+        scale: 2,
+        effects: true,
+        clip: {
+          x: 10,
+          y: 1210,
+          width: 50,
+          height: 40,
+        },
+      }),
+    );
+
+    expect(asked.map(({ op }) => op)).toEqual(["inspect", "cover", "export"]);
+    expect(asked[2]?.input).toMatchObject({
+      node: "1:9",
+      effects: false,
+    });
+    expect([image.width, image.height]).toEqual([100, 80]);
+    // The section's pixel (20, 20) is the region's top left: (10, 1210) less the section's place, at scale 2.
+    expect([...image.data.subarray(0, 2)]).toEqual([20, 20]);
   });
 });

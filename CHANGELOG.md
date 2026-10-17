@@ -28,6 +28,8 @@ How to write this file (people and agents alike):
 - `border-top` and the other single sides draw on a new frame: the line used to come out 0 px wide.
 - `src` on a shape or a frame now points to `background="url(…)"`, which fills any layer with a picture, an existing
   ellipse too; the hint used to speak of frames only.
+- `screenshot` with a `clip` on a layer too big to render whole renders the smallest opaque layer that holds the
+  region alone, such as a page's section, and cuts it there; it used to fail with `RESULT_TOO_LARGE`.
 
 ## 0.3.1 — 2026-10-15
 
