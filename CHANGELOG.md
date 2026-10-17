@@ -30,6 +30,8 @@ How to write this file (people and agents alike):
   ellipse too; the hint used to speak of frames only.
 - `screenshot` with a `clip` on a layer too big to render whole renders the smallest opaque layer that holds the
   region alone, such as a page's section, and cuts it there; it used to fail with `RESULT_TOO_LARGE`.
+- `tokens_apply` says a mode past the file's Figma plan limit in plain words (how many modes the plan allows, which
+  mode is left out) instead of Figma's raw error.
 
 ## 0.3.1 — 2026-10-15
 

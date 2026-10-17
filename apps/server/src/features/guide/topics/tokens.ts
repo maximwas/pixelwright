@@ -52,7 +52,8 @@ export const TOKENS = {
 - A value a variable or style already holds is left as it is, so sending tokens_read's own output writes nothing;
   send only what you change. Nothing is ever deleted (use \`execute\` to remove a token).
 - A library's collection or style the file uses is never copied into the file: change it in the library.
-- More modes than the file's Figma plan allows: that mode's error comes back and the other modes are written.
+- More modes than the file's Figma plan allows (Starter: one a collection): that mode's error says the plan's limit
+  and the other modes are written. A dry run cannot know the plan, and a \`version\` is saved before the write.
 - One undo step; \`dryRun\` checks names, types, modes and aliases without writing. \`version: "Before the brand
   change"\` first saves a named version in the file's history, for the designer to go back to, when the call changes
   something.

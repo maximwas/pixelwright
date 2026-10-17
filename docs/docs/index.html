@@ -713,7 +713,8 @@ shorthand, an effect style&#39;s as a <code>box-shadow</code> list.</li>
 <li>A value a variable or style already holds is left as it is, so sending tokens_read&#39;s own output writes nothing;
 send only what you change. Nothing is ever deleted (use <code>execute</code> to remove a token).</li>
 <li>A library&#39;s collection or style the file uses is never copied into the file: change it in the library.</li>
-<li>More modes than the file&#39;s Figma plan allows: that mode&#39;s error comes back and the other modes are written.</li>
+<li>More modes than the file&#39;s Figma plan allows (Starter: one a collection): that mode&#39;s error says the plan&#39;s limit
+and the other modes are written. A dry run cannot know the plan, and a <code>version</code> is saved before the write.</li>
 <li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing. <code>version: &quot;Before the brand change&quot;</code> first saves a named version in the file&#39;s history, for the designer to go back to, when the call changes
 something.</li>
 </ul>
