@@ -36,6 +36,10 @@ How to write this file (people and agents alike):
   ellipse too; the hint used to speak of frames only.
 - `screenshot` with a `clip` on a layer too big to render whole renders the smallest opaque layer that holds the
   region alone, such as a page's section, and cuts it there; it used to fail with `RESULT_TOO_LARGE`.
+- A colour variable with transparency (a hairline at 14%) reads as the token alone, where `design_read` wrote
+  `color-mix(… 14%, transparent)` on top of the variable's own alpha; `design_apply` writes `color-mix()` over such a
+  variable at the opacity it says (Figma had replaced it with the variable's alpha), and a bound paint takes the
+  variable's colour rather than a black placeholder where Figma does not resolve it.
 - `tokens_apply` says a mode past the file's Figma plan limit in plain words (how many modes the plan allows, which
   mode is left out) instead of Figma's raw error.
 

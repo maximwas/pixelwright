@@ -11,7 +11,7 @@ import {
   type TypedLayer,
 } from "../../../figma/capabilities.ts";
 import { effectsOf, mergedEffects } from "../../../figma/effects.ts";
-import { paintsOf, samePaints } from "../../../figma/paints.ts";
+import { opacitiesAgain, paintsOf, samePaints } from "../../../figma/paints.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import { guarded, type Step } from "./step.ts";
 import type { WriteScope } from "./write-scope.ts";
@@ -55,7 +55,7 @@ function sided(spec: StrokeSpec, node: TypedLayer): boolean {
 }
 
 async function fills(node: FillsNode, { fills: specs }: FigmaProps, scope: WriteScope): Promise<void> {
-  const paints = await paintsOf(specs ?? [], scope);
+  const paints = await paintsOf(specs ?? [], scope, node);
 
   if ("style" in paints) {
     if (node.fillStyleId !== paints.style) {
@@ -66,6 +66,12 @@ async function fills(node: FillsNode, { fills: specs }: FigmaProps, scope: Write
     !samePaints(node.fills, paints.paints)
   ) {
     node.fills = paints.paints;
+
+    const again = opacitiesAgain(node.fills as readonly Paint[], paints.paints);
+
+    if (again !== null) {
+      node.fills = again;
+    }
   }
 }
 
@@ -79,7 +85,7 @@ async function strokes(node: StrokesNode, { strokes: spec }: FigmaProps, scope: 
     sidedNode(node);
   }
 
-  const paints = await paintsOf(spec.paints, scope);
+  const paints = await paintsOf(spec.paints, scope, node);
 
   if ("style" in paints) {
     if (node.strokeStyleId !== paints.style) {
@@ -90,6 +96,12 @@ async function strokes(node: StrokesNode, { strokes: spec }: FigmaProps, scope: 
     !samePaints(node.strokes, paints.paints)
   ) {
     node.strokes = paints.paints;
+
+    const again = opacitiesAgain(node.strokes, paints.paints);
+
+    if (again !== null) {
+      node.strokes = again;
+    }
   }
 
   if (spec.paints.length > 0) {

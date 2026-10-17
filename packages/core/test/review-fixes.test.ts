@@ -224,6 +224,57 @@ describe("stage-2b review fixes", () => {
     expect(css.get("background")).toBe("color-mix(in srgb, var(--Dark) 50%, transparent)");
   });
 
+  it("writes a colour variable's own alpha as the token alone, and only an opacity past it as a mix", () => {
+    // As Figma stores it (seen live on 2026-10-17): a paint bound to a variable keeps the variable's alpha as its
+    // opacity, and an opacity lowered after it is the whole of it.
+    const line = {
+      r: 23 / 255,
+      g: 49 / 255,
+      b: 38 / 255,
+      a: 0.14,
+    };
+    const backgroundAt = (opacity: number) =>
+      new Map(
+        nodeCss(
+          layer({
+            id: "1:1",
+            fills: [
+              {
+                type: "SOLID",
+                color: {
+                  r: line.r,
+                  g: line.g,
+                  b: line.b,
+                },
+                opacity,
+                boundVariables: {
+                  color: {
+                    type: "VARIABLE_ALIAS",
+                    id: "V:2",
+                  },
+                },
+              },
+            ],
+          }),
+          null,
+          context({
+            variables: {
+              "V:2": {
+                name: "line",
+                collection: "Brand",
+                resolvedType: "COLOR",
+                remote: false,
+                value: line,
+              },
+            },
+          }),
+        ).properties,
+      ).get("background");
+
+    expect(backgroundAt(0.14)).toBe("var(--line)");
+    expect(backgroundAt(0.07)).toBe("color-mix(in srgb, var(--line) 50%, transparent)");
+  });
+
   it("writes instance properties and notes so values with commas, equals signs and bars parse back", () => {
     const xml = designXml(
       snapshotOf(

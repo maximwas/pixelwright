@@ -58,7 +58,7 @@ export const RUN_WRITERS: Readonly<Record<RunKey, RunWriter>> = {
     }
   },
   textFills: async (range, { textFills }, scope) => {
-    const paints = await paintsOf(textFills ?? [], scope);
+    const paints = await paintsOf(textFills ?? [], scope, range.node);
 
     if ("style" in paints) {
       await range.fillStyle(paints.style);
