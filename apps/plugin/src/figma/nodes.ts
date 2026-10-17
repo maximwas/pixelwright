@@ -96,3 +96,21 @@ export function instancePath(id: string): string {
 export function isLayer(node: BaseNode): node is SceneNode {
   return node.type !== "DOCUMENT" && node.type !== "PAGE";
 }
+
+/** Layers or pages by id, their pages loaded: what a tool that goes through them starts from; the document is refused. */
+export async function requireRoots(ids: readonly string[]): Promise<BaseNode[]> {
+  const roots: BaseNode[] = [];
+
+  for (const id of ids) {
+    const node = await requireNode(id);
+
+    if (node.type === "DOCUMENT") {
+      throw new BridgeError("NODE_NOT_FOUND", `${id} is the document: give its pages or layers.`);
+    }
+
+    await loadPageOf(node);
+    roots.push(node);
+  }
+
+  return roots;
+}

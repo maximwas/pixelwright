@@ -20,6 +20,7 @@ import { fontsCheckTool } from "../features/fonts-check/tool.ts";
 import { guideTool } from "../features/guide/tool.ts";
 import { imageCompareTool } from "../features/image-compare/tool.ts";
 import { inspectTool } from "../features/inspect/tool.ts";
+import { instancesReattachTool } from "../features/instances-reattach/tool.ts";
 import { measureTool } from "../features/measure/tool.ts";
 import { nodeShowTool } from "../features/node-show/tool.ts";
 import { nodesDeleteTool } from "../features/nodes-delete/tool.ts";
@@ -81,6 +82,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTool(server, tokensApplyTool(context), context.support);
   registerTool(server, tokensBindTool(context), context.support);
   registerTool(server, textsReplaceTool(context), context.support);
+  registerTool(server, instancesReattachTool(context), context.support);
   registerTool(server, effectsApplyTool(context), context.support);
   registerTool(server, versionSaveTool(context), context.support);
   registerTool(server, componentsReadTool(context));

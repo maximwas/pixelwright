@@ -33,6 +33,10 @@ How to write this file (people and agents alike):
   and styles that hold them exactly, in each layer's mode and within the variables' scopes. A value several tokens
   hold is listed with its candidates for a pick, a value none holds is listed for `tokens_apply`, `choose` snaps a
   near value to a token, and `remap` moves every use of one token to another.
+- `instances_reattach` puts frames detached from a component back as instances of it, where they stood and at
+  their size, with their texts, images and hidden layers carried over; `swap` makes instances of one component
+  instances of another (a set's variant with the same values), and `reset` takes instances' overrides off, their
+  look only or all of them.
 - `texts_replace` finds and replaces text under a layer, a page or the whole file: one pair or a list (copy edits,
   a translation), plain or a regular expression with groups, whole words when asked, all pairs at once against the
   text as it was. Each match is replaced where it stands, so its run keeps its font, colour and link, and a text an

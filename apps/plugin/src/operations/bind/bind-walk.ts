@@ -1,29 +1,10 @@
-import { BridgeError } from "@pixelwright/core";
-import { isLayer, loadPageOf, requireNode } from "../../figma/nodes.ts";
+import { isLayer } from "../../figma/nodes.ts";
 
 /** The layers a bind call goes through, the instances it left to their components, and whether it reached them all. */
 export interface BindLayers {
   readonly layers: SceneNode[];
   readonly instances: number;
   readonly finished: boolean;
-}
-
-/** The roots by id, their pages loaded: layers, or pages for all of a page's layers. */
-export async function bindRoots(ids: readonly string[]): Promise<BaseNode[]> {
-  const roots: BaseNode[] = [];
-
-  for (const id of ids) {
-    const node = await requireNode(id);
-
-    if (node.type === "DOCUMENT") {
-      throw new BridgeError("NODE_NOT_FOUND", `${id} is the document: give its pages or layers.`);
-    }
-
-    await loadPageOf(node);
-    roots.push(node);
-  }
-
-  return roots;
 }
 
 /**

@@ -2,6 +2,7 @@ import * as z from "zod";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "../apply/schemas.ts";
 import { EXPORT_CHUNK_BYTES, UPLOAD_MAX_BYTES, VERSION_DESCRIPTION_CHARS } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
+import { InstancesInputSchema, InstancesOutputSchema } from "../instances/schemas.ts";
 import { TextsInputSchema, TextsOutputSchema } from "../texts/schemas.ts";
 import { BindInputSchema, BindOutputSchema } from "../tokens/bind/schemas.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schemas.ts";
@@ -164,6 +165,11 @@ export const CONTENT_OPERATIONS = {
   texts: {
     input: TextsInputSchema,
     output: TextsOutputSchema,
+  },
+  /** Detached frames put back as instances, instances swapped, overrides taken off; a dry run only finds. */
+  instances: {
+    input: InstancesInputSchema,
+    output: InstancesOutputSchema,
   },
   /** Code run in the plugin: its value made JSON-safe, what it printed, and what it threw or that it ran too long. */
   execute: {

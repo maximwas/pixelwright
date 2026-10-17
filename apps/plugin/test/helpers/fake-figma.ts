@@ -158,6 +158,8 @@ export interface FakeOptions {
    * bytes, or of a PNG over 4096 px a side.
    */
   readonly strict?: boolean;
+  /** A removed layer, and every layer in it, throws when its name is read, as Figma's does. */
+  readonly removedThrows?: boolean;
 }
 
 /** Layers Figma lets insertChild put children in; an instance takes them only through its slots. */
@@ -466,6 +468,37 @@ function writable(
     node.mainComponent = component;
     record("swapComponent", [component.id]);
   });
+  // As Figma: every overridden field goes back to the main component's value (the same layer there), then none is.
+  define("removeOverrides", () => {
+    const main = node.mainComponent as FakeNode | undefined;
+    const counterpart = (id: string): FakeNode | undefined => {
+      const own = id === node.id ? main?.id : id.replace(`I${node.id};`, "");
+      const find = (at: FakeNode | undefined): FakeNode | undefined =>
+        at === undefined || at.id === own ? at : (at.children ?? []).map(find).find((found) => found !== undefined);
+
+      return find(main);
+    };
+    const layer = (id: string): FakeNode | undefined => {
+      const find = (at: FakeNode): FakeNode | undefined =>
+        at.id === id ? at : (at.children ?? []).map(find).find((found) => found !== undefined);
+
+      return find(node);
+    };
+
+    for (const { id, overriddenFields } of (node.overrides ?? []) as { id: string; overriddenFields: string[] }[]) {
+      const target = layer(id);
+      const source = counterpart(id);
+
+      if (target !== undefined && source !== undefined) {
+        for (const field of overriddenFields) {
+          target[field] = structuredClone(source[field]);
+        }
+      }
+    }
+
+    node.overrides = [];
+    record("removeOverrides", []);
+  });
 
   if (node.type === "COMPONENT" || node.type === "COMPONENT_SET") {
     // Never read here: Figma refuses reading a variant's definitions, and some tests model that with a getter.
@@ -526,6 +559,25 @@ function writable(
     node.parent?.children?.splice(node.parent.children.indexOf(node), 1);
     node.parent = null;
     record("remove", []);
+
+    // As Figma (when the test asks for it): a removed layer, and every layer in it, throws when read.
+    const gone = (layer: FakeNode) => {
+      Object.defineProperty(layer, "name", {
+        get: () => {
+          throw new Error(`in get_name: The node with id "${layer.id}" does not exist`);
+        },
+        set: () => {},
+        configurable: true,
+      });
+
+      for (const child of layer.children ?? []) {
+        gone(child);
+      }
+    };
+
+    if (options.removedThrows ?? false) {
+      gone(node);
+    }
   });
   define("setGridChildPosition", (row: number, column: number) => {
     refuseGridCell(node, row, column);

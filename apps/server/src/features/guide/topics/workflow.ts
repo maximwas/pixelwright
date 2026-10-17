@@ -54,7 +54,8 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
 7. **Write.** \`design_apply\` writes the same XML back into Figma: change layers by id, create new ones (see \`guide
    write\`, and \`guide layout\` for flex, grid and absolute placement); \`tokens_apply\` writes variables and styles in
    tokens_read's JSON shape (see \`guide tokens\`); \`effects_apply\` puts noise, texture or glass on layers;
-   \`texts_replace\` changes copy across a page or the file (a dictionary at once, styles kept);
+   \`texts_replace\` changes copy across a page or the file (a dictionary at once, styles kept); \`instances_reattach\`
+   puts detached frames back as instances, swaps components and takes overrides off;
    \`execute\` runs plugin code for what none of them can say. The user turns Allow edits on in the plugin window first.
 8. **Code Connect.** Where the project has Figma Code Connect templates (\`*.figma.ts\`) or batch files
    (\`*.figma.batch.json\`), \`design_read\` gives each connected instance as \`$code\` with its code in

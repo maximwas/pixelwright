@@ -20,6 +20,7 @@ import { flows } from "./flows/read-flows.ts";
 import { screens } from "./flows/screens.ts";
 import { saveVersion } from "./history/save-version.ts";
 import { inspect } from "./inspect/inspect-layers.ts";
+import { instancesOperation } from "./instances/instances.ts";
 import { find } from "./read/find.ts";
 import { outline } from "./read/outline.ts";
 import { selection } from "./read/selection.ts";
@@ -68,6 +69,7 @@ const HANDLERS: Handlers = {
   tokens_apply: (input, services) => applyTokens(input, services),
   bind: (input, services) => bindTokens(input, services),
   texts: (input, services) => replaceTexts(input, services),
+  instances: (input, services) => instancesOperation(input, services),
   save_version: (input, services) => saveVersion(input, services),
   upload: async (input, { uploads }) => uploads.receive(input),
 };

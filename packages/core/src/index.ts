@@ -61,6 +61,8 @@ export * from "./diff/variants.ts";
 export * from "./inspect/inspect-view.ts";
 export * from "./inspect/measure.ts";
 export * from "./inspect/measurements.ts";
+export * from "./instances/look-overrides.ts";
+export * from "./instances/schemas.ts";
 export * from "./kernel/color/color.ts";
 export * from "./kernel/color/color-space.ts";
 export * from "./kernel/easing.ts";

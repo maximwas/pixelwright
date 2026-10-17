@@ -67,6 +67,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `code_connect_read` | The project's Figma Code Connect templates and batch files, what each connects and how, what its code leaves out, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images; a named version in Figma's history first, when asked |
 | `tokens_apply` | Variables (collections, modes, aliases) and styles, in `tokens_read`'s shape |
+| `instances_reattach` | Frames detached from components put back as instances (texts, images and hidden layers kept), instances swapped for another component, overrides taken off |
 | `texts_replace` | Find and replace across a layer, a page or the file (a list for copy edits or a translation), each run's style kept, component text properties changed through the property |
 | `tokens_bind` | Raw colours, spacing, radii, texts and effects bound to the variables and styles that hold them; one token's uses rebound to another |
 | `effects_apply` | Figma's own noise, texture and glass on layers: a ready look (grain, film, risograph, frosted or clear glass) or the effect's own values |

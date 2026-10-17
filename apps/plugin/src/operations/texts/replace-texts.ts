@@ -1,17 +1,13 @@
 import { applyTextEdits, type TextEdit, type TextsInput, type TextsOutput, textEdits } from "@pixelwright/core";
 import { OP_BUDGET_MS } from "../../constants/plugin.ts";
+import { type BoundProperty, boundProperty, propertyName } from "../../figma/component-properties.ts";
+import { requireRoots } from "../../figma/nodes.ts";
 import type { PluginServices } from "../../services/plugin-services.ts";
 import { errorMessage } from "../../utils/error-message.ts";
-import { textRoots, textsUnder } from "./text-walk.ts";
+import { textsUnder } from "./text-walk.ts";
 
 /** The most texts the answer lists; the totals count them all. */
 const MAX_LISTED = 200;
-
-/** A text property an instance shows the text from: the instance, and the property's key. */
-interface BoundProperty {
-  readonly instance: InstanceNode;
-  readonly key: string;
-}
 
 /** What one call does to each text: dry or not, and the instance properties it has already set. */
 interface ReplaceRun {
@@ -42,7 +38,7 @@ export async function replaceTexts(input: TextsInput, { edits }: PluginServices)
     set: new Set(),
   };
 
-  for (const text of textsUnder(await textRoots(input.roots))) {
+  for (const text of textsUnder(await requireRoots(input.roots))) {
     if (Date.now() > deadline) {
       output.more = true;
       break;
@@ -91,7 +87,7 @@ async function replaceIn(
         before,
         after,
         count: edits.length,
-        ...(property === null ? {} : { property: property.key.replace(/#[^#]*$/, "") }),
+        ...(property === null ? {} : { property: propertyName(property.key) }),
       });
     }
   } catch (error) {
@@ -107,7 +103,7 @@ async function write(
   text: TextNode,
   { edits, after, run }: { edits: readonly TextEdit[]; after: string; run: ReplaceRun },
 ): Promise<BoundProperty | null> {
-  const property = boundProperty(text);
+  const property = boundProperty(text, "characters");
 
   await fontsOf(text, run.dryRun);
 
@@ -133,26 +129,6 @@ async function write(
     }
 
     text.deleteCharacters(start, end);
-  }
-
-  return null;
-}
-
-/** The instance whose component property the text shows, if it shows one (a main component's own text is its own). */
-function boundProperty(text: TextNode): BoundProperty | null {
-  const key = text.componentPropertyReferences?.characters;
-
-  for (let at = text.parent; key !== undefined && at !== null; at = at.parent) {
-    if (at.type === "INSTANCE" && at.componentProperties[key] !== undefined) {
-      return {
-        instance: at,
-        key,
-      };
-    }
-
-    if (at.type === "COMPONENT" || at.type === "COMPONENT_SET") {
-      return null;
-    }
   }
 
   return null;

@@ -1,44 +1,7 @@
 import { DEFAULT_NAME } from "../../design/hints/layer-hints.ts";
+import { LOOK_OVERRIDES } from "../../instances/look-overrides.ts";
 import type { SnapshotNode } from "../../types/snapshot.ts";
 import { findingOf, type LintRule } from "./lint-rule.ts";
-
-/**
- * The fields an instance may override that change how it looks, as Figma names them, by the CSS word the finding
- * uses: a different text, a hidden layer or a resized instance is what instances are for, a different fill or radius
- * is drift from the component.
- */
-const LOOK_WORDS: Readonly<Record<string, string>> = {
-  fills: "background",
-  fillStyleId: "background",
-  strokes: "border",
-  strokeStyleId: "border",
-  strokeWeight: "border",
-  strokeTopWeight: "border",
-  strokeRightWeight: "border",
-  strokeBottomWeight: "border",
-  strokeLeftWeight: "border",
-  effects: "effects",
-  effectStyleId: "effects",
-  opacity: "opacity",
-  blendMode: "blend mode",
-  textStyleId: "font",
-  fontName: "font",
-  fontSize: "font",
-  lineHeight: "font",
-  letterSpacing: "letter-spacing",
-  textCase: "text-transform",
-  textDecoration: "text-decoration",
-  cornerRadius: "border-radius",
-  topLeftRadius: "border-radius",
-  topRightRadius: "border-radius",
-  bottomLeftRadius: "border-radius",
-  bottomRightRadius: "border-radius",
-  itemSpacing: "gap",
-  paddingTop: "padding",
-  paddingRight: "padding",
-  paddingBottom: "padding",
-  paddingLeft: "padding",
-};
 
 /** Frames detached from their component: every change to the component passes them by. */
 export const DETACHED: LintRule = {
@@ -62,7 +25,7 @@ export const OVERRIDDEN: LintRule = {
   severity: "info",
   about: "Instance layers that change their component's look (fills, radii, fonts) outside its properties.",
   check: ({ node }) => {
-    const words = [...new Set((node.overrides ?? []).flatMap((field) => LOOK_WORDS[field] ?? []))];
+    const words = [...new Set((node.overrides ?? []).flatMap((field) => LOOK_OVERRIDES[field] ?? []))];
 
     return words.length === 0
       ? []

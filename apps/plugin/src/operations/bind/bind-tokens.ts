@@ -1,11 +1,12 @@
 import type { BindInput, BindKind, OperationOutput } from "@pixelwright/core";
 import { OP_BUDGET_MS } from "../../constants/plugin.ts";
+import { requireRoots } from "../../figma/nodes.ts";
 import type { PluginServices } from "../../services/plugin-services.ts";
 import { errorMessage } from "../../utils/error-message.ts";
 import { BindChoices } from "./bind-choices.ts";
 import { BindContext } from "./bind-context.ts";
 import { BindReport } from "./bind-report.ts";
-import { bindableLayers, bindRoots } from "./bind-walk.ts";
+import { bindableLayers } from "./bind-walk.ts";
 import { colorUses } from "./color-uses.ts";
 import { numberUses } from "./number-uses.ts";
 import type { RawUse } from "./raw-use.ts";
@@ -41,7 +42,7 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
     edits.require();
   }
 
-  const roots = await bindRoots(input.roots);
+  const roots = await requireRoots(input.roots);
   const context = await BindContext.of(roots);
   const report = new BindReport();
   const deadline = Date.now() + OP_BUDGET_MS;

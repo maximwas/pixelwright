@@ -7691,6 +7691,205 @@
       ]
     }
   },
+  "instances": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "roots": {
+          "minItems": 1,
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "reattach": {
+          "default": false,
+          "type": "boolean"
+        },
+        "swap": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        },
+        "reset": {
+          "type": "string",
+          "enum": [
+            "look",
+            "all"
+          ]
+        },
+        "dryRun": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "roots"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "reattached": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "frame": {
+                "type": "string",
+                "description": "The detached frame's id (gone after a real run)."
+              },
+              "name": {
+                "type": "string"
+              },
+              "instance": {
+                "description": "The new instance's id; null in a dry run.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "kept": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What the frame had that the instance now has too: texts, images, hidden layers."
+              },
+              "lost": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Layers only the frame had: the instance has nowhere to put them."
+              }
+            },
+            "required": [
+              "frame",
+              "name",
+              "instance",
+              "component",
+              "kept",
+              "lost"
+            ]
+          }
+        },
+        "swapped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "from",
+              "to"
+            ]
+          }
+        },
+        "reset": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "fields"
+            ]
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ]
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "more": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "reattached",
+        "swapped",
+        "reset",
+        "errors",
+        "notes",
+        "more"
+      ]
+    }
+  },
   "execute": {
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
