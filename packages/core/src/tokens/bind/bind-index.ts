@@ -4,7 +4,7 @@ import { styleName, styleTokenName, variableTokenName } from "../../kernel/names
 import { roundTo } from "../../kernel/numbers.ts";
 import type { SnapshotStyle } from "../../types/snapshot.ts";
 import type { RawStyle, RawTokens, RawVariable } from "../raw-tokens.ts";
-import { type BindScope, scopeAllows } from "./fields.ts";
+import { type BindScope, scopeAllows, variableAmount } from "./fields.ts";
 import { colorValue, effectsValue, type TextParts, textValue } from "./values.ts";
 
 /** A style or variable a raw value may be bound to, named by its token as design_read writes it. */
@@ -43,7 +43,6 @@ export class BindIndex {
   readonly #own = new Map<string, BindCandidate>();
   readonly #byId = new Map<string, BindCandidate>();
   readonly #styles = new Map<string, Map<string, BindCandidate[]>>();
-  readonly #styleValues = new Map<string, string>();
   readonly #byToken = new Map<string, BindCandidate[]>();
   readonly #byModes = new Map<string, Map<string, BindCandidate[]>>();
 
@@ -80,9 +79,13 @@ export class BindIndex {
     return [...this.#withoutTargets(variables, modes), ...styles];
   }
 
-  /** The number variables holding a value for a field of this scope in the layer's modes, aliases preferred. */
+  /**
+   * The number variables holding a field's value in the layer's modes, as a variable bound to a field of this scope
+   * holds it (an opacity as a percent), aliases preferred.
+   */
   numbers(value: number, { scope, modes }: { scope: BindScope; modes: ModeMap }): BindCandidate[] {
-    const variables = (this.#valuesIn(modes).get(`FLOAT ${roundTo(value, 2)}`) ?? []).filter((candidate) =>
+    const amount = roundTo(variableAmount(scope, value), 2);
+    const variables = (this.#valuesIn(modes).get(`FLOAT ${amount}`) ?? []).filter((candidate) =>
       scopeAllows(this.#variables.get(candidate.id)?.scopes ?? [], scope),
     );
 
@@ -107,22 +110,6 @@ export class BindIndex {
   /** A style or variable by its id (a library's variable the file uses among them). */
   byId(id: string): BindCandidate | undefined {
     return this.#byId.get(id);
-  }
-
-  /** A token's value as design_read writes it, a variable's in these modes; null when it holds no value of its own. */
-  valueOf(candidate: BindCandidate, modes: ModeMap): string | null {
-    if (candidate.source === "style") {
-      return this.#styleValues.get(candidate.id) ?? null;
-    }
-
-    const variable = this.#variables.get(candidate.id);
-    const value = variable === undefined ? undefined : this.#resolved(variable, modes, ALIAS_DEPTH);
-
-    if (isChannels(value)) {
-      return colorValue(value, 1, this.#space);
-    }
-
-    return typeof value === "number" ? String(roundTo(value, 2)) : null;
   }
 
   #indexVariables(): void {
@@ -164,7 +151,6 @@ export class BindIndex {
 
         byValue.set(value, [...(byValue.get(value) ?? []), candidate]);
         this.#styles.set(style.type, byValue);
-        this.#styleValues.set(style.id, value);
       }
     }
   }

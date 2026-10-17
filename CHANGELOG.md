@@ -77,6 +77,8 @@ How to write this file (people and agents alike):
 
 ### Fixed
 
+- `tokens_bind` and `design_lint` match a layer's opacity with the variables Figma's opacity fields take, kept as
+  percents (50 for 0.5): an opacity variable of 50 was never offered, and a plain 0.5 one bound the layer at 0.5 %.
 - `texts_replace` walks a page or the whole file within the plugin's time limit and says `more` when it stops,
   instead of reading every text first, which on a big file could outlast the request.
 - `tokens_read` writes a number that font weights or opacities point at without px, as they read it (a hidden

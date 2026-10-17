@@ -60,6 +60,14 @@ export const NUMBER_FIELDS: Readonly<Record<string, NumberField>> = {
   },
 };
 
+/**
+ * A field's value as the variables bound to it hold it: an opacity as a percent, which is what Figma's opacity fields
+ * take from a variable (seen live on 2026-10-17: 50 makes a layer 0.5 opaque, 0.5 makes it 0.005).
+ */
+export function variableAmount(scope: BindScope, value: number): number {
+  return scope === "OPACITY" ? value * 100 : value;
+}
+
 /** The corners a radius is bound on: all four for one radius, as Figma's own picker binds it. */
 export const RADIUS_FIELDS = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
 

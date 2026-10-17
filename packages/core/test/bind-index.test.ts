@@ -287,6 +287,25 @@ describe("BindIndex: the tokens that hold a value", () => {
     ).toEqual([]);
   });
 
+  it("finds an opacity among the variables Figma's opacity fields take, kept as percents", () => {
+    const opacities = BindIndex.of({
+      ...RAW,
+      variables: [
+        variable("V:muted", "opacity/muted", { "M:light": 50 }, { scopes: ["OPACITY"] }),
+        variable("V:half", "half", { "M:light": 0.5 }),
+      ],
+    });
+
+    expect(
+      tokens(
+        opacities.numbers(0.5, {
+          scope: "OPACITY",
+          modes: LIGHT,
+        }),
+      ),
+    ).toEqual(["--opacity-muted"]);
+  });
+
   it("finds text and effect styles by the value design_read writes", () => {
     expect(tokens(index.texts(textValue(INTER)))).toEqual(["--Label-font"]);
     expect(tokens(index.effects(effectsValue([SHADOW]) ?? ""))).toEqual(["--Card-shadow"]);
@@ -299,12 +318,5 @@ describe("BindIndex: the tokens that hold a value", () => {
     expect(index.byToken("--Label-font").map(({ id }) => id)).toEqual(["S:label"]);
     expect(index.byToken("Label").map(({ id }) => id)).toEqual(["S:label"]);
     expect(index.byToken("--nothing")).toEqual([]);
-  });
-
-  it("gives a token's value in the layer's mode, to tell an exact match from a snapped one", () => {
-    const [surface] = index.byToken("--surface");
-
-    expect(surface === undefined ? null : index.valueOf(surface, DARK)).toBe("#14161F");
-    expect(surface === undefined ? null : index.valueOf(surface, LIGHT)).toBe("#FFF");
   });
 });
