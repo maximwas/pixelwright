@@ -1,5 +1,6 @@
 import type { EffectSpec, FontSpec, PaintSpec } from "../../css-mapping/figma-props.ts";
 import type { ColorValue } from "../../kernel/color/color.ts";
+import type { CodeSyntax, VariableScopeName } from "../scopes.ts";
 
 /** The variable types tokens_apply writes. */
 export type WritableVariableType = "COLOR" | "FLOAT" | "STRING" | "BOOLEAN";
@@ -19,8 +20,17 @@ export interface VariablePlan {
   /** By mode name. */
   readonly values: Readonly<Record<string, VariableValueSpec>>;
   readonly description?: string;
-  /** Its CSS name when that is not the one its name gives: written as its WEB code syntax. */
+  /** Its CSS name when that is not the one its name gives: written as its WEB code syntax, unless that is given. */
   readonly token?: string;
+  /** The fields Figma's pickers offer it for, when the call gives them. */
+  readonly scopes?: readonly VariableScopeName[];
+  /** Its name in code per platform, when the call gives it: "" removes a platform's. */
+  readonly codeSyntax?: CodeSyntax;
+  /**
+   * Its numbers were written without a unit and nothing in the call scopes it as a plain number: Figma will offer it
+   * for every field, and tokens_read will write its numbers in px.
+   */
+  readonly unitless?: true;
 }
 
 export interface CollectionPlan {

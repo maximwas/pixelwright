@@ -15,6 +15,8 @@ export interface TokenRun {
   created(item: TokenItem): void;
   updated(item: TokenItem): void;
   failed(error: TokenError): void;
+  /** Something written that may not read back as meant. */
+  noted(note: string): void;
   /** Says the file changed, so the call closes one undo step. */
   wrote(): void;
 }

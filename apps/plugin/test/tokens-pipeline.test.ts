@@ -260,6 +260,40 @@ describe("tokens_apply end to end", () => {
     });
   });
 
+  it("copies scopes and code syntax into another file, and the copy fed back writes nothing", async () => {
+    const client = pluginClient(plugin);
+    const read = await readTokens(client, TokensReadInputSchema.parse({ format: "json" }));
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [],
+      }),
+    );
+
+    const input = TokensApplyToolInputSchema.parse({ collections: read.tokens?.collections });
+
+    await expect(applyTokens(client, input)).resolves.toMatchObject({ errors: [] });
+
+    const variables = await figma.variables.getLocalVariablesAsync();
+    const named = (name: string) => variables.find((variable) => variable.name === name);
+
+    expect(named("Surface")).toMatchObject({
+      scopes: ["FRAME_FILL"],
+      codeSyntax: { WEB: "var(--surface)" },
+    });
+    expect(named("space/gap")?.scopes).toEqual(["GAP"]);
+    // Figma keeps an opacity variable's numbers as percents: the copy's 0.6 reads back as it was.
+    expect(Object.values(named("opacity/muted")?.valuesByMode ?? {})).toEqual([60, 40]);
+    await expect(applyTokens(client, input)).resolves.toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+      dryRun: false,
+    });
+  });
+
   it("returns the values it could not read with the plugin's errors, and writes the rest", async () => {
     const applied = await applyTokens(
       pluginClient(plugin),

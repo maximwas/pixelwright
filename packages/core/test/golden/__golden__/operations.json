@@ -7023,6 +7023,58 @@
                         },
                         "token": {
                           "type": "string"
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "ALL_SCOPES",
+                              "TEXT_CONTENT",
+                              "CORNER_RADIUS",
+                              "WIDTH_HEIGHT",
+                              "GAP",
+                              "ALL_FILLS",
+                              "FRAME_FILL",
+                              "SHAPE_FILL",
+                              "TEXT_FILL",
+                              "STROKE_COLOR",
+                              "STROKE_FLOAT",
+                              "EFFECT_FLOAT",
+                              "EFFECT_COLOR",
+                              "OPACITY",
+                              "COLOR_OPACITY",
+                              "FONT_FAMILY",
+                              "FONT_STYLE",
+                              "FONT_WEIGHT",
+                              "FONT_SIZE",
+                              "LINE_HEIGHT",
+                              "LETTER_SPACING",
+                              "PARAGRAPH_SPACING",
+                              "PARAGRAPH_INDENT"
+                            ]
+                          }
+                        },
+                        "codeSyntax": {
+                          "type": "object",
+                          "properties": {
+                            "WEB": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "ANDROID": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "iOS": {
+                              "type": "string",
+                              "maxLength": 512
+                            }
+                          }
+                        },
+                        "unitless": {
+                          "type": "boolean",
+                          "const": true
                         }
                       },
                       "required": [
@@ -7221,6 +7273,12 @@
               "name",
               "message"
             ]
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       },

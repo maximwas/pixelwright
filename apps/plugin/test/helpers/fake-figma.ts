@@ -1,3 +1,5 @@
+import { VARIABLE_SCOPES } from "@pixelwright/core";
+
 /**
  * A small Figma document for the plugin's operations: nodes with parents, boxes, text and main components, and the
  * writing calls design_apply makes (creating, inserting, resizing, binding, styling text ranges), recorded.
@@ -1018,6 +1020,11 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
       });
     });
     method(variable, "setVariableCodeSyntax", (platform: string, value: string) => {
+      // As Figma (seen live on 2026-10-17).
+      if (value.trim() === "") {
+        throw new Error("in setVariableCodeSyntax: Code syntax value cannot be a blank string");
+      }
+
       variable.codeSyntax = {
         ...(variable.codeSyntax as Record<string, string> | undefined),
         [platform]: value,
@@ -1027,6 +1034,33 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
         method: "setVariableCodeSyntax",
         args: [platform, value],
       });
+    });
+    method(variable, "removeVariableCodeSyntax", (platform: string) => {
+      const { [platform]: _removed, ...rest } = (variable.codeSyntax as Record<string, string> | undefined) ?? {};
+
+      variable.codeSyntax = rest;
+      writes.calls.push({
+        node: variable.id,
+        method: "removeVariableCodeSyntax",
+        args: [platform],
+      });
+    });
+
+    // Figma keeps scopes in its own order, whatever order they were set in.
+    let scopes = [...((variable.scopes as string[] | undefined) ?? ["ALL_SCOPES"])];
+
+    Object.defineProperty(variable, "scopes", {
+      get: () => scopes,
+      set: (value: string[]) => {
+        scopes = VARIABLE_SCOPES.filter((scope) => value.includes(scope));
+        writes.calls.push({
+          node: variable.id,
+          method: "scopes",
+          args: [value],
+        });
+      },
+      enumerable: true,
+      configurable: true,
     });
     localVariables.push(variable);
 

@@ -119,6 +119,7 @@ describe("token model", () => {
             Light: "#FFF",
             Dark: "var(--Ink)",
           },
+          codeSyntax: { WEB: "var(--surface)" },
         },
         {
           name: "Ink",
@@ -137,6 +138,7 @@ describe("token model", () => {
         token: "--space-4",
         type: "FLOAT",
         values: { Base: "16px" },
+        scopes: ["GAP"],
       },
     ]);
   });

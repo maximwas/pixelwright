@@ -20,10 +20,11 @@ export class TokenWriter implements TokenRun {
   readonly fonts: FontCatalog;
   readonly #edits: EditsGuard;
   readonly #plan: OperationInput<"tokens_apply">["plan"];
-  readonly #results: Written = {
+  readonly #results: Required<Written> = {
     created: [],
     updated: [],
     errors: [],
+    notes: [],
   };
   #index: Promise<TokenIndex> | null = null;
   #wrote = false;
@@ -54,7 +55,9 @@ export class TokenWriter implements TokenRun {
       figma.commitUndo();
     }
 
-    return this.#results;
+    const { notes, ...results } = this.#results;
+
+    return notes.length === 0 ? results : this.#results;
   }
 
   index(): Promise<TokenIndex> {
@@ -73,6 +76,10 @@ export class TokenWriter implements TokenRun {
 
   failed(error: TokenError): void {
     this.#results.errors.push(error);
+  }
+
+  noted(note: string): void {
+    this.#results.notes.push(note);
   }
 
   wrote(): void {

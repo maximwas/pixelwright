@@ -1,35 +1,33 @@
 import {
   isWritableType,
-  type RawTokens,
+  roundTo,
+  scopedUnit,
   type TokenVariable,
-  tokenName,
   type VariablePlan,
   variableValueOf,
 } from "@pixelwright/core";
 import { documentColor } from "../../../figma/color-profile.ts";
-import { errorMessage } from "../../../utils/error-message.ts";
-import type { Target } from "./collections.ts";
 import type { FileTokens } from "./file-tokens.ts";
 import type { KnownVariables } from "./known-variables.ts";
 import { sameSpec } from "./same-values.ts";
 import type { TokenRun } from "./token-run.ts";
+import { attempt, failVariable, type WrittenVariable } from "./variable-attempt.ts";
+import { writeMeta } from "./variable-meta.ts";
 
-/** A planned variable and the Figma one it is written to (none for a new one on a dry run). */
-export interface WrittenVariable {
-  readonly target: Target;
-  readonly plan: VariablePlan;
-  readonly variable: Variable | null;
-  /** The variable as the file holds it, for one that exists. */
-  readonly held: RawTokens["variables"][number] | null;
-  readonly type: string;
-}
+export type { WrittenVariable } from "./variable-attempt.ts";
 
 /** A value as Figma holds it, or an alias by its target's id. */
 type FigmaValue = { readonly value: VariableValue } | { readonly alias: string };
 
+/** Whether Figma keeps a variable's numbers as percents (an opacity field's: 50 is 50 %), before the call and after. */
+interface PercentStorage {
+  readonly before: boolean;
+  readonly after: boolean;
+}
+
 /**
- * Writes a variable's values, description and code syntax where tokens_read's CSS of them differs from the call's, so
- * tokens_read's own JSON fed back writes nothing. Each value Figma refuses is its own error.
+ * Writes a variable's values, description, scopes and code syntax where tokens_read's CSS of them differs from the
+ * call's, so tokens_read's own JSON fed back writes nothing. Each value Figma refuses is its own error.
  */
 export class VariableValueWriter {
   readonly #run: TokenRun;
@@ -45,11 +43,9 @@ export class VariableValueWriter {
   async write(item: WrittenVariable): Promise<void> {
     const { target, plan, held } = item;
     const shown = held === null ? undefined : this.#file.shownVariable(target.plan.name, plan.name);
-    const changes = [
-      ...(await this.#writeModes(item, shown)),
-      await this.#writeDescription(item, shown),
-      await this.#writeCodeSyntax(item, shown),
-    ];
+    const changes = [...(await this.#writeModes(item, shown)), ...(await writeMeta(this.#run, item, shown))];
+
+    this.#noteUnitless(item);
 
     if (held !== null && changes.some(Boolean)) {
       this.#run.updated({
@@ -60,53 +56,43 @@ export class VariableValueWriter {
     }
   }
 
-  /** Each mode's value whose CSS differs from what tokens_read shows; whether each changes. */
+  /**
+   * Each mode's value whose CSS differs from what tokens_read shows, or every one when the call changes how Figma keeps
+   * the numbers (an opacity's percents); whether each changes.
+   */
   async #writeModes(item: WrittenVariable, shown: TokenVariable | undefined): Promise<boolean[]> {
+    const percents = percentStorage(item, this.#file);
+    const rescaled = percents.before !== percents.after;
     const changes: boolean[] = [];
 
     for (const [mode, spec] of Object.entries(item.plan.values)) {
       const css = shown?.values[mode];
-      const same = css !== undefined && isWritableType(item.type) && sameSpec(variableValueOf(css, item.type), spec);
+      const same =
+        !rescaled && css !== undefined && isWritableType(item.type) && sameSpec(variableValueOf(css, item.type), spec);
 
-      changes.push(same ? false : await this.#writeMode(item, mode, spec));
+      changes.push(same ? false : await this.#writeMode(item, mode, spec, percents.after));
     }
 
     return changes;
   }
 
-  async #writeDescription(item: WrittenVariable, shown: TokenVariable | undefined): Promise<boolean> {
-    const { description } = item.plan;
-
-    if (description === undefined || description === (shown?.description ?? "")) {
-      return false;
-    }
-
-    return await this.#attempt(item, async (variable) => {
-      variable.description = description;
-    });
-  }
-
-  /** The WEB code syntax, when the call's token is not the one the variable's name gives. */
-  async #writeCodeSyntax(item: WrittenVariable, shown: TokenVariable | undefined): Promise<boolean> {
-    const { token, name } = item.plan;
-
-    if (token === undefined || token === (shown?.token ?? tokenName(name))) {
-      return false;
-    }
-
-    return await this.#attempt(item, async (variable) => {
-      variable.setVariableCodeSyntax("WEB", `var(${token})`);
-    });
-  }
-
   /** One mode's value; whether it changes (on a dry run: would). */
-  async #writeMode(item: WrittenVariable, mode: string, spec: VariablePlan["values"][string]): Promise<boolean> {
-    const { target } = item;
-    const modeId = target.modes.get(mode);
+  async #writeMode(
+    item: WrittenVariable,
+    mode: string,
+    spec: VariablePlan["values"][string],
+    percent: boolean,
+  ): Promise<boolean> {
+    const modeId = item.target.modes.get(mode);
 
     if (modeId === undefined) {
-      if (!target.failed.has(mode)) {
-        this.#fail(item, `${target.plan.name} has no mode ${mode}: list it in the collection's modes.`, mode);
+      if (!item.target.failed.has(mode)) {
+        failVariable(
+          this.#run,
+          item,
+          `${item.target.plan.name} has no mode ${mode}: list it in the collection's modes.`,
+          mode,
+        );
       }
 
       return false;
@@ -115,19 +101,20 @@ export class VariableValueWriter {
     const value = this.#figmaValue(spec, item.type);
 
     if (typeof value === "string") {
-      this.#fail(item, value, mode);
+      failVariable(this.#run, item, value, mode);
 
       return false;
     }
 
-    return await this.#attempt(
+    return await attempt(
+      this.#run,
       item,
       async (variable) => {
         variable.setValueForMode(
           modeId,
           "alias" in value
             ? await figma.variables.createVariableAliasByIdAsync(value.alias)
-            : stored(value.value, item.held),
+            : stored(value.value, percent),
         );
       },
       mode,
@@ -158,46 +145,41 @@ export class VariableValueWriter {
       : `var(${spec.token}) is a ${target.type} variable, this one is ${type}.`;
   }
 
-  /** Runs a write on the variable, unless dry; whether it changes. What Figma refuses is the variable's error. */
-  async #attempt(item: WrittenVariable, write: (variable: Variable) => Promise<void>, mode?: string): Promise<boolean> {
-    try {
-      if (!this.#run.dryRun && item.variable !== null) {
-        await write(item.variable);
-        this.#run.wrote();
-      }
-
-      return true;
-    } catch (error) {
-      this.#fail(item, errorMessage(error), mode);
-
-      return false;
+  /** A number written without a unit that Figma will take for a length: said, with the scopes that keep it plain. */
+  #noteUnitless({ target, plan, held }: WrittenVariable): void {
+    if (!plan.unitless || (held !== null && this.#file.unitOf(held) !== "px")) {
+      return;
     }
-  }
 
-  #fail({ target, plan }: WrittenVariable, message: string, mode?: string): void {
-    this.#run.failed({
-      kind: "variable",
-      collection: target.plan.name,
-      name: plan.name,
-      ...(mode === undefined ? {} : { mode }),
-      message,
-    });
+    const number = Object.values(plan.values).find((spec) => spec.kind === "number");
+    const value = number?.kind === "number" ? String(number.value) : "1";
+
+    this.#run.noted(
+      `${plan.name} (${target.plan.name}): ${value} has no unit, but Figma offers a number for every field as a length, so tokens_read writes it as ${value}px. Give it scopes ["FONT_WEIGHT"] for a font weight, ["OPACITY"] for an opacity or ["TEXT_CONTENT"] for a number shown as text, or write ${value}px.`,
+    );
   }
 }
 
-/** A number as Figma stores it: an opacity Figma keeps as a percent (tokens_read shows it divided by 100) is one. */
-function stored(value: VariableValue, held: WrittenVariable["held"]): VariableValue {
-  return typeof value === "number" && percentStored(held) ? value * 100 : value;
+/**
+ * How Figma keeps the variable's numbers, before the call and after: as percents when they are an opacity's that the
+ * file keeps so (some value past 1), a new opacity's, or those of a variable the call scopes as an opacity that was
+ * none; scopes saying nothing of a unit keep the file's way.
+ */
+function percentStorage({ held, plan }: WrittenVariable, file: FileTokens): PercentStorage {
+  const unit = held === null ? null : file.unitOf(held);
+  const before =
+    unit === "opacity" &&
+    held !== null &&
+    Object.values(held.valuesByMode).some((value) => typeof value === "number" && value > 1);
+  const planned = plan.scopes === undefined ? null : scopedUnit(plan.scopes);
+
+  return {
+    before,
+    after: planned === null ? before : planned === "opacity" && (before || unit !== "opacity"),
+  };
 }
 
-/** A variable whose opacity scope Figma fills with percents: tokens_read shows its values divided by 100. */
-function percentStored(held: WrittenVariable["held"]): boolean {
-  if (held === null) {
-    return false;
-  }
-
-  return (
-    held.scopes.some((scope) => scope === "OPACITY" || scope === "COLOR_OPACITY") &&
-    Object.values(held.valuesByMode).some((value) => typeof value === "number" && value > 1)
-  );
+/** A number as Figma stores it: a fraction kept as a percent when Figma keeps the variable's numbers so. */
+function stored(value: VariableValue, percent: boolean): VariableValue {
+  return typeof value === "number" && percent ? roundTo(value * 100, 6) : value;
 }

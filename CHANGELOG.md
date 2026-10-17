@@ -58,6 +58,9 @@ How to write this file (people and agents alike):
   the same way, and `data-<collection>=""` clears it.
 - `guide layout` tells when to lay a frame out as flex, as grid or by absolute placement, with the grid's tracks,
   spans and cells, pinned and centred layers, what is not supported, and examples checked in Figma.
+- `tokens_apply` sets a variable's `scopes`, the fields Figma's pickers offer it for (`["FONT_WEIGHT"]`, `[]` to
+  hide it), and its `codeSyntax` on the web, Android and iOS; scopes a type cannot take are refused before anything
+  is written. `tokens_read`'s JSON lists both, so tokens copied into another file keep them.
 
 ### Changed
 
@@ -68,6 +71,10 @@ How to write this file (people and agents alike):
 
 ### Fixed
 
+- `tokens_read` writes a number that font weights or opacities point at without px, as they read it (a hidden
+  `weight/700` primitive is `700`, not `700px`), and a number shown as text too. `tokens_apply` keeps a new opacity
+  as the percent Figma's opacity fields take (0.4 is stored as 40), and its `notes` say when a number written
+  without a unit and given no scopes will read back in px.
 - `design_read` and `design_apply` work while Figma Desktop has lost its connection: the file's own variables and
   styles are read from its lists, which Figma gives offline, instead of one by one, which Figma gives up on after ten
   seconds; a library's it cannot reach is left out.

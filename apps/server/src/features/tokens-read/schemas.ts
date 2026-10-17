@@ -107,6 +107,17 @@ export const TokensReadOutputSchema = z.object({
               type: z.string(),
               values: z.record(z.string(), z.string()),
               description: z.string().exactOptional(),
+              scopes: z
+                .array(z.string())
+                .exactOptional()
+                .describe("The fields Figma's pickers offer it for, when not every field: [] hides it from all."),
+              codeSyntax: z
+                .object({
+                  WEB: z.string().exactOptional(),
+                  ANDROID: z.string().exactOptional(),
+                  iOS: z.string().exactOptional(),
+                })
+                .exactOptional(),
             }),
           ),
         }),

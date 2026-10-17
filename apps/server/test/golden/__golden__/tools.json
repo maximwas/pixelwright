@@ -4884,7 +4884,7 @@
   {
     "name": "tokens_read",
     "title": "Read the design tokens",
-    "description": "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
+    "description": "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable's scopes (when not every field) and code syntax, which tokens_apply takes back; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5078,6 +5078,28 @@
                         },
                         "description": {
                           "type": "string"
+                        },
+                        "scopes": {
+                          "description": "The fields Figma's pickers offer it for, when not every field: [] hides it from all.",
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "codeSyntax": {
+                          "type": "object",
+                          "properties": {
+                            "WEB": {
+                              "type": "string"
+                            },
+                            "ANDROID": {
+                              "type": "string"
+                            },
+                            "iOS": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -5317,7 +5339,7 @@
   {
     "name": "tokens_apply",
     "title": "Write design tokens",
-    "description": "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), and styles: paint (a colour or colour variable), text (the font shorthand) and effect (a box-shadow list). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+    "description": "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma's pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand) and effect (a box-shadow list). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5376,6 +5398,57 @@
                     "token": {
                       "type": "string",
                       "maxLength": 512
+                    },
+                    "scopes": {
+                      "description": "The fields Figma's pickers offer it for, by Figma's names: [\"FONT_WEIGHT\"], [\"GAP\", \"WIDTH_HEIGHT\"]; [] hides it from all of them. A new variable is offered for every field (ALL_SCOPES), which makes a number a length in px: a font weight or an opacity needs its scope.",
+                      "maxItems": 23,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "ALL_SCOPES",
+                          "TEXT_CONTENT",
+                          "CORNER_RADIUS",
+                          "WIDTH_HEIGHT",
+                          "GAP",
+                          "ALL_FILLS",
+                          "FRAME_FILL",
+                          "SHAPE_FILL",
+                          "TEXT_FILL",
+                          "STROKE_COLOR",
+                          "STROKE_FLOAT",
+                          "EFFECT_FLOAT",
+                          "EFFECT_COLOR",
+                          "OPACITY",
+                          "COLOR_OPACITY",
+                          "FONT_FAMILY",
+                          "FONT_STYLE",
+                          "FONT_WEIGHT",
+                          "FONT_SIZE",
+                          "LINE_HEIGHT",
+                          "LETTER_SPACING",
+                          "PARAGRAPH_SPACING",
+                          "PARAGRAPH_INDENT"
+                        ]
+                      }
+                    },
+                    "codeSyntax": {
+                      "description": "Its name in code per platform: WEB (also its CSS name, as var(--name)), ANDROID, iOS; \"\" removes one.",
+                      "type": "object",
+                      "properties": {
+                        "WEB": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "ANDROID": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "iOS": {
+                          "type": "string",
+                          "maxLength": 512
+                        }
+                      }
                     }
                   },
                   "required": [
@@ -5588,6 +5661,12 @@
               "message"
             ],
             "additionalProperties": false
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "dryRun": {

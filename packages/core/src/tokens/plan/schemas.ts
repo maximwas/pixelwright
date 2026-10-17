@@ -1,5 +1,6 @@
 import * as z from "zod";
 import type { EffectSpec, FontSpec, PaintSpec } from "../../css-mapping/figma-props.ts";
+import { VARIABLE_SCOPES } from "../scopes.ts";
 import type { CollectionPlan, TokenError, TokenItem, TokensPlan, VariableValueSpec } from "./types.ts";
 
 const NameSchema = z.string().min(1).max(512);
@@ -10,6 +11,13 @@ const ColorSchema = z.object({
   b: z.number(),
   a: z.number(),
   space: z.literal("display-p3").exactOptional(),
+});
+
+/** A variable's name in code per platform; "" removes a platform's. */
+const CodeSyntaxSchema = z.object({
+  WEB: z.string().max(512).exactOptional(),
+  ANDROID: z.string().max(512).exactOptional(),
+  iOS: z.string().max(512).exactOptional(),
 });
 
 /**
@@ -30,6 +38,16 @@ export const TokensApplyInputSchema = z.object({
               values: z.record(NameSchema, z.string().max(10_000)),
               description: z.string().max(10_000).exactOptional(),
               token: z.string().max(512).exactOptional(),
+              scopes: z
+                .array(z.enum(VARIABLE_SCOPES))
+                .max(VARIABLE_SCOPES.length)
+                .exactOptional()
+                .describe(
+                  'The fields Figma\'s pickers offer it for, by Figma\'s names: ["FONT_WEIGHT"], ["GAP", "WIDTH_HEIGHT"]; [] hides it from all of them. A new variable is offered for every field (ALL_SCOPES), which makes a number a length in px: a font weight or an opacity needs its scope.',
+                ),
+              codeSyntax: CodeSyntaxSchema.exactOptional().describe(
+                'Its name in code per platform: WEB (also its CSS name, as var(--name)), ANDROID, iOS; "" removes one.',
+              ),
             }),
           )
           .max(5_000),
@@ -94,6 +112,9 @@ const CollectionPlanSchema: z.ZodType<CollectionPlan, CollectionPlan> = z.object
       values: z.record(NameSchema, ValueSchema),
       description: z.string().exactOptional(),
       token: z.string().exactOptional(),
+      scopes: z.array(z.enum(VARIABLE_SCOPES)).exactOptional(),
+      codeSyntax: CodeSyntaxSchema.exactOptional(),
+      unitless: z.literal(true).exactOptional(),
     }),
   ),
 });
@@ -148,4 +169,6 @@ export const TokensApplyResultSchema = z.object({
   created: z.array(TokenItemSchema),
   updated: z.array(TokenItemSchema),
   errors: z.array(TokenErrorSchema),
+  /** What was written but may not read back as meant: a plain number Figma takes for a length. */
+  notes: z.array(z.string()).exactOptional(),
 });

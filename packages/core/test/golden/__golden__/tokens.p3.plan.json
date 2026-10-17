@@ -39,7 +39,14 @@
               }
             },
             "description": "The page background.",
-            "token": "--surface"
+            "token": "--surface",
+            "scopes": [
+              "FRAME_FILL",
+              "SHAPE_FILL"
+            ],
+            "codeSyntax": {
+              "WEB": "var(--surface)"
+            }
           },
           {
             "name": "Ink",
@@ -103,7 +110,10 @@
                 "kind": "number",
                 "value": 8
               }
-            }
+            },
+            "scopes": [
+              "GAP"
+            ]
           },
           {
             "name": "Gap/None",
@@ -113,7 +123,10 @@
                 "kind": "number",
                 "value": 0
               }
-            }
+            },
+            "scopes": [
+              "GAP"
+            ]
           },
           {
             "name": "Radius",
@@ -123,7 +136,8 @@
                 "kind": "number",
                 "value": 13.5
               }
-            }
+            },
+            "scopes": []
           },
           {
             "name": "Opacity/Half",
@@ -133,7 +147,10 @@
                 "kind": "number",
                 "value": 0.5
               }
-            }
+            },
+            "scopes": [
+              "OPACITY"
+            ]
           },
           {
             "name": "Opacity/Faint",
@@ -143,7 +160,10 @@
                 "kind": "number",
                 "value": 0.25
               }
-            }
+            },
+            "scopes": [
+              "COLOR_OPACITY"
+            ]
           },
           {
             "name": "Weight/Bold",
@@ -153,7 +173,10 @@
                 "kind": "number",
                 "value": 700
               }
-            }
+            },
+            "scopes": [
+              "FONT_WEIGHT"
+            ]
           },
           {
             "name": "Font/Family",
@@ -163,7 +186,10 @@
                 "kind": "string",
                 "value": "Inter 'Display' \\ Pro"
               }
-            }
+            },
+            "scopes": [
+              "FONT_FAMILY"
+            ]
           },
           {
             "name": "Feature/On",

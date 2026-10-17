@@ -1,8 +1,10 @@
 import { type ColorSpace, colorSpaceOf } from "../../kernel/color/color-space.ts";
 import { variableTokenName } from "../../kernel/names.ts";
+import { numberUnits } from "../../tokens/model/number-units.ts";
 import { variableCss } from "../../tokens/model/variable-css.ts";
 import { Notes } from "../../tokens/notes.ts";
 import type { RawCollection, RawTokens, RawVariable } from "../../tokens/raw-tokens.ts";
+import type { NumberUnit } from "../../tokens/scopes.ts";
 import type { TokenUses } from "./token-uses.ts";
 import type { BaselineChanges } from "./types.ts";
 
@@ -32,6 +34,7 @@ export class SideVariables {
   readonly #collections: ReadonlyMap<string, RawCollection>;
   readonly #names: ReadonlyMap<string, string>;
   readonly #space: ColorSpace;
+  readonly #units: ReadonlyMap<string, NumberUnit>;
 
   constructor(raw: RawTokens) {
     this.#variables = new Map(raw.variables.map((variable) => [variable.id, variable]));
@@ -41,6 +44,7 @@ export class SideVariables {
       ...Object.entries(raw.external).map(([id, variable]) => [id, variableTokenName(variable)] as const),
     ]);
     this.#space = colorSpaceOf(raw.colorProfile);
+    this.#units = numberUnits(raw.variables);
   }
 
   get(id: string): SideVariable | undefined {
@@ -54,6 +58,7 @@ export class SideVariables {
       names: this.#names,
       space: this.#space,
       notes: new Notes(),
+      units: this.#units,
     };
 
     return {

@@ -2,9 +2,11 @@ import { colorSpaceOf } from "../../kernel/color/color-space.ts";
 import { tokenName, variableTokenName } from "../../kernel/names.ts";
 import { Notes } from "../notes.ts";
 import type { RawCollection, RawTokens, RawVariable } from "../raw-tokens.ts";
+import { everyField } from "../scopes.ts";
 import { filteredCollections, type TokenFilter } from "../token-filter.ts";
 import { noteMissingTargets } from "./missing-targets.ts";
 import { modeSelectors } from "./mode-selectors.ts";
+import { numberUnits } from "./number-units.ts";
 import { styleTokens } from "./style-tokens.ts";
 import type { TokenCollection, TokenModel, TokenVariable } from "./types.ts";
 import { type VariableCssContext, variableCss } from "./variable-css.ts";
@@ -21,6 +23,7 @@ export function tokenModel(raw: RawTokens, filter: TokenFilter = {}): TokenModel
     names: tokenNames(raw),
     space,
     notes,
+    units: numberUnits(raw.variables),
   };
   const drafts = filteredCollections(raw, filter).map((collection) => draftOf(collection, raw.variables, context));
   const selectors = modeSelectors(drafts, notes);
@@ -81,5 +84,7 @@ function tokenVariable(variable: RawVariable, collection: RawCollection, context
       collection.modes.map(({ modeId, name }) => [name, variableCss(variable.valuesByMode[modeId], variable, context)]),
     ),
     ...(variable.description === undefined ? {} : { description: variable.description }),
+    ...(everyField(variable.scopes) ? {} : { scopes: [...variable.scopes] }),
+    ...(Object.keys(variable.codeSyntax ?? {}).length === 0 ? {} : { codeSyntax: { ...variable.codeSyntax } }),
   };
 }
