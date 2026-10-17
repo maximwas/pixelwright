@@ -63,9 +63,11 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `assets_export` | Icons and images as SVG, PNG, JPG, WebP or PDF, sized by a CSS width if you like, originals included |
 | `tokens_read`, `tokens_usage`, `components_read` | Variables with every mode and styles, as CSS, JSON or DTCG token files; the layers a token is used on; the components a page uses, with variants, properties, the nested instances they expose and the project's code for each |
 | `design_audit`, `contrast_check`, `fonts_check` | The scale a design uses and what is off it; every text's WCAG contrast; where the build gets each font |
+| `design_lint` | A layer, page or file checked against the general rules: contrast, raw colours and texts, detached components, stacks without auto layout, overflow, touch targets, missing states, leftovers; each finding with its fix |
 | `code_connect_read` | The project's Figma Code Connect templates and batch files, what each connects and how, what its code leaves out, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images; a named version in Figma's history first, when asked |
 | `tokens_apply` | Variables (collections, modes, aliases) and styles, in `tokens_read`'s shape |
+| `tokens_bind` | Raw colours, spacing, radii, texts and effects bound to the variables and styles that hold them; one token's uses rebound to another |
 | `effects_apply` | Figma's own noise, texture and glass on layers: a ready look (grain, film, risograph, frosted or clear glass) or the effect's own values |
 | `version_save` | A named version in Figma's history, with the baselines it goes with, when you ask for one |
 | `nodes_delete`, `execute` | Delete layers; run plugin code for what the XML cannot say |

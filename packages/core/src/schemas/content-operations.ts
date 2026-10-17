@@ -2,6 +2,7 @@ import * as z from "zod";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "../apply/schemas.ts";
 import { EXPORT_CHUNK_BYTES, UPLOAD_MAX_BYTES, VERSION_DESCRIPTION_CHARS } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
+import { BindInputSchema, BindOutputSchema } from "../tokens/bind/schemas.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schemas.ts";
 import { RawTokensSchema } from "../tokens/raw-tokens.ts";
 import { EffectsInputSchema, EffectsOutputSchema } from "./effects.ts";
@@ -152,6 +153,11 @@ export const CONTENT_OPERATIONS = {
       dryRun: z.boolean(),
     }),
     output: TokensApplyResultSchema,
+  },
+  /** Raw values bound to the tokens that hold them, or one token's uses rebound to another; a dry run only finds. */
+  bind: {
+    input: BindInputSchema,
+    output: BindOutputSchema,
   },
   /** Code run in the plugin: its value made JSON-safe, what it printed, and what it threw or that it ran too long. */
   execute: {

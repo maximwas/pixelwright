@@ -4033,6 +4033,219 @@
     }
   },
   {
+    "name": "design_lint",
+    "title": "Lint a design against the general rules",
+    "description": "Checks layers, a page or the file against the rules a design should keep before it is built: text contrast below WCAG AA (an error), colours, texts and effects bound to no token or style, frames detached from components, stacks placed by hand that Figma reads as a flow, layers reaching past their parent's flow, grid cell or clip (a text past its column), touch targets under 24 or 44 px, interactive components without hover, focus or disabled states, raw values a token holds, spacing off the 4 px grid, instance overrides of a component's look, default layer names, hidden and empty leftovers. Each finding names its layer, why, and how to fix it with which tool (tokens_bind binds raw values to the tokens holding them). Errors first. Works while Allow edits is off. design_audit lists the scale itself.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "What to lint: a layer id, a page id (its top layers), or \"file\". Default: the layers selected in Figma, else the current page.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "rules": {
+          "description": "Only these rules. Default: every rule.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "contrast",
+              "raw-color",
+              "text-style",
+              "detached",
+              "no-auto-layout",
+              "overflow",
+              "touch-target",
+              "missing-states",
+              "raw-number",
+              "off-scale",
+              "effect-style",
+              "overridden",
+              "default-name",
+              "leftover"
+            ]
+          }
+        },
+        "severity": {
+          "default": "info",
+          "description": "The least severe findings to list: error, warning, or info (everything).",
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ]
+        },
+        "limit": {
+          "default": 100,
+          "description": "The most findings listed; every rule is still counted.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string",
+                "enum": [
+                  "contrast",
+                  "raw-color",
+                  "text-style",
+                  "detached",
+                  "no-auto-layout",
+                  "overflow",
+                  "touch-target",
+                  "missing-states",
+                  "raw-number",
+                  "off-scale",
+                  "effect-style",
+                  "overridden",
+                  "default-name",
+                  "leftover"
+                ]
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "count": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "about": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "rule",
+              "severity",
+              "count",
+              "about"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Each rule with findings, and how many: the list below may stop at the limit."
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string",
+                "enum": [
+                  "contrast",
+                  "raw-color",
+                  "text-style",
+                  "detached",
+                  "no-auto-layout",
+                  "overflow",
+                  "touch-target",
+                  "missing-states",
+                  "raw-number",
+                  "off-scale",
+                  "effect-style",
+                  "overridden",
+                  "default-name",
+                  "leftover"
+                ]
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "description": "The layer (or component set) the finding is about."
+              },
+              "name": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "fix": {
+                "description": "How to fix it, naming the tool that does.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "rule",
+              "severity",
+              "id",
+              "name",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Errors first, then warnings, then info; in layer order within each."
+        },
+        "more": {
+          "type": "boolean",
+          "description": "Findings past the limit were left out: raise limit, narrow within or pick rules."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "summary",
+        "rules",
+        "findings",
+        "more",
+        "notes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "tokens_usage",
     "title": "Where a token is used",
     "description": "The layers on the current page (or inside within) that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch.",
@@ -5086,6 +5299,385 @@
         "created",
         "updated",
         "errors",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "tokens_bind",
+    "title": "Bind raw values to tokens",
+    "description": "Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer's variable mode and within the variables' scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates. Instances are left to their main components. Results are grouped by value. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing). design_lint says what is raw.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "The layers to bind in: a layer id, a page id (all its layers), or \"file\". Default: the layers selected in Figma.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "kinds": {
+          "default": [
+            "color",
+            "number",
+            "text",
+            "effect"
+          ],
+          "description": "What to bind: color (fills, strokes, text colours), number (gaps, padding, radii, border widths, opacity), text (text styles), effect (effect styles). Default: all.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "color",
+              "number",
+              "text",
+              "effect"
+            ]
+          }
+        },
+        "choose": {
+          "default": [],
+          "description": "Picks: for a value several tokens hold, the one it takes; or a value to snap to a token (a near colour, an off-scale gap), which then takes the token's value. Values as this tool lists them.",
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "The value as tokens_bind lists it: #3B2FD9, 16px, a font shorthand."
+              },
+              "token": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "field": {
+                "description": "Only where the value is this field (background, border, color, gap, padding, border-radius…).",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "value",
+              "token"
+            ]
+          }
+        },
+        "remap": {
+          "default": [],
+          "description": "Rebind every use of one token to another of its kind (--blue-500 to --brand, a duplicate style to the one kept); raw values are then left alone.",
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "description": "List what would be bound without writing; works with Allow edits off.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "bound": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              },
+              "token": {
+                "type": "string"
+              },
+              "snapped": {
+                "description": "The value was not the token's: the layers take the token's value (a choice asked for it).",
+                "type": "boolean",
+                "const": true
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples",
+              "token"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ambiguous": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              },
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples",
+              "candidates"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "unmatched": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Raw values no token holds."
+        },
+        "remapped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "layers": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "more": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "bound",
+        "ambiguous",
+        "unmatched",
+        "remapped",
+        "layers",
+        "errors",
+        "notes",
+        "more",
+        "summary",
         "dryRun"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",

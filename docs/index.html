@@ -302,6 +302,7 @@
             <dl>
               <dt>tokens_read, tokens_usage</dt><dd>Variables with every mode, and styles, as CSS, JSON or DTCG token files; where each is used.</dd>
               <dt>design_audit, contrast_check, fonts_check</dt><dd>The scale in use and what is off it; text contrast; where each font comes from.</dd>
+              <dt>design_lint</dt><dd>The general rules checked before a build: contrast, raw values, detached components, overflow, touch targets, states, each finding with its fix.</dd>
               <dt>components_read</dt><dd>The components a page uses or the file defines, with variants and properties.</dd>
               <dt>assets_export</dt><dd>Icons and images as SVG, PNG, JPG, WebP or PDF, sized by a CSS width, originals included.</dd>
             </dl>
@@ -311,6 +312,7 @@
             <dl>
               <dt>design_apply</dt><dd>The same XML back: change layers by id, add frames, instances, components and variants, place images; a named version in Figma's history first, when asked.</dd>
               <dt>tokens_apply</dt><dd>Variable collections, modes and aliases, and styles.</dd>
+              <dt>tokens_bind</dt><dd>Raw values bound to the variables and styles that hold them, or one token's uses moved to another.</dd>
               <dt>effects_apply</dt><dd>Figma's own noise, texture and glass: a ready look such as grain, film or frosted glass, or your own values.</dd>
               <dt>nodes_delete, execute</dt><dd>Delete layers; run plugin code for what XML cannot say.</dd>
             </dl>

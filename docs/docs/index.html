@@ -270,6 +270,17 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-design_lint">
+  <h3><code>design_lint</code></h3>
+  <p>Checks layers, a page or the file against the rules a design should keep before it is built: text contrast below WCAG AA (an error), colours, texts and effects bound to no token or style, frames detached from components, stacks placed by hand that Figma reads as a flow, layers reaching past their parent&#39;s flow, grid cell or clip (a text past its column), touch targets under 24 or 44 px, interactive components without hover, focus or disabled states, raw values a token holds, spacing off the 4 px grid, instance overrides of a component&#39;s look, default layer names, hidden and empty leftovers. Each finding names its layer, why, and how to fix it with which tool (tokens_bind binds raw values to the tokens holding them). Errors first. Works while Allow edits is off. design_audit lists the scale itself.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>within</code><span class="optional">optional</span></td><td><code>string | string</code></td><td>What to lint: a layer id, a page id (its top layers), or &quot;file&quot;. Default: the layers selected in Figma, else the current page.</td></tr>
+<tr><td><code>rules</code><span class="optional">optional</span></td><td><code>&quot;contrast&quot; | &quot;raw-color&quot; | &quot;text-style&quot; | &quot;detached&quot; | &quot;no-auto-layout&quot; | &quot;overflow&quot; | &quot;touch-target&quot; | &quot;missing-states&quot; | &quot;raw-number&quot; | &quot;off-scale&quot; | &quot;effect-style&quot; | &quot;overridden&quot; | &quot;default-name&quot; | &quot;leftover&quot;[]</code></td><td>Only these rules. Default: every rule.</td></tr>
+<tr><td><code>severity</code><span class="optional">optional</span></td><td><code>&quot;error&quot; | &quot;warning&quot; | &quot;info&quot;</code><br /><span class="default">default &quot;info&quot;</span></td><td>The least severe findings to list: error, warning, or info (everything).</td></tr>
+<tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 100</span></td><td>The most findings listed; every rule is still counted.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-design_read">
   <h3><code>design_read</code></h3>
   <p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer&#39;s Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer&#39;s summary being $motion in the XML) when there are any, and, where the project has Figma Code Connect templates (<em>.figma.ts) or batch files (</em>.figma.batch.json), codeComponents: the code connected instances render to ({ids, component, template, source, snippet, imports, unread}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code and add what unread names (its own values are its variant and props; read it with node=&lt;its id&gt; for a nested one&#39;s); code: false reads it as layers. A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project&#39;s own components and tokens.</p>
@@ -466,6 +477,19 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-tokens_bind">
+  <h3><code>tokens_bind</code><span class="writes">writes</span></h3>
+  <p>Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer&#39;s variable mode and within the variables&#39; scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates. Instances are left to their main components. Results are grouped by value. One undo step in Figma; refused while the plugin&#39;s Allow edits switch is off (dryRun lists without writing). design_lint says what is raw.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>within</code><span class="optional">optional</span></td><td><code>string | string</code></td><td>The layers to bind in: a layer id, a page id (all its layers), or &quot;file&quot;. Default: the layers selected in Figma.</td></tr>
+<tr><td><code>kinds</code><span class="optional">optional</span></td><td><code>&quot;color&quot; | &quot;number&quot; | &quot;text&quot; | &quot;effect&quot;[]</code><br /><span class="default">default [&quot;color&quot;,&quot;number&quot;,&quot;text&quot;,&quot;effect&quot;]</span></td><td>What to bind: color (fills, strokes, text colours), number (gaps, padding, radii, border widths, opacity), text (text styles), effect (effect styles). Default: all.</td></tr>
+<tr><td><code>choose</code><span class="optional">optional</span></td><td><code>object[]</code><br /><span class="default">default []</span></td><td>Picks: for a value several tokens hold, the one it takes; or a value to snap to a token (a near colour, an off-scale gap), which then takes the token&#39;s value. Values as this tool lists them.</td></tr>
+<tr><td><code>remap</code><span class="optional">optional</span></td><td><code>object[]</code><br /><span class="default">default []</span></td><td>Rebind every use of one token to another of its kind (--blue-500 to --brand, a duplicate style to the one kept); raw values are then left alone.</td></tr>
+<tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>List what would be bound without writing; works with Allow edits off.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-tokens_read">
   <h3><code>tokens_read</code></h3>
   <p>Reads the file&#39;s design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection&#39;s default mode and the styles, and every other mode is a block [data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;] to put on the element a theme applies to; format json returns the same per collection and mode; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries&#39; variables by name. notes say what could not be written.</p>
@@ -560,7 +584,10 @@ A screenshot in another variable mode (<code>modes: {&quot;Theme&quot;: &quot;Da
 <code>tokens_usage</code>: the layers a token is used on. <code>components_read</code>: the components a page uses, or the file
 defines, with variants and properties. <code>design_audit</code>: the scale a design uses (spacing, radii, font sizes,
 colours) and what is off it, for a file without tokens. <code>contrast_check</code>: every text&#39;s WCAG contrast.
-<code>fonts_check</code>: the fonts used and where the build gets each (Google Fonts links).</li>
+<code>fonts_check</code>: the fonts used and where the build gets each (Google Fonts links). <code>design_lint</code>: a layer, a
+page or the file checked against the general rules (contrast, raw values, detached components, overflow, touch
+targets, states, leftovers), each finding with its fix; <code>tokens_bind</code> then binds the raw values to the tokens
+that hold them (<code>dryRun</code> first, <code>choose</code> where several tokens hold a value).</li>
 <li><strong>Files.</strong> <code>assets_export</code>: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
 images as they were placed (originals); <code>width</code> sizes a render by the CSS width the build shows it at (110 at
 scale 2: 220 px). When a file gets another name than design_read planned (<code>planned</code>), use the path it gives.</li>
@@ -739,6 +766,20 @@ send only what you change. Nothing is ever deleted (use <code>execute</code> to 
 and the other modes are written. A dry run cannot know the plan, and a <code>version</code> is saved before the write.</li>
 <li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing. <code>version: &quot;Before the brand change&quot;</code> first saves a named version in the file&#39;s history, for the designer to go back to, when the call changes
 something.</li>
+</ul>
+<h3>tokens_bind</h3>
+<ul>
+<li>It binds raw values to the tokens holding them exactly, as design_read writes both (<code>#3B2FD9</code>, <code>16px</code>, a font
+shorthand): colour variables and paint styles, number variables (gaps, padding, radii, border widths, opacity),
+text styles and effect styles; a colour variable in each layer&#39;s mode, a variable only within its scopes. A colour
+at an opacity binds to its colour&#39;s opaque variable and keeps the opacity.</li>
+<li>Results come grouped by value: <code>bound</code>, <code>ambiguous</code> (several tokens hold it: <code>choose: [{value, token}]</code> picks
+one), <code>unmatched</code> (no token holds it: make one with tokens_apply). A choose for a value no candidate holds snaps
+the layers to the token (<code>snapped</code>); <code>field</code> narrows a choice to background, border, color, gap, padding….</li>
+<li><code>remap: [{from: &quot;--blue-500&quot;, to: &quot;--brand&quot;}]</code> moves every use of one token to another of its kind (merging
+duplicates); raw values are then left alone.</li>
+<li>Instances are left out: bind their main components, and the instances follow. One undo step; <code>dryRun</code> lists
+without writing, <code>version</code> saves a named version first when the call changes something.</li>
 </ul>
 <h3>Values</h3>
 <ul>

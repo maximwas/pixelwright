@@ -7,6 +7,7 @@ import {
 } from "@pixelwright/core";
 import type { PluginServices } from "../services/plugin-services.ts";
 import { applyChanges } from "./apply/apply-changes.ts";
+import { bindTokens } from "./bind/bind-tokens.ts";
 import { components } from "./components/read-components.ts";
 import { deleteNodes } from "./delete/delete-nodes.ts";
 import { applyEffects } from "./effects/apply-effects.ts";
@@ -64,12 +65,20 @@ const HANDLERS: Handlers = {
   cover: clipCover,
   execute: (input, { edits }) => execute(input, edits),
   tokens_apply: (input, services) => applyTokens(input, services),
+  bind: (input, services) => bindTokens(input, services),
   save_version: (input, services) => saveVersion(input, services),
   upload: async (input, { uploads }) => uploads.receive(input),
 };
 
 /** The operations that change the file: their changes are marked as Pixelwright's in the change journal. */
-const OWN_WRITES: ReadonlySet<OperationName> = new Set(["apply", "delete", "execute", "tokens_apply"]);
+const OWN_WRITES: ReadonlySet<OperationName> = new Set([
+  "apply",
+  "delete",
+  "execute",
+  "tokens_apply",
+  "effects",
+  "bind",
+]);
 
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);
 

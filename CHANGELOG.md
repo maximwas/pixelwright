@@ -23,11 +23,22 @@ How to write this file (people and agents alike):
 - `effects_apply` puts Figma's own noise, texture and glass on layers: a ready look (grain, film, risograph,
   frosted glass, clear glass) or the effect's own values; a new effect replaces the layer's one of its type, shadows
   and blurs stay, and `remove` takes them off.
+- `design_lint` checks a layer, a page or the whole file against the rules a design should keep before it is
+  built: text contrast below WCAG AA, colours, texts and effects bound to no token or style, frames detached from
+  components, stacks placed by hand, layers reaching past their parent's flow, grid cell or clip, touch targets under
+  24 or 44 px, interactive components without hover, focus or disabled states, raw values a token holds, spacing off
+  the 4 px grid, instance overrides of a component's look, default names, hidden and empty leftovers. Each finding
+  names its layer and how to fix it.
+- `tokens_bind` binds raw colours, gaps, padding, radii, border widths, opacity, texts and shadows to the variables
+  and styles that hold them exactly, in each layer's mode and within the variables' scopes. A value several tokens
+  hold is listed with its candidates for a pick, a value none holds is listed for `tokens_apply`, `choose` snaps a
+  near value to a token, and `remap` moves every use of one token to another.
 - `guide layout` tells when to lay a frame out as flex, as grid or by absolute placement, with the grid's tracks,
   spans and cells, pinned and centred layers, what is not supported, and examples checked in Figma.
 
 ### Fixed
 
+- `changes_since` counts `effects_apply`'s writes as Pixelwright's, and the plugin window names them.
 - A new frame laid out inside (a card) fills its grid cell with `justify-self`/`align-self="stretch"`: it used to
   hug its content.
 - `design_read` writes a grid's child that fills its cell as `stretch`, apart from one that hugs, and a grid's padding.

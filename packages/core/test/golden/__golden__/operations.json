@@ -7195,6 +7195,323 @@
       ]
     }
   },
+  "bind": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "roots": {
+          "minItems": 1,
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "kinds": {
+          "default": [
+            "color",
+            "number",
+            "text",
+            "effect"
+          ],
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "color",
+              "number",
+              "text",
+              "effect"
+            ]
+          }
+        },
+        "choose": {
+          "default": [],
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "The value as tokens_bind lists it: #3B2FD9, 16px, a font shorthand."
+              },
+              "token": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "field": {
+                "description": "Only where the value is this field (background, border, color, gap, padding, border-radius…).",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "value",
+              "token"
+            ]
+          }
+        },
+        "remap": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "roots"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "bound": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              },
+              "token": {
+                "type": "string"
+              },
+              "snapped": {
+                "description": "The value was not the token's: the layers take the token's value (a choice asked for it).",
+                "type": "boolean",
+                "const": true
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples",
+              "token"
+            ]
+          }
+        },
+        "ambiguous": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              },
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples",
+              "candidates"
+            ]
+          }
+        },
+        "unmatched": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples"
+            ]
+          },
+          "description": "Raw values no token holds."
+        },
+        "remapped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "count"
+            ]
+          }
+        },
+        "layers": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ]
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "more": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "bound",
+        "ambiguous",
+        "unmatched",
+        "remapped",
+        "layers",
+        "errors",
+        "notes",
+        "more"
+      ]
+    }
+  },
   "execute": {
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

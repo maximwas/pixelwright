@@ -51,6 +51,7 @@ describe("stdio server", () => {
         "contrast_check",
         "design_apply",
         "design_audit",
+        "design_lint",
         "design_read",
         "effects_apply",
         "execute",
@@ -71,6 +72,7 @@ describe("stdio server", () => {
         "selection_wait",
         "status",
         "tokens_apply",
+        "tokens_bind",
         "tokens_read",
         "tokens_usage",
         "variants_read",
@@ -86,6 +88,7 @@ describe("stdio server", () => {
           "execute",
           "nodes_delete",
           "tokens_apply",
+          "tokens_bind",
           "version_save",
         ].includes(tool.name);
 

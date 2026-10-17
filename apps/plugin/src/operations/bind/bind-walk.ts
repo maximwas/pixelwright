@@ -1,0 +1,68 @@
+import { BridgeError } from "@pixelwright/core";
+import { isLayer, loadPageOf, requireNode } from "../../figma/nodes.ts";
+
+/** The layers a bind call goes through, the instances it left to their components, and whether it reached them all. */
+export interface BindLayers {
+  readonly layers: SceneNode[];
+  readonly instances: number;
+  readonly finished: boolean;
+}
+
+/** The roots by id, their pages loaded: layers, or pages for all of a page's layers. */
+export async function bindRoots(ids: readonly string[]): Promise<BaseNode[]> {
+  const roots: BaseNode[] = [];
+
+  for (const id of ids) {
+    const node = await requireNode(id);
+
+    if (node.type === "DOCUMENT") {
+      throw new BridgeError("NODE_NOT_FOUND", `${id} is the document: give its pages or layers.`);
+    }
+
+    await loadPageOf(node);
+    roots.push(node);
+  }
+
+  return roots;
+}
+
+/**
+ * The layers under the roots (and the roots, when they are layers), depth first, until the deadline. An instance is
+ * passed over with its layers: what binds there belongs to its main component, and an instance's own would be overrides.
+ */
+export function bindableLayers(roots: readonly BaseNode[], deadline: number): BindLayers {
+  const layers: SceneNode[] = [];
+  const stack: BaseNode[] = [...roots].reverse();
+  let instances = 0;
+
+  while (stack.length > 0) {
+    if (layers.length % 200 === 0 && Date.now() > deadline) {
+      return {
+        layers,
+        instances,
+        finished: false,
+      };
+    }
+
+    const node = stack.pop() as BaseNode;
+
+    if (node.type === "INSTANCE") {
+      instances += 1;
+      continue;
+    }
+
+    if (isLayer(node)) {
+      layers.push(node);
+    }
+
+    if ("children" in node) {
+      stack.push(...[...node.children].reverse());
+    }
+  }
+
+  return {
+    layers,
+    instances,
+    finished: true,
+  };
+}
