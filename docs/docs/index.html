@@ -52,6 +52,7 @@
           <li><a href="#guide-tokens">Guide: tokens</a></li>
           <li><a href="#guide-assets">Guide: assets</a></li>
           <li><a href="#guide-write">Guide: write</a></li>
+          <li><a href="#guide-layout">Guide: layout</a></li>
           <li><a href="#guide-code-connect">Guide: code-connect</a></li>
           <li><a href="#guide-email">Guide: email</a></li>
         </ol>
@@ -331,9 +332,9 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-guide">
   <h3><code>guide</code></h3>
-  <p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); code-connect (Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.</p>
+  <p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); layout (design_apply layouts: when to use flex, grid or absolute placement; grid tracks, spans and cells; pinned and centred layers.); code-connect (Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
-<tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot; | &quot;write&quot; | &quot;code-connect&quot; | &quot;email&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
+<tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot; | &quot;write&quot; | &quot;layout&quot; | &quot;code-connect&quot; | &quot;email&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
 </tbody></table>
 </section>
 <section class="tool" id="tool-image_compare">
@@ -563,8 +564,9 @@ colours) and what is off it, for a file without tokens. <code>contrast_check</co
 <li><strong>Files.</strong> <code>assets_export</code>: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
 images as they were placed (originals); <code>width</code> sizes a render by the CSS width the build shows it at (110 at
 scale 2: 220 px). When a file gets another name than design_read planned (<code>planned</code>), use the path it gives.</li>
-<li><strong>Write.</strong> <code>design_apply</code> writes the same XML back into Figma: change layers by id, create new ones (see <code>guide write</code>); <code>tokens_apply</code> writes variables and styles in tokens_read&#39;s JSON shape (see <code>guide tokens</code>);
-<code>execute</code> runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.</li>
+<li><strong>Write.</strong> <code>design_apply</code> writes the same XML back into Figma: change layers by id, create new ones (see <code>guide write</code>, and <code>guide layout</code> for flex, grid and absolute placement); <code>tokens_apply</code> writes variables and styles in
+tokens_read&#39;s JSON shape (see <code>guide tokens</code>); <code>effects_apply</code> puts noise, texture or glass on layers;
+<code>execute</code> runs plugin code for what none of them can say. The user turns Allow edits on in the plugin window first.</li>
 <li><strong>Code Connect.</strong> Where the project has Figma Code Connect templates (<code>*.figma.ts</code>) or batch files
 (<code>*.figma.batch.json</code>), <code>design_read</code> gives each connected instance as <code>$code</code> with its code in
 <code>codeComponents</code>: use that code, adding what <code>unread</code> names. <code>components_read</code> gives each component&#39;s <code>code</code>, and
@@ -877,7 +879,8 @@ write them (a paint style, a colour or number variable, an effect style); <code>
 weight, or the error lists the styles it has.</li>
 <li>Sizes: <code>width</code>/<code>height</code> in px or <code>auto</code>; <code>flex=&quot;1&quot;</code> fills an auto layout parent&#39;s direction,
 <code>align-self=&quot;stretch&quot;</code> fills across it. Placement: <code>position=&quot;absolute&quot;</code> with <code>left</code>/<code>right</code>/<code>top</code>/
-<code>bottom</code>, <code>calc(50% ± Npx)</code> for the centre, percents (with the size in percents) to scale.</li>
+<code>bottom</code>, <code>calc(50% ± Npx)</code> for the centre, percents (with the size in percents) to scale. When to use flex,
+grid or absolute placement, grid tracks and cells, with examples: see <code>guide layout</code>.</li>
 <li>Not written yet, and refused with an error: gradients, blend modes, grow weights, <code>overflow: scroll</code>, links on
 frames, dashed underlines.</li>
 </ul>
@@ -887,7 +890,8 @@ frames, dashed underlines.</li>
 <code>created</code> lists the new layers&#39; ids by line, <code>changed</code> the layers written to. One call is one undo step in Figma:
 the user&#39;s Cmd+Z takes the whole call back.</p>
 <p>Effects CSS cannot write (noise, texture, glass, hidden effects) stay when a layer&#39;s <code>box-shadow</code> or <code>filter</code>
-changes, and a shadow sent back as it was keeps its colour variable and blend mode.</p>
+changes, and a shadow sent back as it was keeps its colour variable and blend mode. <code>effects_apply</code> puts Figma&#39;s own
+noise, texture and glass on layers: a ready look (grain, film, risograph, frosted or clear glass) or its own values.</p>
 <h3>Beyond the XML: execute</h3>
 <p><code>execute</code> runs JavaScript in the plugin for what design_apply and tokens_apply cannot say (removing a variable,
 a prototype link, a plugin data field). The code is the body of an async function given <code>figma</code> (the Plugin API)
@@ -896,6 +900,125 @@ built), <code>console.log</code> lines come back as <code>logs</code>, and what 
 one undo step; it needs Allow edits, and the tool waits at most 25 s. Code it starts that outlives the call (timers,
 listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
 synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.</p>
+
+        </section>
+        <section id="guide-layout">
+          <h2>Guide: layout</h2>
+<p class="topic-about">design_apply layouts: when to use flex, grid or absolute placement; grid tracks, spans and cells; pinned and centred layers. The agent reads this with <code>guide</code> topic <code>layout</code>.</p>
+<p><code>design_apply</code> lays out a frame&#39;s children as Figma does: auto layout as flex, grid auto layout as grid, or each
+child placed on its own (absolute). Pick the one that says what should happen when the content or the frame&#39;s size
+changes.</p>
+<h3>Which one</h3>
+<ul>
+<li><strong>Flex</strong> (<code>display=&quot;flex&quot;</code>): one direction. A row of buttons, a nav bar or toolbar, a list, a stack of sections, a
+card&#39;s content. Children follow each other; one can take the room left.</li>
+<li><strong>Grid</strong> (<code>display=&quot;grid&quot;</code>): two directions, items lined up in rows and columns at once. Card grids, bento boxes,
+galleries, forms with a label column and a field column, pricing tables, footers with link columns.</li>
+<li><strong>Absolute</strong> (<code>position=&quot;absolute&quot;</code> with <code>left</code>, <code>right</code>, <code>top</code>, <code>bottom</code>): a layer over the others or
+pinned to a corner or an edge. A badge, a close button, an overlay, a decorative shape, layered images in a hero.
+Never for content that should reflow: it stays where it is pinned when the text or the cards around it grow.</li>
+<li>Nest them: a grid of cards, each card a flex column with an absolute badge.</li>
+</ul>
+<h3>Flex</h3>
+<ul>
+<li><code>display=&quot;flex&quot;</code> is a row, <code>flex-direction=&quot;column&quot;</code> a column (no reverse order); <code>flex-wrap=&quot;wrap&quot;</code> wraps
+either. <code>gap</code> spaces the children and the wrapped lines; <code>row-gap</code> and <code>column-gap</code> set one axis each, as in
+CSS.</li>
+<li><code>padding</code> takes 1 to 4 lengths. <code>justify-content</code> aligns along the direction (<code>flex-start</code>, <code>center</code>,
+<code>flex-end</code>, <code>space-between</code>, <code>space-around</code>, <code>space-evenly</code>; a spread ignores <code>gap</code>), <code>align-items</code> across
+it (<code>flex-start</code>, <code>center</code>, <code>flex-end</code>, <code>baseline</code>). Figma aligns all children alike: a child&#39;s
+<code>align-self</code> takes only <code>stretch</code> or <code>auto</code>.</li>
+<li>A child&#39;s size: <code>width</code>/<code>height</code> in px is fixed; none (or <code>auto</code>) hugs its content; <code>flex=&quot;1&quot;</code> takes the
+room left along the direction (Figma has no other weights); <code>align-self=&quot;stretch&quot;</code> fills across it; <code>min-width</code>,
+<code>max-width</code>, <code>min-height</code> and <code>max-height</code> set limits. A new frame with <code>display</code> hugs what it holds unless
+sized or filling.</li>
+</ul>
+<h3>Grid</h3>
+<ul>
+<li><code>display=&quot;grid&quot;</code> with <code>grid-template-columns</code> and <code>grid-template-rows</code>, each a list of tracks: <code>200px</code> is
+fixed, <code>1fr</code> takes a share of the room left (<code>2fr</code> twice as much), <code>auto</code> fits its content; <code>repeat(3, 1fr)</code>
+repeats one track.</li>
+<li>Give both lists: a new grid has 2 columns and 2 rows, and an empty row still takes room. <code>fr</code> tracks share the
+grid&#39;s own size: give the grid a <code>width</code> (a <code>height</code> for <code>fr</code> rows) or let it fill its parent; on an axis where
+the grid hugs, Figma turns <code>fr</code> into <code>auto</code>.</li>
+<li><code>gap=&quot;16px&quot;</code> spaces rows and columns alike, <code>gap=&quot;12px 24px&quot;</code> rows then columns; <code>row-gap</code> and <code>column-gap</code>
+set one each (design_read writes these two). <code>padding</code> works as in flex. <code>justify-content</code> and <code>align-items</code>
+are refused on a grid: align each child in its cell.</li>
+<li>Place a child with <code>grid-column</code> and <code>grid-row</code>, lines counted from 1 as in CSS: <code>grid-column=&quot;3&quot;</code> is the third
+column, <code>grid-column=&quot;1 / span 2&quot;</code> (or <code>&quot;1 / 3&quot;</code>) two columns from the first, <code>grid-row=&quot;2 / span 3&quot;</code> three
+rows from the second. Always give the start line.</li>
+<li>A child without them takes the next free cell, row by row in the XML&#39;s order, and a cell holds one child: place
+every child of a grid, or none. A child with no free cell left goes into a new row at the end, sized like the last
+one (columns are never added). A cell past the tracks, a span past the last track or a taken cell is refused with
+Figma&#39;s error, and the child stays in the next free cell.</li>
+<li>In its cell a child keeps its size and sits in the top left corner, or where <code>justify-self</code> (horizontally) and
+<code>align-self</code> (vertically) put it: <code>start</code>, <code>center</code>, <code>end</code>, or <code>stretch</code> to fill the cell&#39;s width or height
+instead of a size of its own. <code>flex=&quot;1&quot;</code> does not fill a cell.</li>
+<li>A new frame with a <code>display</code> of its own (a card laid out inside) hugs its content in its cell even with
+<code>stretch</code>: send <code>&lt;Frame id=&quot;…&quot; justify-self=&quot;stretch&quot; align-self=&quot;stretch&quot;/&gt;</code> again once it is made.</li>
+<li>Move or delete the children of a row or column before taking it out of the tracks.</li>
+<li>design_read writes a grid the same way: three or more equal tracks as <code>repeat()</code>, each child&#39;s <code>grid-row</code> and
+<code>grid-column</code> from 1, <code>span</code> when it spans.</li>
+</ul>
+<h3>Absolute</h3>
+<ul>
+<li><code>position=&quot;absolute&quot;</code> takes a layer out of its flex or grid parent&#39;s flow: the other children, the padding and the
+gap act as if it were not there. It is placed against its parent and moves with it, so nest it in the frame it
+belongs to (the card, not the grid around the cards). Later in the XML is drawn on top (there is no
+<code>z-index</code>). <code>position=&quot;relative&quot;</code> puts it back in the flow.</li>
+<li>Every child of a frame without auto layout (no <code>display</code>, or <code>display=&quot;block&quot;</code>) is placed so: give it
+<code>position=&quot;absolute&quot;</code> and its edges. Without edges it lands in the top left corner, and <code>left</code> or <code>top</code>
+without <code>position=&quot;absolute&quot;</code> is refused.</li>
+<li>Edges in px: <code>left</code>/<code>top</code> pin it to the start; <code>right</code>/<code>bottom</code> to the end, where it stays when the parent
+is resized (<code>right=&quot;12px&quot; top=&quot;12px&quot;</code> is a top right badge; <code>right=&quot;-8px&quot; top=&quot;-8px&quot;</code> hangs it over the corner
+of a parent that does not clip); <code>left</code> and <code>right</code> without a <code>width</code> stretch it with the parent (<code>top</code> and
+<code>bottom</code> without a <code>height</code> likewise).</li>
+<li>Centred: <code>left=&quot;calc(50% - 24px)&quot;</code> puts the left edge 24 px left of the centre, which centres a layer 48 px wide
+(half its size; <code>top</code> likewise), and keeps it there when the parent is resized; <code>left=&quot;50%&quot;</code> puts the edge on
+the centre. Scaled with the parent: <code>left=&quot;5%&quot;</code> with <code>width=&quot;25%&quot;</code> (<code>top</code> with <code>height</code>). Only <code>left</code> and
+<code>top</code> take <code>calc()</code> and percents; tokens cannot place a layer.</li>
+<li>On the page itself a layer is placed by <code>left</code> and <code>top</code> alone (with <code>position=&quot;absolute&quot;</code>); without them a new
+one goes beside the page&#39;s layers.</li>
+</ul>
+<h3>Not supported</h3>
+<ul>
+<li>Grid: <code>minmax()</code>, <code>fit-content()</code>, <code>auto-fill</code> and <code>auto-fit</code>, <code>repeat()</code> of several tracks, named lines and
+areas (<code>grid-template-areas</code>, <code>grid-area</code>), <code>span</code> without a start line, negative lines, <code>grid-auto-flow</code>,
+<code>grid-auto-rows</code>, <code>justify-items</code> and aligning the whole grid, subgrids.</li>
+<li>Flex: reverse directions, grow weights other than 1, <code>flex-basis</code>, <code>order</code> (the XML&#39;s order is the order).</li>
+<li>Absolute: <code>z-index</code>, <code>inset</code>, <code>position: fixed</code> and <code>sticky</code>, <code>calc()</code> other than around 50%, percents or
+<code>calc()</code> on <code>right</code> and <code>bottom</code>.</li>
+</ul>
+<h3>Examples (each written with design_apply and read back)</h3>
+<p>A bento grid: three equal columns, two rows of 160 px, a card across two columns, one placed on the second row
+across the last two, and a dot centred in the cell left free.</p>
+<pre><code class="language-xml">&lt;Frame name=&quot;Bento&quot; display=&quot;grid&quot; width=&quot;920px&quot; grid-template-columns=&quot;repeat(3, 1fr)&quot; grid-template-rows=&quot;160px 160px&quot; gap=&quot;16px&quot;&gt;
+  &lt;Frame name=&quot;Wide&quot; grid-row=&quot;1&quot; grid-column=&quot;1 / span 2&quot; justify-self=&quot;stretch&quot; align-self=&quot;stretch&quot; border-radius=&quot;16px&quot; background=&quot;#FFFFFF&quot;/&gt;
+  &lt;Frame name=&quot;Side&quot; grid-row=&quot;1&quot; grid-column=&quot;3&quot; justify-self=&quot;stretch&quot; align-self=&quot;stretch&quot; border-radius=&quot;16px&quot; background=&quot;#E4E4E7&quot;/&gt;
+  &lt;Frame name=&quot;Row two&quot; grid-row=&quot;2&quot; grid-column=&quot;2 / span 2&quot; justify-self=&quot;stretch&quot; align-self=&quot;stretch&quot; border-radius=&quot;16px&quot; background=&quot;#18181B&quot;/&gt;
+  &lt;Frame name=&quot;Dot&quot; grid-row=&quot;2&quot; grid-column=&quot;1&quot; justify-self=&quot;center&quot; align-self=&quot;center&quot; width=&quot;64px&quot; height=&quot;64px&quot; border-radius=&quot;32px&quot; background=&quot;#A1A1AA&quot;/&gt;
+&lt;/Frame&gt;
+</code></pre>
+<p>A form: a fixed label column and a field column that takes the rest.</p>
+<pre><code class="language-xml">&lt;Frame name=&quot;Form&quot; display=&quot;grid&quot; width=&quot;480px&quot; grid-template-columns=&quot;120px 1fr&quot; grid-template-rows=&quot;auto auto&quot; gap=&quot;12px 16px&quot; padding=&quot;24px&quot; border-radius=&quot;16px&quot; background=&quot;#FFFFFF&quot;&gt;
+  &lt;Text grid-row=&quot;1&quot; grid-column=&quot;1&quot; justify-self=&quot;end&quot; align-self=&quot;center&quot; font=&quot;500 14px/20px &#39;Inter&#39;&quot; color=&quot;#18181B&quot;&gt;Email&lt;/Text&gt;
+  &lt;Frame name=&quot;Email field&quot; grid-row=&quot;1&quot; grid-column=&quot;2&quot; justify-self=&quot;stretch&quot; height=&quot;40px&quot; border=&quot;1px solid #D4D4D8&quot; border-radius=&quot;8px&quot; background=&quot;#FFFFFF&quot;/&gt;
+  &lt;Text grid-row=&quot;2&quot; grid-column=&quot;1&quot; justify-self=&quot;end&quot; align-self=&quot;center&quot; font=&quot;500 14px/20px &#39;Inter&#39;&quot; color=&quot;#18181B&quot;&gt;Password&lt;/Text&gt;
+  &lt;Frame name=&quot;Password field&quot; grid-row=&quot;2&quot; grid-column=&quot;2&quot; justify-self=&quot;stretch&quot; height=&quot;40px&quot; border=&quot;1px solid #D4D4D8&quot; border-radius=&quot;8px&quot; background=&quot;#FFFFFF&quot;/&gt;
+&lt;/Frame&gt;
+</code></pre>
+<p>A card: a flex column with a row whose field takes the room left, and a badge pinned to the top right corner.</p>
+<pre><code class="language-xml">&lt;Frame name=&quot;Plan&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; width=&quot;320px&quot; padding=&quot;24px&quot; gap=&quot;12px&quot; border-radius=&quot;16px&quot; background=&quot;#FFFFFF&quot;&gt;
+  &lt;Text font=&quot;600 18px/24px &#39;Inter&#39;&quot; color=&quot;#18181B&quot;&gt;Pro plan&lt;/Text&gt;
+  &lt;Frame name=&quot;Actions&quot; display=&quot;flex&quot; align-self=&quot;stretch&quot; align-items=&quot;center&quot; gap=&quot;12px&quot;&gt;
+    &lt;Frame name=&quot;Field&quot; flex=&quot;1&quot; height=&quot;36px&quot; border-radius=&quot;8px&quot; background=&quot;#F4F4F5&quot;/&gt;
+    &lt;Text font=&quot;500 14px/20px &#39;Inter&#39;&quot; color=&quot;#18181B&quot;&gt;Buy&lt;/Text&gt;
+  &lt;/Frame&gt;
+  &lt;Frame name=&quot;Badge&quot; position=&quot;absolute&quot; right=&quot;12px&quot; top=&quot;12px&quot; display=&quot;flex&quot; padding=&quot;4px 10px&quot; border-radius=&quot;999px&quot; background=&quot;#E11D48&quot;&gt;
+    &lt;Text font=&quot;600 12px/16px &#39;Inter&#39;&quot; color=&quot;#FFFFFF&quot;&gt;New&lt;/Text&gt;
+  &lt;/Frame&gt;
+&lt;/Frame&gt;
+</code></pre>
 
         </section>
         <section id="guide-code-connect">

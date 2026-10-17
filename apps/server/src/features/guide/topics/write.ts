@@ -87,7 +87,8 @@ taken as sRGB and converted to P3.
   weight, or the error lists the styles it has.
 - Sizes: \`width\`/\`height\` in px or \`auto\`; \`flex="1"\` fills an auto layout parent's direction,
   \`align-self="stretch"\` fills across it. Placement: \`position="absolute"\` with \`left\`/\`right\`/\`top\`/
-  \`bottom\`, \`calc(50% ± Npx)\` for the centre, percents (with the size in percents) to scale.
+  \`bottom\`, \`calc(50% ± Npx)\` for the centre, percents (with the size in percents) to scale. When to use flex,
+  grid or absolute placement, grid tracks and cells, with examples: see \`guide layout\`.
 - Not written yet, and refused with an error: gradients, blend modes, grow weights, \`overflow: scroll\`, links on
   frames, dashed underlines.
 
@@ -100,7 +101,8 @@ Each element is written on its own: an error names its line and attribute, and t
 the user's Cmd+Z takes the whole call back.
 
 Effects CSS cannot write (noise, texture, glass, hidden effects) stay when a layer's \`box-shadow\` or \`filter\`
-changes, and a shadow sent back as it was keeps its colour variable and blend mode.
+changes, and a shadow sent back as it was keeps its colour variable and blend mode. \`effects_apply\` puts Figma's own
+noise, texture and glass on layers: a ready look (grain, film, risograph, frosted or clear glass) or its own values.
 
 ## Beyond the XML: execute
 

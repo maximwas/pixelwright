@@ -23,6 +23,8 @@ How to write this file (people and agents alike):
 - `effects_apply` puts Figma's own noise, texture and glass on layers: a ready look (grain, film, risograph,
   frosted glass, clear glass) or the effect's own values; a new effect replaces the layer's one of its type, shadows
   and blurs stay, and `remove` takes them off.
+- `guide layout` tells when to lay a frame out as flex, as grid or by absolute placement, with the grid's tracks,
+  spans and cells, pinned and centred layers, what is not supported, and examples checked in Figma.
 
 ## 0.3.2 — 2026-10-17
 

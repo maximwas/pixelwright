@@ -112,6 +112,7 @@ describe("stdio server", () => {
         "tokens",
         "assets",
         "write",
+        "layout",
         "code-connect",
         "email",
       ]);

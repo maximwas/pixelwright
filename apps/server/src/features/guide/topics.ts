@@ -1,6 +1,7 @@
 import { ASSETS } from "./topics/assets.ts";
 import { CODE_CONNECT } from "./topics/code-connect.ts";
 import { EMAIL } from "./topics/email.ts";
+import { LAYOUT } from "./topics/layout.ts";
 import { TOKENS } from "./topics/tokens.ts";
 import { WORKFLOW } from "./topics/workflow.ts";
 import { WRITE } from "./topics/write.ts";
@@ -13,6 +14,7 @@ export const GUIDE_TOPICS = {
   tokens: TOKENS,
   assets: ASSETS,
   write: WRITE,
+  layout: LAYOUT,
   "code-connect": CODE_CONNECT,
   email: EMAIL,
 } as const;
