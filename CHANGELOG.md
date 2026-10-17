@@ -70,6 +70,8 @@ How to write this file (people and agents alike):
 
 ### Changed
 
+- `design_apply` reads a `rotate()` and a gradient's angles in any CSS angle unit (deg, grad, rad, turn), and lengths
+  and percentages as the CSS tokenizer reads them, any case and sign.
 - Pixelwright is open source under the MIT license, which was the license each version would have become two years
   after its release under FSL-1.1-MIT.
 - `tokens_read`'s CSS gives the default mode of a collection with several modes a `[data-<collection>="<mode>"]`

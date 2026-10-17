@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { Color, changeOf, cleanOracle, closest, fontShorthand, slug, splitTop, urlsOf } from "../src/index.ts";
+import {
+  Color,
+  changeOf,
+  cleanOracle,
+  closest,
+  degreesOf,
+  dimensionOf,
+  fontShorthand,
+  slug,
+  splitTop,
+  urlsOf,
+} from "../src/index.ts";
 
 const props = (tag: string, attributes: Record<string, string>) =>
   changeOf({
@@ -195,5 +206,33 @@ describe("Did you mean", () => {
     expect(closest("Cat", ["Bat", "Hat"])).toBe("Bat");
     expect(closest("Div", ["Frame", "Text"])).toBeNull();
     expect(closest("Frame", [])).toBeNull();
+  });
+});
+
+describe("dimensions and angles, as the CSS tokenizer reads them", () => {
+  it("reads a number, a percentage or a dimension, any case and sign", () => {
+    expect(dimensionOf("12.5PX")).toEqual({
+      value: 12.5,
+      unit: "px",
+    });
+    expect(dimensionOf("-50%")).toEqual({
+      value: -50,
+      unit: "%",
+    });
+    expect(dimensionOf("+3")).toEqual({
+      value: 3,
+      unit: "",
+    });
+    expect(dimensionOf("12px 4px")).toBeNull();
+    expect(dimensionOf("var(--x)")).toBeNull();
+  });
+
+  it("gives an angle in degrees from deg, grad, rad or turn", () => {
+    expect(degreesOf("45deg")).toBe(45);
+    expect(degreesOf("0.25turn")).toBe(90);
+    expect(degreesOf("100grad")).toBe(90);
+    expect(degreesOf(`${Math.PI}rad`)).toBeCloseTo(180, 10);
+    expect(degreesOf("45")).toBeNull();
+    expect(degreesOf("45px")).toBeNull();
   });
 });

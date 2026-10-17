@@ -1,6 +1,6 @@
 import { Color } from "../../kernel/color/color.ts";
 import type { GradientLength, GradientSpec, GradientStopSpec } from "../figma-props.ts";
-import { splitTop, tokenOf } from "./css-values.ts";
+import { degreesOf, dimensionOf, splitTop, tokenOf } from "./css-values.ts";
 import { turn } from "./gradient-geometry.ts";
 
 /** CSS's `to <side>` directions as angles; a corner as its diagonal on a square. */
@@ -125,22 +125,12 @@ function conicOf(prelude: string, stops: GradientStopSpec[]): GradientSpec | nul
       };
 }
 
-/** An angle (deg, turn, rad) or a `to <side>` direction. */
+/** An angle (deg, grad, rad, turn) or a `to <side>` direction. */
 function angleOf(value: string): number | null {
   const side = SIDES[value.trim().replace(/\s+/g, " ")];
-  const match = /^(-?\d*\.?\d+)(deg|turn|rad)$/.exec(value.trim());
+  const degrees = side ?? degreesOf(value);
 
-  if (side !== undefined) {
-    return side;
-  }
-
-  if (match === null) {
-    return null;
-  }
-
-  const amount = Number(match[1]);
-
-  return turn(match[2] === "turn" ? amount * 360 : match[2] === "rad" ? (amount * 180) / Math.PI : amount);
+  return degrees === null ? null : turn(degrees);
 }
 
 /** `x y` as lengths, from percents, px or keywords. */
@@ -156,9 +146,10 @@ function centreOf(value: string): { x: GradientLength; y: GradientLength } | nul
       };
 }
 
+/** A length of a centre or a radius: px, a percent, a 0, or a place keyword as its percent. */
 function lengthOf(value: string): GradientLength | null {
   const keyword = PLACES[value];
-  const match = /^(-?\d*\.?\d+)(px|%)?$/.exec(value);
+  const length = dimensionOf(value);
 
   if (keyword !== undefined) {
     return {
@@ -167,21 +158,35 @@ function lengthOf(value: string): GradientLength | null {
     };
   }
 
-  return match === null || (match[2] === undefined && Number(match[1]) !== 0)
-    ? null
-    : {
-        value: Number(match[1]),
-        unit: match[2] === "%" ? "%" : "px",
-      };
+  if (length === null || !(length.unit === "px" || length.unit === "%" || (length.unit === "" && length.value === 0))) {
+    return null;
+  }
+
+  return {
+    value: length.value,
+    unit: length.unit === "%" ? "%" : "px",
+  };
 }
 
-/** A stop: a colour or a token, then its place in percent (a conic's in degrees too); null when it is no stop. */
+/** A stop's place along the gradient, 0 to 1: a percent, or an angle of a conic's turn; null for anything else. */
+function placeOf(word: string): number | null {
+  const place = dimensionOf(word);
+
+  if (place?.unit === "%") {
+    return place.value / 100;
+  }
+
+  const degrees = degreesOf(word);
+
+  return degrees === null ? null : degrees / 360;
+}
+
+/** A stop: a colour or a token, then its place in percent (a conic's as an angle too); null when it is no stop. */
 function stopOf(part: string): ParsedStop | null {
   const words = splitTop(part, " ");
   const last = words.length > 1 ? words[words.length - 1] : undefined;
-  const place = last === undefined ? null : /^(-?\d*\.?\d+)(%|deg)$/.exec(last);
-  const color = (place === null ? words : words.slice(0, -1)).join(" ");
-  const position = place === null ? null : Number(place[1]) / (place[2] === "deg" ? 360 : 100);
+  const position = last === undefined ? null : placeOf(last);
+  const color = (position === null ? words : words.slice(0, -1)).join(" ");
   const token = tokenOf(color);
 
   if (token !== null) {
@@ -194,7 +199,7 @@ function stopOf(part: string): ParsedStop | null {
 
   const parsed = Color.parse(color);
 
-  return parsed === null || (last !== undefined && place === null)
+  return parsed === null || (last !== undefined && position === null)
     ? null
     : {
         color: parsed.value(),

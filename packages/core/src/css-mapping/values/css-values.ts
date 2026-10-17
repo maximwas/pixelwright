@@ -13,11 +13,65 @@ import {
   isTokenBadURL,
   isTokenComma,
   isTokenDelim,
+  isTokenDimension,
+  isTokenEOF,
+  isTokenNumber,
+  isTokenPercentage,
   isTokenString,
   isTokenURL,
   tokenize,
 } from "@csstools/css-tokenizer";
 import type { LengthValue, TokenRef } from "../figma-props.ts";
+
+/** Degrees in each angle unit CSS has. */
+const DEGREES: Readonly<Record<string, number>> = {
+  deg: 1,
+  grad: 0.9,
+  rad: 180 / Math.PI,
+  turn: 360,
+};
+
+/**
+ * A number, a percentage or a dimension, as the CSS tokenizer reads it: its value and unit ("" for a plain number, "%"
+ * for a percentage, the unit in lower case otherwise); null for anything else, or more than one.
+ */
+export function dimensionOf(value: string): { value: number; unit: string } | null {
+  const tokens = tokenize({ css: value.trim() }).filter((token) => !isTokenEOF(token));
+  const [token] = tokens;
+
+  if (tokens.length !== 1 || token === undefined) {
+    return null;
+  }
+
+  if (isTokenDimension(token)) {
+    return {
+      value: token[4].value,
+      unit: token[4].unit.toLowerCase(),
+    };
+  }
+
+  if (isTokenPercentage(token)) {
+    return {
+      value: token[4].value,
+      unit: "%",
+    };
+  }
+
+  return isTokenNumber(token)
+    ? {
+        value: token[4].value,
+        unit: "",
+      }
+    : null;
+}
+
+/** An angle in degrees, from deg, grad, rad or turn; null for anything else. */
+export function degreesOf(value: string): number | null {
+  const angle = dimensionOf(value);
+  const degrees = angle === null ? undefined : DEGREES[angle.unit];
+
+  return angle === null || degrees === undefined ? null : angle.value * degrees;
+}
 
 /** A value as CSS parses it: its component values (functions with their arguments, strings, words, spaces). */
 function componentsOf(value: string): ComponentValue[] {
