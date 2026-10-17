@@ -85,6 +85,8 @@ export { SnapshotFieldsSchema } from "./schemas/snapshot-fields.ts";
 export { TextSegmentSchema } from "./schemas/snapshot-text.ts";
 export { EffectSchema, MIXED, PaintSchema, ReactionSchema } from "./schemas/snapshot-values.ts";
 export * from "./schemas/variants.ts";
+export * from "./texts/schemas.ts";
+export * from "./texts/text-edits.ts";
 export * from "./tokens/bind/bind-index.ts";
 export * from "./tokens/bind/fields.ts";
 export * from "./tokens/bind/schemas.ts";

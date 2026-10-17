@@ -33,6 +33,10 @@ How to write this file (people and agents alike):
   and styles that hold them exactly, in each layer's mode and within the variables' scopes. A value several tokens
   hold is listed with its candidates for a pick, a value none holds is listed for `tokens_apply`, `choose` snaps a
   near value to a token, and `remap` moves every use of one token to another.
+- `texts_replace` finds and replaces text under a layer, a page or the whole file: one pair or a list (copy edits,
+  a translation), plain or a regular expression with groups, whole words when asked, all pairs at once against the
+  text as it was. Each match is replaced where it stands, so its run keeps its font, colour and link, and a text an
+  instance shows from a component property changes through the property.
 - `design_read` writes a variable mode set on a layer as `data-<collection>="<mode>"` (`data-color-modes="dark"`),
   the selector `tokens_read`'s CSS uses, so a dark section reads as dark and the build sets the same attribute; a
   frame read alone also carries the mode it takes from the page or frame above. `design_apply` sets a layer's mode

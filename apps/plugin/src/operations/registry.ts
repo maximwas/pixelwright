@@ -29,6 +29,7 @@ import { show } from "./read/show.ts";
 import { viewport } from "./read/viewport.ts";
 import { entries } from "./snapshot/read-entries.ts";
 import { snapshot } from "./snapshot/read-snapshot.ts";
+import { replaceTexts } from "./texts/replace-texts.ts";
 import { applyTokens } from "./tokens/apply-tokens.ts";
 import { readTokens } from "./tokens/read-tokens.ts";
 import { usage } from "./tokens/usage.ts";
@@ -66,6 +67,7 @@ const HANDLERS: Handlers = {
   execute: (input, { edits }) => execute(input, edits),
   tokens_apply: (input, services) => applyTokens(input, services),
   bind: (input, services) => bindTokens(input, services),
+  texts: (input, services) => replaceTexts(input, services),
   save_version: (input, services) => saveVersion(input, services),
   upload: async (input, { uploads }) => uploads.receive(input),
 };

@@ -60,6 +60,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   save_version: "Saved a version",
   effects: "Changed effects",
   bind: "Bound tokens",
+  texts: "Replaced text",
 };
 
 /** Steps of another action the activity leaves out: status probes, the reads before a write, files on their way in. */

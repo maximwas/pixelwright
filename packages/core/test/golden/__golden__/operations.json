@@ -7548,6 +7548,149 @@
       ]
     }
   },
+  "texts": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "roots": {
+          "minItems": 1,
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "replacements": {
+          "minItems": 1,
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "find": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              "replace": {
+                "type": "string",
+                "maxLength": 10000
+              },
+              "regex": {
+                "default": false,
+                "description": "find is a JavaScript regular expression; replace may use $1, $<name>.",
+                "type": "boolean"
+              },
+              "caseSensitive": {
+                "default": false,
+                "type": "boolean"
+              },
+              "wholeWord": {
+                "default": false,
+                "description": "Match only where no letter or digit touches the match.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "find",
+              "replace"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "roots",
+        "replacements"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "before": {
+                "type": "string"
+              },
+              "after": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "property": {
+                "description": "The component text property the change went through, for a text an instance shows from one.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "before",
+              "after",
+              "count"
+            ]
+          }
+        },
+        "texts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ]
+          }
+        },
+        "more": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "changed",
+        "texts",
+        "count",
+        "errors",
+        "more"
+      ]
+    }
+  },
   "execute": {
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

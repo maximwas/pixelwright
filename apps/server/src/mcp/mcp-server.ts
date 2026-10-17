@@ -30,6 +30,7 @@ import { screenshotTool } from "../features/screenshot/tool.ts";
 import { selectionGetTool } from "../features/selection-get/tool.ts";
 import { selectionWaitTool } from "../features/selection-wait/tool.ts";
 import { statusTool } from "../features/status/tool.ts";
+import { textsReplaceTool } from "../features/texts-replace/tool.ts";
 import { tokensApplyTool } from "../features/tokens-apply/tool.ts";
 import { tokensBindTool } from "../features/tokens-bind/tool.ts";
 import { tokensReadTool } from "../features/tokens-read/tool.ts";
@@ -79,6 +80,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTool(server, tokensReadTool(context));
   registerTool(server, tokensApplyTool(context), context.support);
   registerTool(server, tokensBindTool(context), context.support);
+  registerTool(server, textsReplaceTool(context), context.support);
   registerTool(server, effectsApplyTool(context), context.support);
   registerTool(server, versionSaveTool(context), context.support);
   registerTool(server, componentsReadTool(context));

@@ -5691,6 +5691,208 @@
     }
   },
   {
+    "name": "texts_replace",
+    "title": "Find and replace text",
+    "description": "Finds and replaces text in every text under a layer, a page or the file: one pair or a list (copy edits, a translation dictionary), plain or a regular expression with groups, any case unless caseSensitive, whole words when asked. Each match is replaced where it stands, so its run keeps its font, colour and link; a text an instance shows from a component text property changes through the property. Answers each changed text before and after; a text whose font is missing is named and left. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "The texts to change: under a layer id, a page id, or \"file\". Default: under the layers selected in Figma.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "replacements": {
+          "minItems": 1,
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "find": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              "replace": {
+                "type": "string",
+                "maxLength": 10000
+              },
+              "regex": {
+                "default": false,
+                "description": "find is a JavaScript regular expression; replace may use $1, $<name>.",
+                "type": "boolean"
+              },
+              "caseSensitive": {
+                "default": false,
+                "type": "boolean"
+              },
+              "wholeWord": {
+                "default": false,
+                "description": "Match only where no letter or digit touches the match.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "find",
+              "replace"
+            ]
+          },
+          "description": "What to replace with what: one pair, or a list (copy edits, a translation), all made at once against the text as it was, so one pair never feeds another; where matches overlap the earliest wins, then the longest."
+        },
+        "dryRun": {
+          "default": false,
+          "description": "List the texts that would change, before and after, without writing.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "replacements"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "before": {
+                "type": "string"
+              },
+              "after": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "property": {
+                "description": "The component text property the change went through, for a text an instance shows from one.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "before",
+              "after",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "texts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "more": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "changed",
+        "texts",
+        "count",
+        "errors",
+        "more",
+        "summary",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "effects_apply",
     "title": "Put noise, texture or glass on layers",
     "description": "Puts Figma's own effects on layers: noise (grain of one, two or many colours), texture (a faint printed, cracked look) and glass (frosted or clear, on frames only). Give a preset (grain, film, risograph, frosted-glass, clear-glass), the effect's own values, or both: the values change the preset's; grain is dark, so on a dark layer give noise.color a light colour. A new effect replaces the layer's one of its type; shadows and blurs stay; remove takes types off. Each layer is written on its own, its errors named while the rest goes in; design_read shows a layer with such an effect as an Image. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",

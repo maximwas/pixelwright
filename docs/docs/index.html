@@ -466,6 +466,17 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>probe</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also ping the active file&#39;s plugin and report the round trip.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-texts_replace">
+  <h3><code>texts_replace</code><span class="writes">writes</span></h3>
+  <p>Finds and replaces text in every text under a layer, a page or the file: one pair or a list (copy edits, a translation dictionary), plain or a regular expression with groups, any case unless caseSensitive, whole words when asked. Each match is replaced where it stands, so its run keeps its font, colour and link; a text an instance shows from a component text property changes through the property. Answers each changed text before and after; a text whose font is missing is named and left. One undo step in Figma; refused while the plugin&#39;s Allow edits switch is off (dryRun lists without writing).</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>within</code><span class="optional">optional</span></td><td><code>string | string</code></td><td>The texts to change: under a layer id, a page id, or &quot;file&quot;. Default: under the layers selected in Figma.</td></tr>
+<tr><td><code>replacements</code></td><td><code>object[]</code></td><td>What to replace with what: one pair, or a list (copy edits, a translation), all made at once against the text as it was, so one pair never feeds another; where matches overlap the earliest wins, then the longest.</td></tr>
+<tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>List the texts that would change, before and after, without writing.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-tokens_apply">
   <h3><code>tokens_apply</code><span class="writes">writes</span></h3>
   <p>Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode&#39;s value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), and styles: paint (a colour or colour variable), text (the font shorthand) and effect (a box-shadow list). Collections, modes, variables and styles are found by name among the file&#39;s own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library&#39;s collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in. One undo step in Figma; refused while the plugin&#39;s Allow edits switch is off (dryRun checks without writing).</p>
@@ -593,6 +604,7 @@ images as they were placed (originals); <code>width</code> sizes a render by the
 scale 2: 220 px). When a file gets another name than design_read planned (<code>planned</code>), use the path it gives.</li>
 <li><strong>Write.</strong> <code>design_apply</code> writes the same XML back into Figma: change layers by id, create new ones (see <code>guide write</code>, and <code>guide layout</code> for flex, grid and absolute placement); <code>tokens_apply</code> writes variables and styles in
 tokens_read&#39;s JSON shape (see <code>guide tokens</code>); <code>effects_apply</code> puts noise, texture or glass on layers;
+<code>texts_replace</code> changes copy across a page or the file (a dictionary at once, styles kept);
 <code>execute</code> runs plugin code for what none of them can say. The user turns Allow edits on in the plugin window first.</li>
 <li><strong>Code Connect.</strong> Where the project has Figma Code Connect templates (<code>*.figma.ts</code>) or batch files
 (<code>*.figma.batch.json</code>), <code>design_read</code> gives each connected instance as <code>$code</code> with its code in

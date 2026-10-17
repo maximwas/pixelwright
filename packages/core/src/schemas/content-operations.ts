@@ -2,6 +2,7 @@ import * as z from "zod";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "../apply/schemas.ts";
 import { EXPORT_CHUNK_BYTES, UPLOAD_MAX_BYTES, VERSION_DESCRIPTION_CHARS } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
+import { TextsInputSchema, TextsOutputSchema } from "../texts/schemas.ts";
 import { BindInputSchema, BindOutputSchema } from "../tokens/bind/schemas.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schemas.ts";
 import { RawTokensSchema } from "../tokens/raw-tokens.ts";
@@ -158,6 +159,11 @@ export const CONTENT_OPERATIONS = {
   bind: {
     input: BindInputSchema,
     output: BindOutputSchema,
+  },
+  /** Find and replace in the texts under layers or pages, each run's style kept; a dry run only finds. */
+  texts: {
+    input: TextsInputSchema,
+    output: TextsOutputSchema,
   },
   /** Code run in the plugin: its value made JSON-safe, what it printed, and what it threw or that it ran too long. */
   execute: {

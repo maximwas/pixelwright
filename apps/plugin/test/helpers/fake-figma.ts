@@ -591,6 +591,25 @@ function writable(
     });
   }
 
+  // As Figma: inserting or deleting characters needs the text's font loaded; an insert takes a neighbour's style.
+  const requireFont = (method: string) => {
+    const font = node.fontName as { family: string; style: string };
+
+    if (!writes.loaded.has(fontKey(font))) {
+      throw new Error(`in ${method}: Cannot write to node with unloaded font "${fontKey(font)}"`);
+    }
+  };
+
+  define("insertCharacters", (start: number, text: string, useStyle = "BEFORE") => {
+    requireFont("insertCharacters");
+    characters = `${characters.slice(0, start)}${text}${characters.slice(start)}`;
+    record("insertCharacters", [start, text, useStyle]);
+  });
+  define("deleteCharacters", (start: number, end: number) => {
+    requireFont("deleteCharacters");
+    characters = `${characters.slice(0, start)}${characters.slice(end)}`;
+    record("deleteCharacters", [start, end]);
+  });
   define("setRangeBoundVariable", (start: number, end: number, field: string, variable: { id: string } | null) => {
     // A run over the whole text binds the text's own field, as Figma reports it.
     if (start === 0 && end === characters.length) {
