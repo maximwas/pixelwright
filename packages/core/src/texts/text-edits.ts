@@ -17,9 +17,6 @@ export interface TextEdit {
 /** A letter, digit or underscore of any script: what a whole word does not touch on either side. */
 const WORD = /[\p{L}\p{N}_]/u;
 
-/** A replacement's expression: `$$`, `$&`, `$1`…`$99` and `$<name>` as String.replace takes them. */
-const TOKENS = /\$(\$|&|<([^>]+)>|(\d\d?))/g;
-
 /**
  * The edits the replacements make to a text, all against the text as it was, so one pair never feeds another (a
  * dictionary's "Sign in" → "Log in" and "Log in" → "Enter" give "Log in"): where matches overlap, the earliest wins,
@@ -79,7 +76,13 @@ function matchesOf(characters: string, replacement: TextReplacement): TextEdit[]
       edits.push({
         start,
         end,
-        text: replacement.regex ? expanded(replacement.replace, match) : replacement.replace,
+        text: replacement.regex
+          ? expanded(characters, pattern, {
+              start,
+              end,
+              template: replacement.replace,
+            })
+          : replacement.replace,
       });
     }
   }
@@ -116,30 +119,20 @@ function bounded(characters: string, start: number, end: number): boolean {
   return !(before !== "" && WORD.test(before)) && !(after !== "" && WORD.test(after));
 }
 
-/** A regular expression's replacement with its groups put in. */
-function expanded(template: string, match: RegExpExecArray): string {
-  return template.replace(TOKENS, (whole, token: string, name: string | undefined, digits: string | undefined) => {
-    if (token === "$") {
-      return "$";
-    }
+/**
+ * A regular expression's replacement for one match, its groups put in by String.replace itself ($&, $1, $<name>, $`,
+ * $'): a sticky copy of the pattern replaces that match alone, where it stands in the whole text.
+ */
+function expanded(
+  characters: string,
+  pattern: RegExp,
+  { start, end, template }: { start: number; end: number; template: string },
+): string {
+  const sticky = new RegExp(pattern.source, `${pattern.flags.replace("g", "")}y`);
 
-    if (token === "&") {
-      return match[0];
-    }
+  sticky.lastIndex = start;
 
-    return name === undefined ? numberedGroup(match, digits ?? "", whole) : (match.groups?.[name] ?? "");
-  });
-}
+  const replaced = characters.replace(sticky, template);
 
-/** `$1`…`$99`: the group, or, past the groups there are, `$12` as `$1` then "2" (as String.replace reads it). */
-function numberedGroup(match: RegExpExecArray, digits: string, whole: string): string {
-  const group = Number(digits);
-
-  if (group < match.length) {
-    return match[group] ?? "";
-  }
-
-  const first = Number(digits.charAt(0));
-
-  return digits.length === 2 && first < match.length ? `${match[first] ?? ""}${digits.charAt(1)}` : whole;
+  return replaced.slice(start, replaced.length - (characters.length - end));
 }
