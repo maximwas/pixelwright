@@ -1,8 +1,9 @@
 import type { TextsOutput } from "@pixelwright/core";
 import type * as z from "zod";
-import { versionBefore } from "../../history/version-before.ts";
+import { versionedWrite } from "../../history/versioned-write.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import { scopeOf } from "../../plugin/scope.ts";
+import { quantity } from "../../utils/quantity.ts";
 import type { TextsReplaceInputSchema, TextsReplaceOutputSchema } from "./schemas.ts";
 
 type TextsReplaceArgs = z.output<typeof TextsReplaceInputSchema>;
@@ -24,25 +25,21 @@ export async function replaceTexts(
       replacements,
       dryRun: dry,
     });
-  const probe = title === undefined || dryRun ? null : await write(true);
-
-  if (probe !== null && probe.texts === 0) {
-    return {
-      ...probe,
-      summary: summaryOf(probe, true, scope.label),
-      dryRun: false,
-    };
-  }
-
-  const version = await versionBefore(session, {
-    title,
-    dryRun,
-  });
-  const result = await write(dryRun);
+  const { result, dry, version } = await versionedWrite(
+    session,
+    {
+      title,
+      dryRun,
+    },
+    {
+      write,
+      changes: (replaced) => replaced.texts,
+    },
+  );
 
   return {
     ...result,
-    summary: summaryOf(result, dryRun, scope.label),
+    summary: summaryOf(result, dry, scope.label),
     dryRun,
     ...(version === undefined ? {} : { version }),
   };
@@ -50,8 +47,8 @@ export async function replaceTexts(
 
 /** How many matches in how many texts were (or would be) replaced, and what stopped. */
 function summaryOf(result: TextsOutput, dry: boolean, scope: string): string {
-  const matches = `${result.count} ${result.count === 1 ? "match" : "matches"}`;
-  const texts = `${result.texts} text${result.texts === 1 ? "" : "s"}`;
+  const matches = quantity(result.count, "match", "matches");
+  const texts = quantity(result.texts, "text");
   const parts = [
     `${dry ? "Would replace" : "Replaced"} ${matches} in ${texts} under ${scope}`,
     result.errors.length > 0 ? `${result.errors.length} left as they were (see errors)` : null,

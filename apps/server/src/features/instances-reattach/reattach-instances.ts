@@ -1,8 +1,9 @@
 import type { InstancesOutput } from "@pixelwright/core";
 import type * as z from "zod";
-import { versionBefore } from "../../history/version-before.ts";
+import { versionedWrite } from "../../history/versioned-write.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import { scopeOf } from "../../plugin/scope.ts";
+import { quantity } from "../../utils/quantity.ts";
 import type { InstancesReattachInputSchema, InstancesReattachOutputSchema } from "./schemas.ts";
 
 type ReattachArgs = z.output<typeof InstancesReattachInputSchema>;
@@ -29,41 +30,36 @@ export async function reattachInstances(
       ...(reset === undefined ? {} : { reset }),
       dryRun: dry,
     });
-  const probe = title === undefined || dryRun ? null : await write(true);
-
-  if (probe !== null && changes(probe) === 0) {
-    return {
-      ...probe,
-      summary: summaryOf(probe, true),
-      dryRun: false,
-    };
-  }
-
-  const version = await versionBefore(session, {
-    title,
-    dryRun,
-  });
-  const result = await write(dryRun);
+  const { result, dry, version } = await versionedWrite(
+    session,
+    {
+      title,
+      dryRun,
+    },
+    {
+      write,
+      changes,
+    },
+  );
 
   return {
     ...result,
-    summary: summaryOf(result, dryRun),
+    summary: summaryOf(result, dry),
     dryRun,
     ...(version === undefined ? {} : { version }),
   };
 }
 
 function summaryOf(result: InstancesOutput, dry: boolean): string {
-  const counted = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
   const parts = [
     result.reattached.length > 0
-      ? `${dry ? "would put" : "put"} ${counted(result.reattached.length, "detached frame")} back as ${result.reattached.length === 1 ? "an instance" : "instances"}`
+      ? `${dry ? "would put" : "put"} ${quantity(result.reattached.length, "detached frame")} back as ${result.reattached.length === 1 ? "an instance" : "instances"}`
       : null,
     result.swapped.length > 0
-      ? `${dry ? "would swap" : "swapped"} ${counted(result.swapped.length, "instance")}`
+      ? `${dry ? "would swap" : "swapped"} ${quantity(result.swapped.length, "instance")}`
       : null,
-    result.reset.length > 0 ? `${dry ? "would reset" : "reset"} ${counted(result.reset.length, "instance")}` : null,
-    result.errors.length > 0 ? `${counted(result.errors.length, "layer")} left (see errors)` : null,
+    result.reset.length > 0 ? `${dry ? "would reset" : "reset"} ${quantity(result.reset.length, "instance")}` : null,
+    result.errors.length > 0 ? `${quantity(result.errors.length, "layer")} left (see errors)` : null,
     result.more ? "time ran out before every layer: run again with a narrower within" : null,
   ].filter((part) => part !== null);
   const sentence = parts.length === 0 ? "nothing to change here" : parts.join("; ");

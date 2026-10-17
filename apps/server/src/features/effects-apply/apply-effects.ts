@@ -1,5 +1,5 @@
 import type * as z from "zod";
-import { versionBefore } from "../../history/version-before.ts";
+import { versionedWrite } from "../../history/versioned-write.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import { effectsOf } from "./resolve-effects.ts";
 import type { EffectsApplyInputSchema, EffectsApplyOutputSchema } from "./schemas.ts";
@@ -24,22 +24,20 @@ export async function applyEffects(
       ...effects,
       dryRun: dry,
     });
-  const probe = title === undefined || dryRun ? null : await write(true);
-
-  if (probe !== null && probe.changed.length === 0) {
-    return {
-      ...probe,
-      dryRun: false,
-    };
-  }
-
-  const version = await versionBefore(session, {
-    title,
-    dryRun,
-  });
+  const { result, version } = await versionedWrite(
+    session,
+    {
+      title,
+      dryRun,
+    },
+    {
+      write,
+      changes: (applied) => applied.changed.length,
+    },
+  );
 
   return {
-    ...(await write(dryRun)),
+    ...result,
     dryRun,
     ...(version === undefined ? {} : { version }),
   };
