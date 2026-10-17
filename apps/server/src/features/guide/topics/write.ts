@@ -113,11 +113,29 @@ noise, texture and glass on layers: a ready look (grain, film, risograph, froste
 ## Beyond the XML: execute
 
 \`execute\` runs JavaScript in the plugin for what design_apply and tokens_apply cannot say (removing a variable,
-a prototype link, a plugin data field). The code is the body of an async function given \`figma\` (the Plugin API)
-and \`console\`: \`await\` works, \`return\` gives \`result\` (Figma's layers as {id, type, name}, plain data as
+a prototype link, a plugin data field). The code is the body of an async function given \`figma\` (the Plugin API),
+\`console\` and \`pw\`: \`await\` works, \`return\` gives \`result\` (Figma's layers as {id, type, name}, plain data as
 built), \`console.log\` lines come back as \`logs\`, and what it throws as \`error\`. What it changes during the call is
-one undo step; it needs Allow edits, and the tool waits at most 25 s. Code it starts that outlives the call (timers,
+one undo step, and \`version\` saves a named version in the file's history first; it needs Allow edits. The tool
+waits 10 s by default and up to 300 s (\`timeout\`) for a long task. Code it starts that outlives the call (timers,
 listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
 synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.
+
+\`pw\` stays from one call to the next while the plugin window is open:
+
+- \`pw.state\` holds your data, and functions you add to \`pw\` stay for later calls;
+- \`await pw.node(id)\`: the layer, or an error naming the id;
+- \`await pw.fonts(layer)\`: loads every font the texts in the layer use, mixed runs too, before you change their
+  characters or sizes; it returns their names;
+- \`pw.paint(css)\`: a CSS colour as a solid paint in the file's colours, its alpha as the opacity;
+- \`await pw.variable("--token")\`: the variable design_read names so, a library's imported into the file.
+
+\`\`\`js
+const card = await pw.node("54:243");
+await pw.fonts(card);
+for (const text of card.findAllWithCriteria({ types: ["TEXT"] })) text.textCase = "UPPER";
+card.fills = [figma.variables.setBoundVariableForPaint(pw.paint("#FFF"), "color", await pw.variable("--color-surface"))];
+pw.state.card = card.id;
+\`\`\`
 `,
 } as const;

@@ -102,7 +102,11 @@ export class OwnerClient implements PluginLink {
     return this.#pairing;
   }
 
-  request(op: string, input: unknown, { session }: RequestOptions = {}): Promise<unknown> {
+  request(
+    op: string,
+    input: unknown,
+    { session, timeoutMs = REQUEST_TIMEOUT_MS }: RequestOptions = {},
+  ): Promise<unknown> {
     const socket = this.#socket;
 
     if (socket === null || socket.readyState !== socket.OPEN) {
@@ -110,14 +114,14 @@ export class OwnerClient implements PluginLink {
     }
 
     const id = String(++this.#sequence);
-    const answer = this.#pending.track(id, op, REQUEST_TIMEOUT_MS + PEER_TIMEOUT_MARGIN_MS);
+    const answer = this.#pending.track(id, op, timeoutMs + PEER_TIMEOUT_MARGIN_MS);
 
     this.#send(socket, {
       type: "request",
       id,
       op,
       input: input ?? null,
-      timeoutMs: REQUEST_TIMEOUT_MS,
+      timeoutMs,
       ...(session === undefined ? {} : { session }),
     });
 

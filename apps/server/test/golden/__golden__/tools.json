@@ -3022,8 +3022,8 @@
   },
   {
     "name": "image_compare",
-    "title": "Compare a layer with an image",
-    "description": "Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render's is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render's density (scale 2 for a 2x screenshot). Works while Allow edits is off.",
+    "title": "Compare a layer with an image or a layer",
+    "description": "Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size, or with another layer (against) rendered the same way, a variant against its default or a rebuilt frame against the original: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render's is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render's density (scale 2 for a 2x screenshot). Works while Allow edits is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3034,10 +3034,16 @@
           "description": "The layer's id, e.g. 54:243."
         },
         "reference": {
+          "description": "The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server's folder or absolute.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 4096,
-          "description": "The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server's folder or absolute."
+          "maxLength": 4096
+        },
+        "against": {
+          "description": "Another layer's id to compare with instead of a PNG, rendered the same way: a variant against its default, a rebuilt frame against the original.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
         },
         "scale": {
           "default": 1,
@@ -3105,8 +3111,7 @@
         }
       },
       "required": [
-        "node",
-        "reference"
+        "node"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema"
     },
@@ -4824,7 +4829,7 @@
   {
     "name": "execute",
     "title": "Run plugin code",
-    "description": "Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given `figma` (the Plugin API) and `console`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. The tool waits at most 25 s; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file's styles and check what they write.",
+    "description": "Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given `figma` (the Plugin API), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(\"--token\") (the variable design_read names so). What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file's styles and check what they write.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4836,10 +4841,16 @@
         },
         "timeout": {
           "default": 10,
-          "description": "Seconds to wait for the code: 10 by default, 25 at most.",
+          "description": "Seconds to wait for the code: 10 by default, up to 300 for a long task.",
           "type": "number",
           "minimum": 1,
-          "maximum": 25
+          "maximum": 300
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before the code runs, for the designer to go back to. Pass one before code that changes many layers.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
         },
         "file": {
           "description": "The file to work on: its session from status or its name. Default: the active file.",
@@ -4865,6 +4876,25 @@
         },
         "error": {
           "type": "string"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [

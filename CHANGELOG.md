@@ -58,6 +58,12 @@ How to write this file (people and agents alike):
   the same way, and `data-<collection>=""` clears it.
 - `guide layout` tells when to lay a frame out as flex, as grid or by absolute placement, with the grid's tracks,
   spans and cells, pinned and centred layers, what is not supported, and examples checked in Figma.
+- `execute` gives the code `pw`, which stays from one call to the next while the plugin window is open: `pw.state`
+  for your data and your own functions, and helpers for a layer by id, the fonts its texts use loaded, a CSS colour
+  as a paint and a variable by its CSS name. `version` saves a named version first, and `timeout` waits up to five
+  minutes for a long task.
+- `image_compare` compares a layer `against` another layer, rendered the same way, with no PNG on disk: a variant
+  against its default, a rebuilt frame against the original.
 - `tokens_apply` sets a variable's `scopes`, the fields Figma's pickers offer it for (`["FONT_WEIGHT"]`, `[]` to
   hide it), and its `codeSyntax` on the web, Android and iOS; scopes a type cannot take are refused before anything
   is written. `tokens_read`'s JSON lists both, so tokens copied into another file keep them.

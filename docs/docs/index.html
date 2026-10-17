@@ -319,10 +319,11 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-execute">
   <h3><code>execute</code><span class="writes">writes</span></h3>
-  <p>Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given <code>figma</code> (the Plugin API) and <code>console</code>; <code>return</code> gives <code>result</code> (layers come back as {id, type, name}, figma.mixed as &quot;mixed&quot;), and what it logs comes back as <code>logs</code>. What it throws comes back as <code>error</code>, with the logs before it. What it changes during the call is one undo step in Figma. Refused while the plugin&#39;s Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. The tool waits at most 25 s; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file&#39;s styles and check what they write.</p>
+  <p>Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given <code>figma</code> (the Plugin API), <code>console</code> and <code>pw</code>; <code>return</code> gives <code>result</code> (layers come back as {id, type, name}, figma.mixed as &quot;mixed&quot;), and what it logs comes back as <code>logs</code>. What it throws comes back as <code>error</code>, with the logs before it. <code>pw</code> stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright&#39;s helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(&quot;--token&quot;) (the variable design_read names so). What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin&#39;s Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file&#39;s styles and check what they write.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>code</code></td><td><code>string</code></td><td>JavaScript run as the body of an async function with <code>figma</code> (the Plugin API) and <code>console</code>: <code>await</code> works, <code>return</code> gives the result.</td></tr>
-<tr><td><code>timeout</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 10</span></td><td>Seconds to wait for the code: 10 by default, 25 at most.</td></tr>
+<tr><td><code>timeout</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 10</span></td><td>Seconds to wait for the code: 10 by default, up to 300 for a long task.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before the code runs, for the designer to go back to. Pass one before code that changes many layers.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -358,10 +359,11 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-image_compare">
   <h3><code>image_compare</code></h3>
-  <p>Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render&#39;s is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render&#39;s density (scale 2 for a 2x screenshot). Works while Allow edits is off.</p>
+  <p>Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size, or with another layer (against) rendered the same way, a variant against its default or a rebuilt frame against the original: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render&#39;s is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render&#39;s density (scale 2 for a 2x screenshot). Works while Allow edits is off.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243.</td></tr>
-<tr><td><code>reference</code></td><td><code>string</code></td><td>The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server&#39;s folder or absolute.</td></tr>
+<tr><td><code>reference</code><span class="optional">optional</span></td><td><code>string</code></td><td>The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server&#39;s folder or absolute.</td></tr>
+<tr><td><code>against</code><span class="optional">optional</span></td><td><code>string</code></td><td>Another layer&#39;s id to compare with instead of a PNG, rendered the same way: a variant against its default, a rebuilt frame against the original.</td></tr>
 <tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel of the render: the reference&#39;s density.</td></tr>
 <tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Render shadows and outside strokes around the layer; false renders only its own box.</td></tr>
 <tr><td><code>clip</code><span class="optional">optional</span></td><td><code>object</code></td><td>Only this region of the layer, in Figma px from its box&#39;s top left (before scale); with effects on it may reach into what paints around the box.</td></tr>
@@ -991,12 +993,28 @@ changes, and a shadow sent back as it was keeps its colour variable and blend mo
 noise, texture and glass on layers: a ready look (grain, film, risograph, frosted or clear glass) or its own values.</p>
 <h3>Beyond the XML: execute</h3>
 <p><code>execute</code> runs JavaScript in the plugin for what design_apply and tokens_apply cannot say (removing a variable,
-a prototype link, a plugin data field). The code is the body of an async function given <code>figma</code> (the Plugin API)
-and <code>console</code>: <code>await</code> works, <code>return</code> gives <code>result</code> (Figma&#39;s layers as {id, type, name}, plain data as
+a prototype link, a plugin data field). The code is the body of an async function given <code>figma</code> (the Plugin API),
+<code>console</code> and <code>pw</code>: <code>await</code> works, <code>return</code> gives <code>result</code> (Figma&#39;s layers as {id, type, name}, plain data as
 built), <code>console.log</code> lines come back as <code>logs</code>, and what it throws as <code>error</code>. What it changes during the call is
-one undo step; it needs Allow edits, and the tool waits at most 25 s. Code it starts that outlives the call (timers,
+one undo step, and <code>version</code> saves a named version in the file&#39;s history first; it needs Allow edits. The tool
+waits 10 s by default and up to 300 s (<code>timeout</code>) for a long task. Code it starts that outlives the call (timers,
 listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
 synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.</p>
+<p><code>pw</code> stays from one call to the next while the plugin window is open:</p>
+<ul>
+<li><code>pw.state</code> holds your data, and functions you add to <code>pw</code> stay for later calls;</li>
+<li><code>await pw.node(id)</code>: the layer, or an error naming the id;</li>
+<li><code>await pw.fonts(layer)</code>: loads every font the texts in the layer use, mixed runs too, before you change their
+characters or sizes; it returns their names;</li>
+<li><code>pw.paint(css)</code>: a CSS colour as a solid paint in the file&#39;s colours, its alpha as the opacity;</li>
+<li><code>await pw.variable(&quot;--token&quot;)</code>: the variable design_read names so, a library&#39;s imported into the file.</li>
+</ul>
+<pre><code class="language-js">const card = await pw.node(&quot;54:243&quot;);
+await pw.fonts(card);
+for (const text of card.findAllWithCriteria({ types: [&quot;TEXT&quot;] })) text.textCase = &quot;UPPER&quot;;
+card.fills = [figma.variables.setBoundVariableForPaint(pw.paint(&quot;#FFF&quot;), &quot;color&quot;, await pw.variable(&quot;--color-surface&quot;))];
+pw.state.card = card.id;
+</code></pre>
 
         </section>
         <section id="guide-layout">

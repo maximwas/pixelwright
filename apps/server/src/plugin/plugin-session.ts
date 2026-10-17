@@ -25,8 +25,16 @@ export class PluginSession {
     return this.#bridge.plugins().find((plugin) => plugin.session === this.#session)?.info;
   }
 
-  async run<N extends OperationName>(op: N, input: OperationRequest<N>): Promise<OperationResult<N>> {
-    const answer = await this.#bridge.request(op, input, { session: this.#session });
+  /** One operation, its answer checked; `timeoutMs` waits longer than the bridge's default (a long execute). */
+  async run<N extends OperationName>(
+    op: N,
+    input: OperationRequest<N>,
+    { timeoutMs }: { readonly timeoutMs?: number } = {},
+  ): Promise<OperationResult<N>> {
+    const answer = await this.#bridge.request(op, input, {
+      session: this.#session,
+      ...(timeoutMs === undefined ? {} : { timeoutMs }),
+    });
 
     // TypeScript cannot narrow the schema map by a type parameter; the parse is what checks the answer.
     return OPERATION_SCHEMAS[op].output.parse(answer) as OperationResult<N>;

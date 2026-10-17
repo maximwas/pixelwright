@@ -65,7 +65,11 @@ const HANDLERS: Handlers = {
   effects: (input, { edits }) => applyEffects(input, edits),
   inspect,
   cover: clipCover,
-  execute: (input, { edits }) => execute(input, edits),
+  execute: (input, { edits, code }) =>
+    execute(input, {
+      edits,
+      code,
+    }),
   tokens_apply: (input, services) => applyTokens(input, services),
   bind: (input, services) => bindTokens(input, services),
   texts: (input, services) => replaceTexts(input, services),

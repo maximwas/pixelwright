@@ -7961,7 +7961,7 @@
         "timeoutMs": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 25000
+          "maximum": 300000
         }
       },
       "required": [

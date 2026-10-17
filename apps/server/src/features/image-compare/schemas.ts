@@ -21,8 +21,17 @@ export const ImageCompareInputSchema = z.object({
     .string()
     .min(1)
     .max(4_096)
+    .exactOptional()
     .describe(
       "The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server's folder or absolute.",
+    ),
+  against: z
+    .string()
+    .min(1)
+    .max(200)
+    .exactOptional()
+    .describe(
+      "Another layer's id to compare with instead of a PNG, rendered the same way: a variant against its default, a rebuilt frame against the original.",
     ),
   scale: z
     .number()

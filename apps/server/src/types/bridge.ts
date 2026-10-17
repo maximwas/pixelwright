@@ -47,6 +47,8 @@ export interface ConnectedPlugin {
 export interface RequestOptions {
   /** The plugin session to ask; without it, the active one. */
   readonly session?: string;
+  /** How long to wait for the answer, up to REQUEST_MAX_TIMEOUT_MS; without it, REQUEST_TIMEOUT_MS. */
+  readonly timeoutMs?: number;
 }
 
 /** How this process reaches the plugins: as the bridge's owner (BridgeServer) or through the owner (OwnerClient). */

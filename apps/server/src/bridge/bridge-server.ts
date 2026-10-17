@@ -11,6 +11,7 @@ import {
   MAX_PENDING_PLUGINS,
   MAX_PLUGIN_SESSIONS,
   PAIRING_CODE_TTL_MS,
+  REQUEST_MAX_TIMEOUT_MS,
   REQUEST_TIMEOUT_MS,
 } from "../constants/bridge.ts";
 import type {
@@ -187,7 +188,7 @@ export class BridgeServer
   }
 
   /** Sends an operation to a plugin (the active one unless a session is named) and resolves with its result. */
-  request(op: string, input: unknown, { session }: RequestOptions = {}): Promise<unknown> {
+  request(op: string, input: unknown, { session, timeoutMs: asked }: RequestOptions = {}): Promise<unknown> {
     const target = session === undefined ? pickActive(this.#sessions.values()) : (this.#sessions.get(session) ?? null);
 
     if (target === null) {
@@ -203,7 +204,7 @@ export class BridgeServer
     }
 
     const id = String(++this.#requests);
-    const timeoutMs = this.#options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS;
+    const timeoutMs = Math.min(asked ?? this.#options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS, REQUEST_MAX_TIMEOUT_MS);
     const answer = target.pending.track(id, op, timeoutMs);
 
     sendMessage(
