@@ -26,6 +26,8 @@ How to write this file (people and agents alike):
 - A new text that fills its row (`flex="1"`, `align-self="stretch"`) takes the row's width: it used to stay 0 wide,
   a letter a line.
 - `border-top` and the other single sides draw on a new frame: the line used to come out 0 px wide.
+- `src` on a shape or a frame now points to `background="url(…)"`, which fills any layer with a picture, an existing
+  ellipse too; the hint used to speak of frames only.
 
 ## 0.3.1 — 2026-10-15
 

@@ -92,4 +92,20 @@ describe("design_apply: what agents write out of habit", () => {
       },
     });
   });
+
+  it("answers src on a shape or a frame with its background, which takes a picture on any of them", () => {
+    const { errors } = written('<Ellipse id="4:2" src="face.png"/>');
+
+    expect(
+      errors.map(({ attribute, hint }) => ({
+        attribute,
+        hint,
+      })),
+    ).toEqual([
+      {
+        attribute: "src",
+        hint: 'Fill it with the picture by its background: background="url(face.png)".',
+      },
+    ]);
+  });
 });

@@ -68,7 +68,8 @@ taken as sRGB and converted to P3.
 
 - \`<Image src="photos/hero.jpg" width="600px" height="400px"/>\` makes an image from a file (PNG, JPG or GIF, up
   to 32 MB and 4096 px a side; convert WebP first), \`<Icon src="icons/arrow.svg" width="24px"/>\` an icon from an
-  SVG; \`background: url(…)\` fills a frame with one. Paths are on the server's machine, from its folder.
+  SVG; \`background="url(…)"\` fills any layer that takes a background with one, a new or an existing frame,
+  rectangle or ellipse (an avatar). Paths are on the server's machine, from its folder.
 - An existing \`Image\` with another file in \`src\` takes that image, keeping its fit. A file design_read or
   assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
   the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a

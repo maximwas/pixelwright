@@ -69,7 +69,7 @@ export const ELEMENT_RULES: readonly Rule[] = [
         out.fail(
           "src",
           `src makes an <Image> or an <Icon>, not a <${tag}>.`,
-          "A frame's image is its background: url(…).",
+          `Fill it with the picture by its background: background="url(${own("src") ?? ""})".`,
         );
       }
     },
