@@ -177,6 +177,16 @@ function resizeTo(node: Sized, axis: "width" | "height", value: number): void {
 }
 
 /**
+ * A text that fills its row but is 0 wide, laid out again. Figma makes a new text 0 wide and leaves it so when it is
+ * set to fill (seen live on 2026-10-15: one letter a line); a resize, keeping the fill, makes it take the row's width.
+ */
+export function layOutFillingText(node: SceneNode): void {
+  if (node.type === "TEXT" && node.layoutSizingHorizontal === "FILL" && node.width < 1) {
+    resizeKeeping(node, 100, node.height);
+  }
+}
+
+/**
  * resize(), keeping how the layer sizes itself: Figma's resize fixes the size on both axes and stops a text sizing
  * itself, while the XML changed one size only.
  */

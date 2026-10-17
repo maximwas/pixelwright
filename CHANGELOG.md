@@ -23,6 +23,9 @@ How to write this file (people and agents alike):
 - `design_apply` answers `x` and `y` with `left` and `top`, and Figma's own names (`fill`, `stroke`, `rotation`,
   `corner-radius`) with the CSS that writes them, where it used to suggest the nearest spelling (`id`).
 - `design_apply` takes a bare number as px in sizes, places, gaps, paddings and radii (`width="363"`).
+- A new text that fills its row (`flex="1"`, `align-self="stretch"`) takes the row's width: it used to stay 0 wide,
+  a letter a line.
+- `border-top` and the other single sides draw on a new frame: the line used to come out 0 px wide.
 
 ## 0.3.1 — 2026-10-15
 

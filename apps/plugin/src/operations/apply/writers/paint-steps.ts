@@ -127,8 +127,10 @@ function strokeWeights(node: StrokesNode, { weight, sides }: StrokeSpec): void {
 
   const sided = sidedNode(node);
 
+  // Every side, an equal one too: the first side set gives the layer weights per side and Figma starts the others at
+  // 0, so a top side skipped for already reading 1 (a new frame's strokeWeight) ended at 0.
   for (const side of SIDES) {
-    assign(sided, `stroke${side}Weight`, sides[side.toLowerCase() as "top" | "right" | "bottom" | "left"]);
+    sided[`stroke${side}Weight`] = sides[side.toLowerCase() as "top" | "right" | "bottom" | "left"];
   }
 }
 
