@@ -1,19 +1,12 @@
 import { px } from "../../css-mapping/values/format.ts";
 import { decimal } from "../../kernel/numbers.ts";
-import type { SnapshotNode } from "../../types/snapshot.ts";
+import { roleOf } from "../a11y/controls.ts";
 import { componentStates } from "../states/component-states.ts";
 import { findingOf, type LintRule } from "./lint-rule.ts";
 
 /** The smallest pointer target WCAG 2.2 AA asks for (2.5.8), and the touch target of AAA and Apple's guidelines. */
 const POINTER_TARGET = 24;
 const TOUCH_TARGET = 44;
-
-/** Components people press, by their names. */
-const PRESSABLE =
-  /\b(button|btn|cta|link|tab|checkbox|check ?box|radio|switch|toggle|chip|icon ?button|close|menu ?item|dropdown|select)\b/i;
-
-/** Prototype triggers that make a layer something people press. */
-const PRESS_TRIGGERS: ReadonlySet<string> = new Set(["ON_CLICK", "ON_PRESS", "MOUSE_DOWN", "MOUSE_UP"]);
 
 /** Texts below WCAG AA contrast with what is behind them; those over an image or a gradient, to check by eye. */
 export const CONTRAST: LintRule = {
@@ -46,14 +39,6 @@ export const CONTRAST: LintRule = {
   },
 };
 
-/** Whether people press the layer: a prototype click on it, or it is an instance of a pressable component. */
-function pressable(node: SnapshotNode): boolean {
-  const clicked = (node.reactions ?? []).some(({ trigger }) => trigger !== null && PRESS_TRIGGERS.has(trigger.type));
-  const component = node.instance?.setName ?? node.instance?.componentName ?? "";
-
-  return clicked || (node.type === "INSTANCE" && PRESSABLE.test(component));
-}
-
 /** Pressable layers smaller than a pointer or a finger can hit. */
 export const TOUCH_TARGET_RULE: LintRule = {
   id: "touch-target",
@@ -62,7 +47,8 @@ export const TOUCH_TARGET_RULE: LintRule = {
   check: ({ node }) => {
     const side = Math.min(node.width, node.height);
 
-    if (!pressable(node) || side >= TOUCH_TARGET) {
+    // Pressed is what a11y_read gives a role: a prototype click on it, or an instance of a control component.
+    if (roleOf(node) === null || side >= TOUCH_TARGET) {
       return [];
     }
 

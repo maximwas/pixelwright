@@ -12,7 +12,7 @@ const COMPONENT_ROLES: readonly (readonly [RegExp, string])[] = [
   [/\b(select|dropdown|combo ?box)\b/i, "combobox"],
   [/\bmenu ?item\b/i, "menuitem"],
   [/\blink\b/i, "link"],
-  [/\b(button|btn|cta|icon ?button|chip)\b/i, "button"],
+  [/\b(button|btn|cta|icon ?button|chip|close)\b/i, "button"],
 ];
 
 /** Roles a component's own name settles, whatever its prototype does. */

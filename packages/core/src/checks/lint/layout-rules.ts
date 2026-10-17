@@ -1,3 +1,4 @@
+import { SPACING_GRID } from "../../constants/css.ts";
 import { px } from "../../css-mapping/values/format.ts";
 import { visibleChildren } from "../../design/assets/classify.ts";
 import { guessedLayoutCss } from "../../design/hints/layout-guess.ts";
@@ -6,7 +7,6 @@ import { findingOf, type LintRule } from "./lint-rule.ts";
 import { rawNumbers } from "./raw-values.ts";
 
 /** The grid spacing and radii are expected on. */
-const GRID = 4;
 
 /** How far past its room a layer may reach before it counts: Figma's sub-pixel boxes and text metrics. */
 const SLACK = 1;
@@ -146,7 +146,7 @@ export const OFF_SCALE: LintRule = {
           ({ field, value, amount }) =>
             amount !== undefined &&
             amount > 2 &&
-            amount % GRID !== 0 &&
+            amount % SPACING_GRID !== 0 &&
             (field === "gap" ||
               field === "row-gap" ||
               field === "column-gap" ||
@@ -160,7 +160,7 @@ export const OFF_SCALE: LintRule = {
       ? []
       : [
           findingOf(OFF_SCALE, node, {
-            message: `Off the ${GRID}px grid: ${off.map(({ field, value }) => `${field} ${value}`).join(", ")}.`,
+            message: `Off the ${SPACING_GRID}px grid: ${off.map(({ field, value }) => `${field} ${value}`).join(", ")}.`,
             fix: "Round it to the scale, or snap it to a token with tokens_bind choose.",
           }),
         ];

@@ -18,6 +18,16 @@ const BLURS = [
   ["backdrop-filter", "BACKGROUND_BLUR", "backdrop-blur"],
 ] as const;
 
+/**
+ * A blur as the CSS declaration Dev Mode writes, `filter: blur(…)` or `backdrop-filter: blur(…)` (Figma's radius is
+ * twice CSS's); null for an effect that is no blur.
+ */
+export function blurDeclaration(effect: SnapshotEffect): readonly [string, string] | null {
+  const blur = BLURS.find(([, type]) => type === effect.type);
+
+  return blur === undefined ? null : [blur[0], `blur(${px((effect.radius ?? 0) / 2)})`];
+}
+
 /** A layer's visible shadows and blurs as CSS. */
 export function readEffects(node: SnapshotNode, css: CssDeclarations, context: CssContext): void {
   const effects = (node.effects ?? []).filter((effect) => effect.visible ?? true);
@@ -76,9 +86,10 @@ function readShadows(
 function readBlurs(effects: readonly SnapshotEffect[], css: CssDeclarations): void {
   for (const effect of effects) {
     const blur = BLURS.find(([, type]) => type === effect.type);
+    const declaration = blurDeclaration(effect);
 
-    if (blur !== undefined && effect.radius !== undefined) {
-      css.set(blur[0], `blur(${px(effect.radius / 2)})`);
+    if (blur !== undefined && declaration !== null && effect.radius !== undefined) {
+      css.set(...declaration);
       progressiveBlur(effect, blur[2], css);
     }
   }

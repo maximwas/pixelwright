@@ -1,4 +1,5 @@
-import { shadowListCss } from "../../css-mapping/groups/effects.ts";
+import { blurDeclaration, shadowListCss } from "../../css-mapping/groups/effects.ts";
+import { DECORATION_LINES } from "../../css-mapping/groups/text/run.ts";
 import { CASE_CSS } from "../../css-mapping/groups/text/styles.ts";
 import { fontShorthand, letterSpacingCss } from "../../css-mapping/values/fonts.ts";
 import { px } from "../../css-mapping/values/format.ts";
@@ -12,17 +13,6 @@ export type TextParts = Pick<
   TextSegment,
   "fontName" | "fontSize" | "lineHeight" | "letterSpacing" | "textCase" | "textDecoration"
 >;
-
-const DECORATIONS: Readonly<Record<string, string>> = {
-  UNDERLINE: "underline",
-  STRIKETHROUGH: "line-through",
-};
-
-/** The blurs an effect style may hold, as the CSS property each is. */
-const BLURS: Readonly<Record<string, string>> = {
-  LAYER_BLUR: "filter",
-  BACKGROUND_BLUR: "backdrop-filter",
-};
 
 const SHADOWS: ReadonlySet<string> = new Set(["DROP_SHADOW", "INNER_SHADOW"]);
 
@@ -43,7 +33,7 @@ export function numberValue(field: string, value: number): string {
 export function textValue(parts: TextParts): string {
   const spacing = letterSpacingCss(parts.letterSpacing);
   const transform = CASE_CSS[parts.textCase];
-  const decoration = DECORATIONS[parts.textDecoration];
+  const decoration = DECORATION_LINES[parts.textDecoration];
 
   return [
     fontShorthand(parts),
@@ -62,15 +52,15 @@ export function textValue(parts: TextParts): string {
 export function effectsValue(effects: readonly SnapshotEffect[], space: ColorSpace = "srgb"): string | null {
   const visible = effects.filter((effect) => effect.visible ?? true);
 
-  if (visible.length === 0 || visible.some((effect) => !SHADOWS.has(effect.type) && BLURS[effect.type] === undefined)) {
+  if (visible.length === 0 || visible.some((effect) => !SHADOWS.has(effect.type) && blurDeclaration(effect) === null)) {
     return null;
   }
 
   const shadows = shadowListCss(visible, space);
   const blurs = visible.flatMap((effect) => {
-    const property = BLURS[effect.type];
+    const declaration = blurDeclaration(effect);
 
-    return property === undefined ? [] : [`${property}: blur(${px((effect.radius ?? 0) / 2)})`];
+    return declaration === null ? [] : [`${declaration[0]}: ${declaration[1]}`];
   });
 
   return [shadows === "" ? null : `box-shadow: ${shadows}`, ...blurs].filter((part) => part !== null).join("; ");

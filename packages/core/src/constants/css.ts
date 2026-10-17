@@ -11,6 +11,9 @@ export const VECTOR_TYPES: ReadonlySet<string> = new Set([
   "TRANSFORM_GROUP",
 ]);
 
+/** The spacing grid a design's gaps, padding and radii are checked against, in px. */
+export const SPACING_GRID = 4;
+
 /**
  * A variable font's registered axes at the value a browser draws without being told (upright, not italic, normal
  * width): writing them says nothing. Weight and optical size depend on the text: text CSS compares them with its

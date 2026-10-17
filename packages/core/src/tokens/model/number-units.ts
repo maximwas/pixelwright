@@ -1,4 +1,4 @@
-import { aliasOf } from "../aliases.ts";
+import { aliasLinks } from "../aliases.ts";
 import type { RawVariable } from "../raw-tokens.ts";
 import { type NumberUnit, scopedUnit } from "../scopes.ts";
 
@@ -42,14 +42,8 @@ function aliasGroups(numbers: readonly RawVariable[]): Map<string, string> {
     return at;
   };
 
-  for (const variable of numbers) {
-    for (const value of Object.values(variable.valuesByMode)) {
-      const target = aliasOf(value);
-
-      if (target !== null && parent.has(target)) {
-        parent.set(root(variable.id), root(target));
-      }
-    }
+  for (const [from, to] of aliasLinks(numbers)) {
+    parent.set(root(from), root(to));
   }
 
   return new Map(numbers.map((variable) => [variable.id, root(variable.id)]));
