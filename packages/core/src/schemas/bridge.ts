@@ -140,6 +140,11 @@ export const ResponseMessageSchema = z.discriminatedUnion("ok", [
   }),
 ]);
 
+/** UPDATE_EVENT's data: the newest version npm has. */
+export const UpdateEventSchema = z.object({
+  version: z.string().min(1).max(64),
+});
+
 // both ways, fire and forget
 export const EventMessageSchema = z.object({
   type: z.literal("event"),

@@ -15,6 +15,9 @@ export const PLUGIN_WINDOW = {
 /** figma.clientStorage key of the paired key: per user and plugin, shared by every file, so pairing is once a machine. */
 export const PAIRING_STORAGE_KEY = "pixelwright.pairing";
 
+/** figma.clientStorage key of the version whose update banner the user closed: it comes back with a newer one. */
+export const UPDATE_DISMISSED_STORAGE_KEY = "pixelwright.updateDismissed";
+
 /** figma.clientStorage key of a file where Allow edits is on, followed by the file's id: one key per file. */
 export const EDITS_STORAGE_PREFIX = "pixelwright.allowEdits.";
 

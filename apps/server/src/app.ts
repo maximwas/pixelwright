@@ -21,6 +21,7 @@ import type { App } from "./types/app.ts";
 import type { BridgeConfig } from "./types/bridge.ts";
 import type { AppConfig } from "./types/config.ts";
 import type { Logger } from "./types/logging.ts";
+import { watchLatest } from "./updates/watch-latest.ts";
 
 /** Wires the server together from its environment; the bridge starts trying to connect at once. */
 export async function createApp(): Promise<App> {
@@ -94,6 +95,8 @@ async function createBridge(config: AppConfig, logger: Logger): Promise<PluginBr
       (message) => logger.warn(message),
     ),
   });
+
+  watchLatest(server, config.updateCheck);
 
   return PluginBridge.connect(
     server,

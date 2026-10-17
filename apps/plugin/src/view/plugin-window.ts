@@ -1,15 +1,19 @@
 import { FEEDBACK_LINK, SUPPORT_LINKS, type SupportLink } from "@pixelwright/core";
 import { MARK_SVG } from "../constants/plugin.ts";
 import type { RecentAction, WindowState } from "../types/window.ts";
+import { element } from "./dom.ts";
 import { editsHint, editsNote, pairingNote, statusLine } from "./status-line.ts";
 import { WINDOW_CSS } from "./styles.ts";
+import { UpdateBannerView } from "./update-banner-view.ts";
 
 export interface WindowHandlers {
   readonly onAllowEdits: (allowEdits: boolean) => void;
   /** The user typed the pairing code and pressed Pair (or Enter). */
   readonly onPair: (code: string) => void;
-  /** The user clicked a support or feedback link: main opens it in the browser. */
+  /** The user clicked a support, feedback or update link: main opens it in the browser. */
   readonly onOpenLink: (url: string) => void;
+  /** The user closed the update banner of this version. */
+  readonly onDismissUpdate: (version: string) => void;
 }
 
 /** The undo shortcut of the system Figma runs on. */
@@ -30,14 +34,16 @@ export class PluginWindow {
   readonly #toggle = document.createElement("input");
   readonly #note = element("p", "note");
   readonly #actions = element("ul", "actions");
+  readonly #update = new UpdateBannerView();
 
-  constructor(root: HTMLElement, { onAllowEdits, onPair, onOpenLink }: WindowHandlers) {
+  constructor(root: HTMLElement, { onAllowEdits, onPair, onOpenLink, onDismissUpdate }: WindowHandlers) {
     const style = document.createElement("style");
 
     style.textContent = WINDOW_CSS;
     this.#hint.setAttribute("role", "alert");
     root.append(
       style,
+      this.#update.mount(onOpenLink, onDismissUpdate),
       brand(),
       this.#status(),
       this.#pairingForm(onPair),
@@ -50,7 +56,7 @@ export class PluginWindow {
     );
   }
 
-  render({ context, link, actions, refused, ranCode }: WindowState): void {
+  render({ context, link, actions, refused, ranCode, update }: WindowState): void {
     const line = statusLine(link, context.file.name);
     const pairingLine = pairingNote(link);
     const hintLine = editsHint(refused, context.allowEdits);
@@ -67,6 +73,7 @@ export class PluginWindow {
     this.#toggle.checked = context.allowEdits;
     this.#note.textContent = editsNote(context.allowEdits, UNDO, ranCode);
     this.#actions.replaceChildren(...activityItems(actions));
+    this.#update.render(update);
   }
 
   #status(): HTMLElement {
@@ -176,20 +183,4 @@ function activityItems(actions: readonly RecentAction[]): HTMLLIElement[] {
       ),
     ),
   );
-}
-
-function element<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className: string,
-  ...content: (Node | string)[]
-): HTMLElementTagNameMap[K] {
-  const made = document.createElement(tag);
-
-  if (className !== "") {
-    made.className = className;
-  }
-
-  made.append(...content);
-
-  return made;
 }

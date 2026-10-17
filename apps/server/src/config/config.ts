@@ -22,6 +22,7 @@ export function readConfig(env: Record<string, string | undefined>): AppConfig {
     pluginOrigins: [...new Set([...DEFAULT_PLUGIN_ORIGINS, ...extraOrigins])],
     projectRoot: env.CLAUDE_PROJECT_DIR?.trim() || null,
     supportReminders: env.PIXELWRIGHT_SUPPORT_REMINDERS?.trim().toLowerCase() !== "off",
+    updateCheck: !env.PIXELWRIGHT_NO_UPDATE_CHECK?.trim(),
     logFile: join(homeDir(env), "logs", "pixelwright.log"),
   };
 }

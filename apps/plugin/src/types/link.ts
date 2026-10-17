@@ -30,6 +30,8 @@ export interface SocketLinkOptions {
   readonly onState: (state: LinkState) => void;
   /** The server issued a key after the user typed the code: keep it. */
   readonly onPaired: (key: PluginKey) => void;
+  /** The server heard of this newest Pixelwright from npm. */
+  readonly onUpdate?: (version: string) => void;
   readonly createSocket?: (url: string) => SocketLike;
   /** Runs a reconnect later; returns how to cancel it. */
   readonly schedule?: (run: () => void, ms: number) => () => void;

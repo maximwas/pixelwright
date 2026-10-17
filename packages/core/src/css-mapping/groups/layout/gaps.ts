@@ -1,6 +1,6 @@
 import type { LengthValue } from "../../figma-props.ts";
 import type { WriteInput, WriteOutput } from "../../property-group.ts";
-import { lengthOf, splitTop } from "../../values/css-values.ts";
+import { pixelLengthOf, splitTop } from "../../values/css-values.ts";
 
 /** A gap and the attribute it was read from, for the plugin's errors. */
 export interface Gap {
@@ -30,7 +30,7 @@ export function gapsOf(
 
 /** The gap shorthand's one or two lengths; none, after its error, when it is anything else. */
 function shorthandParts(gap: string | undefined, out: WriteOutput): LengthValue[] {
-  const parts = gap === undefined ? [] : splitTop(gap, " ").map(lengthOf);
+  const parts = gap === undefined ? [] : splitTop(gap, " ").map(pixelLengthOf);
 
   if (gap !== undefined && (parts.length === 0 || parts.length > 2 || parts.includes(null))) {
     out.fail("gap", `gap="${gap}" is not one or two lengths in px or tokens (rows, then columns).`);
@@ -57,7 +57,7 @@ function gapOf(
         };
   }
 
-  const length = value === "normal" ? 0 : lengthOf(value);
+  const length = value === "normal" ? 0 : pixelLengthOf(value);
 
   if (length === null) {
     out.fail(attribute, `${attribute}="${value}" is not a length in px or a token.`);

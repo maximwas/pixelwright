@@ -1,6 +1,7 @@
 import type { PaintSpec } from "@pixelwright/core";
 import { documentColor } from "./color-profile.ts";
 import type { TokenIndex } from "./tokens/token-index.ts";
+import { variableColor } from "./variable-color.ts";
 import { WriteError } from "./write-error.ts";
 
 /** What paints are made from besides their specs: the call's token index, and the bytes an upload brought. */
@@ -9,10 +10,14 @@ export interface PaintSources {
   readonly uploads?: (stream: string) => Uint8Array | undefined;
 }
 
-/** Paints as Figma takes them: one paint style alone, or layers of colours, images and colour variables. */
+/**
+ * Paints as Figma takes them: one paint style alone, or layers of colours, images and colour variables; a variable's
+ * paint takes its colour for `consumer`, the layer it goes on.
+ */
 export async function paintsOf(
   specs: readonly PaintSpec[],
   sources: PaintSources,
+  consumer?: SceneNode,
 ): Promise<{ style: string } | { paints: Paint[] }> {
   const style = await onlyStyle(specs, () => sources.tokens());
 
@@ -23,7 +28,7 @@ export async function paintsOf(
   const paints: Paint[] = [];
 
   for (const spec of specs) {
-    paints.push(await paintOf(spec, sources));
+    paints.push(await paintOf(spec, sources, consumer));
   }
 
   return { paints };
@@ -70,7 +75,7 @@ async function refusePaintStyle(token: string, index: TokenIndex): Promise<void>
   }
 }
 
-async function paintOf(spec: PaintSpec, sources: PaintSources): Promise<Paint> {
+async function paintOf(spec: PaintSpec, sources: PaintSources, consumer?: SceneNode): Promise<Paint> {
   if (spec.kind === "color") {
     const { r, g, b, a } = documentColor(spec.color);
 
@@ -89,26 +94,60 @@ async function paintOf(spec: PaintSpec, sources: PaintSources): Promise<Paint> {
     return imagePaint(spec, sources);
   }
 
-  return await variablePaint(spec, await sources.tokens());
+  return await variablePaint(spec, await sources.tokens(), consumer);
 }
 
-/** A colour variable's paint: a paint style is the whole list of a layer's paints, so it is no layer of one. */
-async function variablePaint(spec: Extract<PaintSpec, { kind: "token" }>, index: TokenIndex): Promise<Paint> {
+/**
+ * A colour variable's paint (a paint style is the whole list of a layer's paints, so it is no layer of one), made as
+ * Figma makes a newly bound one (seen live on 2026-10-17): the variable's colour, its alpha as the opacity, an opacity
+ * past it on top. A paint Figma does not resolve (a text's run) still shows right; Figma replaces the opacity with the
+ * alpha, so an opacity past it is set again after (opacitiesAgain).
+ */
+async function variablePaint(
+  spec: Extract<PaintSpec, { kind: "token" }>,
+  index: TokenIndex,
+  consumer?: SceneNode,
+): Promise<Paint> {
   await refusePaintStyle(spec.token, index);
+
+  const variable = await index.variable(spec.token, "COLOR");
+  const color = await variableColor(variable, consumer);
 
   return figma.variables.setBoundVariableForPaint(
     {
       type: "SOLID",
       color: {
-        r: 0,
-        g: 0,
-        b: 0,
+        r: color?.r ?? 0,
+        g: color?.g ?? 0,
+        b: color?.b ?? 0,
       },
-      opacity: spec.opacity,
+      opacity: (color?.a ?? 1) * spec.opacity,
     },
     "color",
-    await index.variable(spec.token, "COLOR"),
+    variable,
   );
+}
+
+/**
+ * The paints to set again after Figma bound them: it gives a newly bound paint its variable's alpha as the opacity,
+ * whatever it was given, and keeps a lowered one set on a paint already bound (seen live on 2026-10-17). Null when
+ * every bound paint holds the opacity wanted.
+ */
+export function opacitiesAgain(live: readonly Paint[], wanted: readonly Paint[]): Paint[] | null {
+  const opacity = (paint: Paint | undefined) => paint?.opacity ?? 1;
+  const isBound = (paint: Paint | undefined) => paint?.type === "SOLID" && paint.boundVariables?.color !== undefined;
+  const off = wanted.some((paint, index) => isBound(paint) && Math.abs(opacity(live[index]) - opacity(paint)) > 0.0001);
+
+  return off
+    ? live.map((paint, index) =>
+        isBound(paint) && isBound(wanted[index])
+          ? {
+              ...paint,
+              opacity: opacity(wanted[index]),
+            }
+          : paint,
+      )
+    : null;
 }
 
 /** An image layer from its uploaded file. */

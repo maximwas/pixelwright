@@ -5,6 +5,7 @@ import type { ApplyElement, ApplyError, ContentPiece } from "../types.ts";
 import { META_ATTRIBUTES } from "../vocabulary.ts";
 import { type Admission, admissionOf } from "./admission.ts";
 import { refusalOf } from "./attribute-refusals.ts";
+import { habitHint } from "./habits.ts";
 import { childScope, refusedScope, type Scope, skippedScope, TOP } from "./scope.ts";
 import { piecesOf } from "./text-pieces.ts";
 
@@ -144,21 +145,23 @@ export class ApplyReader {
       } else if (known) {
         attributes[name] = value;
       } else {
-        this.#unknown(node, name, place);
+        this.#unknown(node, name, value, place);
       }
     }
 
     return attributes;
   }
 
-  #unknown(node: XmlElementNode, name: string, place: Place): void {
+  /** An attribute no tag takes: the CSS for one written out of habit, else the nearest spelling. */
+  #unknown(node: XmlElementNode, name: string, value: string, place: Place): void {
     const near = closest(name, [...META_ATTRIBUTES, ...CSS_ATTRIBUTES]);
+    const hint = habitHint(name, value) ?? (near === null ? undefined : `Did you mean ${near}?`);
 
     this.errors.push({
       ...place,
       attribute: name,
       message: `${name} is not an attribute of <${node.type}>: left out.`,
-      ...(near === null ? {} : { hint: `Did you mean ${near}?` }),
+      ...(hint === undefined ? {} : { hint }),
     });
   }
 

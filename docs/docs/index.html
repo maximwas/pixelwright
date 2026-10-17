@@ -146,7 +146,8 @@ pixelwright --version
 </code></pre>
 <p><code>PIXELWRIGHT_HOME</code> moves <code>~/.pixelwright</code> (the plugin, pairing keys, written-files.json, the shared log in <code>logs/</code>);
 <code>CLAUDE_PROJECT_DIR</code> names the project for Code Connect; <code>PIXELWRIGHT_SUPPORT_REMINDERS=off</code> turns off the weekly
-support note (see Support); <code>PIXELWRIGHT_LOG_LEVEL=debug</code> adds the bridge&#39;s details to the log.</p>
+support note (see Support); <code>PIXELWRIGHT_NO_UPDATE_CHECK=1</code> stops asking npm for a newer version (see Updating);
+<code>PIXELWRIGHT_LOG_LEVEL=debug</code> adds the bridge&#39;s details to the log.</p>
 
         </section>
         <section id="updating">
@@ -155,6 +156,10 @@ support note (see Support); <code>PIXELWRIGHT_LOG_LEVEL=debug</code> adds the br
 computer: run <code>npx -y pixelwright@latest</code> again (or <code>setup --print</code>) to put the matching one in <code>~/.pixelwright/plugin</code>.
 Figma Desktop loads it the next time you run the plugin. When the plugin&#39;s window says the protocol versions differ,
 this is the fix.</p>
+<p>When a newer version is out, the plugin&#39;s window says so at the top, with what is new in it and a link to these steps.
+Close it, and it stays closed until the next version. The server asks npm for the newest version once a day (the
+answer kept in <code>~/.pixelwright/latest.json</code>); <code>PIXELWRIGHT_NO_UPDATE_CHECK=1</code> turns that off, and the plugin itself
+never goes online.</p>
 <p>Every MCP client session runs its own server, and they share one bridge port. When a newer server starts while an older
 one (another client&#39;s, still open) holds the port, the older one hands the port over and switches its bridge off: its
 status then asks you to restart Pixelwright in that client (<code>/mcp</code> in Claude Code). A plugin turned away by an older
@@ -713,7 +718,8 @@ shorthand, an effect style&#39;s as a <code>box-shadow</code> list.</li>
 <li>A value a variable or style already holds is left as it is, so sending tokens_read&#39;s own output writes nothing;
 send only what you change. Nothing is ever deleted (use <code>execute</code> to remove a token).</li>
 <li>A library&#39;s collection or style the file uses is never copied into the file: change it in the library.</li>
-<li>More modes than the file&#39;s Figma plan allows: that mode&#39;s error comes back and the other modes are written.</li>
+<li>More modes than the file&#39;s Figma plan allows (Starter: one a collection): that mode&#39;s error says the plan&#39;s limit
+and the other modes are written. A dry run cannot know the plan, and a <code>version</code> is saved before the write.</li>
 <li>One undo step; <code>dryRun</code> checks names, types, modes and aliases without writing. <code>version: &quot;Before the brand change&quot;</code> first saves a named version in the file&#39;s history, for the designer to go back to, when the call changes
 something.</li>
 </ul>
@@ -837,7 +843,8 @@ component or a set; an instance of a new component can follow later in the same 
 <ul>
 <li><code>&lt;Image src=&quot;photos/hero.jpg&quot; width=&quot;600px&quot; height=&quot;400px&quot;/&gt;</code> makes an image from a file (PNG, JPG or GIF, up
 to 32 MB and 4096 px a side; convert WebP first), <code>&lt;Icon src=&quot;icons/arrow.svg&quot; width=&quot;24px&quot;/&gt;</code> an icon from an
-SVG; <code>background: url(…)</code> fills a frame with one. Paths are on the server&#39;s machine, from its folder.</li>
+SVG; <code>background=&quot;url(…)&quot;</code> fills any layer that takes a background with one, a new or an existing frame,
+rectangle or ellipse (an avatar). Paths are on the server&#39;s machine, from its folder.</li>
 <li>An existing <code>Image</code> with another file in <code>src</code> takes that image, keeping its fit. A file design_read or
 assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
 the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a
@@ -848,7 +855,8 @@ pinned properties; notes without text, which design_read does not show, stay.</l
 </ul>
 <h3>Values</h3>
 <ul>
-<li>Lengths in px; <code>var(--Name)</code> binds the variable or style of that name, as <code>design_read</code> and <code>tokens_read</code>
+<li>Lengths in px (a bare number in a size, a place, a gap, a padding or a radius is taken as px; a bare line height
+is a multiple of the font size, as in CSS); <code>var(--Name)</code> binds the variable or style of that name, as <code>design_read</code> and <code>tokens_read</code>
 write them (a paint style, a colour or number variable, an effect style); <code>textStyle=&quot;h3&quot;</code> applies a text style.</li>
 <li><code>font</code> is the shorthand <code>[italic] weight size/line-height &#39;Family&#39;</code>; Figma must have the family and that
 weight, or the error lists the styles it has.</li>

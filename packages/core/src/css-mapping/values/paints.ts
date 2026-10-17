@@ -147,8 +147,9 @@ function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext)
 }
 
 /**
- * A solid paint: the token of the colour variable bound to it (its own opacity on top as a mix with transparent, so
- * it still names the token), else its colour.
+ * A solid paint: the token of the colour variable bound to it (an opacity past the variable's own alpha on top as a
+ * mix with transparent, so it still names the token), else its colour. Figma keeps a bound paint's opacity as the
+ * whole of it: the variable's alpha when bound (seen live on 2026-10-17), less when lowered after.
  */
 function solidCss(paint: SnapshotPaint, color: Channels, context: CssContext): string {
   const variable = boundVariable(paint.boundVariables?.color, context);
@@ -159,12 +160,14 @@ function solidCss(paint: SnapshotPaint, color: Channels, context: CssContext): s
   }
 
   const name = variableTokenName(variable);
+  const alpha = isChannels(variable.value) ? (variable.value.a ?? 1) : 1;
+  const extra = alpha > 0 ? opacity / alpha : opacity;
 
   if (isChannels(variable.value)) {
     context.tokens.set(name, Color.of(variable.value, context.colorSpace).css());
   }
 
-  return opacity < 1
-    ? `color-mix(in ${context.colorSpace ?? "srgb"}, var(${name}) ${Math.round(opacity * 100)}%, transparent)`
+  return Math.round(extra * 100) < 100
+    ? `color-mix(in ${context.colorSpace ?? "srgb"}, var(${name}) ${Math.round(extra * 100)}%, transparent)`
     : `var(${name})`;
 }

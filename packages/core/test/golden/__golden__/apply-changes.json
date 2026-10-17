@@ -326,7 +326,7 @@
           "id": "1:1",
           "attribute": "src",
           "message": "src makes an <Image> or an <Icon>, not a <Frame>.",
-          "hint": "A frame's image is its background: url(…)."
+          "hint": "Fill it with the picture by its background: background=\"url(assets/photo.png)\"."
         }
       ]
     }

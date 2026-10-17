@@ -415,7 +415,8 @@ describe("tokens_apply: variables", () => {
         kind: "mode",
         collection: "Brand",
         name: "Contrast",
-        message: expect.stringMatching(/Limited/),
+        message:
+          "The file's Figma plan allows 2 modes in a collection: Contrast is not added, and its values are left out (a dry run cannot know the plan).",
       }),
     ]);
     expect(result.updated).toEqual([

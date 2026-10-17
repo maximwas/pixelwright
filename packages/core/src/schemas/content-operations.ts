@@ -172,6 +172,30 @@ export const CONTENT_OPERATIONS = {
     }),
     output: InspectRawSchema,
   },
+  /**
+   * The smallest layer that renders a region of a layer as the layer's own render shows it: the deepest opaque one
+   * holding the region with nothing painted over it, else the layer itself. Read only.
+   */
+  cover: {
+    input: z.object({
+      node: NodeIdSchema,
+      /** The region, from the layer's box top left, in px. */
+      clip: z.object({
+        x: z.number(),
+        y: z.number(),
+        width: z.number().positive(),
+        height: z.number().positive(),
+      }),
+    }),
+    output: z.object({
+      node: z.string(),
+      /** Its box, from the layer's box top left. */
+      x: z.number(),
+      y: z.number(),
+      width: z.number(),
+      height: z.number(),
+    }),
+  },
   delete: {
     input: z.object({
       nodes: z.array(NodeIdSchema).min(1).max(500),

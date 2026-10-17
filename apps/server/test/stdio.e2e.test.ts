@@ -21,6 +21,7 @@ describe("stdio server", () => {
       env: {
         ...inherited,
         PIXELWRIGHT_HOME: home,
+        PIXELWRIGHT_NO_UPDATE_CHECK: "1",
         PIXELWRIGHT_BRIDGE_PORT: String(await freePort()),
       },
     });

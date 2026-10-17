@@ -63,3 +63,15 @@ export interface OpenLinkHandler extends EventHandler {
   name: "OPEN_LINK";
   handler: (url: string) => void;
 }
+
+/** main → window: the version whose update banner the user closed, or null; sent on READY. */
+export interface DismissedUpdateHandler extends EventHandler {
+  name: "DISMISSED_UPDATE";
+  handler: (version: string | null) => void;
+}
+
+/** window → main: the user closed the update banner of this version. */
+export interface DismissUpdateHandler extends EventHandler {
+  name: "DISMISS_UPDATE";
+  handler: (version: string) => void;
+}

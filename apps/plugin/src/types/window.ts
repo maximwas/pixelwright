@@ -1,3 +1,4 @@
+import type { UpdateBanner } from "../view/update-banner.ts";
 import type { LinkState } from "./link.ts";
 import type { PluginContext } from "./messages.ts";
 
@@ -24,4 +25,6 @@ export interface WindowState {
   readonly refused: boolean;
   /** execute ran in this window: what its code started may still run. */
   readonly ranCode: boolean;
+  /** npm has a newer Pixelwright and its banner was not closed. */
+  readonly update: UpdateBanner | null;
 }

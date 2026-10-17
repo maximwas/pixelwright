@@ -120,7 +120,16 @@ function makeMode(target: Target, name: string, run: TokenRun, make: () => strin
       kind: "mode",
       collection: target.plan.name,
       name,
-      message: errorMessage(error),
+      message: planLimit(error, name) ?? errorMessage(error),
     });
   }
+}
+
+/** Figma's refusal of a mode past the plan's limit ("in addMode: Limited to 1 modes only"), in plain words. */
+function planLimit(error: unknown, mode: string): string | null {
+  const limit = /Limited to (\d+) modes?/i.exec(errorMessage(error))?.[1];
+
+  return limit === undefined
+    ? null
+    : `The file's Figma plan allows ${limit} mode${limit === "1" ? "" : "s"} in a collection: ${mode} is not added, and its values are left out (a dry run cannot know the plan).`;
 }

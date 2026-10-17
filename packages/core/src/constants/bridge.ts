@@ -45,6 +45,9 @@ export const NO_RECONNECT_CODES: ReadonlySet<number> = new Set([CloseCode.Supers
 /** The event the plugin sends whenever its file, page, window visibility or Allow edits changes. */
 export const PLUGIN_INFO_EVENT = "plugin.info";
 
+/** The event the server sends a plugin when npm has a newer Pixelwright: its version (UpdateEventSchema). */
+export const UPDATE_EVENT = "pixelwright.update";
+
 /** Operations the plugin window does not list among the last actions: probes, not something the model asked for. */
 export const SILENT_OPERATIONS: ReadonlySet<string> = new Set(["ping"]);
 

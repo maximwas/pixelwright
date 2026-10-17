@@ -16,6 +16,33 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## 0.3.2 — 2026-10-17
+
+### Added
+
+- The plugin's window says when a newer Pixelwright is out, with links to what is new and to the steps to update.
+  Closed, it stays closed until the next version. The server asks npm once a day; `PIXELWRIGHT_NO_UPDATE_CHECK=1`
+  turns that off.
+
+### Fixed
+
+- `design_apply` answers `x` and `y` with `left` and `top`, and Figma's own names (`fill`, `stroke`, `rotation`,
+  `corner-radius`) with the CSS that writes them, where it used to suggest the nearest spelling (`id`).
+- `design_apply` takes a bare number as px in sizes, places, gaps, paddings and radii (`width="363"`).
+- A new text that fills its row (`flex="1"`, `align-self="stretch"`) takes the row's width: it used to stay 0 wide,
+  a letter a line.
+- `border-top` and the other single sides draw on a new frame: the line used to come out 0 px wide.
+- `src` on a shape or a frame now points to `background="url(…)"`, which fills any layer with a picture, an existing
+  ellipse too; the hint used to speak of frames only.
+- `screenshot` with a `clip` on a layer too big to render whole renders the smallest opaque layer that holds the
+  region alone, such as a page's section, and cuts it there; it used to fail with `RESULT_TOO_LARGE`.
+- A colour variable with transparency (a hairline at 14%) reads as the token alone, where `design_read` wrote
+  `color-mix(… 14%, transparent)` on top of the variable's own alpha; `design_apply` writes `color-mix()` over such a
+  variable at the opacity it says (Figma had replaced it with the variable's alpha), and a bound paint takes the
+  variable's colour rather than a black placeholder where Figma does not resolve it.
+- `tokens_apply` says a mode past the file's Figma plan limit in plain words (how many modes the plan allows, which
+  mode is left out) instead of Figma's raw error.
+
 ## 0.3.1 — 2026-10-15
 
 ### Added

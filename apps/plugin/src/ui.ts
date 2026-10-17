@@ -8,6 +8,8 @@ import type { LinkState, RequestOutcome } from "./types/link.ts";
 import type {
   AllowEditsHandler,
   ContextHandler,
+  DismissedUpdateHandler,
+  DismissUpdateHandler,
   OpenLinkHandler,
   PairingHandler,
   PluginContext,
@@ -20,6 +22,7 @@ import type {
 import type { RecentAction } from "./types/window.ts";
 import { PluginWindow } from "./view/plugin-window.ts";
 import { describeAction, withAction } from "./view/recent-actions.ts";
+import { updateBanner } from "./view/update-banner.ts";
 
 /**
  * The UI iframe: holds the bridge socket (only the iframe may use the network) and draws the window. It starts with no
@@ -44,6 +47,9 @@ class PluginUi {
   /** execute ran: code it started may outlive the switch until the window closes. */
   #ranCode = false;
   #socket: SocketLink | null = null;
+  /** The newest Pixelwright npm has, as the server heard it; and the version whose banner the user closed. */
+  #latest: string | null = null;
+  #dismissed: string | null = null;
 
   constructor(root: HTMLElement) {
     this.#root = root;
@@ -51,6 +57,11 @@ class PluginUi {
       onAllowEdits: (value) => emit<AllowEditsHandler>("ALLOW_EDITS", value),
       onPair: (code) => this.#socket?.pair(code),
       onOpenLink: (url) => emit<OpenLinkHandler>("OPEN_LINK", url),
+      onDismissUpdate: (version) => {
+        this.#dismissed = version;
+        emit<DismissUpdateHandler>("DISMISS_UPDATE", version);
+        this.#render();
+      },
     });
   }
 
@@ -58,6 +69,9 @@ class PluginUi {
     on<ResponseHandler>("RESPONSE", (id, outcome) => this.#relay.settle(id, outcome));
     on<PairingHandler>("PAIRING", (key) => {
       this.#storedKey = key;
+    });
+    on<DismissedUpdateHandler>("DISMISSED_UPDATE", (version) => {
+      this.#dismissed = version;
     });
     on<ContextHandler>("CONTEXT", (next) => this.#contextChanged(next));
     document.addEventListener("visibilitychange", () => this.#socket?.sendInfo());
@@ -90,6 +104,11 @@ class PluginUi {
         actions: this.#actions,
         refused: this.#refused,
         ranCode: this.#ranCode,
+        update: updateBanner({
+          latest: this.#latest,
+          pluginVersion: this.#context.pluginVersion,
+          dismissed: this.#dismissed,
+        }),
       });
     }
   }
@@ -105,6 +124,10 @@ class PluginUi {
         this.#render();
       },
       onPaired: (key) => emit<SavePairingHandler>("SAVE_PAIRING", key),
+      onUpdate: (version) => {
+        this.#latest = version;
+        this.#render();
+      },
     });
   }
 

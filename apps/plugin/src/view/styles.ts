@@ -31,5 +31,11 @@ body { margin: 0; background: var(--figma-color-bg); color: var(--figma-color-te
 .brand-name { font-size: 12px; font-weight: 600; }
 .support { margin: 0; color: var(--figma-color-text-tertiary); }
 .support a { color: var(--figma-color-text-brand); text-decoration: underline; cursor: pointer; }
+.update { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 6px; background: var(--figma-color-bg-brand-tertiary); }
+.update-words { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.update-text { font-weight: 600; }
+.update-links a { color: var(--figma-color-text-brand); text-decoration: underline; cursor: pointer; }
+.update-close { flex: none; width: 20px; height: 20px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--figma-color-icon-secondary); font: 14px/20px Inter, system-ui, sans-serif; cursor: pointer; }
+.update-close:hover { background: var(--figma-color-bg-hover); }
 [hidden] { display: none !important; }
 `;

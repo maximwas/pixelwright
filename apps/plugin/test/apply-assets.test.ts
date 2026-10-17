@@ -113,6 +113,21 @@ beforeEach(() => {
         children: [],
       },
       {
+        id: "4:2",
+        type: "ELLIPSE",
+        name: "Avatar",
+        fills: [
+          {
+            type: "SOLID",
+            color: {
+              r: 0.85,
+              g: 0.85,
+              b: 0.85,
+            },
+          },
+        ],
+      },
+      {
         id: "4:1",
         type: "RECTANGLE",
         name: "Photo",
@@ -267,6 +282,39 @@ describe("apply: images and icons", () => {
       {
         type: "IMAGE",
         imageHash: "hash-5",
+        scaleMode: "FILL",
+      },
+    ]);
+  });
+
+  it("fills an existing ellipse with a picture from a file, as a frame's background", async () => {
+    await send("face-6", 6);
+
+    const { errors, changed } = await apply(
+      changesOf('<Ellipse id="4:2" background="url(face.png)"/>', {
+        "4:2": (change) => ({
+          ...change,
+          props: {
+            ...change.props,
+            fills: (change.props.fills ?? []).map((paint) =>
+              paint.kind === "image"
+                ? {
+                    ...paint,
+                    stream: "face-6",
+                  }
+                : paint,
+            ),
+          },
+        }),
+      }),
+    );
+
+    expect(errors).toEqual([]);
+    expect(changed).toEqual(["4:2"]);
+    expect(byId("4:2")?.fills).toEqual([
+      {
+        type: "IMAGE",
+        imageHash: "hash-6",
         scaleMode: "FILL",
       },
     ]);

@@ -1,6 +1,7 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import { fitIcon, writeImage } from "./asset-steps.ts";
 import { componentSteps } from "./component-steps.ts";
+import { layOutFillingText } from "./size-steps.ts";
 import { stepsFor } from "./steps.ts";
 import { hasTextProps, holdsNoText, TextWriter } from "./text-writer.ts";
 import type { WriteScope } from "./write-scope.ts";
@@ -42,6 +43,8 @@ export class LayerWriter {
 
     const steps = await this.#steps(target, props);
     const text = await this.#text(target);
+
+    layOutFillingText(node);
 
     return asset || component || steps || text;
   }

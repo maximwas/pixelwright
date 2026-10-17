@@ -19,7 +19,7 @@ describe("the plugin build", () => {
       expect(build.status, `${build.stdout}${build.stderr}`).toBe(0);
       // The window only links Figma to the server: core's XML, CSS and token code belongs to the main thread alone.
       expect(statSync(join(out, "build", "ui.js")).size).toBeLessThan(160_000);
-      expect(statSync(join(out, "build", "main.js")).size).toBeLessThan(350_000);
+      expect(statSync(join(out, "build", "main.js")).size).toBeLessThan(360_000);
 
       // Beside each bundle, the licences of the packages it carries: what their licences ask of a copy.
       const main = readFileSync(join(out, "build", "main.js.LICENSE.txt"), "utf8");

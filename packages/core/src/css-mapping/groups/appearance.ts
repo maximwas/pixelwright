@@ -3,7 +3,7 @@ import { MIXED } from "../../schemas/snapshot-values.ts";
 import type { SnapshotNode } from "../../types/snapshot.ts";
 import type { CssDeclarations } from "../css-declarations.ts";
 import type { Rule, WriteInput, WriteOutput } from "../property-group.ts";
-import { boxOf, lengthOf, numberOf, percentOf, splitTop } from "../values/css-values.ts";
+import { boxOf, numberOf, percentOf, pixelLengthOf, splitTop } from "../values/css-values.ts";
 import { px } from "../values/format.ts";
 
 const RADII = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
@@ -136,7 +136,7 @@ function radiusRule({ tag, own }: WriteInput, out: WriteOutput): void {
     return;
   }
 
-  const corners = value.includes("/") ? null : boxOf(splitTop(value, " ").map(lengthOf));
+  const corners = value.includes("/") ? null : boxOf(splitTop(value, " ").map(pixelLengthOf));
 
   if (corners === null) {
     out.fail("border-radius", `border-radius="${value}" is not 1 to 4 lengths in px or tokens.`);

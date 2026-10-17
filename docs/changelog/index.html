@@ -38,6 +38,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-3-2">0.3.2 — 2026-10-17</a></li>
           <li><a href="#v0-3-1">0.3.1 — 2026-10-15</a></li>
           <li><a href="#v0-3-0">0.3.0 — 2026-10-15</a></li>
           <li><a href="#v0-2-0">0.2.0 — 2026-10-14</a></li>
@@ -48,6 +49,35 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-3-2">
+          <h2>0.3.2 — 2026-10-17</h2>
+<h4>Added</h4>
+<ul>
+<li>The plugin&#39;s window says when a newer Pixelwright is out, with links to what is new and to the steps to update.
+Closed, it stays closed until the next version. The server asks npm once a day; <code>PIXELWRIGHT_NO_UPDATE_CHECK=1</code>
+turns that off.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li><code>design_apply</code> answers <code>x</code> and <code>y</code> with <code>left</code> and <code>top</code>, and Figma&#39;s own names (<code>fill</code>, <code>stroke</code>, <code>rotation</code>,
+<code>corner-radius</code>) with the CSS that writes them, where it used to suggest the nearest spelling (<code>id</code>).</li>
+<li><code>design_apply</code> takes a bare number as px in sizes, places, gaps, paddings and radii (<code>width=&quot;363&quot;</code>).</li>
+<li>A new text that fills its row (<code>flex=&quot;1&quot;</code>, <code>align-self=&quot;stretch&quot;</code>) takes the row&#39;s width: it used to stay 0 wide,
+a letter a line.</li>
+<li><code>border-top</code> and the other single sides draw on a new frame: the line used to come out 0 px wide.</li>
+<li><code>src</code> on a shape or a frame now points to <code>background=&quot;url(…)&quot;</code>, which fills any layer with a picture, an existing
+ellipse too; the hint used to speak of frames only.</li>
+<li><code>screenshot</code> with a <code>clip</code> on a layer too big to render whole renders the smallest opaque layer that holds the
+region alone, such as a page&#39;s section, and cuts it there; it used to fail with <code>RESULT_TOO_LARGE</code>.</li>
+<li>A colour variable with transparency (a hairline at 14%) reads as the token alone, where <code>design_read</code> wrote
+<code>color-mix(… 14%, transparent)</code> on top of the variable&#39;s own alpha; <code>design_apply</code> writes <code>color-mix()</code> over such a
+variable at the opacity it says (Figma had replaced it with the variable&#39;s alpha), and a bound paint takes the
+variable&#39;s colour rather than a black placeholder where Figma does not resolve it.</li>
+<li><code>tokens_apply</code> says a mode past the file&#39;s Figma plan limit in plain words (how many modes the plan allows, which
+mode is left out) instead of Figma&#39;s raw error.</li>
+</ul>
+
+        </section>
         <section id="v0-3-1">
           <h2>0.3.1 — 2026-10-15</h2>
 <h4>Added</h4>

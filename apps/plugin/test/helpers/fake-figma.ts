@@ -222,8 +222,56 @@ const DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
     fontSize: 12,
     fills: [SOLID(0, 0, 0)],
     textAutoResize: "WIDTH_AND_HEIGHT",
+    // As Figma makes one (seen live on 2026-10-15): an empty text is 0 wide, and setting it to fill a row leaves it
+    // so; only a resize lays it out again.
+    width: 0,
   },
 };
+
+/** The new layers that take a stroke weight per side. */
+const STROKE_SIDED = new Set(["FRAME", "COMPONENT", "RECTANGLE"]);
+
+/**
+ * Figma's stroke weights per side on a new layer, as seen live on 2026-10-15 (border-top left every weight at 0):
+ * the sides read its strokeWeight, 1, until one is set; setting one gives the layer weights per side, the sides not
+ * set yet 0. strokeWeight is then the sides' weight when they agree, figma.mixed when not, and setting it evens them.
+ */
+function strokeSides(node: FakeNode): void {
+  const SIDES = ["Top", "Right", "Bottom", "Left"] as const;
+  let weight = 1;
+  let sides: Record<(typeof SIDES)[number], number> | null = null;
+
+  for (const side of SIDES) {
+    Object.defineProperty(node, `stroke${side}Weight`, {
+      get: () => (sides === null ? weight : sides[side]),
+      set: (value: number) => {
+        sides ??= {
+          Top: 0,
+          Right: 0,
+          Bottom: 0,
+          Left: 0,
+        };
+        sides[side] = value;
+      },
+      enumerable: true,
+      configurable: true,
+    });
+  }
+
+  Object.defineProperty(node, "strokeWeight", {
+    get: () => {
+      const values = sides === null ? [weight] : Object.values(sides);
+
+      return values.every((value) => value === values[0]) ? values[0] : FAKE_MIXED;
+    },
+    set: (value: number) => {
+      weight = value;
+      sides = null;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+}
 
 /** Figma's range writers, by the field a whole-text run sets. */
 const RANGE_METHODS: Readonly<Record<string, string>> = {
@@ -641,6 +689,10 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
       type,
       ...structuredClone(DEFAULTS[type] ?? {}),
     });
+
+    if (STROKE_SIDED.has(type)) {
+      strokeSides(node);
+    }
 
     writes.created.push(node);
     register(node);
