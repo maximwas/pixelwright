@@ -1,7 +1,7 @@
 import type { SnapshotNode } from "../../../types/snapshot.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";
 import type { Rule, WriteInput, WriteOutput } from "../../property-group.ts";
-import { boxOf, lengthOf, splitTop } from "../../values/css-values.ts";
+import { boxOf, pixelLengthOf, splitTop } from "../../values/css-values.ts";
 import { LAYOUT_TAGS } from "../../vocabulary.ts";
 import { FLEX_ALIGNMENT_RULES, flexLayout, readFlex } from "./flex.ts";
 import { gridLayout, readGrid } from "./grid.ts";
@@ -103,7 +103,7 @@ function layoutRule(input: WriteInput, out: WriteOutput): void {
 
 function paddingRule({ own }: WriteInput, out: WriteOutput): void {
   const value = own("padding") ?? "";
-  const sides = boxOf(splitTop(value, " ").map(lengthOf));
+  const sides = boxOf(splitTop(value, " ").map(pixelLengthOf));
 
   if (sides === null) {
     out.fail("padding", `padding="${value}" is not 1 to 4 lengths in px or tokens.`);

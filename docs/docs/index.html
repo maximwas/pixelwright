@@ -848,7 +848,8 @@ pinned properties; notes without text, which design_read does not show, stay.</l
 </ul>
 <h3>Values</h3>
 <ul>
-<li>Lengths in px; <code>var(--Name)</code> binds the variable or style of that name, as <code>design_read</code> and <code>tokens_read</code>
+<li>Lengths in px (a bare number in a size, a place, a gap, a padding or a radius is taken as px; a bare line height
+is a multiple of the font size, as in CSS); <code>var(--Name)</code> binds the variable or style of that name, as <code>design_read</code> and <code>tokens_read</code>
 write them (a paint style, a colour or number variable, an effect style); <code>textStyle=&quot;h3&quot;</code> applies a text style.</li>
 <li><code>font</code> is the shorthand <code>[italic] weight size/line-height &#39;Family&#39;</code>; Figma must have the family and that
 weight, or the error lists the styles it has.</li>

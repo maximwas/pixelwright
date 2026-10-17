@@ -178,6 +178,16 @@ export function lengthOf(value: string): LengthValue | null {
   return match === null || (match[2] === undefined && Number(match[1]) !== 0) ? null : Number(match[1]);
 }
 
+/**
+ * A length where CSS needs px but a bare number cannot mean anything else (a size, a place, a gap, a padding, a
+ * radius): "363" as 363 px, as agents write it out of habit. Line heights keep lengthOf: a bare one is a multiple.
+ */
+export function pixelLengthOf(value: string): LengthValue | null {
+  const length = lengthOf(value);
+
+  return length === null && /^-?\d*\.?\d+$/.test(value.trim()) ? Number(value) : length;
+}
+
 /** A plain number ("0.5"). */
 export function numberOf(value: string): number | null {
   return /^-?\d*\.?\d+$/.test(value.trim()) ? Number(value) : null;

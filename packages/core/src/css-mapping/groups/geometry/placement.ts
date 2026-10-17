@@ -2,7 +2,7 @@ import { decimal } from "../../../kernel/numbers.ts";
 import type { CssDeclarations } from "../../css-declarations.ts";
 import type { AxisPlacement } from "../../figma-props.ts";
 import type { ReadScope, Rule, WriteInput, WriteOutput } from "../../property-group.ts";
-import { lengthOf, percentOf } from "../../values/css-values.ts";
+import { percentOf, pixelLengthOf } from "../../values/css-values.ts";
 import { px } from "../../values/format.ts";
 import { hasLayout } from "../layout/layout.ts";
 import { transformCss } from "./transform.ts";
@@ -222,7 +222,7 @@ function writeSize(
     return;
   }
 
-  const length = lengthOf(value);
+  const length = pixelLengthOf(value);
 
   if (length === null) {
     out.fail(
@@ -327,7 +327,7 @@ function pixelPlacement({ start, end }: Axis, from: string | undefined, to: stri
 
 /** An edge in pixels: undefined when not given, null when not pixels (a token cannot place a layer). */
 function pixels(value: string | undefined): number | null | undefined {
-  const length = value === undefined ? undefined : lengthOf(value);
+  const length = value === undefined ? undefined : pixelLengthOf(value);
 
   return typeof length === "object" ? null : length;
 }

@@ -16,6 +16,14 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## Unreleased
+
+### Fixed
+
+- `design_apply` answers `x` and `y` with `left` and `top`, and Figma's own names (`fill`, `stroke`, `rotation`,
+  `corner-radius`) with the CSS that writes them, where it used to suggest the nearest spelling (`id`).
+- `design_apply` takes a bare number as px in sizes, places, gaps, paddings and radii (`width="363"`).
+
 ## 0.3.1 — 2026-10-15
 
 ### Added

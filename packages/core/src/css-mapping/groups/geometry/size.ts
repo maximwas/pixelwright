@@ -1,6 +1,6 @@
 import { keywordRule } from "../../keyword-rule.ts";
 import type { ReadScope, Rule, WriteInput, WriteOutput } from "../../property-group.ts";
-import { lengthOf, numberOf } from "../../values/css-values.ts";
+import { numberOf, pixelLengthOf } from "../../values/css-values.ts";
 import { isFlex } from "../layout/layout.ts";
 import type { SizeOverride } from "./placement.ts";
 import { SELF_FIGMA } from "./self-align.ts";
@@ -97,7 +97,7 @@ export const SIZE_RULES: readonly Rule[] = [
 function limitRule(attribute: string, key: (typeof LIMITS)[number][1]): Rule["write"] {
   return ({ own }, out) => {
     const value = own(attribute) ?? "";
-    const length = lengthOf(value);
+    const length = pixelLengthOf(value);
 
     if (value === "none" || value === "auto" || length === 0) {
       out.set(key, null, attribute);
