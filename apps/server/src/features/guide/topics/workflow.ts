@@ -47,7 +47,9 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    \`fonts_check\`: the fonts used and where the build gets each (Google Fonts links). \`design_lint\`: a layer, a
    page or the file checked against the general rules (contrast, raw values, detached components, overflow, touch
    targets, states, leftovers), each finding with its fix; \`tokens_bind\` then binds the raw values to the tokens
-   that hold them (\`dryRun\` first, \`choose\` where several tokens hold a value).
+   that hold them (\`dryRun\` first, \`choose\` where several tokens hold a value). \`a11y_read\`: a screen's heading
+   levels, control roles and labels, alts and reading order, for the markup. \`states_find\`: the hover, focus,
+   disabled, empty, loading or error states the build will need and the design lacks.
 6. **Files.** \`assets_export\`: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
    images as they were placed (originals); \`width\` sizes a render by the CSS width the build shows it at (110 at
    scale 2: 220 px). When a file gets another name than design_read planned (\`planned\`), use the path it gives.

@@ -170,6 +170,14 @@ server keeps trying, and connects once the newer one holds the port.</p>
         <section id="tools">
           <h2>Tools</h2>
 <p>Every tool the server lists, as your agent sees it. Tools marked <span class="writes">writes</span> change the file and need Allow edits.</p>
+<section class="tool" id="tool-a11y_read">
+  <h3><code>a11y_read</code></h3>
+  <p>What a screen&#39;s markup needs for accessibility, read from the design: its headings with levels (a text style named H2 or Heading 3 at that level, else by size, the largest h1; skipped levels and extra h1s said), its controls with their roles (link when a click goes to a screen or URL, button for other clicks, checkbox, radio, switch, tab, textbox, combobox by the component) and the label a screen reader says (an icon-only control gets an aria-label suggestion; a field&#39;s label is the text right before it), its pictures with an alt from their names, controls nested in controls, and where layers placed by hand read in another order than they show. Use it with design_read when you build the screen. contrast_check rates the texts; design_lint checks touch targets. Works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The screen or section to read. Default: the one layer selected in Figma.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-assets_export">
   <h3><code>assets_export</code></h3>
   <p>Writes files out of the design into dir. nodes: up to 50 layers, one file each (SVG for an icon, PNG at 2x otherwise, or the format and scale given; PDF too). from: every true asset inside one layer, the icons and images design_read would plan. original: the images as they were placed instead of renders (photos at full size, in their own format). The same bytes are written once, a name taken by other bytes gets -2, and a file already in dir is never overwritten with other bytes. A layer that cannot be exported is reported in errors and the rest are still written.</p>
@@ -472,6 +480,14 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-states_find">
+  <h3><code>states_find</code></h3>
+  <p>The states a design is drawn in and the ones the build will need that it lacks. Interactive components (buttons, fields, toggles, tabs, links, by their names) used in the scope, or the file&#39;s own for &quot;file&quot;: the states their variants and properties show (hover, focus, pressed, disabled; error for a field, selected for a toggle or tab) and the missing ones. Screens of lists and forms, their frames grouped by name (Inbox, Inbox – Empty, Inbox – Mobile are one): which of empty, loading, error (lists) or error, success (forms) a frame shows and which none does. variants_read gives a component&#39;s states as CSS. Works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>within</code><span class="optional">optional</span></td><td><code>string | string</code></td><td>Where to look: a layer id, a page id, or &quot;file&quot; (the file&#39;s own components). Default: the layers selected in Figma, else the current page.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-status">
   <h3><code>status</code></h3>
   <p>Lists the Figma files whose Pixelwright plugin is connected (name, current page, editor, whether Allow edits is on) and marks the active one: the file whose plugin window was in front last, which every tool uses when no file is named. Call it first, and whenever a tool says no file is connected: hint says what to do. While a plugin waits to be paired, pairing holds the code: tell the user to type it into the Pixelwright window, and never type or send it yourself. probe: true also pings the active file&#39;s plugin.</p>
@@ -611,7 +627,9 @@ colours) and what is off it, for a file without tokens. <code>contrast_check</co
 <code>fonts_check</code>: the fonts used and where the build gets each (Google Fonts links). <code>design_lint</code>: a layer, a
 page or the file checked against the general rules (contrast, raw values, detached components, overflow, touch
 targets, states, leftovers), each finding with its fix; <code>tokens_bind</code> then binds the raw values to the tokens
-that hold them (<code>dryRun</code> first, <code>choose</code> where several tokens hold a value).</li>
+that hold them (<code>dryRun</code> first, <code>choose</code> where several tokens hold a value). <code>a11y_read</code>: a screen&#39;s heading
+levels, control roles and labels, alts and reading order, for the markup. <code>states_find</code>: the hover, focus,
+disabled, empty, loading or error states the build will need and the design lacks.</li>
 <li><strong>Files.</strong> <code>assets_export</code>: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
 images as they were placed (originals); <code>width</code> sizes a render by the CSS width the build shows it at (110 at
 scale 2: 220 px). When a file gets another name than design_read planned (<code>planned</code>), use the path it gives.</li>

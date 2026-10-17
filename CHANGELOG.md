@@ -29,6 +29,13 @@ How to write this file (people and agents alike):
   24 or 44 px, interactive components without hover, focus or disabled states, raw values a token holds, spacing off
   the 4 px grid, instance overrides of a component's look, default names, hidden and empty leftovers. Each finding
   names its layer and how to fix it.
+- `a11y_read` says what a screen's markup needs for accessibility: heading levels (from text style names or sizes),
+  controls with their roles and the labels a screen reader says (an aria-label suggested for an icon-only control, a
+  field's label found beside it), pictures with an alt from their names, controls nested in controls, and layers
+  placed by hand that read in another order than they show.
+- `states_find` lists the states interactive components are drawn in (hover, focus, pressed, disabled; error for a
+  field, selected for a toggle or tab) and the ones they lack, and the empty, loading, error or success frames a
+  list's or a form's screens lack.
 - `tokens_bind` binds raw colours, gaps, padding, radii, border widths, opacity, texts and shadows to the variables
   and styles that hold them exactly, in each layer's mode and within the variables' scopes. A value several tokens
   hold is listed with its candidates for a pick, a value none holds is listed for `tokens_apply`, `choose` snaps a

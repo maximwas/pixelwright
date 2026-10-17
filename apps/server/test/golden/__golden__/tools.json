@@ -4246,6 +4246,327 @@
     }
   },
   {
+    "name": "a11y_read",
+    "title": "Read a screen's accessibility",
+    "description": "What a screen's markup needs for accessibility, read from the design: its headings with levels (a text style named H2 or Heading 3 at that level, else by size, the largest h1; skipped levels and extra h1s said), its controls with their roles (link when a click goes to a screen or URL, button for other clicks, checkbox, radio, switch, tab, textbox, combobox by the component) and the label a screen reader says (an icon-only control gets an aria-label suggestion; a field's label is the text right before it), its pictures with an alt from their names, controls nested in controls, and where layers placed by hand read in another order than they show. Use it with design_read when you build the screen. contrast_check rates the texts; design_lint checks touch targets. Works while Allow edits is off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "node": {
+          "description": "The screen or section to read. Default: the one layer selected in Figma.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "headings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "level": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6
+              },
+              "size": {
+                "type": "number"
+              },
+              "from": {
+                "type": "string",
+                "enum": [
+                  "style",
+                  "size"
+                ],
+                "description": "Its text style's name says the level, or its size among the screen's."
+              }
+            },
+            "required": [
+              "id",
+              "text",
+              "level",
+              "size",
+              "from"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Texts that read as headings, in reading order."
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "description": "button, link, checkbox, radio, switch, tab, textbox, combobox, menuitem."
+              },
+              "label": {
+                "description": "What a screen reader says: its text, a field's label; null when none.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "why": {
+                "type": "string",
+                "description": "What makes it this role: its prototype action, or its component."
+              },
+              "suggestion": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "role",
+              "label",
+              "why"
+            ],
+            "additionalProperties": false
+          },
+          "description": "What people press or type in, in reading order."
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "alt": {
+                "description": "An alt text from its name; null when its name is Figma's default.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "decorative": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "alt",
+              "decorative"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Pictures outside controls."
+        },
+        "order": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Where layers placed by hand read in another order than they show."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "summary",
+        "headings",
+        "controls",
+        "images",
+        "order",
+        "notes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "states_find",
+    "title": "Find missing states",
+    "description": "The states a design is drawn in and the ones the build will need that it lacks. Interactive components (buttons, fields, toggles, tabs, links, by their names) used in the scope, or the file's own for \"file\": the states their variants and properties show (hover, focus, pressed, disabled; error for a field, selected for a toggle or tab) and the missing ones. Screens of lists and forms, their frames grouped by name (Inbox, Inbox – Empty, Inbox – Mobile are one): which of empty, loading, error (lists) or error, success (forms) a frame shows and which none does. variants_read gives a component's states as CSS. Works while Allow edits is off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "Where to look: a layer id, a page id, or \"file\" (the file's own components). Default: the layers selected in Figma, else the current page.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "description": "button, field, toggle, tab or link, by its name."
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The states its variants and properties show."
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The states its kind needs that none shows."
+              },
+              "properties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The properties holding its states."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "states",
+              "missing",
+              "properties"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Interactive components, those lacking most first."
+        },
+        "screens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "description": "list or form."
+              },
+              "frames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The frames of this screen: its widths and states."
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "name",
+              "kind",
+              "frames",
+              "states",
+              "missing"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Screens that show data or take input, grouped by name, with the states their frames show."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "summary",
+        "components",
+        "screens",
+        "notes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "tokens_usage",
     "title": "Where a token is used",
     "description": "The layers on the current page (or inside within) that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch.",

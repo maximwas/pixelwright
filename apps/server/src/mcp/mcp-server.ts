@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import { SERVER_INSTRUCTIONS } from "../constants/mcp.ts";
+import { a11yReadTool } from "../features/a11y-read/tool.ts";
 import { assetsExportTool } from "../features/assets-export/tool.ts";
 import { baselineDiffTool } from "../features/baseline-diff/tool.ts";
 import { baselineSaveTool } from "../features/baseline-save/tool.ts";
@@ -30,6 +31,7 @@ import { outlineTool } from "../features/outline/tool.ts";
 import { screenshotTool } from "../features/screenshot/tool.ts";
 import { selectionGetTool } from "../features/selection-get/tool.ts";
 import { selectionWaitTool } from "../features/selection-wait/tool.ts";
+import { statesFindTool } from "../features/states-find/tool.ts";
 import { statusTool } from "../features/status/tool.ts";
 import { textsReplaceTool } from "../features/texts-replace/tool.ts";
 import { tokensApplyTool } from "../features/tokens-apply/tool.ts";
@@ -51,6 +53,16 @@ export function createMcpServer(context: ToolContext): McpServer {
     { instructions: SERVER_INSTRUCTIONS },
   );
 
+  // In this order clients list them: finding and reading first, then the checks, then writing and the rest.
+  registerReadTools(server, context);
+  registerCheckTools(server, context);
+  registerWriteTools(server, context);
+
+  return server;
+}
+
+/** The tools that find layers and read them. */
+function registerReadTools(server: McpServer, context: ToolContext): void {
   registerTool(server, statusTool(context));
   registerTool(server, selectionGetTool(context));
   registerTool(server, nodeShowTool(context));
@@ -71,11 +83,21 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTool(server, imageCompareTool(context));
   registerTool(server, measureTool(context));
   registerTool(server, flowReadTool(context));
+}
+
+/** The tools that check a design against rules and its scale. */
+function registerCheckTools(server: McpServer, context: ToolContext): void {
   registerTool(server, contrastCheckTool(context));
   registerTool(server, fontsCheckTool(context));
   registerTool(server, designAuditTool(context));
   registerTool(server, designLintTool(context));
+  registerTool(server, a11yReadTool(context));
+  registerTool(server, statesFindTool(context));
   registerTool(server, tokensUsageTool(context));
+}
+
+/** The tools that write, and those that read tokens, components and assets; the guide last. */
+function registerWriteTools(server: McpServer, context: ToolContext): void {
   registerTool(server, designApplyTool(context), context.support);
   registerTool(server, executeTool(context));
   registerTool(server, tokensReadTool(context));
@@ -90,6 +112,4 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTool(server, assetsExportTool(context));
   registerTool(server, codeConnectReadTool(context));
   registerTool(server, guideTool());
-
-  return server;
 }

@@ -41,6 +41,7 @@ describe("stdio server", () => {
       const { tools } = await client.listTools();
 
       expect(tools.map((tool) => tool.name).sort()).toEqual([
+        "a11y_read",
         "assets_export",
         "baseline_diff",
         "baseline_save",
@@ -71,6 +72,7 @@ describe("stdio server", () => {
         "screenshot",
         "selection_get",
         "selection_wait",
+        "states_find",
         "status",
         "texts_replace",
         "tokens_apply",
