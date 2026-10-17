@@ -85,7 +85,9 @@ How to write this file (people and agents alike):
   without a unit and given no scopes will read back in px.
 - `design_read` and `design_apply` work while Figma Desktop has lost its connection: the file's own variables and
   styles are read from its lists, which Figma gives offline, instead of one by one, which Figma gives up on after ten
-  seconds; a library's it cannot reach is left out.
+  seconds; a library's it cannot reach is left out. The same goes for every write that finds a token by id:
+  `design_apply` binding a token, `tokens_apply`, `tokens_bind`, a text's look kept after new characters,
+  `execute`'s `pw.variable`, and `tokens_read` and screenshots in modes.
 - `changes_since` counts `effects_apply`'s writes as Pixelwright's, and the plugin window names them.
 - A new frame laid out inside (a card) fills its grid cell with `justify-self`/`align-self="stretch"`: it used to
   hug its content.

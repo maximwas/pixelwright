@@ -1,4 +1,5 @@
 import { sameValue } from "@pixelwright/core";
+import type { IdLookup } from "../../../figma/id-lookup.ts";
 
 /** A field of a styled text segment. */
 export type SegmentField = keyof Omit<StyledTextSegment, "characters" | "start" | "end">;
@@ -48,10 +49,10 @@ export function longest<T extends { start: number; end: number }>(segments: read
  * The look the text had, over all of it again: its style, then what the style does not set or sets otherwise, its
  * colour, link and the variables bound to its type, so a style and its bindings stay.
  */
-export async function restoreLook(node: TextNode, base: BaseSegment): Promise<void> {
+export async function restoreLook(node: TextNode, base: BaseSegment, lookup: IdLookup): Promise<void> {
   const end = node.characters.length;
   const styleId = typeof base.textStyleId === "string" && base.textStyleId !== "" ? base.textStyleId : null;
-  const style = styleId === null ? null : ((await figma.getStyleByIdAsync(styleId)) as TextStyle | null);
+  const style = styleId === null ? null : ((await lookup.style(styleId)) as TextStyle | null);
 
   if (styleId !== null) {
     await node.setRangeTextStyleIdAsync(0, end, styleId);
@@ -65,7 +66,10 @@ export async function restoreLook(node: TextNode, base: BaseSegment): Promise<vo
   }
 
   await restoreFillAndLink(node, base, end);
-  await restoreBindings(node, base, end);
+  await restoreBindings(node, base, {
+    end,
+    lookup,
+  });
 }
 
 /** A field the style does not set, or sets otherwise, written over the text. */
@@ -94,10 +98,14 @@ async function restoreFillAndLink(node: TextNode, base: BaseSegment, end: number
   }
 }
 
-async function restoreBindings(node: TextNode, base: BaseSegment, end: number): Promise<void> {
+async function restoreBindings(
+  node: TextNode,
+  base: BaseSegment,
+  { end, lookup }: { end: number; lookup: IdLookup },
+): Promise<void> {
   for (const [field, alias] of Object.entries(base.boundVariables ?? {})) {
     const id = (alias as { id?: unknown } | undefined)?.id;
-    const variable = typeof id === "string" ? await figma.variables.getVariableByIdAsync(id) : null;
+    const variable = typeof id === "string" ? await lookup.variable(id) : null;
 
     if (variable !== null && field !== "fills") {
       node.setRangeBoundVariable(0, end, field as VariableBindableTextField, variable);

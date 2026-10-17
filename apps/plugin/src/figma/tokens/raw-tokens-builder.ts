@@ -1,6 +1,7 @@
 import { type RawTokens, unwrapVar } from "@pixelwright/core";
 import { plain } from "../../utils/plain.ts";
 import { colorProfile } from "../color-profile.ts";
+import { IdLookup } from "../id-lookup.ts";
 import { pageOf } from "../nodes.ts";
 import { localStyles, numbered, numberingStyles, styleOf } from "../styles.ts";
 import { aliasesIn, loaded, usedUnder } from "../used-tokens.ts";
@@ -18,6 +19,8 @@ export class RawTokensBuilder {
   readonly #raw: RawTokens;
   readonly #knownCollections: Set<string>;
   readonly #knownVariables: Set<string>;
+  /** A library's tokens by id: what Figma cannot reach (offline, an unavailable library) is left out, not thrown. */
+  readonly #lookup = new IdLookup();
 
   private constructor(raw: RawTokens) {
     this.#raw = raw;
@@ -67,7 +70,7 @@ export class RawTokensBuilder {
     const known = new Set(this.#raw.styles.map((style) => style.id));
 
     for (const id of ids) {
-      const style = known.has(id) ? null : await figma.getStyleByIdAsync(id);
+      const style = known.has(id) ? null : await this.#lookup.style(id);
 
       if (style !== null) {
         this.#raw.styles.push({
@@ -91,7 +94,7 @@ export class RawTokensBuilder {
   /** Adds one variable with its collection; the ids its values point at. One whose collection cannot be read is named in `external` only. */
   async #addVariable(id: string): Promise<string[]> {
     const held = this.#knownVariables.has(id) || this.#raw.external[id] !== undefined;
-    const variable = held ? null : await figma.variables.getVariableByIdAsync(id);
+    const variable = held ? null : await this.#lookup.variable(id);
 
     if (variable === null) {
       return [];
@@ -122,7 +125,7 @@ export class RawTokensBuilder {
       return true;
     }
 
-    const collection = await figma.variables.getVariableCollectionByIdAsync(id);
+    const collection = await this.#lookup.collection(id);
 
     if (collection === null) {
       return false;

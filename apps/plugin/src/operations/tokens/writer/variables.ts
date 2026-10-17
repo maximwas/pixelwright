@@ -93,7 +93,7 @@ export class VariableWriter {
     this.#written.push({
       target,
       plan,
-      variable: await figma.variables.getVariableByIdAsync(held.id),
+      variable: await this.#run.lookup.variable(held.id),
       held,
       type: held.resolvedType,
     });
@@ -119,6 +119,7 @@ export class VariableWriter {
     }
 
     if (variable !== null) {
+      this.#run.lookup.remember(variable);
       this.#run.wrote();
     }
 

@@ -1,3 +1,5 @@
+import { IdLookup } from "./id-lookup.ts";
+
 /** Aliases followed at most this deep for a variable's default colour. */
 const ALIAS_DEPTH = 4;
 
@@ -11,7 +13,11 @@ const isAlias = (value: unknown): value is VariableAlias =>
  * The colour a colour variable gives a layer: its value in the layer's mode, as Figma resolves it, else its
  * collection's default mode's, aliases followed; null when there is none to read.
  */
-export async function variableColor(variable: Variable, consumer?: SceneNode): Promise<RGBA | null> {
+export async function variableColor(
+  variable: Variable,
+  consumer?: SceneNode,
+  lookup: IdLookup = new IdLookup(),
+): Promise<RGBA | null> {
   if (consumer !== undefined && typeof variable.resolveForConsumer === "function") {
     try {
       const { value } = variable.resolveForConsumer(consumer);
@@ -24,11 +30,11 @@ export async function variableColor(variable: Variable, consumer?: SceneNode): P
     }
   }
 
-  return await defaultColor(variable, ALIAS_DEPTH);
+  return await defaultColor(variable, ALIAS_DEPTH, lookup);
 }
 
-async function defaultColor(variable: Variable, depth: number): Promise<RGBA | null> {
-  const collection = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId);
+async function defaultColor(variable: Variable, depth: number, lookup: IdLookup): Promise<RGBA | null> {
+  const collection = await lookup.collection(variable.variableCollectionId);
   const value = collection === null ? undefined : variable.valuesByMode[collection.defaultModeId];
 
   if (isRgba(value)) {
@@ -39,7 +45,7 @@ async function defaultColor(variable: Variable, depth: number): Promise<RGBA | n
     return null;
   }
 
-  const target = await figma.variables.getVariableByIdAsync(value.id);
+  const target = await lookup.variable(value.id);
 
-  return target === null ? null : await defaultColor(target, depth - 1);
+  return target === null ? null : await defaultColor(target, depth - 1, lookup);
 }

@@ -1,4 +1,5 @@
 import { attributeSlug } from "@pixelwright/core";
+import type { IdLookup } from "./id-lookup.ts";
 import { WriteError } from "./write-error.ts";
 
 /** A layer that takes variable modes: every layer on a page does. */
@@ -14,54 +15,21 @@ export interface NamedMode {
 const means = (name: string, key: string) =>
   name.toLowerCase() === key.trim().toLowerCase() || attributeSlug(name) === key.trim();
 
-/**
- * Variable collections by id for one call: the file's own read once (Figma answers that offline), a library's asked
- * for once each; one Figma cannot reach (offline, it gives up after ten seconds) is left out, not an error.
- */
-export class CollectionLookup {
-  #local: Promise<Map<string, VariableCollection>> | null = null;
-  readonly #others = new Map<string, Promise<VariableCollection | null>>();
+/** The file's own variable collections and those a layer's modes name, as one call finds them. */
+export async function collectionsAround(node: ModedNode, lookup: IdLookup): Promise<VariableCollection[]> {
+  const local = await figma.variables.getLocalVariableCollectionsAsync();
+  const ids = new Set([...local.map(({ id }) => id), ...Object.keys(node.resolvedVariableModes ?? {})]);
+  const collections: VariableCollection[] = [];
 
-  async get(id: string): Promise<VariableCollection | null> {
-    const local = (await this.#locals()).get(id);
+  for (const id of ids) {
+    const collection = await lookup.collection(id);
 
-    if (local !== undefined) {
-      return local;
+    if (collection !== null) {
+      collections.push(collection);
     }
-
-    let other = this.#others.get(id);
-
-    if (other === undefined) {
-      other = figma.variables.getVariableCollectionByIdAsync(id).catch(() => null);
-      this.#others.set(id, other);
-    }
-
-    return await other;
   }
 
-  /** The file's own collections and those a layer's modes name. */
-  async around(node: ModedNode): Promise<VariableCollection[]> {
-    const ids = new Set([...(await this.#locals()).keys(), ...Object.keys(node.resolvedVariableModes ?? {})]);
-    const collections: VariableCollection[] = [];
-
-    for (const id of ids) {
-      const collection = await this.get(id);
-
-      if (collection !== null) {
-        collections.push(collection);
-      }
-    }
-
-    return collections;
-  }
-
-  #locals(): Promise<Map<string, VariableCollection>> {
-    this.#local ??= figma.variables
-      .getLocalVariableCollectionsAsync()
-      .then((collections) => new Map(collections.map((collection) => [collection.id, collection])));
-
-    return this.#local;
-  }
+  return collections;
 }
 
 /** The collection a name or attribute slug means; an error listing the collections there are. */
@@ -95,14 +63,11 @@ export function modeNamed(collection: VariableCollection, key: string): string {
 }
 
 /** Modes by collection id and mode id, as names: those whose collection Figma can reach. */
-export async function namedModes(
-  modes: Readonly<Record<string, string>>,
-  lookup: CollectionLookup,
-): Promise<NamedMode[]> {
+export async function namedModes(modes: Readonly<Record<string, string>>, lookup: IdLookup): Promise<NamedMode[]> {
   const named: NamedMode[] = [];
 
   for (const [collectionId, modeId] of Object.entries(modes)) {
-    const collection = await lookup.get(collectionId);
+    const collection = await lookup.collection(collectionId);
     const mode = collection?.modes.find((each) => each.modeId === modeId);
 
     if (collection !== null && mode !== undefined) {
@@ -120,12 +85,12 @@ export async function namedModes(
  * The modes a read's root is in that are not its collections' defaults: set on it, or taken from a frame or page
  * above it, so a dark section read alone still says it is dark.
  */
-export async function rootModes(node: ModedNode, lookup: CollectionLookup): Promise<NamedMode[]> {
+export async function rootModes(node: ModedNode, lookup: IdLookup): Promise<NamedMode[]> {
   const explicit = node.explicitVariableModes ?? {};
   const kept: Record<string, string> = {};
 
   for (const [collectionId, modeId] of Object.entries(node.resolvedVariableModes ?? {})) {
-    const collection = explicit[collectionId] === undefined ? await lookup.get(collectionId) : null;
+    const collection = explicit[collectionId] === undefined ? await lookup.collection(collectionId) : null;
 
     if (collection !== null && collection.defaultModeId !== modeId) {
       kept[collectionId] = modeId;

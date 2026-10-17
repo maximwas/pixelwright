@@ -44,7 +44,7 @@ export async function snapshot({
         inferred: true,
       }),
   });
-  const modes = await rootModes(root as ModedNode, references.collections);
+  const modes = await rootModes(root as ModedNode, references.lookup);
 
   if (modes.length > 0) {
     top.modes = modes;

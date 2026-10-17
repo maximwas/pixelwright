@@ -1,12 +1,12 @@
 import { MIXED, type SnapshotStyle, type SnapshotVariable } from "@pixelwright/core";
-import { numbered, numberingStyles, ownStyles, styleOf } from "../../figma/styles.ts";
+import { numbered, numberingStyles, styleOf } from "../../figma/styles.ts";
 import { plain } from "../../utils/plain.ts";
-import { CollectionLookup } from "../variable-modes.ts";
+import { IdLookup } from "../id-lookup.ts";
 
 /** The styles and variables a read's layers use, resolved once at the end; a variable keeps its first consumer. */
 export class References {
-  /** The variable collections the read's modes name, each looked up once. */
-  readonly collections = new CollectionLookup();
+  /** The read's variables, collections and styles by id, the file's own from its lists, each looked up once. */
+  readonly lookup = new IdLookup();
   readonly #styles = new Set<string>();
   readonly #variables = new Map<string, SceneNode>();
 
@@ -65,14 +65,10 @@ export class References {
    */
   async styles(pages: Iterable<PageNode | null>): Promise<Record<string, SnapshotStyle>> {
     const used: (SnapshotStyle & { id: string })[] = [];
-    // The file's own from its lists, which Figma gives offline too; a library's by id, left out if unreachable.
-    const own =
-      this.#styles.size === 0
-        ? new Map<string, BaseStyle>()
-        : new Map((await ownStyles()).map((style) => [style.id, style]));
 
+    // The file's own from its lists, which Figma gives offline too; a library's by id, left out if unreachable.
     for (const id of this.#styles) {
-      const style = own.get(id) ?? (await figma.getStyleByIdAsync(id).catch(() => null));
+      const style = await this.lookup.style(id);
 
       if (style !== null) {
         used.push({
@@ -99,16 +95,12 @@ export class References {
    */
   async variables(): Promise<Record<string, SnapshotVariable>> {
     const variables: Record<string, SnapshotVariable> = {};
-    const local =
-      this.#variables.size === 0
-        ? new Map<string, Variable>()
-        : new Map((await figma.variables.getLocalVariablesAsync()).map((variable) => [variable.id, variable]));
 
     for (const [id, consumer] of this.#variables) {
-      const variable = local.get(id) ?? (await figma.variables.getVariableByIdAsync(id).catch(() => null));
+      const variable = await this.lookup.variable(id);
 
       if (variable !== null) {
-        variables[id] = await variableOf(variable, consumer, this.collections);
+        variables[id] = await variableOf(variable, consumer, this.lookup);
       }
     }
 
@@ -116,12 +108,8 @@ export class References {
   }
 }
 
-async function variableOf(
-  variable: Variable,
-  consumer: SceneNode,
-  collections: CollectionLookup,
-): Promise<SnapshotVariable> {
-  const collection = await collections.get(variable.variableCollectionId);
+async function variableOf(variable: Variable, consumer: SceneNode, lookup: IdLookup): Promise<SnapshotVariable> {
+  const collection = await lookup.collection(variable.variableCollectionId);
   let value: unknown;
 
   try {

@@ -1,4 +1,5 @@
 import { closest, type RawTokens, styleName, styleTokenName, variableTokenName } from "@pixelwright/core";
+import { IdLookup } from "../id-lookup.ts";
 import { WriteError } from "../write-error.ts";
 import { type LibraryVariable, libraryVariablesByToken } from "./libraries.ts";
 import { tokensOfOtherPages, tokensUnder } from "./raw-tokens-builder.ts";
@@ -19,6 +20,8 @@ export interface VariableRef {
  * for once on the file's other pages, then a variable among the enabled libraries'. One index serves one call.
  */
 export class TokenIndex {
+  /** The call's lookups by id: the file's own variables from its list, so binding works offline too. */
+  readonly lookup: IdLookup;
   readonly #styles = new Map<string, string>();
   readonly #textStyles = new Map<string, string>();
   readonly #variables = new Map<string, { readonly id: string; readonly resolvedType: string }>();
@@ -26,10 +29,13 @@ export class TokenIndex {
   #otherPages: Promise<void> | null = null;
   #libraries: Promise<Map<string, LibraryVariable>> | null = null;
 
-  private constructor() {}
+  private constructor(lookup: IdLookup) {
+    this.lookup = lookup;
+  }
 
-  static async of(): Promise<TokenIndex> {
-    const index = new TokenIndex();
+  /** The index of what the current page uses, finding variables through the call's lookup. */
+  static async of(lookup: IdLookup = new IdLookup()): Promise<TokenIndex> {
+    const index = new TokenIndex(lookup);
 
     index.#take(await tokensUnder(figma.currentPage));
 
@@ -77,7 +83,11 @@ export class TokenIndex {
     let imported = this.#imports.get(listed.key);
 
     if (imported === undefined) {
-      imported = figma.variables.importVariableByKeyAsync(listed.key);
+      imported = figma.variables.importVariableByKeyAsync(listed.key).then((variable) => {
+        this.lookup.remember(variable);
+
+        return variable;
+      });
       this.#imports.set(listed.key, imported);
     }
 
@@ -117,7 +127,7 @@ export class TokenIndex {
       return null;
     }
 
-    const variable = await figma.variables.getVariableByIdAsync(entry.id);
+    const variable = await this.lookup.variable(entry.id);
 
     if (variable === null) {
       throw new WriteError(`${token} names a variable Figma cannot reach now.`, "Enable its library, or use a value.");

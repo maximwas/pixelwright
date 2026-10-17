@@ -88,7 +88,7 @@ async function targetOf(token: string): Promise<Target> {
   for (const [kind, label] of STYLE_KINDS) {
     const name = kind === "TEXT" && token.endsWith("-font") ? token.slice(0, -"-font".length) : token;
     const id = await index.style(name, kind);
-    const style = id === null ? null : await figma.getStyleByIdAsync(id);
+    const style = id === null ? null : await index.lookup.style(id);
 
     if (style !== null) {
       return {

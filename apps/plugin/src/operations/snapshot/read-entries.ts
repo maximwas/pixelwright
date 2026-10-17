@@ -74,7 +74,7 @@ class EntriesRead {
       open: (layer) => this.#asked.has(layer.id),
     });
     // As a read's root: the modes it takes from above count as its own, so a read sent back sets none of them.
-    const modes = await rootModes(node as ModedNode, this.#references.collections);
+    const modes = await rootModes(node as ModedNode, this.#references.lookup);
 
     if (modes.length > 0) {
       entry.modes = modes;

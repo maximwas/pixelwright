@@ -126,7 +126,7 @@ async function loaded(wanted: readonly FontName[]): Promise<Set<string>> {
 
 async function styleFonts(index: TokenIndex, name: string): Promise<FontName[]> {
   try {
-    const style = await figma.getStyleByIdAsync(await index.textStyle(name));
+    const style = await index.lookup.style(await index.textStyle(name));
 
     return style?.type === "TEXT" ? [(style as TextStyle).fontName] : [];
   } catch {

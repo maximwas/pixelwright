@@ -86,7 +86,7 @@ export class TextWriter {
     }
 
     if (segments.length > 1 && base !== undefined && node.characters.length > 0) {
-      await restoreLook(node, base);
+      await restoreLook(node, base, this.#scope.lookup);
     }
 
     return retyped || segments.length > 1;

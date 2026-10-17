@@ -1,5 +1,6 @@
 import type { FigmaProps } from "@pixelwright/core";
-import { CollectionLookup, collectionNamed, type ModedNode, modeNamed } from "../../../figma/variable-modes.ts";
+import { IdLookup } from "../../../figma/id-lookup.ts";
+import { collectionNamed, collectionsAround, type ModedNode, modeNamed } from "../../../figma/variable-modes.ts";
 import type { Step } from "./step.ts";
 
 /**
@@ -9,7 +10,7 @@ import type { Step } from "./step.ts";
  */
 async function modes(node: SceneNode, { modes: given }: FigmaProps): Promise<void> {
   const layer = node as ModedNode;
-  const collections = await new CollectionLookup().around(layer);
+  const collections = await collectionsAround(layer, new IdLookup());
   const writes = Object.entries(given ?? {}).map(([key, mode]) => {
     const collection = collectionNamed(collections, key);
 

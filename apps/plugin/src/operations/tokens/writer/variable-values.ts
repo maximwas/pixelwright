@@ -112,13 +112,20 @@ export class VariableValueWriter {
       async (variable) => {
         variable.setValueForMode(
           modeId,
-          "alias" in value
-            ? await figma.variables.createVariableAliasByIdAsync(value.alias)
-            : stored(value.value, percent),
+          "alias" in value ? await this.#alias(value.alias) : stored(value.value, percent),
         );
       },
       mode,
     );
+  }
+
+  /** An alias to a variable of the file or the call, made from the variable itself: offline too, unlike by its id. */
+  async #alias(id: string): Promise<VariableAlias> {
+    const target = await this.#run.lookup.variable(id);
+
+    return target === null
+      ? await figma.variables.createVariableAliasByIdAsync(id)
+      : figma.variables.createVariableAlias(target);
   }
 
   /**

@@ -1,5 +1,6 @@
 import type { OperationInput, OperationOutput, TokenError, TokenItem } from "@pixelwright/core";
 import type { FontCatalog } from "../../../figma/fonts.ts";
+import { IdLookup } from "../../../figma/id-lookup.ts";
 import { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import type { EditsGuard } from "../../../services/edits-guard.ts";
 import { FileTokens } from "./file-tokens.ts";
@@ -18,6 +19,7 @@ type Written = OperationOutput<"tokens_apply">;
 export class TokenWriter implements TokenRun {
   readonly dryRun: boolean;
   readonly fonts: FontCatalog;
+  readonly lookup = new IdLookup();
   readonly #edits: EditsGuard;
   readonly #plan: OperationInput<"tokens_apply">["plan"];
   readonly #results: Required<Written> = {
@@ -61,7 +63,7 @@ export class TokenWriter implements TokenRun {
   }
 
   index(): Promise<TokenIndex> {
-    this.#index ??= TokenIndex.of();
+    this.#index ??= TokenIndex.of(this.lookup);
 
     return this.#index;
   }

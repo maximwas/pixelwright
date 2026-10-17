@@ -118,7 +118,12 @@ async function bindPaint(
   }
 
   const variable = await context.variable(candidate.id);
-  const opacity = await opacityOf(paint, variable, layer, snapped);
+  const opacity = await opacityOf(paint, {
+    variable,
+    layer,
+    snapped,
+    context,
+  });
   const paints = [...(layer[key] as Paint[])];
 
   paints[index] = figma.variables.setBoundVariableForPaint(paint, "color", variable);
@@ -154,10 +159,18 @@ async function setPaintStyle(layer: SceneNode, key: PaintKey, id: string): Promi
  * The opacity a bound paint keeps: its own, which equals its token's alpha, or is laid over an opaque token; a paint
  * snapped to a token takes the token's alpha with its own opacity over it.
  */
-async function opacityOf(paint: SolidPaint, variable: Variable, layer: SceneNode, snapped: boolean): Promise<number> {
+async function opacityOf(
+  paint: SolidPaint,
+  {
+    variable,
+    layer,
+    snapped,
+    context,
+  }: { variable: Variable; layer: SceneNode; snapped: boolean; context: BindContext },
+): Promise<number> {
   const own = paint.opacity ?? 1;
 
-  return snapped ? ((await variableColor(variable, layer))?.a ?? 1) * own : own;
+  return snapped ? ((await variableColor(variable, layer, context.lookup))?.a ?? 1) * own : own;
 }
 
 /** A text's runs of raw solid colour, where its runs differ: each bound on its own range. */
@@ -230,7 +243,7 @@ async function bindRun(
   }
 
   const variable = await context.variable(candidate.id);
-  const color = await variableColor(variable, text);
+  const color = await variableColor(variable, text, context.lookup);
   const bound = figma.variables.setBoundVariableForPaint(
     {
       ...paint,
@@ -239,7 +252,12 @@ async function bindRun(
         g: color?.g ?? paint.color.g,
         b: color?.b ?? paint.color.b,
       },
-      opacity: await opacityOf(paint, variable, text, snapped),
+      opacity: await opacityOf(paint, {
+        variable,
+        layer: text,
+        snapped,
+        context,
+      }),
     },
     "color",
     variable,

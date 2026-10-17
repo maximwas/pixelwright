@@ -1,5 +1,6 @@
 import type { ApplyChange, FontSpec, OperationOutput } from "@pixelwright/core";
 import { ComponentIndex } from "../../figma/component-index.ts";
+import type { IdLookup } from "../../figma/id-lookup.ts";
 import type { TokenIndex } from "../../figma/tokens/token-index.ts";
 import type { WriteError } from "../../figma/write-error.ts";
 import type { ApplyFonts } from "./apply-fonts.ts";
@@ -16,9 +17,10 @@ import type { PropertyMark, WriteScope } from "./writers/write-scope.ts";
 
 type Fail = (error: unknown, attribute?: string) => void;
 
-/** What a run is given: where top-level layers go, the call's fonts, tokens and images. */
+/** What a run is given: where top-level layers go, the call's lookups by id, fonts, tokens and images. */
 export interface RunParts {
   readonly top: PageNode | SceneNode | null;
+  readonly lookup: IdLookup;
   readonly fonts: ApplyFonts;
   readonly tokens: () => Promise<TokenIndex>;
   readonly images: ApplyImages;
@@ -76,6 +78,10 @@ export class ApplyRun implements WriteScope {
     }
 
     return this.#report.result();
+  }
+
+  get lookup(): IdLookup {
+    return this.#parts.lookup;
   }
 
   tokens(): Promise<TokenIndex> {

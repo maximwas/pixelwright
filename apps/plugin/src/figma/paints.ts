@@ -129,8 +129,9 @@ async function gradientPaint(spec: GradientSpec, sources: PaintSources, consumer
         ),
       });
     } else {
-      const variable = await (await sources.tokens()).variable(token, "COLOR");
-      const value = await variableColor(variable, consumer);
+      const index = await sources.tokens();
+      const variable = await index.variable(token, "COLOR");
+      const value = await variableColor(variable, consumer, index.lookup);
 
       stops.push({
         position,
@@ -166,7 +167,7 @@ async function variablePaint(
   await refusePaintStyle(spec.token, index);
 
   const variable = await index.variable(spec.token, "COLOR");
-  const color = await variableColor(variable, consumer);
+  const color = await variableColor(variable, consumer, index.lookup);
 
   return figma.variables.setBoundVariableForPaint(
     {

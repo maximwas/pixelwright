@@ -6,14 +6,15 @@ import {
   type ModeMap,
   variableTokenName,
 } from "@pixelwright/core";
+import { IdLookup } from "../../figma/id-lookup.ts";
 import { RawTokensBuilder } from "../../figma/tokens/raw-tokens-builder.ts";
 
 /** What a bind call shares across its layers: the file's tokens by value, its colour space, and Figma's lookups. */
 export class BindContext {
   readonly index: BindIndex;
   readonly space: ColorSpace;
-  readonly #variables = new Map<string, Promise<Variable | null>>();
-  readonly #styles = new Map<string, Promise<BaseStyle | null>>();
+  /** Figma's lookups by id for the call: the file's own from its lists, which Figma gives offline too. */
+  readonly lookup = new IdLookup();
 
   private constructor(index: BindIndex, space: ColorSpace) {
     this.index = index;
@@ -49,7 +50,7 @@ export class BindContext {
 
     for (const id of ids) {
       const known = this.index.byId(id);
-      const variable = known === undefined ? await this.#variable(id) : null;
+      const variable = known === undefined ? await this.lookup.variable(id) : null;
 
       if (known !== undefined) {
         candidates.push(known);
@@ -68,7 +69,7 @@ export class BindContext {
 
   /** A variable to bind, by id; an error when Figma cannot reach it now. */
   async variable(id: string): Promise<Variable> {
-    const variable = await this.#variable(id);
+    const variable = await this.lookup.variable(id);
 
     if (variable === null) {
       throw new Error(`Figma cannot reach the variable ${id} now: enable its library.`);
@@ -79,30 +80,12 @@ export class BindContext {
 
   /** A style, by id; an error when Figma cannot reach it now. */
   async style(id: string): Promise<BaseStyle> {
-    let style = this.#styles.get(id);
-
-    if (style === undefined) {
-      style = figma.getStyleByIdAsync(id);
-      this.#styles.set(id, style);
-    }
-
-    const found = await style;
+    const found = await this.lookup.style(id);
 
     if (found === null) {
       throw new Error(`Figma cannot reach the style ${id} now: enable its library.`);
     }
 
     return found;
-  }
-
-  #variable(id: string): Promise<Variable | null> {
-    let variable = this.#variables.get(id);
-
-    if (variable === undefined) {
-      variable = figma.variables.getVariableByIdAsync(id);
-      this.#variables.set(id, variable);
-    }
-
-    return variable;
   }
 }

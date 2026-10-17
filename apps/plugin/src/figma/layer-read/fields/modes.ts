@@ -9,7 +9,7 @@ export async function readModes(entry: LayerEntry): Promise<void> {
     return;
   }
 
-  const modes = await namedModes(explicit, entry.context.references.collections);
+  const modes = await namedModes(explicit, entry.context.references.lookup);
 
   if (modes.length > 0) {
     entry.set("modes", modes);
