@@ -273,6 +273,55 @@ function strokeSides(node: FakeNode): void {
   });
 }
 
+/**
+ * As Figma places a grid's child (seen live on 2026-10-17): with its spans, the cells it covers must lie in the grid
+ * and be free of the other children's, or setGridChildPosition throws Figma's words.
+ */
+function refuseGridCell(node: FakeNode, row: number, column: number): void {
+  const grid = node.parent;
+
+  if (
+    grid?.layoutMode !== "GRID" ||
+    typeof grid.gridColumnCount !== "number" ||
+    typeof grid.gridRowCount !== "number"
+  ) {
+    return;
+  }
+
+  // The cells a child covers from a cell, with its spans: first and last row, first and last column.
+  const covers = (child: FakeNode, top: number, left: number) => ({
+    top,
+    bottom: top + Number(child.gridRowSpan ?? 1) - 1,
+    left,
+    right: left + Number(child.gridColumnSpan ?? 1) - 1,
+  });
+  const mine = covers(node, row, column);
+
+  if (mine.bottom >= grid.gridRowCount || mine.right >= grid.gridColumnCount) {
+    throw new Error(
+      "in setGridChildPosition: Cannot set grid child position: Cannot place child at this position because it is out of bounds of the grid",
+    );
+  }
+
+  const taken = (grid.children ?? []).some((other) => {
+    if (other === node || other.layoutPositioning === "ABSOLUTE" || other.gridRowAnchorIndex === undefined) {
+      return false;
+    }
+
+    const theirs = covers(other, Number(other.gridRowAnchorIndex), Number(other.gridColumnAnchorIndex));
+
+    return (
+      mine.top <= theirs.bottom && theirs.top <= mine.bottom && mine.left <= theirs.right && theirs.left <= mine.right
+    );
+  });
+
+  if (taken) {
+    throw new Error(
+      "in setGridChildPosition: Cannot set grid child position: Can't place child at this position because it is occupied by another node",
+    );
+  }
+}
+
 /** Figma's range writers, by the field a whole-text run sets. */
 const RANGE_METHODS: Readonly<Record<string, string>> = {
   setRangeFontName: "fontName",
@@ -465,6 +514,7 @@ function writable(
     record("remove", []);
   });
   define("setGridChildPosition", (row: number, column: number) => {
+    refuseGridCell(node, row, column);
     node.gridRowAnchorIndex = row;
     node.gridColumnAnchorIndex = column;
     record("setGridChildPosition", [row, column]);

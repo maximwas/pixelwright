@@ -137,6 +137,44 @@ describe("CSS to Figma: layout", () => {
     });
   });
 
+  it("writes only the grid tracks a call gives: new columns leave alone the rows Figma holds", () => {
+    // Figma adds a row for children that do not fit: rows read earlier and sent back would delete it, a taken row.
+    const written = props('<Frame id="1:1" grid-template-columns="repeat(3, 1fr)"/>', {
+      current: {
+        display: "grid",
+        "grid-template-columns": "1fr 1fr",
+        "grid-template-rows": "auto auto",
+      },
+    });
+
+    expect(written).toHaveProperty("gridColumns");
+    expect(written).not.toHaveProperty("gridRows");
+  });
+
+  it("refuses justify-content and align-items on a grid in plain words, which Figma refuses raw", () => {
+    const { errors, change: written } = change(
+      '<Frame id="1:1" display="grid" justify-content="center" align-items="center"/>',
+    );
+
+    expect(
+      errors.map(({ attribute, hint }) => ({
+        attribute,
+        hint,
+      })),
+    ).toEqual([
+      {
+        attribute: "justify-content",
+        hint: 'Give its children justify-self and align-self ("stretch" fills the cell).',
+      },
+      {
+        attribute: "align-items",
+        hint: 'Give its children justify-self and align-self ("stretch" fills the cell).',
+      },
+    ]);
+    expect(written.props).not.toHaveProperty("primaryAxisAlignItems");
+    expect(written.props).not.toHaveProperty("counterAxisAlignItems");
+  });
+
   it("reads sizes, filling, hugging and limits, a token where a length may be one", () => {
     expect(
       props('<Frame id="1:1" width="300px" height="var(--card-h)" min-width="120px" flex="1" align-self="stretch"/>'),

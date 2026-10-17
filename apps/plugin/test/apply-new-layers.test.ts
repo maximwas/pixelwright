@@ -38,6 +38,14 @@ beforeEach(() => {
         width: 600,
         height: 40,
       },
+      {
+        id: "2:2",
+        type: "FRAME",
+        name: "Bento",
+        layoutMode: "GRID",
+        width: 600,
+        height: 320,
+      },
     ],
   });
 
@@ -79,6 +87,18 @@ describe("apply: new layers as Figma lays them out", () => {
       strokeRightWeight: 0,
       strokeBottomWeight: 0,
       strokeLeftWeight: 0,
+    });
+  });
+
+  it("lets a new frame laid out inside fill its grid cell when it stretches, not hug its content", async () => {
+    const { errors } = await apply(
+      '<Frame id="2:2"><Frame name="Card" display="flex" flex-direction="column" justify-self="stretch" align-self="stretch"/></Frame>',
+    );
+
+    expect(errors).toEqual([]);
+    expect(created(0)).toMatchObject({
+      layoutSizingHorizontal: "FILL",
+      layoutSizingVertical: "FILL",
     });
   });
 });

@@ -954,11 +954,9 @@ Figma&#39;s error, and the child stays in the next free cell.</li>
 <li>In its cell a child keeps its size and sits in the top left corner, or where <code>justify-self</code> (horizontally) and
 <code>align-self</code> (vertically) put it: <code>start</code>, <code>center</code>, <code>end</code>, or <code>stretch</code> to fill the cell&#39;s width or height
 instead of a size of its own. <code>flex=&quot;1&quot;</code> does not fill a cell.</li>
-<li>A new frame with a <code>display</code> of its own (a card laid out inside) hugs its content in its cell even with
-<code>stretch</code>: send <code>&lt;Frame id=&quot;…&quot; justify-self=&quot;stretch&quot; align-self=&quot;stretch&quot;/&gt;</code> again once it is made.</li>
 <li>Move or delete the children of a row or column before taking it out of the tracks.</li>
-<li>design_read writes a grid the same way: three or more equal tracks as <code>repeat()</code>, each child&#39;s <code>grid-row</code> and
-<code>grid-column</code> from 1, <code>span</code> when it spans.</li>
+<li>design_read writes a grid the same way: three or more equal tracks as <code>repeat()</code>, the grid&#39;s padding, each child&#39;s
+<code>grid-row</code> and <code>grid-column</code> from 1, <code>span</code> when it spans, and <code>stretch</code> for a child that fills its cell.</li>
 </ul>
 <h3>Absolute</h3>
 <ul>

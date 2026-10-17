@@ -349,6 +349,46 @@ describe("auto layout and grid", () => {
     );
     expect(line(xml, "1:2")).toContain('grid-row="1" grid-column="2 / span 2" justify-self="center"');
   });
+
+  it("writes a grid child that fills its cell as stretch, apart from one that hugs, and the grid's padding", () => {
+    const cell = (id: string, column: number, sizing: "FILL" | "HUG") =>
+      layer({
+        id,
+        gridRowAnchorIndex: 0,
+        gridColumnAnchorIndex: column,
+        gridRowSpan: 1,
+        gridColumnSpan: 1,
+        layoutSizingHorizontal: sizing,
+        layoutSizingVertical: sizing,
+      });
+    const xml = xmlOf(
+      box([cell("1:2", 0, "FILL"), cell("1:3", 1, "HUG")], {
+        layoutMode: "GRID",
+        gridColumnCount: 2,
+        gridRowCount: 1,
+        gridColumnSizes: [
+          {
+            type: "FLEX",
+            value: 1,
+          },
+          {
+            type: "FLEX",
+            value: 1,
+          },
+        ],
+        gridRowSizes: [{ type: "HUG" }],
+        paddingTop: 24,
+        paddingRight: 24,
+        paddingBottom: 24,
+        paddingLeft: 24,
+      }),
+    );
+
+    expect(line(xml, "1:2")).toContain('align-self="stretch"');
+    expect(line(xml, "1:2")).toContain('justify-self="stretch"');
+    expect(line(xml, "1:3")).not.toContain("stretch");
+    expect(line(xml, "1:1")).toContain('padding="24px"');
+  });
 });
 
 describe("text beyond font and color", () => {

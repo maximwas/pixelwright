@@ -26,6 +26,17 @@ How to write this file (people and agents alike):
 - `guide layout` tells when to lay a frame out as flex, as grid or by absolute placement, with the grid's tracks,
   spans and cells, pinned and centred layers, what is not supported, and examples checked in Figma.
 
+### Fixed
+
+- A new frame laid out inside (a card) fills its grid cell with `justify-self`/`align-self="stretch"`: it used to
+  hug its content.
+- `design_read` writes a grid's child that fills its cell as `stretch`, apart from one that hugs, and a grid's padding.
+- Changing a grid's columns leaves its rows alone: rows read earlier and sent back could delete one Figma had added
+  for children that did not fit, which Figma refused.
+- A grid's child moved to another cell narrows its span before it moves, so it no longer runs into a taken cell.
+- `justify-content` and `align-items` on a grid, and `flex` on a grid's child, say what to write instead of passing
+  Figma's raw error.
+
 ## 0.3.2 — 2026-10-17
 
 ### Added

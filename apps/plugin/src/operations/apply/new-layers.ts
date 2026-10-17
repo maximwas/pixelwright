@@ -211,9 +211,14 @@ function hugUnsized(node: SceneNode, props: FigmaProps): void {
 
   const parent = node.parent;
   const direction = parent !== null && "layoutMode" in parent ? parent.layoutMode : undefined;
+  // In a grid, justify-self fills the cell's width and align-self its height; across a flex parent, align-self.
+  const stretched = (axis: "horizontal" | "vertical") =>
+    direction === "GRID"
+      ? (axis === "horizontal" ? props.justifySelf : props.alignSelf) === "STRETCH"
+      : props.alignSelf === "STRETCH" && direction === (axis === "horizontal" ? "VERTICAL" : "HORIZONTAL");
   const fills = (axis: "horizontal" | "vertical") =>
     ((props.grow ?? false) && direction === (axis === "horizontal" ? "HORIZONTAL" : "VERTICAL")) ||
-    (props.alignSelf === "STRETCH" && direction === (axis === "horizontal" ? "VERTICAL" : "HORIZONTAL")) ||
+    stretched(axis) ||
     props[axis]?.kind === "STRETCH" ||
     props[axis]?.kind === "SCALE";
 

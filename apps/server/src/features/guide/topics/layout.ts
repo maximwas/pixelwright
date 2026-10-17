@@ -54,11 +54,9 @@ changes.
 - In its cell a child keeps its size and sits in the top left corner, or where \`justify-self\` (horizontally) and
   \`align-self\` (vertically) put it: \`start\`, \`center\`, \`end\`, or \`stretch\` to fill the cell's width or height
   instead of a size of its own. \`flex="1"\` does not fill a cell.
-- A new frame with a \`display\` of its own (a card laid out inside) hugs its content in its cell even with
-  \`stretch\`: send \`<Frame id="…" justify-self="stretch" align-self="stretch"/>\` again once it is made.
 - Move or delete the children of a row or column before taking it out of the tracks.
-- design_read writes a grid the same way: three or more equal tracks as \`repeat()\`, each child's \`grid-row\` and
-  \`grid-column\` from 1, \`span\` when it spans.
+- design_read writes a grid the same way: three or more equal tracks as \`repeat()\`, the grid's padding, each child's
+  \`grid-row\` and \`grid-column\` from 1, \`span\` when it spans, and \`stretch\` for a child that fills its cell.
 
 ## Absolute
 
