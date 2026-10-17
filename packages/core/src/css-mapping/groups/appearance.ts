@@ -8,25 +8,52 @@ import { px } from "../values/format.ts";
 
 const RADII = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
 
+/** Figma's blend modes as CSS's mix-blend-mode (Figma's linear burn and dodge are CSS's plus-darker and plus-lighter). */
+const BLEND_CSS: Readonly<Record<string, string>> = {
+  DARKEN: "darken",
+  MULTIPLY: "multiply",
+  COLOR_BURN: "color-burn",
+  LINEAR_BURN: "plus-darker",
+  LIGHTEN: "lighten",
+  SCREEN: "screen",
+  COLOR_DODGE: "color-dodge",
+  LINEAR_DODGE: "plus-lighter",
+  OVERLAY: "overlay",
+  SOFT_LIGHT: "soft-light",
+  HARD_LIGHT: "hard-light",
+  DIFFERENCE: "difference",
+  EXCLUSION: "exclusion",
+  HUE: "hue",
+  SATURATION: "saturation",
+  COLOR: "color",
+  LUMINOSITY: "luminosity",
+};
+
+/** CSS's mix-blend-mode as Figma's blend mode. */
+const BLEND_FIGMA: Readonly<Record<string, string>> = Object.fromEntries([
+  ["normal", "NORMAL"],
+  ...Object.entries(BLEND_CSS).map(([figma, css]) => [css, figma]),
+]);
+
 /**
- * How a layer shows as a whole: its opacity, whether it clips its content, and what CSS cannot do of it: a mask
- * (it clips the layers above it; a mask group as a whole is exported as one image) and a blend mode.
+ * How a layer shows as a whole: its opacity, its blend mode, whether it clips its content. A mask is the element's
+ * mask attribute (it clips the layers above it; a mask group as a whole is exported as one image).
  */
 export function readAppearance(node: SnapshotNode, css: CssDeclarations): void {
   if (node.opacity !== undefined) {
     css.set("opacity", decimal(node.opacity));
   }
 
+  const blend = node.blendMode === undefined ? undefined : BLEND_CSS[node.blendMode];
+
+  if (blend !== undefined) {
+    css.set("mix-blend-mode", blend);
+  } else if (node.blendMode !== undefined) {
+    css.readOnly("mix-blend-mode", node.css?.["mix-blend-mode"] ?? node.blendMode.toLowerCase().replaceAll("_", "-"));
+  }
+
   if (node.clipsContent) {
     css.set("overflow", "hidden");
-  }
-
-  if (node.isMask) {
-    css.readOnly("mask", "clips the layers above it");
-  }
-
-  if (node.blendMode !== undefined) {
-    css.readOnly("mix-blend-mode", node.css?.["mix-blend-mode"] ?? node.blendMode.toLowerCase().replaceAll("_", "-"));
   }
 }
 
@@ -68,11 +95,28 @@ function layoutGridText(grid: NonNullable<SnapshotNode["layoutGrids"]>[number]):
   return `${grid.count ?? 1} ${unit} ${alignment}${width}, gutter ${px(grid.gutterSize ?? 0)}${edge}`;
 }
 
-/** Opacity, clipping and a text's truncation, and the corners, written back. */
+/** Opacity, the blend mode, clipping and a text's truncation, and the corners, written back. */
 export const APPEARANCE_RULES: readonly Rule[] = [
   {
     attributes: ["opacity"],
     write: opacityRule,
+  },
+  {
+    attributes: ["mix-blend-mode"],
+    write: ({ own }, out) => {
+      const value = (own("mix-blend-mode") ?? "").trim().toLowerCase();
+      const mode = BLEND_FIGMA[value];
+
+      if (mode === undefined) {
+        out.fail(
+          "mix-blend-mode",
+          `mix-blend-mode="${value}" is no blend mode Figma has.`,
+          `Figma has normal, ${Object.values(BLEND_CSS).join(", ")}.`,
+        );
+      } else {
+        out.set("blendMode", mode, "mix-blend-mode");
+      }
+    },
   },
   {
     attributes: ["overflow", "text-overflow", "white-space"],

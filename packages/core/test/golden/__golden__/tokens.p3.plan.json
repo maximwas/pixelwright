@@ -216,6 +216,36 @@
               }
             }
           ]
+        },
+        {
+          "name": "Glow",
+          "paints": [
+            {
+              "kind": "gradient",
+              "type": "LINEAR",
+              "angle": 90,
+              "stops": [
+                {
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "position": 0
+                },
+                {
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "position": 1
+                }
+              ]
+            }
+          ]
         }
       ],
       "text": [
@@ -320,11 +350,6 @@
       "collection": "Motion",
       "name": "Duration",
       "message": "TIMING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
-    },
-    {
-      "kind": "paint",
-      "name": "Glow",
-      "message": "linear-gradient(90deg, #FFF 0%, #000 100…: a gradient is not written yet."
     }
   ]
 }

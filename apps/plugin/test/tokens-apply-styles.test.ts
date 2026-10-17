@@ -270,6 +270,51 @@ describe("tokens_apply: styles", () => {
     ]);
   });
 
+  it("makes a gradient paint style, and leaves it when the same gradient comes again", async () => {
+    const glow = {
+      paint: [
+        {
+          name: "Glow",
+          value: "linear-gradient(135deg, #3B2FD9 0%, #8B5CF6 100%)",
+        },
+      ],
+    };
+
+    await apply(glow);
+
+    const made = (await local()).paint.find(({ name }) => name === "Glow");
+
+    expect(made?.paints).toMatchObject([{ type: "GRADIENT_LINEAR" }]);
+    expect(await apply(glow)).toMatchObject({
+      created: [],
+      updated: [],
+    });
+
+    await apply({
+      paint: [
+        {
+          name: "Glow",
+          value: "linear-gradient(135deg, #3B2FD9 0%, #000 100%)",
+        },
+      ],
+    });
+
+    expect((await local()).paint.find(({ name }) => name === "Glow")?.paints).toMatchObject([
+      {
+        gradientStops: [
+          { position: 0 },
+          {
+            color: {
+              r: 0,
+              g: 0,
+              b: 0,
+            },
+          },
+        ],
+      },
+    ]);
+  });
+
   it("leaves a library's style alone: the same value changes nothing, another is refused", async () => {
     expect(
       await apply({

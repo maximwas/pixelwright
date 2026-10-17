@@ -4,6 +4,7 @@ import type { CssDeclarations } from "../../css-declarations.ts";
 import type { PaintSpec } from "../../figma-props.ts";
 import type { Rule, WriteOutput } from "../../property-group.ts";
 import { imageOf, splitTop } from "../../values/css-values.ts";
+import { gradientOf } from "../../values/gradient-parse.ts";
 import { paintOf, paintsCss, styleIdOf, UNMAPPED } from "../../values/paints.ts";
 
 /** A box's fills as its background, top layer first; what the table cannot write yet is read-only. */
@@ -71,6 +72,12 @@ function layerOf(attribute: string, layer: string, value: string, out: WriteOutp
     return paint;
   }
 
+  const gradient = attribute === "background" ? gradientOf(layer) : null;
+
+  if (gradient !== null) {
+    return gradient;
+  }
+
   const image = imageOf(layer);
 
   if (image !== null && image !== "unquoted" && attribute === "background") {
@@ -115,7 +122,12 @@ function refusal(
   }
 
   if (layer.includes("gradient(")) {
-    return [`${layer.slice(0, 40)}…: a gradient is not written yet.`, "Use a colour or a token."];
+    return attribute === "background"
+      ? [
+          `${layer.slice(0, 40)}…: this gradient is not written.`,
+          "Write linear-, radial- or conic-gradient() with colours or tokens in their stops (no repeating ones).",
+        ]
+      : ["A text is coloured with a colour or a token, not a gradient.", "Use a colour or a token."];
   }
 
   return [

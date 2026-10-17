@@ -22,7 +22,8 @@ properties as attributes.
 \`variant\` ("Size=Large, State=Default") on instances, \`props\` (an instance's text and boolean properties,
 "Label=Sign up, Icon=true"; a comma, = or backslash inside a name or value comes escaped with a backslash),
 \`description\` (components), \`note\` (Dev Mode annotations, "Category: text", several joined with " | "), \`href\`
-(a prototype link, or a text's hyperlink), \`data-<collection>\` (a variable mode set on the layer, \`data-color-modes="dark"\`;
+(a prototype link, or a text's hyperlink), \`mask\` (alpha, vector or luminance: the layer masks the layers above it),
+\`data-<collection>\` (a variable mode set on the layer, \`data-color-modes="dark"\`;
 the read's root also has the modes it takes from above), \`textStyle\`, \`src\` (assets).
 
 A \`data-<collection>="<mode>"\` attribute is the selector tokens_read's CSS writes for that mode: put it on the
@@ -54,8 +55,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 
 ## Read-only attributes (start with $)
 
-- \`$css\`: what the mapping cannot write back yet, as Figma's own CSS: gradients, blend modes, line clamps, lists,
-  a negative gap ("children overlap"), a mask among layers.
+- \`$css\`: what the mapping cannot write back yet, as Figma's own CSS: a diamond gradient, a turned radial one, blend
+  modes CSS has no name for, line clamps, lists, a negative gap ("children overlap").
 - \`$children="N"\`: the layer has N children and not all are listed (snapshot budget or maxChars).
 - \`$truncated="true"\`: the branch was emptied, or the text shortened, to fit maxChars; its id is in \`truncated\`.
 - \`$code="Button"\`: an instance the project's Code Connect template or batch row renders, written without its

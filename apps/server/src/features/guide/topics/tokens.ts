@@ -83,12 +83,12 @@ export const TOKENS = {
 - An alias is \`var(--other)\`. One that points nowhere is a comment and a note.
 
 A text style is \`--<name>-font\`, with \`also\` holding \`--<name>-letter-spacing\` and \`--<name>-text-transform\`
-when they are not the default. A gradient paint style is a token once a layer that uses it is read (Figma writes its
-CSS for that layer).
+when they are not the default. A gradient paint style is a token as linear-, radial- or conic-gradient(), and
+tokens_apply writes one from the same CSS.
 
 ## Not tokens yet
 
-Paint styles with images, gradient styles no layer read uses, blur effect styles, and library variables the file does
+Paint styles with images, diamond gradient styles, blur effect styles, and library variables the file does
 not use (Figma gives their values only once they are imported into the file: \`libraries: true\` lists them by name
 and type). Paint styles and effect styles that are left out are named in \`notes\`; a \`var()\` design_read writes
 without a value is named in its hints.

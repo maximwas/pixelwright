@@ -64,6 +64,7 @@ export const META_ATTRIBUTES: ReadonlySet<string> = new Set([
   "note",
   "href",
   "textStyle",
+  "mask",
   "src",
   "before",
   "after",

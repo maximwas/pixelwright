@@ -35,6 +35,7 @@ export const CSS_ORDER = [
   "grid-template-rows",
   "transform",
   "opacity",
+  "mix-blend-mode",
   "overflow",
   "text-overflow",
   "white-space",

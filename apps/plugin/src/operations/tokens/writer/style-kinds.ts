@@ -9,7 +9,7 @@ import {
   weightOf,
 } from "@pixelwright/core";
 import { effectKey, effectsOf, mergedEffects } from "../../../figma/effects.ts";
-import { paintsOf } from "../../../figma/paints.ts";
+import { paintsOf, samePaints } from "../../../figma/paints.ts";
 import type { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import type { TokenRun } from "./token-run.ts";
@@ -60,7 +60,7 @@ export const PAINT_STYLES: StyleKind<PaintStylePlan, PaintStyle, Paint[] | null>
 
     return resolved.paints;
   },
-  holds: (style, paints) => paints !== null && sameValue(paintKeys(style.paints), paintKeys(paints)),
+  holds: (style, paints) => paints !== null && samePaints(style.paints, paints),
   make: () => figma.createPaintStyle(),
   write: (style, paints) => {
     if (paints !== null) {
@@ -142,6 +142,12 @@ async function checkPaints(specs: readonly PaintSpec[], index: TokenIndex): Prom
   }
 
   for (const spec of specs) {
+    for (const stop of spec.kind === "gradient" ? spec.stops : []) {
+      if (stop.token !== undefined) {
+        await index.find(stop.token, "COLOR");
+      }
+    }
+
     if (spec.kind !== "token") {
       continue;
     }
@@ -158,16 +164,3 @@ async function checkPaints(specs: readonly PaintSpec[], index: TokenIndex): Prom
 }
 
 /** The parts of paints that make them look as they do. */
-function paintKeys(paints: readonly Paint[]): unknown[] {
-  return paints.map((paint) => {
-    const solid = paint as Partial<SolidPaint>;
-
-    return [
-      paint.type,
-      paint.visible ?? true,
-      paint.opacity ?? 1,
-      solid.color === undefined ? null : [solid.color.r, solid.color.g, solid.color.b],
-      solid.boundVariables?.color?.id ?? null,
-    ];
-  });
-}

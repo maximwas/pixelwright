@@ -44,6 +44,10 @@ How to write this file (people and agents alike):
   their size, with their texts, images and hidden layers carried over; `swap` makes instances of one component
   instances of another (a set's variant with the same values), and `reset` takes instances' overrides off, their
   look only or all of them.
+- `design_read` writes gradients as CSS (`linear-gradient`, `radial-gradient`, `conic-gradient`, as Figma's own CSS
+  gives them), and `design_apply` paints them back from the same CSS, a stop's token bound to its colour variable;
+  `tokens_apply` writes gradient paint styles. `mix-blend-mode` and `mask="alpha|vector|luminance|none"` are read and
+  written too.
 - `texts_replace` finds and replaces text under a layer, a page or the whole file: one pair or a list (copy edits,
   a translation), plain or a regular expression with groups, whole words when asked, all pairs at once against the
   text as it was. Each match is replaced where it stands, so its run keeps its font, colour and link, and a text an

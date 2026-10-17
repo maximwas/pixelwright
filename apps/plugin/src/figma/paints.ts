@@ -1,4 +1,4 @@
-import type { PaintSpec } from "@pixelwright/core";
+import { type GradientSpec, gradientTransformOf, type PaintSpec } from "@pixelwright/core";
 import { documentColor } from "./color-profile.ts";
 import type { TokenIndex } from "./tokens/token-index.ts";
 import { variableColor } from "./variable-color.ts";
@@ -48,6 +48,12 @@ export async function checkPaints(specs: readonly PaintSpec[], index: TokenIndex
       await refusePaintStyle(spec.token, index);
       await index.find(spec.token, "COLOR");
     }
+
+    for (const stop of spec.kind === "gradient" ? spec.stops : []) {
+      if (stop.token !== undefined) {
+        await index.find(stop.token, "COLOR");
+      }
+    }
   }
 }
 
@@ -94,7 +100,56 @@ async function paintOf(spec: PaintSpec, sources: PaintSources, consumer?: SceneN
     return imagePaint(spec, sources);
   }
 
+  if (spec.kind === "gradient") {
+    return await gradientPaint(spec, sources, consumer);
+  }
+
   return await variablePaint(spec, await sources.tokens(), consumer);
+}
+
+/**
+ * A gradient as Figma paints it: its transform made from the CSS at the layer's size (a style's, which has none, at a
+ * square's), its stops in the document's colour space; a stop's token is bound to its colour variable.
+ */
+async function gradientPaint(spec: GradientSpec, sources: PaintSources, consumer?: SceneNode): Promise<GradientPaint> {
+  const [width, height] = consumer === undefined ? [1, 1] : [consumer.width || 1, consumer.height || 1];
+  const stops: ColorStop[] = [];
+
+  for (const { position, color, token } of spec.stops) {
+    if (token === undefined) {
+      stops.push({
+        position,
+        color: documentColor(
+          color ?? {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1,
+          },
+        ),
+      });
+    } else {
+      const variable = await (await sources.tokens()).variable(token, "COLOR");
+      const value = await variableColor(variable, consumer);
+
+      stops.push({
+        position,
+        color: {
+          r: value?.r ?? 0,
+          g: value?.g ?? 0,
+          b: value?.b ?? 0,
+          a: value?.a ?? 1,
+        },
+        boundVariables: { color: figma.variables.createVariableAlias(variable) },
+      });
+    }
+  }
+
+  return {
+    type: `GRADIENT_${spec.type}`,
+    gradientTransform: gradientTransformOf(spec, width, height),
+    gradientStops: stops,
+  };
 }
 
 /**
@@ -171,6 +226,8 @@ export function paintKey(paint: Paint): string {
   const image = paint as Partial<ImagePaint>;
   const round = (value: number | undefined) => Math.round((value ?? 0) * 10_000);
 
+  const gradient = paint as Partial<GradientPaint>;
+
   return JSON.stringify([
     paint.type,
     paint.visible ?? true,
@@ -179,6 +236,15 @@ export function paintKey(paint: Paint): string {
     solid.boundVariables?.color?.id ?? null,
     image.imageHash ?? null,
     image.scaleMode ?? null,
+    gradient.gradientTransform?.flat().map(round) ?? null,
+    gradient.gradientStops?.map(({ position, color, boundVariables }) => [
+      round(position),
+      round(color.r),
+      round(color.g),
+      round(color.b),
+      round(color.a),
+      boundVariables?.color?.id ?? null,
+    ]) ?? null,
   ]);
 }
 

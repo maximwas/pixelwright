@@ -679,7 +679,8 @@ draw). Its <code>src</code> is a PNG of what it shows.</li>
 <code>variant</code> (&quot;Size=Large, State=Default&quot;) on instances, <code>props</code> (an instance&#39;s text and boolean properties,
 &quot;Label=Sign up, Icon=true&quot;; a comma, = or backslash inside a name or value comes escaped with a backslash),
 <code>description</code> (components), <code>note</code> (Dev Mode annotations, &quot;Category: text&quot;, several joined with &quot; | &quot;), <code>href</code>
-(a prototype link, or a text&#39;s hyperlink), <code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>;
+(a prototype link, or a text&#39;s hyperlink), <code>mask</code> (alpha, vector or luminance: the layer masks the layers above it),
+<code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>;
 the read&#39;s root also has the modes it takes from above), <code>textStyle</code>, <code>src</code> (assets).</p>
 <p>A <code>data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;</code> attribute is the selector tokens_read&#39;s CSS writes for that mode: put it on the
 element in the build too, and the element takes that mode&#39;s values. design_apply sets a layer&#39;s mode the same way
@@ -708,8 +709,8 @@ it so, it is what the designer chose. A text with a <code>textStyle</code> carri
 </ul>
 <h3>Read-only attributes (start with $)</h3>
 <ul>
-<li><code>$css</code>: what the mapping cannot write back yet, as Figma&#39;s own CSS: gradients, blend modes, line clamps, lists,
-a negative gap (&quot;children overlap&quot;), a mask among layers.</li>
+<li><code>$css</code>: what the mapping cannot write back yet, as Figma&#39;s own CSS: a diamond gradient, a turned radial one, blend
+modes CSS has no name for, line clamps, lists, a negative gap (&quot;children overlap&quot;).</li>
 <li><code>$children=&quot;N&quot;</code>: the layer has N children and not all are listed (snapshot budget or maxChars).</li>
 <li><code>$truncated=&quot;true&quot;</code>: the branch was emptied, or the text shortened, to fit maxChars; its id is in <code>truncated</code>.</li>
 <li><code>$code=&quot;Button&quot;</code>: an instance the project&#39;s Code Connect template or batch row renders, written without its
@@ -841,10 +842,10 @@ durations in seconds.</li>
 <li>An alias is <code>var(--other)</code>. One that points nowhere is a comment and a note.</li>
 </ul>
 <p>A text style is <code>--&lt;name&gt;-font</code>, with <code>also</code> holding <code>--&lt;name&gt;-letter-spacing</code> and <code>--&lt;name&gt;-text-transform</code>
-when they are not the default. A gradient paint style is a token once a layer that uses it is read (Figma writes its
-CSS for that layer).</p>
+when they are not the default. A gradient paint style is a token as linear-, radial- or conic-gradient(), and
+tokens_apply writes one from the same CSS.</p>
 <h3>Not tokens yet</h3>
-<p>Paint styles with images, gradient styles no layer read uses, blur effect styles, and library variables the file does
+<p>Paint styles with images, diamond gradient styles, blur effect styles, and library variables the file does
 not use (Figma gives their values only once they are imported into the file: <code>libraries: true</code> lists them by name
 and type). Paint styles and effect styles that are left out are named in <code>notes</code>; a <code>var()</code> design_read writes
 without a value is named in its hints.</p>
@@ -972,8 +973,13 @@ weight, or the error lists the styles it has.</li>
 <code>align-self=&quot;stretch&quot;</code> fills across it. Placement: <code>position=&quot;absolute&quot;</code> with <code>left</code>/<code>right</code>/<code>top</code>/
 <code>bottom</code>, <code>calc(50% ± Npx)</code> for the centre, percents (with the size in percents) to scale. When to use flex,
 grid or absolute placement, grid tracks and cells, with examples: see <code>guide layout</code>.</li>
-<li>Not written yet, and refused with an error: gradients, blend modes, grow weights, <code>overflow: scroll</code>, links on
-frames, dashed underlines.</li>
+<li>Gradients: <code>background</code> takes <code>linear-gradient(&lt;angle&gt;, &lt;stops&gt;)</code> (or <code>to right</code>…), <code>radial-gradient(&lt;rx&gt; &lt;ry&gt; at &lt;x&gt; &lt;y&gt;, &lt;stops&gt;)</code> and <code>conic-gradient(from &lt;angle&gt; at &lt;x&gt; &lt;y&gt;, &lt;stops&gt;)</code>, a stop a colour or a token
+(<code>var(--brand) 0%</code>) and its place in percent; a text&#39;s colour and borders take colours and tokens only. Figma&#39;s
+diamond gradient and repeating gradients stay read-only.</li>
+<li><code>mix-blend-mode</code> sets how a layer blends (multiply, screen, overlay…; normal is Figma&#39;s pass through on a frame);
+<code>mask=&quot;alpha&quot;</code> (or vector, luminance) makes a layer the mask of the layers above it in its parent, <code>mask=&quot;none&quot;</code>
+makes it a layer again.</li>
+<li>Not written yet, and refused with an error: grow weights, <code>overflow: scroll</code>, links on frames, dashed underlines.</li>
 </ul>
 <h3>Errors and undo</h3>
 <p><code>nodes_delete</code> deletes layers by id (not those inside an instance: hide them with <code>display=&quot;none&quot;</code>).</p>

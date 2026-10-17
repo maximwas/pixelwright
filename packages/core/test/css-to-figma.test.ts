@@ -399,7 +399,7 @@ describe("CSS to Figma: paint", () => {
 
   it("refuses what it cannot write yet, naming the attribute, in the element's order", () => {
     const { errors } = change(
-      '<Frame id="1:1" display="flex" gap="big" background="linear-gradient(90deg, #000, #FFF)" border-radius="1em"/>',
+      '<Frame id="1:1" display="flex" gap="big" background="repeating-linear-gradient(90deg, #000, #FFF 10%)" border-radius="1em"/>',
     );
 
     expect(errors.map(({ attribute }) => attribute)).toEqual(["gap", "background", "border-radius"]);

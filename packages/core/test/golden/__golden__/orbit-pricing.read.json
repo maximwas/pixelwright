@@ -8,6 +8,7 @@
     "--color-line": "#E1E5EE",
     "--color-on-brand": "#FFF",
     "--color-surface": "#FFF",
+    "--Orbit-Gradient": "linear-gradient(135deg, #3B2FD9 14.64%, #8B5CF6 85.36%)",
     "--radius-lg": "24px",
     "--radius-md": "12px",
     "--radius-pill": "999px",

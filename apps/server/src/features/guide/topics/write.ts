@@ -89,8 +89,14 @@ taken as sRGB and converted to P3.
   \`align-self="stretch"\` fills across it. Placement: \`position="absolute"\` with \`left\`/\`right\`/\`top\`/
   \`bottom\`, \`calc(50% ± Npx)\` for the centre, percents (with the size in percents) to scale. When to use flex,
   grid or absolute placement, grid tracks and cells, with examples: see \`guide layout\`.
-- Not written yet, and refused with an error: gradients, blend modes, grow weights, \`overflow: scroll\`, links on
-  frames, dashed underlines.
+- Gradients: \`background\` takes \`linear-gradient(<angle>, <stops>)\` (or \`to right\`…), \`radial-gradient(<rx> <ry>
+  at <x> <y>, <stops>)\` and \`conic-gradient(from <angle> at <x> <y>, <stops>)\`, a stop a colour or a token
+  (\`var(--brand) 0%\`) and its place in percent; a text's colour and borders take colours and tokens only. Figma's
+  diamond gradient and repeating gradients stay read-only.
+- \`mix-blend-mode\` sets how a layer blends (multiply, screen, overlay…; normal is Figma's pass through on a frame);
+  \`mask="alpha"\` (or vector, luminance) makes a layer the mask of the layers above it in its parent, \`mask="none"\`
+  makes it a layer again.
+- Not written yet, and refused with an error: grow weights, \`overflow: scroll\`, links on frames, dashed underlines.
 
 ## Errors and undo
 

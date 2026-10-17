@@ -155,6 +155,7 @@ export class DesignBuilder {
         ({ collection, mode }): MaybeAttribute => [modeAttribute(collection), attributeSlug(mode)],
       ),
       ["textStyle", this.#catalogue.useTextStyle(textStyle)],
+      ["mask", node.isMask ? (node.maskType ?? "ALPHA").toLowerCase() : undefined],
       ["src", asset === null ? undefined : this.#assets.plan(node, asset)],
     ];
   }

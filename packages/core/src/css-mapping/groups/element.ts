@@ -54,6 +54,27 @@ export const ELEMENT_RULES: readonly Rule[] = [
     },
   },
   {
+    attributes: ["mask"],
+    write: ({ own }, out) => {
+      const value = (own("mask") ?? "").trim().toLowerCase();
+
+      if (value === "none" || value === "") {
+        out.set("mask", { isMask: false }, "mask");
+      } else if (value === "alpha" || value === "vector" || value === "luminance") {
+        out.set(
+          "mask",
+          {
+            isMask: true,
+            maskType: value.toUpperCase() as "ALPHA" | "VECTOR" | "LUMINANCE",
+          },
+          "mask",
+        );
+      } else {
+        out.fail("mask", `mask="${value}" is not alpha, vector, luminance or none.`);
+      }
+    },
+  },
+  {
     attributes: ["src"],
     write: ({ tag, own }, out) => {
       if (tag === "Image" || tag === "Icon") {
