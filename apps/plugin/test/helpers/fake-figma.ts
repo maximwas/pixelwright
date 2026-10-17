@@ -508,6 +508,20 @@ function writable(
     });
   }
 
+  define("setExplicitVariableModeForCollection", (collection: { id: string }, modeId: string) => {
+    node.explicitVariableModes = {
+      ...((node.explicitVariableModes as Record<string, string> | undefined) ?? {}),
+      [collection.id]: modeId,
+    };
+    record("setExplicitVariableModeForCollection", [collection.id, modeId]);
+  });
+  define("clearExplicitVariableModeForCollection", (collection: { id: string }) => {
+    const { [collection.id]: _cleared, ...kept } =
+      (node.explicitVariableModes as Record<string, string> | undefined) ?? {};
+
+    node.explicitVariableModes = kept;
+    record("clearExplicitVariableModeForCollection", [collection.id]);
+  });
   define("remove", () => {
     node.parent?.children?.splice(node.parent.children.indexOf(node), 1);
     node.parent = null;
@@ -638,12 +652,41 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     calls: [],
     created: [],
   };
+  /** As Figma: a layer's modes are the collections' defaults, then each layer's own from the page down to it. */
+  const resolvedModes = (node: FakeNode): Record<string, string> => {
+    const chain: FakeNode[] = [];
+
+    for (let at: FakeNode | null = node; at !== null; at = at.parent) {
+      chain.unshift(at);
+    }
+
+    return Object.assign(
+      Object.fromEntries(localCollections.map((collection) => [collection.id, String(collection.defaultModeId)])),
+      ...chain.map((each) => (each.explicitVariableModes as Record<string, string> | undefined) ?? {}),
+    );
+  };
   const register = (node: FakeNode) => {
     byId.set(node.id, node);
 
     if (Object.getOwnPropertyDescriptor(node, "resize") === undefined) {
       writable(node, writes, register, options);
       copyable(node);
+    }
+
+    // A test that sets the field itself keeps its own value.
+    if (Object.getOwnPropertyDescriptor(node, "resolvedVariableModes") === undefined) {
+      Object.defineProperty(node, "resolvedVariableModes", {
+        get: () => resolvedModes(node),
+        set: (value: unknown) =>
+          Object.defineProperty(node, "resolvedVariableModes", {
+            value,
+            writable: true,
+            enumerable: true,
+            configurable: true,
+          }),
+        enumerable: false,
+        configurable: true,
+      });
     }
   };
   /**

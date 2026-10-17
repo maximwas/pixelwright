@@ -5,6 +5,7 @@ import { ANNOTATION_STEPS } from "./annotation-steps.ts";
 import { APPEARANCE_STEPS } from "./appearance-steps.ts";
 import { CHILD_STEPS } from "./child-steps.ts";
 import { LAYOUT_STEPS } from "./layout-steps.ts";
+import { MODE_STEPS } from "./mode-steps.ts";
 import { PAINT_STEPS } from "./paint-steps.ts";
 import { SIZE_STEPS } from "./size-steps.ts";
 import type { Step } from "./step.ts";
@@ -43,6 +44,7 @@ export const STEPS: readonly Step[] = [
   ...TRANSFORM_STEPS,
   ...APPEARANCE_STEPS,
   ...PAINT_STEPS,
+  ...MODE_STEPS,
   ...ANNOTATION_STEPS,
 ];
 

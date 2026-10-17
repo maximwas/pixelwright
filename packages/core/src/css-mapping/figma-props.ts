@@ -155,6 +155,11 @@ export interface FigmaProps {
   notes?: readonly { readonly category: string | null; readonly label: string }[];
   /** Inside a new Component: the text property (`prop`) or visibility property (`visibleProp`) this layer makes. */
   property?: { readonly text?: string; readonly visible?: string };
+  /**
+   * Variable modes to set on the layer, by the collection's and the mode's attribute slugs (`data-theme="dark"` is
+   * theme → dark); an empty mode clears the collection's mode, so the layer takes its parent's.
+   */
+  modes?: Readonly<Record<string, string>>;
   /** An Image's or Icon's file; the server reads it (an image's bytes go as an upload stream, an icon's SVG inline). */
   asset?: { readonly kind: "image" | "icon"; readonly src: string; readonly stream?: string; readonly svg?: string };
 }

@@ -1,4 +1,5 @@
 import { CSS_ATTRIBUTES } from "../../css-mapping/vocabulary.ts";
+import { isModeAttribute } from "../../kernel/names.ts";
 import type { XmlChild, XmlElementNode } from "../../types/xml.ts";
 import { closest } from "../../utils/closest.ts";
 import type { ApplyElement, ApplyError, ContentPiece } from "../types.ts";
@@ -126,7 +127,7 @@ export class ApplyReader {
         continue;
       }
 
-      const known = META_ATTRIBUTES.has(name) || CSS_ATTRIBUTES.has(name);
+      const known = META_ATTRIBUTES.has(name) || CSS_ATTRIBUTES.has(name) || isModeAttribute(name);
       const refused = known
         ? refusalOf({
             tag: node.type,

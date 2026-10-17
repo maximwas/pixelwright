@@ -79,7 +79,8 @@ export async function numberingStyles(pages: Iterable<PageNode>): Promise<Number
     await loaded(page);
 
     for (const id of usedUnder(page).styleIds) {
-      const style = known.has(id) ? null : await figma.getStyleByIdAsync(id);
+      // A library style Figma cannot reach (offline) is left out of the numbering, not an error.
+      const style = known.has(id) ? null : await figma.getStyleByIdAsync(id).catch(() => null);
 
       if (style !== null) {
         styles.push({

@@ -9,6 +9,7 @@
       ],
       "defaultMode": "Light",
       "selectors": {
+        "Light": "[data-brand-colors=\"light\"]",
         "Dark": "[data-brand-colors=\"dark\"]",
         "dark": "[data-brand-colors=\"dark-2\"]"
       },

@@ -22,7 +22,13 @@ properties as attributes.
 \`variant\` ("Size=Large, State=Default") on instances, \`props\` (an instance's text and boolean properties,
 "Label=Sign up, Icon=true"; a comma, = or backslash inside a name or value comes escaped with a backslash),
 \`description\` (components), \`note\` (Dev Mode annotations, "Category: text", several joined with " | "), \`href\`
-(a prototype link, or a text's hyperlink), \`textStyle\`, \`src\` (assets).
+(a prototype link, or a text's hyperlink), \`data-<collection>\` (a variable mode set on the layer, \`data-color-modes="dark"\`;
+the read's root also has the modes it takes from above), \`textStyle\`, \`src\` (assets).
+
+A \`data-<collection>="<mode>"\` attribute is the selector tokens_read's CSS writes for that mode: put it on the
+element in the build too, and the element takes that mode's values. design_apply sets a layer's mode the same way
+(the collection and mode by these slugs or their own names); \`data-<collection>=""\` clears it, so the layer takes
+its parent's mode.
 
 ## CSS attributes
 

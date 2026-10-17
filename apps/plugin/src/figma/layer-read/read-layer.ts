@@ -5,6 +5,7 @@ import { readFacts } from "./fields/facts.ts";
 import { readGeometry } from "./fields/geometry.ts";
 import { readInstance } from "./fields/instance.ts";
 import { readLayout } from "./fields/layout.ts";
+import { readModes } from "./fields/modes.ts";
 import { readNotes } from "./fields/notes.ts";
 import { readCorners, readPaints } from "./fields/paints.ts";
 import { readPrototype } from "./fields/prototype.ts";
@@ -23,6 +24,7 @@ const FIELD_READERS: readonly FieldReader[] = [
   readPaints,
   readCorners,
   readTokens,
+  readModes,
   readFacts,
   readNotes,
   readPrototype,

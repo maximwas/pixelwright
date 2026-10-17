@@ -106,7 +106,10 @@ describe("token model", () => {
       name: "Brand",
       modes: ["Light", "Dark"],
       defaultMode: "Light",
-      selectors: { Dark: '[data-brand="dark"]' },
+      selectors: {
+        Light: '[data-brand="light"]',
+        Dark: '[data-brand="dark"]',
+      },
       variables: [
         {
           name: "Surface",
@@ -183,7 +186,8 @@ describe("token model", () => {
       '[data-design-system="dark"] {',
       '[data-design-system="contrast"] {',
     ]);
-    expect(css.match(/--color-\d+:/g)).toHaveLength(1_800);
+    // :root, then the Light block (so a Light layer inside another mode resets), Dark and Contrast.
+    expect(css.match(/--color-\d+:/g)).toHaveLength(2_400);
 
     const spacing = tokensCss(tokenModel(raw, { collections: ["spacing"] }));
 
@@ -390,6 +394,7 @@ describe("stage-3 review fixes in the token model", () => {
     const css = tokensCss(model);
 
     expect(css.match(/^\[data-[^\]]+\] \{$/gm)).toEqual([
+      '[data-кольори="світла"] {',
       '[data-кольори="темна"] {',
       '[data-кольори="контраст"] {',
       '[data-кольори="контраст-2"] {',

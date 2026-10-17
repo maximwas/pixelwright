@@ -23,10 +23,11 @@ export const TOKENS = {
 
 - It takes the file's own styles and variables, and those the current page (or \`within\`) uses from a team library:
   a file built on a library has its tokens there. \`used: false\` keeps only the file's own.
-- format css (default): \`:root\` holds every collection's default mode and the styles; every other mode is a block
-  \`[data-<collection>="<mode>"]\` with that collection's variables. Put the attribute on the html element,
-  \`<html data-brand="dark">\`: a token in \`:root\` that points at another collection's token is computed in \`:root\`
-  and does not follow a mode set lower in the page.
+- format css (default): \`:root\` holds every collection's default mode and the styles; every mode of a collection
+  with several is a block \`[data-<collection>="<mode>"]\` with that collection's variables, the default's too (an
+  element in it takes the default back inside another mode's). Put the attribute where design_read writes it
+  (\`data-brand="dark"\` on a section) or on the html element for the whole page: a token in \`:root\` that points at
+  another collection's token is computed in \`:root\` and does not follow a mode set lower in the page.
 - format json: per collection, its modes and each variable's value in every mode.
 - format dtcg: Design Tokens Format (DTCG 2025.10) files, one per mode of each collection, keyed
   \`<collection>.<mode>\` (the collection alone when it has one mode), and \`styles\` for the styles; aliases are

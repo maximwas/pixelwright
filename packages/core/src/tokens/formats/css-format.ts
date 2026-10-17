@@ -28,9 +28,9 @@ export const CSS_FORMAT: TokenFormat<{ css: string; summary: ModelSummary }> = {
 };
 
 /**
- * The tokens as CSS: `:root` with every collection's default mode and the styles, then one block per other mode,
- * `[data-<collection>="<mode>"]`, holding that collection's variables in it. Put the attribute on the element a theme
- * applies to (html for the whole page).
+ * The tokens as CSS: `:root` with every collection's default mode and the styles, then one block per mode of a
+ * collection with several, `[data-<collection>="<mode>"]`, holding that collection's variables in it. Put the attribute
+ * on the element a theme applies to (html for the whole page); design_read writes it where a layer sets a mode.
  */
 export function tokensCss(model: TokenModel): string {
   const root = [...defaultModeLines(model), ...styleLines(model)];
@@ -65,17 +65,21 @@ function styleLines(model: TokenModel): string[] {
   });
 }
 
-/** A block per collection mode but the default, under the mode's selector. */
+/**
+ * A block per mode of a collection with more than one, under the mode's selector: the default's first, so an element of
+ * the default mode inside another mode's sets its values back.
+ */
 function modeBlocks(model: TokenModel): string[] {
   return model.collections.flatMap((collection) =>
-    collection.modes
-      .filter((mode) => mode !== collection.defaultMode)
-      .flatMap((mode) => {
-        const lines = collection.variables.map((variable) => declaration(variable.token, variable.values[mode]));
-        const selector = collection.selectors[mode];
+    (collection.modes.length > 1
+      ? [collection.defaultMode, ...collection.modes.filter((mode) => mode !== collection.defaultMode)]
+      : []
+    ).flatMap((mode) => {
+      const lines = collection.variables.map((variable) => declaration(variable.token, variable.values[mode]));
+      const selector = collection.selectors[mode];
 
-        return lines.length === 0 || selector === undefined ? [] : [`${selector} {\n${lines.join("\n")}\n}`];
-      }),
+      return lines.length === 0 || selector === undefined ? [] : [`${selector} {\n${lines.join("\n")}\n}`];
+    }),
   );
 }
 

@@ -492,7 +492,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-tokens_read">
   <h3><code>tokens_read</code></h3>
-  <p>Reads the file&#39;s design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection&#39;s default mode and the styles, and every other mode is a block [data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;] to put on the element a theme applies to; format json returns the same per collection and mode; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries&#39; variables by name. notes say what could not be written.</p>
+  <p>Reads the file&#39;s design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection&#39;s default mode and the styles, and every mode of a collection with several is a block [data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;] (the default&#39;s too, so an element in it resets inside another mode&#39;s) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries&#39; variables by name. notes say what could not be written.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>collections</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>Only these variable collections, by name (case does not matter). Default: all of them.</td></tr>
 <tr><td><code>libraries</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also list the enabled libraries&#39; variables, by name and type: their values are read only once the file uses them.</td></tr>
@@ -635,7 +635,12 @@ draw). Its <code>src</code> is a PNG of what it shows.</li>
 <code>variant</code> (&quot;Size=Large, State=Default&quot;) on instances, <code>props</code> (an instance&#39;s text and boolean properties,
 &quot;Label=Sign up, Icon=true&quot;; a comma, = or backslash inside a name or value comes escaped with a backslash),
 <code>description</code> (components), <code>note</code> (Dev Mode annotations, &quot;Category: text&quot;, several joined with &quot; | &quot;), <code>href</code>
-(a prototype link, or a text&#39;s hyperlink), <code>textStyle</code>, <code>src</code> (assets).</p>
+(a prototype link, or a text&#39;s hyperlink), <code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>;
+the read&#39;s root also has the modes it takes from above), <code>textStyle</code>, <code>src</code> (assets).</p>
+<p>A <code>data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;</code> attribute is the selector tokens_read&#39;s CSS writes for that mode: put it on the
+element in the build too, and the element takes that mode&#39;s values. design_apply sets a layer&#39;s mode the same way
+(the collection and mode by these slugs or their own names); <code>data-&lt;collection&gt;=&quot;&quot;</code> clears it, so the layer takes
+its parent&#39;s mode.</p>
 <h3>CSS attributes</h3>
 <p>Ready CSS values, in this order: display, flex-direction, flex-wrap, position, left, right, top, bottom, width,
 height, min/max sizes, flex, align-self, grid-row, grid-column, justify-self, padding, justify-content,
@@ -733,10 +738,11 @@ styles are numbered alike: the second &quot;h1&quot; is <code>--h1-2-font</code>
 <ul>
 <li>It takes the file&#39;s own styles and variables, and those the current page (or <code>within</code>) uses from a team library:
 a file built on a library has its tokens there. <code>used: false</code> keeps only the file&#39;s own.</li>
-<li>format css (default): <code>:root</code> holds every collection&#39;s default mode and the styles; every other mode is a block
-<code>[data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;]</code> with that collection&#39;s variables. Put the attribute on the html element,
-<code>&lt;html data-brand=&quot;dark&quot;&gt;</code>: a token in <code>:root</code> that points at another collection&#39;s token is computed in <code>:root</code>
-and does not follow a mode set lower in the page.</li>
+<li>format css (default): <code>:root</code> holds every collection&#39;s default mode and the styles; every mode of a collection
+with several is a block <code>[data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;]</code> with that collection&#39;s variables, the default&#39;s too (an
+element in it takes the default back inside another mode&#39;s). Put the attribute where design_read writes it
+(<code>data-brand=&quot;dark&quot;</code> on a section) or on the html element for the whole page: a token in <code>:root</code> that points at
+another collection&#39;s token is computed in <code>:root</code> and does not follow a mode set lower in the page.</li>
 <li>format json: per collection, its modes and each variable&#39;s value in every mode.</li>
 <li>format dtcg: Design Tokens Format (DTCG 2025.10) files, one per mode of each collection, keyed
 <code>&lt;collection&gt;.&lt;mode&gt;</code> (the collection alone when it has one mode), and <code>styles</code> for the styles; aliases are

@@ -33,11 +33,23 @@ How to write this file (people and agents alike):
   and styles that hold them exactly, in each layer's mode and within the variables' scopes. A value several tokens
   hold is listed with its candidates for a pick, a value none holds is listed for `tokens_apply`, `choose` snaps a
   near value to a token, and `remap` moves every use of one token to another.
+- `design_read` writes a variable mode set on a layer as `data-<collection>="<mode>"` (`data-color-modes="dark"`),
+  the selector `tokens_read`'s CSS uses, so a dark section reads as dark and the build sets the same attribute; a
+  frame read alone also carries the mode it takes from the page or frame above. `design_apply` sets a layer's mode
+  the same way, and `data-<collection>=""` clears it.
 - `guide layout` tells when to lay a frame out as flex, as grid or by absolute placement, with the grid's tracks,
   spans and cells, pinned and centred layers, what is not supported, and examples checked in Figma.
 
+### Changed
+
+- `tokens_read`'s CSS gives the default mode of a collection with several modes a `[data-<collection>="<mode>"]`
+  block too, so an element in the default mode inside another mode's element takes the default values back.
+
 ### Fixed
 
+- `design_read` and `design_apply` work while Figma Desktop has lost its connection: the file's own variables and
+  styles are read from its lists, which Figma gives offline, instead of one by one, which Figma gives up on after ten
+  seconds; a library's it cannot reach is left out.
 - `changes_since` counts `effects_apply`'s writes as Pixelwright's, and the plugin window names them.
 - A new frame laid out inside (a card) fills its grid cell with `justify-self`/`align-self="stretch"`: it used to
   hug its content.
