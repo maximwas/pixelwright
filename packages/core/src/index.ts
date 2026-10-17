@@ -72,6 +72,7 @@ export * from "./schemas/breakpoints.ts";
 export * from "./schemas/bridge.ts";
 export * from "./schemas/contrast.ts";
 export * from "./schemas/diff.ts";
+export * from "./schemas/effects.ts";
 export * from "./schemas/inspect.ts";
 export * from "./schemas/measure.ts";
 export { BoxSchema, ComponentEntrySchema, NodeRefSchema, OutlineNodeSchema } from "./schemas/operation-shapes.ts";

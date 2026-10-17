@@ -16,6 +16,14 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## Unreleased
+
+### Added
+
+- `effects_apply` puts Figma's own noise, texture and glass on layers: a ready look (grain, film, risograph,
+  frosted glass, clear glass) or the effect's own values; a new effect replaces the layer's one of its type, shadows
+  and blurs stay, and `remove` takes them off.
+
 ## 0.3.2 — 2026-10-17
 
 ### Added

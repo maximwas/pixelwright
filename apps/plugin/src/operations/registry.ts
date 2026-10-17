@@ -9,6 +9,7 @@ import type { PluginServices } from "../services/plugin-services.ts";
 import { applyChanges } from "./apply/apply-changes.ts";
 import { components } from "./components/read-components.ts";
 import { deleteNodes } from "./delete/delete-nodes.ts";
+import { applyEffects } from "./effects/apply-effects.ts";
 import { execute } from "./execute/execute-code.ts";
 import { clipCover } from "./export/clip-cover.ts";
 import { exportNode } from "./export/export-node.ts";
@@ -58,6 +59,7 @@ const HANDLERS: Handlers = {
   entries,
   apply: (input, services) => applyChanges(input, services),
   delete: (input, { edits }) => deleteNodes(input, edits),
+  effects: (input, { edits }) => applyEffects(input, edits),
   inspect,
   cover: clipCover,
   execute: (input, { edits }) => execute(input, edits),

@@ -9580,6 +9580,240 @@
       ]
     }
   },
+  "effects": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "minItems": 1,
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "noise": {
+          "type": "object",
+          "properties": {
+            "noiseType": {
+              "type": "string",
+              "enum": [
+                "MONOTONE",
+                "DUOTONE",
+                "MULTITONE"
+              ]
+            },
+            "noiseSize": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "density": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "color": {
+              "type": "object",
+              "properties": {
+                "r": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "g": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "b": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "a": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "r",
+                "g",
+                "b",
+                "a"
+              ]
+            },
+            "secondaryColor": {
+              "type": "object",
+              "properties": {
+                "r": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "g": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "b": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "a": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "r",
+                "g",
+                "b",
+                "a"
+              ]
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "noiseType",
+            "noiseSize",
+            "density",
+            "color"
+          ]
+        },
+        "texture": {
+          "type": "object",
+          "properties": {
+            "noiseSize": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "clipToShape": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "noiseSize",
+            "radius",
+            "clipToShape"
+          ]
+        },
+        "glass": {
+          "type": "object",
+          "properties": {
+            "lightIntensity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "lightAngle": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            },
+            "refraction": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "depth": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "dispersion": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 250
+            }
+          },
+          "required": [
+            "lightIntensity",
+            "lightAngle",
+            "refraction",
+            "depth",
+            "dispersion",
+            "radius"
+          ]
+        },
+        "remove": {
+          "default": [],
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NOISE",
+              "TEXTURE",
+              "GLASS"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "nodes"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ]
+          }
+        }
+      },
+      "required": [
+        "changed",
+        "errors"
+      ]
+    }
+  },
   "delete": {
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

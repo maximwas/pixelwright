@@ -4,6 +4,7 @@ import { EXPORT_CHUNK_BYTES, UPLOAD_MAX_BYTES, VERSION_DESCRIPTION_CHARS } from 
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schemas.ts";
 import { RawTokensSchema } from "../tokens/raw-tokens.ts";
+import { EffectsInputSchema, EffectsOutputSchema } from "./effects.ts";
 import { InspectRawSchema } from "./inspect.ts";
 import { ComponentEntrySchema, NodeIdSchema, QuerySchema } from "./operation-shapes.ts";
 import { SnapshotSchema } from "./snapshot.ts";
@@ -195,6 +196,11 @@ export const CONTENT_OPERATIONS = {
       width: z.number(),
       height: z.number(),
     }),
+  },
+  /** Figma's own noise, texture and glass on layers: write, refused while Allow edits is off (dryRun is not). */
+  effects: {
+    input: EffectsInputSchema,
+    output: EffectsOutputSchema,
   },
   delete: {
     input: z.object({

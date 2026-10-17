@@ -11,6 +11,7 @@ import { contrastCheckTool } from "../features/contrast-check/tool.ts";
 import { designApplyTool } from "../features/design-apply/tool.ts";
 import { designAuditTool } from "../features/design-audit/tool.ts";
 import { designReadTool } from "../features/design-read/tool.ts";
+import { effectsApplyTool } from "../features/effects-apply/tool.ts";
 import { executeTool } from "../features/execute/tool.ts";
 import { fileMapTool } from "../features/file-map/tool.ts";
 import { flowReadTool } from "../features/flow-read/tool.ts";
@@ -74,6 +75,7 @@ export function createMcpServer(context: ToolContext): McpServer {
   registerTool(server, executeTool(context));
   registerTool(server, tokensReadTool(context));
   registerTool(server, tokensApplyTool(context), context.support);
+  registerTool(server, effectsApplyTool(context), context.support);
   registerTool(server, versionSaveTool(context), context.support);
   registerTool(server, componentsReadTool(context));
   registerTool(server, variantsReadTool(context));

@@ -70,6 +70,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `code_connect_read` | The project's Figma Code Connect templates and batch files, what each connects and how, what its code leaves out, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images; a named version in Figma's history first, when asked |
 | `tokens_apply` | Variables (collections, modes, aliases) and styles, in `tokens_read`'s shape |
+| `effects_apply` | Figma's own noise, texture and glass on layers: a ready look (grain, film, risograph, frosted or clear glass) or the effect's own values |
 | `version_save` | A named version in Figma's history, with the baselines it goes with, when you ask for one |
 | `nodes_delete`, `execute` | Delete layers; run plugin code for what the XML cannot say |
 | `guide` | The XML format, writing, tokens, assets, Code Connect and HTML email, for the agent |

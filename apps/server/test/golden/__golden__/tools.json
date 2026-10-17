@@ -5099,6 +5099,248 @@
     }
   },
   {
+    "name": "effects_apply",
+    "title": "Put noise, texture or glass on layers",
+    "description": "Puts Figma's own effects on layers: noise (grain of one, two or many colours), texture (a faint printed, cracked look) and glass (frosted or clear, on frames only). Give a preset (grain, film, risograph, frosted-glass, clear-glass), the effect's own values, or both: the values change the preset's; grain is dark, so on a dark layer give noise.color a light colour. A new effect replaces the layer's one of its type; shadows and blurs stay; remove takes types off. Each layer is written on its own, its errors named while the rest goes in; design_read shows a layer with such an effect as an Image. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "noise": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "description": "mono: grain of one colour; duo: of color and secondColor; multi: of many colours at opacity.",
+              "type": "string",
+              "enum": [
+                "mono",
+                "duo",
+                "multi"
+              ]
+            },
+            "size": {
+              "description": "The grain's size in px.",
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "density": {
+              "description": "How much of the layer the grain covers, 0 to 1.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "color": {
+              "description": "The grain's CSS colour, its alpha how strong it shows.",
+              "type": "string",
+              "maxLength": 100
+            },
+            "secondColor": {
+              "description": "duo's second colour.",
+              "type": "string",
+              "maxLength": 100
+            },
+            "opacity": {
+              "description": "multi's opacity.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "description": "Figma's noise effect: grain over the layer."
+        },
+        "texture": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "description": "The grain's size in px.",
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "radius": {
+              "description": "How far the edges break up, in px.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "clip": {
+              "description": "Keep the texture inside the layer's shape.",
+              "type": "boolean"
+            }
+          },
+          "description": "Figma's texture effect: a faint printed, cracked look over the layer and its edges."
+        },
+        "glass": {
+          "type": "object",
+          "properties": {
+            "light": {
+              "description": "How bright the highlights are, 0 to 1.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "angle": {
+              "description": "Where the light comes from, in degrees.",
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            },
+            "refraction": {
+              "description": "How much it bends what lies behind, 0 to 1.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "depth": {
+              "description": "How thick the glass looks, 1 or more.",
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "dispersion": {
+              "description": "How much it splits colours at the edges, 0 to 1.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "blur": {
+              "description": "The blur of what lies behind, in px.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 250
+            }
+          },
+          "description": "Figma's glass effect, on frames only."
+        },
+        "nodes": {
+          "minItems": 1,
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": "The layers' ids, e.g. [\"54:243\"]."
+        },
+        "preset": {
+          "description": "A ready look: grain (fine dark grain: on a dark layer give noise.color a light colour), film (black and white grain), risograph (grain of many colours), frosted-glass or clear-glass (on frames). noise, texture or glass change its values.",
+          "type": "string",
+          "enum": [
+            "grain",
+            "film",
+            "risograph",
+            "frosted-glass",
+            "clear-glass"
+          ]
+        },
+        "remove": {
+          "default": [],
+          "description": "Effect types to take off the layers.",
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "noise",
+              "texture",
+              "glass"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "description": "Check the layers without writing; works with Allow edits off.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "nodes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "changed",
+        "errors",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "version_save",
     "title": "Save a named version",
     "description": "Saves a named version in the file's Figma version history, for people: the designer can open the design as it was, and developers on a paid plan can pick it in Dev Mode's Compare changes. Save one only when the user asks: Figma's plugin API cannot list, read or delete a version, so it stays in the history. baselines: the baselines it goes with; it is saved only while the design still matches them, and they record it. Needs edit access to the file and the plugin's Allow edits; the same title is refused twice within ten minutes.",
