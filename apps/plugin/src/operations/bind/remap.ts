@@ -1,6 +1,7 @@
 import type { BindCandidate, BindIndex, BindInput } from "@pixelwright/core";
 import { loadTextFonts, styleFonts } from "../../figma/fonts.ts";
 import { opacitiesAgain } from "../../figma/paints.ts";
+import { STYLE_FIELDS, setStyleId } from "../../figma/styles.ts";
 import type { BindContext } from "./bind-context.ts";
 import type { BindReport } from "./bind-report.ts";
 
@@ -20,14 +21,6 @@ interface RemapRun {
 }
 
 type Fields = SceneNode & Record<string, unknown>;
-
-/** A layer's style fields, and the setter of each. */
-const STYLE_SETTERS = [
-  ["fillStyleId", "setFillStyleIdAsync"],
-  ["strokeStyleId", "setStrokeStyleIdAsync"],
-  ["effectStyleId", "setEffectStyleIdAsync"],
-  ["textStyleId", "setTextStyleIdAsync"],
-] as const;
 
 /** Bound fields that hold paints and effects: they are rebound through the paints, not set as a field. */
 const LIST_FIELDS: ReadonlySet<string> = new Set([
@@ -116,7 +109,7 @@ function pairOf(from: string, to: string, index: BindIndex): RemapPair | string 
 async function remapStyle(layer: Fields, { pair, context, dryRun }: RemapRun): Promise<number> {
   let count = 0;
 
-  for (const [key, setter] of STYLE_SETTERS) {
+  for (const key of STYLE_FIELDS) {
     if (layer[key] === pair.source.id) {
       count += 1;
 
@@ -125,7 +118,7 @@ async function remapStyle(layer: Fields, { pair, context, dryRun }: RemapRun): P
           await loadTextFonts([layer as TextNode], styleFonts(await context.style(pair.target.id)));
         }
 
-        await (layer[setter] as (id: string) => Promise<void>).call(layer, pair.target.id);
+        await setStyleId(layer, key, pair.target.id);
       }
     }
   }

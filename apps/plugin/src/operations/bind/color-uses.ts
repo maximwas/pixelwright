@@ -1,7 +1,7 @@
 import { type BindCandidate, type BindScope, colorValue, fillScope, type ModeMap } from "@pixelwright/core";
 import { loadTextFonts } from "../../figma/fonts.ts";
-import { opacitiesAgain } from "../../figma/paints.ts";
-import { variableColor } from "../../figma/variable-color.ts";
+import { boundPaint, opacitiesAgain } from "../../figma/paints.ts";
+import { setStyleId } from "../../figma/styles.ts";
 import type { BindContext } from "./bind-context.ts";
 import { merged, type RawUse } from "./raw-use.ts";
 
@@ -112,65 +112,36 @@ async function bindPaint(
   context: BindContext,
 ): Promise<void> {
   if (candidate.source === "style") {
-    await setPaintStyle(layer, key, candidate.id);
+    await setStyleId(layer, key === "fills" ? "fillStyleId" : "strokeStyleId", candidate.id);
 
     return;
   }
 
-  const variable = await context.variable(candidate.id);
-  const opacity = await opacityOf(paint, {
-    variable,
-    layer,
-    snapped,
-    context,
-  });
   const paints = [...(layer[key] as Paint[])];
 
-  paints[index] = figma.variables.setBoundVariableForPaint(paint, "color", variable);
+  paints[index] = await boundPaint(await context.variable(candidate.id), {
+    base: paint,
+    opacity: keptOpacity(paint, snapped),
+    consumer: layer,
+    lookup: context.lookup,
+  });
   layer[key] = paints;
 
-  const again = opacitiesAgain(
-    layer[key] as Paint[],
-    paints.map((each, at) =>
-      at === index
-        ? {
-            ...each,
-            opacity,
-          }
-        : each,
-    ),
-  );
+  const again = opacitiesAgain(layer[key] as Paint[], paints);
 
   if (again !== null) {
     layer[key] = again;
   }
 }
 
-/** A paint style as the whole list of a layer's fills or strokes. */
-async function setPaintStyle(layer: SceneNode, key: PaintKey, id: string): Promise<void> {
-  if (key === "fills" && "setFillStyleIdAsync" in layer) {
-    await layer.setFillStyleIdAsync(id);
-  } else if (key === "strokes" && "setStrokeStyleIdAsync" in layer) {
-    await layer.setStrokeStyleIdAsync(id);
-  }
-}
-
 /**
- * The opacity a bound paint keeps: its own, which equals its token's alpha, or is laid over an opaque token; a paint
- * snapped to a token takes the token's alpha with its own opacity over it.
+ * The opacity a bound paint keeps, for its token's alpha: its own, which equals the alpha or is laid over an opaque
+ * token; a paint snapped to a token takes the token's alpha with its own opacity over it.
  */
-async function opacityOf(
-  paint: SolidPaint,
-  {
-    variable,
-    layer,
-    snapped,
-    context,
-  }: { variable: Variable; layer: SceneNode; snapped: boolean; context: BindContext },
-): Promise<number> {
+function keptOpacity(paint: SolidPaint, snapped: boolean): (alpha: number) => number {
   const own = paint.opacity ?? 1;
 
-  return snapped ? ((await variableColor(variable, layer, context.lookup))?.a ?? 1) * own : own;
+  return (alpha) => (snapped ? alpha * own : own);
 }
 
 /** A text's runs of raw solid colour, where its runs differ: each bound on its own range. */
@@ -242,26 +213,12 @@ async function bindRun(
     return;
   }
 
-  const variable = await context.variable(candidate.id);
-  const color = await variableColor(variable, text, context.lookup);
-  const bound = figma.variables.setBoundVariableForPaint(
-    {
-      ...paint,
-      color: {
-        r: color?.r ?? paint.color.r,
-        g: color?.g ?? paint.color.g,
-        b: color?.b ?? paint.color.b,
-      },
-      opacity: await opacityOf(paint, {
-        variable,
-        layer: text,
-        snapped,
-        context,
-      }),
-    },
-    "color",
-    variable,
-  );
+  const bound = await boundPaint(await context.variable(candidate.id), {
+    base: paint,
+    opacity: keptOpacity(paint, snapped),
+    consumer: text,
+    lookup: context.lookup,
+  });
 
   text.setRangeFills(start, end, [bound]);
 }

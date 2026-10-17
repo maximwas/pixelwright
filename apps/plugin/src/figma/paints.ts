@@ -1,5 +1,6 @@
 import { type GradientSpec, gradientTransformOf, type PaintSpec } from "@pixelwright/core";
 import { documentColor } from "./color-profile.ts";
+import type { IdLookup } from "./id-lookup.ts";
 import type { TokenIndex } from "./tokens/token-index.ts";
 import { variableColor } from "./variable-color.ts";
 import { WriteError } from "./write-error.ts";
@@ -153,12 +154,7 @@ async function gradientPaint(spec: GradientSpec, sources: PaintSources, consumer
   };
 }
 
-/**
- * A colour variable's paint (a paint style is the whole list of a layer's paints, so it is no layer of one), made as
- * Figma makes a newly bound one (seen live on 2026-10-17): the variable's colour, its alpha as the opacity, an opacity
- * past it on top. A paint Figma does not resolve (a text's run) still shows right; Figma replaces the opacity with the
- * alpha, so an opacity past it is set again after (opacitiesAgain).
- */
+/** A colour variable's paint (a paint style is the whole list of a layer's paints, so it is no layer of one). */
 async function variablePaint(
   spec: Extract<PaintSpec, { kind: "token" }>,
   index: TokenIndex,
@@ -166,18 +162,45 @@ async function variablePaint(
 ): Promise<Paint> {
   await refusePaintStyle(spec.token, index);
 
-  const variable = await index.variable(spec.token, "COLOR");
-  const color = await variableColor(variable, consumer, index.lookup);
+  return await boundPaint(await index.variable(spec.token, "COLOR"), {
+    opacity: (alpha) => alpha * spec.opacity,
+    consumer,
+    lookup: index.lookup,
+  });
+}
+
+/**
+ * A solid paint bound to a colour variable, made as Figma makes a newly bound one (seen live on 2026-10-17): the
+ * variable's colour for the layer it goes on, at the opacity `opacity` gives for the variable's alpha, the base
+ * paint's other fields kept. A paint Figma does not resolve (a text's run) still shows right; Figma gives a newly
+ * bound paint the alpha as its opacity, so another one is set again after (opacitiesAgain).
+ */
+export async function boundPaint(
+  variable: Variable,
+  {
+    base,
+    opacity,
+    consumer,
+    lookup,
+  }: {
+    readonly base?: SolidPaint;
+    readonly opacity: (alpha: number) => number;
+    readonly consumer?: SceneNode | undefined;
+    readonly lookup: IdLookup;
+  },
+): Promise<SolidPaint> {
+  const color = await variableColor(variable, consumer, lookup);
 
   return figma.variables.setBoundVariableForPaint(
     {
+      ...base,
       type: "SOLID",
       color: {
-        r: color?.r ?? 0,
-        g: color?.g ?? 0,
-        b: color?.b ?? 0,
+        r: color?.r ?? base?.color.r ?? 0,
+        g: color?.g ?? base?.color.g ?? 0,
+        b: color?.b ?? base?.color.b ?? 0,
       },
-      opacity: (color?.a ?? 1) * spec.opacity,
+      opacity: opacity(color?.a ?? 1),
     },
     "color",
     variable,
