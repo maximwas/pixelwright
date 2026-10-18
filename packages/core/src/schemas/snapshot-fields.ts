@@ -238,6 +238,18 @@ export const SnapshotFieldsSchema = z.object({
       paddingLeft: z.number().optional(),
     })
     .optional(),
+  /**
+   * The variable modes set on the layer (explicitVariableModes), by collection and mode name; the read's root also
+   * carries those it takes from above it that are not its collection's default.
+   */
+  modes: z
+    .array(
+      z.object({
+        collection: z.string(),
+        mode: z.string(),
+      }),
+    )
+    .optional(),
   /** A frame detached from a component (Figma keeps where from): the component may be worth using instead. */
   detached: z.boolean().optional(),
   /** A vector's paths, hashed: two icons alike in everything else may still draw something else. */

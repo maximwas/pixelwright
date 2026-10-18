@@ -9,6 +9,7 @@
       ],
       "defaultMode": "Light",
       "selectors": {
+        "Light": "[data-brand-colors=\"light\"]",
         "Dark": "[data-brand-colors=\"dark\"]",
         "dark": "[data-brand-colors=\"dark-2\"]"
       },
@@ -22,7 +23,14 @@
             "Dark": "var(--Ink)",
             "dark": "color(display-p3 0.1 0.1 0.12)"
           },
-          "description": "The page background."
+          "description": "The page background.",
+          "scopes": [
+            "FRAME_FILL",
+            "SHAPE_FILL"
+          ],
+          "codeSyntax": {
+            "WEB": "var(--surface)"
+          }
         },
         {
           "name": "Ink",
@@ -70,7 +78,10 @@
           "type": "FLOAT",
           "values": {
             "Base": "8px"
-          }
+          },
+          "scopes": [
+            "GAP"
+          ]
         },
         {
           "name": "Gap/None",
@@ -78,7 +89,10 @@
           "type": "FLOAT",
           "values": {
             "Base": "0"
-          }
+          },
+          "scopes": [
+            "GAP"
+          ]
         },
         {
           "name": "Radius",
@@ -86,7 +100,8 @@
           "type": "FLOAT",
           "values": {
             "Base": "13.5px"
-          }
+          },
+          "scopes": []
         },
         {
           "name": "Opacity/Half",
@@ -94,7 +109,10 @@
           "type": "FLOAT",
           "values": {
             "Base": "0.5"
-          }
+          },
+          "scopes": [
+            "OPACITY"
+          ]
         },
         {
           "name": "Opacity/Faint",
@@ -102,7 +120,10 @@
           "type": "FLOAT",
           "values": {
             "Base": "0.25"
-          }
+          },
+          "scopes": [
+            "COLOR_OPACITY"
+          ]
         },
         {
           "name": "Weight/Bold",
@@ -110,7 +131,10 @@
           "type": "FLOAT",
           "values": {
             "Base": "700"
-          }
+          },
+          "scopes": [
+            "FONT_WEIGHT"
+          ]
         },
         {
           "name": "Font/Family",
@@ -118,7 +142,10 @@
           "type": "STRING",
           "values": {
             "Base": "'Inter \\'Display\\' \\\\ Pro'"
-          }
+          },
+          "scopes": [
+            "FONT_FAMILY"
+          ]
         },
         {
           "name": "Feature/On",
@@ -144,7 +171,8 @@
           "type": "EASING",
           "values": {
             "Default": "ease-out"
-          }
+          },
+          "scopes": []
         },
         {
           "name": "Ease/Curve",
@@ -152,7 +180,8 @@
           "type": "EASING",
           "values": {
             "Default": "cubic-bezier(0.2, 0, 0, 1)"
-          }
+          },
+          "scopes": []
         },
         {
           "name": "Ease/Spring",
@@ -160,7 +189,8 @@
           "type": "EASING",
           "values": {
             "Default": "linear(0, 0.005 1.25%, 0.024 2.92%, 0.056 4.58%, 0.108 6.67%, 0.158 8.33%, 0.212 10%, 0.444 16.67%, 0.555 20%, 0.655 23.33%, 0.742 26.67%, 0.807 29.58%, 0.869 32.92%, 0.912 35.83%, 0.951 39.17%, 0.983 42.92%, 1.005 46.67%, 1.019 50.83%, 1.027 55.83%, 1.027 63.75%, 1.009 84.17%, 1)"
-          }
+          },
+          "scopes": []
         },
         {
           "name": "Duration",
@@ -168,7 +198,8 @@
           "type": "TIMING",
           "values": {
             "Default": "0.3s"
-          }
+          },
+          "scopes": []
         }
       ]
     }

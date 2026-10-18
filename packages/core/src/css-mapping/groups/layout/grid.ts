@@ -6,6 +6,7 @@ import type { WriteInput, WriteOutput } from "../../property-group.ts";
 import { lengthOf, splitTop } from "../../values/css-values.ts";
 import { px } from "../../values/format.ts";
 import { gapsOf } from "./gaps.ts";
+import { readPadding } from "./padding.ts";
 
 /** A grid's tracks and gaps; a grid's own padding and alignment stay Figma's. */
 export function readGrid(node: SnapshotNode, css: CssDeclarations): void {
@@ -24,6 +25,7 @@ export function readGrid(node: SnapshotNode, css: CssDeclarations): void {
     css.set("grid-template-rows", rows);
   }
 
+  readPadding(node, css);
   css.setLength("column-gap", "gridColumnGap", node.gridColumnGap);
   css.setLength("row-gap", "gridRowGap", node.gridRowGap);
 }
@@ -50,10 +52,18 @@ export function gridLayout(input: WriteInput, out: WriteOutput): void {
 
   out.set("layoutMode", "GRID", "display");
 
+  const becomesGrid = changed("display");
+
   for (const [attribute, key] of [
     ["grid-template-columns", "gridColumns"],
     ["grid-template-rows", "gridRows"],
   ] as const) {
+    // Only the tracks the call gives (all of them on a frame that becomes a grid): rows read earlier and sent back
+    // would delete a row Figma added for children that did not fit, and Figma refuses to delete a taken row.
+    if (!becomesGrid && !changed(attribute)) {
+      continue;
+    }
+
     const value = merged(attribute);
     const tracks = value === undefined ? undefined : tracksOf(value);
 

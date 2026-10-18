@@ -72,7 +72,7 @@ class FlowLinks {
 
   /** The links of every layer of a screen with interactions, walked within the deadline. */
   async addScreen(screen: SceneNode, deadline: number): Promise<void> {
-    const walked = layersUntil(screen, deadline);
+    const walked = layersUntil([screen], deadline);
     const layers = walked.layers.filter((node): node is SceneNode => "reactions" in node && node.reactions.length > 0);
 
     this.more ||= !walked.finished;

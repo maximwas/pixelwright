@@ -1,8 +1,8 @@
 /** The longest code execute takes. */
 export const EXECUTE_CODE_CHARS = 100_000;
 
-/** The longest execute waits for its code: the bridge gives a request 30 s, and the plugin must answer first. */
-export const EXECUTE_MAX_MS = 25_000;
+/** The longest execute waits for its code: five minutes, for a long task; the bridge waits a little longer. */
+export const EXECUTE_MAX_MS = 300_000;
 
 /** How long execute waits when the call does not say. */
 export const EXECUTE_DEFAULT_MS = 10_000;

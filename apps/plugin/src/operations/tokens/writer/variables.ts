@@ -1,4 +1,4 @@
-import { type CollectionPlan, tokenName, type VariablePlan } from "@pixelwright/core";
+import { type CollectionPlan, scopesError, tokenName, type VariablePlan } from "@pixelwright/core";
 import { errorMessage } from "../../../utils/error-message.ts";
 import { type Target, targetOf } from "./collections.ts";
 import type { FileTokens } from "./file-tokens.ts";
@@ -86,10 +86,14 @@ export class VariableWriter {
       return;
     }
 
+    if (this.#scopesRefused(target, plan, held.resolvedType)) {
+      return;
+    }
+
     this.#written.push({
       target,
       plan,
-      variable: await figma.variables.getVariableByIdAsync(held.id),
+      variable: await this.#run.lookup.variable(held.id),
       held,
       type: held.resolvedType,
     });
@@ -97,6 +101,10 @@ export class VariableWriter {
 
   /** A new variable in its collection, known by its CSS name from now on; one Figma refuses is its error. */
   #make(target: Target, plan: VariablePlan, type: string): void {
+    if (this.#scopesRefused(target, plan, type)) {
+      return;
+    }
+
     let variable: Variable | null = null;
 
     try {
@@ -111,6 +119,7 @@ export class VariableWriter {
     }
 
     if (variable !== null) {
+      this.#run.lookup.remember(variable);
       this.#run.wrote();
     }
 
@@ -157,6 +166,17 @@ export class VariableWriter {
 
       this.#fail(target, plan, `${aliases.join(", ")} names no variable of this file.`);
     }
+  }
+
+  /** Whether Figma would refuse the scopes the call gives a variable of this type: then that is its error. */
+  #scopesRefused(target: Target, plan: VariablePlan, type: string): boolean {
+    const problem = plan.scopes === undefined ? null : scopesError(type, plan.scopes);
+
+    if (problem !== null) {
+      this.#fail(target, plan, problem);
+    }
+
+    return problem !== null;
   }
 
   #fail(target: Target, plan: VariablePlan, message: string): void {

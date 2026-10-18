@@ -1,5 +1,6 @@
 import { type ApplyChange, type ApplyError, changeOf, readApply } from "@pixelwright/core";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { KEY_IMPORT_MS } from "../src/constants/plugin.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
 import { testPlugin } from "./helpers/test-plugin.ts";
 
@@ -149,7 +150,15 @@ beforeEach(() => {
     ],
   });
   fake = installFigma(root, {
-    components: [library],
+    components: [
+      library,
+      tree({
+        id: "9:1",
+        name: "Chip",
+        type: "COMPONENT",
+        key: "chip-key",
+      }),
+    ],
     fonts: [
       {
         family: "Inter",
@@ -176,6 +185,41 @@ describe("apply: instances", () => {
     expect((instance?.mainComponent as FakeNode | undefined)?.id).toBe("7:3");
     expect(instance?.parent?.id).toBe("3:1");
     expect((instance as FakeNode).componentProperties).toMatchObject({ "Label#1:0": { value: "Our work" } });
+  });
+
+  it("makes instances of library components by key, a set's and a lone one's (whose key a set import never answers)", async () => {
+    const { errors, created } = await apply(
+      [
+        '<Instance component="key:heading-key" variant="Property 1=Green"/>',
+        '<Instance component="key:chip-key"/>',
+      ].join("\n"),
+      { parent: "3:1" },
+    );
+
+    expect(errors).toEqual([]);
+    expect(created.map(({ id }) => (byId(id)?.mainComponent as FakeNode | undefined)?.id)).toEqual(["7:3", "9:1"]);
+  });
+
+  it("gives up on a key Figma does not import in time, and says why", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+    try {
+      const applied = apply('<Instance component="key:unpublished-key"/>', { parent: "3:1" });
+
+      await vi.advanceTimersByTimeAsync(KEY_IMPORT_MS);
+
+      const { errors, created } = await applied;
+
+      expect(created).toEqual([]);
+      expect(errors).toEqual([
+        expect.objectContaining({
+          message: expect.stringMatching(/key:unpublished-key: no answer in 10 s/),
+          hint: expect.stringMatching(/published library/),
+        }),
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("makes an instance look like its component: its fill and sizing stay", async () => {

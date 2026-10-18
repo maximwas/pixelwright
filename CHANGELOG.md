@@ -16,6 +16,107 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## 0.4.0 — 2026-10-18
+
+### Added
+
+- `effects_apply` puts Figma's own noise, texture and glass on layers: a ready look (grain, film, risograph,
+  frosted glass, clear glass) or the effect's own values; a new effect replaces the layer's one of its type, shadows
+  and blurs stay, and `remove` takes them off.
+- `design_lint` checks a layer, a page or the whole file against the rules a design should keep before it is
+  built: text contrast below WCAG AA, colours, texts and effects bound to no token or style, frames detached from
+  components, stacks placed by hand, layers reaching past their parent's flow, grid cell or clip, touch targets under
+  24 or 44 px, interactive components without hover, focus or disabled states, raw values a token holds, spacing off
+  the 4 px grid, instance overrides of a component's look, default names, hidden and empty leftovers. Each finding
+  names its layer and how to fix it.
+- `a11y_read` says what a screen's markup needs for accessibility: heading levels (from text style names or sizes),
+  controls with their roles and the labels a screen reader says (an aria-label suggested for an icon-only control, a
+  field's label found beside it), pictures with an alt from their names, controls nested in controls, and layers
+  placed by hand that read in another order than they show.
+- `states_find` lists the states interactive components are drawn in (hover, focus, pressed, disabled; error for a
+  field, selected for a toggle or tab) and the ones they lack, and the empty, loading, error or success frames a
+  list's or a form's screens lack.
+- `tokens_bind` binds raw colours, gaps, padding, radii, border widths, opacity, texts and shadows to the variables
+  and styles that hold them exactly, in each layer's mode and within the variables' scopes. A value several tokens
+  hold is listed with its candidates for a pick, a value none holds is listed for `tokens_apply`, `choose` snaps a
+  near value to a token, and `remap` moves every use of one token to another.
+- `instances_reattach` puts frames detached from a component back as instances of it, where they stood and at
+  their size, with their texts, images and hidden layers carried over; `swap` makes instances of one component
+  instances of another (a set's variant with the same values), and `reset` takes instances' overrides off, their
+  look only or all of them.
+- `design_read` writes gradients as CSS (`linear-gradient`, `radial-gradient`, `conic-gradient`, as Figma's own CSS
+  gives them), and `design_apply` paints them back from the same CSS, a stop's token bound to its colour variable;
+  `tokens_apply` writes gradient paint styles. `mix-blend-mode` and `mask="alpha|vector|luminance|none"` are read and
+  written too.
+- `texts_replace` finds and replaces text under a layer, a page or the whole file: one pair or a list (copy edits,
+  a translation), plain or a regular expression with groups, whole words when asked, all pairs at once against the
+  text as it was. Each match is replaced where it stands, so its run keeps its font, colour and link, and a text an
+  instance shows from a component property changes through the property.
+- `design_read` writes a variable mode set on a layer as `data-<collection>="<mode>"` (`data-color-modes="dark"`),
+  the selector `tokens_read`'s CSS uses, so a dark section reads as dark and the build sets the same attribute; a
+  frame read alone also carries the mode it takes from the page or frame above. `design_apply` sets a layer's mode
+  the same way, and `data-<collection>=""` clears it.
+- `guide layout` tells when to lay a frame out as flex, as grid or by absolute placement, with the grid's tracks,
+  spans and cells, pinned and centred layers, what is not supported, and examples checked in Figma.
+- `icons_insert` finds icons in Iconify's open sets (Lucide, Material Symbols, Tabler, Phosphor and more; no key)
+  and inserts one as an Icon layer at a size, into a frame, in a colour or bound to a colour token; a search lists
+  icons with each set's licence and writes nothing.
+- `execute` gives the code `pw`, which stays from one call to the next while the plugin window is open: `pw.state`
+  for your data and your own functions, and helpers for a layer by id, the fonts its texts use loaded, a CSS colour
+  as a paint and a variable by its CSS name. `version` saves a named version first, and `timeout` waits up to five
+  minutes for a long task.
+- `image_compare` compares a layer `against` another layer, rendered the same way, with no PNG on disk: a variant
+  against its default, a rebuilt frame against the original.
+- `styles_compare` checks a build's computed styles against the design, layer by layer: give each layer with what
+  `getComputedStyle` returns for the element that draws it, and it lists every property that differs with both values
+  and the token or text style behind it, and the properties the build's styles left out. Shorthands, tokens and text
+  styles are spread out the way the browser computes them; sizes and places may be off by a pixel.
+- `tokens_apply` sets a variable's `scopes`, the fields Figma's pickers offer it for (`["FONT_WEIGHT"]`, `[]` to
+  hide it), and its `codeSyntax` on the web, Android and iOS; scopes a type cannot take are refused before anything
+  is written. `tokens_read`'s JSON lists both, so tokens copied into another file keep them.
+- `design_read` with `repeats: true` reads a list of alike items (features, cards, rows) once: the first stands for
+  all, marked `$repeat="3"`, and `repeats` gives each item's own texts, files and variants as rows, so a long list
+  costs a fraction of the read. With `nearby: 400` it also lists the designer's notes on the canvas around the screen
+  (texts, stickies and small frames of text beside it or over it), nearest first.
+- `library_search` finds components in your team's libraries from any file: save each library once from its own
+  file, then search by words in any order (a typo still finds) and insert what it finds with `design_apply`.
+
+### Changed
+
+- `design_apply` reads a `rotate()` and a gradient's angles in any CSS angle unit (deg, grad, rad, turn), and lengths
+  and percentages as the CSS tokenizer reads them, any case and sign.
+- Pixelwright is open source under the MIT license, which was the license each version would have become two years
+  after its release under FSL-1.1-MIT.
+- `tokens_read`'s CSS gives the default mode of a collection with several modes a `[data-<collection>="<mode>"]`
+  block too, so an element in the default mode inside another mode's element takes the default values back.
+
+### Fixed
+
+- `design_apply` makes an instance of a lone library component by `component="key:…"`, and gives up on a key Figma
+  cannot import (an unpublished library) within 10 seconds, saying why, instead of waiting until the request timed out.
+- `tokens_bind` and `design_lint` match a layer's opacity with the variables Figma's opacity fields take, kept as
+  percents (50 for 0.5): an opacity variable of 50 was never offered, and a plain 0.5 one bound the layer at 0.5 %.
+- `texts_replace` walks a page or the whole file within the plugin's time limit and says `more` when it stops,
+  instead of reading every text first, which on a big file could outlast the request.
+- `tokens_read` writes a number that font weights or opacities point at without px, as they read it (a hidden
+  `weight/700` primitive is `700`, not `700px`), and a number shown as text too. `tokens_apply` keeps a new opacity
+  as the percent Figma's opacity fields take (0.4 is stored as 40), and its `notes` say when a number written
+  without a unit and given no scopes will read back in px.
+- `design_read` and `design_apply` work while Figma Desktop has lost its connection: the file's own variables and
+  styles are read from its lists, which Figma gives offline, instead of one by one, which Figma gives up on after ten
+  seconds; a library's it cannot reach is left out. The same goes for every write that finds a token by id:
+  `design_apply` binding a token, `tokens_apply`, `tokens_bind`, a text's look kept after new characters,
+  `execute`'s `pw.variable`, and `tokens_read` and screenshots in modes.
+- `changes_since` counts `effects_apply`'s writes as Pixelwright's, and the plugin window names them.
+- A new frame laid out inside (a card) fills its grid cell with `justify-self`/`align-self="stretch"`: it used to
+  hug its content.
+- `design_read` writes a grid's child that fills its cell as `stretch`, apart from one that hugs, and a grid's padding.
+- Changing a grid's columns leaves its rows alone: rows read earlier and sent back could delete one Figma had added
+  for children that did not fit, which Figma refused.
+- A grid's child moved to another cell narrows its span before it moves, so it no longer runs into a taken cell.
+- `justify-content` and `align-items` on a grid, and `flex` on a grid's child, say what to write instead of passing
+  Figma's raw error.
+
 ## 0.3.2 — 2026-10-17
 
 ### Added

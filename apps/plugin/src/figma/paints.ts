@@ -1,5 +1,6 @@
-import type { PaintSpec } from "@pixelwright/core";
+import { type GradientSpec, gradientTransformOf, type PaintSpec } from "@pixelwright/core";
 import { documentColor } from "./color-profile.ts";
+import type { IdLookup } from "./id-lookup.ts";
 import type { TokenIndex } from "./tokens/token-index.ts";
 import { variableColor } from "./variable-color.ts";
 import { WriteError } from "./write-error.ts";
@@ -48,6 +49,12 @@ export async function checkPaints(specs: readonly PaintSpec[], index: TokenIndex
       await refusePaintStyle(spec.token, index);
       await index.find(spec.token, "COLOR");
     }
+
+    for (const stop of spec.kind === "gradient" ? spec.stops : []) {
+      if (stop.token !== undefined) {
+        await index.find(stop.token, "COLOR");
+      }
+    }
   }
 }
 
@@ -94,15 +101,60 @@ async function paintOf(spec: PaintSpec, sources: PaintSources, consumer?: SceneN
     return imagePaint(spec, sources);
   }
 
+  if (spec.kind === "gradient") {
+    return await gradientPaint(spec, sources, consumer);
+  }
+
   return await variablePaint(spec, await sources.tokens(), consumer);
 }
 
 /**
- * A colour variable's paint (a paint style is the whole list of a layer's paints, so it is no layer of one), made as
- * Figma makes a newly bound one (seen live on 2026-10-17): the variable's colour, its alpha as the opacity, an opacity
- * past it on top. A paint Figma does not resolve (a text's run) still shows right; Figma replaces the opacity with the
- * alpha, so an opacity past it is set again after (opacitiesAgain).
+ * A gradient as Figma paints it: its transform made from the CSS at the layer's size (a style's, which has none, at a
+ * square's), its stops in the document's colour space; a stop's token is bound to its colour variable.
  */
+async function gradientPaint(spec: GradientSpec, sources: PaintSources, consumer?: SceneNode): Promise<GradientPaint> {
+  const [width, height] = consumer === undefined ? [1, 1] : [consumer.width || 1, consumer.height || 1];
+  const stops: ColorStop[] = [];
+
+  for (const { position, color, token } of spec.stops) {
+    if (token === undefined) {
+      stops.push({
+        position,
+        color: documentColor(
+          color ?? {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1,
+          },
+        ),
+      });
+    } else {
+      const index = await sources.tokens();
+      const variable = await index.variable(token, "COLOR");
+      const value = await variableColor(variable, consumer, index.lookup);
+
+      stops.push({
+        position,
+        color: {
+          r: value?.r ?? 0,
+          g: value?.g ?? 0,
+          b: value?.b ?? 0,
+          a: value?.a ?? 1,
+        },
+        boundVariables: { color: figma.variables.createVariableAlias(variable) },
+      });
+    }
+  }
+
+  return {
+    type: `GRADIENT_${spec.type}`,
+    gradientTransform: gradientTransformOf(spec, width, height),
+    gradientStops: stops,
+  };
+}
+
+/** A colour variable's paint (a paint style is the whole list of a layer's paints, so it is no layer of one). */
 async function variablePaint(
   spec: Extract<PaintSpec, { kind: "token" }>,
   index: TokenIndex,
@@ -110,18 +162,45 @@ async function variablePaint(
 ): Promise<Paint> {
   await refusePaintStyle(spec.token, index);
 
-  const variable = await index.variable(spec.token, "COLOR");
-  const color = await variableColor(variable, consumer);
+  return await boundPaint(await index.variable(spec.token, "COLOR"), {
+    opacity: (alpha) => alpha * spec.opacity,
+    consumer,
+    lookup: index.lookup,
+  });
+}
+
+/**
+ * A solid paint bound to a colour variable, made as Figma makes a newly bound one (seen live on 2026-10-17): the
+ * variable's colour for the layer it goes on, at the opacity `opacity` gives for the variable's alpha, the base
+ * paint's other fields kept. A paint Figma does not resolve (a text's run) still shows right; Figma gives a newly
+ * bound paint the alpha as its opacity, so another one is set again after (opacitiesAgain).
+ */
+export async function boundPaint(
+  variable: Variable,
+  {
+    base,
+    opacity,
+    consumer,
+    lookup,
+  }: {
+    readonly base?: SolidPaint;
+    readonly opacity: (alpha: number) => number;
+    readonly consumer?: SceneNode | undefined;
+    readonly lookup: IdLookup;
+  },
+): Promise<SolidPaint> {
+  const color = await variableColor(variable, consumer, lookup);
 
   return figma.variables.setBoundVariableForPaint(
     {
+      ...base,
       type: "SOLID",
       color: {
-        r: color?.r ?? 0,
-        g: color?.g ?? 0,
-        b: color?.b ?? 0,
+        r: color?.r ?? base?.color.r ?? 0,
+        g: color?.g ?? base?.color.g ?? 0,
+        b: color?.b ?? base?.color.b ?? 0,
       },
-      opacity: (color?.a ?? 1) * spec.opacity,
+      opacity: opacity(color?.a ?? 1),
     },
     "color",
     variable,
@@ -171,6 +250,8 @@ export function paintKey(paint: Paint): string {
   const image = paint as Partial<ImagePaint>;
   const round = (value: number | undefined) => Math.round((value ?? 0) * 10_000);
 
+  const gradient = paint as Partial<GradientPaint>;
+
   return JSON.stringify([
     paint.type,
     paint.visible ?? true,
@@ -179,6 +260,15 @@ export function paintKey(paint: Paint): string {
     solid.boundVariables?.color?.id ?? null,
     image.imageHash ?? null,
     image.scaleMode ?? null,
+    gradient.gradientTransform?.flat().map(round) ?? null,
+    gradient.gradientStops?.map(({ position, color, boundVariables }) => [
+      round(position),
+      round(color.r),
+      round(color.g),
+      round(color.b),
+      round(color.a),
+      boundVariables?.color?.id ?? null,
+    ]) ?? null,
   ]);
 }
 

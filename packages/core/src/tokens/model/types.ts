@@ -1,4 +1,5 @@
 import type { RawTokens } from "../raw-tokens.ts";
+import type { CodeSyntax } from "../scopes.ts";
 
 /** A variable as tokens_read shows it: its CSS custom property and its CSS value in every mode, by mode name. */
 export interface TokenVariable {
@@ -7,13 +8,17 @@ export interface TokenVariable {
   type: string;
   values: Record<string, string>;
   description?: string;
+  /** The fields Figma's pickers offer it for, when not every field: [] hides it from all of them. */
+  scopes?: string[];
+  /** Its name in code per platform, when its designer gave one. */
+  codeSyntax?: CodeSyntax;
 }
 
 export interface TokenCollection {
   name: string;
   modes: string[];
   defaultMode: string;
-  /** Each mode but the default as the CSS selector of its block: `[data-brand="dark"]`, unique in the output. */
+  /** Each mode as the CSS selector of its block (`[data-brand="dark"]`), unique in the output; none with one mode. */
   selectors: Record<string, string>;
   variables: TokenVariable[];
 }

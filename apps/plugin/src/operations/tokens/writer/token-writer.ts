@@ -1,5 +1,6 @@
 import type { OperationInput, OperationOutput, TokenError, TokenItem } from "@pixelwright/core";
 import type { FontCatalog } from "../../../figma/fonts.ts";
+import { IdLookup } from "../../../figma/id-lookup.ts";
 import { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import type { EditsGuard } from "../../../services/edits-guard.ts";
 import { FileTokens } from "./file-tokens.ts";
@@ -18,12 +19,14 @@ type Written = OperationOutput<"tokens_apply">;
 export class TokenWriter implements TokenRun {
   readonly dryRun: boolean;
   readonly fonts: FontCatalog;
+  readonly lookup = new IdLookup();
   readonly #edits: EditsGuard;
   readonly #plan: OperationInput<"tokens_apply">["plan"];
-  readonly #results: Written = {
+  readonly #results: Required<Written> = {
     created: [],
     updated: [],
     errors: [],
+    notes: [],
   };
   #index: Promise<TokenIndex> | null = null;
   #wrote = false;
@@ -54,11 +57,13 @@ export class TokenWriter implements TokenRun {
       figma.commitUndo();
     }
 
-    return this.#results;
+    const { notes, ...results } = this.#results;
+
+    return notes.length === 0 ? results : this.#results;
   }
 
   index(): Promise<TokenIndex> {
-    this.#index ??= TokenIndex.of();
+    this.#index ??= TokenIndex.of(this.lookup);
 
     return this.#index;
   }
@@ -73,6 +78,10 @@ export class TokenWriter implements TokenRun {
 
   failed(error: TokenError): void {
     this.#results.errors.push(error);
+  }
+
+  noted(note: string): void {
+    this.#results.notes.push(note);
   }
 
   wrote(): void {

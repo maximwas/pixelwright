@@ -10,6 +10,7 @@ interface Applied {
   created: { kind: string; name: string; collection?: string }[];
   updated: { kind: string; name: string; collection?: string }[];
   errors: { kind: string; name: string; collection?: string; mode?: string; message: string }[];
+  notes?: string[];
 }
 
 const BLACK = {
@@ -540,5 +541,150 @@ describe("tokens_apply: variables", () => {
     });
 
     expect((await variableNamed("Primary"))?.codeSyntax).toEqual({ WEB: "var(--brand-primary)" });
+  });
+});
+
+describe("tokens_apply: scopes and code syntax", () => {
+  const theme = (variables: unknown[]) => ({
+    collections: [
+      {
+        name: "Theme",
+        variables,
+      },
+    ],
+  });
+
+  it("sets a variable's scopes and code syntax, and the same again writes nothing", async () => {
+    const input = theme([
+      {
+        name: "font-weight/bold",
+        values: { Default: "700" },
+        scopes: ["FONT_WEIGHT", "GAP"],
+        codeSyntax: {
+          WEB: "var(--fw-bold)",
+          ANDROID: "fwBold",
+        },
+      },
+    ]);
+
+    await expect(apply(input)).resolves.toMatchObject({ errors: [] });
+    expect(await variableNamed("font-weight/bold")).toMatchObject({
+      scopes: ["GAP", "FONT_WEIGHT"],
+      codeSyntax: {
+        WEB: "var(--fw-bold)",
+        ANDROID: "fwBold",
+      },
+    });
+    await expect(apply(input)).resolves.toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+  });
+
+  it("removes a platform's code syntax given as empty", async () => {
+    await apply(
+      theme([
+        {
+          name: "ink",
+          values: { Default: "var(--Green)" },
+          codeSyntax: {
+            WEB: "var(--ink)",
+            iOS: "Colors.ink",
+          },
+        },
+      ]),
+    );
+    await apply(
+      theme([
+        {
+          name: "ink",
+          values: { Default: "var(--Green)" },
+          codeSyntax: { iOS: "" },
+        },
+      ]),
+    );
+
+    expect((await variableNamed("ink"))?.codeSyntax).toEqual({ WEB: "var(--ink)" });
+  });
+
+  it("refuses scopes the variable's type cannot take, on a dry run too, writing the rest", async () => {
+    const input = theme([
+      {
+        name: "color/accent",
+        values: { Default: "#F00" },
+        scopes: ["GAP"],
+      },
+      {
+        name: "space/s",
+        values: { Default: "8px" },
+        scopes: ["GAP"],
+      },
+    ]);
+
+    for (const dryRun of [true, false]) {
+      const result = await apply(input, dryRun);
+
+      expect(result.errors).toEqual([
+        expect.objectContaining({
+          name: "color/accent",
+          message: expect.stringContaining("GAP"),
+        }),
+      ]);
+      expect(result.created.map(({ name }) => name)).toEqual(["space/s"]);
+    }
+
+    expect(await variableNamed("color/accent")).toBeUndefined();
+  });
+
+  it("keeps an opacity as Figma's percent: a new one, and a plain number scoped as one", async () => {
+    await apply(
+      theme([
+        {
+          name: "opacity/disabled",
+          values: { Default: "0.4" },
+          scopes: ["OPACITY"],
+        },
+        {
+          name: "opacity/hover",
+          values: { Default: "0.8" },
+        },
+      ]),
+    );
+    await apply(
+      theme([
+        {
+          name: "opacity/hover",
+          values: { Default: "0.8" },
+          scopes: ["OPACITY"],
+        },
+      ]),
+    );
+
+    expect((await variableNamed("opacity/disabled"))?.valuesByMode).toEqual({ "M:theme": 40 });
+    expect((await variableNamed("opacity/hover"))?.valuesByMode).toEqual({ "M:theme": 80 });
+  });
+
+  it("notes a new plain number given no scopes: Figma takes it for a length", async () => {
+    const result = await apply(
+      theme([
+        {
+          name: "z/top",
+          values: { Default: "100" },
+        },
+        {
+          name: "weight/700",
+          values: { Default: "700" },
+        },
+        {
+          name: "font-weight/bold",
+          values: { Default: "var(--weight-700)" },
+          scopes: ["FONT_WEIGHT"],
+        },
+      ]),
+    );
+
+    expect(result.created.map(({ name }) => name)).toEqual(["z/top", "weight/700", "font-weight/bold"]);
+    expect(result.notes).toEqual([expect.stringMatching(/z\/top.*100px.*FONT_WEIGHT/s)]);
   });
 });

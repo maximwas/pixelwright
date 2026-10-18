@@ -7,8 +7,11 @@ export const DEFAULT_BRIDGE_PORT = BRIDGE_PORT;
 /** How often the server pings each plugin; a socket that missed the previous ping is dropped. */
 export const HEARTBEAT_MS = 15_000;
 
-/** How long a plugin has to answer one request. */
+/** How long a plugin has to answer one request, unless the request asks for longer. */
 export const REQUEST_TIMEOUT_MS = 30_000;
+
+/** The longest a request may ask a plugin to take: execute's longest run (five minutes) and a margin. */
+export const REQUEST_MAX_TIMEOUT_MS = 310_000;
 
 /** How long close() lets clients answer the 1001 goodbye before cutting them off. */
 export const CLOSE_GRACE_MS = 1_000;

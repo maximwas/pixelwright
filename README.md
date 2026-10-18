@@ -1,7 +1,8 @@
 # Pixelwright
 
-An MCP server that lets AI agents (Claude Code, Cursor, Codex) read and edit the Figma files you have open in Figma
-Desktop, through a Figma plugin: no REST API, no access token, no API rate limits, any Figma plan.
+An open-source MCP server that lets AI agents (Claude Code, Cursor, Codex) read and edit the Figma files you have
+open in Figma Desktop, through a Figma plugin: no REST API, no access token, no API rate limits, any Figma plan. Its
+code is open under the MIT license.
 
 [Website](https://maximwas.github.io/pixelwright/) · [Docs](https://maximwas.github.io/pixelwright/docs/) · [Changelog](https://maximwas.github.io/pixelwright/changelog/) · [npm](https://www.npmjs.com/package/pixelwright)
 
@@ -67,9 +68,15 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `assets_export` | Icons and images as SVG, PNG, JPG, WebP or PDF, sized by a CSS width if you like, originals included |
 | `tokens_read`, `tokens_usage`, `components_read` | Variables with every mode and styles, as CSS, JSON or DTCG token files; the layers a token is used on; the components a page uses, with variants, properties, the nested instances they expose and the project's code for each |
 | `design_audit`, `contrast_check`, `fonts_check` | The scale a design uses and what is off it; every text's WCAG contrast; where the build gets each font |
+| `a11y_read`, `states_find` | What a screen's markup needs for accessibility (heading levels, control roles and labels, alts, reading order); the states components and screens are drawn in and the ones they lack |
+| `design_lint` | A layer, page or file checked against the general rules: contrast, raw colours and texts, detached components, stacks without auto layout, overflow, touch targets, missing states, leftovers; each finding with its fix |
 | `code_connect_read` | The project's Figma Code Connect templates and batch files, what each connects and how, what its code leaves out, what has none |
 | `design_apply` | The same XML written back: change layers by id, create new ones, instances, components and variants, images; a named version in Figma's history first, when asked |
 | `tokens_apply` | Variables (collections, modes, aliases) and styles, in `tokens_read`'s shape |
+| `instances_reattach` | Frames detached from components put back as instances (texts, images and hidden layers kept), instances swapped for another component, overrides taken off |
+| `texts_replace` | Find and replace across a layer, a page or the file (a list for copy edits or a translation), each run's style kept, component text properties changed through the property |
+| `tokens_bind` | Raw colours, spacing, radii, texts and effects bound to the variables and styles that hold them; one token's uses rebound to another |
+| `effects_apply` | Figma's own noise, texture and glass on layers: a ready look (grain, film, risograph, frosted or clear glass) or the effect's own values |
 | `version_save` | A named version in Figma's history, with the baselines it goes with, when you ask for one |
 | `nodes_delete`, `execute` | Delete layers; run plugin code for what the XML cannot say |
 | `guide` | The XML format, writing, tokens, assets, Code Connect and HTML email, for the agent |
@@ -219,13 +226,12 @@ system and the lines `npx -y pixelwright@latest logs` shows around the problem. 
 
 ## Support
 
-Pixelwright is free, and its code is public. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a
+Pixelwright is free and open source. If it saves you time, donate on [Ko-fi](https://ko-fi.com/maksymvasianin) or to a
 [monobank jar](https://send.monobank.ua/jar/7o9oMrbXTj). At most once a week, after a change that worked, your agent may
 mention it; turn that off with `PIXELWRIGHT_SUPPORT_REMINDERS=off`.
 
 ## License
 
-[FSL-1.1-MIT](LICENSE), the Functional Source License with an MIT future license. Use Pixelwright for anything, at work
-and for clients, and change it for your own use; do not build a competing product or service from its code. Each
-version becomes MIT two years after its release. The bundled third-party packages' licences ship in the npm package
-(`dist/THIRD-PARTY-NOTICES.md`) and at the end of the plugin's bundles.
+[MIT](LICENSE): Pixelwright is open source. Use it, change it and share it for anything, keeping the copyright and
+licence notice. The bundled third-party packages' licences ship in the npm package (`dist/THIRD-PARTY-NOTICES.md`) and
+at the end of the plugin's bundles.

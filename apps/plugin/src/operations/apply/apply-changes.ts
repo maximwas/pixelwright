@@ -1,4 +1,5 @@
 import type { ApplyChange, OperationInput, OperationOutput } from "@pixelwright/core";
+import { IdLookup } from "../../figma/id-lookup.ts";
 import { TokenIndex } from "../../figma/tokens/token-index.ts";
 import type { PluginServices } from "../../services/plugin-services.ts";
 import { ApplyFonts } from "./apply-fonts.ts";
@@ -23,7 +24,8 @@ export async function applyChanges(
     }
 
     const top = parent === undefined ? null : await topLayer(parent);
-    const tokens = lazyTokens();
+    const lookup = new IdLookup();
+    const tokens = lazyTokens(lookup);
     const fonts = await ApplyFonts.prepare(changes, {
       dryRun,
       catalog: services.fonts,
@@ -37,6 +39,7 @@ export async function applyChanges(
         }).run()
       : await new ApplyRun(changes, {
           top,
+          lookup,
           fonts,
           tokens,
           images: new ApplyImages(services.uploads),
@@ -46,12 +49,12 @@ export async function applyChanges(
   }
 }
 
-/** The call's token index, built on first use: most calls name no token. */
-function lazyTokens(): () => Promise<TokenIndex> {
+/** The call's token index, built on first use (most calls name no token), finding variables through its lookup. */
+function lazyTokens(lookup: IdLookup): () => Promise<TokenIndex> {
   let index: Promise<TokenIndex> | null = null;
 
   return () => {
-    index ??= TokenIndex.of();
+    index ??= TokenIndex.of(lookup);
 
     return index;
   };

@@ -19,6 +19,8 @@ const PLACEMENT: ReadonlySet<string> = new Set([
   "flex",
   "align-self",
   "transform",
+  // No exported file holds how a layer blends with what is under it: the asset's element does.
+  "mix-blend-mode",
 ]);
 
 /** An image render is clipped to its own box: corners, drop shadows and outlines outside it stay CSS around it. */

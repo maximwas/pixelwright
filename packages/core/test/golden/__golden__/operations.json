@@ -4010,6 +4010,24 @@
               ],
               "additionalProperties": {}
             },
+            "modes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "collection",
+                  "mode"
+                ]
+              }
+            },
             "detached": {
               "type": "boolean"
             },
@@ -6209,6 +6227,24 @@
               ],
               "additionalProperties": {}
             },
+            "modes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "collection",
+                  "mode"
+                ]
+              }
+            },
             "detached": {
               "type": "boolean"
             },
@@ -6987,6 +7023,58 @@
                         },
                         "token": {
                           "type": "string"
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "ALL_SCOPES",
+                              "TEXT_CONTENT",
+                              "CORNER_RADIUS",
+                              "WIDTH_HEIGHT",
+                              "GAP",
+                              "ALL_FILLS",
+                              "FRAME_FILL",
+                              "SHAPE_FILL",
+                              "TEXT_FILL",
+                              "STROKE_COLOR",
+                              "STROKE_FLOAT",
+                              "EFFECT_FLOAT",
+                              "EFFECT_COLOR",
+                              "OPACITY",
+                              "COLOR_OPACITY",
+                              "FONT_FAMILY",
+                              "FONT_STYLE",
+                              "FONT_WEIGHT",
+                              "FONT_SIZE",
+                              "LINE_HEIGHT",
+                              "LETTER_SPACING",
+                              "PARAGRAPH_SPACING",
+                              "PARAGRAPH_INDENT"
+                            ]
+                          }
+                        },
+                        "codeSyntax": {
+                          "type": "object",
+                          "properties": {
+                            "WEB": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "ANDROID": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "iOS": {
+                              "type": "string",
+                              "maxLength": 512
+                            }
+                          }
+                        },
+                        "unitless": {
+                          "type": "boolean",
+                          "const": true
                         }
                       },
                       "required": [
@@ -7186,12 +7274,677 @@
               "message"
             ]
           }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
         "created",
         "updated",
         "errors"
+      ]
+    }
+  },
+  "bind": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "roots": {
+          "minItems": 1,
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "kinds": {
+          "default": [
+            "color",
+            "number",
+            "text",
+            "effect"
+          ],
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "color",
+              "number",
+              "text",
+              "effect"
+            ]
+          }
+        },
+        "choose": {
+          "default": [],
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "The value as tokens_bind lists it: #3B2FD9, 16px, a font shorthand."
+              },
+              "token": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "field": {
+                "description": "Only where the value is this field (background, border, color, gap, padding, border-radius…).",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "value",
+              "token"
+            ]
+          }
+        },
+        "remap": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "roots"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "bound": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              },
+              "token": {
+                "type": "string"
+              },
+              "snapped": {
+                "description": "The value was not the token's: the layers take the token's value (a choice asked for it).",
+                "type": "boolean",
+                "const": true
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples",
+              "token"
+            ]
+          }
+        },
+        "ambiguous": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              },
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples",
+              "candidates"
+            ]
+          }
+        },
+        "unmatched": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples"
+            ]
+          },
+          "description": "Raw values no token holds."
+        },
+        "remapped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "count"
+            ]
+          }
+        },
+        "layers": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ]
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "more": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "bound",
+        "ambiguous",
+        "unmatched",
+        "remapped",
+        "layers",
+        "errors",
+        "notes",
+        "more"
+      ]
+    }
+  },
+  "texts": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "roots": {
+          "minItems": 1,
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "replacements": {
+          "minItems": 1,
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "find": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              "replace": {
+                "type": "string",
+                "maxLength": 10000
+              },
+              "regex": {
+                "default": false,
+                "description": "find is a JavaScript regular expression; replace may use $1, $<name>.",
+                "type": "boolean"
+              },
+              "caseSensitive": {
+                "default": false,
+                "type": "boolean"
+              },
+              "wholeWord": {
+                "default": false,
+                "description": "Match only where no letter or digit touches the match.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "find",
+              "replace"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "roots",
+        "replacements"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "before": {
+                "type": "string"
+              },
+              "after": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "property": {
+                "description": "The component text property the change went through, for a text an instance shows from one.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "before",
+              "after",
+              "count"
+            ]
+          }
+        },
+        "texts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ]
+          }
+        },
+        "more": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "changed",
+        "texts",
+        "count",
+        "errors",
+        "more"
+      ]
+    }
+  },
+  "instances": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "roots": {
+          "minItems": 1,
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "reattach": {
+          "default": false,
+          "type": "boolean"
+        },
+        "swap": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        },
+        "reset": {
+          "type": "string",
+          "enum": [
+            "look",
+            "all"
+          ]
+        },
+        "dryRun": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "roots"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "reattached": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "frame": {
+                "type": "string",
+                "description": "The detached frame's id (gone after a real run)."
+              },
+              "name": {
+                "type": "string"
+              },
+              "instance": {
+                "description": "The new instance's id; null in a dry run.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "kept": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What the frame had that the instance now has too: texts, images, hidden layers."
+              },
+              "lost": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Layers only the frame had: the instance has nowhere to put them."
+              }
+            },
+            "required": [
+              "frame",
+              "name",
+              "instance",
+              "component",
+              "kept",
+              "lost"
+            ]
+          }
+        },
+        "swapped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "from",
+              "to"
+            ]
+          }
+        },
+        "reset": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "fields"
+            ]
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ]
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "more": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "reattached",
+        "swapped",
+        "reset",
+        "errors",
+        "notes",
+        "more"
       ]
     }
   },
@@ -7208,7 +7961,7 @@
         "timeoutMs": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 25000
+          "maximum": 300000
         }
       },
       "required": [
@@ -8741,6 +9494,24 @@
                 ],
                 "additionalProperties": {}
               },
+              "modes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "collection": {
+                      "type": "string"
+                    },
+                    "mode": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "collection",
+                    "mode"
+                  ]
+                }
+              },
               "detached": {
                 "type": "boolean"
               },
@@ -9510,6 +10281,99 @@
       ]
     }
   },
+  "nearby": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "distance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5000
+        }
+      },
+      "required": [
+        "node",
+        "distance"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "screen": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string",
+                "description": "Its texts, top to bottom."
+              },
+              "side": {
+                "type": "string",
+                "enum": [
+                  "over",
+                  "left",
+                  "right",
+                  "above",
+                  "below"
+                ],
+                "description": "Where it sits from the screen; over it when their boxes overlap."
+              },
+              "distance": {
+                "type": "number",
+                "description": "The gap between its box and the screen's, in px."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "text",
+              "side",
+              "distance"
+            ]
+          }
+        },
+        "more": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "screen",
+        "notes",
+        "more"
+      ]
+    }
+  },
   "cover": {
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9577,6 +10441,240 @@
         "y",
         "width",
         "height"
+      ]
+    }
+  },
+  "effects": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "minItems": 1,
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "noise": {
+          "type": "object",
+          "properties": {
+            "noiseType": {
+              "type": "string",
+              "enum": [
+                "MONOTONE",
+                "DUOTONE",
+                "MULTITONE"
+              ]
+            },
+            "noiseSize": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "density": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "color": {
+              "type": "object",
+              "properties": {
+                "r": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "g": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "b": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "a": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "r",
+                "g",
+                "b",
+                "a"
+              ]
+            },
+            "secondaryColor": {
+              "type": "object",
+              "properties": {
+                "r": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "g": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "b": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "a": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "r",
+                "g",
+                "b",
+                "a"
+              ]
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "noiseType",
+            "noiseSize",
+            "density",
+            "color"
+          ]
+        },
+        "texture": {
+          "type": "object",
+          "properties": {
+            "noiseSize": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "clipToShape": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "noiseSize",
+            "radius",
+            "clipToShape"
+          ]
+        },
+        "glass": {
+          "type": "object",
+          "properties": {
+            "lightIntensity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "lightAngle": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            },
+            "refraction": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "depth": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "dispersion": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 250
+            }
+          },
+          "required": [
+            "lightIntensity",
+            "lightAngle",
+            "refraction",
+            "depth",
+            "dispersion",
+            "radius"
+          ]
+        },
+        "remove": {
+          "default": [],
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NOISE",
+              "TEXTURE",
+              "GLASS"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "nodes"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ]
+          }
+        }
+      },
+      "required": [
+        "changed",
+        "errors"
       ]
     }
   },

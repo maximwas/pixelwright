@@ -5,7 +5,10 @@ import {
   type OperationInput,
   type OperationOutput,
 } from "@pixelwright/core";
+import pTimeout from "p-timeout";
+import type { CodeScope } from "../../services/code-scope.ts";
 import type { EditsGuard } from "../../services/edits-guard.ts";
+import { codeHelpers } from "./code-helpers.ts";
 import { jsonValue } from "./json-value.ts";
 
 type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<unknown>;
@@ -13,17 +16,18 @@ type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<u
 /** The constructor of async functions: the code becomes the body of one. */
 const AsyncFunction = Object.getPrototypeOf(async () => undefined).constructor as AsyncBody;
 
-/** What the race gives when the timer wins. */
+/** What the run gives when its time is up first. */
 const TIMED_OUT = Symbol("timed out");
 
 /**
- * Code as the body of an async function, given figma and a console that keeps what it prints: its value made JSON-safe,
- * or what it threw, or that it ran past its time (it may still be running: a plugin cannot stop it). Whatever it
- * changed is one undo step. Refused while Allow edits is off.
+ * Code as the body of an async function, given figma, a console that keeps what it prints and pw (Pixelwright's
+ * helpers, and what earlier calls kept there): its value made JSON-safe, or what it threw, or that it ran past its
+ * time (it may still be running: a plugin cannot stop it). Whatever it changed is one undo step. Refused while Allow
+ * edits is off.
  */
 export async function execute(
   { code, timeoutMs }: OperationInput<"execute">,
-  edits: EditsGuard,
+  { edits, code: scope }: { readonly edits: EditsGuard; readonly code: CodeScope },
 ): Promise<OperationOutput<"execute">> {
   edits.require();
 
@@ -32,7 +36,10 @@ export async function execute(
   const handler = ui?.onmessage;
 
   try {
-    return await ran(code, timeoutMs, new CapturedConsole());
+    return await ran(code, timeoutMs, {
+      output: new CapturedConsole(),
+      pw: scope.with(codeHelpers()),
+    });
   } finally {
     if (ui !== undefined && ui.onmessage !== handler) {
       ui.onmessage = handler;
@@ -43,17 +50,17 @@ export async function execute(
 }
 
 /** The code's answer: its value, what it threw, or that it ran past its time; with what it printed. */
-async function ran(code: string, timeoutMs: number, output: CapturedConsole): Promise<OperationOutput<"execute">> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
+async function ran(
+  code: string,
+  timeoutMs: number,
+  { output, pw }: { readonly output: CapturedConsole; readonly pw: Record<string, unknown> },
+): Promise<OperationOutput<"execute">> {
   try {
-    const run = new AsyncFunction("figma", "console", code);
-    const value = await Promise.race([
-      run(figma, output.console()),
-      new Promise((resolve) => {
-        timer = setTimeout(() => resolve(TIMED_OUT), timeoutMs);
-      }),
-    ]);
+    const run = new AsyncFunction("figma", "console", "pw", code);
+    const value = await pTimeout(run(figma, output.console(), pw), {
+      milliseconds: timeoutMs,
+      fallback: () => TIMED_OUT,
+    });
 
     if (value === TIMED_OUT) {
       return {
@@ -73,8 +80,6 @@ async function ran(code: string, timeoutMs: number, output: CapturedConsole): Pr
       logs: output.kept(),
       error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
     };
-  } finally {
-    clearTimeout(timer);
   }
 }
 

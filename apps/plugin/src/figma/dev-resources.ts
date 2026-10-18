@@ -1,3 +1,4 @@
+import pTimeout from "p-timeout";
 import { LINKS_TIMEOUT_MS } from "../constants/plugin.ts";
 import { errorMessage } from "../utils/error-message.ts";
 
@@ -34,10 +35,8 @@ export function devResourcesOf(node: BaseNode, includeChildren = false): Promise
 
 /** A call to Figma's servers, given up on after LINKS_TIMEOUT_MS. */
 function answered<T>(call: Promise<T>): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const late = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new LinksTimeout()), LINKS_TIMEOUT_MS);
+  return pTimeout(call, {
+    milliseconds: LINKS_TIMEOUT_MS,
+    message: new LinksTimeout(),
   });
-
-  return Promise.race([call, late]).finally(() => clearTimeout(timer));
 }

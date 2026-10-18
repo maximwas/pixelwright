@@ -1,8 +1,8 @@
-import { tokenName } from "../../kernel/names.ts";
+import { tokenName, variableTokenName } from "../../kernel/names.ts";
+import { COMMENT, type CollectionDraft, markedUnitless, plainNumbers, type VariableDraft } from "./plain-numbers.ts";
 import type { TokensApplyInput } from "./schemas.ts";
 import { type StyleKind, styleValueOf } from "./style-values.ts";
 import type {
-  CollectionPlan,
   EffectStylePlan,
   PaintStylePlan,
   TextStylePlan,
@@ -20,9 +20,6 @@ type InputVariable = InputCollection["variables"][number];
 /** The style kinds in the order their errors are listed. */
 const STYLE_KINDS: readonly StyleKind[] = ["paint", "text", "effect"];
 
-/** What tokens_read could only write as a comment (an alias it could not follow): left as it is. */
-const COMMENT = /^\/\*[\s\S]*\*\/$/;
-
 /**
  * tokens_apply's input in Figma's terms: each mode's CSS value read back as tokens_read writes it (a colour, px or a
  * plain number, a quoted string, true/false, var(--token) for an alias), a variable's type from its first value when
@@ -31,7 +28,7 @@ const COMMENT = /^\/\*[\s\S]*\*\/$/;
  */
 export function tokensPlan(input: TokensApplyInput): { plan: TokensPlan; errors: TokenError[] } {
   const errors: TokenError[] = [];
-  const collections = input.collections.map((collection) => collectionPlan(collection, errors));
+  const collections = markedUnitless(input.collections.map((collection) => collectionDraft(collection, errors)));
   const styles = stylesPlan(input.styles, errors);
 
   return {
@@ -43,7 +40,7 @@ export function tokensPlan(input: TokensApplyInput): { plan: TokensPlan; errors:
   };
 }
 
-function collectionPlan(collection: InputCollection, errors: TokenError[]): CollectionPlan {
+function collectionDraft(collection: InputCollection, errors: TokenError[]): CollectionDraft {
   const fail = (variable: InputVariable, message: string, mode?: string) =>
     errors.push({
       kind: "variable",
@@ -56,15 +53,15 @@ function collectionPlan(collection: InputCollection, errors: TokenError[]): Coll
   return {
     name: collection.name,
     modes: collection.modes ?? modesOf(collection.variables),
-    variables: collection.variables.flatMap((variable) => variablePlan(variable, fail) ?? []),
+    drafts: collection.variables.flatMap((variable) => variableDraft(variable, fail) ?? []),
   };
 }
 
 /** A variable's plan, or null when any of its values cannot be written (each such value is its own error). */
-function variablePlan(
+function variableDraft(
   variable: InputVariable,
   fail: (variable: InputVariable, message: string, mode?: string) => void,
-): VariablePlan | null {
+): VariableDraft | null {
   if (variable.type !== undefined && !isWritableType(variable.type)) {
     fail(variable, `${variable.type} variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can.`);
 
@@ -92,21 +89,63 @@ function variablePlan(
     values[mode] = value;
   }
 
-  return failed ? null : planOf(variable, type, values);
+  const plan = failed ? null : planOf(variable, type, values);
+
+  if (typeof plan === "string") {
+    fail(variable, plan);
+  }
+
+  return plan === null || typeof plan === "string"
+    ? null
+    : {
+        plan,
+        plain: plainNumbers(Object.values(variable.values)),
+      };
 }
 
+/** The variable's plan, or why its CSS name cannot be told. */
 function planOf(
   variable: InputVariable,
   type: WritableVariableType | null,
   values: Record<string, VariableValueSpec>,
-): VariablePlan {
+): VariablePlan | string {
+  const token = cssNameOf(variable);
+
+  if (typeof token !== "string") {
+    return token.error;
+  }
+
+  const codeSyntax = Object.keys(variable.codeSyntax ?? {}).length === 0 ? undefined : variable.codeSyntax;
+
   return {
     name: variable.name,
     type,
     values,
     ...(variable.description === undefined ? {} : { description: variable.description }),
-    ...(variable.token === undefined || variable.token === tokenName(variable.name) ? {} : { token: variable.token }),
+    ...(token === tokenName(variable.name) ? {} : { token }),
+    ...(variable.scopes === undefined ? {} : { scopes: [...new Set(variable.scopes)] }),
+    ...(codeSyntax === undefined ? {} : { codeSyntax }),
   };
+}
+
+/** The variable's CSS name: its WEB code syntax's when the call gives one, else its token's, else its name's. */
+function cssNameOf(variable: InputVariable): string | { error: string } {
+  const web = variable.codeSyntax?.WEB;
+
+  if (web === undefined) {
+    return variable.token ?? tokenName(variable.name);
+  }
+
+  const named = variableTokenName({
+    name: variable.name,
+    codeSyntax: { WEB: web },
+  });
+
+  return variable.token === undefined || variable.token === named
+    ? named
+    : {
+        error: `token ${variable.token} and codeSyntax.WEB "${web}" (${named}) name two CSS properties: give one of them.`,
+      };
 }
 
 function unreadable(css: string, type: WritableVariableType | null): string {

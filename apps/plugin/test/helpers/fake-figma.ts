@@ -1,3 +1,5 @@
+import { VARIABLE_SCOPES } from "@pixelwright/core";
+
 /**
  * A small Figma document for the plugin's operations: nodes with parents, boxes, text and main components, and the
  * writing calls design_apply makes (creating, inserting, resizing, binding, styling text ranges), recorded.
@@ -158,6 +160,8 @@ export interface FakeOptions {
    * bytes, or of a PNG over 4096 px a side.
    */
   readonly strict?: boolean;
+  /** A removed layer, and every layer in it, throws when its name is read, as Figma's does. */
+  readonly removedThrows?: boolean;
 }
 
 /** Layers Figma lets insertChild put children in; an instance takes them only through its slots. */
@@ -271,6 +275,55 @@ function strokeSides(node: FakeNode): void {
     enumerable: true,
     configurable: true,
   });
+}
+
+/**
+ * As Figma places a grid's child (seen live on 2026-10-17): with its spans, the cells it covers must lie in the grid
+ * and be free of the other children's, or setGridChildPosition throws Figma's words.
+ */
+function refuseGridCell(node: FakeNode, row: number, column: number): void {
+  const grid = node.parent;
+
+  if (
+    grid?.layoutMode !== "GRID" ||
+    typeof grid.gridColumnCount !== "number" ||
+    typeof grid.gridRowCount !== "number"
+  ) {
+    return;
+  }
+
+  // The cells a child covers from a cell, with its spans: first and last row, first and last column.
+  const covers = (child: FakeNode, top: number, left: number) => ({
+    top,
+    bottom: top + Number(child.gridRowSpan ?? 1) - 1,
+    left,
+    right: left + Number(child.gridColumnSpan ?? 1) - 1,
+  });
+  const mine = covers(node, row, column);
+
+  if (mine.bottom >= grid.gridRowCount || mine.right >= grid.gridColumnCount) {
+    throw new Error(
+      "in setGridChildPosition: Cannot set grid child position: Cannot place child at this position because it is out of bounds of the grid",
+    );
+  }
+
+  const taken = (grid.children ?? []).some((other) => {
+    if (other === node || other.layoutPositioning === "ABSOLUTE" || other.gridRowAnchorIndex === undefined) {
+      return false;
+    }
+
+    const theirs = covers(other, Number(other.gridRowAnchorIndex), Number(other.gridColumnAnchorIndex));
+
+    return (
+      mine.top <= theirs.bottom && theirs.top <= mine.bottom && mine.left <= theirs.right && theirs.left <= mine.right
+    );
+  });
+
+  if (taken) {
+    throw new Error(
+      "in setGridChildPosition: Cannot set grid child position: Can't place child at this position because it is occupied by another node",
+    );
+  }
 }
 
 /** Figma's range writers, by the field a whole-text run sets. */
@@ -417,6 +470,37 @@ function writable(
     node.mainComponent = component;
     record("swapComponent", [component.id]);
   });
+  // As Figma: every overridden field goes back to the main component's value (the same layer there), then none is.
+  define("removeOverrides", () => {
+    const main = node.mainComponent as FakeNode | undefined;
+    const counterpart = (id: string): FakeNode | undefined => {
+      const own = id === node.id ? main?.id : id.replace(`I${node.id};`, "");
+      const find = (at: FakeNode | undefined): FakeNode | undefined =>
+        at === undefined || at.id === own ? at : (at.children ?? []).map(find).find((found) => found !== undefined);
+
+      return find(main);
+    };
+    const layer = (id: string): FakeNode | undefined => {
+      const find = (at: FakeNode): FakeNode | undefined =>
+        at.id === id ? at : (at.children ?? []).map(find).find((found) => found !== undefined);
+
+      return find(node);
+    };
+
+    for (const { id, overriddenFields } of (node.overrides ?? []) as { id: string; overriddenFields: string[] }[]) {
+      const target = layer(id);
+      const source = counterpart(id);
+
+      if (target !== undefined && source !== undefined) {
+        for (const field of overriddenFields) {
+          target[field] = structuredClone(source[field]);
+        }
+      }
+    }
+
+    node.overrides = [];
+    record("removeOverrides", []);
+  });
 
   if (node.type === "COMPONENT" || node.type === "COMPONENT_SET") {
     // Never read here: Figma refuses reading a variant's definitions, and some tests model that with a getter.
@@ -459,12 +543,46 @@ function writable(
     });
   }
 
+  define("setExplicitVariableModeForCollection", (collection: { id: string }, modeId: string) => {
+    node.explicitVariableModes = {
+      ...((node.explicitVariableModes as Record<string, string> | undefined) ?? {}),
+      [collection.id]: modeId,
+    };
+    record("setExplicitVariableModeForCollection", [collection.id, modeId]);
+  });
+  define("clearExplicitVariableModeForCollection", (collection: { id: string }) => {
+    const { [collection.id]: _cleared, ...kept } =
+      (node.explicitVariableModes as Record<string, string> | undefined) ?? {};
+
+    node.explicitVariableModes = kept;
+    record("clearExplicitVariableModeForCollection", [collection.id]);
+  });
   define("remove", () => {
     node.parent?.children?.splice(node.parent.children.indexOf(node), 1);
     node.parent = null;
     record("remove", []);
+
+    // As Figma (when the test asks for it): a removed layer, and every layer in it, throws when read.
+    const gone = (layer: FakeNode) => {
+      Object.defineProperty(layer, "name", {
+        get: () => {
+          throw new Error(`in get_name: The node with id "${layer.id}" does not exist`);
+        },
+        set: () => {},
+        configurable: true,
+      });
+
+      for (const child of layer.children ?? []) {
+        gone(child);
+      }
+    };
+
+    if (options.removedThrows ?? false) {
+      gone(node);
+    }
   });
   define("setGridChildPosition", (row: number, column: number) => {
+    refuseGridCell(node, row, column);
     node.gridRowAnchorIndex = row;
     node.gridColumnAnchorIndex = column;
     record("setGridChildPosition", [row, column]);
@@ -527,6 +645,25 @@ function writable(
     });
   }
 
+  // As Figma: inserting or deleting characters needs the text's font loaded; an insert takes a neighbour's style.
+  const requireFont = (method: string) => {
+    const font = node.fontName as { family: string; style: string };
+
+    if (!writes.loaded.has(fontKey(font))) {
+      throw new Error(`in ${method}: Cannot write to node with unloaded font "${fontKey(font)}"`);
+    }
+  };
+
+  define("insertCharacters", (start: number, text: string, useStyle = "BEFORE") => {
+    requireFont("insertCharacters");
+    characters = `${characters.slice(0, start)}${text}${characters.slice(start)}`;
+    record("insertCharacters", [start, text, useStyle]);
+  });
+  define("deleteCharacters", (start: number, end: number) => {
+    requireFont("deleteCharacters");
+    characters = `${characters.slice(0, start)}${characters.slice(end)}`;
+    record("deleteCharacters", [start, end]);
+  });
   define("setRangeBoundVariable", (start: number, end: number, field: string, variable: { id: string } | null) => {
     // A run over the whole text binds the text's own field, as Figma reports it.
     if (start === 0 && end === characters.length) {
@@ -588,12 +725,41 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     calls: [],
     created: [],
   };
+  /** As Figma: a layer's modes are the collections' defaults, then each layer's own from the page down to it. */
+  const resolvedModes = (node: FakeNode): Record<string, string> => {
+    const chain: FakeNode[] = [];
+
+    for (let at: FakeNode | null = node; at !== null; at = at.parent) {
+      chain.unshift(at);
+    }
+
+    return Object.assign(
+      Object.fromEntries(localCollections.map((collection) => [collection.id, String(collection.defaultModeId)])),
+      ...chain.map((each) => (each.explicitVariableModes as Record<string, string> | undefined) ?? {}),
+    );
+  };
   const register = (node: FakeNode) => {
     byId.set(node.id, node);
 
     if (Object.getOwnPropertyDescriptor(node, "resize") === undefined) {
       writable(node, writes, register, options);
       copyable(node);
+    }
+
+    // A test that sets the field itself keeps its own value.
+    if (Object.getOwnPropertyDescriptor(node, "resolvedVariableModes") === undefined) {
+      Object.defineProperty(node, "resolvedVariableModes", {
+        get: () => resolvedModes(node),
+        set: (value: unknown) =>
+          Object.defineProperty(node, "resolvedVariableModes", {
+            value,
+            writable: true,
+            enumerable: true,
+            configurable: true,
+          }),
+        enumerable: false,
+        configurable: true,
+      });
     }
   };
   /**
@@ -854,6 +1020,11 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
       });
     });
     method(variable, "setVariableCodeSyntax", (platform: string, value: string) => {
+      // As Figma (seen live on 2026-10-17).
+      if (value.trim() === "") {
+        throw new Error("in setVariableCodeSyntax: Code syntax value cannot be a blank string");
+      }
+
       variable.codeSyntax = {
         ...(variable.codeSyntax as Record<string, string> | undefined),
         [platform]: value,
@@ -863,6 +1034,33 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
         method: "setVariableCodeSyntax",
         args: [platform, value],
       });
+    });
+    method(variable, "removeVariableCodeSyntax", (platform: string) => {
+      const { [platform]: _removed, ...rest } = (variable.codeSyntax as Record<string, string> | undefined) ?? {};
+
+      variable.codeSyntax = rest;
+      writes.calls.push({
+        node: variable.id,
+        method: "removeVariableCodeSyntax",
+        args: [platform],
+      });
+    });
+
+    // Figma keeps scopes in its own order, whatever order they were set in.
+    let scopes = [...((variable.scopes as string[] | undefined) ?? ["ALL_SCOPES"])];
+
+    Object.defineProperty(variable, "scopes", {
+      get: () => scopes,
+      set: (value: string[]) => {
+        scopes = VARIABLE_SCOPES.filter((scope) => value.includes(scope));
+        writes.calls.push({
+          node: variable.id,
+          method: "scopes",
+          args: [value],
+        });
+      },
+      enumerable: true,
+      configurable: true,
     });
     localVariables.push(variable);
 
@@ -1190,7 +1388,9 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
       const found = (library.components ?? []).find((node) => node.key === key && node.type === "COMPONENT_SET");
 
       if (found === undefined) {
-        throw new Error(`No component set with key ${key}`);
+        // As Figma does (measured 2026-10-18): a lone component's key, an unpublished set's or an unknown one never
+        // settles.
+        return new Promise<never>(() => undefined);
       }
 
       return found;

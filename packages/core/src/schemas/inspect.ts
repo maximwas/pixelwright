@@ -153,3 +153,24 @@ export const InspectViewSchema = z.object({
   missing: z.array(z.string()).describe("Ids that are not layers of this file."),
   left: z.number().int().exactOptional().describe("Layers asked for past the first 100, not read: inspect them next."),
 });
+
+/** A designer's note near a screen, as the plugin's nearby op finds it. */
+export const NearbyNoteSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  text: z.string().describe("Its texts, top to bottom."),
+  side: z
+    .enum(["over", "left", "right", "above", "below"])
+    .describe("Where it sits from the screen; over it when their boxes overlap."),
+  distance: z.number().describe("The gap between its box and the screen's, in px."),
+});
+
+/** The nearby op's answer: the screen the layer is on, the notes around it nearest first, and how many more. */
+export const NearbySchema = z.object({
+  screen: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  notes: z.array(NearbyNoteSchema),
+  more: z.number().int(),
+});

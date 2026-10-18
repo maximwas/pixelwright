@@ -2822,19 +2822,40 @@
         "tag": "Frame",
         "parent": null,
         "index": 0,
-        "props": {},
-        "sources": {}
-      },
-      "errors": [
-        {
-          "line": 1,
-          "column": 1,
-          "id": "1:1",
-          "attribute": "background",
-          "message": "linear-gradient(90deg, #000, #FFF)…: a gradient is not written yet.",
-          "hint": "Use a colour or a token."
+        "props": {
+          "fills": [
+            {
+              "kind": "gradient",
+              "type": "LINEAR",
+              "angle": 90,
+              "stops": [
+                {
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "position": 0
+                },
+                {
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "position": 1
+                }
+              ]
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
         }
-      ]
+      },
+      "errors": []
     },
     {
       "change": {
@@ -3005,7 +3026,7 @@
           "column": 1,
           "id": "1:4",
           "attribute": "color",
-          "message": "linear-gradient(#000, #FFF)…: a gradient is not written yet.",
+          "message": "A text is coloured with a colour or a token, not a gradient.",
           "hint": "Use a colour or a token."
         }
       ]
@@ -5591,10 +5612,38 @@
         "parent": null,
         "index": 0,
         "props": {
-          "layoutMode": "HORIZONTAL"
+          "layoutMode": "HORIZONTAL",
+          "fills": [
+            {
+              "kind": "gradient",
+              "type": "LINEAR",
+              "angle": 90,
+              "stops": [
+                {
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "position": 0
+                },
+                {
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "position": 1
+                }
+              ]
+            }
+          ]
         },
         "sources": {
-          "layoutMode": "display"
+          "layoutMode": "display",
+          "fills": "background"
         }
       },
       "errors": [
@@ -5611,14 +5660,6 @@
           "id": "1:1",
           "attribute": "gap",
           "message": "gap=\"big\" is not one or two lengths in px or tokens (rows, then columns)."
-        },
-        {
-          "line": 1,
-          "column": 1,
-          "id": "1:1",
-          "attribute": "background",
-          "message": "linear-gradient(90deg, #000, #FFF)…: a gradient is not written yet.",
-          "hint": "Use a colour or a token."
         }
       ]
     }

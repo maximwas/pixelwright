@@ -1,6 +1,7 @@
 import { FontCatalog } from "../figma/fonts.ts";
 import { ChangeJournal } from "./change-journal.ts";
 import { ChunkStreams } from "./chunk-streams.ts";
+import { CodeScope } from "./code-scope.ts";
 import { EditsGuard } from "./edits-guard.ts";
 import { ModeTurns } from "./mode-turns.ts";
 import { UploadStore } from "./upload-store.ts";
@@ -16,6 +17,8 @@ export interface PluginServices {
   /** Original images the server reads chunk by chunk. */
   readonly images: ChunkStreams<{ bytes: Uint8Array }>;
   readonly modeTurns: ModeTurns;
+  /** What execute's code keeps between calls. */
+  readonly code: CodeScope;
 }
 
 export function createServices(): PluginServices {
@@ -27,5 +30,6 @@ export function createServices(): PluginServices {
     exports: new ChunkStreams(),
     images: new ChunkStreams(),
     modeTurns: new ModeTurns(),
+    code: new CodeScope(),
   };
 }

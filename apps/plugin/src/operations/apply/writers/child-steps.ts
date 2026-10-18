@@ -30,6 +30,13 @@ export const CHILD_STEPS: readonly Step[] = [
 function grow(node: SizedNode, { grow: fill }: FigmaProps): void {
   const direction = flexOf(node.parent);
 
+  if (direction === null && isGrid(node.parent)) {
+    throw new WriteError(
+      "flex fills a flex parent's direction: this layer's parent is a grid.",
+      'Fill its cell with justify-self="stretch" and align-self="stretch".',
+    );
+  }
+
   if (direction === null) {
     throw new WriteError(
       "flex fills the direction of an auto layout parent: this layer's parent has no auto layout.",
@@ -92,17 +99,27 @@ function cell(node: SizedNode, { gridRow, gridColumn }: FigmaProps): void {
 
   const row = gridRow?.anchor ?? node.gridRowAnchorIndex;
   const column = gridColumn?.anchor ?? node.gridColumnAnchorIndex;
+  const spans = [
+    ["gridRowSpan", gridRow?.span],
+    ["gridColumnSpan", gridColumn?.span],
+  ] as const;
+
+  // A span that narrows goes before the move and one that widens after it: on the way the child never covers a cell
+  // another child takes, which Figma refuses.
+  for (const [key, span] of spans) {
+    if (span !== undefined && span < node[key]) {
+      node[key] = span;
+    }
+  }
 
   if (row !== node.gridRowAnchorIndex || column !== node.gridColumnAnchorIndex) {
     node.setGridChildPosition(row, column);
   }
 
-  if (gridRow !== undefined) {
-    assign(node, "gridRowSpan", gridRow.span);
-  }
-
-  if (gridColumn !== undefined) {
-    assign(node, "gridColumnSpan", gridColumn.span);
+  for (const [key, span] of spans) {
+    if (span !== undefined) {
+      assign(node, key, span);
+    }
   }
 }
 

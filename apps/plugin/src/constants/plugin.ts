@@ -53,11 +53,16 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   screens: "Compared the page's screens",
   file_map: "Mapped the file",
   inspect: "Inspected layers",
+  nearby: "Read the notes around a screen",
   apply: "Changed the file",
   delete: "Deleted layers",
   execute: "Ran code",
   tokens_apply: "Wrote tokens",
   save_version: "Saved a version",
+  effects: "Changed effects",
+  bind: "Bound tokens",
+  texts: "Replaced text",
+  instances: "Changed instances",
 };
 
 /** Steps of another action the activity leaves out: status probes, the reads before a write, files on their way in. */
@@ -85,6 +90,9 @@ export const LINKS_BATCH = 25;
 
 /** How long one ask for Dev Mode links may wait for Figma's servers before the links are given up on. */
 export const LINKS_TIMEOUT_MS = 5_000;
+
+/** How long importing a library component by key may take: Figma never answers for a key it cannot import. */
+export const KEY_IMPORT_MS = 10_000;
 
 /**
  * How far a font's weight may be from the one asked for and still be taken (CSS takes the nearest; a variable font

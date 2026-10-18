@@ -26,10 +26,15 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    \`motion\` (Figma Motion as CSS \`@keyframes\`) when the section has them. Read sections, not whole pages: past \`maxChars\` (80 000) the deepest
    branches are left empty with \`$truncated="true"\` and their ids listed in \`truncated\`; read each on its own.
    Pass \`assetsDir\` (e.g. src/assets) to get its icons and images written as files.
+   \`repeats: true\` reads a list of alike items once (\`$repeat\`), with their data as rows: shorter, and the
+   list's shape plain. \`nearby: 400\` adds the designer's notes on the canvas around the screen (texts and stickies
+   beside it, nearest first): read them, they often say what the layers cannot (states, motion, copy to change).
 4. **Look at it.** \`screenshot\` renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; \`save\`
    writes a .png file full size; \`clip\` takes a region of it, in px from its box). Compare your build with it:
    \`image_compare\` renders a layer the same way and compares it with a PNG of your build (rmse, the share of pixels
    that differ, the box around them, edges off by N px; \`diff\` writes the difference as a PNG).
+   \`styles_compare\` checks the build's computed styles (getComputedStyle) against each layer, property by property:
+   the values that differ with the token or text style behind them, and the properties the build left out.
    **Measure it.** \`inspect\` reads layers as Figma has them, without code and with Allow edits off: the layout box
    and the painted box (a centred stroke, shadows and blur reach past it), the fill with the style or variables behind
    it (what a \`var()\` resolves to), how strokes paint, every effect's parameters (a progressive blur's start and
@@ -44,13 +49,21 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    \`tokens_usage\`: the layers a token is used on. \`components_read\`: the components a page uses, or the file
    defines, with variants and properties. \`design_audit\`: the scale a design uses (spacing, radii, font sizes,
    colours) and what is off it, for a file without tokens. \`contrast_check\`: every text's WCAG contrast.
-   \`fonts_check\`: the fonts used and where the build gets each (Google Fonts links).
+   \`fonts_check\`: the fonts used and where the build gets each (Google Fonts links). \`design_lint\`: a layer, a
+   page or the file checked against the general rules (contrast, raw values, detached components, overflow, touch
+   targets, states, leftovers), each finding with its fix; \`tokens_bind\` then binds the raw values to the tokens
+   that hold them (\`dryRun\` first, \`choose\` where several tokens hold a value). \`a11y_read\`: a screen's heading
+   levels, control roles and labels, alts and reading order, for the markup. \`states_find\`: the hover, focus,
+   disabled, empty, loading or error states the build will need and the design lacks.
 6. **Files.** \`assets_export\`: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
    images as they were placed (originals); \`width\` sizes a render by the CSS width the build shows it at (110 at
    scale 2: 220 px). When a file gets another name than design_read planned (\`planned\`), use the path it gives.
 7. **Write.** \`design_apply\` writes the same XML back into Figma: change layers by id, create new ones (see \`guide
-   write\`); \`tokens_apply\` writes variables and styles in tokens_read's JSON shape (see \`guide tokens\`);
-   \`execute\` runs plugin code for what neither can say. The user turns Allow edits on in the plugin window first.
+   write\`, and \`guide layout\` for flex, grid and absolute placement); \`tokens_apply\` writes variables and styles in
+   tokens_read's JSON shape (see \`guide tokens\`); \`effects_apply\` puts noise, texture or glass on layers;
+   \`texts_replace\` changes copy across a page or the file (a dictionary at once, styles kept); \`instances_reattach\`
+   puts detached frames back as instances, swaps components and takes overrides off;
+   \`execute\` runs plugin code for what none of them can say. The user turns Allow edits on in the plugin window first.
 8. **Code Connect.** Where the project has Figma Code Connect templates (\`*.figma.ts\`) or batch files
    (\`*.figma.batch.json\`), \`design_read\` gives each connected instance as \`$code\` with its code in
    \`codeComponents\`: use that code, adding what \`unread\` names. \`components_read\` gives each component's \`code\`, and

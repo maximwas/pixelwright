@@ -54,12 +54,10 @@ export class PeerConnection {
     } else if (stage.kind === "challenged") {
       this.#onAuth(stage, message);
     } else if (message.type === "request") {
-      this.#relay(
-        message.id,
-        message.op,
-        message.input ?? null,
-        message.session === undefined ? {} : { session: message.session },
-      );
+      this.#relay(message.id, message.op, message.input ?? null, {
+        ...(message.session === undefined ? {} : { session: message.session }),
+        timeoutMs: message.timeoutMs,
+      });
     } else {
       this.#socket.close(CloseCode.BadMessage, `unexpected ${message.type}`);
     }

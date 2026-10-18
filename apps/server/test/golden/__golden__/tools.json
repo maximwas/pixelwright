@@ -1232,7 +1232,7 @@
   {
     "name": "design_read",
     "title": "Read a design",
-    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer's Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer's summary being $motion in the XML) when there are any, and, where the project has Figma Code Connect templates (*.figma.ts) or batch files (*.figma.batch.json), codeComponents: the code connected instances render to ({ids, component, template, source, snippet, imports, unread}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code and add what unread names (its own values are its variant and props; read it with node=<its id> for a nested one's); code: false reads it as layers. A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project's own components and tokens.",
+    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer's Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer's summary being $motion in the XML) when there are any, repeats (with repeats: true, each run of alike neighbours read as its first, $repeat in the XML, and a row of each one's own texts, files and variants) and nearby (with nearby: N, the designer's notes on the canvas around the screen), and, where the project has Figma Code Connect templates (*.figma.ts) or batch files (*.figma.batch.json), codeComponents: the code connected instances render to ({ids, component, template, source, snippet, imports, unread}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code and add what unread names (its own values are its variant and props; read it with node=<its id> for a nested one's); code: false reads it as layers. A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project's own components and tokens.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1270,6 +1270,17 @@
           "default": true,
           "description": "Run the project's Code Connect templates, giving connected instances as $code with their code (default); false reads them as layers.",
           "type": "boolean"
+        },
+        "repeats": {
+          "default": false,
+          "description": "Read each run of three or more alike neighbours (list items, cards, table rows) as its first, marked $repeat with the run's length; the JSON's repeats gives each run's layers and the values they hold apart, a row per layer.",
+          "type": "boolean"
+        },
+        "nearby": {
+          "description": "Also list the designer's notes on the canvas within this many px of the screen holding the layer (texts, stickies, small frames of text beside it or over it), e.g. 400: the JSON's nearby.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
         },
         "file": {
           "description": "The file to work on: its session from status or its name. Default: the active file.",
@@ -3022,8 +3033,8 @@
   },
   {
     "name": "image_compare",
-    "title": "Compare a layer with an image",
-    "description": "Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render's is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render's density (scale 2 for a 2x screenshot). Works while Allow edits is off.",
+    "title": "Compare a layer with an image or a layer",
+    "description": "Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size, or with another layer (against) rendered the same way, a variant against its default or a rebuilt frame against the original: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render's is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render's density (scale 2 for a 2x screenshot). Works while Allow edits is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3034,10 +3045,16 @@
           "description": "The layer's id, e.g. 54:243."
         },
         "reference": {
+          "description": "The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server's folder or absolute.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 4096,
-          "description": "The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server's folder or absolute."
+          "maxLength": 4096
+        },
+        "against": {
+          "description": "Another layer's id to compare with instead of a PNG, rendered the same way: a variant against its default, a rebuilt frame against the original.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
         },
         "scale": {
           "default": 1,
@@ -3105,8 +3122,7 @@
         }
       },
       "required": [
-        "node",
-        "reference"
+        "node"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema"
     },
@@ -3289,6 +3305,203 @@
         "box",
         "rows",
         "columns"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "styles_compare",
+    "title": "Compare a build's styles with the design",
+    "description": "Whether a build has each style the design sets, property by property. Give pairs: a layer (design_read's id) and the computed styles of the element that draws it, as the browser gives them: Object.fromEntries([...getComputedStyle(el)].map((p) => [p, getComputedStyle(el).getPropertyValue(p)])), or only the properties a first call lists in notGiven. Each layer is read as design_read writes it in its parent, its tokens and text style in and its shorthands spread into longhands (padding into padding-top…, border into each side's width, style and colour, font into family, size, weight, style and line height, gap into row-gap and column-gap). mismatches gives each property the build has otherwise with both values and the token or text style it comes from; notGiven what the build's styles leave out; notCompared what a computed style cannot be held against (offsets in percent or calc(), fr tracks). Sizes and places may be off by tolerance px; other lengths, colours (hex or rgb()), shadows, gradients and transforms compare by value. What the design leaves unset is not checked. image_compare compares the pixels. Works while Allow edits is off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "pairs": {
+          "minItems": 1,
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "node": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "The layer, by the id design_read gives it, e.g. 54:243."
+              },
+              "css": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "description": "The computed styles of the element that draws the layer in the build, by property: getComputedStyle's values, background-color or backgroundColor."
+              },
+              "label": {
+                "description": "What draws it in the build (a selector, a component), to tell the results apart.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "node",
+              "css"
+            ]
+          },
+          "description": "Each layer with the build's computed styles for it."
+        },
+        "tolerance": {
+          "default": 1,
+          "description": "How far a size or a place may be off, in px (1 by default): layout rounds them. Other lengths, colours and numbers compare as CSS computes them.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "pairs"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "matched": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Properties the build has as the design sets them."
+              },
+              "mismatches": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "type": "string"
+                    },
+                    "design": {
+                      "type": "string",
+                      "description": "The design's value, its tokens' values in."
+                    },
+                    "from": {
+                      "description": "What the design takes it from: a token, var(--name), or a text style, textStyle=\"Name\".",
+                      "type": "string"
+                    },
+                    "build": {
+                      "type": "string",
+                      "description": "The build's computed value."
+                    }
+                  },
+                  "required": [
+                    "property",
+                    "design",
+                    "build"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Properties the build has otherwise, in the design's order."
+              },
+              "notGiven": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Properties the design sets that the build's styles leave out: read them too and compare again."
+              },
+              "notCompared": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "type": "string"
+                    },
+                    "design": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "property",
+                    "design"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "What the design writes in a way a computed style cannot be held against: an offset in percent or calc(), tracks in fr, a value in em without a font size."
+              },
+              "node": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "tag": {
+                "type": "string",
+                "description": "Its element in design_read: Frame, Text, Icon…"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "matched",
+              "mismatches",
+              "notGiven",
+              "notCompared",
+              "node",
+              "name",
+              "tag"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Each pair's layer: what matched, what differs, what the build left out, what cannot be compared."
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Layers the file does not hold."
+        },
+        "same": {
+          "type": "boolean",
+          "description": "The build gave every property the design sets and each one matched (notCompared aside)."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "layers",
+        "missing",
+        "same",
+        "notes"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false
@@ -4033,6 +4246,540 @@
     }
   },
   {
+    "name": "design_lint",
+    "title": "Lint a design against the general rules",
+    "description": "Checks layers, a page or the file against the rules a design should keep before it is built: text contrast below WCAG AA (an error), colours, texts and effects bound to no token or style, frames detached from components, stacks placed by hand that Figma reads as a flow, layers reaching past their parent's flow, grid cell or clip (a text past its column), touch targets under 24 or 44 px, interactive components without hover, focus or disabled states, raw values a token holds, spacing off the 4 px grid, instance overrides of a component's look, default layer names, hidden and empty leftovers. Each finding names its layer, why, and how to fix it with which tool (tokens_bind binds raw values to the tokens holding them). Errors first. Works while Allow edits is off. design_audit lists the scale itself.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "What to lint: a layer id, a page id (its top layers), or \"file\". Default: the layers selected in Figma, else the current page.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "rules": {
+          "description": "Only these rules. Default: every rule.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "contrast",
+              "raw-color",
+              "text-style",
+              "detached",
+              "no-auto-layout",
+              "overflow",
+              "touch-target",
+              "missing-states",
+              "raw-number",
+              "off-scale",
+              "effect-style",
+              "overridden",
+              "default-name",
+              "leftover"
+            ]
+          }
+        },
+        "severity": {
+          "default": "info",
+          "description": "The least severe findings to list: error, warning, or info (everything).",
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ]
+        },
+        "limit": {
+          "default": 100,
+          "description": "The most findings listed; every rule is still counted.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string",
+                "enum": [
+                  "contrast",
+                  "raw-color",
+                  "text-style",
+                  "detached",
+                  "no-auto-layout",
+                  "overflow",
+                  "touch-target",
+                  "missing-states",
+                  "raw-number",
+                  "off-scale",
+                  "effect-style",
+                  "overridden",
+                  "default-name",
+                  "leftover"
+                ]
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "count": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "about": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "rule",
+              "severity",
+              "count",
+              "about"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Each rule with findings, and how many: the list below may stop at the limit."
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string",
+                "enum": [
+                  "contrast",
+                  "raw-color",
+                  "text-style",
+                  "detached",
+                  "no-auto-layout",
+                  "overflow",
+                  "touch-target",
+                  "missing-states",
+                  "raw-number",
+                  "off-scale",
+                  "effect-style",
+                  "overridden",
+                  "default-name",
+                  "leftover"
+                ]
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "description": "The layer (or component set) the finding is about."
+              },
+              "name": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "fix": {
+                "description": "How to fix it, naming the tool that does.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "rule",
+              "severity",
+              "id",
+              "name",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Errors first, then warnings, then info; in layer order within each."
+        },
+        "more": {
+          "type": "boolean",
+          "description": "Findings past the limit were left out: raise limit, narrow within or pick rules."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "summary",
+        "rules",
+        "findings",
+        "more",
+        "notes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "a11y_read",
+    "title": "Read a screen's accessibility",
+    "description": "What a screen's markup needs for accessibility, read from the design: its headings with levels (a text style named H2 or Heading 3 at that level, else by size, the largest h1; skipped levels and extra h1s said), its controls with their roles (link when a click goes to a screen or URL, button for other clicks, checkbox, radio, switch, tab, textbox, combobox by the component) and the label a screen reader says (an icon-only control gets an aria-label suggestion; a field's label is the text right before it), its pictures with an alt from their names, controls nested in controls, and where layers placed by hand read in another order than they show. Use it with design_read when you build the screen. contrast_check rates the texts; design_lint checks touch targets. Works while Allow edits is off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "node": {
+          "description": "The screen or section to read. Default: the one layer selected in Figma.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "headings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "level": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6
+              },
+              "size": {
+                "type": "number"
+              },
+              "from": {
+                "type": "string",
+                "enum": [
+                  "style",
+                  "size"
+                ],
+                "description": "Its text style's name says the level, or its size among the screen's."
+              }
+            },
+            "required": [
+              "id",
+              "text",
+              "level",
+              "size",
+              "from"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Texts that read as headings, in reading order."
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "description": "button, link, checkbox, radio, switch, tab, textbox, combobox, menuitem."
+              },
+              "label": {
+                "description": "What a screen reader says: its text, a field's label; null when none.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "why": {
+                "type": "string",
+                "description": "What makes it this role: its prototype action, or its component."
+              },
+              "suggestion": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "role",
+              "label",
+              "why"
+            ],
+            "additionalProperties": false
+          },
+          "description": "What people press or type in, in reading order."
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "alt": {
+                "description": "An alt text from its name; null when its name is Figma's default.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "decorative": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "alt",
+              "decorative"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Pictures outside controls."
+        },
+        "order": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Where layers placed by hand read in another order than they show."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "summary",
+        "headings",
+        "controls",
+        "images",
+        "order",
+        "notes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "states_find",
+    "title": "Find missing states",
+    "description": "The states a design is drawn in and the ones the build will need that it lacks. Interactive components (buttons, fields, toggles, tabs, links, by their names) used in the scope, or the file's own for \"file\": the states their variants and properties show (hover, focus, pressed, disabled; error for a field, selected for a toggle or tab) and the missing ones. Screens of lists and forms, their frames grouped by name (Inbox, Inbox – Empty, Inbox – Mobile are one): which of empty, loading, error (lists) or error, success (forms) a frame shows and which none does. variants_read gives a component's states as CSS. Works while Allow edits is off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "Where to look: a layer id, a page id, or \"file\" (the file's own components). Default: the layers selected in Figma, else the current page.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "description": "button, field, toggle, tab or link, by its name."
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The states its variants and properties show."
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The states its kind needs that none shows."
+              },
+              "properties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The properties holding its states."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind",
+              "states",
+              "missing",
+              "properties"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Interactive components, those lacking most first."
+        },
+        "screens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "description": "list or form."
+              },
+              "frames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The frames of this screen: its widths and states."
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "name",
+              "kind",
+              "frames",
+              "states",
+              "missing"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Screens that show data or take input, grouped by name, with the states their frames show."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "summary",
+        "components",
+        "screens",
+        "notes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "tokens_usage",
     "title": "Where a token is used",
     "description": "The layers on the current page (or inside within) that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch.",
@@ -4290,7 +5037,7 @@
   {
     "name": "execute",
     "title": "Run plugin code",
-    "description": "Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given `figma` (the Plugin API) and `console`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. The tool waits at most 25 s; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file's styles and check what they write.",
+    "description": "Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given `figma` (the Plugin API), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(\"--token\") (the variable design_read names so). What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file's styles and check what they write.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4302,10 +5049,16 @@
         },
         "timeout": {
           "default": 10,
-          "description": "Seconds to wait for the code: 10 by default, 25 at most.",
+          "description": "Seconds to wait for the code: 10 by default, up to 300 for a long task.",
           "type": "number",
           "minimum": 1,
-          "maximum": 25
+          "maximum": 300
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before the code runs, for the designer to go back to. Pass one before code that changes many layers.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
         },
         "file": {
           "description": "The file to work on: its session from status or its name. Default: the active file.",
@@ -4331,6 +5084,25 @@
         },
         "error": {
           "type": "string"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4350,7 +5122,7 @@
   {
     "name": "tokens_read",
     "title": "Read the design tokens",
-    "description": "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every other mode is a block [data-<collection>=\"<mode>\"] to put on the element a theme applies to; format json returns the same per collection and mode; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
+    "description": "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable's scopes (when not every field) and code syntax, which tokens_apply takes back; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4544,6 +5316,28 @@
                         },
                         "description": {
                           "type": "string"
+                        },
+                        "scopes": {
+                          "description": "The fields Figma's pickers offer it for, when not every field: [] hides it from all.",
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "codeSyntax": {
+                          "type": "object",
+                          "properties": {
+                            "WEB": {
+                              "type": "string"
+                            },
+                            "ANDROID": {
+                              "type": "string"
+                            },
+                            "iOS": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -4783,7 +5577,7 @@
   {
     "name": "tokens_apply",
     "title": "Write design tokens",
-    "description": "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), and styles: paint (a colour or colour variable), text (the font shorthand) and effect (a box-shadow list). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+    "description": "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma's pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand) and effect (a box-shadow list). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4842,6 +5636,57 @@
                     "token": {
                       "type": "string",
                       "maxLength": 512
+                    },
+                    "scopes": {
+                      "description": "The fields Figma's pickers offer it for, by Figma's names: [\"FONT_WEIGHT\"], [\"GAP\", \"WIDTH_HEIGHT\"]; [] hides it from all of them. A new variable is offered for every field (ALL_SCOPES), which makes a number a length in px: a font weight or an opacity needs its scope.",
+                      "maxItems": 23,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "ALL_SCOPES",
+                          "TEXT_CONTENT",
+                          "CORNER_RADIUS",
+                          "WIDTH_HEIGHT",
+                          "GAP",
+                          "ALL_FILLS",
+                          "FRAME_FILL",
+                          "SHAPE_FILL",
+                          "TEXT_FILL",
+                          "STROKE_COLOR",
+                          "STROKE_FLOAT",
+                          "EFFECT_FLOAT",
+                          "EFFECT_COLOR",
+                          "OPACITY",
+                          "COLOR_OPACITY",
+                          "FONT_FAMILY",
+                          "FONT_STYLE",
+                          "FONT_WEIGHT",
+                          "FONT_SIZE",
+                          "LINE_HEIGHT",
+                          "LETTER_SPACING",
+                          "PARAGRAPH_SPACING",
+                          "PARAGRAPH_INDENT"
+                        ]
+                      }
+                    },
+                    "codeSyntax": {
+                      "description": "Its name in code per platform: WEB (also its CSS name, as var(--name)), ANDROID, iOS; \"\" removes one.",
+                      "type": "object",
+                      "properties": {
+                        "WEB": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "ANDROID": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "iOS": {
+                          "type": "string",
+                          "maxLength": 512
+                        }
+                      }
                     }
                   },
                   "required": [
@@ -5056,6 +5901,12 @@
             "additionalProperties": false
           }
         },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "dryRun": {
           "type": "boolean"
         },
@@ -5096,6 +5947,1310 @@
       "destructiveHint": true,
       "idempotentHint": false,
       "openWorldHint": false
+    }
+  },
+  {
+    "name": "tokens_bind",
+    "title": "Bind raw values to tokens",
+    "description": "Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer's variable mode and within the variables' scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates. Instances are left to their main components. Results are grouped by value. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing). design_lint says what is raw.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "The layers to bind in: a layer id, a page id (all its layers), or \"file\". Default: the layers selected in Figma.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "kinds": {
+          "default": [
+            "color",
+            "number",
+            "text",
+            "effect"
+          ],
+          "description": "What to bind: color (fills, strokes, text colours), number (gaps, padding, radii, border widths, opacity), text (text styles), effect (effect styles). Default: all.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "color",
+              "number",
+              "text",
+              "effect"
+            ]
+          }
+        },
+        "choose": {
+          "default": [],
+          "description": "Picks: for a value several tokens hold, the one it takes; or a value to snap to a token (a near colour, an off-scale gap), which then takes the token's value. Values as this tool lists them.",
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+                "description": "The value as tokens_bind lists it: #3B2FD9, 16px, a font shorthand."
+              },
+              "token": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "field": {
+                "description": "Only where the value is this field (background, border, color, gap, padding, border-radius…).",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "value",
+              "token"
+            ]
+          }
+        },
+        "remap": {
+          "default": [],
+          "description": "Rebind every use of one token to another of its kind (--blue-500 to --brand, a duplicate style to the one kept); raw values are then left alone.",
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "description": "List what would be bound without writing; works with Allow edits off.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "bound": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              },
+              "token": {
+                "type": "string"
+              },
+              "snapped": {
+                "description": "The value was not the token's: the layers take the token's value (a choice asked for it).",
+                "type": "boolean",
+                "const": true
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples",
+              "token"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ambiguous": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              },
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples",
+              "candidates"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "unmatched": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "number",
+                  "text",
+                  "effect"
+                ]
+              },
+              "field": {
+                "type": "string",
+                "description": "Where the value is, by its CSS name: background, border, color, gap, font, effects…"
+              },
+              "value": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Ids of a few of the layers."
+              }
+            },
+            "required": [
+              "kind",
+              "field",
+              "value",
+              "count",
+              "examples"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Raw values no token holds."
+        },
+        "remapped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "layers": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "more": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "bound",
+        "ambiguous",
+        "unmatched",
+        "remapped",
+        "layers",
+        "errors",
+        "notes",
+        "more",
+        "summary",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "texts_replace",
+    "title": "Find and replace text",
+    "description": "Finds and replaces text in every text under a layer, a page or the file: one pair or a list (copy edits, a translation dictionary), plain or a regular expression with groups, any case unless caseSensitive, whole words when asked. Each match is replaced where it stands, so its run keeps its font, colour and link; a text an instance shows from a component text property changes through the property. Answers each changed text before and after; a text whose font is missing is named and left. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "The texts to change: under a layer id, a page id, or \"file\". Default: under the layers selected in Figma.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "replacements": {
+          "minItems": 1,
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "find": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              "replace": {
+                "type": "string",
+                "maxLength": 10000
+              },
+              "regex": {
+                "default": false,
+                "description": "find is a JavaScript regular expression; replace may use $1, $<name>.",
+                "type": "boolean"
+              },
+              "caseSensitive": {
+                "default": false,
+                "type": "boolean"
+              },
+              "wholeWord": {
+                "default": false,
+                "description": "Match only where no letter or digit touches the match.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "find",
+              "replace"
+            ]
+          },
+          "description": "What to replace with what: one pair, or a list (copy edits, a translation), all made at once against the text as it was, so one pair never feeds another; where matches overlap the earliest wins, then the longest."
+        },
+        "dryRun": {
+          "default": false,
+          "description": "List the texts that would change, before and after, without writing.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "replacements"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "before": {
+                "type": "string"
+              },
+              "after": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "property": {
+                "description": "The component text property the change went through, for a text an instance shows from one.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "before",
+              "after",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "texts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "more": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "changed",
+        "texts",
+        "count",
+        "errors",
+        "more",
+        "summary",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "instances_reattach",
+    "title": "Put detached components back",
+    "description": "Puts frames detached from a component back as instances of it (Figma remembers which, a library's too): where the frame stood, at its size, with its texts (through the component's text properties where they show one), images and hidden layers carried over by layer path; layers only the frame had are named in lost, and the frame is removed. swap makes instances of one component instances of another (a set's variant with the same values). reset takes overrides off instances: look (fills, strokes, effects, radii, spacing back to the component's, texts kept) or all. design_lint names detached frames and overridden instances. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun says what would change).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "within": {
+          "description": "Where to look: a layer id (a detached frame or what holds some), a page id, or \"file\". Default: the layers selected in Figma.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "reattach": {
+          "description": "Put each frame detached from a component back as an instance of it. Default: true unless swap or reset is given.",
+          "type": "boolean"
+        },
+        "swap": {
+          "default": [],
+          "description": "Instances of one component become another's: [{from: \"Button\", to: \"Button v2\"}] (names, ids or key:<key>); a set's variant with the same values is taken.",
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        },
+        "reset": {
+          "description": "Take overrides off the instances: look (fills, strokes, effects, radii, spacing; texts and sizes stay) or all.",
+          "type": "string",
+          "enum": [
+            "look",
+            "all"
+          ]
+        },
+        "dryRun": {
+          "default": false,
+          "description": "Say what would change without writing; works with Allow edits off.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "reattached": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "frame": {
+                "type": "string",
+                "description": "The detached frame's id (gone after a real run)."
+              },
+              "name": {
+                "type": "string"
+              },
+              "instance": {
+                "description": "The new instance's id; null in a dry run.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "kept": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What the frame had that the instance now has too: texts, images, hidden layers."
+              },
+              "lost": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Layers only the frame had: the instance has nowhere to put them."
+              }
+            },
+            "required": [
+              "frame",
+              "name",
+              "instance",
+              "component",
+              "kept",
+              "lost"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "swapped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "reset": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "fields"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "more": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "reattached",
+        "swapped",
+        "reset",
+        "errors",
+        "notes",
+        "more",
+        "summary",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "effects_apply",
+    "title": "Put noise, texture or glass on layers",
+    "description": "Puts Figma's own effects on layers: noise (grain of one, two or many colours), texture (a faint printed, cracked look) and glass (frosted or clear, on frames only). Give a preset (grain, film, risograph, frosted-glass, clear-glass), the effect's own values, or both: the values change the preset's; grain is dark, so on a dark layer give noise.color a light colour. A new effect replaces the layer's one of its type; shadows and blurs stay; remove takes types off. Each layer is written on its own, its errors named while the rest goes in; design_read shows a layer with such an effect as an Image. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "noise": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "description": "mono: grain of one colour; duo: of color and secondColor; multi: of many colours at opacity.",
+              "type": "string",
+              "enum": [
+                "mono",
+                "duo",
+                "multi"
+              ]
+            },
+            "size": {
+              "description": "The grain's size in px.",
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "density": {
+              "description": "How much of the layer the grain covers, 0 to 1.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "color": {
+              "description": "The grain's CSS colour, its alpha how strong it shows.",
+              "type": "string",
+              "maxLength": 100
+            },
+            "secondColor": {
+              "description": "duo's second colour.",
+              "type": "string",
+              "maxLength": 100
+            },
+            "opacity": {
+              "description": "multi's opacity.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "description": "Figma's noise effect: grain over the layer."
+        },
+        "texture": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "description": "The grain's size in px.",
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "radius": {
+              "description": "How far the edges break up, in px.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "clip": {
+              "description": "Keep the texture inside the layer's shape.",
+              "type": "boolean"
+            }
+          },
+          "description": "Figma's texture effect: a faint printed, cracked look over the layer and its edges."
+        },
+        "glass": {
+          "type": "object",
+          "properties": {
+            "light": {
+              "description": "How bright the highlights are, 0 to 1.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "angle": {
+              "description": "Where the light comes from, in degrees.",
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            },
+            "refraction": {
+              "description": "How much it bends what lies behind, 0 to 1.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "depth": {
+              "description": "How thick the glass looks, 1 or more.",
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "dispersion": {
+              "description": "How much it splits colours at the edges, 0 to 1.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "blur": {
+              "description": "The blur of what lies behind, in px.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 250
+            }
+          },
+          "description": "Figma's glass effect, on frames only."
+        },
+        "nodes": {
+          "minItems": 1,
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": "The layers' ids, e.g. [\"54:243\"]."
+        },
+        "preset": {
+          "description": "A ready look: grain (fine dark grain: on a dark layer give noise.color a light colour), film (black and white grain), risograph (grain of many colours), frosted-glass or clear-glass (on frames). noise, texture or glass change its values.",
+          "type": "string",
+          "enum": [
+            "grain",
+            "film",
+            "risograph",
+            "frosted-glass",
+            "clear-glass"
+          ]
+        },
+        "remove": {
+          "default": [],
+          "description": "Effect types to take off the layers.",
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "noise",
+              "texture",
+              "glass"
+            ]
+          }
+        },
+        "dryRun": {
+          "default": false,
+          "description": "Check the layers without writing; works with Allow edits off.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "nodes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "changed",
+        "errors",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "icons_insert",
+    "title": "Find and insert icons",
+    "description": "Icons from Iconify's open sets (Lucide, Material Symbols, Tabler, Phosphor, MDI and 150 more; no key). search lists icons as set:name with each set's licence, and writes nothing; icon inserts one as an Icon layer: drawn at size (its height in px) into parent, before a sibling, in a CSS colour or bound to a colour token (var(--token)), named after the icon. Sets drawn in their own colours (logos, flags) keep them. license names the set's licence: some ask for credit. Making the layer is one undo step in Figma, binding it to a token another; refused while the plugin's Allow edits switch is off (dryRun checks without writing). Needs the internet.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "search": {
+          "description": "Words to look for, e.g. arrow right: lists icons with their set and licence, and writes nothing.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "set": {
+          "description": "Only this set's icons in a search, by its prefix: lucide, mdi, tabler, ph, material-symbols…",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "limit": {
+          "default": 20,
+          "description": "Icons a search lists, 20 by default.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "icon": {
+          "description": "The icon to insert, as search lists it: lucide:arrow-right.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "parent": {
+          "description": "The frame to put it in. Default: the current page.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "before": {
+          "description": "A layer of the parent to put it before; default: after the last.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "size": {
+          "default": 24,
+          "description": "Its height in px, 24 by default; its width follows the icon's proportions.",
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1024
+        },
+        "color": {
+          "description": "A CSS colour, or var(--token) to bind it to that colour variable. An icon of a set drawn in its own colours keeps them.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "name": {
+          "description": "The layer's name; default: the icon's.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "dryRun": {
+          "default": false,
+          "description": "Check the icon and where it goes without making the layer.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "icons": {
+          "description": "A search's icons, set:name, with their set and its licence.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "icon": {
+                "type": "string"
+              },
+              "set": {
+                "type": "string"
+              },
+              "license": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "icon",
+              "set",
+              "license"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "total": {
+          "description": "How many icons the search found, listed or not.",
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "created": {
+          "description": "The icon layer made (no id in a dry run).",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "icon": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "icon",
+            "name",
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "license": {
+          "description": "The licence of the icon's set: some ask for credit.",
+          "type": "object",
+          "properties": {
+            "set": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "spdx": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "set",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "errors",
+        "notes",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
     }
   },
   {
@@ -5514,6 +7669,191 @@
       "required": [
         "components",
         "more"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "library_search",
+    "title": "Search the saved component libraries",
+    "description": "Finds components in the team's libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer in ~/.pixelwright/libraries; save again after the library changes. Then query from any file: every word must appear in a component's name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:<key>) and properties: insert it with design_apply <Instance component=\"key:…\" variant=\"State=Hover\" props=\"Label=Buy\"/>, which works once the library is published. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "description": "Words to find in the components' names, descriptions, pages and variants, in any order (button hover); a typo still finds. Left out, the saved libraries are listed.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "save": {
+          "default": false,
+          "description": "Save the file's own published components as a library first, replacing what was saved for it before: call it in the library file, open in Figma Desktop with the Pixelwright plugin.",
+          "type": "boolean"
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "limit": {
+          "default": 20,
+          "description": "The most components to give.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "description": "What the query found, best first.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "COMPONENT",
+                  "COMPONENT_SET"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "page": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": {
+                "type": "string"
+              },
+              "properties": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "default": {
+                      "type": [
+                        "string",
+                        "boolean"
+                      ]
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "library": {
+                "type": "string"
+              },
+              "component": {
+                "type": "string",
+                "description": "design_apply's <Instance component=\"key:…\">."
+              }
+            },
+            "required": [
+              "type",
+              "name",
+              "page",
+              "properties",
+              "library",
+              "component"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "more": {
+          "type": "boolean"
+        },
+        "saved": {
+          "type": "object",
+          "properties": {
+            "library": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "components": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "library",
+            "path",
+            "components"
+          ],
+          "additionalProperties": false
+        },
+        "libraries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "components": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "savedAt": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "components",
+              "savedAt",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Every saved library."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "libraries"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false
@@ -6108,7 +8448,7 @@
   {
     "name": "guide",
     "title": "Pixelwright guide",
-    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); code-connect (Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.",
+    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); layout (design_apply layouts: when to use flex, grid or absolute placement; grid tracks, spans and cells; pinned and centred layers.); code-connect (Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -6121,6 +8461,7 @@
             "tokens",
             "assets",
             "write",
+            "layout",
             "code-connect",
             "email"
           ]

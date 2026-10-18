@@ -79,7 +79,8 @@ export async function numberingStyles(pages: Iterable<PageNode>): Promise<Number
     await loaded(page);
 
     for (const id of usedUnder(page).styleIds) {
-      const style = known.has(id) ? null : await figma.getStyleByIdAsync(id);
+      // A library style Figma cannot reach (offline) is left out of the numbering, not an error.
+      const style = known.has(id) ? null : await figma.getStyleByIdAsync(id).catch(() => null);
 
       if (style !== null) {
         styles.push({
@@ -116,4 +117,26 @@ export function numbered<T extends NumberedStyle>(styles: readonly T[], also: re
         : rest
     ) as T;
   });
+}
+
+/** A layer's style id fields, each with the setter Figma takes it through. */
+const STYLE_SETTERS = {
+  fillStyleId: "setFillStyleIdAsync",
+  strokeStyleId: "setStrokeStyleIdAsync",
+  effectStyleId: "setEffectStyleIdAsync",
+  textStyleId: "setTextStyleIdAsync",
+  gridStyleId: "setGridStyleIdAsync",
+} as const;
+
+export type StyleField = keyof typeof STYLE_SETTERS;
+
+export const STYLE_FIELDS = Object.keys(STYLE_SETTERS) as StyleField[];
+
+/** Sets one of a layer's style ids through Figma's setter for it; a layer without that field is left alone. */
+export async function setStyleId(layer: BaseNode, field: StyleField, id: string): Promise<void> {
+  const setter = (layer as BaseNode & Record<string, unknown>)[STYLE_SETTERS[field]];
+
+  if (typeof setter === "function") {
+    await setter.call(layer, id);
+  }
 }

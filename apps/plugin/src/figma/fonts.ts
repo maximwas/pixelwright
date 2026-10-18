@@ -80,3 +80,30 @@ function nearestStyle(spec: FontSpec, styles: readonly FontName[], slanted: (sty
 
   return best;
 }
+
+/**
+ * The fonts a text uses, in one call per text: an empty one through its own fontName, since Figma refuses a range of
+ * no characters. (@create-figma-plugin/utilities' loadFontsAsync asks for each character's font and names none.)
+ */
+export function textFonts(text: TextNode): FontName[] {
+  const fonts = text.characters.length > 0 ? text.getRangeAllFontNames(0, text.characters.length) : [text.fontName];
+
+  return fonts.filter((font): font is FontName => typeof font === "object" && font !== null);
+}
+
+/** A text style's font, for a text about to take the style: Figma sets it only once the font is loaded. */
+export function styleFonts(style: BaseStyle | undefined): FontName[] {
+  return style?.type === "TEXT" ? [(style as TextStyle).fontName] : [];
+}
+
+/**
+ * Loads every font the texts use and the fonts given besides, each once: Figma refuses to change a text's characters
+ * or its look before. Their names, "Family Style".
+ */
+export async function loadTextFonts(texts: readonly TextNode[], also: readonly FontName[] = []): Promise<string[]> {
+  const fonts = new Map([...texts.flatMap(textFonts), ...also].map((font) => [`${font.family} ${font.style}`, font]));
+
+  await Promise.all([...fonts.values()].map((font) => figma.loadFontAsync(font)));
+
+  return [...fonts.keys()];
+}

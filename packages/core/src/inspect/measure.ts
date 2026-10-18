@@ -19,8 +19,7 @@ export function measureLayers(layers: readonly MeasuredLayer[], painted: boolean
 function pairOf(first: MeasuredLayer, second: MeasuredLayer, painted: boolean): MeasuredPair {
   const a = sides(painted ? (first.paintedBox ?? first.box) : first.box);
   const b = sides(painted ? (second.paintedBox ?? second.box) : second.box);
-  const gapX = Math.max(b.left - a.right, a.left - b.right);
-  const gapY = Math.max(b.top - a.bottom, a.top - b.bottom);
+  const { x: gapX, y: gapY } = gapsBetween(a, b);
   const edges = edgesOf(a, b);
   const { contains, inset } = containmentOf(a, b);
   const refA = {
@@ -59,6 +58,18 @@ function pairOf(first: MeasuredLayer, second: MeasuredLayer, painted: boolean): 
 }
 
 type Sides = ReturnType<typeof sides>;
+
+/** The gap between two boxes along each axis: positive when they stand apart on it, negative when they overlap. */
+export function gapsOf(a: InspectBox, b: InspectBox): { x: number; y: number } {
+  return gapsBetween(sides(a), sides(b));
+}
+
+function gapsBetween(a: Sides, b: Sides): { x: number; y: number } {
+  return {
+    x: Math.max(b.left - a.right, a.left - b.right),
+    y: Math.max(b.top - a.bottom, a.top - b.bottom),
+  };
+}
 
 /** How far each of b's edges, and its centre, lies from a's. */
 function edgesOf(a: Sides, b: Sides): MeasuredPair["edges"] {

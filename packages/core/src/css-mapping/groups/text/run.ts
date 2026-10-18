@@ -26,7 +26,8 @@ interface Run {
   readonly same: (key: keyof FontParts) => boolean;
 }
 
-const DECORATION_LINES: Readonly<Record<string, string>> = {
+/** Figma's text decorations as CSS's text-decoration lines. */
+export const DECORATION_LINES: Readonly<Record<string, string>> = {
   UNDERLINE: "underline",
   STRIKETHROUGH: "line-through",
 };

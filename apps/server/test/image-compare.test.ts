@@ -54,6 +54,23 @@ function rendering(png: Uint8Array): BridgeView {
   };
 }
 
+/** A bridge whose layers render to the PNGs by their id. */
+function renderingEach(pngs: Record<string, Uint8Array>): BridgeView {
+  return {
+    ...rendering(new Uint8Array()),
+    request: async (_op, input) => {
+      const { node, offset, length } = input as { node: string; offset: number; length: number };
+      const bytes = Buffer.from(pngs[node] ?? new Uint8Array());
+
+      return {
+        scale: 1,
+        totalBytes: bytes.length,
+        bytes: bytes.subarray(offset, offset + length).toString("base64"),
+      };
+    },
+  };
+}
+
 async function reference(png: Uint8Array): Promise<string> {
   const path = join(await mkdtemp(join(tmpdir(), "pixelwright-compare-")), "build.png");
 
@@ -134,5 +151,46 @@ describe("image_compare", () => {
 
   it("refuses a reference that is not a PNG", async () => {
     await expect(ask(barPng(4), new TextEncoder().encode("not a png"))).rejects.toThrow(/not a PNG/);
+  });
+
+  it("compares a layer against another layer, with no file on disk", async () => {
+    const result = await compareImage(
+      new PluginClient(
+        renderingEach({
+          "1:2": barPng(6),
+          "1:3": barPng(4),
+        }),
+      ),
+      {
+        node: "1:2",
+        against: "1:3",
+        scale: 1,
+        effects: true,
+      },
+    );
+
+    expect(result.size).toEqual({
+      node: "20×10",
+      reference: "20×10",
+    });
+    expect(result.rows.shifted.map(({ by }) => by)).toEqual([2, 2]);
+  });
+
+  it("asks for a PNG or another layer, one of them", async () => {
+    const client = new PluginClient(rendering(barPng(4)));
+    const base = {
+      node: "1:2",
+      scale: 1,
+      effects: true,
+    };
+
+    await expect(compareImage(client, base)).rejects.toThrow(/reference.*against/);
+    await expect(
+      compareImage(client, {
+        ...base,
+        reference: await reference(barPng(4)),
+        against: "1:3",
+      }),
+    ).rejects.toThrow(/one of them/);
   });
 });

@@ -1,5 +1,4 @@
 [
-  "--Orbit-Gradient has no value: its paint style is gradient_linear, which neither core nor Figma wrote as CSS here; take its look from a screenshot of a layer that uses it.",
   "#FF6B3D is written raw once (color of 54:457) and equals --color-accent: use the token.",
   "#E1E5EE is written raw once (background of 54:458) and equals --color-line: use the token.",
   "1 layer keeps Figma's default name (54:458 \"Rectangle 1\"): name it by its role in the code.",

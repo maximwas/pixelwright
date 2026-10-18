@@ -37,7 +37,14 @@
               }
             },
             "description": "The page background.",
-            "token": "--surface"
+            "token": "--surface",
+            "scopes": [
+              "FRAME_FILL",
+              "SHAPE_FILL"
+            ],
+            "codeSyntax": {
+              "WEB": "var(--surface)"
+            }
           },
           {
             "name": "Ink",
@@ -98,7 +105,10 @@
                 "kind": "number",
                 "value": 8
               }
-            }
+            },
+            "scopes": [
+              "GAP"
+            ]
           },
           {
             "name": "Gap/None",
@@ -108,7 +118,10 @@
                 "kind": "number",
                 "value": 0
               }
-            }
+            },
+            "scopes": [
+              "GAP"
+            ]
           },
           {
             "name": "Radius",
@@ -118,7 +131,8 @@
                 "kind": "number",
                 "value": 13.5
               }
-            }
+            },
+            "scopes": []
           },
           {
             "name": "Opacity/Half",
@@ -128,7 +142,10 @@
                 "kind": "number",
                 "value": 0.5
               }
-            }
+            },
+            "scopes": [
+              "OPACITY"
+            ]
           },
           {
             "name": "Opacity/Faint",
@@ -138,7 +155,10 @@
                 "kind": "number",
                 "value": 0.25
               }
-            }
+            },
+            "scopes": [
+              "COLOR_OPACITY"
+            ]
           },
           {
             "name": "Weight/Bold",
@@ -148,7 +168,10 @@
                 "kind": "number",
                 "value": 700
               }
-            }
+            },
+            "scopes": [
+              "FONT_WEIGHT"
+            ]
           },
           {
             "name": "Font/Family",
@@ -158,7 +181,10 @@
                 "kind": "string",
                 "value": "Inter 'Display' \\ Pro"
               }
-            }
+            },
+            "scopes": [
+              "FONT_FAMILY"
+            ]
           },
           {
             "name": "Feature/On",
@@ -207,6 +233,36 @@
                 "b": 0.9803921568627451,
                 "a": 0.8
               }
+            }
+          ]
+        },
+        {
+          "name": "Glow",
+          "paints": [
+            {
+              "kind": "gradient",
+              "type": "LINEAR",
+              "angle": 90,
+              "stops": [
+                {
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "position": 0
+                },
+                {
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "position": 1
+                }
+              ]
             }
           ]
         }
@@ -311,11 +367,6 @@
       "collection": "Motion",
       "name": "Duration",
       "message": "TIMING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
-    },
-    {
-      "kind": "paint",
-      "name": "Glow",
-      "message": "linear-gradient(90deg, #FFF 0%, #000 100…: a gradient is not written yet."
     }
   ]
 }

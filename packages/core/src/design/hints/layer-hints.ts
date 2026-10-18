@@ -6,7 +6,7 @@ import { EXAMPLES, labelOf, listed } from "./examples.ts";
 import { guessedLayoutCss } from "./layout-guess.ts";
 
 /** Figma's names for layers nobody named: `Frame 427`, `Rectangle 22957`. */
-const DEFAULT_NAME =
+export const DEFAULT_NAME =
   /^(Frame|Group|Rectangle|Ellipse|Vector|Line|Polygon|Star|Component|Instance|Section|Union|Subtract|Intersect|Exclude) \d+$/;
 
 /** A layer the read shows as a layer, with the parent it sits in. */

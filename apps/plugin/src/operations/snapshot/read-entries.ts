@@ -5,6 +5,7 @@ import type { EntryContext } from "../../figma/layer-read/layer-entry.ts";
 import { entryOf } from "../../figma/layer-read/read-layer.ts";
 import { References } from "../../figma/layer-read/references.ts";
 import { isLayer, pageOf } from "../../figma/nodes.ts";
+import { type ModedNode, rootModes } from "../../figma/variable-modes.ts";
 import { readSubtree, SnapshotBudget } from "./subtree.ts";
 
 type Root = OperationOutput<"entries">["roots"][number];
@@ -68,11 +69,19 @@ class EntriesRead {
       whole: this.#asked.has(layer.id),
     });
 
+    const entry = await readSubtree(node, this.#budget, {
+      read: (layer) => entryOf(layer, context(layer)),
+      open: (layer) => this.#asked.has(layer.id),
+    });
+    // As a read's root: the modes it takes from above count as its own, so a read sent back sets none of them.
+    const modes = await rootModes(node as ModedNode, this.#references.lookup);
+
+    if (modes.length > 0) {
+      entry.modes = modes;
+    }
+
     return {
-      node: await readSubtree(node, this.#budget, {
-        read: (layer) => entryOf(layer, context(layer)),
-        open: (layer) => this.#asked.has(layer.id),
-      }),
+      node: entry,
       parent: parent === null ? null : await entryOf(parent, context(parent)),
     };
   }

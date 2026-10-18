@@ -31,6 +31,13 @@
   --Body-font: 400 16px/normal 'Open Sans';
 }
 
+[data-brand-colors="light"] {
+  --surface: color(display-p3 1 1 1);
+  --Ink: color(display-p3 0.078 0.086 0.122);
+  --Veil: color-mix(in srgb, color(display-p3 0 0 0) 40%, transparent);
+  --Lost: /* unresolved alias V:missing */;
+}
+
 [data-brand-colors="dark"] {
   --surface: var(--Ink);
   --Ink: var(--Accent);

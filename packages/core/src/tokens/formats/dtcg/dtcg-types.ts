@@ -1,4 +1,4 @@
-import { aliasOf } from "../../aliases.ts";
+import { aliasLinks } from "../../aliases.ts";
 import type { RawTokens, RawVariable } from "../../raw-tokens.ts";
 import { DTCG_DIMENSION_SCOPES } from "./constants.ts";
 
@@ -9,13 +9,7 @@ import { DTCG_DIMENSION_SCOPES } from "./constants.ts";
  */
 export function dtcgTypes(raw: RawTokens): Map<string, string | null> {
   const types = new Map(raw.variables.map((variable) => [variable.id, dtcgTypeOf(variable)]));
-  const links = raw.variables.flatMap((variable) =>
-    Object.values(variable.valuesByMode).flatMap((value) => {
-      const target = aliasOf(value);
-
-      return target !== null && types.has(target) ? [[variable.id, target] as const] : [];
-    }),
-  );
+  const links = aliasLinks(raw.variables);
   let changed = true;
 
   while (changed) {

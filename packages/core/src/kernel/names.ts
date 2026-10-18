@@ -53,3 +53,24 @@ export function variableTokenName(variable: NamedVariable): string {
 
   return web.startsWith("--") ? web : `--${web}`;
 }
+
+/** A name as an HTML attribute name or value: lower case, letters and digits of any script, the rest as "-". */
+export function attributeSlug(name: string): string {
+  const cleaned = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return cleaned === "" ? "mode" : cleaned;
+}
+
+/** The attribute a variable collection's mode is set by, on a layer and in tokens_read's CSS: `data-<collection>`. */
+export function modeAttribute(collection: string): string {
+  return `data-${attributeSlug(collection)}`;
+}
+
+/** Whether an attribute names a variable collection's mode: `data-` and a slug. */
+export function isModeAttribute(name: string): boolean {
+  return /^data-[\p{L}\p{N}][\p{L}\p{N}-]*$/u.test(name);
+}

@@ -50,7 +50,8 @@ taken as sRGB and converted to P3.
 
 - \`<Instance component="Heading" variant="Property 1=Green" props="Label=Our work, Has icon=false"/>\` makes an
   instance by the names design_read and components_read write: the file's components, the ones its page uses from a
-  library, or \`component="key:<key>"\` for a library one the file does not use yet. \`variant\` picks the variant
+  library, or \`component="key:<key>"\` for a library one the file does not use yet (\`library_search\` finds those
+  keys in the libraries saved with it). \`variant\` picks the variant
   (values left out are the set's default), \`props\` sets text and boolean properties (names without Figma's #id).
 - Inside a new instance, elements with another instance's ids (of the same component and variant) or the
   component's own write the new instance's layers, as overrides; the other instance stays as it is.
@@ -69,7 +70,8 @@ taken as sRGB and converted to P3.
 - \`<Image src="photos/hero.jpg" width="600px" height="400px"/>\` makes an image from a file (PNG, JPG or GIF, up
   to 32 MB and 4096 px a side; convert WebP first), \`<Icon src="icons/arrow.svg" width="24px"/>\` an icon from an
   SVG; \`background="url(…)"\` fills any layer that takes a background with one, a new or an existing frame,
-  rectangle or ellipse (an avatar). Paths are on the server's machine, from its folder.
+  rectangle or ellipse (an avatar). Paths are on the server's machine, from its folder. \`icons_insert\` finds an
+  open-source icon (Lucide, Material Symbols, Tabler…) and inserts it at a size, in a colour or bound to a token.
 - An existing \`Image\` with another file in \`src\` takes that image, keeping its fit. A file design_read or
   assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
   the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a
@@ -87,9 +89,16 @@ taken as sRGB and converted to P3.
   weight, or the error lists the styles it has.
 - Sizes: \`width\`/\`height\` in px or \`auto\`; \`flex="1"\` fills an auto layout parent's direction,
   \`align-self="stretch"\` fills across it. Placement: \`position="absolute"\` with \`left\`/\`right\`/\`top\`/
-  \`bottom\`, \`calc(50% ± Npx)\` for the centre, percents (with the size in percents) to scale.
-- Not written yet, and refused with an error: gradients, blend modes, grow weights, \`overflow: scroll\`, links on
-  frames, dashed underlines.
+  \`bottom\`, \`calc(50% ± Npx)\` for the centre, percents (with the size in percents) to scale. When to use flex,
+  grid or absolute placement, grid tracks and cells, with examples: see \`guide layout\`.
+- Gradients: \`background\` takes \`linear-gradient(<angle>, <stops>)\` (or \`to right\`…), \`radial-gradient(<rx> <ry>
+  at <x> <y>, <stops>)\` and \`conic-gradient(from <angle> at <x> <y>, <stops>)\`, a stop a colour or a token
+  (\`var(--brand) 0%\`) and its place in percent; a text's colour and borders take colours and tokens only. Figma's
+  diamond gradient and repeating gradients stay read-only.
+- \`mix-blend-mode\` sets how a layer blends (multiply, screen, overlay…; normal is Figma's pass through on a frame);
+  \`mask="alpha"\` (or vector, luminance) makes a layer the mask of the layers above it in its parent, \`mask="none"\`
+  makes it a layer again.
+- Not written yet, and refused with an error: grow weights, \`overflow: scroll\`, links on frames, dashed underlines.
 
 ## Errors and undo
 
@@ -100,16 +109,35 @@ Each element is written on its own: an error names its line and attribute, and t
 the user's Cmd+Z takes the whole call back.
 
 Effects CSS cannot write (noise, texture, glass, hidden effects) stay when a layer's \`box-shadow\` or \`filter\`
-changes, and a shadow sent back as it was keeps its colour variable and blend mode.
+changes, and a shadow sent back as it was keeps its colour variable and blend mode. \`effects_apply\` puts Figma's own
+noise, texture and glass on layers: a ready look (grain, film, risograph, frosted or clear glass) or its own values.
 
 ## Beyond the XML: execute
 
 \`execute\` runs JavaScript in the plugin for what design_apply and tokens_apply cannot say (removing a variable,
-a prototype link, a plugin data field). The code is the body of an async function given \`figma\` (the Plugin API)
-and \`console\`: \`await\` works, \`return\` gives \`result\` (Figma's layers as {id, type, name}, plain data as
+a prototype link, a plugin data field). The code is the body of an async function given \`figma\` (the Plugin API),
+\`console\` and \`pw\`: \`await\` works, \`return\` gives \`result\` (Figma's layers as {id, type, name}, plain data as
 built), \`console.log\` lines come back as \`logs\`, and what it throws as \`error\`. What it changes during the call is
-one undo step; it needs Allow edits, and the tool waits at most 25 s. Code it starts that outlives the call (timers,
+one undo step, and \`version\` saves a named version in the file's history first; it needs Allow edits. The tool
+waits 10 s by default and up to 300 s (\`timeout\`) for a long task. Code it starts that outlives the call (timers,
 listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
 synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.
+
+\`pw\` stays from one call to the next while the plugin window is open:
+
+- \`pw.state\` holds your data, and functions you add to \`pw\` stay for later calls;
+- \`await pw.node(id)\`: the layer, or an error naming the id;
+- \`await pw.fonts(layer)\`: loads every font the texts in the layer use, mixed runs too, before you change their
+  characters or sizes; it returns their names;
+- \`pw.paint(css)\`: a CSS colour as a solid paint in the file's colours, its alpha as the opacity;
+- \`await pw.variable("--token")\`: the variable design_read names so, a library's imported into the file.
+
+\`\`\`js
+const card = await pw.node("54:243");
+await pw.fonts(card);
+for (const text of card.findAllWithCriteria({ types: ["TEXT"] })) text.textCase = "UPPER";
+card.fills = [figma.variables.setBoundVariableForPaint(pw.paint("#FFF"), "color", await pw.variable("--color-surface"))];
+pw.state.card = card.id;
+\`\`\`
 `,
 } as const;

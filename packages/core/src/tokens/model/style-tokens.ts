@@ -1,6 +1,7 @@
 import { shadowListCss } from "../../css-mapping/groups/effects.ts";
 import { textStyleExtras } from "../../css-mapping/groups/text/styles.ts";
 import { fontShorthand } from "../../css-mapping/values/fonts.ts";
+import { gradientCss } from "../../css-mapping/values/gradient-css.ts";
 import { Color } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
 import { styleTokenName } from "../../kernel/names.ts";
@@ -76,7 +77,10 @@ export function styleTokens(styles: readonly RawStyle[], context: StyleContext):
   return tokens;
 }
 
-/** A single solid paint as its colour; a gradient or layered one as the CSS Figma wrote for a layer that uses it. */
+/**
+ * A single solid paint as its colour; a gradient or layered one as the CSS Figma wrote for a layer that uses it, else
+ * a lone gradient as core writes it.
+ */
 function paintToken(style: RawStyle, token: string, context: StyleContext): StyleToken | null {
   const visible = (style.paints ?? []).filter((paint) => paint.visible ?? true);
   const [only] = visible;
@@ -96,6 +100,27 @@ function paintToken(style: RawStyle, token: string, context: StyleContext): Styl
       name: style.name,
       token,
       value: style.css,
+    };
+  }
+
+  // A style has no box: its gradient reads as on a square, the shape its transform is kept in.
+  const gradient =
+    visible.length === 1 && only !== undefined
+      ? gradientCss(
+          only,
+          {
+            width: 1,
+            height: 1,
+          },
+          { colorSpace: context.space },
+        )
+      : null;
+
+  if (gradient !== null) {
+    return {
+      name: style.name,
+      token,
+      value: gradient,
     };
   }
 

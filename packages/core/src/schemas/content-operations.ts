@@ -2,9 +2,14 @@ import * as z from "zod";
 import { ApplyChangeSchema, ApplyResultSchema, EntriesSchema } from "../apply/schemas.ts";
 import { EXPORT_CHUNK_BYTES, UPLOAD_MAX_BYTES, VERSION_DESCRIPTION_CHARS } from "../constants/bridge.ts";
 import { EXECUTE_CODE_CHARS, EXECUTE_MAX_MS } from "../constants/execute.ts";
+import { NEARBY_MAX_DISTANCE } from "../constants/nearby.ts";
+import { InstancesInputSchema, InstancesOutputSchema } from "../instances/schemas.ts";
+import { TextsInputSchema, TextsOutputSchema } from "../texts/schemas.ts";
+import { BindInputSchema, BindOutputSchema } from "../tokens/bind/schemas.ts";
 import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schemas.ts";
 import { RawTokensSchema } from "../tokens/raw-tokens.ts";
-import { InspectRawSchema } from "./inspect.ts";
+import { EffectsInputSchema, EffectsOutputSchema } from "./effects.ts";
+import { InspectRawSchema, NearbySchema } from "./inspect.ts";
 import { ComponentEntrySchema, NodeIdSchema, QuerySchema } from "./operation-shapes.ts";
 import { SnapshotSchema } from "./snapshot.ts";
 
@@ -152,6 +157,21 @@ export const CONTENT_OPERATIONS = {
     }),
     output: TokensApplyResultSchema,
   },
+  /** Raw values bound to the tokens that hold them, or one token's uses rebound to another; a dry run only finds. */
+  bind: {
+    input: BindInputSchema,
+    output: BindOutputSchema,
+  },
+  /** Find and replace in the texts under layers or pages, each run's style kept; a dry run only finds. */
+  texts: {
+    input: TextsInputSchema,
+    output: TextsOutputSchema,
+  },
+  /** Detached frames put back as instances, instances swapped, overrides taken off; a dry run only finds. */
+  instances: {
+    input: InstancesInputSchema,
+    output: InstancesOutputSchema,
+  },
   /** Code run in the plugin: its value made JSON-safe, what it printed, and what it threw or that it ran too long. */
   execute: {
     input: z.object({
@@ -171,6 +191,18 @@ export const CONTENT_OPERATIONS = {
       relativeTo: NodeIdSchema.exactOptional(),
     }),
     output: InspectRawSchema,
+  },
+  /**
+   * The designer's notes on the canvas around the screen that holds a layer (its topmost layer under its page or a
+   * section): texts, small frames and groups of nothing but texts and plain shapes, layers named like notes; outside the screen or over it,
+   * within `distance` px, nearest first. Read only.
+   */
+  nearby: {
+    input: z.object({
+      node: NodeIdSchema,
+      distance: z.number().min(0).max(NEARBY_MAX_DISTANCE),
+    }),
+    output: NearbySchema,
   },
   /**
    * The smallest layer that renders a region of a layer as the layer's own render shows it: the deepest opaque one
@@ -195,6 +227,11 @@ export const CONTENT_OPERATIONS = {
       width: z.number(),
       height: z.number(),
     }),
+  },
+  /** Figma's own noise, texture and glass on layers: write, refused while Allow edits is off (dryRun is not). */
+  effects: {
+    input: EffectsInputSchema,
+    output: EffectsOutputSchema,
   },
   delete: {
     input: z.object({

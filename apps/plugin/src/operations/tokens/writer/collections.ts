@@ -76,7 +76,7 @@ async function existingTarget(
   local: RawTokens["collections"][number],
   run: TokenRun,
 ): Promise<Target> {
-  const collection = run.dryRun ? null : await figma.variables.getVariableCollectionByIdAsync(local.id);
+  const collection = run.dryRun ? null : await run.lookup.collection(local.id);
   const target = targetFor(plan, collection, new Map(local.modes.map(({ name, modeId }) => [name, modeId])));
 
   for (const name of plan.modes.filter((mode) => !target.modes.has(mode))) {

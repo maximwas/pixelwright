@@ -1,3 +1,4 @@
+import { SPACING_GRID } from "../constants/css.ts";
 import { boundVariable } from "../css-mapping/values/paints.ts";
 import { Color } from "../kernel/color/color.ts";
 import { colorSpaceOf } from "../kernel/color/color-space.ts";
@@ -8,7 +9,6 @@ import type { CssContext } from "../types/css.ts";
 import type { Snapshot, SnapshotNode, SnapshotPaint } from "../types/snapshot.ts";
 
 /** The grid spacing and radii are expected on. */
-const GRID = 4;
 /** How far apart two colour channels (0–255) may be and still look the same. */
 const HAIR = 3;
 /** Below this, sizes a pixel apart are a scale's own steps (12, 13, 14), not a slip. */
@@ -235,10 +235,10 @@ function listed(tally: Tally): { value: number; count: number; token?: string }[
 
 function offGrid(tally: Tally, what: string): string[] {
   return [...tally.values()]
-    .filter((entry) => entry.token === undefined && !entry.full && entry.value > 2 && entry.value % GRID !== 0)
+    .filter((entry) => entry.token === undefined && !entry.full && entry.value > 2 && entry.value % SPACING_GRID !== 0)
     .map(
       (entry) =>
-        `${entry.value}px is off the ${GRID}px grid (${what}, ${entry.where}${entry.count > 1 ? ` and ${entry.count - 1} more` : ""}).`,
+        `${entry.value}px is off the ${SPACING_GRID}px grid (${what}, ${entry.where}${entry.count > 1 ? ` and ${entry.count - 1} more` : ""}).`,
     );
 }
 

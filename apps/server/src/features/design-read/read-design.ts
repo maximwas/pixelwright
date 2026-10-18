@@ -10,6 +10,7 @@ import {
   designReadOf,
   designTree,
   fitPlan,
+  type OperationOutput,
   type Snapshot,
 } from "@pixelwright/core";
 import type * as z from "zod";
@@ -24,10 +25,14 @@ import type { PluginClient } from "../../plugin/plugin-client.ts";
 import type { PluginSession } from "../../plugin/plugin-session.ts";
 import { codeHints } from "./code-hints.ts";
 import { codeOutput } from "./code-output.ts";
+import { nearbyNotes } from "./nearby-notes.ts";
 import type { DesignReadInputSchema } from "./schemas.ts";
 
-/** The tool's input; `code` may be left out by callers that skip the schema (it is on by default). */
-type DesignReadArgs = Omit<z.output<typeof DesignReadInputSchema>, "code"> & { code?: boolean };
+/** The tool's input; `code` (on by default) and `repeats` may be left out by callers that skip the schema. */
+type DesignReadArgs = Omit<z.output<typeof DesignReadInputSchema>, "code" | "repeats"> & {
+  code?: boolean;
+  repeats?: boolean;
+};
 
 /** Code Connect's part of a read: the connected instances' code, or none, and what it says of the project's files. */
 interface Connected {
@@ -53,6 +58,7 @@ export async function readDesign(
     files,
   });
   const read = designReadOf(tree);
+  const notes = args.nearby === undefined ? null : await nearbyNotes(session, node, args.nearby);
   const content: CallToolResult["content"] = [
     {
       type: "text",
@@ -67,6 +73,7 @@ export async function readDesign(
           assets,
           args,
           connected,
+          notes,
         }),
       ),
     },
@@ -174,14 +181,14 @@ async function treeWithAssets(
   { args, code, files }: { args: DesignReadArgs; code: CodeRead | null; files: WrittenFiles },
 ): Promise<{ tree: DesignTree; assets: readonly unknown[] }> {
   const connected = code?.connected ?? new Map<string, string>();
-  const assetsPath = args.assetsDir ?? "assets";
-  const plan = fitPlan(snapshot, args.maxChars - (code?.used ?? 0), {
-    assetsPath,
+  const options = {
+    assetsPath: args.assetsDir ?? "assets",
     connected,
-  });
+    repeats: args.repeats ?? false,
+  };
+  const plan = fitPlan(snapshot, args.maxChars - (code?.used ?? 0), options);
   const tree = designTree(snapshot, {
-    assetsPath,
-    connected,
+    ...options,
     ...plan,
   });
 
@@ -205,16 +212,18 @@ async function treeWithAssets(
 
   return {
     tree: designTree(snapshot, {
-      assetsPath,
+      ...options,
       assetSrc: srcByKey,
-      connected,
       ...plan,
     }),
     assets: written,
   };
 }
 
-/** The read's JSON block: tokens, styles, fonts, assets, measurements, motion, hints, cuts and the connected code. */
+/**
+ * The read's JSON block: tokens, styles, fonts, assets, measurements, motion, hints, cuts, runs read once, the notes
+ * around the screen and the connected code.
+ */
 function readMeta(
   snapshot: Snapshot,
   tree: DesignTree,
@@ -224,7 +233,15 @@ function readMeta(
     assets,
     args,
     connected,
-  }: { node: string; read: DesignRead; assets: readonly unknown[]; args: DesignReadArgs; connected: Connected },
+    notes,
+  }: {
+    node: string;
+    read: DesignRead;
+    assets: readonly unknown[];
+    args: DesignReadArgs;
+    connected: Connected;
+    notes: OperationOutput<"nearby"> | null;
+  },
 ) {
   const measurements = designMeasurements(snapshot);
   const motion = designMotion(snapshot);
@@ -243,6 +260,8 @@ function readMeta(
       connected,
     }),
     truncated: read.truncated,
+    ...(read.repeats === undefined ? {} : { repeats: read.repeats }),
+    ...(notes === null ? {} : { nearby: notes }),
     ...(connected.code === null ? {} : codeOutput(connected.code, tree.root, node)),
   };
 }

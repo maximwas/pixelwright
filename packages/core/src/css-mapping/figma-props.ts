@@ -8,9 +8,50 @@ export interface TokenRef {
 export type LengthValue = number | TokenRef;
 
 /** One paint layer: a colour, a token (a paint style or a colour variable) at an opacity, or an image file. */
+/** A length a gradient is placed with: px, or a percent of the layer's box. */
+export interface GradientLength {
+  readonly value: number;
+  readonly unit: "px" | "%";
+}
+
+/** A gradient stop: its place from 0 to 1, and its colour or the colour variable its token names. */
+export interface GradientStopSpec {
+  readonly position: number;
+  readonly color: ColorValue | null;
+  readonly token?: string;
+}
+
+/**
+ * A gradient as CSS gives it, which the plugin makes Figma's transform from at the layer's size: a linear one's angle
+ * (CSS's, 0deg up and clockwise), a radial one's centre and radii (none: to the farthest corner), a conic one's start
+ * angle and centre.
+ */
+export type GradientSpec =
+  | {
+      readonly kind: "gradient";
+      readonly type: "LINEAR";
+      readonly angle: number;
+      readonly stops: readonly GradientStopSpec[];
+    }
+  | {
+      readonly kind: "gradient";
+      readonly type: "RADIAL";
+      readonly center: { readonly x: GradientLength; readonly y: GradientLength };
+      readonly radii: { readonly x: GradientLength; readonly y: GradientLength } | null;
+      readonly stops: readonly GradientStopSpec[];
+    }
+  | {
+      readonly kind: "gradient";
+      readonly type: "ANGULAR";
+      readonly angle: number;
+      readonly center: { readonly x: GradientLength; readonly y: GradientLength };
+      readonly stops: readonly GradientStopSpec[];
+    };
+
 export type PaintSpec =
   | { readonly kind: "color"; readonly color: ColorValue }
   | { readonly kind: "token"; readonly token: string; readonly opacity: number }
+  | GradientSpec
   | {
       readonly kind: "image";
       /** The file, as the XML names it; the server reads it and names its upload in `stream`. */
@@ -126,6 +167,10 @@ export interface FigmaProps {
   rotation?: number;
   mirror?: boolean;
   opacity?: number;
+  /** Figma's blend mode; a CSS normal is NORMAL, which the plugin makes a frame's PASS_THROUGH. */
+  blendMode?: string;
+  /** Whether the layer is a mask for the layers above it in its parent, and how it masks them. */
+  mask?: { readonly isMask: boolean; readonly maskType?: "ALPHA" | "VECTOR" | "LUMINANCE" };
   clipsContent?: boolean;
   cornerRadius?: LengthValue | readonly [LengthValue, LengthValue, LengthValue, LengthValue];
   fills?: readonly PaintSpec[];
@@ -155,6 +200,11 @@ export interface FigmaProps {
   notes?: readonly { readonly category: string | null; readonly label: string }[];
   /** Inside a new Component: the text property (`prop`) or visibility property (`visibleProp`) this layer makes. */
   property?: { readonly text?: string; readonly visible?: string };
+  /**
+   * Variable modes to set on the layer, by the collection's and the mode's attribute slugs (`data-theme="dark"` is
+   * theme → dark); an empty mode clears the collection's mode, so the layer takes its parent's.
+   */
+  modes?: Readonly<Record<string, string>>;
   /** An Image's or Icon's file; the server reads it (an image's bytes go as an upload stream, an icon's SVG inline). */
   asset?: { readonly kind: "image" | "icon"; readonly src: string; readonly stream?: string; readonly svg?: string };
 }

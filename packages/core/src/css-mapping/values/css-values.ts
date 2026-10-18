@@ -13,11 +13,66 @@ import {
   isTokenBadURL,
   isTokenComma,
   isTokenDelim,
+  isTokenDimension,
+  isTokenEOF,
+  isTokenNumber,
+  isTokenPercentage,
+  isTokenSemicolon,
   isTokenString,
   isTokenURL,
   tokenize,
 } from "@csstools/css-tokenizer";
 import type { LengthValue, TokenRef } from "../figma-props.ts";
+
+/** Degrees in each angle unit CSS has. */
+const DEGREES: Readonly<Record<string, number>> = {
+  deg: 1,
+  grad: 0.9,
+  rad: 180 / Math.PI,
+  turn: 360,
+};
+
+/**
+ * A number, a percentage or a dimension, as the CSS tokenizer reads it: its value and unit ("" for a plain number, "%"
+ * for a percentage, the unit in lower case otherwise); null for anything else, or more than one.
+ */
+export function dimensionOf(value: string): { value: number; unit: string } | null {
+  const tokens = tokenize({ css: value.trim() }).filter((token) => !isTokenEOF(token));
+  const [token] = tokens;
+
+  if (tokens.length !== 1 || token === undefined) {
+    return null;
+  }
+
+  if (isTokenDimension(token)) {
+    return {
+      value: token[4].value,
+      unit: token[4].unit.toLowerCase(),
+    };
+  }
+
+  if (isTokenPercentage(token)) {
+    return {
+      value: token[4].value,
+      unit: "%",
+    };
+  }
+
+  return isTokenNumber(token)
+    ? {
+        value: token[4].value,
+        unit: "",
+      }
+    : null;
+}
+
+/** An angle in degrees, from deg, grad, rad or turn; null for anything else. */
+export function degreesOf(value: string): number | null {
+  const angle = dimensionOf(value);
+  const degrees = angle === null ? undefined : DEGREES[angle.unit];
+
+  return angle === null || degrees === undefined ? null : angle.value * degrees;
+}
 
 /** A value as CSS parses it: its component values (functions with their arguments, strings, words, spaces). */
 function componentsOf(value: string): ComponentValue[] {
@@ -28,15 +83,11 @@ function componentsOf(value: string): ComponentValue[] {
  * A value split at a separator CSS sees at its top level, never inside parentheses, quotes or comments:
  * "a(1, 2), 'b, c'" → ["a(1, 2)", "'b, c'"]. Split at spaces, a comment counts as one.
  */
-export function splitTop(value: string, separator: "," | " " | "/"): string[] {
+export function splitTop(value: string, separator: "," | " " | "/" | ";"): string[] {
   const parts: ComponentValue[][] = [[]];
 
   for (const node of componentsOf(value)) {
-    const splits =
-      separator === " "
-        ? isWhiteSpaceOrCommentNode(node)
-        : isTokenNode(node) &&
-          (separator === "," ? isTokenComma(node.value) : isTokenDelim(node.value) && node.value[4].value === "/");
+    const splits = separator === " " ? isWhiteSpaceOrCommentNode(node) : isSeparator(node, separator);
 
     if (splits) {
       parts.push([]);
@@ -53,6 +104,44 @@ export function splitTop(value: string, separator: "," | " " | "/"): string[] {
         .trim(),
     )
     .filter((part) => part !== "");
+}
+
+function isSeparator(node: ComponentValue, separator: "," | "/" | ";"): boolean {
+  if (!isTokenNode(node)) {
+    return false;
+  }
+
+  if (separator === ",") {
+    return isTokenComma(node.value);
+  }
+
+  return separator === ";" ? isTokenSemicolon(node.value) : isTokenDelim(node.value) && node.value[4].value === "/";
+}
+
+/**
+ * A value with each var() replaced by its token's value, the tokens a value names replaced too; a token the map does
+ * not hold falls back to what the var() gives after its comma, else stays a var().
+ */
+export function withTokenValues(value: string, tokens: Readonly<Record<string, string>>): string {
+  return value.includes("var(") ? tokenValues(value, tokens, new Set()).trim() : value;
+}
+
+/** A value's var()s replaced; a token on the way to it (`chain`) is not: one that names itself stays a var(). */
+function tokenValues(css: string, tokens: Readonly<Record<string, string>>, chain: ReadonlySet<string>): string {
+  const [nodes = []] = replaceComponentValues([componentsOf(css)], (node) => {
+    if (!isFunctionNode(node) || node.getName().toLowerCase() !== "var") {
+      return undefined;
+    }
+
+    const comma = node.value.findIndex((inner) => isTokenNode(inner) && isTokenComma(inner.value));
+    const name = stringify([comma === -1 ? node.value : node.value.slice(0, comma)]).trim();
+    const fallback = comma === -1 ? undefined : stringify([node.value.slice(comma + 1)]).trim();
+    const given = (chain.has(name) ? undefined : tokens[name]) ?? fallback;
+
+    return given === undefined ? undefined : componentsOf(tokenValues(given, tokens, new Set([...chain, name])));
+  });
+
+  return stringify([nodes]);
 }
 
 /**

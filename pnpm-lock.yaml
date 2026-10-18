@@ -68,6 +68,9 @@ importers:
       '@typescript/native':
         specifier: 'catalog:'
         version: typescript@7.0.2
+      p-timeout:
+        specifier: 8.0.0
+        version: 8.0.0
       typescript:
         specifier: npm:@typescript/typescript6@6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -95,6 +98,9 @@ importers:
       fast-png:
         specifier: 8.0.0
         version: 8.0.0
+      fuse.js:
+        specifier: 7.5.0
+        version: 7.5.0
       image-size:
         specifier: 2.0.4
         version: 2.0.4
@@ -156,6 +162,9 @@ importers:
       leven:
         specifier: 4.1.0
         version: 4.1.0
+      semver:
+        specifier: 7.8.5
+        version: 7.8.5
       slugify:
         specifier: 1.6.9
         version: 1.6.9
@@ -169,6 +178,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.0
+      '@types/semver':
+        specifier: 7.8.0
+        version: 7.8.0
       '@typescript/native':
         specifier: 'catalog:'
         version: typescript@7.0.2
@@ -830,6 +842,9 @@ packages:
 
   '@types/node@24.19.0':
     resolution: {integrity: sha512-zY+5tKxXdhGh1PYI0ac+7juvEu4OI6vWtVVoj5i2m42jxAY1U+zHGt6QCyOFwykdP62sM3MJ9stoYYUw5aCWew==}
+
+  '@types/semver@7.8.0':
+    resolution: {integrity: sha512-1mAINjtQCXXeLkJ9ehXkwOcBpqtLxiVtKhpUf83DdRNdQKV0iXZpaHYqRr7nj+wvxuJzoAmAwXI+sCNMv1CzLQ==}
 
   '@types/write-file-atomic@4.0.3':
     resolution: {integrity: sha512-qdo+vZRchyJIHNeuI1nrpsLw+hnkgqP/8mlaN6Wle/NKhydHmUN9l4p3ZE8yP90AJNJW4uB8HQhedb4f1vNayQ==}
@@ -1558,6 +1573,10 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  fuse.js@7.5.0:
+    resolution: {integrity: sha512-sQtrEfA+ez/3G0cCZecF70oqpCRttCexYUG4mUrtWL49ULUzUyxokt5kyqwtKzj1270RaKih+hcP3qLcumccow==}
+    engines: {node: '>=10'}
+
   generic-names@4.0.0:
     resolution: {integrity: sha512-ySFolZQfw9FoDb3ed9d80Cm9f0+r7qj+HJkWjeD9RBfpxEVTlVhol+gvaQB/78WbwYfbnNh8nWHHBSlg072y6A==}
 
@@ -1918,6 +1937,10 @@ packages:
   p-locate@6.0.0:
     resolution: {integrity: sha512-wPrq66Llhl7/4AGC6I+cqxT07LhXvWL08LNXz1fENOw0Ap4sRZZ/gZpTTJ5jpurzzzfS2W/Ge9BY3LgLjCShcw==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
+  p-timeout@8.0.0:
+    resolution: {integrity: sha512-IHjMTvwSvMPKVfGAVTRxI+Ea6Vu5soB0oaC3fuEc58EI01T36AiVclDTTYoHBO8M1gjxqAvgkRLm33TGUCzEDw==}
+    engines: {node: '>=22'}
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
@@ -3139,6 +3162,8 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
+  '@types/semver@7.8.0': {}
+
   '@types/write-file-atomic@4.0.3':
     dependencies:
       '@types/node': 24.19.0
@@ -3796,6 +3821,8 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
+  fuse.js@7.5.0: {}
+
   generic-names@4.0.0:
     dependencies:
       loader-utils: 3.3.1
@@ -4069,6 +4096,8 @@ snapshots:
   p-locate@6.0.0:
     dependencies:
       p-limit: 4.0.0
+
+  p-timeout@8.0.0: {}
 
   package-json-from-dist@1.0.1: {}
 

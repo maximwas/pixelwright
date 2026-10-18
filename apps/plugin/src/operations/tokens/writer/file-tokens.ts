@@ -1,4 +1,6 @@
 import {
+  type NumberUnit,
+  numberUnits,
   type RawTokens,
   type StyleToken,
   type TokenModel,
@@ -22,11 +24,13 @@ export class FileTokens {
   readonly raw: RawTokens;
   readonly model: TokenModel;
   readonly #libraryCollections: ReadonlySet<string>;
+  readonly #units: ReadonlyMap<string, NumberUnit>;
 
   private constructor(raw: RawTokens, libraryCollections: ReadonlySet<string>) {
     this.raw = raw;
     this.model = tokenModel(raw);
     this.#libraryCollections = libraryCollections;
+    this.#units = numberUnits(raw.variables);
   }
 
   /**
@@ -70,6 +74,11 @@ export class FileTokens {
     return this.model.collections
       .find((item) => item.name === collection)
       ?.variables.find((item) => item.name === name);
+  }
+
+  /** How tokens_read writes a number variable the file holds: in px, as a plain number or as an opacity. */
+  unitOf(variable: RawVariable): NumberUnit {
+    return this.#units.get(variable.id) ?? "px";
   }
 
   /** A style as tokens_read shows it, by kind and name. */

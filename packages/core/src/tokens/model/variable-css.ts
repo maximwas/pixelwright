@@ -5,19 +5,21 @@ import { decimal } from "../../kernel/numbers.ts";
 import { aliasOf } from "../aliases.ts";
 import type { Notes } from "../notes.ts";
 import type { RawVariable } from "../raw-tokens.ts";
+import { type NumberUnit, scopedUnit } from "../scopes.ts";
 
-/** What writing a variable's values needs: the CSS names aliases point at, the file's colour space, the notes. */
+/**
+ * What writing a variable's values needs: the CSS names aliases point at, the file's colour space, the notes, and each
+ * number variable's unit when the aliases between them were followed (else a number's own scopes give it).
+ */
 export interface VariableCssContext {
   readonly names: ReadonlyMap<string, string>;
   readonly space: ColorSpace;
   readonly notes: Notes;
+  readonly units?: ReadonlyMap<string, NumberUnit>;
 }
 
 /** Writes one mode's value of a variable of one type as CSS. */
 type ValueCss = (value: unknown, variable: RawVariable, context: VariableCssContext) => string;
-
-/** Scopes a number is used for without a unit; anything else (or no scope) is a length in pixels. */
-const UNITLESS_SCOPES: ReadonlySet<string> = new Set(["OPACITY", "COLOR_OPACITY", "FONT_WEIGHT"]);
 
 /** A writer per variable type; a type without one is written as a comment, with a note. */
 const VALUE_CSS: ReadonlyMap<string, ValueCss> = new Map<string, ValueCss>([
@@ -25,7 +27,9 @@ const VALUE_CSS: ReadonlyMap<string, ValueCss> = new Map<string, ValueCss>([
   [
     "FLOAT",
     (value, variable, context) =>
-      typeof value === "number" ? numberCss(value, variable.scopes) : unknownCss(value, variable, context),
+      typeof value === "number"
+        ? numberCss(value, context.units?.get(variable.id) ?? scopedUnit(variable.scopes) ?? "px")
+        : unknownCss(value, variable, context),
   ],
   [
     "STRING",
@@ -92,16 +96,13 @@ function colorCss(value: unknown, variable: RawVariable, context: VariableCssCon
   return `color-mix(in srgb, ${color} ${opacity}, transparent)`;
 }
 
-function numberCss(value: number, scopes: readonly string[]): string {
-  const unitless = scopes.length > 0 && scopes.every((scope) => UNITLESS_SCOPES.has(scope));
-  // An opacity is a percentage in Figma's opacity fields; CSS wants a fraction. A value up to 1 already is one.
-  const percent = scopes.some((scope) => scope === "OPACITY" || scope === "COLOR_OPACITY") && value > 1;
-
-  if (unitless) {
-    return decimal(percent ? value / 100 : value);
+function numberCss(value: number, unit: NumberUnit): string {
+  if (unit === "px") {
+    return value === 0 ? "0" : `${decimal(value)}px`;
   }
 
-  return value === 0 ? "0" : `${decimal(value)}px`;
+  // An opacity is a percentage in Figma's opacity fields; CSS wants a fraction. A value up to 1 already is one.
+  return decimal(unit === "opacity" && value > 1 ? value / 100 : value);
 }
 
 /** A CSS string in single quotes, its backslashes and quotes escaped. */

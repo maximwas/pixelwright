@@ -1,6 +1,6 @@
 import { type OperationResult, tokensPlan } from "@pixelwright/core";
 import type * as z from "zod";
-import { versionBefore } from "../../history/version-before.ts";
+import { versionedWrite } from "../../history/versioned-write.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import type { TokensApplyOutputSchema, TokensApplyToolInputSchema } from "./schemas.ts";
 
@@ -24,20 +24,21 @@ export async function applyTokens(
       plan,
       dryRun: dry,
     });
-  const probe = title === undefined || dryRun ? null : await write(true);
-
-  if (probe !== null && probe.created.length + probe.updated.length === 0) {
-    // The file holds every token already: nothing to write, so no version to save before it.
-    return answer(probe, errors, false);
-  }
-
-  const version = await versionBefore(session, {
-    title,
-    dryRun,
-  });
+  const { result, version } = await versionedWrite(
+    session,
+    {
+      title,
+      dryRun,
+    },
+    {
+      write,
+      // The file holds every token already: nothing to write, so no version to save before it.
+      changes: (written) => written.created.length + written.updated.length,
+    },
+  );
 
   return {
-    ...answer(await write(dryRun), errors, dryRun),
+    ...answer(result, errors, dryRun),
     ...(version === undefined ? {} : { version }),
   };
 }

@@ -197,40 +197,67 @@
     "real": {
       "result": {
         "created": [],
-        "changed": [],
-        "dryRun": false,
-        "errors": [
-          {
-            "line": 1,
-            "column": 1,
-            "id": "9:2",
-            "attribute": "background",
-            "message": "linear-gradient(90deg, #FF0000, #0000FF)…: a gradient is not written yet.",
-            "hint": "Use a colour or a token."
-          }
-        ]
+        "changed": [
+          "9:2"
+        ],
+        "errors": [],
+        "dryRun": false
       },
       "calls": [],
       "created": [],
-      "changed": {},
-      "undo": 0,
+      "changed": {
+        "9:2": {
+          "fills": [
+            null,
+            [
+              {
+                "type": "GRADIENT_LINEAR",
+                "gradientTransform": [
+                  [
+                    1,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1,
+                    0
+                  ]
+                ],
+                "gradientStops": [
+                  {
+                    "position": 0,
+                    "color": {
+                      "r": 1,
+                      "g": 0,
+                      "b": 0,
+                      "a": 1
+                    }
+                  },
+                  {
+                    "position": 1,
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 1,
+                      "a": 1
+                    }
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "undo": 1,
       "fonts": []
     },
     "dry": {
       "result": {
         "created": [],
         "changed": [],
-        "dryRun": true,
-        "errors": [
-          {
-            "line": 1,
-            "column": 1,
-            "id": "9:2",
-            "attribute": "background",
-            "message": "linear-gradient(90deg, #FF0000, #0000FF)…: a gradient is not written yet.",
-            "hint": "Use a colour or a token."
-          }
-        ]
+        "errors": [],
+        "dryRun": true
       },
       "calls": [],
       "created": [],

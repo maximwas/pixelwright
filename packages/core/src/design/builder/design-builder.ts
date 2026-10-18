@@ -1,5 +1,6 @@
 import { nodeCss } from "../../css-mapping/read-node.ts";
 import { colorSpaceOf } from "../../kernel/color/color-space.ts";
+import { attributeSlug, modeAttribute } from "../../kernel/names.ts";
 import type { CssContext } from "../../types/css.ts";
 import type { Snapshot, SnapshotNode } from "../../types/snapshot.ts";
 import { tagFor } from "../../xml/tags.ts";
@@ -150,7 +151,11 @@ export class DesignBuilder {
       ["$override", overrideWords(node).join(", ") || undefined],
       ["$dev", node === this.#snapshot.root ? DEV_STATUS_WORDS[this.#snapshot.devStatus ?? ""] : undefined],
       ["href", node.href ?? (node.type === "TEXT" ? urlOf(node.text?.segments ?? []) : undefined)],
+      ...(node.modes ?? []).map(
+        ({ collection, mode }): MaybeAttribute => [modeAttribute(collection), attributeSlug(mode)],
+      ),
       ["textStyle", this.#catalogue.useTextStyle(textStyle)],
+      ["mask", node.isMask ? (node.maskType ?? "ALPHA").toLowerCase() : undefined],
       ["src", asset === null ? undefined : this.#assets.plan(node, asset)],
     ];
   }

@@ -146,7 +146,7 @@ describe("assets beyond icons and photos", () => {
     );
 
     expect(line(xml, "1:2")).toMatch(
-      /^ {2}<Icon id="1:2" name="Logo" src="assets\/logo.svg" .*\$css="mix-blend-mode: luminosity"\/>$/,
+      /^ {2}<Icon id="1:2" name="Logo" src="assets\/logo.svg" .*mix-blend-mode="luminosity"\/>$/,
     );
   });
 
@@ -348,6 +348,46 @@ describe("auto layout and grid", () => {
       'display="grid" width="400px" height="300px" column-gap="16px" row-gap="8px" grid-template-columns="1fr 1fr 200px" grid-template-rows="auto auto"',
     );
     expect(line(xml, "1:2")).toContain('grid-row="1" grid-column="2 / span 2" justify-self="center"');
+  });
+
+  it("writes a grid child that fills its cell as stretch, apart from one that hugs, and the grid's padding", () => {
+    const cell = (id: string, column: number, sizing: "FILL" | "HUG") =>
+      layer({
+        id,
+        gridRowAnchorIndex: 0,
+        gridColumnAnchorIndex: column,
+        gridRowSpan: 1,
+        gridColumnSpan: 1,
+        layoutSizingHorizontal: sizing,
+        layoutSizingVertical: sizing,
+      });
+    const xml = xmlOf(
+      box([cell("1:2", 0, "FILL"), cell("1:3", 1, "HUG")], {
+        layoutMode: "GRID",
+        gridColumnCount: 2,
+        gridRowCount: 1,
+        gridColumnSizes: [
+          {
+            type: "FLEX",
+            value: 1,
+          },
+          {
+            type: "FLEX",
+            value: 1,
+          },
+        ],
+        gridRowSizes: [{ type: "HUG" }],
+        paddingTop: 24,
+        paddingRight: 24,
+        paddingBottom: 24,
+        paddingLeft: 24,
+      }),
+    );
+
+    expect(line(xml, "1:2")).toContain('align-self="stretch"');
+    expect(line(xml, "1:2")).toContain('justify-self="stretch"');
+    expect(line(xml, "1:3")).not.toContain("stretch");
+    expect(line(xml, "1:1")).toContain('padding="24px"');
   });
 });
 
@@ -672,7 +712,7 @@ describe("export settings and masks that do not make an asset", () => {
     expect(line(xml, "1:4")).toContain('<Image id="1:4" name="Collage"');
   });
 
-  it("keeps a frame whose mask sits among other layers, and says what the mask clips", () => {
+  it("keeps a frame whose mask sits among other layers, and marks the mask, which clips the layers above it", () => {
     const xml = xmlOf(
       box([
         copy("1:2"),
@@ -691,6 +731,6 @@ describe("export settings and masks that do not make an asset", () => {
     );
 
     expect(line(xml, "1:1")).toContain("<Frame");
-    expect(line(xml, "1:3")).toContain('$css="mask: clips the layers above it"');
+    expect(line(xml, "1:3")).toContain('<Ellipse id="1:3" name="Mask" mask="alpha"');
   });
 });

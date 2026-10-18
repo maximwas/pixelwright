@@ -1,5 +1,6 @@
 import type { FigmaProps, FontSpec } from "@pixelwright/core";
 import type { ComponentIndex } from "../../../figma/component-index.ts";
+import type { IdLookup } from "../../../figma/id-lookup.ts";
 import type { PaintSources } from "../../../figma/paints.ts";
 import type { WriteError } from "../../../figma/write-error.ts";
 
@@ -19,6 +20,8 @@ export interface WriteScope extends PaintSources {
   /** The image an Image's file makes, made once per file. */
   image(asset: { readonly src: string; readonly stream?: string }): Image;
   readonly components: ComponentIndex;
+  /** The call's lookups by id: the file's own variables and styles from its lists, offline too. */
+  readonly lookup: IdLookup;
   /** Holds a property a layer makes until its component is complete. */
   mark(mark: PropertyMark): void;
 }

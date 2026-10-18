@@ -1,3 +1,4 @@
+import { isModeAttribute } from "../kernel/names.ts";
 import type { FigmaProps, TextRunSpec } from "./figma-props.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "./property-group.ts";
 import { BOX_RULES, SPAN_RULES, TEXT_RULES } from "./registry.ts";
@@ -67,6 +68,7 @@ export function writeElement(element: ElementInput, now?: LayerNow): ElementWrit
 
   translate(BOX_RULES, input, out, false);
   translate(TEXT_RULES, input, out, restyled);
+  writeModes(attributes, changed, out);
 
   const text =
     element.content !== undefined && (!(now?.text ?? false) || restyled)
@@ -79,6 +81,24 @@ export function writeElement(element: ElementInput, now?: LayerNow): ElementWrit
     ...(text === undefined ? {} : { text }),
     problems,
   };
+}
+
+/** The variable modes the element's data attributes set (`data-theme="dark"`); an empty one clears its collection's. */
+function writeModes(
+  attributes: Readonly<Record<string, string>>,
+  changed: (name: string) => boolean,
+  out: WriteOutput,
+): void {
+  const modes = Object.entries(attributes).filter(([name]) => isModeAttribute(name) && changed(name));
+  const [first] = modes;
+
+  if (first !== undefined) {
+    out.set(
+      "modes",
+      Object.fromEntries(modes.map(([name, value]) => [name.slice("data-".length), value.trim()])),
+      first[0],
+    );
+  }
 }
 
 function translate(rules: readonly Rule[], input: WriteInput, out: WriteOutput, restyled: boolean): void {

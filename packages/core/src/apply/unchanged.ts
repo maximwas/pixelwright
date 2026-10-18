@@ -1,18 +1,11 @@
 import { withoutUrls } from "../css-mapping/values/css-values.ts";
 import type { LayerNow } from "../css-mapping/write-element.ts";
-import { designTree } from "../design/design-xml.ts";
-import { attributeOf, type DesignContent, type DesignElement, findElement, joinedContent } from "../design/tree.ts";
+import { type LayerInParent, type LayerTokens, layerRead } from "../design/layer-read.ts";
+import { attributeOf, type DesignContent, type DesignElement, joinedContent } from "../design/tree.ts";
 import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
 import { sameValue } from "../kernel/equality.ts";
-import type { Snapshot, SnapshotNode } from "../types/snapshot.ts";
 import type { ApplyElement, ContentPiece } from "./types.ts";
-
-/** A layer to compare with an element: the layer, and the parent it sits in. */
-type Item = { node: SnapshotNode; parent: SnapshotNode | null };
-
-/** What a render needs besides the layers: the tokens, and the file's colour profile its colours are written in. */
-type Tokens = Pick<Snapshot, "styles" | "variables" | "colorProfile">;
 
 /**
  * Which of an element's attributes the layer already has, as design_read would write them (the reader's rounding
@@ -21,7 +14,7 @@ type Tokens = Pick<Snapshot, "styles" | "variables" | "colorProfile">;
  * one only as its parent holds it (the root's own size would hide a size that is new). A hidden layer is rendered as
  * shown, so what it has is known when it is shown again.
  */
-export function unchangedAttributes(element: ApplyElement, item: Item, tokens: Tokens): LayerNow {
+export function unchangedAttributes(element: ApplyElement, item: LayerInParent, tokens: LayerTokens): LayerNow {
   const renders = rendersOf(element, item, tokens);
   const attributes = new Set<string>();
   const space = colorSpaceOf(tokens.colorProfile);
@@ -60,7 +53,7 @@ export function unchangedAttributes(element: ApplyElement, item: Item, tokens: T
 }
 
 /** The elements design_read writes for the layer: as the read's root unless nested, then as its parent holds it. */
-function rendersOf(element: ApplyElement, item: Item, tokens: Tokens): DesignElement[] {
+function rendersOf(element: ApplyElement, item: LayerInParent, tokens: LayerTokens): DesignElement[] {
   const node = item.node.visible
     ? item.node
     : {
@@ -71,27 +64,22 @@ function rendersOf(element: ApplyElement, item: Item, tokens: Tokens): DesignEle
   const renders = [
     nested
       ? null
-      : render(
+      : layerRead(
           {
-            root: node,
-            ...pick(tokens),
+            node,
+            parent: null,
           },
-          node.id,
-          null,
-        ),
+          tokens,
+        ).element,
     item.parent === null
       ? null
-      : render(
+      : layerRead(
           {
-            root: {
-              ...item.parent,
-              children: [node],
-            },
-            ...pick(tokens),
+            node,
+            parent: item.parent,
           },
-          node.id,
-          item.parent.id,
-        ),
+          tokens,
+        ).element,
   ];
 
   return renders.filter((rendered) => rendered !== null);
@@ -118,21 +106,6 @@ function same(name: string, written: string | undefined, value: string): boolean
   return (
     written === value || (written !== undefined && name === "background" && withoutUrls(written) === withoutUrls(value))
   );
-}
-
-function pick(tokens: Tokens): Tokens {
-  return {
-    styles: tokens.styles,
-    variables: tokens.variables,
-    ...(tokens.colorProfile === undefined ? {} : { colorProfile: tokens.colorProfile }),
-  };
-}
-
-/** The element design_read writes for a layer in this snapshot; its parent is kept a layout, never an asset. */
-function render(snapshot: Snapshot, id: string, layout: string | null): DesignElement | null {
-  const { root } = designTree(snapshot, layout === null ? {} : { notAssets: new Set([layout]) });
-
-  return findElement(root, id);
 }
 
 /** A Text element's content in the tree's terms, as design_apply writes it: a span's characters with its attributes. */

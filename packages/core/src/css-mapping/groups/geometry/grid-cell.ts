@@ -13,8 +13,12 @@ export function readGridCell({ node, parent, css }: ReadScope): void {
   const cell = [
     ["grid-row", place(node.gridRowAnchorIndex, node.gridRowSpan)],
     ["grid-column", place(node.gridColumnAnchorIndex, node.gridColumnSpan)],
-    ["justify-self", SELF_CSS[node.gridChildHorizontalAlign ?? "AUTO"]],
-    ["align-self", SELF_CSS[node.gridChildVerticalAlign ?? "AUTO"]],
+    // Filling the cell (Figma's FILL in a grid) is stretch, as design_apply writes it; else the child's alignment.
+    [
+      "justify-self",
+      node.layoutSizingHorizontal === "FILL" ? "stretch" : SELF_CSS[node.gridChildHorizontalAlign ?? "AUTO"],
+    ],
+    ["align-self", node.layoutSizingVertical === "FILL" ? "stretch" : SELF_CSS[node.gridChildVerticalAlign ?? "AUTO"]],
   ] as const;
 
   for (const [property, value] of cell) {

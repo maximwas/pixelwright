@@ -1,3 +1,4 @@
+import { NEARBY_MAX_DISTANCE } from "@pixelwright/core";
 import * as z from "zod";
 import { FileSchema } from "../../plugin/file-schema.ts";
 
@@ -30,6 +31,21 @@ export const DesignReadInputSchema = z.object({
     .default(true)
     .describe(
       "Run the project's Code Connect templates, giving connected instances as $code with their code (default); false reads them as layers.",
+    ),
+  repeats: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Read each run of three or more alike neighbours (list items, cards, table rows) as its first, marked $repeat with the run's length; the JSON's repeats gives each run's layers and the values they hold apart, a row per layer.",
+    ),
+  nearby: z
+    .number()
+    .int()
+    .min(0)
+    .max(NEARBY_MAX_DISTANCE)
+    .exactOptional()
+    .describe(
+      "Also list the designer's notes on the canvas within this many px of the screen holding the layer (texts, stickies, small frames of text beside it or over it), e.g. 400: the JSON's nearby.",
     ),
   file: FileSchema,
 });

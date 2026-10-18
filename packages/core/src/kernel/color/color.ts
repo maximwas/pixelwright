@@ -17,6 +17,8 @@ import {
   modeXyz65,
   parse,
   useMode,
+  wcagContrast,
+  wcagLuminance,
 } from "culori/fn";
 import { clampUnit, decimal, roundTo } from "../numbers.ts";
 import type { ColorSpace } from "./color-space.ts";
@@ -227,19 +229,26 @@ export class Color {
     return near(this.r, theirs.r) && near(this.g, theirs.g) && near(this.b, theirs.b) && near(this.alpha, theirs.alpha);
   }
 
-  /** WCAG 2's relative luminance, of the sRGB form: WCAG defines it on sRGB. */
+  /** WCAG 2's relative luminance (culori's), of the sRGB form: WCAG defines it on sRGB. */
   luminance(): number {
-    const { r, g, b } = this.to("srgb");
-    const linear = (channel: number) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
-
-    return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+    return wcagLuminance(this.#srgb());
   }
 
-  /** WCAG 2's contrast ratio with another colour, 1 to 21. */
+  /** WCAG 2's contrast ratio with another colour (culori's), 1 to 21, both in their sRGB forms. */
   contrast(other: Color): number {
-    const [light, dark] = [this.luminance(), other.luminance()].toSorted((x, y) => y - x) as [number, number];
+    return wcagContrast(this.#srgb(), other.#srgb());
+  }
 
-    return (light + 0.05) / (dark + 0.05);
+  /** This colour as culori takes an sRGB one, clipped to what sRGB can show. */
+  #srgb(): { mode: "rgb"; r: number; g: number; b: number } {
+    const { r, g, b } = this.to("srgb");
+
+    return {
+      mode: "rgb",
+      r,
+      g,
+      b,
+    };
   }
 
   /** This colour laid over a backdrop at its alpha (source-over), in this colour's space. */

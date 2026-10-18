@@ -1,18 +1,52 @@
 import type { FigmaProps, LengthValue } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
-import { hasAutoLayout, hasCornerSides, hasCorners, hasOpacity, refusal } from "../../../figma/capabilities.ts";
+import {
+  hasAutoLayout,
+  hasCornerSides,
+  hasCorners,
+  hasEffects,
+  hasOpacity,
+  refusal,
+} from "../../../figma/capabilities.ts";
 import { guarded, type Step, writeLength, writeLengths } from "./step.ts";
 import type { WriteScope } from "./write-scope.ts";
 
 const CORNERS = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
 
-/** How the layer shows: its opacity, whether it clips what it holds, its corners. */
+/** Layers whose children blend with what is under them as one, unless their mode says so: CSS's normal for them. */
+const PASSING: ReadonlySet<string> = new Set(["FRAME", "GROUP", "COMPONENT", "COMPONENT_SET", "INSTANCE", "SECTION"]);
+
+/** How the layer shows: its opacity, its blend mode, whether it masks or clips, its corners. */
 export const APPEARANCE_STEPS: readonly Step[] = [
   {
     keys: ["opacity"],
     ...guarded(hasOpacity, "opacity", (node, { opacity }) => {
       if (opacity !== undefined) {
         assign(node, "opacity", opacity);
+      }
+    }),
+  },
+  {
+    keys: ["blendMode"],
+    ...guarded(hasEffects, "blend mode", (node, { blendMode }) => {
+      if (blendMode !== undefined) {
+        assign(
+          node,
+          "blendMode",
+          (blendMode === "NORMAL" && PASSING.has(node.type) ? "PASS_THROUGH" : blendMode) as BlendMode,
+        );
+      }
+    }),
+  },
+  {
+    keys: ["mask"],
+    ...guarded(hasEffects, "mask", (node, { mask }) => {
+      if (mask !== undefined) {
+        assign(node, "isMask", mask.isMask);
+
+        if (mask.maskType !== undefined) {
+          assign(node, "maskType", mask.maskType);
+        }
       }
     }),
   },

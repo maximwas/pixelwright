@@ -29,7 +29,9 @@ const SIDE_WEIGHTS = [
 
 const SIDES = ["top", "right", "bottom", "left"] as const;
 const STROKES = ["border", "border-top", "border-right", "border-bottom", "border-left", "outline"];
-const BORDER_STYLES = new Set(["solid", "dashed", "dotted", "none", "hidden"]);
+
+/** The border styles a stroke takes (solid, dashed) and those that draw none. */
+export const BORDER_STYLES: ReadonlySet<string> = new Set(["solid", "dashed", "dotted", "none", "hidden"]);
 
 /**
  * A box's strokes: an inside or centred stroke is a border (with box-sizing: border-box it keeps the size), an outside

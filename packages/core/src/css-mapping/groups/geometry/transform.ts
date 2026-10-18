@@ -1,7 +1,7 @@
 import { decimal, roundTo } from "../../../kernel/numbers.ts";
 import type { SnapshotNode } from "../../../types/snapshot.ts";
 import type { Rule, WriteInput, WriteOutput } from "../../property-group.ts";
-import { splitTop } from "../../values/css-values.ts";
+import { degreesOf, splitTop } from "../../values/css-values.ts";
 
 /**
  * A layer's turn and mirror as CSS. CSS turns clockwise, Figma counter-clockwise. A mirrored layer is its matrix times
@@ -32,11 +32,12 @@ function transformRule({ own }: WriteInput, out: WriteOutput): void {
   let mirror = false;
 
   for (const part of value === "none" ? [] : splitTop(value, " ")) {
-    const turn = /^rotate\(\s*(-?\d*\.?\d+)deg\s*\)$/.exec(part);
+    const inside = /^rotate\(([^)]*)\)$/.exec(part)?.[1];
+    const degrees = inside === undefined ? null : degreesOf(inside);
 
-    if (turn !== null) {
+    if (degrees !== null) {
       // CSS turns clockwise, Figma counter-clockwise.
-      rotation = roundTo(-Number(turn[1]), 4);
+      rotation = roundTo(-degrees, 4);
     } else if (part === "scaleX(-1)") {
       mirror = true;
     } else {

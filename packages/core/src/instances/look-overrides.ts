@@ -1,0 +1,40 @@
+/**
+ * The fields an instance may override that change how it looks, as Figma names them, by the CSS word findings use: a
+ * different text, a hidden layer or a resized instance is what instances are for; a different fill, radius or font is
+ * drift from the component. design_lint reports these, and instances_reattach's reset look takes them off.
+ */
+export const LOOK_OVERRIDES: Readonly<Record<string, string>> = {
+  fills: "background",
+  fillStyleId: "background",
+  strokes: "border",
+  strokeStyleId: "border",
+  strokeWeight: "border",
+  strokeTopWeight: "border",
+  strokeRightWeight: "border",
+  strokeBottomWeight: "border",
+  strokeLeftWeight: "border",
+  strokeAlign: "border",
+  dashPattern: "border",
+  effects: "effects",
+  effectStyleId: "effects",
+  opacity: "opacity",
+  blendMode: "blend mode",
+  textStyleId: "font",
+  fontName: "font",
+  fontSize: "font",
+  lineHeight: "font",
+  letterSpacing: "letter-spacing",
+  textCase: "text-transform",
+  textDecoration: "text-decoration",
+  cornerRadius: "border-radius",
+  topLeftRadius: "border-radius",
+  topRightRadius: "border-radius",
+  bottomLeftRadius: "border-radius",
+  bottomRightRadius: "border-radius",
+  itemSpacing: "gap",
+  counterAxisSpacing: "gap",
+  paddingTop: "padding",
+  paddingRight: "padding",
+  paddingBottom: "padding",
+  paddingLeft: "padding",
+};

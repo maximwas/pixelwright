@@ -41,6 +41,7 @@ describe("stdio server", () => {
       const { tools } = await client.listTools();
 
       expect(tools.map((tool) => tool.name).sort()).toEqual([
+        "a11y_read",
         "assets_export",
         "baseline_diff",
         "baseline_save",
@@ -51,14 +52,19 @@ describe("stdio server", () => {
         "contrast_check",
         "design_apply",
         "design_audit",
+        "design_lint",
         "design_read",
+        "effects_apply",
         "execute",
         "file_map",
         "flow_read",
         "fonts_check",
         "guide",
+        "icons_insert",
         "image_compare",
         "inspect",
+        "instances_reattach",
+        "library_search",
         "measure",
         "node_show",
         "nodes_delete",
@@ -68,8 +74,12 @@ describe("stdio server", () => {
         "screenshot",
         "selection_get",
         "selection_wait",
+        "states_find",
         "status",
+        "styles_compare",
+        "texts_replace",
         "tokens_apply",
+        "tokens_bind",
         "tokens_read",
         "tokens_usage",
         "variants_read",
@@ -79,7 +89,18 @@ describe("stdio server", () => {
 
       for (const tool of tools) {
         // The writing tools say so, so clients ask first (node_show moves the view, not the file).
-        const writes = ["design_apply", "execute", "nodes_delete", "tokens_apply", "version_save"].includes(tool.name);
+        const writes = [
+          "design_apply",
+          "effects_apply",
+          "execute",
+          "icons_insert",
+          "instances_reattach",
+          "nodes_delete",
+          "texts_replace",
+          "tokens_apply",
+          "tokens_bind",
+          "version_save",
+        ].includes(tool.name);
 
         expect(tool.annotations?.readOnlyHint, tool.name).toBe(!writes);
         expect(tool.annotations?.destructiveHint ?? false, tool.name).toBe(writes);
@@ -104,6 +125,7 @@ describe("stdio server", () => {
         "tokens",
         "assets",
         "write",
+        "layout",
         "code-connect",
         "email",
       ]);

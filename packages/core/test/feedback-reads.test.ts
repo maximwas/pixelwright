@@ -14,8 +14,9 @@ import {
 /** What a second real build (six screens of a client project) found missing or wrong (stage 8). */
 
 const GRADIENT = "radial-gradient(144.83% 129.61% at 97.4% 5.56%, #9D3535 0%, #D96837 69.91%, #E29B6A 100%)";
+/** A diamond gradient: CSS has none, so core writes no value of its own and takes Figma's CSS of the layer. */
 const RADIAL = {
-  type: "GRADIENT_RADIAL",
+  type: "GRADIENT_DIAMOND",
   visible: true,
   gradientStops: [
     {

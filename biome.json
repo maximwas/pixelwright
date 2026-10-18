@@ -11,6 +11,7 @@
       "!docs",
       "!.claude",
       "!.superpowers",
+      "!graphify-out",
       "!packages/core/test/fixtures",
       "!**/.pixelwright",
       "!**/__golden__"

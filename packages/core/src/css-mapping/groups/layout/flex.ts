@@ -3,8 +3,9 @@ import type { CssDeclarations } from "../../css-declarations.ts";
 import type { FigmaProps } from "../../figma-props.ts";
 import { keywordRule } from "../../keyword-rule.ts";
 import type { Rule, WriteInput, WriteOutput } from "../../property-group.ts";
-import { boxShorthand, px } from "../../values/format.ts";
+import { px } from "../../values/format.ts";
 import { gapsOf } from "./gaps.ts";
+import { readPadding } from "./padding.ts";
 
 /** Figma's main-axis alignment as justify-content; the start is the default and left out. */
 const JUSTIFY_CSS: Readonly<Record<string, string>> = {
@@ -54,15 +55,33 @@ const ALIGN_CONTENT_FIGMA: Readonly<Record<string, Exclude<FigmaProps["counterAx
   "space-between": "SPACE_BETWEEN",
 };
 
+/**
+ * A flex alignment, refused on a grid in plain words: Figma takes none there (its own error is "primaryAxisAlignItems
+ * must be 'MIN' when layoutMode is 'GRID'"), and a grid aligns each child in its cell instead.
+ */
+function flexOnly(attribute: string, write: Rule["write"]): Rule["write"] {
+  return (input, out) => {
+    if (input.merged("display") === "grid") {
+      out.fail(
+        attribute,
+        `${attribute} aligns the children of a flex layout: a grid aligns each child in its cell.`,
+        'Give its children justify-self and align-self ("stretch" fills the cell).',
+      );
+    } else {
+      write(input, out);
+    }
+  };
+}
+
 /** The flex alignments, each one keyword. */
 export const FLEX_ALIGNMENT_RULES: readonly Rule[] = [
   {
     attributes: ["justify-content"],
-    write: keywordRule("justify-content", JUSTIFY_FIGMA, "primaryAxisAlignItems"),
+    write: flexOnly("justify-content", keywordRule("justify-content", JUSTIFY_FIGMA, "primaryAxisAlignItems")),
   },
   {
     attributes: ["align-items"],
-    write: keywordRule("align-items", ALIGN_FIGMA, "counterAxisAlignItems"),
+    write: flexOnly("align-items", keywordRule("align-items", ALIGN_FIGMA, "counterAxisAlignItems")),
   },
   {
     attributes: ["align-content"],
@@ -91,16 +110,6 @@ export function readFlex(node: SnapshotNode, css: CssDeclarations): void {
 
   if (node.layoutWrap === "WRAP") {
     readWrappedLines(node, css);
-  }
-}
-
-function readPadding(node: SnapshotNode, css: CssDeclarations): void {
-  const sides = (["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"] as const).map((key) =>
-    css.length(key, node[key] ?? 0),
-  );
-
-  if (sides.some((side) => side !== "0")) {
-    css.set("padding", boxShorthand(...(sides as [string, string, string, string])));
   }
 }
 

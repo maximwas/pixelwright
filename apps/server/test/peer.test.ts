@@ -12,7 +12,7 @@ import { OwnerClient } from "../src/bridge/owner-client.ts";
 import { PairingCodes } from "../src/bridge/pairing-codes.ts";
 import { PluginBridge } from "../src/bridge/plugin-bridge.ts";
 import { FilePluginKeys } from "../src/bridge/plugin-keys.ts";
-import { PEER_PATH, PEER_PROTOCOL_VERSION, PEER_RETRY_MS } from "../src/constants/bridge.ts";
+import { PEER_PATH, PEER_PROTOCOL_VERSION, PEER_RETRY_MS, REQUEST_MAX_TIMEOUT_MS } from "../src/constants/bridge.ts";
 import type { PluginKeys } from "../src/types/bridge.ts";
 import { connectPlugin, memoryKeys, pluginInfo, rawPlugin, TEST_KEY } from "./helpers/fake-plugin.ts";
 import { freePort } from "./helpers/free-port.ts";
@@ -130,6 +130,23 @@ describe("peers", () => {
     expect(peer.status().role).toBe("peer");
     await until(() => peer.plugins().length === 1);
     await expect(peer.request("ping", null)).resolves.toEqual({ op: "ping" });
+  });
+
+  it("gives a peer's request as long as it asks for, up to the bridge's longest wait", async () => {
+    const port = await freePort();
+    const owner = await bridgeOn(port);
+    const peer = await bridgeOn(port);
+    const plugin = await connectPlugin(port, pluginInfo());
+
+    cleanup.push(() => plugin.socket.close());
+    expect(owner.status().role).toBe("owner");
+    await until(() => peer.plugins().length === 1);
+    await peer.request("execute", null, { timeoutMs: 125_000 });
+    await peer.request("execute", null, { timeoutMs: 3_600_000 });
+    expect(plugin.received.filter(({ type }) => type === "request").map(({ timeoutMs }) => timeoutMs)).toEqual([
+      125_000,
+      REQUEST_MAX_TIMEOUT_MS,
+    ]);
   });
 
   it("refuses a peer with the wrong token", async () => {

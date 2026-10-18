@@ -6,6 +6,7 @@ import { annotationCategories } from "../../figma/layer-read/fields/notes.ts";
 import { entryOf } from "../../figma/layer-read/read-layer.ts";
 import { References } from "../../figma/layer-read/references.ts";
 import { isLayer, pageOf, requireNode } from "../../figma/nodes.ts";
+import { type ModedNode, rootModes } from "../../figma/variable-modes.ts";
 import { measurementsOf } from "./measurements.ts";
 import { readSubtree, SnapshotBudget } from "./subtree.ts";
 
@@ -43,12 +44,25 @@ export async function snapshot({
         inferred: true,
       }),
   });
+  const modes = await rootModes(root as ModedNode, references.lookup);
+
+  if (modes.length > 0) {
+    top.modes = modes;
+  }
+
+  return {
+    root: top,
+    ...(await aroundRoot(root, references)),
+  };
+}
+
+/** What a snapshot says besides its layers: Dev Mode marks, the colour profile, the tokens used, the page. */
+async function aroundRoot(root: SceneNode, references: References): Promise<Omit<OperationOutput<"snapshot">, "root">> {
   const measurements = measurementsOf(root);
   const devStatus = nearestDevStatus(root);
   const page = pageOf(root);
 
   return {
-    root: top,
     ...(devStatus === undefined ? {} : { devStatus }),
     ...colorProfile(),
     styles: await references.styles([page]),

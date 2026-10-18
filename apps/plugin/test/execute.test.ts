@@ -144,3 +144,116 @@ describe("execute", () => {
     await expect(run("return 1;")).rejects.toMatchObject({ code: "EDITS_DISABLED" });
   });
 });
+
+describe("execute: pw, kept between calls", () => {
+  it("keeps pw.state and the code's own helpers from one call to the next", async () => {
+    await run("pw.state.count = 1; pw.double = (value) => value * 2;");
+
+    expect((await run("pw.state.count += 1; return [pw.state.count, pw.double(21)];")).result).toEqual([2, 42]);
+  });
+
+  it("finds a layer by id with pw.node, or says it is not there", async () => {
+    expect((await run('return (await pw.node("1:2")).name;')).result).toBe("Title");
+    expect((await run('await pw.node("9:9");')).error).toMatch(/No layer 9:9/);
+  });
+
+  it("loads every font the texts under a layer use with pw.fonts", async () => {
+    fake = installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "1:1",
+            name: "Card",
+            children: [
+              {
+                id: "1:2",
+                type: "TEXT",
+                characters: "Plan",
+                fontName: {
+                  family: "Space Grotesk",
+                  style: "Bold",
+                },
+              },
+              {
+                id: "1:3",
+                type: "TEXT",
+                characters: "",
+                fontName: {
+                  family: "Inter",
+                  style: "Regular",
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect((await run('return await pw.fonts(await pw.node("1:1"));')).result).toEqual([
+      "Space Grotesk Bold",
+      "Inter Regular",
+    ]);
+    expect([...fake.writes.loaded]).toEqual(expect.arrayContaining(["Space Grotesk Bold", "Inter Regular"]));
+  });
+
+  it("turns a CSS colour into a Figma paint with pw.paint, its alpha as the opacity", async () => {
+    expect((await run('return pw.paint("rgba(255, 0, 0, 0.5)");')).result).toEqual({
+      type: "SOLID",
+      color: {
+        r: 1,
+        g: 0,
+        b: 0,
+      },
+      opacity: 0.5,
+    });
+    expect((await run('pw.paint("not a colour");')).error).toMatch(/not a CSS colour/);
+  });
+
+  it("finds a variable by the CSS name design_read gives it with pw.variable", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [],
+      }),
+      {
+        localCollections: [
+          {
+            id: "C:1",
+            name: "Theme",
+            remote: false,
+            defaultModeId: "M:1",
+            modes: [
+              {
+                modeId: "M:1",
+                name: "Light",
+              },
+            ],
+          },
+        ],
+        localVariables: [
+          {
+            id: "V:brand",
+            name: "color/brand",
+            variableCollectionId: "C:1",
+            resolvedType: "COLOR",
+            scopes: ["ALL_SCOPES"],
+            codeSyntax: {},
+            valuesByMode: {
+              "M:1": {
+                r: 0.231,
+                g: 0.184,
+                b: 0.851,
+                a: 1,
+              },
+            },
+          },
+        ],
+      },
+    );
+
+    expect((await run('return (await pw.variable("--color-brand")).id;')).result).toBe("V:brand");
+  });
+});

@@ -104,6 +104,19 @@ describe("BridgeServer", () => {
     await expect(server.request("ping", null)).rejects.toMatchObject({ code: "TIMEOUT" });
   });
 
+  it("gives the plugin as long as a request asks for, the bridge's own wait otherwise", async () => {
+    const { server, port } = await startServer();
+    const changed = once(server, "changed");
+    const plugin = await connectPlugin(port, pluginInfo());
+
+    await changed;
+    await server.request("execute", null, { timeoutMs: 125_000 });
+    await server.request("ping", null);
+    expect(plugin.received.filter(({ type }) => type === "request").map(({ timeoutMs }) => timeoutMs)).toEqual([
+      125_000, 1_000,
+    ]);
+  });
+
   it("sends requests to the file whose window came to the front last", async () => {
     const { server, port } = await startServer();
     let changed = once(server, "changed");

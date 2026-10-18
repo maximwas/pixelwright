@@ -6,8 +6,9 @@ import type { SnapshotNode, SnapshotPaint } from "../../types/snapshot.ts";
 import type { PaintSpec } from "../figma-props.ts";
 import { tokenOf, unwrapVar } from "./css-values.ts";
 import { cssUrl } from "./format.ts";
+import { gradientCss } from "./gradient-css.ts";
 
-/** A paint the mapping table cannot write back yet (gradients, video, patterns): read-only CSS instead. */
+/** A paint the mapping table cannot write back (a diamond gradient, video, patterns): read-only CSS instead. */
 export const UNMAPPED = Symbol("unmapped");
 
 export type PaintCss = string | typeof UNMAPPED | null;
@@ -135,6 +136,10 @@ export function paintOf(value: string): PaintSpec | null {
 function layerCss(paint: SnapshotPaint, node: SnapshotNode, context: CssContext): string | typeof UNMAPPED {
   if (paint.type === "SOLID" && paint.color !== undefined) {
     return solidCss(paint, paint.color, context);
+  }
+
+  if (paint.type.startsWith("GRADIENT_")) {
+    return gradientCss(paint, node, context) ?? UNMAPPED;
   }
 
   if (paint.type === "IMAGE") {

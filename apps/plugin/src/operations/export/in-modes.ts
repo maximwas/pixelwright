@@ -1,5 +1,7 @@
 import { BridgeError } from "@pixelwright/core";
+import { IdLookup } from "../../figma/id-lookup.ts";
 import { requireNode } from "../../figma/nodes.ts";
+import { collectionsAround, type ModedNode } from "../../figma/variable-modes.ts";
 import type { PluginServices } from "../../services/plugin-services.ts";
 
 /** What a render in other variable modes needs: it writes for a moment, as Pixelwright, one at a time. */
@@ -11,8 +13,6 @@ interface ModeChoice {
   readonly mode: string;
   readonly before: string | undefined;
 }
-
-type ModedNode = SceneNode & ExplicitVariableModesMixin;
 
 /**
  * Runs a render with the layer in the variable modes asked for (collection and mode by name, any case), then sets its
@@ -42,22 +42,15 @@ export function inModes<T>(
 
 /** The collections and modes asked for, by name, among those that apply to the layer and the file's own. */
 async function choicesFor(node: ModedNode, id: string, modes: Readonly<Record<string, string>>): Promise<ModeChoice[]> {
-  const collections = await Promise.all(
-    [
-      ...new Set([
-        ...Object.keys(node.resolvedVariableModes),
-        ...(await figma.variables.getLocalVariableCollectionsAsync()).map((collection) => collection.id),
-      ]),
-    ].map((collectionId) => figma.variables.getVariableCollectionByIdAsync(collectionId)),
-  );
+  const collections = await collectionsAround(node, new IdLookup());
 
   return Object.entries(modes).map(([collectionName, modeName]) => {
-    const collection = collections.find((each) => each?.name.toLowerCase() === collectionName.toLowerCase());
+    const collection = collections.find((each) => each.name.toLowerCase() === collectionName.toLowerCase());
 
-    if (collection === null || collection === undefined) {
+    if (collection === undefined) {
       throw new BridgeError(
         "OP_FAILED",
-        `No variable collection named ${collectionName} applies to ${id}: ${collections.flatMap((each) => (each === null ? [] : [each.name])).join(", ") || "none does"}.`,
+        `No variable collection named ${collectionName} applies to ${id}: ${collections.map((each) => each.name).join(", ") || "none does"}.`,
       );
     }
 

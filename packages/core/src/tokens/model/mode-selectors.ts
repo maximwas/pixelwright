@@ -1,3 +1,4 @@
+import { attributeSlug } from "../../kernel/names.ts";
 import type { Notes } from "../notes.ts";
 import { uniqueName } from "../unique-name.ts";
 
@@ -9,8 +10,9 @@ interface ModedCollection {
 }
 
 /**
- * Each collection's selectors, by mode: `[data-<collection>="<mode>"]` for every mode but the default, letters of any
- * script kept. Two modes (or two collections) that would share one get -2, and a note says so.
+ * Each collection's selectors, by mode: `[data-<collection>="<mode>"]` for every mode of a collection with more than
+ * one (the default's sets its values back inside another mode's element), letters of any script kept. Two modes (or two
+ * collections) that would share one get -2, and a note says so.
  */
 export function modeSelectors(collections: readonly ModedCollection[], notes: Notes): Record<string, string>[] {
   const attributes = new Set<string>();
@@ -20,7 +22,12 @@ export function modeSelectors(collections: readonly ModedCollection[], notes: No
     const values = new Set<string>();
     const selectors: Record<string, string> = {};
 
-    for (const mode of collection.modes.filter((name) => name !== collection.defaultMode)) {
+    const modes =
+      collection.modes.length > 1
+        ? [collection.defaultMode, ...collection.modes.filter((name) => name !== collection.defaultMode)]
+        : [];
+
+    for (const mode of modes) {
       const wanted = attributeSlug(mode);
       const slug = uniqueName(wanted, values);
 
@@ -33,15 +40,4 @@ export function modeSelectors(collections: readonly ModedCollection[], notes: No
 
     return selectors;
   });
-}
-
-/** A name as an HTML attribute name or value: lower case, letters and digits of any script, the rest as "-". */
-function attributeSlug(name: string): string {
-  const cleaned = name
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return cleaned === "" ? "mode" : cleaned;
 }
