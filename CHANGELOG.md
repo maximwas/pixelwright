@@ -16,6 +16,18 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## Unreleased
+
+### Fixed
+
+- `tokens_apply` with `dryRun` no longer promises a mode the file's Figma plan refuses: once Figma has refused a
+  mode in that file, a dry run refuses the same, and before that it warns when a collection would have more modes than
+  any collection the file already has (a Starter plan allows one).
+- `design_apply` with `dryRun` lists the layers it would create (without ids) and the layers it would change, as the
+  write does.
+- `design_lint` no longer flags layers a clipping frame cuts on purpose, such as a ticker's or a carousel's cards;
+  only a text cut off that way is flagged.
+
 ## 0.4.0 — 2026-10-18
 
 ### Added

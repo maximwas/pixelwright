@@ -50,9 +50,16 @@ interface Box {
   readonly height: number;
 }
 
-/** The room a parent gives a child in its flow or grid (its box less its padding); a clipping frame's own box. */
+/**
+ * The room a parent gives a child in its flow or grid (its box less its padding); a clipping frame's own box. What a
+ * clipping frame cuts is cut on purpose (a ticker, a carousel): only a text cut that way is lost content.
+ */
 function roomOf(parent: SnapshotNode, child: SnapshotNode): Box | null {
   const flows = parent.layoutMode !== undefined && parent.layoutMode !== "NONE";
+
+  if (parent.clipsContent && child.type !== "TEXT") {
+    return null;
+  }
 
   if (flows && child.layoutPositioning !== "ABSOLUTE") {
     return {
@@ -63,8 +70,7 @@ function roomOf(parent: SnapshotNode, child: SnapshotNode): Box | null {
     };
   }
 
-  // A clipping frame cuts what reaches past it: only a text cut that way is lost content.
-  return parent.clipsContent && child.type === "TEXT" ? parent : null;
+  return parent.clipsContent ? parent : null;
 }
 
 /** How far a box reaches past another on each axis. */
