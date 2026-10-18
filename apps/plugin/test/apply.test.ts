@@ -405,6 +405,30 @@ describe("apply: a dry run finds what the real run would", () => {
     expect(messages(real)).toHaveLength(1);
     expect(messages(dry)).toEqual(messages(real));
   });
+
+  it("lists the layers it would make and change, as the real run does, the new ones without ids", async () => {
+    const xml = [
+      '<Frame id="1:1" opacity="0.5"/>',
+      '<Frame name="Card" width="10px" height="10px">',
+      '  <Rectangle width="4px" height="4px"/>',
+      "</Frame>",
+      '<Frame id="9:9" opacity="0.5"/>',
+    ].join("\n");
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    expect(dry.created.map(({ line, tag }) => `${line} ${tag}`)).toEqual(["2 Frame", "3 Rectangle"]);
+    expect(dry.created.some((made) => "id" in made)).toBe(false);
+    expect(dry.created).toEqual(
+      real.created.map(({ line, ref, tag }) => ({
+        line,
+        ref,
+        tag,
+      })),
+    );
+    expect(dry.changed).toEqual(["1:1"]);
+    expect(dry.changed).toEqual(real.changed);
+  });
 });
 
 describe("apply: new component sets", () => {

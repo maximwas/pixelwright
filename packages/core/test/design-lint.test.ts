@@ -292,6 +292,58 @@ describe("design_lint: the general rules", () => {
     ]);
   });
 
+  it("leaves alone what a clipping frame cuts on purpose, a ticker's cards, but not a text it cuts", () => {
+    const card = (id: string, x: number) =>
+      layer(id, "Card", {
+        x,
+        width: 160,
+      });
+    const row = (id: string, name: string, clipsContent: boolean, children: SnapshotNode[]) =>
+      layer(id, name, {
+        width: 300,
+        layoutMode: "HORIZONTAL",
+        itemSpacing: 10,
+        clipsContent,
+        children,
+      });
+    const page = layer("3:0", "Page", {
+      width: 300,
+      height: 200,
+      children: [
+        row("3:1", "Ticker", true, [
+          card("3:2", 0),
+          card("3:3", 170),
+          text("3:4", "Breaking news", {
+            x: 340,
+            width: 200,
+          }),
+        ]),
+        row("3:5", "Row", false, [card("3:6", 0), card("3:7", 170)]),
+      ],
+    });
+    const { findings } = designLint(
+      {
+        reads: [
+          {
+            root: page,
+            styles: {},
+            variables: {},
+          },
+        ],
+      },
+      {
+        limit: 100,
+        scope: "x",
+        rules: ["overflow"],
+      },
+    );
+
+    expect(findings.map(({ id, message }) => `${id}: ${message}`)).toEqual([
+      '3:4: 240px wider than the room 3:1 "Ticker" gives it, which cuts it off.',
+      '3:7: 30px wider than the room 3:5 "Row" gives it.',
+    ]);
+  });
+
   it("lists only what is at least as severe as asked, at most the limit", () => {
     const warnings = lint({
       severity: "warning",

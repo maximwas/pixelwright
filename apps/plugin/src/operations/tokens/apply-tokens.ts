@@ -5,7 +5,7 @@ import { TokenWriter } from "./writer/token-writer.ts";
 /** The `tokens_apply` operation: the plan core made, written by a TokenWriter. */
 export async function applyTokens(
   input: OperationInput<"tokens_apply">,
-  services: Pick<PluginServices, "edits" | "fonts">,
+  services: Pick<PluginServices, "edits" | "fonts" | "modeLimit">,
 ): Promise<OperationOutput<"tokens_apply">> {
   return await new TokenWriter(input, services).run();
 }

@@ -6710,7 +6710,6 @@
             "required": [
               "line",
               "ref",
-              "id",
               "tag"
             ]
           }
