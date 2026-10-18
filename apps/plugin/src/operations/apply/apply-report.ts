@@ -37,6 +37,19 @@ export class ApplyReport {
     this.#changed.push(node.id);
   }
 
+  /** A dry run's: the layer the change would make, which has no id yet, or the one it would write to. */
+  planned(change: ApplyChange): void {
+    if (change.kind === "create") {
+      this.#created.push({
+        line: change.line,
+        ref: change.ref,
+        tag: change.tag,
+      });
+    } else if (change.id !== null) {
+      this.#changed.push(change.id);
+    }
+  }
+
   /** Whether the call made or changed anything: its one undo step. */
   get touched(): boolean {
     return this.#created.length > 0 || this.#changed.length > 0;

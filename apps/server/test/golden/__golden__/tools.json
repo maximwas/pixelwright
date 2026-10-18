@@ -4897,7 +4897,7 @@
         },
         "dryRun": {
           "default": false,
-          "description": "Check ids, tokens and fonts without writing; works with Allow edits off.",
+          "description": "Check ids, tokens and fonts without writing, listing the layers it would create (without ids) and change; works with Allow edits off.",
           "type": "boolean"
         },
         "version": {
@@ -4944,7 +4944,6 @@
             "required": [
               "line",
               "ref",
-              "id",
               "tag"
             ],
             "additionalProperties": false

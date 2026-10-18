@@ -265,7 +265,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>xml</code></td><td><code>string</code></td><td>Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer.</td></tr>
 <tr><td><code>parent</code><span class="optional">optional</span></td><td><code>string</code></td><td>Where top-level new layers go: a frame&#39;s or page&#39;s id. Default: the current page, beside its layers.</td></tr>
-<tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check ids, tokens and fonts without writing; works with Allow edits off.</td></tr>
+<tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check ids, tokens and fonts without writing, listing the layers it would create (without ids) and change; works with Allow edits off.</td></tr>
 <tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
@@ -1035,7 +1035,8 @@ makes it a layer again.</li>
 <h3>Errors and undo</h3>
 <p><code>nodes_delete</code> deletes layers by id (not those inside an instance: hide them with <code>display=&quot;none&quot;</code>).</p>
 <p>Each element is written on its own: an error names its line and attribute, and the rest of the XML still goes in.
-<code>created</code> lists the new layers&#39; ids by line, <code>changed</code> the layers written to. One call is one undo step in Figma:
+<code>created</code> lists the new layers&#39; ids by line, <code>changed</code> the layers written to; a dry run lists the same, the new
+layers without ids, as what it would do. One call is one undo step in Figma:
 the user&#39;s Cmd+Z takes the whole call back.</p>
 <p>Effects CSS cannot write (noise, texture, glass, hidden effects) stay when a layer&#39;s <code>box-shadow</code> or <code>filter</code>
 changes, and a shadow sent back as it was keeps its colour variable and blend mode. <code>effects_apply</code> puts Figma&#39;s own

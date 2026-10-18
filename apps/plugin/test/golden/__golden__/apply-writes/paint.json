@@ -35,7 +35,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "9:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -72,7 +74,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "9:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -127,7 +131,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "9:3"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -182,7 +188,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "9:4"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -255,7 +263,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "9:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -302,7 +312,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "4:2"
+        ],
         "errors": [],
         "dryRun": true
       },

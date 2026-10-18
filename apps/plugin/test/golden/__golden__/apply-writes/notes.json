@@ -30,7 +30,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:1"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -85,7 +87,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:6"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -122,7 +126,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:5"
+        ],
         "errors": [],
         "dryRun": true
       },

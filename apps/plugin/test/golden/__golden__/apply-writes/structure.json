@@ -341,7 +341,28 @@
     },
     "dry": {
       "result": {
-        "created": [],
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "tag": "Frame"
+          },
+          {
+            "line": 2,
+            "ref": "new:2",
+            "tag": "Rectangle"
+          },
+          {
+            "line": 3,
+            "ref": "new:3",
+            "tag": "Ellipse"
+          },
+          {
+            "line": 4,
+            "ref": "new:4",
+            "tag": "Line"
+          }
+        ],
         "changed": [],
         "errors": [],
         "dryRun": true
@@ -396,7 +417,12 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "9:1",
+          "9:3",
+          "9:4",
+          "9:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -450,7 +476,10 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:5",
+          "1:6"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -514,7 +543,10 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "3:1",
+          "9:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -824,8 +856,16 @@
     },
     "dry": {
       "result": {
-        "created": [],
-        "changed": [],
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "tag": "Frame"
+          }
+        ],
+        "changed": [
+          "3:1"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -1135,7 +1175,13 @@
     },
     "dry": {
       "result": {
-        "created": [],
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "tag": "Frame"
+          }
+        ],
         "changed": [],
         "errors": [],
         "dryRun": true
@@ -1173,7 +1219,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:1"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -1308,7 +1356,13 @@
     },
     "dry": {
       "result": {
-        "created": [],
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "tag": "Section"
+          }
+        ],
         "changed": [],
         "errors": [],
         "dryRun": true

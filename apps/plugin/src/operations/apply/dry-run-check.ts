@@ -80,6 +80,7 @@ export class DryRunCheck {
       try {
         const layer = await this.#target(change);
 
+        this.#report.planned(change);
         this.#checked.add(change.ref);
         await this.#neighbour(change, fail);
         this.#planned.record(change, this.#byRef);

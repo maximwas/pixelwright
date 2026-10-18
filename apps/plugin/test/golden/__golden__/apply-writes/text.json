@@ -35,7 +35,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -128,7 +130,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -209,7 +213,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -261,7 +267,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -374,7 +382,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:6"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -413,7 +423,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -484,7 +496,9 @@
     "dry": {
       "result": {
         "created": [],
-        "changed": [],
+        "changed": [
+          "1:2"
+        ],
         "errors": [],
         "dryRun": true
       },
@@ -619,7 +633,13 @@
     },
     "dry": {
       "result": {
-        "created": [],
+        "created": [
+          {
+            "line": 1,
+            "ref": "new:1",
+            "tag": "Text"
+          }
+        ],
         "changed": [],
         "errors": [],
         "dryRun": true

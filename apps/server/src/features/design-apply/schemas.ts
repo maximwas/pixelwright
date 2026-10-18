@@ -20,7 +20,9 @@ export const DesignApplyInputSchema = z.object({
   dryRun: z
     .boolean()
     .default(false)
-    .describe("Check ids, tokens and fonts without writing; works with Allow edits off."),
+    .describe(
+      "Check ids, tokens and fonts without writing, listing the layers it would create (without ids) and change; works with Allow edits off.",
+    ),
   version: VersionInputSchema,
   file: FileSchema,
 });

@@ -218,7 +218,7 @@ async function madeIcon(
           ...(parent === undefined ? {} : { parent }),
           dryRun: dry,
         }),
-      // A dry run of apply lists no layers it would make: a check without errors means the icon goes in.
+      // A check without errors means the icon goes in: an older plugin's dry run lists no layers it would make.
       changes: (applied) => (applied.errors.length > 0 ? 0 : 1),
     },
   );
