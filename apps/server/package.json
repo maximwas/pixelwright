@@ -1,6 +1,6 @@
 {
   "name": "pixelwright",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Open-source MCP server that lets AI agents read and edit Figma files through a Figma plugin: no REST API, no token, no seat quota. Unofficial, not affiliated with Figma.",
   "license": "MIT",
   "funding": [
