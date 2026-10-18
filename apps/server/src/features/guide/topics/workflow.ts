@@ -30,6 +30,8 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    writes a .png file full size; \`clip\` takes a region of it, in px from its box). Compare your build with it:
    \`image_compare\` renders a layer the same way and compares it with a PNG of your build (rmse, the share of pixels
    that differ, the box around them, edges off by N px; \`diff\` writes the difference as a PNG).
+   \`styles_compare\` checks the build's computed styles (getComputedStyle) against each layer, property by property:
+   the values that differ with the token or text style behind them, and the properties the build left out.
    **Measure it.** \`inspect\` reads layers as Figma has them, without code and with Allow edits off: the layout box
    and the painted box (a centred stroke, shadows and blur reach past it), the fill with the style or variables behind
    it (what a \`var()\` resolves to), how strokes paint, every effect's parameters (a progressive blur's start and

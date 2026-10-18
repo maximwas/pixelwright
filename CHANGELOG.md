@@ -67,6 +67,10 @@ How to write this file (people and agents alike):
   minutes for a long task.
 - `image_compare` compares a layer `against` another layer, rendered the same way, with no PNG on disk: a variant
   against its default, a rebuilt frame against the original.
+- `styles_compare` checks a build's computed styles against the design, layer by layer: give each layer with what
+  `getComputedStyle` returns for the element that draws it, and it lists every property that differs with both values
+  and the token or text style behind it, and the properties the build's styles left out. Shorthands, tokens and text
+  styles are spread out the way the browser computes them; sizes and places may be off by a pixel.
 - `tokens_apply` sets a variable's `scopes`, the fields Figma's pickers offer it for (`["FONT_WEIGHT"]`, `[]` to
   hide it), and its `codeSyntax` on the web, Android and iOS; scopes a type cannot take are refused before anything
   is written. `tokens_read`'s JSON lists both, so tokens copied into another file keep them.

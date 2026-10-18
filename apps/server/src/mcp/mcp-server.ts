@@ -34,6 +34,7 @@ import { selectionGetTool } from "../features/selection-get/tool.ts";
 import { selectionWaitTool } from "../features/selection-wait/tool.ts";
 import { statesFindTool } from "../features/states-find/tool.ts";
 import { statusTool } from "../features/status/tool.ts";
+import { stylesCompareTool } from "../features/styles-compare/tool.ts";
 import { textsReplaceTool } from "../features/texts-replace/tool.ts";
 import { tokensApplyTool } from "../features/tokens-apply/tool.ts";
 import { tokensBindTool } from "../features/tokens-bind/tool.ts";
@@ -82,6 +83,7 @@ function registerReadTools(server: McpServer, context: ToolContext): void {
   registerTool(server, baselineDiffTool(context));
   registerTool(server, breakpointsFindTool(context));
   registerTool(server, imageCompareTool(context));
+  registerTool(server, stylesCompareTool(context));
   registerTool(server, measureTool(context));
   registerTool(server, flowReadTool(context));
 }

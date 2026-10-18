@@ -1,10 +1,15 @@
 /**
- * Whether two values are the same as JSON would carry them, whatever order their keys are in: primitives by `===`,
- * arrays item by item, objects key by key, keys holding undefined left out.
+ * Whether two values are the same as JSON would carry them, whatever order their keys are in: primitives by `===`
+ * (numbers within `precision`, exactly by default), arrays item by item, objects key by key, keys holding undefined
+ * left out.
  */
-export function sameValue(a: unknown, b: unknown): boolean {
+export function sameValue(a: unknown, b: unknown, precision = 0): boolean {
   if (a === b) {
     return true;
+  }
+
+  if (typeof a === "number" && typeof b === "number") {
+    return Math.abs(a - b) <= precision;
   }
 
   if (
@@ -24,7 +29,8 @@ export function sameValue(a: unknown, b: unknown): boolean {
     ownKeys.length === otherKeys.length &&
     ownKeys.every(
       (key) =>
-        Object.hasOwn(b, key) && sameValue((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
+        Object.hasOwn(b, key) &&
+        sameValue((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key], precision),
     )
   );
 }

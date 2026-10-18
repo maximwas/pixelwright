@@ -515,6 +515,15 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>probe</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also ping the active file&#39;s plugin and report the round trip.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-styles_compare">
+  <h3><code>styles_compare</code></h3>
+  <p>Whether a build has each style the design sets, property by property. Give pairs: a layer (design_read&#39;s id) and the computed styles of the element that draws it, as the browser gives them: Object.fromEntries([...getComputedStyle(el)].map((p) =&gt; [p, getComputedStyle(el).getPropertyValue(p)])), or only the properties a first call lists in notGiven. Each layer is read as design_read writes it in its parent, its tokens and text style in and its shorthands spread into longhands (padding into padding-top…, border into each side&#39;s width, style and colour, font into family, size, weight, style and line height, gap into row-gap and column-gap). mismatches gives each property the build has otherwise with both values and the token or text style it comes from; notGiven what the build&#39;s styles leave out; notCompared what a computed style cannot be held against (offsets in percent or calc(), fr tracks). Sizes and places may be off by tolerance px; other lengths, colours (hex or rgb()), shadows, gradients and transforms compare by value. What the design leaves unset is not checked. image_compare compares the pixels. Works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>pairs</code></td><td><code>object[]</code></td><td>Each layer with the build&#39;s computed styles for it.</td></tr>
+<tr><td><code>tolerance</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>How far a size or a place may be off, in px (1 by default): layout rounds them. Other lengths, colours and numbers compare as CSS computes them.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-texts_replace">
   <h3><code>texts_replace</code><span class="writes">writes</span></h3>
   <p>Finds and replaces text in every text under a layer, a page or the file: one pair or a list (copy edits, a translation dictionary), plain or a regular expression with groups, any case unless caseSensitive, whole words when asked. Each match is replaced where it stands, so its run keeps its font, colour and link; a text an instance shows from a component text property changes through the property. Answers each changed text before and after; a text whose font is missing is named and left. One undo step in Figma; refused while the plugin&#39;s Allow edits switch is off (dryRun lists without writing).</p>
@@ -630,6 +639,8 @@ Pass <code>assetsDir</code> (e.g. src/assets) to get its icons and images writte
 writes a .png file full size; <code>clip</code> takes a region of it, in px from its box). Compare your build with it:
 <code>image_compare</code> renders a layer the same way and compares it with a PNG of your build (rmse, the share of pixels
 that differ, the box around them, edges off by N px; <code>diff</code> writes the difference as a PNG).
+<code>styles_compare</code> checks the build&#39;s computed styles (getComputedStyle) against each layer, property by property:
+the values that differ with the token or text style behind them, and the properties the build left out.
 <strong>Measure it.</strong> <code>inspect</code> reads layers as Figma has them, without code and with Allow edits off: the layout box
 and the painted box (a centred stroke, shadows and blur reach past it), the fill with the style or variables behind
 it (what a <code>var()</code> resolves to), how strokes paint, every effect&#39;s parameters (a progressive blur&#39;s start and

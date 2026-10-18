@@ -75,6 +75,7 @@ describe("stdio server", () => {
         "selection_wait",
         "states_find",
         "status",
+        "styles_compare",
         "texts_replace",
         "tokens_apply",
         "tokens_bind",

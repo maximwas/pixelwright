@@ -3305,6 +3305,203 @@
     }
   },
   {
+    "name": "styles_compare",
+    "title": "Compare a build's styles with the design",
+    "description": "Whether a build has each style the design sets, property by property. Give pairs: a layer (design_read's id) and the computed styles of the element that draws it, as the browser gives them: Object.fromEntries([...getComputedStyle(el)].map((p) => [p, getComputedStyle(el).getPropertyValue(p)])), or only the properties a first call lists in notGiven. Each layer is read as design_read writes it in its parent, its tokens and text style in and its shorthands spread into longhands (padding into padding-top…, border into each side's width, style and colour, font into family, size, weight, style and line height, gap into row-gap and column-gap). mismatches gives each property the build has otherwise with both values and the token or text style it comes from; notGiven what the build's styles leave out; notCompared what a computed style cannot be held against (offsets in percent or calc(), fr tracks). Sizes and places may be off by tolerance px; other lengths, colours (hex or rgb()), shadows, gradients and transforms compare by value. What the design leaves unset is not checked. image_compare compares the pixels. Works while Allow edits is off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "pairs": {
+          "minItems": 1,
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "node": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "The layer, by the id design_read gives it, e.g. 54:243."
+              },
+              "css": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "description": "The computed styles of the element that draws the layer in the build, by property: getComputedStyle's values, background-color or backgroundColor."
+              },
+              "label": {
+                "description": "What draws it in the build (a selector, a component), to tell the results apart.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "node",
+              "css"
+            ]
+          },
+          "description": "Each layer with the build's computed styles for it."
+        },
+        "tolerance": {
+          "default": 1,
+          "description": "How far a size or a place may be off, in px (1 by default): layout rounds them. Other lengths, colours and numbers compare as CSS computes them.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "pairs"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "matched": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Properties the build has as the design sets them."
+              },
+              "mismatches": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "type": "string"
+                    },
+                    "design": {
+                      "type": "string",
+                      "description": "The design's value, its tokens' values in."
+                    },
+                    "from": {
+                      "description": "What the design takes it from: a token, var(--name), or a text style, textStyle=\"Name\".",
+                      "type": "string"
+                    },
+                    "build": {
+                      "type": "string",
+                      "description": "The build's computed value."
+                    }
+                  },
+                  "required": [
+                    "property",
+                    "design",
+                    "build"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Properties the build has otherwise, in the design's order."
+              },
+              "notGiven": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Properties the design sets that the build's styles leave out: read them too and compare again."
+              },
+              "notCompared": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "type": "string"
+                    },
+                    "design": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "property",
+                    "design"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "What the design writes in a way a computed style cannot be held against: an offset in percent or calc(), tracks in fr, a value in em without a font size."
+              },
+              "node": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "tag": {
+                "type": "string",
+                "description": "Its element in design_read: Frame, Text, Icon…"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "matched",
+              "mismatches",
+              "notGiven",
+              "notCompared",
+              "node",
+              "name",
+              "tag"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Each pair's layer: what matched, what differs, what the build left out, what cannot be compared."
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Layers the file does not hold."
+        },
+        "same": {
+          "type": "boolean",
+          "description": "The build gave every property the design sets and each one matched (notCompared aside)."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "layers",
+        "missing",
+        "same",
+        "notes"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "measure",
     "title": "Measure between layers",
     "description": "Measures the distances between layers, each from the one before it in the list (a→b, b→c, so a row's rhythm shows): the gap between their boxes on each axis (negative where they overlap), how their edges and centres line up (B's minus A's: 0 is aligned), and, when one holds the other, how far it sits from each edge, as padding. Layout boxes by default; painted: true measures what is painted (strokes, shadows). A sentence per pair says it plainly. Works while Allow edits is off.",
