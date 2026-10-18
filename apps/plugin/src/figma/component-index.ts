@@ -1,4 +1,7 @@
 import { closest } from "@pixelwright/core";
+import pTimeout from "p-timeout";
+import { KEY_IMPORT_MS } from "../constants/plugin.ts";
+import { errorMessage } from "../utils/error-message.ts";
 import { type ComponentOwner, ownerOf } from "./variants.ts";
 import { WriteError } from "./write-error.ts";
 
@@ -19,9 +22,7 @@ export class ComponentIndex {
 
   async find(name: string): Promise<ComponentOwner> {
     if (name.startsWith("key:")) {
-      const key = name.slice(4);
-
-      return await figma.importComponentSetByKeyAsync(key).catch(() => figma.importComponentByKeyAsync(key));
+      return await imported(name.slice(4));
     }
 
     this.#used ??= await usedOwners();
@@ -41,6 +42,30 @@ export class ComponentIndex {
     }
 
     throw notFound(name, [...this.#made.keys(), ...this.#used.keys(), ...this.#local.keys()]);
+  }
+}
+
+/**
+ * A library's set or lone component by key, both asked at once: Figma never answers a set import of a key that is no
+ * published set (a lone component's among them), so the one that answers wins, within KEY_IMPORT_MS.
+ */
+async function imported(key: string): Promise<ComponentOwner> {
+  const notImported = (why: string) =>
+    new WriteError(
+      `Figma did not import key:${key}: ${why}`,
+      "Only components of a published library this account can use import by key (library_search finds them); in the library file itself, name the component instead.",
+    );
+
+  try {
+    return await pTimeout(
+      Promise.any([figma.importComponentSetByKeyAsync(key), figma.importComponentByKeyAsync(key)]),
+      {
+        milliseconds: KEY_IMPORT_MS,
+        message: notImported(`no answer in ${KEY_IMPORT_MS / 1_000} s.`),
+      },
+    );
+  } catch (error) {
+    throw error instanceof AggregateError ? notImported(errorMessage(error.errors.at(-1))) : error;
   }
 }
 

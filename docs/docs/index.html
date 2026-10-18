@@ -414,6 +414,16 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-library_search">
+  <h3><code>library_search</code></h3>
+  <p>Finds components in the team&#39;s libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer in ~/.pixelwright/libraries; save again after the library changes. Then query from any file: every word must appear in a component&#39;s name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:&lt;key&gt;) and properties: insert it with design_apply &lt;Instance component=&quot;key:…&quot; variant=&quot;State=Hover&quot; props=&quot;Label=Buy&quot;/&gt;, which works once the library is published. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>query</code><span class="optional">optional</span></td><td><code>string</code></td><td>Words to find in the components&#39; names, descriptions, pages and variants, in any order (button hover); a typo still finds. Left out, the saved libraries are listed.</td></tr>
+<tr><td><code>save</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Save the file&#39;s own published components as a library first, replacing what was saved for it before: call it in the library file, open in Figma Desktop with the Pixelwright plugin.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+<tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 20</span></td><td>The most components to give.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-measure">
   <h3><code>measure</code></h3>
   <p>Measures the distances between layers, each from the one before it in the list (a→b, b→c, so a row&#39;s rhythm shows): the gap between their boxes on each axis (negative where they overlap), how their edges and centres line up (B&#39;s minus A&#39;s: 0 is aligned), and, when one holds the other, how far it sits from each edge, as padding. Layout boxes by default; painted: true measures what is painted (strokes, shadows). A sentence per pair says it plainly. Works while Allow edits is off.</p>
@@ -973,7 +983,8 @@ layers: copy a card&#39;s XML, drop the root&#39;s id, add <code>copyOf</code>, 
 <ul>
 <li><code>&lt;Instance component=&quot;Heading&quot; variant=&quot;Property 1=Green&quot; props=&quot;Label=Our work, Has icon=false&quot;/&gt;</code> makes an
 instance by the names design_read and components_read write: the file&#39;s components, the ones its page uses from a
-library, or <code>component=&quot;key:&lt;key&gt;&quot;</code> for a library one the file does not use yet. <code>variant</code> picks the variant
+library, or <code>component=&quot;key:&lt;key&gt;&quot;</code> for a library one the file does not use yet (<code>library_search</code> finds those
+keys in the libraries saved with it). <code>variant</code> picks the variant
 (values left out are the set&#39;s default), <code>props</code> sets text and boolean properties (names without Figma&#39;s #id).</li>
 <li>Inside a new instance, elements with another instance&#39;s ids (of the same component and variant) or the
 component&#39;s own write the new instance&#39;s layers, as overrides; the other instance stays as it is.

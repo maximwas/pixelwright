@@ -64,6 +64,7 @@ describe("stdio server", () => {
         "image_compare",
         "inspect",
         "instances_reattach",
+        "library_search",
         "measure",
         "node_show",
         "nodes_delete",

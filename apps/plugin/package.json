@@ -15,6 +15,7 @@
     "@pixelwright/core": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
+    "p-timeout": "8.0.0",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "vitest": "catalog:",
     "zod": "catalog:"

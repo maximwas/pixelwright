@@ -1388,7 +1388,9 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
       const found = (library.components ?? []).find((node) => node.key === key && node.type === "COMPONENT_SET");
 
       if (found === undefined) {
-        throw new Error(`No component set with key ${key}`);
+        // As Figma does (measured 2026-10-18): a lone component's key, an unpublished set's or an unknown one never
+        // settles.
+        return new Promise<never>(() => undefined);
       }
 
       return found;

@@ -23,6 +23,7 @@ import { iconsInsertTool } from "../features/icons-insert/tool.ts";
 import { imageCompareTool } from "../features/image-compare/tool.ts";
 import { inspectTool } from "../features/inspect/tool.ts";
 import { instancesReattachTool } from "../features/instances-reattach/tool.ts";
+import { librarySearchTool } from "../features/library-search/tool.ts";
 import { measureTool } from "../features/measure/tool.ts";
 import { nodeShowTool } from "../features/node-show/tool.ts";
 import { nodesDeleteTool } from "../features/nodes-delete/tool.ts";
@@ -112,6 +113,7 @@ function registerWriteTools(server: McpServer, context: ToolContext): void {
   registerTool(server, iconsInsertTool(context), context.support);
   registerTool(server, versionSaveTool(context), context.support);
   registerTool(server, componentsReadTool(context));
+  registerTool(server, librarySearchTool(context));
   registerTool(server, variantsReadTool(context));
   registerTool(server, assetsExportTool(context));
   registerTool(server, codeConnectReadTool(context));

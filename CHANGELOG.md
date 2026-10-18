@@ -78,6 +78,8 @@ How to write this file (people and agents alike):
   all, marked `$repeat="3"`, and `repeats` gives each item's own texts, files and variants as rows, so a long list
   costs a fraction of the read. With `nearby: 400` it also lists the designer's notes on the canvas around the screen
   (texts, stickies and small frames of text beside it or over it), nearest first.
+- `library_search` finds components in your team's libraries from any file: save each library once from its own
+  file, then search by words in any order (a typo still finds) and insert what it finds with `design_apply`.
 
 ### Changed
 
@@ -90,6 +92,8 @@ How to write this file (people and agents alike):
 
 ### Fixed
 
+- `design_apply` makes an instance of a lone library component by `component="key:…"`, and gives up on a key Figma
+  cannot import (an unpublished library) within 10 seconds, saying why, instead of waiting until the request timed out.
 - `tokens_bind` and `design_lint` match a layer's opacity with the variables Figma's opacity fields take, kept as
   percents (50 for 0.5): an opacity variable of 50 was never offered, and a plain 0.5 one bound the layer at 0.5 %.
 - `texts_replace` walks a page or the whole file within the plugin's time limit and says `more` when it stops,

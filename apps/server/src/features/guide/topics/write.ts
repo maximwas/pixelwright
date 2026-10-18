@@ -50,7 +50,8 @@ taken as sRGB and converted to P3.
 
 - \`<Instance component="Heading" variant="Property 1=Green" props="Label=Our work, Has icon=false"/>\` makes an
   instance by the names design_read and components_read write: the file's components, the ones its page uses from a
-  library, or \`component="key:<key>"\` for a library one the file does not use yet. \`variant\` picks the variant
+  library, or \`component="key:<key>"\` for a library one the file does not use yet (\`library_search\` finds those
+  keys in the libraries saved with it). \`variant\` picks the variant
   (values left out are the set's default), \`props\` sets text and boolean properties (names without Figma's #id).
 - Inside a new instance, elements with another instance's ids (of the same component and variant) or the
   component's own write the new instance's layers, as overrides; the other instance stays as it is.
