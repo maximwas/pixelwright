@@ -5,6 +5,7 @@ import {
   type OperationInput,
   type OperationOutput,
 } from "@pixelwright/core";
+import pTimeout from "p-timeout";
 import type { CodeScope } from "../../services/code-scope.ts";
 import type { EditsGuard } from "../../services/edits-guard.ts";
 import { codeHelpers } from "./code-helpers.ts";
@@ -15,7 +16,7 @@ type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<u
 /** The constructor of async functions: the code becomes the body of one. */
 const AsyncFunction = Object.getPrototypeOf(async () => undefined).constructor as AsyncBody;
 
-/** What the race gives when the timer wins. */
+/** What the run gives when its time is up first. */
 const TIMED_OUT = Symbol("timed out");
 
 /**
@@ -54,16 +55,12 @@ async function ran(
   timeoutMs: number,
   { output, pw }: { readonly output: CapturedConsole; readonly pw: Record<string, unknown> },
 ): Promise<OperationOutput<"execute">> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
   try {
     const run = new AsyncFunction("figma", "console", "pw", code);
-    const value = await Promise.race([
-      run(figma, output.console(), pw),
-      new Promise((resolve) => {
-        timer = setTimeout(() => resolve(TIMED_OUT), timeoutMs);
-      }),
-    ]);
+    const value = await pTimeout(run(figma, output.console(), pw), {
+      milliseconds: timeoutMs,
+      fallback: () => TIMED_OUT,
+    });
 
     if (value === TIMED_OUT) {
       return {
@@ -83,8 +80,6 @@ async function ran(
       logs: output.kept(),
       error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
     };
-  } finally {
-    clearTimeout(timer);
   }
 }
 
