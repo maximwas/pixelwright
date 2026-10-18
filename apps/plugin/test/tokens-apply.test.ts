@@ -417,7 +417,7 @@ describe("tokens_apply: variables", () => {
         collection: "Brand",
         name: "Contrast",
         message:
-          "The file's Figma plan allows 2 modes in a collection: Contrast is not added, and its values are left out (a dry run cannot know the plan).",
+          "The file's Figma plan allows 2 modes in a collection: Contrast is not added, and its values are left out.",
       }),
     ]);
     expect(result.updated).toEqual([
@@ -426,6 +426,59 @@ describe("tokens_apply: variables", () => {
         collection: "Brand",
         name: "color/primary",
       },
+    ]);
+  });
+
+  it("warns on a dry run when a collection needs more modes than any of the file's has", async () => {
+    const result = await apply(
+      {
+        collections: [
+          {
+            name: "Brand",
+            modes: ["Light", "Dark", "Contrast"],
+            variables: [],
+          },
+        ],
+      },
+      true,
+    );
+
+    expect(result.created).toEqual([
+      {
+        kind: "mode",
+        collection: "Brand",
+        name: "Contrast",
+      },
+    ]);
+    expect(result.notes).toEqual([
+      "No collection in this file has more than 2 modes, so a dry run cannot tell whether its Figma plan lets Brand have 3 (Starter allows 1): if not, the write refuses Contrast and leaves its values out.",
+    ]);
+  });
+
+  it("refuses on a dry run a mode past the limit a write was refused at", async () => {
+    const plan = {
+      collections: [
+        {
+          name: "Brand",
+          modes: ["Light", "Dark", "Contrast"],
+          variables: [],
+        },
+      ],
+    };
+
+    await apply(plan);
+
+    const dry = await apply(plan, true);
+
+    expect(dry.created).toEqual([]);
+    expect(dry.errors).toEqual([
+      expect.objectContaining({
+        kind: "mode",
+        collection: "Brand",
+        name: "Contrast",
+        message:
+          "The file's Figma plan allows 2 modes in a collection: Contrast is not added, and its values are left out.",
+      }),
     ]);
   });
 

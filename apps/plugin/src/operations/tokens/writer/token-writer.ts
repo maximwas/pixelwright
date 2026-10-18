@@ -3,6 +3,7 @@ import type { FontCatalog } from "../../../figma/fonts.ts";
 import { IdLookup } from "../../../figma/id-lookup.ts";
 import { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import type { EditsGuard } from "../../../services/edits-guard.ts";
+import type { ModeLimit } from "../../../services/mode-limit.ts";
 import { FileTokens } from "./file-tokens.ts";
 import { KnownVariables } from "./known-variables.ts";
 import { StyleWriter } from "./styles.ts";
@@ -20,6 +21,7 @@ export class TokenWriter implements TokenRun {
   readonly dryRun: boolean;
   readonly fonts: FontCatalog;
   readonly lookup = new IdLookup();
+  readonly modeLimit: ModeLimit;
   readonly #edits: EditsGuard;
   readonly #plan: OperationInput<"tokens_apply">["plan"];
   readonly #results: Required<Written> = {
@@ -29,16 +31,22 @@ export class TokenWriter implements TokenRun {
     notes: [],
   };
   #index: Promise<TokenIndex> | null = null;
+  #provenModes: Promise<number> | null = null;
   #wrote = false;
 
   constructor(
     { plan, dryRun }: OperationInput<"tokens_apply">,
-    { edits, fonts }: { readonly edits: EditsGuard; readonly fonts: FontCatalog },
+    {
+      edits,
+      fonts,
+      modeLimit,
+    }: { readonly edits: EditsGuard; readonly fonts: FontCatalog; readonly modeLimit: ModeLimit },
   ) {
     this.#plan = plan;
     this.dryRun = dryRun;
     this.#edits = edits;
     this.fonts = fonts;
+    this.modeLimit = modeLimit;
   }
 
   async run(): Promise<Written> {
@@ -66,6 +74,14 @@ export class TokenWriter implements TokenRun {
     this.#index ??= TokenIndex.of(this.lookup);
 
     return this.#index;
+  }
+
+  provenModes(): Promise<number> {
+    this.#provenModes ??= figma.variables
+      .getLocalVariableCollectionsAsync()
+      .then((collections) => Math.max(1, ...collections.map(({ modes }) => modes.length)));
+
+    return this.#provenModes;
   }
 
   created(item: TokenItem): void {
