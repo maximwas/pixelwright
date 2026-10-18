@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { PlannedAsset } from "@pixelwright/core";
+import { BridgeError, type PlannedAsset } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { writeAssets } from "../src/assets/write-assets.ts";
 import { memoryFiles } from "../src/assets/written-files.ts";
@@ -283,6 +283,104 @@ describe("design_read", () => {
     expect(JSON.parse(textOf(await readDesign(new PluginClient(orbit(PLANS).bridge), args), 1))).not.toHaveProperty(
       "motion",
     );
+  });
+
+  it("reads alike neighbours once with repeats, and the designer's notes around the screen with nearby", async () => {
+    const { bridge, ops } = orbit(PLANS);
+    const notes = {
+      screen: {
+        id: "54:226",
+        name: "Orbit — Pricing",
+      },
+      notes: [
+        {
+          id: "60:1",
+          name: "Note",
+          text: "Pro is the one to sell.",
+          side: "right",
+          distance: 80,
+        },
+      ],
+      more: 0,
+    };
+    const asked: unknown[] = [];
+    const request = bridge.request;
+
+    bridge.request = async (op, input) => {
+      if (op === "nearby") {
+        asked.push(input);
+
+        return notes;
+      }
+
+      return request(op, input);
+    };
+
+    const result = await readDesign(new PluginClient(bridge), {
+      node: "54:243",
+      screenshot: false,
+      maxChars: 80_000,
+      code: false,
+      repeats: true,
+      nearby: 400,
+    });
+    const meta = JSON.parse(textOf(result, 1)) as { repeats: { template: string; rows: unknown[] }[] };
+
+    expect(textOf(result, 0)).toContain('$repeat="3"');
+    expect(meta.repeats[0]).toMatchObject({
+      template: "I54:244;54:214",
+      rows: [
+        ["assets/icon-check.svg", "Unlimited projects"],
+        ["assets/icon-check-2.svg", "Version history for 30 days"],
+        ["assets/icon-check-3.svg", "Email support"],
+      ],
+    });
+    expect(meta).toMatchObject({ nearby: notes });
+    expect(asked).toEqual([
+      {
+        node: "54:243",
+        distance: 400,
+      },
+    ]);
+    expect(ops).toEqual(["snapshot"]);
+
+    const plain = JSON.parse(
+      textOf(
+        await readDesign(new PluginClient(orbit(PLANS).bridge), {
+          node: "54:243",
+          screenshot: false,
+          maxChars: 80_000,
+          code: false,
+        }),
+        1,
+      ),
+    );
+
+    expect(plain).not.toHaveProperty("repeats");
+    expect(plain).not.toHaveProperty("nearby");
+  });
+
+  it("says to update an older plugin that cannot read the notes around a screen", async () => {
+    const { bridge } = orbit(PLANS);
+    const request = bridge.request;
+
+    bridge.request = async (op, input) => {
+      if (op === "nearby") {
+        throw new BridgeError("UNKNOWN_OP", "Unknown operation: nearby");
+      }
+
+      return request(op, input);
+    };
+
+    await expect(
+      readDesign(new PluginClient(bridge), {
+        node: "54:243",
+        screenshot: false,
+        maxChars: 80_000,
+        code: false,
+        nearby: 400,
+      }),
+    ).rejects.toThrow(/older than the server.*or read without nearby/);
   });
 
   it("cuts a read past maxChars and tells how to read the rest", async () => {

@@ -53,6 +53,7 @@ export const ACTION_NAMES: Readonly<Record<string, string>> = {
   screens: "Compared the page's screens",
   file_map: "Mapped the file",
   inspect: "Inspected layers",
+  nearby: "Read the notes around a screen",
   apply: "Changed the file",
   delete: "Deleted layers",
   execute: "Ran code",

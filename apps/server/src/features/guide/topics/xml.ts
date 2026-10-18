@@ -59,6 +59,9 @@ text-decoration-thickness), text-align, text-wrap, color.
   modes CSS has no name for, line clamps, lists, a negative gap ("children overlap").
 - \`$children="N"\`: the layer has N children and not all are listed (snapshot budget or maxChars).
 - \`$truncated="true"\`: the branch was emptied, or the text shortened, to fit maxChars; its id is in \`truncated\`.
+- \`$repeat="N"\`: with \`repeats: true\`, the first of N alike neighbours (list items, cards, rows) stands for all of
+  them; the JSON's \`repeats\` lists the run's layers and, a row per layer, the values they hold apart (texts, src,
+  variant, props, href, position). Build one component and map the rows over it. Sent back, it changes only the first.
 - \`$code="Button"\`: an instance the project's Code Connect template or batch row renders, written without its
   children; its code is in \`codeComponents\`, whose \`unread\` names the properties that code leaves out: add them
   (see \`guide code-connect\`). design_apply leaves its children alone.

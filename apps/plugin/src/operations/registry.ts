@@ -21,6 +21,7 @@ import { screens } from "./flows/screens.ts";
 import { saveVersion } from "./history/save-version.ts";
 import { inspect } from "./inspect/inspect-layers.ts";
 import { instancesOperation } from "./instances/instances.ts";
+import { nearby } from "./nearby/read-nearby.ts";
 import { find } from "./read/find.ts";
 import { outline } from "./read/outline.ts";
 import { selection } from "./read/selection.ts";
@@ -64,6 +65,7 @@ const HANDLERS: Handlers = {
   delete: (input, { edits }) => deleteNodes(input, edits),
   effects: (input, { edits }) => applyEffects(input, edits),
   inspect,
+  nearby,
   cover: clipCover,
   execute: (input, { edits, code }) =>
     execute(input, {

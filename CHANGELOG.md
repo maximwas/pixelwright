@@ -74,6 +74,10 @@ How to write this file (people and agents alike):
 - `tokens_apply` sets a variable's `scopes`, the fields Figma's pickers offer it for (`["FONT_WEIGHT"]`, `[]` to
   hide it), and its `codeSyntax` on the web, Android and iOS; scopes a type cannot take are refused before anything
   is written. `tokens_read`'s JSON lists both, so tokens copied into another file keep them.
+- `design_read` with `repeats: true` reads a list of alike items (features, cards, rows) once: the first stands for
+  all, marked `$repeat="3"`, and `repeats` gives each item's own texts, files and variants as rows, so a long list
+  costs a fraction of the read. With `nearby: 400` it also lists the designer's notes on the canvas around the screen
+  (texts, stickies and small frames of text beside it or over it), nearest first.
 
 ### Changed
 

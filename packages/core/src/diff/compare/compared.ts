@@ -1,5 +1,5 @@
 import { designTree } from "../../design/design-xml.ts";
-import { type DesignElement, joinedContent } from "../../design/tree.ts";
+import { type DesignElement, elementLabel, joinedContent } from "../../design/tree.ts";
 import type { Snapshot } from "../../types/snapshot.ts";
 
 /** A layer as a diff compares it, or a run of a text's (a span, with no id): its layers or runs are its children. */
@@ -52,5 +52,5 @@ export function comparedOf(element: DesignElement): Compared {
 
 /** An element as nodes_diff names it: its tag and name, numbered when siblings share both. */
 export function labelOf(element: Compared, index: number): string {
-  return `${element.tag} "${element.attributes.name ?? ""}"${index > 0 ? `[${index + 1}]` : ""}`;
+  return elementLabel(element.tag, element.attributes.name, index);
 }

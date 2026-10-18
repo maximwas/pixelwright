@@ -66,7 +66,8 @@ export function fitPlan(snapshot: Snapshot, maxChars: number, options: DesignXml
 
 /**
  * One round of fitting: a render measured, and the plan's cuts made on it one kind after another while the estimate
- * of what is left stays over maxChars.
+ * of what is left stays over maxChars. A run read as its first is cut whole and never inside: a cut makes its first
+ * unlike the others, and the run would be written out in full again.
  */
 class FitRound {
   readonly #lines: readonly string[];
@@ -75,6 +76,10 @@ class FitRound {
   readonly #size: Map<string, number>;
   readonly #plan: FitPlan;
   readonly #maxChars: number;
+  /** The layers of each run, by its first. */
+  readonly #runs: ReadonlyMap<string, readonly string[]>;
+  /** The elements inside a run's first. */
+  readonly #inRuns: ReadonlySet<string>;
   #left: number;
 
   constructor(render: RenderedDesign, plan: FitPlan, maxChars: number) {
@@ -83,6 +88,12 @@ class FitRound {
     this.#size = measure(render.lines, render.spans);
     this.#plan = plan;
     this.#maxChars = maxChars;
+    this.#runs = new Map((render.read.repeats ?? []).map(({ template, layers }) => [template, layers]));
+    this.#inRuns = new Set(
+      [...render.spans.keys()].filter((id) =>
+        [...this.#runs.keys()].some((first) => isInside(id, first, render.spans)),
+      ),
+    );
     this.#left = render.read.xml.length;
   }
 
@@ -94,8 +105,17 @@ class FitRound {
   /** Empties branches, deepest first and largest first at one depth, until the read fits or none is left. */
   cutBranches(): void {
     const candidates = [...this.#spans]
-      .filter(([id, span]) => span.end > span.start && span.parent !== null && !this.#plan.cut.has(id))
-      .sort(([a, left], [b, right]) => right.level - left.level || this.#sizeOf(b) - this.#sizeOf(a));
+      .filter(
+        ([id, span]) =>
+          span.end > span.start && span.parent !== null && !this.#plan.cut.has(id) && !this.#inRuns.has(id),
+      )
+      // At one depth a run's first goes last: it stands for every layer of its run.
+      .sort(
+        ([a, left], [b, right]) =>
+          right.level - left.level ||
+          Number(this.#runs.has(a)) - Number(this.#runs.has(b)) ||
+          this.#sizeOf(b) - this.#sizeOf(a),
+      );
 
     for (const [id, span] of candidates) {
       if (this.fits) {
@@ -125,7 +145,10 @@ class FitRound {
   shortenTexts(nodes: ReadonlyMap<string, SnapshotNode>): void {
     const texts = [...this.#spans.keys()]
       .map((id) => nodes.get(id))
-      .filter((node): node is SnapshotNode => node?.type === "TEXT" && !this.#plan.limits.has(node.id))
+      .filter(
+        (node): node is SnapshotNode =>
+          node?.type === "TEXT" && !this.#plan.limits.has(node.id) && !this.#folded(node.id),
+      )
       .sort((a, b) => (b.text?.characters.length ?? 0) - (a.text?.characters.length ?? 0));
 
     for (const text of texts) {
@@ -146,11 +169,19 @@ class FitRound {
     return this.#size.get(id) ?? 0;
   }
 
-  /** Empties a branch down to its stub: its ancestors shrink with it, and cuts made inside it drop out. */
+  /** Whether an element is a run's first or inside one: what changes it unfolds the run. */
+  #folded(id: string): boolean {
+    return this.#runs.has(id) || this.#inRuns.has(id);
+  }
+
+  /** Empties a branch (a run: each of its layers) down to its stub: its ancestors shrink with it, cuts inside drop. */
   #cut(id: string, span: DesignSpan, stub: number): void {
     const saving = this.#sizeOf(id) - stub;
 
-    this.#plan.cut.add(id);
+    for (const layer of this.#runs.get(id) ?? [id]) {
+      this.#plan.cut.add(layer);
+    }
+
     this.#left -= saving;
     this.#size.set(id, stub);
 
@@ -170,7 +201,7 @@ class FitRound {
     const children = new Map<string, string[]>();
 
     for (const [id, span] of [...this.#spans].sort(([, a], [, b]) => a.start - b.start)) {
-      if (span.parent !== null && !this.#plan.cut.has(span.parent)) {
+      if (span.parent !== null && !this.#plan.cut.has(span.parent) && !this.#folded(span.parent)) {
         children.set(span.parent, [...(children.get(span.parent) ?? []), id]);
       }
     }
@@ -185,7 +216,7 @@ class FitRound {
       .sort((a, b) => b.width - a.width);
   }
 
-  /** Drops a list's children from its end while the read is over; its first child always stays. */
+  /** Drops a list's children from its end while the read is over; its first child always stays, a run counts whole. */
   #shorten(parent: string, list: readonly string[]): void {
     let kept = Math.min(list.length, this.#plan.limits.get(parent) ?? list.length);
     let removed = 0;
@@ -196,7 +227,10 @@ class FitRound {
     }
 
     if (removed > 0) {
-      this.#plan.limits.set(parent, kept);
+      this.#plan.limits.set(
+        parent,
+        list.slice(0, kept).reduce((count, id) => count + (this.#runs.get(id)?.length ?? 1), 0),
+      );
       this.#left -= removed - LIMIT_EXTRA;
     }
   }

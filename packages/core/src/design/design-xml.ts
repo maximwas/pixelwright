@@ -1,12 +1,28 @@
 import type { Snapshot } from "../types/snapshot.ts";
 import { DesignBuilder } from "./builder/design-builder.ts";
+import { foldRepeats } from "./repeats.ts";
 import { type SerializedDesign, serializeDesign } from "./serializer.ts";
 import type { DesignTree } from "./tree.ts";
 import type { DesignRead, DesignXmlOptions } from "./types.ts";
 
-/** The design tree of a snapshot: what design_read reads, before it is written as XML. */
+/**
+ * The design tree of a snapshot: what design_read reads, before it is written as XML; runs of alike neighbours read
+ * as their first when asked, so a fit measures the read as it is written.
+ */
 export function designTree(snapshot: Snapshot, options: DesignXmlOptions = {}): DesignTree {
-  return new DesignBuilder(snapshot, options).build();
+  const tree = new DesignBuilder(snapshot, options).build();
+
+  if (!(options.repeats ?? false)) {
+    return tree;
+  }
+
+  const { root, repeats } = foldRepeats(tree.root);
+
+  return {
+    ...tree,
+    root,
+    repeats,
+  };
 }
 
 /** A design tree as design_read answers with it: the XML, and the tokens, text styles, fonts and assets it names. */

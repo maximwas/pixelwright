@@ -26,6 +26,9 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    \`motion\` (Figma Motion as CSS \`@keyframes\`) when the section has them. Read sections, not whole pages: past \`maxChars\` (80 000) the deepest
    branches are left empty with \`$truncated="true"\` and their ids listed in \`truncated\`; read each on its own.
    Pass \`assetsDir\` (e.g. src/assets) to get its icons and images written as files.
+   \`repeats: true\` reads a list of alike items once (\`$repeat\`), with their data as rows: shorter, and the
+   list's shape plain. \`nearby: 400\` adds the designer's notes on the canvas around the screen (texts and stickies
+   beside it, nearest first): read them, they often say what the layers cannot (states, motion, copy to change).
 4. **Look at it.** \`screenshot\` renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; \`save\`
    writes a .png file full size; \`clip\` takes a region of it, in px from its box). Compare your build with it:
    \`image_compare\` renders a layer the same way and compares it with a PNG of your build (rmse, the share of pixels

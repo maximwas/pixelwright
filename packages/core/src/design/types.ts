@@ -21,6 +21,25 @@ export interface DesignRead {
   readonly assets: PlannedAsset[];
   /** Layers shown without their children: cut to fit maxChars, or past the snapshot's size budget. */
   readonly truncated: string[];
+  /** Runs of alike layers read as their first, when the read was asked for repeats. */
+  readonly repeats?: readonly RepeatRead[];
+}
+
+/** One value the layers of a run hold apart: an attribute of a layer of the template, or its text ($text). */
+export interface RepeatField {
+  readonly layer: string;
+  /** Where the layer sits in the template, as nodes_diff names paths; none for the template itself. */
+  readonly path?: string;
+  readonly attribute: string;
+}
+
+/** A run of alike neighbours read as the first (the template): the layers in order, and each one's own values. */
+export interface RepeatRead {
+  readonly template: string;
+  readonly layers: readonly string[];
+  readonly fields: readonly RepeatField[];
+  /** A row per layer, a value per field: a text with spans as its pieces. */
+  readonly rows: readonly (readonly (string | readonly string[])[])[];
 }
 
 export interface DesignXmlOptions {
@@ -42,6 +61,8 @@ export interface DesignXmlOptions {
    * without its children, its code going with the read instead.
    */
   readonly connected?: ReadonlyMap<string, string>;
+  /** Runs of three or more alike neighbours read as their first, marked `$repeat`, the others' values as rows. */
+  readonly repeats?: boolean;
 }
 
 /** Where a layer's element sits in the XML's lines, for measuring and cutting branches. */

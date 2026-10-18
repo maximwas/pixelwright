@@ -57,6 +57,11 @@ export function elementsOf(root: DesignElement | null): DesignElement[] {
   return root === null ? [] : [root, ...root.children.flatMap((child) => elementsOf(child))];
 }
 
+/** An element as a path names it: its tag and name, numbered from the second sibling sharing both, Icon "flask"[2]. */
+export function elementLabel(tag: string, name: string | undefined, index: number): string {
+  return `${tag} "${name ?? ""}"${index > 0 ? `[${index + 1}]` : ""}`;
+}
+
 /** The element written for a layer, anywhere in the tree. */
 export function findElement(root: DesignElement | null, id: string): DesignElement | null {
   return elementsOf(root).find((element) => element.id === id) ?? null;

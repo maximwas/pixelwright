@@ -10281,6 +10281,99 @@
       ]
     }
   },
+  "nearby": {
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "distance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5000
+        }
+      },
+      "required": [
+        "node",
+        "distance"
+      ]
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "screen": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string",
+                "description": "Its texts, top to bottom."
+              },
+              "side": {
+                "type": "string",
+                "enum": [
+                  "over",
+                  "left",
+                  "right",
+                  "above",
+                  "below"
+                ],
+                "description": "Where it sits from the screen; over it when their boxes overlap."
+              },
+              "distance": {
+                "type": "number",
+                "description": "The gap between its box and the screen's, in px."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "text",
+              "side",
+              "distance"
+            ]
+          }
+        },
+        "more": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "screen",
+        "notes",
+        "more"
+      ]
+    }
+  },
   "cover": {
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
