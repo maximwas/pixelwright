@@ -38,6 +38,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-4-1">0.4.1 — 2026-10-18</a></li>
           <li><a href="#v0-4-0">0.4.0 — 2026-10-18</a></li>
           <li><a href="#v0-3-2">0.3.2 — 2026-10-17</a></li>
           <li><a href="#v0-3-1">0.3.1 — 2026-10-15</a></li>
@@ -50,6 +51,20 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-4-1">
+          <h2>0.4.1 — 2026-10-18</h2>
+<h4>Fixed</h4>
+<ul>
+<li><code>tokens_apply</code> with <code>dryRun</code> no longer promises a mode the file&#39;s Figma plan refuses: once Figma has refused a
+mode in that file, a dry run refuses the same, and before that it warns when a collection would have more modes than
+any collection the file already has (a Starter plan allows one).</li>
+<li><code>design_apply</code> with <code>dryRun</code> lists the layers it would create (without ids) and the layers it would change, as the
+write does.</li>
+<li><code>design_lint</code> no longer flags layers a clipping frame cuts on purpose, such as a ticker&#39;s or a carousel&#39;s cards;
+only a text cut off that way is flagged.</li>
+</ul>
+
+        </section>
         <section id="v0-4-0">
           <h2>0.4.0 — 2026-10-18</h2>
 <h4>Added</h4>
