@@ -19,6 +19,7 @@ import { fileMapTool } from "../features/file-map/tool.ts";
 import { flowReadTool } from "../features/flow-read/tool.ts";
 import { fontsCheckTool } from "../features/fonts-check/tool.ts";
 import { guideTool } from "../features/guide/tool.ts";
+import { iconsInsertTool } from "../features/icons-insert/tool.ts";
 import { imageCompareTool } from "../features/image-compare/tool.ts";
 import { inspectTool } from "../features/inspect/tool.ts";
 import { instancesReattachTool } from "../features/instances-reattach/tool.ts";
@@ -106,6 +107,7 @@ function registerWriteTools(server: McpServer, context: ToolContext): void {
   registerTool(server, textsReplaceTool(context), context.support);
   registerTool(server, instancesReattachTool(context), context.support);
   registerTool(server, effectsApplyTool(context), context.support);
+  registerTool(server, iconsInsertTool(context), context.support);
   registerTool(server, versionSaveTool(context), context.support);
   registerTool(server, componentsReadTool(context));
   registerTool(server, variantsReadTool(context));

@@ -6824,6 +6824,228 @@
     }
   },
   {
+    "name": "icons_insert",
+    "title": "Find and insert icons",
+    "description": "Icons from Iconify's open sets (Lucide, Material Symbols, Tabler, Phosphor, MDI and 150 more; no key). search lists icons as set:name with each set's licence, and writes nothing; icon inserts one as an Icon layer: drawn at size (its height in px) into parent, before a sibling, in a CSS colour or bound to a colour token (var(--token)), named after the icon. Sets drawn in their own colours (logos, flags) keep them. license names the set's licence: some ask for credit. Making the layer is one undo step in Figma, binding it to a token another; refused while the plugin's Allow edits switch is off (dryRun checks without writing). Needs the internet.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "search": {
+          "description": "Words to look for, e.g. arrow right: lists icons with their set and licence, and writes nothing.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "set": {
+          "description": "Only this set's icons in a search, by its prefix: lucide, mdi, tabler, ph, material-symbols…",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "limit": {
+          "default": 20,
+          "description": "Icons a search lists, 20 by default.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "icon": {
+          "description": "The icon to insert, as search lists it: lucide:arrow-right.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "parent": {
+          "description": "The frame to put it in. Default: the current page.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "before": {
+          "description": "A layer of the parent to put it before; default: after the last.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "size": {
+          "default": 24,
+          "description": "Its height in px, 24 by default; its width follows the icon's proportions.",
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1024
+        },
+        "color": {
+          "description": "A CSS colour, or var(--token) to bind it to that colour variable. An icon of a set drawn in its own colours keeps them.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "name": {
+          "description": "The layer's name; default: the icon's.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "dryRun": {
+          "default": false,
+          "description": "Check the icon and where it goes without making the layer.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "file": {
+          "description": "The file to work on: its session from status or its name. Default: the active file.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "icons": {
+          "description": "A search's icons, set:name, with their set and its licence.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "icon": {
+                "type": "string"
+              },
+              "set": {
+                "type": "string"
+              },
+              "license": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "icon",
+              "set",
+              "license"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "total": {
+          "description": "How many icons the search found, listed or not.",
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "created": {
+          "description": "The icon layer made (no id in a dry run).",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "icon": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "icon",
+            "name",
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "license": {
+          "description": "The licence of the icon's set: some ask for credit.",
+          "type": "object",
+          "properties": {
+            "set": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "spdx": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "set",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "errors",
+        "notes",
+        "dryRun"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
     "name": "version_save",
     "title": "Save a named version",
     "description": "Saves a named version in the file's Figma version history, for people: the designer can open the design as it was, and developers on a paid plan can pick it in Dev Mode's Compare changes. Save one only when the user asks: Figma's plugin API cannot list, read or delete a version, so it stays in the history. baselines: the baselines it goes with; it is saved only while the design still matches them, and they record it. Needs edit access to the file and the plugin's Allow edits; the same title is refused twice within ten minutes.",

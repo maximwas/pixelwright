@@ -58,6 +58,9 @@ How to write this file (people and agents alike):
   the same way, and `data-<collection>=""` clears it.
 - `guide layout` tells when to lay a frame out as flex, as grid or by absolute placement, with the grid's tracks,
   spans and cells, pinned and centred layers, what is not supported, and examples checked in Figma.
+- `icons_insert` finds icons in Iconify's open sets (Lucide, Material Symbols, Tabler, Phosphor and more; no key)
+  and inserts one as an Icon layer at a size, into a frame, in a colour or bound to a colour token; a search lists
+  icons with each set's licence and writes nothing.
 - `execute` gives the code `pw`, which stays from one call to the next while the plugin window is open: `pw.state`
   for your data and your own functions, and helpers for a layer by id, the fonts its texts use loaded, a CSS colour
   as a paint and a variable by its CSS name. `version` saves a named version first, and `timeout` waits up to five

@@ -357,6 +357,24 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot; | &quot;write&quot; | &quot;layout&quot; | &quot;code-connect&quot; | &quot;email&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
 </tbody></table>
 </section>
+<section class="tool" id="tool-icons_insert">
+  <h3><code>icons_insert</code><span class="writes">writes</span></h3>
+  <p>Icons from Iconify&#39;s open sets (Lucide, Material Symbols, Tabler, Phosphor, MDI and 150 more; no key). search lists icons as set:name with each set&#39;s licence, and writes nothing; icon inserts one as an Icon layer: drawn at size (its height in px) into parent, before a sibling, in a CSS colour or bound to a colour token (var(--token)), named after the icon. Sets drawn in their own colours (logos, flags) keep them. license names the set&#39;s licence: some ask for credit. Making the layer is one undo step in Figma, binding it to a token another; refused while the plugin&#39;s Allow edits switch is off (dryRun checks without writing). Needs the internet.</p>
+  <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>search</code><span class="optional">optional</span></td><td><code>string</code></td><td>Words to look for, e.g. arrow right: lists icons with their set and licence, and writes nothing.</td></tr>
+<tr><td><code>set</code><span class="optional">optional</span></td><td><code>string</code></td><td>Only this set&#39;s icons in a search, by its prefix: lucide, mdi, tabler, ph, material-symbols…</td></tr>
+<tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 20</span></td><td>Icons a search lists, 20 by default.</td></tr>
+<tr><td><code>icon</code><span class="optional">optional</span></td><td><code>string</code></td><td>The icon to insert, as search lists it: lucide:arrow-right.</td></tr>
+<tr><td><code>parent</code><span class="optional">optional</span></td><td><code>string</code></td><td>The frame to put it in. Default: the current page.</td></tr>
+<tr><td><code>before</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer of the parent to put it before; default: after the last.</td></tr>
+<tr><td><code>size</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 24</span></td><td>Its height in px, 24 by default; its width follows the icon&#39;s proportions.</td></tr>
+<tr><td><code>color</code><span class="optional">optional</span></td><td><code>string</code></td><td>A CSS colour, or var(--token) to bind it to that colour variable. An icon of a set drawn in its own colours keeps them.</td></tr>
+<tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s name; default: the icon&#39;s.</td></tr>
+<tr><td><code>dryRun</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Check the icon and where it goes without making the layer.</td></tr>
+<tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
 <section class="tool" id="tool-image_compare">
   <h3><code>image_compare</code></h3>
   <p>Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size, or with another layer (against) rendered the same way, a variant against its default or a rebuilt frame against the original: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render&#39;s is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render&#39;s density (scale 2 for a 2x screenshot). Works while Allow edits is off.</p>
@@ -955,7 +973,8 @@ component or a set; an instance of a new component can follow later in the same 
 <li><code>&lt;Image src=&quot;photos/hero.jpg&quot; width=&quot;600px&quot; height=&quot;400px&quot;/&gt;</code> makes an image from a file (PNG, JPG or GIF, up
 to 32 MB and 4096 px a side; convert WebP first), <code>&lt;Icon src=&quot;icons/arrow.svg&quot; width=&quot;24px&quot;/&gt;</code> an icon from an
 SVG; <code>background=&quot;url(…)&quot;</code> fills any layer that takes a background with one, a new or an existing frame,
-rectangle or ellipse (an avatar). Paths are on the server&#39;s machine, from its folder.</li>
+rectangle or ellipse (an avatar). Paths are on the server&#39;s machine, from its folder. <code>icons_insert</code> finds an
+open-source icon (Lucide, Material Symbols, Tabler…) and inserts it at a size, in a colour or bound to a token.</li>
 <li>An existing <code>Image</code> with another file in <code>src</code> takes that image, keeping its fit. A file design_read or
 assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
 the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a
