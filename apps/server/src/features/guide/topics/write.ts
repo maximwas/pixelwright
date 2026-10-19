@@ -102,7 +102,8 @@ taken as sRGB and converted to P3.
 
 ## Errors and undo
 
-\`nodes_delete\` deletes layers by id (not those inside an instance: hide them with \`display="none"\`).
+\`nodes_delete\` deletes layers by id (not those inside an instance: hide them with \`display="none"\`; what an
+instance's slot holds is its own and is deleted).
 
 Each element is written on its own: an error names its line and attribute, and the rest of the XML still goes in.
 \`created\` lists the new layers' ids by line, \`changed\` the layers written to; a dry run lists the same, the new

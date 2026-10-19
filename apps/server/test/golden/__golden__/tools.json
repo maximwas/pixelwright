@@ -1080,7 +1080,7 @@
   {
     "name": "nodes_delete",
     "title": "Delete layers",
-    "description": "Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display=\"none\" in design_apply instead) stays, with why. One call is one undo step in Figma. Refused while the plugin's Allow edits switch is off.",
+    "description": "Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display=\"none\" in design_apply instead) stays, with why. What an instance's slot holds is the instance's own and is deleted. One call is one undo step in Figma. Refused while the plugin's Allow edits switch is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
