@@ -140,10 +140,10 @@ synchronous or of awaits, freezes Figma until then. Read the result back with th
 
 The plugin runs with documentAccess "dynamic-page": the synchronous lookups throw, so use the Async calls
 (\`getNodeByIdAsync\`, \`getMainComponentAsync\`, \`getLocalPaintStylesAsync\`, \`setFillStyleIdAsync\`…), and
-\`await page.loadAsync()\` before reading another page. \`figma.skipInvisibleInstanceChildren\` is true: \`findAll\`,
-\`findOne\` and \`children\` skip hidden layers inside instances, and \`getNodeByIdAsync\` gives null for them; set it
-to false in the code to reach them (execute sets it back after the call). An error names the line and column in
-the code it came from.
+\`await page.loadAsync()\` before reading another page. \`figma.skipInvisibleInstanceChildren\` is Figma's own, false
+in the editor and true in Dev Mode: set to true, \`findAll\`, \`findOne\` and \`children\` skip hidden layers inside
+instances (a faster walk of a big file) and \`getNodeByIdAsync\` gives null for them; execute sets it back after the
+call. An error names the line and column in the code it came from.
 
 A long script goes in a file on the server's disk, passed as \`script\` instead of \`code\` (an absolute path, or one
 from the server's folder): it is read at every call, so the file as it is now runs, after a plugin restart too.
