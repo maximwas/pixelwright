@@ -49,7 +49,9 @@ export const TOKENS = {
   \`var(--token)\` makes an alias, to a variable of the call (in any order) or of the file. A \`token\` other than the
   name's own becomes the variable's Web code syntax.
 - A paint style's value reads as a \`background\` (colours, a colour variable), a text style's as the \`font\`
-  shorthand, an effect style's as a \`box-shadow\` list.
+  shorthand with its letter spacing and case from \`also\`, as tokens_read lists them, or after it
+  (\`500 12px/16px 'Inter'; letter-spacing: 0.04em; text-transform: uppercase\`), an effect style's as a
+  \`box-shadow\` list. What a value leaves out, the style keeps.
 - A value a variable or style already holds is left as it is, so sending tokens_read's own output writes nothing;
   send only what you change. Nothing is ever deleted (use \`execute\` to remove a token).
 - A library's collection or style the file uses is never copied into the file: change it in the library.
@@ -70,7 +72,8 @@ export const TOKENS = {
   the layers to the token (\`snapped\`); \`field\` narrows a choice to background, border, color, gap, padding….
 - \`remap: [{from: "--blue-500", to: "--brand"}]\` moves every use of one token to another of its kind (merging
   duplicates); raw values are then left alone.
-- Instances are left out: bind their main components, and the instances follow. One undo step; \`dryRun\` lists
+- Instances are left out: bind their main components, and the instances follow. What was put into an instance's
+  slots is the instance's own and is bound. One undo step; \`dryRun\` lists
   without writing, \`version\` saves a named version first when the call changes something.
 
 ## Values
