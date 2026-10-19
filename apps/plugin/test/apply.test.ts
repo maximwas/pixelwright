@@ -599,6 +599,20 @@ describe("apply: changing", () => {
     expect([a, b, c, d].map((value) => Math.round(value ?? 0))).toEqual([0, 1, -1, 0]);
     expect([Math.round(x ?? 0), Math.round(y ?? 0)]).toEqual([310, 80]);
   });
+
+  it("stretches a layer between its top and bottom with its height given too, which wins over the bottom as in CSS", async () => {
+    const result = await apply('<Rectangle id="3:2" position="absolute" top="0" bottom="0" height="120px"/>');
+
+    expect(result.errors).toEqual([]);
+    expect(byId("3:2")).toMatchObject({
+      height: 120,
+      constraints: { vertical: "STRETCH" },
+    });
+    expect(byId("3:2")?.relativeTransform).toEqual([
+      [1, 0, 10],
+      [0, 1, 0],
+    ]);
+  });
 });
 
 describe("apply: colours in a Display P3 file", () => {

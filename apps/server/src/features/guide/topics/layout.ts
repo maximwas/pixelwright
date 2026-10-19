@@ -69,8 +69,8 @@ changes.
   without \`position="absolute"\` is refused.
 - Edges in px: \`left\`/\`top\` pin it to the start; \`right\`/\`bottom\` to the end, where it stays when the parent
   is resized (\`right="12px" top="12px"\` is a top right badge; \`right="-8px" top="-8px"\` hangs it over the corner
-  of a parent that does not clip); \`left\` and \`right\` without a \`width\` stretch it with the parent (\`top\` and
-  \`bottom\` without a \`height\` likewise).
+  of a parent that does not clip); \`left\` and \`right\` stretch it with the parent (\`top\` and \`bottom\` likewise),
+  between them without a \`width\`; a \`width\` given too wins over \`right\`, as in CSS, and it still stretches.
 - Centred: \`left="calc(50% - 24px)"\` puts the left edge 24 px left of the centre, which centres a layer 48 px wide
   (half its size; \`top\` likewise), and keeps it there when the parent is resized; \`left="50%"\` puts the edge on
   the centre. Scaled with the parent: \`left="5%"\` with \`width="25%"\` (\`top\` with \`height\`). Only \`left\` and

@@ -241,10 +241,29 @@ describe("CSS to Figma: layout", () => {
     });
   });
 
-  it("refuses placement CSS would not apply: offsets without position, over-constrained axes, fixed", () => {
+  it("refuses placement CSS would not apply: offsets without position, fixed", () => {
     expect(failed('<Frame left="10px"/>')).toEqual(["left"]);
-    expect(failed('<Frame position="absolute" left="0" right="0" width="100px"/>')).toEqual(["width"]);
     expect(failed('<Frame position="fixed"/>')).toEqual(["position"]);
+  });
+
+  it("stretches between both edges with a size given too, as CSS sizes it: the size wins, auto leaves it to them", () => {
+    expect(props('<Frame id="1:1" position="absolute" top="0" bottom="0" height="120px"/>')).toEqual({
+      absolute: true,
+      vertical: {
+        kind: "STRETCH",
+        start: 0,
+        end: 0,
+      },
+      height: 120,
+    });
+    expect(props('<Frame id="1:1" position="absolute" left="8px" right="8px" width="auto"/>')).toEqual({
+      absolute: true,
+      horizontal: {
+        kind: "STRETCH",
+        start: 8,
+        end: 8,
+      },
+    });
   });
 
   it("reads turns, mirrors, opacity, clipping and radii", () => {
