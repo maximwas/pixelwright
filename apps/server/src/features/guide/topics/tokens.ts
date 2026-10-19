@@ -77,7 +77,9 @@ export const TOKENS = {
   overrides on each one: for a copy that must differ from its components, like a dark copy in a file whose plan has
   one mode.
 - Instances are left out: bind their main components, and the instances follow. What was put into an instance's
-  slots is the instance's own and is bound. One undo step; \`dryRun\` lists
+  slots is the instance's own and is bound. A slot's default content (what the component put there) is left alone,
+  \`instances: "override"\` too: binding it would make the slot the instance's own, so later changes to the
+  component would no longer reach it. One undo step; \`dryRun\` lists
   without writing, \`version\` saves a named version first when the call changes something.
 
 ## Values

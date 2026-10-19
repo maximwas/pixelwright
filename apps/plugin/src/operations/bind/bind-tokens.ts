@@ -1,4 +1,4 @@
-import type { BindInput, BindKind, OperationOutput } from "@pixelwright/core";
+import { type BindInput, type BindKind, isDefaultSlotContent, type OperationOutput } from "@pixelwright/core";
 import { OP_BUDGET_MS } from "../../constants/plugin.ts";
 import { isLayer, requireRoots } from "../../figma/nodes.ts";
 import { layersUntil } from "../../figma/walk.ts";
@@ -35,8 +35,8 @@ interface BindRun {
 /**
  * The `bind` operation: under the roots, every raw value bound to the one token holding it (or the call's pick), the
  * rest listed; or, with remaps, one token's uses rebound to another. Instances are left to their components, all but
- * their slots' content, unless remaps are asked to override them. A dry run writes nothing and works with Allow edits
- * off; a real run is one undo step.
+ * what was put into their slots, unless remaps are asked to override them; a slot's default content always is. A dry
+ * run writes nothing and works with Allow edits off; a real run is one undo step.
  */
 export async function bindTokens(input: BindInput, { edits }: PluginServices): Promise<OperationOutput<"bind">> {
   if (!input.dryRun) {
@@ -48,7 +48,7 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
   const report = new BindReport();
   const deadline = Date.now() + OP_BUDGET_MS;
   const remaps = input.remap.length > 0;
-  const { layers, instances, finished } = bindableLayers(roots, {
+  const { layers, instances, defaults, finished } = bindableLayers(roots, {
     deadline,
     overrides: remaps && input.instances === "override",
   });
@@ -69,6 +69,10 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
     report.note(leftAlone(instances, remaps));
   }
 
+  if (defaults > 0) {
+    report.note(defaultsLeftAlone(defaults));
+  }
+
   if (!input.dryRun && report.wrote) {
     figma.commitUndo();
   }
@@ -84,6 +88,13 @@ function leftAlone(instances: number, remaps: boolean): string {
       : `${instances} instances were left alone: bind their main components, and the instances follow`;
 
   return remaps ? `${left}; instances: "override" rebinds the uses inside them as their overrides.` : `${left}.`;
+}
+
+/** The note on the slots' default content a call left to the components. */
+function defaultsLeftAlone(defaults: number): string {
+  return defaults === 1
+    ? "1 layer of a slot's default content was left alone: binding it would make the slot the instance's own, so later changes to the component would no longer reach it; bind the component, and the slot follows."
+    : `${defaults} layers of slots' default content were left alone: binding them would make their slots the instances' own, so later changes to the components would no longer reach them; bind the components, and the slots follow.`;
 }
 
 /** Each layer's raw values bound or listed; false when time ran out first. */
@@ -131,32 +142,39 @@ async function settle(use: RawUse, choices: BindChoices, { input, report }: Bind
 }
 
 /**
- * The layers a bind call goes through, the roots among them, and how many instances it left to their components: what
- * binds there belongs to the main component, and an instance's own would be overrides. What was put into an instance's
- * slots is the instance's own, so the walk goes on there. With `overrides`, the walk goes into every instance.
+ * The layers a bind call goes through, the roots among them, how many instances it left to their components (what
+ * binds there belongs to the main component, and an instance's own would be overrides), and how many layers of slots'
+ * default content it left to theirs. What was put into an instance's slots is the instance's own, so the walk goes on
+ * there. With `overrides`, the walk goes into every instance, still not into a slot's default content: binding it
+ * would make no override but take the slot from its component.
  */
 function bindableLayers(roots: readonly BaseNode[], { deadline, overrides }: { deadline: number; overrides: boolean }) {
   if (overrides) {
-    const walked = layersUntil(roots, deadline);
+    const walked = layersUntil(roots, deadline, (node) => !isDefaultContent(node));
+    const layers = walked.layers.filter(isLayer);
 
     return {
-      layers: walked.layers.filter(isLayer),
+      layers: layers.filter((node) => !isDefaultContent(node)),
       instances: 0,
+      defaults: layers.filter(isDefaultContent).length,
       finished: walked.finished,
     };
   }
 
   const layers: SceneNode[] = [];
   let instances = 0;
+  let defaults = 0;
   let next: readonly BaseNode[] = roots;
   let finished = true;
 
   while (next.length > 0 && finished) {
-    const walked = layersUntil(next, deadline, (node) => node.type !== "INSTANCE");
-    const found = walked.layers.filter((node): node is InstanceNode => node.type === "INSTANCE");
+    const walked = layersUntil(next, deadline, (node) => node.type !== "INSTANCE" && !isDefaultContent(node));
+    const kept = walked.layers.filter((node) => !isDefaultContent(node));
+    const found = kept.filter((node): node is InstanceNode => node.type === "INSTANCE");
 
-    layers.push(...walked.layers.filter((node): node is SceneNode => node.type !== "INSTANCE" && isLayer(node)));
+    layers.push(...kept.filter((node): node is SceneNode => node.type !== "INSTANCE" && isLayer(node)));
     instances += found.length;
+    defaults += walked.layers.length - kept.length;
     finished = walked.finished;
     next = found.flatMap(slotContent);
   }
@@ -164,8 +182,14 @@ function bindableLayers(roots: readonly BaseNode[], { deadline, overrides }: { d
   return {
     layers,
     instances,
+    defaults,
     finished,
   };
+}
+
+/** Whether a layer is a slot's default content (see isDefaultSlotContent). */
+function isDefaultContent(node: BaseNode): boolean {
+  return node.parent?.type === "SLOT" && isDefaultSlotContent(node.id, node.parent.id);
 }
 
 /** The layers in an instance's own slots; a slot of an instance inside it is that instance's. */

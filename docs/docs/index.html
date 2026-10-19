@@ -891,7 +891,9 @@ duplicates); raw values are then left alone. <code>instances: &quot;override&quo
 overrides on each one: for a copy that must differ from its components, like a dark copy in a file whose plan has
 one mode.</li>
 <li>Instances are left out: bind their main components, and the instances follow. What was put into an instance&#39;s
-slots is the instance&#39;s own and is bound. One undo step; <code>dryRun</code> lists
+slots is the instance&#39;s own and is bound. A slot&#39;s default content (what the component put there) is left alone,
+<code>instances: &quot;override&quot;</code> too: binding it would make the slot the instance&#39;s own, so later changes to the
+component would no longer reach it. One undo step; <code>dryRun</code> lists
 without writing, <code>version</code> saves a named version first when the call changes something.</li>
 </ul>
 <h3>Values</h3>

@@ -1,4 +1,5 @@
 import { colorSpaceOf } from "../../kernel/color/color-space.ts";
+import { isDefaultSlotContent } from "../../kernel/layer-ids.ts";
 import type { BindOutput } from "../../tokens/bind/schemas.ts";
 import type { ContrastText } from "../../types/contrast.ts";
 import type { Snapshot, SnapshotNode } from "../../types/snapshot.ts";
@@ -119,8 +120,9 @@ function checked(rules: readonly LintRule[], layer: LintLayer, context: LintCont
 }
 
 /**
- * Visits a layer and, when it is shown, its children: inside an instance, inside a main component, or neither. What a
- * slot holds is the instance's own content, not its component's, so it is linted as any layer.
+ * Visits a layer and, when it is shown, its children: inside an instance, inside a main component, or neither. What
+ * an instance put into its slot is its own content, so it is linted as any layer; the slot's default content stays
+ * the component's, as tokens_bind leaves it.
  */
 function walk(node: SnapshotNode, where: Omit<LintLayer, "node">, visit: (layer: LintLayer) => void): void {
   const inInstance = where.inInstance || node.type === "INSTANCE";
@@ -141,7 +143,7 @@ function walk(node: SnapshotNode, where: Omit<LintLayer, "node">, visit: (layer:
       {
         parent: node,
         root: where.root,
-        inInstance: inInstance && node.type !== "SLOT",
+        inInstance: inInstance && (node.type !== "SLOT" || isDefaultSlotContent(child.id, node.id)),
         inComponent: where.inComponent || node.type === "COMPONENT" || node.type === "COMPONENT_SET",
       },
       visit,

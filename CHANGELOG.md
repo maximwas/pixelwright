@@ -46,7 +46,9 @@ How to write this file (people and agents alike):
   it checks (a part of a screen lies on the screen's fill), weighs a see-through layer over a text (a scrim), and
   rates a text on see-through glass against each part below it, giving the worst. `design_lint`'s contrast rule
   does the same.
-- `design_lint` and `tokens_bind` check and bind what an instance's slot holds: it is the instance's own content.
+- `design_lint` and `tokens_bind` check and bind what was put into an instance's slot: it is the instance's own
+  content. The slot's default content stays the component's: `tokens_bind` leaves it alone and says so, as binding
+  it would make the slot the instance's own and later changes to the component would no longer reach it.
 - `design_lint` lists a rule at the severity of its most severe finding, so a rule whose findings are all info no
   longer shows as a warning.
 - `tokens_read` with `format: "json"` past `maxChars` gives as many whole tokens as fit, and says how to read the rest.

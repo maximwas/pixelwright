@@ -363,7 +363,9 @@ describe("design_lint: the general rules", () => {
     ]);
   });
 
-  it("lints the layers put into an instance's slot, and leaves the instance's own layers to its component", () => {
+  it("lints the layers put into an instance's slot, and leaves the instance's own layers and the slot's default content to its component", () => {
+    // Ids as Figma gives them (live, 2026-10-20): a layer put into the slot is plain, the layers of a slot that is the
+    // instance's own extend the slot's id, and the component's default content is I<instance>;<its id in the component>.
     const sheet = layer("5:1", "Sheet", {
       type: "INSTANCE",
       instance: {
@@ -376,9 +378,14 @@ describe("design_lint: the general rules", () => {
         layer("I5:1;2:1", "Content", {
           type: "SLOT",
           children: [
-            layer("I5:1;2:2", "Frame 7", {
+            layer("5:7", "Frame 7", {
               fills: [solid(0x123456)],
-              children: [text("I5:1;2:4", "Amount")],
+              children: [text("5:8", "Amount")],
+            }),
+            layer("I5:1;2:1;5:9", "Frame 8", { fills: [solid(0x123456)] }),
+            layer("I5:1;2:5", "Frame 6", {
+              fills: [solid(0x123456)],
+              children: [text("I5:1;2:6", "Default")],
             }),
           ],
         }),
@@ -402,10 +409,12 @@ describe("design_lint: the general rules", () => {
     );
 
     expect(findings.map(({ rule, id }) => `${rule} ${id}`)).toEqual([
-      "raw-color I5:1;2:2",
-      "raw-color I5:1;2:4",
-      "text-style I5:1;2:4",
-      "default-name I5:1;2:2",
+      "raw-color 5:7",
+      "raw-color 5:8",
+      "text-style 5:8",
+      "raw-color I5:1;2:1;5:9",
+      "default-name 5:7",
+      "default-name I5:1;2:1;5:9",
     ]);
   });
 
