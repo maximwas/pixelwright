@@ -701,6 +701,49 @@ describe("delete", () => {
 
     await expect(plugin.run("delete", { nodes: ["1:2"] })).rejects.toMatchObject({ code: "EDITS_DISABLED" });
   });
+
+  it("deletes a layer in an instance's slot, which is the instance's own, but not the slot or a component's layer", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "2:1",
+            type: "INSTANCE",
+            name: "Sheet",
+            children: [
+              {
+                id: "I2:1;3:5",
+                type: "SLOT",
+                name: "Content",
+                children: [
+                  {
+                    id: "6:1",
+                    name: "Row",
+                  },
+                  {
+                    id: "6:2",
+                    type: "INSTANCE",
+                    name: "Button",
+                    children: [{ id: "I6:2;7:1" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const result = (await plugin.run("delete", { nodes: ["6:1", "6:2", "I6:2;7:1", "I2:1;3:5"] })) as {
+      deleted: string[];
+      errors: { id: string }[];
+    };
+
+    expect(result.deleted).toEqual(["6:1", "6:2"]);
+    expect(result.errors.map(({ id }) => id)).toEqual(["I6:2;7:1", "I2:1;3:5"]);
+  });
 });
 
 describe("apply: review fixes", () => {

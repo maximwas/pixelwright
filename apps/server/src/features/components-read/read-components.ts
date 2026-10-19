@@ -6,11 +6,10 @@ import { templateName } from "../../code-connect/names.ts";
 import { findTemplates } from "../../code-connect/templates.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import { linkPath } from "./link-paths.ts";
-import type { ComponentsReadInputSchema, ComponentsReadOutputSchema } from "./schemas.ts";
+import type { ComponentsReadInputSchema, ComponentsReadOutputSchema, Listed } from "./schemas.ts";
 
 type Input = Omit<z.output<typeof ComponentsReadInputSchema>, "file"> & { file?: string };
 type Output = z.output<typeof ComponentsReadOutputSchema>;
-type Listed = Output["components"][number];
 
 /** What the plugin is asked for when `mapped` filters the list: the most it lists, filtered here, then cut. */
 const MAPPED_ASK = 500;
@@ -21,7 +20,7 @@ const MAPPED_ASK = 500;
  * at, and notes for what was not read.
  */
 export async function readComponents(plugin: PluginClient, input: Input, root: string): Promise<Output> {
-  const { file, mapped, limit, ...query } = input;
+  const { file, mapped, limit, fields, ...query } = input;
   const session = plugin.session(file);
   const { templates, problems } = await findTemplates(root);
   const answer = await session.run("components", {
@@ -45,10 +44,15 @@ export async function readComponents(plugin: PluginClient, input: Input, root: s
   ];
 
   return {
-    components: kept.slice(0, limit),
+    components: kept.slice(0, limit).map((entry) => (fields === undefined ? entry : picked(entry, fields))),
     more: answer.more || kept.length > limit,
     ...(notes.length === 0 ? {} : { notes }),
   };
+}
+
+/** Only the asked fields of a component, those it has. */
+function picked(entry: Listed, fields: readonly (keyof Listed)[]): Partial<Listed> {
+  return Object.fromEntries(fields.filter((field) => field in entry).map((field) => [field, entry[field]]));
 }
 
 /** A component with its connection and its links' project files. */

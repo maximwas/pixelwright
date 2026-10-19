@@ -7,7 +7,7 @@ export const StatusInputSchema = z.object({
 const FileSchema = z.object({
   session: z.string(),
   name: z.string(),
-  key: z.string().nullable(),
+  key: z.string().nullable().describe("The file key of figma.com links; null when Figma gives none (see note)."),
   page: z.string(),
   editorType: z.string(),
   allowEdits: z.boolean(),
@@ -41,4 +41,6 @@ export const StatusOutputSchema = z.object({
     })
     .nullable(),
   hint: z.string().nullable(),
+  /** When a file has no key: why, and where to take it from. */
+  note: z.string().exactOptional(),
 });

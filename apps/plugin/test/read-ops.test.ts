@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { findNodes } from "../../server/src/features/nodes-find/find-nodes.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
+import { pluginClient } from "./helpers/plugin-bridge.ts";
 import { testPlugin } from "./helpers/test-plugin.ts";
 
 /** The plugin these tests run, over the fake Figma. */
@@ -254,6 +256,63 @@ describe("find on a page the user has not opened", () => {
 
     expect(loaded).toBe(true);
     expect(found.nodes.map((node) => node.id)).toEqual(["7:1"]);
+  });
+});
+
+describe("nodes_find in the whole file", () => {
+  beforeEach(() => {
+    const components = tree({
+      id: "0:2",
+      type: "PAGE",
+      name: "Components",
+      children: [
+        {
+          id: "7:1",
+          type: "COMPONENT",
+          name: "Logo/Orange",
+        },
+      ],
+    });
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        name: "Screens",
+        children: [
+          {
+            id: "5:1",
+            type: "COMPONENT",
+            name: "Logo/Blue",
+          },
+        ],
+      }),
+      { pages: [components] },
+    );
+  });
+
+  it('searches every page for within "file"', async () => {
+    const found = await findNodes(pluginClient(plugin), {
+      name: "logo/",
+      within: "file",
+      limit: 50,
+    });
+
+    expect(found.nodes.map(({ id }) => id)).toEqual(["5:1", "7:1"]);
+    expect(found.more).toBe(false);
+  });
+
+  it("stops at the limit and says there were more", async () => {
+    await expect(
+      findNodes(pluginClient(plugin), {
+        name: "logo/",
+        within: "file",
+        limit: 1,
+      }),
+    ).resolves.toMatchObject({
+      nodes: [{ id: "5:1" }],
+      more: true,
+    });
   });
 });
 

@@ -66,6 +66,9 @@ text-decoration-thickness), text-align, text-wrap, color.
   children; its code is in \`codeComponents\`, whose \`unread\` names the properties that code leaves out: add them
   (see \`guide code-connect\`). design_apply leaves its children alone.
 - \`$exposed="true"\`: a nested instance its component exposes: its properties are the component's API too.
+- \`$visibleProp="Show subtitle"\`, \`$prop="Title"\`, \`$swapProp="Icon"\`: a component's layer bound to its
+  properties: the boolean one that shows it, the text one its characters show, the instance swap one it is. In code
+  they are the component's props; design_apply makes them only in a new Component (\`visibleProp\`, \`prop\`).
 - \`$css\` holds \`property: value\` pairs only, explained in hints: \`blur: progressive from 0px at 50% 0% to 8px at
   50% 100%\` (a blur that changes across the layer; \`filter\` holds its end radius) and \`stroke-align: center\` (half
   of the stroke paints outside the box, which a border-box border does not; \`inspect\` gives the painted box),

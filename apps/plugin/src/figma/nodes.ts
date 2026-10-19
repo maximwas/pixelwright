@@ -69,11 +69,18 @@ interface Nested {
   readonly parent: Nested | null;
 }
 
-/** Whether a layer comes from a component through an instance (its place and layers are the component's). */
+/**
+ * Whether a layer comes from a component through an instance (its place and layers are the component's). What an
+ * instance's slot holds is the instance's own, as in Figma: the slot is where its users add, move and delete layers.
+ */
 export function insideInstance(node: Nested): boolean {
   for (let current = node.parent; current !== null; current = current.parent) {
     if (current.type === "INSTANCE") {
       return true;
+    }
+
+    if (current.type === "SLOT") {
+      return false;
     }
   }
 

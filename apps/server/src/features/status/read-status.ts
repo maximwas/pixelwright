@@ -16,6 +16,7 @@ export async function readStatus(bridge: BridgeView, version: string, probe: boo
   }));
 
   const pairing = bridge.pairing();
+  const keyless = files.filter(({ key }) => key === null).map(({ name }) => name);
 
   return {
     server: {
@@ -36,7 +37,13 @@ export async function readStatus(bridge: BridgeView, version: string, probe: boo
             waiting: pairing.waiting,
           },
     hint,
+    ...(keyless.length === 0 ? {} : { note: keylessNote(keyless) }),
   };
+}
+
+/** Why the files have no key (figma.fileKey is for private plugins only), and where an agent takes it from. */
+function keylessNote(names: readonly string[]): string {
+  return `Figma gives the file key only to private organization plugins, so ${names.join(", ")} has key null: to make a figma.com link to the file or a layer, ask the user for the file's link (Share, Copy link) and take the key from it (figma.com/design/<key>/…).`;
 }
 
 async function ping(bridge: BridgeView): Promise<StatusOutput["probe"]> {

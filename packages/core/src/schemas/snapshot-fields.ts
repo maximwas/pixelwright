@@ -166,6 +166,8 @@ export const SnapshotFieldsSchema = z.object({
     .optional(),
   /** A component's description, for whoever builds it. */
   description: z.string().optional(),
+  /** A component's layer bound to its properties, by field (visible, characters, mainComponent): Figma's keys. */
+  componentPropertyReferences: z.record(z.string(), z.string()).optional(),
   /**
    * Dev Mode annotations: the designer's notes for developers, with their category's name, and the properties pinned in
    * them (Figma's types, in the order pinned). An annotation has a note, pins, or both.

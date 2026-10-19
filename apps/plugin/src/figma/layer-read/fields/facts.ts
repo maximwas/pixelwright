@@ -1,4 +1,5 @@
 import { plain } from "../../../utils/plain.ts";
+import { insideInstance } from "../../nodes.ts";
 import type { LayerEntry } from "../layer-entry.ts";
 
 /** What the designer set up around the layer: exports, a component's description, the layout Figma infers, and more. */
@@ -11,6 +12,11 @@ export function readFacts(entry: LayerEntry): void {
 
   if ((node.type === "COMPONENT" || node.type === "COMPONENT_SET") && node.description !== "") {
     entry.set("description", node.description);
+  }
+
+  // A component's API: inside an instance the same bindings come again with every copy, and its props say them.
+  if (Object.keys(layer.componentPropertyReferences ?? {}).length > 0 && !insideInstance(node)) {
+    entry.set("componentPropertyReferences", plain(layer.componentPropertyReferences));
   }
 
   if (

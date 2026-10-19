@@ -322,6 +322,38 @@ describe("snapshot", () => {
     expect(label?.overrides).toEqual(["fills"]);
     expect(inner).not.toHaveProperty("overrides");
     expect(inner?.children?.[0]?.overrides).toEqual(["fills", "opacity"]);
+    expect(label).not.toHaveProperty("componentPropertyReferences");
+  });
+
+  it("reads which component properties a component's layers are bound to", async () => {
+    const references = {
+      characters: "Label#1:0",
+      visible: "Show#1:1",
+    };
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:0",
+            name: "Card",
+            type: "COMPONENT",
+            children: [
+              {
+                id: "5:4",
+                componentPropertyReferences: references,
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await plugin.run("snapshot", { node: "5:0" })) as Shot;
+
+    expect(root.children?.[0]?.componentPropertyReferences).toEqual(references);
   });
 
   it("asks no match for a radius whose corners are bound, nor any match for design_apply's own read", async () => {
