@@ -129,4 +129,62 @@ describe("contrast_check", () => {
     });
     expect(asked).toEqual(["selection", "snapshot"]);
   });
+
+  it("reads the layers above a part of a screen, so the screen's fill is behind its texts", async () => {
+    const inputs: unknown[] = [];
+    const content = {
+      ...card.root,
+      fills: [],
+    };
+    const bridge: BridgeView = {
+      status: () => {
+        throw new Error("not used");
+      },
+      pairing: () => null,
+      plugins: () => [
+        {
+          session: "s1",
+          info: pluginInfo(),
+          active: true,
+        },
+      ],
+      request: async (_op, input) => {
+        inputs.push(input);
+
+        return (input as { ancestors?: boolean }).ancestors
+          ? {
+              ...card,
+              root: content,
+              ancestors: [
+                {
+                  ...card.root,
+                  id: "1:0",
+                  name: "Screen",
+                  children: [
+                    {
+                      ...content,
+                      children: undefined,
+                    },
+                  ],
+                },
+              ],
+            }
+          : {
+              ...card,
+              root: content,
+            };
+      },
+    };
+
+    await expect(checkContrast(new PluginClient(bridge), { node: "1:1" })).resolves.toMatchObject({
+      texts: [
+        {
+          name: "Label",
+          backdrop: "#000",
+          ratio: 21,
+        },
+      ],
+    });
+    expect(inputs).toEqual([expect.objectContaining({ ancestors: true })]);
+  });
 });

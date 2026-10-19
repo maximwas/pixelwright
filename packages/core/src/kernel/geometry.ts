@@ -7,7 +7,18 @@ export interface BoxSize {
   readonly height: number;
 }
 
+/** A box in px: where it starts and how big it is (any object with these fields: a layer, a Figma rect). */
+interface Area extends BoxSize {
+  readonly x: number;
+  readonly y: number;
+}
+
 export type Axis = "horizontal" | "vertical";
+
+/** Whether two boxes overlap; boxes that only touch do not. */
+export function overlaps(a: Area, b: Area): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
 
 /** A sine or cosine within 1e-10 of zero is zero: a turn of 90 degrees lands on whole values. */
 export function snapped(value: number): number {

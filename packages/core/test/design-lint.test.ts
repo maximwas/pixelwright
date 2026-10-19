@@ -542,3 +542,48 @@ describe("componentStates", () => {
     ).toBeNull();
   });
 });
+
+describe("design_lint contrast on a text of several colours", () => {
+  it("reports the text's worst run, whichever comes first", () => {
+    const legal = text("2:2", "Terms apply");
+    const runs = [
+      segment("Terms", 0x0d99ff),
+      {
+        ...segment(" apply", 0x808080),
+        start: 5,
+        end: 11,
+      },
+    ];
+    const card = layer("2:1", "Card", {
+      width: 400,
+      fills: [solid(0xffffff)],
+      children: [
+        {
+          ...legal,
+          text: {
+            ...(legal.text as NonNullable<SnapshotNode["text"]>),
+            segments: runs,
+          },
+        },
+      ],
+    });
+    const { findings } = designLint(
+      {
+        reads: [
+          {
+            root: card,
+            styles: {},
+            variables: {},
+          },
+        ],
+      },
+      {
+        rules: ["contrast"],
+        limit: 100,
+        scope: "the selection",
+      },
+    );
+
+    expect(findings.map(({ message }) => message)).toEqual([expect.stringMatching(/^2\.99:1 /)]);
+  });
+});

@@ -7,18 +7,21 @@ import { entryOf } from "../../figma/layer-read/read-layer.ts";
 import { References } from "../../figma/layer-read/references.ts";
 import { isLayer, pageOf, requireNode } from "../../figma/nodes.ts";
 import { type ModedNode, rootModes } from "../../figma/variable-modes.ts";
+import { ancestorsOf } from "./ancestors.ts";
 import { measurementsOf } from "./measurements.ts";
 import { readSubtree, SnapshotBudget } from "./subtree.ts";
 
 /**
  * The raw Figma properties of a layer and its descendants, for core to turn into CSS. Built breadth first under a
  * size budget, like outline: a layer whose children did not fit keeps their count. Hidden layers are a name and a box.
+ * Asked for, the layers above it too, with what overlaps it in them.
  */
 export async function snapshot({
   node: id,
   depth,
   css,
   paths,
+  ancestors,
 }: OperationInput<"snapshot">): Promise<OperationOutput<"snapshot">> {
   const root = await requireNode(id);
 
@@ -30,19 +33,21 @@ export async function snapshot({
   const references = new References();
   const categories = await annotationCategories();
   const overrides = InstanceOverrides.around(root);
-  const top = await readSubtree(root, new SnapshotBudget(), {
+  const budget = new SnapshotBudget();
+  const read = (node: SceneNode) =>
+    entryOf(node, {
+      x: originX ?? 0,
+      y: originY ?? 0,
+      css,
+      paths,
+      references,
+      categories,
+      overrides,
+      inferred: true,
+    });
+  const top = await readSubtree(root, budget, {
     depth,
-    read: (node) =>
-      entryOf(node, {
-        x: originX ?? 0,
-        y: originY ?? 0,
-        css,
-        paths,
-        references,
-        categories,
-        overrides,
-        inferred: true,
-      }),
+    read,
   });
   const modes = await rootModes(root as ModedNode, references.lookup);
 
@@ -52,6 +57,7 @@ export async function snapshot({
 
   return {
     root: top,
+    ...(ancestors ? { ancestors: await ancestorsOf(root, budget, read) } : {}),
     ...(await aroundRoot(root, references)),
   };
 }

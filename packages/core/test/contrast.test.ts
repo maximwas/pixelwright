@@ -137,27 +137,38 @@ describe("contrast_check", () => {
   });
 });
 
-describe("contrast_check after the review", () => {
-  const DARK = solid(18, 18, 18);
-  const rect = (id: string, fills: unknown[], x: number, width: number): SnapshotNode => ({
-    id,
-    name: id,
-    type: "RECTANGLE",
-    visible: true,
-    x,
-    y: 0,
-    width,
-    height: 100,
-    childCount: 0,
-    fills: fills as SnapshotNode["fills"],
-  });
-  const check = (root: SnapshotNode) =>
-    contrastCheck({
-      root,
-      styles: {},
-      variables: {},
-    }).texts[0];
+/** A text whose every run is painted with one fill. */
+const painted = (node: SnapshotNode, fill: unknown): SnapshotNode => ({
+  ...node,
+  text: {
+    ...(node.text as NonNullable<SnapshotNode["text"]>),
+    segments: (node.text?.segments ?? []).map((segment) => ({
+      ...segment,
+      fills: [fill] as TextSegment["fills"],
+    })),
+  },
+});
+const DARK = solid(18, 18, 18);
+const rect = (id: string, fills: unknown[], x: number, width: number): SnapshotNode => ({
+  id,
+  name: id,
+  type: "RECTANGLE",
+  visible: true,
+  x,
+  y: 0,
+  width,
+  height: 100,
+  childCount: 0,
+  fills: fills as SnapshotNode["fills"],
+});
+const check = (root: SnapshotNode) =>
+  contrastCheck({
+    root,
+    styles: {},
+    variables: {},
+  }).texts[0];
 
+describe("contrast_check after the review", () => {
   it("finds a backdrop nested inside a layer below the text", () => {
     expect(
       check(frame("1:1", [], [frame("1:2", [], [rect("1:3", [DARK], 0, 400)]), text("Over", 16, 10, 10)])),
@@ -213,5 +224,239 @@ describe("contrast_check after the review", () => {
       color: "a gradient",
       ratio: null,
     });
+  });
+});
+
+describe("contrast_check on the Dukach feedback", () => {
+  it("looks past the layer read into the layers above it, rating only the read's own texts (bug 6)", () => {
+    const content = frame("Content", [], [painted(text("Account", 16, 10, 10), solid(142, 142, 147))]);
+    const bare: SnapshotNode = {
+      ...content,
+      children: undefined,
+    };
+    const { summary, texts } = contrastCheck({
+      root: content,
+      ancestors: [frame("Screen", [solid(0, 0, 0)], [text("Title", 16, 10, 10), bare])],
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts).toEqual([
+      expect.objectContaining({
+        name: "Account",
+        backdrop: "#000",
+        ratio: 6.44,
+      }),
+    ]);
+    expect(summary).toBe("1 texts: 0 below AA.");
+  });
+
+  it("never takes a text lower in the frame for a backdrop (bug 8)", () => {
+    const row = (id: string, x: number) => text(id, 16, x, 10, { fills: [GRAY] as SnapshotNode["fills"] });
+    const { texts } = contrastCheck({
+      root: frame("1:1", [DARK], [row("Row", 10), row("Footer", 12), text("Tab", 16, 10, 10)]),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts.find(({ name }) => name === "Tab")).toMatchObject({
+      backdrop: "#121212",
+      aa: true,
+    });
+  });
+
+  it("stops at the solid fill right under a text: deeper layers that cover part of it are hidden (bug 7)", () => {
+    const partly = rect("Tab 1", [GRAY], 12, 98);
+    const onDark = {
+      backdrop: "#121212",
+      aa: true,
+    };
+
+    const capsule = frame("Capsule", [DARK], [text("Cancel", 16, 10, 10)]);
+
+    expect(check(frame("1:1", [WHITE], [partly, capsule]))).toMatchObject(onDark);
+    expect(check(frame("1:1", [WHITE], [partly, rect("Bar", [DARK], 0, 400), text("9:41", 16, 10, 10)]))).toMatchObject(
+      onDark,
+    );
+  });
+
+  it("leaves out a text a clipping frame cuts out of view, and says so (bug 9)", () => {
+    const scroll = {
+      ...frame("Scroll", [DARK], [text("Shown", 16, 10, 10), text("Note", 16, 10, 150)]),
+      clipsContent: true,
+    };
+    const unclipped = frame("Free", [WHITE], [text("Below", 16, 10, 150)], 200);
+    const { summary, texts } = contrastCheck({
+      root: frame("1:1", [GRAY], [scroll, unclipped]),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts.map(({ name }) => name)).toEqual(["Shown", "Below"]);
+    expect(summary).toBe("2 texts: 1 below AA. Left out as not visible: 1 cut off by a clipping frame.");
+  });
+
+  it("counts each reason a contrast is not one number on its own line (bug 11)", () => {
+    const photo = {
+      ...rect(
+        "Photo",
+        [
+          {
+            type: "IMAGE",
+            visible: true,
+          },
+        ],
+        0,
+        400,
+      ),
+      y: 100,
+    };
+    const strip = {
+      ...rect("Strip", [DARK], 12, 98),
+      y: 300,
+    };
+    const { summary } = contrastCheck({
+      root: frame(
+        "1:1",
+        [],
+        [
+          frame("Card", [DARK], [text("Fine", 16, 10, 10)]),
+          photo,
+          text("Over", 16, 10, 110),
+          frame("Bare", [], [text("Air", 16, 10, 210)], 200),
+          frame("Half", [WHITE], [strip, text("Half", 16, 10, 310)], 300),
+        ],
+      ),
+      styles: {},
+      variables: {},
+    });
+
+    expect(summary).toBe(
+      "4 texts: 0 below AA, 1 over an image or gradient (check those by eye), 1 partly over another layer (check those by eye), 1 with nothing opaque behind it in the read (check those inside their screen).",
+    );
+  });
+
+  it("lays a see-through layer over a text (a scrim) on the text and its backdrop alike; an opaque one hides it (bug 10)", () => {
+    const scrim = rect(
+      "Scrim",
+      [
+        {
+          ...solid(0, 0, 0),
+          opacity: 0.4,
+        },
+      ],
+      0,
+      400,
+    );
+    const sheet = {
+      ...rect("Sheet", [WHITE], 0, 400),
+      y: 50,
+      height: 50,
+    };
+    const rows = [painted(text("Row", 16, 10, 10), GRAY), painted(text("Under", 16, 10, 60), GRAY)];
+    const { summary, texts } = contrastCheck({
+      root: frame("1:1", [WHITE], [...rows, scrim, sheet]),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts).toEqual([
+      expect.objectContaining({
+        name: "Row",
+        ratio: 3.27,
+        aa: false,
+        backdrop: expect.stringMatching(/^#FFF under Scrim "Scrim"/),
+      }),
+    ]);
+    expect(summary).toBe(
+      "1 texts: 1 below AA, 1 under a see-through layer (a scrim: content behind a modal may be exempt). Left out as not visible: 1 hidden under an opaque layer.",
+    );
+  });
+
+  it("rates every run with a colour of its own, so a link inside legal text is checked", () => {
+    const legal = painted(text("Legal", 14, 10, 10), GRAY);
+    const [run] = legal.text?.segments ?? [];
+    const runs = [
+      ["By continuing you agree to the ", GRAY],
+      ["Terms", BLUE],
+      [".", GRAY],
+    ] as const;
+    let start = 0;
+    const segments = runs.map(([characters, fill]) => {
+      start += characters.length;
+
+      return {
+        ...(run as TextSegment),
+        characters,
+        start: start - characters.length,
+        end: start,
+        fills: [fill] as TextSegment["fills"],
+      };
+    });
+    const { summary, texts } = contrastCheck({
+      root: frame(
+        "1:1",
+        [WHITE],
+        [
+          {
+            ...legal,
+            text: {
+              ...(legal.text as NonNullable<SnapshotNode["text"]>),
+              characters: runs.map(([characters]) => characters).join(""),
+              segments,
+            },
+          },
+        ],
+      ),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts.map(({ text: characters, color, ratio }) => [characters, color, ratio])).toEqual([
+      ["By continuing you agree to the ", "#767676", 4.54],
+      ["Terms", "#0D99FF", 2.99],
+    ]);
+    expect(summary).toBe("1 texts: 1 below AA.");
+  });
+
+  it("rates a text on see-through glass over mixed rows against the worst of them, the blur not weighed", () => {
+    const row = (id: string, fill: unknown, y: number, height: number) => ({
+      ...rect(id, [fill], 0, 400),
+      y,
+      height,
+    });
+    const glass = {
+      ...rect(
+        "Glass",
+        [
+          {
+            ...WHITE,
+            opacity: 0.7,
+          },
+        ],
+        0,
+        400,
+      ),
+      effects: [
+        {
+          type: "BACKGROUND_BLUR",
+          visible: true,
+          radius: 20,
+        },
+      ],
+    };
+    const rows = [row("Row 1", solid(255, 59, 48), 0, 15), row("Row 2", WHITE, 15, 85)];
+    const { summary, texts } = contrastCheck({
+      root: frame("1:1", [WHITE], [...rows, glass, painted(text("Label", 16, 10, 10), GRAY)]),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts[0]).toMatchObject({
+      ratio: 3.01,
+      aa: false,
+      backdrop: expect.stringMatching(/^#FFC4C1 \(the worst of 2 /),
+    });
+    expect(summary).toBe("1 texts: 1 below AA.");
   });
 });

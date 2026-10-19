@@ -1518,3 +1518,111 @@ describe("layout grids in a snapshot", () => {
     ]);
   });
 });
+
+describe("snapshot with ancestors", () => {
+  const box = (y: number, height: number) => ({
+    x: 0,
+    y,
+    width: 390,
+    height,
+  });
+
+  beforeEach(() => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "6:1",
+            name: "Settings",
+            absoluteBoundingBox: box(0, 844),
+            fills: [
+              {
+                type: "SOLID",
+                color: {
+                  r: 0,
+                  g: 0,
+                  b: 0,
+                },
+              },
+            ],
+            children: [
+              {
+                id: "6:2",
+                name: "Glow",
+                absoluteBoundingBox: box(100, 300),
+                children: [
+                  {
+                    id: "6:3",
+                    name: "Spot",
+                    type: "RECTANGLE",
+                    absoluteBoundingBox: box(100, 300),
+                  },
+                ],
+              },
+              {
+                id: "6:4",
+                name: "Hidden",
+                type: "RECTANGLE",
+                visible: false,
+                absoluteBoundingBox: box(100, 300),
+              },
+              {
+                id: "6:5",
+                name: "Content",
+                absoluteBoundingBox: box(100, 300),
+                children: [
+                  {
+                    id: "6:6",
+                    name: "Row",
+                    type: "RECTANGLE",
+                    absoluteBoundingBox: {
+                      x: 16,
+                      y: 116,
+                      width: 80,
+                      height: 20,
+                    },
+                  },
+                ],
+              },
+              {
+                id: "6:7",
+                name: "Footer",
+                absoluteBoundingBox: box(700, 144),
+              },
+            ],
+          },
+        ],
+      }),
+    );
+  });
+
+  it("reads the layers above the node, each with its shown children that overlap it, the node's place bare", async () => {
+    const answer = OPERATION_SCHEMAS.snapshot.output.parse(
+      await plugin.run("snapshot", {
+        node: "6:5",
+        ancestors: true,
+      }),
+    );
+
+    expect(answer.ancestors).toEqual([
+      expect.objectContaining({
+        id: "6:1",
+        y: -100,
+        children: [
+          expect.objectContaining({
+            id: "6:2",
+            children: [expect.objectContaining({ id: "6:3" })],
+          }),
+          expect.not.objectContaining({ children: expect.anything() }),
+        ],
+      }),
+    ]);
+    expect(answer.ancestors?.[0]?.children?.[1]?.id).toBe("6:5");
+  });
+
+  it("reads none unless asked", async () => {
+    expect(await plugin.run("snapshot", { node: "6:5" })).not.toHaveProperty("ancestors");
+  });
+});
