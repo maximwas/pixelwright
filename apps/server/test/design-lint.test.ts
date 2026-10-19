@@ -120,6 +120,26 @@ describe("design_lint: what it reads", () => {
     const result = await lint(view);
 
     expect(result.notes).toEqual(["9:9 was not read: No node 9:9 in this file."]);
+    expect(result.summary).toBe(
+      "Not checked: 1 of 2 layers could not be read (the notes say why). 1 findings in the rest: 0 errors, 0 warnings, 1 info.",
+    );
     expect(result.findings.map(({ id }) => id)).toEqual(["1:1"]);
+  });
+
+  it("fails, never answering no findings, when it could read none of the layers", async () => {
+    const view = scopeBridge({
+      selection: [],
+      answers: {
+        ...ANSWERS,
+        snapshot: () => {
+          throw new BridgeError("OP_FAILED", "Attempted to invoke callback with invalid id -32605");
+        },
+      },
+    });
+
+    await expect(lint(view, "3:603")).rejects.toMatchObject({
+      code: "OP_FAILED",
+      message: "3:603 was not read: Attempted to invoke callback with invalid id -32605",
+    });
   });
 });

@@ -17,6 +17,8 @@ const RANK: Readonly<Record<LintSeverity, number>> = {
 /** What design_lint reads: each root's snapshot, tokens_bind's dry run over them, and the components they use. */
 export interface LintInput {
   readonly reads: readonly Snapshot[];
+  /** How many roots could not be read: the summary says they were not checked. */
+  readonly unread?: number;
   readonly bind?: BindOutput | null;
   readonly components?: readonly ComponentEntry[];
 }
@@ -43,7 +45,10 @@ export function designLint(input: LintInput, options: LintOptions): DesignLint {
     .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
 
   return {
-    summary: summaryOf(shown, options),
+    summary: summaryOf(shown, options, {
+      read: input.reads.length,
+      unread: input.unread ?? 0,
+    }),
     rules: rules.flatMap((rule) => {
       const count = shown.filter((finding) => finding.rule === rule.id).length;
 
@@ -164,13 +169,22 @@ function cutNotes(root: SnapshotNode): string[] {
       ];
 }
 
-function summaryOf(findings: readonly LintFinding[], { limit, scope }: LintOptions): string {
+/** The findings by severity; roots that could not be read come first, so they never pass for clean ones. */
+function summaryOf(
+  findings: readonly LintFinding[],
+  { limit, scope }: LintOptions,
+  { read, unread }: { read: number; unread: number },
+): string {
+  const where = unread === 0 ? scope : "the rest";
+  const prefix =
+    unread === 0 ? "" : `Not checked: ${unread} of ${read + unread} layers could not be read (the notes say why). `;
+
   if (findings.length === 0) {
-    return `No findings in ${scope} for the rules checked.`;
+    return `${prefix}No findings in ${where} for the rules checked.`;
   }
 
   const of = (severity: LintSeverity) => findings.filter((finding) => finding.severity === severity).length;
   const counts = [`${of("error")} errors`, `${of("warning")} warnings`, `${of("info")} info`].join(", ");
 
-  return `${findings.length} findings in ${scope}: ${counts}${findings.length > limit ? `; the first ${limit} are listed` : ""}.`;
+  return `${prefix}${findings.length} findings in ${where}: ${counts}${findings.length > limit ? `; the first ${limit} are listed` : ""}.`;
 }
