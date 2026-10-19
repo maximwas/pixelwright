@@ -3817,6 +3817,15 @@
             "description": {
               "type": "string"
             },
+            "componentPropertyReferences": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
             "annotations": {
               "type": "array",
               "items": {
@@ -6033,6 +6042,15 @@
             },
             "description": {
               "type": "string"
+            },
+            "componentPropertyReferences": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
             },
             "annotations": {
               "type": "array",
@@ -9299,6 +9317,15 @@
               },
               "description": {
                 "type": "string"
+              },
+              "componentPropertyReferences": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
               },
               "annotations": {
                 "type": "array",

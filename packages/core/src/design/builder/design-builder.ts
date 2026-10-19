@@ -13,7 +13,15 @@ import { overrideWords } from "../overrides.ts";
 import type { DesignAttribute, DesignElement, DesignTree } from "../tree.ts";
 import type { DesignXmlOptions } from "../types.ts";
 import { DEV_STATUS_WORDS } from "../vocabulary.ts";
-import { componentAttributes, cutCount, noteOf, pinsOf, readOnlyOf, urlOf } from "./layer-attributes.ts";
+import {
+  componentAttributes,
+  cutCount,
+  noteOf,
+  pinsOf,
+  propertyAttributes,
+  readOnlyOf,
+  urlOf,
+} from "./layer-attributes.ts";
 import { ReadCatalogue } from "./read-catalogue.ts";
 import { textContent } from "./text-content.ts";
 
@@ -167,6 +175,7 @@ export class DesignBuilder {
 
     return [
       ["$code", form.code],
+      ...propertyAttributes(node),
       ["$css", readOnlyOf(readOnly, form.asset !== null)],
       ["$grid-style", node.gridStyleId === undefined ? undefined : this.#snapshot.styles[node.gridStyleId]?.name],
       ...interactionAttributes(node.reactions ?? []),

@@ -19,8 +19,7 @@ export function componentAttributes(node: SnapshotNode): MaybeAttribute[] {
   const listed = (types: ReadonlySet<string>) =>
     Object.entries(properties)
       .filter(([, property]) => types.has(property.type))
-      // Figma suffixes a non-variant property's name with its id: "Label#12:0".
-      .map(([name, property]) => `${listItem(name.replace(/#[^#]*$/, ""))}=${listItem(String(property.value))}`)
+      .map(([name, property]) => `${listItem(bareName(name))}=${listItem(String(property.value))}`)
       .join(", ");
   const variant = listed(VARIANT_PROPERTY);
   const props = listed(OWN_PROPERTIES);
@@ -31,6 +30,26 @@ export function componentAttributes(node: SnapshotNode): MaybeAttribute[] {
     ["props", props === "" ? undefined : props],
     ["$exposed", exposed ? "true" : undefined],
   ];
+}
+
+/**
+ * The component properties a component's layer is bound to, read-only (design_apply makes them only in a new
+ * Component): the text one its characters show, the boolean one that shows it, the instance swap one it is.
+ */
+export function propertyAttributes(node: SnapshotNode): MaybeAttribute[] {
+  const references = node.componentPropertyReferences ?? {};
+  const named = (field: string) => (references[field] === undefined ? undefined : bareName(references[field]));
+
+  return [
+    ["$prop", named("characters")],
+    ["$visibleProp", named("visible")],
+    ["$swapProp", named("mainComponent")],
+  ];
+}
+
+/** A property's name as people read it: Figma suffixes a non-variant property's name with its id ("Label#12:0"). */
+function bareName(key: string): string {
+  return key.replace(/#[^#]*$/, "");
 }
 
 /** The designer's Dev Mode notes, each with its category, separated by ` | ` (a bar inside a note is escaped). */
