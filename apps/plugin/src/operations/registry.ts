@@ -82,15 +82,11 @@ const HANDLERS: Handlers = {
   upload: async (input, { uploads }) => uploads.receive(input),
 };
 
-/** The operations that change the file: their changes are marked as Pixelwright's in the change journal. */
-const OWN_WRITES: ReadonlySet<OperationName> = new Set([
-  "apply",
-  "delete",
-  "execute",
-  "tokens_apply",
-  "effects",
-  "bind",
-]);
+/**
+ * The writes whose changes the change journal marks as Pixelwright's: every one but save_version, which changes no
+ * layer and waits for the writes before it to settle (as one of them, it would wait for itself).
+ */
+const OWN_WRITES: ReadonlySet<string> = new Set([...WRITE_OPERATIONS].filter((op) => op !== "save_version"));
 
 /** What touches no layer runs at once, whatever runs meanwhile: a probe, the journal, an upload, a wait for the user. */
 const UNTURNED: ReadonlySet<OperationName> = new Set(["ping", "changes", "upload", "selection_wait"]);
