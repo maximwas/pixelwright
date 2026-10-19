@@ -345,4 +345,20 @@ describe("design_apply end to end: sections", () => {
       [0, 1, 320],
     ]);
   });
+
+  it("places a new layer on the page by its left and top alone, and refuses them where the call's parent lays it out", async () => {
+    const result = await apply('<Frame name="Board" left="40px" top="2400px" width="100px" height="50px"/>');
+    const board = byId(result.created[0]?.id ?? "");
+
+    expect(result.errors).toEqual([]);
+    expect(board?.parent?.type).toBe("PAGE");
+    expect(board?.relativeTransform).toEqual([
+      [1, 0, 40],
+      [0, 1, 2400],
+    ]);
+
+    const flowing = await apply('<Frame name="Flowing" left="4px"/>', { parent: "9:1" });
+
+    expect(flowing.errors.map(({ attribute }) => attribute)).toEqual(["left"]);
+  });
 });

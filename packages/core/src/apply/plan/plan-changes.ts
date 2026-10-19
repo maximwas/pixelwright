@@ -70,14 +70,14 @@ export function planChanges({ elements, assessed, layers, files }: PlanInput): {
 
 /**
  * Whether nothing lays the element's layer out where it goes, so its edges place it: a parent element without auto
- * layout (a section, a frame displayed as a block), or the page a top-level layer is on. A new top-level layer goes
- * where the plugin finds out.
+ * layout (a section, a frame displayed as a block), or the page a top-level layer is on. A new top-level layer is
+ * placed by its edges too: where the call's parent lays it out, the plugin refuses them.
  */
 function isPlaced({ element, entry }: Assessment, byRef: ReadonlyMap<string, Assessment>): boolean {
   const parent = element.parent === null ? undefined : byRef.get(element.parent);
 
   if (parent === undefined) {
-    return element.parent === null && entry !== undefined && entry.parent === null;
+    return element.parent === null && (element.id === null || entry?.parent === null);
   }
 
   const { display } = parent.element.attributes;
