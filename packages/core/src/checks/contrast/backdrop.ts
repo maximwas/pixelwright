@@ -40,6 +40,57 @@ export function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[
   };
 }
 
+/** A see-through layer over a text, and the colour it lays over the text and its backdrop alike. */
+export interface Veil {
+  readonly layer: SnapshotNode;
+  readonly color: Color;
+}
+
+/** What lies over a text: see-through layers (bottom first), an opaque layer that hides it, or one not one colour. */
+export type Over =
+  | { readonly veils: readonly Veil[] }
+  | { readonly hidden: SnapshotNode }
+  | { readonly unknown: "image"; readonly says: string };
+
+/**
+ * What lies over a text and covers it whole: the layers above it in each parent, their children included. An opaque
+ * paint hides the text; a see-through one (a modal's scrim) is seen through. Layers over only part of it are not
+ * weighed: shortcut, the text is rated as if they were not there; rate the part under them when a design needs it.
+ */
+export function overOf(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Over {
+  const veils: Veil[] = [];
+  let unknown: Over | null = null;
+
+  for (const { layer, paint } of paintsOver(node, ancestors)) {
+    if ("kind" in paint) {
+      unknown ??= {
+        unknown: "image",
+        says: `under ${paint.kind} ${layer.id} "${layer.name}"`,
+      };
+    } else if (paint.alpha >= 1) {
+      return { hidden: layer };
+    } else if (paint.alpha > 0) {
+      veils.push({
+        layer,
+        color: Color.of(
+          {
+            ...paint.color,
+            a: paint.alpha,
+          },
+          space,
+        ),
+      });
+    }
+  }
+
+  return unknown ?? { veils };
+}
+
+/** A colour as seen through the see-through layers over it, bottom first. */
+export function throughVeils(color: Color, veils: readonly Veil[]): Color {
+  return veils.reduce((seen, veil) => veil.color.over(seen), color);
+}
+
 /** Whether two layers' boxes overlap. */
 export function meets(a: SnapshotNode, b: SnapshotNode): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -64,6 +115,48 @@ function stepsUnder(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Ste
   }
 
   return steps;
+}
+
+/** A paint over a text, and the layer it is on. */
+interface Cover {
+  readonly layer: SnapshotNode;
+  readonly paint: Layer;
+}
+
+/** The paints over a text that cover it whole, bottom first: the layers above it in each parent, then further out. */
+function paintsOver(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Cover[] {
+  const found: Cover[] = [];
+  let current = node;
+
+  for (let level = ancestors.length - 1; level >= 0; level--) {
+    const parent = ancestors[level] as SnapshotNode;
+    const siblings = parent.children ?? [];
+
+    for (const above of siblings.slice(siblings.indexOf(current) + 1)) {
+      found.push(...paintedOver(above, node));
+    }
+
+    current = parent;
+  }
+
+  return found;
+}
+
+/** What a layer above a text lays over all of it, bottom first: its own fills, then its children's. */
+function paintedOver(layer: SnapshotNode, text: SnapshotNode): Cover[] {
+  if (!layer.visible || layer.type === "TEXT" || !meets(layer, text)) {
+    return [];
+  }
+
+  const own = covers(layer, text) ? paintLayers(layer).toReversed() : [];
+
+  return [
+    ...own.map((paint) => ({
+      layer,
+      paint,
+    })),
+    ...(layer.children ?? []).flatMap((child) => paintedOver(child, text)),
+  ];
 }
 
 /** Paints laid over each other, bottom up from the opaque one last in the list: one colour, or what the bottom is. */

@@ -137,6 +137,17 @@ describe("contrast_check", () => {
   });
 });
 
+/** A text whose every run is painted with one fill. */
+const painted = (node: SnapshotNode, fill: unknown): SnapshotNode => ({
+  ...node,
+  text: {
+    ...(node.text as NonNullable<SnapshotNode["text"]>),
+    segments: (node.text?.segments ?? []).map((segment) => ({
+      ...segment,
+      fills: [fill] as TextSegment["fills"],
+    })),
+  },
+});
 const DARK = solid(18, 18, 18);
 const rect = (id: string, fills: unknown[], x: number, width: number): SnapshotNode => ({
   id,
@@ -259,7 +270,7 @@ describe("contrast_check on the Dukach feedback", () => {
     });
 
     expect(texts.map(({ name }) => name)).toEqual(["Shown", "Below"]);
-    expect(summary).toBe("2 texts: 1 below AA. 1 text is left out: cut off by a clipping frame.");
+    expect(summary).toBe("2 texts: 1 below AA. Left out as not visible: 1 cut off by a clipping frame.");
   });
 
   it("counts each reason a contrast is not one number on its own line (bug 11)", () => {
@@ -299,6 +310,43 @@ describe("contrast_check on the Dukach feedback", () => {
 
     expect(summary).toBe(
       "4 texts: 0 below AA, 1 over an image or gradient (check those by eye), 1 partly over another layer (check those by eye), 1 with nothing opaque behind it in the read (check those inside their screen).",
+    );
+  });
+
+  it("lays a see-through layer over a text (a scrim) on the text and its backdrop alike; an opaque one hides it (bug 10)", () => {
+    const scrim = rect(
+      "Scrim",
+      [
+        {
+          ...solid(0, 0, 0),
+          opacity: 0.4,
+        },
+      ],
+      0,
+      400,
+    );
+    const sheet = {
+      ...rect("Sheet", [WHITE], 0, 400),
+      y: 50,
+      height: 50,
+    };
+    const rows = [painted(text("Row", 16, 10, 10), GRAY), painted(text("Under", 16, 10, 60), GRAY)];
+    const { summary, texts } = contrastCheck({
+      root: frame("1:1", [WHITE], [...rows, scrim, sheet]),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts).toEqual([
+      expect.objectContaining({
+        name: "Row",
+        ratio: 3.27,
+        aa: false,
+        backdrop: expect.stringMatching(/^#FFF under Scrim "Scrim"/),
+      }),
+    ]);
+    expect(summary).toBe(
+      "1 texts: 1 below AA, 1 under a see-through layer (a scrim: content behind a modal may be exempt). Left out as not visible: 1 hidden under an opaque layer.",
     );
   });
 });
