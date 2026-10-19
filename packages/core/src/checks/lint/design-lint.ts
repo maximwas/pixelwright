@@ -112,7 +112,10 @@ function checked(rules: readonly LintRule[], layer: LintLayer, context: LintCont
   return rules.filter((rule) => layer.node.visible || rule.hidden).flatMap((rule) => [...rule.check(layer, context)]);
 }
 
-/** Visits a layer and, when it is shown, its children: inside an instance, inside a main component, or neither. */
+/**
+ * Visits a layer and, when it is shown, its children: inside an instance, inside a main component, or neither. What a
+ * slot holds is the instance's own content, not its component's, so it is linted as any layer.
+ */
 function walk(node: SnapshotNode, where: Omit<LintLayer, "node">, visit: (layer: LintLayer) => void): void {
   const inInstance = where.inInstance || node.type === "INSTANCE";
 
@@ -132,7 +135,7 @@ function walk(node: SnapshotNode, where: Omit<LintLayer, "node">, visit: (layer:
       {
         parent: node,
         root: where.root,
-        inInstance,
+        inInstance: inInstance && node.type !== "SLOT",
         inComponent: where.inComponent || node.type === "COMPONENT" || node.type === "COMPONENT_SET",
       },
       visit,
