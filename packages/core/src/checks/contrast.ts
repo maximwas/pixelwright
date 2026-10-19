@@ -18,12 +18,20 @@ const KINDS: Readonly<Record<string, string>> = {
 /**
  * Each visible text's WCAG contrast with what is behind it: the layers below it in its parent that cover it, then its
  * ancestors' fills, see-through ones laid over what is below them. An image or a gradient behind is said, not guessed.
+ * A text a clipping frame cuts out of view is left out, and counted.
  */
 export function contrastCheck(snapshot: Snapshot): Contrast {
   const space = colorSpaceOf(snapshot.colorProfile);
   const texts: ContrastText[] = [];
+  let cut = 0;
   const walk = (node: SnapshotNode, ancestors: readonly SnapshotNode[]) => {
     if (!node.visible) {
+      return;
+    }
+
+    if (node.type === "TEXT" && cutOff(node, ancestors)) {
+      cut++;
+
       return;
     }
 
@@ -48,9 +56,14 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
   const unknown = texts.filter((text) => text.ratio === null).length;
 
   return {
-    summary: `${texts.length} texts: ${failing} below AA${unknown === 0 ? "" : `, ${unknown} over an image or gradient (check those by eye)`}.`,
+    summary: `${texts.length} texts: ${failing} below AA${unknown === 0 ? "" : `, ${unknown} over an image or gradient (check those by eye)`}.${cut === 0 ? "" : ` ${cut === 1 ? "1 text" : `${cut} texts`} cut off by a clipping frame ${cut === 1 ? "is" : "are"} left out.`}`,
     texts,
   };
+}
+
+/** Whether a frame above that clips its content leaves none of the text in view. */
+function cutOff(node: SnapshotNode, ancestors: readonly SnapshotNode[]): boolean {
+  return ancestors.some((ancestor) => ancestor.clipsContent && !meets(ancestor, node));
 }
 
 function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): ContrastText | null {

@@ -245,4 +245,20 @@ describe("contrast_check on the Dukach feedback", () => {
       onDark,
     );
   });
+
+  it("leaves out a text a clipping frame cuts out of view, and says so (bug 9)", () => {
+    const scroll = {
+      ...frame("Scroll", [DARK], [text("Shown", 16, 10, 10), text("Note", 16, 10, 150)]),
+      clipsContent: true,
+    };
+    const unclipped = frame("Free", [WHITE], [text("Below", 16, 10, 150)], 200);
+    const { summary, texts } = contrastCheck({
+      root: frame("1:1", [GRAY], [scroll, unclipped]),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts.map(({ name }) => name)).toEqual(["Shown", "Below"]);
+    expect(summary).toBe("2 texts: 1 below AA. 1 text cut off by a clipping frame is left out.");
+  });
 });
