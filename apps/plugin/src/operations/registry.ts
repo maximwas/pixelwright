@@ -6,6 +6,7 @@ import {
   type OperationOutput,
 } from "@pixelwright/core";
 import type { PluginServices } from "../services/plugin-services.ts";
+import { explained } from "../utils/error-message.ts";
 import { applyChanges } from "./apply/apply-changes.ts";
 import { bindTokens } from "./bind/bind-tokens.ts";
 import { components } from "./components/read-components.ts";
@@ -113,6 +114,10 @@ export class OperationRegistry {
 
     const run = (): Promise<unknown> => HANDLERS[op](parsed.data as never, this.#services);
 
-    return OWN_WRITES.has(op) ? this.#services.journal.asOwnWrite(run) : run();
+    try {
+      return await (OWN_WRITES.has(op) ? this.#services.journal.asOwnWrite(run) : run());
+    } catch (error) {
+      throw explained(error);
+    }
   }
 }

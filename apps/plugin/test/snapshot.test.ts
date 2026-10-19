@@ -844,6 +844,33 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
     });
   });
 
+  it("says to reopen the plugin window when Figma's sandbox has spent its callback ids on grid tracks", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "3:1",
+          type: "FRAME",
+          layoutMode: "GRID",
+          gridColumnSizes: [{ type: "HUG" }],
+        },
+      ],
+    });
+
+    installFigma(page);
+    // Figma's words, seen after thousands of calls through one plugin window (Dukach feedback, bug 4).
+    Object.defineProperty(page.children?.[0], "gridRowSizes", {
+      get: () => {
+        throw new Error("Attempted to invoke callback with invalid id -32605");
+      },
+    });
+
+    await expect(plugin.run("snapshot", { node: "3:1" })).rejects.toThrow(
+      /invalid id -32605.*close and reopen the Pixelwright plugin window/s,
+    );
+  });
+
   it("keeps the properties a designer pinned in an annotation, with its note or without one", async () => {
     installFigma(
       tree({
