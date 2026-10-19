@@ -564,6 +564,19 @@ describe("apply: changing", () => {
     expect(byId("2:1")?.type).toBe("INSTANCE");
   });
 
+  it("hides a layer inside an instance, which Figma may drop from the plugin API at once, and says it changed", async () => {
+    root = page();
+    fake = installFigma(root, LIBRARY, { hiddenInInstanceGone: true });
+
+    const result = await apply('<Text id="I2:1;3:4" name="Label" display="none"/>');
+
+    expect(result).toMatchObject({
+      changed: ["I2:1;3:4"],
+      errors: [],
+    });
+    expect(byId("I2:1;3:4")?.visible).toBe(false);
+  });
+
   it("fills the parent's direction, pins to the right edge, turns about the centre", async () => {
     await apply('<Frame id="1:3" flex="1"/>');
     await apply('<Frame id="3:2" position="absolute" right="20px" top="10px" width="100px"/>');

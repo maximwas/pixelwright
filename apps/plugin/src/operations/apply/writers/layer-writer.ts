@@ -18,7 +18,8 @@ interface Target {
 
 /**
  * Writes a change onto its layer, step by step in Figma's order: its file, its component, the property it makes, its
- * properties, then its text. Each step on its own: a step that fails leaves the others, its error naming its attribute.
+ * properties, then its text, and hiding it last. Each step on its own: a step that fails leaves the others, its error
+ * naming its attribute.
  */
 export class LayerWriter {
   readonly #scope: WriteScope;
@@ -41,12 +42,16 @@ export class LayerWriter {
 
     this.#mark(target);
 
-    const steps = await this.#steps(target, props);
+    // A layer hidden inside an instance can be gone from the plugin API at once ("… does not exist"): nothing after.
+    const { visible, ...shown } = props;
+    const steps = await this.#steps(target, visible === false ? shown : props);
     const text = await this.#text(target);
 
     layOutFillingText(node);
 
-    return asset || component || steps || text;
+    const hidden = visible === false && (await this.#steps(target, { visible }));
+
+    return asset || component || steps || text || hidden;
   }
 
   #asset({ node, change, fail }: Target): boolean {
