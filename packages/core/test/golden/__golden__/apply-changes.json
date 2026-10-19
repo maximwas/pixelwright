@@ -4893,7 +4893,8 @@
         },
         "sources": {
           "name": "name"
-        }
+        },
+        "copy": "new:1"
       },
       "errors": []
     }

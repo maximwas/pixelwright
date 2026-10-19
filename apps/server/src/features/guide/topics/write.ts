@@ -45,7 +45,8 @@ taken as sRGB and converted to P3.
   \`overflow\`; a new auto layout frame hugs unless sized; a new text is black unless \`color\` says otherwise.
 - **A copy:** \`<Frame copyOf="54:268" name="Card 2">\` clones that layer (everything the XML cannot show comes
   along) and then writes the element onto the copy. Inside it, elements with the source's ids write the copy's
-  layers: copy a card's XML, drop the root's id, add \`copyOf\`, change the title.
+  layers, and \`before\`/\`after\` with a source's id put a layer next to the copy's: copy a card's XML, drop the
+  root's id, add \`copyOf\`, change the title, add a new layer in the same call.
 
 ## Components and instances
 

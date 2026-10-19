@@ -238,6 +238,17 @@ describe("design_apply end to end: copies and new instances", () => {
     expect(title?.id).not.toBe("1:2");
   });
 
+  it("puts a layer next to the copy's counterpart of the source layer before= or after= names", async () => {
+    const result = await apply(
+      '<Frame id="3:1"><Frame copyOf="1:1" name="Card 2"><Frame id="1:5"><Text name="Lead" before="1:2">Lead</Text><Text id="1:6" after="1:2"/></Frame></Frame></Frame>',
+    );
+    const copy = byId(result.created[0]?.id ?? "");
+
+    expect(result.errors).toEqual([]);
+    expect(copy?.children?.[0]?.children?.map(({ name }) => name)).toEqual(["Lead", "Hello", "Read more"]);
+    expect(byId("1:5")?.children?.map(({ id }) => id)).toEqual(["1:2", "1:6"]);
+  });
+
   it("loads the fonts of a copy's texts before retyping them", async () => {
     const result = await apply('<Frame copyOf="1:1"><Frame id="1:5"><Text id="1:6">More</Text></Frame></Frame>', {
       parent: "3:1",

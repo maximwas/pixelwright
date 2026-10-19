@@ -213,11 +213,7 @@ function elementOf({ node, scope, index, id, ref, source, attributes, content }:
     index,
     attributes,
     ...(content.length > 0 ? { content } : {}),
-    ...(source === null || scope.copy === null
-      ? {}
-      : {
-          source,
-          copy: scope.copy.ref,
-        }),
+    ...(scope.copy === null ? {} : { copy: scope.copy.ref }),
+    ...(source === null || scope.copy === null ? {} : { source }),
   };
 }

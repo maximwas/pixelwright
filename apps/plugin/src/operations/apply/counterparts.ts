@@ -32,6 +32,11 @@ export class Counterparts {
     }
   }
 
+  /** The layer standing for the source's layer `id` in the copy `scope`, when the copy has one. */
+  inCopy(scope: string, id: string): SceneNode | undefined {
+    return this.#layers.get(`${scope} ${id}`);
+  }
+
   /** The counterpart of the layer a change names, in the copy or the new instance it is in. */
   find(change: ApplyChange, { inCopy, made }: { readonly inCopy: boolean; readonly made: boolean }): SceneNode {
     if (!made) {

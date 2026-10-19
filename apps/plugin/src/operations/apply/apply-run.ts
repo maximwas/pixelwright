@@ -50,7 +50,7 @@ export class ApplyRun implements WriteScope {
     this.#changes = changes;
     this.#byRef = new Map(changes.map((change) => [change.ref, change]));
     this.#parts = parts;
-    this.#placement = new Placement(changes, this.#layers, parts.top);
+    this.#placement = new Placement(changes, this.#layers, parts.top, this.#counterparts);
     this.#sets = new PendingSets(this.#byRef, {
       write: (node, change, fail) => this.#write(node, change, fail),
       made: (change, node) => this.#report.made(change, node),
