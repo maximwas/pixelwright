@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { codeFrames } from "../src/operations/execute/code-error.ts";
 import { installFigma, tree } from "./helpers/fake-figma.ts";
 import { testPlugin } from "./helpers/test-plugin.ts";
 
@@ -294,5 +295,26 @@ describe("execute: pw, kept between calls", () => {
     );
 
     expect((await run('return (await pw.variable("--color-brand")).id;')).result).toBe("V:brand");
+  });
+});
+
+describe("execute errors in Figma's QuickJS (live check)", () => {
+  it("keeps the engine's columns, as QuickJS points at another token of the probe than V8", () => {
+    // `throw new Error();` as Figma's QuickJS reports it: the body from line 3, the column at the call's `(`.
+    const probe = {
+      name: "anonymous",
+      site: "<input>",
+      line: 3,
+      column: 16,
+    };
+
+    expect(codeFrames("    at anonymous (<input>:5:5)\n    at FL (PLUGIN_7_SOURCE:64:2300)", probe)).toEqual([
+      {
+        name: "",
+        site: "<input>",
+        line: 3,
+        column: 5,
+      },
+    ]);
   });
 });

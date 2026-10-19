@@ -5,9 +5,8 @@ type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<u
 /** The constructor of async functions: the code becomes the body of one. */
 const AsyncFunction = Object.getPrototypeOf(async () => undefined).constructor as AsyncBody;
 
-/** Code that throws on its first line, at PROBE_COLUMN: its frame shows how the engine names a place in the code. */
+/** Code that throws on its first line: its frame shows how the engine names the code's site and its first line. */
 const PROBE = "throw new Error();";
-const PROBE_COLUMN = 7;
 
 /** The most frames of the code an error lists. */
 const CODE_FRAMES = 5;
@@ -32,8 +31,8 @@ export function codeFunction(code: string): (...values: unknown[]) => Promise<un
 }
 
 /**
- * What code threw, as its name and message, then the frames of the code itself (V8's or QuickJS's stack read through
- * a probe, so lines and columns are the code's own, not the wrapper's), the line it threw on, and the async call to
+ * What code threw, as its name and message, then the frames of the code itself (V8's or QuickJS's stack, its lines
+ * read through a probe so they are the code's own, not the wrapper's), the line it threw on, and the async call to
  * make when Figma refused a synchronous one.
  */
 export async function codeError(error: unknown, code: string): Promise<string> {
@@ -67,18 +66,17 @@ async function probeFrame(): Promise<Frame | null> {
 }
 
 /** The frames of an error's stack in the code, at the code's own lines and columns, the code's top level unnamed. */
-function codeFrames(stack: string, probe: Frame): Frame[] {
+export function codeFrames(stack: string, probe: Frame): Frame[] {
   return frames(stack)
     .filter((frame) => frame.site === probe.site)
     .slice(0, CODE_FRAMES)
     .map((frame) => ({
       ...frame,
       name: unasync(frame.name) === unasync(probe.name) ? "" : frame.name,
+      // The engines start the body on a line of its own, so its columns are the code's; which token of a throwing
+      // expression a column points at differs (V8 the probe's `new`, QuickJS its call), so the probe's column says
+      // nothing of the wrapper.
       line: frame.line - probe.line + 1,
-      column:
-        frame.column === undefined || probe.column === undefined
-          ? undefined
-          : frame.column - probe.column + PROBE_COLUMN,
     }));
 }
 
