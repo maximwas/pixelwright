@@ -329,6 +329,10 @@
               "radius": 2,
               "spread": 1
             }
+          ],
+          "covers": [
+            "DROP_SHADOW",
+            "INNER_SHADOW"
           ]
         }
       ]

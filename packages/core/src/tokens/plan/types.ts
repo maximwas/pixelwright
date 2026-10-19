@@ -55,9 +55,14 @@ export interface TextStylePlan extends TextStyleValue {
   readonly name: string;
 }
 
-export interface EffectStylePlan {
-  readonly name: string;
+/** An effect style's shadows and blurs, and the effect types its CSS names: those it replaces, the style's others kept. */
+export interface EffectStyleValue {
   readonly effects: readonly EffectSpec[];
+  readonly covers: readonly EffectSpec["type"][];
+}
+
+export interface EffectStylePlan extends EffectStyleValue {
+  readonly name: string;
 }
 
 /** What tokens_apply asks the plugin to write, in Figma's terms. */

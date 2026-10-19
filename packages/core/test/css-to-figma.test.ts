@@ -397,6 +397,16 @@ describe("CSS to Figma: paint", () => {
     expect(props('<Frame id="1:1" box-shadow="none"/>').effects).toEqual([]);
   });
 
+  it("binds a blur's effect style by its token, and refuses a shadow written beside it", () => {
+    expect(props('<Frame id="1:1" backdrop-filter="var(--Blur-Backdrop)"/>').effects).toEqual({
+      token: "--Blur-Backdrop",
+    });
+    expect(props('<Frame id="1:1" filter="var(--Soft)" box-shadow="none"/>').effects).toEqual({ token: "--Soft" });
+    expect(failed('<Frame id="1:1" box-shadow="0 1px 2px 0 #000" backdrop-filter="var(--Blur-Backdrop)"/>')).toEqual([
+      "box-shadow",
+    ]);
+  });
+
   it("refuses what it cannot write yet, naming the attribute, in the element's order", () => {
     const { errors } = change(
       '<Frame id="1:1" display="flex" gap="big" background="repeating-linear-gradient(90deg, #000, #FFF 10%)" border-radius="1em"/>',

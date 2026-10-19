@@ -403,6 +403,52 @@ describe("tokens_apply: styles", () => {
     expect((await local()).text[0]).toMatchObject({ textCase: "UPPER" });
   });
 
+  it("makes a blur effect style, and adds a blur to a style's shadows keeping them", async () => {
+    const backdrop = {
+      effect: [
+        {
+          name: "Blur/Backdrop",
+          value: "backdrop-filter: blur(20px)",
+        },
+      ],
+    };
+
+    expect(await apply(backdrop)).toMatchObject({ created: [{ name: "Blur/Backdrop" }] });
+    expect((await local()).effect[0]?.effects).toMatchObject([
+      {
+        type: "BACKGROUND_BLUR",
+        radius: 40,
+      },
+    ]);
+    expect(await apply(backdrop)).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+
+    await apply({
+      effect: [
+        {
+          name: "Lift",
+          value: "0 5px 0 0 #191A23",
+        },
+      ],
+    });
+    await apply({
+      effect: [
+        {
+          name: "Lift",
+          value: "filter: blur(2px)",
+        },
+      ],
+    });
+
+    expect((await local()).effect[1]?.effects.map(({ type }) => type).toSorted()).toEqual([
+      "DROP_SHADOW",
+      "LAYER_BLUR",
+    ]);
+  });
+
   it("names the font a text style asks for that this Figma lacks", async () => {
     expect(
       (

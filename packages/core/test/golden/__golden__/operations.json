@@ -7174,11 +7174,24 @@
                       },
                       "effects": {
                         "x-zod": "custom"
+                      },
+                      "covers": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "DROP_SHADOW",
+                            "INNER_SHADOW",
+                            "LAYER_BLUR",
+                            "BACKGROUND_BLUR"
+                          ]
+                        }
                       }
                     },
                     "required": [
                       "name",
-                      "effects"
+                      "effects",
+                      "covers"
                     ]
                   }
                 }

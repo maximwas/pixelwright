@@ -168,6 +168,7 @@ export const TokensPlanSchema: z.ZodType<TokensPlan, TokensPlan> = z.object({
       z.object({
         name: NameSchema,
         effects: EffectsSchema,
+        covers: z.array(z.enum(["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR", "BACKGROUND_BLUR"])),
       }),
     ),
   }),

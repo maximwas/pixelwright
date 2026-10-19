@@ -61,7 +61,7 @@
     {
       "kind": "effect",
       "name": "Borrowed",
-      "message": "var(--Shadow-Card) names another style: an effect style holds its shadows."
+      "message": "var(--Shadow-Card) names another style: an effect style holds its shadows and blurs."
     }
   ]
 }

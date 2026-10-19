@@ -15,9 +15,6 @@ import type { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import type { TokenRun } from "./token-run.ts";
 
-/** Effects an effect style's CSS shows: its shadows (tokens_read leaves blurs out, so a write keeps them). */
-const STYLE_EFFECTS: ReadonlySet<string> = new Set(["DROP_SHADOW", "INNER_SHADOW"]);
-
 /**
  * How one kind of style is written: what core read its CSS as, Figma's local styles of the kind, the value a planned
  * style becomes (keeping what CSS cannot show from the style it changes), and how that value is held and set.
@@ -163,9 +160,13 @@ function textExtras(
 
 export const EFFECT_STYLES: StyleKind<EffectStylePlan, EffectStyle, Effect[]> = {
   kind: "effect",
-  spec: ({ effects }) => ({ effects }),
+  spec: ({ effects, covers }) => ({
+    effects,
+    covers,
+  }),
   local: () => figma.getLocalEffectStylesAsync(),
-  next: async ({ effects }, held) => mergedEffects(held?.effects ?? [], effectsOf(effects), STYLE_EFFECTS),
+  // What the CSS names is replaced, the rest kept: tokens_read shows only shadows, so its CSS keeps a style's blurs.
+  next: async ({ effects, covers }, held) => mergedEffects(held?.effects ?? [], effectsOf(effects), new Set(covers)),
   holds: (style, effects) => sameValue(style.effects.map(effectKey), effects.map(effectKey)),
   make: () => figma.createEffectStyle(),
   write: (style, effects) => {

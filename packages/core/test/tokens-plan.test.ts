@@ -423,6 +423,48 @@ describe("tokensPlan: styles", () => {
     ]);
   });
 
+  it("reads an effect style's blurs after its shadows, and which effects its CSS names", () => {
+    const { plan, errors } = planOf({
+      styles: {
+        effect: [
+          {
+            name: "Blur/Backdrop",
+            value: "backdrop-filter: blur(20px)",
+          },
+          {
+            name: "Glass",
+            value: "0 1px 2px 0 #000; filter: blur(2px)",
+          },
+        ],
+      },
+    });
+
+    expect(errors).toEqual([]);
+    expect(plan.styles.effect).toEqual([
+      {
+        name: "Blur/Backdrop",
+        effects: [
+          {
+            type: "BACKGROUND_BLUR",
+            radius: 40,
+          },
+        ],
+        covers: ["BACKGROUND_BLUR"],
+      },
+      {
+        name: "Glass",
+        effects: [
+          {
+            type: "LAYER_BLUR",
+            radius: 4,
+          },
+          expect.objectContaining({ type: "DROP_SHADOW" }),
+        ],
+        covers: ["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR"],
+      },
+    ]);
+  });
+
   it("refuses a style value that does not read as its kind, naming the style", () => {
     const { plan, errors } = planOf({
       styles: {
