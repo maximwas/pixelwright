@@ -9,7 +9,8 @@ type TokensRead = z.input<typeof TokensReadOutputSchema>;
 
 /**
  * tokens_read: the file's tokens from the plugin, made into core's token model and written in the format asked for.
- * Past maxChars only the summary comes back, with a note naming the parts to read one at a time.
+ * Past maxChars the summary comes back (with json, also the first tokens that fit), and a note naming the parts to read
+ * one at a time.
  */
 export async function readTokens(
   plugin: PluginClient,
@@ -27,21 +28,26 @@ export async function readTokens(
   const filter = collections === undefined ? {} : { collections };
   const model = tokenModel(raw, filter);
   const listing = raw.library === undefined ? null : libraryListing(raw.library);
-  const written = TOKEN_FORMATS[format].write({
+  const source = {
     raw,
     model,
     filter,
-  });
+  };
+  const written = TOKEN_FORMATS[format].write(source);
   const notes = [...model.notes, ...readingNotes(raw, collections), ...(listing?.notes ?? []), ...written.notes];
   const library = listing === null ? {} : { library: listing.library };
 
   if (written.size > maxChars) {
-    // A design system can be thousands of variables: past maxChars the model gets the map and asks for parts.
+    // A design system can be thousands of variables: past maxChars the model gets the map, the start of the tokens
+    // where the format can be cut between them, and the parts to ask for.
+    const start = TOKEN_FORMATS[format].start?.(source, maxChars);
+
     return {
       format,
+      ...start?.body,
       summary: modelSummary(model),
       ...library,
-      notes: [...notes, tooLongNote(written.size, maxChars, model)],
+      notes: [...notes, tooLongNote(written.size, maxChars, model, start)],
     };
   }
 
@@ -72,11 +78,19 @@ function readingNotes(raw: RawTokens, collections: readonly string[] | undefined
   return notes;
 }
 
-function tooLongNote(size: number, maxChars: number, model: TokenModel): string {
+function tooLongNote(
+  size: number,
+  maxChars: number,
+  model: TokenModel,
+  start: { shown: number; total: number } | undefined,
+): string {
   const parts = model.collections
     .map((collection) => `collections: ${JSON.stringify([collection.name])}`)
     .slice(0, 5)
     .join(", ");
+  const past = `The tokens are ${size} characters, past maxChars (${maxChars})`;
 
-  return `The tokens are ${size} characters, past maxChars (${maxChars}): read them a part at a time, e.g. ${parts}.`;
+  return start === undefined
+    ? `${past}: read them a part at a time, e.g. ${parts}.`
+    : `${past}: tokens holds the first ${start.shown} of ${start.total} variables and styles, in order. Read the rest a part at a time, e.g. ${parts}, or with a larger maxChars.`;
 }

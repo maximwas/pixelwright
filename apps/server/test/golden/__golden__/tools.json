@@ -5172,7 +5172,7 @@
         },
         "maxChars": {
           "default": 80000,
-          "description": "Longest output; past it, only the summary comes back and you read collections one at a time.",
+          "description": "Longest output; past it the summary comes back (with format json, also the first tokens that fit) and you read collections one at a time.",
           "type": "integer",
           "minimum": 2000,
           "maximum": 400000

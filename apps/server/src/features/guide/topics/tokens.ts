@@ -36,7 +36,8 @@ export const TOKENS = {
   in \`notes\`: an alias to a token no file here holds (a library's, a collection left out), a name taken twice (the
   second suffixed -2), and what DTCG has no type for (a text variable, a boolean, an image style).
 - \`collections\` keeps only the named ones; \`libraries: true\` adds the enabled libraries' variables by name and type.
-- Past \`maxChars\` (80 000) only the summary comes back, with the collections to read one at a time.
+- Past \`maxChars\` (80 000) the summary comes back, with the collections to read one at a time; with format json
+  also the first whole variables and styles that fit.
 - An alias to a token the output leaves out (a collection you did not ask for) is named in \`notes\`.
 
 ## tokens_apply
