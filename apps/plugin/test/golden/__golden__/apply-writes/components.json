@@ -119,7 +119,8 @@
             "line": 1,
             "ref": "new:1",
             "id": "90:1",
-            "tag": "Instance"
+            "tag": "Instance",
+            "name": "Heading"
           }
         ],
         "changed": [],
@@ -234,31 +235,36 @@
             "line": 1,
             "ref": "new:1:26",
             "id": "90:2",
-            "tag": "Component"
+            "tag": "Component",
+            "name": "Tone=Dark"
           },
           {
             "line": 1,
             "ref": "new:1:57",
             "id": "90:3",
-            "tag": "Text"
+            "tag": "Text",
+            "name": "Text"
           },
           {
             "line": 1,
             "ref": "new:1:96",
             "id": "90:4",
-            "tag": "Component"
+            "tag": "Component",
+            "name": "Tone=Light"
           },
           {
             "line": 1,
             "ref": "new:1:128",
             "id": "90:5",
-            "tag": "Text"
+            "tag": "Text",
+            "name": "Text"
           },
           {
             "line": 1,
             "ref": "new:1",
             "id": "90:6",
-            "tag": "ComponentSet"
+            "tag": "ComponentSet",
+            "name": "Tag"
           }
         ],
         "changed": [],
@@ -804,7 +810,8 @@
             "line": 1,
             "ref": "new:1",
             "id": "90:1",
-            "tag": "Instance"
+            "tag": "Instance",
+            "name": "Heading"
           }
         ],
         "changed": [],
@@ -1101,31 +1108,36 @@
             "line": 1,
             "ref": "new:1:26",
             "id": "90:2",
-            "tag": "Component"
+            "tag": "Component",
+            "name": "Tone=Dark"
           },
           {
             "line": 1,
             "ref": "new:1:57",
             "id": "90:3",
-            "tag": "Text"
+            "tag": "Text",
+            "name": "Text"
           },
           {
             "line": 1,
             "ref": "new:1",
             "id": "90:4",
-            "tag": "ComponentSet"
+            "tag": "ComponentSet",
+            "name": "Tag"
           },
           {
             "line": 2,
             "ref": "new:2",
             "id": "90:5",
-            "tag": "Instance"
+            "tag": "Instance",
+            "name": "Tag"
           },
           {
             "line": 3,
             "ref": "new:3",
             "id": "90:6",
-            "tag": "Instance"
+            "tag": "Instance",
+            "name": "Heading"
           }
         ],
         "changed": [],

@@ -52,16 +52,20 @@ export const ApplyErrorSchema: z.ZodType<ApplyError, ApplyError> = z.object({
 });
 
 export const ApplyResultSchema = z.object({
-  /** The layers made, by their element's line and temporary ref; a dry run's, which it would make, have no id. */
+  /**
+   * The layers made, by their element's line and temporary ref, with their names; a dry run's, which it would make,
+   * have no id and no name.
+   */
   created: z.array(
     z.object({
       line: z.number().int(),
       ref: z.string(),
       id: z.string().exactOptional(),
       tag: z.string(),
+      name: z.string().exactOptional(),
     }),
   ),
-  /** The existing layers written to (a dry run's: would be). */
+  /** The existing layers written to (a dry run's: would be), and the layers of a copy or new instance written. */
   changed: z.array(z.string()),
   errors: z.array(ApplyErrorSchema),
 });

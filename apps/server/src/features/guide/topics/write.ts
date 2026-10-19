@@ -111,8 +111,9 @@ taken as sRGB and converted to P3.
 \`nodes_delete\` deletes layers by id (not those inside an instance: hide them with \`display="none"\`).
 
 Each element is written on its own: an error names its line and attribute, and the rest of the XML still goes in.
-\`created\` lists the new layers' ids by line, \`changed\` the layers written to; a dry run lists the same, the new
-layers without ids, as what it would do. One call is one undo step in Figma:
+\`created\` lists the new layers' ids and names by line, \`changed\` the layers written to (inside a copy or a new
+instance, by their ids there); a dry run lists the same, the new layers without ids or names (and no layers inside
+a copy, which do not exist yet), as what it would do. One call is one undo step in Figma:
 the user's Cmd+Z takes the whole call back.
 
 Effects CSS cannot write (noise, texture, glass, hidden effects) stay when a layer's \`box-shadow\` or \`filter\`

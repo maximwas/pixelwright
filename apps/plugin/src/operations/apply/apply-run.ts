@@ -210,7 +210,8 @@ export class ApplyRun implements WriteScope {
       }
 
       this.#report.made(change, node);
-    } else if (wrote && change.source === undefined) {
+    } else if (wrote) {
+      // A copy's or new instance's layer too, by its own id there: the agent sees what its edits inside wrote.
       this.#report.wroteTo(node);
     }
   }

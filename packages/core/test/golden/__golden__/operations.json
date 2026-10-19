@@ -6705,6 +6705,9 @@
               },
               "tag": {
                 "type": "string"
+              },
+              "name": {
+                "type": "string"
               }
             },
             "required": [
