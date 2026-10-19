@@ -4,7 +4,7 @@ import { ChunkStreams } from "./chunk-streams.ts";
 import { CodeScope } from "./code-scope.ts";
 import { EditsGuard } from "./edits-guard.ts";
 import { ModeLimit } from "./mode-limit.ts";
-import { ModeTurns } from "./mode-turns.ts";
+import { OperationTurns } from "./operation-turns.ts";
 import { UploadStore } from "./upload-store.ts";
 
 /** What the plugin keeps while it runs, made once by its composition root and handed to the operations that use it. */
@@ -17,7 +17,8 @@ export interface PluginServices {
   readonly exports: ChunkStreams<{ bytes: Uint8Array; scale: number }>;
   /** Original images the server reads chunk by chunk. */
   readonly images: ChunkStreams<{ bytes: Uint8Array }>;
-  readonly modeTurns: ModeTurns;
+  /** Writes one at a time, reads beside each other. */
+  readonly turns: OperationTurns;
   /** The modes a collection may have, once Figma has refused one. */
   readonly modeLimit: ModeLimit;
   /** What execute's code keeps between calls. */
@@ -32,7 +33,7 @@ export function createServices(): PluginServices {
     fonts: new FontCatalog(),
     exports: new ChunkStreams(),
     images: new ChunkStreams(),
-    modeTurns: new ModeTurns(),
+    turns: new OperationTurns(),
     modeLimit: new ModeLimit(),
     code: new CodeScope(),
   };

@@ -1,5 +1,12 @@
-import { BridgeError, fromWireError } from "@pixelwright/core";
+import { BridgeError, fromWireError, WRITE_OPERATIONS } from "@pixelwright/core";
 import type { PendingRequest, ResponseMessage } from "../types/bridge.ts";
+
+/** A plugin cannot stop an operation: a write goes on, and a retry, run after it, writes again what it does not find. */
+function timeoutMessage(op: string, timeoutMs: number): string {
+  return WRITE_OPERATIONS.has(op)
+    ? `${op} timed out after ${timeoutMs} ms, and the plugin may still be writing: read the file's state before you retry.`
+    : `${op} timed out after ${timeoutMs} ms (it may still be applied in Figma)`;
+}
 
 /** Requests sent to one plugin session and not answered yet. Each one fails on its own timer. */
 export class PendingRequests {
@@ -10,7 +17,7 @@ export class PendingRequests {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.#requests.delete(id);
-        reject(new BridgeError("TIMEOUT", `${op} timed out after ${timeoutMs} ms (it may still be applied in Figma)`));
+        reject(new BridgeError("TIMEOUT", timeoutMessage(op, timeoutMs)));
       }, timeoutMs);
 
       this.#requests.set(id, {

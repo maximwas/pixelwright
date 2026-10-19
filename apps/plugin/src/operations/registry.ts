@@ -4,6 +4,7 @@ import {
   type OperationInput,
   type OperationName,
   type OperationOutput,
+  WRITE_OPERATIONS,
 } from "@pixelwright/core";
 import type { PluginServices } from "../services/plugin-services.ts";
 import { explained } from "../utils/error-message.ts";
@@ -91,7 +92,15 @@ const OWN_WRITES: ReadonlySet<OperationName> = new Set([
   "bind",
 ]);
 
+/** What touches no layer runs at once, whatever runs meanwhile: a probe, the journal, an upload, a wait for the user. */
+const UNTURNED: ReadonlySet<OperationName> = new Set(["ping", "changes", "upload", "selection_wait"]);
+
 const isOperation = (op: string): op is OperationName => Object.hasOwn(OPERATION_SCHEMAS, op);
+
+/** A write takes its turn alone; so does a render in other variable modes, which has the layer in them meanwhile. */
+const isWrite = (op: OperationName, input: unknown): boolean =>
+  WRITE_OPERATIONS.has(op) ||
+  (op === "export" && Object.keys((input as OperationInput<"export">).modes ?? {}).length > 0);
 
 /** Runs the operations the server asks for: by name, their input checked against the shared schemas. */
 export class OperationRegistry {
@@ -112,10 +121,16 @@ export class OperationRegistry {
       throw new BridgeError("OP_FAILED", `${op}: invalid input: ${parsed.error.message}`);
     }
 
-    const run = (): Promise<unknown> => HANDLERS[op](parsed.data as never, this.#services);
+    const handle = (): Promise<unknown> => HANDLERS[op](parsed.data as never, this.#services);
+    const run = () => (OWN_WRITES.has(op) ? this.#services.journal.asOwnWrite(handle) : handle());
+    const { turns } = this.#services;
 
     try {
-      return await (OWN_WRITES.has(op) ? this.#services.journal.asOwnWrite(run) : run());
+      if (UNTURNED.has(op)) {
+        return await run();
+      }
+
+      return await (isWrite(op, parsed.data) ? turns.write(run) : turns.read(run));
     } catch (error) {
       throw explained(error);
     }
