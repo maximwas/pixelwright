@@ -4782,7 +4782,7 @@
   {
     "name": "tokens_usage",
     "title": "Where a token is used",
-    "description": "The layers on the current page (or inside within) that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch.",
+    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4793,10 +4793,18 @@
           "description": "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg."
         },
         "within": {
-          "description": "The layer or page to look in. Default: the current page.",
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
+          "description": "The layer or page to look in, or \"file\" for every page (loading them all is slow on a big file). Default: the current page.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
         },
         "file": {
           "description": "The file to work on: its session from status or its name. Default: the active file.",

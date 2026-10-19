@@ -607,9 +607,17 @@
           "maxLength": 300
         },
         "within": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
         }
       },
       "required": [

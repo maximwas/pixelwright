@@ -112,8 +112,8 @@ export const NAVIGATION_OPERATIONS = {
     input: z.object({
       /** A style's or variable's token as design_read and tokens_read write it (--White-2, --h1-font). */
       token: z.string().min(3).max(300),
-      /** The layer or page to look in. Default: the current page. */
-      within: NodeIdSchema.exactOptional(),
+      /** The layer or page to look in, or "file" for every page. Default: the current page. */
+      within: z.union([z.literal("file"), NodeIdSchema]).exactOptional(),
     }),
     output: z.object({
       token: z.string(),
