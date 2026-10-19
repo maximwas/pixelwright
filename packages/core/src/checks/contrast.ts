@@ -137,42 +137,56 @@ function rateSegment(node: SnapshotNode, segment: TextSegment, { paint, behind, 
 }
 
 /**
- * The colour behind a layer, or what it is in words when it is not one colour: the layers below it in each parent
- * (their own children included) that paint under it, then the parent's fills, top first, until an opaque one.
+ * The colour behind a layer, or what it is in words when it is not one colour: what is under it, top first, until an
+ * opaque paint. A layer covering only part of the text matters only above that paint: the paint hides what is below.
  */
 function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Color | string {
   const layers: Layer[] = [];
+
+  for (const step of stepsUnder(node, ancestors)) {
+    if ("partly" in step) {
+      return `partly over ${step.partly.id} "${step.partly.name}": it covers only part of the text`;
+    }
+
+    layers.push(step.paint);
+
+    if ("kind" in step.paint || step.paint.alpha >= 1) {
+      return composited(layers, space);
+    }
+  }
+
+  return "nothing opaque behind it in the layer read: check it inside its screen";
+}
+
+/** One step down from a text: a paint under it, or a layer that paints under only part of it. */
+type Step = { readonly paint: Layer } | { readonly partly: SnapshotNode };
+
+/** What is under a text, top first: the layers below it in each parent (their own children included), then its fills. */
+function stepsUnder(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Step[] {
+  const steps: Step[] = [];
   let current = node;
 
   for (let level = ancestors.length - 1; level >= 0; level--) {
     const parent = ancestors[level] as SnapshotNode;
     const siblings = parent.children ?? [];
-    const index = siblings.indexOf(current);
 
     // Figma lists children bottom first: those before it are below it.
-    for (let below = index - 1; below >= 0; below--) {
-      const found = paintedUnder(siblings[below] as SnapshotNode, node);
-
-      if (found.partly !== null) {
-        return `partly over ${found.partly.id} "${found.partly.name}": it covers only part of the text`;
-      }
-
-      layers.push(...found.layers);
+    for (let below = siblings.indexOf(current) - 1; below >= 0; below--) {
+      steps.push(...paintedUnder(siblings[below] as SnapshotNode, node));
     }
 
-    layers.push(...paintLayers(parent));
+    steps.push(...paintLayers(parent).map((paint) => ({ paint })));
     current = parent;
   }
 
-  const opaque = layers.findIndex((layer) => "kind" in layer || layer.alpha >= 1);
+  return steps;
+}
 
-  if (opaque === -1) {
-    return "nothing opaque behind it in the layer read: check it inside its screen";
-  }
-
+/** Paints laid over each other, bottom up from the opaque one last in the list: one colour, or what the bottom is. */
+function composited(layers: readonly Layer[], space: ColorSpace): Color | string {
   let color: Color | null = null;
 
-  for (const layer of layers.slice(0, opaque + 1).toReversed()) {
+  for (const layer of layers.toReversed()) {
     if ("kind" in layer) {
       return layer.kind;
     }
@@ -198,39 +212,17 @@ function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[], spac
  * painting layer that meets the text without covering it makes the backdrop two things at once. A text is never a
  * backdrop: its fills colour thin glyphs, not its box.
  */
-function paintedUnder(layer: SnapshotNode, text: SnapshotNode): { layers: Layer[]; partly: SnapshotNode | null } {
+function paintedUnder(layer: SnapshotNode, text: SnapshotNode): Step[] {
   if (!layer.visible || layer.type === "TEXT" || !meets(layer, text)) {
-    return {
-      layers: [],
-      partly: null,
-    };
+    return [];
   }
 
-  const layers: Layer[] = [];
-
-  for (const child of (layer.children ?? []).toReversed()) {
-    const found = paintedUnder(child, text);
-
-    if (found.partly !== null) {
-      return found;
-    }
-
-    layers.push(...found.layers);
-  }
-
+  const children = (layer.children ?? []).toReversed().flatMap((child) => paintedUnder(child, text));
   const own = paintLayers(layer);
 
-  if (own.length > 0 && !covers(layer, text)) {
-    return {
-      layers: [],
-      partly: layer,
-    };
-  }
-
-  return {
-    layers: [...layers, ...own],
-    partly: null,
-  };
+  return own.length > 0 && !covers(layer, text)
+    ? [...children, { partly: layer }]
+    : [...children, ...own.map((paint) => ({ paint }))];
 }
 
 function meets(a: SnapshotNode, b: SnapshotNode): boolean {

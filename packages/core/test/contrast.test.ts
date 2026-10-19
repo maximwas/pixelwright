@@ -230,4 +230,19 @@ describe("contrast_check on the Dukach feedback", () => {
       aa: true,
     });
   });
+
+  it("stops at the solid fill right under a text: deeper layers that cover part of it are hidden (bug 7)", () => {
+    const partly = rect("Tab 1", [GRAY], 12, 98);
+    const onDark = {
+      backdrop: "#121212",
+      aa: true,
+    };
+
+    const capsule = frame("Capsule", [DARK], [text("Cancel", 16, 10, 10)]);
+
+    expect(check(frame("1:1", [WHITE], [partly, capsule]))).toMatchObject(onDark);
+    expect(check(frame("1:1", [WHITE], [partly, rect("Bar", [DARK], 0, 400), text("9:41", 16, 10, 10)]))).toMatchObject(
+      onDark,
+    );
+  });
 });
