@@ -1,3 +1,5 @@
+import { asyncHint } from "./async-hint.ts";
+
 type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<unknown>;
 
 /** The constructor of async functions: the code becomes the body of one. */
@@ -31,7 +33,8 @@ export function codeFunction(code: string): (...values: unknown[]) => Promise<un
 
 /**
  * What code threw, as its name and message, then the frames of the code itself (V8's or QuickJS's stack read through
- * a probe, so lines and columns are the code's own, not the wrapper's) and the line it threw on.
+ * a probe, so lines and columns are the code's own, not the wrapper's), the line it threw on, and the async call to
+ * make when Figma refused a synchronous one.
  */
 export async function codeError(error: unknown, code: string): Promise<string> {
   if (!(error instanceof Error)) {
@@ -42,14 +45,15 @@ export async function codeError(error: unknown, code: string): Promise<string> {
   const probe = await probeFrame();
   const frames = probe === null ? [] : codeFrames(error.stack ?? "", probe);
   const first = frames[0];
+  const quoted = first === undefined ? "" : (code.split("\n")[first.line - 1]?.trim().slice(0, QUOTED_CHARS) ?? "");
+  const hint = asyncHint(error.message, quoted);
 
-  if (first === undefined) {
-    return thrown;
-  }
-
-  const quoted = code.split("\n")[first.line - 1]?.trim().slice(0, QUOTED_CHARS) ?? "";
-
-  return [thrown, ...frames.map(framed), `line ${first.line}: ${quoted}`].join("\n");
+  return [
+    thrown,
+    ...frames.map(framed),
+    ...(first === undefined ? [] : [`line ${first.line}: ${quoted}`]),
+    ...(hint === null ? [] : [hint]),
+  ].join("\n");
 }
 
 async function probeFrame(): Promise<Frame | null> {

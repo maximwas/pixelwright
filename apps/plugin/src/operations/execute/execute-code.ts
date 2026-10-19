@@ -30,6 +30,8 @@ export async function execute(
   // The window's messages (Allow edits among them) come through this handler: code may not keep it.
   const ui = (figma as { ui?: { onmessage?: unknown } }).ui;
   const handler = ui?.onmessage;
+  // Every operation walks layers as the plugin set this up; code may turn it off to reach hidden instance children.
+  const skipInvisible = figma.skipInvisibleInstanceChildren;
 
   try {
     return await ran(code, timeoutMs, {
@@ -41,6 +43,7 @@ export async function execute(
       ui.onmessage = handler;
     }
 
+    figma.skipInvisibleInstanceChildren = skipInvisible;
     figma.commitUndo();
   }
 }

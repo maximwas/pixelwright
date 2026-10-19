@@ -109,6 +109,29 @@ describe("execute", () => {
     );
   });
 
+  it("names the async call when Figma refuses a synchronous one for dynamic-page, unless Figma named it", async () => {
+    Object.assign(figma, {
+      getNodeById: () => {
+        throw new Error("in getNodeById: Cannot call with documentAccess: dynamic-page");
+      },
+      getLocalPaintStyles: () => {
+        throw new Error("Cannot call with documentAccess: dynamic-page. Use getLocalPaintStylesAsync instead.");
+      },
+    });
+
+    expect((await run('return figma.getNodeById("1:1");')).error).toMatch(
+      /\nUse await figma\.getNodeByIdAsync\(id\) instead: this plugin's documentAccess is dynamic-page\.$/,
+    );
+    expect((await run("return figma.getLocalPaintStyles();")).error).not.toMatch(/\nUse /);
+  });
+
+  it("gives figma.skipInvisibleInstanceChildren back as the plugin had it, whatever the code set", async () => {
+    Object.assign(figma, { skipInvisibleInstanceChildren: true });
+    await run("figma.skipInvisibleInstanceChildren = false; return 1;");
+
+    expect(figma.skipInvisibleInstanceChildren).toBe(true);
+  });
+
   it("stops waiting at its timeout and says the code may still be running", async () => {
     const { error } = await run("await new Promise(() => {});", 50);
 
