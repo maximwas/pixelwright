@@ -259,6 +259,46 @@ describe("contrast_check on the Dukach feedback", () => {
     });
 
     expect(texts.map(({ name }) => name)).toEqual(["Shown", "Below"]);
-    expect(summary).toBe("2 texts: 1 below AA. 1 text cut off by a clipping frame is left out.");
+    expect(summary).toBe("2 texts: 1 below AA. 1 text is left out: cut off by a clipping frame.");
+  });
+
+  it("counts each reason a contrast is not one number on its own line (bug 11)", () => {
+    const photo = {
+      ...rect(
+        "Photo",
+        [
+          {
+            type: "IMAGE",
+            visible: true,
+          },
+        ],
+        0,
+        400,
+      ),
+      y: 100,
+    };
+    const strip = {
+      ...rect("Strip", [DARK], 12, 98),
+      y: 300,
+    };
+    const { summary } = contrastCheck({
+      root: frame(
+        "1:1",
+        [],
+        [
+          frame("Card", [DARK], [text("Fine", 16, 10, 10)]),
+          photo,
+          text("Over", 16, 10, 110),
+          frame("Bare", [], [text("Air", 16, 10, 210)], 200),
+          frame("Half", [WHITE], [strip, text("Half", 16, 10, 310)], 300),
+        ],
+      ),
+      styles: {},
+      variables: {},
+    });
+
+    expect(summary).toBe(
+      "4 texts: 0 below AA, 1 over an image or gradient (check those by eye), 1 partly over another layer (check those by eye), 1 with nothing opaque behind it in the read (check those inside their screen).",
+    );
   });
 });
