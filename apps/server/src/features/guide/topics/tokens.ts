@@ -36,7 +36,8 @@ export const TOKENS = {
   in \`notes\`: an alias to a token no file here holds (a library's, a collection left out), a name taken twice (the
   second suffixed -2), and what DTCG has no type for (a text variable, a boolean, an image style).
 - \`collections\` keeps only the named ones; \`libraries: true\` adds the enabled libraries' variables by name and type.
-- Past \`maxChars\` (80 000) only the summary comes back, with the collections to read one at a time.
+- Past \`maxChars\` (80 000) the summary comes back, with the collections to read one at a time; with format json
+  also the first whole variables and styles that fit.
 - An alias to a token the output leaves out (a collection you did not ask for) is named in \`notes\`.
 
 ## tokens_apply
@@ -49,7 +50,10 @@ export const TOKENS = {
   \`var(--token)\` makes an alias, to a variable of the call (in any order) or of the file. A \`token\` other than the
   name's own becomes the variable's Web code syntax.
 - A paint style's value reads as a \`background\` (colours, a colour variable), a text style's as the \`font\`
-  shorthand, an effect style's as a \`box-shadow\` list.
+  shorthand with its letter spacing and case from \`also\`, as tokens_read lists them, or after it
+  (\`500 12px/16px 'Inter'; letter-spacing: 0.04em; text-transform: uppercase\`), an effect style's as a
+  \`box-shadow\` list with its blurs after it, or a blur alone (\`backdrop-filter: blur(20px)\`, \`filter: blur(4px)\`).
+  What a value leaves out, the style keeps.
 - A value a variable or style already holds is left as it is, so sending tokens_read's own output writes nothing;
   send only what you change. Nothing is ever deleted (use \`execute\` to remove a token).
 - A library's collection or style the file uses is never copied into the file: change it in the library.
@@ -69,8 +73,13 @@ export const TOKENS = {
   one), \`unmatched\` (no token holds it: make one with tokens_apply). A choose for a value no candidate holds snaps
   the layers to the token (\`snapped\`); \`field\` narrows a choice to background, border, color, gap, padding….
 - \`remap: [{from: "--blue-500", to: "--brand"}]\` moves every use of one token to another of its kind (merging
-  duplicates); raw values are then left alone.
-- Instances are left out: bind their main components, and the instances follow. One undo step; \`dryRun\` lists
+  duplicates); raw values are then left alone. \`instances: "override"\` rebinds the uses inside instances too, as
+  overrides on each one: for a copy that must differ from its components, like a dark copy in a file whose plan has
+  one mode.
+- Instances are left out: bind their main components, and the instances follow. What was put into an instance's
+  slots is the instance's own and is bound. A slot's default content (what the component put there) is left alone,
+  \`instances: "override"\` too: binding it would make the slot the instance's own, so later changes to the
+  component would no longer reach it. One undo step; \`dryRun\` lists
   without writing, \`version\` saves a named version first when the call changes something.
 
 ## Values
@@ -88,7 +97,8 @@ tokens_apply writes one from the same CSS.
 
 ## Not tokens yet
 
-Paint styles with images, diamond gradient styles, blur effect styles, and library variables the file does
+Paint styles with images, diamond gradient styles, the blurs of effect styles (tokens_apply writes them, tokens_read
+lists only shadows), and library variables the file does
 not use (Figma gives their values only once they are imported into the file: \`libraries: true\` lists them by name
 and type). Paint styles and effect styles that are left out are named in \`notes\`; a \`var()\` design_read writes
 without a value is named in its hints.

@@ -517,7 +517,8 @@
             "line": 1,
             "ref": "new:1",
             "id": "90:1",
-            "tag": "Text"
+            "tag": "Text",
+            "name": "New text"
           }
         ],
         "changed": [],
@@ -552,7 +553,7 @@
         {
           "parent": "1:5",
           "state": {
-            "name": "Text",
+            "name": "New text",
             "type": "TEXT",
             "visible": true,
             "absoluteBoundingBox": {
@@ -563,6 +564,7 @@
             },
             "id": "90:1",
             "characters": "New text",
+            "autoRename": true,
             "fontName": {
               "family": "Inter",
               "style": "Regular"

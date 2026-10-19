@@ -322,6 +322,38 @@ describe("snapshot", () => {
     expect(label?.overrides).toEqual(["fills"]);
     expect(inner).not.toHaveProperty("overrides");
     expect(inner?.children?.[0]?.overrides).toEqual(["fills", "opacity"]);
+    expect(label).not.toHaveProperty("componentPropertyReferences");
+  });
+
+  it("reads which component properties a component's layers are bound to", async () => {
+    const references = {
+      characters: "Label#1:0",
+      visible: "Show#1:1",
+    };
+
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "5:0",
+            name: "Card",
+            type: "COMPONENT",
+            children: [
+              {
+                id: "5:4",
+                componentPropertyReferences: references,
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const { root } = (await plugin.run("snapshot", { node: "5:0" })) as Shot;
+
+    expect(root.children?.[0]?.componentPropertyReferences).toEqual(references);
   });
 
   it("asks no match for a radius whose corners are bound, nor any match for design_apply's own read", async () => {
@@ -842,6 +874,33 @@ describe("snapshot of what designers tell developers, and of a grid", () => {
       gridRowAnchorIndex: 0,
       gridColumnSpan: 1,
     });
+  });
+
+  it("says to reopen the plugin window when Figma's sandbox has spent its callback ids on grid tracks", async () => {
+    const page = tree({
+      id: "0:1",
+      type: "PAGE",
+      children: [
+        {
+          id: "3:1",
+          type: "FRAME",
+          layoutMode: "GRID",
+          gridColumnSizes: [{ type: "HUG" }],
+        },
+      ],
+    });
+
+    installFigma(page);
+    // Figma's words, seen after thousands of calls through one plugin window (Dukach feedback, bug 4).
+    Object.defineProperty(page.children?.[0], "gridRowSizes", {
+      get: () => {
+        throw new Error("Attempted to invoke callback with invalid id -32605");
+      },
+    });
+
+    await expect(plugin.run("snapshot", { node: "3:1" })).rejects.toThrow(
+      /invalid id -32605.*close and reopen the Pixelwright plugin window/s,
+    );
   });
 
   it("keeps the properties a designer pinned in an annotation, with its note or without one", async () => {
@@ -1457,5 +1516,113 @@ describe("layout grids in a snapshot", () => {
         count: 12,
       }),
     ]);
+  });
+});
+
+describe("snapshot with ancestors", () => {
+  const box = (y: number, height: number) => ({
+    x: 0,
+    y,
+    width: 390,
+    height,
+  });
+
+  beforeEach(() => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [
+          {
+            id: "6:1",
+            name: "Settings",
+            absoluteBoundingBox: box(0, 844),
+            fills: [
+              {
+                type: "SOLID",
+                color: {
+                  r: 0,
+                  g: 0,
+                  b: 0,
+                },
+              },
+            ],
+            children: [
+              {
+                id: "6:2",
+                name: "Glow",
+                absoluteBoundingBox: box(100, 300),
+                children: [
+                  {
+                    id: "6:3",
+                    name: "Spot",
+                    type: "RECTANGLE",
+                    absoluteBoundingBox: box(100, 300),
+                  },
+                ],
+              },
+              {
+                id: "6:4",
+                name: "Hidden",
+                type: "RECTANGLE",
+                visible: false,
+                absoluteBoundingBox: box(100, 300),
+              },
+              {
+                id: "6:5",
+                name: "Content",
+                absoluteBoundingBox: box(100, 300),
+                children: [
+                  {
+                    id: "6:6",
+                    name: "Row",
+                    type: "RECTANGLE",
+                    absoluteBoundingBox: {
+                      x: 16,
+                      y: 116,
+                      width: 80,
+                      height: 20,
+                    },
+                  },
+                ],
+              },
+              {
+                id: "6:7",
+                name: "Footer",
+                absoluteBoundingBox: box(700, 144),
+              },
+            ],
+          },
+        ],
+      }),
+    );
+  });
+
+  it("reads the layers above the node, each with its shown children that overlap it, the node's place bare", async () => {
+    const answer = OPERATION_SCHEMAS.snapshot.output.parse(
+      await plugin.run("snapshot", {
+        node: "6:5",
+        ancestors: true,
+      }),
+    );
+
+    expect(answer.ancestors).toEqual([
+      expect.objectContaining({
+        id: "6:1",
+        y: -100,
+        children: [
+          expect.objectContaining({
+            id: "6:2",
+            children: [expect.objectContaining({ id: "6:3" })],
+          }),
+          expect.not.objectContaining({ children: expect.anything() }),
+        ],
+      }),
+    ]);
+    expect(answer.ancestors?.[0]?.children?.[1]?.id).toBe("6:5");
+  });
+
+  it("reads none unless asked", async () => {
+    expect(await plugin.run("snapshot", { node: "6:5" })).not.toHaveProperty("ancestors");
   });
 });

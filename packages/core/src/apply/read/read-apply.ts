@@ -2,6 +2,7 @@ import type { XmlChild } from "../../types/xml.ts";
 import { parseXml } from "../../xml/parse/parse-xml.ts";
 import { xmlSyntaxError } from "../../xml/parse/xml-errors.ts";
 import type { ApplyElement, ApplyError } from "../types.ts";
+import { KNOWN_TAGS } from "../vocabulary.ts";
 import { ApplyReader } from "./apply-reader.ts";
 
 /**
@@ -31,7 +32,7 @@ export function readApply(xml: string): { elements: ApplyElement[]; errors: Appl
 
   const reader = new ApplyReader();
 
-  reader.read(roots);
+  reader.read(asWritten(roots, true));
 
   if (reader.elements.length === 0 && reader.errors.length === 0) {
     reader.errors.push({
@@ -45,4 +46,31 @@ export function readApply(xml: string): { elements: ApplyElement[]; errors: Appl
     elements: reader.elements,
     errors: reader.errors,
   };
+}
+
+/** Each tag by its lowercase spelling. */
+const TAGS: ReadonlyMap<string, string> = new Map([...KNOWN_TAGS].map((tag) => [tag.toLowerCase(), tag]));
+
+/**
+ * The XML as the agent meant it: a top-level `<Root>` without attributes (an XML document's one root) holds the top
+ * level, and a tag in another case is that tag (HTML's `<span>`).
+ */
+function asWritten(children: readonly XmlChild[], top: boolean): XmlChild[] {
+  return children.flatMap((child): XmlChild[] => {
+    if (child.kind === "text") {
+      return [child];
+    }
+
+    if (top && child.type.toLowerCase() === "root" && Object.keys(child.props).length === 0) {
+      return asWritten(child.children, true);
+    }
+
+    return [
+      {
+        ...child,
+        type: TAGS.get(child.type.toLowerCase()) ?? child.type,
+        children: asWritten(child.children, false),
+      },
+    ];
+  });
 }

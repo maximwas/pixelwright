@@ -1,7 +1,7 @@
 import { tokenName, variableTokenName } from "../../kernel/names.ts";
 import { COMMENT, type CollectionDraft, markedUnitless, plainNumbers, type VariableDraft } from "./plain-numbers.ts";
 import type { TokensApplyInput } from "./schemas.ts";
-import { type StyleKind, styleValueOf } from "./style-values.ts";
+import { type StyleKind, type StyleValue, styleValueOf } from "./style-values.ts";
 import type {
   EffectStylePlan,
   PaintStylePlan,
@@ -16,6 +16,13 @@ import { isWritableType, variableTypeOf, variableValueOf } from "./variable-valu
 
 type InputCollection = TokensApplyInput["collections"][number];
 type InputVariable = InputCollection["variables"][number];
+
+/** The styles' plans as they are read. */
+interface StylesDraft {
+  paint: PaintStylePlan[];
+  text: TextStylePlan[];
+  effect: EffectStylePlan[];
+}
 
 /** The style kinds in the order their errors are listed. */
 const STYLE_KINDS: readonly StyleKind[] = ["paint", "text", "effect"];
@@ -156,42 +163,48 @@ function unreadable(css: string, type: WritableVariableType | null): string {
 
 /** Each style's value read; one that cannot be is its error. */
 function stylesPlan(styles: TokensApplyInput["styles"], errors: TokenError[]): TokensPlan["styles"] {
-  const plan: { paint: PaintStylePlan[]; text: TextStylePlan[]; effect: EffectStylePlan[] } = {
+  const plan: StylesDraft = {
     paint: [],
     text: [],
     effect: [],
   };
 
   for (const kind of STYLE_KINDS) {
-    for (const { name, value } of styles[kind]) {
-      const read = styleValueOf(kind, value);
+    for (const style of styles[kind]) {
+      const read = styleValueOf(kind, style.value, "also" in style ? style.also : undefined);
 
       if ("error" in read) {
         errors.push({
           kind,
-          name,
+          name: style.name,
           message: read.error,
         });
-      } else if ("paints" in read) {
-        plan.paint.push({
-          name,
-          paints: read.paints,
-        });
-      } else if ("font" in read) {
-        plan.text.push({
-          name,
-          font: read.font,
-        });
       } else {
-        plan.effect.push({
-          name,
-          effects: read.effects,
-        });
+        addStyle(plan, style.name, read);
       }
     }
   }
 
   return plan;
+}
+
+function addStyle(plan: StylesDraft, name: string, read: Exclude<StyleValue, { error: string }>): void {
+  if ("paints" in read) {
+    plan.paint.push({
+      name,
+      ...read,
+    });
+  } else if ("font" in read) {
+    plan.text.push({
+      name,
+      ...read,
+    });
+  } else {
+    plan.effect.push({
+      name,
+      ...read,
+    });
+  }
 }
 
 /** The modes the values name, in the order they first appear. */

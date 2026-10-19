@@ -394,7 +394,6 @@ export const CHANGE_CASES: Readonly<Record<string, ChangeCase>> = {
   "placements CSS would not apply": {
     xml: lines(
       '<Frame id="1:1" left="10px" right="auto"/>',
-      '<Frame id="1:2" position="absolute" left="0" right="0" width="100px"/>',
       '<Frame id="1:3" position="absolute" left="10%"/>',
       '<Frame id="1:4" position="absolute" left="var(--x)"/>',
       '<Frame id="1:5" position="absolute" right="1em"/>',

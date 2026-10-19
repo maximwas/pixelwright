@@ -175,6 +175,18 @@ beforeEach(() => {
           },
         ],
       },
+      {
+        id: "5:1",
+        name: "Area",
+        type: "SECTION",
+        absoluteBoundingBox: {
+          x: 0,
+          y: 200,
+          width: 600,
+          height: 400,
+        },
+        children: [],
+      },
     ],
   });
   fake = installFigma(root, {
@@ -208,6 +220,33 @@ describe("design_apply end to end: copies and new instances", () => {
     expect(result.errors).toEqual([]);
     expect(copy?.children?.[0]?.children?.[0]?.characters).toBe("Copied title");
     expect(byId("1:2")?.characters).toBe("Hello");
+  });
+
+  it("names the layers it made, and lists a copy's layers it wrote as changed, by their ids in the copy", async () => {
+    const result = await apply(
+      '<Frame id="3:1"><Frame copyOf="1:1" name="Card 2"><Frame id="1:5"><Text id="1:2">Copied title</Text></Frame></Frame><Frame name="Spacer"/></Frame>',
+    );
+    const copy = byId(result.created[0]?.id ?? "");
+    const title = copy?.children?.[0]?.children?.[0];
+
+    expect(result.errors).toEqual([]);
+    expect(result.created.map(({ name, tag }) => [name, tag])).toEqual([
+      ["Card 2", "Frame"],
+      ["Spacer", "Frame"],
+    ]);
+    expect(result.changed).toEqual([title?.id]);
+    expect(title?.id).not.toBe("1:2");
+  });
+
+  it("puts a layer next to the copy's counterpart of the source layer before= or after= names", async () => {
+    const result = await apply(
+      '<Frame id="3:1"><Frame copyOf="1:1" name="Card 2"><Frame id="1:5"><Text name="Lead" before="1:2">Lead</Text><Text id="1:6" after="1:2"/></Frame></Frame></Frame>',
+    );
+    const copy = byId(result.created[0]?.id ?? "");
+
+    expect(result.errors).toEqual([]);
+    expect(copy?.children?.[0]?.children?.map(({ name }) => name)).toEqual(["Lead", "Hello", "Read more"]);
+    expect(byId("1:5")?.children?.map(({ id }) => id)).toEqual(["1:2", "1:6"]);
   });
 
   it("loads the fonts of a copy's texts before retyping them", async () => {
@@ -275,5 +314,51 @@ describe("design_apply end to end: dry runs and moves", () => {
     expect(byId("1:5")?.children?.map(({ id }) => id)).toEqual(["1:6", "1:2"]);
     expect(result.changed).toEqual(["1:6"]);
     expect(fake.writes.undo).toBe(1);
+  });
+});
+
+describe("design_apply end to end: sections", () => {
+  it("places a new frame in a section by its left and top, which nothing there lays out, absolute or not", async () => {
+    const result = await apply(
+      '<Section id="5:1"><Frame name="Card" left="40px" top="24px" width="100px" height="50px"/></Section>',
+    );
+    const card = byId(result.created[0]?.id ?? "");
+
+    expect(result.errors).toEqual([]);
+    expect(card?.parent?.id).toBe("5:1");
+    expect(card?.relativeTransform).toEqual([
+      [1, 0, 40],
+      [0, 1, 24],
+    ]);
+
+    const flowing = await apply('<Frame id="1:1"><Frame name="Flowing" left="4px"/></Frame>');
+
+    expect(flowing.errors.map(({ attribute }) => attribute)).toEqual(["left"]);
+  });
+
+  it("moves a section on the page by its top alone, as design_read gives a layer there no position", async () => {
+    const result = await apply('<Section id="5:1" top="320px"/>');
+
+    expect(result.errors).toEqual([]);
+    expect(byId("5:1")?.relativeTransform).toEqual([
+      [1, 0, 0],
+      [0, 1, 320],
+    ]);
+  });
+
+  it("places a new layer on the page by its left and top alone, and refuses them where the call's parent lays it out", async () => {
+    const result = await apply('<Frame name="Board" left="40px" top="2400px" width="100px" height="50px"/>');
+    const board = byId(result.created[0]?.id ?? "");
+
+    expect(result.errors).toEqual([]);
+    expect(board?.parent?.type).toBe("PAGE");
+    expect(board?.relativeTransform).toEqual([
+      [1, 0, 40],
+      [0, 1, 2400],
+    ]);
+
+    const flowing = await apply('<Frame name="Flowing" left="4px"/>', { parent: "9:1" });
+
+    expect(flowing.errors.map(({ attribute }) => attribute)).toEqual(["left"]);
   });
 });

@@ -25,4 +25,6 @@ export interface FormattedTokens<Body extends object> {
 /** One way of writing the tokens (a strategy tokens_read picks by name), giving answers of its own shape. */
 export interface TokenFormat<Body extends object> {
   write(source: TokenSource): FormattedTokens<Body>;
+  /** For a format that can be cut between tokens: as many whole tokens as fit in maxChars, in order, and of how many. */
+  start?(source: TokenSource, maxChars: number): { body: Body; shown: number; total: number };
 }

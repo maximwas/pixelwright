@@ -19,6 +19,9 @@ export const TokensBindInputSchema = z.object({
   remap: shape.remap.describe(
     "Rebind every use of one token to another of its kind (--blue-500 to --brand, a duplicate style to the one kept); raw values are then left alone.",
   ),
+  instances: shape.instances.describe(
+    "With remap: leave (default) keeps instances to their main components; override rebinds the uses inside them, nested instances too, as overrides on each instance, for a copy that must differ from its components (a dark copy in a file whose plan has one mode).",
+  ),
   dryRun: z.boolean().default(false).describe("List what would be bound without writing; works with Allow edits off."),
   version: VersionInputSchema,
   file: FileSchema,

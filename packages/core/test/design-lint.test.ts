@@ -363,6 +363,94 @@ describe("design_lint: the general rules", () => {
     ]);
   });
 
+  it("lints the layers put into an instance's slot, and leaves the instance's own layers and the slot's default content to its component", () => {
+    // Ids as Figma gives them (live, 2026-10-20): a layer put into the slot is plain, the layers of a slot that is the
+    // instance's own extend the slot's id, and the component's default content is I<instance>;<its id in the component>.
+    const sheet = layer("5:1", "Sheet", {
+      type: "INSTANCE",
+      instance: {
+        componentId: "C:sheet",
+        componentName: "SheetContainer",
+        properties: {},
+      },
+      children: [
+        layer("I5:1;2:3", "Frame 9", { fills: [solid(0x123456)] }),
+        layer("I5:1;2:1", "Content", {
+          type: "SLOT",
+          children: [
+            layer("5:7", "Frame 7", {
+              fills: [solid(0x123456)],
+              children: [text("5:8", "Amount")],
+            }),
+            layer("I5:1;2:1;5:9", "Frame 8", { fills: [solid(0x123456)] }),
+            layer("I5:1;2:5", "Frame 6", {
+              fills: [solid(0x123456)],
+              children: [text("I5:1;2:6", "Default")],
+            }),
+          ],
+        }),
+      ],
+    });
+    const { findings } = designLint(
+      {
+        reads: [
+          {
+            root: sheet,
+            styles: {},
+            variables: {},
+          },
+        ],
+      },
+      {
+        limit: 100,
+        scope: "x",
+        rules: ["raw-color", "text-style", "default-name"],
+      },
+    );
+
+    expect(findings.map(({ rule, id }) => `${rule} ${id}`)).toEqual([
+      "raw-color 5:7",
+      "raw-color 5:8",
+      "text-style 5:8",
+      "raw-color I5:1;2:1;5:9",
+      "default-name 5:7",
+      "default-name I5:1;2:1;5:9",
+    ]);
+  });
+
+  it("gives each rule the severity of its most severe finding, so the list and the findings agree", () => {
+    const button = (id: string, height: number) =>
+      layer(id, "Buy", {
+        type: "INSTANCE",
+        height,
+        instance: {
+          componentId: "C:btn",
+          componentName: "Button",
+          properties: {},
+        },
+      });
+    const rulesOf = (...buttons: SnapshotNode[]) =>
+      designLint(
+        {
+          reads: [
+            {
+              root: layer("4:0", "Bar", { children: buttons }),
+              styles: {},
+              variables: {},
+            },
+          ],
+        },
+        {
+          limit: 100,
+          scope: "x",
+          rules: ["touch-target"],
+        },
+      ).rules.map(({ rule, severity, count }) => `${rule} ${severity} ${count}`);
+
+    expect(rulesOf(button("4:1", 32), button("4:2", 40))).toEqual(["touch-target info 2"]);
+    expect(rulesOf(button("4:1", 32), button("4:2", 20))).toEqual(["touch-target warning 2"]);
+  });
+
   it("says a layer's raw values in one sentence, overrides in CSS words, and leaves a mask's colour alone", () => {
     const card = layer("2:1", "Promo", {
       fills: [solid(0x14161f), solid(0x123456)],
@@ -428,6 +516,55 @@ describe("design_lint: the general rules", () => {
       "tokens_bind binds it to the token holding it, if one does; else make it a token with tokens_apply, or snap it to a near one with tokens_bind choose.",
     );
   });
+
+  it("says when the layers above a read were cut at the size budget, as its contrast rule rates texts on them", () => {
+    const card = layer("5:1", "Card", { children: [text("5:2", "Label")] });
+    const bare = {
+      ...card,
+      childCount: 1,
+      children: undefined,
+    };
+    const decor = layer("5:3", "Decor", {
+      childCount: 8000,
+      children: [layer("5:4", "Dot", { type: "RECTANGLE" })],
+    });
+    // An ancestor's entry holds only the children that overlap the read, and the read's bare place, by design.
+    const screen = layer("5:9", "Screen", {
+      fills: [solid(0xffffff)],
+      childCount: 5,
+      children: [decor, bare],
+    });
+    const lint = (ancestors: SnapshotNode[]) =>
+      designLint(
+        {
+          reads: [
+            {
+              root: card,
+              ancestors,
+              styles: {},
+              variables: {},
+            },
+          ],
+        },
+        {
+          limit: 100,
+          scope: "x",
+          rules: ["contrast"],
+        },
+      ).notes;
+
+    expect(lint([screen])).toEqual([
+      'The layers above 5:1 "Card" were read without all their children at the size budget (first 5:3 "Decor"): contrast findings there may be wrong; check them in a screenshot.',
+    ]);
+    expect(
+      lint([
+        {
+          ...screen,
+          children: [bare],
+        },
+      ]),
+    ).toEqual([]);
+  });
 });
 
 describe("componentStates", () => {
@@ -461,5 +598,50 @@ describe("componentStates", () => {
         properties: {},
       }),
     ).toBeNull();
+  });
+});
+
+describe("design_lint contrast on a text of several colours", () => {
+  it("reports the text's worst run, whichever comes first", () => {
+    const legal = text("2:2", "Terms apply");
+    const runs = [
+      segment("Terms", 0x0d99ff),
+      {
+        ...segment(" apply", 0x808080),
+        start: 5,
+        end: 11,
+      },
+    ];
+    const card = layer("2:1", "Card", {
+      width: 400,
+      fills: [solid(0xffffff)],
+      children: [
+        {
+          ...legal,
+          text: {
+            ...(legal.text as NonNullable<SnapshotNode["text"]>),
+            segments: runs,
+          },
+        },
+      ],
+    });
+    const { findings } = designLint(
+      {
+        reads: [
+          {
+            root: card,
+            styles: {},
+            variables: {},
+          },
+        ],
+      },
+      {
+        rules: ["contrast"],
+        limit: 100,
+        scope: "the selection",
+      },
+    );
+
+    expect(findings.map(({ message }) => message)).toEqual([expect.stringMatching(/^2\.99:1 /)]);
   });
 });

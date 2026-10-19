@@ -328,6 +328,60 @@ describe("apply: components and sets", () => {
     expect(Object.keys(set?.componentPropertyDefinitions as object)).toEqual(["Size", "Label#2:0"]);
   });
 
+  it("places a new set's variants in the cells of its grid, which lays them out itself", async () => {
+    const { errors, created } = await apply(
+      [
+        '<ComponentSet name="Tag" display="grid" grid-template-columns="80px 80px" grid-template-rows="30px">',
+        '<Component variant="Tone=Dark" width="80px" height="30px" grid-row="1" grid-column="2"/>',
+        '<Component variant="Tone=Light" width="80px" height="30px" grid-row="1" grid-column="1"/>',
+        "</ComponentSet>",
+      ].join(""),
+      { parent: "3:1" },
+    );
+    const set = byId(created.find(({ tag }) => tag === "ComponentSet")?.id ?? "");
+
+    expect(errors).toEqual([]);
+    expect(set?.layoutMode).toBe("GRID");
+    expect(
+      set?.children?.map((variant) => [variant.name, variant.gridRowAnchorIndex, variant.gridColumnAnchorIndex]),
+    ).toEqual([
+      ["Tone=Dark", 0, 1],
+      ["Tone=Light", 0, 0],
+    ]);
+    expect(fake.writes.calls.filter(({ method }) => method === "resizeWithoutConstraints")).toEqual([]);
+  });
+
+  it("moves the variants of a grid set to other cells", async () => {
+    root.children?.push(
+      tree(
+        {
+          id: "5:1",
+          name: "Chip",
+          type: "COMPONENT_SET",
+          layoutMode: "GRID",
+          gridColumnCount: 3,
+          gridRowCount: 1,
+          children: ["Dark", "Light"].map((tone, column) => ({
+            id: `5:${column + 2}`,
+            name: `Tone=${tone}`,
+            type: "COMPONENT",
+            gridRowAnchorIndex: 0,
+            gridColumnAnchorIndex: column,
+            gridRowSpan: 1,
+            gridColumnSpan: 1,
+          })),
+        },
+        root,
+      ),
+    );
+    fake = installFigma(root);
+
+    const { errors } = await apply('<Component id="5:3" grid-column="3"/>');
+
+    expect(errors).toEqual([]);
+    expect(byId("5:3")?.gridColumnAnchorIndex).toBe(2);
+  });
+
   it("copies a set as it is, its variants never combined again", async () => {
     const { errors, created } = await apply('<ComponentSet copyOf="7:1" name="Heading 2"/>', { parent: "3:1" });
     const copy = byId(created[0]?.id ?? "");
@@ -405,19 +459,55 @@ describe("apply: notes", () => {
     ]);
   });
 
-  it("writes notes with their categories, making a category the file lacks", async () => {
-    await apply('<Frame id="3:1" note="Development: build it | Behavior: opens the modal | Plain"/>');
+  it("files a note under the file's category of its prefix, and makes no category from text", async () => {
+    const categories = async () => (await figma.annotations.getAnnotationCategoriesAsync()).length;
+    const before = await categories();
+
+    await apply('<Frame id="3:1" note="Spacing: 8px between the rows | Development: build it"/>');
 
     expect(byId("3:1")?.annotations).toEqual([
+      { label: "Spacing: 8px between the rows" },
       {
         label: "build it",
         categoryId: "cat-dev",
       },
-      {
-        label: "opens the modal",
-        categoryId: "cat-2",
-      },
-      { label: "Plain" },
     ]);
+    expect(await categories()).toBe(before);
+  });
+
+  it("keeps an agent's note as written: a colon further on and bars between new words split nothing", async () => {
+    await apply('<Frame id="3:1" note="Pick a period&#10;Shown as: Дні | Тижні | Місяці | Роки"/>');
+
+    expect(byId("3:1")?.annotations).toEqual([{ label: "Pick a period\nShown as: Дні | Тижні | Місяці | Роки" }]);
+    expect(await figma.annotations.getAnnotationCategoriesAsync()).toHaveLength(1);
+  });
+
+  it("takes the layer's notes sent back with a new one as they were, the new one whole", async () => {
+    const board = byId("3:1") as FakeNode;
+    // As Figma reads them: both the plain text and the Markdown (it refuses a write that gives both).
+    const read = (text: string, markdown = text) => ({
+      label: text,
+      labelMarkdown: markdown,
+    });
+
+    board.annotations = [
+      read("Rule: keep 8px"),
+      {
+        ...read("Build it", "**Build** it"),
+        categoryId: "cat-dev",
+      },
+    ];
+
+    await apply('<Frame id="3:1" note="Rule: keep 8px | Development: Build it | Tabs: Дні | Тижні"/>');
+
+    expect(board.annotations).toEqual([
+      { labelMarkdown: "Rule: keep 8px" },
+      {
+        labelMarkdown: "**Build** it",
+        categoryId: "cat-dev",
+      },
+      { label: "Tabs: Дні | Тижні" },
+    ]);
+    expect(await figma.annotations.getAnnotationCategoriesAsync()).toHaveLength(1);
   });
 });

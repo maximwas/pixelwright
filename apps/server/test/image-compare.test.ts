@@ -26,6 +26,36 @@ function barPng(bar: number, width = 20, height = 10): Uint8Array {
   });
 }
 
+/** A 96×96 bell icon (dome, flared body, rim, clapper), antialiased by `samples`² coverage samples from `offset`. */
+function bellPng(samples: number, offset: number): Uint8Array {
+  const size = 96;
+  const data = new Uint8Array(size * size * 4);
+  const ellipse = (x: number, y: number, [cx, cy, rx, ry]: number[]) =>
+    ((x - (cx ?? 0)) / (rx ?? 1)) ** 2 + ((y - (cy ?? 0)) / (ry ?? 1)) ** 2 <= 1;
+  const inside = (x: number, y: number) =>
+    ellipse(x, y, [48, 36, 22, 22]) ||
+    (y >= 36 && y <= 70 && ellipse(x, y, [48, 70, 26 - (70 - y) / 6, 40])) ||
+    ellipse(x, y, [48, 70, 34, 5]) ||
+    ellipse(x, y, [48, 82, 7, 7]) ||
+    ellipse(x, y, [48, 12, 4, 4]);
+
+  for (let pixel = 0; pixel < size * size; pixel++) {
+    const [x, y] = [pixel % size, Math.floor(pixel / size)];
+    const hits = Array.from({ length: samples ** 2 }, (_, sample) =>
+      inside(x + ((sample % samples) + offset) / samples, y + (Math.floor(sample / samples) + offset) / samples),
+    ).filter(Boolean).length;
+
+    data.set([20, 20, 20, Math.round((255 * hits) / samples ** 2)], pixel * 4);
+  }
+
+  return encode({
+    width: size,
+    height: size,
+    channels: 4,
+    data,
+  });
+}
+
 /** A bridge whose layer renders to `png`. */
 function rendering(png: Uint8Array): BridgeView {
   const bytes = Buffer.from(png);
@@ -126,6 +156,18 @@ describe("image_compare", () => {
         by: 2,
       },
     ]);
+  });
+
+  it("reads a curved icon antialiased another way as the same edges, off by 1 px at most", async () => {
+    const result = await ask(bellPng(16, 0.5), bellPng(3, 0.5));
+
+    expect(result.rmse).toBeLessThan(5);
+
+    for (const edges of [result.rows, result.columns]) {
+      expect(edges.shifted.filter(({ by }) => Math.abs(by) > 1)).toEqual([]);
+      expect(edges.missing).toEqual([]);
+      expect(edges.extra).toEqual([]);
+    }
   });
 
   it("compares the part both cover when the sizes differ, and says so", async () => {

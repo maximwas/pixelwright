@@ -31,26 +31,19 @@ export async function lintDesign(
   const session = plugin.session(file);
   const scope = await scopeOf(session, within, { pageWhenEmpty: true });
   const roots = await rootsOf(session, scope);
-  const reads: Snapshot[] = [];
-  const notes = [...roots.notes];
-
-  for (const id of roots.ids) {
-    try {
-      reads.push(
-        await session.run("snapshot", {
-          node: id,
-          css: "none",
-        }),
-      );
-    } catch (error) {
-      notes.push(`${id} was not read: ${errorMessage(error)}`);
-    }
-  }
+  const { reads, unread } = await readRoots(session, roots.ids);
+  const notes = [...roots.notes, ...unread.map(({ note }) => note)];
 
   const lint = designLint(
     {
       reads,
-      bind: await bindPreview(session, roots.ids, notes),
+      unread: unread.length,
+      // Only the layers read: the plugin's bind fails as a whole on one id it cannot find.
+      bind: await bindPreview(
+        session,
+        reads.map(({ root }) => root.id),
+        notes,
+      ),
       components: await usedComponents(session, scope),
     },
     {
@@ -64,6 +57,50 @@ export async function lintDesign(
   return {
     ...lint,
     notes: [...notes, ...lint.notes],
+  };
+}
+
+/**
+ * Each root's snapshot, and the roots that could not be read with why. With none read the lint fails: a lint that
+ * checked nothing must not answer "No findings".
+ */
+async function readRoots(
+  session: PluginSession,
+  ids: readonly string[],
+): Promise<{ reads: Snapshot[]; unread: { note: string; error: unknown }[] }> {
+  const reads: Snapshot[] = [];
+  const unread: { note: string; error: unknown }[] = [];
+
+  for (const id of ids) {
+    try {
+      reads.push(
+        await session.run("snapshot", {
+          node: id,
+          css: "none",
+          // The layers above a part of a screen: its texts lie on the screen's fill.
+          ancestors: true,
+        }),
+      );
+    } catch (error) {
+      unread.push({
+        note: `${id} was not read: ${errorMessage(error)}`,
+        error,
+      });
+    }
+  }
+
+  const [first] = unread;
+
+  if (reads.length === 0 && first !== undefined) {
+    throw new BridgeError(
+      first.error instanceof BridgeError ? first.error.code : "OP_FAILED",
+      unread.map(({ note }) => note).join(" "),
+    );
+  }
+
+  return {
+    reads,
+    unread,
   };
 }
 

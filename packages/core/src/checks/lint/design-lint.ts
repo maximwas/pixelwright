@@ -1,8 +1,10 @@
 import { colorSpaceOf } from "../../kernel/color/color-space.ts";
+import { isDefaultSlotContent } from "../../kernel/layer-ids.ts";
 import type { BindOutput } from "../../tokens/bind/schemas.ts";
 import type { ContrastText } from "../../types/contrast.ts";
 import type { Snapshot, SnapshotNode } from "../../types/snapshot.ts";
 import { contrastCheck } from "../contrast.ts";
+import { readCuts } from "../read-cuts.ts";
 import type { ComponentEntry } from "../states/component-states.ts";
 import { BindHints, type LintContext, type LintLayer, type LintRule } from "./lint-rule.ts";
 import { LINT_RULES } from "./lint-rules.ts";
@@ -17,6 +19,8 @@ const RANK: Readonly<Record<LintSeverity, number>> = {
 /** What design_lint reads: each root's snapshot, tokens_bind's dry run over them, and the components they use. */
 export interface LintInput {
   readonly reads: readonly Snapshot[];
+  /** How many roots could not be read: the summary says they were not checked. */
+  readonly unread?: number;
   readonly bind?: BindOutput | null;
   readonly components?: readonly ComponentEntry[];
 }
@@ -43,17 +47,22 @@ export function designLint(input: LintInput, options: LintOptions): DesignLint {
     .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
 
   return {
-    summary: summaryOf(shown, options),
+    summary: summaryOf(shown, options, {
+      read: input.reads.length,
+      unread: input.unread ?? 0,
+    }),
     rules: rules.flatMap((rule) => {
-      const count = shown.filter((finding) => finding.rule === rule.id).length;
+      const own = shown.filter((finding) => finding.rule === rule.id);
+      // A rule's findings may be milder than the rule (a touch target under 44 px is info): list the most severe shown.
+      const [worst] = own;
 
-      return count === 0
+      return worst === undefined
         ? []
         : [
             {
               rule: rule.id,
-              severity: rule.severity,
-              count,
+              severity: worst.severity,
+              count: own.length,
               about: rule.about,
             },
           ];
@@ -91,7 +100,12 @@ function findingsOf(input: LintInput, rules: readonly LintRule[]): { found: Lint
       },
       (layer) => found.push(...checked(rules, layer, context)),
     );
-    notes.push(...cutNotes(snapshot.root));
+    notes.push(
+      ...cutNotes(
+        snapshot,
+        rules.some(({ id }) => id === "contrast"),
+      ),
+    );
   }
 
   return {
@@ -105,7 +119,11 @@ function checked(rules: readonly LintRule[], layer: LintLayer, context: LintCont
   return rules.filter((rule) => layer.node.visible || rule.hidden).flatMap((rule) => [...rule.check(layer, context)]);
 }
 
-/** Visits a layer and, when it is shown, its children: inside an instance, inside a main component, or neither. */
+/**
+ * Visits a layer and, when it is shown, its children: inside an instance, inside a main component, or neither. What
+ * an instance put into its slot is its own content, so it is linted as any layer; the slot's default content stays
+ * the component's, as tokens_bind leaves it.
+ */
 function walk(node: SnapshotNode, where: Omit<LintLayer, "node">, visit: (layer: LintLayer) => void): void {
   const inInstance = where.inInstance || node.type === "INSTANCE";
 
@@ -125,7 +143,7 @@ function walk(node: SnapshotNode, where: Omit<LintLayer, "node">, visit: (layer:
       {
         parent: node,
         root: where.root,
-        inInstance,
+        inInstance: inInstance && (node.type !== "SLOT" || isDefaultSlotContent(child.id, node.id)),
         inComponent: where.inComponent || node.type === "COMPONENT" || node.type === "COMPONENT_SET",
       },
       visit,
@@ -133,44 +151,56 @@ function walk(node: SnapshotNode, where: Omit<LintLayer, "node">, visit: (layer:
   }
 }
 
-/** The texts below AA, or over what contrast cannot be measured on, by id. */
+/** The texts below AA, or over what contrast cannot be measured on, by id: a text's worst run, a ratio before none. */
 function failingTexts(snapshot: Snapshot): Map<string, ContrastText> {
   return new Map(
     contrastCheck(snapshot)
       .texts.filter((text) => !text.aa)
+      // Each run of a text has a row: sorted best first, so the worst one is set last and kept.
+      .toSorted((a, b) => (b.ratio ?? Number.MAX_VALUE) - (a.ratio ?? Number.MAX_VALUE))
       .map((text) => [text.id, text]),
   );
 }
 
-/** Where the read stopped at its size budget: the layers below were not linted. */
-function cutNotes(root: SnapshotNode): string[] {
-  const cut: SnapshotNode[] = [];
-  const find = (node: SnapshotNode) => {
-    if (node.visible && node.childCount > (node.children?.length ?? 0)) {
-      cut.push(node);
-    }
+/**
+ * Where the read stopped at its size budget: the layers below were not linted; the layers above, the contrast rule
+ * rates texts on.
+ */
+function cutNotes(snapshot: Snapshot, contrast: boolean): string[] {
+  const { root } = snapshot;
+  const { inside, above } = readCuts(snapshot);
+  const [first] = above;
 
-    for (const child of node.children ?? []) {
-      find(child);
-    }
-  };
-
-  find(root);
-
-  return cut.length === 0
-    ? []
-    : [
-        `The read of ${root.id} "${root.name}" stopped at its size budget, so ${cut.length} layer${cut.length === 1 ? "'s" : "s'"} children were not linted (first ${cut[0]?.id}): lint them with within.`,
-      ];
+  return [
+    ...(inside.length === 0
+      ? []
+      : [
+          `The read of ${root.id} "${root.name}" stopped at its size budget, so ${inside.length} layer${inside.length === 1 ? "'s" : "s'"} children were not linted (first ${inside[0]?.id}): lint them with within.`,
+        ]),
+    ...(first === undefined || !contrast
+      ? []
+      : [
+          `The layers above ${root.id} "${root.name}" were read without all their children at the size budget (first ${first.id} "${first.name}"): contrast findings there may be wrong; check them in a screenshot.`,
+        ]),
+  ];
 }
 
-function summaryOf(findings: readonly LintFinding[], { limit, scope }: LintOptions): string {
+/** The findings by severity; roots that could not be read come first, so they never pass for clean ones. */
+function summaryOf(
+  findings: readonly LintFinding[],
+  { limit, scope }: LintOptions,
+  { read, unread }: { read: number; unread: number },
+): string {
+  const where = unread === 0 ? scope : "the rest";
+  const prefix =
+    unread === 0 ? "" : `Not checked: ${unread} of ${read + unread} layers could not be read (the notes say why). `;
+
   if (findings.length === 0) {
-    return `No findings in ${scope} for the rules checked.`;
+    return `${prefix}No findings in ${where} for the rules checked.`;
   }
 
   const of = (severity: LintSeverity) => findings.filter((finding) => finding.severity === severity).length;
   const counts = [`${of("error")} errors`, `${of("warning")} warnings`, `${of("info")} info`].join(", ");
 
-  return `${findings.length} findings in ${scope}: ${counts}${findings.length > limit ? `; the first ${limit} are listed` : ""}.`;
+  return `${prefix}${findings.length} findings in ${where}: ${counts}${findings.length > limit ? `; the first ${limit} are listed` : ""}.`;
 }

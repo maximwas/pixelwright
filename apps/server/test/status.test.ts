@@ -80,6 +80,27 @@ describe("status", () => {
     });
   });
 
+  it("says why a file has no key and where to take it from", async () => {
+    const status = await readStatus(
+      view(async () => ({ pong: true })),
+      "0.1.0",
+      false,
+    );
+
+    expect(status.note).toMatch(/private.*Orbit.*link/);
+    expect(status.note).not.toMatch(/Kit/);
+  });
+
+  it("adds no note when every file has its key", async () => {
+    const base = view(async () => ({ pong: true }));
+    const keyed: BridgeView = {
+      ...base,
+      plugins: () => base.plugins().slice(1),
+    };
+
+    expect((await readStatus(keyed, "0.1.0", false)).note).toBeUndefined();
+  });
+
   it("reports a failed ping instead of failing", async () => {
     const failing = view(async () => {
       throw new BridgeError("TIMEOUT", "ping timed out after 30000 ms");

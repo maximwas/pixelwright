@@ -2,7 +2,7 @@
   {
     "name": "status",
     "title": "Connection status",
-    "description": "Lists the Figma files whose Pixelwright plugin is connected (name, current page, editor, whether Allow edits is on) and marks the active one: the file whose plugin window was in front last, which every tool uses when no file is named. Call it first, and whenever a tool says no file is connected: hint says what to do. While a plugin waits to be paired, pairing holds the code: tell the user to type it into the Pixelwright window, and never type or send it yourself. probe: true also pings the active file's plugin.",
+    "description": "Lists the Figma files whose Pixelwright plugin is connected (name, current page, editor, whether Allow edits is on) and marks the active one: the file whose plugin window was in front last, which every tool uses when no file is named. Call it first, and whenever a tool says no file is connected: hint says what to do. While a plugin waits to be paired, pairing holds the code: tell the user to type it into the Pixelwright window, and never type or send it yourself. probe: true also pings the active file's plugin. key is the file key of figma.com links, given by Figma to private organization plugins only, so it is mostly null: then ask the user for the file's link.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -65,6 +65,7 @@
                 "type": "string"
               },
               "key": {
+                "description": "The file key of figma.com links; null when Figma gives none (see note).",
                 "type": [
                   "string",
                   "null"
@@ -191,6 +192,9 @@
             "string",
             "null"
           ]
+        },
+        "note": {
+          "type": "string"
         }
       },
       "required": [
@@ -885,7 +889,7 @@
   {
     "name": "nodes_find",
     "title": "Find layers",
-    "description": "Finds layers on the current page, or inside `within`, by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance's component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down.",
+    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance's component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -910,9 +914,18 @@
           "maxLength": 200
         },
         "within": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
+          "description": "Where to search: a layer or page id, or \"file\" for every page. Default: the current page.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
         },
         "limit": {
           "default": 50,
@@ -1067,7 +1080,7 @@
   {
     "name": "nodes_delete",
     "title": "Delete layers",
-    "description": "Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display=\"none\" in design_apply instead) stays, with why. One call is one undo step in Figma. Refused while the plugin's Allow edits switch is off.",
+    "description": "Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display=\"none\" in design_apply instead) stays, with why. What an instance's slot holds is the instance's own and is deleted. One call is one undo step in Figma. Refused while the plugin's Allow edits switch is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3892,7 +3905,7 @@
   {
     "name": "contrast_check",
     "title": "Check text contrast",
-    "description": "Rates every visible text under a layer for WCAG contrast against what is behind it (the layers below it that cover it, then its parents' fills, see-through ones laid over what is below): the ratio, whether it is large text (24 px, or 18.66 px bold), and whether it passes AA and AAA. A text over an image or a gradient is said, not guessed: check those in a screenshot. Works while Allow edits is off.",
+    "description": "Rates every visible text under a layer for WCAG contrast against what is behind it (the layers below it that cover it, then its parents' fills up to the page, those above the layer named included, see-through ones laid over what is below; a see-through layer over the text, a scrim, laid over both): the ratio, whether it is large text (24 px, or 18.66 px bold), and whether it passes AA and AAA. Each run with a colour of its own has a row (a link in a sentence). A text over an image or a gradient, or over a layer that covers only part of it, is said, not guessed: check those in a screenshot; on a see-through panel (glass, its blur not weighed) the worst part under it is rated. Texts cut off by a clipping frame or hidden under an opaque layer are left out and counted. Works while Allow edits is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3930,7 +3943,7 @@
               },
               "text": {
                 "type": "string",
-                "description": "The text's first characters."
+                "description": "The text's first characters; for a text of several colours, the first run of this one."
               },
               "color": {
                 "type": "string"
@@ -4248,12 +4261,12 @@
   {
     "name": "design_lint",
     "title": "Lint a design against the general rules",
-    "description": "Checks layers, a page or the file against the rules a design should keep before it is built: text contrast below WCAG AA (an error), colours, texts and effects bound to no token or style, frames detached from components, stacks placed by hand that Figma reads as a flow, layers reaching past their parent's flow, grid cell or clip (a text past its column), touch targets under 24 or 44 px, interactive components without hover, focus or disabled states, raw values a token holds, spacing off the 4 px grid, instance overrides of a component's look, default layer names, hidden and empty leftovers. Each finding names its layer, why, and how to fix it with which tool (tokens_bind binds raw values to the tokens holding them). Errors first. Works while Allow edits is off. design_audit lists the scale itself.",
+    "description": "Checks layers, a page or the file against the rules a design should keep before it is built: text contrast below WCAG AA (an error), colours, texts and effects bound to no token or style, frames detached from components, stacks placed by hand that Figma reads as a flow, layers reaching past their parent's flow, grid cell or clip (a text past its column), touch targets under 24 or 44 px, interactive components without hover, focus or disabled states, raw values a token holds, spacing off the 4 px grid, instance overrides of a component's look, default layer names, hidden and empty leftovers. Each finding names its layer, why, and how to fix it with which tool (tokens_bind binds raw values to the tokens holding them). Errors first. A big board linted whole is slow and its read stops at a size budget (the notes name what was left out): give within its frames' ids instead, a list linted frame by frame in one call. Works while Allow edits is off. design_audit lists the scale itself.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "within": {
-          "description": "What to lint: a layer id, a page id (its top layers), or \"file\". Default: the layers selected in Figma, else the current page.",
+          "description": "What to lint: a layer id, a list of up to 30 layer ids (each read on its own: a big board's frames), a page id (its top layers), or \"file\". Default: the layers selected in Figma, else the current page.",
           "anyOf": [
             {
               "type": "string",
@@ -4263,6 +4276,16 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 200
+            },
+            {
+              "minItems": 1,
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
             }
           ]
         },
@@ -4782,7 +4805,7 @@
   {
     "name": "tokens_usage",
     "title": "Where a token is used",
-    "description": "The layers on the current page (or inside within) that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch.",
+    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4793,10 +4816,18 @@
           "description": "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg."
         },
         "within": {
-          "description": "The layer or page to look in. Default: the current page.",
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
+          "description": "The layer or page to look in, or \"file\" for every page (loading them all is slow on a big file). Default: the current page.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
         },
         "file": {
           "description": "The file to work on: its session from status or its name. Default: the active file.",
@@ -4939,6 +4970,9 @@
               },
               "tag": {
                 "type": "string"
+              },
+              "name": {
+                "type": "string"
               }
             },
             "required": [
@@ -5036,15 +5070,21 @@
   {
     "name": "execute",
     "title": "Run plugin code",
-    "description": "Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given `figma` (the Plugin API), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(\"--token\") (the variable design_read names so). What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file's styles and check what they write.",
+    "description": "Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given `figma` (the Plugin API), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(\"--token\") (the variable design_read names so). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file's styles and check what they write.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "code": {
+          "description": "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give code or script.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 100000,
-          "description": "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result."
+          "maxLength": 100000
+        },
+        "script": {
+          "description": "A file of such code on the server's disk, run instead of code: an absolute path (or one from the server's folder, as design_apply's src). It is read at every call, so the file as it is now runs, after a plugin restart too.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
         },
         "timeout": {
           "default": 10,
@@ -5066,9 +5106,6 @@
           "maxLength": 1024
         }
       },
-      "required": [
-        "code"
-      ],
       "$schema": "https://json-schema.org/draft/2020-12/schema"
     },
     "outputSchema": {
@@ -5164,7 +5201,7 @@
         },
         "maxChars": {
           "default": 80000,
-          "description": "Longest output; past it, only the summary comes back and you read collections one at a time.",
+          "description": "Longest output; past it the summary comes back (with format json, also the first tokens that fit) and you read collections one at a time.",
           "type": "integer",
           "minimum": 2000,
           "maximum": 400000
@@ -5576,7 +5613,7 @@
   {
     "name": "tokens_apply",
     "title": "Write design tokens",
-    "description": "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma's pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand) and effect (a box-shadow list). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+    "description": "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma's pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand, its letter spacing and case in also as tokens_read lists them, or after it: \"500 12px/16px 'Inter'; letter-spacing: 0.04em; text-transform: uppercase\"; left out, the style keeps its own) and effect (a box-shadow list, its blurs after it or alone: \"backdrop-filter: blur(20px)\"; the effects a value leaves out, the style keeps). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5747,6 +5784,28 @@
                   "value": {
                     "type": "string",
                     "maxLength": 10000
+                  },
+                  "also": {
+                    "description": "Its letter spacing and case as tokens_read lists them: [{token: '--Caption-letter-spacing', value: '0.04em'}, {token: '--Caption-text-transform', value: 'uppercase'}].",
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 10000
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "value"
+                      ]
+                    }
                   }
                 },
                 "required": [
@@ -5951,7 +6010,7 @@
   {
     "name": "tokens_bind",
     "title": "Bind raw values to tokens",
-    "description": "Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer's variable mode and within the variables' scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates. Instances are left to their main components. Results are grouped by value. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing). design_lint says what is raw.",
+    "description": "Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer's variable mode and within the variables' scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates, and with instances: override inside instances too, as their overrides (a dark copy on a plan with one mode). Instances are left to their main components, all but what was put into their slots. Results are grouped by value. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing). design_lint says what is raw.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -6045,6 +6104,15 @@
               "to"
             ]
           }
+        },
+        "instances": {
+          "default": "leave",
+          "description": "With remap: leave (default) keeps instances to their main components; override rebinds the uses inside them, nested instances too, as overrides on each instance, for a copy that must differ from its components (a dark copy in a file whose plan has one mode).",
+          "type": "string",
+          "enum": [
+            "leave",
+            "override"
+          ]
         },
         "dryRun": {
           "default": false,
@@ -7364,7 +7432,7 @@
   {
     "name": "components_read",
     "title": "Read the components",
-    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description, `exposed` (the nested instances whose properties its instances show: in code they are its props too) and `code`: the project's Code Connect template or batch row that connects it ({component, source, template, by}), or null. `mapped: false` lists only the components without code yet: connect each with a batch row keyed by its key (guide topic code-connect). `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them.",
+    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description, `exposed` (the nested instances whose properties its instances show: in code they are its props too) and `code`: the project's Code Connect template or batch row that connects it ({component, source, template, by}), or null. `mapped: false` lists only the components without code yet: connect each with a batch row keyed by its key (guide topic code-connect). `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -7384,7 +7452,7 @@
           "maxLength": 200
         },
         "query": {
-          "description": "Only components whose name contains this.",
+          "description": "Only components whose name contains this, e.g. \"icon/\" for the icon sets.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
@@ -7394,6 +7462,30 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 500
+        },
+        "fields": {
+          "description": "Only these fields of each component, e.g. [\"name\", \"id\", \"description\"]. Default: all.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "id",
+              "key",
+              "type",
+              "name",
+              "page",
+              "remote",
+              "description",
+              "variants",
+              "properties",
+              "instances",
+              "exposed",
+              "links",
+              "error",
+              "code"
+            ]
+          }
         },
         "mapped": {
           "description": "true: only components a Code Connect file connects; false: only those none connects. Default: all.",
@@ -7642,18 +7734,9 @@
                 ]
               }
             },
-            "required": [
-              "id",
-              "key",
-              "type",
-              "name",
-              "page",
-              "remote",
-              "properties",
-              "code"
-            ],
             "additionalProperties": false
-          }
+          },
+          "description": "Each component, with only the fields asked for when fields is given."
         },
         "more": {
           "type": "boolean"

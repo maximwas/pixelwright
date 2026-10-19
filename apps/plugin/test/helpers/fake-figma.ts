@@ -162,6 +162,54 @@ export interface FakeOptions {
   readonly strict?: boolean;
   /** A removed layer, and every layer in it, throws when its name is read, as Figma's does. */
   readonly removedThrows?: boolean;
+  /**
+   * A layer hidden inside an instance is gone from the plugin API at once, as Figma can make it
+   * (skipInvisibleInstanceChildren on, or the instance drawn again): its type and name throw when read, its id stays.
+   */
+  readonly hiddenInInstanceGone?: boolean;
+}
+
+/** As Figma's layers that are gone from the plugin API: these fields throw when read; the id stays readable. */
+function dropped(layer: FakeNode, fields: readonly string[]): void {
+  for (const field of fields) {
+    Object.defineProperty(layer, field, {
+      get: () => {
+        throw new Error(
+          `in get_${field}: The node (instance sublayer or table cell) with id "${layer.id}" does not exist`,
+        );
+      },
+      set: () => {},
+      configurable: true,
+    });
+  }
+}
+
+/** A layer inside an instance that drops out of the plugin API once hidden (FakeOptions.hiddenInInstanceGone). */
+function droppedWhenHidden(node: FakeNode): void {
+  let inInstance = false;
+
+  for (let at = node.parent; at !== null && at !== undefined; at = at.parent) {
+    inInstance ||= at.type === "INSTANCE";
+  }
+
+  if (!inInstance) {
+    return;
+  }
+
+  let visible = node.visible !== false;
+
+  Object.defineProperty(node, "visible", {
+    get: () => visible,
+    set: (value: boolean) => {
+      visible = value;
+
+      if (!value) {
+        dropped(node, ["type", "name"]);
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
 }
 
 /** Layers Figma lets insertChild put children in; an instance takes them only through its slots. */
@@ -211,6 +259,10 @@ const DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
     fills: [SOLID(1, 1, 1)],
     children: [],
   },
+  COMPONENT_SET: {
+    layoutMode: "NONE",
+    children: [],
+  },
   RECTANGLE: { fills: [SOLID(0.85, 0.85, 0.85)] },
   ELLIPSE: { fills: [SOLID(0.85, 0.85, 0.85)] },
   LINE: {
@@ -219,6 +271,7 @@ const DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
   },
   TEXT: {
     characters: "",
+    autoRename: true,
     fontName: {
       family: "Inter",
       style: "Regular",
@@ -588,6 +641,10 @@ function writable(
     record("setGridChildPosition", [row, column]);
   });
 
+  if (options.hiddenInInstanceGone ?? false) {
+    droppedWhenHidden(node);
+  }
+
   if (node.type !== "TEXT") {
     return;
   }
@@ -623,6 +680,23 @@ function writable(
 
       characters = value;
       record("characters", [value]);
+
+      // As Figma: a new text is named after its characters until its name is set.
+      if ((node.autoRename as boolean | undefined) ?? false) {
+        name = value;
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
+  let name = node.name;
+
+  Object.defineProperty(node, "name", {
+    get: () => name,
+    set: (value: string) => {
+      name = value;
+      node.autoRename = false;
     },
     enumerable: true,
     configurable: true,

@@ -104,6 +104,18 @@ describe("BridgeServer", () => {
     await expect(server.request("ping", null)).rejects.toMatchObject({ code: "TIMEOUT" });
   });
 
+  it("says of a write that timed out that the plugin may still be writing, so a retry reads the file first", async () => {
+    const { server, port } = await startServer(100);
+    const changed = once(server, "changed");
+
+    await connectPlugin(port, pluginInfo(), { answer: null });
+    await changed;
+    await expect(server.request("tokens_apply", null)).rejects.toMatchObject({
+      code: "TIMEOUT",
+      message: expect.stringMatching(/plugin may still be writing: read the file's state before you retry/),
+    });
+  });
+
   it("gives the plugin as long as a request asks for, the bridge's own wait otherwise", async () => {
     const { server, port } = await startServer();
     const changed = once(server, "changed");

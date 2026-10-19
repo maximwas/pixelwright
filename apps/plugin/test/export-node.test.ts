@@ -257,7 +257,7 @@ describe("export in a variable mode", () => {
 });
 
 describe("mode renders at once", () => {
-  it("render one at a time, each in its own mode, and leave the layer as it was", async () => {
+  it("render one at a time, each in its own mode, a read meanwhile seeing the layer's own; the layer left as it was", async () => {
     const page = tree({
       id: "0:1",
       type: "PAGE",
@@ -294,6 +294,7 @@ describe("mode renders at once", () => {
     });
     const node = page.children?.[0] as unknown as Record<string, unknown>;
     const seen: string[] = [];
+    const reads: Promise<unknown>[] = [];
 
     node.resolvedVariableModes = { "C:1": "m:1" };
     node.explicitVariableModes = {};
@@ -305,6 +306,11 @@ describe("mode renders at once", () => {
     };
     node.exportAsync = async () => {
       const mode = (node.explicitVariableModes as Record<string, string>)["C:1"] ?? "none";
+
+      // A design_read of the layer comes in while the dark render has the layer in Dark.
+      if (mode === "m:2") {
+        reads.push(plugin.run("snapshot", { node: "4:2" }));
+      }
 
       // Slow, as a real render is: the other request arrives while this one runs.
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -327,9 +333,13 @@ describe("mode renders at once", () => {
         stream: mode,
       });
 
+    const own = await plugin.run("snapshot", { node: "4:2" });
+
     await Promise.all([render("Dark"), render("Light")]);
 
     expect(seen.toSorted()).toEqual(["m:1", "m:2"]);
     expect(node.explicitVariableModes).toEqual({});
+    expect(reads).toHaveLength(1);
+    expect(await reads[0]).toEqual(own);
   });
 });

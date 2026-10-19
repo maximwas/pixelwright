@@ -196,7 +196,11 @@ export interface FigmaProps {
   props?: Readonly<Record<string, string>>;
   /** A component's or set's description. */
   description?: string;
-  /** Dev Mode annotations, the whole list (an empty one removes them). */
+  /**
+   * Dev Mode annotations, the whole list (an empty one removes them): design_read's note split at every unescaped bar,
+   * each part at its first ": ". The plugin takes that as a category only when the file has one of that name, and
+   * joins parts again where a bar is the note's own text (see its notes step).
+   */
   notes?: readonly { readonly category: string | null; readonly label: string }[];
   /** Inside a new Component: the text property (`prop`) or visibility property (`visibleProp`) this layer makes. */
   property?: { readonly text?: string; readonly visible?: string };

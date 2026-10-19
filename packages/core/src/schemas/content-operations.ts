@@ -104,6 +104,8 @@ export const CONTENT_OPERATIONS = {
       css: z.enum(["none", "unmapped", "all"]).default("none"),
       /** Hash each vector's paths (pathHash), for comparing drawings: nodes_diff and variants_read ask for it. */
       paths: z.boolean().default(false),
+      /** Also read the layers above the node and what overlaps it in them: contrast_check needs what is behind it. */
+      ancestors: z.boolean().default(false),
     }),
     output: SnapshotSchema,
   },

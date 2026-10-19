@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { linkPath } from "../src/features/components-read/link-paths.ts";
 import { readComponents } from "../src/features/components-read/read-components.ts";
+import { ComponentsReadOutputSchema } from "../src/features/components-read/schemas.ts";
 import { PluginClient } from "../src/plugin/plugin-client.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
@@ -153,6 +154,50 @@ describe("components_read with the project's code", () => {
         )
       ).components,
     ).toHaveLength(1);
+  });
+
+  it("keeps only the fields asked for, so a big section's sets list by name", async () => {
+    const root = await project({});
+    const { client } = plugin({
+      components: [
+        entry("3:1", "icon/Bell", "k-bell", {
+          type: "COMPONENT_SET",
+          description: "Bell",
+          variants: [
+            {
+              id: "3:2",
+              name: "weight=Fill",
+            },
+          ],
+        }),
+        entry("3:3", "icon/Plus", "k-plus", { type: "COMPONENT_SET" }),
+      ],
+      more: false,
+    });
+    const answer = await readComponents(
+      client,
+      {
+        scope: "local",
+        query: "icon/",
+        limit: 100,
+        links: false,
+        fields: ["id", "name", "description"],
+      },
+      root,
+    );
+
+    expect(answer.components).toEqual([
+      {
+        id: "3:1",
+        name: "icon/Bell",
+        description: "Bell",
+      },
+      {
+        id: "3:3",
+        name: "icon/Plus",
+      },
+    ]);
+    expect(ComponentsReadOutputSchema.parse(answer).components).toEqual(answer.components);
   });
 
   it("passes the links on with the project file a code link points at, and Figma's note", async () => {

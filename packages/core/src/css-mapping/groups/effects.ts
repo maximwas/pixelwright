@@ -141,20 +141,14 @@ export const EFFECTS_RULE: Rule = {
 
 /**
  * Shadows and blurs are one list in Figma: an attribute the element leaves out keeps what the layer has. An effect
- * style holds every effect, so a blur beside its token is an error.
+ * style holds every effect, so a token on the shadows or on a blur binds it, and another effect beside it is an error.
  */
-function effectsRule({ own, merged, changed }: WriteInput, out: WriteOutput): void {
+function effectsRule(input: WriteInput, out: WriteOutput): void {
+  const { merged, changed } = input;
   const shadowAttribute = merged("box-shadow") === undefined ? "text-shadow" : "box-shadow";
   const shadows = merged(shadowAttribute);
-  const token = shadows === undefined ? null : tokenOf(shadows);
 
-  if (token !== null) {
-    for (const [name] of BLURS.filter(([name]) => changed(name) && own(name) !== "none")) {
-      out.fail(name, `The effect style ${token.token} holds every effect: change the style, or write its shadows out.`);
-    }
-
-    out.set("effects", token, shadowAttribute);
-
+  if (boundStyle(shadowAttribute, input, out)) {
     return;
   }
 
@@ -164,6 +158,38 @@ function effectsRule({ own, merged, changed }: WriteInput, out: WriteOutput): vo
   if (blurs !== null && list !== null) {
     out.set("effects", [...blurs, ...list.toReversed()], EFFECTS.find(changed) ?? shadowAttribute);
   }
+}
+
+/**
+ * The effect style a var() on the shadows or a blur names, the element's own before the layer's, set as the layer's
+ * effects; false when none names one.
+ */
+function boundStyle(shadowAttribute: string, { own, merged, changed }: WriteInput, out: WriteOutput): boolean {
+  const attributes = [shadowAttribute, ...BLURS.map(([name]) => name)];
+  const tokenIn = (name: string) => tokenOf(merged(name) ?? "");
+  const styled =
+    attributes.find((name) => changed(name) && tokenIn(name) !== null) ??
+    attributes.find((name) => tokenIn(name) !== null);
+  const token = styled === undefined ? null : tokenIn(styled);
+
+  if (styled === undefined || token === null) {
+    return false;
+  }
+
+  const beside = attributes.filter(
+    (name) => name !== styled && changed(name) && own(name) !== "none" && tokenIn(name)?.token !== token.token,
+  );
+
+  for (const name of beside) {
+    out.fail(
+      name,
+      `The effect style ${token.token} holds every effect: change the style, or write its ${styled === shadowAttribute ? "shadows" : "blur"} out.`,
+    );
+  }
+
+  out.set("effects", token, styled);
+
+  return true;
 }
 
 /** The blurs the filters give (Figma's radius is twice CSS's); null after a filter that is not blur(Npx). */

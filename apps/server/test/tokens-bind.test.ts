@@ -37,6 +37,7 @@ const call = (view: BindView, args: Partial<Parameters<typeof bindTokens>[1]> = 
     kinds: ["color", "number", "text", "effect"],
     choose: [],
     remap: [],
+    instances: "leave",
     dryRun: false,
     ...args,
   });

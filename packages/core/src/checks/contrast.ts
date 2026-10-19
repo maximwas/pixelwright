@@ -1,302 +1,274 @@
-import { type Channels, Color } from "../kernel/color/color.ts";
+import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { overlaps } from "../kernel/geometry.ts";
 import type { Contrast, ContrastText } from "../types/contrast.ts";
-import type { Snapshot, SnapshotNode, SnapshotPaint, TextSegment } from "../types/snapshot.ts";
+import type { Snapshot, SnapshotNode, TextSegment } from "../types/snapshot.ts";
+import {
+  type Backdrop,
+  backdropOf,
+  type Over,
+  overOf,
+  throughVeils,
+  type Unknown,
+  type Veil,
+} from "./contrast/backdrop.ts";
+import { kindOf, topSolid } from "./contrast/paints.ts";
+import { type ReadCuts, readCuts } from "./read-cuts.ts";
 
-type Layer = { color: Channels; alpha: number } | { kind: string };
+/** A run rated: its row, why its contrast is not one number when it is not, and whether it is seen through a veil. */
+interface Rated {
+  readonly row: ContrastText;
+  readonly unknown: Unknown | null;
+  readonly veiled: boolean;
+}
 
-/** What a fill CSS cannot reduce to one colour is, in words. */
-const KINDS: Readonly<Record<string, string>> = {
-  IMAGE: "an image",
-  VIDEO: "a video",
-  GRADIENT_LINEAR: "a gradient",
-  GRADIENT_RADIAL: "a gradient",
-  GRADIENT_ANGULAR: "a gradient",
-  GRADIENT_DIAMOND: "a gradient",
-};
+/** Why a text is left out: nobody sees it. */
+type LeftOut = "cut" | "hidden";
+
+/** How the summary counts each reason a contrast is not one number, in this order. */
+const UNKNOWN_COUNTS: readonly (readonly [Unknown, string])[] = [
+  ["image", "over an image or gradient (check those by eye)"],
+  ["partly", "partly over another layer (check those by eye)"],
+  ["nothing", "with nothing opaque behind it in the read (check those inside their screen)"],
+];
+
+/** Texts under a scrim are rated as seen and counted: whether such inactive content is exempt is the designer's call. */
+const VEILED = "under a see-through layer (a scrim: content behind a modal may be exempt)";
+
+const LEFT_OUT_COUNTS: readonly (readonly [LeftOut, string])[] = [
+  ["cut", "cut off by a clipping frame"],
+  ["hidden", "hidden under an opaque layer"],
+];
 
 /**
  * Each visible text's WCAG contrast with what is behind it: the layers below it in its parent that cover it, then its
- * ancestors' fills, see-through ones laid over what is below them. An image or a gradient behind is said, not guessed.
+ * ancestors' fills, see-through ones laid over what is below them, and the see-through layers over it (a scrim) laid
+ * over both. An image or a gradient is said, not guessed. A text nobody sees (cut off by a clipping frame, under an
+ * opaque layer) is left out, and counted. The layers above the read (the snapshot's ancestors) count as its parents.
  */
 export function contrastCheck(snapshot: Snapshot): Contrast {
   const space = colorSpaceOf(snapshot.colorProfile);
-  const texts: ContrastText[] = [];
-  const walk = (node: SnapshotNode, ancestors: readonly SnapshotNode[]) => {
+  const rated: Rated[][] = [];
+  const left: LeftOut[] = [];
+  const walk = (node: SnapshotNode, ancestors: readonly SnapshotNode[], inside: boolean) => {
     if (!node.visible) {
       return;
     }
 
-    if (node.type === "TEXT") {
-      const rated = rate(node, ancestors, space);
+    if (node.type === "TEXT" && inside) {
+      const text = rateText(node, ancestors, space);
 
-      if (rated !== null) {
-        texts.push(rated);
+      if (typeof text === "string") {
+        left.push(text);
+      } else if (text.length > 0) {
+        rated.push(text);
       }
 
       return;
     }
 
     for (const child of node.children ?? []) {
-      walk(child, [...ancestors, node]);
+      walk(child, [...ancestors, node], inside || child === snapshot.root);
     }
   };
+  const top = placed(snapshot);
 
-  walk(snapshot.root, []);
-
-  const failing = texts.filter((text) => text.aa === false).length;
-  const unknown = texts.filter((text) => text.ratio === null).length;
+  walk(top, [], top === snapshot.root);
 
   return {
-    summary: `${texts.length} texts: ${failing} below AA${unknown === 0 ? "" : `, ${unknown} over an image or gradient (check those by eye)`}.`,
-    texts,
+    summary: `${cutNote(readCuts(snapshot))}${summaryOf(rated, left)}`,
+    texts: rated.flat().map(({ row }) => row),
   };
 }
 
-function rate(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): ContrastText | null {
-  const segments = node.text?.segments ?? [];
-  const behind = backdropOf(node, ancestors, space);
-  let worst: ContrastText | null = null;
+/** Where the read stopped at its size budget: texts missing, or backdrops that may be wrong; nothing when it is whole. */
+function cutNote({ inside, above }: ReadCuts): string {
+  const parts = [
+    ...(inside.length === 0 ? [] : [`${unread(inside, "in it")}: their texts are missing; check smaller parts of it`]),
+    ...(above.length === 0
+      ? []
+      : [`${unread(above, "behind or over it")}: the backdrops may be wrong; check them in a screenshot`]),
+  ];
 
-  for (const segment of segments) {
-    const paint = topSolid(segment.fills);
-    const visible = segment.fills.filter((fill) => fill.visible ?? true);
+  return parts.length === 0 ? "" : `Incomplete: the read stopped at its size budget, so ${parts.join("; ")}. `;
+}
 
-    if (paint === null && visible.length === 0) {
-      continue;
-    }
+/** "1 layer in it was read without all its children (first …)", or several. */
+function unread(cut: readonly SnapshotNode[], where: string): string {
+  const one = cut.length === 1;
+  const first = cut[0] as SnapshotNode;
 
-    const rated =
-      paint === null
-        ? unknownColor(node, segment, KINDS[visible.at(-1)?.type ?? ""] ?? "a fill CSS cannot hold")
-        : rateSegment(node, segment, {
-            paint,
-            behind,
-            space,
-          });
+  return `${cut.length} ${one ? "layer" : "layers"} ${where} ${one ? "was" : "were"} read without all ${one ? "its" : "their"} children (first ${first.id} "${first.name}")`;
+}
 
-    if (worst === null || (rated.ratio ?? Infinity) < (worst.ratio ?? Infinity)) {
-      worst = rated;
+/** The read's root put back in the layers above it, in place of its bare entry there: the outermost, the root inside. */
+function placed(snapshot: Snapshot): SnapshotNode {
+  return (snapshot.ancestors ?? []).reduce<SnapshotNode>(
+    (inner, ancestor) => ({
+      ...ancestor,
+      children: (ancestor.children ?? []).map((child) => (child.id === inner.id ? inner : child)),
+    }),
+    snapshot.root,
+  );
+}
+
+/** The counts, of texts (each with its runs): below AA, why a contrast is not one number, seen through a veil, left out. */
+function summaryOf(rated: readonly (readonly Rated[])[], left: readonly LeftOut[]): string {
+  const failing = rated.filter((runs) => runs.some(({ row }) => row.aa === false)).length;
+  const reasons = rated.map((runs) => runs.find(({ unknown }) => unknown !== null)?.unknown);
+  const unclear = counted([
+    ...UNKNOWN_COUNTS.map(([reason, says]) => [reasons.filter((one) => one === reason).length, says] as const),
+    [rated.filter((runs) => runs.some(({ veiled }) => veiled)).length, VEILED],
+  ]);
+  const out = counted(
+    LEFT_OUT_COUNTS.map(([reason, says]) => [left.filter((one) => one === reason).length, says] as const),
+  );
+
+  return `${rated.length} texts: ${failing} below AA${unclear.map((part) => `, ${part}`).join("")}.${out.length === 0 ? "" : ` Left out as not visible: ${out.join(", ")}.`}`;
+}
+
+/** Each count that is not zero, with what it counts. */
+function counted(counts: readonly (readonly [number, string])[]): string[] {
+  return counts.flatMap(([count, says]) => (count === 0 ? [] : [`${count} ${says}`]));
+}
+
+/**
+ * A text's runs against what is behind and over it, one row per colour (a link in a sentence is its own row), or why
+ * it is left out. No rows when no run has a visible paint.
+ */
+function rateText(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Rated[] | LeftOut {
+  if (ancestors.some((ancestor) => ancestor.clipsContent && !overlaps(ancestor, node))) {
+    return "cut";
+  }
+
+  const over = overOf(node, ancestors, space);
+
+  if ("hidden" in over) {
+    return "hidden";
+  }
+
+  const measured = {
+    behind: backdropOf(node, ancestors, space),
+    over,
+    space,
+  };
+  const runs = new Map<string, Rated>();
+
+  for (const segment of node.text?.segments ?? []) {
+    const run = rateSegment(node, segment, measured);
+    const key = `${run?.row.color} ${run?.row.large}`;
+
+    if (run !== null && !runs.has(key)) {
+      runs.set(key, run);
     }
   }
 
-  return worst;
+  const rows = [...runs.values()];
+  const whole = (node.text?.characters ?? "").slice(0, 40);
+
+  // A text of one colour is named by its own characters, not its first run's.
+  return rows.length === 1
+    ? rows.map((run) => ({
+        ...run,
+        row: {
+          ...run.row,
+          text: whole,
+        },
+      }))
+    : rows;
 }
 
-/** What a run's colour is measured against: its top paint, what is behind the text (or why it is not known), the space. */
+/** What a run's colour is measured against: what is behind the text and over it (or why it is not known), the space. */
 interface Measured {
-  readonly paint: { color: Channels; alpha: number };
-  readonly behind: Color | string;
+  readonly behind: Backdrop;
+  readonly over: Exclude<Over, { hidden: SnapshotNode }>;
   readonly space: ColorSpace;
 }
 
-function rateSegment(node: SnapshotNode, segment: TextSegment, { paint, behind, space }: Measured): ContrastText {
-  const size = segment.fontSize;
-  const weight = segment.fontWeight;
-  const large = size >= 24 || (size >= 18.66 && weight >= 700);
-  const alpha = paint.alpha * (node.opacity ?? 1);
-  const base = {
-    id: node.id,
-    name: node.name,
-    text: (node.text?.characters ?? "").slice(0, 40),
-    size,
-    weight,
-    large,
-  };
+function rateSegment(node: SnapshotNode, segment: TextSegment, { behind, over, space }: Measured): Rated | null {
+  const paint = topSolid(segment.fills);
+  const visible = segment.fills.filter((fill) => fill.visible ?? true);
+  const base = baseOf(node, segment);
 
-  if (typeof behind === "string") {
-    return {
+  if (paint === null) {
+    return visible.length === 0 ? null : unrated(base, [kindOf(visible.at(-1)?.type), "not compared"], "image");
+  }
+
+  const color = Color.of(
+    {
+      ...paint.color,
+      a: paint.alpha * (node.opacity ?? 1),
+    },
+    space,
+  );
+
+  if ("unknown" in over) {
+    return unrated(base, [color.css(), over.says], over.unknown);
+  }
+
+  return "colors" in behind
+    ? ratedOver(base, color, [behind.colors, over.veils])
+    : unrated(base, [color.css(), behind.says], behind.unknown);
+}
+
+/**
+ * A run's ratio: its colour over what is behind it, both seen through the veils over the text (bottom first); over
+ * several backdrops (the parts under a see-through panel), the worst of them.
+ */
+function ratedOver(base: Base, color: Color, [colors, veils]: readonly [readonly Color[], readonly Veil[]]): Rated {
+  // Color measures WCAG contrast on the sRGB form.
+  const { behind, ratio } = colors
+    .map((one) => ({
+      behind: one,
+      ratio: throughVeils(color.over(one), veils).contrast(throughVeils(one, veils)),
+    }))
+    .reduce((worst, next) => (next.ratio < worst.ratio ? next : worst));
+  const top = veils.at(-1);
+  const parts = colors.length > 1 ? ` (the worst of ${colors.length} backdrops under a see-through layer)` : "";
+
+  return {
+    row: {
       ...base,
-      color: Color.of(paint.color, space).faded(alpha).css(),
-      backdrop: behind,
+      color: color.css(),
+      backdrop: `${behind.css()}${parts}${top === undefined ? "" : ` under ${top.layer.id} "${top.layer.name}" ${top.color.css()}`}`,
+      ratio: Math.round(ratio * 100) / 100,
+      aa: ratio >= (base.large ? 3 : 4.5),
+      aaa: ratio >= (base.large ? 4.5 : 7),
+    },
+    unknown: null,
+    veiled: top !== undefined,
+  };
+}
+
+/** A row without a ratio: the text's colour and what is behind it, each in words when it is not one colour. */
+function unrated(base: Base, [color, backdrop]: readonly [string, string], unknown: Unknown): Rated {
+  return {
+    row: {
+      ...base,
+      color,
+      backdrop,
       ratio: null,
       aa: null,
       aaa: null,
-    };
-  }
-
-  // The text's colour laid over what is behind it; Color measures WCAG contrast on the sRGB form.
-  const ratio = Color.of(
-    {
-      ...paint.color,
-      a: alpha,
     },
-    space,
-  )
-    .over(behind)
-    .contrast(behind);
-
-  return {
-    ...base,
-    color: Color.of(paint.color, space).faded(alpha).css(),
-    backdrop: behind.css(),
-    ratio: Math.round(ratio * 100) / 100,
-    aa: ratio >= (large ? 3 : 4.5),
-    aaa: ratio >= (large ? 4.5 : 7),
+    unknown,
+    veiled: false,
   };
 }
 
-/**
- * The colour behind a layer, or what it is in words when it is not one colour: the layers below it in each parent
- * (their own children included) that paint under it, then the parent's fills, top first, until an opaque one.
- */
-function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Color | string {
-  const layers: Layer[] = [];
-  let current = node;
+/** What a row says of the text and its run whatever the colours: which text, its size, and whether it is large. */
+type Base = Pick<ContrastText, "id" | "name" | "text" | "size" | "weight" | "large">;
 
-  for (let level = ancestors.length - 1; level >= 0; level--) {
-    const parent = ancestors[level] as SnapshotNode;
-    const siblings = parent.children ?? [];
-    const index = siblings.indexOf(current);
-
-    // Figma lists children bottom first: those before it are below it.
-    for (let below = index - 1; below >= 0; below--) {
-      const found = paintedUnder(siblings[below] as SnapshotNode, node);
-
-      if (found.partly !== null) {
-        return `partly over ${found.partly.id} "${found.partly.name}": it covers only part of the text`;
-      }
-
-      layers.push(...found.layers);
-    }
-
-    layers.push(...paintLayers(parent));
-    current = parent;
-  }
-
-  const opaque = layers.findIndex((layer) => "kind" in layer || layer.alpha >= 1);
-
-  if (opaque === -1) {
-    return "nothing opaque behind it in the layer read: check it inside its screen";
-  }
-
-  let color: Color | null = null;
-
-  for (const layer of layers.slice(0, opaque + 1).toReversed()) {
-    if ("kind" in layer) {
-      return layer.kind;
-    }
-
-    // Laid over in the document's own space, as Figma composites them.
-    color =
-      color === null
-        ? Color.of(layer.color, space)
-        : Color.of(
-            {
-              ...layer.color,
-              a: layer.alpha,
-            },
-            space,
-          ).over(color);
-  }
-
-  return color as Color;
-}
-
-/**
- * What a layer below the text paints under it, top first: its children's paints (above its own) and its own fills. A
- * painting layer that meets the text without covering it makes the backdrop two things at once.
- */
-function paintedUnder(layer: SnapshotNode, text: SnapshotNode): { layers: Layer[]; partly: SnapshotNode | null } {
-  if (!layer.visible || !meets(layer, text)) {
-    return {
-      layers: [],
-      partly: null,
-    };
-  }
-
-  const layers: Layer[] = [];
-
-  for (const child of (layer.children ?? []).toReversed()) {
-    const found = paintedUnder(child, text);
-
-    if (found.partly !== null) {
-      return found;
-    }
-
-    layers.push(...found.layers);
-  }
-
-  const own = paintLayers(layer);
-
-  if (own.length > 0 && !covers(layer, text)) {
-    return {
-      layers: [],
-      partly: layer,
-    };
-  }
-
-  return {
-    layers: [...layers, ...own],
-    partly: null,
-  };
-}
-
-function meets(a: SnapshotNode, b: SnapshotNode): boolean {
-  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-}
-
-function unknownColor(node: SnapshotNode, segment: TextSegment, kind: string): ContrastText {
+function baseOf(node: SnapshotNode, segment: TextSegment): Base {
   const size = segment.fontSize;
   const weight = segment.fontWeight;
 
   return {
     id: node.id,
     name: node.name,
-    text: (node.text?.characters ?? "").slice(0, 40),
-    color: kind,
-    backdrop: "not compared",
-    ratio: null,
+    text: segment.characters.slice(0, 40),
     size,
     weight,
     large: size >= 24 || (size >= 18.66 && weight >= 700),
-    aa: null,
-    aaa: null,
   };
-}
-
-/** A layer's visible fills, top first, each as a colour with its alpha or the kind of fill it is. */
-function paintLayers(node: SnapshotNode): Layer[] {
-  const fills = Array.isArray(node.fills) ? node.fills : [];
-  const opacity = node.opacity ?? 1;
-
-  return fills
-    .filter((paint) => paint.visible ?? true)
-    .toReversed()
-    .map((paint): Layer => {
-      const solid = solidOf(paint);
-
-      return solid === null
-        ? { kind: KINDS[paint.type] ?? "a fill CSS cannot hold" }
-        : {
-            color: solid.color,
-            alpha: solid.alpha * opacity,
-          };
-    });
-}
-
-function topSolid(paints: readonly SnapshotPaint[]): { color: Channels; alpha: number } | null {
-  const visible = paints.filter((paint) => paint.visible ?? true);
-
-  return solidOf(visible.at(-1));
-}
-
-function solidOf(paint: SnapshotPaint | undefined): { color: Channels; alpha: number } | null {
-  if (paint?.type !== "SOLID" || paint.color === undefined) {
-    return null;
-  }
-
-  return {
-    color: paint.color,
-    alpha: (paint.opacity ?? 1) * (paint.color.a ?? 1),
-  };
-}
-
-function covers(outer: SnapshotNode, inner: SnapshotNode): boolean {
-  return (
-    outer.x <= inner.x &&
-    outer.y <= inner.y &&
-    outer.x + outer.width >= inner.x + inner.width &&
-    outer.y + outer.height >= inner.y + inner.height
-  );
 }

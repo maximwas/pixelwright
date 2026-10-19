@@ -351,6 +351,104 @@ describe("tokens_apply: styles", () => {
     expect((await local()).paint.map(({ name }) => name)).toEqual(["Dark"]);
   });
 
+  it("writes a text style's letter spacing and case, and leaves them when the same come again", async () => {
+    const display = {
+      text: [
+        {
+          name: "h2",
+          value: "400 40px/normal 'Inter'",
+          also: [
+            {
+              token: "--h2-letter-spacing",
+              value: "-0.02em",
+            },
+            {
+              token: "--h2-text-transform",
+              value: "uppercase",
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(await apply(display)).toMatchObject({ updated: [{ name: "h2" }] });
+    expect((await local()).text[0]).toMatchObject({
+      letterSpacing: {
+        unit: "PERCENT",
+        value: -2,
+      },
+      textCase: "UPPER",
+    });
+    // Figma keeps letter spacing as a float: what renders the same as asked is left alone.
+    Object.assign((await local()).text[0] ?? {}, {
+      letterSpacing: {
+        unit: "PERCENT",
+        value: -2.0000000298,
+      },
+    });
+    expect(await apply(display)).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+    // A call that names no spacing or case leaves the style's.
+    await apply({
+      text: [
+        {
+          name: "h2",
+          value: "500 40px/normal 'Inter'",
+        },
+      ],
+    });
+    expect((await local()).text[0]).toMatchObject({ textCase: "UPPER" });
+  });
+
+  it("makes a blur effect style, and adds a blur to a style's shadows keeping them", async () => {
+    const backdrop = {
+      effect: [
+        {
+          name: "Blur/Backdrop",
+          value: "backdrop-filter: blur(20px)",
+        },
+      ],
+    };
+
+    expect(await apply(backdrop)).toMatchObject({ created: [{ name: "Blur/Backdrop" }] });
+    expect((await local()).effect[0]?.effects).toMatchObject([
+      {
+        type: "BACKGROUND_BLUR",
+        radius: 40,
+      },
+    ]);
+    expect(await apply(backdrop)).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+
+    await apply({
+      effect: [
+        {
+          name: "Lift",
+          value: "0 5px 0 0 #191A23",
+        },
+      ],
+    });
+    await apply({
+      effect: [
+        {
+          name: "Lift",
+          value: "filter: blur(2px)",
+        },
+      ],
+    });
+
+    expect((await local()).effect[1]?.effects.map(({ type }) => type).toSorted()).toEqual([
+      "DROP_SHADOW",
+      "LAYER_BLUR",
+    ]);
+  });
+
   it("names the font a text style asks for that this Figma lacks", async () => {
     expect(
       (
@@ -370,5 +468,31 @@ describe("tokens_apply: styles", () => {
         message: expect.stringMatching(/Nope Sans/),
       }),
     ]);
+  });
+
+  it("runs a retry after the call still writing, so it finds that call's styles by name and makes no copies", async () => {
+    const load = fake.figma.loadFontAsync;
+
+    // Fonts load slowly, as in the big call the server stopped waiting for: its retry arrives while it still writes.
+    Object.assign(fake.figma, {
+      loadFontAsync: async (font: FontName) => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        await load(font);
+      },
+    });
+
+    const text = ["h3", "h4", "h5"].map((name) => ({
+      name,
+      value: "500 20px/normal 'Inter'",
+    }));
+    const [first, retry] = await Promise.all([apply({ text }), apply({ text })]);
+
+    expect((await local()).text.map(({ name }) => name)).toEqual(["h2", "h3", "h4", "h5"]);
+    expect(first.created).toHaveLength(3);
+    expect(retry).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
   });
 });

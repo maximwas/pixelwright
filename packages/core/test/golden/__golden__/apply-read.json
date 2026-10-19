@@ -537,8 +537,8 @@
         "attributes": {
           "id": "2:4871"
         },
-        "source": "2:4871",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "2:4871"
       },
       {
         "line": 1,
@@ -559,8 +559,8 @@
             "value": "One"
           }
         ],
-        "source": "I2:4872;330:292",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "I2:4872;330:292"
       },
       {
         "line": 2,
@@ -586,8 +586,8 @@
         "attributes": {
           "id": "2:4871"
         },
-        "source": "2:4871",
-        "copy": "new:2"
+        "copy": "new:2",
+        "source": "2:4871"
       },
       {
         "line": 2,
@@ -608,8 +608,8 @@
             "value": "Two"
           }
         ],
-        "source": "I2:4872;330:292",
-        "copy": "new:2"
+        "copy": "new:2",
+        "source": "I2:4872;330:292"
       }
     ],
     "errors": []
@@ -639,8 +639,8 @@
         "attributes": {
           "id": "2:2"
         },
-        "source": "2:2",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "2:2"
       }
     ],
     "errors": [
@@ -691,8 +691,8 @@
           "id": "2:2",
           "name": "Inside"
         },
-        "source": "2:2",
-        "copy": "new:2"
+        "copy": "new:2",
+        "source": "2:2"
       },
       {
         "line": 2,
@@ -706,8 +706,8 @@
           "id": "2:3",
           "name": "Inside too"
         },
-        "source": "2:3",
-        "copy": "new:2"
+        "copy": "new:2",
+        "source": "2:3"
       },
       {
         "line": 3,
@@ -750,8 +750,8 @@
         "attributes": {
           "id": "2:2"
         },
-        "source": "2:2",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "2:2"
       },
       {
         "line": 3,
@@ -764,7 +764,8 @@
         "attributes": {
           "copyOf": "2:3",
           "name": "Inner"
-        }
+        },
+        "copy": "new:1"
       },
       {
         "line": 3,
@@ -785,8 +786,8 @@
             "value": "Deep"
           }
         ],
-        "source": "2:4",
-        "copy": "new:3"
+        "copy": "new:3",
+        "source": "2:4"
       },
       {
         "line": 4,
@@ -798,7 +799,8 @@
         "index": 1,
         "attributes": {
           "name": "New"
-        }
+        },
+        "copy": "new:1"
       }
     ],
     "errors": []
@@ -837,8 +839,8 @@
             "value": "Pro"
           }
         ],
-        "source": "I54:268;54:211",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "I54:268;54:211"
       },
       {
         "line": 3,
@@ -851,8 +853,8 @@
         "attributes": {
           "id": "I54:268;54:212"
         },
-        "source": "I54:268;54:212",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "I54:268;54:212"
       },
       {
         "line": 3,
@@ -873,8 +875,8 @@
             "value": "$29"
           }
         ],
-        "source": "I54:268;54:213",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "I54:268;54:213"
       }
     ],
     "errors": []
@@ -941,8 +943,8 @@
         "attributes": {
           "id": "2:2"
         },
-        "source": "2:2",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "2:2"
       },
       {
         "line": 1,
@@ -954,7 +956,8 @@
         "index": 0,
         "attributes": {
           "component": "Badge"
-        }
+        },
+        "copy": "new:1"
       },
       {
         "line": 1,
@@ -975,8 +978,8 @@
             "value": "New"
           }
         ],
-        "source": "I9:1;9:2",
-        "copy": "new:1:37"
+        "copy": "new:1:37",
+        "source": "I9:1;9:2"
       },
       {
         "line": 2,
@@ -1000,7 +1003,8 @@
         "index": 0,
         "attributes": {
           "component": "Badge"
-        }
+        },
+        "copy": "new:2"
       },
       {
         "line": 2,
@@ -1021,8 +1025,8 @@
             "value": "Inner"
           }
         ],
-        "source": "I1:1;1:2",
-        "copy": "new:2:28"
+        "copy": "new:2:28",
+        "source": "I1:1;1:2"
       },
       {
         "line": 3,
@@ -1047,8 +1051,8 @@
         "attributes": {
           "id": "2:5"
         },
-        "source": "2:5",
-        "copy": "new:3"
+        "copy": "new:3",
+        "source": "2:5"
       },
       {
         "line": 3,
@@ -1069,8 +1073,8 @@
             "value": "Kept"
           }
         ],
-        "source": "I2:5;3:1",
-        "copy": "new:3"
+        "copy": "new:3",
+        "source": "I2:5;3:1"
       }
     ],
     "errors": []
@@ -1100,8 +1104,8 @@
         "attributes": {
           "id": "2:3"
         },
-        "source": "2:3",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "2:3"
       }
     ],
     "errors": [
@@ -1174,8 +1178,8 @@
         "attributes": {
           "id": "2:2"
         },
-        "source": "2:2",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "2:2"
       },
       {
         "line": 1,
@@ -1188,8 +1192,8 @@
         "attributes": {
           "id": "2:3"
         },
-        "source": "2:3",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "2:3"
       }
     ],
     "errors": [
@@ -1907,8 +1911,8 @@
         "attributes": {
           "id": "2:3"
         },
-        "source": "2:3",
-        "copy": "new:1"
+        "copy": "new:1",
+        "source": "2:3"
       }
     ],
     "errors": [
@@ -2131,8 +2135,8 @@
             "value": "Copied"
           }
         ],
-        "source": "1:2",
-        "copy": "new:4"
+        "copy": "new:4",
+        "source": "1:2"
       }
     ],
     "errors": []

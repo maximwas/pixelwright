@@ -8,13 +8,9 @@ import {
 import pTimeout from "p-timeout";
 import type { CodeScope } from "../../services/code-scope.ts";
 import type { EditsGuard } from "../../services/edits-guard.ts";
+import { codeError, codeFunction } from "./code-error.ts";
 import { codeHelpers } from "./code-helpers.ts";
 import { jsonValue } from "./json-value.ts";
-
-type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<unknown>;
-
-/** The constructor of async functions: the code becomes the body of one. */
-const AsyncFunction = Object.getPrototypeOf(async () => undefined).constructor as AsyncBody;
 
 /** What the run gives when its time is up first. */
 const TIMED_OUT = Symbol("timed out");
@@ -34,6 +30,8 @@ export async function execute(
   // The window's messages (Allow edits among them) come through this handler: code may not keep it.
   const ui = (figma as { ui?: { onmessage?: unknown } }).ui;
   const handler = ui?.onmessage;
+  // Every operation walks layers as the plugin set this up; code may turn it off to reach hidden instance children.
+  const skipInvisible = figma.skipInvisibleInstanceChildren;
 
   try {
     return await ran(code, timeoutMs, {
@@ -45,6 +43,7 @@ export async function execute(
       ui.onmessage = handler;
     }
 
+    figma.skipInvisibleInstanceChildren = skipInvisible;
     figma.commitUndo();
   }
 }
@@ -56,7 +55,7 @@ async function ran(
   { output, pw }: { readonly output: CapturedConsole; readonly pw: Record<string, unknown> },
 ): Promise<OperationOutput<"execute">> {
   try {
-    const run = new AsyncFunction("figma", "console", "pw", code);
+    const run = codeFunction(code);
     const value = await pTimeout(run(figma, output.console(), pw), {
       milliseconds: timeoutMs,
       fallback: () => TIMED_OUT,
@@ -78,7 +77,7 @@ async function ran(
     return {
       result: null,
       logs: output.kept(),
-      error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      error: await codeError(error, code),
     };
   }
 }

@@ -162,6 +162,31 @@ describe("tokens_read", () => {
     expect(read.notes.join("\n")).toMatch(/past maxChars/);
   });
 
+  it("gives the start of the JSON past maxChars: whole variables in order, with the summary", async () => {
+    const many = {
+      ...RAW,
+      variables: Array.from({ length: 200 }, (_, index) => ({
+        ...RAW.variables[0],
+        id: `V:${index}`,
+        name: `color/shade-${index}`,
+      })),
+    };
+    const read = await readTokens(pluginAnswering(many).plugin, {
+      libraries: false,
+      used: true,
+      format: "json",
+      maxChars: 4_000,
+    });
+    const shown = read.tokens?.collections[0]?.variables ?? [];
+
+    expect(shown.length).toBeGreaterThan(10);
+    expect(shown.length).toBeLessThan(200);
+    expect(shown[0]?.name).toBe("color/shade-0");
+    expect(JSON.stringify(read.tokens).length).toBeLessThanOrEqual(4_000);
+    expect(read.summary?.collections[0]?.variables).toBe(200);
+    expect(read.notes).toContainEqual(expect.stringMatching(new RegExp(`first ${shown.length} of 200`)));
+  });
+
   it("says which collections exist when a filter matches none", async () => {
     const { plugin } = pluginAnswering(RAW);
     const read = await readTokens(plugin, {

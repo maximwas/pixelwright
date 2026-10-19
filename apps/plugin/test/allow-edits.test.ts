@@ -76,6 +76,7 @@ async function switchTo(value: boolean): Promise<void> {
 }
 
 describe("Allow edits", () => {
+  // Five fresh imports of the plugin's main code: near vitest's 5 s default when the full suite loads the machine.
   it("is remembered for the file it was turned on in, on this computer, until it is turned off", async () => {
     expect(await run(fileA)).toBe(false);
     // A file that was only read is left as it was.
@@ -92,7 +93,7 @@ describe("Allow edits", () => {
     expect(await run(fileA)).toBe(true);
     await switchTo(false);
     expect(await run(fileA)).toBe(false);
-  });
+  }, 20_000);
 
   it("keeps the last choice when an earlier save is still running", async () => {
     const file = new Map<string, string>();

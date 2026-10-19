@@ -84,6 +84,7 @@ export * from "./kernel/easing.ts";
 export * from "./kernel/equality.ts";
 export * from "./kernel/geometry.ts";
 export * from "./kernel/hash.ts";
+export * from "./kernel/layer-ids.ts";
 export * from "./kernel/names.ts";
 export * from "./kernel/numbers.ts";
 export * from "./kernel/spring.ts";

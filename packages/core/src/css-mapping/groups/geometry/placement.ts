@@ -198,26 +198,17 @@ function writeEdges(axis: Axis, { own, merged, changed }: WriteInput, out: Write
   return result.placement;
 }
 
-/** The axis's size: a length or a token, auto as hugging; none of its own while both edges stretch the layer. */
-function writeSize(
-  { start, end, size }: Axis,
-  { own }: WriteInput,
-  out: WriteOutput,
-  placed: AxisPlacement | null,
-): void {
+/**
+ * The axis's size: a length or a token, auto as hugging. Between both edges auto leaves the size to them, and a length
+ * wins over the end edge as in CSS: the layer starts at its start edge and still stretches with its parent.
+ */
+function writeSize({ start, size }: Axis, { own }: WriteInput, out: WriteOutput, placed: AxisPlacement | null): void {
   const value = own(size) ?? "";
 
-  if (placed?.kind === "STRETCH") {
-    out.fail(
-      size,
-      `${size} comes from ${start} and ${end} when both are set: set one of them to auto to size the layer.`,
-    );
-
-    return;
-  }
-
   if (value === "auto" || value === "fit-content" || value === "max-content") {
-    out.set(size, "HUG", size);
+    if (placed?.kind !== "STRETCH") {
+      out.set(size, "HUG", size);
+    }
 
     return;
   }

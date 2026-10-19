@@ -92,7 +92,11 @@ function place(node: SceneNode, axis: Axis, props: FigmaProps): void {
     throw new WriteError("A layer on the page is placed by left and top alone.");
   }
 
-  placeAlong(node, axis, spec, page ? 0 : lengthOf(parent, axis));
+  const span = page ? 0 : lengthOf(parent, axis);
+  // A size given with both edges wins over the end edge, as in CSS: measured from the start edge it fills the span.
+  const sized = spec.kind === "STRETCH" && props[axis === "horizontal" ? "width" : "height"] !== undefined;
+
+  placeAlong(node, axis, spec, sized ? spec.start + lengthAlong(node, axis) + spec.end : span);
 }
 
 /** design_read places a level or standing line by the box it covers; other layers by their unturned box's centre. */

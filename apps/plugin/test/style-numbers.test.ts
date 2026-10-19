@@ -253,6 +253,43 @@ describe("tokens_usage", () => {
       more: false,
     });
   });
+
+  it("looks on every page of the file when asked, the current page's layers first", async () => {
+    const { writes } = installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        children: [filled("1:1", "S:w")],
+      }),
+      {
+        styles: {
+          "S:w": {
+            ...blackStyle("S:w", 1),
+            name: "White",
+          },
+        },
+        pages: [
+          tree({
+            id: "0:2",
+            type: "PAGE",
+            children: [filled("2:1", "S:w")],
+          }),
+        ],
+      },
+    );
+    const ids = (found: unknown) => (found as { layers: { id: string }[] }).layers.map(({ id }) => id);
+
+    expect(ids(await plugin.run("usage", { token: "--White" }))).toEqual(["1:1"]);
+    expect(
+      ids(
+        await plugin.run("usage", {
+          token: "--White",
+          within: "file",
+        }),
+      ),
+    ).toEqual(["1:1", "2:1"]);
+    expect(writes.calls.map(({ method }) => method)).toContain("loadAllPagesAsync");
+  });
 });
 
 describe("same-named text styles in design_apply's lookup", () => {

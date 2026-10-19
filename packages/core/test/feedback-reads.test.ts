@@ -289,3 +289,44 @@ describe("layout grids", () => {
     expect(xml).toContain('$css="layout-grid: 12 columns stretch, gutter 24px, margin 80px + 8px grid"');
   });
 });
+
+describe("a component's layers bound to its properties (Dukach feedback)", () => {
+  it("say which property shows them, sets their text or swaps them, read-only and without the #id", () => {
+    const { xml } = designXml(
+      snapshotOf(
+        layer({
+          id: "1:1",
+          type: "COMPONENT",
+          name: "Row",
+          layoutMode: "VERTICAL",
+          children: [
+            layer({
+              id: "1:2",
+              type: "FRAME",
+              name: "Subtitle",
+              minHeight: 44,
+              componentPropertyReferences: { visible: "Show subtitle#12:0" },
+            }),
+            layer({
+              id: "1:3",
+              type: "INSTANCE",
+              name: "Icon",
+              instance: {
+                componentId: "9:1",
+                componentName: "icon/Bell",
+                properties: {},
+              },
+              componentPropertyReferences: {
+                mainComponent: "Icon#12:1",
+                visible: "Show icon#12:2",
+              },
+            }),
+          ],
+        }),
+      ),
+    );
+
+    expect(xml).toMatch(/<Frame id="1:2" name="Subtitle" [^>]*min-height="44px"[^>]*\$visibleProp="Show subtitle"/);
+    expect(xml).toMatch(/<Instance id="1:3" [^>]*\$visibleProp="Show icon" \$swapProp="Icon"/);
+  });
+});

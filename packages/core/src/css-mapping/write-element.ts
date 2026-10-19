@@ -25,6 +25,8 @@ export interface ElementInput {
   readonly tag: string;
   readonly attributes: Readonly<Record<string, string>>;
   readonly content?: readonly TextPiece[];
+  /** Whether nothing lays its layer out where it goes (the page, a section, a frame without auto layout): as absolute. */
+  readonly placed?: boolean;
 }
 
 /** A value the mapping could not write: its attribute, why, what to do, and the content piece it is in (a span's). */
@@ -52,7 +54,11 @@ export interface ElementWrite {
 export function writeElement(element: ElementInput, now?: LayerNow): ElementWrite {
   const problems: WriteProblem[] = [];
   const attributes = element.attributes;
-  const current = now?.current ?? {};
+  // Where nothing lays a layer out its edges place it, as design_read's position="absolute" there says.
+  const current: Readonly<Record<string, string>> = {
+    ...((element.placed ?? false) ? { position: "absolute" } : {}),
+    ...now?.current,
+  };
   const changed = (name: string) =>
     name !== "id" && attributes[name] !== undefined && !(now?.attributes.has(name) ?? false);
   const input: WriteInput = {
@@ -170,13 +176,21 @@ function textOf(
  * a layer.
  */
 export function attributeProps(tag: string, attribute: string, value: string): { props: FigmaProps; errors: string[] } {
+  return attributesProps(tag, { [attribute]: value });
+}
+
+/** attributeProps for several attributes of one element, read together (a font with its spacing, shadows with blurs). */
+export function attributesProps(
+  tag: string,
+  attributes: Readonly<Record<string, string>>,
+): { props: FigmaProps; errors: string[] } {
   const problems: WriteProblem[] = [];
-  const own = (name: string) => (name === attribute ? value : undefined);
+  const own = (name: string) => (Object.hasOwn(attributes, name) ? attributes[name] : undefined);
   const input: WriteInput = {
     tag,
     own,
     merged: own,
-    changed: (name) => name === attribute,
+    changed: (name) => Object.hasOwn(attributes, name),
     hidden: false,
   };
   const out = new ChangeOutput(problems);

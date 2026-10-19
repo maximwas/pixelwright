@@ -55,7 +55,7 @@ export class StyleWriter {
     };
     const shown = this.#file.shownStyle(kind.kind, plan.name);
 
-    if (shown !== undefined && sameSpec(styleValueOf(kind.kind, shown.value), kind.spec(plan))) {
+    if (shown !== undefined && sameSpec(styleValueOf(kind.kind, shown.value, shown.also), kind.spec(plan))) {
       return;
     }
 
