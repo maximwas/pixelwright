@@ -72,6 +72,8 @@ async function readRoots(
         await session.run("snapshot", {
           node: id,
           css: "none",
+          // The layers above a part of a screen: its texts lie on the screen's fill.
+          ancestors: true,
         }),
       );
     } catch (error) {

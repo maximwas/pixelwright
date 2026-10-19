@@ -38,6 +38,93 @@ const snapshotOf = (input: unknown) => {
   };
 };
 
+const WHITE = [
+  {
+    type: "SOLID",
+    visible: true,
+    color: {
+      r: 1,
+      g: 1,
+      b: 1,
+    },
+  },
+];
+
+/** A white label in a frame of no fill (1:1), on a white screen the plugin reads above it when asked for ancestors. */
+const screenPart = (input: unknown) => {
+  const box = {
+    visible: true,
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+  };
+  const content = {
+    ...box,
+    id: "1:1",
+    name: "Content",
+    type: "FRAME",
+    childCount: 1,
+    fills: [],
+  };
+  const characters = "Hello";
+  const label = {
+    ...box,
+    id: "1:2",
+    name: "Label",
+    type: "TEXT",
+    childCount: 0,
+    text: {
+      characters,
+      textAutoResize: "WIDTH_AND_HEIGHT",
+      textAlignHorizontal: "LEFT",
+      textAlignVertical: "TOP",
+      segments: [
+        {
+          characters,
+          start: 0,
+          end: characters.length,
+          fontName: {
+            family: "Inter",
+            style: "Regular",
+          },
+          fontSize: 16,
+          fontWeight: 400,
+          textDecoration: "NONE",
+          textCase: "ORIGINAL",
+          lineHeight: { unit: "AUTO" },
+          letterSpacing: {
+            unit: "PIXELS",
+            value: 0,
+          },
+          fills: WHITE,
+          fillStyleId: "",
+          textStyleId: "",
+        },
+      ],
+    },
+  };
+  const screen = {
+    ...box,
+    id: "1:0",
+    name: "Screen",
+    type: "FRAME",
+    childCount: 1,
+    fills: WHITE,
+    children: [content],
+  };
+
+  return {
+    root: {
+      ...content,
+      children: [label],
+    },
+    ...((input as { ancestors?: boolean }).ancestors ? { ancestors: [screen] } : {}),
+    styles: {},
+    variables: {},
+  };
+};
+
 const ANSWERS = {
   snapshot: snapshotOf,
   bind: () => {
@@ -140,6 +227,25 @@ describe("design_lint: what it reads", () => {
       "Not checked: 1 of 2 layers could not be read (the notes say why). 1 findings in the rest: 0 errors, 0 warnings, 1 info.",
     );
     expect(result.findings.map(({ id }) => id)).toEqual(["1:1"]);
+  });
+
+  it("rates a part of a screen's texts against the screen's fill above it", async () => {
+    const view = scopeBridge({
+      selection: [],
+      answers: {
+        ...ANSWERS,
+        snapshot: screenPart,
+      },
+    });
+    const result = await lint(view, "1:1");
+
+    expect(result.findings.filter(({ rule }) => rule === "contrast")).toMatchObject([
+      {
+        id: "1:2",
+        severity: "error",
+      },
+    ]);
+    expect(view.inputs.snapshot).toMatchObject({ ancestors: true });
   });
 
   it("fails, never answering no findings, when it could read none of the layers", async () => {
