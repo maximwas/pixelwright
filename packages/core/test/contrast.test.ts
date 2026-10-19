@@ -137,27 +137,27 @@ describe("contrast_check", () => {
   });
 });
 
-describe("contrast_check after the review", () => {
-  const DARK = solid(18, 18, 18);
-  const rect = (id: string, fills: unknown[], x: number, width: number): SnapshotNode => ({
-    id,
-    name: id,
-    type: "RECTANGLE",
-    visible: true,
-    x,
-    y: 0,
-    width,
-    height: 100,
-    childCount: 0,
-    fills: fills as SnapshotNode["fills"],
-  });
-  const check = (root: SnapshotNode) =>
-    contrastCheck({
-      root,
-      styles: {},
-      variables: {},
-    }).texts[0];
+const DARK = solid(18, 18, 18);
+const rect = (id: string, fills: unknown[], x: number, width: number): SnapshotNode => ({
+  id,
+  name: id,
+  type: "RECTANGLE",
+  visible: true,
+  x,
+  y: 0,
+  width,
+  height: 100,
+  childCount: 0,
+  fills: fills as SnapshotNode["fills"],
+});
+const check = (root: SnapshotNode) =>
+  contrastCheck({
+    root,
+    styles: {},
+    variables: {},
+  }).texts[0];
 
+describe("contrast_check after the review", () => {
   it("finds a backdrop nested inside a layer below the text", () => {
     expect(
       check(frame("1:1", [], [frame("1:2", [], [rect("1:3", [DARK], 0, 400)]), text("Over", 16, 10, 10)])),
@@ -212,6 +212,22 @@ describe("contrast_check after the review", () => {
       name: "Shine",
       color: "a gradient",
       ratio: null,
+    });
+  });
+});
+
+describe("contrast_check on the Dukach feedback", () => {
+  it("never takes a text lower in the frame for a backdrop (bug 8)", () => {
+    const row = (id: string, x: number) => text(id, 16, x, 10, { fills: [GRAY] as SnapshotNode["fills"] });
+    const { texts } = contrastCheck({
+      root: frame("1:1", [DARK], [row("Row", 10), row("Footer", 12), text("Tab", 16, 10, 10)]),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts.find(({ name }) => name === "Tab")).toMatchObject({
+      backdrop: "#121212",
+      aa: true,
     });
   });
 });

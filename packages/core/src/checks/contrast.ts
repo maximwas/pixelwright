@@ -195,10 +195,11 @@ function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[], spac
 
 /**
  * What a layer below the text paints under it, top first: its children's paints (above its own) and its own fills. A
- * painting layer that meets the text without covering it makes the backdrop two things at once.
+ * painting layer that meets the text without covering it makes the backdrop two things at once. A text is never a
+ * backdrop: its fills colour thin glyphs, not its box.
  */
 function paintedUnder(layer: SnapshotNode, text: SnapshotNode): { layers: Layer[]; partly: SnapshotNode | null } {
-  if (!layer.visible || !meets(layer, text)) {
+  if (!layer.visible || layer.type === "TEXT" || !meets(layer, text)) {
     return {
       layers: [],
       partly: null,
