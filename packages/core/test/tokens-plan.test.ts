@@ -365,6 +365,106 @@ describe("tokensPlan: styles", () => {
     expect(plan.styles.effect[0]?.effects.map(({ type }) => type)).toEqual(["INNER_SHADOW", "DROP_SHADOW"]);
   });
 
+  it("reads a text style's letter spacing and case from tokens_read's also, or after its font", () => {
+    const { plan, errors } = planOf({
+      styles: {
+        text: [
+          {
+            name: "Display",
+            token: "--Display-font",
+            value: "700 48px/56px 'Inter'",
+            also: [
+              {
+                token: "--Display-letter-spacing",
+                value: "-0.02em",
+              },
+              {
+                token: "--Display-text-transform",
+                value: "uppercase",
+              },
+            ],
+          },
+          {
+            name: "Caption",
+            value: "400 12px/16px 'Inter'; letter-spacing: 0.4px",
+          },
+          {
+            name: "Odd",
+            value: "400 12px/16px 'Inter'; color: red",
+          },
+        ],
+      },
+    });
+
+    expect(plan.styles.text).toEqual([
+      expect.objectContaining({
+        name: "Display",
+        letterSpacing: {
+          unit: "PERCENT",
+          value: -2,
+        },
+        textCase: "UPPER",
+      }),
+      expect.objectContaining({
+        name: "Caption",
+        letterSpacing: {
+          unit: "PIXELS",
+          value: 0.4,
+        },
+      }),
+    ]);
+    expect(plan.styles.text[1]).not.toHaveProperty("textCase");
+    expect(errors).toEqual([
+      expect.objectContaining({
+        kind: "text",
+        name: "Odd",
+        message: expect.stringMatching(/color: red/),
+      }),
+    ]);
+  });
+
+  it("reads an effect style's blurs after its shadows, and which effects its CSS names", () => {
+    const { plan, errors } = planOf({
+      styles: {
+        effect: [
+          {
+            name: "Blur/Backdrop",
+            value: "backdrop-filter: blur(20px)",
+          },
+          {
+            name: "Glass",
+            value: "0 1px 2px 0 #000; filter: blur(2px)",
+          },
+        ],
+      },
+    });
+
+    expect(errors).toEqual([]);
+    expect(plan.styles.effect).toEqual([
+      {
+        name: "Blur/Backdrop",
+        effects: [
+          {
+            type: "BACKGROUND_BLUR",
+            radius: 40,
+          },
+        ],
+        covers: ["BACKGROUND_BLUR"],
+      },
+      {
+        name: "Glass",
+        effects: [
+          {
+            type: "LAYER_BLUR",
+            radius: 4,
+          },
+          expect.objectContaining({ type: "DROP_SHADOW" }),
+        ],
+        covers: ["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR"],
+      },
+    ]);
+  });
+
   it("refuses a style value that does not read as its kind, naming the style", () => {
     const { plan, errors } = planOf({
       styles: {

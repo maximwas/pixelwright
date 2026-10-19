@@ -1,5 +1,6 @@
 import {
   type EffectStylePlan,
+  letterSpacingCss,
   lineHeightCss,
   type PaintSpec,
   type PaintStylePlan,
@@ -13,9 +14,6 @@ import { paintsOf, samePaints } from "../../../figma/paints.ts";
 import type { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import type { TokenRun } from "./token-run.ts";
-
-/** Effects an effect style's CSS shows: its shadows (tokens_read leaves blurs out, so a write keeps them). */
-const STYLE_EFFECTS: ReadonlySet<string> = new Set(["DROP_SHADOW", "INNER_SHADOW"]);
 
 /**
  * How one kind of style is written: what core read its CSS as, Figma's local styles of the kind, the value a planned
@@ -33,11 +31,13 @@ export interface StyleKind<Plan extends { readonly name: string }, Style extends
   write(style: Style, value: Value): void;
 }
 
-/** The text style's value: its face, size and line height. */
+/** The text style's value: its face, size and line height, and the spacing and case the plan gives. */
 interface TextValue {
   readonly fontName: FontName;
   readonly fontSize: number;
   readonly lineHeight: LineHeight;
+  readonly letterSpacing?: LetterSpacing;
+  readonly textCase?: TextCase;
 }
 
 export const PAINT_STYLES: StyleKind<PaintStylePlan, PaintStyle, Paint[] | null> = {
@@ -71,56 +71,102 @@ export const PAINT_STYLES: StyleKind<PaintStylePlan, PaintStyle, Paint[] | null>
 
 export const TEXT_STYLES: StyleKind<TextStylePlan, TextStyle, TextValue> = {
   kind: "text",
-  spec: ({ font }) => ({ font }),
+  spec: ({ font, letterSpacing, textCase }) => ({
+    font,
+    ...(letterSpacing === undefined ? {} : { letterSpacing }),
+    ...(textCase === undefined ? {} : { textCase }),
+  }),
   local: () => figma.getLocalTextStylesAsync(),
-  next: async ({ font }, held, run) => {
-    // Its own face first: a condensed or variable face reads as its family and weight only.
-    const fontName = await run.fonts.fontNameOf(
-      font,
-      held === null
-        ? []
-        : [
-            {
-              fontName: held.fontName,
-              weight: weightOf(held.fontName.style),
-            },
-          ],
-    );
-    // A size or line height that renders the same as the style's stays the style's (tokens_read rounds both).
-    const fontSize = held !== null && px(held.fontSize) === px(font.size) ? held.fontSize : font.size;
-    const lineHeight =
-      held !== null && lineHeightCss(held.lineHeight, fontSize) === lineHeightCss(font.lineHeight, fontSize)
-        ? held.lineHeight
-        : font.lineHeight;
-
-    if (!run.dryRun) {
-      await figma.loadFontAsync(fontName);
-    }
-
-    return {
-      fontName,
-      fontSize,
-      lineHeight,
-    };
-  },
+  next: async (plan, held, run) => ({
+    ...(await textFace(plan, held, run)),
+    ...textExtras(plan, held),
+  }),
   holds: (style, value) =>
     style.fontName.family === value.fontName.family &&
     style.fontName.style === value.fontName.style &&
     style.fontSize === value.fontSize &&
-    sameValue(style.lineHeight, value.lineHeight),
+    sameValue(style.lineHeight, value.lineHeight) &&
+    (value.letterSpacing === undefined || sameValue(style.letterSpacing, value.letterSpacing)) &&
+    (value.textCase === undefined || style.textCase === value.textCase),
   make: () => figma.createTextStyle(),
   write: (style, value) => {
     style.fontName = value.fontName;
     style.fontSize = value.fontSize;
     style.lineHeight = value.lineHeight;
+
+    if (value.letterSpacing !== undefined) {
+      style.letterSpacing = value.letterSpacing;
+    }
+
+    if (value.textCase !== undefined) {
+      style.textCase = value.textCase;
+    }
   },
 };
 
+/** A text style's face, size and line height, loaded for writing. */
+async function textFace(
+  { font }: TextStylePlan,
+  held: TextStyle | null,
+  run: TokenRun,
+): Promise<Pick<TextValue, "fontName" | "fontSize" | "lineHeight">> {
+  // Its own face first: a condensed or variable face reads as its family and weight only.
+  const fontName = await run.fonts.fontNameOf(
+    font,
+    held === null
+      ? []
+      : [
+          {
+            fontName: held.fontName,
+            weight: weightOf(held.fontName.style),
+          },
+        ],
+  );
+  // A size or line height that renders the same as the style's stays the style's (tokens_read rounds both).
+  const fontSize = held !== null && px(held.fontSize) === px(font.size) ? held.fontSize : font.size;
+  const lineHeight =
+    held !== null && lineHeightCss(held.lineHeight, fontSize) === lineHeightCss(font.lineHeight, fontSize)
+      ? held.lineHeight
+      : font.lineHeight;
+
+  if (!run.dryRun) {
+    await figma.loadFontAsync(fontName);
+  }
+
+  return {
+    fontName,
+    fontSize,
+    lineHeight,
+  };
+}
+
+/** The spacing and case the plan gives; a spacing that renders the same as the style's stays the style's. */
+function textExtras(
+  { letterSpacing, textCase }: TextStylePlan,
+  held: TextStyle | null,
+): Pick<TextValue, "letterSpacing" | "textCase"> {
+  const spacing =
+    held !== null &&
+    letterSpacing !== undefined &&
+    letterSpacingCss({ ...held.letterSpacing }) === letterSpacingCss(letterSpacing)
+      ? held.letterSpacing
+      : letterSpacing;
+
+  return {
+    ...(spacing === undefined ? {} : { letterSpacing: spacing }),
+    ...(textCase === undefined ? {} : { textCase }),
+  };
+}
+
 export const EFFECT_STYLES: StyleKind<EffectStylePlan, EffectStyle, Effect[]> = {
   kind: "effect",
-  spec: ({ effects }) => ({ effects }),
+  spec: ({ effects, covers }) => ({
+    effects,
+    covers,
+  }),
   local: () => figma.getLocalEffectStylesAsync(),
-  next: async ({ effects }, held) => mergedEffects(held?.effects ?? [], effectsOf(effects), STYLE_EFFECTS),
+  // What the CSS names is replaced, the rest kept: tokens_read shows only shadows, so its CSS keeps a style's blurs.
+  next: async ({ effects, covers }, held) => mergedEffects(held?.effects ?? [], effectsOf(effects), new Set(covers)),
   holds: (style, effects) => sameValue(style.effects.map(effectKey), effects.map(effectKey)),
   make: () => figma.createEffectStyle(),
   write: (style, effects) => {

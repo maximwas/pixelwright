@@ -84,7 +84,8 @@ taken as sRGB and converted to P3.
 
 - Lengths in px (a bare number in a size, a place, a gap, a padding or a radius is taken as px; a bare line height
   is a multiple of the font size, as in CSS); \`var(--Name)\` binds the variable or style of that name, as \`design_read\` and \`tokens_read\`
-  write them (a paint style, a colour or number variable, an effect style); \`textStyle="h3"\` applies a text style.
+  write them (a paint style, a colour or number variable, an effect style, on \`box-shadow\` or on a blur:
+  \`backdrop-filter="var(--Blur-Backdrop)"\`); \`textStyle="h3"\` applies a text style.
 - \`font\` is the shorthand \`[italic] weight size/line-height 'Family'\`; Figma must have the family and that
   weight, or the error lists the styles it has.
 - Sizes: \`width\`/\`height\` in px or \`auto\`; \`flex="1"\` fills an auto layout parent's direction,

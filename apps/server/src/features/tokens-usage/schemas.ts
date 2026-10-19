@@ -7,7 +7,7 @@ export const TokensUsageInputSchema = z.object({
     "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg.",
   ),
   within: OPERATION_SCHEMAS.usage.input.shape.within.describe(
-    "The layer or page to look in. Default: the current page.",
+    'The layer or page to look in, or "file" for every page (loading them all is slow on a big file). Default: the current page.',
   ),
   file: FileSchema,
 });

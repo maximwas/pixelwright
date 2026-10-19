@@ -1,4 +1,4 @@
-import type { EffectSpec, FontSpec, PaintSpec } from "../../css-mapping/figma-props.ts";
+import type { EffectSpec, FigmaProps, FontSpec, PaintSpec } from "../../css-mapping/figma-props.ts";
 import type { ColorValue } from "../../kernel/color/color.ts";
 import type { CodeSyntax, VariableScopeName } from "../scopes.ts";
 
@@ -44,14 +44,25 @@ export interface PaintStylePlan {
   readonly paints: readonly PaintSpec[];
 }
 
-export interface TextStylePlan {
-  readonly name: string;
+/** A text style's font, with its letter spacing and case when its CSS gives them (else the style keeps its own). */
+export interface TextStyleValue {
   readonly font: FontSpec;
+  readonly letterSpacing?: Exclude<FigmaProps["letterSpacing"], undefined>;
+  readonly textCase?: Exclude<FigmaProps["textCase"], undefined>;
 }
 
-export interface EffectStylePlan {
+export interface TextStylePlan extends TextStyleValue {
   readonly name: string;
+}
+
+/** An effect style's shadows and blurs, and the effect types its CSS names: those it replaces, the style's others kept. */
+export interface EffectStyleValue {
   readonly effects: readonly EffectSpec[];
+  readonly covers: readonly EffectSpec["type"][];
+}
+
+export interface EffectStylePlan extends EffectStyleValue {
+  readonly name: string;
 }
 
 /** What tokens_apply asks the plugin to write, in Figma's terms. */

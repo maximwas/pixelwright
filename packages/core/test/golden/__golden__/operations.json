@@ -607,9 +607,17 @@
           "maxLength": 300
         },
         "within": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
         }
       },
       "required": [
@@ -7160,6 +7168,34 @@
                       },
                       "font": {
                         "x-zod": "custom"
+                      },
+                      "letterSpacing": {
+                        "type": "object",
+                        "properties": {
+                          "unit": {
+                            "type": "string",
+                            "enum": [
+                              "PIXELS",
+                              "PERCENT"
+                            ]
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "unit",
+                          "value"
+                        ]
+                      },
+                      "textCase": {
+                        "type": "string",
+                        "enum": [
+                          "ORIGINAL",
+                          "UPPER",
+                          "LOWER",
+                          "TITLE"
+                        ]
                       }
                     },
                     "required": [
@@ -7180,11 +7216,24 @@
                       },
                       "effects": {
                         "x-zod": "custom"
+                      },
+                      "covers": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "DROP_SHADOW",
+                            "INNER_SHADOW",
+                            "LAYER_BLUR",
+                            "BACKGROUND_BLUR"
+                          ]
+                        }
                       }
                     },
                     "required": [
                       "name",
-                      "effects"
+                      "effects",
+                      "covers"
                     ]
                   }
                 }
@@ -7410,6 +7459,14 @@
               "to"
             ]
           }
+        },
+        "instances": {
+          "default": "leave",
+          "type": "string",
+          "enum": [
+            "leave",
+            "override"
+          ]
         },
         "dryRun": {
           "default": false,

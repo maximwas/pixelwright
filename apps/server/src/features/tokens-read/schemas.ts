@@ -38,7 +38,9 @@ export const TokensReadInputSchema = z.object({
     .min(2_000)
     .max(400_000)
     .default(80_000)
-    .describe("Longest output; past it, only the summary comes back and you read collections one at a time."),
+    .describe(
+      "Longest output; past it the summary comes back (with format json, also the first tokens that fit) and you read collections one at a time.",
+    ),
   file: FileSchema,
 });
 

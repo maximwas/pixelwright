@@ -34,8 +34,9 @@ interface BindRun {
 
 /**
  * The `bind` operation: under the roots, every raw value bound to the one token holding it (or the call's pick), the
- * rest listed; or, with remaps, one token's uses rebound to another. Instances are left to their components. A dry run
- * writes nothing and works with Allow edits off; a real run is one undo step.
+ * rest listed; or, with remaps, one token's uses rebound to another. Instances are left to their components, all but
+ * their slots' content, unless remaps are asked to override them. A dry run writes nothing and works with Allow edits
+ * off; a real run is one undo step.
  */
 export async function bindTokens(input: BindInput, { edits }: PluginServices): Promise<OperationOutput<"bind">> {
   if (!input.dryRun) {
@@ -46,10 +47,14 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
   const context = await BindContext.of(roots);
   const report = new BindReport();
   const deadline = Date.now() + OP_BUDGET_MS;
-  const { layers, instances, finished } = bindableLayers(roots, deadline);
+  const remaps = input.remap.length > 0;
+  const { layers, instances, finished } = bindableLayers(roots, {
+    deadline,
+    overrides: remaps && input.instances === "override",
+  });
   let done = true;
 
-  if (input.remap.length > 0) {
+  if (remaps) {
     await remapTokens(layers, input, context, report);
   } else {
     done = await bindValues(layers, {
@@ -61,11 +66,7 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
   }
 
   if (instances > 0) {
-    report.note(
-      instances === 1
-        ? "1 instance was left alone: bind its main component, and its instances follow."
-        : `${instances} instances were left alone: bind their main components, and the instances follow.`,
-    );
+    report.note(leftAlone(instances, remaps));
   }
 
   if (!input.dryRun && report.wrote) {
@@ -73,6 +74,16 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
   }
 
   return report.result(!finished || !done);
+}
+
+/** The note on the instances a call left to their components, and what binds inside them. */
+function leftAlone(instances: number, remaps: boolean): string {
+  const left =
+    instances === 1
+      ? "1 instance was left alone: bind its main component, and its instances follow"
+      : `${instances} instances were left alone: bind their main components, and the instances follow`;
+
+  return remaps ? `${left}; instances: "override" rebinds the uses inside them as their overrides.` : `${left}.`;
 }
 
 /** Each layer's raw values bound or listed; false when time ran out first. */
@@ -121,14 +132,56 @@ async function settle(use: RawUse, choices: BindChoices, { input, report }: Bind
 
 /**
  * The layers a bind call goes through, the roots among them, and how many instances it left to their components: what
- * binds there belongs to the main component, and an instance's own would be overrides.
+ * binds there belongs to the main component, and an instance's own would be overrides. What was put into an instance's
+ * slots is the instance's own, so the walk goes on there. With `overrides`, the walk goes into every instance.
  */
-function bindableLayers(roots: readonly BaseNode[], deadline: number) {
-  const { layers, finished } = layersUntil(roots, deadline, (node) => node.type !== "INSTANCE");
+function bindableLayers(roots: readonly BaseNode[], { deadline, overrides }: { deadline: number; overrides: boolean }) {
+  if (overrides) {
+    const walked = layersUntil(roots, deadline);
+
+    return {
+      layers: walked.layers.filter(isLayer),
+      instances: 0,
+      finished: walked.finished,
+    };
+  }
+
+  const layers: SceneNode[] = [];
+  let instances = 0;
+  let next: readonly BaseNode[] = roots;
+  let finished = true;
+
+  while (next.length > 0 && finished) {
+    const walked = layersUntil(next, deadline, (node) => node.type !== "INSTANCE");
+    const found = walked.layers.filter((node): node is InstanceNode => node.type === "INSTANCE");
+
+    layers.push(...walked.layers.filter((node): node is SceneNode => node.type !== "INSTANCE" && isLayer(node)));
+    instances += found.length;
+    finished = walked.finished;
+    next = found.flatMap(slotContent);
+  }
 
   return {
-    layers: layers.filter((node): node is SceneNode => node.type !== "INSTANCE" && isLayer(node)),
-    instances: layers.filter((node) => node.type === "INSTANCE").length,
+    layers,
+    instances,
     finished,
   };
+}
+
+/** The layers in an instance's own slots; a slot of an instance inside it is that instance's. */
+function slotContent(instance: InstanceNode): SceneNode[] {
+  return instance
+    .findAllWithCriteria({ types: ["SLOT"] })
+    .filter((slot) => closestInstance(slot)?.id === instance.id)
+    .flatMap((slot) => [...slot.children]);
+}
+
+function closestInstance(node: BaseNode): BaseNode | null {
+  let up = node.parent;
+
+  while (up !== null && up.type !== "INSTANCE") {
+    up = up.parent;
+  }
+
+  return up;
 }

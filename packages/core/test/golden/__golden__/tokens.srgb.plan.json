@@ -279,7 +279,12 @@
               "unit": "PIXELS",
               "value": 58
             }
-          }
+          },
+          "letterSpacing": {
+            "unit": "PERCENT",
+            "value": -2
+          },
+          "textCase": "UPPER"
         },
         {
           "name": "Body",
@@ -324,6 +329,10 @@
               "radius": 2,
               "spread": 1
             }
+          ],
+          "covers": [
+            "DROP_SHADOW",
+            "INNER_SHADOW"
           ]
         }
       ]

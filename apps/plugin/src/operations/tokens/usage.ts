@@ -42,12 +42,9 @@ const STYLE_KINDS: readonly (readonly [StyleKind, Usage["kind"]])[] = [
  * style found through the same token index design_apply binds with, so --White-2 is the style tokens_read calls so.
  */
 export async function usage({ token, within }: OperationInput<"usage">): Promise<Usage> {
+  const deadline = Date.now() + OP_BUDGET_MS;
   const target = await targetOf(token);
-  const root = within === undefined ? figma.currentPage : await requireNode(within);
-
-  await loaded(root);
-
-  const { layers: all, finished } = layersUntil([root], Date.now() + OP_BUDGET_MS);
+  const { layers: all, finished } = layersUntil(await rootsOf(within), deadline);
   const layers: Usage["layers"] = [];
   let more = !finished;
 
@@ -79,6 +76,21 @@ export async function usage({ token, within }: OperationInput<"usage">): Promise
     layers,
     more,
   };
+}
+
+/** Where to look, loaded: the layer or page `within` names, every page (the current one first), or the current page. */
+async function rootsOf(within: OperationInput<"usage">["within"]): Promise<BaseNode[]> {
+  if (within === "file") {
+    await figma.loadAllPagesAsync();
+
+    return [figma.currentPage, ...figma.root.children.filter((page) => page.id !== figma.currentPage.id)];
+  }
+
+  const root = within === undefined ? figma.currentPage : await requireNode(within);
+
+  await loaded(root);
+
+  return [root];
 }
 
 /** The style the token names (paint, then effect, then text), else the variable; none is NODE_NOT_FOUND. */
