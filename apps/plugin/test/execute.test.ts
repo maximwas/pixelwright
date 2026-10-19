@@ -87,10 +87,26 @@ describe("execute", () => {
     expect(await run('console.warn("before"); throw new Error("boom");')).toEqual({
       result: null,
       logs: ["warn: before"],
-      error: "Error: boom",
+      error: 'Error: boom\n    at line 1, column 31\nline 1: console.warn("before"); throw new Error("boom");',
     });
     expect(fake.writes.undo).toBe(1);
     expect((await run("return (")).error).toMatch(/SyntaxError/);
+  });
+
+  it("says where in the code an error came from, the calls that led there and the line itself", async () => {
+    const { error } = await run(
+      ["const label = (layer) => layer.missing();", "await null;", "return [1].map((each) => label(each));"].join("\n"),
+    );
+
+    expect(error).toBe(
+      [
+        "TypeError: layer.missing is not a function",
+        "    at label (line 1, column 32)",
+        "    at line 3, column 26",
+        "    at line 3, column 12",
+        "line 1: const label = (layer) => layer.missing();",
+      ].join("\n"),
+    );
   });
 
   it("stops waiting at its timeout and says the code may still be running", async () => {

@@ -8,13 +8,9 @@ import {
 import pTimeout from "p-timeout";
 import type { CodeScope } from "../../services/code-scope.ts";
 import type { EditsGuard } from "../../services/edits-guard.ts";
+import { codeError, codeFunction } from "./code-error.ts";
 import { codeHelpers } from "./code-helpers.ts";
 import { jsonValue } from "./json-value.ts";
-
-type AsyncBody = new (...names: string[]) => (...values: unknown[]) => Promise<unknown>;
-
-/** The constructor of async functions: the code becomes the body of one. */
-const AsyncFunction = Object.getPrototypeOf(async () => undefined).constructor as AsyncBody;
 
 /** What the run gives when its time is up first. */
 const TIMED_OUT = Symbol("timed out");
@@ -56,7 +52,7 @@ async function ran(
   { output, pw }: { readonly output: CapturedConsole; readonly pw: Record<string, unknown> },
 ): Promise<OperationOutput<"execute">> {
   try {
-    const run = new AsyncFunction("figma", "console", "pw", code);
+    const run = codeFunction(code);
     const value = await pTimeout(run(figma, output.console(), pw), {
       milliseconds: timeoutMs,
       fallback: () => TIMED_OUT,
@@ -78,7 +74,7 @@ async function ran(
     return {
       result: null,
       logs: output.kept(),
-      error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      error: await codeError(error, code),
     };
   }
 }
