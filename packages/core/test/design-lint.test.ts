@@ -363,6 +363,39 @@ describe("design_lint: the general rules", () => {
     ]);
   });
 
+  it("gives each rule the severity of its most severe finding, so the list and the findings agree", () => {
+    const button = (id: string, height: number) =>
+      layer(id, "Buy", {
+        type: "INSTANCE",
+        height,
+        instance: {
+          componentId: "C:btn",
+          componentName: "Button",
+          properties: {},
+        },
+      });
+    const rulesOf = (...buttons: SnapshotNode[]) =>
+      designLint(
+        {
+          reads: [
+            {
+              root: layer("4:0", "Bar", { children: buttons }),
+              styles: {},
+              variables: {},
+            },
+          ],
+        },
+        {
+          limit: 100,
+          scope: "x",
+          rules: ["touch-target"],
+        },
+      ).rules.map(({ rule, severity, count }) => `${rule} ${severity} ${count}`);
+
+    expect(rulesOf(button("4:1", 32), button("4:2", 40))).toEqual(["touch-target info 2"]);
+    expect(rulesOf(button("4:1", 32), button("4:2", 20))).toEqual(["touch-target warning 2"]);
+  });
+
   it("says a layer's raw values in one sentence, overrides in CSS words, and leaves a mask's colour alone", () => {
     const card = layer("2:1", "Promo", {
       fills: [solid(0x14161f), solid(0x123456)],

@@ -50,15 +50,17 @@ export function designLint(input: LintInput, options: LintOptions): DesignLint {
       unread: input.unread ?? 0,
     }),
     rules: rules.flatMap((rule) => {
-      const count = shown.filter((finding) => finding.rule === rule.id).length;
+      const own = shown.filter((finding) => finding.rule === rule.id);
+      // A rule's findings may be milder than the rule (a touch target under 44 px is info): list the most severe shown.
+      const [worst] = own;
 
-      return count === 0
+      return worst === undefined
         ? []
         : [
             {
               rule: rule.id,
-              severity: rule.severity,
-              count,
+              severity: worst.severity,
+              count: own.length,
               about: rule.about,
             },
           ];
