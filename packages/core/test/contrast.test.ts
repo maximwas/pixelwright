@@ -395,4 +395,45 @@ describe("contrast_check on the Dukach feedback", () => {
     ]);
     expect(summary).toBe("1 texts: 1 below AA.");
   });
+
+  it("rates a text on see-through glass over mixed rows against the worst of them, the blur not weighed", () => {
+    const row = (id: string, fill: unknown, y: number, height: number) => ({
+      ...rect(id, [fill], 0, 400),
+      y,
+      height,
+    });
+    const glass = {
+      ...rect(
+        "Glass",
+        [
+          {
+            ...WHITE,
+            opacity: 0.7,
+          },
+        ],
+        0,
+        400,
+      ),
+      effects: [
+        {
+          type: "BACKGROUND_BLUR",
+          visible: true,
+          radius: 20,
+        },
+      ],
+    };
+    const rows = [row("Row 1", solid(255, 59, 48), 0, 15), row("Row 2", WHITE, 15, 85)];
+    const { summary, texts } = contrastCheck({
+      root: frame("1:1", [WHITE], [...rows, glass, painted(text("Label", 16, 10, 10), GRAY)]),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts[0]).toMatchObject({
+      ratio: 3.01,
+      aa: false,
+      backdrop: expect.stringMatching(/^#FFC4C1 \(the worst of 2 /),
+    });
+    expect(summary).toBe("1 texts: 1 below AA.");
+  });
 });

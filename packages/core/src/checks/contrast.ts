@@ -173,22 +173,31 @@ function rateSegment(node: SnapshotNode, segment: TextSegment, { behind, over, s
     return unrated(base, [color.css(), over.says], over.unknown);
   }
 
-  return behind instanceof Color
-    ? ratedOver(base, color, [behind, over.veils])
+  return "colors" in behind
+    ? ratedOver(base, color, [behind.colors, over.veils])
     : unrated(base, [color.css(), behind.says], behind.unknown);
 }
 
-/** A run's ratio: its colour over what is behind it, both seen through the veils over the text (bottom first). */
-function ratedOver(base: Base, color: Color, [behind, veils]: readonly [Color, readonly Veil[]]): Rated {
+/**
+ * A run's ratio: its colour over what is behind it, both seen through the veils over the text (bottom first); over
+ * several backdrops (the parts under a see-through panel), the worst of them.
+ */
+function ratedOver(base: Base, color: Color, [colors, veils]: readonly [readonly Color[], readonly Veil[]]): Rated {
   // Color measures WCAG contrast on the sRGB form.
-  const ratio = throughVeils(color.over(behind), veils).contrast(throughVeils(behind, veils));
+  const { behind, ratio } = colors
+    .map((one) => ({
+      behind: one,
+      ratio: throughVeils(color.over(one), veils).contrast(throughVeils(one, veils)),
+    }))
+    .reduce((worst, next) => (next.ratio < worst.ratio ? next : worst));
   const top = veils.at(-1);
+  const parts = colors.length > 1 ? ` (the worst of ${colors.length} backdrops under a see-through layer)` : "";
 
   return {
     row: {
       ...base,
       color: color.css(),
-      backdrop: `${behind.css()}${top === undefined ? "" : ` under ${top.layer.id} "${top.layer.name}" ${top.color.css()}`}`,
+      backdrop: `${behind.css()}${parts}${top === undefined ? "" : ` under ${top.layer.id} "${top.layer.name}" ${top.color.css()}`}`,
       ratio: Math.round(ratio * 100) / 100,
       aa: ratio >= (base.large ? 3 : 4.5),
       aaa: ratio >= (base.large ? 4.5 : 7),

@@ -6,38 +6,85 @@ import { type Layer, paintLayers } from "./paints.ts";
 /** Why a text's contrast is not one number: an image or gradient, a layer under part of it, nothing opaque read. */
 export type Unknown = "image" | "partly" | "nothing";
 
-/** What is behind a text: one colour, or why it is not one, in words. */
-export type Backdrop = Color | { readonly unknown: Unknown; readonly says: string };
+/** Why a text's contrast is not one number, in words. */
+type NotOne = { readonly unknown: Unknown; readonly says: string };
+
+/** What is behind a text: the colours it lies over (one, or each part's under a see-through panel), or why not known. */
+export type Backdrop = { readonly colors: readonly Color[] } | NotOne;
 
 /** One step down from a text: a paint under it, or a layer that paints under only part of it. */
 type Step = { readonly paint: Layer } | { readonly partly: SnapshotNode };
 
 /**
  * The colour behind a layer, or why it is not one colour: what is under it, top first, until an opaque paint. A layer
- * covering only part of the text matters only above that paint: the paint hides what is below.
+ * covering only part of the text matters only above that paint: the paint hides what is below. Under a see-through
+ * panel (glass, matte; its blur is not weighed) the text is over each part: the backdrop without the layers under part
+ * of it, and with each of them. Shortcut: such layers are not combined with each other, so where two overlap under
+ * the text that part is missed; combine them when a design needs it.
  */
 export function backdropOf(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Backdrop {
-  const layers: Layer[] = [];
+  const steps = stepsUnder(node, ancestors);
+  const end = steps.findIndex((step) => "paint" in step && opaque(step.paint));
+  const above = end === -1 ? steps : steps.slice(0, end);
+  const first = above.findIndex((step) => "partly" in step);
+  const parts = above.slice(first).flatMap((step) => ("partly" in step ? [step.partly] : []));
+  const [part] = parts;
 
-  for (const step of stepsUnder(node, ancestors)) {
-    if ("partly" in step) {
-      return {
+  if (first === -1 || part === undefined) {
+    return colorsOf([paintsWith(steps, null)], space);
+  }
+
+  // Every paint above the first opaque one is see-through: one that shows at all makes the panel.
+  const panel = above.slice(0, first).some((step) => "paint" in step && "alpha" in step.paint && step.paint.alpha > 0);
+
+  return panel
+    ? colorsOf([paintsWith(steps, null), ...parts.map((one) => paintsWith(steps, one))], space)
+    : {
         unknown: "partly",
-        says: `partly over ${step.partly.id} "${step.partly.name}": it covers only part of the text`,
+        says: `partly over ${part.id} "${part.name}": it covers only part of the text`,
       };
+}
+
+/** The steps' paints, top first: those of one layer under part of the text included, the other such layers left out. */
+function paintsWith(steps: readonly Step[], part: SnapshotNode | null): Layer[] {
+  return steps.flatMap((step) => {
+    if ("paint" in step) {
+      return [step.paint];
     }
 
-    layers.push(step.paint);
+    return step.partly === part ? paintLayers(part) : [];
+  });
+}
 
-    if ("kind" in step.paint || step.paint.alpha >= 1) {
-      return composited(layers, space);
+/** The colour each list of paints (top first) makes down to its first opaque one; why not, when one makes none. */
+function colorsOf(lists: readonly (readonly Layer[])[], space: ColorSpace): Backdrop {
+  const colors: Color[] = [];
+
+  for (const layers of lists) {
+    const end = layers.findIndex(opaque);
+    const found: Color | NotOne =
+      end === -1
+        ? {
+            unknown: "nothing",
+            says: "nothing opaque behind it in the layer read: check it inside its screen",
+          }
+        : composited(layers.slice(0, end + 1), space);
+
+    if (!(found instanceof Color)) {
+      return found;
+    }
+
+    if (!colors.some((color) => color.equals(found, 0))) {
+      colors.push(found);
     }
   }
 
-  return {
-    unknown: "nothing",
-    says: "nothing opaque behind it in the layer read: check it inside its screen",
-  };
+  return { colors };
+}
+
+/** A paint nothing below shows through: a solid at full alpha, or an image or a gradient. */
+function opaque(paint: Layer): boolean {
+  return "kind" in paint || paint.alpha >= 1;
 }
 
 /** A see-through layer over a text, and the colour it lays over the text and its backdrop alike. */
@@ -160,7 +207,7 @@ function paintedOver(layer: SnapshotNode, text: SnapshotNode): Cover[] {
 }
 
 /** Paints laid over each other, bottom up from the opaque one last in the list: one colour, or what the bottom is. */
-function composited(layers: readonly Layer[], space: ColorSpace): Backdrop {
+function composited(layers: readonly Layer[], space: ColorSpace): Color | NotOne {
   let color: Color | null = null;
 
   for (const layer of layers.toReversed()) {
