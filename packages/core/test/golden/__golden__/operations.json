@@ -7418,6 +7418,14 @@
             ]
           }
         },
+        "instances": {
+          "default": "leave",
+          "type": "string",
+          "enum": [
+            "leave",
+            "override"
+          ]
+        },
         "dryRun": {
           "default": false,
           "type": "boolean"

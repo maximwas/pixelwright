@@ -72,7 +72,9 @@ export const TOKENS = {
   one), \`unmatched\` (no token holds it: make one with tokens_apply). A choose for a value no candidate holds snaps
   the layers to the token (\`snapped\`); \`field\` narrows a choice to background, border, color, gap, padding….
 - \`remap: [{from: "--blue-500", to: "--brand"}]\` moves every use of one token to another of its kind (merging
-  duplicates); raw values are then left alone.
+  duplicates); raw values are then left alone. \`instances: "override"\` rebinds the uses inside instances too, as
+  overrides on each one: for a copy that must differ from its components, like a dark copy in a file whose plan has
+  one mode.
 - Instances are left out: bind their main components, and the instances follow. What was put into an instance's
   slots is the instance's own and is bound. One undo step; \`dryRun\` lists
   without writing, \`version\` saves a named version first when the call changes something.

@@ -417,6 +417,68 @@ describe("bind: one token's uses rebound to another", () => {
     expect(byId("1:1").fills).toEqual([solid(0xffffff)]);
   });
 
+  it("rebinds uses inside instances as their overrides only when asked", async () => {
+    const button = byId("1:4");
+    const remap = [
+      {
+        from: "--brand",
+        to: "--accent",
+      },
+    ];
+
+    button.children = [
+      tree(
+        {
+          id: "I1:4;2:1",
+          name: "Icon",
+          type: "INSTANCE",
+          children: [
+            {
+              id: "I1:4;2:1;3:1",
+              name: "Glyph",
+              type: "VECTOR",
+              fills: [
+                {
+                  ...solid(0x3b2fd9),
+                  boundVariables: {
+                    color: {
+                      type: "VARIABLE_ALIAS",
+                      id: "V:brand",
+                    },
+                  },
+                },
+              ],
+              fillStyleId: "",
+            },
+          ],
+        },
+        button,
+      ),
+    ];
+
+    const left = await run({ remap });
+
+    expect(left.remapped).toEqual([]);
+    expect(left.notes).toEqual([
+      '1 instance was left alone: bind its main component, and its instances follow; instances: "override" rebinds the uses inside them as their overrides.',
+    ]);
+
+    const overridden = await run({
+      remap,
+      instances: "override",
+    });
+
+    expect(overridden.remapped).toEqual([
+      {
+        from: "--brand",
+        to: "--accent",
+        count: 1,
+      },
+    ]);
+    expect(overridden.notes).toEqual([]);
+    expect(byId("I1:4;2:1;3:1").fills).toMatchObject([{ boundVariables: { color: { id: "V:accent" } } }]);
+  });
+
   it("refuses to rebind a token to one of another kind", async () => {
     const output = await run({
       remap: [

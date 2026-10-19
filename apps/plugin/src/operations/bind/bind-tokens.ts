@@ -35,8 +35,8 @@ interface BindRun {
 /**
  * The `bind` operation: under the roots, every raw value bound to the one token holding it (or the call's pick), the
  * rest listed; or, with remaps, one token's uses rebound to another. Instances are left to their components, all but
- * their slots' content. A dry run
- * writes nothing and works with Allow edits off; a real run is one undo step.
+ * their slots' content, unless remaps are asked to override them. A dry run writes nothing and works with Allow edits
+ * off; a real run is one undo step.
  */
 export async function bindTokens(input: BindInput, { edits }: PluginServices): Promise<OperationOutput<"bind">> {
   if (!input.dryRun) {
@@ -47,10 +47,14 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
   const context = await BindContext.of(roots);
   const report = new BindReport();
   const deadline = Date.now() + OP_BUDGET_MS;
-  const { layers, instances, finished } = bindableLayers(roots, deadline);
+  const remaps = input.remap.length > 0;
+  const { layers, instances, finished } = bindableLayers(roots, {
+    deadline,
+    overrides: remaps && input.instances === "override",
+  });
   let done = true;
 
-  if (input.remap.length > 0) {
+  if (remaps) {
     await remapTokens(layers, input, context, report);
   } else {
     done = await bindValues(layers, {
@@ -62,11 +66,7 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
   }
 
   if (instances > 0) {
-    report.note(
-      instances === 1
-        ? "1 instance was left alone: bind its main component, and its instances follow."
-        : `${instances} instances were left alone: bind their main components, and the instances follow.`,
-    );
+    report.note(leftAlone(instances, remaps));
   }
 
   if (!input.dryRun && report.wrote) {
@@ -74,6 +74,16 @@ export async function bindTokens(input: BindInput, { edits }: PluginServices): P
   }
 
   return report.result(!finished || !done);
+}
+
+/** The note on the instances a call left to their components, and what binds inside them. */
+function leftAlone(instances: number, remaps: boolean): string {
+  const left =
+    instances === 1
+      ? "1 instance was left alone: bind its main component, and its instances follow"
+      : `${instances} instances were left alone: bind their main components, and the instances follow`;
+
+  return remaps ? `${left}; instances: "override" rebinds the uses inside them as their overrides.` : `${left}.`;
 }
 
 /** Each layer's raw values bound or listed; false when time ran out first. */
@@ -123,9 +133,19 @@ async function settle(use: RawUse, choices: BindChoices, { input, report }: Bind
 /**
  * The layers a bind call goes through, the roots among them, and how many instances it left to their components: what
  * binds there belongs to the main component, and an instance's own would be overrides. What was put into an instance's
- * slots is the instance's own, so the walk goes on there.
+ * slots is the instance's own, so the walk goes on there. With `overrides`, the walk goes into every instance.
  */
-function bindableLayers(roots: readonly BaseNode[], deadline: number) {
+function bindableLayers(roots: readonly BaseNode[], { deadline, overrides }: { deadline: number; overrides: boolean }) {
+  if (overrides) {
+    const walked = layersUntil(roots, deadline);
+
+    return {
+      layers: walked.layers.filter(isLayer),
+      instances: 0,
+      finished: walked.finished,
+    };
+  }
+
   const layers: SceneNode[] = [];
   let instances = 0;
   let next: readonly BaseNode[] = roots;

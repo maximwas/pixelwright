@@ -34,6 +34,8 @@ export const BindInputSchema = z.object({
   choose: z.array(BindChoiceSchema).max(200).default([]),
   /** With remaps the raw values are left alone: only the uses of the `from` tokens are rebound. */
   remap: z.array(BindRemapSchema).max(50).default([]),
+  /** With remaps: leave instances to their main components, or rebind the uses inside them as their overrides. */
+  instances: z.enum(["leave", "override"]).default("leave"),
   /** Find what would be bound without writing (works with Allow edits off). */
   dryRun: z.boolean().default(false),
 });
