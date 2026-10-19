@@ -16,6 +16,71 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## Unreleased
+
+### Added
+
+- `execute` takes `script` instead of `code`: a file of code on the server's disk, read at every call, so a long
+  script needs no pasting and an edited file runs as it is now.
+- `design_lint` takes a list of up to 30 layer ids in `within`, each read on its own in one call: a big board's frames.
+- `nodes_find` and `tokens_usage` take `within: "file"` and look on every page.
+- `components_read` takes `fields`, so a big component library answers with only the fields asked for (names of the
+  icon sets, for one).
+- `tokens_bind` with `remap` takes `instances: "override"`, which rebinds the uses inside instances, nested ones too,
+  as overrides on each instance: a dark copy on a plan with one mode a collection.
+- `tokens_apply` writes a text style's letter spacing and text case, from the `also` list `tokens_read` gives or
+  after the font, and blur effect styles (`filter: blur()`, `backdrop-filter: blur()`) beside shadows.
+  `design_apply` binds an effect style from `filter` and `backdrop-filter` with `var(--Style)`, as from `box-shadow`.
+- `design_read` shows which component property a component's layer is bound to: `$visibleProp`, `$prop` and
+  `$swapProp`, read only.
+- `design_apply` takes `padding-top`, `padding-right`, `padding-bottom` and `padding-left`, each over the layer's
+  other sides, and its `created` names each layer it made beside its id.
+- `status` says why a file's key is empty (Figma gives it only to private plugins) and to ask for the file's link.
+
+### Changed
+
+- The plugin runs a write alone, after everything asked before it, and reads beside each other after the writes
+  before them: a read never sees a write half done, and a timed-out write's retry finds what the first try made.
+- `contrast_check` rates every run of a text with its own colour, by its characters, sees the layers above the layer
+  it checks (a part of a screen lies on the screen's fill), weighs a see-through layer over a text (a scrim), and
+  rates a text on see-through glass against each part below it, giving the worst. `design_lint`'s contrast rule
+  does the same.
+- `design_lint` and `tokens_bind` check and bind what an instance's slot holds: it is the instance's own content.
+- `design_lint` lists a rule at the severity of its most severe finding, so a rule whose findings are all info no
+  longer shows as a warning.
+- `tokens_read` with `format: "json"` past `maxChars` gives as many whole tokens as fit, and says how to read the rest.
+- `design_apply` takes a size together with both edges as CSS does (the size wins, the layer still stretches),
+  places a layer by `left` and `top` where nothing lays it out (in a section, on the page), reads any known tag in
+  any case (`<span>` too), and takes the elements a top-level `<Root>` wraps.
+- `execute`'s description names what its code runs under (dynamic page access, hidden layers inside instances
+  skipped); an error about a synchronous call names the async one to make, and a script that turns
+  `skipInvisibleInstanceChildren` off gets it back after the call.
+
+### Fixed
+
+- A `tokens_apply` retried after the server stopped waiting no longer makes duplicate text styles; the timeout of a
+  write says the plugin may still be writing and to read the file before retrying.
+- After thousands of calls in one plugin window, Figma's "invalid callback id" error on layers holding a grid says to
+  close and reopen the Pixelwright plugin window, which clears it.
+- `changes_since` counts what `texts_replace` and `instances_reattach` changed as Pixelwright's.
+- `design_lint` never answers "No findings" for layers it could not read: with none read it fails with each reason,
+  with some read its summary says how many were not checked.
+- `contrast_check` stops at the opaque fill right under a text instead of calling it "partly over" a deeper layer,
+  never takes a text for a backdrop, leaves out (and counts) texts a clipping frame cuts out of view or an opaque
+  layer covers, and says each reason a contrast is not one number instead of "over an image or gradient".
+- `image_compare` no longer reads antialiased edges as shifts of several pixels.
+- `nodes_delete` deletes a layer in an instance's slot, and `design_apply` moves layers within a slot.
+- `execute` code that does not parse is answered with the line and column, before anything runs, and says when the
+  code may have arrived cut; an error while it runs names the line in the code and quotes it, with a short stack.
+- `design_apply` `note=` keeps a note's text as written: a prefix is a category only when the file has one of that
+  name (none is made), and a bar splits only next to a note the layer has.
+- `design_apply` hiding a layer inside an instance with `display="none"` no longer answers "does not exist".
+- `design_apply` places a new component set's variants in its grid with `grid-row` and `grid-column`.
+- `design_apply` after a `copyOf` with edits inside lists the copy's layers it wrote in `changed`, and `before=` and
+  `after=` inside a copy place by the copy's layers.
+- `design_apply` keeps a new text named `Text` when `name="Text"` is given.
+- `design_apply`'s "too many layers at once" says to leave out the layers that stay as they are, or to split the call.
+
 ## 0.4.1 — 2026-10-18
 
 ### Fixed
