@@ -29,7 +29,9 @@ taken as sRGB and converted to P3.
   is pinned to. A new \`left\` or \`right\` replaces both edges.
 - Moving: an element with \`id\` under another parent element moves the layer there, \`before="id"\` /
   \`after="id"\` puts it next to that layer, and listing layers in another order reorders them. A layer inside an
-  instance stays where it is (only an instance's slots take new layers).
+  instance stays where it is (only an instance's slots take new layers). An element alone (\`<Frame id="…"/>\`)
+  moves its layer with everything inside it: leave out the layers inside that stay as they are, since each layer
+  named is read before the write and a call reads only so many.
 - A text \`design_read\` shortened (\`$truncated\`) is never written back: read that layer on its own to change it.
 - A hidden layer comes back with \`display\` (\`flex\`, \`grid\` or \`block\`, as it was laid out).
 - Each tag takes its own attributes: no \`background\` or \`gap\` on a Text (its colour is \`color\`), no text

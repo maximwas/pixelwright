@@ -55,7 +55,8 @@ function unread(element: ApplyElement, named: string): ApplyError {
     line: element.line,
     column: element.column,
     ...(element.id === null ? {} : { id: element.id }),
-    message: `design_apply could not read ${named}'s current state: the call holds too many layers at once.`,
-    hint: "Send fewer layers in one call, or this one on its own.",
+    // The read takes every layer named whole, layers inside included: a design_read sent back whole to move it fills it.
+    message: `design_apply could not read ${named}'s current state: the layers this call names, with every layer inside them, are more than one call reads.`,
+    hint: 'Leave out the layers that stay as they are: an element alone (<Frame id="…"/>) moves or changes its layer with everything inside it. Or split the call.',
   };
 }
