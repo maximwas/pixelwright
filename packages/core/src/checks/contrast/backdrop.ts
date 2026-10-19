@@ -1,5 +1,6 @@
 import { Color } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
+import { overlaps } from "../../kernel/geometry.ts";
 import type { SnapshotNode } from "../../types/snapshot.ts";
 import { type Layer, paintLayers } from "./paints.ts";
 
@@ -138,11 +139,6 @@ export function throughVeils(color: Color, veils: readonly Veil[]): Color {
   return veils.reduce((seen, veil) => veil.color.over(seen), color);
 }
 
-/** Whether two layers' boxes overlap. */
-export function meets(a: SnapshotNode, b: SnapshotNode): boolean {
-  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-}
-
 /** What is under a text, top first: the layers below it in each parent (their own children included), then its fills. */
 function stepsUnder(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Step[] {
   const steps: Step[] = [];
@@ -191,7 +187,7 @@ function paintsOver(node: SnapshotNode, ancestors: readonly SnapshotNode[]): Cov
 
 /** What a layer above a text lays over all of it, bottom first: its own fills, then its children's. */
 function paintedOver(layer: SnapshotNode, text: SnapshotNode): Cover[] {
-  if (!layer.visible || layer.type === "TEXT" || !meets(layer, text)) {
+  if (!layer.visible || layer.type === "TEXT" || !overlaps(layer, text)) {
     return [];
   }
 
@@ -240,7 +236,7 @@ function composited(layers: readonly Layer[], space: ColorSpace): Color | NotOne
  * backdrop: its fills colour thin glyphs, not its box.
  */
 function paintedUnder(layer: SnapshotNode, text: SnapshotNode): Step[] {
-  if (!layer.visible || layer.type === "TEXT" || !meets(layer, text)) {
+  if (!layer.visible || layer.type === "TEXT" || !overlaps(layer, text)) {
     return [];
   }
 

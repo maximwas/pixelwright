@@ -4,7 +4,10 @@ import type { PluginClient } from "../../plugin/plugin-client.ts";
 import { selectedLayer } from "../../plugin/selected-layer.ts";
 import type { ContrastInputSchema } from "./schemas.ts";
 
-/** The texts under a layer (the one selected when none is named) rated for contrast against what is behind them. */
+/**
+ * The texts under a layer (the one selected when none is named) rated for contrast against what is behind them, the
+ * layers above it included: a part of a screen lies on the screen's fill.
+ */
 export async function checkContrast(
   plugin: PluginClient,
   { node, file }: z.output<typeof ContrastInputSchema>,
@@ -16,6 +19,7 @@ export async function checkContrast(
     await session.run("snapshot", {
       node: id,
       css: "none",
+      ancestors: true,
     }),
   );
 }

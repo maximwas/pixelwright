@@ -1,11 +1,11 @@
 import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { overlaps } from "../kernel/geometry.ts";
 import type { Contrast, ContrastText } from "../types/contrast.ts";
 import type { Snapshot, SnapshotNode, TextSegment } from "../types/snapshot.ts";
 import {
   type Backdrop,
   backdropOf,
-  meets,
   type Over,
   overOf,
   throughVeils,
@@ -43,18 +43,18 @@ const LEFT_OUT_COUNTS: readonly (readonly [LeftOut, string])[] = [
  * Each visible text's WCAG contrast with what is behind it: the layers below it in its parent that cover it, then its
  * ancestors' fills, see-through ones laid over what is below them, and the see-through layers over it (a scrim) laid
  * over both. An image or a gradient is said, not guessed. A text nobody sees (cut off by a clipping frame, under an
- * opaque layer) is left out, and counted.
+ * opaque layer) is left out, and counted. The layers above the read (the snapshot's ancestors) count as its parents.
  */
 export function contrastCheck(snapshot: Snapshot): Contrast {
   const space = colorSpaceOf(snapshot.colorProfile);
   const rated: Rated[][] = [];
   const left: LeftOut[] = [];
-  const walk = (node: SnapshotNode, ancestors: readonly SnapshotNode[]) => {
+  const walk = (node: SnapshotNode, ancestors: readonly SnapshotNode[], inside: boolean) => {
     if (!node.visible) {
       return;
     }
 
-    if (node.type === "TEXT") {
+    if (node.type === "TEXT" && inside) {
       const text = rateText(node, ancestors, space);
 
       if (typeof text === "string") {
@@ -67,16 +67,28 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
     }
 
     for (const child of node.children ?? []) {
-      walk(child, [...ancestors, node]);
+      walk(child, [...ancestors, node], inside || child === snapshot.root);
     }
   };
+  const top = placed(snapshot);
 
-  walk(snapshot.root, []);
+  walk(top, [], top === snapshot.root);
 
   return {
     summary: summaryOf(rated, left),
     texts: rated.flat().map(({ row }) => row),
   };
+}
+
+/** The read's root put back in the layers above it, in place of its bare entry there: the outermost, the root inside. */
+function placed(snapshot: Snapshot): SnapshotNode {
+  return (snapshot.ancestors ?? []).reduce<SnapshotNode>(
+    (inner, ancestor) => ({
+      ...ancestor,
+      children: (ancestor.children ?? []).map((child) => (child.id === inner.id ? inner : child)),
+    }),
+    snapshot.root,
+  );
 }
 
 /** The counts, of texts (each with its runs): below AA, why a contrast is not one number, seen through a veil, left out. */
@@ -104,7 +116,7 @@ function counted(counts: readonly (readonly [number, string])[]): string[] {
  * it is left out. No rows when no run has a visible paint.
  */
 function rateText(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Rated[] | LeftOut {
-  if (ancestors.some((ancestor) => ancestor.clipsContent && !meets(ancestor, node))) {
+  if (ancestors.some((ancestor) => ancestor.clipsContent && !overlaps(ancestor, node))) {
     return "cut";
   }
 

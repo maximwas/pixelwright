@@ -228,6 +228,29 @@ describe("contrast_check after the review", () => {
 });
 
 describe("contrast_check on the Dukach feedback", () => {
+  it("looks past the layer read into the layers above it, rating only the read's own texts (bug 6)", () => {
+    const content = frame("Content", [], [painted(text("Account", 16, 10, 10), solid(142, 142, 147))]);
+    const bare: SnapshotNode = {
+      ...content,
+      children: undefined,
+    };
+    const { summary, texts } = contrastCheck({
+      root: content,
+      ancestors: [frame("Screen", [solid(0, 0, 0)], [text("Title", 16, 10, 10), bare])],
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts).toEqual([
+      expect.objectContaining({
+        name: "Account",
+        backdrop: "#000",
+        ratio: 6.44,
+      }),
+    ]);
+    expect(summary).toBe("1 texts: 0 below AA.");
+  });
+
   it("never takes a text lower in the frame for a backdrop (bug 8)", () => {
     const row = (id: string, x: number) => text(id, 16, x, 10, { fills: [GRAY] as SnapshotNode["fills"] });
     const { texts } = contrastCheck({

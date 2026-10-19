@@ -2116,6 +2116,10 @@
         "paths": {
           "default": false,
           "type": "boolean"
+        },
+        "ancestors": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "required": [
@@ -2128,6 +2132,12 @@
       "properties": {
         "root": {
           "$ref": "#/$defs/__schema0"
+        },
+        "ancestors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
         },
         "colorProfile": {
           "type": "string"
@@ -4314,6 +4324,12 @@
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
+        "ancestors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
         "colorProfile": {
           "type": "string"
         },
