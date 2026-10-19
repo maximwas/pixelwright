@@ -371,4 +371,30 @@ describe("tokens_apply: styles", () => {
       }),
     ]);
   });
+
+  it("runs a retry after the call still writing, so it finds that call's styles by name and makes no copies", async () => {
+    const load = fake.figma.loadFontAsync;
+
+    // Fonts load slowly, as in the big call the server stopped waiting for: its retry arrives while it still writes.
+    Object.assign(fake.figma, {
+      loadFontAsync: async (font: FontName) => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        await load(font);
+      },
+    });
+
+    const text = ["h3", "h4", "h5"].map((name) => ({
+      name,
+      value: "500 20px/normal 'Inter'",
+    }));
+    const [first, retry] = await Promise.all([apply({ text }), apply({ text })]);
+
+    expect((await local()).text.map(({ name }) => name)).toEqual(["h2", "h3", "h4", "h5"]);
+    expect(first.created).toHaveLength(3);
+    expect(retry).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+  });
 });

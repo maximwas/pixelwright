@@ -4,8 +4,8 @@ import { requireNode } from "../../figma/nodes.ts";
 import { collectionsAround, type ModedNode } from "../../figma/variable-modes.ts";
 import type { PluginServices } from "../../services/plugin-services.ts";
 
-/** What a render in other variable modes needs: it writes for a moment, as Pixelwright, one at a time. */
-type ModeWrites = Pick<PluginServices, "edits" | "journal" | "modeTurns">;
+/** What a render in other variable modes needs: it writes for a moment, as Pixelwright. */
+type ModeWrites = Pick<PluginServices, "edits" | "journal">;
 
 /** A collection to set on the layer for the render, the mode to set, and the layer's own mode to set back. */
 interface ModeChoice {
@@ -16,28 +16,27 @@ interface ModeChoice {
 
 /**
  * Runs a render with the layer in the variable modes asked for (collection and mode by name, any case), then sets its
- * modes back: a write for a moment, so Allow edits must be on; one undo step that leaves the file as it was. One mode
- * render at a time: two at once (light and dark side by side) would each see the other's mode as the layer's.
+ * modes back: a write for a moment, so Allow edits must be on; one undo step that leaves the file as it was. The
+ * registry runs it as a write, alone: two at once (light and dark side by side) would each see the other's mode as the
+ * layer's, and so would a read meanwhile.
  */
-export function inModes<T>(
+export async function inModes<T>(
   id: string,
   modes: Readonly<Record<string, string>>,
   run: () => Promise<T>,
   services: ModeWrites,
 ): Promise<T> {
-  return services.modeTurns.run(async () => {
-    services.edits.require();
+  services.edits.require();
 
-    const node = await requireNode(id);
+  const node = await requireNode(id);
 
-    if (!("resolvedVariableModes" in node) || !("setExplicitVariableModeForCollection" in node)) {
-      throw new BridgeError("OP_FAILED", `${id} is a ${node.type.toLowerCase()}, which takes no variable modes.`);
-    }
+  if (!("resolvedVariableModes" in node) || !("setExplicitVariableModeForCollection" in node)) {
+    throw new BridgeError("OP_FAILED", `${id} is a ${node.type.toLowerCase()}, which takes no variable modes.`);
+  }
 
-    const chosen = await choicesFor(node, id, modes);
+  const chosen = await choicesFor(node, id, modes);
 
-    return services.journal.asOwnWrite(() => renderedIn(node, chosen, run));
-  });
+  return services.journal.asOwnWrite(() => renderedIn(node, chosen, run));
 }
 
 /** The collections and modes asked for, by name, among those that apply to the layer and the file's own. */

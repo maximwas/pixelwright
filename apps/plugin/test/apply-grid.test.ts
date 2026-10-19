@@ -90,4 +90,19 @@ describe("apply: a grid's child moved to another cell", () => {
       },
     ]);
   });
+
+  it("says to reopen the plugin window when Figma's sandbox has spent its callback ids on grid tracks", async () => {
+    // Figma's words, seen after thousands of calls through one plugin window (Dukach feedback, bug 4).
+    Object.defineProperty(page.children?.[0], "gridColumnSizes", {
+      get: () => {
+        throw new Error("Attempted to invoke callback with invalid id -32605");
+      },
+      set: () => {},
+    });
+
+    const { errors } = await apply('<Frame id="1:1" display="grid" grid-template-columns="100px 1fr 1fr"/>');
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toMatch(/invalid id -32605.*close and reopen the Pixelwright plugin window/s);
+  });
 });

@@ -51,6 +51,22 @@ export const UPDATE_EVENT = "pixelwright.update";
 /** Operations the plugin window does not list among the last actions: probes, not something the model asked for. */
 export const SILENT_OPERATIONS: ReadonlySet<string> = new Set(["ping"]);
 
+/**
+ * Operations that change the file. The plugin runs each alone, after every operation before it, so a retry finds what
+ * the first try wrote; the server's timeout of one says the plugin may still be writing.
+ */
+export const WRITE_OPERATIONS: ReadonlySet<string> = new Set([
+  "apply",
+  "delete",
+  "execute",
+  "tokens_apply",
+  "effects",
+  "bind",
+  "texts",
+  "instances",
+  "save_version",
+]);
+
 /** Digits of the pairing code the server shows and the user types into the plugin window. */
 export const PAIRING_CODE_LENGTH = 6;
 
