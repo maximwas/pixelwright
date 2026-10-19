@@ -7126,6 +7126,34 @@
                       },
                       "font": {
                         "x-zod": "custom"
+                      },
+                      "letterSpacing": {
+                        "type": "object",
+                        "properties": {
+                          "unit": {
+                            "type": "string",
+                            "enum": [
+                              "PIXELS",
+                              "PERCENT"
+                            ]
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "unit",
+                          "value"
+                        ]
+                      },
+                      "textCase": {
+                        "type": "string",
+                        "enum": [
+                          "ORIGINAL",
+                          "UPPER",
+                          "LOWER",
+                          "TITLE"
+                        ]
                       }
                     },
                     "required": [

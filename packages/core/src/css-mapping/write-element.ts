@@ -170,13 +170,21 @@ function textOf(
  * a layer.
  */
 export function attributeProps(tag: string, attribute: string, value: string): { props: FigmaProps; errors: string[] } {
+  return attributesProps(tag, { [attribute]: value });
+}
+
+/** attributeProps for several attributes of one element, read together (a font with its spacing, shadows with blurs). */
+export function attributesProps(
+  tag: string,
+  attributes: Readonly<Record<string, string>>,
+): { props: FigmaProps; errors: string[] } {
   const problems: WriteProblem[] = [];
-  const own = (name: string) => (name === attribute ? value : undefined);
+  const own = (name: string) => (Object.hasOwn(attributes, name) ? attributes[name] : undefined);
   const input: WriteInput = {
     tag,
     own,
     merged: own,
-    changed: (name) => name === attribute,
+    changed: (name) => Object.hasOwn(attributes, name),
     hidden: false,
   };
   const out = new ChangeOutput(problems);

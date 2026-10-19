@@ -286,7 +286,12 @@
               "unit": "PIXELS",
               "value": 58
             }
-          }
+          },
+          "letterSpacing": {
+            "unit": "PERCENT",
+            "value": -2
+          },
+          "textCase": "UPPER"
         },
         {
           "name": "Body",

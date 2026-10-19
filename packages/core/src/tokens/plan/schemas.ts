@@ -58,7 +58,7 @@ export const TokensApplyInputSchema = z.object({
   styles: z
     .object({
       paint: z.array(StyleInputSchema()).max(2_000).default([]),
-      text: z.array(StyleInputSchema()).max(2_000).default([]),
+      text: z.array(TextStyleInputSchema()).max(2_000).default([]),
       effect: z.array(StyleInputSchema()).max(2_000).default([]),
     })
     .default({
@@ -76,6 +76,24 @@ function StyleInputSchema() {
   return z.object({
     name: NameSchema,
     value: z.string().max(10_000),
+  });
+}
+
+/** A text style as tokens_read lists it: with its letter spacing and case as tokens of their own. */
+function TextStyleInputSchema() {
+  return StyleInputSchema().extend({
+    also: z
+      .array(
+        z.object({
+          token: z.string().max(512),
+          value: z.string().max(10_000),
+        }),
+      )
+      .max(20)
+      .exactOptional()
+      .describe(
+        "Its letter spacing and case as tokens_read lists them: [{token: '--Caption-letter-spacing', value: '0.04em'}, {token: '--Caption-text-transform', value: 'uppercase'}].",
+      ),
   });
 }
 
@@ -137,6 +155,13 @@ export const TokensPlanSchema: z.ZodType<TokensPlan, TokensPlan> = z.object({
       z.object({
         name: NameSchema,
         font: FontSchema,
+        letterSpacing: z
+          .object({
+            unit: z.enum(["PIXELS", "PERCENT"]),
+            value: z.number(),
+          })
+          .exactOptional(),
+        textCase: z.enum(["ORIGINAL", "UPPER", "LOWER", "TITLE"]).exactOptional(),
       }),
     ),
     effect: z.array(

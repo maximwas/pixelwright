@@ -351,6 +351,58 @@ describe("tokens_apply: styles", () => {
     expect((await local()).paint.map(({ name }) => name)).toEqual(["Dark"]);
   });
 
+  it("writes a text style's letter spacing and case, and leaves them when the same come again", async () => {
+    const display = {
+      text: [
+        {
+          name: "h2",
+          value: "400 40px/normal 'Inter'",
+          also: [
+            {
+              token: "--h2-letter-spacing",
+              value: "-0.02em",
+            },
+            {
+              token: "--h2-text-transform",
+              value: "uppercase",
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(await apply(display)).toMatchObject({ updated: [{ name: "h2" }] });
+    expect((await local()).text[0]).toMatchObject({
+      letterSpacing: {
+        unit: "PERCENT",
+        value: -2,
+      },
+      textCase: "UPPER",
+    });
+    // Figma keeps letter spacing as a float: what renders the same as asked is left alone.
+    Object.assign((await local()).text[0] ?? {}, {
+      letterSpacing: {
+        unit: "PERCENT",
+        value: -2.0000000298,
+      },
+    });
+    expect(await apply(display)).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+    });
+    // A call that names no spacing or case leaves the style's.
+    await apply({
+      text: [
+        {
+          name: "h2",
+          value: "500 40px/normal 'Inter'",
+        },
+      ],
+    });
+    expect((await local()).text[0]).toMatchObject({ textCase: "UPPER" });
+  });
+
   it("names the font a text style asks for that this Figma lacks", async () => {
     expect(
       (
