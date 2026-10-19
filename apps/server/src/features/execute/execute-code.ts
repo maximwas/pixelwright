@@ -5,6 +5,7 @@ import type { PluginClient } from "../../plugin/plugin-client.ts";
 import { codeToRun } from "./code-to-run.ts";
 import { EXECUTE_ANSWER_MARGIN_MS } from "./constants.ts";
 import type { ExecuteInputSchema, ExecuteOutputSchema } from "./schemas.ts";
+import { syntaxError } from "./syntax-error.ts";
 
 type ExecuteArgs = z.output<typeof ExecuteInputSchema>;
 
@@ -18,6 +19,16 @@ export async function executeCode(
   { timeout, file, version: title, ...source }: ExecuteArgs,
 ): Promise<z.input<typeof ExecuteOutputSchema>> {
   const code = await codeToRun(source);
+  const invalid = syntaxError(code);
+
+  if (invalid !== null) {
+    return {
+      result: null,
+      logs: [],
+      error: invalid,
+    };
+  }
+
   const session = plugin.session(file);
   const version = await versionBefore(session, {
     title,

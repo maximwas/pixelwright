@@ -140,6 +140,32 @@ describe("execute", () => {
     expect(asked).toEqual([]);
   });
 
+  it("answers code that does not parse with where, and says code that breaks off at its end may have been cut", async () => {
+    const { asked, client } = recording({ execute: RAN });
+    const cut = "the rest was cut on its way to Pixelwright";
+    const parsed = (code: string) =>
+      executeCode(
+        client,
+        ExecuteInputSchema.parse({
+          code,
+          version: "Before",
+        }),
+      );
+
+    expect(await parsed('const a = 1;\nreturn "M0 0L1')).toEqual({
+      result: null,
+      logs: [],
+      error: `SyntaxError: Invalid or unexpected token\n    at line 2, column 8\nline 2: return "M0 0L1\nThe code ends there, after 27 characters: if you sent more, ${cut} (a model's reply is limited in tokens). Keep long code or data in a file and pass its path as script.`,
+    });
+    expect((await parsed("if (a) {\nreturn 1;")).error).toMatch(
+      /^SyntaxError: .*\n {4}at the end of the code\n.*after 18/,
+    );
+    expect((await parsed("a b;\nreturn 1;")).error).toBe(
+      "SyntaxError: Unexpected identifier 'b'\n    at line 1, column 3\nline 1: a b;",
+    );
+    expect(asked).toEqual([]);
+  });
+
   it("saves a named version in the file's history before the code runs", async () => {
     const { asked, client } = recording({
       save_version: { id: "v7" },
