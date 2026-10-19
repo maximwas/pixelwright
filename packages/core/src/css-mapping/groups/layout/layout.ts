@@ -44,6 +44,13 @@ export const LAYOUT_RULES: readonly Rule[] = [
   ...FLEX_ALIGNMENT_RULES,
 ];
 
+/** Whether a display lays a frame's children out: flex or grid, inline or not. */
+export function isLayoutDisplay(display: string): boolean {
+  const mode = DISPLAYS[display];
+
+  return mode === "flex" || mode === "grid";
+}
+
 /** Whether a layer lays its children out in a row or a column (auto layout). */
 export function isFlex(node: SnapshotNode | null): boolean {
   return node?.layoutMode === "HORIZONTAL" || node?.layoutMode === "VERTICAL";

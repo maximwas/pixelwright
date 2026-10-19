@@ -64,8 +64,9 @@ changes.
   gap act as if it were not there. It is placed against its parent and moves with it, so nest it in the frame it
   belongs to (the card, not the grid around the cards). Later in the XML is drawn on top (there is no
   \`z-index\`). \`position="relative"\` puts it back in the flow.
-- Every child of a frame without auto layout (no \`display\`, or \`display="block"\`) is placed so: give it
-  \`position="absolute"\` and its edges. Without edges it lands in the top left corner, and \`left\` or \`top\`
+- Every child of a frame without auto layout (no \`display\`, or \`display="block"\`), of a section and of the page
+  is placed so, by its edges (design_read writes \`position="absolute"\` there; nothing flows, so it may be left
+  out). Without edges it lands in the top left corner. \`left\` or \`top\` on a layer that flows in auto layout
   without \`position="absolute"\` is refused.
 - Edges in px: \`left\`/\`top\` pin it to the start; \`right\`/\`bottom\` to the end, where it stays when the parent
   is resized (\`right="12px" top="12px"\` is a top right badge; \`right="-8px" top="-8px"\` hangs it over the corner
@@ -75,8 +76,8 @@ changes.
   (half its size; \`top\` likewise), and keeps it there when the parent is resized; \`left="50%"\` puts the edge on
   the centre. Scaled with the parent: \`left="5%"\` with \`width="25%"\` (\`top\` with \`height\`). Only \`left\` and
   \`top\` take \`calc()\` and percents; tokens cannot place a layer.
-- On the page itself a layer is placed by \`left\` and \`top\` alone (with \`position="absolute"\`); without them a new
-  one goes beside the page's layers.
+- On the page itself a layer is placed by \`left\` and \`top\` alone (\`<Section id="…" top="800px"/>\` moves a
+  section down); without them a new one goes beside the page's layers.
 
 ## Not supported
 

@@ -25,6 +25,8 @@ export interface ElementInput {
   readonly tag: string;
   readonly attributes: Readonly<Record<string, string>>;
   readonly content?: readonly TextPiece[];
+  /** Whether nothing lays its layer out where it goes (the page, a section, a frame without auto layout): as absolute. */
+  readonly placed?: boolean;
 }
 
 /** A value the mapping could not write: its attribute, why, what to do, and the content piece it is in (a span's). */
@@ -52,7 +54,11 @@ export interface ElementWrite {
 export function writeElement(element: ElementInput, now?: LayerNow): ElementWrite {
   const problems: WriteProblem[] = [];
   const attributes = element.attributes;
-  const current = now?.current ?? {};
+  // Where nothing lays a layer out its edges place it, as design_read's position="absolute" there says.
+  const current: Readonly<Record<string, string>> = {
+    ...((element.placed ?? false) ? { position: "absolute" } : {}),
+    ...now?.current,
+  };
   const changed = (name: string) =>
     name !== "id" && attributes[name] !== undefined && !(now?.attributes.has(name) ?? false);
   const input: WriteInput = {
