@@ -1,3 +1,7 @@
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { EXECUTE_CODE_CHARS } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { executeCode } from "../src/features/execute/execute-code.ts";
 import { ExecuteInputSchema } from "../src/features/execute/schemas.ts";
@@ -103,6 +107,37 @@ describe("execute", () => {
       }).success,
     ).toBe(false);
     expect(ExecuteInputSchema.parse({ code: "x" }).timeout).toBe(10);
+  });
+
+  it("runs a script from the server's disk as the file is at each call", async () => {
+    const { asked, client } = recording({ execute: RAN });
+    const script = join(await mkdtemp(join(tmpdir(), "pixelwright-execute-")), "dark-copies.js");
+
+    await writeFile(script, "return 1;");
+    await executeCode(client, ExecuteInputSchema.parse({ script }));
+    await writeFile(script, "return 2;");
+    await executeCode(client, ExecuteInputSchema.parse({ script }));
+
+    expect(asked.map(({ input }) => (input as { code: string }).code)).toEqual(["return 1;", "return 2;"]);
+  });
+
+  it("refuses code and a script together or neither, and a script it cannot read or run whole", async () => {
+    const { asked, client } = recording({ execute: RAN });
+    const folder = await mkdtemp(join(tmpdir(), "pixelwright-execute-"));
+    const long = join(folder, "long.js");
+    const run = (args: object) => executeCode(client, ExecuteInputSchema.parse(args));
+
+    await writeFile(long, "x".repeat(EXECUTE_CODE_CHARS + 1));
+    await expect(
+      run({
+        code: "x",
+        script: long,
+      }),
+    ).rejects.toThrow(/code or script/);
+    await expect(run({})).rejects.toThrow(/code or script/);
+    await expect(run({ script: join(folder, "missing.js") })).rejects.toThrow(/missing\.js is not a file the server/);
+    await expect(run({ script: long })).rejects.toThrow(/100001 characters.*100000/);
+    expect(asked).toEqual([]);
   });
 
   it("saves a named version in the file's history before the code runs", async () => {
