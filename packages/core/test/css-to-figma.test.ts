@@ -540,6 +540,25 @@ describe("what the layer has now completes what Figma keeps in one property", ()
     });
   });
 
+  it("a padding side keeps the other sides the layer has, their tokens too", () => {
+    const current = {
+      display: "flex",
+      padding: "var(--space-8) 16px",
+    };
+
+    expect(change('<Frame id="1:1" padding-top="12px"/>', { current }).change).toMatchObject({
+      props: {
+        padding: [12, 16, { token: "--space-8" }, 16],
+      },
+      sources: { padding: "padding-top" },
+    });
+    expect(
+      props('<Frame display="flex" padding="4px" padding-left="var(--space-8)" padding-right="0"/>').padding,
+    ).toEqual([4, 0, 4, { token: "--space-8" }]);
+    expect(failed('<Frame id="1:1" padding-bottom="wide"/>', { current })).toEqual(["padding-bottom"]);
+    expect(failed('<Text id="1:2" padding-top="4px"/>')).toEqual(["padding-top"]);
+  });
+
   it("a blur keeps the shadows, a side keeps the other sides, an offset keeps the underline", () => {
     expect(
       props('<Frame id="1:1" filter="blur(2px)"/>', { current: { "box-shadow": "0 4px 8px 0 #191A23" } }).effects,

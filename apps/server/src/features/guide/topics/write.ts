@@ -24,7 +24,7 @@ taken as sRGB and converted to P3.
   without content keeps its text, so \`<Text id="…" color="var(--Dark)"/>\` only recolours it. A text inside an
   instance changes by its \`I…;…\` id and stays an override.
 - What Figma keeps together is completed from the layer: a new \`column-gap\` keeps its direction and wrap, a new
-  \`filter\` keeps its shadows, a new \`border-bottom\` keeps its other sides, a new \`width\` keeps the edge it
+  \`filter\` keeps its shadows, a new \`border-bottom\` or \`padding-top\` keeps its other sides, a new \`width\` keeps the edge it
   is pinned to. A new \`left\` or \`right\` replaces both edges.
 - Moving: an element with \`id\` under another parent element moves the layer there, \`before="id"\` /
   \`after="id"\` puts it next to that layer, and listing layers in another order reorders them. A layer inside an
