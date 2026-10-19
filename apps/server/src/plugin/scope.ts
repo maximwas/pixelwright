@@ -2,8 +2,13 @@ import { BridgeError } from "@pixelwright/core";
 import * as z from "zod";
 import type { PluginSession } from "./plugin-session.ts";
 
+const IdSchema = z.string().min(1).max(200);
+
 /** Where a tool works: a layer or a page by id, or "file" for every page. */
-export const WithinSchema = z.union([z.literal("file"), z.string().min(1).max(200)]);
+export const WithinSchema = z.union([z.literal("file"), IdSchema]);
+
+/** Several layers by id, for a tool that reads its roots one by one: a big board's frames in one call. */
+export const WithinIdsSchema = z.array(IdSchema).min(1);
 
 /** The ids a tool goes through, and how its answer names them. */
 export interface Scope {
@@ -15,14 +20,23 @@ export interface Scope {
 }
 
 /**
- * The roots of `within`: the layer or page it names, every page for "file", else the layers selected in Figma; with
- * nothing selected, the current page when the tool reads a page whole, an error naming `within` otherwise.
+ * The roots of `within`: the layer or page it names, the layers of a list, every page for "file", else the layers
+ * selected in Figma; with nothing selected, the current page when the tool reads a page whole, an error naming
+ * `within` otherwise.
  */
 export async function scopeOf(
   session: PluginSession,
-  within: string | undefined,
+  within: string | readonly string[] | undefined,
   { pageWhenEmpty }: { pageWhenEmpty: boolean },
 ): Promise<Scope> {
+  if (typeof within === "object") {
+    return {
+      roots: within,
+      label: within.join(", "),
+      pages: [],
+    };
+  }
+
   if (within === "file") {
     const { pages } = await session.run("file_map", null);
 
@@ -44,6 +58,11 @@ export async function scopeOf(
     };
   }
 
+  return selectionScope(session, pageWhenEmpty);
+}
+
+/** The layers selected in Figma; with none, the current page, or an error when the tool does not read a page whole. */
+async function selectionScope(session: PluginSession, pageWhenEmpty: boolean): Promise<Scope> {
   const { nodes } = await session.run("selection", null);
 
   if (nodes.length > 0) {

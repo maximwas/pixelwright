@@ -363,6 +363,85 @@ describe("design_lint: the general rules", () => {
     ]);
   });
 
+  it("lints the layers put into an instance's slot, and leaves the instance's own layers to its component", () => {
+    const sheet = layer("5:1", "Sheet", {
+      type: "INSTANCE",
+      instance: {
+        componentId: "C:sheet",
+        componentName: "SheetContainer",
+        properties: {},
+      },
+      children: [
+        layer("I5:1;2:3", "Frame 9", { fills: [solid(0x123456)] }),
+        layer("I5:1;2:1", "Content", {
+          type: "SLOT",
+          children: [
+            layer("I5:1;2:2", "Frame 7", {
+              fills: [solid(0x123456)],
+              children: [text("I5:1;2:4", "Amount")],
+            }),
+          ],
+        }),
+      ],
+    });
+    const { findings } = designLint(
+      {
+        reads: [
+          {
+            root: sheet,
+            styles: {},
+            variables: {},
+          },
+        ],
+      },
+      {
+        limit: 100,
+        scope: "x",
+        rules: ["raw-color", "text-style", "default-name"],
+      },
+    );
+
+    expect(findings.map(({ rule, id }) => `${rule} ${id}`)).toEqual([
+      "raw-color I5:1;2:2",
+      "raw-color I5:1;2:4",
+      "text-style I5:1;2:4",
+      "default-name I5:1;2:2",
+    ]);
+  });
+
+  it("gives each rule the severity of its most severe finding, so the list and the findings agree", () => {
+    const button = (id: string, height: number) =>
+      layer(id, "Buy", {
+        type: "INSTANCE",
+        height,
+        instance: {
+          componentId: "C:btn",
+          componentName: "Button",
+          properties: {},
+        },
+      });
+    const rulesOf = (...buttons: SnapshotNode[]) =>
+      designLint(
+        {
+          reads: [
+            {
+              root: layer("4:0", "Bar", { children: buttons }),
+              styles: {},
+              variables: {},
+            },
+          ],
+        },
+        {
+          limit: 100,
+          scope: "x",
+          rules: ["touch-target"],
+        },
+      ).rules.map(({ rule, severity, count }) => `${rule} ${severity} ${count}`);
+
+    expect(rulesOf(button("4:1", 32), button("4:2", 40))).toEqual(["touch-target info 2"]);
+    expect(rulesOf(button("4:1", 32), button("4:2", 20))).toEqual(["touch-target warning 2"]);
+  });
+
   it("says a layer's raw values in one sentence, overrides in CSS words, and leaves a mask's colour alone", () => {
     const card = layer("2:1", "Promo", {
       fills: [solid(0x14161f), solid(0x123456)],
