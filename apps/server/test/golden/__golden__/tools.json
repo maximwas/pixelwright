@@ -885,7 +885,7 @@
   {
     "name": "nodes_find",
     "title": "Find layers",
-    "description": "Finds layers on the current page, or inside `within`, by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance's component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down.",
+    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance's component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -910,9 +910,18 @@
           "maxLength": 200
         },
         "within": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
+          "description": "Where to search: a layer or page id, or \"file\" for every page. Default: the current page.",
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
         },
         "limit": {
           "default": 50,
