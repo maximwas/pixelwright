@@ -20,7 +20,8 @@ taken as sRGB and converted to P3.
 - Leaving an attribute out never removes it. To remove, write the value that means none: \`background="none"\`,
   \`border="none"\`, \`box-shadow="none"\`, \`width="auto"\` (hug), \`max-width="none"\`, \`flex="none"\`,
   \`left="auto"\`, \`transform="none"\`, \`display="block"\` (no auto layout), \`display="none"\` (hide).
-- A text: \`<Text id="…">New words</Text>\` replaces the characters and keeps the look; spans style runs. A Text
+- A text: \`<Text id="…">New words</Text>\` replaces the characters and keeps the look; a \`<Span>\` (HTML's
+  \`<span>\` too) styles a run of them. A Text
   without content keeps its text, so \`<Text id="…" color="var(--Dark)"/>\` only recolours it. A text inside an
   instance changes by its \`I…;…\` id and stays an override.
 - What Figma keeps together is completed from the layer: a new \`column-gap\` keeps its direction and wrap, a new
@@ -111,6 +112,7 @@ taken as sRGB and converted to P3.
 \`nodes_delete\` deletes layers by id (not those inside an instance: hide them with \`display="none"\`).
 
 Each element is written on its own: an error names its line and attribute, and the rest of the XML still goes in.
+The XML may hold several top-level elements; a \`<Root>\` wrapped around them is left out.
 \`created\` lists the new layers' ids and names by line, \`changed\` the layers written to (inside a copy or a new
 instance, by their ids there); a dry run lists the same, the new layers without ids or names (and no layers inside
 a copy, which do not exist yet), as what it would do. One call is one undo step in Figma:
