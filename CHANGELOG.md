@@ -68,6 +68,9 @@ How to write this file (people and agents alike):
 - `contrast_check` stops at the opaque fill right under a text instead of calling it "partly over" a deeper layer,
   never takes a text for a backdrop, leaves out (and counts) texts a clipping frame cuts out of view or an opaque
   layer covers, and says each reason a contrast is not one number instead of "over an image or gradient".
+- `contrast_check` says when its read stopped at its size budget (a screen of thousands of layers): the texts past it
+  are missing and the backdrops of the layers above may be wrong, instead of answering as if the read were whole;
+  `design_lint` notes the same for its contrast rule.
 - `image_compare` no longer reads antialiased edges as shifts of several pixels.
 - `nodes_delete` deletes a layer in an instance's slot, and `design_apply` moves layers within a slot.
 - `execute` code that does not parse is answered with the line and column, before anything runs, and says when the

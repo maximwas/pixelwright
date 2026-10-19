@@ -507,6 +507,55 @@ describe("design_lint: the general rules", () => {
       "tokens_bind binds it to the token holding it, if one does; else make it a token with tokens_apply, or snap it to a near one with tokens_bind choose.",
     );
   });
+
+  it("says when the layers above a read were cut at the size budget, as its contrast rule rates texts on them", () => {
+    const card = layer("5:1", "Card", { children: [text("5:2", "Label")] });
+    const bare = {
+      ...card,
+      childCount: 1,
+      children: undefined,
+    };
+    const decor = layer("5:3", "Decor", {
+      childCount: 8000,
+      children: [layer("5:4", "Dot", { type: "RECTANGLE" })],
+    });
+    // An ancestor's entry holds only the children that overlap the read, and the read's bare place, by design.
+    const screen = layer("5:9", "Screen", {
+      fills: [solid(0xffffff)],
+      childCount: 5,
+      children: [decor, bare],
+    });
+    const lint = (ancestors: SnapshotNode[]) =>
+      designLint(
+        {
+          reads: [
+            {
+              root: card,
+              ancestors,
+              styles: {},
+              variables: {},
+            },
+          ],
+        },
+        {
+          limit: 100,
+          scope: "x",
+          rules: ["contrast"],
+        },
+      ).notes;
+
+    expect(lint([screen])).toEqual([
+      'The layers above 5:1 "Card" were read without all their children at the size budget (first 5:3 "Decor"): contrast findings there may be wrong; check them in a screenshot.',
+    ]);
+    expect(
+      lint([
+        {
+          ...screen,
+          children: [bare],
+        },
+      ]),
+    ).toEqual([]);
+  });
 });
 
 describe("componentStates", () => {

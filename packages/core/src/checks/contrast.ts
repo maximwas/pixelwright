@@ -13,6 +13,7 @@ import {
   type Veil,
 } from "./contrast/backdrop.ts";
 import { kindOf, topSolid } from "./contrast/paints.ts";
+import { type ReadCuts, readCuts } from "./read-cuts.ts";
 
 /** A run rated: its row, why its contrast is not one number when it is not, and whether it is seen through a veil. */
 interface Rated {
@@ -75,9 +76,29 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
   walk(top, [], top === snapshot.root);
 
   return {
-    summary: summaryOf(rated, left),
+    summary: `${cutNote(readCuts(snapshot))}${summaryOf(rated, left)}`,
     texts: rated.flat().map(({ row }) => row),
   };
+}
+
+/** Where the read stopped at its size budget: texts missing, or backdrops that may be wrong; nothing when it is whole. */
+function cutNote({ inside, above }: ReadCuts): string {
+  const parts = [
+    ...(inside.length === 0 ? [] : [`${unread(inside, "in it")}: their texts are missing; check smaller parts of it`]),
+    ...(above.length === 0
+      ? []
+      : [`${unread(above, "behind or over it")}: the backdrops may be wrong; check them in a screenshot`]),
+  ];
+
+  return parts.length === 0 ? "" : `Incomplete: the read stopped at its size budget, so ${parts.join("; ")}. `;
+}
+
+/** "1 layer in it was read without all its children (first …)", or several. */
+function unread(cut: readonly SnapshotNode[], where: string): string {
+  const one = cut.length === 1;
+  const first = cut[0] as SnapshotNode;
+
+  return `${cut.length} ${one ? "layer" : "layers"} ${where} ${one ? "was" : "were"} read without all ${one ? "its" : "their"} children (first ${first.id} "${first.name}")`;
 }
 
 /** The read's root put back in the layers above it, in place of its bare entry there: the outermost, the root inside. */

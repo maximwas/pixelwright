@@ -3,6 +3,7 @@ import type { BindOutput } from "../../tokens/bind/schemas.ts";
 import type { ContrastText } from "../../types/contrast.ts";
 import type { Snapshot, SnapshotNode } from "../../types/snapshot.ts";
 import { contrastCheck } from "../contrast.ts";
+import { readCuts } from "../read-cuts.ts";
 import type { ComponentEntry } from "../states/component-states.ts";
 import { BindHints, type LintContext, type LintLayer, type LintRule } from "./lint-rule.ts";
 import { LINT_RULES } from "./lint-rules.ts";
@@ -98,7 +99,12 @@ function findingsOf(input: LintInput, rules: readonly LintRule[]): { found: Lint
       },
       (layer) => found.push(...checked(rules, layer, context)),
     );
-    notes.push(...cutNotes(snapshot.root));
+    notes.push(
+      ...cutNotes(
+        snapshot,
+        rules.some(({ id }) => id === "contrast"),
+      ),
+    );
   }
 
   return {
@@ -154,26 +160,27 @@ function failingTexts(snapshot: Snapshot): Map<string, ContrastText> {
   );
 }
 
-/** Where the read stopped at its size budget: the layers below were not linted. */
-function cutNotes(root: SnapshotNode): string[] {
-  const cut: SnapshotNode[] = [];
-  const find = (node: SnapshotNode) => {
-    if (node.visible && node.childCount > (node.children?.length ?? 0)) {
-      cut.push(node);
-    }
+/**
+ * Where the read stopped at its size budget: the layers below were not linted; the layers above, the contrast rule
+ * rates texts on.
+ */
+function cutNotes(snapshot: Snapshot, contrast: boolean): string[] {
+  const { root } = snapshot;
+  const { inside, above } = readCuts(snapshot);
+  const [first] = above;
 
-    for (const child of node.children ?? []) {
-      find(child);
-    }
-  };
-
-  find(root);
-
-  return cut.length === 0
-    ? []
-    : [
-        `The read of ${root.id} "${root.name}" stopped at its size budget, so ${cut.length} layer${cut.length === 1 ? "'s" : "s'"} children were not linted (first ${cut[0]?.id}): lint them with within.`,
-      ];
+  return [
+    ...(inside.length === 0
+      ? []
+      : [
+          `The read of ${root.id} "${root.name}" stopped at its size budget, so ${inside.length} layer${inside.length === 1 ? "'s" : "s'"} children were not linted (first ${inside[0]?.id}): lint them with within.`,
+        ]),
+    ...(first === undefined || !contrast
+      ? []
+      : [
+          `The layers above ${root.id} "${root.name}" were read without all their children at the size budget (first ${first.id} "${first.name}"): contrast findings there may be wrong; check them in a screenshot.`,
+        ]),
+  ];
 }
 
 /** The findings by severity; roots that could not be read come first, so they never pass for clean ones. */

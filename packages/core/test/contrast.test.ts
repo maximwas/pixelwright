@@ -460,3 +460,49 @@ describe("contrast_check on the Dukach feedback", () => {
     expect(summary).toBe("1 texts: 1 below AA.");
   });
 });
+
+describe("contrast_check on a read cut at its size budget (live check)", () => {
+  const card = frame("Card", [], [painted(text("Label", 16, 10, 10), DARK)]);
+  const bare: SnapshotNode = {
+    ...card,
+    childCount: 1,
+    children: undefined,
+  };
+  // An ancestor's entry holds only the children that overlap the root, and the root's bare place, by design.
+  const screen = (children: SnapshotNode[]): SnapshotNode => ({
+    ...frame("Screen", [WHITE], children),
+    childCount: 5,
+  });
+  const decor = (childCount: number): SnapshotNode => ({
+    ...frame("Decor", [], [rect("Dot 1", [GRAY], 300, 12)]),
+    childCount,
+  });
+  const summaryOf = (root: SnapshotNode, ancestors: SnapshotNode[]) =>
+    contrastCheck({
+      root,
+      ancestors,
+      styles: {},
+      variables: {},
+    }).summary;
+
+  it("says the layers behind or over a text were not all read, so its backdrop may be wrong", () => {
+    expect(summaryOf(card, [screen([decor(8000), bare])])).toBe(
+      'Incomplete: the read stopped at its size budget, so 1 layer behind or over it was read without all its children (first Decor "Decor"): the backdrops may be wrong; check them in a screenshot. 1 texts: 0 below AA.',
+    );
+  });
+
+  it("says the texts of layers inside the read whose children did not fit are missing", () => {
+    const cut: SnapshotNode = {
+      ...frame("1:1", [WHITE], [painted(text("Title", 16, 10, 10), DARK)]),
+      childCount: 40,
+    };
+
+    expect(summaryOf(cut, [])).toBe(
+      'Incomplete: the read stopped at its size budget, so 1 layer in it was read without all its children (first 1:1 "1:1"): their texts are missing; check smaller parts of it. 1 texts: 0 below AA.',
+    );
+  });
+
+  it("adds nothing when the read is whole, the layers above holding only what overlaps it", () => {
+    expect(summaryOf(card, [screen([decor(1), bare])])).toBe("1 texts: 0 below AA.");
+  });
+});
