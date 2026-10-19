@@ -1,6 +1,7 @@
 import { BridgeError } from "@pixelwright/core";
 import { describe, expect, it } from "vitest";
 import { lintDesign } from "../src/features/design-lint/lint-design.ts";
+import { DesignLintInputSchema } from "../src/features/design-lint/schemas.ts";
 import { PluginClient } from "../src/plugin/plugin-client.ts";
 import { scopeBridge } from "./helpers/scope-bridge.ts";
 
@@ -48,7 +49,7 @@ const ANSWERS = {
   },
 };
 
-const lint = (view: ReturnType<typeof scopeBridge>, within?: string) =>
+const lint = (view: ReturnType<typeof scopeBridge>, within?: string | string[]) =>
   lintDesign(new PluginClient(view.bridge), {
     ...(within === undefined ? {} : { within }),
     severity: "info",
@@ -90,6 +91,21 @@ describe("design_lint: what it reads", () => {
     ]);
     expect(result.summary).toBe("2 findings in page Pricing: 0 errors, 0 warnings, 2 info.");
     expect(result.findings.map(({ rule, id }) => `${rule} ${id}`)).toEqual(["default-name 1:1", "default-name 1:2"]);
+  });
+
+  it("lints a list of frames each on its own, in one call", async () => {
+    const view = scopeBridge({
+      selection: [],
+      answers: ANSWERS,
+    });
+    const result = await lint(view, ["1:1", "1:2"]);
+
+    expect(view.asked).toEqual(["snapshot", "snapshot", "bind (dry run)", "components", "components"]);
+    expect(result.summary).toBe("2 findings in 1:1, 1:2: 0 errors, 0 warnings, 2 info.");
+    expect(result.findings.map(({ id }) => id)).toEqual(["1:1", "1:2"]);
+    expect(DesignLintInputSchema.safeParse({ within: Array.from({ length: 31 }, (_, i) => `1:${i}`) }).success).toBe(
+      false,
+    );
   });
 
   it("still lints with a plugin older than tokens_bind, naming the tool in the fixes", async () => {
