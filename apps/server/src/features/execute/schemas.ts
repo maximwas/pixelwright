@@ -8,8 +8,17 @@ export const ExecuteInputSchema = z.object({
     .string()
     .min(1)
     .max(EXECUTE_CODE_CHARS)
+    .exactOptional()
     .describe(
-      "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result.",
+      "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give code or script.",
+    ),
+  script: z
+    .string()
+    .min(1)
+    .max(1_024)
+    .exactOptional()
+    .describe(
+      "A file of such code on the server's disk, run instead of code: an absolute path (or one from the server's folder, as design_apply's src). It is read at every call, so the file as it is now runs, after a plugin restart too.",
     ),
   timeout: z
     .number()

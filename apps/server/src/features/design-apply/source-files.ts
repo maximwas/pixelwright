@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { readFile, stat } from "node:fs/promises";
-import { resolve } from "node:path";
+import { readFile } from "node:fs/promises";
 import { imageInfo } from "../../assets/image-info.ts";
+import { notAFile, serverFile } from "../../utils/server-file.ts";
 import { MAX_SOURCE_BYTES, MAX_SVG_BYTES } from "./constants.ts";
 
 /** What a file is read as: an image for an Image or a background, an SVG for an Icon. */
@@ -45,13 +45,12 @@ export class SourceFiles {
 }
 
 async function readSource(path: string, cwd: string, kind: SourceKind): Promise<SourceRead> {
-  const absolute = resolve(cwd, path);
-  const info = await stat(absolute).catch(() => null);
+  const info = await serverFile(path, cwd);
 
-  if (info === null || !info.isFile()) {
+  if (info === null) {
     return {
       problem: "missing",
-      message: `${path} is not a file the server can read (paths are from its folder: ${cwd}).`,
+      message: notAFile(path, cwd),
     };
   }
 
@@ -63,7 +62,7 @@ async function readSource(path: string, cwd: string, kind: SourceKind): Promise<
     );
   }
 
-  const bytes = await readFile(absolute);
+  const bytes = await readFile(info.path);
 
   if (kind === "icon" && !/<svg[\s>]/i.test(bytes.subarray(0, 4096).toString("utf8"))) {
     return unusable(`${path} is not an SVG: an <Icon> is drawn from an SVG file.`);
@@ -75,7 +74,7 @@ async function readSource(path: string, cwd: string, kind: SourceKind): Promise<
 
   return {
     file: {
-      path: absolute,
+      path: info.path,
       bytes,
       sha1: createHash("sha1").update(bytes).digest("hex"),
     },

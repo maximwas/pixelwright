@@ -138,9 +138,20 @@ waits 10 s by default and up to 300 s (\`timeout\`) for a long task. Code it sta
 listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
 synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.
 
+The plugin runs with documentAccess "dynamic-page": the synchronous lookups throw, so use the Async calls
+(\`getNodeByIdAsync\`, \`getMainComponentAsync\`, \`getLocalPaintStylesAsync\`, \`setFillStyleIdAsync\`…), and
+\`await page.loadAsync()\` before reading another page. \`figma.skipInvisibleInstanceChildren\` is true: \`findAll\`,
+\`findOne\` and \`children\` skip hidden layers inside instances, and \`getNodeByIdAsync\` gives null for them; set it
+to false in the code to reach them (execute sets it back after the call). An error names the line and column in
+the code it came from.
+
+A long script goes in a file on the server's disk, passed as \`script\` instead of \`code\` (an absolute path, or one
+from the server's folder): it is read at every call, so the file as it is now runs, after a plugin restart too.
+
 \`pw\` stays from one call to the next while the plugin window is open:
 
-- \`pw.state\` holds your data, and functions you add to \`pw\` stay for later calls;
+- \`pw.state\` holds your data, and functions you add to \`pw\` stay for later calls, as they were when added: after
+  a change to their script, run the script again;
 - \`await pw.node(id)\`: the layer, or an error naming the id;
 - \`await pw.fonts(layer)\`: loads every font the texts in the layer use, mixed runs too, before you change their
   characters or sizes; it returns their names;
