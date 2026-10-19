@@ -23,6 +23,7 @@ How to write this file (people and agents alike):
 - `execute` takes `script` instead of `code`: a file of code on the server's disk, read at every call, so a long
   script needs no pasting and an edited file runs as it is now.
 - `design_lint` takes a list of up to 30 layer ids in `within`, each read on its own in one call: a big board's frames.
+  An id it cannot read is named, and the rest keep their token hints.
 - `nodes_find` and `tokens_usage` take `within: "file"` and look on every page.
 - `components_read` takes `fields`, so a big component library answers with only the fields asked for (names of the
   icon sets, for one).

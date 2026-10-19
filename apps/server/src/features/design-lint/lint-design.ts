@@ -38,7 +38,12 @@ export async function lintDesign(
     {
       reads,
       unread: unread.length,
-      bind: await bindPreview(session, roots.ids, notes),
+      // Only the layers read: the plugin's bind fails as a whole on one id it cannot find.
+      bind: await bindPreview(
+        session,
+        reads.map(({ root }) => root.id),
+        notes,
+      ),
       components: await usedComponents(session, scope),
     },
     {

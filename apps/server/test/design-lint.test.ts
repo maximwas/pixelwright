@@ -229,6 +229,43 @@ describe("design_lint: what it reads", () => {
     expect(result.findings.map(({ id }) => id)).toEqual(["1:1"]);
   });
 
+  it("asks tokens_bind only about the layers it read, so one missing id in a list keeps the others' token hints", async () => {
+    const view = scopeBridge({
+      selection: [],
+      answers: {
+        ...ANSWERS,
+        snapshot: (input: unknown) => {
+          if ((input as { node: string }).node === "9:9") {
+            throw new BridgeError("NODE_NOT_FOUND", "No node 9:9 in this file.");
+          }
+
+          return snapshotOf(input);
+        },
+        // As the plugin's bind: one root it cannot find fails the whole call.
+        bind: ({ roots }: { roots: string[] }) => {
+          if (roots.includes("9:9")) {
+            throw new BridgeError("NODE_NOT_FOUND", "No node 9:9 in this file.");
+          }
+
+          return {
+            bound: [],
+            ambiguous: [],
+            unmatched: [],
+            remapped: [],
+            layers: 0,
+            errors: [],
+            notes: [],
+            more: false,
+          };
+        },
+      },
+    });
+    const result = await lint(view, ["1:1", "9:9"]);
+
+    expect(view.inputs.bind).toMatchObject({ roots: ["1:1"] });
+    expect(result.notes).toEqual(["9:9 was not read: No node 9:9 in this file."]);
+  });
+
   it("rates a part of a screen's texts against the screen's fill above it", async () => {
     const view = scopeBridge({
       selection: [],
