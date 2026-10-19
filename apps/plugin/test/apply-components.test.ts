@@ -405,19 +405,55 @@ describe("apply: notes", () => {
     ]);
   });
 
-  it("writes notes with their categories, making a category the file lacks", async () => {
-    await apply('<Frame id="3:1" note="Development: build it | Behavior: opens the modal | Plain"/>');
+  it("files a note under the file's category of its prefix, and makes no category from text", async () => {
+    const categories = async () => (await figma.annotations.getAnnotationCategoriesAsync()).length;
+    const before = await categories();
+
+    await apply('<Frame id="3:1" note="Spacing: 8px between the rows | Development: build it"/>');
 
     expect(byId("3:1")?.annotations).toEqual([
+      { label: "Spacing: 8px between the rows" },
       {
         label: "build it",
         categoryId: "cat-dev",
       },
-      {
-        label: "opens the modal",
-        categoryId: "cat-2",
-      },
-      { label: "Plain" },
     ]);
+    expect(await categories()).toBe(before);
+  });
+
+  it("keeps an agent's note as written: a colon further on and bars between new words split nothing", async () => {
+    await apply('<Frame id="3:1" note="Pick a period&#10;Shown as: Дні | Тижні | Місяці | Роки"/>');
+
+    expect(byId("3:1")?.annotations).toEqual([{ label: "Pick a period\nShown as: Дні | Тижні | Місяці | Роки" }]);
+    expect(await figma.annotations.getAnnotationCategoriesAsync()).toHaveLength(1);
+  });
+
+  it("takes the layer's notes sent back with a new one as they were, the new one whole", async () => {
+    const board = byId("3:1") as FakeNode;
+    // As Figma reads them: both the plain text and the Markdown (it refuses a write that gives both).
+    const read = (text: string, markdown = text) => ({
+      label: text,
+      labelMarkdown: markdown,
+    });
+
+    board.annotations = [
+      read("Rule: keep 8px"),
+      {
+        ...read("Build it", "**Build** it"),
+        categoryId: "cat-dev",
+      },
+    ];
+
+    await apply('<Frame id="3:1" note="Rule: keep 8px | Development: Build it | Tabs: Дні | Тижні"/>');
+
+    expect(board.annotations).toEqual([
+      { labelMarkdown: "Rule: keep 8px" },
+      {
+        labelMarkdown: "**Build** it",
+        categoryId: "cat-dev",
+      },
+      { label: "Tabs: Дні | Тижні" },
+    ]);
+    expect(await figma.annotations.getAnnotationCategoriesAsync()).toHaveLength(1);
   });
 });

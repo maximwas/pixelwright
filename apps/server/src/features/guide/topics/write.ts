@@ -76,9 +76,13 @@ taken as sRGB and converted to P3.
   assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
   the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a
   new one.
-- \`note="Behavior: opens the modal | Spacing: 8px"\` writes the layer's Dev Mode notes, the whole list (a
-  category the file lacks is made; \`note=""\` removes them). A note sent back as it was keeps its formatting and
-  pinned properties; notes without text, which design_read does not show, stay.
+- \`note="Behavior: opens the modal | Spacing: 8px"\` writes the layer's Dev Mode notes, the whole list, as
+  design_read writes it (\`note=""\` removes them). \`Behavior: \` files a note under the file's annotation category of
+  that name; a name the file has no category for stays part of the text (no category is made). \` | \` separates the
+  layer's own notes sent back and comes before a note a category starts; elsewhere it is text, so
+  \`note="Tabs: Days | Weeks"\` is one note (two new notes without a category take two calls).
+  A note sent back as it was keeps its category, formatting and pinned properties; notes without text, which
+  design_read does not show, stay.
 
 ## Values
 
