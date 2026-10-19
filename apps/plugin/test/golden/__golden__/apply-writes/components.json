@@ -689,6 +689,7 @@
               "height": 100
             },
             "id": "90:6",
+            "layoutMode": "NONE",
             "absoluteTransform": [
               [
                 1,
@@ -715,6 +716,10 @@
             ],
             "width": 320,
             "height": 180,
+            "children": [
+              "90:2",
+              "90:4"
+            ],
             "componentPropertyDefinitions": {
               "Tone": {
                 "type": "VARIANT",
@@ -729,10 +734,6 @@
                 "defaultValue": "A"
               }
             },
-            "children": [
-              "90:2",
-              "90:4"
-            ],
             "defaultVariant": "node:90:2"
           }
         }
@@ -1415,6 +1416,7 @@
               "height": 100
             },
             "id": "90:4",
+            "layoutMode": "NONE",
             "absoluteTransform": [
               [
                 1,
@@ -1441,6 +1443,9 @@
             ],
             "width": 180,
             "height": 180,
+            "children": [
+              "90:2"
+            ],
             "componentPropertyDefinitions": {
               "Tone": {
                 "type": "VARIANT",
@@ -1454,9 +1459,6 @@
                 "defaultValue": "A"
               }
             },
-            "children": [
-              "90:2"
-            ],
             "defaultVariant": "node:90:2"
           }
         },

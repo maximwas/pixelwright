@@ -259,6 +259,10 @@ const DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
     fills: [SOLID(1, 1, 1)],
     children: [],
   },
+  COMPONENT_SET: {
+    layoutMode: "NONE",
+    children: [],
+  },
   RECTANGLE: { fills: [SOLID(0.85, 0.85, 0.85)] },
   ELLIPSE: { fills: [SOLID(0.85, 0.85, 0.85)] },
   LINE: {

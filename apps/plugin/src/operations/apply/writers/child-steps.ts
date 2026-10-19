@@ -26,6 +26,9 @@ export const CHILD_STEPS: readonly Step[] = [
   },
 ];
 
+/** What places a layer in its parent's layout: written once the parent has it. */
+export const PLACING_KEYS: ReadonlySet<string> = new Set(CHILD_STEPS.flatMap(({ keys }) => keys));
+
 /** flex: 1 fills the flex parent's direction. */
 function grow(node: SizedNode, { grow: fill }: FigmaProps): void {
   const direction = flexOf(node.parent);

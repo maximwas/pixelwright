@@ -127,7 +127,13 @@ export class ApplyRun implements WriteScope {
       return;
     }
 
-    this.#record(change, node, (await this.#write(node, change, fail)) || moved);
+    const now = this.#sets.writable({
+      node,
+      change,
+      fail,
+    });
+
+    this.#record(change, node, (await this.#write(node, now, fail)) || moved);
   }
 
   async #write(node: SceneNode, change: ApplyChange, fail: Fail): Promise<boolean> {

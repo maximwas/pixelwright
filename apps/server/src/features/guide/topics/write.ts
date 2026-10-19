@@ -61,7 +61,9 @@ taken as sRGB and converted to P3.
 - \`<Component name="Badge">…</Component>\` makes a component like a frame; inside it, \`prop="Label"\` on a
   Text makes a text property bound to it and \`visibleProp="Shown"\` makes a boolean property bound to the layer's
   visibility. \`<ComponentSet name="Badge">\` holds \`<Component variant="Tone=Dark">\` variants: they are
-  combined into one set (the properties defined once on it) and laid out in a grid. \`description\` describes a
+  combined into one set (the properties defined once on it) and laid out in a grid; a set given \`display="flex"\`
+  or \`"grid"\` lays them out itself, each variant placed by its own \`grid-row\`/\`grid-column\`, \`align-self\`
+  or \`flex\`. \`description\` describes a
   component or a set; an instance of a new component can follow later in the same XML.
 - \`<Slot name="Content">\` makes a slot in a new component; in an instance, give its \`<Slot id="…">\` new layers.
 
