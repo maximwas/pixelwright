@@ -243,7 +243,7 @@
             "ref": "new:1:57",
             "id": "90:3",
             "tag": "Text",
-            "name": "Text"
+            "name": "A"
           },
           {
             "line": 1,
@@ -257,7 +257,7 @@
             "ref": "new:1:128",
             "id": "90:5",
             "tag": "Text",
-            "name": "Text"
+            "name": "B"
           },
           {
             "line": 1,
@@ -504,7 +504,7 @@
         {
           "parent": "90:2",
           "state": {
-            "name": "Text",
+            "name": "A",
             "type": "TEXT",
             "visible": true,
             "absoluteBoundingBox": {
@@ -515,6 +515,7 @@
             },
             "id": "90:3",
             "characters": "A",
+            "autoRename": true,
             "fontName": {
               "family": "Inter",
               "style": "Regular"
@@ -621,7 +622,7 @@
         {
           "parent": "90:4",
           "state": {
-            "name": "Text",
+            "name": "B",
             "type": "TEXT",
             "visible": true,
             "absoluteBoundingBox": {
@@ -632,6 +633,7 @@
             },
             "id": "90:5",
             "characters": "B",
+            "autoRename": true,
             "fontName": {
               "family": "Inter",
               "style": "Regular"
@@ -1116,7 +1118,7 @@
             "ref": "new:1:57",
             "id": "90:3",
             "tag": "Text",
-            "name": "Text"
+            "name": "A"
           },
           {
             "line": 1,
@@ -1354,7 +1356,7 @@
         {
           "parent": "90:2",
           "state": {
-            "name": "Text",
+            "name": "A",
             "type": "TEXT",
             "visible": true,
             "absoluteBoundingBox": {
@@ -1365,6 +1367,7 @@
             },
             "id": "90:3",
             "characters": "A",
+            "autoRename": true,
             "fontName": {
               "family": "Inter",
               "style": "Regular"

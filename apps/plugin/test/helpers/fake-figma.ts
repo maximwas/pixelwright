@@ -271,6 +271,7 @@ const DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
   },
   TEXT: {
     characters: "",
+    autoRename: true,
     fontName: {
       family: "Inter",
       style: "Regular",
@@ -679,6 +680,23 @@ function writable(
 
       characters = value;
       record("characters", [value]);
+
+      // As Figma: a new text is named after its characters until its name is set.
+      if ((node.autoRename as boolean | undefined) ?? false) {
+        name = value;
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
+  let name = node.name;
+
+  Object.defineProperty(node, "name", {
+    get: () => name,
+    set: (value: string) => {
+      name = value;
+      node.autoRename = false;
     },
     enumerable: true,
     configurable: true,

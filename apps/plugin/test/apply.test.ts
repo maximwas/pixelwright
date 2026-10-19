@@ -537,6 +537,12 @@ describe("apply: creating", () => {
 
     expect(byId("1:1")?.children?.map(({ name }) => name)).toEqual(["Title", "Between", "Side", "Last"]);
   });
+
+  it("keeps a new text's name, the one Figma gives it too, and names one without a name after its characters", async () => {
+    await apply('<Text name="Text">Our services</Text>\n<Text>Contact</Text>', { parent: "3:1" });
+
+    expect(fake.writes.created.map(({ name }) => name)).toEqual(["Text", "Contact"]);
+  });
 });
 
 describe("apply: changing", () => {
