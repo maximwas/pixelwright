@@ -274,6 +274,46 @@ describe("bind: raw values bound to the one token that holds each", () => {
     expect(output.notes).toEqual(["1 instance was left alone: bind its main component, and its instances follow."]);
   });
 
+  it("goes into an instance's slots: what was put there is bound, the instance's own layers stay its component's", async () => {
+    const button = byId("1:4");
+    const raw = {
+      type: "RECTANGLE",
+      fills: [solid(0x3b2fd9)],
+      fillStyleId: "",
+    };
+
+    button.children = [
+      tree(
+        {
+          ...raw,
+          id: "I1:4;2:1",
+          name: "Label",
+        },
+        button,
+      ),
+      tree(
+        {
+          id: "I1:4;2:2",
+          name: "Content",
+          type: "SLOT",
+          children: [
+            {
+              ...raw,
+              id: "1:5",
+              name: "Placed",
+            },
+          ],
+        },
+        button,
+      ),
+    ];
+
+    await run({ kinds: ["color"] });
+
+    expect(byId("1:5").fills).toMatchObject([{ boundVariables: { color: { id: "V:brand" } } }]);
+    expect(byId("I1:4;2:1").fills).toEqual([solid(0x3b2fd9)]);
+  });
+
   it("takes the call's pick for a value several tokens hold, and snaps a value to a token when asked", async () => {
     const output = await run({
       kinds: ["color"],
