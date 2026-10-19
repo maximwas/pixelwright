@@ -2,52 +2,46 @@
 import { EDGE_LIST_MAX, EDGE_MAX_SHIFT, EDGE_MIN_SHARE, EDGE_STEP } from "../constants/images.ts";
 import type { EdgeDiff, RgbaImage } from "../types/images.ts";
 
-/**
- * Where lines and edges run across an image, by axis: `rows` holds the y of each horizontal edge (a hairline gives its
- * top and its bottom), `columns` the x of each vertical one. A row counts when enough of it changes luminance from the
- * row above; neighbouring rows of one soft edge count once, at the strongest.
- */
-export function edgesOf(image: RgbaImage): { rows: number[]; columns: number[] } {
-  const light = luminance(image);
-  const { width, height } = image;
-  const at = (x: number, y: number) => light[y * width + x] ?? 0;
-  const rows = Array.from({ length: height }, (_, y) =>
-    y === 0 ? 0 : countWhere(width, (x) => Math.abs(at(x, y) - at(x, y - 1)) > EDGE_STEP) / width,
-  );
-  const columns = Array.from({ length: width }, (_, x) =>
-    x === 0 ? 0 : countWhere(height, (y) => Math.abs(at(x, y) - at(x - 1, y)) > EDGE_STEP) / height,
-  );
+/** Each pixel's luminance step from the one before it across the lines (rows or columns): 1 lighter, -1 darker, 0. */
+interface Steps {
+  readonly lines: number;
+  readonly span: number;
+  readonly signs: Int8Array;
+}
+
+/** How the reference's horizontal edges (rows, by y) and vertical ones (columns, by x) pair with the render's. */
+export function edgeDiff(reference: RgbaImage, node: RgbaImage): { rows: EdgeDiff; columns: EdgeDiff } {
+  const theirs = luminance(reference);
+  const ours = luminance(node);
 
   return {
-    rows: peaks(rows),
-    columns: peaks(columns),
+    rows: diffSteps(stepsOf(reference, theirs, "rows"), stepsOf(node, ours, "rows")),
+    columns: diffSteps(stepsOf(reference, theirs, "columns"), stepsOf(node, ours, "columns")),
   };
 }
 
-/** How the reference's edges along one axis pair with the render's: exact, shifted, missing or extra. */
-export function diffEdges(reference: readonly number[], node: readonly number[]): EdgeDiff {
-  const free = new Set(node);
+/**
+ * Edges pair by the pixels on them, not by position alone: an edge of one image is where the other has the same step
+ * (same pixels, same direction) within EDGE_MAX_SHIFT lines, so a curve antialiased another way, whose edge rows come
+ * and go, never borrows an unrelated edge and reads as a shift.
+ */
+function diffSteps(reference: Steps, node: Steps): EdgeDiff {
   const shifted: { reference: number; node: number; by: number }[] = [];
   const missing: number[] = [];
   let matched = 0;
 
-  for (const edge of reference) {
-    const nearest = [...free].toSorted((a, b) => Math.abs(a - edge) - Math.abs(b - edge))[0];
+  for (const edge of edgesOf(reference)) {
+    const by = offsetOf(edge, reference, node);
 
-    if (nearest === undefined || Math.abs(nearest - edge) > EDGE_MAX_SHIFT) {
+    if (by === null) {
       missing.push(edge);
-      continue;
-    }
-
-    free.delete(nearest);
-
-    if (nearest === edge) {
+    } else if (by === 0) {
       matched += 1;
     } else {
       shifted.push({
         reference: edge,
-        node: nearest,
-        by: nearest - edge,
+        node: edge + by,
+        by,
       });
     }
   }
@@ -56,7 +50,99 @@ export function diffEdges(reference: readonly number[], node: readonly number[])
     matched,
     shifted: shifted.slice(0, EDGE_LIST_MAX),
     missing: missing.slice(0, EDGE_LIST_MAX),
-    extra: [...free].toSorted((a, b) => a - b).slice(0, EDGE_LIST_MAX),
+    extra: edgesOf(node)
+      .filter((edge) => offsetOf(edge, node, reference) === null)
+      .slice(0, EDGE_LIST_MAX),
+  };
+}
+
+/**
+ * Where the lines of an edge run: a line counts when enough of it steps from the line before; neighbouring lines of
+ * one soft edge count once, at the strongest (a hairline gives its top and its bottom).
+ */
+function edgesOf({ lines, span, signs }: Steps): number[] {
+  return peaks(
+    Array.from({ length: lines }, (_, line) => countWhere(span, (along) => signs[line * span + along] !== 0) / span),
+  );
+}
+
+/**
+ * How many lines further on `to` has the edge at `line` of `from`: the commonest offset of its pixels' nearest like
+ * steps (the smaller on a tie), or null when under half of its pixels have one within EDGE_MAX_SHIFT.
+ */
+function offsetOf(line: number, from: Steps, to: Steps): number | null {
+  const counts = new Map<number, number>();
+  let pixels = 0;
+
+  for (let along = 0; along < from.span; along++) {
+    const sign = from.signs[line * from.span + along] ?? 0;
+
+    if (sign === 0) {
+      continue;
+    }
+
+    pixels += 1;
+
+    const offset = nearestStep(to, {
+      line,
+      along,
+      sign,
+    });
+
+    if (offset !== null) {
+      counts.set(offset, (counts.get(offset) ?? 0) + 1);
+    }
+  }
+
+  const found = [...counts.values()].reduce((sum, count) => sum + count, 0);
+  const [best] = [...counts].toSorted(([a, many], [b, more]) => more - many || Math.abs(a) - Math.abs(b));
+
+  return best === undefined || found * 2 < pixels ? null : best[0];
+}
+
+/** The offset of the nearest line where `steps` has a step of `sign` at `along`, from `line` out to EDGE_MAX_SHIFT. */
+function nearestStep(
+  steps: Steps,
+  { line, along, sign }: { line: number; along: number; sign: number },
+): number | null {
+  if (along >= steps.span) {
+    return null;
+  }
+
+  for (let distance = 0; distance <= EDGE_MAX_SHIFT; distance++) {
+    for (const offset of distance === 0 ? [0] : [distance, -distance]) {
+      const at = line + offset;
+
+      if (at >= 1 && at < steps.lines && steps.signs[at * steps.span + along] === sign) {
+        return offset;
+      }
+    }
+  }
+
+  return null;
+}
+
+/** The steps across rows (each pixel against the one above) or across columns (against the one on its left). */
+function stepsOf(image: RgbaImage, light: Float32Array, axis: "rows" | "columns"): Steps {
+  const { width, height } = image;
+  const rows = axis === "rows";
+  const lines = rows ? height : width;
+  const span = rows ? width : height;
+  const at = (line: number, along: number) => light[rows ? line * width + along : along * width + line] ?? 0;
+  const signs = new Int8Array(lines * span);
+
+  for (let line = 1; line < lines; line++) {
+    for (let along = 0; along < span; along++) {
+      const step = at(line, along) - at(line - 1, along);
+
+      signs[line * span + along] = step > EDGE_STEP ? 1 : step < -EDGE_STEP ? -1 : 0;
+    }
+  }
+
+  return {
+    lines,
+    span,
+    signs,
   };
 }
 

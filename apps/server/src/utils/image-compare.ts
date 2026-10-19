@@ -1,6 +1,6 @@
 import { PIXEL_TOLERANCE } from "../constants/images.ts";
 import type { ImageComparison, RgbaImage } from "../types/images.ts";
-import { diffEdges, edgesOf } from "./edge-diff.ts";
+import { edgeDiff } from "./edge-diff.ts";
 
 /**
  * The render against the reference: pixel by pixel over the part both cover (from the top left), both laid over
@@ -42,8 +42,6 @@ export function compareImages(node: RgbaImage, reference: RgbaImage): ImageCompa
   }
 
   const pixels = Math.max(1, width * height);
-  const ours = edgesOf(node);
-  const theirs = edgesOf(reference);
 
   return {
     rmse: Math.round(Math.sqrt(squares / pixels) * 100) / 100,
@@ -57,8 +55,7 @@ export function compareImages(node: RgbaImage, reference: RgbaImage): ImageCompa
             width: box.right - box.left + 1,
             height: box.bottom - box.top + 1,
           },
-    rows: diffEdges(theirs.rows, ours.rows),
-    columns: diffEdges(theirs.columns, ours.columns),
+    ...edgeDiff(reference, node),
   };
 }
 
