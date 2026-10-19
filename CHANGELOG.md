@@ -16,11 +16,11 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
-## Unreleased
+## 0.5.0 — 2026-10-20
 
 ### Added
 
-- `execute` takes `script` instead of `code`: a file of code on the server's disk, read at every call, so a long
+- `execute` takes `script` in place of `code`: a file of code on the server's disk, read at every call, so a long
   script needs no pasting and an edited file runs as it is now.
 - `design_lint` takes a list of up to 30 layer ids in `within`, each read on its own in one call: a big board's frames.
   An id it cannot read is named, and the rest keep their token hints.
@@ -55,9 +55,9 @@ How to write this file (people and agents alike):
 - `design_apply` takes a size together with both edges as CSS does (the size wins, the layer still stretches),
   places a layer by `left` and `top` where nothing lays it out (in a section, on the page), reads any known tag in
   any case (`<span>` too), and takes the elements a top-level `<Root>` wraps.
-- `execute`'s description names what its code runs under (dynamic page access, hidden layers inside instances
-  skipped); an error about a synchronous call names the async one to make, and a script that turns
-  `skipInvisibleInstanceChildren` off gets it back after the call.
+- `execute`'s description names what its code runs under (dynamic page access, `skipInvisibleInstanceChildren`
+  false in the editor); an error about a synchronous call names the async one to make, and a script that turns
+  `skipInvisibleInstanceChildren` on gets it set back after the call.
 
 ### Fixed
 

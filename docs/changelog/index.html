@@ -38,6 +38,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-5-0">0.5.0 — 2026-10-20</a></li>
           <li><a href="#v0-4-1">0.4.1 — 2026-10-18</a></li>
           <li><a href="#v0-4-0">0.4.0 — 2026-10-18</a></li>
           <li><a href="#v0-3-2">0.3.2 — 2026-10-17</a></li>
@@ -51,6 +52,79 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-5-0">
+          <h2>0.5.0 — 2026-10-20</h2>
+<h4>Added</h4>
+<ul>
+<li><code>execute</code> takes <code>script</code> in place of <code>code</code>: a file of code on the server&#39;s disk, read at every call, so a long
+script needs no pasting and an edited file runs as it is now.</li>
+<li><code>design_lint</code> takes a list of up to 30 layer ids in <code>within</code>, each read on its own in one call: a big board&#39;s frames.
+An id it cannot read is named, and the rest keep their token hints.</li>
+<li><code>nodes_find</code> and <code>tokens_usage</code> take <code>within: &quot;file&quot;</code> and look on every page.</li>
+<li><code>components_read</code> takes <code>fields</code>, so a big component library answers with only the fields asked for (names of the
+icon sets, for one).</li>
+<li><code>tokens_bind</code> with <code>remap</code> takes <code>instances: &quot;override&quot;</code>, which rebinds the uses inside instances, nested ones too,
+as overrides on each instance: a dark copy on a plan with one mode a collection.</li>
+<li><code>tokens_apply</code> writes a text style&#39;s letter spacing and text case, from the <code>also</code> list <code>tokens_read</code> gives or
+after the font, and blur effect styles (<code>filter: blur()</code>, <code>backdrop-filter: blur()</code>) beside shadows.
+<code>design_apply</code> binds an effect style from <code>filter</code> and <code>backdrop-filter</code> with <code>var(--Style)</code>, as from <code>box-shadow</code>.</li>
+<li><code>design_read</code> shows which component property a component&#39;s layer is bound to: <code>$visibleProp</code>, <code>$prop</code> and
+<code>$swapProp</code>, read only.</li>
+<li><code>design_apply</code> takes <code>padding-top</code>, <code>padding-right</code>, <code>padding-bottom</code> and <code>padding-left</code>, each over the layer&#39;s
+other sides, and its <code>created</code> names each layer it made beside its id.</li>
+<li><code>status</code> says why a file&#39;s key is empty (Figma gives it only to private plugins) and to ask for the file&#39;s link.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>The plugin runs a write alone, after everything asked before it, and reads beside each other after the writes
+before them: a read never sees a write half done, and a timed-out write&#39;s retry finds what the first try made.</li>
+<li><code>contrast_check</code> rates every run of a text with its own colour, by its characters, sees the layers above the layer
+it checks (a part of a screen lies on the screen&#39;s fill), weighs a see-through layer over a text (a scrim), and
+rates a text on see-through glass against each part below it, giving the worst. <code>design_lint</code>&#39;s contrast rule
+does the same.</li>
+<li><code>design_lint</code> and <code>tokens_bind</code> check and bind what was put into an instance&#39;s slot: it is the instance&#39;s own
+content. The slot&#39;s default content stays the component&#39;s: <code>tokens_bind</code> leaves it alone and says so, as binding
+it would make the slot the instance&#39;s own and later changes to the component would no longer reach it.</li>
+<li><code>design_lint</code> lists a rule at the severity of its most severe finding, so a rule whose findings are all info no
+longer shows as a warning.</li>
+<li><code>tokens_read</code> with <code>format: &quot;json&quot;</code> past <code>maxChars</code> gives as many whole tokens as fit, and says how to read the rest.</li>
+<li><code>design_apply</code> takes a size together with both edges as CSS does (the size wins, the layer still stretches),
+places a layer by <code>left</code> and <code>top</code> where nothing lays it out (in a section, on the page), reads any known tag in
+any case (<code>&lt;span&gt;</code> too), and takes the elements a top-level <code>&lt;Root&gt;</code> wraps.</li>
+<li><code>execute</code>&#39;s description names what its code runs under (dynamic page access, <code>skipInvisibleInstanceChildren</code>
+false in the editor); an error about a synchronous call names the async one to make, and a script that turns
+<code>skipInvisibleInstanceChildren</code> on gets it set back after the call.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>A <code>tokens_apply</code> retried after the server stopped waiting no longer makes duplicate text styles; the timeout of a
+write says the plugin may still be writing and to read the file before retrying.</li>
+<li>After thousands of calls in one plugin window, Figma&#39;s &quot;invalid callback id&quot; error on layers holding a grid says to
+close and reopen the Pixelwright plugin window, which clears it.</li>
+<li><code>changes_since</code> counts what <code>texts_replace</code> and <code>instances_reattach</code> changed as Pixelwright&#39;s.</li>
+<li><code>design_lint</code> never answers &quot;No findings&quot; for layers it could not read: with none read it fails with each reason,
+with some read its summary says how many were not checked.</li>
+<li><code>contrast_check</code> stops at the opaque fill right under a text instead of calling it &quot;partly over&quot; a deeper layer,
+never takes a text for a backdrop, leaves out (and counts) texts a clipping frame cuts out of view or an opaque
+layer covers, and says each reason a contrast is not one number instead of &quot;over an image or gradient&quot;.</li>
+<li><code>contrast_check</code> says when its read stopped at its size budget (a screen of thousands of layers): the texts past it
+are missing and the backdrops of the layers above may be wrong, instead of answering as if the read were whole;
+<code>design_lint</code> notes the same for its contrast rule.</li>
+<li><code>image_compare</code> no longer reads antialiased edges as shifts of several pixels.</li>
+<li><code>nodes_delete</code> deletes a layer in an instance&#39;s slot, and <code>design_apply</code> moves layers within a slot.</li>
+<li><code>execute</code> code that does not parse is answered with the line and column, before anything runs, and says when the
+code may have arrived cut; an error while it runs names the line in the code and quotes it, with a short stack.</li>
+<li><code>design_apply</code> <code>note=</code> keeps a note&#39;s text as written: a prefix is a category only when the file has one of that
+name (none is made), and a bar splits only next to a note the layer has.</li>
+<li><code>design_apply</code> hiding a layer inside an instance with <code>display=&quot;none&quot;</code> no longer answers &quot;does not exist&quot;.</li>
+<li><code>design_apply</code> places a new component set&#39;s variants in its grid with <code>grid-row</code> and <code>grid-column</code>.</li>
+<li><code>design_apply</code> after a <code>copyOf</code> with edits inside lists the copy&#39;s layers it wrote in <code>changed</code>, and <code>before=</code> and
+<code>after=</code> inside a copy place by the copy&#39;s layers.</li>
+<li><code>design_apply</code> keeps a new text named <code>Text</code> when <code>name=&quot;Text&quot;</code> is given.</li>
+<li><code>design_apply</code>&#39;s &quot;too many layers at once&quot; says to leave out the layers that stay as they are, or to split the call.</li>
+</ul>
+
+        </section>
         <section id="v0-4-1">
           <h2>0.4.1 — 2026-10-18</h2>
 <h4>Fixed</h4>
