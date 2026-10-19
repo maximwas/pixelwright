@@ -133,11 +133,13 @@ function walk(node: SnapshotNode, where: Omit<LintLayer, "node">, visit: (layer:
   }
 }
 
-/** The texts below AA, or over what contrast cannot be measured on, by id. */
+/** The texts below AA, or over what contrast cannot be measured on, by id: a text's worst run, a ratio before none. */
 function failingTexts(snapshot: Snapshot): Map<string, ContrastText> {
   return new Map(
     contrastCheck(snapshot)
       .texts.filter((text) => !text.aa)
+      // Each run of a text has a row: sorted best first, so the worst one is set last and kept.
+      .toSorted((a, b) => (b.ratio ?? Number.MAX_VALUE) - (a.ratio ?? Number.MAX_VALUE))
       .map((text) => [text.id, text]),
   );
 }

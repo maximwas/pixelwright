@@ -3930,7 +3930,7 @@
               },
               "text": {
                 "type": "string",
-                "description": "The text's first characters."
+                "description": "The text's first characters; for a text of several colours, the first run of this one."
               },
               "color": {
                 "type": "string"

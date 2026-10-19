@@ -14,7 +14,7 @@ import {
 } from "./contrast/backdrop.ts";
 import { kindOf, topSolid } from "./contrast/paints.ts";
 
-/** A text rated: its row, why its contrast is not one number when it is not, and whether it is seen through a veil. */
+/** A run rated: its row, why its contrast is not one number when it is not, and whether it is seen through a veil. */
 interface Rated {
   readonly row: ContrastText;
   readonly unknown: Unknown | null;
@@ -47,7 +47,7 @@ const LEFT_OUT_COUNTS: readonly (readonly [LeftOut, string])[] = [
  */
 export function contrastCheck(snapshot: Snapshot): Contrast {
   const space = colorSpaceOf(snapshot.colorProfile);
-  const rated: Rated[] = [];
+  const rated: Rated[][] = [];
   const left: LeftOut[] = [];
   const walk = (node: SnapshotNode, ancestors: readonly SnapshotNode[]) => {
     if (!node.visible) {
@@ -59,7 +59,7 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
 
       if (typeof text === "string") {
         left.push(text);
-      } else if (text !== null) {
+      } else if (text.length > 0) {
         rated.push(text);
       }
 
@@ -75,15 +75,17 @@ export function contrastCheck(snapshot: Snapshot): Contrast {
 
   return {
     summary: summaryOf(rated, left),
-    texts: rated.map(({ row }) => row),
+    texts: rated.flat().map(({ row }) => row),
   };
 }
 
-function summaryOf(rated: readonly Rated[], left: readonly LeftOut[]): string {
-  const failing = rated.filter(({ row }) => row.aa === false).length;
+/** The counts, of texts (each with its runs): below AA, why a contrast is not one number, seen through a veil, left out. */
+function summaryOf(rated: readonly (readonly Rated[])[], left: readonly LeftOut[]): string {
+  const failing = rated.filter((runs) => runs.some(({ row }) => row.aa === false)).length;
+  const reasons = rated.map((runs) => runs.find(({ unknown }) => unknown !== null)?.unknown);
   const unclear = counted([
-    ...UNKNOWN_COUNTS.map(([reason, says]) => [rated.filter((text) => text.unknown === reason).length, says] as const),
-    [rated.filter((text) => text.veiled).length, VEILED],
+    ...UNKNOWN_COUNTS.map(([reason, says]) => [reasons.filter((one) => one === reason).length, says] as const),
+    [rated.filter((runs) => runs.some(({ veiled }) => veiled)).length, VEILED],
   ]);
   const out = counted(
     LEFT_OUT_COUNTS.map(([reason, says]) => [left.filter((one) => one === reason).length, says] as const),
@@ -97,8 +99,11 @@ function counted(counts: readonly (readonly [number, string])[]): string[] {
   return counts.flatMap(([count, says]) => (count === 0 ? [] : [`${count} ${says}`]));
 }
 
-/** A text's worst run against what is behind and over it; why it is left out; null when no run has a visible paint. */
-function rateText(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Rated | LeftOut | null {
+/**
+ * A text's runs against what is behind and over it, one row per colour (a link in a sentence is its own row), or why
+ * it is left out. No rows when no run has a visible paint.
+ */
+function rateText(node: SnapshotNode, ancestors: readonly SnapshotNode[], space: ColorSpace): Rated[] | LeftOut {
   if (ancestors.some((ancestor) => ancestor.clipsContent && !meets(ancestor, node))) {
     return "cut";
   }
@@ -114,17 +119,30 @@ function rateText(node: SnapshotNode, ancestors: readonly SnapshotNode[], space:
     over,
     space,
   };
-  let worst: Rated | null = null;
+  const runs = new Map<string, Rated>();
 
   for (const segment of node.text?.segments ?? []) {
-    const rated = rateSegment(node, segment, measured);
+    const run = rateSegment(node, segment, measured);
+    const key = `${run?.row.color} ${run?.row.large}`;
 
-    if (rated !== null && (worst === null || (rated.row.ratio ?? Infinity) < (worst.row.ratio ?? Infinity))) {
-      worst = rated;
+    if (run !== null && !runs.has(key)) {
+      runs.set(key, run);
     }
   }
 
-  return worst;
+  const rows = [...runs.values()];
+  const whole = (node.text?.characters ?? "").slice(0, 40);
+
+  // A text of one colour is named by its own characters, not its first run's.
+  return rows.length === 1
+    ? rows.map((run) => ({
+        ...run,
+        row: {
+          ...run.row,
+          text: whole,
+        },
+      }))
+    : rows;
 }
 
 /** What a run's colour is measured against: what is behind the text and over it (or why it is not known), the space. */
@@ -206,7 +224,7 @@ function baseOf(node: SnapshotNode, segment: TextSegment): Base {
   return {
     id: node.id,
     name: node.name,
-    text: (node.text?.characters ?? "").slice(0, 40),
+    text: segment.characters.slice(0, 40),
     size,
     weight,
     large: size >= 24 || (size >= 18.66 && weight >= 700),

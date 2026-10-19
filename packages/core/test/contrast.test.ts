@@ -349,4 +349,50 @@ describe("contrast_check on the Dukach feedback", () => {
       "1 texts: 1 below AA, 1 under a see-through layer (a scrim: content behind a modal may be exempt). Left out as not visible: 1 hidden under an opaque layer.",
     );
   });
+
+  it("rates every run with a colour of its own, so a link inside legal text is checked", () => {
+    const legal = painted(text("Legal", 14, 10, 10), GRAY);
+    const [run] = legal.text?.segments ?? [];
+    const runs = [
+      ["By continuing you agree to the ", GRAY],
+      ["Terms", BLUE],
+      [".", GRAY],
+    ] as const;
+    let start = 0;
+    const segments = runs.map(([characters, fill]) => {
+      start += characters.length;
+
+      return {
+        ...(run as TextSegment),
+        characters,
+        start: start - characters.length,
+        end: start,
+        fills: [fill] as TextSegment["fills"],
+      };
+    });
+    const { summary, texts } = contrastCheck({
+      root: frame(
+        "1:1",
+        [WHITE],
+        [
+          {
+            ...legal,
+            text: {
+              ...(legal.text as NonNullable<SnapshotNode["text"]>),
+              characters: runs.map(([characters]) => characters).join(""),
+              segments,
+            },
+          },
+        ],
+      ),
+      styles: {},
+      variables: {},
+    });
+
+    expect(texts.map(({ text: characters, color, ratio }) => [characters, color, ratio])).toEqual([
+      ["By continuing you agree to the ", "#767676", 4.54],
+      ["Terms", "#0D99FF", 2.99],
+    ]);
+    expect(summary).toBe("1 texts: 1 below AA.");
+  });
 });
