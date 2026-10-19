@@ -241,10 +241,29 @@ describe("CSS to Figma: layout", () => {
     });
   });
 
-  it("refuses placement CSS would not apply: offsets without position, over-constrained axes, fixed", () => {
+  it("refuses placement CSS would not apply: offsets without position, fixed", () => {
     expect(failed('<Frame left="10px"/>')).toEqual(["left"]);
-    expect(failed('<Frame position="absolute" left="0" right="0" width="100px"/>')).toEqual(["width"]);
     expect(failed('<Frame position="fixed"/>')).toEqual(["position"]);
+  });
+
+  it("stretches between both edges with a size given too, as CSS sizes it: the size wins, auto leaves it to them", () => {
+    expect(props('<Frame id="1:1" position="absolute" top="0" bottom="0" height="120px"/>')).toEqual({
+      absolute: true,
+      vertical: {
+        kind: "STRETCH",
+        start: 0,
+        end: 0,
+      },
+      height: 120,
+    });
+    expect(props('<Frame id="1:1" position="absolute" left="8px" right="8px" width="auto"/>')).toEqual({
+      absolute: true,
+      horizontal: {
+        kind: "STRETCH",
+        start: 8,
+        end: 8,
+      },
+    });
   });
 
   it("reads turns, mirrors, opacity, clipping and radii", () => {
@@ -548,6 +567,25 @@ describe("what the layer has now completes what Figma keeps in one property", ()
       itemSpacing: 12,
       counterAxisSpacing: 24,
     });
+  });
+
+  it("a padding side keeps the other sides the layer has, their tokens too", () => {
+    const current = {
+      display: "flex",
+      padding: "var(--space-8) 16px",
+    };
+
+    expect(change('<Frame id="1:1" padding-top="12px"/>', { current }).change).toMatchObject({
+      props: {
+        padding: [12, 16, { token: "--space-8" }, 16],
+      },
+      sources: { padding: "padding-top" },
+    });
+    expect(
+      props('<Frame display="flex" padding="4px" padding-left="var(--space-8)" padding-right="0"/>').padding,
+    ).toEqual([4, 0, 4, { token: "--space-8" }]);
+    expect(failed('<Frame id="1:1" padding-bottom="wide"/>', { current })).toEqual(["padding-bottom"]);
+    expect(failed('<Text id="1:2" padding-top="4px"/>')).toEqual(["padding-top"]);
   });
 
   it("a blur keeps the shadows, a side keeps the other sides, an offset keeps the underline", () => {

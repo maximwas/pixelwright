@@ -1,6 +1,7 @@
 import type { ApplyChange } from "@pixelwright/core";
 import { indexIn, insideInstance, loadPageOf } from "../../figma/nodes.ts";
 import { WriteError } from "../../figma/write-error.ts";
+import type { Counterparts } from "./counterparts.ts";
 
 /** Where a layer goes: a parent and the index among its children. */
 export interface Place {
@@ -16,15 +17,18 @@ export class Placement {
   readonly #changes: readonly ApplyChange[];
   readonly #layers: ReadonlyMap<string, SceneNode | null>;
   readonly #top: PageNode | SceneNode | null;
+  readonly #counterparts: Counterparts;
 
   constructor(
     changes: readonly ApplyChange[],
     layers: ReadonlyMap<string, SceneNode | null>,
     top: PageNode | SceneNode | null,
+    counterparts: Counterparts,
   ) {
     this.#changes = changes;
     this.#layers = layers;
     this.#top = top;
+    this.#counterparts = counterparts;
   }
 
   async whereTo(change: ApplyChange): Promise<Place> {
@@ -32,7 +36,10 @@ export class Placement {
     const neighbour = change.before ?? change.after;
 
     if (neighbour !== undefined) {
-      return await nextTo(change, neighbour, parent);
+      // Inside a copy the source's id names the copy's layer, as the element's own id does.
+      const copied = change.copy === undefined ? undefined : this.#counterparts.inCopy(change.copy, neighbour);
+
+      return await nextTo(change, copied ?? (await figma.getNodeByIdAsync(neighbour)), parent);
     }
 
     const into = parent ?? this.#top ?? figma.currentPage;
@@ -111,8 +118,8 @@ export class Placement {
 }
 
 /** Next to the layer before or after names, which must sit in the element's parent. */
-async function nextTo(change: ApplyChange, neighbour: string, parent: SceneNode | null): Promise<Place> {
-  const sibling = await figma.getNodeByIdAsync(neighbour);
+async function nextTo(change: ApplyChange, sibling: BaseNode | null, parent: SceneNode | null): Promise<Place> {
+  const neighbour = change.before ?? change.after;
 
   if (sibling === null || sibling.parent === null) {
     throw new WriteError(`No layer ${neighbour} to put the new one next to.`);

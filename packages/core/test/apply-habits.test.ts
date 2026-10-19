@@ -108,4 +108,26 @@ describe("design_apply: what agents write out of habit", () => {
       },
     ]);
   });
+
+  it("takes HTML's lowercase <span> as a <Span>, and any tag in another case as that tag", () => {
+    const { elements, errors } = readApply('<text name="Note">Hi <span color="#FF0000">there</span></text>');
+
+    expect(errors).toEqual([]);
+    expect(elements.map(({ tag }) => tag)).toEqual(["Text"]);
+    expect(elements[0]?.content?.[1]).toMatchObject({
+      kind: "span",
+      attributes: { color: "#FF0000" },
+      value: "there",
+    });
+  });
+
+  it("reads the elements a <Root> wraps, as XML documents have one root, as the top level", () => {
+    const { elements, errors } = readApply('<Root>\n  <Frame id="1:1" opacity="0.5"/>\n  <Frame name="New"/>\n</Root>');
+
+    expect(errors).toEqual([]);
+    expect(elements.map(({ tag, parent, line }) => [tag, parent, line])).toEqual([
+      ["Frame", null, 2],
+      ["Frame", null, 3],
+    ]);
+  });
 });

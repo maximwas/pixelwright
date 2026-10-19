@@ -17,8 +17,7 @@
             null,
             [
               {
-                "label": "keep the 24px gap",
-                "categoryId": "cat-2"
+                "label": "Card: keep the 24px gap"
               }
             ]
           ]

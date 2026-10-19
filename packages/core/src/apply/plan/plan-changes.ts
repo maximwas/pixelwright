@@ -1,3 +1,4 @@
+import { isLayoutDisplay } from "../../css-mapping/groups/layout/layout.ts";
 import { changeOf } from "../change-of.ts";
 import type { ApplyChange, ApplyElement, ApplyError } from "../types.ts";
 import type { Assessment } from "./assessment.ts";
@@ -32,10 +33,12 @@ export function planChanges({ elements, assessed, layers, files }: PlanInput): {
   errors: ApplyError[];
 } {
   const moved = movedRefs(elements, layers);
+  const byRef = new Map(assessed.map((item) => [item.element.ref, item]));
   const changes: ApplyChange[] = [];
   const errors: ApplyError[] = [];
 
-  for (const { element, now } of assessed) {
+  for (const item of assessed) {
+    const { element, now } = item;
     const differ = files.get(element.ref) ?? NO_FILE_CHANGES;
     const { change, errors: translated } = changeOf(
       element,
@@ -45,6 +48,7 @@ export function planChanges({ elements, assessed, layers, files }: PlanInput): {
             ...now,
             attributes: new Set([...now.attributes].filter((name) => !differ.changed.includes(name))),
           },
+      isPlaced(item, byRef),
     );
 
     changes.push(
@@ -62,6 +66,24 @@ export function planChanges({ elements, assessed, layers, files }: PlanInput): {
     changes,
     errors,
   };
+}
+
+/**
+ * Whether nothing lays the element's layer out where it goes, so its edges place it: a parent element without auto
+ * layout (a section, a frame displayed as a block), or the page a top-level layer is on. A new top-level layer goes
+ * where the plugin finds out.
+ */
+function isPlaced({ element, entry }: Assessment, byRef: ReadonlyMap<string, Assessment>): boolean {
+  const parent = element.parent === null ? undefined : byRef.get(element.parent);
+
+  if (parent === undefined) {
+    return element.parent === null && entry !== undefined && entry.parent === null;
+  }
+
+  const { display } = parent.element.attributes;
+
+  // A parent hidden by display="none" keeps the layout it has.
+  return !isLayoutDisplay((display === "none" ? undefined : display) ?? parent.now?.current.display ?? "block");
 }
 
 function fileError(element: ApplyElement, { attribute, message }: FileChanges["problems"][number]): ApplyError {

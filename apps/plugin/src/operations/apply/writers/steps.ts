@@ -18,6 +18,11 @@ const ELEMENT_STEPS: readonly Step[] = [
     write: (node, { name }) => {
       if (name !== undefined) {
         assign(node, "name", name);
+
+        // Named already as given ("Text"), a new text would still take its characters' name: set or not, it keeps it.
+        if (node.type === "TEXT") {
+          assign(node, "autoRename", false);
+        }
       }
     },
   },

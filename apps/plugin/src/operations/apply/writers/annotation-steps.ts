@@ -47,58 +47,101 @@ function linkable(node: TypedLayer): void {
 }
 
 /**
- * Dev Mode annotations, the whole list design_read shows, each category found by its label (made when the file lacks
- * it). A note that comes back as it was keeps its formatting and pinned properties; notes without text, which
- * design_read cannot show, stay.
+ * Dev Mode annotations, the whole list design_read shows. A note the layer has, sent back as design_read writes it,
+ * stays as it was (category, formatting, pinned properties); `Category: text` files a new note under the file's
+ * category of that name, and a name the file has no category for stays text: no category is ever made. Notes without
+ * text, which design_read cannot show, stay.
  */
 async function notes(node: Annotated, { notes: given }: FigmaProps): Promise<void> {
-  const categories = await categoriesByLabel();
+  const categories = await figma.annotations.getAnnotationCategoriesAsync();
   const before: readonly Annotation[] = Array.isArray(node.annotations) ? node.annotations : [];
   const unused = before.filter((annotation) => textOf(annotation) !== "");
-  const annotations: Annotation[] = [];
+  const read = (annotation: Annotation) => readText(annotation, categories);
+  const texts = noteTexts(
+    (given ?? []).map(({ category, label }) => (category === null ? label : `${category}: ${label}`)),
+    (text) => unused.some((annotation) => read(annotation) === text),
+    (text) => filed(text, categories).categoryId !== undefined,
+  );
+  const annotations = texts.map((text) => {
+    const same = unused.findIndex((annotation) => read(annotation) === text);
 
-  for (const { category, label } of given ?? []) {
-    const id = category === null ? undefined : await categoryId(categories, category);
+    if (same !== -1) {
+      return writable(unused.splice(same, 1)[0] as Annotation);
+    }
+
+    const { categoryId, label } = filed(text, categories);
+    // The same words under another category keep their formatting and pins.
     const at = unused.findIndex((annotation) => textOf(annotation) === label);
-    const kept = at === -1 ? undefined : unused.splice(at, 1)[0];
-    const { categoryId: _category, ...rest } = kept ?? { label };
+    const { categoryId: _old, ...kept } = at === -1 ? { label } : writable(unused.splice(at, 1)[0] as Annotation);
 
-    annotations.push({
-      ...rest,
-      ...(id === undefined ? {} : { categoryId: id }),
-    });
+    return categoryId === undefined
+      ? kept
+      : {
+          ...kept,
+          categoryId,
+        };
+  });
+
+  node.annotations = [...annotations, ...before.filter((annotation) => textOf(annotation) === "").map(writable)];
+}
+
+/**
+ * The notes core's parts make (design_read's note split at every unescaped bar). A bar separates only where the format
+ * means it: next to a note the layer has, or before a note a category starts; between new words it is the agent's
+ * text, so `Tabs: Days | Weeks` stays one note.
+ */
+function noteTexts(parts: readonly string[], had: (text: string) => boolean, starts: (text: string) => boolean) {
+  const texts: string[] = [];
+  let open = false;
+
+  for (const part of parts) {
+    if (open && !had(part) && !starts(part)) {
+      texts[texts.length - 1] += ` | ${part}`;
+    } else {
+      texts.push(part);
+      open = !had(part);
+    }
   }
 
-  node.annotations = [...annotations, ...before.filter((annotation) => textOf(annotation) === "")];
+  return texts;
 }
 
 const textOf = (annotation: Annotation) => annotation.label ?? annotation.labelMarkdown ?? "";
 
-async function categoriesByLabel(): Promise<Map<string, string>> {
-  return new Map(
-    (await figma.annotations.getAnnotationCategoriesAsync()).map((category) => [
-      category.label.toLowerCase(),
-      category.id,
-    ]),
-  );
+/** A note as design_read writes it: `Category: text`, or the text alone. */
+function readText(annotation: Annotation, categories: readonly AnnotationCategory[]): string {
+  const category = categories.find(({ id }) => id === annotation.categoryId);
+
+  return category === undefined ? textOf(annotation) : `${category.label}: ${textOf(annotation)}`;
 }
 
-/** A category's id by its label, made when the file lacks it. */
-async function categoryId(categories: Map<string, string>, label: string): Promise<string> {
-  const known = categories.get(label.toLowerCase());
+/** A new note's category: the file's category its text starts with (`Category: text`), if the file has one. */
+function filed(text: string, categories: readonly AnnotationCategory[]): { categoryId?: string; label: string } {
+  const at = text.indexOf(": ");
+  const name = text.slice(0, at).toLowerCase();
+  const category = at === -1 ? undefined : categories.find(({ label }) => label.toLowerCase() === name);
 
-  if (known !== undefined) {
-    return known;
+  return category === undefined
+    ? { label: text }
+    : {
+        categoryId: category.id,
+        label: text.slice(at + 2),
+      };
+}
+
+/** An annotation as Figma takes it back: it reads both texts but refuses a write that gives both (Markdown kept). */
+function writable({ label, labelMarkdown, ...rest }: Annotation): Annotation {
+  if (labelMarkdown !== undefined && labelMarkdown !== "") {
+    return {
+      ...rest,
+      labelMarkdown,
+    };
   }
 
-  const made = (
-    await figma.annotations.addAnnotationCategoryAsync({
-      label,
-      color: "blue",
-    })
-  ).id;
-
-  categories.set(label.toLowerCase(), made);
-
-  return made;
+  return label === undefined || label === ""
+    ? rest
+    : {
+        ...rest,
+        label,
+      };
 }

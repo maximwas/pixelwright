@@ -18,6 +18,9 @@ const LAYOUT = [
   "grid-template-rows",
 ];
 
+/** A padding's sides on their own, in the shorthand's order. */
+const PADDING_SIDES = ["padding-top", "padding-right", "padding-bottom", "padding-left"] as const;
+
 const DISPLAYS: Readonly<Record<string, "flex" | "grid" | "block" | "none">> = {
   flex: "flex",
   "inline-flex": "flex",
@@ -35,11 +38,18 @@ export const LAYOUT_RULES: readonly Rule[] = [
     write: layoutRule,
   },
   {
-    attributes: ["padding"],
+    attributes: ["padding", ...PADDING_SIDES],
     write: paddingRule,
   },
   ...FLEX_ALIGNMENT_RULES,
 ];
+
+/** Whether a display lays a frame's children out: flex or grid, inline or not. */
+export function isLayoutDisplay(display: string): boolean {
+  const mode = DISPLAYS[display];
+
+  return mode === "flex" || mode === "grid";
+}
 
 /** Whether a layer lays its children out in a row or a column (auto layout). */
 export function isFlex(node: SnapshotNode | null): boolean {
@@ -101,13 +111,31 @@ function layoutRule(input: WriteInput, out: WriteOutput): void {
   }
 }
 
-function paddingRule({ own }: WriteInput, out: WriteOutput): void {
-  const value = own("padding") ?? "";
+/** The padding shorthand (the layer's when the element gives none), then each side given on its own over it, as CSS. */
+function paddingRule({ own, merged }: WriteInput, out: WriteOutput): void {
+  const value = merged("padding") ?? "0";
   const sides = boxOf(splitTop(value, " ").map(pixelLengthOf));
 
   if (sides === null) {
     out.fail("padding", `padding="${value}" is not 1 to 4 lengths in px or tokens.`);
-  } else {
-    out.set("padding", sides, "padding");
+
+    return;
   }
+
+  for (const [index, name] of PADDING_SIDES.entries()) {
+    const side = own(name);
+    const length = side === undefined ? undefined : pixelLengthOf(side.trim());
+
+    if (length === null) {
+      out.fail(name, `${name}="${side}" is not a length in px or a token.`);
+
+      return;
+    }
+
+    if (length !== undefined) {
+      sides[index] = length;
+    }
+  }
+
+  out.set("padding", sides, own("padding") === undefined ? (PADDING_SIDES.find(own) ?? "padding") : "padding");
 }

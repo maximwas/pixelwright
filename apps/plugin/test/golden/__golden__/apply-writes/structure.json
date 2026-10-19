@@ -7,25 +7,29 @@
             "line": 1,
             "ref": "new:1",
             "id": "90:1",
-            "tag": "Frame"
+            "tag": "Frame",
+            "name": "New"
           },
           {
             "line": 2,
             "ref": "new:2",
             "id": "90:2",
-            "tag": "Rectangle"
+            "tag": "Rectangle",
+            "name": "Box"
           },
           {
             "line": 3,
             "ref": "new:3",
             "id": "90:3",
-            "tag": "Ellipse"
+            "tag": "Ellipse",
+            "name": "Round"
           },
           {
             "line": 4,
             "ref": "new:4",
             "id": "90:4",
-            "tag": "Line"
+            "tag": "Line",
+            "name": "Line"
           }
         ],
         "changed": [],
@@ -565,10 +569,13 @@
             "line": 1,
             "ref": "new:1",
             "id": "90:1",
-            "tag": "Frame"
+            "tag": "Frame",
+            "name": "Card 2"
           }
         ],
-        "changed": [],
+        "changed": [
+          "90:3"
+        ],
         "errors": [],
         "dryRun": false
       },
@@ -884,10 +891,13 @@
             "line": 1,
             "ref": "new:1",
             "id": "90:1",
-            "tag": "Frame"
+            "tag": "Frame",
+            "name": "Card"
           }
         ],
-        "changed": [],
+        "changed": [
+          "90:4"
+        ],
         "errors": [],
         "dryRun": false
       },
@@ -1240,7 +1250,8 @@
             "line": 1,
             "ref": "new:1",
             "id": "90:1",
-            "tag": "Section"
+            "tag": "Section",
+            "name": "New area"
           }
         ],
         "changed": [],

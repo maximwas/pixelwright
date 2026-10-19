@@ -127,8 +127,9 @@ describe("assessElements", () => {
         line: 2,
         column: 1,
         id: "9:2",
-        message: "design_apply could not read 9:2's current state: the call holds too many layers at once.",
-        hint: "Send fewer layers in one call, or this one on its own.",
+        message:
+          "design_apply could not read 9:2's current state: the layers this call names, with every layer inside them, are more than one call reads.",
+        hint: 'Leave out the layers that stay as they are: an element alone (<Frame id="…"/>) moves or changes its layer with everything inside it. Or split the call.',
       },
     ]);
     expect(

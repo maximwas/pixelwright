@@ -5,14 +5,23 @@ import { WriteError } from "../../figma/write-error.ts";
 import { finishNew } from "./new-layers.ts";
 import type { PropertyMarks } from "./property-marks.ts";
 import { layOut } from "./variant-grid.ts";
+import { PLACING_KEYS } from "./writers/child-steps.ts";
 
 type Fail = (error: unknown, attribute?: string) => void;
 
-/** A new set waiting for its variants: the frame holding them until they are combined. */
+/** A layer's write that waits: its layer, its change, where its errors go. */
+interface Held {
+  readonly node: SceneNode;
+  readonly change: ApplyChange;
+  readonly fail: Fail;
+}
+
+/** A new set waiting for its variants: the frame holding them until they are combined, and their placing in it. */
 interface Pending {
   readonly change: ApplyChange;
   readonly holder: SceneNode;
   readonly fail: Fail;
+  readonly placing: Held[];
 }
 
 /** What finishing a set needs from the run: its writer, its record, its components, marks and layers. */
@@ -43,7 +52,38 @@ export class PendingSets {
       change,
       holder,
       fail,
+      placing: [],
     });
+  }
+
+  /**
+   * The change to write now. A variant of a set still held is written in its holder, which has no layout: what places
+   * it in the set (a grid cell, its alignment) waits until the set is made with its own.
+   */
+  writable({ node, change, fail }: Held): ApplyChange {
+    const set = this.#pending.find((pending) => pending.change.ref === change.parent);
+    const keys = Object.keys(change.props);
+
+    if (set === undefined || !keys.some((key) => PLACING_KEYS.has(key))) {
+      return change;
+    }
+
+    const part = (placing: boolean) =>
+      Object.fromEntries(Object.entries(change.props).filter(([key]) => PLACING_KEYS.has(key) === placing));
+
+    set.placing.push({
+      node,
+      change: {
+        ...change,
+        props: part(true),
+      },
+      fail,
+    });
+
+    return {
+      ...change,
+      props: part(false),
+    };
   }
 
   /** Sets whose XML has ended (none holds `next`) are finished; a set still open waits, and the properties inside it. */
@@ -71,7 +111,16 @@ export class PendingSets {
 
     try {
       await this.#run.write(made, pending.change, pending.fail);
-      layOut(made);
+
+      // A set with auto layout or a grid lays its variants out itself, placed by what waited for it.
+      if (made.layoutMode === "NONE") {
+        layOut(made);
+      }
+
+      for (const { node, change, fail } of pending.placing) {
+        await this.#run.write(node, change, fail);
+      }
+
       // As any new layer: it hugs what the XML did not size, and on the page it goes beside what is there.
       finishNew(made, pending.change);
       this.#run.components.add(made);

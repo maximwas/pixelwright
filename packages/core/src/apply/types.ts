@@ -63,7 +63,7 @@ export interface ApplyChange {
   readonly copyOf?: string;
   /** Inside a copy or a new instance: the layer whose counterpart this change writes. */
   readonly source?: string;
-  /** The copy or new instance that counterpart is in. */
+  /** The copy or new instance the change is inside: its counterparts, and the layers before/after name, are there. */
   readonly copy?: string;
   /** An update placed again, as a create is: another parent, before/after, or another order. */
   readonly move?: boolean;

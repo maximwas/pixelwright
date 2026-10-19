@@ -30,6 +30,7 @@ export class ApplyReport {
       ref: change.ref,
       id: node.id,
       tag: change.tag,
+      name: node.name,
     });
   }
 

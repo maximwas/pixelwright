@@ -50,7 +50,7 @@ export class ApplyRun implements WriteScope {
     this.#changes = changes;
     this.#byRef = new Map(changes.map((change) => [change.ref, change]));
     this.#parts = parts;
-    this.#placement = new Placement(changes, this.#layers, parts.top);
+    this.#placement = new Placement(changes, this.#layers, parts.top, this.#counterparts);
     this.#sets = new PendingSets(this.#byRef, {
       write: (node, change, fail) => this.#write(node, change, fail),
       made: (change, node) => this.#report.made(change, node),
@@ -127,7 +127,13 @@ export class ApplyRun implements WriteScope {
       return;
     }
 
-    this.#record(change, node, (await this.#write(node, change, fail)) || moved);
+    const now = this.#sets.writable({
+      node,
+      change,
+      fail,
+    });
+
+    this.#record(change, node, (await this.#write(node, now, fail)) || moved);
   }
 
   async #write(node: SceneNode, change: ApplyChange, fail: Fail): Promise<boolean> {
@@ -204,7 +210,8 @@ export class ApplyRun implements WriteScope {
       }
 
       this.#report.made(change, node);
-    } else if (wrote && change.source === undefined) {
+    } else if (wrote) {
+      // A copy's or new instance's layer too, by its own id there: the agent sees what its edits inside wrote.
       this.#report.wroteTo(node);
     }
   }

@@ -5,10 +5,20 @@ import type { ApplyChange, ApplyElement, ApplyError } from "./types.ts";
 /**
  * An element as a change in Figma's terms: what the mapping writes for it (with `now`, only what the layer does not
  * have yet), in the envelope the plugin places it by. Errors stand where the XML has them, a span's at the span, and
- * come in the order of the element's attributes.
+ * come in the order of the element's attributes. `placed`: nothing lays the layer out where it goes.
  */
-export function changeOf(element: ApplyElement, now?: LayerNow): { change: ApplyChange; errors: ApplyError[] } {
-  const write = writeElement(element, now);
+export function changeOf(
+  element: ApplyElement,
+  now?: LayerNow,
+  placed = false,
+): { change: ApplyChange; errors: ApplyError[] } {
+  const write = writeElement(
+    {
+      ...element,
+      placed,
+    },
+    now,
+  );
   const { attributes } = element;
   const order = Object.keys(attributes);
   const rank = (error: ApplyError) => {

@@ -537,6 +537,12 @@ describe("apply: creating", () => {
 
     expect(byId("1:1")?.children?.map(({ name }) => name)).toEqual(["Title", "Between", "Side", "Last"]);
   });
+
+  it("keeps a new text's name, the one Figma gives it too, and names one without a name after its characters", async () => {
+    await apply('<Text name="Text">Our services</Text>\n<Text>Contact</Text>', { parent: "3:1" });
+
+    expect(fake.writes.created.map(({ name }) => name)).toEqual(["Text", "Contact"]);
+  });
 });
 
 describe("apply: changing", () => {
@@ -564,6 +570,19 @@ describe("apply: changing", () => {
     expect(byId("2:1")?.type).toBe("INSTANCE");
   });
 
+  it("hides a layer inside an instance, which Figma may drop from the plugin API at once, and says it changed", async () => {
+    root = page();
+    fake = installFigma(root, LIBRARY, { hiddenInInstanceGone: true });
+
+    const result = await apply('<Text id="I2:1;3:4" name="Label" display="none"/>');
+
+    expect(result).toMatchObject({
+      changed: ["I2:1;3:4"],
+      errors: [],
+    });
+    expect(byId("I2:1;3:4")?.visible).toBe(false);
+  });
+
   it("fills the parent's direction, pins to the right edge, turns about the centre", async () => {
     await apply('<Frame id="1:3" flex="1"/>');
     await apply('<Frame id="3:2" position="absolute" right="20px" top="10px" width="100px"/>');
@@ -585,6 +604,20 @@ describe("apply: changing", () => {
     // Turned a quarter about its centre (330, 30): the 100 x 40 box now spans 20 across and 50 down from there.
     expect([a, b, c, d].map((value) => Math.round(value ?? 0))).toEqual([0, 1, -1, 0]);
     expect([Math.round(x ?? 0), Math.round(y ?? 0)]).toEqual([310, 80]);
+  });
+
+  it("stretches a layer between its top and bottom with its height given too, which wins over the bottom as in CSS", async () => {
+    const result = await apply('<Rectangle id="3:2" position="absolute" top="0" bottom="0" height="120px"/>');
+
+    expect(result.errors).toEqual([]);
+    expect(byId("3:2")).toMatchObject({
+      height: 120,
+      constraints: { vertical: "STRETCH" },
+    });
+    expect(byId("3:2")?.relativeTransform).toEqual([
+      [1, 0, 10],
+      [0, 1, 0],
+    ]);
   });
 });
 
