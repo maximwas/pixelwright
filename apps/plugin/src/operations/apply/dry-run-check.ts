@@ -16,6 +16,7 @@ import { WriteError } from "../../figma/write-error.ts";
 import type { ApplyFonts } from "./apply-fonts.ts";
 import { ApplyReport } from "./apply-report.ts";
 import { canMake, newLayerType } from "./new-layers.ts";
+import { plannedProperties } from "./property-marks.ts";
 import { existingLayer } from "./targets.ts";
 import { typeRefusals } from "./type-refusals.ts";
 
@@ -85,6 +86,7 @@ export class DryRunCheck {
         await this.#neighbour(change, fail);
         this.#planned.record(change, this.#byRef);
         await this.#props(change, fail, this.#refused(change, layer));
+        await this.#marks(change, layer, fail);
       } catch (error) {
         fail(error);
       }
@@ -201,6 +203,46 @@ export class DryRunCheck {
         }
       }
     }
+  }
+
+  /** The properties a layer of an existing component would add, reported, and what binding it refuses. */
+  async #marks(change: ApplyChange, layer: TypedLayer | null, fail: Fail): Promise<void> {
+    const property = change.props.property;
+    const from = property === undefined || layer === null ? undefined : await this.#holderFrom(change);
+
+    if (property === undefined || layer === null || from === undefined) {
+      return;
+    }
+
+    try {
+      for (const added of plannedProperties(from, layer.type, property)) {
+        this.#report.added(added);
+      }
+    } catch (error) {
+      fail(error, change.sources.property);
+    }
+  }
+
+  /**
+   * Where the component holding a layer is looked for: above an existing layer, or from the nearest existing layer a
+   * new one goes in; undefined inside a new component, which the real run makes whole.
+   */
+  async #holderFrom(change: ApplyChange): Promise<BaseNode | null | undefined> {
+    if (change.kind === "update") {
+      return (await figma.getNodeByIdAsync(change.id ?? ""))?.parent ?? null;
+    }
+
+    for (let up = this.#byRef.get(change.parent ?? ""); up !== undefined; up = this.#byRef.get(up.parent ?? "")) {
+      if (up.kind === "update") {
+        return await figma.getNodeByIdAsync(up.id ?? "");
+      }
+
+      if (up.tag === "Component") {
+        return undefined;
+      }
+    }
+
+    return null;
   }
 
   #font(change: ApplyChange, props: FigmaProps, fail: Fail): void {

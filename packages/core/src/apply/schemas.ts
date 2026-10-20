@@ -68,6 +68,19 @@ export const ApplyResultSchema = z.object({
   /** The existing layers written to (a dry run's: would be), and the layers of a copy or new instance written. */
   changed: z.array(z.string()),
   errors: z.array(ApplyErrorSchema),
+  /**
+   * The properties prop, visibleProp and swapProp added to components that were there before the call (a dry run's:
+   * would add), each on its component or set by id, by name without Figma's #id; left out when none.
+   */
+  properties: z
+    .array(
+      z.object({
+        component: z.string(),
+        name: z.string(),
+        type: z.enum(["TEXT", "BOOLEAN", "INSTANCE_SWAP"]),
+      }),
+    )
+    .exactOptional(),
 });
 
 /**

@@ -11,7 +11,10 @@ export interface Scope {
    * the source's layers (or another instance's of the component), written onto their counterparts.
    */
   readonly copy: { readonly ref: string; readonly seen: Set<string> } | null;
-  /** Inside a new Component: its layers may make properties (prop, visibleProp). */
+  /**
+   * Where a component may hold the layers, so they may make its properties (prop, visibleProp, swapProp): inside a
+   * new Component, or an existing layer's (the plugin knows whether a component holds that one).
+   */
   readonly inComponent: boolean;
 }
 
@@ -22,10 +25,19 @@ export const TOP: Scope = {
   inComponent: false,
 };
 
-/** An applied element's children: under it, in a copy it starts (copyOf or a new instance), in a new component. */
+/**
+ * An applied element's children: under it, in a copy it starts (copyOf or a new instance), in a new component or
+ * under an existing layer (`existing`: it has an id outside a copy).
+ */
 export function childScope(
   scope: Scope,
-  parent: { readonly ref: string; readonly tag: string; readonly creating: boolean; readonly copying: boolean },
+  parent: {
+    readonly ref: string;
+    readonly tag: string;
+    readonly creating: boolean;
+    readonly copying: boolean;
+    readonly existing: boolean;
+  },
 ): Scope {
   return {
     parentRef: parent.ref,
@@ -38,7 +50,7 @@ export function childScope(
             seen: new Set(),
           }
         : scope.copy,
-    inComponent: scope.inComponent || (parent.creating && parent.tag === "Component"),
+    inComponent: scope.inComponent || parent.existing || (parent.creating && parent.tag === "Component"),
   };
 }
 

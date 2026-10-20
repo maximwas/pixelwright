@@ -85,7 +85,12 @@ function page(): FakeNode {
             value: "Hello",
           },
         },
-        children: [],
+        children: [
+          {
+            ...textNode("I2:1;8:2", "Hello"),
+            componentPropertyReferences: { characters: "Title#2:0" },
+          },
+        ],
       },
       {
         id: "6:1",
@@ -243,5 +248,107 @@ describe("design_apply: swapProp in a new component", () => {
       errors: [],
     });
     expect(calls("addComponentProperty")).toEqual([]);
+  });
+});
+
+describe("design_apply: properties on an existing component", () => {
+  it("binds a layer to the property of that name the component has, and adds one it lacks, once", async () => {
+    const result = await apply(
+      [
+        '<Component id="8:1"><Text id="8:4" prop="Note"/><Instance id="8:5" swapProp="Icon"/>',
+        '<Text prop="Caption">New</Text></Component>',
+        '<Text id="8:2" prop="Note"/>',
+      ].join("\n"),
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(byId("8:5").componentPropertyReferences).toEqual({ mainComponent: "Icon#1:0" });
+    expect(calls("addComponentProperty").map(({ args }) => args)).toEqual([
+      ["Note", "TEXT", "Fine print"],
+      ["Caption", "TEXT", "New"],
+    ]);
+    expect([byId("8:4"), byId("8:2")].map(({ componentPropertyReferences }) => componentPropertyReferences)).toEqual([
+      { characters: "Note#3:0" },
+      { characters: "Note#3:0" },
+    ]);
+    expect(result.changed).toEqual(["8:4", "8:5", "8:2"]);
+    expect(result.properties).toEqual([
+      {
+        component: "8:1",
+        name: "Note",
+        type: "TEXT",
+      },
+      {
+        component: "8:1",
+        name: "Caption",
+        type: "TEXT",
+      },
+    ]);
+  });
+
+  it("adds a variant's property on its set, once for every variant, its default the layer's value now", async () => {
+    const result = await apply(
+      '<Text id="6:3" prop="Label" visibleProp="Shown" display="none"/>\n<Text id="6:5" prop="Label"/>',
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(byId("6:1").componentPropertyDefinitions).toMatchObject({
+      "Label#2:0": {
+        type: "TEXT",
+        defaultValue: "Buy",
+      },
+      "Shown#3:0": {
+        type: "BOOLEAN",
+        defaultValue: false,
+      },
+    });
+    expect([byId("6:3"), byId("6:5")].map(({ componentPropertyReferences }) => componentPropertyReferences)).toEqual([
+      {
+        characters: "Label#2:0",
+        visible: "Shown#3:0",
+      },
+      { characters: "Label#2:0" },
+    ]);
+  });
+
+  it("refuses a name another type of property has, and a layer no component holds, adding nothing", async () => {
+    const result = await apply(
+      '<Text id="8:4" visibleProp="Title"/>\n<Text id="3:2" prop="Loose"/>\n<Text id="I2:1;8:2" prop="Heading"/>',
+    );
+
+    expect(result.errors.map(({ line, attribute, message }) => [line, attribute, message])).toEqual([
+      [1, "visibleProp", expect.stringMatching(/Card has a text property Title/)],
+      [2, "prop", expect.stringMatching(/No component holds this layer/)],
+      [3, "prop", expect.stringMatching(/inside an instance/)],
+    ]);
+    expect(calls("addComponentProperty")).toEqual([]);
+    expect(result.changed).toEqual([]);
+  });
+
+  it("sends nothing for a layer bound as it says already", async () => {
+    const result = await apply('<Text id="8:2" prop="Title"/>\n<Instance id="8:3" swapProp="Icon"/>');
+
+    expect(result).toMatchObject({
+      changed: [],
+      errors: [],
+    });
+  });
+
+  it("reports in a dry run what it would add, once, and what it would refuse, writing nothing", async () => {
+    const result = await apply(
+      '<Text id="6:3" prop="Label"/>\n<Text id="6:5" prop="Label"/>\n<Component id="8:1"><Text prop="Title">Hi</Text></Component>\n<Text id="8:4" visibleProp="Title"/>',
+      { dryRun: true },
+    );
+
+    expect(result.properties).toEqual([
+      {
+        component: "6:1",
+        name: "Label",
+        type: "TEXT",
+      },
+    ]);
+    expect(result.errors.map(({ line, attribute }) => [line, attribute])).toEqual([[4, "visibleProp"]]);
+    expect(calls("addComponentProperty")).toEqual([]);
+    expect(byId("6:3").componentPropertyReferences).toBeUndefined();
   });
 });

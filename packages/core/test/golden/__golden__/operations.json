@@ -6799,6 +6799,33 @@
               "message"
             ]
           }
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "component": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "TEXT",
+                  "BOOLEAN",
+                  "INSTANCE_SWAP"
+                ]
+              }
+            },
+            "required": [
+              "component",
+              "name",
+              "type"
+            ]
+          }
         }
       },
       "required": [

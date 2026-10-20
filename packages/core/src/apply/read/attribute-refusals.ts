@@ -6,7 +6,7 @@ interface Use {
   readonly tag: string;
   readonly name: string;
   readonly value: string;
-  /** Inside a new Component. */
+  /** Where a component may hold the layer: inside a new Component, or an existing layer or under one. */
   readonly inComponent: boolean;
 }
 
@@ -38,8 +38,9 @@ const PROPERTY_ATTRIBUTES: ReadonlySet<string> = new Set(["prop", "visibleProp",
 const ATTRIBUTE_REFUSALS: readonly Refusal[] = [
   {
     applies: ({ name, inComponent }) => PROPERTY_ATTRIBUTES.has(name) && !inComponent,
-    message: ({ name }) => `${name} makes a property of a new <Component>: this layer is in none.`,
-    hint: () => "Use it on the layers inside a <Component> you create.",
+    message: ({ name }) => `${name} makes a property of the <Component> holding the layer: this new layer is in none.`,
+    hint: () =>
+      "Use it on the layers inside a <Component> you create, or on an existing component's: by their ids, or new ones inside its element.",
   },
   {
     applies: ({ tag, name, value }) => name === "display" && !layout(tag) && value !== "none" && value !== "block",
