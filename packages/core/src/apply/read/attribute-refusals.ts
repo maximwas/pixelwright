@@ -37,6 +37,11 @@ const PROPERTY_ATTRIBUTES: ReadonlySet<string> = new Set(["prop", "visibleProp",
 /** The rules in the order they are checked. */
 const ATTRIBUTE_REFUSALS: readonly Refusal[] = [
   {
+    applies: ({ tag, name }) => tag === "Page" && name !== "id" && name !== "name",
+    message: ({ name }) => `A <Page> takes only a name: ${name} is not written.`,
+    hint: () => "Give it on the layers in the page.",
+  },
+  {
     applies: ({ name, inComponent }) => PROPERTY_ATTRIBUTES.has(name) && !inComponent,
     message: ({ name }) => `${name} makes a property of the <Component> holding the layer: this new layer is in none.`,
     hint: () =>

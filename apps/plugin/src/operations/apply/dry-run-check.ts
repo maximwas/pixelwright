@@ -16,6 +16,7 @@ import { WriteError } from "../../figma/write-error.ts";
 import type { ApplyFonts } from "./apply-fonts.ts";
 import { ApplyReport } from "./apply-report.ts";
 import { canMake, newLayerType } from "./new-layers.ts";
+import { existingPage } from "./pages.ts";
 import { plannedProperties } from "./property-marks.ts";
 import { existingLayer } from "./targets.ts";
 import { typeRefusals } from "./type-refusals.ts";
@@ -79,20 +80,39 @@ export class DryRunCheck {
       const fail: Fail = (error, attribute) => this.#report.fail(change, error, attribute);
 
       try {
-        const layer = await this.#target(change);
-
-        this.#report.planned(change);
-        this.#checked.add(change.ref);
-        await this.#neighbour(change, fail);
-        this.#planned.record(change, this.#byRef);
-        await this.#props(change, fail, this.#refused(change, layer));
-        await this.#marks(change, layer, fail);
+        await (change.tag === "Page" ? this.#page(change) : this.#check(change, fail));
       } catch (error) {
         fail(error);
       }
     }
 
     return this.#report.result();
+  }
+
+  async #check(change: ApplyChange, fail: Fail): Promise<void> {
+    const layer = await this.#target(change);
+
+    this.#report.planned(change);
+    this.#checked.add(change.ref);
+    await this.#neighbour(change, fail);
+    this.#planned.record(change, this.#byRef);
+    await this.#props(change, fail, this.#refused(change, layer));
+    await this.#marks(change, layer, fail);
+  }
+
+  /**
+   * A page takes only its name: a new one is listed (made on the real run); the one an id names must be there, and is
+   * listed only when the name differs, as the real run renames it only then.
+   */
+  async #page(change: ApplyChange): Promise<void> {
+    const page = change.kind === "update" ? await existingPage(change.id, { load: false }) : null;
+    const { name } = change.props;
+
+    if (page === null || (name !== undefined && page.name !== name)) {
+      this.#report.planned(change);
+    }
+
+    this.#checked.add(change.ref);
   }
 
   /**

@@ -19,11 +19,21 @@ export interface SubtreeOptions {
   readonly read: (node: SceneNode) => Promise<SnapshotNode>;
   /** A hidden layer whose layers are read all the same. */
   readonly open?: (node: SceneNode) => boolean;
+  /** A layer whose layers are read before the others', so the budget goes to them first. */
+  readonly first?: (node: SceneNode) => boolean;
 }
 
 /** A layer and its descendants, breadth first, until the budget (shared by the call) runs out. */
-export function readSubtree(root: SceneNode, budget: SnapshotBudget, options: SubtreeOptions): Promise<SnapshotNode> {
-  return new SubtreeRead(budget, options).run(root);
+export async function readSubtree(
+  root: SceneNode,
+  budget: SnapshotBudget,
+  options: SubtreeOptions,
+): Promise<SnapshotNode> {
+  const read = await SubtreeRead.start(root, budget, options);
+
+  await read.expand();
+
+  return read.top;
 }
 
 /** A layer waiting for its children to be read: its entry, and how deep it is. */
@@ -33,33 +43,71 @@ interface QueuedLayer {
   readonly level: number;
 }
 
-/** One breadth-first read: the layers waiting, and whether the budget has run out. */
-class SubtreeRead {
+/** Layers waiting, in the order they came: an index walks them, so nothing is shifted. */
+class LayerQueue {
+  readonly #layers: QueuedLayer[] = [];
+  #at = 0;
+
+  push(layer: QueuedLayer): void {
+    this.#layers.push(layer);
+  }
+
+  next(): QueuedLayer | undefined {
+    const layer = this.#layers[this.#at];
+
+    if (layer !== undefined) {
+      this.#at += 1;
+    }
+
+    return layer;
+  }
+}
+
+/**
+ * One breadth-first read: the layers `first` picks before the others, each kind in the order they came, until the
+ * budget runs out. Started, its root is read; several reads can then take their first layers before any takes the rest.
+ */
+export class SubtreeRead {
+  readonly top: SnapshotNode;
   readonly #budget: SnapshotBudget;
   readonly #options: SubtreeOptions;
-  readonly #queue: QueuedLayer[] = [];
+  readonly #first = new LayerQueue();
+  readonly #rest = new LayerQueue();
   #full = false;
 
-  constructor(budget: SnapshotBudget, options: SubtreeOptions) {
+  private constructor(top: SnapshotNode, budget: SnapshotBudget, options: SubtreeOptions) {
+    this.top = top;
     this.#budget = budget;
     this.#options = options;
   }
 
-  async run(root: SceneNode): Promise<SnapshotNode> {
-    const top = await this.#options.read(root);
+  static async start(root: SceneNode, budget: SnapshotBudget, options: SubtreeOptions): Promise<SubtreeRead> {
+    const top = await options.read(root);
 
-    this.#budget.take(top);
-    this.#queue.push({
+    budget.take(top);
+
+    const read = new SubtreeRead(top, budget, options);
+
+    read.#queue({
       node: root,
       entry: top,
       level: 0,
     });
 
-    for (let index = 0; index < this.#queue.length && !this.#full; index++) {
-      await this.#expand(this.#queue[index] as QueuedLayer);
-    }
+    return read;
+  }
 
-    return top;
+  /** Reads the waiting layers' children: those `first` picks, then (unless only those) the rest. */
+  async expand({ firstOnly = false }: { readonly firstOnly?: boolean } = {}): Promise<void> {
+    for (const queue of firstOnly ? [this.#first] : [this.#first, this.#rest]) {
+      for (let layer = queue.next(); layer !== undefined && !this.#full; layer = queue.next()) {
+        await this.#expand(layer);
+      }
+    }
+  }
+
+  #queue(layer: QueuedLayer): void {
+    ((this.#options.first?.(layer.node) ?? false) ? this.#first : this.#rest).push(layer);
   }
 
   /** Reads a layer's children into its entry, as far as the depth and the budget go. */
@@ -85,7 +133,7 @@ class SubtreeRead {
       }
 
       children.push(childEntry);
-      this.#queue.push({
+      this.#queue({
         node: child,
         entry: childEntry,
         level: level + 1,

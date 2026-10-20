@@ -120,6 +120,8 @@ export interface FakeLibrary {
   readonly pages?: FakeNode[];
   /** How many modes a collection may have (Figma's plan limit): addMode refuses past it. Default 4. */
   readonly modeLimit?: number;
+  /** How many pages the file may have (Figma's Starter plan: 3): createPage refuses past it. Default: no limit. */
+  readonly pageLimit?: number;
   /** Fonts listed but that loadFontAsync cannot load (a missing file, a broken font). */
   readonly unloadable?: readonly { family: string; style: string }[];
   /** An enabled library's variables as importVariableByKeyAsync brings them in, by key. */
@@ -979,7 +981,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     const id = `90:${writes.created.length + 1}`;
     // As Figma: an instance looks like its component (fills, sizing) and holds its layers as I<instance>;<layer> ids.
     const sublayers = (layer: FakeNode): Record<string, unknown> => {
-      const { children, parent: _parent, id: own, ...rest } = layer;
+      const { children, parent: _parent, id: own, mainComponent, ...rest } = layer;
 
       return {
         ...structuredClone(
@@ -987,7 +989,10 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
             Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
           ),
         ),
-        id: `I${id};${own}`,
+        // A nested instance shows the same component as the one in the component it was made of.
+        ...(mainComponent === undefined ? {} : { mainComponent }),
+        // A nested instance's layer (I8:2;7:12 in the component) is I<instance>;8:2;7:12 here.
+        id: `I${id};${own.replace(/^I/, "")}`,
         children: (children ?? []).map(sublayers),
       };
     };
@@ -1434,6 +1439,25 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
         method: "loadAllPagesAsync",
         args: [],
       });
+    },
+    // As Figma: a new page goes last, named by its place; Starter's limit refuses it in these words (typings 1.141).
+    createPage: () => {
+      const pages = figma.root.children;
+
+      if (library.pageLimit !== undefined && pages.length >= library.pageLimit) {
+        throw new Error(
+          `The Starter plan only comes with ${library.pageLimit} pages. Upgrade to Professional for unlimited pages.`,
+        );
+      }
+
+      const page = create("PAGE")();
+
+      page.name = `Page ${pages.length + 1}`;
+      page.children = [];
+      page.selection = [];
+      pages.push(page);
+
+      return page;
     },
     importComponentByKeyAsync: async (key: string) => {
       writes.calls.push({

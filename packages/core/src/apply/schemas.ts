@@ -92,6 +92,8 @@ export const EntriesSchema = SnapshotSchema.omit({ root: true }).extend({
     z.object({
       node: SnapshotNodeSchema,
       parent: SnapshotNodeSchema.nullable(),
+      /** The page a root without a parent layer sits on: a <Page> element holding it keeps it there. */
+      page: z.string().exactOptional(),
     }),
   ),
   /** Asked for but not found, or not a layer. */

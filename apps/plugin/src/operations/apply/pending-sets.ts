@@ -30,7 +30,7 @@ export interface SetFinishing {
   made(change: ApplyChange, node: SceneNode): void;
   readonly components: ComponentIndex;
   readonly marks: PropertyMarks;
-  readonly layers: Map<string, SceneNode | null>;
+  readonly layers: Map<string, PageNode | SceneNode | null>;
 }
 
 /**

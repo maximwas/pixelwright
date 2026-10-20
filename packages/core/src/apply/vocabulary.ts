@@ -1,5 +1,6 @@
-/** Tags design_apply can create. */
+/** Tags design_apply can create: a Page only at the top level, empty but for the layers the XML puts in it. */
 export const CREATABLE_TAGS: ReadonlySet<string> = new Set([
+  "Page",
   "Frame",
   "Section",
   "Text",

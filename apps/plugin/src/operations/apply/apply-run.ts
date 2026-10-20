@@ -8,6 +8,7 @@ import type { ApplyImages } from "./apply-images.ts";
 import { ApplyReport } from "./apply-report.ts";
 import { Counterparts } from "./counterparts.ts";
 import { createLayer, finishNew } from "./new-layers.ts";
+import { existingPage, newPage } from "./pages.ts";
 import { PendingSets } from "./pending-sets.ts";
 import { Placement } from "./placement.ts";
 import { PropertyMarks } from "./property-marks.ts";
@@ -35,7 +36,7 @@ export class ApplyRun implements WriteScope {
   readonly components = new ComponentIndex();
   readonly #changes: readonly ApplyChange[];
   readonly #byRef: ReadonlyMap<string, ApplyChange>;
-  readonly #layers = new Map<string, SceneNode | null>();
+  readonly #layers = new Map<string, PageNode | SceneNode | null>();
   readonly #parts: RunParts;
   readonly #report = new ApplyReport();
   readonly #counterparts = new Counterparts();
@@ -109,6 +110,12 @@ export class ApplyRun implements WriteScope {
   }
 
   async #apply(change: ApplyChange, fail: Fail): Promise<void> {
+    if (change.tag === "Page") {
+      await this.#page(change);
+
+      return;
+    }
+
     if (change.kind === "create" && change.tag === "Instance" && change.copyOf === undefined) {
       // Components made earlier in the call are whole before an instance is made of one.
       await this.#sets.settle(change);
@@ -134,6 +141,25 @@ export class ApplyRun implements WriteScope {
     });
 
     this.#record(change, node, (await this.#write(node, now, fail)) || moved);
+  }
+
+  /** A page made or named by its id: the layers inside its element go on it. Its name is all a page takes. */
+  async #page(change: ApplyChange): Promise<void> {
+    const { name } = change.props;
+    const page = change.kind === "create" ? newPage(name) : await existingPage(change.id, { load: true });
+    const renamed = name !== undefined && page.name !== name;
+
+    if (renamed) {
+      page.name = name;
+    }
+
+    this.#layers.set(change.ref, page);
+
+    if (change.kind === "create") {
+      this.#report.made(change, page);
+    } else if (renamed) {
+      this.#report.wroteTo(page);
+    }
   }
 
   async #write(node: SceneNode, change: ApplyChange, fail: Fail): Promise<boolean> {

@@ -15,13 +15,13 @@ export interface Place {
  */
 export class Placement {
   readonly #changes: readonly ApplyChange[];
-  readonly #layers: ReadonlyMap<string, SceneNode | null>;
+  readonly #layers: ReadonlyMap<string, PageNode | SceneNode | null>;
   readonly #top: PageNode | SceneNode | null;
   readonly #counterparts: Counterparts;
 
   constructor(
     changes: readonly ApplyChange[],
-    layers: ReadonlyMap<string, SceneNode | null>,
+    layers: ReadonlyMap<string, PageNode | SceneNode | null>,
     top: PageNode | SceneNode | null,
     counterparts: Counterparts,
   ) {
@@ -77,7 +77,7 @@ export class Placement {
     parent.insertChild(index, node);
   }
 
-  #parentOf(change: ApplyChange): SceneNode | null {
+  #parentOf(change: ApplyChange): PageNode | SceneNode | null {
     if (change.parent === null) {
       return null;
     }
@@ -118,7 +118,11 @@ export class Placement {
 }
 
 /** Next to the layer before or after names, which must sit in the element's parent. */
-async function nextTo(change: ApplyChange, sibling: BaseNode | null, parent: SceneNode | null): Promise<Place> {
+async function nextTo(
+  change: ApplyChange,
+  sibling: BaseNode | null,
+  parent: PageNode | SceneNode | null,
+): Promise<Place> {
   const neighbour = change.before ?? change.after;
 
   if (sibling === null || sibling.parent === null) {
