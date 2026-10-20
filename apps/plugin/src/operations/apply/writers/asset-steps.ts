@@ -1,5 +1,6 @@
-import type { FigmaProps } from "@pixelwright/core";
+import { type FigmaProps, px } from "@pixelwright/core";
 import { hasFills, isSized, refusal } from "../../../figma/capabilities.ts";
+import { drawnPast } from "../../../figma/layer-read/fields/geometry.ts";
 import type { WriteScope } from "./write-scope.ts";
 
 /**
@@ -40,14 +41,25 @@ export function writeImage(node: SceneNode, props: FigmaProps, scope: WriteScope
         );
 }
 
-/** A new Icon sized as the XML says, scaled with its vectors (a resize would leave them as they are). */
-export function fitIcon(node: SceneNode, props: FigmaProps): FigmaProps {
+/**
+ * An Icon sized as the XML says by scaling it whole, its lines and corners too (a resize would leave them as they
+ * are): by its width when given, else by its height, the drawing keeping its ratio. A new one is measured by its box,
+ * an existing one by the box design_read gives it (what it draws past its box included); a size that reads the same
+ * scales nothing.
+ */
+export function fitIcon(node: SceneNode, props: FigmaProps, isNew: boolean): { props: FigmaProps; scaled: boolean } {
   const { width, height, ...rest } = props;
-  const wanted = typeof width === "number" ? width / node.width : typeof height === "number" ? height / node.height : 1;
+  const box = isNew ? node : (drawnPast(node) ?? node.absoluteBoundingBox ?? node);
+  const [wanted, held] =
+    typeof width === "number" ? [width, box.width] : typeof height === "number" ? [height, box.height] : [0, 0];
+  const scaled = wanted > 0 && held > 0 && px(wanted) !== px(held) && isSized(node);
 
-  if (wanted !== 1 && Number.isFinite(wanted) && wanted > 0 && isSized(node)) {
-    node.rescale(wanted);
+  if (scaled) {
+    node.rescale(wanted / held);
   }
 
-  return rest;
+  return {
+    props: rest,
+    scaled,
+  };
 }
