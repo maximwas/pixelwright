@@ -30,8 +30,10 @@ taken as sRGB and converted to P3.
 - Moving: an element with \`id\` under another parent element moves the layer there, \`before="id"\` /
   \`after="id"\` puts it next to that layer, and listing layers in another order reorders them. A layer inside an
   instance stays where it is (only an instance's slots take new layers). An element alone (\`<Frame id="…"/>\`)
-  moves its layer with everything inside it: leave out the layers inside that stay as they are, since each layer
-  named is read before the write and a call reads only so many.
+  moves its layer with everything inside it.
+- Each layer named is read before the write, and a call reads only so many: the layers named and the ones on the
+  way to them come first. So a deep layer changes in one call nested as design_read writes it (screen, section,
+  card, its text), even in a big screen; leave out the siblings that stay as they are.
 - A text \`design_read\` shortened (\`$truncated\`) is never written back: read that layer on its own to change it.
 - A hidden layer comes back with \`display\` (\`flex\`, \`grid\` or \`block\`, as it was laid out).
 - Each tag takes its own attributes: no \`background\` or \`gap\` on a Text (its colour is \`color\`), no text
@@ -42,7 +44,15 @@ taken as sRGB and converted to P3.
 - An element without \`id\` creates a layer: \`Frame\`, \`Section\`, \`Text\`, \`Rectangle\`, \`Ellipse\`,
   \`Line\`, \`Instance\`, \`Component\`, \`ComponentSet\`, \`Image\`, \`Icon\`, \`Slot\`. It goes inside its parent
   element, after the element before it (alone: last); at the top level into \`parent\` or the current page, or next
-  to a layer with \`before="id"\` / \`after="id"\`. Groups and vectors are not drawn from XML: use an \`Icon\`.
+  to a layer with \`before="id"\` / \`after="id"\`, or onto a page (below). Groups and vectors are not drawn from
+  XML: use an \`Icon\`.
+- **A page:** a top-level \`<Page name="Screens">…</Page>\` makes a new page, last in the file, and creates the
+  layers inside it there in the XML's order, each placed by its \`left\` and \`top\` (without them, beside the ones
+  before it); a layer named by its id inside it moves onto the new page. A dry run lists the page it would make.
+  \`<Page id="…">\` (an id from \`file_map\`) is a page the file has: \`name\` renames it, the layers inside it are
+  written where they are, new ones go on it. A page takes only a name, stands only at the top level, and is never
+  deleted or reordered. Figma's Starter plan allows 3 pages: past that the error names the limit, and nothing
+  inside that page is made.
 - A new layer has what its XML says and nothing more: no fill without \`background\`, no clipping without
   \`overflow\`; a new auto layout frame hugs unless sized; a new text is black unless \`color\` says otherwise.
 - **A copy:** \`<Frame copyOf="54:268" name="Card 2">\` clones that layer (everything the XML cannot show comes
