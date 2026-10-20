@@ -649,6 +649,17 @@ describe("design_apply end to end: pages", () => {
     expect(byId("3:1")?.paddingTop).toBe(8);
   });
 
+  it("counts a page sent back with its own name as unchanged, in a dry run and a real one", async () => {
+    const dry = await apply('<Page id="0:1" name="0:1"/>', { dryRun: true });
+    const real = await apply('<Page id="0:1" name="0:1"/>');
+    const renaming = await apply('<Page id="0:1" name="Home"/>', { dryRun: true });
+
+    expect([dry.changed, real.changed, renaming.changed]).toEqual([[], [], ["0:1"]]);
+    expect([dry.errors, real.errors]).toEqual([[], []]);
+    expect(fake.writes.undo).toBe(0);
+    expect(root.name).toBe("0:1");
+  });
+
   it("refuses a page id that names a layer", async () => {
     const result = await apply('<Page id="3:1" name="Home"/>');
 

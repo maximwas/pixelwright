@@ -39,15 +39,6 @@ const TOKEN_CHECKS: Readonly<Record<TokenUse["kind"], TokenCheck>> = {
   TEXT_STYLE: async (index, { token: name }) => await index.textStyle(name),
 };
 
-/** A page takes only its name: the one an id names is there, a new one is made on the real run. No layer type. */
-async function checkedPage(change: ApplyChange): Promise<null> {
-  if (change.kind === "update") {
-    await existingPage(change.id, { load: false });
-  }
-
-  return null;
-}
-
 /** The list of paints a property holds. */
 function paintsAt(props: FigmaProps, key: keyof FigmaProps): readonly PaintSpec[] {
   if (key === "strokes") {
@@ -88,19 +79,38 @@ export class DryRunCheck {
       const fail: Fail = (error, attribute) => this.#report.fail(change, error, attribute);
 
       try {
-        const layer = await this.#target(change);
-
-        this.#report.planned(change);
-        this.#checked.add(change.ref);
-        await this.#neighbour(change, fail);
-        this.#planned.record(change, this.#byRef);
-        await this.#props(change, fail, this.#refused(change, layer));
+        await (change.tag === "Page" ? this.#page(change) : this.#check(change, fail));
       } catch (error) {
         fail(error);
       }
     }
 
     return this.#report.result();
+  }
+
+  async #check(change: ApplyChange, fail: Fail): Promise<void> {
+    const layer = await this.#target(change);
+
+    this.#report.planned(change);
+    this.#checked.add(change.ref);
+    await this.#neighbour(change, fail);
+    this.#planned.record(change, this.#byRef);
+    await this.#props(change, fail, this.#refused(change, layer));
+  }
+
+  /**
+   * A page takes only its name: a new one is listed (made on the real run); the one an id names must be there, and is
+   * listed only when the name differs, as the real run renames it only then.
+   */
+  async #page(change: ApplyChange): Promise<void> {
+    const page = change.kind === "update" ? await existingPage(change.id, { load: false }) : null;
+    const { name } = change.props;
+
+    if (page === null || (name !== undefined && page.name !== name)) {
+      this.#report.planned(change);
+    }
+
+    this.#checked.add(change.ref);
   }
 
   /**
@@ -110,10 +120,6 @@ export class DryRunCheck {
   async #target(change: ApplyChange): Promise<TypedLayer | null> {
     if (change.source !== undefined) {
       return null;
-    }
-
-    if (change.tag === "Page") {
-      return await checkedPage(change);
     }
 
     if (change.kind === "update") {
