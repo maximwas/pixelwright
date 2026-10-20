@@ -97,7 +97,7 @@ export class PendingSets {
       await this.#finish(pending);
     }
 
-    this.#run.marks.bindOutside(new Set(this.#pending.map(({ holder }) => holder.id)));
+    await this.#run.marks.bindOutside(new Set(this.#pending.map(({ holder }) => holder.id)));
   }
 
   async #finish(pending: Pending): Promise<void> {

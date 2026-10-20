@@ -27,7 +27,9 @@ export function unchangedAttributes(element: ApplyElement, item: LayerInParent, 
     // file that exists with the layer's image, and swaps it only when they differ.
     if (
       name === "src" ||
-      renders.some((rendered) => values.some((value) => same(name, attributeOf(rendered, name), value)))
+      renders.some((rendered) =>
+        values.some((value) => same(name, attributeOf(rendered, READ_AS[name] ?? name), value)),
+      )
     ) {
       attributes.add(name);
     }
@@ -51,6 +53,13 @@ export function unchangedAttributes(element: ApplyElement, item: LayerInParent, 
     current: Object.fromEntries((shown?.attributes ?? []).filter(([name]) => name !== "id" && !name.startsWith("$"))),
   };
 }
+
+/** The read-only attribute design_read writes what a component's layer is bound to as. */
+const READ_AS: Readonly<Record<string, string>> = {
+  prop: "$prop",
+  visibleProp: "$visibleProp",
+  swapProp: "$swapProp",
+};
 
 /** The elements design_read writes for the layer: as the read's root unless nested, then as its parent holds it. */
 function rendersOf(element: ApplyElement, item: LayerInParent, tokens: LayerTokens): DesignElement[] {

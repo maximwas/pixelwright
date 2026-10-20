@@ -71,6 +71,7 @@ export const META_ATTRIBUTES: ReadonlySet<string> = new Set([
   "copyOf",
   "prop",
   "visibleProp",
+  "swapProp",
 ]);
 
 /** A Figma layer id: 54:243, or an instance's layer I54:268;54:211. */

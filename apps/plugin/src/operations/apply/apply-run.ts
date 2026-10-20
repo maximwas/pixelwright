@@ -39,7 +39,7 @@ export class ApplyRun implements WriteScope {
   readonly #parts: RunParts;
   readonly #report = new ApplyReport();
   readonly #counterparts = new Counterparts();
-  readonly #marks = new PropertyMarks();
+  readonly #marks = new PropertyMarks(this.#report);
   readonly #placement: Placement;
   readonly #sets: PendingSets;
   readonly #writer = new LayerWriter(this);

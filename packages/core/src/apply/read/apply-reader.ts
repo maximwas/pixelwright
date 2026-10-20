@@ -91,6 +91,7 @@ export class ApplyReader {
           tag: node.type,
           creating: id === null && source === null,
           copying: attributes.copyOf !== undefined,
+          existing: id !== null,
         }),
       );
     }
@@ -133,7 +134,8 @@ export class ApplyReader {
             tag: node.type,
             name,
             value,
-            inComponent: scope.inComponent,
+            // An existing layer may be a component's: the plugin knows.
+            inComponent: scope.inComponent || (scope.copy === null && node.props.id !== undefined),
           })
         : null;
 

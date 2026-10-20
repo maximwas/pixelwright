@@ -116,6 +116,7 @@ async function write(
     created: applied.created,
     changed: applied.changed,
     errors: sortedErrors([...errors, ...applied.errors]),
+    ...(applied.properties === undefined ? {} : { properties: applied.properties }),
     dryRun,
     ...(version === undefined ? {} : { version }),
   };

@@ -56,19 +56,29 @@ taken as sRGB and converted to P3.
   instance by the names design_read and components_read write: the file's components, the ones its page uses from a
   library, or \`component="key:<key>"\` for a library one the file does not use yet (\`library_search\` finds those
   keys in the libraries saved with it). \`variant\` picks the variant
-  (values left out are the set's default), \`props\` sets text and boolean properties (names without Figma's #id).
+  (values left out are the set's default), \`props\` sets its properties by their names without Figma's #id: a
+  text, \`true\` or \`false\` for a boolean, and for an instance swap the component to show, by the name a
+  \`component\` takes (a set's name shows its default variant) or \`key:<key>\` (\`props="Icon=Heart"\`).
 - Inside a new instance, elements with another instance's ids (of the same component and variant) or the
   component's own write the new instance's layers, as overrides; the other instance stays as it is.
   \`<Instance copyOf="id">\` copies an instance with its overrides instead.
 - An existing instance: \`variant\` switches it, \`props\` changes its properties, \`component\` swaps it to
   another component. A comma or \`=\` inside a name or value is escaped with a backslash, as design_read writes it.
 - \`<Component name="Badge">…</Component>\` makes a component like a frame; inside it, \`prop="Label"\` on a
-  Text makes a text property bound to it and \`visibleProp="Shown"\` makes a boolean property bound to the layer's
-  visibility. \`<ComponentSet name="Badge">\` holds \`<Component variant="Tone=Dark">\` variants: they are
-  combined into one set (the properties defined once on it) and laid out in a grid; a set given \`display="flex"\`
-  or \`"grid"\` lays them out itself, each variant placed by its own \`grid-row\`/\`grid-column\`, \`align-self\`
-  or \`flex\`. \`description\` describes a
-  component or a set; an instance of a new component can follow later in the same XML.
+  Text makes a text property bound to it, \`visibleProp="Shown"\` a boolean property bound to the layer's
+  visibility, and \`swapProp="Icon"\` on an Instance an instance swap property whose default is that instance's
+  component (instances then take \`props="Icon=Heart"\`). \`<ComponentSet name="Badge">\` holds
+  \`<Component variant="Tone=Dark">\` variants: they are combined into one set (the properties defined once on it)
+  and laid out in a grid; a set given \`display="flex"\` or \`"grid"\` lays them out itself, each variant placed by
+  its own \`grid-row\`/\`grid-column\`, \`align-self\` or \`flex\`. \`description\` describes a component or a set;
+  an instance of a new component can follow later in the same XML.
+- An existing component takes properties the same way, so it never has to be rebuilt: \`prop\`, \`visibleProp\` and
+  \`swapProp\` on its layers by their ids (\`<Instance id="54:12" swapProp="Icon"/>\`), or on new layers inside its
+  \`<Component id="…">\`, bind each layer to the property of that name the component has (a variant's: its set's), or
+  add the property once when it has none, its default the layer's value now (the text, whether it shows, the
+  instance's component). A name a property of another kind holds is an error; a layer no component holds, or one
+  inside an instance, is refused. \`properties\` in the answer lists what was added to existing components (a dry
+  run's: what would be).
 - \`<Slot name="Content">\` makes a slot in a new component; in an instance, give its \`<Slot id="…">\` new layers.
 
 ## Images, icons and notes
