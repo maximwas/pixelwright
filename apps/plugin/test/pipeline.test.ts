@@ -109,17 +109,137 @@ function heading(): FakeNode {
   return set;
 }
 
+/** A Button set (Default, Hover), each variant holding its label. */
+function button(): FakeNode {
+  const set = tree({
+    id: "7:10",
+    name: "Button",
+    type: "COMPONENT_SET",
+    componentPropertyDefinitions: {
+      State: {
+        type: "VARIANT",
+        defaultValue: "Default",
+        variantOptions: ["Default", "Hover"],
+      },
+    },
+    children: [
+      {
+        id: "7:11",
+        name: "State=Default",
+        type: "COMPONENT",
+        layoutMode: "HORIZONTAL",
+        children: [text("7:12", "Go")],
+      },
+      {
+        id: "7:13",
+        name: "State=Hover",
+        type: "COMPONENT",
+        layoutMode: "HORIZONTAL",
+        children: [text("7:14", "Go")],
+      },
+    ],
+  });
+
+  set.defaultVariant = set.children?.[0];
+
+  return set;
+}
+
+/** A Card component with a Title text property and a Button inside, as its instance 2:9 holds them. */
+function card(buttons: FakeNode): { component: FakeNode; instance: Parameters<typeof tree>[0] } {
+  const main = buttons.children?.[0] as FakeNode;
+  const title = { componentPropertyReferences: { characters: "Title#8:9" } };
+  const component = tree({
+    id: "8:1",
+    name: "Card",
+    type: "COMPONENT",
+    layoutMode: "VERTICAL",
+    componentPropertyDefinitions: {
+      "Title#8:9": {
+        type: "TEXT",
+        defaultValue: "Card title",
+      },
+    },
+    children: [
+      {
+        ...text("8:3", "Card title"),
+        ...title,
+      },
+      {
+        id: "8:2",
+        name: "Button",
+        type: "INSTANCE",
+        layoutMode: "HORIZONTAL",
+        mainComponent: main,
+        componentProperties: {
+          State: {
+            type: "VARIANT",
+            value: "Default",
+          },
+        },
+        children: [text("I8:2;7:12", "Go")],
+      },
+    ],
+  });
+
+  return {
+    component,
+    instance: {
+      id: "2:9",
+      name: "Card",
+      type: "INSTANCE",
+      layoutMode: "VERTICAL",
+      mainComponent: component,
+      componentProperties: {
+        "Title#8:9": {
+          type: "TEXT",
+          value: "Card title",
+        },
+      },
+      children: [
+        {
+          ...text("I2:9;8:3", "Card title"),
+          ...title,
+        },
+        {
+          id: "I2:9;8:2",
+          name: "Button",
+          type: "INSTANCE",
+          layoutMode: "HORIZONTAL",
+          mainComponent: main,
+          componentProperties: {
+            State: {
+              type: "VARIANT",
+              value: "Default",
+            },
+          },
+          children: [text("I2:9;8:2;7:12", "Go")],
+        },
+      ],
+    },
+  };
+}
+
 let root: FakeNode;
 let library: FakeNode;
+let buttons: FakeNode;
+let cards: FakeNode;
 let fake: ReturnType<typeof installFigma>;
 let apply: ReturnType<typeof pipeline>;
 const all = (from: FakeNode): FakeNode[] => [from, ...(from.children ?? []).flatMap(all)];
-const byId = (id: string) => [...all(root), ...all(library), ...fake.writes.created].find((node) => node.id === id);
+const byId = (id: string) =>
+  [...all(root), ...all(library), ...all(buttons), ...all(cards), ...fake.writes.created].find(
+    (node) => node.id === id,
+  );
 
 beforeEach(() => {
   library = heading();
+  buttons = button();
 
   const main = library.children?.[0] as FakeNode;
+  const nested = card(buttons);
+
+  cards = nested.component;
 
   root = tree({
     id: "0:1",
@@ -187,10 +307,11 @@ beforeEach(() => {
         },
         children: [],
       },
+      nested.instance,
     ],
   });
   fake = installFigma(root, {
-    components: [library],
+    components: [library, buttons, cards],
     fonts: [
       {
         family: "Inter",
@@ -360,5 +481,89 @@ describe("design_apply end to end: sections", () => {
     const flowing = await apply('<Frame name="Flowing" left="4px"/>', { parent: "9:1" });
 
     expect(flowing.errors.map(({ attribute }) => attribute)).toEqual(["left"]);
+  });
+});
+
+describe("design_apply end to end: layers two levels deep in one call", () => {
+  it("overrides a text inside an instance's nested instance by its I<outer>;<inner>;<layer> id", async () => {
+    const result = await apply(
+      '<Instance id="2:9"><Instance id="I2:9;8:2"><Text id="I2:9;8:2;7:12" color="#FF0000">Buy</Text></Instance></Instance>',
+    );
+    const label = byId("I2:9;8:2;7:12");
+
+    expect(result.errors).toEqual([]);
+    expect(label?.characters).toBe("Buy");
+    expect(label?.fills).toEqual([
+      expect.objectContaining({
+        color: {
+          r: 1,
+          g: 0,
+          b: 0,
+        },
+      }),
+    ]);
+    expect(result.changed).toEqual(["I2:9;8:2;7:12"]);
+  });
+
+  it("sets the outer instance's text property, its fonts loaded, and switches its nested instance's variant", async () => {
+    const result = await apply(
+      '<Instance id="2:9" props="Title=Plans"><Instance id="I2:9;8:2" variant="State=Hover"/></Instance>',
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(byId("I2:9;8:3")?.characters).toBe("Plans");
+    expect((byId("I2:9;8:2") as FakeNode).mainComponent).toMatchObject({ id: "7:13" });
+    expect(result.changed).toEqual(["2:9", "I2:9;8:2"]);
+  });
+
+  it("writes a layer deep in a big screen when the screen and the section around it are named too", async () => {
+    // More cards than one call's read takes whole: the layers named come first, the rest as far as it goes.
+    const cards = Array.from({ length: 4000 }, (_, index) => ({
+      id: `20:${index + 1}`,
+      layoutMode: "VERTICAL",
+      children: [{ id: `21:${index + 1}` }],
+    }));
+
+    installFigma(
+      tree({
+        id: "0:2",
+        type: "PAGE",
+        children: [
+          {
+            id: "1:1",
+            layoutMode: "VERTICAL",
+            children: [
+              ...cards,
+              {
+                id: "1:2",
+                layoutMode: "VERTICAL",
+                children: [
+                  {
+                    id: "1:3",
+                    layoutMode: "NONE",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const result = await apply('<Frame id="1:1"><Frame id="1:2"><Frame id="1:3" padding="8px"/></Frame></Frame>');
+
+    expect(result.errors).toEqual([]);
+    expect(result.changed).toEqual(["1:3"]);
+  });
+
+  it("writes a text inside a new instance's nested instance, the variant switched in the same call", async () => {
+    const result = await apply(
+      '<Frame id="3:1"><Instance component="Card"><Instance id="I2:9;8:2" variant="State=Hover"><Text id="I2:9;8:2;7:12">Buy</Text></Instance></Instance></Frame>',
+    );
+    const made = byId(result.created[0]?.id ?? "");
+
+    expect(result.errors).toEqual([]);
+    expect(made?.children?.[1]?.mainComponent).toMatchObject({ id: "7:13" });
+    expect(made?.children?.[1]?.children?.[0]?.characters).toBe("Buy");
   });
 });

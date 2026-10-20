@@ -979,7 +979,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     const id = `90:${writes.created.length + 1}`;
     // As Figma: an instance looks like its component (fills, sizing) and holds its layers as I<instance>;<layer> ids.
     const sublayers = (layer: FakeNode): Record<string, unknown> => {
-      const { children, parent: _parent, id: own, ...rest } = layer;
+      const { children, parent: _parent, id: own, mainComponent, ...rest } = layer;
 
       return {
         ...structuredClone(
@@ -987,7 +987,10 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
             Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
           ),
         ),
-        id: `I${id};${own}`,
+        // A nested instance shows the same component as the one in the component it was made of.
+        ...(mainComponent === undefined ? {} : { mainComponent }),
+        // A nested instance's layer (I8:2;7:12 in the component) is I<instance>;8:2;7:12 here.
+        id: `I${id};${own.replace(/^I/, "")}`,
         children: (children ?? []).map(sublayers),
       };
     };
