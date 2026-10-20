@@ -202,8 +202,11 @@ export interface FigmaProps {
    * joins parts again where a bar is the note's own text (see its notes step).
    */
   notes?: readonly { readonly category: string | null; readonly label: string }[];
-  /** Inside a new Component: the text property (`prop`) or visibility property (`visibleProp`) this layer makes. */
-  property?: { readonly text?: string; readonly visible?: string };
+  /**
+   * Inside a new Component: the text property (`prop`), visibility property (`visibleProp`) or instance swap property
+   * (`swapProp`) this layer makes.
+   */
+  property?: { readonly text?: string; readonly visible?: string; readonly swap?: string };
   /**
    * Variable modes to set on the layer, by the collection's and the mode's attribute slugs (`data-theme="dark"` is
    * theme → dark); an empty mode clears the collection's mode, so the layer takes its parent's.

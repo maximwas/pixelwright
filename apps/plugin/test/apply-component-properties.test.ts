@@ -58,6 +58,7 @@ function page(): FakeNode {
             id: "8:3",
             name: "Star",
             type: "INSTANCE",
+            componentProperties: {},
             componentPropertyReferences: { mainComponent: "Icon#1:0" },
           },
           textNode("8:4", "Fine print"),
@@ -65,6 +66,7 @@ function page(): FakeNode {
             id: "8:5",
             name: "Heart",
             type: "INSTANCE",
+            componentProperties: {},
           },
         ],
       },
@@ -181,5 +183,65 @@ describe("design_apply: an instance swap property through props", () => {
       ["props", expect.stringMatching(/named Hart.*Did you mean Heart\?/)],
     ]);
     expect(calls("setProperties")).toHaveLength(2);
+  });
+});
+
+describe("design_apply: swapProp in a new component", () => {
+  it("makes an instance swap property whose default is the instance's component, bound to the instance", async () => {
+    const result = await apply('<Component name="Tile"><Instance component="Star" swapProp="Icon"/></Component>');
+    const [tile] = fake.writes.created.filter(({ type }) => type === "COMPONENT");
+    const [icon] = fake.writes.created.filter(({ type }) => type === "INSTANCE");
+
+    expect(result.errors).toEqual([]);
+    expect(tile?.componentPropertyDefinitions).toEqual({
+      "Icon#1:0": {
+        type: "INSTANCE_SWAP",
+        defaultValue: "4:1",
+      },
+    });
+    expect(icon?.componentPropertyReferences).toEqual({ mainComponent: "Icon#1:0" });
+  });
+
+  it("defines it once on a new set, every variant's instance bound to it", async () => {
+    const result = await apply(
+      [
+        '<ComponentSet name="Tiles">',
+        '<Component variant="Size=S"><Instance component="Star" swapProp="Icon"/></Component>',
+        '<Component variant="Size=L"><Instance component="Star" swapProp="Icon"/></Component>',
+        "</ComponentSet>",
+      ].join(""),
+    );
+    const [set] = fake.writes.created.filter(({ type }) => type === "COMPONENT_SET");
+    const icons = fake.writes.created.filter(({ type }) => type === "INSTANCE");
+
+    expect(result.errors).toEqual([]);
+    expect(Object.keys(set?.componentPropertyDefinitions as object)).toEqual(["Size", "Icon#2:0"]);
+    expect(icons.map(({ componentPropertyReferences }) => componentPropertyReferences)).toEqual([
+      { mainComponent: "Icon#2:0" },
+      { mainComponent: "Icon#2:0" },
+    ]);
+  });
+
+  it("refuses it on a layer that is no instance, and outside a component", async () => {
+    const result = await apply(
+      '<Component name="Tile"><Text swapProp="Icon">A</Text></Component>\n<Instance component="Star" swapProp="Icon"/>',
+    );
+
+    expect(result.errors.map(({ line, attribute, message }) => [line, attribute, message])).toEqual([
+      [1, "swapProp", expect.stringMatching(/instance swap property: it goes on an <Instance>/)],
+      [2, "swapProp", expect.stringMatching(/swapProp makes a property of/)],
+    ]);
+    expect(calls("addComponentProperty")).toEqual([]);
+  });
+
+  it("writes nothing for the $swapProp design_read gives a bound instance", async () => {
+    const result = await apply('<Component id="8:1"><Instance id="8:3" $swapProp="Icon"/></Component>');
+
+    expect(result).toMatchObject({
+      created: [],
+      changed: [],
+      errors: [],
+    });
+    expect(calls("addComponentProperty")).toEqual([]);
   });
 });

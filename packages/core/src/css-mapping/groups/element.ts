@@ -38,18 +38,20 @@ export const ELEMENT_RULES: readonly Rule[] = [
     write: ({ own }, out) => out.set("notes", notesOf(own("note") ?? ""), "note"),
   },
   {
-    attributes: ["prop", "visibleProp"],
+    attributes: ["prop", "visibleProp", "swapProp"],
     write: ({ own }, out) => {
       const text = own("prop");
       const visible = own("visibleProp");
+      const swap = own("swapProp");
 
       out.set(
         "property",
         {
           ...(text === undefined ? {} : { text }),
           ...(visible === undefined ? {} : { visible }),
+          ...(swap === undefined ? {} : { swap }),
         },
-        text === undefined ? "visibleProp" : "prop",
+        text === undefined ? (visible === undefined ? "swapProp" : "visibleProp") : "prop",
       );
     },
   },
