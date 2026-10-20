@@ -56,7 +56,9 @@ taken as sRGB and converted to P3.
   instance by the names design_read and components_read write: the file's components, the ones its page uses from a
   library, or \`component="key:<key>"\` for a library one the file does not use yet (\`library_search\` finds those
   keys in the libraries saved with it). \`variant\` picks the variant
-  (values left out are the set's default), \`props\` sets text and boolean properties (names without Figma's #id).
+  (values left out are the set's default), \`props\` sets its properties by their names without Figma's #id: a
+  text, \`true\` or \`false\` for a boolean, and for an instance swap the component to show, by the name a
+  \`component\` takes (a set's name shows its default variant) or \`key:<key>\` (\`props="Icon=Heart"\`).
 - Inside a new instance, elements with another instance's ids (of the same component and variant) or the
   component's own write the new instance's layers, as overrides; the other instance stays as it is.
   \`<Instance copyOf="id">\` copies an instance with its overrides instead.
