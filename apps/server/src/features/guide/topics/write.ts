@@ -102,6 +102,10 @@ taken as sRGB and converted to P3.
   assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
   the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a
   new one.
+- An \`Icon\`'s \`width\` or \`height\`, new or existing, scales it whole as Figma's scale tool does: its lines and
+  corners grow with it (a 24px icon with a 2px line at 48px has a 4px line). The drawing keeps its ratio: the width
+  decides when both are given, else the height. The size is the one design_read writes (what the icon draws past
+  its box included); a \`Frame\` with the same id only resizes, its lines staying as they are.
 - \`note="Behavior: opens the modal | Spacing: 8px"\` writes the layer's Dev Mode notes, the whole list, as
   design_read writes it (\`note=""\` removes them). \`Behavior: \` files a note under the file's annotation category of
   that name; a name the file has no category for stays part of the text (no category is made). \` | \` separates the
@@ -115,7 +119,12 @@ taken as sRGB and converted to P3.
 - Lengths in px (a bare number in a size, a place, a gap, a padding or a radius is taken as px; a bare line height
   is a multiple of the font size, as in CSS); \`var(--Name)\` binds the variable or style of that name, as \`design_read\` and \`tokens_read\`
   write them (a paint style, a colour or number variable, an effect style, on \`box-shadow\` or on a blur:
-  \`backdrop-filter="var(--Blur-Backdrop)"\`); \`textStyle="h3"\` applies a text style.
+  \`backdrop-filter="var(--Blur-Backdrop)"\`); \`textStyle="h3"\` applies a text style. A shadow's colour can be a
+  colour variable, inset and in \`text-shadow\` too: \`box-shadow="0 4px 12px 0 var(--shadow)"\` binds it, and
+  design_read writes a bound one so. The variable is the shadow's whole colour, its alpha too, so it takes no
+  \`color-mix()\`: make a variable with that alpha.
+- design_apply binds tokens and never makes them: a new variable (or paint, text or effect style) is created with
+  \`tokens_apply\` first, then bound here by its name. A \`var()\` that names none is an error naming the near ones.
 - \`font\` is the shorthand \`[italic] weight size/line-height 'Family'\`; Figma must have the family and that
   weight, or the error lists the styles it has.
 - Sizes: \`width\`/\`height\` in px or \`auto\`; \`flex="1"\` fills an auto layout parent's direction,

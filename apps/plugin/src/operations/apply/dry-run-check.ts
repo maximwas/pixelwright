@@ -32,6 +32,7 @@ type TokenCheck = (index: TokenIndex, use: TokenUse, props: FigmaProps) => Promi
 const TOKEN_CHECKS: Readonly<Record<TokenUse["kind"], TokenCheck>> = {
   FLOAT: (index, { token }) => index.find(token, "FLOAT"),
   PAINT: (index, { key }, props) => checkPaints(paintsAt(props, key), index),
+  COLOR: (index, { token }) => index.find(token, "COLOR"),
   EFFECT_STYLE: async (index, { token }) => {
     if ((await index.style(token, "EFFECT")) === null) {
       throw new WriteError(`No effect style is named ${token} in this file or the libraries its page uses.`);

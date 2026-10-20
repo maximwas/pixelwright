@@ -9,10 +9,11 @@ import type { Notes } from "../notes.ts";
 import type { RawStyle } from "../raw-tokens.ts";
 import type { StyleToken, StyleTokens } from "./types.ts";
 
-/** What writing a style needs: the file's colour space and the notes. */
+/** What writing a style needs: the file's colour space, the notes, and the variables' tokens by id. */
 interface StyleContext {
   readonly space: ColorSpace;
   readonly notes: Notes;
+  readonly names?: ReadonlyMap<string, string>;
 }
 
 /** Writes one kind of style as a token, or notes why it cannot. */
@@ -158,9 +159,9 @@ function textToken(style: RawStyle, token: string): StyleToken | null {
   };
 }
 
-/** The shadows as a box-shadow list; blurs are not tokens yet. */
+/** The shadows as a box-shadow list, a colour bound to a variable as its var(); blurs are not tokens yet. */
 function effectToken(style: RawStyle, token: string, context: StyleContext): StyleToken | null {
-  const shadows = shadowListCss(style.effects ?? [], context.space);
+  const shadows = shadowListCss(style.effects ?? [], context.space, context.names);
 
   if (shadows === "") {
     context.notes.add(`Effect style ${style.name} holds no shadow: blurs are not tokens yet.`);

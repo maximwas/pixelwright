@@ -36,8 +36,7 @@ export class LayerWriter {
       fail: (error, keys) => fail(error, keys === undefined ? undefined : attributeOf(change, keys)),
     };
     const asset = this.#asset(target);
-    // A new icon is sized by scaling it with its vectors; a resize would leave them as they are.
-    const props = change.tag === "Icon" && change.kind === "create" ? fitIcon(node, change.props) : change.props;
+    const { props, scaled } = this.#icon(target);
     const component = await this.#component(target);
 
     this.#mark(target);
@@ -51,7 +50,30 @@ export class LayerWriter {
 
     const hidden = visible === false && (await this.#steps(target, { visible }));
 
-    return asset || component || steps || text || hidden;
+    return asset || scaled || component || steps || text || hidden;
+  }
+
+  /** An Icon is sized by scaling it with its vectors, a new one or an existing one: a resize would leave them. */
+  #icon({ node, change, fail }: Target): { props: FigmaProps; scaled: boolean } {
+    if (change.tag !== "Icon") {
+      return {
+        props: change.props,
+        scaled: false,
+      };
+    }
+
+    try {
+      return fitIcon(node, change.props, change.kind === "create");
+    } catch (error) {
+      fail(error, ["width", "height"]);
+
+      const { width: _width, height: _height, ...props } = change.props;
+
+      return {
+        props,
+        scaled: false,
+      };
+    }
   }
 
   #asset({ node, change, fail }: Target): boolean {

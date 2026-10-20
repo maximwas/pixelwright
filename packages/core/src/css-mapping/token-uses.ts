@@ -1,10 +1,13 @@
 import type { FigmaProps, LengthValue, PaintSpec } from "./figma-props.ts";
 
-/** A token a change's properties name: where, and what it must be (a number, a paint, an effect or a text style). */
+/**
+ * A token a change's properties name: where, and what it must be (a number, a paint, a shadow's colour variable, an
+ * effect or a text style).
+ */
 export interface TokenUse {
   readonly key: keyof FigmaProps;
   readonly token: string;
-  readonly kind: "FLOAT" | "PAINT" | "EFFECT_STYLE" | "TEXT_STYLE";
+  readonly kind: "FLOAT" | "PAINT" | "COLOR" | "EFFECT_STYLE" | "TEXT_STYLE";
 }
 
 const LENGTH_KEYS = [
@@ -47,6 +50,11 @@ function paintUses(key: keyof FigmaProps, specs: readonly PaintSpec[] | undefine
 
 function styleUses({ effects, textStyle }: FigmaProps): TokenUse[] {
   return [
+    ...(Array.isArray(effects)
+      ? effects.flatMap((effect) =>
+          "token" in effect && effect.token !== undefined ? [use("effects", effect.token, "COLOR")] : [],
+        )
+      : []),
     ...(effects !== undefined && !Array.isArray(effects)
       ? [use("effects", (effects as { token: string }).token, "EFFECT_STYLE")]
       : []),

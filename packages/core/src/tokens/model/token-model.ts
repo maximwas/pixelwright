@@ -38,6 +38,7 @@ export function tokenModel(raw: RawTokens, filter: TokenFilter = {}): TokenModel
   const styles = styleTokens(raw.styles, {
     space,
     notes,
+    names: context.names,
   });
 
   return {

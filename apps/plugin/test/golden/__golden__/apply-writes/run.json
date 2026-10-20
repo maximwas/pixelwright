@@ -85,7 +85,7 @@
             "id": "1:1",
             "attribute": "padding",
             "message": "No variable is named --nope in this file or the libraries it uses.",
-            "hint": "tokens_read lists the file's tokens."
+            "hint": "tokens_read lists the file's tokens; create a new one with tokens_apply first."
           }
         ],
         "dryRun": false
@@ -122,7 +122,7 @@
             "id": "1:1",
             "attribute": "padding",
             "message": "No variable is named --nope in this file or the libraries it uses.",
-            "hint": "tokens_read lists the file's tokens."
+            "hint": "tokens_read lists the file's tokens; create a new one with tokens_apply first."
           }
         ],
         "dryRun": true

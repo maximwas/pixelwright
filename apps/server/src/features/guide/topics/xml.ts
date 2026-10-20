@@ -48,8 +48,8 @@ text-decoration-thickness), text-align, text-wrap, color.
   parent element: give that parent \`position: relative\`. Constraints: right/bottom when pinned to the end,
   \`calc(50% ± n px)\` when centred, left and right without a width when stretched, percents when scaled.
 - A turned layer has \`transform: rotate()\` and is placed by its centre; a mirrored one \`scaleX(-1)\`.
-- Colours bound to a style or variable are \`var(--Name)\` (see \`guide tokens\`); values for them are in the JSON
-  \`tokens\`. In a Display P3 file every colour is \`color(display-p3 r g b)\` (as tokens_read writes it too): keep
+- Colours bound to a style or variable are \`var(--Name)\`, a shadow's colour too (see \`guide tokens\`); values for
+  them are in the JSON \`tokens\`. design_apply binds only tokens the file has: \`tokens_apply\` creates new ones. In a Display P3 file every colour is \`color(display-p3 r g b)\` (as tokens_read writes it too): keep
   it so, it is what the designer chose. A text with a \`textStyle\` carries only what differs from the style; \`textStyles\` holds the style's font.
 - Lengths are whole pixels; letter spacing keeps fractions.
 

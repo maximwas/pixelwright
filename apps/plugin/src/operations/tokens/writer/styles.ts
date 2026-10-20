@@ -1,4 +1,5 @@
 import { styleValueOf, type TokensPlan } from "@pixelwright/core";
+import { WriteError } from "../../../figma/write-error.ts";
 import { errorMessage } from "../../../utils/error-message.ts";
 import type { FileTokens } from "./file-tokens.ts";
 import { sameSpec } from "./same-values.ts";
@@ -35,10 +36,13 @@ export class StyleWriter {
       try {
         await this.#writeStyle(kind, plan, locals);
       } catch (error) {
+        // A token error's hint names the near tokens: a style's error has no field of its own for it.
+        const hint = error instanceof WriteError && error.hint !== undefined ? ` ${error.hint}` : "";
+
         this.#run.failed({
           kind: kind.kind,
           name: plan.name,
-          message: errorMessage(error),
+          message: `${errorMessage(error)}${hint}`,
         });
       }
     }

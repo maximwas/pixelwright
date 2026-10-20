@@ -38,7 +38,13 @@ export class RawTokensBuilder {
       ...colorProfile(),
     });
 
-    await builder.#addVariables(builder.#raw.variables.flatMap((variable) => aliasesIn(variable.valuesByMode)));
+    // What the variables' values point at, and the variables an effect style's shadow colours are bound to.
+    await builder.#addVariables(
+      aliasesIn([
+        ...builder.#raw.variables.map((variable) => variable.valuesByMode),
+        ...builder.#raw.styles.map((style) => style.effects),
+      ]),
+    );
 
     return builder;
   }

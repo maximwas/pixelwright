@@ -287,6 +287,34 @@ const DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
   },
 };
 
+/**
+ * As Figma's rescale (the scale tool): the layer and everything inside it scaled, their boxes, line weights and corner
+ * radii too.
+ */
+function scaled(node: FakeNode, factor: number): void {
+  for (const key of ["width", "height", "strokeWeight", "cornerRadius"]) {
+    if (typeof node[key] === "number") {
+      node[key] = (node[key] as number) * factor;
+    }
+  }
+
+  for (const key of ["absoluteBoundingBox", "absoluteRenderBounds"]) {
+    const box = node[key] as { width: number; height: number } | undefined;
+
+    if (box !== undefined && box !== null) {
+      node[key] = {
+        ...box,
+        width: box.width * factor,
+        height: box.height * factor,
+      };
+    }
+  }
+
+  for (const child of node.children ?? []) {
+    scaled(child, factor);
+  }
+}
+
 /** The new layers that take a stroke weight per side. */
 const STROKE_SIDED = new Set(["FRAME", "COMPONENT", "RECTANGLE"]);
 
@@ -883,8 +911,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     });
     Object.defineProperty(node, "rescale", {
       value: (factor: number) => {
-        node.width = (node.width ?? 0) * factor;
-        node.height = (node.height ?? 0) * factor;
+        scaled(node, factor);
         writes.calls.push({
           node: node.id,
           method: "rescale",
@@ -1320,6 +1347,17 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
       setBoundVariableForPaint: (paint: object, field: string, variable: { id: string }) => ({
         ...paint,
         boundVariables: {
+          [field]: {
+            type: "VARIABLE_ALIAS",
+            id: variable.id,
+          },
+        },
+      }),
+      // A copy of the effect with the field bound, its other bound fields kept.
+      setBoundVariableForEffect: (effect: { boundVariables?: object }, field: string, variable: { id: string }) => ({
+        ...effect,
+        boundVariables: {
+          ...effect.boundVariables,
           [field]: {
             type: "VARIABLE_ALIAS",
             id: variable.id,

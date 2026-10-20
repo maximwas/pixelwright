@@ -167,7 +167,7 @@ async function effects(node: SceneNode, { effects: spec }: FigmaProps, scope: Wr
   if (Array.isArray(spec)) {
     const current: readonly Effect[] = Array.isArray(node.effects) ? node.effects : [];
 
-    assign(node, "effects", mergedEffects(current, effectsOf(spec as readonly EffectSpec[])));
+    assign(node, "effects", mergedEffects(current, await effectsOf(spec as readonly EffectSpec[], scope, node)));
 
     return;
   }
