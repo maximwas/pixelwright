@@ -60,10 +60,12 @@ export type PaintSpec =
       readonly stream?: string;
     };
 
+/** A shadow's colour is a colour, or (null) the colour variable its token names; a blur has a radius only. */
 export type EffectSpec =
   | {
       readonly type: "DROP_SHADOW" | "INNER_SHADOW";
-      readonly color: ColorValue;
+      readonly color: ColorValue | null;
+      readonly token?: string;
       readonly x: number;
       readonly y: number;
       readonly radius: number;

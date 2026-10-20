@@ -1348,6 +1348,17 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
           },
         },
       }),
+      // A copy of the effect with the field bound, its other bound fields kept.
+      setBoundVariableForEffect: (effect: { boundVariables?: object }, field: string, variable: { id: string }) => ({
+        ...effect,
+        boundVariables: {
+          ...effect.boundVariables,
+          [field]: {
+            type: "VARIABLE_ALIAS",
+            id: variable.id,
+          },
+        },
+      }),
     },
     getLocalPaintStylesAsync: async () => localStyles.paint,
     getLocalTextStylesAsync: async () => localStyles.text,

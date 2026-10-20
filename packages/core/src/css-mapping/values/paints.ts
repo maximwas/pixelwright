@@ -2,7 +2,7 @@ import { type Channels, Color, isChannels } from "../../kernel/color/color.ts";
 import { styleTokenName, variableTokenName } from "../../kernel/names.ts";
 import { MIXED } from "../../schemas/snapshot-values.ts";
 import type { CssContext } from "../../types/css.ts";
-import type { SnapshotNode, SnapshotPaint } from "../../types/snapshot.ts";
+import type { SnapshotNode, SnapshotPaint, SnapshotVariable } from "../../types/snapshot.ts";
 import type { PaintSpec } from "../figma-props.ts";
 import { tokenOf, unwrapVar } from "./css-values.ts";
 import { cssUrl } from "./format.ts";
@@ -89,13 +89,27 @@ export function styleIdOf(id: string | undefined): string | undefined {
   return id === undefined || id === "" || id === MIXED ? undefined : id;
 }
 
-/** The variable an alias (`{type: "VARIABLE_ALIAS", id}`) points at, when the snapshot resolved it. */
+/** The id of the variable an alias (`{type: "VARIABLE_ALIAS", id}`) points at. */
+export function aliasId(alias: unknown): string | null {
+  return typeof alias === "object" && alias !== null && "id" in alias && typeof alias.id === "string" ? alias.id : null;
+}
+
+/** The variable an alias points at, when the snapshot resolved it. */
 export function boundVariable(alias: unknown, context: CssContext) {
-  if (typeof alias !== "object" || alias === null || !("id" in alias) || typeof alias.id !== "string") {
-    return null;
+  const id = aliasId(alias);
+
+  return id === null ? null : (context.variables[id] ?? null);
+}
+
+/** A colour variable's token, its colour put in the read's tokens. */
+export function colorToken(variable: SnapshotVariable, context: CssContext): string {
+  const name = variableTokenName(variable);
+
+  if (isChannels(variable.value)) {
+    context.tokens.set(name, Color.of(variable.value, context.colorSpace).css());
   }
 
-  return context.variables[alias.id] ?? null;
+  return name;
 }
 
 /** A paint: a colour, a token, or a token mixed with transparent at an opacity (how design_read writes those). */
@@ -164,13 +178,9 @@ function solidCss(paint: SnapshotPaint, color: Channels, context: CssContext): s
     return Color.of(color, context.colorSpace).faded(opacity).css();
   }
 
-  const name = variableTokenName(variable);
+  const name = colorToken(variable, context);
   const alpha = isChannels(variable.value) ? (variable.value.a ?? 1) : 1;
   const extra = alpha > 0 ? opacity / alpha : opacity;
-
-  if (isChannels(variable.value)) {
-    context.tokens.set(name, Color.of(variable.value, context.colorSpace).css());
-  }
 
   return Math.round(extra * 100) < 100
     ? `color-mix(in ${context.colorSpace ?? "srgb"}, var(${name}) ${Math.round(extra * 100)}%, transparent)`
