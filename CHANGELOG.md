@@ -16,6 +16,38 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## Unreleased
+
+### Added
+
+- `design_apply` makes pages: a top-level `<Page name="Screens">` creates a page, last in the file, with the layers
+  inside it, and a layer named by its id inside it moves onto it. `<Page id="…">` is a page the file has: `name`
+  renames it, and new layers inside it go on it. Past the pages Figma's plan allows, the error names the limit.
+- `swapProp="Icon"` on an `<Instance>` in a new `<Component>` makes an instance swap property, its default that
+  instance's component.
+- `prop`, `visibleProp` and `swapProp` work on an existing component, so it never has to be rebuilt: on its layers by
+  their ids, or on new layers inside its `<Component id="…">`, each binds to the property of that name or adds it once,
+  its default the layer's value now. The answer's `properties` lists what was added (a dry run's: what would be).
+- A shadow's colour can be a colour variable: `design_apply` binds `var(--shadow)` in `box-shadow`, inset shadows and
+  `text-shadow`, `design_read` and `tokens_read` write a bound one so, and `tokens_apply` effect styles take it.
+- `design_apply` scales an existing `Icon` whose `width` or `height` changes, its lines and corners with it, as a new
+  one is; the width decides when both are given.
+
+### Changed
+
+- A `var()` that names no token in `design_apply` says to create it with `tokens_apply` first: `design_apply` binds
+  tokens and never makes them.
+- `visibleProp` defaults to whether the layer shows, so a layer the call hides gets a property that is off.
+
+### Fixed
+
+- `design_apply` changes a layer deep inside a big screen in one call, nested as `design_read` writes it: the layers
+  named and the ones on the way to them are read first, instead of "could not read its current state".
+- `design_apply` `props=` that sets a text property on an existing instance loads the fonts its text uses first,
+  instead of failing on an unloaded font.
+- `tokens_apply`'s error for a style naming an unknown variable keeps the near names it suggests.
+- `guide write` says how `props` sets an instance swap property: by a component's or set's name or `key:<key>`.
+
 ## 0.5.0 — 2026-10-20
 
 ### Added
