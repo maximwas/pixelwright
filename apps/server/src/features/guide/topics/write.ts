@@ -103,6 +103,8 @@ taken as sRGB and converted to P3.
   colour variable, inset and in \`text-shadow\` too: \`box-shadow="0 4px 12px 0 var(--shadow)"\` binds it, and
   design_read writes a bound one so. The variable is the shadow's whole colour, its alpha too, so it takes no
   \`color-mix()\`: make a variable with that alpha.
+- design_apply binds tokens and never makes them: a new variable (or paint, text or effect style) is created with
+  \`tokens_apply\` first, then bound here by its name. A \`var()\` that names none is an error naming the near ones.
 - \`font\` is the shorthand \`[italic] weight size/line-height 'Family'\`; Figma must have the family and that
   weight, or the error lists the styles it has.
 - Sizes: \`width\`/\`height\` in px or \`auto\`; \`flex="1"\` fills an auto layout parent's direction,

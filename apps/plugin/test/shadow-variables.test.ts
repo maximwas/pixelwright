@@ -134,7 +134,7 @@ describe("design_apply: a shadow's colour from a colour variable", () => {
     });
   });
 
-  it("names a near variable when none has the name, in a dry run too", async () => {
+  it("names a near variable when none has the name, in a dry run too, and where a new one is made", async () => {
     for (const dryRun of [false, true]) {
       const { errors } = await apply('<Frame id="1:1" box-shadow="0 4px 12px 0 var(--shadow-sof)"/>', dryRun);
 
@@ -142,10 +142,23 @@ describe("design_apply: a shadow's colour from a colour variable", () => {
         expect.objectContaining({
           attribute: "box-shadow",
           message: expect.stringMatching(/No .* is named --shadow-sof /),
-          hint: expect.stringMatching(/--shadow-soft/),
+          hint: "Did you mean --shadow-soft? A new one: create it with tokens_apply first.",
         }),
       ]);
     }
+  });
+});
+
+describe("design_apply: a var() that names no variable", () => {
+  it("points to tokens_apply, which makes variables: design_apply only binds them", async () => {
+    const { errors } = await apply('<Frame id="1:1" background="var(--brand-zzz-unlike-anything)"/>');
+
+    expect(errors).toEqual([
+      expect.objectContaining({
+        attribute: "background",
+        hint: "tokens_read lists the file's tokens; create a new one with tokens_apply first.",
+      }),
+    ]);
   });
 });
 

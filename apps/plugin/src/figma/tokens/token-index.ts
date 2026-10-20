@@ -207,11 +207,14 @@ function ofType<V extends { readonly resolvedType: string }>(
   return variable;
 }
 
+/** A token no one has: the near one, and where a new one comes from (tokens_apply makes tokens, design_apply binds them). */
 function unknownToken(what: string, token: string, candidates: Iterable<string>): WriteError {
   const near = closest(token, candidates);
 
   return new WriteError(
     `No ${what} is named ${token} in this file or the libraries it uses.`,
-    near === null ? "tokens_read lists the file's tokens." : `Did you mean ${near}?`,
+    near === null
+      ? "tokens_read lists the file's tokens; create a new one with tokens_apply first."
+      : `Did you mean ${near}? A new one: create it with tokens_apply first.`,
   );
 }
