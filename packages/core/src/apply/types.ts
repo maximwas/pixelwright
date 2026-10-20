@@ -69,10 +69,11 @@ export interface ApplyChange {
   readonly move?: boolean;
 }
 
-/** A layer an element is compared with: the layer, and the parent it sits in. */
+/** A layer an element is compared with: the layer, the parent it sits in, and the page when that is its parent. */
 export interface LayerEntry {
   readonly node: SnapshotNode;
   readonly parent: SnapshotNode | null;
+  readonly page?: string;
 }
 
 /** What a read of layers needs besides them: the tokens, and the file's colour profile its colours are written in. */

@@ -20,9 +20,12 @@ export function movedRefs(elements: readonly ApplyElement[], layers: CurrentLaye
   );
 }
 
-/** Whether an element places its layer again. A top-level one moves only by before or after. */
+/**
+ * Whether an element places its layer again. A top-level one moves only by before or after, and a page's own layer in
+ * a <Page> element only onto another page.
+ */
 function moves(element: ApplyElement, entry: LayerEntry, inside: ApplyElement | undefined, order: SiblingOrder) {
-  const parent = entry.parent?.id ?? null;
+  const parent = entry.parent?.id ?? entry.page ?? null;
 
   if (element.attributes.before !== undefined || element.attributes.after !== undefined) {
     return true;

@@ -16,6 +16,7 @@ import { WriteError } from "../../figma/write-error.ts";
 import type { ApplyFonts } from "./apply-fonts.ts";
 import { ApplyReport } from "./apply-report.ts";
 import { canMake, newLayerType } from "./new-layers.ts";
+import { existingPage } from "./pages.ts";
 import { existingLayer } from "./targets.ts";
 import { typeRefusals } from "./type-refusals.ts";
 
@@ -37,6 +38,15 @@ const TOKEN_CHECKS: Readonly<Record<TokenUse["kind"], TokenCheck>> = {
   },
   TEXT_STYLE: async (index, { token: name }) => await index.textStyle(name),
 };
+
+/** A page takes only its name: the one an id names is there, a new one is made on the real run. No layer type. */
+async function checkedPage(change: ApplyChange): Promise<null> {
+  if (change.kind === "update") {
+    await existingPage(change.id, { load: false });
+  }
+
+  return null;
+}
 
 /** The list of paints a property holds. */
 function paintsAt(props: FigmaProps, key: keyof FigmaProps): readonly PaintSpec[] {
@@ -100,6 +110,10 @@ export class DryRunCheck {
   async #target(change: ApplyChange): Promise<TypedLayer | null> {
     if (change.source !== undefined) {
       return null;
+    }
+
+    if (change.tag === "Page") {
+      return await checkedPage(change);
     }
 
     if (change.kind === "update") {

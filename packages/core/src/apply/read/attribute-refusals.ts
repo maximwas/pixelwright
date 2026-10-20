@@ -34,6 +34,11 @@ const layout = (tag: string) => LAYOUT_TAGS.has(tag);
 /** The rules in the order they are checked. */
 const ATTRIBUTE_REFUSALS: readonly Refusal[] = [
   {
+    applies: ({ tag, name }) => tag === "Page" && name !== "id" && name !== "name",
+    message: ({ name }) => `A <Page> takes only a name: ${name} is not written.`,
+    hint: () => "Give it on the layers in the page.",
+  },
+  {
     applies: ({ name, inComponent }) => (name === "prop" || name === "visibleProp") && !inComponent,
     message: ({ name }) => `${name} makes a property of a new <Component>: this layer is in none.`,
     hint: () => "Use it on the layers inside a <Component> you create.",

@@ -17,7 +17,6 @@ type Root = OperationOutput<"entries">["roots"][number];
  * them, so a big screen named around a deep layer still reads that layer.
  */
 export async function entries({ ids }: OperationInput<"entries">): Promise<OperationOutput<"entries">> {
-  const asked = new Set(ids);
   const found = await Promise.all(
     ids.map(async (id) => ({
       id,
@@ -25,6 +24,8 @@ export async function entries({ ids }: OperationInput<"entries">): Promise<Opera
     })),
   );
   const layers = found.flatMap(({ node }) => (node !== null && isLayer(node) ? [node] : []));
+  // A page asked for (a <Page id> element) is no layer: the layers on it are roots of their own.
+  const asked = new Set(layers.map(({ id }) => id));
   const references = new References();
   const read = new EntriesRead({
     asked,
@@ -106,9 +107,10 @@ class EntriesRead {
     });
   }
 
-  /** A root read, with its parent's own entry and the modes it takes from above. */
+  /** A root read, with its parent's own entry (or the page it is on) and the modes it takes from above. */
   async #root(node: SceneNode, entry: SnapshotNode, context: (layer: SceneNode) => EntryContext): Promise<Root> {
     const parent = parentLayer(node);
+    const page = parent === null ? pageOf(node) : null;
     // As a read's root: the modes it takes from above count as its own, so a read sent back sets none of them.
     const modes = await rootModes(node as ModedNode, this.#parts.references.lookup);
 
@@ -119,6 +121,7 @@ class EntriesRead {
     return {
       node: entry,
       parent: parent === null ? null : await entryOf(parent, context(parent)),
+      ...(page === null ? {} : { page: page.id }),
     };
   }
 }

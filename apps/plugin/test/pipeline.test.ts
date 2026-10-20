@@ -567,3 +567,92 @@ describe("design_apply end to end: layers two levels deep in one call", () => {
     expect(made?.children?.[1]?.children?.[0]?.characters).toBe("Buy");
   });
 });
+
+describe("design_apply end to end: pages", () => {
+  it("makes a page last in the file with its layers in the XML's order, placed by left and top", async () => {
+    const result = await apply(
+      '<Page name="Screens"><Frame name="Home" width="100px" height="50px"/><Frame name="About" left="200px" top="80px" width="100px" height="50px"/></Page>',
+    );
+    const page = byId(result.created[0]?.id ?? "");
+
+    expect(result.errors).toEqual([]);
+    expect(result.created.map(({ tag, name }) => [tag, name])).toEqual([
+      ["Page", "Screens"],
+      ["Frame", "Home"],
+      ["Frame", "About"],
+    ]);
+    expect(page?.type).toBe("PAGE");
+    expect(fake.figma.root.children.at(-1)).toBe(page);
+    expect(page?.children?.map(({ name }) => name)).toEqual(["Home", "About"]);
+    expect(page?.children?.map(({ relativeTransform }) => relativeTransform)).toEqual([
+      [
+        [1, 0, 0],
+        [0, 1, 0],
+      ],
+      [
+        [1, 0, 200],
+        [0, 1, 80],
+      ],
+    ]);
+    expect(fake.writes.undo).toBe(1);
+  });
+
+  it("moves a layer named by its id onto a new page", async () => {
+    const result = await apply('<Page name="Archive"><Frame id="9:1"/></Page>');
+
+    expect(result.errors).toEqual([]);
+    expect(byId(result.created[0]?.id ?? "")?.children?.map(({ id }) => id)).toEqual(["9:1"]);
+    expect(root.children?.map(({ id }) => id)).not.toContain("9:1");
+  });
+
+  it("lists the page a dry run would make, and makes none", async () => {
+    const result = await apply('<Page name="Screens"><Frame name="Home"/></Page>', { dryRun: true });
+
+    expect(result.errors).toEqual([]);
+    expect(result.created.map(({ tag }) => tag)).toEqual(["Page", "Frame"]);
+    expect(fake.figma.root.children).toHaveLength(1);
+  });
+
+  it("names the plan's page limit when Figma refuses a new page, and makes nothing for it", async () => {
+    const pages = ["0:2", "0:3"].map((id) =>
+      tree({
+        id,
+        type: "PAGE",
+        children: [],
+      }),
+    );
+
+    fake = installFigma(root, {
+      pages,
+      pageLimit: 3,
+    });
+
+    const result = await apply('<Page name="Screens">\n<Frame name="Home"/>\n</Page>');
+
+    expect(result.created).toEqual([]);
+    expect(result.errors.map(({ line, message }) => [line, message])).toEqual([
+      [1, "The file's Figma plan allows 3 pages: Screens is not made, and the layers in it are not created."],
+      [2, expect.stringMatching(/parent element was not written/)],
+    ]);
+    expect(fake.figma.root.children).toHaveLength(3);
+  });
+
+  it("renames a page by its id, writes its layers where they are and puts a new one on it", async () => {
+    const result = await apply(
+      '<Page id="0:1" name="Home"><Frame id="3:1" padding="8px"/><Frame name="Footer"/></Page>',
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(root.name).toBe("Home");
+    expect(result.changed).toEqual(["0:1", "3:1"]);
+    expect(root.children?.slice(0, 3).map(({ name }) => name)).toEqual(["Card", "Board", "Footer"]);
+    expect(byId("3:1")?.paddingTop).toBe(8);
+  });
+
+  it("refuses a page id that names a layer", async () => {
+    const result = await apply('<Page id="3:1" name="Home"/>');
+
+    expect(result.errors.map(({ message }) => message)).toEqual(["3:1 is a frame, not a page."]);
+    expect(byId("3:1")?.name).toBe("Board");
+  });
+});

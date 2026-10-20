@@ -120,6 +120,8 @@ export interface FakeLibrary {
   readonly pages?: FakeNode[];
   /** How many modes a collection may have (Figma's plan limit): addMode refuses past it. Default 4. */
   readonly modeLimit?: number;
+  /** How many pages the file may have (Figma's Starter plan: 3): createPage refuses past it. Default: no limit. */
+  readonly pageLimit?: number;
   /** Fonts listed but that loadFontAsync cannot load (a missing file, a broken font). */
   readonly unloadable?: readonly { family: string; style: string }[];
   /** An enabled library's variables as importVariableByKeyAsync brings them in, by key. */
@@ -1437,6 +1439,25 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
         method: "loadAllPagesAsync",
         args: [],
       });
+    },
+    // As Figma: a new page goes last, named by its place; Starter's limit refuses it in these words (typings 1.141).
+    createPage: () => {
+      const pages = figma.root.children;
+
+      if (library.pageLimit !== undefined && pages.length >= library.pageLimit) {
+        throw new Error(
+          `The Starter plan only comes with ${library.pageLimit} pages. Upgrade to Professional for unlimited pages.`,
+        );
+      }
+
+      const page = create("PAGE")();
+
+      page.name = `Page ${pages.length + 1}`;
+      page.children = [];
+      page.selection = [];
+      pages.push(page);
+
+      return page;
     },
     importComponentByKeyAsync: async (key: string) => {
       writes.calls.push({
