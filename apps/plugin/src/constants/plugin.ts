@@ -95,6 +95,12 @@ export const LINKS_TIMEOUT_MS = 5_000;
 export const KEY_IMPORT_MS = 10_000;
 
 /**
+ * How long Figma's own CSS of one layer may take: getCSSAsync has hung for minutes (live, 2026-10-22), holding the
+ * operation's turn and every call to the file after it, while it answers in milliseconds otherwise.
+ */
+export const CSS_TIMEOUT_MS = 3_000;
+
+/**
  * How far a font's weight may be from the one asked for and still be taken (CSS takes the nearest; a variable font
  * reports weights like SF Pro Semibold's 590): a style further off is an error naming the family's styles.
  */

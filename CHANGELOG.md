@@ -45,6 +45,11 @@ How to write this file (people and agents alike):
   refuses those edits up front, in a dry run as in a real one, and says to switch first, read the instance again,
   then edit: Figma gives a switched instance's layers new ids, so before, a dry run that passed ended in a real run
   that wrote the switch and failed the edits.
+- A `var()` that names no token no longer freezes the plugin for minutes: `design_apply` and `tokens_apply` look for
+  it on the file's other pages without asking Figma for any layer's CSS, which could hang there, so the answer, with
+  its "Did you mean" hint, comes quickly and the calls after it are not held up. Where a layer's CSS is still read
+  (the current page's gradient styles, `design_read`), a slow answer is given up on after 3 seconds.
+- `tokens_apply` takes a variable's `type` in any case: `"color"` is `COLOR`.
 - `design_apply` changes a layer deep inside a big screen in one call, nested as `design_read` writes it: the layers
   named and the ones on the way to them are read first, instead of "could not read its current state".
 - `design_apply` `props=` that sets a text property on an existing instance loads the fonts its text uses first,

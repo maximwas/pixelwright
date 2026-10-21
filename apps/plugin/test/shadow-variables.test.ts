@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { applyDesign } from "../../server/src/features/design-apply/apply-design.ts";
 import { readDesign } from "../../server/src/features/design-read/read-design.ts";
 import { applyTokens } from "../../server/src/features/tokens-apply/apply-tokens.ts";
@@ -6,6 +6,7 @@ import { TokensApplyToolInputSchema } from "../../server/src/features/tokens-app
 import { readTokens } from "../../server/src/features/tokens-read/read-tokens.ts";
 import { TokensReadInputSchema } from "../../server/src/features/tokens-read/schemas.ts";
 import { PluginClient } from "../../server/src/plugin/plugin-client.ts";
+import { CSS_TIMEOUT_MS } from "../src/constants/plugin.ts";
 import { textNode } from "./helpers/apply-document.ts";
 import { type FakeNode, installFigma, tree } from "./helpers/fake-figma.ts";
 import { pluginBridge, pluginClient } from "./helpers/plugin-bridge.ts";
@@ -160,6 +161,125 @@ describe("design_apply: a var() that names no variable", () => {
       }),
     ]);
   });
+});
+
+describe("a var() that names no token, where Figma's CSS of a layer never answers", () => {
+  // Live, 2026-10-22: getCSSAsync of a gradient-styled layer hung for minutes, and the plugin with it.
+  const GRADIENT = {
+    type: "GRADIENT_LINEAR",
+    visible: true,
+    opacity: 1,
+    gradientStops: [],
+    gradientTransform: [
+      [1, 0, 0],
+      [0, 1, 0],
+    ],
+  };
+  const hanging = (id: string) => ({
+    id,
+    type: "RECTANGLE",
+    fills: [GRADIENT],
+    fillStyleId: "S:g",
+    getCSSAsync: () => new Promise(() => {}),
+  });
+  const lift = (dryRun: boolean) =>
+    applyTokens(
+      pluginClient(plugin),
+      TokensApplyToolInputSchema.parse({
+        dryRun,
+        styles: {
+          effect: [
+            {
+              name: "Lift",
+              value: "0 4px 12px 0 var(--shadow-sof)",
+            },
+          ],
+        },
+      }),
+    );
+  const nearName = [expect.objectContaining({ message: expect.stringMatching(/--shadow-sof .*--shadow-soft/) })];
+
+  beforeEach(() => {
+    installFigma(page, {
+      fonts: [
+        {
+          family: "Inter",
+          style: "Regular",
+        },
+      ],
+      localCollections: [
+        {
+          id: "C:1",
+          name: "Theme",
+          remote: false,
+          defaultModeId: "M:1",
+          modes: [
+            {
+              modeId: "M:1",
+              name: "Light",
+            },
+          ],
+        },
+      ],
+      localVariables: [
+        {
+          id: "V:shadow",
+          name: "shadow/soft",
+          variableCollectionId: "C:1",
+          resolvedType: "COLOR",
+          remote: false,
+          scopes: ["ALL_SCOPES"],
+          codeSyntax: {},
+          valuesByMode: { "M:1": SHADOW },
+        },
+      ],
+      styles: {
+        "S:g": {
+          id: "S:g",
+          name: "Brand Gradient",
+          type: "PAINT",
+          remote: true,
+          paints: [GRADIENT],
+        },
+      },
+      pages: [
+        tree({
+          id: "0:2",
+          type: "PAGE",
+          children: [hanging("2:1")],
+        }),
+      ],
+    });
+  });
+
+  it("design_apply's dry run still names the near variable: it asks no layer for its CSS", async () => {
+    page.children?.push(tree(hanging("1:9"), page));
+
+    const { errors } = await apply('<Frame id="1:1" box-shadow="0 4px 12px 0 var(--shadow-sof)"/>', true);
+
+    expect(errors).toEqual([
+      expect.objectContaining({ hint: "Did you mean --shadow-soft? A new one: create it with tokens_apply first." }),
+    ]);
+  }, 2_000);
+
+  it("tokens_apply's dry run names the near variable at once: it asks other pages for no CSS", async () => {
+    expect((await lift(true)).errors).toEqual(nearName);
+  }, 2_000);
+
+  it("tokens_apply gives up on the current page's CSS Figma does not give in time", async () => {
+    page.children?.push(tree(hanging("1:9"), page));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+    try {
+      const applied = lift(true);
+
+      await vi.advanceTimersByTimeAsync(CSS_TIMEOUT_MS);
+
+      expect((await applied).errors).toEqual(nearName);
+    } finally {
+      vi.useRealTimers();
+    }
+  }, 2_000);
 });
 
 describe("tokens_apply: an effect style's shadow colour from a colour variable", () => {

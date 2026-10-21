@@ -2,7 +2,7 @@ import { type RawTokens, unwrapVar } from "@pixelwright/core";
 import { plain } from "../../utils/plain.ts";
 import { colorProfile } from "../color-profile.ts";
 import { IdLookup } from "../id-lookup.ts";
-import { pageOf } from "../nodes.ts";
+import { cssOf, pageOf } from "../nodes.ts";
 import { localStyles, numbered, numberingStyles, styleOf } from "../styles.ts";
 import { aliasesIn, loaded, usedUnder } from "../used-tokens.ts";
 
@@ -50,18 +50,22 @@ export class RawTokensBuilder {
   }
 
   /**
-   * Adds the styles and variables the layers under `root` use and the file does not define (a team library's), and
-   * the CSS of gradient paint styles from a layer that fills with them. A library style may share a name with another:
-   * all are numbered again among the page's, as every reader numbers them, so a part of a page reads the same names.
+   * Adds the styles and variables the layers under `root` use and the file does not define (a team library's), and,
+   * unless `css` is false, the CSS of gradient paint styles from a layer that fills with them. A library style may
+   * share a name with another: all are numbered again among the page's, as every reader numbers them, so a part of a
+   * page reads the same names.
    */
-  async addUsed(root: BaseNode): Promise<void> {
+  async addUsed(root: BaseNode, { css = true }: UsedTokens = {}): Promise<void> {
     await loaded(root);
 
     const { styleIds, variableIds } = usedUnder(root);
 
     await this.#addStyles(styleIds);
     await this.#addVariables(variableIds);
-    await this.#addPaintCss(root);
+
+    if (css) {
+      await this.#addPaintCss(root);
+    }
 
     const page = root.type === "PAGE" ? null : pageOf(root);
 
@@ -145,7 +149,8 @@ export class RawTokensBuilder {
 
   /**
    * Each gradient or layered paint style's CSS, from the first layer under `root` it fills: core writes only single
-   * solid paint styles itself, and Figma writes the rest for a layer (getCSSAsync's background).
+   * solid paint styles itself, and Figma writes the rest for a layer (getCSSAsync's background). Once Figma gives no
+   * CSS in time, the rest go without, as core writes them.
    */
   async #addPaintCss(root: BaseNode): Promise<void> {
     const wanted = new Map(this.#raw.styles.filter(wantsCss).map((style) => [style.id, style]));
@@ -158,26 +163,41 @@ export class RawTokensBuilder {
       const style = wanted.get(fillStyleOf(layer) ?? "");
 
       if (style !== undefined && style.css === undefined && "getCSSAsync" in layer) {
-        const css = unwrapVar((await layer.getCSSAsync()).background);
+        const css = await cssOf(layer);
 
-        if (css !== undefined) {
-          style.css = css;
+        if (css === null) {
+          return;
+        }
+
+        const background = unwrapVar(css.background);
+
+        if (background !== undefined) {
+          style.css = background;
         }
       }
     }
   }
 }
 
+/** What a reader takes of the tokens layers use: css false leaves out the gradient styles' CSS, for one that needs names. */
+export interface UsedTokens {
+  readonly css?: boolean;
+}
+
 /** The file's tokens with those the layers under `root` use. */
-export async function tokensUnder(root: BaseNode): Promise<RawTokens> {
+export async function tokensUnder(root: BaseNode, used?: UsedTokens): Promise<RawTokens> {
   const builder = await RawTokensBuilder.local();
 
-  await builder.addUsed(root);
+  await builder.addUsed(root, used);
 
   return builder.build();
 }
 
-/** The tokens each page other than the current one uses, page by page (loading every page is slow on big files). */
+/**
+ * The tokens each page other than the current one uses, page by page (loading every page is slow on big files), with
+ * no style's CSS: its readers look for names there, a local style's CSS is the current page's, and a getCSSAsync there
+ * held the plugin for minutes (live, 2026-10-22), its time limit firing late.
+ */
 export async function tokensOfOtherPages(): Promise<RawTokens[]> {
   await figma.loadAllPagesAsync();
 
@@ -185,7 +205,7 @@ export async function tokensOfOtherPages(): Promise<RawTokens[]> {
   const tokens: RawTokens[] = [];
 
   for (const page of pages) {
-    tokens.push(await tokensUnder(page));
+    tokens.push(await tokensUnder(page, { css: false }));
   }
 
   return tokens;
