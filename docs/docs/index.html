@@ -1024,7 +1024,9 @@ text, <code>true</code> or <code>false</code> for a boolean, and for an instance
 component&#39;s own write the new instance&#39;s layers, as overrides; the other instance stays as it is.
 <code>&lt;Instance copyOf=&quot;id&quot;&gt;</code> copies an instance with its overrides instead.</li>
 <li>An existing instance: <code>variant</code> switches it, <code>props</code> changes its properties, <code>component</code> swaps it to
-another component. A comma or <code>=</code> inside a name or value is escaped with a backslash, as design_read writes it.</li>
+another component. A comma or <code>=</code> inside a name or value is escaped with a backslash, as design_read writes it.
+A switch or a swap gives the instance&#39;s layers new ids, so a call that switches an instance (or a copy, or one
+nested in a new instance) refuses edits of its layers by their old ids: switch first, read it again, then edit.</li>
 <li><code>&lt;Component name=&quot;Badge&quot;&gt;…&lt;/Component&gt;</code> makes a component like a frame; inside it, <code>prop=&quot;Label&quot;</code> on a
 Text makes a text property bound to it, <code>visibleProp=&quot;Shown&quot;</code> a boolean property bound to the layer&#39;s
 visibility, and <code>swapProp=&quot;Icon&quot;</code> on an Instance an instance swap property whose default is that instance&#39;s

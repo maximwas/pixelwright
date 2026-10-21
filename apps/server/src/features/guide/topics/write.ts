@@ -74,6 +74,8 @@ taken as sRGB and converted to P3.
   \`<Instance copyOf="id">\` copies an instance with its overrides instead.
 - An existing instance: \`variant\` switches it, \`props\` changes its properties, \`component\` swaps it to
   another component. A comma or \`=\` inside a name or value is escaped with a backslash, as design_read writes it.
+  A switch or a swap gives the instance's layers new ids, so a call that switches an instance (or a copy, or one
+  nested in a new instance) refuses edits of its layers by their old ids: switch first, read it again, then edit.
 - \`<Component name="Badge">…</Component>\` makes a component like a frame; inside it, \`prop="Label"\` on a
   Text makes a text property bound to it, \`visibleProp="Shown"\` a boolean property bound to the layer's
   visibility, and \`swapProp="Icon"\` on an Instance an instance swap property whose default is that instance's

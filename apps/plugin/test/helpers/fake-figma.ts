@@ -41,6 +41,26 @@ function walk(node: FakeNode, out: FakeNode[]): void {
   }
 }
 
+/**
+ * A component's layer as an instance holds it: its fields, and an id under the instance's (I8:2;7:12 in the component
+ * is I<instance>;8:2;7:12 there; I<outer>;<nested>;… in a nested instance).
+ */
+function sublayerOf(layer: FakeNode, instanceId: string): Record<string, unknown> {
+  const { children, parent: _parent, id: own, mainComponent, ...rest } = layer;
+
+  return {
+    ...structuredClone(
+      Object.fromEntries(
+        Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
+      ),
+    ),
+    // A nested instance shows the same component as the one in the component it was made of.
+    ...(mainComponent === undefined ? {} : { mainComponent }),
+    id: `${instanceId.startsWith("I") ? instanceId : `I${instanceId}`};${own.replace(/^I/, "")}`,
+    children: (children ?? []).map((child) => sublayerOf(child, instanceId)),
+  };
+}
+
 /** Builds a node tree from a spec, wiring parents, findAll and getMainComponentAsync like Figma's. */
 export function tree(spec: Spec, parent: FakeNode | null = null): FakeNode {
   const { children, ...rest } = spec;
@@ -233,6 +253,16 @@ export interface FakeWrites {
   readonly loaded: Set<string>;
   readonly calls: { node: string; method: string; args: unknown[] }[];
   readonly created: FakeNode[];
+}
+
+/** How the fake keeps its layers: findable by id, and an instance's made again when its main component changes. */
+interface FakeLayers {
+  register(node: FakeNode): void;
+  /**
+   * As Figma after a variant switch or a swap (live, 2026-10-22): the instance's layers are the new main component's,
+   * with ids of their own (I119:9;54:190 became I119:9;54:196), and the old ids are gone.
+   */
+  follow(instance: FakeNode): void;
 }
 
 const fontKey = (font: { family: string; style: string }) => `${font.family} ${font.style}`;
@@ -428,12 +458,7 @@ const RANGE_METHODS: Readonly<Record<string, string>> = {
 };
 
 /** Gives a node Figma's writing methods, recording each call; a text refuses new characters until its font loads. */
-function writable(
-  node: FakeNode,
-  writes: FakeWrites,
-  register: (node: FakeNode) => void,
-  options: FakeOptions = {},
-): void {
+function writable(node: FakeNode, writes: FakeWrites, layers: FakeLayers, options: FakeOptions = {}): void {
   const define = (name: string, value: unknown) =>
     Object.defineProperty(node, name, {
       value,
@@ -464,7 +489,7 @@ function writable(
     node.children ??= [];
     node.children.splice(at !== -1 && at < index ? index - 1 : index, 0, child);
     child.parent = node;
-    register(child);
+    layers.register(child);
     record("insertChild", [index, child.id]);
   };
 
@@ -504,6 +529,8 @@ function writable(
 
     const own = node.componentProperties as Record<string, { type: string; value: unknown }> | undefined;
     const main = node.mainComponent as FakeNode | undefined;
+    const set = main?.parent?.type === "COMPONENT_SET" ? main.parent : undefined;
+    const wanted = main === undefined ? {} : variantOf(main.name);
 
     for (const [key, value] of Object.entries(properties)) {
       if (own !== undefined && own[key] === undefined) {
@@ -517,22 +544,23 @@ function writable(
         };
       }
 
-      // A variant's value switches the instance to that variant of its set.
-      if (own?.[key]?.type === "VARIANT" && main?.parent?.type === "COMPONENT_SET") {
-        const wanted = {
-          ...variantOf(main.name),
-          [key]: String(value),
-        };
-        const next = main.parent.children?.find((child) =>
-          Object.entries(wanted).every(([name, option]) => variantOf(child.name)[name] === option),
-        );
-
-        if (next === undefined) {
-          throw new Error(`No variant ${JSON.stringify(wanted)}`);
-        }
-
-        node.mainComponent = next;
+      if (own?.[key]?.type === "VARIANT") {
+        wanted[key] = String(value);
       }
+    }
+
+    // The variant's values, all of them at once, switch the instance to that variant of its set.
+    const next = set?.children?.find((child) =>
+      Object.entries(wanted).every(([name, option]) => variantOf(child.name)[name] === option),
+    );
+
+    if (set !== undefined && next === undefined) {
+      throw new Error(`No variant ${JSON.stringify(wanted)}`);
+    }
+
+    if (next !== undefined && next !== main) {
+      node.mainComponent = next;
+      layers.follow(node);
     }
 
     const walkTexts = (layer: FakeNode) => {
@@ -551,6 +579,7 @@ function writable(
   });
   define("swapComponent", (component: FakeNode) => {
     node.mainComponent = component;
+    layers.follow(node);
     record("swapComponent", [component.id]);
   });
   // As Figma: every overridden field goes back to the main component's value (the same layer there), then none is.
@@ -842,11 +871,37 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
       ...chain.map((each) => (each.explicitVariableModes as Record<string, string> | undefined) ?? {}),
     );
   };
+  const follow = (instance: FakeNode) => {
+    const main = instance.mainComponent as FakeNode | undefined;
+
+    // A test's main component without layers leaves the instance its own.
+    if (main?.children === undefined) {
+      return;
+    }
+
+    for (const old of instance.findAll?.(() => true) ?? []) {
+      byId.delete(old.id);
+    }
+
+    instance.children = main.children.map((child) => tree(sublayerOf(child, instance.id) as never, instance));
+
+    for (const layer of instance.findAll?.(() => true) ?? []) {
+      register(layer);
+    }
+  };
   const register = (node: FakeNode) => {
     byId.set(node.id, node);
 
     if (Object.getOwnPropertyDescriptor(node, "resize") === undefined) {
-      writable(node, writes, register, options);
+      writable(
+        node,
+        writes,
+        {
+          register,
+          follow,
+        },
+        options,
+      );
       copyable(node);
     }
 
@@ -1007,22 +1062,6 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     >;
     const id = `90:${writes.created.length + 1}`;
     // As Figma: an instance looks like its component (fills, sizing) and holds its layers as I<instance>;<layer> ids.
-    const sublayers = (layer: FakeNode): Record<string, unknown> => {
-      const { children, parent: _parent, id: own, mainComponent, ...rest } = layer;
-
-      return {
-        ...structuredClone(
-          Object.fromEntries(
-            Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
-          ),
-        ),
-        // A nested instance shows the same component as the one in the component it was made of.
-        ...(mainComponent === undefined ? {} : { mainComponent }),
-        // A nested instance's layer (I8:2;7:12 in the component) is I<instance>;8:2;7:12 here.
-        id: `I${id};${own.replace(/^I/, "")}`,
-        children: (children ?? []).map(sublayers),
-      };
-    };
     const instance = tree({
       id,
       name: owner.name,
@@ -1047,7 +1086,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
           },
         ]),
       ),
-      children: (component.children ?? []).map((child) => sublayers(child) as never),
+      children: (component.children ?? []).map((child) => sublayerOf(child, id) as never),
     });
 
     writes.created.push(instance);

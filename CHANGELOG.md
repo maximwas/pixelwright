@@ -41,6 +41,10 @@ How to write this file (people and agents alike):
 
 ### Fixed
 
+- A `design_apply` call that switches an instance's variant or component and also edits its layers by their old ids
+  refuses those edits up front, in a dry run as in a real one, and says to switch first, read the instance again,
+  then edit: Figma gives a switched instance's layers new ids, so before, a dry run that passed ended in a real run
+  that wrote the switch and failed the edits.
 - `design_apply` changes a layer deep inside a big screen in one call, nested as `design_read` writes it: the layers
   named and the ones on the way to them are read first, instead of "could not read its current state".
 - `design_apply` `props=` that sets a text property on an existing instance loads the fonts its text uses first,

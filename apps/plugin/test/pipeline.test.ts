@@ -484,6 +484,42 @@ describe("design_apply end to end: sections", () => {
   });
 });
 
+describe("design_apply end to end: a variant switch and the instance's layers", () => {
+  it("refuses an edit by an id inside an instance the call switches, in the dry run as in the real one", async () => {
+    // Figma gives a switched instance's layers new ids (live, 2026-10-22): the real run would not find I2:1;3:5.
+    const xml =
+      '<Instance id="2:1" variant="Property 1=Green"><Frame id="I2:1;3:4"><Text id="I2:1;3:5">Switched</Text></Frame></Instance>';
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    expect(real).toEqual({
+      ...dry,
+      dryRun: false,
+    });
+    expect(real.changed).toEqual(["2:1"]);
+    expect(real.errors).toEqual([
+      expect.objectContaining({
+        id: "I2:1;3:5",
+        hint: "Switch the variant first, read the instance again, then edit its layers by their new ids.",
+      }),
+    ]);
+    expect((byId("2:1") as FakeNode).mainComponent).toMatchObject({ id: "7:3" });
+  });
+
+  it("refuses an edit inside a copy of an instance the call switches, by the copied layer's id", async () => {
+    const result = await apply(
+      '<Frame id="3:1"><Instance copyOf="2:1" variant="Property 1=Green"><Frame id="I2:1;3:4"><Text id="I2:1;3:5">Switched</Text></Frame></Instance></Frame>',
+    );
+
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        message: expect.stringContaining("inside the copy of 2:1, which this call switches to another variant"),
+      }),
+    ]);
+    expect((byId(result.created[0]?.id ?? "") as FakeNode).mainComponent).toMatchObject({ id: "7:3" });
+  });
+});
+
 describe("design_apply end to end: layers two levels deep in one call", () => {
   it("overrides a text inside an instance's nested instance by its I<outer>;<inner>;<layer> id", async () => {
     const result = await apply(
@@ -556,15 +592,21 @@ describe("design_apply end to end: layers two levels deep in one call", () => {
     expect(result.changed).toEqual(["1:3"]);
   });
 
-  it("writes a text inside a new instance's nested instance, the variant switched in the same call", async () => {
-    const result = await apply(
-      '<Frame id="3:1"><Instance component="Card"><Instance id="I2:9;8:2" variant="State=Hover"><Text id="I2:9;8:2;7:12">Buy</Text></Instance></Instance></Frame>',
-    );
+  it("switches a new instance's nested instance and refuses a text in it named in the same call, dry or not", async () => {
+    const xml =
+      '<Frame id="3:1"><Instance component="Card"><Instance id="I2:9;8:2" variant="State=Hover"><Text id="I2:9;8:2;7:12">Buy</Text></Instance></Instance></Frame>';
+    const dry = await apply(xml, { dryRun: true });
+    const result = await apply(xml);
     const made = byId(result.created[0]?.id ?? "");
 
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        message: expect.stringContaining("inside the instance standing for I2:9;8:2, which this call switches"),
+      }),
+    ]);
+    expect(dry.errors).toEqual(result.errors);
     expect(made?.children?.[1]?.mainComponent).toMatchObject({ id: "7:13" });
-    expect(made?.children?.[1]?.children?.[0]?.characters).toBe("Buy");
+    expect(made?.children?.[1]?.children?.[0]?.characters).toBe("Go");
   });
 });
 
