@@ -56,7 +56,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | Tool | What it is for |
 | --- | --- |
 | `status` | The connected files, which one tools use, and what to do when none is |
-| `file_map`, `outline`, `nodes_find` | Every page with its frames and sections in one call; a frame's layer tree (instances name their component); layers by name, type, text or component |
+| `file_map`, `outline`, `nodes_find` | Every page with its frames and sections in one call; a frame's layer tree (instances name their component); layers by name, type, text, component or variant, and instances counted by variant |
 | `selection_get`, `selection_wait`, `viewport_get`, `node_show` | What the user picked, or waiting for them to pick; what they are looking at; showing layers, fitted or at a zoom |
 | `changes_since` | What the designer changed since the agent last looked, by whom |
 | `design_read` | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files; the designer's Dev Mode notes, pinned properties and measurements; Figma Motion as CSS keyframes; what an instance changed outside its component's properties; what is ready for dev |

@@ -18,7 +18,9 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
      A layer with \`$children="N"\` has more children than listed: outline it on its own. An instance names its
      \`component\` and \`variant\`, so repeated cards show without a read; \`dev="ready"\` marks what the designer
      handed over for development.
-   - \`nodes_find\`: layers by name, type, text or component.
+   - \`nodes_find\`: layers by name, type, text, component or an instance's \`variant\` ("State=Hover, Size=L").
+     \`counts: true\` counts every instance found by component and variant: before deleting variants, which ones
+     layers still use (a variant missing from the counts has no instance there).
    - \`node_show\`: brings layers into view (fitted or at a zoom) and selects them, so the user sees which you mean.
    - \`changes_since\`: what the designer changed since you last looked (a cursor), to read again only that.
 3. **Read one section.** \`design_read\` returns the section as XML (see \`guide xml\`), then JSON with tokens, text
