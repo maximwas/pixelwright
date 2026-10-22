@@ -16,6 +16,25 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## Unreleased
+
+### Added
+
+- `design_read` takes `autoLineHeight: "px"`: Figma's Auto line heights are written as the px Figma renders them at,
+  wherever a text that hugs its lines shows that for its font and size. Elsewhere, and by default, they stay `normal`.
+- `assets_export` takes `names`, a file name per layer id (`{ "12:34": "hero-mountains" }`). Layers without one keep
+  the name made from the layer's name.
+- The guide and `assets_export` say that WEBP keeps transparency exactly, at any quality.
+
+### Fixed
+
+- `file_map` no longer fails when Figma cannot load a page. Every page is still listed by id and name, the pages
+  that loaded have their layers, and `pagesNotRead` names the others with Figma's reason.
+- Stroke weights keep their fractions: a 2.5 border reads as `2.5px`, not `3px`, and sending it back changes nothing.
+- Relative paths start in the session's project folder (the MCP client's root, else `CLAUDE_PROJECT_DIR`), not in the
+  folder the server was started from: `design_read`'s `assetsDir`, `assets_export`'s `dir`, `design_apply`'s image
+  files, `screenshot`'s `save`, `image_compare`'s files and `execute`'s `script`.
+
 ## 0.7.0 — 2026-10-22
 
 ### Added
