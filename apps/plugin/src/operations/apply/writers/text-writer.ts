@@ -1,17 +1,17 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
-import type { TypedLayer } from "../../../figma/capabilities.ts";
+import type { TextLayer, TypedLayer } from "../../../figma/capabilities.ts";
 import { boundProperty } from "../../../figma/component-properties.ts";
 import { textFonts } from "../../../figma/fonts.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 import { BASE_FIELDS, inherit, longest, restoreLook } from "./text-look.ts";
-import { TextRange } from "./text-range.ts";
+import { TextRange, textKeyRefusal } from "./text-range.ts";
 import { RUN_FIELDS, RUN_WRITERS, type RunKey } from "./text-runs.ts";
 import type { WriteScope } from "./write-scope.ts";
 
 type TextFail = (key: keyof FigmaProps | "text", error: unknown) => void;
 
-const BOX_KEYS = ["textAlignHorizontal", "textWrapStyle", "truncate"] as const;
+const BOX_KEYS = ["textAlignHorizontal", "textWrapStyle", "truncate", "pathStart"] as const;
 
 /** What only a text has; a link on another layer is refused by its own step. */
 const TEXT_KEYS: readonly (keyof FigmaProps)[] = [
@@ -32,14 +32,15 @@ export function holdsNoText(node: TypedLayer): WriteError {
 /**
  * A text's characters, its own look, its runs and the box's text settings. New characters keep the look the text had
  * (its longest run's); the text's own properties go to the runs that had its own value, as CSS inherits; the spans
- * then set theirs. Each property in its own try: `fail` gets the property and the error.
+ * then set theirs. Each property in its own try: `fail` gets the property and the error. A text on a path is written
+ * the same, with its start along the path and without what only a text has.
  */
 export class TextWriter {
-  readonly #node: TextNode;
+  readonly #node: TextLayer;
   readonly #change: ApplyChange;
   readonly #scope: WriteScope;
 
-  constructor(node: TextNode, change: ApplyChange, scope: WriteScope) {
+  constructor(node: TextLayer, change: ApplyChange, scope: WriteScope) {
     this.#node = node;
     this.#change = change;
     this.#scope = scope;
@@ -147,7 +148,7 @@ export class TextWriter {
     await RUN_WRITERS[key](range, props, this.#scope);
   }
 
-  /** The box's text settings: alignment, wrapping, truncation. */
+  /** The box's text settings: alignment, wrapping, truncation; a text on a path's start along it. */
   #box(fail: TextFail): boolean {
     const props = this.#change.props;
     const node = this.#node;
@@ -159,12 +160,19 @@ export class TextWriter {
       },
       textWrapStyle: () => {
         if (props.textWrapStyle !== undefined) {
-          assign(node, "textWrapStyle", props.textWrapStyle);
+          assign(ofKind(node, "TEXT", "textWrapStyle"), "textWrapStyle", props.textWrapStyle);
         }
       },
       truncate: () => {
-        assign(node, "textTruncation", props.truncate ? "ENDING" : "DISABLED");
-        assign(node, "maxLines", props.truncate ? 1 : null);
+        const text = ofKind(node, "TEXT", "truncate");
+
+        assign(text, "textTruncation", props.truncate ? "ENDING" : "DISABLED");
+        assign(text, "maxLines", props.truncate ? 1 : null);
+      },
+      pathStart: () => {
+        if (props.pathStart !== undefined) {
+          assign(ofKind(node, "TEXT_PATH", "pathStart"), "textPathStartData", { ...props.pathStart });
+        }
       },
     };
     let wrote = false;
@@ -184,11 +192,24 @@ export class TextWriter {
   }
 }
 
+/** The text layer as the kind that has the property, else the refusal of it. */
+function ofKind<K extends TextLayer["type"]>(
+  node: TextLayer,
+  kind: K,
+  key: keyof FigmaProps,
+): Extract<TextLayer, { type: K }> {
+  if (node.type !== kind) {
+    throw textKeyRefusal(node, key);
+  }
+
+  return node as Extract<TextLayer, { type: K }>;
+}
+
 /**
  * Characters through the component property they are bound to, when an instance holds it (written on the text itself
  * they would not stick); otherwise on the text, an override inside an instance.
  */
-function setCharacters(node: TextNode, characters: string): void {
+function setCharacters(node: TextLayer, characters: string): void {
   const property = boundProperty(node, "characters");
 
   if (property === null) {

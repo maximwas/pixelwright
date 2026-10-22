@@ -1,4 +1,5 @@
-import type { ApplyChange, FontSpec } from "@pixelwright/core";
+import { type ApplyChange, type FontSpec, TEXT_TAGS } from "@pixelwright/core";
+import type { TextLayer } from "../../figma/capabilities.ts";
 import { type FontCatalog, fontKey, type KnownFont, textFonts } from "../../figma/fonts.ts";
 import type { TokenIndex } from "../../figma/tokens/token-index.ts";
 import { WriteError } from "../../figma/write-error.ts";
@@ -54,7 +55,7 @@ export class ApplyFonts {
   }
 
   /** A text that exists only now, in a copy or a new instance: its fonts (its component's) load before it is written. */
-  async loadFor(text: TextNode): Promise<void> {
+  async loadFor(text: TextLayer): Promise<void> {
     for (const font of textFonts(text)) {
       await figma.loadFontAsync(font).catch(() => this.#unloaded.add(keyOf(font)));
     }
@@ -72,10 +73,10 @@ async function changedTextFonts(changes: readonly ApplyChange[], wanted: FontNam
     const id = change.kind === "update" ? (change.id ?? change.source ?? null) : (change.copyOf ?? null);
     const node = id === null ? null : await figma.getNodeByIdAsync(id);
 
-    if (node?.type === "TEXT") {
+    if (node?.type === "TEXT" || node?.type === "TEXT_PATH") {
       wanted.push(...textFonts(node));
       known.push(...knownFonts(node));
-    } else if (change.kind === "create" && change.copyOf === undefined && change.tag === "Text") {
+    } else if (change.kind === "create" && change.copyOf === undefined && TEXT_TAGS.has(change.tag)) {
       wanted.push(NEW_TEXT_FONT);
     }
   }
@@ -135,7 +136,7 @@ async function styleFonts(index: TokenIndex, name: string): Promise<FontName[]> 
   }
 }
 
-function knownFonts(node: TextNode): KnownFont[] {
+function knownFonts(node: TextLayer): KnownFont[] {
   if (node.characters.length === 0) {
     return node.fontName === figma.mixed || node.fontWeight === figma.mixed
       ? []

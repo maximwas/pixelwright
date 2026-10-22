@@ -1,7 +1,8 @@
 import { isModeAttribute } from "../kernel/names.ts";
 import type { FigmaProps, TextRunSpec } from "./figma-props.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "./property-group.ts";
-import { BOX_RULES, SPAN_RULES, TEXT_RULES } from "./registry.ts";
+import { BOX_RULES, SPAN_RULES, TEXT_PATH_RULES, TEXT_RULES } from "./registry.ts";
+import { TEXT_TAGS } from "./vocabulary.ts";
 
 /** What a layer has now, measured against an element (unchangedAttributes): the mapping writes only the rest. */
 export interface LayerNow {
@@ -67,13 +68,15 @@ export function writeElement(element: ElementInput, now?: LayerNow): ElementWrit
     merged: (name) => attributes[name] ?? current[name],
     changed,
     hidden: now !== undefined && !now.visible,
+    existing: now !== undefined,
   };
   const out = new ChangeOutput(problems);
   // Applying a text style resets what it covers: the element's own overrides and its runs are written again.
-  const restyled = element.tag === "Text" && changed("textStyle");
+  const restyled = TEXT_TAGS.has(element.tag) && changed("textStyle");
 
   translate(BOX_RULES, input, out, false);
   translate(TEXT_RULES, input, out, restyled);
+  translate(TEXT_PATH_RULES, input, out, false);
   writeModes(attributes, changed, out);
 
   const text =
@@ -153,6 +156,7 @@ function textOf(
         merged: (name) => piece.attributes[name] ?? base(name),
         changed: (name) => piece.attributes[name] !== undefined,
         hidden: false,
+        existing: false,
       },
       out,
       false,
@@ -192,6 +196,7 @@ export function attributesProps(
     merged: own,
     changed: (name) => Object.hasOwn(attributes, name),
     hidden: false,
+    existing: false,
   };
   const out = new ChangeOutput(problems);
 

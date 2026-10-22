@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { GridTrackSchema, TextSegmentSchema } from "./snapshot-text.ts";
+import { GridTrackSchema, TextPathSchema, TextSegmentSchema } from "./snapshot-text.ts";
 import { BoundVariablesSchema, EffectSchema, MixedSchema, PaintSchema, ReactionSchema } from "./snapshot-values.ts";
 
 const NumberOrMixed = z.union([z.number(), MixedSchema]);
@@ -142,6 +142,8 @@ export const SnapshotFieldsSchema = z.object({
       segments: z.array(TextSegmentSchema),
     })
     .optional(),
+  /** A text on a path's path and start, as Figma has them (vectorPaths in the layer's own coordinates). */
+  textPath: TextPathSchema.optional(),
   instance: z
     .object({
       componentId: z.string(),

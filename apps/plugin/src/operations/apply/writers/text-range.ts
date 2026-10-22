@@ -1,13 +1,17 @@
+import type { FigmaProps } from "@pixelwright/core";
+import { refusal, type TextLayer, type TypedLayer } from "../../../figma/capabilities.ts";
+import type { WriteError } from "../../../figma/write-error.ts";
+
 /**
  * A text's characters from start to end. An empty range is an empty text, which Figma writes on the node itself: it
- * refuses a range of no characters.
+ * refuses a range of no characters. A text on a path has a text's look but no line height or decoration.
  */
 export class TextRange {
-  readonly node: TextNode;
+  readonly node: TextLayer;
   readonly start: number;
   readonly end: number;
 
-  constructor(node: TextNode, start: number, end: number) {
+  constructor(node: TextLayer, start: number, end: number) {
     this.node = node;
     this.start = start;
     this.end = end;
@@ -23,14 +27,19 @@ export class TextRange {
       : this.node.setRangeTextStyleIdAsync(this.start, this.end, id));
   }
 
+  /** The font and its size, and on a text its line height (a text on a path runs along its path, with no lines). */
   font(font: FontName, size: number, lineHeight: LineHeight): void {
     if (this.#whole) {
       this.node.fontName = font;
       this.node.fontSize = size;
-      this.node.lineHeight = lineHeight;
     } else {
       this.node.setRangeFontName(this.start, this.end, font);
       this.node.setRangeFontSize(this.start, this.end, size);
+    }
+
+    if (this.node.type === "TEXT" && this.#whole) {
+      this.node.lineHeight = lineHeight;
+    } else if (this.node.type === "TEXT") {
       this.node.setRangeLineHeight(this.start, this.end, lineHeight);
     }
   }
@@ -74,27 +83,60 @@ export class TextRange {
   }
 
   decorationLine(value: TextDecoration): void {
+    const node = decorated(this.node);
+
     if (this.#whole) {
-      this.node.textDecoration = value;
+      node.textDecoration = value;
     } else {
-      this.node.setRangeTextDecoration(this.start, this.end, value);
+      node.setRangeTextDecoration(this.start, this.end, value);
     }
   }
 
   /** The decoration's look: its style, colour, offset and thickness, in that order. */
   decorationLook(look: DecorationLook): void {
+    const node = decorated(this.node);
+
     if (this.#whole) {
-      this.node.textDecorationStyle = look.style;
-      this.node.textDecorationColor = look.color;
-      this.node.textDecorationOffset = look.offset;
-      this.node.textDecorationThickness = look.thickness;
+      node.textDecorationStyle = look.style;
+      node.textDecorationColor = look.color;
+      node.textDecorationOffset = look.offset;
+      node.textDecorationThickness = look.thickness;
     } else {
-      this.node.setRangeTextDecorationStyle(this.start, this.end, look.style);
-      this.node.setRangeTextDecorationColor(this.start, this.end, look.color);
-      this.node.setRangeTextDecorationOffset(this.start, this.end, look.offset);
-      this.node.setRangeTextDecorationThickness(this.start, this.end, look.thickness);
+      node.setRangeTextDecorationStyle(this.start, this.end, look.style);
+      node.setRangeTextDecorationColor(this.start, this.end, look.color);
+      node.setRangeTextDecorationOffset(this.start, this.end, look.offset);
+      node.setRangeTextDecorationThickness(this.start, this.end, look.thickness);
     }
   }
+}
+
+/** What only one kind of text layer has, and what a refusal calls it: a text on a path has fewer of a text's. */
+const OWN_KEYS: Readonly<Partial<Record<keyof FigmaProps, readonly [TextLayer["type"], string]>>> = {
+  textDecoration: ["TEXT", "underline or strike-through"],
+  textWrapStyle: ["TEXT", "text wrapping"],
+  truncate: ["TEXT", "truncation"],
+  pathStart: ["TEXT_PATH", "path for its text to start on"],
+};
+
+/** Whether this text layer lacks a property only the other kind of text layer has. */
+export function lacksTextKey(layer: TypedLayer, key: keyof FigmaProps): boolean {
+  const kind = OWN_KEYS[key]?.[0];
+
+  return kind !== undefined && kind !== layer.type;
+}
+
+/** The refusal of a property this text layer lacks. */
+export function textKeyRefusal(layer: TypedLayer, key: keyof FigmaProps): WriteError {
+  return refusal(layer, OWN_KEYS[key]?.[1] ?? key);
+}
+
+/** A text that can be underlined or struck through: a text on a path cannot. */
+function decorated(node: TextLayer): TextNode {
+  if (node.type !== "TEXT") {
+    throw textKeyRefusal(node, "textDecoration");
+  }
+
+  return node;
 }
 
 /** How an underline or a strike-through looks. */

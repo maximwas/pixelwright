@@ -65,9 +65,19 @@ export function planChanges({ elements, assessed, layers, files }: PlanInput): {
   }
 
   return {
-    changes: withoutSwitchedLayers(changes, errors),
+    // A new TextPath whose d or arc was refused is not made: Figma makes one only along its path, and the error says.
+    changes: withoutSwitchedLayers(changes, errors).filter((change) => !isPathless(change)),
     errors,
   };
+}
+
+function isPathless(change: ApplyChange): boolean {
+  return (
+    change.kind === "create" &&
+    change.tag === "TextPath" &&
+    change.copyOf === undefined &&
+    change.props.path === undefined
+  );
 }
 
 /**

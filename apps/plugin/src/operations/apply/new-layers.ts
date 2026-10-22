@@ -1,6 +1,6 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
 import { assign } from "../../figma/assign.ts";
-import { hasFills } from "../../figma/capabilities.ts";
+import { hasFills, isTextLayer } from "../../figma/capabilities.ts";
 import type { ComponentIndex } from "../../figma/component-index.ts";
 import { variantFor } from "../../figma/variants.ts";
 import { WriteError } from "../../figma/write-error.ts";
@@ -28,6 +28,7 @@ const NEW_TYPES: Readonly<Record<string, SceneNode["type"]>> = {
   Frame: "FRAME",
   Section: "SECTION",
   Text: "TEXT",
+  TextPath: "TEXT_PATH",
   Rectangle: "RECTANGLE",
   Ellipse: "ELLIPSE",
   Line: "LINE",
@@ -51,7 +52,7 @@ export interface Making {
 
 /** Whether a tag is a layer design_apply makes. */
 export function canMake(tag: string): boolean {
-  return MAKERS[tag] !== undefined || tag === "Icon" || tag === "Slot";
+  return MAKERS[tag] !== undefined || tag === "Icon" || tag === "Slot" || tag === "TextPath";
 }
 
 /** A layer made from nothing; a copy, an instance or a slot starts as its source, component or component's slot. */
@@ -119,6 +120,10 @@ async function makeLayer(change: ApplyChange, parent: BaseNode, making: Making):
     return slotIn(parent);
   }
 
+  if (change.tag === "TextPath") {
+    return textPathOf(change.props);
+  }
+
   const make = MAKERS[change.tag];
 
   if (make === undefined) {
@@ -149,6 +154,33 @@ function slotIn(parent: BaseNode): SceneNode {
   return parent.createSlot();
 }
 
+/**
+ * A text on a path: a vector drawn along the path, made into one where its text starts. Figma turns the vector itself
+ * into the text path, so the node it returns is the one to keep; the path cannot change after.
+ */
+function textPathOf({ path, pathStart }: FigmaProps): TextPathNode {
+  if (path === undefined) {
+    throw new WriteError("A <TextPath> is made along a path: give it d or arc.");
+  }
+
+  const vector = figma.createVector();
+
+  try {
+    vector.vectorPaths = [
+      {
+        windingRule: "NONE",
+        data: path,
+      },
+    ];
+
+    return figma.createTextPath(vector, pathStart?.segment ?? 0, pathStart?.position ?? 0);
+  } catch (error) {
+    vector.remove();
+
+    throw error;
+  }
+}
+
 function assetOf(props: FigmaProps): { readonly src: string; readonly stream?: string } {
   if (props.asset === undefined) {
     throw new WriteError("An <Image> is made from its file: give it src.");
@@ -175,7 +207,7 @@ function fileName(src: string): string {
 
 /** What the XML leaves out a new layer does not have: no fill without a background, no clipping without overflow. */
 function startBare(node: SceneNode, props: FigmaProps): void {
-  if (props.fills === undefined && node.type !== "TEXT" && node.type !== "LINE" && hasFills(node)) {
+  if (props.fills === undefined && !isTextLayer(node) && node.type !== "LINE" && hasFills(node)) {
     node.fills = [];
   }
 

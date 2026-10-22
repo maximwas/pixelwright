@@ -23,7 +23,10 @@ export async function existingLayer(change: ApplyChange, { load }: { readonly lo
     throw new WriteError(`No layer ${change.id} in this file.`, "Read the ids again with design_read or nodes_find.");
   }
 
-  if ((change.tag === "Text") !== (node.type === "TEXT")) {
+  if (
+    (change.tag === "Text") !== (node.type === "TEXT") ||
+    (change.tag === "TextPath") !== (node.type === "TEXT_PATH")
+  ) {
     throw new WriteError(
       `${change.id} is a ${node.type.toLowerCase()}, not a ${change.tag}.`,
       "Check the id: the tag is the layer's type as design_read writes it.",

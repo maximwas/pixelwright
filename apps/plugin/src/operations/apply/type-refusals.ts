@@ -1,9 +1,10 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
-import { hasFills, refusal, type TypedLayer } from "../../figma/capabilities.ts";
+import { hasFills, isTextLayer, refusal, type TypedLayer } from "../../figma/capabilities.ts";
 import { componentRefusals } from "./writers/component-steps.ts";
 import { attributeOf } from "./writers/layer-writer.ts";
 import { stepsFor } from "./writers/steps.ts";
 import { checkDecoration } from "./writers/text-decoration.ts";
+import { lacksTextKey, textKeyRefusal } from "./writers/text-range.ts";
 import { hasTextProps, holdsNoText } from "./writers/text-writer.ts";
 
 /** What a dry run finds refused: the error, the properties it is about, the XML attribute it names. */
@@ -52,9 +53,12 @@ export function typeRefusals(layer: TypedLayer, change: ApplyChange): TypeRefusa
   return [...found, ...textRefusals(layer, change)];
 }
 
-/** A text given to a layer that is no text; a decoration Figma cannot draw, on the text or a run of it. */
+/**
+ * A text given to a layer that is no text; what only the other kind of text layer has; a decoration Figma cannot
+ * draw, on the text or a run of it.
+ */
 function textRefusals(layer: TypedLayer, change: ApplyChange): TypeRefusal[] {
-  if (layer.type !== "TEXT") {
+  if (!isTextLayer(layer)) {
     return change.text !== undefined || hasTextProps(change.props)
       ? [
           {
@@ -65,7 +69,27 @@ function textRefusals(layer: TypedLayer, change: ApplyChange): TypeRefusal[] {
       : [];
   }
 
-  for (const props of [change.props, ...(change.text?.runs ?? []).map((run) => run.props)]) {
+  const runs = [change.props, ...(change.text?.runs ?? []).map((run) => run.props)];
+  const lacked = (Object.keys(change.props) as (keyof FigmaProps)[]).find((key) => lacksTextKey(layer, key));
+  const spanLacked = runs.some((props) => props.textDecoration !== undefined) && lacksTextKey(layer, "textDecoration");
+  const key = lacked ?? (spanLacked ? "textDecoration" : undefined);
+
+  if (key !== undefined) {
+    return [
+      {
+        error: textKeyRefusal(layer, key),
+        keys: [key],
+        attribute: attributeOf(change, [key]),
+      },
+    ];
+  }
+
+  return decorationRefusals(change, runs);
+}
+
+/** A decoration Figma cannot draw, on the text or a run of it. */
+function decorationRefusals(change: ApplyChange, runs: readonly FigmaProps[]): TypeRefusal[] {
+  for (const props of runs) {
     try {
       if (props.textDecoration !== undefined) {
         checkDecoration(props.textDecoration);

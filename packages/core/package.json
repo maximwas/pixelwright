@@ -18,6 +18,7 @@
     "leven": "4.1.0",
     "semver": "7.8.5",
     "slugify": "1.6.9",
+    "svg-path-commander": "2.3.3",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { CSS_ATTRIBUTES } from "../../css-mapping/vocabulary.ts";
+import { CSS_ATTRIBUTES, TEXT_TAGS } from "../../css-mapping/vocabulary.ts";
 import { isModeAttribute } from "../../kernel/names.ts";
 import type { XmlChild, XmlElementNode } from "../../types/xml.ts";
 import { closest } from "../../utils/closest.ts";
@@ -68,7 +68,8 @@ export class ApplyReader {
     const attributes = this.#attributes(node, scope, place);
     // No content leaves the text as it is: a partial edit (<Text id="…" color="…"/>) never empties it, and a text
     // design_read shortened to fit maxChars is never written back shortened.
-    const content = node.type === "Text" && node.props.$truncated !== "true" ? piecesOf(node, this.errors) : [];
+    const text = TEXT_TAGS.has(node.type);
+    const content = text && node.props.$truncated !== "true" ? piecesOf(node, this.errors) : [];
 
     this.elements.push(
       elementOf({
@@ -83,7 +84,7 @@ export class ApplyReader {
       }),
     );
 
-    if (node.type !== "Text") {
+    if (!text) {
       this.read(
         node.children,
         childScope(scope, {
@@ -107,7 +108,7 @@ export class ApplyReader {
 
     // A text's or a span's own characters are its content, not layers: only the elements in it are read.
     const children =
-      node.type === "Text" || node.type === "Span"
+      TEXT_TAGS.has(node.type) || node.type === "Span"
         ? node.children.filter(({ kind }) => kind === "element")
         : node.children;
 

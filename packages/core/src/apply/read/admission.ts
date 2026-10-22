@@ -161,6 +161,13 @@ function missingFor(node: XmlElementNode): { message: string; hint?: string } | 
     };
   }
 
+  if (node.type === "TextPath" && node.props.d === undefined && node.props.arc === undefined) {
+    return {
+      message: "A <TextPath> is made along a path: give it d or arc.",
+      hint: 'd="M 0 100 C 50 0 150 0 200 100" in its own box, or arc="200 200 150 -60 60" (centre, radius, from and to degrees) in its parent.',
+    };
+  }
+
   if ((node.type === "Image" || node.type === "Icon") && node.props.src === undefined) {
     return {
       message: `An <${node.type}> is made from a file: give it src.`,

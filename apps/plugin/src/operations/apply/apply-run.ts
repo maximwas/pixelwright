@@ -1,4 +1,5 @@
 import type { ApplyChange, FontSpec, OperationOutput } from "@pixelwright/core";
+import { isTextLayer } from "../../figma/capabilities.ts";
 import { ComponentIndex } from "../../figma/component-index.ts";
 import type { IdLookup } from "../../figma/id-lookup.ts";
 import type { TokenIndex } from "../../figma/tokens/token-index.ts";
@@ -187,7 +188,7 @@ export class ApplyRun implements WriteScope {
     });
 
     // A text there exists only now: its fonts (an instance's are its component's) load before it is written.
-    if (node.type === "TEXT") {
+    if (isTextLayer(node)) {
       await this.#parts.fonts.loadFor(node);
     }
 

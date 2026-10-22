@@ -27,6 +27,20 @@ export const GridTrackSchema = z.object({
   value: z.number().optional(),
 });
 
+/** What a text on a path has besides its text: the path it runs along, and where on it the text starts. */
+export const TextPathSchema = z.object({
+  vectorPaths: z.array(
+    z.looseObject({
+      windingRule: z.string(),
+      data: z.string(),
+    }),
+  ),
+  textPathStartData: z.object({
+    segment: z.number(),
+    position: z.number(),
+  }),
+});
+
 /** A run of text with one set of styles (getStyledTextSegments). */
 export const TextSegmentSchema = z.looseObject({
   characters: z.string(),
