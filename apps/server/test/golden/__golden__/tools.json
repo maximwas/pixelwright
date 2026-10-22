@@ -1313,7 +1313,7 @@
   {
     "name": "inspect",
     "title": "Inspect layers",
-    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component's variant. Boxes are measured from relativeTo's top left, so it also measures: give a list of layers and their section.",
+    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component's variant. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1334,6 +1334,31 @@
           "minLength": 1,
           "maxLength": 200
         },
+        "around": {
+          "description": "A point to measure each layer's distance and angle from: a layer's id (its centre, e.g. a ring's), or {x, y} in the boxes' origin (relativeTo's top left, or the page's). The angle matches CSS rotate(): 0 straight up, then clockwise to 360.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ]
+            }
+          ]
+        },
         "file": {
           "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
@@ -1349,6 +1374,23 @@
         "relativeTo": {
           "type": "string",
           "description": "What the boxes are measured from: a layer as `id \"name\"`, or the page."
+        },
+        "around": {
+          "description": "The point distance and angle are measured from, in the boxes' origin: the given one, or the centre of the given layer.",
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
         },
         "layers": {
           "type": "array",
@@ -1416,6 +1458,31 @@
                 "additionalProperties": false,
                 "description": "The layout box."
               },
+              "center": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false,
+                "description": "The box's centre, in the box's origin; for a turned layer its own centre too, as the box bounds the turned layer."
+              },
+              "distance": {
+                "description": "With around: how far the layer's centre lies from that point, in px.",
+                "type": "number"
+              },
+              "angle": {
+                "description": "With around: the direction of the layer's centre from that point, in degrees as CSS rotate() turns: 0 straight up, 90 right, 180 down, 270 left (clockwise, 0 to 360). Left out at the point itself.",
+                "type": "number"
+              },
               "paintedBox": {
                 "description": "What is painted, when it differs from the box: centred or outside strokes, shadows, blur.",
                 "type": "object",
@@ -1442,6 +1509,7 @@
                 "additionalProperties": false
               },
               "rotation": {
+                "description": "Figma's rotation in degrees, counter-clockwise: CSS turns it as rotate(-rotation), as design_read writes.",
                 "type": "number"
               },
               "overflow": {
@@ -1931,7 +1999,8 @@
               "name",
               "type",
               "parent",
-              "box"
+              "box",
+              "center"
             ],
             "additionalProperties": false
           }

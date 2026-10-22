@@ -38,7 +38,9 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    **Measure it.** \`inspect\` reads layers as Figma has them, without code and with Allow edits off: the layout box
    and the painted box (a centred stroke, shadows and blur reach past it), the fill with the style or variables behind
    it (what a \`var()\` resolves to), how strokes paint, every effect's parameters (a progressive blur's start and
-   end), a text's lines and line heights, overflow, interactions with their transitions, a component's variant.
+   end), a text's lines and line heights, overflow, interactions with their transitions, a component's variant, and
+   each layer's centre. Items set around a circle (a round menu, labels on a dial): \`around\` (the circle's id, or a
+   point) gives each centre's distance from it and its angle as CSS \`rotate()\` turns, 0 at the top, clockwise.
    \`measure\` gives the distances between layers, each from the one before (gaps, aligned edges, insets).
    **Compare variants.** \`nodes_diff\` says how one layer differs from another (A/B screens): the layers only one
    has, the attributes that differ, and icons whose drawing differs. \`variants_read\` gives a component's states as

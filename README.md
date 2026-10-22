@@ -60,7 +60,7 @@ connected at once; tools work on the one whose plugin window was in front last, 
 | `selection_get`, `selection_wait`, `viewport_get`, `node_show` | What the user picked, or waiting for them to pick; what they are looking at; showing layers, fitted or at a zoom |
 | `changes_since` | What the designer changed since the agent last looked, by whom |
 | `design_read` | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files; the designer's Dev Mode notes, pinned properties and measurements; Figma Motion as CSS keyframes; what an instance changed outside its component's properties; what is ready for dev |
-| `inspect`, `measure` | Layers as Figma has them, without code: layout and painted boxes, the fill with its style or variables, how strokes paint, every effect's parameters, a text's lines and line heights, overflow, interactions; the distances between layers |
+| `inspect`, `measure` | Layers as Figma has them, without code: layout and painted boxes, the fill with its style or variables, how strokes paint, every effect's parameters, a text's lines and line heights, overflow, interactions, centres with their distance and angle around a point; the distances between layers |
 | `nodes_diff`, `variants_read`, `breakpoints_find` | How one layer differs from another (A/B variants); a component's states as differences from its default; a screen at its other widths |
 | `baseline_save`, `baseline_diff` | Keep a section as your code was built from it, in the project; later, what the designer changed since, in the XML's terms: layers, a component's change once, tokens in every mode, icons to export again |
 | `flow_read` | The prototype as screens and the links between them, for an app's routes |

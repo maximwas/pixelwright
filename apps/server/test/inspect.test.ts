@@ -38,8 +38,11 @@ const RAW: InspectRaw = {
   ],
 };
 
-/** A bridge with one file: the selection holds `selected`, inspect answers RAW; each request is recorded. */
-function bridge(selected: string[]) {
+/** A bridge with one file: the selection holds `selected`, inspect answers RAW (or `inspected`); each request is recorded. */
+function bridge(
+  selected: string[],
+  inspected: (input: { nodes: string[]; relativeTo?: string }) => InspectRaw = () => RAW,
+) {
   const requests: { op: string; input: unknown }[] = [];
   const view: BridgeView = {
     status: () => {
@@ -68,7 +71,7 @@ function bridge(selected: string[]) {
               box: null,
             })),
           }
-        : RAW;
+        : inspected(input as { nodes: string[] });
     },
   };
 
@@ -110,5 +113,87 @@ describe("inspect of a big selection", () => {
 
     expect((requests[1]?.input as { nodes: string[] } | undefined)?.nodes).toHaveLength(100);
     expect(result.left).toBe(3);
+  });
+});
+
+describe("inspect around a point", () => {
+  const rule = RAW.layers[0] as InspectRaw["layers"][number];
+  /**
+   * A 200 px ring at the top left of section 2:1, which sits at (300, 300) on the page: the plugin gives its box from
+   * the origin it is asked for, as Figma's inspect op does.
+   */
+  const ringIn = (relativeTo: string | undefined) => ({
+    ...rule,
+    id: "2:9",
+    name: "Ring",
+    type: "ELLIPSE",
+    box: {
+      x: relativeTo === "2:1" ? 0 : 300,
+      y: relativeTo === "2:1" ? 0 : 300,
+      width: 200,
+      height: 200,
+    },
+  });
+  const rawFor = ({ nodes, relativeTo }: { nodes: string[]; relativeTo?: string }): InspectRaw => ({
+    ...RAW,
+    layers: nodes.includes("2:9") ? [ringIn(relativeTo)] : RAW.layers,
+  });
+
+  it("measures from the centre of the layer around names, read in the same origin as the boxes", async () => {
+    const { view } = bridge([], rawFor);
+    const result = await inspectLayers(new PluginClient(view), {
+      nodes: ["2:4"],
+      relativeTo: "2:1",
+      around: "2:9",
+    });
+
+    expect(result.around).toEqual({
+      x: 100,
+      y: 100,
+    });
+    // The rule's box runs from (0, 100) 100 px wide: its centre is 50 px left of the ring's.
+    expect(result.layers[0]).toMatchObject({
+      center: {
+        x: 50,
+        y: 100,
+      },
+      distance: 50,
+      angle: 270,
+    });
+  });
+
+  it("measures from a point given in the boxes' origin", async () => {
+    const { view } = bridge([], rawFor);
+    const result = await inspectLayers(new PluginClient(view), {
+      nodes: ["2:4"],
+      around: {
+        x: 50,
+        y: 0,
+      },
+    });
+
+    expect(result.around).toEqual({
+      x: 50,
+      y: 0,
+    });
+    expect(result.layers[0]).toMatchObject({
+      distance: 100,
+      angle: 180,
+    });
+  });
+
+  it("says so when the layer around names is not in the file", async () => {
+    const { view } = bridge([], ({ nodes }) => ({
+      ...RAW,
+      layers: nodes.includes("9:9") ? [] : RAW.layers,
+      missing: nodes.includes("9:9") ? ["9:9"] : [],
+    }));
+
+    await expect(
+      inspectLayers(new PluginClient(view), {
+        nodes: ["2:4"],
+        around: "9:9",
+      }),
+    ).rejects.toThrow(/9:9/);
   });
 });
