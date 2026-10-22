@@ -16,6 +16,30 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## Unreleased
+
+### Added
+
+- `design_read` reads Figma's text on a path (a label along an arc) as `<TextPath>`: its text, spans and text CSS as
+  a `Text`'s, `d` (the path in its own box) and `start` (the segment and the place along it where the text begins).
+- `design_apply` edits text on a path: `<TextPath id="…">New words</TextPath>` changes its characters and keeps its
+  look, its text CSS is written as on a `Text`, and `start` moves where the text begins. A changed `d` is refused,
+  since Figma cannot change the path: delete the layer and make it again.
+- `design_apply` makes text on a path along `d` (any SVG path) or `arc="<cx> <cy> <r> <from> <to>"`, an arc of a
+  circle in the parent with its ends in degrees as CSS turns (0 at the top, clockwise).
+- `inspect` gives every layer its `center`, and with `around` (a layer's id, such as a ring's, or a point) each
+  layer's `distance` from it and its `angle` as CSS `rotate()` turns: 0 straight up, clockwise to 360.
+- `nodes_find` finds instances by `variant` (`"State=Hover, Size=L"`), and `counts: true` counts every instance found,
+  past the `limit`, by component and variant: before deleting variants, which ones layers still use, without code.
+  A plugin too old for these is refused with a hint to update it, instead of listing every variant's instances.
+- `execute` says in `note` when its code changed no layer on the page, and that the read tools need no code and work
+  with Allow edits off.
+
+### Fixed
+
+- Text on a path, and a frame holding one, no longer read as an `<Icon>` with no text, and a `<Text>` written inside a
+  `<TextPath>` is refused with a hint instead of becoming a new layer in it.
+
 ## 0.6.0 — 2026-10-22
 
 ### Added
