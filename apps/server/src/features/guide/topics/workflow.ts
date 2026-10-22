@@ -18,7 +18,9 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
      A layer with \`$children="N"\` has more children than listed: outline it on its own. An instance names its
      \`component\` and \`variant\`, so repeated cards show without a read; \`dev="ready"\` marks what the designer
      handed over for development.
-   - \`nodes_find\`: layers by name, type, text or component.
+   - \`nodes_find\`: layers by name, type, text, component or an instance's \`variant\` ("State=Hover, Size=L").
+     \`counts: true\` counts every instance found by component and variant: before deleting variants, which ones
+     layers still use (a variant missing from the counts has no instance there).
    - \`node_show\`: brings layers into view (fitted or at a zoom) and selects them, so the user sees which you mean.
    - \`changes_since\`: what the designer changed since you last looked (a cursor), to read again only that.
 3. **Read one section.** \`design_read\` returns the section as XML (see \`guide xml\`), then JSON with tokens, text
@@ -38,7 +40,9 @@ tool takes \`file\` (a session id from \`status\`, or a file name); without it, 
    **Measure it.** \`inspect\` reads layers as Figma has them, without code and with Allow edits off: the layout box
    and the painted box (a centred stroke, shadows and blur reach past it), the fill with the style or variables behind
    it (what a \`var()\` resolves to), how strokes paint, every effect's parameters (a progressive blur's start and
-   end), a text's lines and line heights, overflow, interactions with their transitions, a component's variant.
+   end), a text's lines and line heights, overflow, interactions with their transitions, a component's variant, and
+   each layer's centre. Items set around a circle (a round menu, labels on a dial): \`around\` (the circle's id, or a
+   point) gives each centre's distance from it and its angle as CSS \`rotate()\` turns, 0 at the top, clockwise.
    \`measure\` gives the distances between layers, each from the one before (gaps, aligned edges, insets).
    **Compare variants.** \`nodes_diff\` says how one layer differs from another (A/B screens): the layers only one
    has, the attributes that differ, and icons whose drawing differs. \`variants_read\` gives a component's states as

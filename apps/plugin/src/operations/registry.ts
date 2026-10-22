@@ -69,10 +69,11 @@ const HANDLERS: Handlers = {
   inspect,
   nearby,
   cover: clipCover,
-  execute: (input, { edits, code }) =>
+  execute: (input, { edits, code, journal }) =>
     execute(input, {
       edits,
       code,
+      journal,
     }),
   tokens_apply: (input, services) => applyTokens(input, services),
   bind: (input, services) => bindTokens(input, services),

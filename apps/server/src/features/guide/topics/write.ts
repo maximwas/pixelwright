@@ -190,6 +190,10 @@ waits 10 s by default and up to 300 s (\`timeout\`) for a long task. Code it sta
 listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
 synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.
 
+execute is for writes. Reading needs no code and no Allow edits: \`design_read\` for the XML, \`inspect\` for boxes,
+centres and angles around a point, \`measure\` for distances, \`nodes_find\` for instances by variant and their
+counts. A run that changed no layer on the page says so in \`note\`.
+
 The plugin runs with documentAccess "dynamic-page": the synchronous lookups throw, so use the Async calls
 (\`getNodeByIdAsync\`, \`getMainComponentAsync\`, \`getLocalPaintStylesAsync\`, \`setFillStyleIdAsync\`…), and
 \`await page.loadAsync()\` before reading another page. \`figma.skipInvisibleInstanceChildren\` is Figma's own, false

@@ -2,6 +2,7 @@ import type { OperationInput, OperationOutput, OutlineNode } from "@pixelwright/
 import { MAIN_COMPONENT_BATCH, OP_BUDGET_MS } from "../../constants/plugin.ts";
 import { devStatusOf } from "../../figma/dev-status.ts";
 import { boxOf, requireNode } from "../../figma/nodes.ts";
+import { componentNames } from "../../figma/variants.ts";
 import { OUTLINE_MAX_NODES } from "./constants.ts";
 
 /**
@@ -144,16 +145,7 @@ class OutlineRead {
 async function componentOf(node: InstanceNode): Promise<Pick<OutlineNode, "component" | "variant">> {
   const main = await node.getMainComponentAsync();
 
-  if (main === null) {
-    return {};
-  }
-
-  return main.parent?.type === "COMPONENT_SET"
-    ? {
-        component: main.parent.name,
-        variant: main.name,
-      }
-    : { component: main.name };
+  return main === null ? {} : componentNames(main);
 }
 
 function childrenOf(node: BaseNode): readonly BaseNode[] {

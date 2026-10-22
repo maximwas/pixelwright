@@ -23,6 +23,16 @@ export function valuesOf(component: ComponentNode): Record<string, string> {
   );
 }
 
+/** An instance's main component as reads name it: by its set's name for a variant, with the variant as Figma names it. */
+export function componentNames(main: ComponentNode): { component: string; variant?: string } {
+  return main.parent?.type === "COMPONENT_SET"
+    ? {
+        component: main.parent.name,
+        variant: main.name,
+      }
+    : { component: main.name };
+}
+
 /** A variant's name as Figma writes it. */
 export function variantName(values: Readonly<Record<string, string>>): string {
   return Object.entries(values)

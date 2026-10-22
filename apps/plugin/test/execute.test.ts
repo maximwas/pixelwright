@@ -298,6 +298,66 @@ describe("execute: pw, kept between calls", () => {
   });
 });
 
+describe("execute that changes nothing", () => {
+  /** A plugin as it runs in Figma: its change journal watching the page from the start. */
+  const watched = testPlugin({ allowEdits: true });
+  const runWatched = async (code: string) =>
+    (await watched.run("execute", {
+      code,
+      timeoutMs: 1_000,
+    })) as Ran & { note?: string };
+
+  beforeEach(() => {
+    watched.services.journal.start();
+  });
+
+  it("says when the code changed no layer that the read tools read without code, with Allow edits off", async () => {
+    const ran = await runWatched("return figma.currentPage.children.length;");
+
+    expect(ran.result).toBe(2);
+    expect(ran.note).toMatch(/changed no layer/);
+    expect(ran.note).toMatch(/design_read, inspect, measure and nodes_find/);
+    expect(ran.note).toMatch(/Allow edits is off/);
+  });
+
+  it("gives no note when Figma reports the code's change a moment after the code returns", async () => {
+    const [card] = fake.figma.currentPage.children ?? [];
+
+    // Figma reports changes in batches, after the code that made them: here 30 ms after the call starts.
+    setTimeout(
+      () =>
+        fake.emit(
+          "nodechange",
+          {
+            nodeChanges: [
+              {
+                id: "1:1",
+                node: card,
+                type: "PROPERTY_CHANGE",
+                origin: "LOCAL",
+                properties: ["name"],
+              },
+            ],
+          },
+          "0:1",
+        ),
+      30,
+    );
+
+    const ran = await runWatched('(await figma.getNodeByIdAsync("1:1")).name = "Card 2";');
+
+    expect(ran.error).toBeUndefined();
+    expect(ran).not.toHaveProperty("note");
+  });
+
+  it("gives no note when the code threw, whatever it changed", async () => {
+    const ran = await runWatched('throw new Error("not this time");');
+
+    expect(ran.error).toMatch(/not this time/);
+    expect(ran).not.toHaveProperty("note");
+  });
+});
+
 describe("execute errors in Figma's QuickJS (live check)", () => {
   it("keeps the engine's columns, as QuickJS points at another token of the probe than V8", () => {
     // `throw new Error();` as Figma's QuickJS reports it: the body from line 3, the column at the call's `(`.
