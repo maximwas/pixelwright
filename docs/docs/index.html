@@ -109,7 +109,7 @@ instance as <code>$code</code> in the XML with its code and imports, and names t
 <p>A row or a template can name the component&#39;s key (<code>components_read</code> gives it), which matches exactly that component
 in every file, a library&#39;s included. <code>components_read mapped=false</code> lists the components still without code, so a
 design system is mapped once, a row each. See <a href="https://github.com/maximwas/pixelwright/tree/main/examples/orbit">examples/orbit</a>
-for two templates, one rendering the other inside it, a batch file, and how they match. The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in.</p>
+for two templates, one rendering the other inside it, a batch file, and how they match. The project folder is the root your MCP client gives, else <code>CLAUDE_PROJECT_DIR</code>, else the folder your MCP client starts the server in; a relative path a tool takes (assetsDir, dir, src, save, reference) starts there too.</p>
 
         </section>
         <section id="safety">
@@ -146,7 +146,8 @@ pixelwright logs            follow the logs of every running server on this mach
 pixelwright --version
 </code></pre>
 <p><code>PIXELWRIGHT_HOME</code> moves <code>~/.pixelwright</code> (the plugin, pairing keys, written-files.json, the shared log in <code>logs/</code>);
-<code>CLAUDE_PROJECT_DIR</code> names the project for Code Connect; <code>PIXELWRIGHT_SUPPORT_REMINDERS=off</code> turns off the weekly
+<code>CLAUDE_PROJECT_DIR</code> names the project (baselines; Code Connect and relative paths when the client gives no root);
+<code>PIXELWRIGHT_SUPPORT_REMINDERS=off</code> turns off the weekly
 support note (see Support); <code>PIXELWRIGHT_NO_UPDATE_CHECK=1</code> stops asking npm for a newer version (see Updating);
 <code>PIXELWRIGHT_LOG_LEVEL=debug</code> adds the bridge&#39;s details to the log.</p>
 
@@ -180,15 +181,16 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-assets_export">
   <h3><code>assets_export</code></h3>
-  <p>Writes files out of the design into dir. nodes: up to 50 layers, one file each (SVG for an icon, PNG at 2x otherwise, or the format and scale given; PDF too). from: every true asset inside one layer, the icons and images design_read would plan. original: the images as they were placed instead of renders (photos at full size, in their own format). The same bytes are written once, a name taken by other bytes gets -2, and a file already in dir is never overwritten with other bytes. A layer that cannot be exported is reported in errors and the rest are still written.</p>
+  <p>Writes files out of the design into dir. nodes: up to 50 layers, one file each (SVG for an icon, PNG at 2x otherwise, or the format and scale given; PDF too; WEBP keeps transparency exactly at any quality, which sets how lossy its colours are, 85 by default). from: every true asset inside one layer, the icons and images design_read would plan. original: the images as they were placed instead of renders (photos at full size, in their own format). Files are named after their layer (Rectangle 61: rectangle-61.png), or as names gives a layer id. The same bytes are written once, a name taken by other bytes gets -2, and a file already in dir is never overwritten with other bytes. A layer that cannot be exported is reported in errors and the rest are still written.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>Layers to write, one file each: SVG for an icon, PNG otherwise, unless format says. Give nodes or from.</td></tr>
 <tr><td><code>from</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer to write every true asset of (its icons and images, as design_read plans them). Give nodes or from.</td></tr>
-<tr><td><code>dir</code></td><td><code>string</code></td><td>The folder to write into; created if missing. Files already there are never overwritten with other bytes.</td></tr>
+<tr><td><code>dir</code></td><td><code>string</code></td><td>The folder to write into; created if missing. Files already there are never overwritten with other bytes. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
+<tr><td><code>names</code><span class="optional">optional</span></td><td><code>object</code></td><td>A file name per layer id, e.g. {&quot;54:12&quot;: &quot;hero-mountains&quot;}: slugged, the extension added. The other layers are named after themselves (Rectangle 61: rectangle-61.png).</td></tr>
 <tr><td><code>format</code><span class="optional">optional</span></td><td><code>&quot;PNG&quot; | &quot;JPG&quot; | &quot;WEBP&quot; | &quot;SVG&quot; | &quot;PDF&quot;</code></td><td>For nodes: the format of every file. WEBP is rendered as PNG by Figma and encoded here.</td></tr>
 <tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code></td><td>For PNG, JPG and WEBP: pixels per Figma pixel, or per CSS px with width. Default 2.</td></tr>
 <tr><td><code>width</code><span class="optional">optional</span></td><td><code>number</code></td><td>For nodes as PNG, JPG or WEBP: the CSS width the build shows the layer at; the file is width × scale px wide (110 at scale 2: 220 px).</td></tr>
-<tr><td><code>quality</code><span class="optional">optional</span></td><td><code>integer</code></td><td>For WEBP: 1 to 100. Default 85.</td></tr>
+<tr><td><code>quality</code><span class="optional">optional</span></td><td><code>integer</code></td><td>For WEBP: the colours&#39; quality, 1 to 100. Default 85. Transparency is kept exactly at any quality.</td></tr>
 <tr><td><code>original</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Write the images as they were placed (not cropped, filtered or scaled) instead of renders, with their real format.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
@@ -262,7 +264,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-design_apply">
   <h3><code>design_apply</code><span class="writes">writes</span></h3>
-  <p>Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=&quot;none&quot;, width=&quot;auto&quot; to hug, display=&quot;block&quot; to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; a TextPath (text on a path) along d, an SVG path, or arc=&quot;cx cy r from to&quot; in its parent, whose text and start change later but whose path does not; an Instance by component=&quot;Name&quot; variant=&quot;Prop=Value&quot; props=&quot;Label=Text&quot;; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=&quot;id&quot; copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write.</p>
+  <p>Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=&quot;none&quot;, width=&quot;auto&quot; to hug, display=&quot;block&quot; to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; a TextPath (text on a path) along d, an SVG path, or arc=&quot;cx cy r from to&quot; in its parent, whose text and start change later but whose path does not; an Instance by component=&quot;Name&quot; variant=&quot;Prop=Value&quot; props=&quot;Label=Text&quot;; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=&quot;id&quot; copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write. Files (src, url()) are read from the server&#39;s disk. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>xml</code></td><td><code>string</code></td><td>Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer.</td></tr>
 <tr><td><code>parent</code><span class="optional">optional</span></td><td><code>string</code></td><td>Where top-level new layers go: a frame&#39;s or page&#39;s id. Default: the current page, beside its layers.</td></tr>
@@ -296,11 +298,12 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243. Default: the one layer selected in Figma.</td></tr>
 <tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below the layer to read. Default: all.</td></tr>
-<tr><td><code>assetsDir</code><span class="optional">optional</span></td><td><code>string</code></td><td>Folder to write the icons (SVG) and images (PNG at 2x, originals for backgrounds) into, e.g. src/assets; the XML&#39;s src paths start with it. Without it the assets are only planned.</td></tr>
+<tr><td><code>assetsDir</code><span class="optional">optional</span></td><td><code>string</code></td><td>Folder to write the icons (SVG) and images (PNG at 2x, originals for backgrounds) into, e.g. src/assets; the XML&#39;s src paths start with it as given. Without it the assets are only planned. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
 <tr><td><code>screenshot</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also return the layer&#39;s image, to compare your build with.</td></tr>
 <tr><td><code>maxChars</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 80000</span></td><td>Longest XML to return; deeper branches past it come back empty with $truncated, to read on their own.</td></tr>
 <tr><td><code>code</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Run the project&#39;s Code Connect templates, giving connected instances as $code with their code (default); false reads them as layers.</td></tr>
 <tr><td><code>repeats</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Read each run of three or more alike neighbours (list items, cards, table rows) as its first, marked $repeat with the run&#39;s length; the JSON&#39;s repeats gives each run&#39;s layers and the values they hold apart, a row per layer.</td></tr>
+<tr><td><code>autoLineHeight</code><span class="optional">optional</span></td><td><code>&quot;normal&quot; | &quot;px&quot;</code><br /><span class="default">default &quot;normal&quot;</span></td><td>How to write Figma&#39;s Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere. A px read sent back to design_apply fixes those line heights at that px.</td></tr>
 <tr><td><code>nearby</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Also list the designer&#39;s notes on the canvas within this many px of the screen holding the layer (texts, stickies, small frames of text beside it or over it), e.g. 400: the JSON&#39;s nearby.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
@@ -325,7 +328,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <p>Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given <code>figma</code> (the Plugin API), <code>console</code> and <code>pw</code>; <code>return</code> gives <code>result</code> (layers come back as {id, type, name}, figma.mixed as &quot;mixed&quot;), and what it logs comes back as <code>logs</code>. What it throws comes back as <code>error</code>, with the logs before it. <code>pw</code> stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright&#39;s helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(&quot;--token&quot;) (the variable design_read names so). The plugin runs with documentAccess &quot;dynamic-page&quot;: use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma&#39;s own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin&#39;s Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file&#39;s styles and check what they write. To read, use the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in <code>note</code>.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>code</code><span class="optional">optional</span></td><td><code>string</code></td><td>JavaScript run as the body of an async function with <code>figma</code> (the Plugin API) and <code>console</code>: <code>await</code> works, <code>return</code> gives the result. Give code or script.</td></tr>
-<tr><td><code>script</code><span class="optional">optional</span></td><td><code>string</code></td><td>A file of such code on the server&#39;s disk, run instead of code: an absolute path (or one from the server&#39;s folder, as design_apply&#39;s src). It is read at every call, so the file as it is now runs, after a plugin restart too.</td></tr>
+<tr><td><code>script</code><span class="optional">optional</span></td><td><code>string</code></td><td>A file of such code on the server&#39;s disk, run instead of code. It is read at every call, so the file as it is now runs, after a plugin restart too. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
 <tr><td><code>timeout</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 10</span></td><td>Seconds to wait for the code: 10 by default, up to 300 for a long task.</td></tr>
 <tr><td><code>version</code><span class="optional">optional</span></td><td><code>string</code></td><td>A name for a version saved in the file&#39;s history before the code runs, for the designer to go back to. Pass one before code that changes many layers.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
@@ -333,7 +336,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-file_map">
   <h3><code>file_map</code></h3>
-  <p>Every page of the file with its top layers (frames, sections, components) and, inside each section, its own, with their types and sizes, in one call: where to start in a big file. Pages load one at a time; past the time a call has, more: true and the rest are left out (outline them one by one).</p>
+  <p>Every page of the file by id and name, with its top layers (frames, sections, components) and, inside each section, its own, with their types and sizes, in one call: where to start in a big file. Pages load one at a time; past the time a call has, more: true and the pages left have no nodes (outline them one by one). A page Figma cannot load (its connection is down, say) has no nodes either and is in pagesNotRead with Figma&#39;s words; the other pages are still mapped.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
@@ -384,13 +387,13 @@ server keeps trying, and connects once the newer one holds the port.</p>
   <p>Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size, or with another layer (against) rendered the same way, a variant against its default or a rebuilt frame against the original: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render&#39;s is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render&#39;s density (scale 2 for a 2x screenshot). Works while Allow edits is off.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243.</td></tr>
-<tr><td><code>reference</code><span class="optional">optional</span></td><td><code>string</code></td><td>The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server&#39;s folder or absolute.</td></tr>
+<tr><td><code>reference</code><span class="optional">optional</span></td><td><code>string</code></td><td>The PNG to compare with, e.g. a screenshot of your build at the same size: its path. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
 <tr><td><code>against</code><span class="optional">optional</span></td><td><code>string</code></td><td>Another layer&#39;s id to compare with instead of a PNG, rendered the same way: a variant against its default, a rebuilt frame against the original.</td></tr>
 <tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel of the render: the reference&#39;s density.</td></tr>
 <tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Render shadows and outside strokes around the layer; false renders only its own box.</td></tr>
 <tr><td><code>clip</code><span class="optional">optional</span></td><td><code>object</code></td><td>Only this region of the layer, in Figma px from its box&#39;s top left (before scale); with effects on it may reach into what paints around the box.</td></tr>
 <tr><td><code>modes</code><span class="optional">optional</span></td><td><code>object</code></td><td>Render in these variable modes, by collection and mode name, e.g. {&quot;Theme&quot;: &quot;Dark&quot;}: set on the layer for the render, then set back (needs Allow edits; the file is left as it was).</td></tr>
-<tr><td><code>diff</code><span class="optional">optional</span></td><td><code>string</code></td><td>A .png path to write the difference to: the render faded, every differing pixel red.</td></tr>
+<tr><td><code>diff</code><span class="optional">optional</span></td><td><code>string</code></td><td>A .png path to write the difference to: the render faded, every differing pixel red. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -496,7 +499,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 <tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243.</td></tr>
 <tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel: 2 for a sharp look, below 1 to fit.</td></tr>
 <tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Include shadows and outside strokes around the layer; false renders only its own box.</td></tr>
-<tr><td><code>save</code><span class="optional">optional</span></td><td><code>string</code></td><td>Write the PNG to this file (any size) instead of returning it; a relative path is from the server&#39;s folder.</td></tr>
+<tr><td><code>save</code><span class="optional">optional</span></td><td><code>string</code></td><td>Write the PNG to this file (any size) instead of returning it. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
 <tr><td><code>clip</code><span class="optional">optional</span></td><td><code>object</code></td><td>Only this region of the layer, in Figma px from its box&#39;s top left (before scale); with effects on it may reach into what paints around the box.</td></tr>
 <tr><td><code>modes</code><span class="optional">optional</span></td><td><code>object</code></td><td>Render in these variable modes, by collection and mode name, e.g. {&quot;Theme&quot;: &quot;Dark&quot;}: set on the layer for the render, then set back (needs Allow edits; the file is left as it was).</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
@@ -806,8 +809,9 @@ drawn as <code>linear()</code>. A link stays <code>href</code>.</li>
 <ul>
 <li><code>&amp;#10;</code> is a paragraph break (Enter), <code>&amp;#8232;</code> a line break inside a paragraph (Shift+Enter, <code>&lt;br&gt;</code> in HTML):
 never spaces.</li>
-<li><code>line-height: normal</code> is Figma&#39;s Auto line height, the font&#39;s own spacing (about 1.2× the size for most fonts):
-give it in px where the build must match; <code>inspect</code> shows each text&#39;s.</li>
+<li><code>line-height: normal</code> is Figma&#39;s Auto line height, the font&#39;s own spacing (about 1.2× the size for most fonts).
+Where the build must match, read with <code>autoLineHeight: &quot;px&quot;</code>: it writes the px Figma renders where the read can
+tell (a text that hugs its lines shows it for its font and size), and normal elsewhere.</li>
 <li>A <code>TextPath</code> is a text set along a path. Its characters, spans and text CSS are a <code>Text</code>&#39;s (it has no line
 height, decoration, wrapping or truncation of its own); <code>d</code> is the path in the layer&#39;s own box, which <code>left</code> and
 <code>top</code> place as for any layer, and <code>start</code> where the text begins on it: the path&#39;s segment (from 0) and the place
@@ -959,14 +963,17 @@ holds no text (an export on a section with text is a preview, read as layers). A
 give: PNG, JPG, WebP, SVG or PDF; <code>width</code>, the CSS width the build shows a layer at, sets the render to width ×
 scale px) or <code>from</code> (every asset inside one layer). <code>original: true</code> writes the images as they were placed, full
 size and in their own format, instead of renders.</li>
+<li>WebP keeps transparency exactly: its alpha is stored without loss at any <code>quality</code>. <code>quality</code> (1 to 100, 85 by
+default) is how lossy its colours are, so a transparent PNG becomes a WebP with the same see-through pixels.</li>
 <li>design_read without <code>assetsDir</code> only plans names. When assets_export writes a file under another name (the name
 holds other bytes, the same bytes are another layer&#39;s file, an original is a JPEG), the file has <code>planned</code>: use
 its <code>path</code> in the <code>src</code>.</li>
 </ul>
 <h3>Files</h3>
-<p>Named after the layer (<code>Hero photo</code> → hero-photo.png, a component&#39;s variant added: company-logo-amazon.svg). The
-same bytes are written once and shared; a name already taken by other bytes gets -2; a file already in the folder is
-never overwritten with other bytes.</p>
+<p>Named after the layer (<code>Hero photo</code> → hero-photo.png, a component&#39;s variant added: company-logo-amazon.svg), or, in
+assets_export, as <code>names</code> gives a layer id (<code>{&quot;54:12&quot;: &quot;hero-mountains&quot;}</code> → hero-mountains.png, slugged the same
+way). The same bytes are written once and shared; a name already taken by other bytes gets -2; a file already in the
+folder is never overwritten with other bytes.</p>
 
         </section>
         <section id="guide-write">
@@ -1065,7 +1072,8 @@ run&#39;s: what would be).</li>
 <li><code>&lt;Image src=&quot;photos/hero.jpg&quot; width=&quot;600px&quot; height=&quot;400px&quot;/&gt;</code> makes an image from a file (PNG, JPG or GIF, up
 to 32 MB and 4096 px a side; convert WebP first), <code>&lt;Icon src=&quot;icons/arrow.svg&quot; width=&quot;24px&quot;/&gt;</code> an icon from an
 SVG; <code>background=&quot;url(…)&quot;</code> fills any layer that takes a background with one, a new or an existing frame,
-rectangle or ellipse (an avatar). Paths are on the server&#39;s machine, from its folder. <code>icons_insert</code> finds an
+rectangle or ellipse (an avatar). Paths are on the server&#39;s machine; a relative one starts in the project folder
+(the MCP client&#39;s root, else <code>CLAUDE_PROJECT_DIR</code>, else the server&#39;s working directory). <code>icons_insert</code> finds an
 open-source icon (Lucide, Material Symbols, Tabler…) and inserts it at a size, in a colour or bound to a token.</li>
 <li>An existing <code>Image</code> with another file in <code>src</code> takes that image, keeping its fit. A file design_read or
 assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
@@ -1163,7 +1171,8 @@ in the editor and true in Dev Mode: set to true, <code>findAll</code>, <code>fin
 instances (a faster walk of a big file) and <code>getNodeByIdAsync</code> gives null for them; execute sets it back after the
 call. An error names the line and column in the code it came from.</p>
 <p>A long script goes in a file on the server&#39;s disk, passed as <code>script</code> instead of <code>code</code> (an absolute path, or one
-from the server&#39;s folder): it is read at every call, so the file as it is now runs, after a plugin restart too.</p>
+from the project folder, as <code>src</code>): it is read at every call, so the file as it is now runs, after a plugin restart
+too.</p>
 <p><code>pw</code> stays from one call to the next while the plugin window is open:</p>
 <ul>
 <li><code>pw.state</code> holds your data, and functions you add to <code>pw</code> stay for later calls, as they were when added: after
@@ -1367,8 +1376,8 @@ URLs are not checked).</li>
 properties are the component&#39;s API too, so in code they are its props.</li>
 </ul>
 <h3>Where the files are</h3>
-<p>The project folder is <code>CLAUDE_PROJECT_DIR</code>, else the server&#39;s working directory (never the home folder or the disk&#39;s
-root). Code Connect files are those ending in <code>.figma.ts</code>, <code>.figma.js</code>, <code>.figma.template.ts</code>,
+<p>The project folder is the MCP client&#39;s root, else <code>CLAUDE_PROJECT_DIR</code>, else the server&#39;s working directory (never the
+home folder or the disk&#39;s root). Code Connect files are those ending in <code>.figma.ts</code>, <code>.figma.js</code>, <code>.figma.template.ts</code>,
 <code>.figma.template.js</code> or <code>.figma.batch.json</code> among those <code>figma.config.json</code>&#39;s <code>codeConnect.include</code> globs name
 (minus <code>exclude</code>; its <code>documentUrlSubstitutions</code> are applied to urls), else all such files; dependency and build
 folders are never searched. A batch file a custom <code>include</code> misses is left out, as Figma does, and named in the
