@@ -54,6 +54,9 @@ text-decoration-thickness), text-align, text-wrap, color.
   them are in the JSON \`tokens\`. design_apply binds only tokens the file has: \`tokens_apply\` creates new ones. In a Display P3 file every colour is \`color(display-p3 r g b)\` (as tokens_read writes it too): keep
   it so, it is what the designer chose. A text with a \`textStyle\` carries only what differs from the style; \`textStyles\` holds the style's font.
 - Lengths are whole pixels; letter spacing keeps fractions.
+- \`filter: blur()\` and \`backdrop-filter: blur()\` are Figma's blur radius / 2, as Dev Mode writes them. Figma
+  renders a radius R as a Gaussian of about 0.43 R (measured on layer and background blurs of radius 4 to 40 against
+  Chrome), so that CSS is about 15% softer than Figma: for a pixel match, use about 0.86 of the value.
 
 ## Read-only attributes (start with $)
 
