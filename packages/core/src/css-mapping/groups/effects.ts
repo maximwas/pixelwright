@@ -1,15 +1,15 @@
-import { TEXT_TYPES } from "../../constants/css.ts";
+import { BLUR_PER_RADIUS, TEXT_TYPES } from "../../constants/css.ts";
 import { Color, type ColorValue } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
 import { styleTokenName } from "../../kernel/names.ts";
-import { roundTo } from "../../kernel/numbers.ts";
+import { decimal, roundTo } from "../../kernel/numbers.ts";
 import type { CssContext } from "../../types/css.ts";
 import type { SnapshotEffect, SnapshotNode } from "../../types/snapshot.ts";
 import type { CssDeclarations } from "../css-declarations.ts";
 import type { EffectSpec } from "../figma-props.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../property-group.ts";
 import { lengthOf, splitTop, tokenOf } from "../values/css-values.ts";
-import { px } from "../values/format.ts";
+import { decimalPx, px } from "../values/format.ts";
 import { aliasId, boundVariable, colorToken, paintOf } from "../values/paints.ts";
 
 const EFFECTS = ["box-shadow", "text-shadow", "filter", "backdrop-filter"];
@@ -21,13 +21,13 @@ const BLURS = [
 ] as const;
 
 /**
- * A blur as the CSS declaration Dev Mode writes, `filter: blur(…)` or `backdrop-filter: blur(…)` (Figma's radius is
- * twice CSS's); null for an effect that is no blur.
+ * A blur as the CSS declaration that looks like Figma's render, `filter: blur(…)` or `backdrop-filter: blur(…)` (CSS's
+ * value is BLUR_PER_RADIUS of Figma's radius, not Dev Mode's half); null for an effect that is no blur.
  */
 export function blurDeclaration(effect: SnapshotEffect): readonly [string, string] | null {
   const blur = BLURS.find(([, type]) => type === effect.type);
 
-  return blur === undefined ? null : [blur[0], `blur(${px((effect.radius ?? 0) / 2)})`];
+  return blur === undefined ? null : [blur[0], `blur(${decimalPx((effect.radius ?? 0) * BLUR_PER_RADIUS)})`];
 }
 
 /** A layer's visible shadows and blurs as CSS. */
@@ -101,8 +101,8 @@ function readShadows(
 }
 
 /**
- * Figma's blur radius is twice the CSS one: Dev Mode writes blur(radius / 2). A progressive blur shows its end radius,
- * and how it runs is noted: CSS has no blur that changes across a box.
+ * Blurs as blurDeclaration writes them. A progressive blur shows its end radius, and how it runs is noted: CSS has no
+ * blur that changes across a box.
  */
 function readBlurs(effects: readonly SnapshotEffect[], css: CssDeclarations): void {
   for (const effect of effects) {
@@ -145,7 +145,7 @@ function progressiveBlur(effect: SnapshotEffect, property: string, css: CssDecla
 
     return `${Math.round(x * 100)}% ${Math.round(y * 100)}%`;
   };
-  const radius = (value: number) => `${Math.round(value / 2)}px`;
+  const radius = (value: number) => `${decimal(value * BLUR_PER_RADIUS)}px`;
 
   css.readOnly(
     property,
@@ -156,6 +156,7 @@ function progressiveBlur(effect: SnapshotEffect, property: string, css: CssDecla
       x: 0.5,
       y: 1,
     })}`,
+    true,
   );
 }
 
@@ -218,7 +219,7 @@ function boundStyle(shadowAttribute: string, { own, merged, changed }: WriteInpu
   return true;
 }
 
-/** The blurs the filters give (Figma's radius is twice CSS's); null after a filter that is not blur(Npx). */
+/** The blurs the filters give (Figma's radius is CSS's over BLUR_PER_RADIUS); null after a filter not blur(Npx). */
 function blursOf(merged: AttributeReader, out: WriteOutput): EffectSpec[] | null {
   const effects: EffectSpec[] = [];
 
@@ -239,7 +240,7 @@ function blursOf(merged: AttributeReader, out: WriteOutput): EffectSpec[] | null
 
     effects.push({
       type,
-      radius: roundTo(Number(blur[1]) * 2, 4),
+      radius: roundTo(Number(blur[1]) / BLUR_PER_RADIUS, 4),
     });
   }
 

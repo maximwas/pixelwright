@@ -169,7 +169,7 @@ afterEach(() => {
 describe("apply: effects CSS cannot write", () => {
   it("keeps noise and a progressive blur, and a shadow sent back unchanged keeps its variable and blend mode", async () => {
     const { errors } = await apply(
-      '<Frame id="4:1" box-shadow="0 5px 0 0 #191A23, 0 2px 4px 0 rgba(0, 0, 0, 0.25)" filter="blur(4px)"/>',
+      '<Frame id="4:1" box-shadow="0 5px 0 0 #191A23, 0 2px 4px 0 rgba(0, 0, 0, 0.25)" filter="blur(3.44px)"/>',
     );
     const effects = byId("4:1")?.effects as Record<string, unknown>[];
 

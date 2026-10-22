@@ -454,11 +454,11 @@ describe("tokensPlan: styles", () => {
         effect: [
           {
             name: "Blur/Backdrop",
-            value: "backdrop-filter: blur(20px)",
+            value: "backdrop-filter: blur(17.2px)",
           },
           {
             name: "Glass",
-            value: "0 1px 2px 0 #000; filter: blur(2px)",
+            value: "0 1px 2px 0 #000; filter: blur(1.72px)",
           },
         ],
       },

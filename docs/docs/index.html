@@ -767,9 +767,9 @@ parent element: give that parent <code>position: relative</code>. Constraints: r
 them are in the JSON <code>tokens</code>. design_apply binds only tokens the file has: <code>tokens_apply</code> creates new ones. In a Display P3 file every colour is <code>color(display-p3 r g b)</code> (as tokens_read writes it too): keep
 it so, it is what the designer chose. A text with a <code>textStyle</code> carries only what differs from the style; <code>textStyles</code> holds the style&#39;s font.</li>
 <li>Lengths are whole pixels; letter spacing keeps fractions.</li>
-<li><code>filter: blur()</code> and <code>backdrop-filter: blur()</code> are Figma&#39;s blur radius / 2, as Dev Mode writes them. Figma
-renders a radius R as a Gaussian of about 0.43 R (measured on layer and background blurs of radius 4 to 40 against
-Chrome), so that CSS is about 15% softer than Figma: for a pixel match, use about 0.86 of the value.</li>
+<li><code>filter: blur()</code> and <code>backdrop-filter: blur()</code> are 0.43 of Figma&#39;s blur radius: Figma renders a radius R as a
+Gaussian of about 0.43 R (measured on layer and background blurs of radius 4 to 40 against Chrome), so radius 20 is
+<code>blur(8.6px)</code>, and design_apply writes <code>blur(v)</code> as radius v / 0.43. Dev Mode writes radius / 2, which is softer.</li>
 </ul>
 <h3>Read-only attributes (start with $)</h3>
 <ul>
@@ -788,7 +788,7 @@ children; its code is in <code>codeComponents</code>, whose <code>unread</code> 
 properties: the boolean one that shows it, the text one its characters show, the instance swap one it is. In code
 they are the component&#39;s props; design_apply binds and adds them with <code>visibleProp</code>, <code>prop</code> and <code>swapProp</code>
 (see <code>guide write</code>).</li>
-<li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
+<li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8.6px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
 of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box),
 <code>list-spacing: 8px</code> (the space between a list&#39;s items, apart from paragraph spacing) and
 <code>stroke-linecap: round</code> (a line&#39;s round or square ends, which a CSS border does not draw).</li>

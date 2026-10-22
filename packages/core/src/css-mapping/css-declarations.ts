@@ -46,15 +46,15 @@ export class CssDeclarations {
     }
   }
 
-  /** CSS the mapping cannot write back yet: shown, never written. */
-  readOnly(property: string, value: string): void {
-    this.#readOnly.push([property, value]);
+  /** CSS the mapping cannot write back yet: shown, never written; `exact` for a value ours rounds already. */
+  readOnly(property: string, value: string, exact = false): void {
+    this.#readOnly.push([property, exact ? value : cleanOracle(value)]);
   }
 
   build(textStyle?: string): NodeCss {
     return {
       properties: [...this.#properties].sort(([a], [b]) => order(a) - order(b)),
-      readOnly: this.#readOnly.map(([property, value]) => [property, cleanOracle(value)]),
+      readOnly: [...this.#readOnly],
       ...(textStyle === undefined ? {} : { textStyle }),
     };
   }

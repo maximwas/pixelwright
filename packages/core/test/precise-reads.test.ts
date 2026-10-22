@@ -122,8 +122,8 @@ describe("effects in full", () => {
       ]),
     );
 
-    expect(line(xml, "1:2")).toContain('filter="blur(8px)"');
-    expect(line(xml, "1:2")).toContain("blur: progressive from 0px at 50% 0% to 8px at 50% 100%");
+    expect(line(xml, "1:2")).toContain('filter="blur(6.88px)"');
+    expect(line(xml, "1:2")).toContain("blur: progressive from 0px at 50% 0% to 6.88px at 50% 100%");
   });
 });
 

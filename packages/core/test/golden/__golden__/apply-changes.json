@@ -3473,7 +3473,7 @@
       "errors": []
     }
   ],
-  "shadows bottom first, inset ones inner, blurs at Figma's double radius": [
+  "shadows bottom first, inset ones inner, blurs at the radius Figma renders so": [
     {
       "change": {
         "line": 1,
@@ -3488,11 +3488,11 @@
           "effects": [
             {
               "type": "LAYER_BLUR",
-              "radius": 2.5
+              "radius": 2.907
             },
             {
               "type": "BACKGROUND_BLUR",
-              "radius": 20
+              "radius": 23.2558
             },
             {
               "type": "DROP_SHADOW",
@@ -5114,7 +5114,7 @@
           "effects": [
             {
               "type": "LAYER_BLUR",
-              "radius": 4
+              "radius": 4.6512
             },
             {
               "type": "DROP_SHADOW",
@@ -5153,7 +5153,7 @@
           "effects": [
             {
               "type": "BACKGROUND_BLUR",
-              "radius": 10
+              "radius": 11.6279
             },
             {
               "type": "DROP_SHADOW",

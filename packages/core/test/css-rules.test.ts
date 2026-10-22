@@ -313,7 +313,7 @@ describe("CSS mapping rules", () => {
     ]);
   });
 
-  it("lists shadows top first with inset ones marked, and halves Figma's blur radius", () => {
+  it("lists shadows top first with inset ones marked, and a blur as Figma renders its radius", () => {
     const { properties } = cssOf(
       layer({
         effects: [
@@ -354,7 +354,7 @@ describe("CSS mapping rules", () => {
     expect(properties).toEqual(
       expect.arrayContaining([
         ["box-shadow", "inset 0 -1px 0 0 #191A23, 0 4px 8px 0 rgba(25, 26, 35, 0.25)"],
-        ["backdrop-filter", "blur(10px)"],
+        ["backdrop-filter", "blur(8.6px)"],
       ]),
     );
   });

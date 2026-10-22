@@ -382,10 +382,10 @@ describe("CSS to Figma: paint", () => {
     ]);
   });
 
-  it("reads shadows bottom first, inset ones inner, blurs at Figma's double radius, an effect token", () => {
+  it("reads shadows bottom first, inset ones inner, blurs at the radius Figma renders so, an effect token", () => {
     expect(
       props(
-        '<Frame id="1:1" box-shadow="inset 0 -1px 0 0 #191A23, rgba(25, 26, 35, 0.25) 0 4px 8px 0" backdrop-filter="blur(10px)"/>',
+        '<Frame id="1:1" box-shadow="inset 0 -1px 0 0 #191A23, rgba(25, 26, 35, 0.25) 0 4px 8px 0" backdrop-filter="blur(8.6px)"/>',
       ).effects,
     ).toEqual([
       {
@@ -590,7 +590,7 @@ describe("what the layer has now completes what Figma keeps in one property", ()
 
   it("a blur keeps the shadows, a side keeps the other sides, an offset keeps the underline", () => {
     expect(
-      props('<Frame id="1:1" filter="blur(2px)"/>', { current: { "box-shadow": "0 4px 8px 0 #191A23" } }).effects,
+      props('<Frame id="1:1" filter="blur(1.72px)"/>', { current: { "box-shadow": "0 4px 8px 0 #191A23" } }).effects,
     ).toEqual([
       {
         type: "LAYER_BLUR",

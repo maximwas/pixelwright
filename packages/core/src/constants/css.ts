@@ -17,6 +17,13 @@ export const TEXT_TYPES: ReadonlySet<string> = new Set(["TEXT", "TEXT_PATH"]);
 export const SPACING_GRID = 4;
 
 /**
+ * CSS's blur() per px of Figma's blur radius: Figma renders a radius R as a Gaussian of about 0.43 R (measured on
+ * layer and background blurs of radius 4 to 40 against Chrome), so blur(0.43 R) looks like it; Dev Mode's R / 2 is
+ * softer.
+ */
+export const BLUR_PER_RADIUS = 0.43;
+
+/**
  * A variable font's registered axes at the value a browser draws without being told (upright, not italic, normal
  * width): writing them says nothing. Weight and optical size depend on the text: text CSS compares them with its
  * weight and size.

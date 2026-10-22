@@ -168,8 +168,8 @@ describe("CSS", () => {
       ),
     );
 
-    expect(xml).toContain('filter="blur(3px)"');
-    expect(xml).toContain("blur: progressive from 1px at 50% 0% to 3px at 50% 100%");
+    expect(xml).toContain('filter="blur(2.15px)"');
+    expect(xml).toContain("blur: progressive from 0.43px at 50% 0% to 2.15px at 50% 100%");
   });
 
   it("writes no stroke-align for a line that draws no stroke", () => {

@@ -547,7 +547,7 @@ export const CHANGE_CASES: Readonly<Record<string, ChangeCase>> = {
   "a line's border": {
     xml: lines('<Line id="1:1" border-top="2px solid #000"/>', '<Line id="1:2" border-left="1px dashed var(--Dark)"/>'),
   },
-  "shadows bottom first, inset ones inner, blurs at Figma's double radius": {
+  "shadows bottom first, inset ones inner, blurs at the radius Figma renders so": {
     xml: '<Frame id="1:1" box-shadow="inset 0 -1px 0 0 #191A23, rgba(25, 26, 35, 0.25) 0 4px 8px 0" backdrop-filter="blur(10px)" filter="blur(1.25px)"/>',
   },
   "an effect style, and a blur beside it": {

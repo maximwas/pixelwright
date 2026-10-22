@@ -408,7 +408,7 @@ describe("tokens_apply: styles", () => {
       effect: [
         {
           name: "Blur/Backdrop",
-          value: "backdrop-filter: blur(20px)",
+          value: "backdrop-filter: blur(17.2px)",
         },
       ],
     };

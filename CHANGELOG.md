@@ -26,6 +26,12 @@ How to write this file (people and agents alike):
   the name made from the layer's name.
 - The guide and `assets_export` say that WEBP keeps transparency exactly, at any quality.
 
+### Changed
+
+- Blurs now match how Figma renders them. `design_read` writes a layer or background blur of radius 20 as
+  `blur(8.6px)`, about 0.86 of the value it wrote before, and `design_apply` and `tokens_apply` read `blur(8.6px)` back
+  as radius 20. Figma's Dev Mode still writes half the radius (`blur(10px)`), so its CSS differs from Pixelwright's.
+
 ### Fixed
 
 - `file_map` no longer fails when Figma cannot load a page. Every page is still listed by id and name, the pages
