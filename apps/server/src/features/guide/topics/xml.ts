@@ -13,6 +13,7 @@ properties as attributes.
 - \`Image\`: a true image (a photo, a layer filled with an image, a masked group, a layer with an effect CSS cannot
   draw). Its \`src\` is a PNG of what it shows.
 - \`Icon\`: a vector, or a group or instance drawn only with vector shapes (a logo). Its \`src\` is one SVG.
+- \`TextPath\`: Figma's text on a path (a label along an arc), its text written as a \`Text\`'s (see Text below).
 - \`Span\`: a run inside a \`Text\` whose style differs from the text's own.
 - Hidden layers and slices are left out.
 
@@ -24,7 +25,8 @@ properties as attributes.
 \`description\` (components), \`note\` (Dev Mode annotations, "Category: text", several joined with " | "), \`href\`
 (a prototype link, or a text's hyperlink), \`mask\` (alpha, vector or luminance: the layer masks the layers above it),
 \`data-<collection>\` (a variable mode set on the layer, \`data-color-modes="dark"\`;
-the read's root also has the modes it takes from above), \`textStyle\`, \`src\` (assets).
+the read's root also has the modes it takes from above), \`textStyle\`, \`src\` (assets), \`d\` and \`start\` (a
+text on a path).
 
 A \`data-<collection>="<mode>"\` attribute is the selector tokens_read's CSS writes for that mode: put it on the
 element in the build too, and the element takes that mode's values. design_apply sets a layer's mode the same way
@@ -98,6 +100,14 @@ text-decoration-thickness), text-align, text-wrap, color.
   never spaces.
 - \`line-height: normal\` is Figma's Auto line height, the font's own spacing (about 1.2× the size for most fonts):
   give it in px where the build must match; \`inspect\` shows each text's.
+- A \`TextPath\` is a text set along a path. Its characters, spans and text CSS are a \`Text\`'s (it has no line
+  height, decoration, wrapping or truncation of its own); \`d\` is the path in the layer's own box, which \`left\` and
+  \`top\` place as for any layer, and \`start\` where the text begins on it: the path's segment (from 0) and the place
+  along that segment (0 to 1). In code an SVG \`<textPath>\` over a \`<path d="…">\` draws it:
+
+\`\`\`xml
+<TextPath id="12:41" name="Label" d="M 0 50 C 55.23 -16.67 144.77 -16.67 200 50" start="0 0.5" position="absolute" left="100px" top="20px" width="200px" height="50px" font="500 14px/normal 'Inter'" color="var(--color-ink)">Share</TextPath>
+\`\`\`
 
 ## Example (Orbit, a pricing card, abridged)
 

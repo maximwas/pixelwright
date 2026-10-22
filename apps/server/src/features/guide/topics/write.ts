@@ -41,8 +41,8 @@ taken as sRGB and converted to P3.
 
 ## Creating
 
-- An element without \`id\` creates a layer: \`Frame\`, \`Section\`, \`Text\`, \`Rectangle\`, \`Ellipse\`,
-  \`Line\`, \`Instance\`, \`Component\`, \`ComponentSet\`, \`Image\`, \`Icon\`, \`Slot\`. It goes inside its parent
+- An element without \`id\` creates a layer: \`Frame\`, \`Section\`, \`Text\`, \`TextPath\` (below), \`Rectangle\`,
+  \`Ellipse\`, \`Line\`, \`Instance\`, \`Component\`, \`ComponentSet\`, \`Image\`, \`Icon\`, \`Slot\`. It goes inside its parent
   element, after the element before it (alone: last); at the top level into \`parent\` or the current page, or next
   to a layer with \`before="id"\` / \`after="id"\`, or onto a page (below). Groups and vectors are not drawn from
   XML: use an \`Icon\`.
@@ -115,6 +115,27 @@ taken as sRGB and converted to P3.
   \`note="Tabs: Days | Weeks"\` is one note (two new notes without a category take two calls).
   A note sent back as it was keeps its category, formatting and pinned properties; notes without text, which
   design_read does not show, stay.
+
+## Text on a path
+
+- \`<TextPath id="…">New words</TextPath>\` changes the characters of a text on a path and keeps its look, as a
+  Text's do; its spans and text CSS (\`font\`, \`letter-spacing\`, \`text-transform\`, \`color\`, \`textStyle\`) are
+  written as on a Text. It has no line height, underline, wrapping or truncation. \`start="1 0.25"\` moves where its
+  text begins: the path's segment (from 0) and the place along it (0 to 1). Its path stays as Figma made it: a
+  changed \`d\` is refused, so delete the layer and make it again. The characters go in it, never in a \`<Text>\`
+  inside it.
+- A new one is made along \`d\`, an SVG path in its own box that \`left\` and \`top\` place (relative commands and
+  arcs are taken, and written as Figma's lines and curves), or along \`arc="<cx> <cy> <r> <from> <to>"\`, an arc of
+  a circle in the parent: its centre and radius in px, its ends in degrees as CSS turns (0 at the top, clockwise). An
+  arc places the layer itself, absolutely, so it takes no \`left\` or \`top\`. A \`to\` smaller than \`from\` runs
+  back, counter-clockwise: below the centre, \`arc="200 200 160 225 135"\` runs left to right.
+
+\`\`\`xml
+<Frame id="12:30" name="Round menu">
+  <TextPath id="12:41" start="0 0.25">Share</TextPath>
+  <TextPath name="Label" arc="200 200 160 -40 40" font="500 14px 'Inter'" color="var(--color-ink)">Settings</TextPath>
+</Frame>
+\`\`\`
 
 ## Values
 
