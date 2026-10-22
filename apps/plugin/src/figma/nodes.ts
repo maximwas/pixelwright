@@ -1,4 +1,19 @@
 import { BridgeError } from "@pixelwright/core";
+import pTimeout from "p-timeout";
+import { CSS_TIMEOUT_MS } from "../constants/plugin.ts";
+
+/**
+ * Figma's own CSS of a layer (getCSSAsync), or null when Figma gives none in CSS_TIMEOUT_MS: read as a layer without.
+ * shortcut: while a getCSSAsync hangs, Figma fires the plugin's later timers late too (live, 2026-10-22: a 3 s one at
+ * 63 s, the CSS at 123 s), so this bounds a slow answer, not a hang; a timer from the UI iframe would, if a current
+ * page's read ever hangs.
+ */
+export async function cssOf(node: Pick<SceneNode, "getCSSAsync">): Promise<Record<string, string> | null> {
+  return await pTimeout(node.getCSSAsync(), {
+    milliseconds: CSS_TIMEOUT_MS,
+    fallback: () => null,
+  });
+}
 
 /** A node by id, or NODE_NOT_FOUND naming the id (documentAccess dynamic-page: only the async lookup works). */
 export async function requireNode(id: string): Promise<BaseNode> {

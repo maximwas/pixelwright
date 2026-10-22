@@ -10,12 +10,16 @@ export function changesToSend(changes: readonly ApplyChange[]): ApplyChange[] {
   const beside = new Set(placed.map((change) => change.parent ?? ""));
 
   return changes.filter(
-    (change) =>
-      change.kind === "create" ||
-      (change.move ?? false) ||
-      change.text !== undefined ||
-      Object.keys(change.props).length > 0 ||
-      parents.has(change.ref) ||
-      beside.has(change.parent ?? ""),
+    (change) => writesSomething(change) || parents.has(change.ref) || beside.has(change.parent ?? ""),
+  );
+}
+
+/** Whether a change writes its layer: makes it, moves it, or gives it a property or characters. */
+export function writesSomething(change: ApplyChange): boolean {
+  return (
+    change.kind === "create" ||
+    (change.move ?? false) ||
+    change.text !== undefined ||
+    Object.keys(change.props).length > 0
   );
 }

@@ -52,7 +52,8 @@ export const TOKENS = {
 - A paint style's value reads as a \`background\` (colours, a colour variable), a text style's as the \`font\`
   shorthand with its letter spacing and case from \`also\`, as tokens_read lists them, or after it
   (\`500 12px/16px 'Inter'; letter-spacing: 0.04em; text-transform: uppercase\`), an effect style's as a
-  \`box-shadow\` list with its blurs after it, or a blur alone (\`backdrop-filter: blur(20px)\`, \`filter: blur(4px)\`).
+  \`box-shadow\` list with its blurs after it, or a blur alone (\`backdrop-filter: blur(20px)\`, \`filter: blur(4px)\`);
+  a shadow's colour may be a colour variable (\`0 4px 12px 0 var(--shadow)\`), as tokens_read writes a bound one.
   What a value leaves out, the style keeps.
 - A value a variable or style already holds is left as it is, so sending tokens_read's own output writes nothing;
   send only what you change. Nothing is ever deleted (use \`execute\` to remove a token).

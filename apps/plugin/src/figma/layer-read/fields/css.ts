@@ -1,4 +1,5 @@
 import { MIXED } from "@pixelwright/core";
+import { cssOf } from "../../nodes.ts";
 import { MAPPED_EFFECTS, MAPPED_PAINTS } from "../constants.ts";
 import type { LayerEntry } from "../layer-entry.ts";
 
@@ -7,7 +8,11 @@ export async function readCss(entry: LayerEntry): Promise<void> {
   const { node, context } = entry;
 
   if ((context.css === "all" || (context.css === "unmapped" && needsOracle(entry.fields()))) && "getCSSAsync" in node) {
-    entry.set("css", await node.getCSSAsync());
+    const css = await cssOf(node);
+
+    if (css !== null) {
+      entry.set("css", css);
+    }
   }
 }
 

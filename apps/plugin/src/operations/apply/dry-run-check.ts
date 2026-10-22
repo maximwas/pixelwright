@@ -16,6 +16,8 @@ import { WriteError } from "../../figma/write-error.ts";
 import type { ApplyFonts } from "./apply-fonts.ts";
 import { ApplyReport } from "./apply-report.ts";
 import { canMake, newLayerType } from "./new-layers.ts";
+import { existingPage } from "./pages.ts";
+import { plannedProperties } from "./property-marks.ts";
 import { existingLayer } from "./targets.ts";
 import { typeRefusals } from "./type-refusals.ts";
 
@@ -30,6 +32,7 @@ type TokenCheck = (index: TokenIndex, use: TokenUse, props: FigmaProps) => Promi
 const TOKEN_CHECKS: Readonly<Record<TokenUse["kind"], TokenCheck>> = {
   FLOAT: (index, { token }) => index.find(token, "FLOAT"),
   PAINT: (index, { key }, props) => checkPaints(paintsAt(props, key), index),
+  COLOR: (index, { token }) => index.find(token, "COLOR"),
   EFFECT_STYLE: async (index, { token }) => {
     if ((await index.style(token, "EFFECT")) === null) {
       throw new WriteError(`No effect style is named ${token} in this file or the libraries its page uses.`);
@@ -78,19 +81,39 @@ export class DryRunCheck {
       const fail: Fail = (error, attribute) => this.#report.fail(change, error, attribute);
 
       try {
-        const layer = await this.#target(change);
-
-        this.#report.planned(change);
-        this.#checked.add(change.ref);
-        await this.#neighbour(change, fail);
-        this.#planned.record(change, this.#byRef);
-        await this.#props(change, fail, this.#refused(change, layer));
+        await (change.tag === "Page" ? this.#page(change) : this.#check(change, fail));
       } catch (error) {
         fail(error);
       }
     }
 
     return this.#report.result();
+  }
+
+  async #check(change: ApplyChange, fail: Fail): Promise<void> {
+    const layer = await this.#target(change);
+
+    this.#report.planned(change);
+    this.#checked.add(change.ref);
+    await this.#neighbour(change, fail);
+    this.#planned.record(change, this.#byRef);
+    await this.#props(change, fail, this.#refused(change, layer));
+    await this.#marks(change, layer, fail);
+  }
+
+  /**
+   * A page takes only its name: a new one is listed (made on the real run); the one an id names must be there, and is
+   * listed only when the name differs, as the real run renames it only then.
+   */
+  async #page(change: ApplyChange): Promise<void> {
+    const page = change.kind === "update" ? await existingPage(change.id, { load: false }) : null;
+    const { name } = change.props;
+
+    if (page === null || (name !== undefined && page.name !== name)) {
+      this.#report.planned(change);
+    }
+
+    this.#checked.add(change.ref);
   }
 
   /**
@@ -201,6 +224,46 @@ export class DryRunCheck {
         }
       }
     }
+  }
+
+  /** The properties a layer of an existing component would add, reported, and what binding it refuses. */
+  async #marks(change: ApplyChange, layer: TypedLayer | null, fail: Fail): Promise<void> {
+    const property = change.props.property;
+    const from = property === undefined || layer === null ? undefined : await this.#holderFrom(change);
+
+    if (property === undefined || layer === null || from === undefined) {
+      return;
+    }
+
+    try {
+      for (const added of plannedProperties(from, layer.type, property)) {
+        this.#report.added(added);
+      }
+    } catch (error) {
+      fail(error, change.sources.property);
+    }
+  }
+
+  /**
+   * Where the component holding a layer is looked for: above an existing layer, or from the nearest existing layer a
+   * new one goes in; undefined inside a new component, which the real run makes whole.
+   */
+  async #holderFrom(change: ApplyChange): Promise<BaseNode | null | undefined> {
+    if (change.kind === "update") {
+      return (await figma.getNodeByIdAsync(change.id ?? ""))?.parent ?? null;
+    }
+
+    for (let up = this.#byRef.get(change.parent ?? ""); up !== undefined; up = this.#byRef.get(up.parent ?? "")) {
+      if (up.kind === "update") {
+        return await figma.getNodeByIdAsync(up.id ?? "");
+      }
+
+      if (up.tag === "Component") {
+        return undefined;
+      }
+    }
+
+    return null;
   }
 
   #font(change: ApplyChange, props: FigmaProps, fail: Fail): void {

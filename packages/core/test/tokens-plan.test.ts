@@ -287,6 +287,31 @@ describe("tokensPlan: variables", () => {
     ]);
     expect(plan.collections[0]?.variables.map(({ name }) => name)).toEqual(["fine"]);
   });
+
+  it("takes a type in any case, as Figma's upper-case one", () => {
+    const { plan, errors } = planOf({
+      collections: [
+        {
+          name: "Brand",
+          variables: [
+            {
+              name: "accent",
+              type: "color",
+              values: { Light: "#FFF" },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(errors).toEqual([]);
+    expect(plan.collections[0]?.variables).toEqual([
+      expect.objectContaining({
+        name: "accent",
+        type: "COLOR",
+      }),
+    ]);
+  });
 });
 
 describe("tokensPlan: styles", () => {

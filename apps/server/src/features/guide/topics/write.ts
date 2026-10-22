@@ -30,8 +30,10 @@ taken as sRGB and converted to P3.
 - Moving: an element with \`id\` under another parent element moves the layer there, \`before="id"\` /
   \`after="id"\` puts it next to that layer, and listing layers in another order reorders them. A layer inside an
   instance stays where it is (only an instance's slots take new layers). An element alone (\`<Frame id="…"/>\`)
-  moves its layer with everything inside it: leave out the layers inside that stay as they are, since each layer
-  named is read before the write and a call reads only so many.
+  moves its layer with everything inside it.
+- Each layer named is read before the write, and a call reads only so many: the layers named and the ones on the
+  way to them come first. So a deep layer changes in one call nested as design_read writes it (screen, section,
+  card, its text), even in a big screen; leave out the siblings that stay as they are.
 - A text \`design_read\` shortened (\`$truncated\`) is never written back: read that layer on its own to change it.
 - A hidden layer comes back with \`display\` (\`flex\`, \`grid\` or \`block\`, as it was laid out).
 - Each tag takes its own attributes: no \`background\` or \`gap\` on a Text (its colour is \`color\`), no text
@@ -42,7 +44,15 @@ taken as sRGB and converted to P3.
 - An element without \`id\` creates a layer: \`Frame\`, \`Section\`, \`Text\`, \`Rectangle\`, \`Ellipse\`,
   \`Line\`, \`Instance\`, \`Component\`, \`ComponentSet\`, \`Image\`, \`Icon\`, \`Slot\`. It goes inside its parent
   element, after the element before it (alone: last); at the top level into \`parent\` or the current page, or next
-  to a layer with \`before="id"\` / \`after="id"\`. Groups and vectors are not drawn from XML: use an \`Icon\`.
+  to a layer with \`before="id"\` / \`after="id"\`, or onto a page (below). Groups and vectors are not drawn from
+  XML: use an \`Icon\`.
+- **A page:** a top-level \`<Page name="Screens">…</Page>\` makes a new page, last in the file, and creates the
+  layers inside it there in the XML's order, each placed by its \`left\` and \`top\` (without them, beside the ones
+  before it); a layer named by its id inside it moves onto the new page. A dry run lists the page it would make.
+  \`<Page id="…">\` (an id from \`file_map\`) is a page the file has: \`name\` renames it, the layers inside it are
+  written where they are, new ones go on it. A page takes only a name, stands only at the top level, and is never
+  deleted or reordered. Figma's Starter plan allows 3 pages: past that the error names the limit, and nothing
+  inside that page is made.
 - A new layer has what its XML says and nothing more: no fill without \`background\`, no clipping without
   \`overflow\`; a new auto layout frame hugs unless sized; a new text is black unless \`color\` says otherwise.
 - **A copy:** \`<Frame copyOf="54:268" name="Card 2">\` clones that layer (everything the XML cannot show comes
@@ -56,19 +66,31 @@ taken as sRGB and converted to P3.
   instance by the names design_read and components_read write: the file's components, the ones its page uses from a
   library, or \`component="key:<key>"\` for a library one the file does not use yet (\`library_search\` finds those
   keys in the libraries saved with it). \`variant\` picks the variant
-  (values left out are the set's default), \`props\` sets text and boolean properties (names without Figma's #id).
+  (values left out are the set's default), \`props\` sets its properties by their names without Figma's #id: a
+  text, \`true\` or \`false\` for a boolean, and for an instance swap the component to show, by the name a
+  \`component\` takes (a set's name shows its default variant) or \`key:<key>\` (\`props="Icon=Heart"\`).
 - Inside a new instance, elements with another instance's ids (of the same component and variant) or the
   component's own write the new instance's layers, as overrides; the other instance stays as it is.
   \`<Instance copyOf="id">\` copies an instance with its overrides instead.
 - An existing instance: \`variant\` switches it, \`props\` changes its properties, \`component\` swaps it to
   another component. A comma or \`=\` inside a name or value is escaped with a backslash, as design_read writes it.
+  A switch or a swap gives the instance's layers new ids, so a call that switches an instance (or a copy, or one
+  nested in a new instance) refuses edits of its layers by their old ids: switch first, read it again, then edit.
 - \`<Component name="Badge">…</Component>\` makes a component like a frame; inside it, \`prop="Label"\` on a
-  Text makes a text property bound to it and \`visibleProp="Shown"\` makes a boolean property bound to the layer's
-  visibility. \`<ComponentSet name="Badge">\` holds \`<Component variant="Tone=Dark">\` variants: they are
-  combined into one set (the properties defined once on it) and laid out in a grid; a set given \`display="flex"\`
-  or \`"grid"\` lays them out itself, each variant placed by its own \`grid-row\`/\`grid-column\`, \`align-self\`
-  or \`flex\`. \`description\` describes a
-  component or a set; an instance of a new component can follow later in the same XML.
+  Text makes a text property bound to it, \`visibleProp="Shown"\` a boolean property bound to the layer's
+  visibility, and \`swapProp="Icon"\` on an Instance an instance swap property whose default is that instance's
+  component (instances then take \`props="Icon=Heart"\`). \`<ComponentSet name="Badge">\` holds
+  \`<Component variant="Tone=Dark">\` variants: they are combined into one set (the properties defined once on it)
+  and laid out in a grid; a set given \`display="flex"\` or \`"grid"\` lays them out itself, each variant placed by
+  its own \`grid-row\`/\`grid-column\`, \`align-self\` or \`flex\`. \`description\` describes a component or a set;
+  an instance of a new component can follow later in the same XML.
+- An existing component takes properties the same way, so it never has to be rebuilt: \`prop\`, \`visibleProp\` and
+  \`swapProp\` on its layers by their ids (\`<Instance id="54:12" swapProp="Icon"/>\`), or on new layers inside its
+  \`<Component id="…">\`, bind each layer to the property of that name the component has (a variant's: its set's), or
+  add the property once when it has none, its default the layer's value now (the text, whether it shows, the
+  instance's component). A name a property of another kind holds is an error; a layer no component holds, or one
+  inside an instance, is refused. \`properties\` in the answer lists what was added to existing components (a dry
+  run's: what would be).
 - \`<Slot name="Content">\` makes a slot in a new component; in an instance, give its \`<Slot id="…">\` new layers.
 
 ## Images, icons and notes
@@ -82,6 +104,10 @@ taken as sRGB and converted to P3.
   assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
   the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a
   new one.
+- An \`Icon\`'s \`width\` or \`height\`, new or existing, scales it whole as Figma's scale tool does: its lines and
+  corners grow with it (a 24px icon with a 2px line at 48px has a 4px line). The drawing keeps its ratio: the width
+  decides when both are given, else the height. The size is the one design_read writes (what the icon draws past
+  its box included); a \`Frame\` with the same id only resizes, its lines staying as they are.
 - \`note="Behavior: opens the modal | Spacing: 8px"\` writes the layer's Dev Mode notes, the whole list, as
   design_read writes it (\`note=""\` removes them). \`Behavior: \` files a note under the file's annotation category of
   that name; a name the file has no category for stays part of the text (no category is made). \` | \` separates the
@@ -95,7 +121,12 @@ taken as sRGB and converted to P3.
 - Lengths in px (a bare number in a size, a place, a gap, a padding or a radius is taken as px; a bare line height
   is a multiple of the font size, as in CSS); \`var(--Name)\` binds the variable or style of that name, as \`design_read\` and \`tokens_read\`
   write them (a paint style, a colour or number variable, an effect style, on \`box-shadow\` or on a blur:
-  \`backdrop-filter="var(--Blur-Backdrop)"\`); \`textStyle="h3"\` applies a text style.
+  \`backdrop-filter="var(--Blur-Backdrop)"\`); \`textStyle="h3"\` applies a text style. A shadow's colour can be a
+  colour variable, inset and in \`text-shadow\` too: \`box-shadow="0 4px 12px 0 var(--shadow)"\` binds it, and
+  design_read writes a bound one so. The variable is the shadow's whole colour, its alpha too, so it takes no
+  \`color-mix()\`: make a variable with that alpha.
+- design_apply binds tokens and never makes them: a new variable (or paint, text or effect style) is created with
+  \`tokens_apply\` first, then bound here by its name. A \`var()\` that names none is an error naming the near ones.
 - \`font\` is the shorthand \`[italic] weight size/line-height 'Family'\`; Figma must have the family and that
   weight, or the error lists the styles it has.
 - Sizes: \`width\`/\`height\` in px or \`auto\`; \`flex="1"\` fills an auto layout parent's direction,

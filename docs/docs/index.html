@@ -262,7 +262,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-design_apply">
   <h3><code>design_apply</code><span class="writes">writes</span></h3>
-  <p>Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=&quot;none&quot;, width=&quot;auto&quot; to hug, display=&quot;block&quot; to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; an Instance by component=&quot;Name&quot; variant=&quot;Prop=Value&quot; props=&quot;Label=Text&quot;; a Component (prop and visibleProp on its layers make its properties) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=&quot;id&quot; copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write.</p>
+  <p>Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=&quot;none&quot;, width=&quot;auto&quot; to hug, display=&quot;block&quot; to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; an Instance by component=&quot;Name&quot; variant=&quot;Prop=Value&quot; props=&quot;Label=Text&quot;; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=&quot;id&quot; copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>xml</code></td><td><code>string</code></td><td>Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer.</td></tr>
 <tr><td><code>parent</code><span class="optional">optional</span></td><td><code>string</code></td><td>Where top-level new layers go: a frame&#39;s or page&#39;s id. Default: the current page, beside its layers.</td></tr>
@@ -551,7 +551,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-tokens_apply">
   <h3><code>tokens_apply</code><span class="writes">writes</span></h3>
-  <p>Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode&#39;s value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma&#39;s pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand, its letter spacing and case in also as tokens_read lists them, or after it: &quot;500 12px/16px &#39;Inter&#39;; letter-spacing: 0.04em; text-transform: uppercase&quot;; left out, the style keeps its own) and effect (a box-shadow list, its blurs after it or alone: &quot;backdrop-filter: blur(20px)&quot;; the effects a value leaves out, the style keeps). Collections, modes, variables and styles are found by name among the file&#39;s own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library&#39;s collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin&#39;s Allow edits switch is off (dryRun checks without writing).</p>
+  <p>Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode&#39;s value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma&#39;s pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand, its letter spacing and case in also as tokens_read lists them, or after it: &quot;500 12px/16px &#39;Inter&#39;; letter-spacing: 0.04em; text-transform: uppercase&quot;; left out, the style keeps its own) and effect (a box-shadow list, a shadow&#39;s colour a colour or var(--colour variable), its blurs after it or alone: &quot;backdrop-filter: blur(20px)&quot;; the effects a value leaves out, the style keeps). Collections, modes, variables and styles are found by name among the file&#39;s own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library&#39;s collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin&#39;s Allow edits switch is off (dryRun checks without writing).</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>collections</code><span class="optional">optional</span></td><td><code>object[]</code><br /><span class="default">default []</span></td><td></td></tr>
 <tr><td><code>styles</code><span class="optional">optional</span></td><td><code>object</code><br /><span class="default">default {&quot;paint&quot;:[],&quot;text&quot;:[],&quot;effect&quot;:[]}</span></td><td></td></tr>
@@ -751,8 +751,8 @@ more children.</li>
 parent element: give that parent <code>position: relative</code>. Constraints: right/bottom when pinned to the end,
 <code>calc(50% ± n px)</code> when centred, left and right without a width when stretched, percents when scaled.</li>
 <li>A turned layer has <code>transform: rotate()</code> and is placed by its centre; a mirrored one <code>scaleX(-1)</code>.</li>
-<li>Colours bound to a style or variable are <code>var(--Name)</code> (see <code>guide tokens</code>); values for them are in the JSON
-<code>tokens</code>. In a Display P3 file every colour is <code>color(display-p3 r g b)</code> (as tokens_read writes it too): keep
+<li>Colours bound to a style or variable are <code>var(--Name)</code>, a shadow&#39;s colour too (see <code>guide tokens</code>); values for
+them are in the JSON <code>tokens</code>. design_apply binds only tokens the file has: <code>tokens_apply</code> creates new ones. In a Display P3 file every colour is <code>color(display-p3 r g b)</code> (as tokens_read writes it too): keep
 it so, it is what the designer chose. A text with a <code>textStyle</code> carries only what differs from the style; <code>textStyles</code> holds the style&#39;s font.</li>
 <li>Lengths are whole pixels; letter spacing keeps fractions.</li>
 </ul>
@@ -771,7 +771,8 @@ children; its code is in <code>codeComponents</code>, whose <code>unread</code> 
 <li><code>$exposed=&quot;true&quot;</code>: a nested instance its component exposes: its properties are the component&#39;s API too.</li>
 <li><code>$visibleProp=&quot;Show subtitle&quot;</code>, <code>$prop=&quot;Title&quot;</code>, <code>$swapProp=&quot;Icon&quot;</code>: a component&#39;s layer bound to its
 properties: the boolean one that shows it, the text one its characters show, the instance swap one it is. In code
-they are the component&#39;s props; design_apply makes them only in a new Component (<code>visibleProp</code>, <code>prop</code>).</li>
+they are the component&#39;s props; design_apply binds and adds them with <code>visibleProp</code>, <code>prop</code> and <code>swapProp</code>
+(see <code>guide write</code>).</li>
 <li><code>$css</code> holds <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8px at 50% 100%</code> (a blur that changes across the layer; <code>filter</code> holds its end radius) and <code>stroke-align: center</code> (half
 of the stroke paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box),
 <code>list-spacing: 8px</code> (the space between a list&#39;s items, apart from paragraph spacing) and
@@ -867,7 +868,8 @@ name&#39;s own becomes the variable&#39;s Web code syntax.</li>
 <li>A paint style&#39;s value reads as a <code>background</code> (colours, a colour variable), a text style&#39;s as the <code>font</code>
 shorthand with its letter spacing and case from <code>also</code>, as tokens_read lists them, or after it
 (<code>500 12px/16px &#39;Inter&#39;; letter-spacing: 0.04em; text-transform: uppercase</code>), an effect style&#39;s as a
-<code>box-shadow</code> list with its blurs after it, or a blur alone (<code>backdrop-filter: blur(20px)</code>, <code>filter: blur(4px)</code>).
+<code>box-shadow</code> list with its blurs after it, or a blur alone (<code>backdrop-filter: blur(20px)</code>, <code>filter: blur(4px)</code>);
+a shadow&#39;s colour may be a colour variable (<code>0 4px 12px 0 var(--shadow)</code>), as tokens_read writes a bound one.
 What a value leaves out, the style keeps.</li>
 <li>A value a variable or style already holds is left as it is, so sending tokens_read&#39;s own output writes nothing;
 send only what you change. Nothing is ever deleted (use <code>execute</code> to remove a token).</li>
@@ -979,8 +981,10 @@ is pinned to. A new <code>left</code> or <code>right</code> replaces both edges.
 <li>Moving: an element with <code>id</code> under another parent element moves the layer there, <code>before=&quot;id&quot;</code> /
 <code>after=&quot;id&quot;</code> puts it next to that layer, and listing layers in another order reorders them. A layer inside an
 instance stays where it is (only an instance&#39;s slots take new layers). An element alone (<code>&lt;Frame id=&quot;…&quot;/&gt;</code>)
-moves its layer with everything inside it: leave out the layers inside that stay as they are, since each layer
-named is read before the write and a call reads only so many.</li>
+moves its layer with everything inside it.</li>
+<li>Each layer named is read before the write, and a call reads only so many: the layers named and the ones on the
+way to them come first. So a deep layer changes in one call nested as design_read writes it (screen, section,
+card, its text), even in a big screen; leave out the siblings that stay as they are.</li>
 <li>A text <code>design_read</code> shortened (<code>$truncated</code>) is never written back: read that layer on its own to change it.</li>
 <li>A hidden layer comes back with <code>display</code> (<code>flex</code>, <code>grid</code> or <code>block</code>, as it was laid out).</li>
 <li>Each tag takes its own attributes: no <code>background</code> or <code>gap</code> on a Text (its colour is <code>color</code>), no text
@@ -991,7 +995,15 @@ styles on a Frame, no auto layout on a shape; an element&#39;s id is given once 
 <li>An element without <code>id</code> creates a layer: <code>Frame</code>, <code>Section</code>, <code>Text</code>, <code>Rectangle</code>, <code>Ellipse</code>,
 <code>Line</code>, <code>Instance</code>, <code>Component</code>, <code>ComponentSet</code>, <code>Image</code>, <code>Icon</code>, <code>Slot</code>. It goes inside its parent
 element, after the element before it (alone: last); at the top level into <code>parent</code> or the current page, or next
-to a layer with <code>before=&quot;id&quot;</code> / <code>after=&quot;id&quot;</code>. Groups and vectors are not drawn from XML: use an <code>Icon</code>.</li>
+to a layer with <code>before=&quot;id&quot;</code> / <code>after=&quot;id&quot;</code>, or onto a page (below). Groups and vectors are not drawn from
+XML: use an <code>Icon</code>.</li>
+<li><strong>A page:</strong> a top-level <code>&lt;Page name=&quot;Screens&quot;&gt;…&lt;/Page&gt;</code> makes a new page, last in the file, and creates the
+layers inside it there in the XML&#39;s order, each placed by its <code>left</code> and <code>top</code> (without them, beside the ones
+before it); a layer named by its id inside it moves onto the new page. A dry run lists the page it would make.
+<code>&lt;Page id=&quot;…&quot;&gt;</code> (an id from <code>file_map</code>) is a page the file has: <code>name</code> renames it, the layers inside it are
+written where they are, new ones go on it. A page takes only a name, stands only at the top level, and is never
+deleted or reordered. Figma&#39;s Starter plan allows 3 pages: past that the error names the limit, and nothing
+inside that page is made.</li>
 <li>A new layer has what its XML says and nothing more: no fill without <code>background</code>, no clipping without
 <code>overflow</code>; a new auto layout frame hugs unless sized; a new text is black unless <code>color</code> says otherwise.</li>
 <li><strong>A copy:</strong> <code>&lt;Frame copyOf=&quot;54:268&quot; name=&quot;Card 2&quot;&gt;</code> clones that layer (everything the XML cannot show comes
@@ -1005,19 +1017,31 @@ root&#39;s id, add <code>copyOf</code>, change the title, add a new layer in the
 instance by the names design_read and components_read write: the file&#39;s components, the ones its page uses from a
 library, or <code>component=&quot;key:&lt;key&gt;&quot;</code> for a library one the file does not use yet (<code>library_search</code> finds those
 keys in the libraries saved with it). <code>variant</code> picks the variant
-(values left out are the set&#39;s default), <code>props</code> sets text and boolean properties (names without Figma&#39;s #id).</li>
+(values left out are the set&#39;s default), <code>props</code> sets its properties by their names without Figma&#39;s #id: a
+text, <code>true</code> or <code>false</code> for a boolean, and for an instance swap the component to show, by the name a
+<code>component</code> takes (a set&#39;s name shows its default variant) or <code>key:&lt;key&gt;</code> (<code>props=&quot;Icon=Heart&quot;</code>).</li>
 <li>Inside a new instance, elements with another instance&#39;s ids (of the same component and variant) or the
 component&#39;s own write the new instance&#39;s layers, as overrides; the other instance stays as it is.
 <code>&lt;Instance copyOf=&quot;id&quot;&gt;</code> copies an instance with its overrides instead.</li>
 <li>An existing instance: <code>variant</code> switches it, <code>props</code> changes its properties, <code>component</code> swaps it to
-another component. A comma or <code>=</code> inside a name or value is escaped with a backslash, as design_read writes it.</li>
+another component. A comma or <code>=</code> inside a name or value is escaped with a backslash, as design_read writes it.
+A switch or a swap gives the instance&#39;s layers new ids, so a call that switches an instance (or a copy, or one
+nested in a new instance) refuses edits of its layers by their old ids: switch first, read it again, then edit.</li>
 <li><code>&lt;Component name=&quot;Badge&quot;&gt;…&lt;/Component&gt;</code> makes a component like a frame; inside it, <code>prop=&quot;Label&quot;</code> on a
-Text makes a text property bound to it and <code>visibleProp=&quot;Shown&quot;</code> makes a boolean property bound to the layer&#39;s
-visibility. <code>&lt;ComponentSet name=&quot;Badge&quot;&gt;</code> holds <code>&lt;Component variant=&quot;Tone=Dark&quot;&gt;</code> variants: they are
-combined into one set (the properties defined once on it) and laid out in a grid; a set given <code>display=&quot;flex&quot;</code>
-or <code>&quot;grid&quot;</code> lays them out itself, each variant placed by its own <code>grid-row</code>/<code>grid-column</code>, <code>align-self</code>
-or <code>flex</code>. <code>description</code> describes a
-component or a set; an instance of a new component can follow later in the same XML.</li>
+Text makes a text property bound to it, <code>visibleProp=&quot;Shown&quot;</code> a boolean property bound to the layer&#39;s
+visibility, and <code>swapProp=&quot;Icon&quot;</code> on an Instance an instance swap property whose default is that instance&#39;s
+component (instances then take <code>props=&quot;Icon=Heart&quot;</code>). <code>&lt;ComponentSet name=&quot;Badge&quot;&gt;</code> holds
+<code>&lt;Component variant=&quot;Tone=Dark&quot;&gt;</code> variants: they are combined into one set (the properties defined once on it)
+and laid out in a grid; a set given <code>display=&quot;flex&quot;</code> or <code>&quot;grid&quot;</code> lays them out itself, each variant placed by
+its own <code>grid-row</code>/<code>grid-column</code>, <code>align-self</code> or <code>flex</code>. <code>description</code> describes a component or a set;
+an instance of a new component can follow later in the same XML.</li>
+<li>An existing component takes properties the same way, so it never has to be rebuilt: <code>prop</code>, <code>visibleProp</code> and
+<code>swapProp</code> on its layers by their ids (<code>&lt;Instance id=&quot;54:12&quot; swapProp=&quot;Icon&quot;/&gt;</code>), or on new layers inside its
+<code>&lt;Component id=&quot;…&quot;&gt;</code>, bind each layer to the property of that name the component has (a variant&#39;s: its set&#39;s), or
+add the property once when it has none, its default the layer&#39;s value now (the text, whether it shows, the
+instance&#39;s component). A name a property of another kind holds is an error; a layer no component holds, or one
+inside an instance, is refused. <code>properties</code> in the answer lists what was added to existing components (a dry
+run&#39;s: what would be).</li>
 <li><code>&lt;Slot name=&quot;Content&quot;&gt;</code> makes a slot in a new component; in an instance, give its <code>&lt;Slot id=&quot;…&quot;&gt;</code> new layers.</li>
 </ul>
 <h3>Images, icons and notes</h3>
@@ -1031,6 +1055,10 @@ open-source icon (Lucide, Material Symbols, Tabler…) and inserts it at a size,
 assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
 the originals; a picture saved over it is a new image. An existing icon is replaced by deleting it and creating a
 new one.</li>
+<li>An <code>Icon</code>&#39;s <code>width</code> or <code>height</code>, new or existing, scales it whole as Figma&#39;s scale tool does: its lines and
+corners grow with it (a 24px icon with a 2px line at 48px has a 4px line). The drawing keeps its ratio: the width
+decides when both are given, else the height. The size is the one design_read writes (what the icon draws past
+its box included); a <code>Frame</code> with the same id only resizes, its lines staying as they are.</li>
 <li><code>note=&quot;Behavior: opens the modal | Spacing: 8px&quot;</code> writes the layer&#39;s Dev Mode notes, the whole list, as
 design_read writes it (<code>note=&quot;&quot;</code> removes them). <code>Behavior: </code> files a note under the file&#39;s annotation category of
 that name; a name the file has no category for stays part of the text (no category is made). <code>|</code> separates the
@@ -1044,7 +1072,12 @@ design_read does not show, stay.</li>
 <li>Lengths in px (a bare number in a size, a place, a gap, a padding or a radius is taken as px; a bare line height
 is a multiple of the font size, as in CSS); <code>var(--Name)</code> binds the variable or style of that name, as <code>design_read</code> and <code>tokens_read</code>
 write them (a paint style, a colour or number variable, an effect style, on <code>box-shadow</code> or on a blur:
-<code>backdrop-filter=&quot;var(--Blur-Backdrop)&quot;</code>); <code>textStyle=&quot;h3&quot;</code> applies a text style.</li>
+<code>backdrop-filter=&quot;var(--Blur-Backdrop)&quot;</code>); <code>textStyle=&quot;h3&quot;</code> applies a text style. A shadow&#39;s colour can be a
+colour variable, inset and in <code>text-shadow</code> too: <code>box-shadow=&quot;0 4px 12px 0 var(--shadow)&quot;</code> binds it, and
+design_read writes a bound one so. The variable is the shadow&#39;s whole colour, its alpha too, so it takes no
+<code>color-mix()</code>: make a variable with that alpha.</li>
+<li>design_apply binds tokens and never makes them: a new variable (or paint, text or effect style) is created with
+<code>tokens_apply</code> first, then bound here by its name. A <code>var()</code> that names none is an error naming the near ones.</li>
 <li><code>font</code> is the shorthand <code>[italic] weight size/line-height &#39;Family&#39;</code>; Figma must have the family and that
 weight, or the error lists the styles it has.</li>
 <li>Sizes: <code>width</code>/<code>height</code> in px or <code>auto</code>; <code>flex=&quot;1&quot;</code> fills an auto layout parent&#39;s direction,

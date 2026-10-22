@@ -1,4 +1,4 @@
-import { Color } from "../../kernel/color/color.ts";
+import { Color, type ColorValue } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
 import { styleTokenName } from "../../kernel/names.ts";
 import { roundTo } from "../../kernel/numbers.ts";
@@ -9,6 +9,7 @@ import type { EffectSpec } from "../figma-props.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../property-group.ts";
 import { lengthOf, splitTop, tokenOf } from "../values/css-values.ts";
 import { px } from "../values/format.ts";
+import { aliasId, boundVariable, colorToken, paintOf } from "../values/paints.ts";
 
 const EFFECTS = ["box-shadow", "text-shadow", "filter", "backdrop-filter"];
 
@@ -36,12 +37,23 @@ export function readEffects(node: SnapshotNode, css: CssDeclarations, context: C
   readBlurs(effects, css);
 }
 
-/** Shadows as a box-shadow list, top first (an effect style's value, for the tokens). */
-export function shadowListCss(effects: readonly SnapshotEffect[], space: ColorSpace = "srgb"): string {
+/**
+ * Shadows as a box-shadow list, top first (an effect style's value, for the tokens): a colour bound to a variable
+ * `names` has a token for (by id) as its var(), any other as its colour.
+ */
+export function shadowListCss(
+  effects: readonly SnapshotEffect[],
+  space: ColorSpace = "srgb",
+  names: ReadonlyMap<string, string> = new Map(),
+): string {
   return effects
     .filter((effect) => (effect.visible ?? true) && (effect.type === "DROP_SHADOW" || effect.type === "INNER_SHADOW"))
     .toReversed()
-    .map((effect) => shadowCss(effect, false, space))
+    .map((effect) => {
+      const name = names.get(aliasId(effect.boundVariables?.color) ?? "");
+
+      return shadowCss(effect, false, name === undefined ? colorCss(effect, space) : `var(${name})`);
+    })
     .join(", ");
 }
 
@@ -59,7 +71,15 @@ function readShadows(
   const shadows = effects
     .filter((effect) => effect.type === "DROP_SHADOW" || (effect.type === "INNER_SHADOW" && !isText))
     .toReversed()
-    .map((effect) => shadowCss(effect, isText, context.colorSpace))
+    .map((effect) => {
+      const variable = boundVariable(effect.boundVariables?.color, context);
+
+      return shadowCss(
+        effect,
+        isText,
+        variable === null ? colorCss(effect, context.colorSpace) : `var(${colorToken(variable, context)})`,
+      );
+    })
     .join(", ");
 
   if (shadows === "") {
@@ -95,17 +115,22 @@ function readBlurs(effects: readonly SnapshotEffect[], css: CssDeclarations): vo
   }
 }
 
-function shadowCss(effect: SnapshotEffect, isText: boolean, space: ColorSpace | undefined): string {
+/** A shadow as CSS writes it, with its colour as given: a colour, or the var() of its colour variable. */
+function shadowCss(effect: SnapshotEffect, isText: boolean, color: string | null): string {
   const parts = [
     effect.type === "INNER_SHADOW" ? "inset" : null,
     px(effect.offset?.x ?? 0),
     px(effect.offset?.y ?? 0),
     px(effect.radius ?? 0),
     isText ? null : px(effect.spread ?? 0),
-    effect.color === undefined ? null : Color.of(effect.color, space).css(),
+    color,
   ];
 
   return parts.filter((part) => part !== null).join(" ");
+}
+
+function colorCss(effect: SnapshotEffect, space: ColorSpace | undefined): string | null {
+  return effect.color === undefined ? null : Color.of(effect.color, space).css();
 }
 
 /** A progressive blur's run, in CSS radii, from where it starts to where it ends (percents of the box). */
@@ -227,10 +252,13 @@ function shadowsOf(attribute: string, shadows: string | undefined, out: WriteOut
   for (const shadow of shadows === undefined || shadows === "none" ? [] : splitTop(shadows, ",")) {
     const words = splitTop(shadow, " ");
     const lengths = words.map(lengthOf).filter((length): length is number => typeof length === "number");
-    const color = Color.parse(words.filter((word) => word !== "inset" && typeof lengthOf(word) !== "number").join(" "));
+    const color = shadowColor(words.filter((word) => word !== "inset" && typeof lengthOf(word) !== "number").join(" "));
 
-    if (lengths.length < 2 || lengths.length > 4 || color === null) {
-      out.fail(attribute, `"${shadow}" is not a shadow: [inset] x y [blur] [spread] and a colour.`);
+    if (lengths.length < 2 || lengths.length > 4 || color === null || typeof color === "string") {
+      out.fail(
+        attribute,
+        typeof color === "string" ? color : `"${shadow}" is not a shadow: [inset] x y [blur] [spread] and a colour.`,
+      );
 
       return null;
     }
@@ -239,7 +267,7 @@ function shadowsOf(attribute: string, shadows: string | undefined, out: WriteOut
 
     list.push({
       type: words.includes("inset") ? "INNER_SHADOW" : "DROP_SHADOW",
-      color: color.value(),
+      ...color,
       x,
       y,
       radius,
@@ -248,4 +276,27 @@ function shadowsOf(attribute: string, shadows: string | undefined, out: WriteOut
   }
 
   return list;
+}
+
+/**
+ * A shadow's colour, read as a background's: a colour, or a colour variable's token (no colour); why not, when a token
+ * is mixed with transparent (Figma's shadow takes its variable's whole colour), or the shadow's error when it is none.
+ */
+function shadowColor(value: string): { color: ColorValue | null; token?: string } | string | null {
+  const paint = paintOf(value);
+
+  if (paint?.kind === "color") {
+    return { color: paint.color };
+  }
+
+  if (paint?.kind !== "token") {
+    return null;
+  }
+
+  return paint.opacity === 1
+    ? {
+        color: null,
+        token: paint.token,
+      }
+    : `A shadow's colour variable is its whole colour, its alpha too: write var(${paint.token}) alone, or make a variable with that alpha with tokens_apply first.`;
 }

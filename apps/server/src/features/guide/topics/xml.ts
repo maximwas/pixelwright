@@ -48,8 +48,8 @@ text-decoration-thickness), text-align, text-wrap, color.
   parent element: give that parent \`position: relative\`. Constraints: right/bottom when pinned to the end,
   \`calc(50% ± n px)\` when centred, left and right without a width when stretched, percents when scaled.
 - A turned layer has \`transform: rotate()\` and is placed by its centre; a mirrored one \`scaleX(-1)\`.
-- Colours bound to a style or variable are \`var(--Name)\` (see \`guide tokens\`); values for them are in the JSON
-  \`tokens\`. In a Display P3 file every colour is \`color(display-p3 r g b)\` (as tokens_read writes it too): keep
+- Colours bound to a style or variable are \`var(--Name)\`, a shadow's colour too (see \`guide tokens\`); values for
+  them are in the JSON \`tokens\`. design_apply binds only tokens the file has: \`tokens_apply\` creates new ones. In a Display P3 file every colour is \`color(display-p3 r g b)\` (as tokens_read writes it too): keep
   it so, it is what the designer chose. A text with a \`textStyle\` carries only what differs from the style; \`textStyles\` holds the style's font.
 - Lengths are whole pixels; letter spacing keeps fractions.
 
@@ -68,7 +68,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 - \`$exposed="true"\`: a nested instance its component exposes: its properties are the component's API too.
 - \`$visibleProp="Show subtitle"\`, \`$prop="Title"\`, \`$swapProp="Icon"\`: a component's layer bound to its
   properties: the boolean one that shows it, the text one its characters show, the instance swap one it is. In code
-  they are the component's props; design_apply makes them only in a new Component (\`visibleProp\`, \`prop\`).
+  they are the component's props; design_apply binds and adds them with \`visibleProp\`, \`prop\` and \`swapProp\`
+  (see \`guide write\`).
 - \`$css\` holds \`property: value\` pairs only, explained in hints: \`blur: progressive from 0px at 50% 0% to 8px at
   50% 100%\` (a blur that changes across the layer; \`filter\` holds its end radius) and \`stroke-align: center\` (half
   of the stroke paints outside the box, which a border-box border does not; \`inspect\` gives the painted box),

@@ -69,13 +69,16 @@ function variableDraft(
   variable: InputVariable,
   fail: (variable: InputVariable, message: string, mode?: string) => void,
 ): VariableDraft | null {
-  if (variable.type !== undefined && !isWritableType(variable.type)) {
+  // Figma's types are upper case; "color" means the same.
+  const given = variable.type?.toUpperCase();
+
+  if (given !== undefined && !isWritableType(given)) {
     fail(variable, `${variable.type} variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can.`);
 
     return null;
   }
 
-  let type: WritableVariableType | null = variable.type ?? null;
+  let type: WritableVariableType | null = given ?? null;
   const values: Record<string, VariableValueSpec> = {};
   let failed = false;
 

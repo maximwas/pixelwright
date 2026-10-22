@@ -1,5 +1,6 @@
-/** Tags design_apply can create. */
+/** Tags design_apply can create: a Page only at the top level, empty but for the layers the XML puts in it. */
 export const CREATABLE_TAGS: ReadonlySet<string> = new Set([
+  "Page",
   "Frame",
   "Section",
   "Text",
@@ -71,6 +72,7 @@ export const META_ATTRIBUTES: ReadonlySet<string> = new Set([
   "copyOf",
   "prop",
   "visibleProp",
+  "swapProp",
 ]);
 
 /** A Figma layer id: 54:243, or an instance's layer I54:268;54:211. */

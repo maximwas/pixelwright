@@ -23,12 +23,19 @@ export function readGeometry(entry: LayerEntry): void {
     entry.set("bounds", boxFrom(node.absoluteBoundingBox, context));
   }
 
+  const drawn = drawnPast(node);
+
+  if (drawn !== null) {
+    entry.set("renderBounds", boxFrom(drawn, context));
+  }
+}
+
+/** The box a layer draws in when it reaches past its own (centred or outside strokes, shadows): an icon's read size. */
+export function drawnPast(node: SceneNode): Rect | null {
   const drawn = ("absoluteRenderBounds" in node ? node.absoluteRenderBounds : null) ?? null;
   const own = node.absoluteBoundingBox;
 
-  if (drawn !== null && own !== null && reachesPast(drawn, own)) {
-    entry.set("renderBounds", boxFrom(drawn, context));
-  }
+  return drawn !== null && own !== null && reachesPast(drawn, own) ? drawn : null;
 }
 
 /** Whether a layer draws past its own box by more than half a pixel (centred or outside strokes, shadows). */

@@ -30,7 +30,7 @@ export interface SetFinishing {
   made(change: ApplyChange, node: SceneNode): void;
   readonly components: ComponentIndex;
   readonly marks: PropertyMarks;
-  readonly layers: Map<string, SceneNode | null>;
+  readonly layers: Map<string, PageNode | SceneNode | null>;
 }
 
 /**
@@ -97,7 +97,7 @@ export class PendingSets {
       await this.#finish(pending);
     }
 
-    this.#run.marks.bindOutside(new Set(this.#pending.map(({ holder }) => holder.id)));
+    await this.#run.marks.bindOutside(new Set(this.#pending.map(({ holder }) => holder.id)));
   }
 
   async #finish(pending: Pending): Promise<void> {

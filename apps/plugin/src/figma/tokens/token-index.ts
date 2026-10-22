@@ -2,9 +2,12 @@ import { closest, type RawTokens, styleName, styleTokenName, variableTokenName }
 import { IdLookup } from "../id-lookup.ts";
 import { WriteError } from "../write-error.ts";
 import { type LibraryVariable, libraryVariablesByToken } from "./libraries.ts";
-import { tokensOfOtherPages, tokensUnder } from "./raw-tokens-builder.ts";
+import { tokensOfOtherPages, tokensUnder, type UsedTokens } from "./raw-tokens-builder.ts";
 
 export type StyleKind = "PAINT" | "EFFECT" | "TEXT";
+
+/** The index keeps ids, names and types: no style's CSS, which costs a getCSSAsync per gradient style. */
+const NAMES_ONLY: UsedTokens = { css: false };
 
 /** A variable as a check needs it: a library's not yet imported has the id `library:<key>`. */
 export interface VariableRef {
@@ -37,7 +40,7 @@ export class TokenIndex {
   static async of(lookup: IdLookup = new IdLookup()): Promise<TokenIndex> {
     const index = new TokenIndex(lookup);
 
-    index.#take(await tokensUnder(figma.currentPage));
+    index.#take(await tokensUnder(figma.currentPage, NAMES_ONLY));
 
     return index;
   }
@@ -207,11 +210,14 @@ function ofType<V extends { readonly resolvedType: string }>(
   return variable;
 }
 
+/** A token no one has: the near one, and where a new one comes from (tokens_apply makes tokens, design_apply binds them). */
 function unknownToken(what: string, token: string, candidates: Iterable<string>): WriteError {
   const near = closest(token, candidates);
 
   return new WriteError(
     `No ${what} is named ${token} in this file or the libraries it uses.`,
-    near === null ? "tokens_read lists the file's tokens." : `Did you mean ${near}?`,
+    near === null
+      ? "tokens_read lists the file's tokens; create a new one with tokens_apply first."
+      : `Did you mean ${near}? A new one: create it with tokens_apply first.`,
   );
 }

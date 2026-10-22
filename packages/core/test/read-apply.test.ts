@@ -226,6 +226,34 @@ describe("readApply", () => {
     ]);
   });
 
+  it("reads a top-level Page with its layers, takes only a name on it, and skips a page inside a layer", () => {
+    const { elements, errors } = readApply(
+      [
+        '<Page name="Screens" background="#FFF">',
+        '  <Frame name="Home"/>',
+        "</Page>",
+        '<Page id="0:1"/>',
+        '<Frame id="1:1">',
+        '  <Page name="Inner"><Frame name="Lost"/></Page>',
+        "</Frame>",
+      ].join("\n"),
+    );
+
+    expect(elements.map(({ tag, ref, parent, attributes }) => [tag, ref, parent, attributes])).toEqual([
+      ["Page", "new:1", null, { name: "Screens" }],
+      ["Frame", "new:2", "new:1", { name: "Home" }],
+      ["Page", "0:1", null, { id: "0:1" }],
+      ["Frame", "1:1", null, { id: "1:1" }],
+    ]);
+    expect(errors.map(({ line, attribute }) => [line, attribute])).toEqual([
+      [1, "background"],
+      [6, undefined],
+      [6, undefined],
+    ]);
+    expect(errors[0]?.message).toMatch(/takes only a name/);
+    expect(errors[1]?.message).toMatch(/top level/);
+  });
+
   it("leaves a text as it is when its element has no content, so a partial edit never empties it", () => {
     const [empty, closed, written] = readApply(
       '<Text id="1:2" color="#F00"/>\n<Text id="1:3"></Text>\n<Text id="1:4">Hi</Text>',

@@ -2007,7 +2007,8 @@
         "parent": "1:1",
         "index": 0,
         "attributes": {
-          "id": "1:2"
+          "id": "1:2",
+          "prop": "Label"
         },
         "content": [
           {
@@ -2024,23 +2025,15 @@
         "line": 1,
         "column": 17,
         "attribute": "prop",
-        "message": "prop makes a property of a new <Component>: this layer is in none.",
-        "hint": "Use it on the layers inside a <Component> you create."
+        "message": "prop makes a property of the <Component> holding the layer: this new layer is in none.",
+        "hint": "Use it on the layers inside a <Component> you create, or on an existing component's: by their ids, or new ones inside its element."
       },
       {
         "line": 1,
         "column": 17,
         "attribute": "visibleProp",
-        "message": "visibleProp makes a property of a new <Component>: this layer is in none.",
-        "hint": "Use it on the layers inside a <Component> you create."
-      },
-      {
-        "line": 2,
-        "column": 21,
-        "id": "1:2",
-        "attribute": "prop",
-        "message": "prop makes a property of a new <Component>: this layer is in none.",
-        "hint": "Use it on the layers inside a <Component> you create."
+        "message": "visibleProp makes a property of the <Component> holding the layer: this new layer is in none.",
+        "hint": "Use it on the layers inside a <Component> you create, or on an existing component's: by their ids, or new ones inside its element."
       }
     ]
   },

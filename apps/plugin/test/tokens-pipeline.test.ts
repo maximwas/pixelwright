@@ -108,11 +108,13 @@ beforeEach(() => {
                 type: "INNER_SHADOW",
                 visible: true,
                 blendMode: "NORMAL",
-                color: {
-                  r: 0,
-                  g: 0,
-                  b: 0,
-                  a: 0.25,
+                // Its colour bound to a variable, as Figma keeps one: the variable's colour.
+                color: BLACK,
+                boundVariables: {
+                  color: {
+                    type: "VARIABLE_ALIAS",
+                    id: "V:ink",
+                  },
                 },
                 offset: {
                   x: 0,
@@ -249,7 +251,12 @@ describe("tokens_apply end to end", () => {
     expect(read.tokens?.styles).toMatchObject({
       paint: [{ name: "Veil" }],
       text: [{ name: "Heading/h2" }],
-      effect: [{ name: "Card" }],
+      effect: [
+        {
+          name: "Card",
+          value: "inset 0 0 4px 1px var(--color-ink), 0 5px 0 0 #191A23",
+        },
+      ],
     });
 
     expect(applied).toEqual({

@@ -31,7 +31,7 @@ type Check = (candidate: Candidate) => Admission | null;
 
 /**
  * Whether an element is read, the checks in their order: a new element under a parent that was not made, a stray
- * Span, an unknown tag, an id that is no Figma id, a copy with an id, an id given twice (the id is taken once this
+ * Span, an unknown tag, a Page inside a layer, an id that is no Figma id, a copy with an id, an id given twice (the id is taken once this
  * passes), and what a new layer of its tag cannot be made without. Null admits it.
  */
 export function admissionOf(candidate: Candidate): Admission | null {
@@ -76,6 +76,14 @@ const unknownTag: Check = ({ node }) => {
     hint: near === null ? "Tags are Figma layer types: Frame, Text, Rectangle…" : `Did you mean <${near}>?`,
   };
 };
+
+const pageInLayer: Check = ({ node, scope }) =>
+  node.type === "Page" && (scope.parentRef !== null || scope.skippedParent !== null || scope.copy !== null)
+    ? {
+        action: "skip",
+        message: "A <Page> stands at the top level: a page holds layers, and no layer holds a page.",
+      }
+    : null;
 
 const notLayerId: Check = ({ named }) =>
   named !== null && !LAYER_ID.test(named)
@@ -129,6 +137,7 @@ const CHECKS: readonly Check[] = [
   notCreated,
   spanOutsideText,
   unknownTag,
+  pageInLayer,
   notLayerId,
   copyWithId,
   givenTwice,

@@ -2,6 +2,7 @@ import { type ApplyChange, closest, type FigmaProps } from "@pixelwright/core";
 import { assign } from "../../../figma/assign.ts";
 import type { TypedLayer } from "../../../figma/capabilities.ts";
 import type { ComponentIndex } from "../../../figma/component-index.ts";
+import { loadTextFonts } from "../../../figma/fonts.ts";
 import { type ComponentOwner, ownerOf, valuesOf, variantFor, variantName } from "../../../figma/variants.ts";
 import { WriteError } from "../../../figma/write-error.ts";
 
@@ -174,7 +175,17 @@ async function setProps(
     values[key] = await propertyValue(own[key]?.type, value, index);
   }
 
+  await loadShownFonts(node, Object.keys(values));
   node.setProperties(values);
+}
+
+/** Figma retypes the texts a text property shows, which needs their fonts loaded, as setting characters does. */
+async function loadShownFonts(node: InstanceNode, keys: readonly string[]): Promise<void> {
+  const texts = node
+    .findAllWithCriteria({ types: ["TEXT"] })
+    .filter((text) => keys.includes(text.componentPropertyReferences?.characters ?? ""));
+
+  await loadTextFonts(texts);
 }
 
 /** A property's value as Figma takes it: a swap names a component by its id, a boolean is true or false. */

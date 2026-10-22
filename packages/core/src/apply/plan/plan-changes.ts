@@ -1,9 +1,11 @@
 import { isLayoutDisplay } from "../../css-mapping/groups/layout/layout.ts";
+import { isInInstance } from "../../kernel/layer-ids.ts";
 import { changeOf } from "../change-of.ts";
 import type { ApplyChange, ApplyElement, ApplyError } from "../types.ts";
 import type { Assessment } from "./assessment.ts";
 import type { CurrentLayers } from "./current-layers.ts";
 import { movedRefs } from "./moves.ts";
+import { writesSomething } from "./send-list.ts";
 
 /** What the files an element names change: attributes written again (their file holds another image), problems. */
 export interface FileChanges {
@@ -63,8 +65,63 @@ export function planChanges({ elements, assessed, layers, files }: PlanInput): {
   }
 
   return {
-    changes,
+    changes: withoutSwitchedLayers(changes, errors),
     errors,
+  };
+}
+
+/**
+ * The changes less those that write a layer inside an instance the call switches to another variant or component,
+ * each refused with an error: Figma gives that instance's layers new ids (live, 2026-10-22), so the real run would no
+ * longer find the layer once the switch is written, while a dry run, which switches nothing, would.
+ */
+function withoutSwitchedLayers(changes: readonly ApplyChange[], errors: ApplyError[]): ApplyChange[] {
+  const switched = changes.filter(switches);
+
+  return changes.filter((change) => {
+    const instance = writesSomething(change) ? switched.find((other) => isLayerOf(change, other)) : undefined;
+
+    if (instance !== undefined) {
+      errors.push(switchedError(change, instance));
+    }
+
+    return instance === undefined;
+  });
+}
+
+/** An instance there (in the file, a copy or a new instance) given a component or a variant, or a copy given one. */
+function switches(change: ApplyChange): boolean {
+  const { component, variant } = change.props;
+
+  return (
+    change.tag === "Instance" &&
+    (change.kind === "update" || change.copyOf !== undefined) &&
+    (component !== undefined || variant !== undefined)
+  );
+}
+
+/** Whether a change names a layer inside the instance: by the instance's ids, where the instance's layers are named. */
+function isLayerOf(change: ApplyChange, instance: ApplyChange): boolean {
+  // A copy's own layers are named inside it by the copied layer's ids; any other's where the instance itself is.
+  const scope = instance.copyOf === undefined ? instance.copy : instance.ref;
+  const id = instance.copyOf ?? instance.source ?? instance.id;
+  const named = change.source ?? change.id;
+
+  return change.copy === scope && id !== null && named !== null && isInInstance(named, id);
+}
+
+function switchedError(change: ApplyChange, instance: ApplyChange): ApplyError {
+  const to = instance.props.component === undefined ? "variant" : "component";
+  const where =
+    instance.id ??
+    (instance.copyOf === undefined ? `the instance standing for ${instance.source}` : `the copy of ${instance.copyOf}`);
+
+  return {
+    line: change.line,
+    column: change.column,
+    ...(change.id === null ? {} : { id: change.id }),
+    message: `This layer is inside ${where}, which this call switches to another ${to}: Figma gives the instance's layers new ids then, so this layer is not written.`,
+    hint: `Switch the ${to} first, read the instance again, then edit its layers by their new ids.`,
   };
 }
 

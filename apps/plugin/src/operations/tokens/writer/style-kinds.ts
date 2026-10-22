@@ -9,7 +9,7 @@ import {
   type TextStylePlan,
   weightOf,
 } from "@pixelwright/core";
-import { effectKey, effectsOf, mergedEffects } from "../../../figma/effects.ts";
+import { checkEffects, effectKey, effectsOf, mergedEffects } from "../../../figma/effects.ts";
 import { paintsOf, samePaints } from "../../../figma/paints.ts";
 import type { TokenIndex } from "../../../figma/tokens/token-index.ts";
 import { WriteError } from "../../../figma/write-error.ts";
@@ -158,19 +158,33 @@ function textExtras(
   };
 }
 
-export const EFFECT_STYLES: StyleKind<EffectStylePlan, EffectStyle, Effect[]> = {
+export const EFFECT_STYLES: StyleKind<EffectStylePlan, EffectStyle, Effect[] | null> = {
   kind: "effect",
   spec: ({ effects, covers }) => ({
     effects,
     covers,
   }),
   local: () => figma.getLocalEffectStylesAsync(),
-  // What the CSS names is replaced, the rest kept: tokens_read shows only shadows, so its CSS keeps a style's blurs.
-  next: async ({ effects, covers }, held) => mergedEffects(held?.effects ?? [], effectsOf(effects), new Set(covers)),
-  holds: (style, effects) => sameValue(style.effects.map(effectKey), effects.map(effectKey)),
+  next: async ({ effects, covers }, held, run) => {
+    // A dry run only finds a shadow's colour variable: binding a library's would import it, which writes to the file.
+    if (run.dryRun && (await checkEffects(effects, await run.index()))) {
+      return null;
+    }
+
+    // What the CSS names is replaced, the rest kept: tokens_read shows only shadows, so its CSS keeps a style's blurs.
+    return mergedEffects(held?.effects ?? [], await effectsOf(effects, { tokens: () => run.index() }), new Set(covers));
+  },
+  holds: (style, effects) =>
+    effects !== null &&
+    sameValue(
+      style.effects.map((effect) => effectKey(effect)),
+      effects.map((effect) => effectKey(effect)),
+    ),
   make: () => figma.createEffectStyle(),
   write: (style, effects) => {
-    style.effects = effects;
+    if (effects !== null) {
+      style.effects = effects;
+    }
   },
 };
 

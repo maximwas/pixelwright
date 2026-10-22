@@ -70,7 +70,9 @@ function sameShadow(mine: Shadow, theirs: Shadow | undefined): boolean {
       [theirs.x, theirs.y, theirs.radius, theirs.spread],
       LENGTH_PRECISION,
     ) &&
-    Color.fromValue(mine.color).equals(Color.fromValue(theirs.color), COLOR_PRECISION)
+    (mine.color === null || theirs.color === null
+      ? mine.token === theirs.token
+      : Color.fromValue(mine.color).equals(Color.fromValue(theirs.color), COLOR_PRECISION))
   );
 }
 

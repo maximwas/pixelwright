@@ -7,3 +7,8 @@
 export function isDefaultSlotContent(id: string, slotId: string): boolean {
   return id.startsWith("I") && !id.startsWith(`${slotId};`);
 }
+
+/** Whether a layer id names a layer inside the instance: I<instance>;… for a top one, <its id>;… for a nested one. */
+export function isInInstance(id: string, instanceId: string): boolean {
+  return id.startsWith(`${instanceId.startsWith("I") ? instanceId : `I${instanceId}`};`);
+}

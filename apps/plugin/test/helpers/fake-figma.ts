@@ -41,6 +41,26 @@ function walk(node: FakeNode, out: FakeNode[]): void {
   }
 }
 
+/**
+ * A component's layer as an instance holds it: its fields, and an id under the instance's (I8:2;7:12 in the component
+ * is I<instance>;8:2;7:12 there; I<outer>;<nested>;… in a nested instance).
+ */
+function sublayerOf(layer: FakeNode, instanceId: string): Record<string, unknown> {
+  const { children, parent: _parent, id: own, mainComponent, ...rest } = layer;
+
+  return {
+    ...structuredClone(
+      Object.fromEntries(
+        Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
+      ),
+    ),
+    // A nested instance shows the same component as the one in the component it was made of.
+    ...(mainComponent === undefined ? {} : { mainComponent }),
+    id: `${instanceId.startsWith("I") ? instanceId : `I${instanceId}`};${own.replace(/^I/, "")}`,
+    children: (children ?? []).map((child) => sublayerOf(child, instanceId)),
+  };
+}
+
 /** Builds a node tree from a spec, wiring parents, findAll and getMainComponentAsync like Figma's. */
 export function tree(spec: Spec, parent: FakeNode | null = null): FakeNode {
   const { children, ...rest } = spec;
@@ -120,6 +140,8 @@ export interface FakeLibrary {
   readonly pages?: FakeNode[];
   /** How many modes a collection may have (Figma's plan limit): addMode refuses past it. Default 4. */
   readonly modeLimit?: number;
+  /** How many pages the file may have (Figma's Starter plan: 3): createPage refuses past it. Default: no limit. */
+  readonly pageLimit?: number;
   /** Fonts listed but that loadFontAsync cannot load (a missing file, a broken font). */
   readonly unloadable?: readonly { family: string; style: string }[];
   /** An enabled library's variables as importVariableByKeyAsync brings them in, by key. */
@@ -233,6 +255,16 @@ export interface FakeWrites {
   readonly created: FakeNode[];
 }
 
+/** How the fake keeps its layers: findable by id, and an instance's made again when its main component changes. */
+interface FakeLayers {
+  register(node: FakeNode): void;
+  /**
+   * As Figma after a variant switch or a swap (live, 2026-10-22): the instance's layers are the new main component's,
+   * with ids of their own (I119:9;54:190 became I119:9;54:196), and the old ids are gone.
+   */
+  follow(instance: FakeNode): void;
+}
+
 const fontKey = (font: { family: string; style: string }) => `${font.family} ${font.style}`;
 
 const SOLID = (r: number, g: number, b: number) => ({
@@ -284,6 +316,34 @@ const DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
     width: 0,
   },
 };
+
+/**
+ * As Figma's rescale (the scale tool): the layer and everything inside it scaled, their boxes, line weights and corner
+ * radii too.
+ */
+function scaled(node: FakeNode, factor: number): void {
+  for (const key of ["width", "height", "strokeWeight", "cornerRadius"]) {
+    if (typeof node[key] === "number") {
+      node[key] = (node[key] as number) * factor;
+    }
+  }
+
+  for (const key of ["absoluteBoundingBox", "absoluteRenderBounds"]) {
+    const box = node[key] as { width: number; height: number } | undefined;
+
+    if (box !== undefined && box !== null) {
+      node[key] = {
+        ...box,
+        width: box.width * factor,
+        height: box.height * factor,
+      };
+    }
+  }
+
+  for (const child of node.children ?? []) {
+    scaled(child, factor);
+  }
+}
 
 /** The new layers that take a stroke weight per side. */
 const STROKE_SIDED = new Set(["FRAME", "COMPONENT", "RECTANGLE"]);
@@ -398,12 +458,7 @@ const RANGE_METHODS: Readonly<Record<string, string>> = {
 };
 
 /** Gives a node Figma's writing methods, recording each call; a text refuses new characters until its font loads. */
-function writable(
-  node: FakeNode,
-  writes: FakeWrites,
-  register: (node: FakeNode) => void,
-  options: FakeOptions = {},
-): void {
+function writable(node: FakeNode, writes: FakeWrites, layers: FakeLayers, options: FakeOptions = {}): void {
   const define = (name: string, value: unknown) =>
     Object.defineProperty(node, name, {
       value,
@@ -434,7 +489,7 @@ function writable(
     node.children ??= [];
     node.children.splice(at !== -1 && at < index ? index - 1 : index, 0, child);
     child.parent = node;
-    register(child);
+    layers.register(child);
     record("insertChild", [index, child.id]);
   };
 
@@ -474,6 +529,8 @@ function writable(
 
     const own = node.componentProperties as Record<string, { type: string; value: unknown }> | undefined;
     const main = node.mainComponent as FakeNode | undefined;
+    const set = main?.parent?.type === "COMPONENT_SET" ? main.parent : undefined;
+    const wanted = main === undefined ? {} : variantOf(main.name);
 
     for (const [key, value] of Object.entries(properties)) {
       if (own !== undefined && own[key] === undefined) {
@@ -487,22 +544,23 @@ function writable(
         };
       }
 
-      // A variant's value switches the instance to that variant of its set.
-      if (own?.[key]?.type === "VARIANT" && main?.parent?.type === "COMPONENT_SET") {
-        const wanted = {
-          ...variantOf(main.name),
-          [key]: String(value),
-        };
-        const next = main.parent.children?.find((child) =>
-          Object.entries(wanted).every(([name, option]) => variantOf(child.name)[name] === option),
-        );
-
-        if (next === undefined) {
-          throw new Error(`No variant ${JSON.stringify(wanted)}`);
-        }
-
-        node.mainComponent = next;
+      if (own?.[key]?.type === "VARIANT") {
+        wanted[key] = String(value);
       }
+    }
+
+    // The variant's values, all of them at once, switch the instance to that variant of its set.
+    const next = set?.children?.find((child) =>
+      Object.entries(wanted).every(([name, option]) => variantOf(child.name)[name] === option),
+    );
+
+    if (set !== undefined && next === undefined) {
+      throw new Error(`No variant ${JSON.stringify(wanted)}`);
+    }
+
+    if (next !== undefined && next !== main) {
+      node.mainComponent = next;
+      layers.follow(node);
     }
 
     const walkTexts = (layer: FakeNode) => {
@@ -521,6 +579,7 @@ function writable(
   });
   define("swapComponent", (component: FakeNode) => {
     node.mainComponent = component;
+    layers.follow(node);
     record("swapComponent", [component.id]);
   });
   // As Figma: every overridden field goes back to the main component's value (the same layer there), then none is.
@@ -812,11 +871,37 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
       ...chain.map((each) => (each.explicitVariableModes as Record<string, string> | undefined) ?? {}),
     );
   };
+  const follow = (instance: FakeNode) => {
+    const main = instance.mainComponent as FakeNode | undefined;
+
+    // A test's main component without layers leaves the instance its own.
+    if (main?.children === undefined) {
+      return;
+    }
+
+    for (const old of instance.findAll?.(() => true) ?? []) {
+      byId.delete(old.id);
+    }
+
+    instance.children = main.children.map((child) => tree(sublayerOf(child, instance.id) as never, instance));
+
+    for (const layer of instance.findAll?.(() => true) ?? []) {
+      register(layer);
+    }
+  };
   const register = (node: FakeNode) => {
     byId.set(node.id, node);
 
     if (Object.getOwnPropertyDescriptor(node, "resize") === undefined) {
-      writable(node, writes, register, options);
+      writable(
+        node,
+        writes,
+        {
+          register,
+          follow,
+        },
+        options,
+      );
       copyable(node);
     }
 
@@ -881,8 +966,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     });
     Object.defineProperty(node, "rescale", {
       value: (factor: number) => {
-        node.width = (node.width ?? 0) * factor;
-        node.height = (node.height ?? 0) * factor;
+        scaled(node, factor);
         writes.calls.push({
           node: node.id,
           method: "rescale",
@@ -978,19 +1062,6 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     >;
     const id = `90:${writes.created.length + 1}`;
     // As Figma: an instance looks like its component (fills, sizing) and holds its layers as I<instance>;<layer> ids.
-    const sublayers = (layer: FakeNode): Record<string, unknown> => {
-      const { children, parent: _parent, id: own, ...rest } = layer;
-
-      return {
-        ...structuredClone(
-          Object.fromEntries(
-            Object.entries(rest).filter(([, value]) => typeof value !== "function" && typeof value !== "symbol"),
-          ),
-        ),
-        id: `I${id};${own}`,
-        children: (children ?? []).map(sublayers),
-      };
-    };
     const instance = tree({
       id,
       name: owner.name,
@@ -1015,7 +1086,7 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
           },
         ]),
       ),
-      children: (component.children ?? []).map((child) => sublayers(child) as never),
+      children: (component.children ?? []).map((child) => sublayerOf(child, id) as never),
     });
 
     writes.created.push(instance);
@@ -1321,6 +1392,17 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
           },
         },
       }),
+      // A copy of the effect with the field bound, its other bound fields kept.
+      setBoundVariableForEffect: (effect: { boundVariables?: object }, field: string, variable: { id: string }) => ({
+        ...effect,
+        boundVariables: {
+          ...effect.boundVariables,
+          [field]: {
+            type: "VARIABLE_ALIAS",
+            id: variable.id,
+          },
+        },
+      }),
     },
     getLocalPaintStylesAsync: async () => localStyles.paint,
     getLocalTextStylesAsync: async () => localStyles.text,
@@ -1434,6 +1516,25 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
         method: "loadAllPagesAsync",
         args: [],
       });
+    },
+    // As Figma: a new page goes last, named by its place; Starter's limit refuses it in these words (typings 1.141).
+    createPage: () => {
+      const pages = figma.root.children;
+
+      if (library.pageLimit !== undefined && pages.length >= library.pageLimit) {
+        throw new Error(
+          `The Starter plan only comes with ${library.pageLimit} pages. Upgrade to Professional for unlimited pages.`,
+        );
+      }
+
+      const page = create("PAGE")();
+
+      page.name = `Page ${pages.length + 1}`;
+      page.children = [];
+      page.selection = [];
+      pages.push(page);
+
+      return page;
     },
     importComponentByKeyAsync: async (key: string) => {
       writes.calls.push({

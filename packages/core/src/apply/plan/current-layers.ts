@@ -27,7 +27,7 @@ export class CurrentLayers {
     const entries = new Map<string, LayerEntry>();
 
     for (const root of read.roots) {
-      index(root.node, root.parent, entries);
+      index(root.node, root.parent, entries, root.page);
     }
 
     return new CurrentLayers(entries, new Set(read.missing), {
@@ -47,10 +47,11 @@ export class CurrentLayers {
   }
 }
 
-function index(node: SnapshotNode, parent: SnapshotNode | null, entries: Map<string, LayerEntry>): void {
+function index(node: SnapshotNode, parent: SnapshotNode | null, entries: Map<string, LayerEntry>, page?: string): void {
   entries.set(node.id, {
     node,
     parent,
+    ...(page === undefined ? {} : { page }),
   });
 
   for (const child of node.children ?? []) {
