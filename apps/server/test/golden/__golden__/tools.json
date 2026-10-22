@@ -1359,6 +1359,15 @@
           "description": "Read each run of three or more alike neighbours (list items, cards, table rows) as its first, marked $repeat with the run's length; the JSON's repeats gives each run's layers and the values they hold apart, a row per layer.",
           "type": "boolean"
         },
+        "autoLineHeight": {
+          "default": "normal",
+          "description": "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere. A px read sent back to design_apply fixes those line heights at that px.",
+          "type": "string",
+          "enum": [
+            "normal",
+            "px"
+          ]
+        },
         "nearby": {
           "description": "Also list the designer's notes on the canvas within this many px of the screen holding the layer (texts, stickies, small frames of text beside it or over it), e.g. 400: the JSON's nearby.",
           "type": "integer",

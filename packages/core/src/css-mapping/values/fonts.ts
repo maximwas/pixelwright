@@ -2,8 +2,9 @@ import { decimal, roundTo } from "../../kernel/numbers.ts";
 import type { TextSegment } from "../../types/snapshot.ts";
 import { weightOf } from "../../utils/font-weight.ts";
 import type { FontSpec, TextLength } from "../figma-props.ts";
+import { type AutoLineHeights, fontKey } from "./auto-line-heights.ts";
 import { lengthOf, numberOf, percentOf, splitTop } from "./css-values.ts";
-import { px } from "./format.ts";
+import { decimalPx, px } from "./format.ts";
 
 export function decorationLength(length: TextSegment["textDecorationOffset"]): string | null {
   if (length?.value === undefined) {
@@ -13,20 +14,25 @@ export function decorationLength(length: TextSegment["textDecorationOffset"]): s
   return length.unit === "PERCENT" ? `${decimal(length.value / 100)}em` : `${decimal(length.value)}px`;
 }
 
-/** `[italic] weight size/line-height 'Family'`, for a run or a text style. */
+/**
+ * `[italic] weight size/line-height 'Family'`, for a run or a text style; an Auto line height in px where `auto` knows
+ * the font and size's.
+ */
 export function fontShorthand(
   parts: Pick<TextSegment, "fontName" | "fontSize" | "lineHeight"> & {
     fontWeight?: number | undefined;
   },
+  auto?: AutoLineHeights,
 ): string {
   const italic = /italic/i.test(parts.fontName.style) ? "italic " : "";
   const weight = parts.fontWeight ?? weightOf(parts.fontName.style);
+  const lineHeight = lineHeightCss(parts.lineHeight, parts.fontSize, auto?.get(fontKey(parts)));
 
-  return `${italic}${weight} ${px(parts.fontSize)}/${lineHeightCss(parts.lineHeight, parts.fontSize)} '${parts.fontName.family}'`;
+  return `${italic}${weight} ${px(parts.fontSize)}/${lineHeight} '${parts.fontName.family}'`;
 }
 
-/** A line height as CSS writes it at this font size: px, or normal. */
-export function lineHeightCss(lineHeight: TextSegment["lineHeight"], fontSize: number): string {
+/** A line height as CSS writes it at this font size: px, or normal for Auto unless the px it renders at is known. */
+export function lineHeightCss(lineHeight: TextSegment["lineHeight"], fontSize: number, autoPx?: number): string {
   if (lineHeight.unit === "PIXELS" && lineHeight.value !== undefined) {
     return px(lineHeight.value);
   }
@@ -35,7 +41,7 @@ export function lineHeightCss(lineHeight: TextSegment["lineHeight"], fontSize: n
     return px((fontSize * lineHeight.value) / 100);
   }
 
-  return "normal";
+  return autoPx === undefined ? "normal" : decimalPx(autoPx);
 }
 
 export function letterSpacingCss(spacing: TextSegment["letterSpacing"]): string | null {

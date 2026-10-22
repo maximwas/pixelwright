@@ -1,4 +1,5 @@
 import type { SnapshotStyle } from "../../../types/snapshot.ts";
+import type { AutoLineHeights } from "../../values/auto-line-heights.ts";
 import { fontShorthand, letterSpacingCss } from "../../values/fonts.ts";
 
 /** Figma's text case as text-transform; ORIGINAL is the default and left out (small caps are no transform). */
@@ -8,18 +9,21 @@ export const CASE_CSS: Readonly<Record<string, string>> = {
   TITLE: "capitalize",
 };
 
-/** A text style as the textStyles map shows it: its font shorthand plus its spacing and case. */
-export function textStyleCss(style: SnapshotStyle): string | null {
+/** A text style as the textStyles map shows it: its font shorthand (Auto in px where `auto` knows) and spacing and case. */
+export function textStyleCss(style: SnapshotStyle, auto?: AutoLineHeights): string | null {
   if (style.fontName === undefined || style.fontSize === undefined || style.lineHeight === undefined) {
     return null;
   }
 
   return [
-    fontShorthand({
-      fontName: style.fontName,
-      fontSize: style.fontSize,
-      lineHeight: style.lineHeight,
-    }),
+    fontShorthand(
+      {
+        fontName: style.fontName,
+        fontSize: style.fontSize,
+        lineHeight: style.lineHeight,
+      },
+      auto,
+    ),
     ...textStyleExtras(style).map(([property, value]) => `${property}: ${value}`),
   ].join("; ");
 }

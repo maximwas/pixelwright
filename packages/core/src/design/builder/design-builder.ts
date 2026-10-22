@@ -1,5 +1,6 @@
 import { TEXT_TYPES } from "../../constants/css.ts";
 import { nodeCss } from "../../css-mapping/read-node.ts";
+import { autoLineHeights } from "../../css-mapping/values/auto-line-heights.ts";
 import { pathData } from "../../css-mapping/values/paths.ts";
 import { colorSpaceOf } from "../../kernel/color/color-space.ts";
 import { attributeSlug, modeAttribute } from "../../kernel/names.ts";
@@ -59,9 +60,11 @@ export class DesignBuilder {
   readonly #truncated: string[] = [];
 
   constructor(snapshot: Snapshot, options: DesignXmlOptions) {
+    const auto = options.autoLineHeight === "px" ? autoLineHeights(snapshot.root) : undefined;
+
     this.#snapshot = snapshot;
     this.#options = options;
-    this.#catalogue = new ReadCatalogue(snapshot.styles);
+    this.#catalogue = new ReadCatalogue(snapshot.styles, auto);
     this.#assets = new AssetPlanner(options);
     this.#context = {
       styles: snapshot.styles,
@@ -70,6 +73,7 @@ export class DesignBuilder {
       root: snapshot.root,
       imageUrl: (node, paint) => this.#assets.background(node, paint),
       colorSpace: colorSpaceOf(snapshot.colorProfile),
+      ...(auto === undefined ? {} : { autoLineHeights: auto }),
     };
   }
 

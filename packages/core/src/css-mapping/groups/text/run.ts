@@ -83,7 +83,7 @@ function readType(run: Run): void {
   const { segment, css, same } = run;
 
   if (!(same("fontName") && same("fontSize") && same("lineHeight"))) {
-    css.set("font", fontShorthand(segment));
+    css.set("font", fontShorthand(segment, run.context.autoLineHeights));
   }
 
   const spacing = letterSpacingCss(segment.letterSpacing);
