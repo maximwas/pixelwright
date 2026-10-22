@@ -271,6 +271,89 @@ describe("assets_export", () => {
   });
 });
 
+describe("assets_export names", () => {
+  it("names a layer's file as names says, slugged, and the others after their layer; a clash still gets -2", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
+    const result = await exportAssets(new PluginClient(file().bridge), {
+      nodes: ["1:5", "1:6", "1:7", "1:3", "1:4"],
+      dir,
+      names: {
+        "1:5": "Hero / Mountains",
+        "1:6": "hero-mountains",
+        "1:7": "../../outside",
+      },
+      original: false,
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(result.files.map((written) => written.path)).toEqual([
+      join(dir, "hero-mountains.png"),
+      join(dir, "hero-mountains-2.png"),
+      // A name is a file name, never a path out of dir.
+      join(dir, "outside.png"),
+      join(dir, "hero-photo.png"),
+      join(dir, "hero-photo-2.png"),
+    ]);
+    expect((await readdir(dir)).sort()).toEqual([
+      "hero-mountains-2.png",
+      "hero-mountains.png",
+      "hero-photo-2.png",
+      "hero-photo.png",
+      "outside.png",
+    ]);
+  });
+
+  it("still writes the same bytes once, whatever names each layer asks for", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
+    const result = await exportAssets(new PluginClient(file().bridge), {
+      nodes: ["1:1", "1:2"],
+      dir,
+      names: {
+        "1:1": "first",
+        "1:2": "second",
+      },
+      original: false,
+    });
+
+    expect(result.files.map(({ path, planned }) => [path, planned])).toEqual([
+      [join(dir, "first.png"), undefined],
+      [join(dir, "first.png"), join(dir, "second.png")],
+    ]);
+    expect(await readdir(dir)).toEqual(["first.png"]);
+  });
+
+  it("names the assets inside a layer by their ids too", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
+    const result = await exportAssets(new PluginClient(file().bridge), {
+      from: "54:434",
+      dir,
+      names: { "54:454": "Customer photo" },
+      original: false,
+    });
+
+    expect(result.files.find(({ node }) => node === "54:454")?.path).toBe(join(dir, "customer-photo.png"));
+  });
+
+  it("notes an id in names that is not among the exported layers, and writes the rest", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));
+    const result = await exportAssets(new PluginClient(file().bridge), {
+      nodes: ["1:5", "9:9"],
+      dir,
+      names: {
+        "1:5": "hero",
+        "9:9": "missing",
+        "7:7": "ghost",
+      },
+      original: false,
+    });
+
+    expect(result.files.map(({ path }) => path)).toEqual([join(dir, "hero.png")]);
+    // 9:9 failed and is in errors already; 7:7 was never asked for.
+    expect(result.errors.map(({ node }) => node)).toEqual(["9:9"]);
+    expect(result.notes).toEqual([expect.stringMatching(/^names has 7:7, which is not among the layers exported/)]);
+  });
+});
+
 describe("assets_export review fixes", () => {
   it("renders an icon with its strokes whatever format it is asked in", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-export-"));

@@ -26,6 +26,12 @@ export const AssetsExportInputSchema = z.object({
     .describe(
       "The folder to write into; created if missing. Files already there are never overwritten with other bytes.",
     ),
+  names: z
+    .record(z.string().min(1).max(200), z.string().min(1).max(200))
+    .exactOptional()
+    .describe(
+      'A file name per layer id, e.g. {"54:12": "hero-mountains"}: slugged, the extension added. The other layers are named after themselves (Rectangle 61: rectangle-61.png).',
+    ),
   format: z
     .enum(["PNG", "JPG", "WEBP", "SVG", "PDF"])
     .exactOptional()
@@ -64,7 +70,9 @@ export const AssetsExportOutputSchema = z.object({
       planned: z
         .string()
         .exactOptional()
-        .describe("The path design_read plans for this layer, when the file got another name: use path in its src."),
+        .describe(
+          "The path planned for this layer (its name in names, else as design_read plans it), when the file got another name: use path in its src.",
+        ),
       bytes: z.number(),
     }),
   ),

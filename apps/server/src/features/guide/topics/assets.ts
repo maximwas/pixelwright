@@ -32,8 +32,9 @@ Only true assets become files; everything else is CSS.
 
 ## Files
 
-Named after the layer (\`Hero photo\` → hero-photo.png, a component's variant added: company-logo-amazon.svg). The
-same bytes are written once and shared; a name already taken by other bytes gets -2; a file already in the folder is
-never overwritten with other bytes.
+Named after the layer (\`Hero photo\` → hero-photo.png, a component's variant added: company-logo-amazon.svg), or, in
+assets_export, as \`names\` gives a layer id (\`{"54:12": "hero-mountains"}\` → hero-mountains.png, slugged the same
+way). The same bytes are written once and shared; a name already taken by other bytes gets -2; a file already in the
+folder is never overwritten with other bytes.
 `,
 } as const;
