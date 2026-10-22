@@ -3773,6 +3773,49 @@
                 "segments"
               ]
             },
+            "textPath": {
+              "type": "object",
+              "properties": {
+                "vectorPaths": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "windingRule": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "windingRule",
+                      "data"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "textPathStartData": {
+                  "type": "object",
+                  "properties": {
+                    "segment": {
+                      "type": "number"
+                    },
+                    "position": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "segment",
+                    "position"
+                  ]
+                }
+              },
+              "required": [
+                "vectorPaths",
+                "textPathStartData"
+              ]
+            },
             "instance": {
               "type": "object",
               "properties": {
@@ -6006,6 +6049,49 @@
                 "textAlignHorizontal",
                 "textAlignVertical",
                 "segments"
+              ]
+            },
+            "textPath": {
+              "type": "object",
+              "properties": {
+                "vectorPaths": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "windingRule": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "windingRule",
+                      "data"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "textPathStartData": {
+                  "type": "object",
+                  "properties": {
+                    "segment": {
+                      "type": "number"
+                    },
+                    "position": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "segment",
+                    "position"
+                  ]
+                }
+              },
+              "required": [
+                "vectorPaths",
+                "textPathStartData"
               ]
             },
             "instance": {
@@ -9360,6 +9446,49 @@
                   "textAlignHorizontal",
                   "textAlignVertical",
                   "segments"
+                ]
+              },
+              "textPath": {
+                "type": "object",
+                "properties": {
+                  "vectorPaths": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "windingRule": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "windingRule",
+                        "data"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "textPathStartData": {
+                    "type": "object",
+                    "properties": {
+                      "segment": {
+                        "type": "number"
+                      },
+                      "position": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "segment",
+                      "position"
+                    ]
+                  }
+                },
+                "required": [
+                  "vectorPaths",
+                  "textPathStartData"
                 ]
               },
               "instance": {

@@ -1,4 +1,4 @@
-import { VECTOR_TYPES } from "../../constants/css.ts";
+import { TEXT_TYPES, VECTOR_TYPES } from "../../constants/css.ts";
 import type { SnapshotNode } from "../../types/snapshot.ts";
 
 /** Paints CSS cannot draw: a leaf filled with one is rendered as an image (gradients stay CSS, read-only for now). */
@@ -88,7 +88,7 @@ function exportedAs(node: SnapshotNode, root: SnapshotNode | null): Classified |
 
 /** Whether a layer holds text; a branch the snapshot cut may, so it counts as holding some. */
 function hasText(node: SnapshotNode): boolean {
-  if (node.type === "TEXT" || (node.children === undefined && node.childCount > 0)) {
+  if (TEXT_TYPES.has(node.type) || (node.children === undefined && node.childCount > 0)) {
     return true;
   }
 

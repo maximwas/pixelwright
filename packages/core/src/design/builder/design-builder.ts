@@ -1,4 +1,6 @@
+import { TEXT_TYPES } from "../../constants/css.ts";
 import { nodeCss } from "../../css-mapping/read-node.ts";
+import { pathData } from "../../css-mapping/values/paths.ts";
 import { colorSpaceOf } from "../../kernel/color/color-space.ts";
 import { attributeSlug, modeAttribute } from "../../kernel/names.ts";
 import type { CssContext } from "../../types/css.ts";
@@ -20,6 +22,7 @@ import {
   pinsOf,
   propertyAttributes,
   readOnlyOf,
+  startOf,
   urlOf,
 } from "./layer-attributes.ts";
 import { ReadCatalogue } from "./read-catalogue.ts";
@@ -92,17 +95,15 @@ export class DesignBuilder {
     const attributes = this.#attributes(node, parent, form);
     const shownWhole = form.asset === null && form.code === undefined;
 
-    if (
-      form.cut ||
-      (node.type === "TEXT" && form.limit !== undefined) ||
-      (shownWhole && cutCount(node, form.limit) !== undefined)
-    ) {
+    const text = TEXT_TYPES.has(node.type);
+
+    if (form.cut || (text && form.limit !== undefined) || (shownWhole && cutCount(node, form.limit) !== undefined)) {
       this.#truncated.push(node.id);
     }
 
     const tag = form.asset === null ? tagFor(node.type) : form.asset.kind === "icon" ? "Icon" : "Image";
 
-    if (node.type === "TEXT" && form.asset === null) {
+    if (text && form.asset === null) {
       return {
         id: node.id,
         tag,
@@ -149,28 +150,32 @@ export class DesignBuilder {
 
   /** What the layer is: its id and name, its component, notes and status, its link, text style and file. */
   #metadata(node: SnapshotNode, textStyle: string | undefined, asset: Classified | null): MaybeAttribute[] {
+    const text = TEXT_TYPES.has(node.type);
+
     return [
       ["id", node.id],
-      ["name", node.type === "TEXT" && node.name === node.text?.characters ? undefined : node.name],
+      ["name", text && node.name === node.text?.characters ? undefined : node.name],
       ...componentAttributes(node),
       ["description", node.description === "" ? undefined : node.description],
       ["note", noteOf(node)],
       ["$pins", pinsOf(node)],
       ["$override", overrideWords(node).join(", ") || undefined],
       ["$dev", node === this.#snapshot.root ? DEV_STATUS_WORDS[this.#snapshot.devStatus ?? ""] : undefined],
-      ["href", node.href ?? (node.type === "TEXT" ? urlOf(node.text?.segments ?? []) : undefined)],
+      ["href", node.href ?? (text ? urlOf(node.text?.segments ?? []) : undefined)],
       ...(node.modes ?? []).map(
         ({ collection, mode }): MaybeAttribute => [modeAttribute(collection), attributeSlug(mode)],
       ),
       ["textStyle", this.#catalogue.useTextStyle(textStyle)],
       ["mask", node.isMask ? (node.maskType ?? "ALPHA").toLowerCase() : undefined],
       ["src", asset === null ? undefined : this.#assets.plan(node, asset)],
+      ["d", node.textPath === undefined ? undefined : pathData(node.textPath.vectorPaths)],
+      ["start", startOf(node)],
     ];
   }
 
   /** What design_apply leaves alone: code, read-only CSS, the grid style, interactions, motion, what was cut. */
   #readOnly(node: SnapshotNode, form: Form, readOnly: readonly [string, string][]): MaybeAttribute[] {
-    const clipped = node.type === "TEXT" && form.limit !== undefined;
+    const clipped = TEXT_TYPES.has(node.type) && form.limit !== undefined;
     const whole = form.asset === null && form.code === undefined && !form.cut && !clipped;
 
     return [
