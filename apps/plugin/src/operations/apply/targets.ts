@@ -2,6 +2,12 @@ import { type ApplyChange, BridgeError } from "@pixelwright/core";
 import { loadPageOf } from "../../figma/nodes.ts";
 import { WriteError } from "../../figma/write-error.ts";
 
+/** The tags of the text layers' types, as design_read writes them: the types a tag mismatch is about. */
+const TEXT_TAG_OF: Readonly<Partial<Record<NodeType, string>>> = {
+  TEXT: "Text",
+  TEXT_PATH: "TextPath",
+};
+
 /** Where top-level new layers go: a frame's or a page's id, its page loaded. */
 export async function topLayer(id: string): Promise<PageNode | SceneNode> {
   const node = await figma.getNodeByIdAsync(id);
@@ -28,7 +34,7 @@ export async function existingLayer(change: ApplyChange, { load }: { readonly lo
     (change.tag === "TextPath") !== (node.type === "TEXT_PATH")
   ) {
     throw new WriteError(
-      `${change.id} is a ${node.type.toLowerCase()}, not a ${change.tag}.`,
+      `${change.id} is ${withArticle(TEXT_TAG_OF[node.type] ?? node.type.toLowerCase())}, not ${withArticle(change.tag)}.`,
       "Check the id: the tag is the layer's type as design_read writes it.",
     );
   }
@@ -38,4 +44,8 @@ export async function existingLayer(change: ApplyChange, { load }: { readonly lo
   }
 
   return node;
+}
+
+function withArticle(word: string): string {
+  return `${/^[aeiou]/i.test(word) ? "an" : "a"} ${word}`;
 }

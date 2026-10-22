@@ -193,6 +193,16 @@ describe("text", () => {
     expect(hints).toContainEqual(expect.stringMatching(/&#8232;.*Shift\+Enter.*1:3/s));
   });
 
+  it("leaves text on a path out of the line-height hint: it has no line height, though Figma reads it as Auto", () => {
+    const auto = { lineHeight: { unit: "AUTO" } } as const;
+    const { hints } = read(
+      box([text("1:2", "Auto line", {}, auto), text("1:4", "Along an arc", { type: "TEXT_PATH" }, auto)]),
+    );
+
+    expect(hints).toContainEqual(expect.stringMatching(/normal.*Auto.*1:2/s));
+    expect(hints.join("\n")).not.toMatch(/1:4/);
+  });
+
   it("hints when a layer is wider than the room its parent gives it", () => {
     const { hints } = read(
       box(

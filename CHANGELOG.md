@@ -24,7 +24,8 @@ How to write this file (people and agents alike):
   a `Text`'s, `d` (the path in its own box) and `start` (the segment and the place along it where the text begins).
 - `design_apply` edits text on a path: `<TextPath id="…">New words</TextPath>` changes its characters and keeps its
   look, its text CSS is written as on a `Text`, and `start` moves where the text begins. A changed `d` is refused,
-  since Figma cannot change the path: delete the layer and make it again.
+  since Figma cannot change the path: delete the layer and make it again. So is a line height in `font`: a text on a
+  path has none.
 - `design_apply` makes text on a path along `d` (any SVG path) or `arc="<cx> <cy> <r> <from> <to>"`, an arc of a
   circle in the parent with its ends in degrees as CSS turns (0 at the top, clockwise).
 - `text-align="center"` or `"right"` on a text on a path, without `start`, puts its start in the middle of the path

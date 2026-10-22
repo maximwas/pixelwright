@@ -7,7 +7,7 @@ Only true assets become files; everything else is CSS.
 
 ## What is an asset
 
-- \`Icon\` (SVG): a vector, Figma Draw's text on a path or transform group, or a group, frame or instance without auto
+- \`Icon\` (SVG): a vector, Figma Draw's transform group, or a group, frame or instance without auto
   layout drawn only with vector shapes, at least one of them a true vector (a logo, an arrow in a circle). Exported with
   everything it draws, strokes outside its box included, and sized by that box.
 - \`Image\` (PNG at 2x): a layer filled with an image, a mask group (its bottom layer is the mask), a layer with a

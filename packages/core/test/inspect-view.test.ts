@@ -488,4 +488,19 @@ describe("inspect around a point", () => {
       ["hub", 0, undefined],
     ]);
   });
+
+  it("rounds an angle with decimals to two places, with no float noise from the turn past 360", () => {
+    const view = inspectView(
+      {
+        ...ring,
+        layers: [dot("past the top", 200.3316, 100.0005), dot("a hair below the right", 299.9982, 200.192)],
+      },
+      {
+        x: 200,
+        y: 200,
+      },
+    );
+
+    expect(view.layers.map(({ angle }) => angle)).toEqual([0.19, 90.11]);
+  });
 });

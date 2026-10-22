@@ -87,12 +87,19 @@ export const TEXT_RULES: readonly Rule[] = [
   TEXT_COLOR_RULE,
 ];
 
-function fontRule({ own }: WriteInput, out: WriteOutput): void {
+function fontRule({ own, tag }: WriteInput, out: WriteOutput): void {
   const value = own("font") ?? "";
   const font = fontOf(value);
 
   if (font === null) {
     out.fail("font", `font="${value}" is not "[italic] weight size/line-height 'Family'".`);
+  } else if (tag === "TextPath" && font.lineHeight.unit !== "AUTO") {
+    // Figma would take the font and drop the line height, so the same call would be "changed" every time.
+    out.fail(
+      "font",
+      "A text path has no line height.",
+      `Give its font without one: font="${value.replace(/\s*\/\s*\S+/, "")}".`,
+    );
   } else {
     out.set("font", font, "font");
   }

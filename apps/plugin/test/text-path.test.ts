@@ -180,6 +180,37 @@ describe("design_apply: an existing text on a path", () => {
     expect(await read("1:2")).toContain('color="#F00">Об\'єднати</TextPath>');
   });
 
+  it("refuses a line height in font, which a text on a path has not, in a dry run too, and writes no font", async () => {
+    for (const dryRun of [true, false]) {
+      const result = await apply('<TextPath id="1:2" font="500 16px/24px \'Inter\'"/>', dryRun);
+
+      expect(result).toMatchObject({
+        changed: [],
+        errors: [
+          expect.objectContaining({
+            id: "1:2",
+            attribute: "font",
+            message: "A text path has no line height.",
+            hint: "Give its font without one: font=\"500 16px 'Inter'\".",
+          }),
+        ],
+      });
+    }
+
+    expect(byId("1:2").fontName).toEqual({
+      family: "Inter",
+      style: "Regular",
+    });
+  });
+
+  it("names the layer's type as its tag when the tag sent is another", async () => {
+    const refusal = async (xml: string) => (await apply(xml)).errors.map(({ message }) => message);
+
+    expect(await refusal('<Icon id="1:2" opacity="0.5"/>')).toEqual(["1:2 is a TextPath, not an Icon."]);
+    expect(await refusal('<Text id="1:2">Так</Text>')).toEqual(["1:2 is a TextPath, not a Text."]);
+    expect(await refusal('<TextPath id="1:1">Ні</TextPath>')).toEqual(["1:1 is a frame, not a TextPath."]);
+  });
+
   it("refuses an underline, which Figma has for a text and not a text on a path, in a dry run too", async () => {
     for (const dryRun of [true, false]) {
       const { errors } = await apply('<TextPath id="1:2" text-decoration="underline"/>', dryRun);

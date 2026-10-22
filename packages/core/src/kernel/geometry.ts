@@ -49,7 +49,7 @@ export function bearing(from: Place, to: Place): { distance: number; angle?: num
 
   return {
     distance,
-    angle: roundTo(degrees + 360, 2) % 360,
+    angle: roundTo((degrees + 360) % 360, 2) % 360,
   };
 }
 
