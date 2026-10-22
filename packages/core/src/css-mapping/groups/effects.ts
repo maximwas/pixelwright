@@ -1,3 +1,4 @@
+import { TEXT_TYPES } from "../../constants/css.ts";
 import { Color, type ColorValue } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
 import { styleTokenName } from "../../kernel/names.ts";
@@ -67,7 +68,7 @@ function readShadows(
   css: CssDeclarations,
   context: CssContext,
 ): void {
-  const isText = node.type === "TEXT";
+  const isText = TEXT_TYPES.has(node.type);
   const shadows = effects
     .filter((effect) => effect.type === "DROP_SHADOW" || (effect.type === "INNER_SHADOW" && !isText))
     .toReversed()

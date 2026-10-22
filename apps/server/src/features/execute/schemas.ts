@@ -33,6 +33,10 @@ export const ExecuteInputSchema = z.object({
 });
 
 export const ExecuteOutputSchema = OPERATION_SCHEMAS.execute.output.extend({
+  note: z
+    .string()
+    .exactOptional()
+    .describe("When the code ran and only reads (nothing in it writes): the tools that read without code."),
   /** The version saved in the file's history before the code ran, when one was asked for. */
   version: VersionSavedSchema,
 });

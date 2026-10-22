@@ -1,3 +1,5 @@
+import { roundTo } from "./numbers.ts";
+
 /** A layer's transform as Figma holds it: [[a, b, x], [c, d, y]], the layer's own axes and its place in its parent. */
 export type Matrix = [[number, number, number], [number, number, number]];
 
@@ -14,6 +16,42 @@ interface Area extends BoxSize {
 }
 
 export type Axis = "horizontal" | "vertical";
+
+/** A point in px. */
+type Place = Pick<Area, "x" | "y">;
+
+/**
+ * A box's centre, to two decimals. Figma's box of a turned layer bounds the turned layer, and a turned rectangle's bounds
+ * share its centre, so this is a turned layer's centre too.
+ */
+export function centerOf(box: Area): Place {
+  return {
+    x: roundTo(box.x + box.width / 2, 2),
+    y: roundTo(box.y + box.height / 2, 2),
+  };
+}
+
+/**
+ * How far `to` lies from `from` in px, and its angle in degrees as CSS rotate() turns (0 straight up, clockwise, 0 to
+ * 360; y grows downwards), to two decimals; no angle when the points meet.
+ */
+export function bearing(from: Place, to: Place): { distance: number; angle?: number } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const distance = roundTo(Math.hypot(dx, dy), 2);
+
+  if (distance === 0) {
+    return { distance };
+  }
+
+  // atan2(dx, -dy) is 0 straight up and grows clockwise on a page whose y grows downwards; 359.999 rounds to 0.
+  const degrees = (Math.atan2(dx, -dy) * 180) / Math.PI;
+
+  return {
+    distance,
+    angle: roundTo((degrees + 360) % 360, 2) % 360,
+  };
+}
 
 /** Whether two boxes overlap; boxes that only touch do not. */
 export function overlaps(a: Area, b: Area): boolean {

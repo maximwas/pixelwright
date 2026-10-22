@@ -14,12 +14,17 @@ const QUOTED_CHARS = 200;
  */
 export function syntaxError(code: string): string | null {
   try {
-    void new vm.Script(`(async function (figma, console, pw) {\n${code}\n})`, { filename: SCRIPT_NAME });
+    void new vm.Script(asFunction(code), { filename: SCRIPT_NAME });
 
     return null;
   } catch (error) {
     return error instanceof SyntaxError ? placed(error, code) : null;
   }
+}
+
+/** The code as the plugin runs it: the body of an async function given figma, console and pw, from the second line. */
+export function asFunction(code: string): string {
+  return `(async function (figma, console, pw) {\n${code}\n})`;
 }
 
 function placed(error: SyntaxError, code: string): string {

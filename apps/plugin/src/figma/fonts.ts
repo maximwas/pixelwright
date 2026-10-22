@@ -1,5 +1,6 @@
 import { closest, type FontSpec, weightOf } from "@pixelwright/core";
 import { NEAR_FONT_WEIGHT } from "../constants/plugin.ts";
+import type { TextLayer } from "./capabilities.ts";
 import { WriteError } from "./write-error.ts";
 
 /** A font a text uses now, with the weight Figma reports for it (a variable font's own, like 590). */
@@ -85,7 +86,7 @@ function nearestStyle(spec: FontSpec, styles: readonly FontName[], slanted: (sty
  * The fonts a text uses, in one call per text: an empty one through its own fontName, since Figma refuses a range of
  * no characters. (@create-figma-plugin/utilities' loadFontsAsync asks for each character's font and names none.)
  */
-export function textFonts(text: TextNode): FontName[] {
+export function textFonts(text: TextLayer): FontName[] {
   const fonts = text.characters.length > 0 ? text.getRangeAllFontNames(0, text.characters.length) : [text.fontName];
 
   return fonts.filter((font): font is FontName => typeof font === "object" && font !== null);
@@ -100,7 +101,7 @@ export function styleFonts(style: BaseStyle | undefined): FontName[] {
  * Loads every font the texts use and the fonts given besides, each once: Figma refuses to change a text's characters
  * or its look before. Their names, "Family Style".
  */
-export async function loadTextFonts(texts: readonly TextNode[], also: readonly FontName[] = []): Promise<string[]> {
+export async function loadTextFonts(texts: readonly TextLayer[], also: readonly FontName[] = []): Promise<string[]> {
   const fonts = new Map([...texts.flatMap(textFonts), ...also].map((font) => [`${font.family} ${font.style}`, font]));
 
   await Promise.all([...fonts.values()].map((font) => figma.loadFontAsync(font)));

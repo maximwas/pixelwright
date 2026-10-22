@@ -14,6 +14,8 @@ export interface WriteInput {
   readonly merged: AttributeReader;
   readonly changed: (name: string) => boolean;
   readonly hidden: boolean;
+  /** Whether the element changes a layer there (a copy's included), not one it makes. */
+  readonly existing: boolean;
 }
 
 /** Where a write rule puts Figma properties, and the errors of the attributes it cannot write. */

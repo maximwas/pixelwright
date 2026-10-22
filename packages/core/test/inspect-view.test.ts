@@ -412,3 +412,95 @@ describe("inspect of a Display P3 file", () => {
     expect(badge?.strokes?.colors).toEqual(["color(display-p3 1 0 0)"]);
   });
 });
+
+describe("inspect around a point", () => {
+  /** A 20 px dot whose centre is at (x, y): its box starts 10 px up and left of it. */
+  const dot = (id: string, x: number, y: number): InspectRaw["layers"][number] => ({
+    id,
+    name: id,
+    type: "ELLIPSE",
+    visible: true,
+    x: x - 10,
+    y: y - 10,
+    width: 20,
+    height: 20,
+    childCount: 0,
+    parent: null,
+    box: {
+      x: x - 10,
+      y: y - 10,
+      width: 20,
+      height: 20,
+    },
+    paintedBox: null,
+    parentBox: null,
+    parentPadding: null,
+  });
+  // Labels on a ring of radius 100 around (200, 200), one at each quarter, two between, and one a hair left of the top.
+  const ring: InspectRaw = {
+    origin: null,
+    missing: [],
+    layers: [
+      dot("top", 200, 100),
+      dot("right", 300, 200),
+      dot("bottom", 200, 300),
+      dot("left", 100, 200),
+      dot("top right", 270.71, 129.29),
+      dot("top left", 129.29, 129.29),
+      dot("a hair left of the top", 199.999, 100),
+      dot("hub", 200, 200),
+    ],
+  };
+
+  it("gives every layer its centre, in the origin its box uses, and no distance without a point", () => {
+    const [top, right] = inspectView(ring).layers;
+
+    expect(top?.center).toEqual({
+      x: 200,
+      y: 100,
+    });
+    expect(right?.center).toEqual({
+      x: 300,
+      y: 200,
+    });
+    expect(top).not.toHaveProperty("distance");
+    expect(top).not.toHaveProperty("angle");
+  });
+
+  it("gives each layer's distance and angle from the point as CSS rotate() turns: 0 at the top, clockwise", () => {
+    const view = inspectView(ring, {
+      x: 200,
+      y: 200,
+    });
+
+    expect(view.around).toEqual({
+      x: 200,
+      y: 200,
+    });
+    expect(view.layers.map(({ id, distance, angle }) => [id, distance, angle])).toEqual([
+      ["top", 100, 0],
+      ["right", 100, 90],
+      ["bottom", 100, 180],
+      ["left", 100, 270],
+      ["top right", 100, 45],
+      ["top left", 100, 315],
+      ["a hair left of the top", 100, 0],
+      ["hub", 0, undefined],
+    ]);
+  });
+
+  it("rounds an angle with decimals to two places, with no float noise from the turn past 360", () => {
+    const view = inspectView(
+      {
+        ...ring,
+        layers: [dot("past the top", 200.3316, 100.0005), dot("a hair below the right", 299.9982, 200.192)],
+      },
+      {
+        x: 200,
+        y: 200,
+      },
+    );
+
+    expect(view.layers.map(({ angle }) => angle)).toEqual([0.19, 90.11]);
+  });
+});

@@ -53,9 +53,18 @@ export const InspectRawSchema = z.object({
   colorProfile: z.string().optional(),
 });
 
+/** A point in px, from the origin the boxes are measured from. */
+const InspectPointSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
 /** The inspect tool's answer, per layer (inspectView). */
 export const InspectViewSchema = z.object({
   relativeTo: z.string().describe('What the boxes are measured from: a layer as `id "name"`, or the page.'),
+  around: InspectPointSchema.exactOptional().describe(
+    "The point distance and angle are measured from, in the boxes' origin: the given one, or the centre of the given layer.",
+  ),
   layers: z.array(
     z.object({
       id: z.string(),
@@ -69,10 +78,28 @@ export const InspectViewSchema = z.object({
         })
         .nullable(),
       box: InspectBoxSchema.describe("The layout box."),
+      center: InspectPointSchema.describe(
+        "The box's centre, in the box's origin; for a turned layer its own centre too, as the box bounds the turned layer.",
+      ),
+      distance: z
+        .number()
+        .exactOptional()
+        .describe("With around: how far the layer's centre lies from that point, in px."),
+      angle: z
+        .number()
+        .exactOptional()
+        .describe(
+          "With around: the direction of the layer's centre from that point, in degrees as CSS rotate() turns: 0 straight up, 90 right, 180 down, 270 left (clockwise, 0 to 360). Left out at the point itself.",
+        ),
       paintedBox: InspectBoxSchema.exactOptional().describe(
         "What is painted, when it differs from the box: centred or outside strokes, shadows, blur.",
       ),
-      rotation: z.number().exactOptional(),
+      rotation: z
+        .number()
+        .exactOptional()
+        .describe(
+          "Figma's rotation in degrees, counter-clockwise: CSS turns it as rotate(-rotation), as design_read writes.",
+        ),
       overflow: z
         .object({
           left: z.number().exactOptional(),

@@ -176,14 +176,74 @@ describe("assets beyond icons and photos", () => {
     expect(line(xml, "1:3")).toContain('<Image id="1:3" name="Grain" src="assets/grain.png"');
   });
 
-  it("draws text on a path and transform groups as icons, and leaves slices out", () => {
+  it("reads text on a path as a TextPath: its text, its path in its own box and where the text starts", () => {
     const xml = xmlOf(
       box([
-        layer({
+        text({
           id: "1:2",
           type: "TEXT_PATH",
-          name: "Badge text",
+          name: "Label on arc",
+          x: 20,
+          y: 30,
+          width: 200,
+          height: 50,
+          layoutSizingHorizontal: "FIXED",
+          layoutSizingVertical: "FIXED",
+          textPath: {
+            vectorPaths: [
+              {
+                windingRule: "NONE",
+                data: "M 0 50 C 55.228 -16.667 144.772 -16.667 200.0004 50",
+              },
+            ],
+            textPathStartData: {
+              segment: 0,
+              position: 0.25,
+            },
+          },
         }),
+        // A frame of a text on a path and a vector is no drawing: the text stays text.
+        layer({
+          id: "1:3",
+          type: "FRAME",
+          name: "Sector",
+          children: [
+            layer({
+              id: "1:4",
+              type: "VECTOR",
+            }),
+            text({
+              id: "1:5",
+              type: "TEXT_PATH",
+              textPath: {
+                vectorPaths: [
+                  {
+                    windingRule: "NONE",
+                    data: "M 0 0 L 100 0",
+                  },
+                ],
+                textPathStartData: {
+                  segment: 0,
+                  position: 0,
+                },
+              },
+            }),
+          ],
+        }),
+      ]),
+    );
+
+    expect(line(xml, "1:2")).toBe(
+      '  <TextPath id="1:2" name="Label on arc" d="M 0 50 C 55.23 -16.67 144.77 -16.67 200 50" start="0 0.25" position="absolute" left="20px" top="30px" width="200px" height="50px" font="400 16px/normal \'Inter\'" color="#191A23">Read more</TextPath>',
+    );
+    expect(line(xml, "1:3")).toContain("<Frame");
+    expect(line(xml, "1:4")).toContain("<Icon");
+    expect(line(xml, "1:5")).toContain('<TextPath id="1:5" d="M 0 0 L 100 0" start="0 0"');
+  });
+
+  it("draws transform groups as icons, and leaves slices out", () => {
+    const xml = xmlOf(
+      box([
         layer({
           id: "1:3",
           type: "TRANSFORM_GROUP",
@@ -203,7 +263,6 @@ describe("assets beyond icons and photos", () => {
       ]),
     );
 
-    expect(line(xml, "1:2")).toContain("<Icon");
     expect(line(xml, "1:3")).toContain("<Icon");
     expect(xml).not.toContain("1:5");
   });

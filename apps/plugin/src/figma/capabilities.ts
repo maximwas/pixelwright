@@ -105,6 +105,9 @@ export const isAnnotated = guard([
   "TEXT",
   "TEXT_PATH",
 ]);
+/** Layers that hold text: a text, and a text on a path, whose text Figma gives a text's members (fewer of them). */
+export const isTextLayer = guard(["TEXT", "TEXT_PATH"]);
+export type TextLayer = TextNode | TextPathNode;
 /** Layers that hold children. */
 export const hasChildren = guard([...FRAMES, "GROUP", "SECTION", "BOOLEAN_OPERATION", "TRANSFORM_GROUP"]);
 

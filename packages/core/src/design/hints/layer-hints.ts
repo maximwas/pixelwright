@@ -83,8 +83,11 @@ const LAYER_HINTS: Readonly<Record<string, LayerHint>> = {
       `${examples.length === 1 ? "A frame was" : `${examples.length} frames were`} detached from a component (${listed(examples)}): check whether the component fits instead.`,
   },
   autoLineHeight: {
+    // A text on a path has no line height: Figma reads its segments as Auto all the same.
     find: ({ node }) =>
-      (node.text?.segments ?? []).some((segment) => segment.lineHeight.unit === "AUTO") ? labelOf(node) : null,
+      node.type === "TEXT" && (node.text?.segments ?? []).some((segment) => segment.lineHeight.unit === "AUTO")
+        ? labelOf(node)
+        : null,
     say: (examples) =>
       `line-height normal is Figma's Auto line height: the font's own spacing, about 1.2× the font size for most fonts (${listed(examples)}); give it in px where the build must match to the pixel (inspect shows each text's).`,
   },

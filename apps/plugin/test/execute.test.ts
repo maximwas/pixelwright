@@ -298,6 +298,30 @@ describe("execute: pw, kept between calls", () => {
   });
 });
 
+describe("execute while the change journal watches the page", () => {
+  /** A plugin as it runs in Figma: its change journal watching the page from the start. */
+  const watched = testPlugin({ allowEdits: true });
+
+  beforeEach(() => {
+    watched.services.journal.start();
+  });
+
+  it("answers code that changes nothing at once, with no word on the file: Figma may report changes a minute late", async () => {
+    const started = Date.now();
+    const ran = await watched.run("execute", {
+      code: "return figma.currentPage.children.length;",
+      timeoutMs: 1_000,
+    });
+
+    // A file in a background tab hears of its changes about once a minute: change events cannot tell what code did.
+    expect(Date.now() - started).toBeLessThan(300);
+    expect(ran).toEqual({
+      result: 2,
+      logs: [],
+    });
+  });
+});
+
 describe("execute errors in Figma's QuickJS (live check)", () => {
   it("keeps the engine's columns, as QuickJS points at another token of the probe than V8", () => {
     // `throw new Error();` as Figma's QuickJS reports it: the body from line 3, the column at the call's `(`.

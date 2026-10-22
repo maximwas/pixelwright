@@ -1,3 +1,4 @@
+import { roundTo } from "../../kernel/numbers.ts";
 import type { SnapshotNode, TextSegment } from "../../types/snapshot.ts";
 import { ANNOTATION_PINS, TEXT_ANNOTATION_PINS } from "../vocabulary.ts";
 
@@ -84,6 +85,13 @@ export function urlOf(segments: readonly TextSegment[]): string | undefined {
   const [url] = urls;
 
   return urls.size === 1 ? url : undefined;
+}
+
+/** Where a text on a path's text starts: the path's segment, and how far along it, from 0 to 1. */
+export function startOf(node: SnapshotNode): string | undefined {
+  const start = node.textPath?.textPathStartData;
+
+  return start === undefined ? undefined : `${start.segment} ${roundTo(start.position, 4)}`;
 }
 
 /** The read-only CSS of a layer; an asset keeps only its blend mode, which no exported file holds. */

@@ -38,6 +38,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-7-0">0.7.0 — 2026-10-22</a></li>
           <li><a href="#v0-6-0">0.6.0 — 2026-10-22</a></li>
           <li><a href="#v0-5-0">0.5.0 — 2026-10-20</a></li>
           <li><a href="#v0-4-1">0.4.1 — 2026-10-18</a></li>
@@ -53,6 +54,35 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-7-0">
+          <h2>0.7.0 — 2026-10-22</h2>
+<h4>Added</h4>
+<ul>
+<li><code>design_read</code> reads Figma&#39;s text on a path (a label along an arc) as <code>&lt;TextPath&gt;</code>: its text, spans and text CSS as
+a <code>Text</code>&#39;s, <code>d</code> (the path in its own box) and <code>start</code> (the segment and the place along it where the text begins).</li>
+<li><code>design_apply</code> edits text on a path: <code>&lt;TextPath id=&quot;…&quot;&gt;New words&lt;/TextPath&gt;</code> changes its characters and keeps its
+look, its text CSS is written as on a <code>Text</code>, and <code>start</code> moves where the text begins. A changed <code>d</code> is refused,
+since Figma cannot change the path: delete the layer and make it again. So is a line height in <code>font</code>: a text on a
+path has none.</li>
+<li><code>design_apply</code> makes text on a path along <code>d</code> (any SVG path) or <code>arc=&quot;&lt;cx&gt; &lt;cy&gt; &lt;r&gt; &lt;from&gt; &lt;to&gt;&quot;</code>, an arc of a
+circle in the parent with its ends in degrees as CSS turns (0 at the top, clockwise).</li>
+<li><code>text-align=&quot;center&quot;</code> or <code>&quot;right&quot;</code> on a text on a path, without <code>start</code>, puts its start in the middle of the path
+or at its end, where Figma anchors the alignment, so the whole text shows instead of one letter.</li>
+<li><code>inspect</code> gives every layer its <code>center</code>, and with <code>around</code> (a layer&#39;s id, such as a ring&#39;s, or a point) each
+layer&#39;s <code>distance</code> from it and its <code>angle</code> as CSS <code>rotate()</code> turns: 0 straight up, clockwise to 360.</li>
+<li><code>nodes_find</code> finds instances by <code>variant</code> (<code>&quot;State=Hover, Size=L&quot;</code>), and <code>counts: true</code> counts every instance found,
+past the <code>limit</code>, by component and variant: before deleting variants, which ones layers still use, without code.
+A plugin too old for these is refused with a hint to update it, instead of listing every variant&#39;s instances.</li>
+<li><code>execute</code> says in <code>note</code> when its code only reads (nothing in it sets a property, calls a method that writes or
+runs a helper of your own), and that the read tools need no code and work with Allow edits off.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>Text on a path, and a frame holding one, no longer read as an <code>&lt;Icon&gt;</code> with no text, and a <code>&lt;Text&gt;</code> written inside a
+<code>&lt;TextPath&gt;</code> is refused with a hint instead of becoming a new layer in it.</li>
+</ul>
+
+        </section>
         <section id="v0-6-0">
           <h2>0.6.0 — 2026-10-22</h2>
 <h4>Added</h4>

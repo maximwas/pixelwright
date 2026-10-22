@@ -315,6 +315,20 @@ const DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
     // so; only a resize lays it out again.
     width: 0,
   },
+  VECTOR: { vectorPaths: [] },
+  // As createTextPath makes one, its text as a new text's (not seen live).
+  TEXT_PATH: {
+    characters: "",
+    autoRename: true,
+    fontName: {
+      family: "Inter",
+      style: "Regular",
+    },
+    fontSize: 12,
+    fills: [SOLID(0, 0, 0)],
+    textAlignHorizontal: "LEFT",
+    textAlignVertical: "TOP",
+  },
 };
 
 /**
@@ -704,29 +718,31 @@ function writable(node: FakeNode, writes: FakeWrites, layers: FakeLayers, option
     droppedWhenHidden(node);
   }
 
-  if (node.type !== "TEXT") {
+  if (node.type !== "TEXT" && node.type !== "TEXT_PATH") {
     return;
   }
 
   let characters = typeof node.characters === "string" ? node.characters : "";
   let textAutoResize = typeof node.textAutoResize === "string" ? node.textAutoResize : "NONE";
 
-  // Figma: setting how a text sizes itself requires its font loaded.
-  Object.defineProperty(node, "textAutoResize", {
-    get: () => textAutoResize,
-    set: (value: string) => {
-      if (!writes.loaded.has(fontKey(node.fontName as { family: string; style: string }))) {
-        throw new Error(
-          `Cannot write to node with unloaded font "${fontKey(node.fontName as { family: string; style: string })}"`,
-        );
-      }
+  // Figma: setting how a text sizes itself requires its font loaded. A text on a path has no such setting.
+  if (node.type === "TEXT") {
+    Object.defineProperty(node, "textAutoResize", {
+      get: () => textAutoResize,
+      set: (value: string) => {
+        if (!writes.loaded.has(fontKey(node.fontName as { family: string; style: string }))) {
+          throw new Error(
+            `Cannot write to node with unloaded font "${fontKey(node.fontName as { family: string; style: string })}"`,
+          );
+        }
 
-      textAutoResize = value;
-      record("textAutoResize", [value]);
-    },
-    enumerable: true,
-    configurable: true,
-  });
+        textAutoResize = value;
+        record("textAutoResize", [value]);
+      },
+      enumerable: true,
+      configurable: true,
+    });
+  }
 
   Object.defineProperty(node, "characters", {
     get: () => characters,
@@ -762,6 +778,11 @@ function writable(node: FakeNode, writes: FakeWrites, layers: FakeLayers, option
   });
 
   for (const [method, field] of Object.entries(RANGE_METHODS)) {
+    // As Figma's typings: a text on a path has no line height or decoration of its own.
+    if (node.type === "TEXT_PATH" && (field === "lineHeight" || field.startsWith("textDecoration"))) {
+      continue;
+    }
+
     define(method, (start: number, end: number, value: unknown) => {
       if (method === "setRangeFontName" && !writes.loaded.has(fontKey(value as { family: string; style: string }))) {
         throw new Error(`Cannot use unloaded font "${fontKey(value as { family: string; style: string })}"`);
@@ -1440,6 +1461,31 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
     createRectangle: create("RECTANGLE"),
     createEllipse: create("ELLIPSE"),
     createLine: create("LINE"),
+    createVector: create("VECTOR"),
+    // As Figma: the vector-like layer becomes a text on that path, a node object of its own, where the layer was.
+    createTextPath: (vector: FakeNode, segment: number, position: number) => {
+      const node = create("TEXT_PATH")();
+      const siblings = vector.parent?.children;
+
+      node.vectorPaths = structuredClone(vector.vectorPaths);
+      node.textPathStartData = {
+        segment,
+        position,
+      };
+
+      if (siblings !== undefined) {
+        siblings.splice(siblings.indexOf(vector), 1, node);
+        node.parent = vector.parent;
+      }
+
+      writes.calls.push({
+        node: vector.id,
+        method: "createTextPath",
+        args: [segment, position],
+      });
+
+      return node;
+    },
     createImage: (bytes: Uint8Array) => {
       if (options.strict ?? false) {
         checkImage(bytes);

@@ -10,7 +10,7 @@ export function nodesFindTool({
     name: "nodes_find",
     title: "Find layers",
     description:
-      'Finds layers on the current page, or inside `within` (a layer, a page, or "file" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance\'s component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down.',
+      'Finds layers on the current page, or inside `within` (a layer, a page, or "file" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring), component (an instance\'s component or component set name) or variant (an instance\'s variant values, "State=Hover, Size=L"). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.',
     input: NodesFindInputSchema,
     output: NodesFindOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,

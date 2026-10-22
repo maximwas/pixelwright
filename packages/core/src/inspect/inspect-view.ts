@@ -4,6 +4,7 @@ import { paintsCss } from "../css-mapping/values/paints.ts";
 import { interactionSummary } from "../design/interactions.ts";
 import { Color } from "../kernel/color/color.ts";
 import { type ColorSpace, colorSpaceOf } from "../kernel/color/color-space.ts";
+import { bearing, centerOf } from "../kernel/geometry.ts";
 import { styleTokenName } from "../kernel/names.ts";
 import { MIXED } from "../schemas/snapshot-values.ts";
 import type { InspectBox, InspectedLayer, InspectedLayerView, InspectRaw, InspectView } from "../types/inspect.ts";
@@ -16,25 +17,33 @@ const PAST = 0.5;
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
+/** A point in the boxes' origin. */
+type Point = NonNullable<InspectView["around"]>;
+
 /**
- * What inspect gives for each layer, from the plugin's raw read: boxes, how strokes paint, every effect, a text's
- * lines and line heights, overflow, interactions and the component. Nothing here is guessed from CSS.
+ * What inspect gives for each layer, from the plugin's raw read: boxes and centres, how strokes paint, every effect, a
+ * text's lines and line heights, overflow, interactions and the component; with `around` (a point in the boxes'
+ * origin), each centre's distance and angle from it. Nothing here is guessed from CSS.
  */
-export function inspectView(raw: InspectRaw): InspectView {
+export function inspectView(raw: InspectRaw, around?: Point): InspectView {
   return {
     relativeTo: raw.origin === null ? "the page" : `${raw.origin.id} "${raw.origin.name}"`,
-    layers: raw.layers.map((layer) => layerView(layer, raw)),
+    ...(around === undefined ? {} : { around }),
+    layers: raw.layers.map((layer) => layerView(layer, raw, around)),
     missing: raw.missing,
   };
 }
 
-function layerView(layer: InspectedLayer, raw: InspectRaw): InspectedLayerView {
+function layerView(layer: InspectedLayer, raw: InspectRaw, around: Point | undefined): InspectedLayerView {
+  const center = centerOf(layer.box);
   const view: InspectedLayerView = {
     id: layer.id,
     name: layer.name,
     type: layer.type,
     parent: layer.parent,
     box: layer.box,
+    center,
+    ...(around === undefined ? {} : bearing(around, center)),
   };
   const overflow = overflowOf(layer);
   const strokes = strokesOf(layer, colorSpaceOf(raw.colorProfile));

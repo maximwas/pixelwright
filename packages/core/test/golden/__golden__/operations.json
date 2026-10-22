@@ -984,6 +984,16 @@
           "minLength": 1,
           "maxLength": 200
         },
+        "variant": {
+          "description": "Instances of one variant, e.g. \"State=Hover, Size=L\": every value given must be the main component's (in any order and case; the rest may be anything).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "counts": {
+          "description": "Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.",
+          "type": "boolean"
+        },
         "within": {
           "type": "string",
           "minLength": 1,
@@ -1063,6 +1073,47 @@
         },
         "more": {
           "type": "boolean"
+        },
+        "variant": {
+          "description": "With variant: the values matched, as the filter was read.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "counts": {
+          "description": "With counts: the instances found, by component and variant, in the order first met. A variant no instance uses is not listed.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "component": {
+                "type": "string",
+                "description": "The component set's name, or a component's without variants."
+              },
+              "variant": {
+                "description": "The variant as Figma names it.",
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "component",
+              "count"
+            ]
+          }
+        },
+        "countsCut": {
+          "description": "The time ran out before every layer was counted: counts cover the layers reached. Search within less.",
+          "type": "boolean",
+          "const": true
         }
       },
       "required": [
@@ -3773,6 +3824,49 @@
                 "segments"
               ]
             },
+            "textPath": {
+              "type": "object",
+              "properties": {
+                "vectorPaths": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "windingRule": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "windingRule",
+                      "data"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "textPathStartData": {
+                  "type": "object",
+                  "properties": {
+                    "segment": {
+                      "type": "number"
+                    },
+                    "position": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "segment",
+                    "position"
+                  ]
+                }
+              },
+              "required": [
+                "vectorPaths",
+                "textPathStartData"
+              ]
+            },
             "instance": {
               "type": "object",
               "properties": {
@@ -6006,6 +6100,49 @@
                 "textAlignHorizontal",
                 "textAlignVertical",
                 "segments"
+              ]
+            },
+            "textPath": {
+              "type": "object",
+              "properties": {
+                "vectorPaths": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "windingRule": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "windingRule",
+                      "data"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "textPathStartData": {
+                  "type": "object",
+                  "properties": {
+                    "segment": {
+                      "type": "number"
+                    },
+                    "position": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "segment",
+                    "position"
+                  ]
+                }
+              },
+              "required": [
+                "vectorPaths",
+                "textPathStartData"
               ]
             },
             "instance": {
@@ -9360,6 +9497,49 @@
                   "textAlignHorizontal",
                   "textAlignVertical",
                   "segments"
+                ]
+              },
+              "textPath": {
+                "type": "object",
+                "properties": {
+                  "vectorPaths": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "windingRule": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "windingRule",
+                        "data"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "textPathStartData": {
+                    "type": "object",
+                    "properties": {
+                      "segment": {
+                        "type": "number"
+                      },
+                      "position": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "segment",
+                      "position"
+                    ]
+                  }
+                },
+                "required": [
+                  "vectorPaths",
+                  "textPathStartData"
                 ]
               },
               "instance": {

@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { SELECTION_WAIT_MAX_MS } from "../constants/bridge.ts";
+import { nameValueList } from "../kernel/lists.ts";
 import { ScreensRawSchema } from "./breakpoints.ts";
 import {
   BoxSchema,
@@ -181,12 +182,48 @@ export const NAVIGATION_OPERATIONS = {
       type: QuerySchema.exactOptional(),
       text: QuerySchema.exactOptional(),
       component: QuerySchema.exactOptional(),
+      variant: QuerySchema.refine((value) => Object.keys(nameValueList(value) ?? {}).length > 0, {
+        message: 'variant is a list of Name=Value, separated by commas: "State=Hover, Size=L".',
+      })
+        .exactOptional()
+        .describe(
+          'Instances of one variant, e.g. "State=Hover, Size=L": every value given must be the main component\'s (in any order and case; the rest may be anything).',
+        ),
+      counts: z
+        .boolean()
+        .exactOptional()
+        .describe(
+          "Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.",
+        ),
       within: NodeIdSchema.exactOptional(),
       limit: z.number().int().min(1).max(500).default(50),
     }),
     output: z.object({
       nodes: z.array(NodeRefSchema.extend({ path: z.array(z.string()) })),
       more: z.boolean(),
+      // An older plugin, which ignores the filter, leaves it out: the server tells it apart by this.
+      variant: z
+        .record(z.string(), z.string())
+        .exactOptional()
+        .describe("With variant: the values matched, as the filter was read."),
+      counts: z
+        .array(
+          z.object({
+            component: z.string().describe("The component set's name, or a component's without variants."),
+            variant: z.string().exactOptional().describe("The variant as Figma names it."),
+            count: z.number().int().min(1),
+          }),
+        )
+        .exactOptional()
+        .describe(
+          "With counts: the instances found, by component and variant, in the order first met. A variant no instance uses is not listed.",
+        ),
+      countsCut: z
+        .literal(true)
+        .exactOptional()
+        .describe(
+          "The time ran out before every layer was counted: counts cover the layers reached. Search within less.",
+        ),
     }),
   },
   outline: {

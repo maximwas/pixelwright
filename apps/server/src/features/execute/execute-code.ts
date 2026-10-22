@@ -3,7 +3,8 @@ import { REQUEST_TIMEOUT_MS } from "../../constants/bridge.ts";
 import { versionBefore } from "../../history/version-before.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import { codeToRun } from "./code-to-run.ts";
-import { EXECUTE_ANSWER_MARGIN_MS } from "./constants.ts";
+import { EXECUTE_ANSWER_MARGIN_MS, READS_ONLY_NOTE } from "./constants.ts";
+import { readsOnly } from "./reads-only.ts";
 import type { ExecuteInputSchema, ExecuteOutputSchema } from "./schemas.ts";
 import { syntaxError } from "./syntax-error.ts";
 
@@ -46,6 +47,8 @@ export async function executeCode(
 
   return {
     ...ran,
+    // Decided from the code, not from Figma's change events: a file in a background tab hears of them a minute late.
+    ...(ran.error === undefined && readsOnly(code) ? { note: READS_ONLY_NOTE } : {}),
     ...(version === undefined ? {} : { version }),
   };
 }

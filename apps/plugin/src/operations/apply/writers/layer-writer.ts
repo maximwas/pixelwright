@@ -1,4 +1,5 @@
 import type { ApplyChange, FigmaProps } from "@pixelwright/core";
+import { isTextLayer } from "../../../figma/capabilities.ts";
 import { fitIcon, writeImage } from "./asset-steps.ts";
 import { componentSteps } from "./component-steps.ts";
 import { layOutFillingText } from "./size-steps.ts";
@@ -135,7 +136,7 @@ export class LayerWriter {
   }
 
   async #text({ node, change, fail }: Target): Promise<boolean> {
-    if (node.type === "TEXT") {
+    if (isTextLayer(node)) {
       return await new TextWriter(node, change, this.#scope).write((key, error) =>
         fail(error, key === "text" ? undefined : [key]),
       );

@@ -1,4 +1,4 @@
-import { VECTOR_TYPES } from "../constants/css.ts";
+import { TEXT_TYPES, VECTOR_TYPES } from "../constants/css.ts";
 import type { CssContext, NodeCss } from "../types/css.ts";
 import type { SnapshotNode } from "../types/snapshot.ts";
 import { CssDeclarations } from "./css-declarations.ts";
@@ -35,7 +35,7 @@ export function nodeCss(node: SnapshotNode, parent: SnapshotNode | null, context
 
   readAppearance(node, css);
 
-  if (node.type === "TEXT") {
+  if (TEXT_TYPES.has(node.type)) {
     textStyle = readText(node, css, context);
   } else if (!VECTOR_TYPES.has(node.type) && node.type !== "LINE") {
     readRadius(node, css);

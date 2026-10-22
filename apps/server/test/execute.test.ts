@@ -51,6 +51,7 @@ describe("execute", () => {
   it("runs the code in the plugin with its timeout in milliseconds and returns what came back", async () => {
     const { asked, client } = recording({ execute: RAN });
 
+    // The code only reads, so the answer also carries the note the server adds for such code.
     expect(
       await executeCode(
         client,
@@ -59,7 +60,10 @@ describe("execute", () => {
           timeout: 3,
         }),
       ),
-    ).toEqual(RAN);
+    ).toEqual({
+      ...RAN,
+      note: READS_ONLY,
+    });
     expect(
       asked.map(({ op, input }) => ({
         op,
@@ -182,11 +186,109 @@ describe("execute", () => {
       ),
     ).toEqual({
       ...RAN,
+      note: READS_ONLY,
       version: {
         id: "v7",
         title: "Before the bulk rename",
       },
     });
     expect(asked.map(({ op }) => op)).toEqual(["save_version", "execute"]);
+  });
+});
+
+/** What code that only reads is told: the read tools need no code. It says nothing of the file, only of the code. */
+const READS_ONLY =
+  "This code only reads: design_read, inspect, measure and nodes_find read without code, and work while Allow edits is off.";
+
+/** The answer the server gives for code the plugin ran without an error. */
+async function answered(code: string, ran: object = RAN) {
+  const { client } = recording({ execute: ran });
+
+  return await executeCode(client, ExecuteInputSchema.parse({ code }));
+}
+
+describe("execute's note on code that only reads", () => {
+  it.each([
+    "return figma.currentPage.children.length;",
+    'const card = await pw.node("1:1"); return { name: card.name, box: card.absoluteBoundingBox };',
+    [
+      "const counts = new Map();",
+      "for (const instance of figma.currentPage.findAll((node) => node.type === 'INSTANCE')) {",
+      "  const main = await instance.getMainComponentAsync();",
+      "  counts.set(main.name, (counts.get(main.name) ?? 0) + 1);",
+      "}",
+      "return [...counts];",
+    ].join("\n"),
+    "const out = []; for (const node of figma.currentPage.children) out.push(node.name); return out.join(', ');",
+    'const text = await pw.node("1:2"); return await text.getStyledTextSegments(["fontName"]);',
+  ])("gives the note to code that only reads: %s", async (code) => {
+    expect(await answered(code)).toEqual({
+      ...RAN,
+      note: READS_ONLY,
+    });
+  });
+
+  it.each([
+    ["a property set", '(await figma.getNodeByIdAsync("1:1")).name = "Card 2";'],
+    ["a property set by a computed key", 'const card = await pw.node("1:1"); card["opacity"] = 0.5;'],
+    ["a property added to", 'const card = await pw.node("1:1"); card.x += 10;'],
+    ["a property counted up", 'const card = await pw.node("1:1"); card.y++;'],
+    ["a property deleted", 'const card = await pw.node("1:1"); delete card.foo;'],
+    ["a create* call", "figma.createRectangle();"],
+    ["remove", '(await pw.node("1:1")).remove();'],
+    ["append*", 'figma.currentPage.appendChild(await pw.node("1:1"));'],
+    ["insert*", 'figma.currentPage.insertChild(0, await pw.node("1:1"));'],
+    ["set*", 'figma.root.setPluginData("seen", "1");'],
+    ["set*Async", 'await (await pw.node("1:1")).setFillStyleIdAsync("S:1");'],
+    ["resize", '(await pw.node("1:1")).resize(10, 10);'],
+    ["rescale", '(await pw.node("1:1")).rescale(2);'],
+    ["group", 'figma.group([await pw.node("1:1")], figma.currentPage);'],
+    ["flatten", 'figma.flatten([await pw.node("1:1")]);'],
+    ["commitUndo", "figma.commitUndo();"],
+    ["import*", 'await figma.importComponentByKeyAsync("abc");'],
+    ["clone", '(await pw.node("1:1")).clone();'],
+    ["detach*", '(await pw.node("1:3")).detachInstance();'],
+    ["a boolean operation", 'figma.union([await pw.node("1:1")], figma.currentPage);'],
+    ["add*", "(await figma.variables.getLocalVariableCollectionsAsync())[0].addMode('Dark');"],
+    ["insertCharacters", '(await pw.node("1:2")).insertCharacters(0, "x");'],
+    ["triggerUndo", "figma.triggerUndo();"],
+    ["a write by a string key", '(await pw.node("1:1"))["remove"]();'],
+    ["a method named by a variable", 'const how = "remove"; (await pw.node("1:1"))[how]();'],
+    ["a method taken out", 'const { remove } = await pw.node("1:1"); remove.call(await pw.node("1:1"));'],
+    ["a method kept for later", 'const card = await pw.node("1:1"); const gone = card.remove; gone.call(card);'],
+    ["Object.assign", 'Object.assign(await pw.node("1:1"), { name: "Card 2" });'],
+    ["Reflect", 'Reflect.set(await pw.node("1:1"), "name", "Card 2");'],
+    ["eval", 'eval("figma.createRectangle()");'],
+    ["Function", 'new Function("figma", "figma.createRectangle()")(figma);'],
+    ["a function's constructor", '(() => {}).constructor("figma.createRectangle()")();'],
+    ["with", 'with (await pw.node("1:1")) { name = "Card 2"; }'],
+  ])("gives no note to code with %s", async (_kind, code) => {
+    expect(await answered(code)).not.toHaveProperty("note");
+  });
+
+  it.each([
+    [
+      "in a function the code declares",
+      'function rename(node) { node.name = "Card 2"; }\nrename(await pw.node("1:1"));',
+    ],
+    ["in an arrow function", "const make = () => figma.createRectangle();\nreturn make().id;"],
+    ["in a callback", "figma.currentPage.children.forEach((node) => node.remove());"],
+    ["in a helper an earlier call added to pw", "return await pw.makeCard();"],
+    ["in a helper kept in pw.state", "return pw.state.rename();"],
+    ["in a helper taken out of pw", "const { makeCard } = pw;\nreturn makeCard();"],
+    ["in a function an earlier call left global", "return makeCard();"],
+  ])("gives no note when a write may hide %s", async (_where, code) => {
+    expect(await answered(code)).not.toHaveProperty("note");
+  });
+
+  it("gives no note when the code threw or ran past its time, though it only reads", async () => {
+    const threw = {
+      result: null,
+      logs: [],
+      error: "Error: not this time",
+    };
+
+    expect(await answered("return figma.currentPage.name;", threw)).toEqual(threw);
+    expect(await answered('throw new Error("not this time");', threw)).toEqual(threw);
   });
 });

@@ -889,7 +889,7 @@
   {
     "name": "nodes_find",
     "title": "Find layers",
-    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance's component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down.",
+    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring), component (an instance's component or component set name) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -912,6 +912,16 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 200
+        },
+        "variant": {
+          "description": "Instances of one variant, e.g. \"State=Hover, Size=L\": every value given must be the main component's (in any order and case; the rest may be anything).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "counts": {
+          "description": "Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.",
+          "type": "boolean"
         },
         "within": {
           "description": "Where to search: a layer or page id, or \"file\" for every page. Default: the current page.",
@@ -1009,6 +1019,48 @@
         },
         "more": {
           "type": "boolean"
+        },
+        "variant": {
+          "description": "With variant: the values matched, as the filter was read.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "counts": {
+          "description": "With counts: the instances found, by component and variant, in the order first met. A variant no instance uses is not listed.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "component": {
+                "type": "string",
+                "description": "The component set's name, or a component's without variants."
+              },
+              "variant": {
+                "description": "The variant as Figma names it.",
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "component",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "countsCut": {
+          "description": "The time ran out before every layer was counted: counts cover the layers reached. Search within less.",
+          "type": "boolean",
+          "const": true
         }
       },
       "required": [
@@ -1245,7 +1297,7 @@
   {
     "name": "design_read",
     "title": "Read a design",
-    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer's Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer's summary being $motion in the XML) when there are any, repeats (with repeats: true, each run of alike neighbours read as its first, $repeat in the XML, and a row of each one's own texts, files and variants) and nearby (with nearby: N, the designer's notes on the canvas around the screen), and, where the project has Figma Code Connect templates (*.figma.ts) or batch files (*.figma.batch.json), codeComponents: the code connected instances render to ({ids, component, template, source, snippet, imports, unread}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code and add what unread names (its own values are its variant and props; read it with node=<its id> for a nested one's); code: false reads it as layers. A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project's own components and tokens.",
+    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, Image and Icon for true assets, TextPath for a text on a path (its text as a Text's, its path as d and where the text starts as start), CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer's Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer's summary being $motion in the XML) when there are any, repeats (with repeats: true, each run of alike neighbours read as its first, $repeat in the XML, and a row of each one's own texts, files and variants) and nearby (with nearby: N, the designer's notes on the canvas around the screen), and, where the project has Figma Code Connect templates (*.figma.ts) or batch files (*.figma.batch.json), codeComponents: the code connected instances render to ({ids, component, template, source, snippet, imports, unread}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code and add what unread names (its own values are its variant and props; read it with node=<its id> for a nested one's); code: false reads it as layers. A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project's own components and tokens.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1313,7 +1365,7 @@
   {
     "name": "inspect",
     "title": "Inspect layers",
-    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component's variant. Boxes are measured from relativeTo's top left, so it also measures: give a list of layers and their section.",
+    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component's variant. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1334,6 +1386,31 @@
           "minLength": 1,
           "maxLength": 200
         },
+        "around": {
+          "description": "A point to measure each layer's distance and angle from: a layer's id (its centre, e.g. a ring's), or {x, y} in the boxes' origin (relativeTo's top left, or the page's). The angle matches CSS rotate(): 0 straight up, then clockwise to 360.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ]
+            }
+          ]
+        },
         "file": {
           "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
@@ -1349,6 +1426,23 @@
         "relativeTo": {
           "type": "string",
           "description": "What the boxes are measured from: a layer as `id \"name\"`, or the page."
+        },
+        "around": {
+          "description": "The point distance and angle are measured from, in the boxes' origin: the given one, or the centre of the given layer.",
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
         },
         "layers": {
           "type": "array",
@@ -1416,6 +1510,31 @@
                 "additionalProperties": false,
                 "description": "The layout box."
               },
+              "center": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false,
+                "description": "The box's centre, in the box's origin; for a turned layer its own centre too, as the box bounds the turned layer."
+              },
+              "distance": {
+                "description": "With around: how far the layer's centre lies from that point, in px.",
+                "type": "number"
+              },
+              "angle": {
+                "description": "With around: the direction of the layer's centre from that point, in degrees as CSS rotate() turns: 0 straight up, 90 right, 180 down, 270 left (clockwise, 0 to 360). Left out at the point itself.",
+                "type": "number"
+              },
               "paintedBox": {
                 "description": "What is painted, when it differs from the box: centred or outside strokes, shadows, blur.",
                 "type": "object",
@@ -1442,6 +1561,7 @@
                 "additionalProperties": false
               },
               "rotation": {
+                "description": "Figma's rotation in degrees, counter-clockwise: CSS turns it as rotate(-rotation), as design_read writes.",
                 "type": "number"
               },
               "overflow": {
@@ -1931,7 +2051,8 @@
               "name",
               "type",
               "parent",
-              "box"
+              "box",
+              "center"
             ],
             "additionalProperties": false
           }
@@ -4910,7 +5031,7 @@
   {
     "name": "design_apply",
     "title": "Write a design",
-    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=\"none\", width=\"auto\" to hug, display=\"block\" to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; an Instance by component=\"Name\" variant=\"Prop=Value\" props=\"Label=Text\"; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=\"id\" copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write.",
+    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=\"none\", width=\"auto\" to hug, display=\"block\" to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; a TextPath (text on a path) along d, an SVG path, or arc=\"cx cy r from to\" in its parent, whose text and start change later but whose path does not; an Instance by component=\"Name\" variant=\"Prop=Value\" props=\"Label=Text\"; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=\"id\" copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5098,7 +5219,7 @@
   {
     "name": "execute",
     "title": "Run plugin code",
-    "description": "Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given `figma` (the Plugin API), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(\"--token\") (the variable design_read names so). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file's styles and check what they write.",
+    "description": "Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given `figma` (the Plugin API), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(\"--token\") (the variable design_read names so). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file's styles and check what they write. To read, use the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5147,6 +5268,10 @@
           }
         },
         "error": {
+          "type": "string"
+        },
+        "note": {
+          "description": "When the code ran and only reads (nothing in it writes): the tools that read without code.",
           "type": "string"
         },
         "version": {
