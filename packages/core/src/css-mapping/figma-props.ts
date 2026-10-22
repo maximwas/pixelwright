@@ -214,6 +214,10 @@ export interface FigmaProps {
    * theme → dark); an empty mode clears the collection's mode, so the layer takes its parent's.
    */
   modes?: Readonly<Record<string, string>>;
+  /** A new TextPath's path, as Figma's vector paths take one, in its own box. */
+  path?: string;
+  /** Where a TextPath's text starts: a segment of its path, and how far along it from 0 to 1. */
+  pathStart?: { readonly segment: number; readonly position: number };
   /** An Image's or Icon's file; the server reads it (an image's bytes go as an upload stream, an icon's SVG inline). */
   asset?: { readonly kind: "image" | "icon"; readonly src: string; readonly stream?: string; readonly svg?: string };
 }

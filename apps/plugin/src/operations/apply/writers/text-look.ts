@@ -1,4 +1,5 @@
 import { sameValue } from "@pixelwright/core";
+import type { TextLayer } from "../../../figma/capabilities.ts";
 import type { IdLookup } from "../../../figma/id-lookup.ts";
 
 /** A field of a styled text segment. */
@@ -26,15 +27,24 @@ const STYLED_FIELDS = ["fontName", "fontSize", "lineHeight", "letterSpacing", "t
 
 type StyledField = (typeof STYLED_FIELDS)[number];
 
+/** Each styled field written over a text; a text on a path has no line height or decoration to restore. */
 const STYLED_WRITERS: {
-  readonly [F in StyledField]: (node: TextNode, end: number, value: BaseSegment[F]) => void;
+  readonly [F in StyledField]: (node: TextLayer, end: number, value: BaseSegment[F]) => void;
 } = {
   fontName: (node, end, value) => node.setRangeFontName(0, end, value),
   fontSize: (node, end, value) => node.setRangeFontSize(0, end, value),
-  lineHeight: (node, end, value) => node.setRangeLineHeight(0, end, value),
+  lineHeight: (node, end, value) => {
+    if (node.type === "TEXT") {
+      node.setRangeLineHeight(0, end, value);
+    }
+  },
   letterSpacing: (node, end, value) => node.setRangeLetterSpacing(0, end, value),
   textCase: (node, end, value) => node.setRangeTextCase(0, end, value),
-  textDecoration: (node, end, value) => node.setRangeTextDecoration(0, end, value),
+  textDecoration: (node, end, value) => {
+    if (node.type === "TEXT") {
+      node.setRangeTextDecoration(0, end, value);
+    }
+  },
 };
 
 /** The run of most characters: the text's own look. */
@@ -49,7 +59,7 @@ export function longest<T extends { start: number; end: number }>(segments: read
  * The look the text had, over all of it again: its style, then what the style does not set or sets otherwise, its
  * colour, link and the variables bound to its type, so a style and its bindings stay.
  */
-export async function restoreLook(node: TextNode, base: BaseSegment, lookup: IdLookup): Promise<void> {
+export async function restoreLook(node: TextLayer, base: BaseSegment, lookup: IdLookup): Promise<void> {
   const end = node.characters.length;
   const styleId = typeof base.textStyleId === "string" && base.textStyleId !== "" ? base.textStyleId : null;
   const style = styleId === null ? null : ((await lookup.style(styleId)) as TextStyle | null);
@@ -74,7 +84,7 @@ export async function restoreLook(node: TextNode, base: BaseSegment, lookup: IdL
 
 /** A field the style does not set, or sets otherwise, written over the text. */
 function restoreField<F extends StyledField>(
-  node: TextNode,
+  node: TextLayer,
   end: number,
   field: F,
   { base, style }: { readonly base: BaseSegment; readonly style: TextStyle | null },
@@ -86,7 +96,7 @@ function restoreField<F extends StyledField>(
   }
 }
 
-async function restoreFillAndLink(node: TextNode, base: BaseSegment, end: number): Promise<void> {
+async function restoreFillAndLink(node: TextLayer, base: BaseSegment, end: number): Promise<void> {
   if (typeof base.fillStyleId === "string" && base.fillStyleId !== "") {
     await node.setRangeFillStyleIdAsync(0, end, base.fillStyleId);
   } else if (Array.isArray(base.fills)) {
@@ -99,7 +109,7 @@ async function restoreFillAndLink(node: TextNode, base: BaseSegment, end: number
 }
 
 async function restoreBindings(
-  node: TextNode,
+  node: TextLayer,
   base: BaseSegment,
   { end, lookup }: { end: number; lookup: IdLookup },
 ): Promise<void> {
@@ -115,7 +125,7 @@ async function restoreBindings(
 
 /** Writes over the runs that have the text's own value of these fields (all of an empty text). */
 export async function inherit(
-  node: TextNode,
+  node: TextLayer,
   fields: readonly SegmentField[],
   write: (start: number, end: number) => Promise<void>,
 ): Promise<void> {

@@ -114,13 +114,11 @@ export const READ_CASES: Readonly<Record<string, string>> = {
     "<Icon/>",
   ),
   "a group is made by grouping": '<Group name="G"><Frame id="2:5" name="Kept"/><Frame name="Lost"/></Group>',
-  "shapes not drawn from XML": lines(
-    "<Vector/>",
-    "<Star/>",
-    "<Polygon/>",
-    "<BooleanOperation/>",
-    "<TextPath/>",
-    "<TransformGroup/>",
+  "shapes not drawn from XML": lines("<Vector/>", "<Star/>", "<Polygon/>", "<BooleanOperation/>", "<TransformGroup/>"),
+  "a text on a path is made along d or arc, which only it takes": lines(
+    "<TextPath>No path</TextPath>",
+    '<TextPath d="M 0 0 L 100 0">Along</TextPath>',
+    '<Frame d="M 0 0 L 100 0" start="0 0"/>',
   ),
   "other known tags that cannot be created": lines(
     "<Table/>",

@@ -24,7 +24,11 @@ export function piecesOf(node: XmlElementNode, errors: ApplyError[]): ContentPie
       errors.push({
         line: child.line,
         column: child.column,
-        message: `<${child.type}> inside a Text: a text holds only text and <Span> runs.`,
+        message: `<${child.type}> inside a ${node.type}: a text holds only text and <Span> runs.`,
+        // A text on a path is no frame around a text: its characters are its own.
+        ...(child.type === "Text" && node.type === "TextPath"
+          ? { hint: 'Write the characters in the TextPath itself: <TextPath id="…">text</TextPath>.' }
+          : {}),
       });
 
       return [];

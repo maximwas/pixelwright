@@ -101,6 +101,12 @@ export const LAYOUT_ATTRIBUTES: ReadonlySet<string> = new Set([
   "grid-template-rows",
 ]);
 
+/** Tags whose layers hold text: a Text, and a TextPath, whose text is written as a Text's. */
+export const TEXT_TAGS: ReadonlySet<string> = new Set(["Text", "TextPath"]);
+
+/** What a TextPath has besides its text: its path, the arc that draws one, and where on it the text starts. */
+export const PATH_ATTRIBUTES: ReadonlySet<string> = new Set(["d", "arc", "start"]);
+
 /** What only a Text takes (its spans the run ones). */
 export const TEXT_ATTRIBUTES: ReadonlySet<string> = new Set([
   "textStyle",

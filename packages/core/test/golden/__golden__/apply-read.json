@@ -1468,14 +1468,64 @@
       {
         "line": 5,
         "column": 1,
-        "message": "A <TextPath> is not drawn from XML.",
-        "hint": "Draw it as an <Icon src=\"…svg\">, or change it by its id."
-      },
-      {
-        "line": 6,
-        "column": 1,
         "message": "A <TransformGroup> is not drawn from XML.",
         "hint": "Draw it as an <Icon src=\"…svg\">, or change it by its id."
+      }
+    ]
+  },
+  "a text on a path is made along d or arc, which only it takes": {
+    "elements": [
+      {
+        "line": 2,
+        "column": 1,
+        "tag": "TextPath",
+        "id": null,
+        "ref": "new:2",
+        "parent": null,
+        "index": 1,
+        "attributes": {
+          "d": "M 0 0 L 100 0"
+        },
+        "content": [
+          {
+            "line": 2,
+            "column": 29,
+            "kind": "text",
+            "value": "Along"
+          }
+        ]
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "tag": "Frame",
+        "id": null,
+        "ref": "new:3",
+        "parent": null,
+        "index": 2,
+        "attributes": {}
+      }
+    ],
+    "errors": [
+      {
+        "line": 1,
+        "column": 1,
+        "message": "A <TextPath> is made along a path: give it d or arc.",
+        "hint": "d=\"M 0 100 C 50 0 150 0 200 100\" in its own box, or arc=\"200 200 150 -60 60\" (centre, radius, from and to degrees) in its parent."
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "attribute": "d",
+        "message": "d belongs to a text on a path: a <Frame> has no path.",
+        "hint": "Set text along a path with a <TextPath d=\"…\"> or <TextPath arc=\"…\">."
+      },
+      {
+        "line": 3,
+        "column": 1,
+        "attribute": "start",
+        "message": "start belongs to a text on a path: a <Frame> has no path.",
+        "hint": "Set text along a path with a <TextPath d=\"…\"> or <TextPath arc=\"…\">."
       }
     ]
   },

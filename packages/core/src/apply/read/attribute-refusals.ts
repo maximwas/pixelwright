@@ -1,4 +1,11 @@
-import { BOX_PAINT, LAYOUT_ATTRIBUTES, LAYOUT_TAGS, TEXT_ATTRIBUTES } from "../../css-mapping/vocabulary.ts";
+import {
+  BOX_PAINT,
+  LAYOUT_ATTRIBUTES,
+  LAYOUT_TAGS,
+  PATH_ATTRIBUTES,
+  TEXT_ATTRIBUTES,
+  TEXT_TAGS,
+} from "../../css-mapping/vocabulary.ts";
 import { SHAPE_TAGS } from "../vocabulary.ts";
 
 /** An attribute on a tag, where design_apply reads it. */
@@ -58,13 +65,18 @@ const ATTRIBUTE_REFUSALS: readonly Refusal[] = [
     hint: () => 'Put the layers in a <Frame display="flex"> and give it there.',
   },
   {
-    applies: ({ tag, name }) => TEXT_ATTRIBUTES.has(name) && tag !== "Text",
+    applies: ({ tag, name }) => TEXT_ATTRIBUTES.has(name) && !TEXT_TAGS.has(tag),
     message: ({ tag, name }) => `${name} styles a text: a <${tag}> holds none.`,
     hint: () => "Give it on the <Text> inside.",
   },
   {
-    applies: ({ tag, name }) => tag === "Text" && BOX_PAINT.has(name),
-    message: ({ name }) => `A <Text> has no box to paint: ${name} is not written on it.`,
+    applies: ({ tag, name }) => PATH_ATTRIBUTES.has(name) && tag !== "TextPath",
+    message: ({ tag, name }) => `${name} belongs to a text on a path: a <${tag}> has no path.`,
+    hint: () => 'Set text along a path with a <TextPath d="…"> or <TextPath arc="…">.',
+  },
+  {
+    applies: ({ tag, name }) => TEXT_TAGS.has(tag) && BOX_PAINT.has(name),
+    message: ({ tag, name }) => `A <${tag}> has no box to paint: ${name} is not written on it.`,
     hint: ({ name }) =>
       name === "background"
         ? "A text's colour is color; a background goes on a <Frame> around it."
