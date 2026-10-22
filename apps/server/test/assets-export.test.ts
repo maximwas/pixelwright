@@ -165,7 +165,7 @@ describe("assets_export", () => {
         dir,
         original: false,
       },
-      files,
+      { files },
     );
     const known = await files.read();
 

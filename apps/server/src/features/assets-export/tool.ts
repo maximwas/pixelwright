@@ -7,6 +7,7 @@ import { AssetsExportInputSchema, AssetsExportOutputSchema } from "./schemas.ts"
 export function assetsExportTool({
   plugin,
   files,
+  project,
 }: ToolContext): ToolDefinition<typeof AssetsExportInputSchema, typeof AssetsExportOutputSchema> {
   // One encoder for the server: its wasm is read once.
   const webp = new WebpEncoder();
@@ -19,6 +20,11 @@ export function assetsExportTool({
     input: AssetsExportInputSchema,
     output: AssetsExportOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (args) => exportAssets(plugin, args, files, webp),
+    run: async (args) =>
+      exportAssets(plugin, args, {
+        files,
+        webp,
+        root: await project.root(),
+      }),
   };
 }

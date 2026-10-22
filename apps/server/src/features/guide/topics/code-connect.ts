@@ -77,8 +77,8 @@ again, or copied, gets a new key: its keyed connection then misses, and the comp
 
 ## Where the files are
 
-The project folder is \`CLAUDE_PROJECT_DIR\`, else the server's working directory (never the home folder or the disk's
-root). Code Connect files are those ending in \`.figma.ts\`, \`.figma.js\`, \`.figma.template.ts\`,
+The project folder is the MCP client's root, else \`CLAUDE_PROJECT_DIR\`, else the server's working directory (never the
+home folder or the disk's root). Code Connect files are those ending in \`.figma.ts\`, \`.figma.js\`, \`.figma.template.ts\`,
 \`.figma.template.js\` or \`.figma.batch.json\` among those \`figma.config.json\`'s \`codeConnect.include\` globs name
 (minus \`exclude\`; its \`documentUrlSubstitutions\` are applied to urls), else all such files; dependency and build
 folders are never searched. A batch file a custom \`include\` misses is left out, as Figma does, and named in the

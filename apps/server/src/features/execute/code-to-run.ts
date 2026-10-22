@@ -4,7 +4,7 @@ import { notAFile, serverFile } from "../../utils/server-file.ts";
 
 /**
  * The code a call runs: its code, or its script read from the server's disk at this call, so the file as it is now is
- * what runs; paths as design_apply's src takes them.
+ * what runs; paths as design_apply's src takes them, a relative one from `cwd`, the project folder.
  */
 export async function codeToRun(
   { code, script }: { readonly code?: string; readonly script?: string },

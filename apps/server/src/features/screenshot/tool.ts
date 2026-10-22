@@ -4,7 +4,7 @@ import { takeScreenshot } from "../../images/screenshot.ts";
 import type { ContentToolDefinition, ToolContext } from "../../types/mcp.ts";
 import { ScreenshotInputSchema } from "./schemas.ts";
 
-export function screenshotTool({ plugin }: ToolContext): ContentToolDefinition<typeof ScreenshotInputSchema> {
+export function screenshotTool({ plugin, project }: ToolContext): ContentToolDefinition<typeof ScreenshotInputSchema> {
   return {
     name: "screenshot",
     title: "Screenshot a layer",
@@ -16,12 +16,17 @@ export function screenshotTool({ plugin }: ToolContext): ContentToolDefinition<t
       openWorldHint: false,
     },
     run: async ({ file, ...shot }) => {
+      const save = shot.save === undefined ? undefined : await project.resolve(shot.save);
+
       // A bad save path is said first, before the file is looked for.
-      if (shot.save !== undefined) {
-        await pngPath(shot.save);
+      if (save !== undefined) {
+        await pngPath(save);
       }
 
-      return takeScreenshot(plugin.session(file), shot);
+      return takeScreenshot(plugin.session(file), {
+        ...shot,
+        save,
+      });
     },
   };
 }

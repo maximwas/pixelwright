@@ -5,7 +5,7 @@ import { ComponentsReadInputSchema, ComponentsReadOutputSchema } from "./schemas
 
 export function componentsReadTool({
   plugin,
-  projectRoot,
+  project,
 }: ToolContext): ToolDefinition<typeof ComponentsReadInputSchema, typeof ComponentsReadOutputSchema> {
   return {
     name: "components_read",
@@ -15,6 +15,6 @@ export function componentsReadTool({
     input: ComponentsReadInputSchema,
     output: ComponentsReadOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (input) => readComponents(plugin, input, projectRoot),
+    run: async (input) => readComponents(plugin, input, await project.root()),
   };
 }

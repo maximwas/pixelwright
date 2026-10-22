@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/server";
-import { SERVER_INSTRUCTIONS } from "../constants/mcp.ts";
+import { ROOTS_TIMEOUT_MS, SERVER_INSTRUCTIONS } from "../constants/mcp.ts";
 import { a11yReadTool } from "../features/a11y-read/tool.ts";
 import { assetsExportTool } from "../features/assets-export/tool.ts";
 import { baselineDiffTool } from "../features/baseline-diff/tool.ts";
@@ -44,6 +44,7 @@ import { tokensUsageTool } from "../features/tokens-usage/tool.ts";
 import { variantsReadTool } from "../features/variants-read/tool.ts";
 import { versionSaveTool } from "../features/version-save/tool.ts";
 import { viewportGetTool } from "../features/viewport-get/tool.ts";
+import type { ProjectFolder } from "../project/project-folder.ts";
 import type { ToolContext } from "../types/mcp.ts";
 import { registerContentTool, registerTool } from "./register-tool.ts";
 
@@ -56,12 +57,24 @@ export function createMcpServer(context: ToolContext): McpServer {
     { instructions: SERVER_INSTRUCTIONS },
   );
 
+  askRoots(server, context.project);
+
   // In this order clients list them: finding and reading first, then the checks, then writing and the rest.
   registerReadTools(server, context);
   registerCheckTools(server, context);
   registerWriteTools(server, context);
 
   return server;
+}
+
+/** The project folder takes the client's roots when it has them, asked again after they change. */
+function askRoots(server: McpServer, project: ProjectFolder): void {
+  project.askRoots(async () =>
+    server.server.getClientCapabilities()?.roots === undefined
+      ? null
+      : (await server.server.listRoots(undefined, { timeout: ROOTS_TIMEOUT_MS })).roots,
+  );
+  server.server.setNotificationHandler("notifications/roots/list_changed", () => project.forget());
 }
 
 /** The tools that find layers and read them. */

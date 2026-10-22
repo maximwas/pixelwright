@@ -54,3 +54,6 @@ export const MAX_CLIP_RENDER_PX = 64_000_000;
 
 /** The most layers one inspect reads (the plugin op's own limit). */
 export const MAX_INSPECTED = 100;
+
+/** How long the client has to list its roots before relative paths start from the fallback folder instead. */
+export const ROOTS_TIMEOUT_MS = 5_000;

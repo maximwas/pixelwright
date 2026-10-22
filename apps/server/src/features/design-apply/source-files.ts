@@ -20,7 +20,7 @@ export type SourceRead =
   | { readonly problem: "missing" | "unusable"; readonly message: string };
 
 /**
- * The files one design_apply call names by src or a background's url(), relative to the server's folder as
+ * The files one design_apply call names by src or a background's url(), relative to the project folder as
  * assets_export's dir is. Each is read once per kind, however many layers name it.
  */
 export class SourceFiles {

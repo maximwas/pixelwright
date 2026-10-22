@@ -122,7 +122,7 @@ async function wantedImage(
   return await referenceImage(reference);
 }
 
-/** The reference PNG as RGBA, from a path relative to the server's folder or absolute. */
+/** The reference PNG as RGBA, from its path (the tool has resolved a relative one from the project folder). */
 async function referenceImage(reference: string): Promise<RgbaImage> {
   const path = resolve(reference);
   const size = await stat(path).then(

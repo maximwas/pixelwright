@@ -5,6 +5,7 @@ import { ImageCompareInputSchema, ImageCompareOutputSchema } from "./schemas.ts"
 
 export function imageCompareTool({
   plugin,
+  project,
 }: ToolContext): ToolDefinition<typeof ImageCompareInputSchema, typeof ImageCompareOutputSchema> {
   return {
     name: "image_compare",
@@ -14,6 +15,11 @@ export function imageCompareTool({
     input: ImageCompareInputSchema,
     output: ImageCompareOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (args) => compareImage(plugin, args),
+    run: async ({ reference, diff, ...args }) =>
+      compareImage(plugin, {
+        ...args,
+        ...(reference === undefined ? {} : { reference: await project.resolve(reference) }),
+        ...(diff === undefined ? {} : { diff: await project.resolve(diff) }),
+      }),
   };
 }

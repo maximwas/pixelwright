@@ -15,12 +15,19 @@ import type { AssetsExportInputSchema, AssetsExportOutputSchema } from "./schema
 type AssetsExportArgs = z.output<typeof AssetsExportInputSchema>;
 type AssetsExport = z.output<typeof AssetsExportOutputSchema>;
 
+/** What an export writes with: the store of written files, the WebP encoder, the folder a relative dir starts from. */
+export interface ExportDeps {
+  readonly files?: WrittenFiles;
+  readonly webp?: WebpEncoder;
+  /** The project folder. */
+  readonly root?: string;
+}
+
 /** The layers named, or the assets inside one, rendered or taken as placed, and written into dir. */
 export async function exportAssets(
   plugin: PluginClient,
   args: AssetsExportArgs,
-  files: WrittenFiles = memoryFiles(),
-  webp: WebpEncoder = new WebpEncoder(),
+  { files = memoryFiles(), webp = new WebpEncoder(), root = process.cwd() }: ExportDeps = {},
 ): Promise<AssetsExport> {
   const { nodes, from, dir, original, file } = args;
 
@@ -44,7 +51,7 @@ export async function exportAssets(
     planned.filter((asset) => fetched.has(asset)),
     async (asset) => fetched.get(asset) ?? Buffer.alloc(0),
     {
-      dir: resolve(dir),
+      dir: resolve(root, dir),
       srcBase: dir,
       files,
     },

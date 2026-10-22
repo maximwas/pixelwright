@@ -139,7 +139,7 @@ describe("SourceFiles", () => {
     const sources = new SourceFiles(DIR);
     const missing = (path: string) => ({
       problem: "missing",
-      message: `${path} is not a file the server can read (paths are from its folder: ${DIR}).`,
+      message: `${path} is not a file the server can read (relative paths are from the project folder: ${DIR}).`,
     });
 
     expect(
@@ -252,7 +252,7 @@ describe("fileChangesOf", () => {
           problems: [
             {
               attribute: "src",
-              message: `nowhere.png is not a file the server can read (paths are from its folder: ${DIR}).`,
+              message: `nowhere.png is not a file the server can read (relative paths are from the project folder: ${DIR}).`,
             },
           ],
         },
@@ -276,7 +276,7 @@ describe("fileChangesOf", () => {
         problems: [
           {
             attribute: "background",
-            message: `nowhere.png is not a file the server can read (paths are from its folder: ${DIR}).`,
+            message: `nowhere.png is not a file the server can read (relative paths are from the project folder: ${DIR}).`,
           },
         ],
       },
@@ -304,7 +304,7 @@ describe("fileChangesOf", () => {
         problems: [
           {
             attribute: "src",
-            message: `other.svg is not a file the server can read (paths are from its folder: ${DIR}).`,
+            message: `other.svg is not a file the server can read (relative paths are from the project folder: ${DIR}).`,
           },
         ],
       },

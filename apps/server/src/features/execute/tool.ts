@@ -5,6 +5,7 @@ import { ExecuteInputSchema, ExecuteOutputSchema } from "./schemas.ts";
 
 export function executeTool({
   plugin,
+  project,
 }: ToolContext): ToolDefinition<typeof ExecuteInputSchema, typeof ExecuteOutputSchema> {
   return {
     name: "execute",
@@ -14,6 +15,6 @@ export function executeTool({
     input: ExecuteInputSchema,
     output: ExecuteOutputSchema,
     annotations: WRITE_ANNOTATIONS,
-    run: (args) => executeCode(plugin, args),
+    run: async (args) => executeCode(plugin, args, await project.root()),
   };
 }

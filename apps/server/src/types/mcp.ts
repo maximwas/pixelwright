@@ -5,6 +5,7 @@ import type { BaselineStore } from "../baselines/baseline-store.ts";
 import type { SeenDesigns } from "../baselines/seen-designs.ts";
 import type { StatusOutputSchema } from "../features/status/schemas.ts";
 import type { PluginClient } from "../plugin/plugin-client.ts";
+import type { ProjectFolder } from "../project/project-folder.ts";
 import type { BridgeStatus, ConnectedPlugin, PairingStatus, RequestOptions } from "./bridge.ts";
 import type { SupportNotes } from "./support.ts";
 
@@ -23,8 +24,13 @@ export interface ToolContext {
   readonly version: string;
   /** The files design_read and assets_export wrote, which design_apply knows again. */
   readonly files: WrittenFiles;
-  /** The project folder, where Code Connect templates are looked for. */
+  /** The project folder baselines live in: CLAUDE_PROJECT_DIR, else the server's working directory. */
   readonly projectRoot: string;
+  /**
+   * The session's project folder: the MCP client's root, else projectRoot. Relative paths a tool takes start there,
+   * and Code Connect templates are looked for there.
+   */
+  readonly project: ProjectFolder;
   /** The weekly support note, added to a write's result after a change that worked. */
   readonly support: SupportNotes;
   /** The project's baselines (`.pixelwright/baselines`): what code was built from. */

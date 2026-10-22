@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { MAX_EXPORT_NODES } from "../../constants/mcp.ts";
 import { FileSchema } from "../../plugin/file-schema.ts";
+import { RELATIVE_PATHS } from "../../project/constants.ts";
 
 export const AssetsExportInputSchema = z.object({
   nodes: z
@@ -24,7 +25,7 @@ export const AssetsExportInputSchema = z.object({
     .min(1)
     .max(4_096)
     .describe(
-      "The folder to write into; created if missing. Files already there are never overwritten with other bytes.",
+      `The folder to write into; created if missing. Files already there are never overwritten with other bytes. ${RELATIVE_PATHS}`,
     ),
   names: z
     .record(z.string().min(1).max(200), z.string().min(1).max(200))

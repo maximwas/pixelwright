@@ -1,6 +1,7 @@
 import { NEARBY_MAX_DISTANCE } from "@pixelwright/core";
 import * as z from "zod";
 import { FileSchema } from "../../plugin/file-schema.ts";
+import { RELATIVE_PATHS } from "../../project/constants.ts";
 
 export const DesignReadInputSchema = z.object({
   node: z
@@ -16,7 +17,7 @@ export const DesignReadInputSchema = z.object({
     .max(4_096)
     .exactOptional()
     .describe(
-      "Folder to write the icons (SVG) and images (PNG at 2x, originals for backgrounds) into, e.g. src/assets; the XML's src paths start with it. Without it the assets are only planned.",
+      `Folder to write the icons (SVG) and images (PNG at 2x, originals for backgrounds) into, e.g. src/assets; the XML's src paths start with it as given. Without it the assets are only planned. ${RELATIVE_PATHS}`,
     ),
   screenshot: z.boolean().default(false).describe("Also return the layer's image, to compare your build with."),
   maxChars: z

@@ -5,7 +5,7 @@ import { CodeConnectReadInputSchema, CodeConnectReadOutputSchema } from "./schem
 
 export function codeConnectReadTool({
   plugin,
-  projectRoot,
+  project,
 }: ToolContext): ToolDefinition<typeof CodeConnectReadInputSchema, typeof CodeConnectReadOutputSchema> {
   return {
     name: "code_connect_read",
@@ -15,6 +15,6 @@ export function codeConnectReadTool({
     input: CodeConnectReadInputSchema,
     output: CodeConnectReadOutputSchema,
     annotations: READ_ONLY_ANNOTATIONS,
-    run: (input) => readCodeConnect(plugin, input, projectRoot),
+    run: async (input) => readCodeConnect(plugin, input, await project.root()),
   };
 }

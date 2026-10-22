@@ -13,13 +13,14 @@ type ExecuteArgs = z.output<typeof ExecuteInputSchema>;
 /**
  * The code (or the script's) run in the plugin of one file, a named version saved first when one is asked for. The
  * server waits for the answer a little past the code's own time, however long that is, and never less than the
- * bridge's usual wait.
+ * bridge's usual wait. A relative script starts from `root`, the project folder.
  */
 export async function executeCode(
   plugin: PluginClient,
   { timeout, file, version: title, ...source }: ExecuteArgs,
+  root = process.cwd(),
 ): Promise<z.input<typeof ExecuteOutputSchema>> {
-  const code = await codeToRun(source);
+  const code = await codeToRun(source, root);
   const invalid = syntaxError(code);
 
   if (invalid !== null) {
