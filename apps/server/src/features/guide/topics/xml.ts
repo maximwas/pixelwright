@@ -103,7 +103,8 @@ text-decoration-thickness), text-align, text-wrap, color.
 - A \`TextPath\` is a text set along a path. Its characters, spans and text CSS are a \`Text\`'s (it has no line
   height, decoration, wrapping or truncation of its own); \`d\` is the path in the layer's own box, which \`left\` and
   \`top\` place as for any layer, and \`start\` where the text begins on it: the path's segment (from 0) and the place
-  along that segment (0 to 1). In code an SVG \`<textPath>\` over a \`<path d="…">\` draws it:
+  along that segment (0 to 1). \`text-align\` is anchored there: \`center\` centres the text on \`start\`, \`right\`
+  ends it there. In code an SVG \`<textPath>\` over a \`<path d="…">\` draws it:
 
 \`\`\`xml
 <TextPath id="12:41" name="Label" d="M 0 50 C 55.23 -16.67 144.77 -16.67 200 50" start="0 0.5" position="absolute" left="100px" top="20px" width="200px" height="50px" font="500 14px/normal 'Inter'" color="var(--color-ink)">Share</TextPath>

@@ -129,6 +129,10 @@ taken as sRGB and converted to P3.
   a circle in the parent: its centre and radius in px, its ends in degrees as CSS turns (0 at the top, clockwise). An
   arc places the layer itself, absolutely, so it takes no \`left\` or \`top\`. A \`to\` smaller than \`from\` runs
   back, counter-clockwise: below the centre, \`arc="200 200 160 225 135"\` runs left to right.
+- \`text-align\` is anchored at \`start\`: \`left\` begins there, \`center\` centres the text on it, \`right\` ends it
+  there, and letters that would fall before the path's beginning are not drawn. So \`text-align="center"\` or
+  \`"right"\` given without \`start\` also puts the start in the middle of the path (by length) or at its end, on a
+  new one or an existing one; give \`start\` with it to anchor the text elsewhere.
 
 \`\`\`xml
 <Frame id="12:30" name="Round menu">

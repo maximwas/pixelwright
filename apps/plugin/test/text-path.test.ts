@@ -304,3 +304,125 @@ describe("design_apply: a new text on a path", () => {
     expect(byId("1:1").children).toHaveLength(1);
   });
 });
+
+/**
+ * Figma anchors a text on a path's alignment at its start (live 2026-10-22): left begins there, center centres on it,
+ * right ends there, and letters before the path's beginning are not drawn, so a centred text from "0 0" shows one
+ * letter. A start is the segment and Figma's place on it, the curve's own parameter (live: not its share of length).
+ */
+describe("design_apply: text-align on a text on a path, with no start", () => {
+  /** Where the text of the TextPath this XML makes starts, as the fake holds it. */
+  const startOfNew = async (xml: string) => {
+    await expect(apply(xml)).resolves.toMatchObject({ errors: [] });
+
+    const made = byId("1:1").children?.at(-1) as FakeNode;
+
+    return made.textPathStartData;
+  };
+
+  it.each([
+    [
+      "center",
+      {
+        segment: 1,
+        position: 0,
+      },
+    ],
+    [
+      "right",
+      {
+        segment: 1,
+        position: 1,
+      },
+    ],
+    [
+      "left",
+      {
+        segment: 0,
+        position: 0,
+      },
+    ],
+  ])("puts a new arc's start where text-align %s anchors: the middle, the end, the beginning", async (align, start) => {
+    // Two quarter pieces, from the circle's left over its top to its right: its middle is where they meet.
+    expect(await startOfNew(`<TextPath arc="200 200 100 -90 90" text-align="${align}">Середина</TextPath>`)).toEqual(
+      start,
+    );
+  });
+
+  it("puts a new arc's middle half way along its middle piece when the pieces are odd", async () => {
+    expect(await startOfNew('<TextPath arc="200 200 100 -135 135" text-align="center">Меню</TextPath>')).toEqual({
+      segment: 1,
+      position: 0.5,
+    });
+  });
+
+  it.each([
+    [
+      "center",
+      {
+        segment: 0,
+        position: 0.5,
+      },
+    ],
+    [
+      "right",
+      {
+        segment: 0,
+        position: 1,
+      },
+    ],
+    [
+      "left",
+      {
+        segment: 0,
+        position: 0,
+      },
+    ],
+  ])("puts a new d path's start where text-align %s anchors", async (align, start) => {
+    expect(await startOfNew(`<TextPath d="${ARC}" text-align="${align}">Середина</TextPath>`)).toEqual(start);
+  });
+
+  it("finds the middle by length, then Figma's place on that segment by its curve", async () => {
+    // Lines of 100 and 300 px: half the 400 px is a third along the second line.
+    expect(await startOfNew('<TextPath d="M 0 0 L 100 0 L 100 300" text-align="center">Кут</TextPath>')).toEqual({
+      segment: 1,
+      position: 0.3333,
+    });
+    // x = 300 t³ along this curve: half its length (150 px) is at t = 0.7937, not 0.5.
+    expect(await startOfNew('<TextPath d="M 0 0 C 0 0 0 0 300 0" text-align="center">Хвіст</TextPath>')).toEqual({
+      segment: 0,
+      position: 0.7937,
+    });
+  });
+
+  it("keeps the start given with text-align", async () => {
+    expect(
+      await startOfNew('<TextPath arc="200 200 100 -90 90" text-align="center" start="0 0.25">Тут</TextPath>'),
+    ).toEqual({
+      segment: 0,
+      position: 0.25,
+    });
+  });
+
+  it("moves an existing one's start to the anchor its new text-align takes, unless start is given", async () => {
+    await expect(apply('<TextPath id="1:2" text-align="right"/>')).resolves.toMatchObject({ errors: [] });
+    expect(byId("1:2")).toMatchObject({
+      textAlignHorizontal: "RIGHT",
+      textPathStartData: {
+        segment: 0,
+        position: 1,
+      },
+    });
+
+    await expect(apply('<TextPath id="1:2" text-align="center" start="0 0.25"/>')).resolves.toMatchObject({
+      errors: [],
+    });
+    expect(byId("1:2")).toMatchObject({
+      textAlignHorizontal: "CENTER",
+      textPathStartData: {
+        segment: 0,
+        position: 0.25,
+      },
+    });
+  });
+});

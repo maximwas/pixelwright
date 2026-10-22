@@ -811,7 +811,8 @@ give it in px where the build must match; <code>inspect</code> shows each text&#
 <li>A <code>TextPath</code> is a text set along a path. Its characters, spans and text CSS are a <code>Text</code>&#39;s (it has no line
 height, decoration, wrapping or truncation of its own); <code>d</code> is the path in the layer&#39;s own box, which <code>left</code> and
 <code>top</code> place as for any layer, and <code>start</code> where the text begins on it: the path&#39;s segment (from 0) and the place
-along that segment (0 to 1). In code an SVG <code>&lt;textPath&gt;</code> over a <code>&lt;path d=&quot;…&quot;&gt;</code> draws it:</li>
+along that segment (0 to 1). <code>text-align</code> is anchored there: <code>center</code> centres the text on <code>start</code>, <code>right</code>
+ends it there. In code an SVG <code>&lt;textPath&gt;</code> over a <code>&lt;path d=&quot;…&quot;&gt;</code> draws it:</li>
 </ul>
 <pre><code class="language-xml">&lt;TextPath id=&quot;12:41&quot; name=&quot;Label&quot; d=&quot;M 0 50 C 55.23 -16.67 144.77 -16.67 200 50&quot; start=&quot;0 0.5&quot; position=&quot;absolute&quot; left=&quot;100px&quot; top=&quot;20px&quot; width=&quot;200px&quot; height=&quot;50px&quot; font=&quot;500 14px/normal &#39;Inter&#39;&quot; color=&quot;var(--color-ink)&quot;&gt;Share&lt;/TextPath&gt;
 </code></pre>
@@ -1095,6 +1096,10 @@ arcs are taken, and written as Figma&#39;s lines and curves), or along <code>arc
 a circle in the parent: its centre and radius in px, its ends in degrees as CSS turns (0 at the top, clockwise). An
 arc places the layer itself, absolutely, so it takes no <code>left</code> or <code>top</code>. A <code>to</code> smaller than <code>from</code> runs
 back, counter-clockwise: below the centre, <code>arc=&quot;200 200 160 225 135&quot;</code> runs left to right.</li>
+<li><code>text-align</code> is anchored at <code>start</code>: <code>left</code> begins there, <code>center</code> centres the text on it, <code>right</code> ends it
+there, and letters that would fall before the path&#39;s beginning are not drawn. So <code>text-align=&quot;center&quot;</code> or
+<code>&quot;right&quot;</code> given without <code>start</code> also puts the start in the middle of the path (by length) or at its end, on a
+new one or an existing one; give <code>start</code> with it to anchor the text elsewhere.</li>
 </ul>
 <pre><code class="language-xml">&lt;Frame id=&quot;12:30&quot; name=&quot;Round menu&quot;&gt;
   &lt;TextPath id=&quot;12:41&quot; start=&quot;0 0.25&quot;&gt;Share&lt;/TextPath&gt;

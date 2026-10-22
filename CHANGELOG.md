@@ -27,6 +27,8 @@ How to write this file (people and agents alike):
   since Figma cannot change the path: delete the layer and make it again.
 - `design_apply` makes text on a path along `d` (any SVG path) or `arc="<cx> <cy> <r> <from> <to>"`, an arc of a
   circle in the parent with its ends in degrees as CSS turns (0 at the top, clockwise).
+- `text-align="center"` or `"right"` on a text on a path, without `start`, puts its start in the middle of the path
+  or at its end, where Figma anchors the alignment, so the whole text shows instead of one letter.
 - `inspect` gives every layer its `center`, and with `around` (a layer's id, such as a ring's, or a point) each
   layer's `distance` from it and its `angle` as CSS `rotate()` turns: 0 straight up, clockwise to 360.
 - `nodes_find` finds instances by `variant` (`"State=Hover, Size=L"`), and `counts: true` counts every instance found,

@@ -1,13 +1,20 @@
 import type { FigmaProps } from "../../figma-props.ts";
 import type { Rule, WriteInput, WriteOutput } from "../../property-group.ts";
 import { degreesOf, numberOf, pixelLengthOf } from "../../values/css-values.ts";
-import { arcPath, figmaPath } from "../../values/paths.ts";
+import { arcPath, figmaPath, startAlong } from "../../values/paths.ts";
 
 /** Figma makes a text on a path from a vector, and its path stays as made. */
 const MADE_PATH = "Figma cannot change a text path's path: delete it and make it again.";
 
 /** The edges an arc places its layer by itself. */
 const EDGES = ["left", "top", "right", "bottom"] as const;
+
+/** Where along its path, as a share of the length, text-align anchors a text on a path that gives no start. */
+const ALIGN_SHARE: Readonly<Record<string, number>> = {
+  center: 0.5,
+  right: 1,
+  end: 1,
+};
 
 /** A TextPath's own attributes written back: the path it is made along (d, or arc), and where its text starts. */
 export const TEXT_PATH_RULES: readonly Rule[] = [
@@ -22,6 +29,10 @@ export const TEXT_PATH_RULES: readonly Rule[] = [
   {
     attributes: ["start"],
     write: startRule,
+  },
+  {
+    attributes: ["text-align"],
+    write: alignedStartRule,
   },
 ];
 
@@ -111,6 +122,38 @@ function startRule({ own }: WriteInput, out: WriteOutput): void {
   } else {
     out.set("pathStart", start, "start");
   }
+}
+
+/**
+ * Figma aligns a text on a path at its start (left begins there, center centres on it, right ends there) and draws no
+ * letter before the path's beginning, so a centred text from "0 0" shows one: text-align center or right with no start
+ * puts the start in the path's middle or at its end.
+ */
+function alignedStartRule(input: WriteInput, out: WriteOutput): void {
+  const share = ALIGN_SHARE[input.own("text-align") ?? ""];
+
+  if (share === undefined || input.tag !== "TextPath" || input.own("start") !== undefined) {
+    return;
+  }
+
+  const path = pathOf(input);
+  const start = path === null ? null : startAlong(path, share);
+
+  if (start !== null) {
+    out.set("pathStart", start, "text-align");
+  }
+}
+
+/** The path a new TextPath is made along (its d or arc), or the one an existing one has. */
+function pathOf({ own, merged, existing }: WriteInput): string | null {
+  const arc = own("arc");
+  const d = existing ? merged("d") : own("d");
+
+  if (!existing && arc !== undefined) {
+    return arcOf(arc)?.d ?? null;
+  }
+
+  return d === undefined ? null : figmaPath(d);
 }
 
 function startOf(value: string): NonNullable<FigmaProps["pathStart"]> | null {
