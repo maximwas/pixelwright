@@ -262,7 +262,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-design_apply">
   <h3><code>design_apply</code><span class="writes">writes</span></h3>
-  <p>Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=&quot;none&quot;, width=&quot;auto&quot; to hug, display=&quot;block&quot; to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; an Instance by component=&quot;Name&quot; variant=&quot;Prop=Value&quot; props=&quot;Label=Text&quot;; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=&quot;id&quot; copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write.</p>
+  <p>Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=&quot;none&quot;, width=&quot;auto&quot; to hug, display=&quot;block&quot; to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; a TextPath (text on a path) along d, an SVG path, or arc=&quot;cx cy r from to&quot; in its parent, whose text and start change later but whose path does not; an Instance by component=&quot;Name&quot; variant=&quot;Prop=Value&quot; props=&quot;Label=Text&quot;; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=&quot;id&quot; copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>xml</code></td><td><code>string</code></td><td>Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer.</td></tr>
 <tr><td><code>parent</code><span class="optional">optional</span></td><td><code>string</code></td><td>Where top-level new layers go: a frame&#39;s or page&#39;s id. Default: the current page, beside its layers.</td></tr>
@@ -292,7 +292,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-design_read">
   <h3><code>design_read</code></h3>
-  <p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, Image and Icon for true assets, CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer&#39;s Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer&#39;s summary being $motion in the XML) when there are any, repeats (with repeats: true, each run of alike neighbours read as its first, $repeat in the XML, and a row of each one&#39;s own texts, files and variants) and nearby (with nearby: N, the designer&#39;s notes on the canvas around the screen), and, where the project has Figma Code Connect templates (<em>.figma.ts) or batch files (</em>.figma.batch.json), codeComponents: the code connected instances render to ({ids, component, template, source, snippet, imports, unread}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code and add what unread names (its own values are its variant and props; read it with node=&lt;its id&gt; for a nested one&#39;s); code: false reads it as layers. A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project&#39;s own components and tokens.</p>
+  <p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, Image and Icon for true assets, TextPath for a text on a path (its text as a Text&#39;s, its path as d and where the text starts as start), CSS properties as attributes (var(--Name) where Figma binds a style or variable), ids to read or change a layer later. The first text block is the XML; the second is JSON with tokens (their values), textStyles, fonts, assets (written to assetsDir when given), hints on what the code should bind, truncated (ids of branches left empty to fit maxChars: read each on its own), measurements (the designer&#39;s Dev Mode measurements in px) and motion (Figma Motion as CSS @keyframes, a layer&#39;s summary being $motion in the XML) when there are any, repeats (with repeats: true, each run of alike neighbours read as its first, $repeat in the XML, and a row of each one&#39;s own texts, files and variants) and nearby (with nearby: N, the designer&#39;s notes on the canvas around the screen), and, where the project has Figma Code Connect templates (<em>.figma.ts) or batch files (</em>.figma.batch.json), codeComponents: the code connected instances render to ({ids, component, template, source, snippet, imports, unread}, the same code once), with imports and codeErrors; such an instance is $code in the XML, without its children: use its code and add what unread names (its own values are its variant and props; read it with node=&lt;its id&gt; for a nested one&#39;s); code: false reads it as layers. A layer with position absolute is placed against its parent element: give that parent position: relative. For a big frame, find its sections with outline first. Rebuild the result with the project&#39;s own components and tokens.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243. Default: the one layer selected in Figma.</td></tr>
 <tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below the layer to read. Default: all.</td></tr>
@@ -322,7 +322,7 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-execute">
   <h3><code>execute</code><span class="writes">writes</span></h3>
-  <p>Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given <code>figma</code> (the Plugin API), <code>console</code> and <code>pw</code>; <code>return</code> gives <code>result</code> (layers come back as {id, type, name}, figma.mixed as &quot;mixed&quot;), and what it logs comes back as <code>logs</code>. What it throws comes back as <code>error</code>, with the logs before it. <code>pw</code> stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright&#39;s helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(&quot;--token&quot;) (the variable design_read names so). The plugin runs with documentAccess &quot;dynamic-page&quot;: use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma&#39;s own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin&#39;s Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file&#39;s styles and check what they write.</p>
+  <p>Runs JavaScript in the Pixelwright plugin, for what design_apply and tokens_apply cannot say: the code is the body of an async function given <code>figma</code> (the Plugin API), <code>console</code> and <code>pw</code>; <code>return</code> gives <code>result</code> (layers come back as {id, type, name}, figma.mixed as &quot;mixed&quot;), and what it logs comes back as <code>logs</code>. What it throws comes back as <code>error</code>, with the logs before it. <code>pw</code> stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright&#39;s helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them), pw.paint(css) (a CSS colour as a solid paint), await pw.variable(&quot;--token&quot;) (the variable design_read names so). The plugin runs with documentAccess &quot;dynamic-page&quot;: use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma&#39;s own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma, and version saves a named version first. Refused while the plugin&#39;s Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Prefer the XML and token tools: they keep the file&#39;s styles and check what they write. To read, use the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; a run that changed no layer on the page says so in <code>note</code>.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>code</code><span class="optional">optional</span></td><td><code>string</code></td><td>JavaScript run as the body of an async function with <code>figma</code> (the Plugin API) and <code>console</code>: <code>await</code> works, <code>return</code> gives the result. Give code or script.</td></tr>
 <tr><td><code>script</code><span class="optional">optional</span></td><td><code>string</code></td><td>A file of such code on the server&#39;s disk, run instead of code: an absolute path (or one from the server&#39;s folder, as design_apply&#39;s src). It is read at every call, so the file as it is now runs, after a plugin restart too.</td></tr>
@@ -396,10 +396,11 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-inspect">
   <h3><code>inspect</code></h3>
-  <p>Reads layers as Figma has them, for what design_read&#39;s CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma&#39;s own parameters (a progressive blur&#39;s start and end, noise, texture), a text&#39;s lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component&#39;s variant. Boxes are measured from relativeTo&#39;s top left, so it also measures: give a list of layers and their section.</p>
+  <p>Reads layers as Figma has them, for what design_read&#39;s CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma&#39;s own parameters (a progressive blur&#39;s start and end, noise, texture), a text&#39;s lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component&#39;s variant. Boxes and each layer&#39;s centre are measured from relativeTo&#39;s top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle&#39;s id, or a point) adds each centre&#39;s distance from it and its angle as CSS rotate() turns (0 up, clockwise).</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids, e.g. [&quot;54:243&quot;]. Default: the layers selected in Figma.</td></tr>
 <tr><td><code>relativeTo</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer (a section, a frame) whose top left the boxes are measured from. Default: the page&#39;s.</td></tr>
+<tr><td><code>around</code><span class="optional">optional</span></td><td><code>string | object</code></td><td>A point to measure each layer&#39;s distance and angle from: a layer&#39;s id (its centre, e.g. a ring&#39;s), or {x, y} in the boxes&#39; origin (relativeTo&#39;s top left, or the page&#39;s). The angle matches CSS rotate(): 0 straight up, then clockwise to 360.</td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
 </tbody></table>
 </section>
@@ -466,12 +467,14 @@ server keeps trying, and connects once the newer one holds the port.</p>
 </section>
 <section class="tool" id="tool-nodes_find">
   <h3><code>nodes_find</code></h3>
-  <p>Finds layers on the current page, or inside <code>within</code> (a layer, a page, or &quot;file&quot; for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring) or component (an instance&#39;s component or component set name). Returns ids, names, types, boxes and the names of their ancestors, at most <code>limit</code> (more: true when there were more). Combine criteria to narrow down.</p>
+  <p>Finds layers on the current page, or inside <code>within</code> (a layer, a page, or &quot;file&quot; for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring), component (an instance&#39;s component or component set name) or variant (an instance&#39;s variant values, &quot;State=Hover, Size=L&quot;). Returns ids, names, types, boxes and the names of their ancestors, at most <code>limit</code> (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.</p>
   <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td></td></tr>
 <tr><td><code>type</code><span class="optional">optional</span></td><td><code>string</code></td><td></td></tr>
 <tr><td><code>text</code><span class="optional">optional</span></td><td><code>string</code></td><td></td></tr>
 <tr><td><code>component</code><span class="optional">optional</span></td><td><code>string</code></td><td></td></tr>
+<tr><td><code>variant</code><span class="optional">optional</span></td><td><code>string</code></td><td>Instances of one variant, e.g. &quot;State=Hover, Size=L&quot;: every value given must be the main component&#39;s (in any order and case; the rest may be anything).</td></tr>
+<tr><td><code>counts</code><span class="optional">optional</span></td><td><code>boolean</code></td><td>Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.</td></tr>
 <tr><td><code>within</code><span class="optional">optional</span></td><td><code>string | string</code></td><td>Where to search: a layer or page id, or &quot;file&quot; for every page. Default: the current page.</td></tr>
 <tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 50</span></td><td></td></tr>
 <tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
@@ -640,7 +643,9 @@ something, then wait for it. <code>viewport_get</code>: what the user is looking
 A layer with <code>$children=&quot;N&quot;</code> has more children than listed: outline it on its own. An instance names its
 <code>component</code> and <code>variant</code>, so repeated cards show without a read; <code>dev=&quot;ready&quot;</code> marks what the designer
 handed over for development.</li>
-<li><code>nodes_find</code>: layers by name, type, text or component.</li>
+<li><code>nodes_find</code>: layers by name, type, text, component or an instance&#39;s <code>variant</code> (&quot;State=Hover, Size=L&quot;).
+<code>counts: true</code> counts every instance found by component and variant: before deleting variants, which ones
+layers still use (a variant missing from the counts has no instance there).</li>
 <li><code>node_show</code>: brings layers into view (fitted or at a zoom) and selects them, so the user sees which you mean.</li>
 <li><code>changes_since</code>: what the designer changed since you last looked (a cursor), to read again only that.</li>
 </ul>
@@ -662,7 +667,9 @@ the values that differ with the token or text style behind them, and the propert
 <strong>Measure it.</strong> <code>inspect</code> reads layers as Figma has them, without code and with Allow edits off: the layout box
 and the painted box (a centred stroke, shadows and blur reach past it), the fill with the style or variables behind
 it (what a <code>var()</code> resolves to), how strokes paint, every effect&#39;s parameters (a progressive blur&#39;s start and
-end), a text&#39;s lines and line heights, overflow, interactions with their transitions, a component&#39;s variant.
+end), a text&#39;s lines and line heights, overflow, interactions with their transitions, a component&#39;s variant, and
+each layer&#39;s centre. Items set around a circle (a round menu, labels on a dial): <code>around</code> (the circle&#39;s id, or a
+point) gives each centre&#39;s distance from it and its angle as CSS <code>rotate()</code> turns, 0 at the top, clockwise.
 <code>measure</code> gives the distances between layers, each from the one before (gaps, aligned edges, insets).
 <strong>Compare variants.</strong> <code>nodes_diff</code> says how one layer differs from another (A/B screens): the layers only one
 has, the attributes that differ, and icons whose drawing differs. <code>variants_read</code> gives a component&#39;s states as
@@ -720,6 +727,7 @@ properties as attributes.</p>
 <li><code>Image</code>: a true image (a photo, a layer filled with an image, a masked group, a layer with an effect CSS cannot
 draw). Its <code>src</code> is a PNG of what it shows.</li>
 <li><code>Icon</code>: a vector, or a group or instance drawn only with vector shapes (a logo). Its <code>src</code> is one SVG.</li>
+<li><code>TextPath</code>: Figma&#39;s text on a path (a label along an arc), its text written as a <code>Text</code>&#39;s (see Text below).</li>
 <li><code>Span</code>: a run inside a <code>Text</code> whose style differs from the text&#39;s own.</li>
 <li>Hidden layers and slices are left out.</li>
 </ul>
@@ -730,7 +738,8 @@ draw). Its <code>src</code> is a PNG of what it shows.</li>
 <code>description</code> (components), <code>note</code> (Dev Mode annotations, &quot;Category: text&quot;, several joined with &quot; | &quot;), <code>href</code>
 (a prototype link, or a text&#39;s hyperlink), <code>mask</code> (alpha, vector or luminance: the layer masks the layers above it),
 <code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>;
-the read&#39;s root also has the modes it takes from above), <code>textStyle</code>, <code>src</code> (assets).</p>
+the read&#39;s root also has the modes it takes from above), <code>textStyle</code>, <code>src</code> (assets), <code>d</code> and <code>start</code> (a
+text on a path).</p>
 <p>A <code>data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;</code> attribute is the selector tokens_read&#39;s CSS writes for that mode: put it on the
 element in the build too, and the element takes that mode&#39;s values. design_apply sets a layer&#39;s mode the same way
 (the collection and mode by these slugs or their own names); <code>data-&lt;collection&gt;=&quot;&quot;</code> clears it, so the layer takes
@@ -799,7 +808,13 @@ drawn as <code>linear()</code>. A link stays <code>href</code>.</li>
 never spaces.</li>
 <li><code>line-height: normal</code> is Figma&#39;s Auto line height, the font&#39;s own spacing (about 1.2× the size for most fonts):
 give it in px where the build must match; <code>inspect</code> shows each text&#39;s.</li>
+<li>A <code>TextPath</code> is a text set along a path. Its characters, spans and text CSS are a <code>Text</code>&#39;s (it has no line
+height, decoration, wrapping or truncation of its own); <code>d</code> is the path in the layer&#39;s own box, which <code>left</code> and
+<code>top</code> place as for any layer, and <code>start</code> where the text begins on it: the path&#39;s segment (from 0) and the place
+along that segment (0 to 1). In code an SVG <code>&lt;textPath&gt;</code> over a <code>&lt;path d=&quot;…&quot;&gt;</code> draws it:</li>
 </ul>
+<pre><code class="language-xml">&lt;TextPath id=&quot;12:41&quot; name=&quot;Label&quot; d=&quot;M 0 50 C 55.23 -16.67 144.77 -16.67 200 50&quot; start=&quot;0 0.5&quot; position=&quot;absolute&quot; left=&quot;100px&quot; top=&quot;20px&quot; width=&quot;200px&quot; height=&quot;50px&quot; font=&quot;500 14px/normal &#39;Inter&#39;&quot; color=&quot;var(--color-ink)&quot;&gt;Share&lt;/TextPath&gt;
+</code></pre>
 <h3>Example (Orbit, a pricing card, abridged)</h3>
 <pre><code class="language-xml">&lt;Instance id=&quot;54:268&quot; name=&quot;Plan – Pro&quot; component=&quot;Plan Card&quot; props=&quot;Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro&quot; note=&quot;The price comes from the billing API. Show the Popular badge only on the plan the API marks popular.&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; width=&quot;385px&quot; height=&quot;394px&quot; padding=&quot;var(--space-32)&quot; gap=&quot;var(--space-24)&quot; border-radius=&quot;var(--radius-lg)&quot; border=&quot;2px solid var(--color-brand)&quot; background=&quot;var(--color-surface)&quot; box-shadow=&quot;var(--Shadow-Card)&quot; $on-click=&quot;go to Checkout – Desktop; dissolve 300ms ease-out&quot;&gt;
   …
@@ -992,8 +1007,8 @@ styles on a Frame, no auto layout on a shape; an element&#39;s id is given once 
 </ul>
 <h3>Creating</h3>
 <ul>
-<li>An element without <code>id</code> creates a layer: <code>Frame</code>, <code>Section</code>, <code>Text</code>, <code>Rectangle</code>, <code>Ellipse</code>,
-<code>Line</code>, <code>Instance</code>, <code>Component</code>, <code>ComponentSet</code>, <code>Image</code>, <code>Icon</code>, <code>Slot</code>. It goes inside its parent
+<li>An element without <code>id</code> creates a layer: <code>Frame</code>, <code>Section</code>, <code>Text</code>, <code>TextPath</code> (below), <code>Rectangle</code>,
+<code>Ellipse</code>, <code>Line</code>, <code>Instance</code>, <code>Component</code>, <code>ComponentSet</code>, <code>Image</code>, <code>Icon</code>, <code>Slot</code>. It goes inside its parent
 element, after the element before it (alone: last); at the top level into <code>parent</code> or the current page, or next
 to a layer with <code>before=&quot;id&quot;</code> / <code>after=&quot;id&quot;</code>, or onto a page (below). Groups and vectors are not drawn from
 XML: use an <code>Icon</code>.</li>
@@ -1067,6 +1082,25 @@ layer&#39;s own notes sent back and comes before a note a category starts; elsew
 A note sent back as it was keeps its category, formatting and pinned properties; notes without text, which
 design_read does not show, stay.</li>
 </ul>
+<h3>Text on a path</h3>
+<ul>
+<li><code>&lt;TextPath id=&quot;…&quot;&gt;New words&lt;/TextPath&gt;</code> changes the characters of a text on a path and keeps its look, as a
+Text&#39;s do; its spans and text CSS (<code>font</code>, <code>letter-spacing</code>, <code>text-transform</code>, <code>color</code>, <code>textStyle</code>) are
+written as on a Text. It has no line height, underline, wrapping or truncation. <code>start=&quot;1 0.25&quot;</code> moves where its
+text begins: the path&#39;s segment (from 0) and the place along it (0 to 1). Its path stays as Figma made it: a
+changed <code>d</code> is refused, so delete the layer and make it again. The characters go in it, never in a <code>&lt;Text&gt;</code>
+inside it.</li>
+<li>A new one is made along <code>d</code>, an SVG path in its own box that <code>left</code> and <code>top</code> place (relative commands and
+arcs are taken, and written as Figma&#39;s lines and curves), or along <code>arc=&quot;&lt;cx&gt; &lt;cy&gt; &lt;r&gt; &lt;from&gt; &lt;to&gt;&quot;</code>, an arc of
+a circle in the parent: its centre and radius in px, its ends in degrees as CSS turns (0 at the top, clockwise). An
+arc places the layer itself, absolutely, so it takes no <code>left</code> or <code>top</code>. A <code>to</code> smaller than <code>from</code> runs
+back, counter-clockwise: below the centre, <code>arc=&quot;200 200 160 225 135&quot;</code> runs left to right.</li>
+</ul>
+<pre><code class="language-xml">&lt;Frame id=&quot;12:30&quot; name=&quot;Round menu&quot;&gt;
+  &lt;TextPath id=&quot;12:41&quot; start=&quot;0 0.25&quot;&gt;Share&lt;/TextPath&gt;
+  &lt;TextPath name=&quot;Label&quot; arc=&quot;200 200 160 -40 40&quot; font=&quot;500 14px &#39;Inter&#39;&quot; color=&quot;var(--color-ink)&quot;&gt;Settings&lt;/TextPath&gt;
+&lt;/Frame&gt;
+</code></pre>
 <h3>Values</h3>
 <ul>
 <li>Lengths in px (a bare number in a size, a place, a gap, a padding or a radius is taken as px; a bare line height
@@ -1113,6 +1147,9 @@ one undo step, and <code>version</code> saves a named version in the file&#39;s 
 waits 10 s by default and up to 300 s (<code>timeout</code>) for a long task. Code it starts that outlives the call (timers,
 listeners, work past the timeout) keeps running until the plugin window is closed, Allow edits or not; an endless loop,
 synchronous or of awaits, freezes Figma until then. Read the result back with the read tools.</p>
+<p>execute is for writes. Reading needs no code and no Allow edits: <code>design_read</code> for the XML, <code>inspect</code> for boxes,
+centres and angles around a point, <code>measure</code> for distances, <code>nodes_find</code> for instances by variant and their
+counts. A run that changed no layer on the page says so in <code>note</code>.</p>
 <p>The plugin runs with documentAccess &quot;dynamic-page&quot;: the synchronous lookups throw, so use the Async calls
 (<code>getNodeByIdAsync</code>, <code>getMainComponentAsync</code>, <code>getLocalPaintStylesAsync</code>, <code>setFillStyleIdAsync</code>…), and
 <code>await page.loadAsync()</code> before reading another page. <code>figma.skipInvisibleInstanceChildren</code> is Figma&#39;s own, false
