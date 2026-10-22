@@ -50,7 +50,13 @@ export const AssetsExportInputSchema = z.object({
     .describe(
       "For nodes as PNG, JPG or WEBP: the CSS width the build shows the layer at; the file is width × scale px wide (110 at scale 2: 220 px).",
     ),
-  quality: z.number().int().min(1).max(100).exactOptional().describe("For WEBP: 1 to 100. Default 85."),
+  quality: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .exactOptional()
+    .describe("For WEBP: the colours' quality, 1 to 100. Default 85. Transparency is kept exactly at any quality."),
   original: z
     .boolean()
     .default(false)
