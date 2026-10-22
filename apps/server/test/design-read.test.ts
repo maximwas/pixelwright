@@ -414,6 +414,22 @@ describe("design_read", () => {
     expect(await read()).toMatch(/name="Trusted"[^>]* font="500 14px\/normal 'Inter'"/);
     expect(DesignReadInputSchema.parse({}).autoLineHeight).toBe("normal");
   });
+
+  it("names in the Auto line height hint of a px read only the texts it still writes normal", async () => {
+    const result = await readDesign(new PluginClient(orbit().bridge), {
+      node: "54:434",
+      screenshot: false,
+      maxChars: 80_000,
+      autoLineHeight: "px",
+    });
+    const xml = textOf(result, 0);
+    const { hints } = JSON.parse(textOf(result, 1)) as { hints: string[] };
+    const named = [...(hints.find((hint) => hint.includes("Auto line height")) ?? "").matchAll(/(\d+:\d+) "/g)];
+    const fontOf = (id: string) => /font="[^"]*"/.exec(xml.split("\n").find((row) => row.includes(`id="${id}"`)) ?? "");
+
+    expect(xml).toMatch(/name="Trusted"[^>]* font="500 14px\/17px 'Inter'"/);
+    expect(named.map(([, id]) => fontOf(id ?? "")?.[0] ?? "").filter((font) => !font.includes("/normal"))).toEqual([]);
+  });
 });
 
 describe("writeAssets", () => {

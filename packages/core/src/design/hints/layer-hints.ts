@@ -1,3 +1,4 @@
+import { type AutoLineHeights, fontKey } from "../../css-mapping/values/auto-line-heights.ts";
 import { px } from "../../css-mapping/values/format.ts";
 import type { SnapshotNode } from "../../types/snapshot.ts";
 import { visibleChildren } from "../assets/classify.ts";
@@ -15,10 +16,14 @@ export interface ShownLayer {
   readonly parent: SnapshotNode | null;
 }
 
-/** What a hint looks at on a layer: the layer, its parent, the read's root and the layer's shown children. */
+/**
+ * What a hint looks at on a layer: the layer, its parent, the read's root, the layer's shown children, and the Auto
+ * line heights the read writes in px.
+ */
 interface LayerScope extends ShownLayer {
   readonly root: SnapshotNode;
   readonly children: readonly SnapshotNode[];
+  readonly autoPx: AutoLineHeights;
 }
 
 /** A kind of hint about layers: the example a layer gives of it (null for none), and the hint for all of them. */
@@ -84,8 +89,9 @@ const LAYER_HINTS: Readonly<Record<string, LayerHint>> = {
   },
   autoLineHeight: {
     // A text on a path has no line height: Figma reads its segments as Auto all the same.
-    find: ({ node }) =>
-      node.type === "TEXT" && (node.text?.segments ?? []).some((segment) => segment.lineHeight.unit === "AUTO")
+    find: ({ node, autoPx }) =>
+      node.type === "TEXT" &&
+      (node.text?.segments ?? []).some((segment) => segment.lineHeight.unit === "AUTO" && !autoPx.has(fontKey(segment)))
         ? labelOf(node)
         : null,
     say: (examples) =>
@@ -105,8 +111,12 @@ const LAYER_HINTS: Readonly<Record<string, LayerHint>> = {
   },
 };
 
-/** One hint per kind, however many layers it is about. */
-export function layerHints(layers: readonly ShownLayer[], root: SnapshotNode): string[] {
+/** One hint per kind, however many layers it is about; `autoPx`, the Auto line heights a px read writes in px. */
+export function layerHints(
+  layers: readonly ShownLayer[],
+  root: SnapshotNode,
+  autoPx: AutoLineHeights = new Map(),
+): string[] {
   const found = new Map<LayerHint, string[]>();
 
   for (const { node, parent } of layers) {
@@ -115,6 +125,7 @@ export function layerHints(layers: readonly ShownLayer[], root: SnapshotNode): s
       parent,
       root,
       children: visibleChildren(node),
+      autoPx,
     };
 
     for (const hint of Object.values(LAYER_HINTS)) {

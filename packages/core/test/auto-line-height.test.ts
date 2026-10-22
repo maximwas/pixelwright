@@ -185,4 +185,21 @@ describe("design_read autoLineHeight", () => {
   it("names the option in the hint on Auto line heights", () => {
     expect(designHints(CARD).find((hint) => hint.includes("Auto line height"))).toContain('autoLineHeight: "px"');
   });
+
+  it("on a px read, gives the hint only for the texts still written normal", () => {
+    const px = (snapshot: Snapshot) =>
+      designHints(snapshot, designTree(snapshot, { autoLineHeight: "px" }), { autoLineHeight: "px" }).find((hint) =>
+        hint.includes("Auto line height"),
+      );
+    const hugging = {
+      ...CARD,
+      root: {
+        ...CARD.root,
+        children: CARD.root.children?.slice(0, 2),
+      },
+    };
+
+    expect(px(CARD)).toContain('(1:5 "1:5"; 1:6 "1:6")');
+    expect(px(hugging)).toBeUndefined();
+  });
 });

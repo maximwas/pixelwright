@@ -37,6 +37,8 @@ How to write this file (people and agents alike):
 - `file_map` no longer fails when Figma cannot load a page. Every page is still listed by id and name, the pages
   that loaded have their layers, and `pagesNotRead` names the others with Figma's reason.
 - Stroke weights keep their fractions: a 2.5 border reads as `2.5px`, not `3px`, and sending it back changes nothing.
+- `design_read` with `autoLineHeight: "px"` no longer says `line-height normal` is Figma's Auto line height for the
+  texts it wrote in px: the hint names only the texts still written `normal`.
 - Relative paths start in the session's project folder (the MCP client's root, else `CLAUDE_PROJECT_DIR`), not in the
   folder the server was started from: `design_read`'s `assetsDir`, `assets_export`'s `dir`, `design_apply`'s image
   files, `screenshot`'s `save`, `image_compare`'s files and `execute`'s `script`.

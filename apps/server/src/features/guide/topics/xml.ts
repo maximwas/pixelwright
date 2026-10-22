@@ -53,7 +53,7 @@ text-decoration-thickness), text-align, text-wrap, color.
 - Colours bound to a style or variable are \`var(--Name)\`, a shadow's colour too (see \`guide tokens\`); values for
   them are in the JSON \`tokens\`. design_apply binds only tokens the file has: \`tokens_apply\` creates new ones. In a Display P3 file every colour is \`color(display-p3 r g b)\` (as tokens_read writes it too): keep
   it so, it is what the designer chose. A text with a \`textStyle\` carries only what differs from the style; \`textStyles\` holds the style's font.
-- Lengths are whole pixels; letter spacing keeps fractions.
+- Lengths are whole pixels; stroke widths and blurs keep two decimals, and letter spacing keeps its fractions.
 - \`filter: blur()\` and \`backdrop-filter: blur()\` are 0.43 of Figma's blur radius: Figma renders a radius R as a
   Gaussian of about 0.43 R (measured on layer and background blurs of radius 4 to 40 against Chrome), so radius 20 is
   \`blur(8.6px)\`, and design_apply writes \`blur(v)\` as radius v / 0.43. Dev Mode writes radius / 2, which is softer.

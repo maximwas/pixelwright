@@ -267,7 +267,7 @@ function readMeta(
     ...(motion === null ? {} : { motion }),
     hints: hintsOf(snapshot, tree, {
       read,
-      assetsDir: args.assetsDir,
+      args,
       connected,
     }),
     truncated: read.truncated,
@@ -280,13 +280,13 @@ function readMeta(
 function hintsOf(
   snapshot: Snapshot,
   tree: DesignTree,
-  { read, assetsDir, connected }: { read: DesignRead; assetsDir: string | undefined; connected: Connected },
+  { read, args, connected }: { read: DesignRead; args: DesignReadArgs; connected: Connected },
 ): string[] {
   const left = connected.code?.left ?? 0;
 
   return [
-    ...designHints(snapshot, tree),
-    ...(assetsDir === undefined && read.assets.length > 0
+    ...designHints(snapshot, tree, { autoLineHeight: args.autoLineHeight ?? "normal" }),
+    ...(args.assetsDir === undefined && read.assets.length > 0
       ? [
           `${read.assets.length} assets are planned but not written, so their src names are plans: pass assetsDir to write them with their real names, or take each path assets_export gives (a name holding other bytes gets -2, the same bytes share one file).`,
         ]

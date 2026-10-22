@@ -1,7 +1,9 @@
+import { autoLineHeights } from "../../css-mapping/values/auto-line-heights.ts";
 import type { Snapshot, SnapshotNode } from "../../types/snapshot.ts";
 import { classify } from "../assets/classify.ts";
 import { designTree } from "../design-xml.ts";
 import type { DesignTree } from "../tree.ts";
+import type { DesignXmlOptions } from "../types.ts";
 import { inferredHints } from "./inferred-hints.ts";
 import { defaultNameHints, layerHints, missingFontHints, type ShownLayer } from "./layer-hints.ts";
 import { tokenHints } from "./token-hints.ts";
@@ -9,10 +11,12 @@ import { tokenHints } from "./token-hints.ts";
 /**
  * What Figma does not bind and the code should: raw values equal to tokens, unnamed layers, frames placed by hand,
  * backgrounds drawn as rectangles, bare wrappers, missing fonts, detached components. Hints never change the XML.
+ * `options` are the read's: a px read writes some Auto line heights in px, and the hint on them names only the rest.
  */
 export function designHints(
   snapshot: Snapshot,
   read: Pick<DesignTree, "root" | "tokens"> = designTree(snapshot),
+  options: Pick<DesignXmlOptions, "autoLineHeight"> = {},
 ): string[] {
   const layers = shownLayers(snapshot);
   const nodes = layers.map(({ node }) => node);
@@ -20,7 +24,7 @@ export function designHints(
   return [
     ...tokenHints(snapshot, read),
     ...defaultNameHints(nodes),
-    ...layerHints(layers, snapshot.root),
+    ...layerHints(layers, snapshot.root, options.autoLineHeight === "px" ? autoLineHeights(snapshot.root) : new Map()),
     ...missingFontHints(nodes),
     ...inferredHints(snapshot, nodes),
   ];
