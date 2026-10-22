@@ -50,25 +50,6 @@ export class ChangeJournal {
     }
   }
 
-  /** Where the journal is now: `unchangedSince` tells whether anything changed after it. */
-  get cursor(): number {
-    return this.#seq;
-  }
-
-  /**
-   * Whether no change reached the journal after `cursor`, given up to `limitMs` for Figma to report one: it reports
-   * changes in batches, after the code that made them. False while the journal watches no page: it cannot tell.
-   */
-  async unchangedSince(cursor: number, limitMs: number): Promise<boolean> {
-    const deadline = Date.now() + limitMs;
-
-    while (this.#watched !== null && this.#seq === cursor && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, Math.max(1, Math.min(SETTLE_POLL_MS, deadline - Date.now()))));
-    }
-
-    return this.#watched !== null && this.#seq === cursor;
-  }
-
   /** Runs one of Pixelwright's writes, its changes marked as its own until a moment after it ends. */
   async asOwnWrite<T>(write: () => Promise<T>): Promise<T> {
     this.#writing += 1;

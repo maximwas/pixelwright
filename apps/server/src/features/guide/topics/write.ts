@@ -192,7 +192,8 @@ synchronous or of awaits, freezes Figma until then. Read the result back with th
 
 execute is for writes. Reading needs no code and no Allow edits: \`design_read\` for the XML, \`inspect\` for boxes,
 centres and angles around a point, \`measure\` for distances, \`nodes_find\` for instances by variant and their
-counts. A run that changed no layer on the page says so in \`note\`.
+counts. Code in which nothing writes (no property set, no \`create*\`, \`remove\`, \`set*\`… call, no helper of your
+own on \`pw\`) is told so in \`note\`; the note speaks of the code, not of the file.
 
 The plugin runs with documentAccess "dynamic-page": the synchronous lookups throw, so use the Async calls
 (\`getNodeByIdAsync\`, \`getMainComponentAsync\`, \`getLocalPaintStylesAsync\`, \`setFillStyleIdAsync\`…), and

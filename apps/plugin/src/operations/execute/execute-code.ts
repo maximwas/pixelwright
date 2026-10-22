@@ -6,8 +6,6 @@ import {
   type OperationOutput,
 } from "@pixelwright/core";
 import pTimeout from "p-timeout";
-import { OWN_WRITE_ECHO_MS } from "../../constants/plugin.ts";
-import type { ChangeJournal } from "../../services/change-journal.ts";
 import type { CodeScope } from "../../services/code-scope.ts";
 import type { EditsGuard } from "../../services/edits-guard.ts";
 import { codeError, codeFunction } from "./code-error.ts";
@@ -17,43 +15,18 @@ import { jsonValue } from "./json-value.ts";
 /** What the run gives when its time is up first. */
 const TIMED_OUT = Symbol("timed out");
 
-/** What a run that changed no layer is told: reads need no code. */
-const UNCHANGED_NOTE =
-  "This code changed no layer on this page: design_read, inspect, measure and nodes_find read layers without code, and work while Allow edits is off.";
-
 /**
  * Code as the body of an async function, given figma, a console that keeps what it prints and pw (Pixelwright's
  * helpers, and what earlier calls kept there): its value made JSON-safe, or what it threw, or that it ran past its
- * time (it may still be running: a plugin cannot stop it). Whatever it changed is one undo step; when the change
- * journal heard of no change, a note says the read tools need no code. Refused while Allow edits is off.
+ * time (it may still be running: a plugin cannot stop it). Whatever it changed is one undo step. Refused while Allow
+ * edits is off.
  */
 export async function execute(
-  input: OperationInput<"execute">,
-  {
-    edits,
-    code: scope,
-    journal,
-  }: { readonly edits: EditsGuard; readonly code: CodeScope; readonly journal: ChangeJournal },
+  { code, timeoutMs }: OperationInput<"execute">,
+  { edits, code: scope }: { readonly edits: EditsGuard; readonly code: CodeScope },
 ): Promise<OperationOutput<"execute">> {
   edits.require();
 
-  const cursor = journal.cursor;
-  const answer = await answerOf(input, scope);
-
-  // Figma reports a change after the code that made it: a write is given the moment the journal calls its own echo.
-  return answer.error === undefined && (await journal.unchangedSince(cursor, OWN_WRITE_ECHO_MS))
-    ? {
-        ...answer,
-        note: UNCHANGED_NOTE,
-      }
-    : answer;
-}
-
-/** The code's answer, with what the code may not keep put back after it and its changes made one undo step. */
-async function answerOf(
-  { code, timeoutMs }: OperationInput<"execute">,
-  scope: CodeScope,
-): Promise<OperationOutput<"execute">> {
   // The window's messages (Allow edits among them) come through this handler: code may not keep it.
   const ui = (figma as { ui?: { onmessage?: unknown } }).ui;
   const handler = ui?.onmessage;

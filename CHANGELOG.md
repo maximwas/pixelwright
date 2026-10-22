@@ -32,8 +32,8 @@ How to write this file (people and agents alike):
 - `nodes_find` finds instances by `variant` (`"State=Hover, Size=L"`), and `counts: true` counts every instance found,
   past the `limit`, by component and variant: before deleting variants, which ones layers still use, without code.
   A plugin too old for these is refused with a hint to update it, instead of listing every variant's instances.
-- `execute` says in `note` when its code changed no layer on the page, and that the read tools need no code and work
-  with Allow edits off.
+- `execute` says in `note` when its code only reads (nothing in it sets a property, calls a method that writes or
+  runs a helper of your own), and that the read tools need no code and work with Allow edits off.
 
 ### Fixed
 

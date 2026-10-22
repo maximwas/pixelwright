@@ -94,9 +94,11 @@ describe("execute over the bridge", () => {
 
     expect(code).toHaveLength(90_000);
     expect(code.length).toBeLessThan(EXECUTE_CODE_CHARS);
+    // The code only returns a string, so the answer also carries the note the server adds for code that only reads.
     expect(await executeCode(await connected(), ExecuteInputSchema.parse({ code }))).toEqual({
       result: code,
       logs: [],
+      note: expect.stringMatching(/^This code only reads/),
     });
   });
 });

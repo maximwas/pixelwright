@@ -298,63 +298,27 @@ describe("execute: pw, kept between calls", () => {
   });
 });
 
-describe("execute that changes nothing", () => {
+describe("execute while the change journal watches the page", () => {
   /** A plugin as it runs in Figma: its change journal watching the page from the start. */
   const watched = testPlugin({ allowEdits: true });
-  const runWatched = async (code: string) =>
-    (await watched.run("execute", {
-      code,
-      timeoutMs: 1_000,
-    })) as Ran & { note?: string };
 
   beforeEach(() => {
     watched.services.journal.start();
   });
 
-  it("says when the code changed no layer that the read tools read without code, with Allow edits off", async () => {
-    const ran = await runWatched("return figma.currentPage.children.length;");
+  it("answers code that changes nothing at once, with no word on the file: Figma may report changes a minute late", async () => {
+    const started = Date.now();
+    const ran = await watched.run("execute", {
+      code: "return figma.currentPage.children.length;",
+      timeoutMs: 1_000,
+    });
 
-    expect(ran.result).toBe(2);
-    expect(ran.note).toMatch(/changed no layer/);
-    expect(ran.note).toMatch(/design_read, inspect, measure and nodes_find/);
-    expect(ran.note).toMatch(/Allow edits is off/);
-  });
-
-  it("gives no note when Figma reports the code's change a moment after the code returns", async () => {
-    const [card] = fake.figma.currentPage.children ?? [];
-
-    // Figma reports changes in batches, after the code that made them: here 30 ms after the call starts.
-    setTimeout(
-      () =>
-        fake.emit(
-          "nodechange",
-          {
-            nodeChanges: [
-              {
-                id: "1:1",
-                node: card,
-                type: "PROPERTY_CHANGE",
-                origin: "LOCAL",
-                properties: ["name"],
-              },
-            ],
-          },
-          "0:1",
-        ),
-      30,
-    );
-
-    const ran = await runWatched('(await figma.getNodeByIdAsync("1:1")).name = "Card 2";');
-
-    expect(ran.error).toBeUndefined();
-    expect(ran).not.toHaveProperty("note");
-  });
-
-  it("gives no note when the code threw, whatever it changed", async () => {
-    const ran = await runWatched('throw new Error("not this time");');
-
-    expect(ran.error).toMatch(/not this time/);
-    expect(ran).not.toHaveProperty("note");
+    // A file in a background tab hears of its changes about once a minute: change events cannot tell what code did.
+    expect(Date.now() - started).toBeLessThan(300);
+    expect(ran).toEqual({
+      result: 2,
+      logs: [],
+    });
   });
 });
 

@@ -184,10 +184,6 @@ export const CONTENT_OPERATIONS = {
       result: z.unknown(),
       logs: z.array(z.string()),
       error: z.string().exactOptional(),
-      note: z
-        .string()
-        .exactOptional()
-        .describe("When the code ran and changed no layer on the page: the tools that read without code."),
     }),
   },
   /** Layers as Figma has them, from `relativeTo`'s top left (the page's without it): read only, Allow edits or not. */
