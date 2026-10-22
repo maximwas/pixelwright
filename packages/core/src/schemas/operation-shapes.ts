@@ -24,6 +24,14 @@ export const MapNodeSchema = LayerNameSchema.extend({
   devStatus: z.enum(["ready", "completed"]).exactOptional(),
 });
 
+/** Pages Figma could not load (offline, say), each with its words: their layers are not read. */
+export const PagesNotReadSchema = z.array(
+  z.object({
+    name: z.string(),
+    error: z.string(),
+  }),
+);
+
 /** A node as lists show it: enough to name it, find it again and point at it. */
 export const NodeRefSchema = z.object({
   id: z.string(),

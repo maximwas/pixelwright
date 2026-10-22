@@ -10,7 +10,7 @@ import { TokensApplyResultSchema, TokensPlanSchema } from "../tokens/plan/schema
 import { RawTokensSchema } from "../tokens/raw-tokens.ts";
 import { EffectsInputSchema, EffectsOutputSchema } from "./effects.ts";
 import { InspectRawSchema, NearbySchema } from "./inspect.ts";
-import { ComponentEntrySchema, NodeIdSchema, QuerySchema } from "./operation-shapes.ts";
+import { ComponentEntrySchema, NodeIdSchema, PagesNotReadSchema, QuerySchema } from "./operation-shapes.ts";
 import { SnapshotSchema } from "./snapshot.ts";
 
 /** The operations that read layers' content and tokens, export them, and write: apply, tokens, execute, delete. */
@@ -69,14 +69,7 @@ export const CONTENT_OPERATIONS = {
       /** Why some or all links were not read: Figma refused them, gave no answer, or the time ran out. */
       linksNote: z.string().exactOptional(),
       /** Pages Figma could not load (offline, say), with its words: their components are not listed. */
-      pagesNotRead: z
-        .array(
-          z.object({
-            name: z.string(),
-            error: z.string(),
-          }),
-        )
-        .exactOptional(),
+      pagesNotRead: PagesNotReadSchema.exactOptional(),
     }),
   },
   variables: {

@@ -1,34 +1,35 @@
 import type { OperationOutput } from "@pixelwright/core";
 import { OP_BUDGET_MS } from "../../constants/plugin.ts";
 import { devStatusOf } from "../../figma/dev-status.ts";
-import { loaded } from "../../figma/used-tokens.ts";
+import { PageLoads } from "../../figma/nodes.ts";
 import { FILE_MAP_MAX_NODES } from "./constants.ts";
 
 type MapPage = OperationOutput<"file_map">["pages"][number];
 
 /**
- * Every page with its top layers and a section's own, sizes rounded; pages are loaded one at a time within the budget,
- * and at most FILE_MAP_MAX_NODES layers are listed in all (a page cut short says how many it has).
+ * Every page by id and name, which needs no loading, with its top layers and a section's own, sizes rounded. Pages
+ * are loaded one at a time within the budget, and at most FILE_MAP_MAX_NODES layers are listed in all (a page cut
+ * short says how many it has); a page Figma cannot load is listed without its layers, in pagesNotRead with its words.
  */
 export async function fileMap(): Promise<OperationOutput<"file_map">> {
   const started = Date.now();
   const map = new FileMap();
+  const loads = new PageLoads();
 
   for (const page of figma.root.children) {
-    if (Date.now() - started > OP_BUDGET_MS || map.full) {
-      return {
-        pages: map.pages,
-        more: true,
-      };
-    }
+    const late = Date.now() - started > OP_BUDGET_MS || map.full;
 
-    await loaded(page);
-    map.addPage(page);
+    if (!late && (await loads.load(page))) {
+      map.addPage(page);
+    } else {
+      map.addUnread(page, late);
+    }
   }
 
   return {
     pages: map.pages,
     more: map.more,
+    ...(loads.notRead.length === 0 ? {} : { pagesNotRead: loads.notRead }),
   };
 }
 
@@ -43,7 +44,7 @@ class FileMap {
   }
 
   addPage(page: PageNode): void {
-    const nodes: MapPage["nodes"] = [];
+    const nodes: NonNullable<MapPage["nodes"]> = [];
 
     for (const node of page.children) {
       if (this.#left <= 0) {
@@ -62,13 +63,25 @@ class FileMap {
 
     this.more ||= nodes.length < page.children.length;
     this.pages.push({
-      id: page.id,
-      name: page.name,
-      current: page === figma.currentPage,
+      ...pageEntryOf(page),
       ...(nodes.length < page.children.length ? { total: page.children.length } : {}),
       nodes,
     });
   }
+
+  /** A page by id and name only: Figma could not load it, or the time or the layer limit ran out (`late`). */
+  addUnread(page: PageNode, late: boolean): void {
+    this.more ||= late;
+    this.pages.push(pageEntryOf(page));
+  }
+}
+
+function pageEntryOf(page: PageNode): Omit<MapPage, "nodes"> {
+  return {
+    id: page.id,
+    name: page.name,
+    current: page === figma.currentPage,
+  };
 }
 
 function entryOf(node: SceneNode) {

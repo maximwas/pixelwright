@@ -120,6 +120,10 @@ export function tree(spec: Spec, parent: FakeNode | null = null): FakeNode {
   return node;
 }
 
+/** What Figma throws, from page.loadAsync among others, while Figma Desktop's connection is down (live, 2026-10-14). */
+export const FIGMA_OFFLINE =
+  "Unable to establish connection to Figma after 10 seconds. Please check your internet connection.";
+
 export interface FakeLibrary {
   readonly styles?: Record<string, object>;
   readonly variables?: Record<string, Record<string, unknown> & { name: string; variableCollectionId: string }>;
@@ -138,6 +142,8 @@ export interface FakeLibrary {
   readonly categories?: { id: string; label: string; color: string }[];
   /** The file's other pages. */
   readonly pages?: FakeNode[];
+  /** Pages, by id, whose loadAsync throws as Figma's does while its connection is down (FIGMA_OFFLINE). */
+  readonly unloadablePages?: readonly string[];
   /** How many modes a collection may have (Figma's plan limit): addMode refuses past it. Default 4. */
   readonly modeLimit?: number;
   /** How many pages the file may have (Figma's Starter plan: 3): createPage refuses past it. Default: no limit. */
@@ -1020,6 +1026,10 @@ export function installFigma(page: FakeNode, library: FakeLibrary = {}, options:
             method: "loadAsync",
             args: [],
           });
+
+          if (library.unloadablePages?.includes(node.id)) {
+            throw new Error(FIGMA_OFFLINE);
+          }
         },
         enumerable: false,
         configurable: true,

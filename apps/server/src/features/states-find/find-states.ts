@@ -69,5 +69,5 @@ async function screensOf(session: PluginSession, scope: Scope): Promise<{ id: st
       ? pages.filter(({ id }) => scope.pages.includes(id))
       : pages.filter(({ current }) => current);
 
-  return wanted.flatMap((page) => page.nodes.flatMap((node) => [node, ...(node.children ?? [])]));
+  return wanted.flatMap((page) => (page.nodes ?? []).flatMap((node) => [node, ...(node.children ?? [])]));
 }

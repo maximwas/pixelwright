@@ -9,6 +9,7 @@ import {
   NodeIdSchema,
   NodeRefSchema,
   OutlineNodeSchema,
+  PagesNotReadSchema,
   QuerySchema,
 } from "./operation-shapes.ts";
 
@@ -88,16 +89,23 @@ export const NAVIGATION_OPERATIONS = {
           current: z.boolean(),
           /** How many top layers the page has, when not all are listed. */
           total: z.number().int().exactOptional(),
-          /** The page's top layers (frames, sections, components), a section's own listed inside it. */
-          nodes: z.array(
-            MapNodeSchema.extend({
-              children: z.array(MapNodeSchema).exactOptional(),
-            }),
-          ),
+          /**
+           * The page's top layers (frames, sections, components), a section's own listed inside it; none for a page not
+           * read (Figma could not load it, or the time or the layer limit ran out first).
+           */
+          nodes: z
+            .array(
+              MapNodeSchema.extend({
+                children: z.array(MapNodeSchema).exactOptional(),
+              }),
+            )
+            .exactOptional(),
         }),
       ),
-      /** Pages left out: the operation's time ran out, read them with outline. */
+      /** Layers left out: the time or the layer limit ran out first; outline those pages one by one. */
       more: z.boolean(),
+      /** Pages Figma could not load (offline, say), with its words: their layers are not listed. */
+      pagesNotRead: PagesNotReadSchema.exactOptional(),
     }),
   },
   screens: {
