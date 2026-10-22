@@ -117,10 +117,12 @@ async function rootsOf(session: PluginSession, scope: Scope): Promise<LintRoots>
   }
 
   const { pages } = await session.run("file_map", null);
-  const tops = pages.filter(({ id }) => scope.pages.includes(id)).flatMap((page) => page.nodes.map(({ id }) => id));
+  const tops = pages
+    .filter(({ id }) => scope.pages.includes(id))
+    .flatMap((page) => (page.nodes ?? []).map(({ id }) => id));
   const total = pages
     .filter(({ id }) => scope.pages.includes(id))
-    .reduce((sum, page) => sum + (page.total ?? page.nodes.length), 0);
+    .reduce((sum, page) => sum + (page.total ?? page.nodes?.length ?? 0), 0);
   const ids = tops.slice(0, LINT_MAX_ROOTS);
 
   return {

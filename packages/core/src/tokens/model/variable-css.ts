@@ -1,3 +1,4 @@
+import { decimalPx } from "../../css-mapping/values/format.ts";
 import { Color, isChannels } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
 import { easingCss as kernelEasingCss } from "../../kernel/easing.ts";
@@ -98,7 +99,7 @@ function colorCss(value: unknown, variable: RawVariable, context: VariableCssCon
 
 function numberCss(value: number, unit: NumberUnit): string {
   if (unit === "px") {
-    return value === 0 ? "0" : `${decimal(value)}px`;
+    return decimalPx(value);
   }
 
   // An opacity is a percentage in Figma's opacity fields; CSS wants a fraction. A value up to 1 already is one.

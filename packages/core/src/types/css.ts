@@ -1,3 +1,4 @@
+import type { AutoLineHeights } from "../css-mapping/values/auto-line-heights.ts";
 import type { ColorSpace } from "../kernel/color/color-space.ts";
 import type { SnapshotNode, SnapshotPaint, SnapshotStyle, SnapshotVariable } from "./snapshot.ts";
 
@@ -12,6 +13,8 @@ export interface CssContext {
   readonly imageUrl?: ((node: SnapshotNode, paint: SnapshotPaint) => string) | undefined;
   /** The file's colour space: a Display P3 file's colours are written as color(display-p3 …). */
   readonly colorSpace?: ColorSpace;
+  /** The px Auto line heights render at, by font and size, to write them in px (design_read autoLineHeight: "px"). */
+  readonly autoLineHeights?: AutoLineHeights;
 }
 
 /** A layer's CSS: what design_apply can write back, and what it cannot yet (read-only, from getCSSAsync). */

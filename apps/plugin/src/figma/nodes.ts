@@ -1,6 +1,8 @@
 import { BridgeError } from "@pixelwright/core";
 import pTimeout from "p-timeout";
 import { CSS_TIMEOUT_MS } from "../constants/plugin.ts";
+import { errorMessage } from "../utils/error-message.ts";
+import { loaded } from "./used-tokens.ts";
 
 /**
  * Figma's own CSS of a layer (getCSSAsync), or null when Figma gives none in CSS_TIMEOUT_MS: read as a layer without.
@@ -75,6 +77,28 @@ export async function loadPageOf(node: BaseNode): Promise<void> {
 
   if (page !== null && page !== figma.currentPage) {
     await page.loadAsync();
+  }
+}
+
+/** The pages a read loads one at a time, and those Figma could not load, with its words. */
+export class PageLoads {
+  readonly notRead: { name: string; error: string }[] = [];
+
+  /** Whether the node's layers can be read: a page the user is not on is loaded first; false, noted, if it cannot be. */
+  async load(node: BaseNode): Promise<boolean> {
+    try {
+      await loaded(node);
+
+      return true;
+    } catch (error) {
+      // A page Figma cannot fetch (offline, say) is left out; the other pages are still read.
+      this.notRead.push({
+        name: node.name,
+        error: errorMessage(error),
+      });
+
+      return false;
+    }
   }
 }
 

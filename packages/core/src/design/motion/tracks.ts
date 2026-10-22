@@ -1,5 +1,4 @@
 import { easingCss } from "../../kernel/easing.ts";
-import { decimal } from "../../kernel/numbers.ts";
 import type { MotionEasing, MotionTrack, SnapshotMotion } from "./types.ts";
 import { MOTION_AXES } from "./vocabulary.ts";
 
@@ -72,11 +71,6 @@ export function isVector(value: unknown): value is Vector {
     typeof (value as { x?: unknown }).x === "number" &&
     typeof (value as { y?: unknown }).y === "number"
   );
-}
-
-/** A length as a keyframe writes it: bare zero, else px to two decimals. */
-export function lengthCss(value: number): string {
-  return value === 0 ? "0" : `${decimal(value)}px`;
 }
 
 /** A keyframe's easing as valid CSS (a spring as linear() over the keyframe's own time); linear when unknown. */

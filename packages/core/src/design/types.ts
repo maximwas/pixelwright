@@ -63,6 +63,11 @@ export interface DesignXmlOptions {
   readonly connected?: ReadonlyMap<string, string>;
   /** Runs of three or more alike neighbours read as their first, marked `$repeat`, the others' values as rows. */
   readonly repeats?: boolean;
+  /**
+   * How an Auto line height is written: `normal` (default), or `px`, the px Figma renders it at where the read can tell
+   * (a text that hugs its lines shows it for every text in its font and size), normal elsewhere.
+   */
+  readonly autoLineHeight?: "normal" | "px";
 }
 
 /** Where a layer's element sits in the XML's lines, for measuring and cutting branches. */

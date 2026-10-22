@@ -89,7 +89,7 @@ const LAYER_HINTS: Readonly<Record<string, LayerHint>> = {
         ? labelOf(node)
         : null,
     say: (examples) =>
-      `line-height normal is Figma's Auto line height: the font's own spacing, about 1.2× the font size for most fonts (${listed(examples)}); give it in px where the build must match to the pixel (inspect shows each text's).`,
+      `line-height normal is Figma's Auto line height: the font's own spacing, about 1.2× the font size for most fonts (${listed(examples)}); where the build must match to the pixel, read with autoLineHeight: "px", which writes the px Figma renders where the read can tell (a text that hugs its lines shows it for its font and size).`,
   },
   softBreak: {
     find: ({ node }) => ((node.text?.characters ?? "").includes("\u2028") ? labelOf(node) : null),

@@ -460,13 +460,30 @@
             "required": [
               "id",
               "name",
-              "current",
-              "nodes"
+              "current"
             ]
           }
         },
         "more": {
           "type": "boolean"
+        },
+        "pagesNotRead": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "error"
+            ]
+          }
         }
       },
       "required": [

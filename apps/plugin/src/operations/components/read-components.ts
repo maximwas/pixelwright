@@ -1,7 +1,7 @@
 import type { OperationInput, OperationOutput } from "@pixelwright/core";
 import { MAIN_COMPONENT_BATCH, OP_BUDGET_MS } from "../../constants/plugin.ts";
-import { requireNode } from "../../figma/nodes.ts";
-import { errorMessage } from "../../utils/error-message.ts";
+import { PageLoads, requireNode } from "../../figma/nodes.ts";
+import { loaded } from "../../figma/used-tokens.ts";
 import { type ComponentEntry, type ComponentOwner, componentEntryOf } from "./component-entry.ts";
 import { type LinkSources, withLinks } from "./component-links.ts";
 import { exposedOf } from "./exposed-instances.ts";
@@ -28,7 +28,7 @@ export async function components({
   const listed = await found.withExposed(matching.slice(0, limit));
   const answer = {
     more: found.cut || matching.length > limit,
-    ...(found.pagesNotRead.length === 0 ? {} : { pagesNotRead: found.pagesNotRead }),
+    ...(found.pages.notRead.length === 0 ? {} : { pagesNotRead: found.pages.notRead }),
   };
 
   if (!links) {
@@ -51,8 +51,7 @@ export async function components({
 /** The components found by id, with their nodes and an instance of each used one, and whether the time ran out first. */
 class FoundComponents implements LinkSources {
   cut = false;
-  /** The pages Figma could not load, with its words. */
-  readonly pagesNotRead: { name: string; error: string }[] = [];
+  readonly pages = new PageLoads();
   readonly started = Date.now();
   readonly #found = new Map<string, ComponentEntry>();
   readonly #owners = new Map<string, ComponentOwner>();
@@ -97,14 +96,7 @@ class FoundComponents implements LinkSources {
         break;
       }
 
-      try {
-        await loaded(root);
-      } catch (error) {
-        // A page Figma cannot fetch (offline, say) is left out; the other pages are still read.
-        this.pagesNotRead.push({
-          name: root.name,
-          error: errorMessage(error),
-        });
+      if (!(await this.pages.load(root))) {
         continue;
       }
 
@@ -168,11 +160,4 @@ class FoundComponents implements LinkSources {
 /** The layers of these types inside a node (a page, a frame, a set), not the node itself. */
 function descendants(node: BaseNode, types: NodeType[]): BaseNode[] {
   return "findAllWithCriteria" in node ? node.findAllWithCriteria({ types }) : [];
-}
-
-/** dynamic-page: a page the user is not on has no layers until it is loaded. */
-async function loaded(node: BaseNode): Promise<void> {
-  if (node.type === "PAGE" && node !== figma.currentPage) {
-    await node.loadAsync();
-  }
 }

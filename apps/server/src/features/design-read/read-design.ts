@@ -28,10 +28,11 @@ import { codeOutput } from "./code-output.ts";
 import { nearbyNotes } from "./nearby-notes.ts";
 import type { DesignReadInputSchema } from "./schemas.ts";
 
-/** The tool's input; `code` (on by default) and `repeats` may be left out by callers that skip the schema. */
-type DesignReadArgs = Omit<z.output<typeof DesignReadInputSchema>, "code" | "repeats"> & {
+/** The tool's input; `code` (on by default), `repeats` and `autoLineHeight` may be left out by callers that skip the schema. */
+type DesignReadArgs = Omit<z.output<typeof DesignReadInputSchema>, "code" | "repeats" | "autoLineHeight"> & {
   code?: boolean;
   repeats?: boolean;
+  autoLineHeight?: "normal" | "px";
 };
 
 /** Code Connect's part of a read: the connected instances' code, or none, and what it says of the project's files. */
@@ -185,6 +186,7 @@ async function treeWithAssets(
     assetsPath: args.assetsDir ?? "assets",
     connected,
     repeats: args.repeats ?? false,
+    autoLineHeight: args.autoLineHeight ?? "normal",
   };
   const plan = fitPlan(snapshot, args.maxChars - (code?.used ?? 0), options);
   const tree = designTree(snapshot, {

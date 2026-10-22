@@ -1,8 +1,15 @@
+import { decimal } from "../../kernel/numbers.ts";
+
 /** A length in whole pixels, `0` without a unit. */
 export function px(value: number): string {
   const rounded = Math.round(value);
 
   return rounded === 0 ? "0" : `${rounded}px`;
+}
+
+/** A length in px to two decimals, bare zero: a stroke weight (a 2.5 border draws 2.5 px), a keyframe, a token. */
+export function decimalPx(value: number): string {
+  return value === 0 ? "0" : `${decimal(value)}px`;
 }
 
 /** CSS's box shorthand (padding, radius order aside): one value when all four match, two or three when they pair. */

@@ -211,6 +211,33 @@ describe("outline of the document", () => {
       ],
     });
   });
+
+  it("lists every page while Figma cannot load one, as it loads none", async () => {
+    installFigma(
+      tree({
+        id: "0:0",
+        type: "DOCUMENT",
+        name: "Untitled",
+        children: [
+          {
+            id: "0:1",
+            type: "PAGE",
+            name: "Landing",
+          },
+          {
+            id: "0:2",
+            type: "PAGE",
+            name: "Community",
+          },
+        ],
+      }),
+      { unloadablePages: ["0:2"] },
+    );
+
+    const outline = (await plugin.run("outline", { node: "0:0" })) as { root: { children: { name: string }[] } };
+
+    expect(outline.root.children.map(({ name }) => name)).toEqual(["Landing", "Community"]);
+  });
 });
 
 describe("find on a page the user has not opened", () => {

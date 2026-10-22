@@ -2,11 +2,12 @@ import { blurDeclaration, shadowListCss } from "../../css-mapping/groups/effects
 import { DECORATION_LINES } from "../../css-mapping/groups/text/run.ts";
 import { CASE_CSS } from "../../css-mapping/groups/text/styles.ts";
 import { fontShorthand, letterSpacingCss } from "../../css-mapping/values/fonts.ts";
-import { px } from "../../css-mapping/values/format.ts";
+import { decimalPx, px } from "../../css-mapping/values/format.ts";
 import { type Channels, Color } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
 import { decimal } from "../../kernel/numbers.ts";
 import type { SnapshotEffect, TextSegment } from "../../types/snapshot.ts";
+import { STROKE_FIELDS } from "./fields.ts";
 
 /** The parts of a text a text style sets: what two texts share when one style fits both. */
 export type TextParts = Pick<
@@ -15,6 +16,7 @@ export type TextParts = Pick<
 >;
 
 const SHADOWS: ReadonlySet<string> = new Set(["DROP_SHADOW", "INNER_SHADOW"]);
+const STROKE_WEIGHTS: ReadonlySet<string> = new Set(["strokeWeight", ...STROKE_FIELDS]);
 
 /**
  * A colour as design_read writes it (`#3B2FD9`, `rgba(…)` when see-through): how tokens_bind and design_lint tell two
@@ -24,9 +26,13 @@ export function colorValue(color: Channels, opacity: number, space: ColorSpace):
   return Color.of(color, space).faded(opacity).css();
 }
 
-/** A number field's value as CSS writes it: px, an opacity as a plain number. */
+/** A number field's value as design_read writes it: px, a stroke weight with its fractions, an opacity bare. */
 export function numberValue(field: string, value: number): string {
-  return field === "opacity" ? decimal(value) : px(value);
+  if (field === "opacity") {
+    return decimal(value);
+  }
+
+  return STROKE_WEIGHTS.has(field) ? decimalPx(value) : px(value);
 }
 
 /** A text's style parts as design_read writes them: the font shorthand, then spacing, case and decoration. */

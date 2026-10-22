@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { writeAssets } from "../src/assets/write-assets.ts";
 import { memoryFiles } from "../src/assets/written-files.ts";
 import { readDesign } from "../src/features/design-read/read-design.ts";
+import { DesignReadInputSchema } from "../src/features/design-read/schemas.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 import { JPEG, PNG } from "./helpers/images.ts";
@@ -394,6 +395,24 @@ describe("design_read", () => {
     expect(textOf(result, 0).length).toBeLessThanOrEqual(2_000);
     expect(meta.truncated.length).toBeGreaterThan(0);
     expect(meta.hints).toContainEqual(expect.stringMatching(/read each with design_read node=<id>/));
+  });
+
+  it('writes an Auto line height in the px Figma renders with autoLineHeight: "px", normal by default', async () => {
+    const read = async (autoLineHeight?: "normal" | "px") =>
+      textOf(
+        await readDesign(new PluginClient(orbit().bridge), {
+          node: "54:434",
+          screenshot: false,
+          maxChars: 80_000,
+          ...(autoLineHeight === undefined ? {} : { autoLineHeight }),
+        }),
+        0,
+      );
+
+    // "Trusted by 2,000+ teams" hugs its one line of Inter Medium 14 Auto: Figma made it 17 px tall.
+    expect(await read("px")).toMatch(/name="Trusted"[^>]* font="500 14px\/17px 'Inter'"/);
+    expect(await read()).toMatch(/name="Trusted"[^>]* font="500 14px\/normal 'Inter'"/);
+    expect(DesignReadInputSchema.parse({}).autoLineHeight).toBe("normal");
   });
 });
 

@@ -281,6 +281,45 @@ describe("design_lint: the general rules", () => {
     ]);
   });
 
+  it("says a raw border width with its fractions, as design_read writes the border and tokens_bind matches it", () => {
+    const { findings } = designLint(
+      {
+        reads: [
+          {
+            root: layer("3:1", "Hairline", {
+              strokes: [solid(0x14161f)],
+              strokeWeight: 0.5,
+            }),
+            styles: {},
+            variables: {},
+          },
+        ],
+        bind: {
+          ...BIND,
+          bound: [
+            {
+              kind: "number",
+              field: "border-width",
+              value: "0.5px",
+              token: "--hairline",
+              count: 1,
+              examples: ["3:1"],
+            },
+          ],
+        },
+      },
+      {
+        limit: 100,
+        scope: "x",
+        rules: ["raw-number"],
+      },
+    );
+
+    expect(findings.map(({ message, fix }) => `${message} ${fix}`)).toEqual([
+      "Raw border-width 0.5px. tokens_bind binds it to --hairline.",
+    ]);
+  });
+
   it("names how far a layer reaches past its parent's room, and what a component lacks", () => {
     const { findings } = lint({ rules: ["overflow", "missing-states", "touch-target", "no-auto-layout"] });
 

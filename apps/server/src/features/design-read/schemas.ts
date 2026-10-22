@@ -38,6 +38,12 @@ export const DesignReadInputSchema = z.object({
     .describe(
       "Read each run of three or more alike neighbours (list items, cards, table rows) as its first, marked $repeat with the run's length; the JSON's repeats gives each run's layers and the values they hold apart, a row per layer.",
     ),
+  autoLineHeight: z
+    .enum(["normal", "px"])
+    .default("normal")
+    .describe(
+      "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere. A px read sent back to design_apply fixes those line heights at that px.",
+    ),
   nearby: z
     .number()
     .int()

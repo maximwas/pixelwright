@@ -607,7 +607,7 @@
   {
     "name": "file_map",
     "title": "Map the file",
-    "description": "Every page of the file with its top layers (frames, sections, components) and, inside each section, its own, with their types and sizes, in one call: where to start in a big file. Pages load one at a time; past the time a call has, more: true and the rest are left out (outline them one by one).",
+    "description": "Every page of the file by id and name, with its top layers (frames, sections, components) and, inside each section, its own, with their types and sizes, in one call: where to start in a big file. Pages load one at a time; past the time a call has, more: true and the pages left have no nodes (outline them one by one). A page Figma cannot load (its connection is down, say) has no nodes either and is in pagesNotRead with Figma's words; the other pages are still mapped.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -722,14 +722,32 @@
             "required": [
               "id",
               "name",
-              "current",
-              "nodes"
+              "current"
             ],
             "additionalProperties": false
           }
         },
         "more": {
           "type": "boolean"
+        },
+        "pagesNotRead": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "error"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
@@ -1340,6 +1358,15 @@
           "default": false,
           "description": "Read each run of three or more alike neighbours (list items, cards, table rows) as its first, marked $repeat with the run's length; the JSON's repeats gives each run's layers and the values they hold apart, a row per layer.",
           "type": "boolean"
+        },
+        "autoLineHeight": {
+          "default": "normal",
+          "description": "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere. A px read sent back to design_apply fixes those line heights at that px.",
+          "type": "string",
+          "enum": [
+            "normal",
+            "px"
+          ]
         },
         "nearby": {
           "description": "Also list the designer's notes on the canvas within this many px of the screen holding the layer (texts, stickies, small frames of text beside it or over it), e.g. 400: the JSON's nearby.",

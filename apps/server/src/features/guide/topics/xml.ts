@@ -98,8 +98,9 @@ text-decoration-thickness), text-align, text-wrap, color.
 
 - \`&#10;\` is a paragraph break (Enter), \`&#8232;\` a line break inside a paragraph (Shift+Enter, \`<br>\` in HTML):
   never spaces.
-- \`line-height: normal\` is Figma's Auto line height, the font's own spacing (about 1.2× the size for most fonts):
-  give it in px where the build must match; \`inspect\` shows each text's.
+- \`line-height: normal\` is Figma's Auto line height, the font's own spacing (about 1.2× the size for most fonts).
+  Where the build must match, read with \`autoLineHeight: "px"\`: it writes the px Figma renders where the read can
+  tell (a text that hugs its lines shows it for its font and size), and normal elsewhere.
 - A \`TextPath\` is a text set along a path. Its characters, spans and text CSS are a \`Text\`'s (it has no line
   height, decoration, wrapping or truncation of its own); \`d\` is the path in the layer's own box, which \`left\` and
   \`top\` place as for any layer, and \`start\` where the text begins on it: the path's segment (from 0) and the place

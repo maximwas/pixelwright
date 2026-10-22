@@ -1,15 +1,19 @@
 import { textStyleCss } from "../../css-mapping/groups/text/styles.ts";
+import type { AutoLineHeights } from "../../css-mapping/values/auto-line-heights.ts";
 import { styleName } from "../../kernel/names.ts";
 import type { Snapshot, SnapshotStyle, TextSegment } from "../../types/snapshot.ts";
 
 /** The text styles and fonts a read refers to, gathered as its elements are built. */
 export class ReadCatalogue {
   readonly #styles: Snapshot["styles"];
+  readonly #auto: AutoLineHeights | undefined;
   readonly #textStyles = new Map<string, string>();
   readonly #fonts = new Map<string, Set<string>>();
 
-  constructor(styles: Snapshot["styles"]) {
+  /** `auto`: the Auto line heights to write in px, as the read's texts are. */
+  constructor(styles: Snapshot["styles"], auto?: AutoLineHeights) {
     this.#styles = styles;
+    this.#auto = auto;
   }
 
   /** Notes a text style the read names, with its CSS when the snapshot has the style; the name as given. */
@@ -21,7 +25,7 @@ export class ReadCatalogue {
     const style = Object.values(this.#styles).find(
       (candidate: SnapshotStyle) => candidate.type === "TEXT" && styleName(candidate) === name,
     );
-    const css = style === undefined ? null : textStyleCss(style);
+    const css = style === undefined ? null : textStyleCss(style, this.#auto);
 
     if (css !== null) {
       this.#textStyles.set(name, css);

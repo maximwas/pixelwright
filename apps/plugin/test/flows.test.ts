@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { installFigma, tree } from "./helpers/fake-figma.ts";
+import { FIGMA_OFFLINE, installFigma, tree } from "./helpers/fake-figma.ts";
 import { testPlugin } from "./helpers/test-plugin.ts";
 
 /** The plugin these tests run, over the fake Figma. */
@@ -212,6 +212,62 @@ describe("file_map", () => {
   });
 });
 
+describe("file_map while Figma cannot load a page", () => {
+  it("lists every page, gives the layers of those it loaded, and names the other with Figma's words", async () => {
+    installFigma(prototype(), {
+      pages: [
+        tree({
+          id: "0:2",
+          type: "PAGE",
+          name: "Community",
+          children: [
+            {
+              id: "4:1",
+              name: "Cover",
+            },
+          ],
+        }),
+        tree({
+          id: "0:3",
+          type: "PAGE",
+          name: "Components",
+          children: [
+            {
+              id: "3:1",
+              name: "Button",
+            },
+          ],
+        }),
+      ],
+      unloadablePages: ["0:2"],
+    });
+
+    const map = (await plugin.run("file_map", null)) as {
+      pages: { id: string; name: string; current: boolean; nodes?: { id: string }[] }[];
+      more: boolean;
+      pagesNotRead?: unknown;
+    };
+
+    expect(map.pages.map(({ id, name, nodes }) => [id, name, nodes?.map((node) => node.id)])).toEqual([
+      ["0:1", "App", ["9:1", "9:3"]],
+      ["0:2", "Community", undefined],
+      ["0:3", "Components", ["3:1"]],
+    ]);
+    expect(map.pages[1]).toEqual({
+      id: "0:2",
+      name: "Community",
+      current: false,
+    });
+    expect(map.pagesNotRead).toEqual([
+      {
+        name: "Community",
+        error: FIGMA_OFFLINE,
+      },
+    ]);
+    expect(map.more).toBe(false);
+  });
+});
+
 describe("file_map of a page with thousands of loose layers", () => {
   it("lists so many in all, with each page's own count, and says there is more", async () => {
     installFigma(
@@ -234,6 +290,40 @@ describe("file_map of a page with thousands of loose layers", () => {
 
     expect(map.pages[0]?.nodes).toHaveLength(1_500);
     expect(map.pages[0]?.total).toBe(1_600);
+    expect(map.more).toBe(true);
+  });
+
+  it("still lists the pages past the limit by id and name, so they can be outlined one by one", async () => {
+    installFigma(
+      tree({
+        id: "0:1",
+        type: "PAGE",
+        name: "Scraps",
+        children: Array.from({ length: 1_600 }, (_, index) => ({
+          id: `8:${index + 1}`,
+          type: "RECTANGLE",
+          name: `Rectangle ${index + 1}`,
+        })),
+      }),
+      {
+        pages: [
+          tree({
+            id: "0:2",
+            type: "PAGE",
+            name: "Archive",
+            children: [{ id: "5:1" }],
+          }),
+        ],
+      },
+    );
+
+    const map = (await plugin.run("file_map", null)) as { pages: unknown[]; more: boolean };
+
+    expect(map.pages[1]).toEqual({
+      id: "0:2",
+      name: "Archive",
+      current: false,
+    });
     expect(map.more).toBe(true);
   });
 });
