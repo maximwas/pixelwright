@@ -41,7 +41,10 @@ interface Connected {
   readonly problems: readonly string[];
 }
 
-/** `project`: the folder whose Code Connect templates render the instances; none, none run. */
+/**
+ * `project`: the folder whose Code Connect templates render the instances and a relative assetsDir starts from; none,
+ * no templates run and assetsDir starts from the working directory.
+ */
 export async function readDesign(
   plugin: PluginClient,
   args: DesignReadArgs,
@@ -57,6 +60,7 @@ export async function readDesign(
     args,
     code: connected.code,
     files,
+    project,
   });
   const read = designReadOf(tree);
   const notes = args.nearby === undefined ? null : await nearbyNotes(session, node, args.nearby);
@@ -179,7 +183,12 @@ async function connectedCode(
 async function treeWithAssets(
   session: PluginSession,
   snapshot: Snapshot,
-  { args, code, files }: { args: DesignReadArgs; code: CodeRead | null; files: WrittenFiles },
+  {
+    args,
+    code,
+    files,
+    project,
+  }: { args: DesignReadArgs; code: CodeRead | null; files: WrittenFiles; project: string | null },
 ): Promise<{ tree: DesignTree; assets: readonly unknown[] }> {
   const connected = code?.connected ?? new Map<string, string>();
   const options = {
@@ -207,7 +216,7 @@ async function treeWithAssets(
   }
 
   const { srcByKey, written } = await writeAssets(tree.assets, (asset) => fetchAsset(session, asset), {
-    dir: resolve(args.assetsDir),
+    dir: resolve(project ?? "", args.assetsDir),
     srcBase: args.assetsDir,
     files,
   });

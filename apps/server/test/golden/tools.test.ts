@@ -5,6 +5,7 @@ import { memoryBaselines } from "../../src/baselines/baseline-store.ts";
 import { SeenDesigns } from "../../src/baselines/seen-designs.ts";
 import { createMcpServer } from "../../src/mcp/mcp-server.ts";
 import { PluginClient } from "../../src/plugin/plugin-client.ts";
+import { ProjectFolder } from "../../src/project/project-folder.ts";
 import type { BridgeView } from "../../src/types/mcp.ts";
 
 const unused = () => {
@@ -31,6 +32,7 @@ describe("golden tool contract", () => {
       version: "0.0.0-golden",
       files: memoryFiles(),
       projectRoot: "/golden",
+      project: new ProjectFolder("/golden"),
       support: { due: async () => null },
       baselines: memoryBaselines(),
       seen: new SeenDesigns(),

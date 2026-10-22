@@ -7,7 +7,7 @@ export interface ServerFile {
   readonly size: number;
 }
 
-/** The file at a path a tool was given (design_apply's src, execute's script), from the server's folder unless absolute. */
+/** The file at a path a tool was given (design_apply's src, execute's script), from `cwd` unless absolute. */
 export async function serverFile(path: string, cwd: string): Promise<ServerFile | null> {
   const absolute = resolve(cwd, path);
   const info = await stat(absolute).catch(() => null);
@@ -22,5 +22,5 @@ export async function serverFile(path: string, cwd: string): Promise<ServerFile 
 
 /** Why a path a tool was given names no file it can read, and where relative paths start. */
 export function notAFile(path: string, cwd: string): string {
-  return `${path} is not a file the server can read (paths are from its folder: ${cwd}).`;
+  return `${path} is not a file the server can read (relative paths are from the project folder: ${cwd}).`;
 }

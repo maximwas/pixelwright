@@ -25,6 +25,7 @@ type DesignApplied = z.input<typeof DesignApplyOutputSchema>;
 
 /** Where design_apply reads files from, how it sends them, and the store of files design_read wrote. */
 export interface ApplyDeps {
+  /** The folder a relative src starts from: the project folder. */
   readonly cwd?: string;
   readonly chunkBytes?: number;
   readonly files?: WrittenFiles;

@@ -5,7 +5,7 @@ import { DesignReadInputSchema } from "./schemas.ts";
 export function designReadTool({
   plugin,
   files,
-  projectRoot,
+  project,
 }: ToolContext): ContentToolDefinition<typeof DesignReadInputSchema> {
   return {
     name: "design_read",
@@ -18,6 +18,6 @@ export function designReadTool({
       idempotentHint: true,
       openWorldHint: false,
     },
-    run: (args) => readDesign(plugin, args, files, projectRoot),
+    run: async (args) => readDesign(plugin, args, files, await project.root()),
   };
 }

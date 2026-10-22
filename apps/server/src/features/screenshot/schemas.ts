@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { ClipSchema, RenderModesSchema } from "../../images/schemas.ts";
 import { FileSchema } from "../../plugin/file-schema.ts";
+import { RELATIVE_PATHS } from "../../project/constants.ts";
 
 export const ScreenshotInputSchema = z.object({
   node: z.string().min(1).max(200).describe("The layer's id, e.g. 54:243."),
@@ -14,9 +15,7 @@ export const ScreenshotInputSchema = z.object({
     .min(1)
     .max(4_096)
     .exactOptional()
-    .describe(
-      "Write the PNG to this file (any size) instead of returning it; a relative path is from the server's folder.",
-    ),
+    .describe(`Write the PNG to this file (any size) instead of returning it. ${RELATIVE_PATHS}`),
   clip: ClipSchema,
   modes: RenderModesSchema,
   file: FileSchema,

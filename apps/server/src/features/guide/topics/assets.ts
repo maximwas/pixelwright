@@ -26,14 +26,17 @@ Only true assets become files; everything else is CSS.
   give: PNG, JPG, WebP, SVG or PDF; \`width\`, the CSS width the build shows a layer at, sets the render to width ×
   scale px) or \`from\` (every asset inside one layer). \`original: true\` writes the images as they were placed, full
   size and in their own format, instead of renders.
+- WebP keeps transparency exactly: its alpha is stored without loss at any \`quality\`. \`quality\` (1 to 100, 85 by
+  default) is how lossy its colours are, so a transparent PNG becomes a WebP with the same see-through pixels.
 - design_read without \`assetsDir\` only plans names. When assets_export writes a file under another name (the name
   holds other bytes, the same bytes are another layer's file, an original is a JPEG), the file has \`planned\`: use
   its \`path\` in the \`src\`.
 
 ## Files
 
-Named after the layer (\`Hero photo\` → hero-photo.png, a component's variant added: company-logo-amazon.svg). The
-same bytes are written once and shared; a name already taken by other bytes gets -2; a file already in the folder is
-never overwritten with other bytes.
+Named after the layer (\`Hero photo\` → hero-photo.png, a component's variant added: company-logo-amazon.svg), or, in
+assets_export, as \`names\` gives a layer id (\`{"54:12": "hero-mountains"}\` → hero-mountains.png, slugged the same
+way). The same bytes are written once and shared; a name already taken by other bytes gets -2; a file already in the
+folder is never overwritten with other bytes.
 `,
 } as const;

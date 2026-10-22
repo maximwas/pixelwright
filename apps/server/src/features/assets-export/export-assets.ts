@@ -9,18 +9,25 @@ import { WEBP_QUALITY } from "../../constants/mcp.ts";
 import { describeError } from "../../plugin/describe-error.ts";
 import type { PluginClient } from "../../plugin/plugin-client.ts";
 import type { PluginSession } from "../../plugin/plugin-session.ts";
-import { planInside, planLayers, snapshotOf } from "./plan-assets.ts";
+import { planInside, planLayers, snapshotOf, withNames } from "./plan-assets.ts";
 import type { AssetsExportInputSchema, AssetsExportOutputSchema } from "./schemas.ts";
 
 type AssetsExportArgs = z.output<typeof AssetsExportInputSchema>;
 type AssetsExport = z.output<typeof AssetsExportOutputSchema>;
 
+/** What an export writes with: the store of written files, the WebP encoder, the folder a relative dir starts from. */
+export interface ExportDeps {
+  readonly files?: WrittenFiles;
+  readonly webp?: WebpEncoder;
+  /** The project folder. */
+  readonly root?: string;
+}
+
 /** The layers named, or the assets inside one, rendered or taken as placed, and written into dir. */
 export async function exportAssets(
   plugin: PluginClient,
   args: AssetsExportArgs,
-  files: WrittenFiles = memoryFiles(),
-  webp: WebpEncoder = new WebpEncoder(),
+  { files = memoryFiles(), webp = new WebpEncoder(), root = process.cwd() }: ExportDeps = {},
 ): Promise<AssetsExport> {
   const { nodes, from, dir, original, file } = args;
 
@@ -29,10 +36,12 @@ export async function exportAssets(
   // One file for the whole export: the user may switch files while it runs.
   const session = plugin.session(file);
   const errors: AssetsExport["errors"] = [];
-  const planned =
+  const planned = withNames(
     from === undefined
       ? await planLayers(session, nodes ?? [], args, errors)
-      : planInside(await snapshotOf(session, from), dir, original);
+      : planInside(await snapshotOf(session, from), dir, original),
+    args.names,
+  );
   const fetched = await fetchAll(session, planned, {
     errors,
     quality: args.quality,
@@ -42,13 +51,29 @@ export async function exportAssets(
     planned.filter((asset) => fetched.has(asset)),
     async (asset) => fetched.get(asset) ?? Buffer.alloc(0),
     {
-      dir: resolve(dir),
+      dir: resolve(root, dir),
       srcBase: dir,
       files,
     },
   );
 
-  return answerOf(written, errors);
+  return answerOf(written, errors, unnamed(args.names, planned, errors));
+}
+
+/** The notes for ids names gives a name that no exported layer has; a layer that failed is in errors already. */
+function unnamed(
+  names: Readonly<Record<string, string>> | undefined,
+  planned: readonly PlannedAsset[],
+  errors: AssetsExport["errors"],
+): string[] {
+  const known = new Set([...planned, ...errors].map(({ node }) => node));
+
+  return Object.keys(names ?? {})
+    .filter((id) => !known.has(id))
+    .map(
+      (id) =>
+        `names has ${id}, which is not among the layers exported (files[].node gives their ids): no file took its name.`,
+    );
 }
 
 function refuseMixedArgs({ nodes, from, original, width }: AssetsExportArgs): void {
@@ -89,6 +114,7 @@ async function fetchAll(
 function answerOf(
   written: readonly { node: string; kind: PlannedAsset["kind"]; src: string; planned: string; bytes: number }[],
   errors: AssetsExport["errors"],
+  notes: readonly string[],
 ): AssetsExport {
   const renamed = written.filter(({ src, planned: wanted }) => basename(src) !== basename(wanted));
 
@@ -102,10 +128,13 @@ function answerOf(
       bytes,
     })),
     errors,
-    notes: renamed.map(
-      ({ node, src, planned: wanted }) =>
-        `${node} is in ${basename(src)}, not ${basename(wanted)} as design_read plans it (the same bytes share one file, a name holding other bytes gets -2): use ${src} in its src.`,
-    ),
+    notes: [
+      ...renamed.map(
+        ({ node, src, planned: wanted }) =>
+          `${node} is in ${basename(src)}, not ${basename(wanted)} as planned (the same bytes share one file, a name holding other bytes gets -2): use ${src} in its src.`,
+      ),
+      ...notes,
+    ],
   };
 }
 

@@ -2,6 +2,7 @@ import { EXECUTE_CODE_CHARS, EXECUTE_DEFAULT_MS, EXECUTE_MAX_MS, OPERATION_SCHEM
 import * as z from "zod";
 import { VersionInputSchema, VersionSavedSchema } from "../../history/schemas.ts";
 import { FileSchema } from "../../plugin/file-schema.ts";
+import { RELATIVE_PATHS } from "../../project/constants.ts";
 
 export const ExecuteInputSchema = z.object({
   code: z
@@ -18,7 +19,7 @@ export const ExecuteInputSchema = z.object({
     .max(1_024)
     .exactOptional()
     .describe(
-      "A file of such code on the server's disk, run instead of code: an absolute path (or one from the server's folder, as design_apply's src). It is read at every call, so the file as it is now runs, after a plugin restart too.",
+      `A file of such code on the server's disk, run instead of code. It is read at every call, so the file as it is now runs, after a plugin restart too. ${RELATIVE_PATHS}`,
     ),
   timeout: z
     .number()

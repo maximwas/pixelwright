@@ -345,7 +345,7 @@ describe("design_apply: files", () => {
       ops: ["entries"],
     });
     expect(await apply("gone.svg")).toEqual({
-      errors: [`src: gone.svg is not a file the server can read (paths are from its folder: ${dir}).`],
+      errors: [`src: gone.svg is not a file the server can read (relative paths are from the project folder: ${dir}).`],
       ops: ["entries"],
     });
     expect(await apply("assets/logo-nova.svg")).toEqual({

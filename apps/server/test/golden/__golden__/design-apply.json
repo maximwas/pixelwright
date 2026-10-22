@@ -1805,7 +1805,7 @@
           "column": 3,
           "id": "1:2",
           "attribute": "src",
-          "message": "nowhere.png is not a file the server can read (paths are from its folder: <dir>)."
+          "message": "nowhere.png is not a file the server can read (relative paths are from the project folder: <dir>)."
         }
       ]
     }

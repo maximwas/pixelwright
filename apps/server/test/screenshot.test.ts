@@ -7,6 +7,7 @@ import { screenshotTool } from "../src/features/screenshot/tool.ts";
 import { takeScreenshot } from "../src/images/screenshot.ts";
 import { exportBytes } from "../src/plugin/export-bytes.ts";
 import { PluginClient } from "../src/plugin/plugin-client.ts";
+import { ProjectFolder } from "../src/project/project-folder.ts";
 import type { BridgeView } from "../src/types/mcp.ts";
 import { pluginInfo } from "./helpers/fake-plugin.ts";
 
@@ -168,7 +169,10 @@ describe("screenshot review fixes", () => {
         throw new Error("no plugin");
       },
     };
-    const tool = screenshotTool({ plugin: new PluginClient(empty) } as never);
+    const tool = screenshotTool({
+      plugin: new PluginClient(empty),
+      project: new ProjectFolder(tmpdir()),
+    } as never);
 
     await expect(
       tool.run({

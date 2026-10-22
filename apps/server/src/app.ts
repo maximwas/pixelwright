@@ -16,6 +16,7 @@ import { SUPPORT_STATE_FILE } from "./constants/support.ts";
 import { createLogger } from "./logging/logger.ts";
 import { createMcpServer } from "./mcp/mcp-server.ts";
 import { PluginClient } from "./plugin/plugin-client.ts";
+import { ProjectFolder } from "./project/project-folder.ts";
 import { SupportReminder } from "./support/support-reminder.ts";
 import type { App } from "./types/app.ts";
 import type { BridgeConfig } from "./types/bridge.ts";
@@ -35,6 +36,7 @@ export async function createApp(): Promise<App> {
     version: serverPackage.version,
     files: fileStore(),
     projectRoot,
+    project: new ProjectFolder(projectRoot),
     support: new SupportReminder({
       file: join(homeDir(), SUPPORT_STATE_FILE),
       enabled: config.supportReminders,

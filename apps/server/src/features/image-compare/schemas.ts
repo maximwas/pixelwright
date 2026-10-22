@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { ClipSchema, RenderModesSchema } from "../../images/schemas.ts";
 import { FileSchema } from "../../plugin/file-schema.ts";
+import { RELATIVE_PATHS } from "../../project/constants.ts";
 
 const EdgeDiffSchema = z.object({
   matched: z.number(),
@@ -22,9 +23,7 @@ export const ImageCompareInputSchema = z.object({
     .min(1)
     .max(4_096)
     .exactOptional()
-    .describe(
-      "The PNG to compare with, e.g. a screenshot of your build at the same size: a path, relative to the server's folder or absolute.",
-    ),
+    .describe(`The PNG to compare with, e.g. a screenshot of your build at the same size: its path. ${RELATIVE_PATHS}`),
   against: z
     .string()
     .min(1)
@@ -50,7 +49,7 @@ export const ImageCompareInputSchema = z.object({
     .min(1)
     .max(4_096)
     .exactOptional()
-    .describe("A .png path to write the difference to: the render faded, every differing pixel red."),
+    .describe(`A .png path to write the difference to: the render faded, every differing pixel red. ${RELATIVE_PATHS}`),
   file: FileSchema,
 });
 

@@ -1,3 +1,4 @@
+import { extname } from "node:path";
 import {
   BridgeError,
   classify,
@@ -106,6 +107,23 @@ function scaleFor(
   }
 
   return sized;
+}
+
+/** The planned files with the base names `names` gives their layers, slugged: a name never leaves the folder. */
+export function withNames(
+  planned: readonly PlannedAsset[],
+  names: Readonly<Record<string, string>> | undefined,
+): PlannedAsset[] {
+  return planned.map((asset) => {
+    const name = names?.[asset.node];
+
+    return name === undefined
+      ? asset
+      : {
+          ...asset,
+          src: asset.src.replace(/[^/]*$/, (file) => `${slug(name)}${extname(file)}`),
+        };
+  });
 }
 
 /** Every true asset inside a layer, as design_read plans them; with original, images as placed. */

@@ -98,7 +98,8 @@ taken as sRGB and converted to P3.
 - \`<Image src="photos/hero.jpg" width="600px" height="400px"/>\` makes an image from a file (PNG, JPG or GIF, up
   to 32 MB and 4096 px a side; convert WebP first), \`<Icon src="icons/arrow.svg" width="24px"/>\` an icon from an
   SVG; \`background="url(…)"\` fills any layer that takes a background with one, a new or an existing frame,
-  rectangle or ellipse (an avatar). Paths are on the server's machine, from its folder. \`icons_insert\` finds an
+  rectangle or ellipse (an avatar). Paths are on the server's machine; a relative one starts in the project folder
+  (the MCP client's root, else \`CLAUDE_PROJECT_DIR\`, else the server's working directory). \`icons_insert\` finds an
   open-source icon (Lucide, Material Symbols, Tabler…) and inserts it at a size, in a colour or bound to a token.
 - An existing \`Image\` with another file in \`src\` takes that image, keeping its fit. A file design_read or
   assets_export wrote for that layer (a render of it) changes nothing wherever it went, so a read sent back keeps
@@ -207,7 +208,8 @@ instances (a faster walk of a big file) and \`getNodeByIdAsync\` gives null for 
 call. An error names the line and column in the code it came from.
 
 A long script goes in a file on the server's disk, passed as \`script\` instead of \`code\` (an absolute path, or one
-from the server's folder): it is read at every call, so the file as it is now runs, after a plugin restart too.
+from the project folder, as \`src\`): it is read at every call, so the file as it is now runs, after a plugin restart
+too.
 
 \`pw\` stays from one call to the next while the plugin window is open:
 

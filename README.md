@@ -121,7 +121,7 @@ instance as `$code` in the XML with its code and imports, and names the properti
 A row or a template can name the component's key (`components_read` gives it), which matches exactly that component
 in every file, a library's included. `components_read mapped=false` lists the components still without code, so a
 design system is mapped once, a row each. See [examples/orbit](https://github.com/maximwas/pixelwright/tree/main/examples/orbit)
-for two templates, one rendering the other inside it, a batch file, and how they match. The project folder is `CLAUDE_PROJECT_DIR`, else the folder your MCP client starts the server in.
+for two templates, one rendering the other inside it, a batch file, and how they match. The project folder is the root your MCP client gives, else `CLAUDE_PROJECT_DIR`, else the folder your MCP client starts the server in; a relative path a tool takes (assetsDir, dir, src, save, reference) starts there too.
 
 ## Safety
 
@@ -153,7 +153,8 @@ pixelwright --version
 ```
 
 `PIXELWRIGHT_HOME` moves `~/.pixelwright` (the plugin, pairing keys, written-files.json, the shared log in `logs/`);
-`CLAUDE_PROJECT_DIR` names the project for Code Connect; `PIXELWRIGHT_SUPPORT_REMINDERS=off` turns off the weekly
+`CLAUDE_PROJECT_DIR` names the project (baselines; Code Connect and relative paths when the client gives no root);
+`PIXELWRIGHT_SUPPORT_REMINDERS=off` turns off the weekly
 support note (see Support); `PIXELWRIGHT_NO_UPDATE_CHECK=1` stops asking npm for a newer version (see Updating);
 `PIXELWRIGHT_LOG_LEVEL=debug` adds the bridge's details to the log.
 
