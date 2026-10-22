@@ -38,6 +38,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-6-0">0.6.0 — 2026-10-22</a></li>
           <li><a href="#v0-5-0">0.5.0 — 2026-10-20</a></li>
           <li><a href="#v0-4-1">0.4.1 — 2026-10-18</a></li>
           <li><a href="#v0-4-0">0.4.0 — 2026-10-18</a></li>
@@ -52,6 +53,49 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-6-0">
+          <h2>0.6.0 — 2026-10-22</h2>
+<h4>Added</h4>
+<ul>
+<li><code>design_apply</code> makes pages: a top-level <code>&lt;Page name=&quot;Screens&quot;&gt;</code> creates a page, last in the file, with the layers
+inside it, and a layer named by its id inside it moves onto it. <code>&lt;Page id=&quot;…&quot;&gt;</code> is a page the file has: <code>name</code>
+renames it, and new layers inside it go on it. Past the pages Figma&#39;s plan allows, the error names the limit.</li>
+<li><code>swapProp=&quot;Icon&quot;</code> on an <code>&lt;Instance&gt;</code> in a new <code>&lt;Component&gt;</code> makes an instance swap property, its default that
+instance&#39;s component.</li>
+<li><code>prop</code>, <code>visibleProp</code> and <code>swapProp</code> work on an existing component, so it never has to be rebuilt: on its layers by
+their ids, or on new layers inside its <code>&lt;Component id=&quot;…&quot;&gt;</code>, each binds to the property of that name or adds it once,
+its default the layer&#39;s value now. The answer&#39;s <code>properties</code> lists what was added (a dry run&#39;s: what would be).</li>
+<li>A shadow&#39;s colour can be a colour variable: <code>design_apply</code> binds <code>var(--shadow)</code> in <code>box-shadow</code>, inset shadows and
+<code>text-shadow</code>, <code>design_read</code> and <code>tokens_read</code> write a bound one so, and <code>tokens_apply</code> effect styles take it.</li>
+<li><code>design_apply</code> scales an existing <code>Icon</code> whose <code>width</code> or <code>height</code> changes, its lines and corners with it, as a new
+one is; the width decides when both are given.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>A <code>var()</code> that names no token in <code>design_apply</code> says to create it with <code>tokens_apply</code> first: <code>design_apply</code> binds
+tokens and never makes them.</li>
+<li><code>visibleProp</code> defaults to whether the layer shows, so a layer the call hides gets a property that is off.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>A <code>design_apply</code> call that switches an instance&#39;s variant or component and also edits its layers by their old ids
+refuses those edits up front, in a dry run as in a real one, and says to switch first, read the instance again,
+then edit: Figma gives a switched instance&#39;s layers new ids, so before, a dry run that passed ended in a real run
+that wrote the switch and failed the edits.</li>
+<li>A <code>var()</code> that names no token no longer freezes the plugin for minutes: <code>design_apply</code> and <code>tokens_apply</code> look for
+it on the file&#39;s other pages without asking Figma for any layer&#39;s CSS, which could hang there, so the answer, with
+its &quot;Did you mean&quot; hint, comes quickly and the calls after it are not held up. Where a layer&#39;s CSS is still read
+(the current page&#39;s gradient styles, <code>design_read</code>), a slow answer is given up on after 3 seconds.</li>
+<li><code>tokens_apply</code> takes a variable&#39;s <code>type</code> in any case: <code>&quot;color&quot;</code> is <code>COLOR</code>.</li>
+<li><code>design_apply</code> changes a layer deep inside a big screen in one call, nested as <code>design_read</code> writes it: the layers
+named and the ones on the way to them are read first, instead of &quot;could not read its current state&quot;.</li>
+<li><code>design_apply</code> <code>props=</code> that sets a text property on an existing instance loads the fonts its text uses first,
+instead of failing on an unloaded font.</li>
+<li><code>tokens_apply</code>&#39;s error for a style naming an unknown variable keeps the near names it suggests.</li>
+<li><code>guide write</code> says how <code>props</code> sets an instance swap property: by a component&#39;s or set&#39;s name or <code>key:&lt;key&gt;</code>.</li>
+</ul>
+
+        </section>
         <section id="v0-5-0">
           <h2>0.5.0 — 2026-10-20</h2>
 <h4>Added</h4>
