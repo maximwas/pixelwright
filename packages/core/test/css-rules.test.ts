@@ -259,6 +259,60 @@ describe("CSS mapping rules", () => {
     );
   });
 
+  it("keeps a stroke weight's fractions on a border, an outline, one side and a line, its lengths whole", () => {
+    const stroke = [
+      {
+        type: "SOLID",
+        color: DARK,
+      },
+    ];
+
+    expect(
+      cssOf(
+        layer({
+          strokes: stroke,
+          strokeWeight: 2.5,
+        }),
+      ).properties,
+    ).toContainEqual(["border", "2.5px solid #191A23"]);
+    expect(
+      cssOf(
+        layer({
+          strokes: stroke,
+          strokeWeight: 1.333,
+          strokeAlign: "OUTSIDE",
+        }),
+      ).properties,
+    ).toContainEqual(["outline", "1.33px solid #191A23"]);
+    expect(
+      cssOf(
+        layer({
+          strokes: stroke,
+          strokeWeight: "mixed",
+          strokeTopWeight: 0,
+          strokeRightWeight: 0,
+          strokeBottomWeight: 0.5,
+          strokeLeftWeight: 0,
+        }),
+      ).properties,
+    ).toContainEqual(["border-bottom", "0.5px solid #191A23"]);
+    expect(
+      cssOf(
+        layer({
+          type: "LINE",
+          width: 18.4,
+          height: 0,
+          strokes: stroke,
+          strokeWeight: 0.75,
+        }),
+        frame({ layoutMode: "HORIZONTAL" }),
+      ).properties,
+    ).toEqual([
+      ["width", "18px"],
+      ["border-top", "0.75px solid #191A23"],
+    ]);
+  });
+
   it("lists shadows top first with inset ones marked, and halves Figma's blur radius", () => {
     const { properties } = cssOf(
       layer({

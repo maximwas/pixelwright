@@ -6,7 +6,7 @@ import type { CssDeclarations } from "../../css-declarations.ts";
 import type { PaintSpec, StrokeSpec } from "../../figma-props.ts";
 import type { AttributeReader, Rule, WriteInput, WriteOutput } from "../../property-group.ts";
 import { lengthOf, splitTop } from "../../values/css-values.ts";
-import { px } from "../../values/format.ts";
+import { decimalPx } from "../../values/format.ts";
 import { paintOf, paintsCss, UNMAPPED } from "../../values/paints.ts";
 
 /** One side of a stroke: its weight, whether it is dashed, its paint. */
@@ -50,7 +50,8 @@ export function readStrokes(node: SnapshotNode, css: CssDeclarations, context: C
     return;
   }
 
-  const line = (weight: number) => `${px(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${color}`;
+  const line = (weight: number) =>
+    `${decimalPx(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${color}`;
 
   if (node.strokeWeight === MIXED) {
     for (const [key, property] of SIDE_WEIGHTS) {

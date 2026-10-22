@@ -1,5 +1,5 @@
 import { INFERRED_WORDS } from "../../constants/inferred.ts";
-import { px } from "../../css-mapping/values/format.ts";
+import { decimalPx, px } from "../../css-mapping/values/format.ts";
 import { variableTokenName } from "../../kernel/names.ts";
 import { decimal } from "../../kernel/numbers.ts";
 import type { Snapshot, SnapshotNode } from "../../types/snapshot.ts";
@@ -31,7 +31,7 @@ export function inferredHints(snapshot: Snapshot, nodes: readonly SnapshotNode[]
         continue;
       }
 
-      const value = field === "opacity" ? decimal(raw) : px(raw);
+      const value = valueCss(field, word, raw);
       const token = variableTokenName(variable);
       const key = `${word}|${value}|${token}`;
       const match = found.get(key) ?? {
@@ -53,4 +53,13 @@ export function inferredHints(snapshot: Snapshot, nodes: readonly SnapshotNode[]
     ({ word, value, token, examples }) =>
       `${word} ${value} on ${examples.length === 1 ? "1 layer" : `${examples.length} layers`} (${listed(examples)}) matches ${token}, Figma's own match for that field: use the token.`,
   );
+}
+
+/** A raw value as design_read writes it: an opacity bare, a border width with its fractions, other lengths whole. */
+function valueCss(field: string, word: string, raw: number): string {
+  if (field === "opacity") {
+    return decimal(raw);
+  }
+
+  return word === "border-width" ? decimalPx(raw) : px(raw);
 }

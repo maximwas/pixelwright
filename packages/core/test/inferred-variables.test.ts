@@ -90,4 +90,40 @@ describe("Figma's own variable match", () => {
 
     expect(hints.join("\n")).not.toMatch(/--space-0/);
   });
+
+  it("says a border width with its fractions, as design_read writes the border", () => {
+    const snapshot = read(
+      frame("1:2", {
+        strokes: [
+          {
+            type: "SOLID",
+            color: {
+              r: 0,
+              g: 0,
+              b: 0,
+            },
+          },
+        ],
+        strokeWeight: 1.5,
+        inferred: { strokeWeight: "V:hairline" },
+      }),
+    );
+
+    expect(
+      hintsOf({
+        ...snapshot,
+        variables: {
+          "V:hairline": {
+            name: "stroke/hairline",
+            collection: "Orbit",
+            resolvedType: "FLOAT",
+            remote: false,
+            value: 1.5,
+          },
+        },
+      }),
+    ).toContainEqual(
+      expect.stringMatching(/^border-width 1\.5px on 1 layer \(1:2 "Card 1:2"\) matches --stroke-hairline,/),
+    );
+  });
 });

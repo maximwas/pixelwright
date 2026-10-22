@@ -1,9 +1,10 @@
+import { decimalPx } from "../../css-mapping/values/format.ts";
 import { type Channels, Color, isChannels } from "../../kernel/color/color.ts";
 import type { ColorSpace } from "../../kernel/color/color-space.ts";
 import { decimal } from "../../kernel/numbers.ts";
 import type { SnapshotNode } from "../../types/snapshot.ts";
 import { nameOf, summaryOf } from "./track-summary.ts";
-import { componentOf, cssPoints, lengthCss, type Point, sample } from "./tracks.ts";
+import { componentOf, cssPoints, type Point, sample } from "./tracks.ts";
 import type { MotionEasing, MotionTrack, SnapshotMotion } from "./types.ts";
 import { MOTION_AXES, MOTION_PROPERTIES, MOTION_UNCOVERED } from "./vocabulary.ts";
 
@@ -152,7 +153,7 @@ class ChannelSet {
     if (own !== undefined && numbers) {
       return {
         property: own.property,
-        css: (value) => (own.length ? lengthCss(value as number) : decimal(value as number)),
+        css: (value) => (own.length ? decimalPx(value as number) : decimal(value as number)),
       };
     }
 
@@ -200,7 +201,7 @@ function axisPoints(property: AxisProperty, tracks: readonly AxisTrack[]): Chann
       t,
       css:
         property === "translate"
-          ? `${lengthCss(x)} ${lengthCss(y)}`
+          ? `${decimalPx(x)} ${decimalPx(y)}`
           : x === y
             ? decimal(x)
             : `${decimal(x)} ${decimal(y)}`,

@@ -1,5 +1,5 @@
 import type { ReadScope } from "../../property-group.ts";
-import { px } from "../../values/format.ts";
+import { decimalPx, px } from "../../values/format.ts";
 import { paintsCss } from "../../values/paints.ts";
 import { readPlacement } from "../geometry/placement.ts";
 import { hasLayout } from "../layout/layout.ts";
@@ -41,7 +41,7 @@ function lineBorder({ node, context }: ReadScope): string {
   const color = paintsCss(node.strokes, node.strokeStyleId, node, context);
   const weight = typeof node.strokeWeight === "number" ? node.strokeWeight : 1;
 
-  return `${px(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${typeof color === "string" ? color : "currentColor"}`;
+  return `${decimalPx(weight)} ${node.dashPattern === undefined ? "solid" : "dashed"} ${typeof color === "string" ? color : "currentColor"}`;
 }
 
 /** A flat or standing line placed absolutely by its drawn box's corner, when its parent does not lay it out. */
