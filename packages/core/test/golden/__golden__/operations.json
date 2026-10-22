@@ -8156,6 +8156,10 @@
         },
         "error": {
           "type": "string"
+        },
+        "note": {
+          "description": "When the code ran and changed no layer on the page: the tools that read without code.",
+          "type": "string"
         }
       },
       "required": [
