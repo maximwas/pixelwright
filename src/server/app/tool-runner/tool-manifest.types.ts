@@ -1,5 +1,5 @@
 import type * as zod from "zod/mini";
-import type { Tool } from "./tool.ts";
+import type { Tool } from "./tool/tool.ts";
 
 /** MCP tool annotations: clients ask before a destructive call (S-053). */
 interface ToolAnnotations {

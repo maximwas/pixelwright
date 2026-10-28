@@ -1,5 +1,5 @@
 import * as zod from "zod/mini";
-import { PLUGIN_LINK_ROLES } from "../../../core/ports/plugin-link.constants.ts";
+import { PLUGIN_LINK_ROLES } from "../../../core/ports/plugin-link/plugin-link.constants.ts";
 
 /** Strict: a misspelt argument is refused by name instead of being dropped without a word. */
 export const StatusInputSchema = zod.strictObject({

@@ -115,9 +115,23 @@ const LIMITS = {
 };
 
 /** File names of K-architecture 9.1: `x.ts`, `x.<suffix>.ts`, tests beside them, `index.ts`, `data/*.json`. */
-const FILES = [
+const SCRIPT_FILES = [
   { name: "index.ts" },
   { name: "{kebab-case}(.{suffix})?(.test)?.ts" },
+  { name: "{kebab-case}.(html|md)" },
+  { name: "data", children: [{ name: "{kebab-case}.json" }] },
+];
+
+/**
+ * src/: one folder per class. A class, port, tool or operation file and its satellites carry the name of their folder
+ * (config-reader/config-reader.ts, config-reader.schema.ts, config-reader.test.ts). Loose in a topic folder: data that
+ * belongs to no class (constants, types, tokens, schemas), a layer's catalog, a composition root.
+ */
+const FILES = [
+  { name: "index.ts" },
+  { name: "{folder-name}(.{suffix})?(.test)?.ts" },
+  { name: "{kebab-case}.(constants|types|tokens|schema)(.test)?.ts" },
+  { name: "{kebab-case}.(catalog|main)(.test)?.ts" },
   { name: "{kebab-case}.(html|md)" },
   { name: "data", children: [{ name: "{kebab-case}.json" }] },
 ];
@@ -126,10 +140,11 @@ const FOLDER_STRUCTURE = createFolderStructure({
   regexParameters: { suffix: "(types|constants|schema|port|manifest|tool|operation|catalog|contract|main|tokens)" },
   structure: [
     { name: "src", children: [{ name: "(cli|plugin-ui)", ruleId: "entryRoot" }, { ruleId: "folder" }] },
-    { name: "scripts", children: [...FILES, { ruleId: "folder" }] },
+    { name: "scripts", children: [...SCRIPT_FILES, { ruleId: "scriptFolder" }] },
   ],
   rules: {
     folder: { name: "{kebab-case}", children: [...FILES, { ruleId: "folder" }] },
+    scriptFolder: { name: "{kebab-case}", children: [...SCRIPT_FILES, { ruleId: "scriptFolder" }] },
     // A root holds its entry points only; everything else lives in folders under it.
     entryRoot: {
       children: [
