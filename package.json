@@ -22,7 +22,8 @@
     "lint": "pnpm check:deps && biome check --formatter-enabled=false . && eslint . && knip && node scripts/check-names.ts",
     "format": "biome check --write . && eslint --fix . && biome check --write . && eslint --fix .",
     "typecheck": "tsc -b",
-    "build": "tsdown",
+    "build": "tsdown && tsx scripts/build-plugin.ts",
+    "plugin:install": "tsx scripts/install-plugin.ts",
     "try": "tsx scripts/try.ts",
     "try:hello": "tsx scripts/try-hello.ts",
     "test": "vitest run --project unit --project contract",
@@ -39,13 +40,15 @@
       "name": "plugin main thread",
       "path": "dist/plugin/main.js",
       "limit": "450 KB",
-      "gzip": false
+      "gzip": false,
+      "brotli": false
     },
     {
       "name": "plugin window",
       "path": "dist/plugin/ui.html",
       "limit": "160 KB",
-      "gzip": false
+      "gzip": false,
+      "brotli": false
     }
   ],
   "devDependencies": {
@@ -61,6 +64,7 @@
     "@typescript-eslint/parser": "8.72.1",
     "@typescript/native": "npm:typescript@7.0.2",
     "dependency-cruiser": "18.7.0",
+    "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "eslint-no-restricted": "0.1.2",
     "eslint-plugin-antfu": "3.3.1",

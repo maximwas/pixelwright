@@ -1,0 +1,24 @@
+/**
+ * The two virtual channels on figma.ui (A§4.3): the server's frames, which the window relays to and from its socket
+ * unread, and the window's own messages to the plugin's main thread.
+ */
+export const UI_CHANNEL_NAME = {
+  server: "server",
+  window: "window",
+} as const;
+
+/** The field that names a figma.ui message's channel. */
+export const UI_CHANNEL_FIELD = "ch";
+
+/** The field that names a window message's kind. */
+export const WINDOW_MESSAGE_FIELD = "type";
+
+/**
+ * What the window and main say to each other: the window is ready, main hands it the stored key and the file's context
+ * (never through showUI, FX-001), the window hands back a key a pairing issued.
+ */
+export const WINDOW_MESSAGE = {
+  ready: "ready",
+  start: "start",
+  savePairing: "save_pairing",
+} as const;

@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // The main thread's tests: the plugin typings declare figma and __html__, which they never touch at run time.
+    "lib": ["ES2024"],
+    "types": ["@figma/plugin-typings"]
+  },
+  "include": ["src/plugin/**/*.test.ts"]
+}

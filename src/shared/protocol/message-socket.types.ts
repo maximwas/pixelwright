@@ -7,6 +7,9 @@ export interface MessageSocket {
   close(code: number, reason: string): void;
   /** Every frame that arrives; null for a binary one, which the protocol never sends. */
   onMessage(listener: (text: string | null) => void): void;
-  /** Once, when the socket has closed, whichever side closed it, with the close code. */
-  onClose(listener: (code: number) => void): void;
+  /**
+   * Once, when the socket has closed, whichever side closed it, with the close code and reason: a 4426's reason names
+   * the protocol the other side requires (ProtocolReason).
+   */
+  onClose(listener: (code: number, reason: string) => void): void;
 }

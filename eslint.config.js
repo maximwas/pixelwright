@@ -209,10 +209,10 @@ const FOLDER_STRUCTURE = createFolderStructure({
   rules: {
     folder: { name: "{kebab-case}", children: [...FILES, { ruleId: "folder" }] },
     scriptFolder: { name: "{kebab-case}", children: [...SCRIPT_FILES, { ruleId: "scriptFolder" }] },
-    // A root holds its entry points only; everything else lives in folders under it.
+    // A root holds its entry points only, and a root's composition test; everything else lives in folders under it.
     entryRoot: {
       children: [
-        { name: "(bin|{kebab-case}.main).ts" },
+        { name: "(bin|{kebab-case}.main)(.test)?.ts" },
         { name: "{kebab-case}.html" },
         { name: "index.ts" },
         { ruleId: "folder" },
