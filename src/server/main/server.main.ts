@@ -3,10 +3,11 @@ import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
 import { CLOCK } from "../../core/ports/clock/clock.port.ts";
+import { JSON_FILE } from "../../core/ports/json-file/json-file.port.ts";
 import { LOGGER } from "../../core/ports/logger/logger.port.ts";
 import { PLUGIN_LINK } from "../../core/ports/plugin-link/plugin-link.port.ts";
-import { NoBridge } from "../adapters/bridge/no-bridge/no-bridge.ts";
 import { SystemClock } from "../adapters/clock/system-clock/system-clock.ts";
+import { AtomicJsonFile } from "../adapters/files/atomic-json-file/atomic-json-file.ts";
 import { LOG_DESTINATIONS, LOG_SETTINGS } from "../adapters/logging/logging.tokens.ts";
 import { PinoLogger } from "../adapters/logging/pino-logger/pino-logger.ts";
 import { SharedLogFile } from "../adapters/logging/shared-log-file/shared-log-file.ts";
@@ -17,6 +18,7 @@ import { OutputCheckStep } from "../app/tool-runner/steps/output-check-step/outp
 import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER } from "../app/tool-runner/tool-runner/tool-runner.tokens.ts";
 import { ToolRunner } from "../app/tool-runner/tool-runner/tool-runner.ts";
 import { TOOL_CATALOG, ToolCatalog } from "../tools/tool.catalog.ts";
+import { BridgeProviders } from "./bridge-providers/bridge-providers.ts";
 import { ConfigReader } from "./config-reader/config-reader.ts";
 import type { ServerConfig } from "./config-reader/config-reader.types.ts";
 import { ContainerToolFactory } from "./container-tool-factory/container-tool-factory.ts";
@@ -46,14 +48,28 @@ export class ServerMain {
     new StdoutGuard().install();
 
     const container = this.#composed();
-    const endpoint = container.get(McpEndpoint);
 
-    container.get(ShutdownHooks).install(() => endpoint.close());
-    await endpoint.connect(new StdioServerTransport());
+    // The bridge before MCP (A§4.1): the first status call already sees the owner.
+    await this.listen();
+    container.get(ShutdownHooks).install(() => this.close());
+    await container.get(McpEndpoint).connect(new StdioServerTransport());
     container
       .get(LOGGER)
       .child({ component: "server" })
       .info("pixelwright ready on stdio", { role: container.get(PLUGIN_LINK).state().role });
+  }
+
+  /** Takes the plugin bridge up: the owner listens on the channel's port. The contract tests start it without stdio. */
+  async listen(): Promise<void> {
+    await this.#composed().get(PLUGIN_LINK).start();
+  }
+
+  /** The bridge frees its port first, so a sibling server can take it at once, then MCP closes (S-013). */
+  async close(): Promise<void> {
+    const container = this.#composed();
+
+    await container.get(PLUGIN_LINK).close();
+    await container.get(McpEndpoint).close();
   }
 
   /** The container with every binding, built once at first use: reading the environment is no constructor's work. */
@@ -66,13 +82,15 @@ export class ServerMain {
   #compose(config: ServerConfig): Container {
     const container = new Container();
 
-    this.#bindLogging(container, config);
+    this.#bindInfra(container, config);
+    new BridgeProviders().register(container, config);
     this.#bindServices(container);
 
     return container;
   }
 
-  #bindLogging(
+  /** The log, the clock and the home's JSON files: what every other service may need. */
+  #bindInfra(
     container: Container,
     { logLevel, home }: ServerConfig,
   ): void {
@@ -104,16 +122,15 @@ export class ServerMain {
       .bind({
         provide: CLOCK,
         useClass: SystemClock,
+      })
+      .bind({
+        provide: JSON_FILE,
+        useClass: AtomicJsonFile,
       });
   }
 
   #bindServices(container: Container): void {
     container
-      // shortcut: every run is bridge-off until item 02 binds OwnerBridge when config.pluginBridge is true.
-      .bind({
-        provide: PLUGIN_LINK,
-        useClass: NoBridge,
-      })
       .bind({
         provide: TOOL_CATALOG,
         useClass: ToolCatalog,

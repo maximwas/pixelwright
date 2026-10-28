@@ -5,4 +5,7 @@ export interface ServerConfig {
   readonly home: string;
   readonly logLevel: LogLevel;
   readonly pluginBridge: boolean;
+  /** The channel's port; the contract tests give 0 for any free one. */
+  readonly bridgePort: number;
+  readonly pluginOrigins: readonly string[];
 }

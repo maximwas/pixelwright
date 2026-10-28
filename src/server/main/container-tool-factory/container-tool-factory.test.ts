@@ -2,6 +2,8 @@ import { Container, inject, injectable } from "@needle-di/core";
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
 import { PLUGIN_LINK } from "../../../core/ports/plugin-link/plugin-link.port.ts";
+import { STATUS_HINTS } from "../../adapters/bridge/hints/status-hints/status-hints.tokens.ts";
+import { StatusHints } from "../../adapters/bridge/hints/status-hints/status-hints.ts";
 import { NoBridge } from "../../adapters/bridge/no-bridge/no-bridge.ts";
 import { PinoLogger } from "../../adapters/logging/pino-logger/pino-logger.ts";
 import { CallId } from "../../app/tool-runner/call-id/call-id.ts";
@@ -46,10 +48,15 @@ const MANIFEST: ToolManifest = {
 };
 
 class FactoryProbe {
-  readonly root = new Container().bind({
-    provide: PLUGIN_LINK,
-    useClass: NoBridge,
-  });
+  readonly root = new Container()
+    .bind({
+      provide: STATUS_HINTS,
+      useValue: new StatusHints([]),
+    })
+    .bind({
+      provide: PLUGIN_LINK,
+      useClass: NoBridge,
+    });
   readonly factory = new ContainerToolFactory(this.root);
   readonly logger = new PinoLogger(
     {

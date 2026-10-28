@@ -81,6 +81,7 @@ describe("PinoLogger", () => {
   it.each([
     ["a pairing code", "pairingCode"],
     ["a key", "key"],
+    ["a key's secret", "secret"],
     ["a proof", "proof"],
     ["a nonce", "nonce"],
     ["a token", "token"],
