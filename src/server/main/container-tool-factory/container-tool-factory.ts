@@ -1,8 +1,8 @@
 import type { Container } from "@needle-di/core";
-import type { Tool } from "../../app/tool-runner/tool/tool.ts";
-import type { ToolManifest } from "../../app/tool-runner/tool-manifest.types.ts";
-import { TOOL_CONTEXT } from "../../app/tool-runner/tool-runner/tool-runner.tokens.ts";
-import type { ToolContext, ToolFactory } from "../../app/tool-runner/tool-runner/tool-runner.types.ts";
+import type { Tool } from "@/server/app/tool-runner/tool/tool.ts";
+import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
+import { TOOL_CONTEXT } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
+import type { ToolContext, ToolFactory } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 
 /**
  * Factory: one tool per call, built in a child container that holds the call's context, so the root keeps its

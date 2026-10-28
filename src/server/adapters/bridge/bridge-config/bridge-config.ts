@@ -1,13 +1,13 @@
 import { randomBytes } from "node:crypto";
 import { inject, injectable } from "@needle-di/core";
-import { CLOCK } from "../../../../core/ports/clock/clock.port.ts";
-import { JSON_FILE } from "../../../../core/ports/json-file/json-file.port.ts";
-import { CHANNEL } from "../../../../shared/protocol/channel.constants.ts";
-import { KEY_ID_BYTES, KEY_SECRET_BYTES } from "../../../../shared/protocol/protocol.constants.ts";
-import { BRIDGE_SETTINGS } from "../bridge.tokens.ts";
-import { BRIDGE_TOKEN_BYTES } from "./bridge-config.constants.ts";
-import { type BridgeFile, BridgeFileSchema } from "./bridge-config.schema.ts";
-import type { PluginKey } from "./bridge-config.types.ts";
+import { CLOCK } from "@/core/ports/clock/clock.port.ts";
+import { JSON_FILE } from "@/core/ports/json-file/json-file.port.ts";
+import { BRIDGE_SETTINGS } from "@/server/adapters/bridge/bridge.tokens.ts";
+import { BRIDGE_ENCODING, BRIDGE_TOKEN_BYTES } from "@/server/adapters/bridge/bridge-config/bridge-config.constants.ts";
+import { type BridgeFile, BridgeFileSchema } from "@/server/adapters/bridge/bridge-config/bridge-config.schema.ts";
+import type { PluginKey } from "@/server/adapters/bridge/bridge-config/bridge-config.types.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { KEY_ID_BYTES, KEY_SECRET_BYTES } from "@/shared/protocol/protocol.constants.ts";
 
 /**
  * bridge.json in the channel's home, shared by every server of the channel on this machine (S-024). It is read again
@@ -52,8 +52,8 @@ export class BridgeConfig {
   addKey(): PluginKey {
     const config = this.#read();
     const key = {
-      id: randomBytes(KEY_ID_BYTES).toString("hex"),
-      secret: randomBytes(KEY_SECRET_BYTES).toString("hex"),
+      id: randomBytes(KEY_ID_BYTES).toString(BRIDGE_ENCODING.key),
+      secret: randomBytes(KEY_SECRET_BYTES).toString(BRIDGE_ENCODING.key),
     };
 
     this.#files.write(this.#settings.configFile, {
@@ -79,7 +79,7 @@ export class BridgeConfig {
     return {
       version: 1,
       port: CHANNEL.port,
-      token: randomBytes(BRIDGE_TOKEN_BYTES).toString("base64url"),
+      token: randomBytes(BRIDGE_TOKEN_BYTES).toString(BRIDGE_ENCODING.token),
       pluginKeys: [],
     };
   }

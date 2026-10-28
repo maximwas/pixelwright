@@ -1,8 +1,8 @@
-import { HANDSHAKE_TYPE, PAIRING_REASON } from "../../../../shared/protocol/handshake.constants.ts";
-import type { PairingReason } from "../../../../shared/protocol/handshake.schema.ts";
-import { CLOSE_CODE } from "../../../../shared/protocol/protocol.constants.ts";
-import { CODE_CHECK } from "../pairing-codes/pairing-codes.constants.ts";
-import type { CodeOutcome } from "../pairing-codes/pairing-codes.types.ts";
+import { CODE_CHECK } from "@/server/adapters/bridge/pairing-codes/pairing-codes.constants.ts";
+import type { CodeOutcome } from "@/server/adapters/bridge/pairing-codes/pairing-codes.types.ts";
+import { HANDSHAKE_TYPE, PAIRING_REASON } from "@/shared/protocol/handshake.constants.ts";
+import type { PairingReason } from "@/shared/protocol/handshake.schema.ts";
+import { CLOSE_CODE } from "@/shared/protocol/protocol.constants.ts";
 
 /** How long a new socket has to say hello, and a challenged one to prove its key: a page cannot sit on a socket (S-008). */
 export const HELLO_TIMEOUT_MS = 5_000;

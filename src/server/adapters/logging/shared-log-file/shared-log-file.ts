@@ -2,8 +2,12 @@ import { closeSync, fstatSync, mkdirSync, openSync, renameSync, statSync, writeS
 import { dirname } from "node:path";
 import { inject, injectable } from "@needle-di/core";
 import type { DestinationStream } from "pino";
-import { LOG_SETTINGS } from "../logging.tokens.ts";
-import { LOG_FILE_MAX_BYTES } from "./shared-log-file.constants.ts";
+import { FILE_ERROR } from "@/server/adapters/files/file-error.constants.ts";
+import { LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
+import {
+  LOG_FILE_MAX_BYTES,
+  SHARED_LOG_FILE,
+} from "@/server/adapters/logging/shared-log-file/shared-log-file.constants.ts";
 
 /**
  * The log every server of this channel shares, written line by line (S-065). A write that finds the file past 5 MiB
@@ -55,11 +59,11 @@ export class SharedLogFile implements DestinationStream {
 
   #setAside(): void {
     try {
-      renameSync(this.#path, `${this.#path}.1`);
+      renameSync(this.#path, SHARED_LOG_FILE.setAside(this.#path));
     } catch (error) {
       // Another process set it aside first: its new file is the one to write to. Any other refusal leaves the file
       // where it is, written on, and not tried on every line.
-      if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
+      if (!(error instanceof Error && "code" in error && error.code === FILE_ERROR.missing)) {
         this.#stuck = true;
 
         return;
@@ -87,7 +91,7 @@ export class SharedLogFile implements DestinationStream {
         mode: 0o700,
       });
 
-      return openSync(this.#path, "a", 0o600);
+      return openSync(this.#path, SHARED_LOG_FILE.appendFlag, 0o600);
     } catch {
       return null;
     }

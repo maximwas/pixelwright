@@ -5,8 +5,8 @@ import {
   HelloProtocolSchema,
   PluginHandshakeSchema,
   ServerHandshakeSchema,
-} from "../../src/shared/protocol/handshake.schema.ts";
-import { PluginInfoSchema } from "../../src/shared/protocol/plugin-info.schema.ts";
+} from "@/shared/protocol/handshake.schema.ts";
+import { PluginInfoSchema } from "@/shared/protocol/plugin-info.schema.ts";
 
 /** Frames 0.7.0 sends, recorded from its own code (the fixture's source says how), as the exact bytes on the wire. */
 const RECORDING = zod.parse(

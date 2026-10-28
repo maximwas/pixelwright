@@ -1,10 +1,10 @@
 import { inject, injectable } from "@needle-di/core";
 import { pino } from "pino";
-import { CHANNEL } from "../../../../shared/protocol/channel.constants.ts";
-import { VERSION } from "../../../../shared/version/version.constants.ts";
-import { REDACTED, REDACTED_PATHS } from "../logging.constants.ts";
-import { LOG_DESTINATIONS, LOG_SETTINGS } from "../logging.tokens.ts";
-import { PinoLines } from "../pino-lines/pino-lines.ts";
+import { LOG_LEVEL, REDACTED, REDACTED_PATHS } from "@/server/adapters/logging/logging.constants.ts";
+import { LOG_DESTINATIONS, LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
+import { PinoLines } from "@/server/adapters/logging/pino-lines/pino-lines.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { VERSION } from "@/shared/version/version.constants.ts";
 
 /**
  * The server's root logger: JSON lines with time, level, pid, version and channel to every destination (stderr and the
@@ -35,7 +35,7 @@ export class PinoLogger extends PinoLines {
         pino.multistream(
           destinations.map((stream) => ({
             stream,
-            level: "trace",
+            level: LOG_LEVEL.trace,
           })),
         ),
       ),

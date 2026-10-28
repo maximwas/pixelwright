@@ -5,7 +5,9 @@ import figmaPlugins from "@figma/eslint-plugin-figma-plugins";
 import stylistic from "@stylistic/eslint-plugin";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import createNoRestrictedSyntax from "eslint-no-restricted/syntax";
 import antfu from "eslint-plugin-antfu";
+import noRelativeImportPaths from "eslint-plugin-no-relative-import-paths";
 import {
   createFileComposition,
   createFolderStructure,
@@ -74,6 +76,68 @@ const INJECTION = [
     message: "inject() takes an InjectionToken constant: a child container builds a second instance of a class (#110).",
   },
 ];
+
+/**
+ * Where a string literal names code instead of holding a value: module specifiers and import attributes, property keys
+ * (`"~standard"`, `x["~standard"]`, `in`), typeof checks, and an InjectionToken's description (a debug name needle-di
+ * prints when a provider is missing; it never leaves the process). The empty string holds no text, as 0 holds no
+ * number. A literal type is left to shape/no-string-type, so it is reported once.
+ */
+const NOT_VALUES = [
+  "ImportDeclaration > Literal.source",
+  "ExportNamedDeclaration > Literal.source",
+  "ExportAllDeclaration > Literal.source",
+  "ImportExpression > Literal.source",
+  "ImportAttribute > Literal.value",
+  "TSImportType Literal",
+  "Property > Literal.key",
+  "PropertyDefinition > Literal.key",
+  "TSPropertySignature > Literal.key",
+  "MemberExpression[computed=true] > Literal.property",
+  "BinaryExpression[operator='in'] > Literal.left",
+  "BinaryExpression[left.operator='typeof'] > Literal.right",
+  "NewExpression[callee.name='InjectionToken'] > Literal.arguments",
+  "Literal[value='']",
+  "TSLiteralType > Literal",
+];
+
+/** Where a string type names a property: an indexed access (`X["reason"]`) and the keys of Pick and Omit. */
+const TYPE_KEYS = [
+  "TSImportType Literal",
+  "TSIndexedAccessType > TSLiteralType.indexType > Literal",
+  "TSTypeReference[typeName.name=/^(Pick|Omit)$/] > TSTypeParameterInstantiation > :nth-child(2) Literal",
+];
+
+/**
+ * No string in code: every text lives in an `as const` object of a .constants.ts. One named rule per kind
+ * (eslint-no-restricted), so they compose apart from no-restricted-syntax and each has its own severity.
+ */
+const SHAPE = createNoRestrictedSyntax(
+  "shape",
+  {
+    name: "no-string-literal",
+    selector: `Literal[raw=/^['"]/]:not(${NOT_VALUES.join(", ")})`,
+    message: "No string in code: take it from an `as const` object in the class's or topic's .constants.ts.",
+  },
+  {
+    name: "no-string-type",
+    selector: `TSLiteralType > Literal[raw=/^['"]/]:not(${TYPE_KEYS.join(", ")})`,
+    message: "No hand-written string type: infer it from the schema, or write (typeof X)[keyof typeof X].",
+  },
+  {
+    name: "no-text-template",
+    selector: "TemplateLiteral:has(> TemplateElement[value.raw!=''])",
+    message: "Text with values is a constant arrow in a .constants.ts object: portTaken: (port: number) => `...`.",
+  },
+);
+
+/** no-relative-import-paths sees `import … from` only; a dynamic import() and `export … from` take `@/` here. */
+const IMPORTS = createNoRestrictedSyntax("imports", {
+  name: "no-relative-path",
+  selector:
+    "ImportExpression[source.value=/^\\./], ExportNamedDeclaration[source.value=/^\\./], ExportAllDeclaration[source.value=/^\\./]",
+  message: "Every import of src goes through @/ (the src root), dynamic import() and export … from too.",
+});
 
 /**
  * @stylistic's function-paren-newline for signatures only: declarations, methods and constructors, and functions not
@@ -293,5 +357,37 @@ export default [
     ...figmaPlugins.flatConfigs["recommended-problems-only"],
     files: ["src/plugin/**/*.ts"],
     languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+  },
+  // Texts live in .constants.ts; tests keep their names and the wire bytes they expect.
+  {
+    files: ["src/**/*.ts"],
+    ignores: [...TESTS, "**/*.constants.ts"],
+    plugins: { shape: SHAPE },
+    // Every shape rule as an error.
+    rules: SHAPE.configs.recommended.rules,
+  },
+  // Every import of src goes through `@/` (the src root), the class's own satellites and subfolders too; only a path
+  // out of src (package.json) has no alias and stays relative. `eslint --fix` rewrites the rest.
+  {
+    files: ["src/**/*.ts"],
+    plugins: { "no-relative-import-paths": noRelativeImportPaths, imports: IMPORTS },
+    rules: {
+      "no-relative-import-paths/no-relative-import-paths": [
+        "error",
+        { rootDir: "src", prefix: "@", allowSameFolder: false },
+      ],
+      ...IMPORTS.configs.recommended.rules,
+    },
+  },
+  // The plugin judges only files inside its rootDir, so test/ and scripts/ take the plain ban, fixed by hand. A script
+  // that imports src runs under tsx, which reads the tsconfig paths; raw node does not.
+  {
+    files: ["test/**/*.ts", "scripts/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { patterns: [{ regex: "^(\\.\\./)+src/", message: "Import src through @/, as src does." }] },
+      ],
+    },
   },
 ];

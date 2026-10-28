@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { STATUS_HINT_ORDER } from "./status-hints.constants.ts";
-import { StatusHints } from "./status-hints.ts";
-import type { HintFacts } from "./status-hints.types.ts";
+import { STATUS_HINT_ORDER } from "@/server/adapters/bridge/hints/status-hints/status-hints.constants.ts";
+import { StatusHints } from "@/server/adapters/bridge/hints/status-hints/status-hints.ts";
+import type { HintFacts } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
 
 /** The table in the order the root binds it. */
 const hints = new StatusHints(STATUS_HINT_ORDER.map((Rule) => new Rule()));

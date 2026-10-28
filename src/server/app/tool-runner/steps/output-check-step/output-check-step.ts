@@ -1,6 +1,12 @@
 import { injectable } from "@needle-di/core";
 import * as zod from "zod/mini";
-import type { ToolAnswer, ToolCall, ToolCallStep, ToolStepNext } from "../../tool-runner/tool-runner.types.ts";
+import { OUTPUT_CHECK } from "@/server/app/tool-runner/steps/output-check-step/output-check-step.constants.ts";
+import type {
+  ToolAnswer,
+  ToolCall,
+  ToolCallStep,
+  ToolStepNext,
+} from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 
 /**
  * Checks every answer against its tool's outputSchema before it leaves (T-004). An answer outside it is a bug, so it
@@ -16,7 +22,7 @@ export class OutputCheckStep implements ToolCallStep {
     const checked = zod.safeParse(call.manifest.output, answer.structuredContent);
 
     if (!checked.success) {
-      throw new Error(`the answer does not match its outputSchema: ${zod.prettifyError(checked.error)}`);
+      throw new Error(OUTPUT_CHECK.mismatch(zod.prettifyError(checked.error)));
     }
 
     return answer;

@@ -1,5 +1,5 @@
-import type { PairingReason } from "../../../../shared/protocol/handshake.schema.ts";
-import type { CODE_CHECK } from "./pairing-codes.constants.ts";
+import type { CODE_CHECK } from "@/server/adapters/bridge/pairing-codes/pairing-codes.constants.ts";
+import type { PairingReason } from "@/shared/protocol/handshake.schema.ts";
 
 /** The one code in force. */
 export interface ActiveCode {

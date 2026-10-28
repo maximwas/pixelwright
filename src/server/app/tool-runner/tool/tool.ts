@@ -1,5 +1,6 @@
 import * as zod from "zod/mini";
-import type { ToolAnswer } from "../tool-runner/tool-runner.types.ts";
+import { TOOL_CONTENT_TYPE } from "@/server/app/tool-runner/tool-content.constants.ts";
+import type { ToolAnswer } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 
 export type ToolOutput = Readonly<Record<string, unknown>>;
 
@@ -22,7 +23,7 @@ export abstract class Tool<Input = unknown, Output extends ToolOutput = ToolOutp
     return {
       content: [
         {
-          type: "text",
+          type: TOOL_CONTENT_TYPE.text,
           text: JSON.stringify(output),
         },
       ],

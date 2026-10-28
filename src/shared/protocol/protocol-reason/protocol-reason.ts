@@ -1,4 +1,4 @@
-import { PROTOCOL_REASON_TEXT } from "./protocol-reason.constants.ts";
+import { PROTOCOL_REASON_TEXT } from "@/shared/protocol/protocol-reason/protocol-reason.constants.ts";
 
 /**
  * The close reason of a 4426 (S-004), a value object: `protocol N required`, naming the protocol the closing side

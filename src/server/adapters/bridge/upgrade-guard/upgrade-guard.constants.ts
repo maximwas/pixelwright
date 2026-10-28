@@ -1,14 +1,19 @@
-import { BRIDGE_PATH, PEER_PATH } from "../../../../shared/protocol/protocol.constants.ts";
-import type { UpgradeRole } from "./upgrade-guard.types.ts";
+import { BRIDGE_PATH, PEER_PATH } from "@/shared/protocol/protocol.constants.ts";
 
 /** Who upgrades: the plugin's window, or another Pixelwright server joining the owner. */
 export const UPGRADE_ROLE = {
   plugin: "plugin",
   peer: "peer",
-} as const satisfies Record<string, UpgradeRole>;
+} as const;
+
+/** Which check refused an upgrade: the Host it named, or the Origin it came with. */
+export const UPGRADE_REFUSAL = {
+  host: "host",
+  origin: "origin",
+} as const;
 
 /** Who may upgrade on which path; any other path is 404. */
-export const UPGRADE_PATHS: readonly { readonly path: string; readonly role: UpgradeRole }[] = [
+export const UPGRADE_PATHS = [
   {
     path: BRIDGE_PATH,
     role: UPGRADE_ROLE.plugin,
@@ -17,7 +22,16 @@ export const UPGRADE_PATHS: readonly { readonly path: string; readonly role: Upg
     path: PEER_PATH,
     role: UPGRADE_ROLE.peer,
   },
-];
+] as const;
+
+/** A request URL's path ends where its query starts; a request names its host as name:port. */
+export const UPGRADE_URL = {
+  queryStart: "?",
+  host: (
+    name: string,
+    port: number,
+  ) => `${name}:${port}`,
+} as const;
 
 /**
  * Figma's plugin iframe sends the literal Origin "null" (seen live, FX-002). Any sandboxed iframe or file: page sends

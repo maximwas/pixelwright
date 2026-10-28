@@ -1,8 +1,15 @@
 import { inject, injectable } from "@needle-di/core";
-import { CLOCK } from "../../../../../core/ports/clock/clock.port.ts";
-import { LOGGER, type LogFields } from "../../../../../core/ports/logger/logger.port.ts";
-import { PixelwrightError } from "../../../../../shared/errors/pixelwright-error/pixelwright-error.ts";
-import type { ToolAnswer, ToolCall, ToolCallStep, ToolStepNext } from "../../tool-runner/tool-runner.types.ts";
+import { CLOCK } from "@/core/ports/clock/clock.port.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
+import { LOGGER, type LogFields } from "@/core/ports/logger/logger.port.ts";
+import { CALL_LOG } from "@/server/app/tool-runner/steps/call-log-step/call-log-step.constants.ts";
+import type {
+  ToolAnswer,
+  ToolCall,
+  ToolCallStep,
+  ToolStepNext,
+} from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
 
 /**
  * The tool-call log (S-058): one line per call with its tool, callId, the file it named and ms. An expected failure
@@ -31,7 +38,7 @@ export class CallLogStep implements ToolCallStep {
     try {
       const answer = await next(call);
 
-      this.#logger.info(`tool ${name}`, this.#fields(call, started));
+      this.#logger.info(CALL_LOG.called(name), this.#fields(call, started));
 
       return answer;
     } catch (error) {
@@ -41,9 +48,9 @@ export class CallLogStep implements ToolCallStep {
       };
 
       if (error instanceof PixelwrightError) {
-        this.#logger.warn(`tool ${name} failed`, fields);
+        this.#logger.warn(CALL_LOG.failed(name), fields);
       } else {
-        this.#logger.error(`tool ${name} failed`, fields);
+        this.#logger.error(CALL_LOG.failed(name), fields);
       }
 
       throw error;
@@ -57,7 +64,7 @@ export class CallLogStep implements ToolCallStep {
     const file = typeof args === "object" && args !== null && "file" in args ? args.file : undefined;
 
     return {
-      component: "tool-runner",
+      component: LOG_COMPONENT.toolRunner,
       tool: manifest.name,
       callId: callId.value,
       ...(typeof file === "string" ? { file } : {}),

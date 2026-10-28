@@ -1,27 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import * as zod from "zod/mini";
-import { LOG_COMPONENT } from "../../../../core/ports/logger/logger.constants.ts";
-import { CHANNEL } from "../../../../shared/protocol/channel.constants.ts";
-import { HANDSHAKE_TYPE, PAIRING_REASON } from "../../../../shared/protocol/handshake.constants.ts";
-import {
-  type Hello,
-  HelloProtocolSchema,
-  type PairingReason,
-  type PluginHandshake,
-  PluginHandshakeSchema,
-  type ServerHandshake,
-} from "../../../../shared/protocol/handshake.schema.ts";
-import type { MessageSocket } from "../../../../shared/protocol/message-socket.types.ts";
-import type { PluginInfo } from "../../../../shared/protocol/plugin-info.schema.ts";
-import { PROOF_ROLE } from "../../../../shared/protocol/proof/proof.constants.ts";
-import { Proof } from "../../../../shared/protocol/proof/proof.ts";
-import { CLOSE_CODE, NONCE_BYTES, PROTOCOL } from "../../../../shared/protocol/protocol.constants.ts";
-import { ProtocolReason } from "../../../../shared/protocol/protocol-reason/protocol-reason.ts";
-import { VERSION } from "../../../../shared/version/version.constants.ts";
-import type { PluginKey } from "../bridge-config/bridge-config.types.ts";
-import { CODE_CHECK, PAIRING_CODE_TTL_MS } from "../pairing-codes/pairing-codes.constants.ts";
-import { BridgeSession } from "../sessions/bridge-session/bridge-session.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
+import type { PluginKey } from "@/server/adapters/bridge/bridge-config/bridge-config.types.ts";
+import { CODE_CHECK, PAIRING_CODE_TTL_MS } from "@/server/adapters/bridge/pairing-codes/pairing-codes.constants.ts";
 import {
   CLOSE_REASON,
   CONNECTION_LOG,
@@ -29,8 +11,29 @@ import {
   EXPECTED_FRAMES,
   HELLO_TIMEOUT_MS,
   NOT_PAIRED_REASONS,
-} from "./plugin-connection.constants.ts";
-import type { ConnectionState, HandshakeServices } from "./plugin-connection.types.ts";
+} from "@/server/adapters/bridge/plugin-connection/plugin-connection.constants.ts";
+import type {
+  ConnectionState,
+  HandshakeServices,
+} from "@/server/adapters/bridge/plugin-connection/plugin-connection.types.ts";
+import { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { HANDSHAKE_TYPE, PAIRING_REASON } from "@/shared/protocol/handshake.constants.ts";
+import {
+  type Hello,
+  HelloProtocolSchema,
+  type PairingReason,
+  type PluginHandshake,
+  PluginHandshakeSchema,
+  type ServerHandshake,
+} from "@/shared/protocol/handshake.schema.ts";
+import type { MessageSocket } from "@/shared/protocol/message-socket.types.ts";
+import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
+import { PROOF_ROLE } from "@/shared/protocol/proof/proof.constants.ts";
+import { Proof } from "@/shared/protocol/proof/proof.ts";
+import { CLOSE_CODE, NONCE_BYTES, PROTOCOL } from "@/shared/protocol/protocol.constants.ts";
+import { ProtocolReason } from "@/shared/protocol/protocol-reason/protocol-reason.ts";
+import { VERSION } from "@/shared/version/version.constants.ts";
 
 type Waiting = Exclude<
   ConnectionState,

@@ -1,5 +1,6 @@
 import type { StandardSchemaWithJSON } from "@modelcontextprotocol/server";
 import * as zod from "zod/mini";
+import { TOOL_JSON_SCHEMA } from "@/server/main/mcp-tool-schema/mcp-tool-schema.constants.ts";
 
 type Props<Schema extends zod.ZodMiniType> = StandardSchemaWithJSON<zod.input<Schema>, zod.output<Schema>>["~standard"];
 
@@ -20,13 +21,13 @@ implements StandardSchemaWithJSON<zod.input<Schema>, zod.output<Schema>>
       jsonSchema: {
         input: () =>
           zod.toJSONSchema(schema, {
-            target: "draft-2020-12",
-            io: "input",
+            target: TOOL_JSON_SCHEMA.target,
+            io: TOOL_JSON_SCHEMA.input,
           }),
         output: () =>
           zod.toJSONSchema(schema, {
-            target: "draft-2020-12",
-            io: "output",
+            target: TOOL_JSON_SCHEMA.target,
+            io: TOOL_JSON_SCHEMA.output,
           }),
       },
     };

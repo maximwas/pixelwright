@@ -1,6 +1,6 @@
 import { InjectionToken, injectable } from "@needle-di/core";
-import type { ToolManifest } from "../app/tool-runner/tool-manifest.types.ts";
-import { STATUS_MANIFEST } from "./status/status.manifest.ts";
+import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
+import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
 
 /**
  * Every tool (Registry), in the order clients list them (T-009): finding and reading first, then the checks, then

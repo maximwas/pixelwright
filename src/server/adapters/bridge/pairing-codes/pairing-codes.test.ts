@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Clock } from "../../../../core/ports/clock/clock.port.ts";
-import { PinoLogger } from "../../logging/pino-logger/pino-logger.ts";
-import { PairingCodes } from "./pairing-codes.ts";
+import type { Clock } from "@/core/ports/clock/clock.port.ts";
+import { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 
 /** Time that moves only when the test says so. */
 class FixedClock implements Clock {

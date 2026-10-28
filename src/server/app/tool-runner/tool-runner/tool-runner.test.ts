@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
-import type { Clock } from "../../../../core/ports/clock/clock.port.ts";
-import type { LogFields, Logger } from "../../../../core/ports/logger/logger.port.ts";
-import { PixelwrightError } from "../../../../shared/errors/pixelwright-error/pixelwright-error.ts";
-import { CallLogStep } from "../steps/call-log-step/call-log-step.ts";
-import { ErrorTextStep } from "../steps/error-text-step/error-text-step.ts";
-import { OutputCheckStep } from "../steps/output-check-step/output-check-step.ts";
-import { Tool } from "../tool/tool.ts";
-import type { ToolManifest } from "../tool-manifest.types.ts";
-import { ToolRunner } from "./tool-runner.ts";
-import type { ToolContext, ToolFactory } from "./tool-runner.types.ts";
+import type { Clock } from "@/core/ports/clock/clock.port.ts";
+import type { LogFields, Logger } from "@/core/ports/logger/logger.port.ts";
+import { CallLogStep } from "@/server/app/tool-runner/steps/call-log-step/call-log-step.ts";
+import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step/error-text-step.ts";
+import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step/output-check-step.ts";
+import { Tool } from "@/server/app/tool-runner/tool/tool.ts";
+import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
+import { ToolRunner } from "@/server/app/tool-runner/tool-runner/tool-runner.ts";
+import type { ToolContext, ToolFactory } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
 
 const ProbeInput = zod.object({
   file: zod.optional(zod.string()),

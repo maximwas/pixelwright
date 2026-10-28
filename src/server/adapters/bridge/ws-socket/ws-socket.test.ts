@@ -2,8 +2,8 @@ import { once } from "node:events";
 import { setTimeout as sleep } from "node:timers/promises";
 import { afterEach, describe, expect, it } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
-import { PinoLogger } from "../../logging/pino-logger/pino-logger.ts";
-import { WsSocket } from "./ws-socket.ts";
+import { WsSocket } from "@/server/adapters/bridge/ws-socket/ws-socket.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 
 /** Short, so the test sees several heartbeats; production beats every 15 s. */
 const BEAT_MS = 25;

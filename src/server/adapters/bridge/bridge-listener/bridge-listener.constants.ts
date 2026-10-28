@@ -1,4 +1,4 @@
-import { BRIDGE_PATH } from "../../../../shared/protocol/protocol.constants.ts";
+import { BRIDGE_PATH } from "@/shared/protocol/protocol.constants.ts";
 
 /** Loopback only, never 0.0.0.0, and not "localhost", which may resolve to ::1 first (S-001). */
 export const LISTEN_HOST = "127.0.0.1";

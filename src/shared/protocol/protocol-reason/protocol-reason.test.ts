@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ProtocolReason } from "./protocol-reason.ts";
+import { ProtocolReason } from "@/shared/protocol/protocol-reason/protocol-reason.ts";
 
 describe("ProtocolReason", () => {
   it("writes the reason as 0.7.0 did and as a 0.7.0 plugin reads it", () => {

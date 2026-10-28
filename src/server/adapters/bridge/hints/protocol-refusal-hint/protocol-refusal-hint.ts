@@ -1,8 +1,8 @@
 import { injectable } from "@needle-di/core";
-import { CHANNEL } from "../../../../../shared/protocol/channel.constants.ts";
-import { PROTOCOL } from "../../../../../shared/protocol/protocol.constants.ts";
-import type { HintFacts, StatusHint } from "../status-hints/status-hints.types.ts";
-import { PROTOCOL_REFUSAL_HINT } from "./protocol-refusal-hint.constants.ts";
+import { PROTOCOL_REFUSAL_HINT } from "@/server/adapters/bridge/hints/protocol-refusal-hint/protocol-refusal-hint.constants.ts";
+import type { HintFacts, StatusHint } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { PROTOCOL } from "@/shared/protocol/protocol.constants.ts";
 
 /**
  * No file, but a plugin of another protocol was turned away with 4426 (S-003, S-004): an older plugin needs the one

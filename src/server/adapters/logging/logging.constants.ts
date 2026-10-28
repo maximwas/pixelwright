@@ -1,5 +1,13 @@
 /** pino's levels, for PIXELWRIGHT_LOG_LEVEL (default info: start, plugin connected or refused, each call, each failure). */
-export const LOG_LEVELS = ["trace", "debug", "info", "warn", "error", "fatal", "silent"] as const;
+export const LOG_LEVEL = {
+  trace: "trace",
+  debug: "debug",
+  info: "info",
+  warn: "warn",
+  error: "error",
+  fatal: "fatal",
+  silent: "silent",
+} as const;
 
 /**
  * Secrets that never reach a log, at the top of a line or one level down: pairing codes, keys and their secrets,

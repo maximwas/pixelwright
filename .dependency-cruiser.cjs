@@ -6,6 +6,9 @@ module.exports = {
   forbidden: [
     rule("no-old", {}, { path: "^old/" }),
     rule("no-cycles", {}, { circular: true }),
+    // An @/ import the tsconfig paths cannot resolve is invisible to every layer rule below. The guard samples map @/
+    // to their own src/, which test/guards/guards.test.ts cruises from there.
+    rule("no-unresolved-alias", { pathNot: "^test/guards/samples/" }, { path: "^@/", couldNotResolve: true }),
     rule("shared-is-the-floor", { path: "^src/shared/" }, { path: "^src/", pathNot: "^src/shared/" }),
     rule("core-on-shared", { path: "^src/core/" }, { path: "^src/", pathNot: "^src/(core|shared)/" }),
     rule("kernel-on-nothing", { path: "^src/core/kernel/" }, { path: "^src/core/", pathNot: "^src/core/kernel/" }),

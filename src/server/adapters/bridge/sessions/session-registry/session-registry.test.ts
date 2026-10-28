@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { PluginInfo } from "../../../../../shared/protocol/plugin-info.schema.ts";
-import { PinoLogger } from "../../../logging/pino-logger/pino-logger.ts";
-import { PairingCodes } from "../../pairing-codes/pairing-codes.ts";
-import { BridgeSession } from "../bridge-session/bridge-session.ts";
-import { SessionRegistry } from "./session-registry.ts";
+import { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
+import { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.ts";
+import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry/session-registry.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
+import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 
 const info = (
   instanceId: string,
@@ -45,11 +45,12 @@ class RegistryProbe {
       close: (
         code: number,
         reason: string,
-      ) => this.closes.push({
-        window: instanceId,
-        code,
-        reason,
-      }),
+      ) =>
+        this.closes.push({
+          window: instanceId,
+          code,
+          reason,
+        }),
     };
     const session = new BridgeSession(socket, info(instanceId, visible), this.registry.next());
 
@@ -112,9 +113,19 @@ describe("SessionRegistry", () => {
 
     probe.add("window-a");
     probe.add("window-b", false);
-    expect(probe.registry.files().filter((file) => file.active).map((file) => file.name)).toEqual(["File of window-a"]);
+    expect(
+      probe.registry
+        .files()
+        .filter((file) => file.active)
+        .map((file) => file.name),
+    ).toEqual(["File of window-a"]);
     probe.add("window-c");
-    expect(probe.registry.files().filter((file) => file.active).map((file) => file.name)).toEqual(["File of window-c"]);
+    expect(
+      probe.registry
+        .files()
+        .filter((file) => file.active)
+        .map((file) => file.name),
+    ).toEqual(["File of window-c"]);
   });
 
   it("forgets the plugins turned away once a plugin connects", () => {

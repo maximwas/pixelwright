@@ -1,11 +1,11 @@
 import { inject, injectable } from "@needle-di/core";
-import { PLUGIN_LINK_ROLE } from "../../../../core/ports/plugin-link/plugin-link.constants.ts";
-import type { PluginLink, PluginLinkState } from "../../../../core/ports/plugin-link/plugin-link.port.ts";
-import { BRIDGE_CONFIG } from "../bridge-config/bridge-config.tokens.ts";
-import { BRIDGE_LISTENER } from "../bridge-listener/bridge-listener.tokens.ts";
-import { STATUS_HINTS } from "../hints/status-hints/status-hints.tokens.ts";
-import { SESSION_REGISTRY } from "../sessions/session-registry/session-registry.tokens.ts";
-import { OWNER_FAILURE } from "./owner-bridge.constants.ts";
+import { PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link/plugin-link.constants.ts";
+import type { PluginLink, PluginLinkState } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { BRIDGE_CONFIG } from "@/server/adapters/bridge/bridge-config/bridge-config.tokens.ts";
+import { BRIDGE_LISTENER } from "@/server/adapters/bridge/bridge-listener/bridge-listener.tokens.ts";
+import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints/status-hints.tokens.ts";
+import { OWNER_FAILURE } from "@/server/adapters/bridge/owner-bridge/owner-bridge.constants.ts";
+import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
 
 /**
  * The server that owns the bridge's port (A§4.1 step 5): bridge.json first, where keys and the peers' token live, then

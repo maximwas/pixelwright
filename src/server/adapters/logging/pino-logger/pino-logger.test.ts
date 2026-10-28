@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { PixelwrightError } from "../../../../shared/errors/pixelwright-error/pixelwright-error.ts";
-import { CHANNEL } from "../../../../shared/protocol/channel.constants.ts";
-import { VERSION } from "../../../../shared/version/version.constants.ts";
-import { PinoLogger } from "./pino-logger.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { VERSION } from "@/shared/version/version.constants.ts";
 
 /** The logger's destination in a test: every line it writes, parsed. */
 class LineSink {

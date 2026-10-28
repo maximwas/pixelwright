@@ -1,16 +1,16 @@
 import { Container, inject, injectable } from "@needle-di/core";
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
-import { PLUGIN_LINK } from "../../../core/ports/plugin-link/plugin-link.port.ts";
-import { STATUS_HINTS } from "../../adapters/bridge/hints/status-hints/status-hints.tokens.ts";
-import { StatusHints } from "../../adapters/bridge/hints/status-hints/status-hints.ts";
-import { NoBridge } from "../../adapters/bridge/no-bridge/no-bridge.ts";
-import { PinoLogger } from "../../adapters/logging/pino-logger/pino-logger.ts";
-import { CallId } from "../../app/tool-runner/call-id/call-id.ts";
-import { Tool } from "../../app/tool-runner/tool/tool.ts";
-import type { ToolManifest } from "../../app/tool-runner/tool-manifest.types.ts";
-import { TOOL_CONTEXT } from "../../app/tool-runner/tool-runner/tool-runner.tokens.ts";
-import { ContainerToolFactory } from "./container-tool-factory.ts";
+import { PLUGIN_LINK } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints/status-hints.tokens.ts";
+import { StatusHints } from "@/server/adapters/bridge/hints/status-hints/status-hints.ts";
+import { NoBridge } from "@/server/adapters/bridge/no-bridge/no-bridge.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
+import { CallId } from "@/server/app/tool-runner/call-id/call-id.ts";
+import { Tool } from "@/server/app/tool-runner/tool/tool.ts";
+import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
+import { TOOL_CONTEXT } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
+import { ContainerToolFactory } from "@/server/main/container-tool-factory/container-tool-factory.ts";
 
 /** A tool that shows what it was built with. */
 @injectable()

@@ -1,6 +1,8 @@
 // Type information for the Figma ESLint rules on the plugin samples (typescript-eslint's project service finds the
-// nearest tsconfig.json). tsc -b never builds it: the root tsconfig.json does not reference it.
+// nearest tsconfig.json), and the samples' own `@/` for dependency-cruiser. tsc -b never builds it: the root
+// tsconfig.json does not reference it.
 {
   "extends": "../../../tsconfig.plugin.json",
+  "compilerOptions": { "paths": { "@/*": ["./src/*"] } },
   "include": ["src/plugin"]
 }

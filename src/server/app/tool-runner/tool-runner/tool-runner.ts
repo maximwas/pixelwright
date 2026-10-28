@@ -1,8 +1,9 @@
 import { inject, injectable } from "@needle-di/core";
-import { LOGGER } from "../../../../core/ports/logger/logger.port.ts";
-import { CallId } from "../call-id/call-id.ts";
-import { TOOL_CALL_STEPS, TOOL_FACTORY } from "./tool-runner.tokens.ts";
-import type { ToolAnswer, ToolCall, ToolRequest } from "./tool-runner.types.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
+import { LOGGER } from "@/core/ports/logger/logger.port.ts";
+import { CallId } from "@/server/app/tool-runner/call-id/call-id.ts";
+import { TOOL_CALL_STEPS, TOOL_FACTORY } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
+import type { ToolAnswer, ToolCall, ToolRequest } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 
 /**
  * Runs every tool call through the same chain of steps (Chain of Responsibility): the call gets its id, each step does
@@ -46,7 +47,7 @@ export class ToolRunner {
 
   async #execute({ manifest, args, callId, signal }: ToolCall): Promise<ToolAnswer> {
     const logger = this.#logger.child({
-      component: "tool",
+      component: LOG_COMPONENT.tool,
       tool: manifest.name,
       callId: callId.value,
     });

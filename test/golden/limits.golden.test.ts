@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { LIMITS } from "../../src/shared/limits/limits.constants.ts";
+import { LIMITS } from "@/shared/limits/limits.constants.ts";
 
 // Every shared limit with its value (P-155+r). A deliberate change updates __golden__/limits.json in the same commit,
 // with the reason.

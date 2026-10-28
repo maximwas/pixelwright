@@ -1,11 +1,11 @@
 import { inject, injectable } from "@needle-di/core";
-import { LOGGER } from "../../../../core/ports/logger/logger.port.ts";
-import type { MessageSocket } from "../../../../shared/protocol/message-socket.types.ts";
-import { BRIDGE_CONFIG } from "../bridge-config/bridge-config.tokens.ts";
-import { PAIRING_CODES } from "../pairing-codes/pairing-codes.tokens.ts";
-import { PluginConnection } from "../plugin-connection/plugin-connection.ts";
-import { SESSION_REGISTRY } from "../sessions/session-registry/session-registry.tokens.ts";
-import type { UpgradeRejection } from "../upgrade-guard/upgrade-guard.types.ts";
+import { LOGGER } from "@/core/ports/logger/logger.port.ts";
+import { BRIDGE_CONFIG } from "@/server/adapters/bridge/bridge-config/bridge-config.tokens.ts";
+import { PAIRING_CODES } from "@/server/adapters/bridge/pairing-codes/pairing-codes.tokens.ts";
+import { PluginConnection } from "@/server/adapters/bridge/plugin-connection/plugin-connection.ts";
+import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
+import type { UpgradeRejection } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.types.ts";
+import type { MessageSocket } from "@/shared/protocol/message-socket.types.ts";
 
 /**
  * The plugin side of the owner's port, a Factory: one PluginConnection for each plugin socket the upgrade guard let

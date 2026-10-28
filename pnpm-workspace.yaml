@@ -1,4 +1,6 @@
 # pnpm 12 refuses to install while a dependency's build script is neither allowed nor denied. simple-git-hooks'
-# postinstall is denied: the "prepare" script installs the hook instead.
+# postinstall is denied: the "prepare" script installs the hook instead. esbuild's (under tsx) is denied too: it only
+# swaps the JS shim for the platform binary, which esbuild finds in its optional dependency without it.
 allowBuilds:
+  esbuild: false
   simple-git-hooks: false

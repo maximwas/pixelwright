@@ -1,11 +1,12 @@
 import * as zod from "zod/mini";
-import { KEY_ID_BYTES, KEY_SECRET_BYTES } from "../../../../shared/protocol/protocol.constants.ts";
-import { BRIDGE_TOKEN_MIN_CHARS } from "./bridge-config.constants.ts";
+import { BRIDGE_TOKEN_MIN_CHARS } from "@/server/adapters/bridge/bridge-config/bridge-config.constants.ts";
+import { HANDSHAKE_PATTERN } from "@/shared/protocol/handshake.constants.ts";
+import { KEY_ID_BYTES, KEY_SECRET_BYTES } from "@/shared/protocol/protocol.constants.ts";
 
 /** Loose: a field a newer Pixelwright wrote is kept when this one rewrites the file (O-027). */
 const PluginKeyEntrySchema = zod.looseObject({
-  id: zod.string().check(zod.regex(new RegExp(`^[0-9a-f]{${KEY_ID_BYTES * 2}}$`))),
-  secret: zod.string().check(zod.regex(new RegExp(`^[0-9a-f]{${KEY_SECRET_BYTES * 2}}$`))),
+  id: zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(KEY_ID_BYTES))),
+  secret: zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(KEY_SECRET_BYTES))),
   createdAt: zod.string(),
 });
 

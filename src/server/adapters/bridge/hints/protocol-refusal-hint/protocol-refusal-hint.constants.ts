@@ -3,7 +3,8 @@ export const PROTOCOL_REFUSAL_HINT = {
   plugin: (
     name: string,
     version: string | null,
-  ) => (version === null ? `The ${name} plugin` : `The ${name} plugin ${version}`),
+  ) =>
+    version === null ? `The ${name} plugin` : `The ${name} plugin ${version}`,
   older: (
     plugin: string,
     protocol: number,

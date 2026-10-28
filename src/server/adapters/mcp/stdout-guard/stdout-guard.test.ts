@@ -1,7 +1,7 @@
 import { Console } from "node:console";
 import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
-import { StdoutGuard } from "./stdout-guard.ts";
+import { StdoutGuard } from "@/server/adapters/mcp/stdout-guard/stdout-guard.ts";
 
 /** A real Console over two streams, so the test sees which one each call reaches. */
 class ConsoleProbe {

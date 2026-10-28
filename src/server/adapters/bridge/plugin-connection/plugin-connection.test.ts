@@ -2,14 +2,14 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemorySocket } from "../../../../shared/protocol/memory-socket/memory-socket.ts";
-import { Proof } from "../../../../shared/protocol/proof/proof.ts";
-import { AtomicJsonFile } from "../../files/atomic-json-file/atomic-json-file.ts";
-import { PinoLogger } from "../../logging/pino-logger/pino-logger.ts";
-import { BridgeConfig } from "../bridge-config/bridge-config.ts";
-import { PairingCodes } from "../pairing-codes/pairing-codes.ts";
-import { SessionRegistry } from "../sessions/session-registry/session-registry.ts";
-import { PluginConnection } from "./plugin-connection.ts";
+import { BridgeConfig } from "@/server/adapters/bridge/bridge-config/bridge-config.ts";
+import { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
+import { PluginConnection } from "@/server/adapters/bridge/plugin-connection/plugin-connection.ts";
+import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry/session-registry.ts";
+import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file/atomic-json-file.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
+import { MemorySocket } from "@/shared/protocol/memory-socket/memory-socket.ts";
+import { Proof } from "@/shared/protocol/proof/proof.ts";
 
 const PLUGIN_NONCE = "00112233445566778899aabbccddeeff";
 
@@ -113,7 +113,7 @@ afterEach(() => {
 describe("PluginConnection, before the session", () => {
   it.each([
     ["a socket that says no hello", () => [], 5_000, "hello timeout"],
-    ["a challenged plugin that sends no proof", (probe: HandshakeProbe) => [hello(probe.keys.addKey().id)], 5_000, "auth timeout"],
+    ["a challenged, silent plugin", (probe: HandshakeProbe) => [hello(probe.keys.addKey().id)], 5_000, "auth timeout"],
     ["an unpaired window", () => [hello(null)], 120_000, "waited too long for the pairing code"],
   ])("closes %s with 4408 when its time is up, and frees its slot", (_case, frames, ms, reason) => {
     vi.useFakeTimers();
