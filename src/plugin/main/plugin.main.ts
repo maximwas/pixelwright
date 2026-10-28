@@ -28,20 +28,19 @@ export class PluginMain {
     figma.showUI(__html__, PLUGIN_WINDOW);
     // An arrow, not the runner itself: birpc calls a served function with its own `this`.
     container.get(SERVER_RPC).start({ run: (op, input) => runner.run(op, input) });
-    container.get(DOCUMENT_EVENTS).start();
     this.#publishInfo(container);
     container.get(WINDOW_HOST).start();
   }
 
   /**
-   * Plugin info events (Observer, S-012): each change of the file's page, Allow edits or tab goes to the server, and so
+   * Plugin info events (S-012): each change of the file's page, Allow edits or tab goes to the server, and so
    * does the info as every new socket's session starts, since that socket's hello may carry a page from before.
    */
   #publishInfo(container: Container): void {
     const events = container.get(DOCUMENT_EVENTS);
     const server = container.get(SERVER_EVENTS);
 
-    events.onInfo((info) => server.pluginInfo(info));
+    events.start((info) => server.pluginInfo(info));
     server.onOpen(() => void events.info().then((info) => server.pluginInfo(info)));
   }
 

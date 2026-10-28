@@ -23,10 +23,10 @@ export class OpContract<Input extends zod.ZodMiniType, Output extends zod.ZodMin
     const declared = this.declared;
 
     return {
-      write: this.#flag(declared.write, input),
+      write: this.#resolve(declared.write, input),
       dryRun: declared.dryRun,
-      timeoutMs: this.#number(declared.timeoutMs, input),
-      needsAllowEdits: this.#flag(declared.needsAllowEdits, input),
+      timeoutMs: this.#resolve(declared.timeoutMs, input),
+      needsAllowEdits: this.#resolve(declared.needsAllowEdits, input),
       turn: declared.turn,
       quiet: declared.quiet ?? false,
     };
@@ -40,11 +40,8 @@ export class OpContract<Input extends zod.ZodMiniType, Output extends zod.ZodMin
     return this.#parse(this.output, raw);
   }
 
-  #flag(value: PerInput<zod.output<Input>, boolean>, input: zod.output<Input>): boolean {
-    return typeof value === "function" ? value(input) : value;
-  }
-
-  #number(value: PerInput<zod.output<Input>, number>, input: zod.output<Input>): number {
+  /** A per-input meta value for this input: as declared, or what its arrow gives. */
+  #resolve<Value extends boolean | number>(value: PerInput<zod.output<Input>, Value>, input: zod.output<Input>): Value {
     return typeof value === "function" ? value(input) : value;
   }
 

@@ -222,7 +222,7 @@ export type LinkState =
   | { readonly kind: typeof LINK_STATE.waiting; readonly retryInMs: number; readonly reason: string | null }
   | { readonly kind: typeof LINK_STATE.stopped; readonly reason: string | null };
 
-/** What the link asks of the window and tells it (Observer). */
+/** What the link asks of the window and tells it: the window is its one listener. */
 export interface LinkObserver {
   /** Who the plugin is now, for each hello. */
   info(): PluginInfo;

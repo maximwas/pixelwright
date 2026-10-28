@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import * as zod from "zod/mini";
-import type { LogLevel } from "@/server/adapters/logging/logging.tokens.ts";
+import type { LogLevel } from "@/server/adapters/logging/logging.types.ts";
 import { SERVER_ENV } from "@/server/main/config/config.constants.ts";
 import { ServerEnvSchema } from "@/server/main/config/config-reader.schema.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
