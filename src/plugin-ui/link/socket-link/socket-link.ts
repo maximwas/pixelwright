@@ -23,6 +23,7 @@ import type { MessageSocket } from "@/shared/protocol/message-socket.types.ts";
 import { PROOF_ROLE } from "@/shared/protocol/proof/proof.constants.ts";
 import { Proof } from "@/shared/protocol/proof/proof.ts";
 import { CLOSE_CODE, NONCE_BYTES, PROTOCOL } from "@/shared/protocol/protocol.constants.ts";
+import { LINK_OPENED_FRAME } from "@/shared/window/ui-message.constants.ts";
 
 /**
  * The plugin's end of the bridge, in the window (A§4.4, A§5.2), a State machine: one handshake field and TAKEN_IN as
@@ -149,6 +150,8 @@ export class SocketLink {
       this.#backoff.reset();
       this.#handshake = { name: HANDSHAKE_STATE.session };
       this.#observer?.state({ kind: LINK_STATE.connected });
+      // Main opens its RPC peer for this socket now, so its plugin info events reach the server (S-012).
+      this.#observer?.frame(this.#epoch, LINK_OPENED_FRAME);
     }
   }
 

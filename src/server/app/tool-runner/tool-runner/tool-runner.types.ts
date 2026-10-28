@@ -1,4 +1,5 @@
 import type { Logger } from "@/core/ports/logger/logger.port.ts";
+import type { PluginSession } from "@/server/app/sessions/plugin-session/plugin-session.ts";
 import type { CallId } from "@/server/app/tool-runner/call-id/call-id.ts";
 import type { Tool } from "@/server/app/tool-runner/tool/tool.ts";
 import type { TOOL_CONTENT_TYPE } from "@/server/app/tool-runner/tool-content.constants.ts";
@@ -14,6 +15,8 @@ export interface ToolRequest {
 /** One call on its way through the runner's steps. */
 export interface ToolCall extends ToolRequest {
   readonly callId: CallId;
+  /** The file the call works on, bound once by TargetStep for a tool that takes `file` (T-002). */
+  readonly session?: PluginSession;
 }
 
 /** What a call answers, in the shape of an MCP CallToolResult. */
@@ -39,7 +42,7 @@ export interface ToolContext {
   readonly signal: AbortSignal;
 }
 
-/** Builds a fresh tool for one call, with that call's context. */
+/** Builds a fresh tool for one call, with that call's context and, for a tool that takes `file`, its session. */
 export interface ToolFactory {
-  create(manifest: ToolManifest, context: ToolContext): Promise<Tool>;
+  create(manifest: ToolManifest, context: ToolContext, session?: PluginSession): Promise<Tool>;
 }

@@ -40,6 +40,7 @@ export default defineConfig({
         test: {
           name: "live",
           include: ["test/live/**/*.live.test.ts"],
+          globalSetup: ["test/live/live.setup.ts"],
           exclude,
           fileParallelism: false,
           retry: 0,

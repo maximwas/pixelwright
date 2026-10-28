@@ -45,6 +45,10 @@
         display: flex;
         gap: 8px;
       }
+      /* The display rules above would show a hidden element: the pairing field only while pairing. */
+      [hidden] {
+        display: none;
+      }
       input {
         flex: 1;
         min-width: 0;

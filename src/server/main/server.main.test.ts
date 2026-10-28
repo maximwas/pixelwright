@@ -12,8 +12,9 @@ import { BRIDGE_CONFIG } from "@/server/adapters/bridge/bridge-config/bridge-con
 import { BRIDGE_LISTENER } from "@/server/adapters/bridge/bridge-listener/bridge-listener.tokens.ts";
 import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints/status-hints.tokens.ts";
 import { NoBridge } from "@/server/adapters/bridge/no-bridge/no-bridge.ts";
-import { OwnerBridge } from "@/server/adapters/bridge/owner-bridge/owner-bridge.ts";
+import { OWNER_BRIDGE } from "@/server/adapters/bridge/owner-bridge/owner-bridge.tokens.ts";
 import { PAIRING_CODES } from "@/server/adapters/bridge/pairing-codes/pairing-codes.tokens.ts";
+import { PluginBridge } from "@/server/adapters/bridge/plugin-bridge/plugin-bridge.ts";
 import { PLUGIN_CONNECTIONS } from "@/server/adapters/bridge/plugin-connections/plugin-connections.tokens.ts";
 import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
 import { UPGRADE_GUARD } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.tokens.ts";
@@ -58,7 +59,7 @@ describe("ServerMain's composition", () => {
   });
 
   it("binds the owner as the plugin link, or NoBridge with the bridge off", () => {
-    expect(root(true).get(PLUGIN_LINK)).toBeInstanceOf(OwnerBridge);
+    expect(root(true).get(PLUGIN_LINK)).toBeInstanceOf(PluginBridge);
     expect(root(false).get(PLUGIN_LINK)).toBeInstanceOf(NoBridge);
   });
 
@@ -71,6 +72,6 @@ describe("ServerMain's composition", () => {
       pluginVersion: "0.7.0",
     });
 
-    expect(container.get(PLUGIN_LINK).state().hint).toContain("0.7.0");
+    expect(container.get(OWNER_BRIDGE).state().hint).toContain("0.7.0");
   });
 });

@@ -36,6 +36,11 @@ export class BridgeConfig {
     this.#files.ensure(this.#settings.configFile, this.#fresh());
   }
 
+  /** The token owner and peers prove to each other (S-031); never sent. */
+  token(): string {
+    return this.#read().token;
+  }
+
   /** The paired plugin's key with this id, or null; the file is read for each lookup. */
   findKey(id: string): PluginKey | null {
     const entry = this.#read().pluginKeys.find((candidate) => candidate.id === id);

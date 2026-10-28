@@ -1,35 +1,43 @@
 import { randomUUID } from "node:crypto";
-import type { ConnectedFile, ProbeResult } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import * as zod from "zod/mini";
+import type { ConnectedFile } from "@/core/ports/plugin-link/plugin-link.port.ts";
 import { PluginRpc } from "@/server/adapters/bridge/plugin-rpc/plugin-rpc.ts";
-import type { SessionSocket } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.types.ts";
-import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
-import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
-import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
+import type {
+  SessionSequence,
+  SessionSocket,
+} from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.types.ts";
+import { type PluginInfo, PluginInfoUpdateSchema } from "@/shared/protocol/plugin-info.schema.ts";
 
 /**
  * One plugin window past the handshake, one open Figma file (S-011): a random session id, what the window said in its
- * hello, and when it connected and last came to the front, as positions on the registry's sequence, so two sessions
- * never tie.
+ * hello and in every plugin info event since (S-012), and when it connected and last came to the front, as positions
+ * on the registry's sequence, so two sessions never tie.
  */
 export class BridgeSession {
   readonly id = randomUUID();
-  readonly info: PluginInfo;
   /** The plugin's ops, over this session's socket (A§5.4). */
   readonly rpc: PluginRpc;
   readonly #socket: SessionSocket;
+  readonly #sequence: SessionSequence;
   readonly #connected: number;
-  readonly #lastVisible: number;
+  #info: PluginInfo;
+  #lastVisible: number;
 
   constructor(
     socket: SessionSocket,
     info: PluginInfo,
-    connected: number,
+    sequence: SessionSequence,
   ) {
     this.#socket = socket;
-    this.info = info;
-    this.rpc = new PluginRpc(socket);
-    this.#connected = connected;
-    this.#lastVisible = info.visible ? connected : 0;
+    this.#info = info;
+    this.#sequence = sequence;
+    this.rpc = new PluginRpc(socket, { pluginInfo: (update: unknown) => this.#update(update) });
+    this.#connected = sequence.next();
+    this.#lastVisible = info.visible ? this.#connected : 0;
+  }
+
+  get info(): PluginInfo {
+    return this.#info;
   }
 
   /** Ends it from the server's side; the registry has let it go already. */
@@ -38,27 +46,6 @@ export class BridgeSession {
     reason: string,
   ): void {
     this.#socket.close(code, reason);
-  }
-
-  /** status probe (T-021): one ping's round trip, rounded to the ms, or why it failed. */
-  async probe(): Promise<ProbeResult> {
-    const started = performance.now();
-
-    try {
-      await this.rpc.run(pingOp, {});
-
-      return {
-        ok: true,
-        ms: Math.round(performance.now() - started),
-        error: null,
-      };
-    } catch (error) {
-      return {
-        ok: false,
-        ms: null,
-        error: error instanceof PixelwrightError ? error.text() : String(error),
-      };
-    }
   }
 
   /** Whether a tool that names no file takes this one before `other`: in front last, else connected last. */
@@ -72,13 +59,33 @@ export class BridgeSession {
   file(active: boolean): ConnectedFile {
     return {
       session: this.id,
-      name: this.info.file.name,
-      key: this.info.file.key,
-      page: this.info.page.name,
-      editorType: this.info.editorType,
-      allowEdits: this.info.allowEdits,
+      name: this.#info.file.name,
+      key: this.#info.file.key,
+      page: this.#info.page.name,
+      editorType: this.#info.editorType,
+      allowEdits: this.#info.allowEdits,
+      visible: this.#info.visible,
       active,
-      pluginVersion: this.info.pluginVersion,
+      pluginVersion: this.#info.pluginVersion,
     };
+  }
+
+  /** A plugin info event, checked again each time (S-012): one that does not parse is ignored; a tab in front is active. */
+  #update(raw: unknown): void {
+    const update = zod.safeParse(PluginInfoUpdateSchema, raw);
+
+    if (!update.success) {
+      return;
+    }
+
+    if (update.data.visible && !this.#info.visible) {
+      this.#lastVisible = this.#sequence.next();
+    }
+
+    this.#info = {
+      ...update.data,
+      instanceId: this.#info.instanceId,
+    };
+    this.#sequence.changed();
   }
 }

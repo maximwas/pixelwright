@@ -296,7 +296,7 @@ export class PluginConnection {
       return;
     }
 
-    const session = new BridgeSession(this, info, sessions.next());
+    const session = new BridgeSession(this, info, sessions);
 
     this.#state = {
       name: CONNECTION_STATE.session,

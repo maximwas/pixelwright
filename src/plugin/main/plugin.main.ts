@@ -1,7 +1,9 @@
 import { Container } from "@needle-di/core";
+import { DOCUMENT_EVENTS } from "@/core/ports/document-events/document-events.port.ts";
 import { SERVER_RPC } from "@/plugin/adapters/host/server-rpc/server-rpc.tokens.ts";
 import { WINDOW_HOST } from "@/plugin/adapters/host/window-host/window-host.tokens.ts";
 import { OPERATION_RUNNER } from "@/plugin/app/operation-runner/operation-runner.tokens.ts";
+import { PLUGIN_INFO_PUBLISHER } from "@/plugin/app/plugin-info-publisher/plugin-info-publisher.ts";
 import { HostProviders } from "@/plugin/main/host-providers/host-providers.ts";
 import { OperationProviders } from "@/plugin/main/operation-providers/operation-providers.ts";
 import { PLUGIN_WINDOW } from "@/plugin/main/plugin.constants.ts";
@@ -31,6 +33,8 @@ export class PluginMain {
         input,
       ) => runner.run(op, input),
     });
+    container.get(DOCUMENT_EVENTS).start();
+    container.get(PLUGIN_INFO_PUBLISHER).start();
     container.get(WINDOW_HOST).start();
   }
 

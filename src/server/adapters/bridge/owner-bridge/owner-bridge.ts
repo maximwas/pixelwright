@@ -1,12 +1,18 @@
 import { inject, injectable } from "@needle-di/core";
-import { PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link/plugin-link.constants.ts";
-import type { PluginLink, PluginLinkState, ProbeResult } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { LINK_TEXT, PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link/plugin-link.constants.ts";
+import type {
+  ConnectedFile,
+  OpRequest,
+  PluginLink,
+  PluginLinkState,
+} from "@/core/ports/plugin-link/plugin-link.port.ts";
 import { BRIDGE_CONFIG } from "@/server/adapters/bridge/bridge-config/bridge-config.tokens.ts";
 import { BRIDGE_LISTENER } from "@/server/adapters/bridge/bridge-listener/bridge-listener.tokens.ts";
 import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints/status-hints.tokens.ts";
 import { OWNER_FAILURE } from "@/server/adapters/bridge/owner-bridge/owner-bridge.constants.ts";
-import { NO_PROBE } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.constants.ts";
 import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
+import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
 
 /**
  * The server that owns the bridge's port (A§4.1 step 5): bridge.json first, where keys and the peers' token live, then
@@ -34,20 +40,45 @@ export class OwnerBridge implements PluginLink {
   }
 
   async start(): Promise<void> {
+    await this.take();
+  }
+
+  /** Takes the port: false when another program or server holds it, so the bridge joins it as a peer (S-030). */
+  async take(): Promise<boolean> {
     try {
       this.#config.ensure();
       await this.#listener.listen();
+      this.#failure = null;
     } catch (error) {
-      this.#failure = this.#reason(error);
+      if ((error as NodeJS.ErrnoException).code === OWNER_FAILURE.portTakenCode) {
+        return false;
+      }
+
+      this.#failure = error instanceof Error ? error.message : String(error);
     }
+
+    return true;
   }
 
   async close(): Promise<void> {
     await this.#listener.close();
   }
 
-  probe(): Promise<ProbeResult> {
-    return this.#sessions.active()?.probe() ?? Promise.resolve(NO_PROBE);
+  files(): readonly ConnectedFile[] {
+    return this.#sessions.files();
+  }
+
+  /** On that session's socket (S-042): no file connected is PLUGIN_NOT_CONNECTED, a session gone FILE_NOT_FOUND. */
+  async request({ session, op, input, timeoutMs }: OpRequest): Promise<unknown> {
+    const found = this.#sessions.find(session);
+
+    if (found !== undefined) {
+      return found.rpc.request(op, input, timeoutMs);
+    }
+
+    throw this.#sessions.files().length === 0
+      ? new PixelwrightError(ERROR_CODE.pluginNotConnected, LINK_TEXT.notConnected)
+      : new PixelwrightError(ERROR_CODE.fileNotFound, LINK_TEXT.sessionGone(session));
   }
 
   state(): PluginLinkState {
@@ -72,16 +103,5 @@ export class OwnerBridge implements PluginLink {
         refusal: this.#sessions.refusal(),
       }),
     };
-  }
-
-  /** In words for the hint: a taken port says who may hold it. */
-  #reason(error: unknown): string {
-    if (!(error instanceof Error)) {
-      return String(error);
-    }
-
-    return (error as NodeJS.ErrnoException).code === OWNER_FAILURE.portTakenCode
-      ? OWNER_FAILURE.portTaken(this.#listener.port())
-      : error.message;
   }
 }

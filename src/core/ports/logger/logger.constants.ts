@@ -3,5 +3,6 @@ export const LOG_COMPONENT = {
   server: "server",
   bridge: "bridge",
   toolRunner: "tool-runner",
+  pluginSession: "plugin-session",
   tool: "tool",
 } as const;

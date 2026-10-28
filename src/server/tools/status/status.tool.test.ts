@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { PluginLink, PluginLinkState, ProbeResult } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import type { ConnectedFile, PluginLink, PluginLinkState } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { PluginSessions } from "@/server/app/sessions/plugin-sessions/plugin-sessions.ts";
+import { TargetResolver } from "@/server/app/sessions/target-resolver/target-resolver.ts";
 import { StatusTool } from "@/server/tools/status/status.tool.ts";
 import { VERSION } from "@/shared/version/version.constants.ts";
 
@@ -19,14 +21,17 @@ class LinkState implements PluginLink {
     return this.#state;
   }
 
-  async probe(): Promise<ProbeResult> {
-    return {
-      ok: true,
-      ms: 3,
-      error: null,
-    };
+  files(): readonly ConnectedFile[] {
+    return this.#state.files;
+  }
+
+  async request(): Promise<unknown> {
+    return null;
   }
 }
+
+const status = (link: PluginLink) =>
+  new StatusTool(link, new PluginSessions(link, new TargetResolver(), []), { now: () => 0 });
 
 describe("StatusTool", () => {
   it("shows the server's version, channel and protocol with the bridge's role, port and hint", async () => {
@@ -37,7 +42,7 @@ describe("StatusTool", () => {
       pairing: null,
       hint: "The plugin bridge is off.",
     });
-    const answer = await new StatusTool(link).execute({});
+    const answer = await status(link).execute({});
 
     expect(answer.structuredContent).toEqual({
       server: {
@@ -68,10 +73,11 @@ describe("StatusTool", () => {
       page: "Start here",
       editorType: "figma",
       allowEdits: false,
+      visible: true,
       active: true,
       pluginVersion: "0.8.0",
     };
-    const answer = await new StatusTool(
+    const answer = await status(
       new LinkState({
         role: "owner",
         port: 18_721,
@@ -85,6 +91,7 @@ describe("StatusTool", () => {
       server: { role: "owner" },
       files: [file],
       pairing,
+      note: expect.stringContaining("Test MCP has key null"),
     });
   });
 });

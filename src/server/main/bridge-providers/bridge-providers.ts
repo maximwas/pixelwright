@@ -11,9 +11,14 @@ import { STATUS_HINT_ORDER } from "@/server/adapters/bridge/hints/status-hints/s
 import { STATUS_HINT_RULES, STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints/status-hints.tokens.ts";
 import { StatusHints } from "@/server/adapters/bridge/hints/status-hints/status-hints.ts";
 import { NoBridge } from "@/server/adapters/bridge/no-bridge/no-bridge.ts";
+import { OWNER_BRIDGE } from "@/server/adapters/bridge/owner-bridge/owner-bridge.tokens.ts";
 import { OwnerBridge } from "@/server/adapters/bridge/owner-bridge/owner-bridge.ts";
+import { OWNER_PEERS, OwnerPeers } from "@/server/adapters/bridge/owner-peers/owner-peers.ts";
+import { OWNER_ROUTER, OwnerRouter } from "@/server/adapters/bridge/owner-router/owner-router.ts";
 import { PAIRING_CODES } from "@/server/adapters/bridge/pairing-codes/pairing-codes.tokens.ts";
 import { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
+import { PEER_BRIDGE, PeerBridge } from "@/server/adapters/bridge/peer-bridge/peer-bridge.ts";
+import { PluginBridge } from "@/server/adapters/bridge/plugin-bridge/plugin-bridge.ts";
 import { PLUGIN_CONNECTIONS } from "@/server/adapters/bridge/plugin-connections/plugin-connections.tokens.ts";
 import { PluginConnections } from "@/server/adapters/bridge/plugin-connections/plugin-connections.ts";
 import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
@@ -65,11 +70,35 @@ export class BridgeProviders {
       .bind({
         provide: BRIDGE_LISTENER,
         useClass: BridgeListener,
+      });
+    this.#bindRoles(container, pluginBridge);
+  }
+
+  /** The roles PluginBridge picks from at start (S-030), and the owner's peers; off binds NoBridge. */
+  #bindRoles(
+    container: Container,
+    pluginBridge: boolean,
+  ): void {
+    container
+      .bind({
+        provide: OWNER_BRIDGE,
+        useClass: OwnerBridge,
       })
-      // shortcut: owner or off until item 07's PluginBridge picks owner, peer or off at start.
+      .bind({
+        provide: OWNER_ROUTER,
+        useClass: OwnerRouter,
+      })
+      .bind({
+        provide: OWNER_PEERS,
+        useClass: OwnerPeers,
+      })
+      .bind({
+        provide: PEER_BRIDGE,
+        useClass: PeerBridge,
+      })
       .bind({
         provide: PLUGIN_LINK,
-        useClass: pluginBridge ? OwnerBridge : NoBridge,
+        useClass: pluginBridge ? PluginBridge : NoBridge,
       });
   }
 

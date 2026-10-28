@@ -12,11 +12,5 @@ export const PLUGIN_RPC_TEXT = {
     timeoutMs: number,
   ) =>
     `${op}: the plugin did not answer in ${timeoutMs / MS_PER_SECOND} s; bring its file to the front in Figma (a background tab is slowed) and try again`,
-  badEnvelope: (op: string) =>
-    `${op}: the plugin's answer is not an op result; update the plugin and the server together`,
-  badOutput: (
-    op: string,
-    problem: string,
-  ) => `${op}: the plugin's answer does not match the op's output: ${problem}`,
   disconnected: "The plugin window closed or lost its connection before it answered: reopen it and try again.",
 } as const;

@@ -245,7 +245,12 @@ describe("SocketLink's sessions", () => {
 
     expect(window.last()).toEqual(CONNECTED);
     expect(bridge.plugins[1]?.sent.filter((frame) => frame.type === undefined)).toEqual([{ fresh: true }]);
-    expect(window.frames).toEqual([[2, '{"rpc":true}']]);
+    // Each session starts with the opened frame, so main's RPC peer of that socket opens at once (S-012).
+    expect(window.frames).toEqual([
+      [1, ""],
+      [2, ""],
+      [2, '{"rpc":true}'],
+    ]);
   });
 
   it("starts the backoff over once the server acknowledged a session", () => {

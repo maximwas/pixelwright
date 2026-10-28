@@ -53,7 +53,7 @@ class RegistryProbe {
           reason,
         }),
     };
-    const session = new BridgeSession(socket, info(instanceId, visible), this.registry.next());
+    const session = new BridgeSession(socket, info(instanceId, visible), this.registry);
 
     this.registry.add(session);
 

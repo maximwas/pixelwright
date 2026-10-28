@@ -6,4 +6,9 @@ export const ERROR_TEXT = {
     firstLine: string | undefined,
   ) =>
     `Internal error in ${tool}: ${firstLine}; see pixelwright logs`,
+  timedOut: (
+    code: string,
+    tool: string,
+    message: string,
+  ) => `${code}: ${tool}: ${message}`,
 } as const;
