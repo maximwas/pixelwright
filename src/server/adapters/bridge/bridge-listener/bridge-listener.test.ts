@@ -1,7 +1,15 @@
+import { mkdtempSync } from "node:fs";
 import { createServer, type OutgoingHttpHeaders, request } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
+import { AtomicJsonFile } from "../../files/atomic-json-file/atomic-json-file.ts";
 import { PinoLogger } from "../../logging/pino-logger/pino-logger.ts";
+import { BridgeConfig } from "../bridge-config/bridge-config.ts";
+import { PairingCodes } from "../pairing-codes/pairing-codes.ts";
+import { PluginConnections } from "../plugin-connections/plugin-connections.ts";
+import { SessionRegistry } from "../sessions/session-registry/session-registry.ts";
 import { UpgradeGuard } from "../upgrade-guard/upgrade-guard.ts";
 import { BridgeListener } from "./bridge-listener.ts";
 
@@ -12,24 +20,34 @@ const UPGRADE = {
   "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==",
 };
 
-/** A BridgeListener built by hand on a free port, with every log line it writes. */
+/** A BridgeListener built by hand on a free port, over a temp bridge.json, with every log line it writes. */
 class ListenerProbe {
   readonly lines: Record<string, unknown>[] = [];
   readonly settings = {
     port: 0,
     pluginOrigins: [],
-    configFile: "unused",
+    configFile: join(mkdtempSync(join(tmpdir(), "pixelwright-listener-")), "bridge.json"),
   };
 
+  readonly logger = new PinoLogger(
+    {
+      level: "info",
+      file: "unused",
+    },
+    [{ write: (line: string) => this.lines.push(JSON.parse(line)) }],
+  );
+
+  readonly clock = { now: () => Date.now() };
+  readonly sessions = new SessionRegistry(new PairingCodes(this.clock, this.logger), this.logger);
   readonly listener = new BridgeListener(
     this.settings,
     new UpgradeGuard(this.settings),
-    new PinoLogger(
-      {
-        level: "info",
-        file: "unused",
-      },
-      [{ write: (line: string) => this.lines.push(JSON.parse(line)) }],
+    this.logger,
+    new PluginConnections(
+      new BridgeConfig(new AtomicJsonFile(this.logger), this.settings, this.clock),
+      new PairingCodes(this.clock, this.logger),
+      this.sessions,
+      this.logger,
     ),
   );
 
@@ -58,11 +76,20 @@ class ListenerProbe {
     });
   }
 
-  /** How the server closes a WebSocket it let in. */
-  closeCode(origin: string): Promise<number> {
+  /** How the server closes a WebSocket it let in on `path` after it sent `frame`, if any. */
+  close(
+    path: string,
+    frame?: unknown,
+  ): Promise<{ code: number; reason: string }> {
     return new Promise((resolve, reject) => {
-      new WebSocket(`ws://127.0.0.1:${this.listener.port()}/pixelwright/v1`, { origin })
-        .on("close", (code) => resolve(code))
+      const socket = new WebSocket(`ws://127.0.0.1:${this.listener.port()}${path}`, path.endsWith("/peer") ? {} : { origin: "null" });
+
+      socket
+        .on("open", () => frame !== undefined && socket.send(JSON.stringify(frame)))
+        .on("close", (code, reason) => resolve({
+          code,
+          reason: String(reason),
+        }))
         .on("error", reject);
     });
   }
@@ -106,11 +133,27 @@ describe("BridgeListener", () => {
     expect(await response.text()).toBe("Upgrade Required");
   });
 
-  it("lets the plugin's window upgrade, then closes it 1011 until the handshake exists", async () => {
+  it("hands the plugin's window to the handshake, which turns a 0.7.0 hello away with 4426", async () => {
+    const probe = await listening();
+    const hello = {
+      type: "hello",
+      protocol: 5,
+    };
+
+    expect(await probe.close("/pixelwright/v1", hello)).toEqual({
+      code: 4426,
+      reason: "protocol 6 required",
+    });
+    expect(probe.sessions.rejection()).toBeNull();
+  });
+
+  it("closes a peer 1011 until the peer handshake exists", async () => {
     const probe = await listening();
 
-    expect(await probe.closeCode("null")).toBe(1011);
-    expect(probe.listener.rejection()).toBeNull();
+    expect(await probe.close("/pixelwright/v1/peer")).toEqual({
+      code: 1011,
+      reason: "the peer handshake is not built yet",
+    });
   });
 
   it("refuses a foreign Host with 403, logs the reason, and keeps it for the status hint", async () => {
@@ -122,7 +165,7 @@ describe("BridgeListener", () => {
         origin: "null",
       }),
     ).toBe(403);
-    expect(probe.listener.rejection()).toEqual({
+    expect(probe.sessions.rejection()).toEqual({
       reason: "host",
       origin: "null",
     });
@@ -143,7 +186,7 @@ describe("BridgeListener", () => {
     const probe = await listening();
 
     expect(await probe.upgrade("/pixelwright/v1", { origin: "https://evil.example" })).toBe(403);
-    expect(probe.listener.rejection()).toEqual({
+    expect(probe.sessions.rejection()).toEqual({
       reason: "origin",
       origin: "https://evil.example",
     });
@@ -154,7 +197,7 @@ describe("BridgeListener", () => {
 
     expect(await probe.upgrade("/other", { origin: "null" })).toBe(404);
     expect(await probe.upgrade("/pixelwright/v1/peer", { origin: "null" })).toBe(403);
-    expect(probe.listener.rejection()).toBeNull();
+    expect(probe.sessions.rejection()).toBeNull();
     expect(probe.lines.slice(1)).toMatchObject([
       {
         status: 404,

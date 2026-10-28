@@ -1,0 +1,54 @@
+{
+  "source": "0.7.0 (develop de12f24): old/packages/core/src/bridge/proof.ts proofFor, run under Node 24; frames from old/apps/plugin/src/link/socket-link.ts and old/apps/server/src/bridge/plugin-connection.ts, checked by old/packages/core/src/schemas/bridge.ts",
+  "key": {
+    "id": "0123456789abcdef",
+    "secret": "abababababababababababababababababababababababababababababababab"
+  },
+  "pluginNonce": "00112233445566778899aabbccddeeff",
+  "serverNonce": "ffeeddccbbaa99887766554433221100",
+  "versionMismatchReason": "protocol 6 required",
+  "proofs": [
+    {
+      "secret": "abababababababababababababababababababababababababababababababab",
+      "role": "server",
+      "theirNonce": "00112233445566778899aabbccddeeff",
+      "ourNonce": "ffeeddccbbaa99887766554433221100",
+      "proof": "b58b2f134efb5f06dabaf4a8e931a728e42af13c61d6f7de86194b6b5c260ff8"
+    },
+    {
+      "secret": "abababababababababababababababababababababababababababababababab",
+      "role": "plugin",
+      "theirNonce": "ffeeddccbbaa99887766554433221100",
+      "ourNonce": "00112233445566778899aabbccddeeff",
+      "proof": "3bff079f38884c4a12d49ccc8eb55072b11e86c97303b696d9f69f098d3f4b55"
+    },
+    {
+      "secret": "5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e",
+      "role": "server",
+      "theirNonce": "00112233445566778899aabbccddeeff",
+      "ourNonce": "ffeeddccbbaa99887766554433221100",
+      "proof": "07abfbc2817151e2cf4891764164f2743174222fd5626f7276dd8b0883943c19"
+    },
+    {
+      "secret": "5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e",
+      "role": "plugin",
+      "theirNonce": "ffeeddccbbaa99887766554433221100",
+      "ourNonce": "00112233445566778899aabbccddeeff",
+      "proof": "1a72e6f84dcc018be2b71ac6978f71a72035256afe783ff6f8e4f89ac61e3fa2"
+    }
+  ],
+  "pluginToServer": {
+    "helloNoKey": "{\"type\":\"hello\",\"protocol\":5,\"plugin\":{\"instanceId\":\"a1b2c3d4e5f60718293a4b5c\",\"pluginVersion\":\"0.7.0\",\"editorType\":\"figma\",\"file\":{\"name\":\"Test MCP\",\"key\":null},\"page\":{\"id\":\"0:1\",\"name\":\"Start here\"},\"allowEdits\":false,\"visible\":true},\"keyId\":null,\"nonce\":\"00112233445566778899aabbccddeeff\"}",
+    "helloWithKey": "{\"type\":\"hello\",\"protocol\":5,\"plugin\":{\"instanceId\":\"a1b2c3d4e5f60718293a4b5c\",\"pluginVersion\":\"0.7.0\",\"editorType\":\"figma\",\"file\":{\"name\":\"Test MCP\",\"key\":null},\"page\":{\"id\":\"0:1\",\"name\":\"Start here\"},\"allowEdits\":false,\"visible\":true},\"keyId\":\"0123456789abcdef\",\"nonce\":\"00112233445566778899aabbccddeeff\"}",
+    "auth": "{\"type\":\"auth\",\"proof\":\"3bff079f38884c4a12d49ccc8eb55072b11e86c97303b696d9f69f098d3f4b55\"}",
+    "pair": "{\"type\":\"pair\",\"code\":\"012345\"}",
+    "info": "{\"type\":\"event\",\"name\":\"plugin.info\",\"data\":{\"instanceId\":\"a1b2c3d4e5f60718293a4b5c\",\"pluginVersion\":\"0.7.0\",\"editorType\":\"figma\",\"file\":{\"name\":\"Test MCP\",\"key\":null},\"page\":{\"id\":\"0:1\",\"name\":\"Start here\"},\"allowEdits\":false,\"visible\":true}}"
+  },
+  "serverToPlugin": {
+    "challenge": "{\"type\":\"challenge\",\"nonce\":\"ffeeddccbbaa99887766554433221100\",\"proof\":\"b58b2f134efb5f06dabaf4a8e931a728e42af13c61d6f7de86194b6b5c260ff8\"}",
+    "pairingRequired": "{\"type\":\"pairing_required\",\"reason\":\"no_key\",\"attemptsLeft\":5,\"expiresInMs\":0}",
+    "wrongCode": "{\"type\":\"pairing_required\",\"reason\":\"wrong_code\",\"attemptsLeft\":4,\"expiresInMs\":117000}",
+    "paired": "{\"type\":\"paired\",\"key\":{\"id\":\"0123456789abcdef\",\"secret\":\"abababababababababababababababababababababababababababababababab\"}}",
+    "helloAck": "{\"type\":\"hello_ack\",\"protocol\":5,\"sessionId\":\"6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13\",\"server\":{\"name\":\"pixelwright\",\"version\":\"0.7.0\"}}"
+  }
+}

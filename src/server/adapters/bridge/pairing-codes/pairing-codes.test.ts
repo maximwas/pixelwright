@@ -154,6 +154,41 @@ describe("PairingCodes", () => {
     expect(probe.pairing.status(1)?.lockedForSeconds).toBe(30);
   });
 
+  it("tells a waiting window the code's tries and time without minting one", () => {
+    const probe = new PairingProbe();
+
+    expect(probe.pairing.prompt("no_key")).toEqual({
+      reason: "no_key",
+      attemptsLeft: 5,
+      expiresInMs: 0,
+    });
+    expect(probe.pairing.check("123456")).toEqual({ outcome: "expired" });
+    expect(probe.lines).toEqual([]);
+
+    const code = probe.code();
+
+    probe.clock.advance(3_000);
+    probe.pairing.check(code === "000000" ? "000001" : "000000");
+    expect(probe.pairing.prompt("wrong_code")).toEqual({
+      reason: "wrong_code",
+      attemptsLeft: 4,
+      expiresInMs: 117_000,
+    });
+  });
+
+  it("tells a waiting window that pairing is paused, and for how long, whatever it asked about", () => {
+    const probe = new PairingProbe();
+
+    probe.exhaust();
+    probe.clock.advance(10_000);
+
+    expect(probe.pairing.prompt("unknown_key")).toEqual({
+      reason: "locked",
+      attemptsLeft: 0,
+      expiresInMs: 20_000,
+    });
+  });
+
   it("logs that a code was minted and that pairing locked, never the code itself", () => {
     const probe = new PairingProbe();
     const code = probe.code();

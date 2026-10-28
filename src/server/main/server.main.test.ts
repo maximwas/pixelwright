@@ -1,0 +1,76 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import type { InjectionToken } from "@needle-di/core";
+import { describe, expect, it } from "vitest";
+import { CLOCK } from "../../core/ports/clock/clock.port.ts";
+import { JSON_FILE } from "../../core/ports/json-file/json-file.port.ts";
+import { LOGGER } from "../../core/ports/logger/logger.port.ts";
+import { PLUGIN_LINK } from "../../core/ports/plugin-link/plugin-link.port.ts";
+import { BRIDGE_SETTINGS } from "../adapters/bridge/bridge.tokens.ts";
+import { BRIDGE_CONFIG } from "../adapters/bridge/bridge-config/bridge-config.tokens.ts";
+import { BRIDGE_LISTENER } from "../adapters/bridge/bridge-listener/bridge-listener.tokens.ts";
+import { STATUS_HINTS } from "../adapters/bridge/hints/status-hints/status-hints.tokens.ts";
+import { NoBridge } from "../adapters/bridge/no-bridge/no-bridge.ts";
+import { OwnerBridge } from "../adapters/bridge/owner-bridge/owner-bridge.ts";
+import { PAIRING_CODES } from "../adapters/bridge/pairing-codes/pairing-codes.tokens.ts";
+import { PLUGIN_CONNECTIONS } from "../adapters/bridge/plugin-connections/plugin-connections.tokens.ts";
+import { SESSION_REGISTRY } from "../adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
+import { UPGRADE_GUARD } from "../adapters/bridge/upgrade-guard/upgrade-guard.tokens.ts";
+import { TOOL_FACTORY, TOOL_RUNNER } from "../app/tool-runner/tool-runner/tool-runner.tokens.ts";
+import { TOOL_CATALOG } from "../tools/tool.catalog.ts";
+import { ServerMain } from "./server.main.ts";
+
+/** The root as the server composes it, without start(): constructors touch nothing, so nothing listens. */
+const root = (pluginBridge: boolean) =>
+  new ServerMain({
+    home: mkdtempSync(join(tmpdir(), "pixelwright-composition-")),
+    logLevel: "silent",
+    pluginBridge,
+    bridgePort: 0,
+    pluginOrigins: [],
+  }).container();
+
+const SINGLETONS: [string, InjectionToken<unknown>][] = [
+  ["LOGGER", LOGGER],
+  ["CLOCK", CLOCK],
+  ["JSON_FILE", JSON_FILE],
+  ["PLUGIN_LINK", PLUGIN_LINK],
+  ["BRIDGE_SETTINGS", BRIDGE_SETTINGS],
+  ["BRIDGE_CONFIG", BRIDGE_CONFIG],
+  ["PAIRING_CODES", PAIRING_CODES],
+  ["SESSION_REGISTRY", SESSION_REGISTRY],
+  ["PLUGIN_CONNECTIONS", PLUGIN_CONNECTIONS],
+  ["UPGRADE_GUARD", UPGRADE_GUARD],
+  ["BRIDGE_LISTENER", BRIDGE_LISTENER],
+  ["STATUS_HINTS", STATUS_HINTS],
+  ["TOOL_CATALOG", TOOL_CATALOG],
+  ["TOOL_FACTORY", TOOL_FACTORY],
+  ["TOOL_RUNNER", TOOL_RUNNER],
+];
+
+describe("ServerMain's composition", () => {
+  it.each(SINGLETONS)("resolves %s, and a child container reaches the root's own instance", (_name, token) => {
+    const container = root(true);
+
+    expect(container.get(token)).toBeDefined();
+    expect(container.createChild().get(token)).toBe(container.get(token));
+  });
+
+  it("binds the owner as the plugin link, or NoBridge with the bridge off", () => {
+    expect(root(true).get(PLUGIN_LINK)).toBeInstanceOf(OwnerBridge);
+    expect(root(false).get(PLUGIN_LINK)).toBeInstanceOf(NoBridge);
+  });
+
+  it("gives the owner, the listener and the plugin connections one session registry", () => {
+    const container = root(true);
+    const sessions = container.get(SESSION_REGISTRY);
+
+    sessions.refused({
+      protocol: 5,
+      pluginVersion: "0.7.0",
+    });
+
+    expect(container.get(PLUGIN_LINK).state().hint).toContain("0.7.0");
+  });
+});

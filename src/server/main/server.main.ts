@@ -4,6 +4,7 @@ import { Container } from "@needle-di/core";
 import { pino } from "pino";
 import { CLOCK } from "../../core/ports/clock/clock.port.ts";
 import { JSON_FILE } from "../../core/ports/json-file/json-file.port.ts";
+import { LOG_COMPONENT } from "../../core/ports/logger/logger.constants.ts";
 import { LOGGER } from "../../core/ports/logger/logger.port.ts";
 import { PLUGIN_LINK } from "../../core/ports/plugin-link/plugin-link.port.ts";
 import { SystemClock } from "../adapters/clock/system-clock/system-clock.ts";
@@ -23,6 +24,7 @@ import { ConfigReader } from "./config-reader/config-reader.ts";
 import type { ServerConfig } from "./config-reader/config-reader.types.ts";
 import { ContainerToolFactory } from "./container-tool-factory/container-tool-factory.ts";
 import { McpEndpoint } from "./mcp-endpoint/mcp-endpoint.ts";
+import { LOG_FILE, SERVER_LOG } from "./server.constants.ts";
 import { ShutdownHooks } from "./shutdown-hooks/shutdown-hooks.ts";
 
 /**
@@ -43,6 +45,11 @@ export class ServerMain {
     return this.#composed().get(McpEndpoint);
   }
 
+  /** The composed container, for the composition test alone (A§10.2): nothing else outside main/ sees it. */
+  container(): Container {
+    return this.#composed();
+  }
+
   async start(): Promise<void> {
     // First, before anything can print: stdout carries MCP only (S-056).
     new StdoutGuard().install();
@@ -55,8 +62,8 @@ export class ServerMain {
     await container.get(McpEndpoint).connect(new StdioServerTransport());
     container
       .get(LOGGER)
-      .child({ component: "server" })
-      .info("pixelwright ready on stdio", { role: container.get(PLUGIN_LINK).state().role });
+      .child({ component: LOG_COMPONENT.server })
+      .info(SERVER_LOG.ready, { role: container.get(PLUGIN_LINK).state().role });
   }
 
   /** Takes the plugin bridge up: the owner listens on the channel's port. The contract tests start it without stdio. */
@@ -99,7 +106,7 @@ export class ServerMain {
         provide: LOG_SETTINGS,
         useValue: {
           level: logLevel,
-          file: join(home, "logs", "pixelwright.log"),
+          file: join(home, LOG_FILE.folder, LOG_FILE.name),
         },
       })
       .bind({

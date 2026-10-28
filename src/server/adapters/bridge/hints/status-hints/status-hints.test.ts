@@ -14,6 +14,13 @@ const OWNER: HintFacts = {
   pairing: null,
   files: 0,
   rejection: null,
+  refusal: null,
+};
+
+/** A 0.7.0 plugin, turned away at hello. */
+const OLDER = {
+  protocol: 5,
+  pluginVersion: "0.7.0",
 };
 
 const CODE = {
@@ -40,6 +47,7 @@ const EVERYTHING = {
   pairing: CODE,
   files: 1,
   rejection: REFUSED,
+  refusal: OLDER,
 };
 
 const NO_FILE =
@@ -111,8 +119,27 @@ describe("StatusHints, in priority order", () => {
       {
         files: 1,
         rejection: REFUSED,
+        refusal: OLDER,
       },
       null,
+    ],
+    [
+      "an older plugin turned away beats a refused connection, and is named with its version",
+      {
+        rejection: REFUSED,
+        refusal: OLDER,
+      },
+      "The Pixelwright New plugin 0.7.0 that tried to connect is older than this server (protocol 5; this server speaks 6), so it was turned away: ask the user to install the plugin that comes with this server's version and run it again in Figma.",
+    ],
+    [
+      "a newer plugin turned away asks to update the server",
+      {
+        refusal: {
+          protocol: 7,
+          pluginVersion: null,
+        },
+      },
+      "The Pixelwright New plugin that tried to connect is newer than this server (protocol 7; this server speaks 6), so it was turned away: update this Pixelwright server and restart it in this MCP client (/mcp in Claude Code).",
     ],
     [
       "a refusal beats no file",

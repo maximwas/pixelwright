@@ -21,6 +21,7 @@
     "typecheck": "tsc -b",
     "build": "tsdown",
     "try": "node scripts/try.ts",
+    "try:hello": "node scripts/try-hello.ts",
     "test": "vitest run --project unit --project contract",
     "test:live": "vitest run --project live",
     "check:deps": "depcruise src scripts test",
@@ -72,6 +73,7 @@
   "dependencies": {
     "@modelcontextprotocol/server": "2.4.0",
     "@needle-di/core": "1.2.1",
+    "@noble/hashes": "2.4.0",
     "atomically": "2.1.1",
     "close-with-grace": "2.5.0",
     "pino": "10.4.0",
