@@ -24,3 +24,5 @@ export const PluginInfoSchema = zod.object({
   /** The plugin window's document is visible: its file tab is in front. */
   visible: zod.boolean(),
 });
+
+export type PluginInfo = zod.output<typeof PluginInfoSchema>;

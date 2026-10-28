@@ -93,3 +93,11 @@ export const ServerHandshakeSchema = zod.discriminatedUnion("type", [
     }),
   }),
 ]);
+
+export type Hello = zod.output<typeof HelloSchema>;
+
+export type PluginHandshake = zod.output<typeof PluginHandshakeSchema>;
+
+export type ServerHandshake = zod.output<typeof ServerHandshakeSchema>;
+
+export type PairingReason = zod.output<typeof PairingReasonSchema>;

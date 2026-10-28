@@ -13,6 +13,19 @@ export interface PairingStatus {
   readonly waiting: number;
 }
 
+/** A Figma file whose plugin finished the handshake, as status lists it. */
+export interface ConnectedFile {
+  readonly session: string;
+  readonly name: string;
+  readonly key: string | null;
+  readonly page: string;
+  readonly editorType: string;
+  readonly allowEdits: boolean;
+  /** The file a tool uses when it names none: its window came to the front last, else it connected last (S-011). */
+  readonly active: boolean;
+  readonly pluginVersion: string;
+}
+
 /** Where this server stands with the Figma plugins, as status shows it. */
 export interface PluginLinkState {
   readonly role: PluginLinkRole;

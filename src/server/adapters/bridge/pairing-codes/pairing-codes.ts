@@ -3,6 +3,7 @@ import { inject, injectable } from "@needle-di/core";
 import { CLOCK } from "../../../../core/ports/clock/clock.port.ts";
 import { LOGGER } from "../../../../core/ports/logger/logger.port.ts";
 import type { PairingStatus } from "../../../../core/ports/plugin-link/plugin-link.port.ts";
+import type { PairingReason } from "../../../../shared/protocol/handshake.schema.ts";
 import { PAIRING_CODE_DIGITS } from "../../../../shared/protocol/protocol.constants.ts";
 import {
   PAIRING_ATTEMPTS,
@@ -10,7 +11,7 @@ import {
   PAIRING_LOCK_MS,
   PAIRING_MAX_LOCK_MS,
 } from "./pairing-codes.constants.ts";
-import type { ActiveCode, CodeCheck } from "./pairing-codes.types.ts";
+import type { ActiveCode, CodeCheck, PairingPrompt } from "./pairing-codes.types.ts";
 
 /**
  * The one pairing code in force, for every waiting plugin window. Only status mints one (S-020): a plugin asking to
@@ -49,6 +50,30 @@ export class PairingCodes {
       expiresInSeconds: code === null ? null : this.#secondsUntil(code.expiresAt),
       lockedForSeconds: locked ? this.#secondsUntil(this.#lockedUntil) : null,
       waiting,
+    };
+  }
+
+  /**
+   * What a waiting window is told (pairing_required, S-022): the tries and time the code in force has left, or, while
+   * pairing is paused, "locked" and the pause left. It never mints a code: only status does.
+   */
+  prompt(reason: PairingReason): PairingPrompt {
+    const now = this.#clock.now();
+
+    if (this.#locked()) {
+      return {
+        reason: "locked",
+        attemptsLeft: 0,
+        expiresInMs: this.#lockedUntil - now,
+      };
+    }
+
+    const active = this.#active();
+
+    return {
+      reason,
+      attemptsLeft: active?.attemptsLeft ?? PAIRING_ATTEMPTS,
+      expiresInMs: active === null ? 0 : active.expiresAt - now,
     };
   }
 
