@@ -30,6 +30,7 @@ export interface ConnectedFile {
 export interface PluginLinkState {
   readonly role: PluginLinkRole;
   readonly port: number;
+  readonly files: readonly ConnectedFile[];
   /** Asking for the state is what mints a pairing code while a plugin waits (S-020): only status asks. */
   readonly pairing: PairingStatus | null;
   /** What the user should do; null when a file is connected and nothing is wrong. */

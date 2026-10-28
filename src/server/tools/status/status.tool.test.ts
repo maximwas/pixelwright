@@ -25,6 +25,7 @@ describe("StatusTool", () => {
     const link = new LinkState({
       role: "disabled",
       port: 18_721,
+      files: [],
       pairing: null,
       hint: "The plugin bridge is off.",
     });
@@ -45,17 +46,28 @@ describe("StatusTool", () => {
     });
   });
 
-  it("passes on the pairing code the bridge shows while a plugin waits", async () => {
+  it("passes on the pairing code the bridge shows while a plugin waits, and the files connected", async () => {
     const pairing = {
       code: "123456",
       expiresInSeconds: 120,
       lockedForSeconds: null,
       waiting: 1,
     };
+    const file = {
+      session: "6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13",
+      name: "Test MCP",
+      key: null,
+      page: "Start here",
+      editorType: "figma",
+      allowEdits: false,
+      active: true,
+      pluginVersion: "0.8.0",
+    };
     const answer = await new StatusTool(
       new LinkState({
         role: "owner",
         port: 18_721,
+        files: [file],
         pairing,
         hint: "A plugin is waiting to be paired.",
       }),
@@ -63,6 +75,7 @@ describe("StatusTool", () => {
 
     expect(answer.structuredContent).toMatchObject({
       server: { role: "owner" },
+      files: [file],
       pairing,
     });
   });

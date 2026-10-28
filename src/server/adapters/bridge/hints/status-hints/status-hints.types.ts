@@ -1,4 +1,5 @@
 import type { PairingStatus, PluginLinkRole } from "../../../../../core/ports/plugin-link/plugin-link.port.ts";
+import type { ProtocolRefusal } from "../../sessions/session-registry/session-registry.types.ts";
 import type { UpgradeRejection } from "../../upgrade-guard/upgrade-guard.types.ts";
 
 /** What status knows about the bridge when it picks a hint. */
@@ -12,8 +13,10 @@ export interface HintFacts {
   readonly pairing: PairingStatus | null;
   /** Files whose plugin is connected. */
   readonly files: number;
-  /** The last plugin upgrade the guard refused. */
+  /** The last plugin upgrade the guard refused since a plugin connected. */
   readonly rejection: UpgradeRejection | null;
+  /** The last plugin turned away for its protocol since a plugin connected. */
+  readonly refusal: ProtocolRefusal | null;
 }
 
 /** One row of the hint table (Strategy): whether it speaks for the facts, and what it says. */
