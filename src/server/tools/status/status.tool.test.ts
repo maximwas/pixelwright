@@ -11,6 +11,10 @@ class LinkState implements PluginLink {
     this.#state = state;
   }
 
+  async start(): Promise<void> {}
+
+  async close(): Promise<void> {}
+
   state(): PluginLinkState {
     return this.#state;
   }
@@ -21,6 +25,7 @@ describe("StatusTool", () => {
     const link = new LinkState({
       role: "disabled",
       port: 18_721,
+      pairing: null,
       hint: "The plugin bridge is off.",
     });
     const answer = await new StatusTool(link).execute({});
@@ -37,6 +42,28 @@ describe("StatusTool", () => {
       probe: null,
       pairing: null,
       hint: "The plugin bridge is off.",
+    });
+  });
+
+  it("passes on the pairing code the bridge shows while a plugin waits", async () => {
+    const pairing = {
+      code: "123456",
+      expiresInSeconds: 120,
+      lockedForSeconds: null,
+      waiting: 1,
+    };
+    const answer = await new StatusTool(
+      new LinkState({
+        role: "owner",
+        port: 18_721,
+        pairing,
+        hint: "A plugin is waiting to be paired.",
+      }),
+    ).execute({});
+
+    expect(answer.structuredContent).toMatchObject({
+      server: { role: "owner" },
+      pairing,
     });
   });
 });

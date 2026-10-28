@@ -9,4 +9,6 @@ export const ServerEnvSchema = zod.object({
   PIXELWRIGHT_LOG_LEVEL: zod.catch(zod.enum(LOG_LEVELS), "info"),
   /** `off` runs the server without the plugin bridge. */
   PIXELWRIGHT_PLUGIN_BRIDGE: zod.optional(zod.string()),
+  /** Comma-separated origins a plugin window may come from besides "null" (S-002). */
+  PIXELWRIGHT_PLUGIN_ORIGINS: zod.optional(zod.string()),
 });

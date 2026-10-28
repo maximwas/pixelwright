@@ -26,6 +26,12 @@ export class ConfigReader {
       home: env.PIXELWRIGHT_HOME?.trim() || join(this.#homeDir ?? homedir(), CHANNEL.home),
       logLevel: env.PIXELWRIGHT_LOG_LEVEL,
       pluginBridge: env.PIXELWRIGHT_PLUGIN_BRIDGE?.trim().toLowerCase() !== "off",
+      // No variable moves the port: the plugin's manifest allows the channel's port only (D-03).
+      bridgePort: CHANNEL.port,
+      pluginOrigins: (env.PIXELWRIGHT_PLUGIN_ORIGINS ?? "")
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter((origin) => origin !== ""),
     };
   }
 }

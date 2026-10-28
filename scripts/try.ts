@@ -1,5 +1,7 @@
-// `pnpm try <tool> ['<json>']`: runs one tool call against the built server (dist/bin.mjs) over stdio and prints the
-// answer. Written here, not the MCP Inspector CLI, because a call must never reach a file other than "Test MCP" (R-001).
+// `pnpm try [--hold <s>] <tool> ['<json>']`: runs one tool call against the built server (dist/bin.mjs) over stdio and
+// prints the answer; --hold keeps the server up that long afterwards, so its bridge can be probed or a code typed.
+// Written here, not the MCP Inspector CLI, because a call must never reach a file other than "Test MCP" (R-001).
+import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { Client } from "@modelcontextprotocol/client";
@@ -13,14 +15,16 @@ class TryClient {
 
   /** The process exit code: 1 when the answer is an error. */
   async run(argv: readonly string[]): Promise<number> {
-    const { positionals } = parseArgs({
+    const { positionals, values } = parseArgs({
       args: [...argv],
       allowPositionals: true,
+      options: { hold: { type: "string" } },
     });
     const [tool, json = "{}"] = positionals;
+    const holdSeconds = Number(values.hold ?? 0);
 
-    if (tool === undefined) {
-      throw new Error("Usage: pnpm try <tool> ['<json arguments>']");
+    if (tool === undefined || !Number.isFinite(holdSeconds) || holdSeconds < 0) {
+      throw new Error("Usage: pnpm try [--hold <seconds>] <tool> ['<json arguments>']");
     }
 
     const client = new Client({
@@ -45,6 +49,11 @@ class TryClient {
       });
 
       process.stdout.write(`${JSON.stringify(answer.structuredContent ?? answer.content, null, 2)}\n`);
+
+      if (holdSeconds > 0) {
+        process.stderr.write(`Holding the server for ${holdSeconds} s.\n`);
+        await sleep(holdSeconds * 1000);
+      }
 
       return answer.isError ? 1 : 0;
     } finally {

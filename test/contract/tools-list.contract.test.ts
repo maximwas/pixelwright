@@ -17,6 +17,8 @@ class ContractClient {
     home: this.home,
     logLevel: "silent",
     pluginBridge: false,
+    bridgePort: 0,
+    pluginOrigins: [],
   }).endpoint();
   readonly client = new Client({
     name: "contract",

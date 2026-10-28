@@ -52,6 +52,7 @@
     "@size-limit/file": "14.3.0",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "26.6.5",
+    "@types/ws": "8.18.2",
     "@typescript-eslint/eslint-plugin": "8.72.1",
     "@typescript-eslint/parser": "8.72.1",
     "@typescript/native": "npm:typescript@7.0.2",
@@ -69,8 +70,10 @@
   "dependencies": {
     "@modelcontextprotocol/server": "2.4.0",
     "@needle-di/core": "1.2.1",
+    "atomically": "2.1.1",
     "close-with-grace": "2.5.0",
     "pino": "10.4.0",
+    "ws": "8.22.0",
     "zod": "4.6.7"
   }
 }
