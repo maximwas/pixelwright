@@ -79,8 +79,9 @@ const INJECTION = [
 
 /**
  * Where a string literal names code instead of holding a value: module specifiers and import attributes, property keys
- * and `in`, typeof checks, and an InjectionToken's description (a debug name needle-di prints when a provider is
- * missing; it never leaves the process). A literal type is left to shape/no-string-type, so it is reported once.
+ * (`"~standard"`, `x["~standard"]`, `in`), typeof checks, and an InjectionToken's description (a debug name needle-di
+ * prints when a provider is missing; it never leaves the process). The empty string holds no text, as 0 holds no
+ * number. A literal type is left to shape/no-string-type, so it is reported once.
  */
 const NOT_VALUES = [
   "ImportDeclaration > Literal.source",
@@ -90,14 +91,21 @@ const NOT_VALUES = [
   "ImportAttribute > Literal.value",
   "TSImportType Literal",
   "Property > Literal.key",
+  "PropertyDefinition > Literal.key",
   "TSPropertySignature > Literal.key",
+  "MemberExpression[computed=true] > Literal.property",
   "BinaryExpression[operator='in'] > Literal.left",
   "BinaryExpression[left.operator='typeof'] > Literal.right",
   "NewExpression[callee.name='InjectionToken'] > Literal.arguments",
+  "Literal[value='']",
   "TSLiteralType > Literal",
-  // shortcut: item 03 adds LOG_COMPONENT to core/ports/logger/logger.constants.ts; phase B of the shape pass moves
-  // every `component` value there and deletes this line.
-  "Property[key.name='component'] > Literal.value",
+];
+
+/** Where a string type names a property: an indexed access (`X["reason"]`) and the keys of Pick and Omit. */
+const TYPE_KEYS = [
+  "TSImportType Literal",
+  "TSIndexedAccessType > TSLiteralType.indexType > Literal",
+  "TSTypeReference[typeName.name=/^(Pick|Omit)$/] > TSTypeParameterInstantiation > :nth-child(2) Literal",
 ];
 
 /**
@@ -113,7 +121,7 @@ const SHAPE = createNoRestrictedSyntax(
   },
   {
     name: "no-string-type",
-    selector: `TSLiteralType > Literal[raw=/^['"]/]:not(TSImportType Literal)`,
+    selector: `TSLiteralType > Literal[raw=/^['"]/]:not(${TYPE_KEYS.join(", ")})`,
     message: "No hand-written string type: infer it from the schema, or write (typeof X)[keyof typeof X].",
   },
   {
@@ -122,18 +130,6 @@ const SHAPE = createNoRestrictedSyntax(
     message: "Text with values is a constant arrow in a .constants.ts object: portTaken: (port: number) => `...`.",
   },
 );
-
-/** Every shape rule at one level. */
-const SHAPE_RULES = (level) => Object.fromEntries(Object.keys(SHAPE.rules).map((name) => [`shape/${name}`, level]));
-
-/** Phase A of the shape pass: item 03 is still writing these; they take both rules in phase B. */
-const ITEM_03 = [
-  "src/shared/protocol/**",
-  "src/server/adapters/bridge/**",
-  "src/core/ports/plugin-link/**",
-  "src/server/main/**",
-  "src/server/tools/status/**",
-];
 
 /**
  * @stylistic's function-paren-newline for signatures only: declarations, methods and constructors, and functions not
@@ -359,7 +355,8 @@ export default [
     files: ["src/**/*.ts"],
     ignores: [...TESTS, "**/*.constants.ts"],
     plugins: { shape: SHAPE },
-    rules: SHAPE_RULES("error"),
+    // Every shape rule as an error.
+    rules: SHAPE.configs.recommended.rules,
   },
   // Imports across folders go through `@/` (the src root); `./` stays for the folder itself and below. A path out of
   // src (package.json) has no alias and stays relative. `eslint --fix` rewrites the rest.
@@ -396,20 +393,5 @@ export default [
         },
       ],
     },
-  },
-  // Phase A of the shape pass: item 03's folders warn for literals and are left to phase B for imports, so a
-  // `pnpm format` (eslint --fix fixes warnings too) cannot rewrite files another agent is writing.
-  {
-    files: ITEM_03,
-    ignores: [...TESTS, "**/*.constants.ts"],
-    rules: SHAPE_RULES("warn"),
-  },
-  {
-    files: ITEM_03,
-    rules: { "no-relative-import-paths/no-relative-import-paths": "off" },
-  },
-  {
-    files: ["test/contract/**"],
-    rules: { "no-restricted-imports": "off" },
   },
 ];

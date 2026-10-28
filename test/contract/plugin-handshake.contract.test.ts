@@ -5,9 +5,9 @@ import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
 import * as zod from "zod/mini";
-import { ServerMain } from "../../src/server/main/server.main.ts";
-import { type StatusOutput, StatusOutputSchema } from "../../src/server/tools/status/status.schema.ts";
-import { Proof } from "../../src/shared/protocol/proof/proof.ts";
+import { ServerMain } from "@/server/main/server.main.ts";
+import { type StatusOutput, StatusOutputSchema } from "@/server/tools/status/status.schema.ts";
+import { Proof } from "@/shared/protocol/proof/proof.ts";
 
 /** Frames 0.7.0 sends, recorded from its own code, as the exact bytes on the wire. */
 const RECORDING = JSON.parse(readFileSync(new URL("../golden/fixtures/handshake-0.7.0.json", import.meta.url), "utf8"));
@@ -46,10 +46,12 @@ class PluginWindow {
     this.#socket = new WebSocket(`ws://127.0.0.1:${port}/pixelwright/v1`, { origin: "null" });
     this.#socket.on("message", (data) => this.frames.push(JSON.parse(String(data))));
     this.closed = new Promise((resolve) => {
-      this.#socket.on("close", (code, reason) => resolve({
-        code,
-        reason: String(reason),
-      }));
+      this.#socket.on("close", (code, reason) =>
+        resolve({
+          code,
+          reason: String(reason),
+        }),
+      );
     });
   }
 

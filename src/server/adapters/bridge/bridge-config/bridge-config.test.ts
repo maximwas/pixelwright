@@ -2,8 +2,8 @@ import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { AtomicJsonFile } from "../../files/atomic-json-file/atomic-json-file.ts";
-import { PinoLogger } from "../../logging/pino-logger/pino-logger.ts";
+import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file/atomic-json-file.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 import { BridgeConfig } from "./bridge-config.ts";
 
 const NOW = Date.parse("2026-10-28T12:00:00.000Z");

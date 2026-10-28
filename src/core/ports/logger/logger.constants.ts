@@ -2,4 +2,6 @@
 export const LOG_COMPONENT = {
   server: "server",
   bridge: "bridge",
+  toolRunner: "tool-runner",
+  tool: "tool",
 } as const;

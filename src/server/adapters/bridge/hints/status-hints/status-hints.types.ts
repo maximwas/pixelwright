@@ -1,6 +1,6 @@
-import type { PairingStatus, PluginLinkRole } from "../../../../../core/ports/plugin-link/plugin-link.port.ts";
-import type { ProtocolRefusal } from "../../sessions/session-registry/session-registry.types.ts";
-import type { UpgradeRejection } from "../../upgrade-guard/upgrade-guard.types.ts";
+import type { PairingStatus, PluginLinkRole } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import type { ProtocolRefusal } from "@/server/adapters/bridge/sessions/session-registry/session-registry.types.ts";
+import type { UpgradeRejection } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.types.ts";
 
 /** What status knows about the bridge when it picks a hint. */
 export interface HintFacts {

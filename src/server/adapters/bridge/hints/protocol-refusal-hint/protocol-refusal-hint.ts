@@ -1,7 +1,7 @@
 import { injectable } from "@needle-di/core";
-import { CHANNEL } from "../../../../../shared/protocol/channel.constants.ts";
-import { PROTOCOL } from "../../../../../shared/protocol/protocol.constants.ts";
-import type { HintFacts, StatusHint } from "../status-hints/status-hints.types.ts";
+import type { HintFacts, StatusHint } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { PROTOCOL } from "@/shared/protocol/protocol.constants.ts";
 import { PROTOCOL_REFUSAL_HINT } from "./protocol-refusal-hint.constants.ts";
 
 /**

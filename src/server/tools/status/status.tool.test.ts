@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { PluginLink, PluginLinkState } from "../../../core/ports/plugin-link/plugin-link.port.ts";
-import { VERSION } from "../../../shared/version/version.constants.ts";
+import type { PluginLink, PluginLinkState } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { VERSION } from "@/shared/version/version.constants.ts";
 import { StatusTool } from "./status.tool.ts";
 
 /** A bridge state as a value: status only reads it. */

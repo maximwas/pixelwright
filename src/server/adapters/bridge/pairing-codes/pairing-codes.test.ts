@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Clock } from "../../../../core/ports/clock/clock.port.ts";
-import { PinoLogger } from "../../logging/pino-logger/pino-logger.ts";
+import type { Clock } from "@/core/ports/clock/clock.port.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 import { PairingCodes } from "./pairing-codes.ts";
 
 /** Time that moves only when the test says so. */

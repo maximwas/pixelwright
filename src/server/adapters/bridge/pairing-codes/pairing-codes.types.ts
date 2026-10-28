@@ -1,4 +1,4 @@
-import type { PairingReason } from "../../../../shared/protocol/handshake.schema.ts";
+import type { PairingReason } from "@/shared/protocol/handshake.schema.ts";
 import type { CODE_CHECK } from "./pairing-codes.constants.ts";
 
 /** The one code in force. */

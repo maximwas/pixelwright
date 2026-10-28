@@ -1,5 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { CLOCK } from "@/core/ports/clock/clock.port.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
 import { LOGGER, type LogFields } from "@/core/ports/logger/logger.port.ts";
 import type {
   ToolAnswer,
@@ -63,7 +64,7 @@ export class CallLogStep implements ToolCallStep {
     const file = typeof args === "object" && args !== null && "file" in args ? args.file : undefined;
 
     return {
-      component: "tool-runner",
+      component: LOG_COMPONENT.toolRunner,
       tool: manifest.name,
       callId: callId.value,
       ...(typeof file === "string" ? { file } : {}),

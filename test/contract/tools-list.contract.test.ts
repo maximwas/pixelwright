@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ServerMain } from "../../src/server/main/server.main.ts";
+import { ServerMain } from "@/server/main/server.main.ts";
 
 /** Every tool as 0.7.0 listed it, plus the reviewed changes; until item 68 each registered tool is checked by name. */
 const GOLDEN: { name: string }[] = JSON.parse(

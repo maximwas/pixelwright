@@ -1,4 +1,5 @@
 import { inject, injectable } from "@needle-di/core";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
 import { LOGGER } from "@/core/ports/logger/logger.port.ts";
 import { CallId } from "@/server/app/tool-runner/call-id/call-id.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY } from "./tool-runner.tokens.ts";
@@ -46,7 +47,7 @@ export class ToolRunner {
 
   async #execute({ manifest, args, callId, signal }: ToolCall): Promise<ToolAnswer> {
     const logger = this.#logger.child({
-      component: "tool",
+      component: LOG_COMPONENT.tool,
       tool: manifest.name,
       callId: callId.value,
     });

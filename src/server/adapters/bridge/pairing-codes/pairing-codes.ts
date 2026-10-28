@@ -1,12 +1,12 @@
 import { randomInt, timingSafeEqual } from "node:crypto";
 import { inject, injectable } from "@needle-di/core";
-import { CLOCK } from "../../../../core/ports/clock/clock.port.ts";
-import { LOG_COMPONENT } from "../../../../core/ports/logger/logger.constants.ts";
-import { LOGGER } from "../../../../core/ports/logger/logger.port.ts";
-import type { PairingStatus } from "../../../../core/ports/plugin-link/plugin-link.port.ts";
-import { PAIRING_REASON } from "../../../../shared/protocol/handshake.constants.ts";
-import type { PairingReason } from "../../../../shared/protocol/handshake.schema.ts";
-import { PAIRING_CODE_DIGITS } from "../../../../shared/protocol/protocol.constants.ts";
+import { CLOCK } from "@/core/ports/clock/clock.port.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
+import { LOGGER } from "@/core/ports/logger/logger.port.ts";
+import type { PairingStatus } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { PAIRING_REASON } from "@/shared/protocol/handshake.constants.ts";
+import type { PairingReason } from "@/shared/protocol/handshake.schema.ts";
+import { PAIRING_CODE_DIGITS } from "@/shared/protocol/protocol.constants.ts";
 import {
   CODE_CHECK,
   PAIRING_ATTEMPTS,

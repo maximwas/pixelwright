@@ -1,7 +1,7 @@
 import type { RawData, WebSocket } from "ws";
-import { LOG_COMPONENT } from "../../../../core/ports/logger/logger.constants.ts";
-import type { Logger } from "../../../../core/ports/logger/logger.port.ts";
-import type { MessageSocket } from "../../../../shared/protocol/message-socket.types.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
+import type { Logger } from "@/core/ports/logger/logger.port.ts";
+import type { MessageSocket } from "@/shared/protocol/message-socket.types.ts";
 import { WS_EVENT, WS_LOG } from "./ws-socket.constants.ts";
 
 /**
@@ -30,10 +30,12 @@ export class WsSocket implements MessageSocket {
     this.#socket.on(WS_EVENT.pong, () => this.#hear());
     this.#socket.on(WS_EVENT.message, () => this.#hear());
     this.#socket.on(WS_EVENT.close, () => clearInterval(heartbeat));
-    this.#socket.on(WS_EVENT.error, (error) => this.#logger.warn(WS_LOG.error, {
-      component: LOG_COMPONENT.bridge,
-      err: error,
-    }));
+    this.#socket.on(WS_EVENT.error, (error) =>
+      this.#logger.warn(WS_LOG.error, {
+        component: LOG_COMPONENT.bridge,
+        err: error,
+      }),
+    );
   }
 
   send(text: string): void {

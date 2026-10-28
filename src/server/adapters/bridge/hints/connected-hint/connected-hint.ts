@@ -1,5 +1,5 @@
 import { injectable } from "@needle-di/core";
-import type { HintFacts, StatusHint } from "../status-hints/status-hints.types.ts";
+import type { HintFacts, StatusHint } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
 
 /** A file is connected and nothing above went wrong: no hint at all. */
 @injectable()

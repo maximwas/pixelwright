@@ -1,6 +1,7 @@
 import { injectable } from "@needle-di/core";
-import { CHANNEL } from "../../../../../shared/protocol/channel.constants.ts";
-import type { StatusHint } from "../status-hints/status-hints.types.ts";
+import type { StatusHint } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { NO_FILE_HINT } from "./no-file-hint.constants.ts";
 
 /** Last row, always applies: the bridge is up and no file is connected yet. */
 @injectable()
@@ -10,6 +11,6 @@ export class NoFileHint implements StatusHint {
   }
 
   text(): string {
-    return `No Figma file is connected: open the file in Figma Desktop, run Plugins → Development → ${CHANNEL.pluginName}, and keep the plugin window open.`;
+    return NO_FILE_HINT.text(CHANNEL.pluginName);
   }
 }

@@ -1,7 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import * as zod from "zod/mini";
-import { CHANNEL } from "../../../shared/protocol/channel.constants.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { SERVER_ENV } from "./config-reader.constants.ts";
 import { ServerEnvSchema } from "./config-reader.schema.ts";
 import type { ServerConfig } from "./config-reader.types.ts";
 
@@ -25,11 +26,11 @@ export class ConfigReader {
     return {
       home: env.PIXELWRIGHT_HOME?.trim() || join(this.#homeDir ?? homedir(), CHANNEL.home),
       logLevel: env.PIXELWRIGHT_LOG_LEVEL,
-      pluginBridge: env.PIXELWRIGHT_PLUGIN_BRIDGE?.trim().toLowerCase() !== "off",
+      pluginBridge: env.PIXELWRIGHT_PLUGIN_BRIDGE?.trim().toLowerCase() !== SERVER_ENV.bridgeOff,
       // No variable moves the port: the plugin's manifest allows the channel's port only (D-03).
       bridgePort: CHANNEL.port,
       pluginOrigins: (env.PIXELWRIGHT_PLUGIN_ORIGINS ?? "")
-        .split(",")
+        .split(SERVER_ENV.listSeparator)
         .map((origin) => origin.trim())
         .filter((origin) => origin !== ""),
     };

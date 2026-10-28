@@ -4,10 +4,7 @@
  */
 export interface MessageSocket {
   send(text: string): void;
-  close(
-    code: number,
-    reason: string,
-  ): void;
+  close(code: number, reason: string): void;
   /** Every frame that arrives; null for a binary one, which the protocol never sends. */
   onMessage(listener: (text: string | null) => void): void;
   /** Once, when the socket has closed, whichever side closed it, with the close code. */

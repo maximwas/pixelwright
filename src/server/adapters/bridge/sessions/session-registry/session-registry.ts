@@ -1,12 +1,12 @@
 import { inject, injectable } from "@needle-di/core";
-import { LOG_COMPONENT } from "../../../../../core/ports/logger/logger.constants.ts";
-import { LOGGER } from "../../../../../core/ports/logger/logger.port.ts";
-import type { ConnectedFile, PairingStatus } from "../../../../../core/ports/plugin-link/plugin-link.port.ts";
-import type { PluginInfo } from "../../../../../shared/protocol/plugin-info.schema.ts";
-import { CLOSE_CODE } from "../../../../../shared/protocol/protocol.constants.ts";
-import { PAIRING_CODES } from "../../pairing-codes/pairing-codes.tokens.ts";
-import type { UpgradeRejection } from "../../upgrade-guard/upgrade-guard.types.ts";
-import type { BridgeSession } from "../bridge-session/bridge-session.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
+import { LOGGER } from "@/core/ports/logger/logger.port.ts";
+import type { ConnectedFile, PairingStatus } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { PAIRING_CODES } from "@/server/adapters/bridge/pairing-codes/pairing-codes.tokens.ts";
+import type { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.ts";
+import type { UpgradeRejection } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.types.ts";
+import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
+import { CLOSE_CODE } from "@/shared/protocol/protocol.constants.ts";
 import { MAX_SESSIONS, MAX_WAITING, SESSION_LOG, SUPERSEDED_REASON } from "./session-registry.constants.ts";
 import type { ProtocolRefusal } from "./session-registry.types.ts";
 

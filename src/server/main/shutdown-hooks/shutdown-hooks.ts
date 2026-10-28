@@ -1,7 +1,8 @@
 import { inject, injectable } from "@needle-di/core";
 import closeWithGrace from "close-with-grace";
-import { LOGGER } from "../../../core/ports/logger/logger.port.ts";
-import { SHUTDOWN_DELAY_MS } from "./shutdown-hooks.constants.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
+import { LOGGER } from "@/core/ports/logger/logger.port.ts";
+import { SHUTDOWN_DELAY_MS, SHUTDOWN_LOG, STDIN_EVENT } from "./shutdown-hooks.constants.ts";
 
 /**
  * Closes the server once (S-013): when the MCP client goes away (stdin ends) or on SIGINT, SIGTERM and the other exit
@@ -16,7 +17,7 @@ export class ShutdownHooks {
   }
 
   install(close: () => Promise<void>): void {
-    const logger = this.#logger.child({ component: "server" });
+    const logger = this.#logger.child({ component: LOG_COMPONENT.server });
     const hooks = closeWithGrace(
       {
         delay: SHUTDOWN_DELAY_MS,
@@ -24,16 +25,18 @@ export class ShutdownHooks {
       },
       async ({ signal, err: error, manual }) => {
         if (error === undefined) {
-          logger.info("shutting down", { reason: signal ?? (manual ? "stdin closed" : "nothing left to do") });
+          logger.info(SHUTDOWN_LOG.closing, {
+            reason: signal ?? (manual ? SHUTDOWN_LOG.stdinClosed : SHUTDOWN_LOG.idle),
+          });
         } else {
-          logger.error("shutting down after an uncaught error", { err: error });
+          logger.error(SHUTDOWN_LOG.crashed, { err: error });
         }
 
         await close();
       },
     );
 
-    process.stdin.once("end", () => hooks.close());
-    process.stdin.once("close", () => hooks.close());
+    process.stdin.once(STDIN_EVENT.end, () => hooks.close());
+    process.stdin.once(STDIN_EVENT.close, () => hooks.close());
   }
 }

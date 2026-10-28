@@ -1,4 +1,4 @@
-import type { MessageSocket } from "../message-socket.types.ts";
+import type { MessageSocket } from "@/shared/protocol/message-socket.types.ts";
 
 /**
  * A MessageSocket whose other end is a test (A§10.2): it keeps what was sent and how it was closed, and delivers the

@@ -1,9 +1,9 @@
 import { inject, injectable } from "@needle-di/core";
-import { PLUGIN_LINK } from "../../../core/ports/plugin-link/plugin-link.port.ts";
-import { CHANNEL } from "../../../shared/protocol/channel.constants.ts";
-import { PROTOCOL } from "../../../shared/protocol/protocol.constants.ts";
-import { VERSION } from "../../../shared/version/version.constants.ts";
-import { Tool } from "../../app/tool-runner/tool/tool.ts";
+import { PLUGIN_LINK } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { Tool } from "@/server/app/tool-runner/tool/tool.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { PROTOCOL } from "@/shared/protocol/protocol.constants.ts";
+import { VERSION } from "@/shared/version/version.constants.ts";
 import { type StatusInput, StatusInputSchema, type StatusOutput } from "./status.schema.ts";
 
 /** Where this server stands: its version, channel and protocol, the bridge's role and port, and what to do next. */

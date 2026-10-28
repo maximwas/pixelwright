@@ -2,17 +2,17 @@ import { createServer, type IncomingMessage, type Server, STATUS_CODES } from "n
 import type { Duplex } from "node:stream";
 import { inject, injectable } from "@needle-di/core";
 import { type WebSocket, WebSocketServer } from "ws";
-import { LOG_COMPONENT } from "../../../../core/ports/logger/logger.constants.ts";
-import { LOGGER } from "../../../../core/ports/logger/logger.port.ts";
-import { LIMITS } from "../../../../shared/limits/limits.constants.ts";
-import { CLOSE_CODE } from "../../../../shared/protocol/protocol.constants.ts";
-import { BRIDGE_SETTINGS } from "../bridge.tokens.ts";
-import { PLUGIN_CONNECTIONS } from "../plugin-connections/plugin-connections.tokens.ts";
-import { UPGRADE_ROLE } from "../upgrade-guard/upgrade-guard.constants.ts";
-import { UPGRADE_GUARD } from "../upgrade-guard/upgrade-guard.tokens.ts";
-import type { UpgradeRole, UpgradeVerdict } from "../upgrade-guard/upgrade-guard.types.ts";
-import { HEARTBEAT_MS } from "../ws-socket/ws-socket.constants.ts";
-import { WsSocket } from "../ws-socket/ws-socket.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
+import { LOGGER } from "@/core/ports/logger/logger.port.ts";
+import { BRIDGE_SETTINGS } from "@/server/adapters/bridge/bridge.tokens.ts";
+import { PLUGIN_CONNECTIONS } from "@/server/adapters/bridge/plugin-connections/plugin-connections.tokens.ts";
+import { UPGRADE_ROLE } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.constants.ts";
+import { UPGRADE_GUARD } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.tokens.ts";
+import type { UpgradeRole, UpgradeVerdict } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.types.ts";
+import { HEARTBEAT_MS } from "@/server/adapters/bridge/ws-socket/ws-socket.constants.ts";
+import { WsSocket } from "@/server/adapters/bridge/ws-socket/ws-socket.ts";
+import { LIMITS } from "@/shared/limits/limits.constants.ts";
+import { CLOSE_CODE } from "@/shared/protocol/protocol.constants.ts";
 import { CLOSE_GRACE_MS, HTTP_EVENT, LISTEN_HOST, LISTENER_LOG, LISTENER_TEXT } from "./bridge-listener.constants.ts";
 
 /**

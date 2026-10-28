@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { afterEach, describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
-import { ServerMain } from "../../src/server/main/server.main.ts";
-import { type StatusOutput, StatusOutputSchema } from "../../src/server/tools/status/status.schema.ts";
+import { ServerMain } from "@/server/main/server.main.ts";
+import { type StatusOutput, StatusOutputSchema } from "@/server/tools/status/status.schema.ts";
 
 /** The server as the composition root wires it with the bridge on, in a temp home, on a free or a given port. */
 class OwnerClient {

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { ConnectedFile } from "../../../../../core/ports/plugin-link/plugin-link.port.ts";
-import type { PluginInfo } from "../../../../../shared/protocol/plugin-info.schema.ts";
+import type { ConnectedFile } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 import type { SessionSocket } from "./bridge-session.types.ts";
 
 /**

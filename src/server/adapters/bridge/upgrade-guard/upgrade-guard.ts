@@ -1,8 +1,15 @@
 import type { IncomingHttpHeaders } from "node:http";
 import { inject, injectable } from "@needle-di/core";
-import { BRIDGE_SETTINGS } from "../bridge.tokens.ts";
-import { LOOPBACK_HOSTS, PLUGIN_ORIGINS, UPGRADE_PATHS } from "./upgrade-guard.constants.ts";
-import type { UpgradeRejection, UpgradeRequest, UpgradeRole, UpgradeVerdict } from "./upgrade-guard.types.ts";
+import { BRIDGE_SETTINGS } from "@/server/adapters/bridge/bridge.tokens.ts";
+import {
+  LOOPBACK_HOSTS,
+  PLUGIN_ORIGINS,
+  UPGRADE_PATHS,
+  UPGRADE_REFUSAL,
+  UPGRADE_ROLE,
+  UPGRADE_URL,
+} from "./upgrade-guard.constants.ts";
+import type { UpgradeRefusal, UpgradeRequest, UpgradeRole, UpgradeVerdict } from "./upgrade-guard.types.ts";
 
 /**
  * Decides a WebSocket upgrade (S-002). Every upgrade must name this server's own Host, the DNS-rebinding guard. The
@@ -22,7 +29,7 @@ export class UpgradeGuard {
     request: UpgradeRequest,
     port: number,
   ): UpgradeVerdict {
-    const path = (request.url ?? "").split("?")[0];
+    const path = (request.url ?? "").split(UPGRADE_URL.queryStart)[0];
     const role = UPGRADE_PATHS.find((entry) => entry.path === path)?.role;
 
     if (role === undefined) {
@@ -50,17 +57,17 @@ export class UpgradeGuard {
     { host, origin }: IncomingHttpHeaders,
     role: UpgradeRole,
     port: number,
-  ): UpgradeRejection["reason"] | null {
-    if (!LOOPBACK_HOSTS.some((name) => host?.toLowerCase() === `${name}:${port}`)) {
-      return "host";
+  ): UpgradeRefusal | null {
+    if (!LOOPBACK_HOSTS.some((name) => host?.toLowerCase() === UPGRADE_URL.host(name, port))) {
+      return UPGRADE_REFUSAL.host;
     }
 
-    if (role === "peer") {
-      return origin === undefined ? null : "origin";
+    if (role === UPGRADE_ROLE.peer) {
+      return origin === undefined ? null : UPGRADE_REFUSAL.origin;
     }
 
     return origin !== undefined && [...PLUGIN_ORIGINS, ...this.#settings.pluginOrigins].includes(origin)
       ? null
-      : "origin";
+      : UPGRADE_REFUSAL.origin;
   }
 }

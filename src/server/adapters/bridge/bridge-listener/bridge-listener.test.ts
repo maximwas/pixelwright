@@ -4,13 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
-import { AtomicJsonFile } from "../../files/atomic-json-file/atomic-json-file.ts";
-import { PinoLogger } from "../../logging/pino-logger/pino-logger.ts";
-import { BridgeConfig } from "../bridge-config/bridge-config.ts";
-import { PairingCodes } from "../pairing-codes/pairing-codes.ts";
-import { PluginConnections } from "../plugin-connections/plugin-connections.ts";
-import { SessionRegistry } from "../sessions/session-registry/session-registry.ts";
-import { UpgradeGuard } from "../upgrade-guard/upgrade-guard.ts";
+import { BridgeConfig } from "@/server/adapters/bridge/bridge-config/bridge-config.ts";
+import { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
+import { PluginConnections } from "@/server/adapters/bridge/plugin-connections/plugin-connections.ts";
+import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry/session-registry.ts";
+import { UpgradeGuard } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.ts";
+import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file/atomic-json-file.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 import { BridgeListener } from "./bridge-listener.ts";
 
 const UPGRADE = {
@@ -82,14 +82,19 @@ class ListenerProbe {
     frame?: unknown,
   ): Promise<{ code: number; reason: string }> {
     return new Promise((resolve, reject) => {
-      const socket = new WebSocket(`ws://127.0.0.1:${this.listener.port()}${path}`, path.endsWith("/peer") ? {} : { origin: "null" });
+      const socket = new WebSocket(
+        `ws://127.0.0.1:${this.listener.port()}${path}`,
+        path.endsWith("/peer") ? {} : { origin: "null" },
+      );
 
       socket
         .on("open", () => frame !== undefined && socket.send(JSON.stringify(frame)))
-        .on("close", (code, reason) => resolve({
-          code,
-          reason: String(reason),
-        }))
+        .on("close", (code, reason) =>
+          resolve({
+            code,
+            reason: String(reason),
+          }),
+        )
         .on("error", reject);
     });
   }

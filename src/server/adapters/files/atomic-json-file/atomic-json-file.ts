@@ -5,6 +5,7 @@ import { inject, injectable } from "@needle-di/core";
 import { writeFileSync as writeAtomically } from "atomically";
 import * as zod from "zod/mini";
 import type { JsonFile } from "@/core/ports/json-file/json-file.port.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
 import { LOGGER } from "@/core/ports/logger/logger.port.ts";
 import { FILE_ERROR } from "@/server/adapters/files/file-error.constants.ts";
 import { ATOMIC_JSON_FILE, ATOMIC_JSON_FILE_LOG } from "./atomic-json-file.constants.ts";
@@ -42,7 +43,7 @@ export class AtomicJsonFile implements JsonFile {
     }
 
     this.#logger.warn(ATOMIC_JSON_FILE_LOG.offSchema, {
-      component: "server",
+      component: LOG_COMPONENT.server,
       file: path,
       issues: parsed.error.issues.map(({ path: at, message }) =>
         ATOMIC_JSON_FILE_LOG.issue(at.join(ATOMIC_JSON_FILE_LOG.pathSeparator) || ATOMIC_JSON_FILE_LOG.top, message),
@@ -123,7 +124,7 @@ export class AtomicJsonFile implements JsonFile {
       write();
     } catch (error) {
       this.#logger.warn(ATOMIC_JSON_FILE_LOG.unwritten, {
-        component: "server",
+        component: LOG_COMPONENT.server,
         file: path,
         reason: this.#code(error),
       });
@@ -144,7 +145,7 @@ export class AtomicJsonFile implements JsonFile {
     reason: string,
   ): void {
     this.#logger.warn(ATOMIC_JSON_FILE_LOG.unreadable, {
-      component: "server",
+      component: LOG_COMPONENT.server,
       file: path,
       reason,
     });
