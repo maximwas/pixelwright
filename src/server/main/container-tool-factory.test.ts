@@ -17,7 +17,10 @@ class WiringTool extends Tool {
   readonly link;
   readonly context;
 
-  constructor(link = inject(PLUGIN_LINK), context = inject(TOOL_CONTEXT)) {
+  constructor(
+    link = inject(PLUGIN_LINK),
+    context = inject(TOOL_CONTEXT),
+  ) {
     super();
     this.link = link;
     this.context = context;

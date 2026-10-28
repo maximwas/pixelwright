@@ -9,7 +9,10 @@ export class StdoutGuard {
   readonly #console: Console;
   readonly #stderr: NodeJS.WritableStream;
 
-  constructor(target: Console = console, stderr: NodeJS.WritableStream = process.stderr) {
+  constructor(
+    target: Console = console,
+    stderr: NodeJS.WritableStream = process.stderr,
+  ) {
     this.#console = target;
     this.#stderr = stderr;
   }
@@ -20,7 +23,10 @@ export class StdoutGuard {
     target.log = target.error;
     target.info = target.error;
     target.debug = target.error;
-    target.dir = (item, options) => {
+    target.dir = (
+      item,
+      options,
+    ) => {
       this.#stderr.write(`${inspect(item, options)}\n`);
     };
   }

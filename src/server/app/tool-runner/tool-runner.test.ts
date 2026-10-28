@@ -36,13 +36,13 @@ class ProbeTool extends Tool<zod.output<typeof ProbeInput>, zod.output<typeof Pr
 
     return fail === "schema"
       ? {
-          length: -1,
-          errors: [],
-        }
+        length: -1,
+        errors: [],
+      }
       : {
-          length: text.length,
-          errors: ["2:3: kept"],
-        };
+        length: text.length,
+        errors: ["2:3: kept"],
+      };
   }
 
   protected override answer(output: zod.output<typeof ProbeOutput>) {
@@ -50,9 +50,9 @@ class ProbeTool extends Tool<zod.output<typeof ProbeInput>, zod.output<typeof Pr
 
     return output.length < 0
       ? {
-          ...answer,
-          structuredContent: { length: "wrong" },
-        }
+        ...answer,
+        structuredContent: { length: "wrong" },
+      }
       : answer;
   }
 }
@@ -87,28 +87,46 @@ class RecordingLogger implements Logger {
   readonly lines: Record<string, unknown>[];
   readonly #fields: LogFields;
 
-  constructor(lines: Record<string, unknown>[] = [], fields: LogFields = {}) {
+  constructor(
+    lines: Record<string, unknown>[] = [],
+    fields: LogFields = {},
+  ) {
     this.lines = lines;
     this.#fields = fields;
   }
 
-  trace(message: string, fields?: LogFields): void {
+  trace(
+    message: string,
+    fields?: LogFields,
+  ): void {
     this.#write("trace", message, fields);
   }
 
-  debug(message: string, fields?: LogFields): void {
+  debug(
+    message: string,
+    fields?: LogFields,
+  ): void {
     this.#write("debug", message, fields);
   }
 
-  info(message: string, fields?: LogFields): void {
+  info(
+    message: string,
+    fields?: LogFields,
+  ): void {
     this.#write("info", message, fields);
   }
 
-  warn(message: string, fields?: LogFields): void {
+  warn(
+    message: string,
+    fields?: LogFields,
+  ): void {
     this.#write("warn", message, fields);
   }
 
-  error(message: string, fields?: LogFields): void {
+  error(
+    message: string,
+    fields?: LogFields,
+  ): void {
     this.#write("error", message, fields);
   }
 
@@ -119,7 +137,11 @@ class RecordingLogger implements Logger {
     });
   }
 
-  #write(level: string, msg: string, fields: LogFields = {}): void {
+  #write(
+    level: string,
+    msg: string,
+    fields: LogFields = {},
+  ): void {
     this.lines.push({
       level,
       msg,
@@ -132,7 +154,10 @@ class RecordingLogger implements Logger {
 class ProbeFactory implements ToolFactory {
   readonly contexts: ToolContext[] = [];
 
-  async create(_manifest: ToolManifest, context: ToolContext): Promise<Tool> {
+  async create(
+    _manifest: ToolManifest,
+    context: ToolContext,
+  ): Promise<Tool> {
     this.contexts.push(context);
 
     return new ProbeTool();

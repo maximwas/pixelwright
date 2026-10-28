@@ -5,6 +5,7 @@ import figmaPlugins from "@figma/eslint-plugin-figma-plugins";
 import stylistic from "@stylistic/eslint-plugin";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import antfu from "eslint-plugin-antfu";
 import {
   createFileComposition,
   createFolderStructure,
@@ -73,6 +74,29 @@ const INJECTION = [
     message: "inject() takes an InjectionToken constant: a child container builds a second instance of a class (#110).",
   },
 ];
+
+/** @stylistic's function-paren-newline for signatures only: as it is, it would also break every call of two arguments. */
+const PAREN_NEWLINE = stylistic.rules["function-paren-newline"];
+const LAYOUT = {
+  rules: {
+    "signature-paren-newline": {
+      meta: PAREN_NEWLINE.meta,
+      create(context) {
+        const [check] = Object.values(PAREN_NEWLINE.create(context));
+
+        return { "FunctionDeclaration, FunctionExpression, ArrowFunctionExpression": check };
+      },
+    },
+  },
+};
+
+/** consistent-list-newline for parameters only: other lists keep Biome's layout. */
+const PARAMETER_LISTS = Object.fromEntries(
+  Object.keys(antfu.rules["consistent-list-newline"].meta.schema[0].properties).map((kind) => [
+    kind,
+    ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"].includes(kind),
+  ]),
+);
 
 /** A function fits on a screen, a file is one cohesive module, more than four parameters go in an options object. */
 const LIMITS = {
@@ -148,9 +172,28 @@ export default [
   {
     files: ["**/*.ts"],
     languageOptions: { parser: tsParser },
-    plugins: { "@stylistic": stylistic, "project-structure": projectStructurePlugin },
+    plugins: { "@stylistic": stylistic, "project-structure": projectStructurePlugin, antfu, layout: LAYOUT },
     rules: {
       "no-restricted-syntax": ["error", NO_CSS_ASYNC],
+      // Two or more parameters: each on its own line. Biome formats first and would put them back on one line,
+      // so ESLint fixes after it, re-indents what it moved, and checks the layout in pnpm lint.
+      "layout/signature-paren-newline": ["error", { minItems: 2 }],
+      "antfu/consistent-list-newline": ["error", PARAMETER_LISTS],
+      "@stylistic/indent": ["error", 2, { SwitchCase: 1 }],
+      "@stylistic/no-trailing-spaces": "error",
+      "@stylistic/comma-dangle": [
+        "error",
+        {
+          arrays: "ignore",
+          objects: "ignore",
+          imports: "ignore",
+          exports: "ignore",
+          functions: "always-multiline",
+          enums: "ignore",
+          generics: "ignore",
+          tuples: "ignore",
+        },
+      ],
       "@stylistic/padding-line-between-statements": [
         "error",
         { blankLine: "always", prev: "*", next: ["return", "throw"] },

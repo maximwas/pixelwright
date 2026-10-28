@@ -15,7 +15,10 @@ export class ContainerToolFactory implements ToolFactory {
     this.#root = root;
   }
 
-  async create(manifest: ToolManifest, context: ToolContext): Promise<Tool> {
+  async create(
+    manifest: ToolManifest,
+    context: ToolContext,
+  ): Promise<Tool> {
     const toolClass = await manifest.load();
 
     // The one place a tool is asked for by its class: a fresh instance per call is the point (needle-di #110).

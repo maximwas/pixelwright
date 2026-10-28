@@ -28,6 +28,7 @@ const EXPECTED: Record<string, string[]> = {
   "src/core/default-function.ts": ["no-restricted-syntax"],
   "src/core/static-only.ts": ["@typescript-eslint/no-extraneous-class"],
   "src/core/short-name.ts": ["id-length"],
+  "src/core/two-params.ts": ["layout/signature-paren-newline"],
   "src/server/app/service-locator.ts": ["no-restricted-syntax"],
   "src/server/app/injected-class.ts": ["no-restricted-syntax"],
   // Targets of the planted imports: clean themselves.
@@ -108,7 +109,10 @@ describe("guard rails refuse each planted sample with exactly its rules", () => 
     expect([...found.keys()].sort()).toEqual(Object.keys(EXPECTED).sort());
   });
 
-  it.each(Object.entries(EXPECTED))("%s", (file, rules) => {
+  it.each(Object.entries(EXPECTED))("%s", (
+    file,
+    rules,
+  ) => {
     expect(found.get(file)).toEqual([...rules].sort());
   });
 });

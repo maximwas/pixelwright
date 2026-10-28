@@ -13,12 +13,18 @@ export class CallLogStep implements ToolCallStep {
   readonly #logger;
   readonly #clock;
 
-  constructor(logger = inject(LOGGER), clock = inject(CLOCK)) {
+  constructor(
+    logger = inject(LOGGER),
+    clock = inject(CLOCK),
+  ) {
     this.#logger = logger.child({ component: "tool-runner" });
     this.#clock = clock;
   }
 
-  async handle(call: ToolCall, next: ToolStepNext): Promise<ToolAnswer> {
+  async handle(
+    call: ToolCall,
+    next: ToolStepNext,
+  ): Promise<ToolAnswer> {
     const started = this.#clock.now();
     const name = call.manifest.name;
 
@@ -44,7 +50,10 @@ export class CallLogStep implements ToolCallStep {
     }
   }
 
-  #fields({ manifest, callId, args }: ToolCall, started: number): LogFields {
+  #fields(
+    { manifest, callId, args }: ToolCall,
+    started: number,
+  ): LogFields {
     const file = typeof args === "object" && args !== null && "file" in args ? args.file : undefined;
 
     return {

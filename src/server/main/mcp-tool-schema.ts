@@ -9,7 +9,7 @@ type Props<Schema extends zod.ZodMiniType> = StandardSchemaWithJSON<zod.input<Sc
  * z.toJSONSchema output (pinned by the tools.json golden) and leaves validation to zod's own `~standard`.
  */
 export class McpToolSchema<Schema extends zod.ZodMiniType>
-  implements StandardSchemaWithJSON<zod.input<Schema>, zod.output<Schema>>
+implements StandardSchemaWithJSON<zod.input<Schema>, zod.output<Schema>>
 {
   readonly "~standard": Props<Schema>;
 

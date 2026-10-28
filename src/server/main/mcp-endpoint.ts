@@ -16,7 +16,10 @@ export class McpEndpoint {
   readonly #server: McpServer;
   readonly #runner;
 
-  constructor(catalog = inject(TOOL_CATALOG), runner = inject(TOOL_RUNNER)) {
+  constructor(
+    catalog = inject(TOOL_CATALOG),
+    runner = inject(TOOL_RUNNER),
+  ) {
     this.#runner = runner;
     this.#server = new McpServer(
       {
@@ -49,7 +52,10 @@ export class McpEndpoint {
       annotations,
     };
 
-    this.#server.registerTool(name, config, async (args, context) => {
+    this.#server.registerTool(name, config, async (
+      args,
+      context,
+    ) => {
       const answer = await this.#runner.run({
         manifest,
         args,

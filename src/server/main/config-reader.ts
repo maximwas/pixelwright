@@ -10,7 +10,10 @@ export class ConfigReader {
   readonly #env: Readonly<Record<string, string | undefined>>;
   readonly #homeDir: string;
 
-  constructor(env: Readonly<Record<string, string | undefined>> = process.env, homeDir = homedir()) {
+  constructor(
+    env: Readonly<Record<string, string | undefined>> = process.env,
+    homeDir = homedir(),
+  ) {
     this.#env = env;
     this.#homeDir = homeDir;
   }

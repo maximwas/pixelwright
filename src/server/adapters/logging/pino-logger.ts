@@ -12,7 +12,10 @@ import { PinoLines } from "./pino-lines.ts";
  */
 @injectable()
 export class PinoLogger extends PinoLines {
-  constructor(settings = inject(LOG_SETTINGS), destinations = inject(LOG_DESTINATIONS, { multi: true })) {
+  constructor(
+    settings = inject(LOG_SETTINGS),
+    destinations = inject(LOG_DESTINATIONS, { multi: true }),
+  ) {
     super(
       pino(
         {

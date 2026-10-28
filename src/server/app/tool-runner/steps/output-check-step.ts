@@ -8,7 +8,10 @@ import type { ToolAnswer, ToolCall, ToolCallStep, ToolStepNext } from "../tool-r
  */
 @injectable()
 export class OutputCheckStep implements ToolCallStep {
-  async handle(call: ToolCall, next: ToolStepNext): Promise<ToolAnswer> {
+  async handle(
+    call: ToolCall,
+    next: ToolStepNext,
+  ): Promise<ToolAnswer> {
     const answer = await next(call);
     const checked = zod.safeParse(call.manifest.output, answer.structuredContent);
 

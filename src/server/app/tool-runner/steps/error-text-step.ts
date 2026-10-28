@@ -8,7 +8,10 @@ import type { ToolAnswer, ToolCall, ToolCallStep, ToolStepNext } from "../tool-r
  */
 @injectable()
 export class ErrorTextStep implements ToolCallStep {
-  async handle(call: ToolCall, next: ToolStepNext): Promise<ToolAnswer> {
+  async handle(
+    call: ToolCall,
+    next: ToolStepNext,
+  ): Promise<ToolAnswer> {
     try {
       return await next(call);
     } catch (error) {
@@ -24,7 +27,10 @@ export class ErrorTextStep implements ToolCallStep {
     }
   }
 
-  #text(call: ToolCall, error: unknown): string {
+  #text(
+    call: ToolCall,
+    error: unknown,
+  ): string {
     if (error instanceof PixelwrightError) {
       return error.text();
     }

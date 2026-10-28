@@ -52,7 +52,10 @@ class TryClient {
   }
 
   /** The arguments with `file: "Test MCP"` added for a tool that takes a file; any other file is refused. */
-  async #pinned(tool: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async #pinned(
+    tool: string,
+    args: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
     const { tools } = await this.#client.listTools();
     const takesFile = tools.find(({ name }) => name === tool)?.inputSchema.properties?.file !== undefined;
 
@@ -62,9 +65,9 @@ class TryClient {
 
     return takesFile
       ? {
-          ...args,
-          file: TEST_FILE,
-        }
+        ...args,
+        file: TEST_FILE,
+      }
       : args;
   }
 

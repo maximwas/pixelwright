@@ -4,7 +4,11 @@ import type { ErrorCode } from "./error-code.constants.ts";
 export class PixelwrightError extends Error {
   readonly code: ErrorCode;
 
-  constructor(code: ErrorCode, message: string, options?: ErrorOptions) {
+  constructor(
+    code: ErrorCode,
+    message: string,
+    options?: ErrorOptions,
+  ) {
     super(message, options);
     this.name = "PixelwrightError";
     this.code = code;

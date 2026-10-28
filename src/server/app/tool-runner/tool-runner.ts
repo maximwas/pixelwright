@@ -15,7 +15,11 @@ export class ToolRunner {
   readonly #tools;
   readonly #logger;
 
-  constructor(steps = inject(TOOL_CALL_STEPS, { multi: true }), tools = inject(TOOL_FACTORY), logger = inject(LOGGER)) {
+  constructor(
+    steps = inject(TOOL_CALL_STEPS, { multi: true }),
+    tools = inject(TOOL_FACTORY),
+    logger = inject(LOGGER),
+  ) {
     this.#steps = steps;
     this.#tools = tools;
     this.#logger = logger;
@@ -31,7 +35,10 @@ export class ToolRunner {
     );
   }
 
-  #handle(call: ToolCall, index: number): Promise<ToolAnswer> {
+  #handle(
+    call: ToolCall,
+    index: number,
+  ): Promise<ToolAnswer> {
     const step = this.#steps[index];
 
     return step === undefined ? this.#execute(call) : step.handle(call, (next) => this.#handle(next, index + 1));

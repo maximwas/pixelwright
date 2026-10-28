@@ -9,23 +9,38 @@ export class PinoLines implements Logger {
     this.#pino = pino;
   }
 
-  trace(message: string, fields: LogFields = {}): void {
+  trace(
+    message: string,
+    fields: LogFields = {},
+  ): void {
     this.#pino.trace(fields, message);
   }
 
-  debug(message: string, fields: LogFields = {}): void {
+  debug(
+    message: string,
+    fields: LogFields = {},
+  ): void {
     this.#pino.debug(fields, message);
   }
 
-  info(message: string, fields: LogFields = {}): void {
+  info(
+    message: string,
+    fields: LogFields = {},
+  ): void {
     this.#pino.info(fields, message);
   }
 
-  warn(message: string, fields: LogFields = {}): void {
+  warn(
+    message: string,
+    fields: LogFields = {},
+  ): void {
     this.#pino.warn(fields, message);
   }
 
-  error(message: string, fields: LogFields = {}): void {
+  error(
+    message: string,
+    fields: LogFields = {},
+  ): void {
     this.#pino.error(fields, message);
   }
 

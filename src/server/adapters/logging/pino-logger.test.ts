@@ -84,7 +84,10 @@ describe("PinoLogger", () => {
     ["a proof", "proof"],
     ["a nonce", "nonce"],
     ["a token", "token"],
-  ])("never writes %s, at the top or one level down", (_kind, field) => {
+  ])("never writes %s, at the top or one level down", (
+    _kind,
+    field,
+  ) => {
     const probe = new LoggerProbe();
     const secret = `secret-${field}-4711`;
 
