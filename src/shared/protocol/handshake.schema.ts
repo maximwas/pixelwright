@@ -19,10 +19,10 @@ import {
 // changes. After hello_ack the socket carries RPC frames, which these schemas never see.
 
 /** Each side's half of a challenge, hex. */
-const NonceSchema = zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(NONCE_BYTES)));
+export const NonceSchema = zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(NONCE_BYTES)));
 
 /** HMAC-SHA256 over the role and both nonces (Proof), hex. */
-const ProofSchema = zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(PROOF_BYTES)));
+export const ProofSchema = zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(PROOF_BYTES)));
 
 /** A paired plugin's key, hex: the server keeps it in bridge.json, the plugin in clientStorage. */
 export const PluginKeySchema = zod.object({

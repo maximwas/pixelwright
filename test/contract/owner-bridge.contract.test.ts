@@ -111,7 +111,7 @@ describe("the owner bridge through the composition root", () => {
     );
   });
 
-  it("stays up when another program holds the port: role failed, and the hint says why", async () => {
+  it("stays up when another program holds the port: unavailable, retrying, and the hint says why (S-014)", async () => {
     const holder = createServer();
 
     await new Promise<void>((resolve) => holder.listen(0, "127.0.0.1", resolve));
@@ -124,10 +124,10 @@ describe("the owner bridge through the composition root", () => {
 
       expect(await owner.status()).toMatchObject({
         server: {
-          role: "failed",
+          role: "unavailable",
           port,
         },
-        hint: `The plugin bridge could not start: port ${port} is taken by another program or another Pixelwright server.`,
+        hint: `Port ${port} is held by a program that is not Pixelwright: free it. This session keeps retrying.`,
       });
     } finally {
       await new Promise((resolve) => holder.close(resolve));

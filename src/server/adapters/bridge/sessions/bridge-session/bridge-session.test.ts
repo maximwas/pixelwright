@@ -24,6 +24,7 @@ const hello = (visible: boolean): PluginInfo => ({
 const connected = (info: PluginInfo) => {
   let position = 0;
   const sequence = {
+    changed: () => undefined,
     next: () => {
       position += 1;
 

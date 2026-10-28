@@ -86,5 +86,6 @@ export class BridgeSession {
       ...update.data,
       instanceId: this.#info.instanceId,
     };
+    this.#sequence.changed();
   }
 }

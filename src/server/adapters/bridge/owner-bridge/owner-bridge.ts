@@ -40,12 +40,24 @@ export class OwnerBridge implements PluginLink {
   }
 
   async start(): Promise<void> {
+    await this.take();
+  }
+
+  /** Takes the port: false when another program or server holds it, so the bridge joins it as a peer (S-030). */
+  async take(): Promise<boolean> {
     try {
       this.#config.ensure();
       await this.#listener.listen();
+      this.#failure = null;
     } catch (error) {
-      this.#failure = this.#reason(error);
+      if ((error as NodeJS.ErrnoException).code === OWNER_FAILURE.portTakenCode) {
+        return false;
+      }
+
+      this.#failure = error instanceof Error ? error.message : String(error);
     }
+
+    return true;
   }
 
   async close(): Promise<void> {
@@ -91,16 +103,5 @@ export class OwnerBridge implements PluginLink {
         refusal: this.#sessions.refusal(),
       }),
     };
-  }
-
-  /** In words for the hint: a taken port says who may hold it. */
-  #reason(error: unknown): string {
-    if (!(error instanceof Error)) {
-      return String(error);
-    }
-
-    return (error as NodeJS.ErrnoException).code === OWNER_FAILURE.portTakenCode
-      ? OWNER_FAILURE.portTaken(this.#listener.port())
-      : error.message;
   }
 }

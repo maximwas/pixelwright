@@ -7,6 +7,11 @@ export const MAX_WAITING = 8;
 /** The 4409 reason, 0.7.0's words. */
 export const SUPERSEDED_REASON = "superseded by a newer connection of the same plugin window";
 
+/** The registry's one event: its files or its waiting windows changed. */
+export const REGISTRY_EVENT = {
+  changed: "changed",
+} as const;
+
 export const SESSION_LOG = {
   connected: "plugin connected",
   disconnected: "plugin disconnected",

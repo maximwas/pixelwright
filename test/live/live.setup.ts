@@ -17,38 +17,46 @@ declare module "vitest" {
 }
 
 /**
- * The live run's global setup (A§10.5): the lock, then one server that waits for Test MCP and checks it is the visible
- * tab with Allow edits on. Until the peer bridge (item 07) the server closes after the checks, and each test file's
- * own server becomes the owner in turn.
+ * The live run's global setup (A§10.5): the lock, then one server that owns the bridge for the whole run, so the
+ * plugin stays connected; it waits for Test MCP and checks it is the visible tab with Allow edits on. Each test file's
+ * own server joins it as a peer (R-036). Teardown stops it and frees the lock.
  */
-export default async function setup(project: TestProject): Promise<() => void> {
+export default async function setup(project: TestProject): Promise<() => Promise<void>> {
   const lock = new LiveLock();
 
   lock.acquire();
 
   try {
-    const client = await new LiveClient().connect();
+    const owner = await new LiveClient().connect();
 
     try {
-      const { file } = await client.waitForTestMcp();
-      const problem = new LiveChecks().problem(file);
+      const { status, file } = await owner.waitForTestMcp();
+      const problem =
+        (status.server as { role: string }).role === "owner"
+          ? new LiveChecks().problem(file)
+          : "Another Pixelwright New server owns the bridge: close the other MCP client sessions of this checkout and run again.";
 
       if (problem !== null) {
         throw new Error(problem);
       }
-    } finally {
-      await client.close();
+    } catch (error) {
+      await owner.close();
+
+      throw error;
     }
 
     project.provide("live", {
       file: TEST_MCP.file,
       scratch: null,
     });
+
+    return async () => {
+      await owner.close();
+      lock.release();
+    };
   } catch (error) {
     lock.release();
 
     throw error;
   }
-
-  return () => lock.release();
 }

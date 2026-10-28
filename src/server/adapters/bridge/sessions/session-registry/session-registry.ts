@@ -1,4 +1,5 @@
 import { inject, injectable } from "@needle-di/core";
+import { createNanoEvents } from "nanoevents";
 import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
 import { LOGGER } from "@/core/ports/logger/logger.port.ts";
 import type { ConnectedFile, PairingStatus } from "@/core/ports/plugin-link/plugin-link.port.ts";
@@ -7,6 +8,7 @@ import type { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-ses
 import {
   MAX_SESSIONS,
   MAX_WAITING,
+  REGISTRY_EVENT,
   SESSION_LOG,
   SUPERSEDED_REASON,
 } from "@/server/adapters/bridge/sessions/session-registry/session-registry.constants.ts";
@@ -26,6 +28,7 @@ export class SessionRegistry {
   readonly #logger;
   readonly #sessions = new Map<string, BridgeSession>();
   readonly #waiting = new Set<object>();
+  readonly #changes = createNanoEvents<{ [REGISTRY_EVENT.changed]: () => void }>();
   #sequence = 0;
   #rejection: UpgradeRejection | null = null;
   #refusal: ProtocolRefusal | null = null;
@@ -45,6 +48,16 @@ export class SessionRegistry {
     return this.#sequence;
   }
 
+  /** Calls `listener` on every change of the files or of the windows waiting (S-033); the result stops it. */
+  onChange(listener: () => void): () => void {
+    return this.#changes.on(REGISTRY_EVENT.changed, listener);
+  }
+
+  /** A session's info changed (S-012). */
+  changed(): void {
+    this.#changes.emit(REGISTRY_EVENT.changed);
+  }
+
   /** An unpaired window starts waiting for the code; false when MAX_WAITING wait already. */
   wait(window: object): boolean {
     if (this.#waiting.size >= MAX_WAITING) {
@@ -52,13 +65,16 @@ export class SessionRegistry {
     }
 
     this.#waiting.add(window);
+    this.changed();
 
     return true;
   }
 
   /** It stopped waiting: paired, closed, or gone. */
   stopWaiting(window: object): void {
-    this.#waiting.delete(window);
+    if (this.#waiting.delete(window)) {
+      this.changed();
+    }
   }
 
   /** For status alone: the code while a window waits, minted by this very ask (S-020), or the pause. */
@@ -89,6 +105,7 @@ export class SessionRegistry {
       pluginVersion: session.info.pluginVersion,
       sessions: this.#sessions.size,
     });
+    this.changed();
   }
 
   /** A session's socket closed: it leaves, unless a newer socket of its window replaced it already. */
@@ -107,6 +124,7 @@ export class SessionRegistry {
       code,
       sessions: this.#sessions.size,
     });
+    this.changed();
   }
 
   /** The session a tool uses when it names no file (S-011), or null when none is connected. */

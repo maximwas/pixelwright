@@ -2,6 +2,9 @@
 export const PROOF_ROLE = {
   server: "server",
   plugin: "plugin",
+  /** The two servers of the peer handshake (S-031), 0.7.0's roles. */
+  owner: "owner",
+  peer: "peer",
 } as const;
 
 export const PROOF_TEXT = {
