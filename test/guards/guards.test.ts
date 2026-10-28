@@ -13,6 +13,7 @@ const SAMPLES = fileURLToPath(new URL("samples/", import.meta.url));
 const EXPECTED: Record<string, string[]> = {
   "src/core/node-import.ts": ["no-node-without-node"],
   "src/core/legacy-import.ts": ["no-old"],
+  "src/core/tokens/token-name.ts": ["core-domains-by-index"],
   "src/server/tools/alpha/alpha.tool.ts": ["tools-apart"],
   "src/plugin/operations/xml-read/xml-read.operation.ts": ["plugin-no-server-core"],
   "src/plugin/operations/node-read/node-read.operation.ts": ["no-restricted-globals", "no-restricted-syntax"],
@@ -25,6 +26,7 @@ const EXPECTED: Record<string, string[]> = {
   // Targets of the planted imports: clean themselves.
   "src/server/tools/beta/beta.tool.ts": [],
   "src/core/xml/index.ts": [],
+  "src/core/kernel/names/slug.ts": [],
 };
 
 /** The repo's ESLint config; project-structure takes its root from the folder above node_modules, so it moves here. */
