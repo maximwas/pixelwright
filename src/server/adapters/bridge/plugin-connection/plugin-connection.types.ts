@@ -5,6 +5,7 @@ import type { PluginKey } from "../bridge-config/bridge-config.types.ts";
 import type { PairingCodes } from "../pairing-codes/pairing-codes.ts";
 import type { BridgeSession } from "../sessions/bridge-session/bridge-session.ts";
 import type { SessionRegistry } from "../sessions/session-registry/session-registry.ts";
+import type { CONNECTION_STATE } from "./plugin-connection.constants.ts";
 
 /** The owner's services one connection works with; PluginConnections hands the same ones to each. */
 export interface HandshakeServices {
@@ -17,20 +18,20 @@ export interface HandshakeServices {
 
 /** Where a connection stands: its one state field. */
 export type ConnectionState =
-  | { readonly name: "hello" }
+  | { readonly name: typeof CONNECTION_STATE.hello }
   | {
-    readonly name: "challenged";
+    readonly name: typeof CONNECTION_STATE.challenged;
     readonly info: PluginInfo;
     readonly key: PluginKey;
     readonly pluginNonce: string;
     readonly serverNonce: string;
   }
   | {
-    readonly name: "pairing";
+    readonly name: typeof CONNECTION_STATE.pairing;
     readonly info: PluginInfo;
   }
   | {
-    readonly name: "session";
+    readonly name: typeof CONNECTION_STATE.session;
     readonly session: BridgeSession;
   }
-  | { readonly name: "closed" };
+  | { readonly name: typeof CONNECTION_STATE.closed };

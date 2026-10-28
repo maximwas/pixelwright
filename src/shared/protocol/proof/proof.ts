@@ -1,6 +1,7 @@
 import { hmac } from "@noble/hashes/hmac.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
+import { PROOF_TEXT } from "./proof.constants.ts";
 import type { ProofRole } from "./proof.types.ts";
 
 /**
@@ -23,7 +24,7 @@ export class Proof {
     theirNonce: string,
     ourNonce: string,
   ): Proof {
-    const message = `pixelwright|${role}|${theirNonce}|${ourNonce}`;
+    const message = PROOF_TEXT.message(role, theirNonce, ourNonce);
 
     return new Proof(bytesToHex(hmac(sha256, utf8ToBytes(secret), utf8ToBytes(message))));
   }

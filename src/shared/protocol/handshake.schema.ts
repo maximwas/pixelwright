@@ -1,4 +1,5 @@
 import * as zod from "zod/mini";
+import { FRAME_TYPE_FIELD, HANDSHAKE_PATTERN, HANDSHAKE_TYPE, PAIRING_REASON } from "./handshake.constants.ts";
 import { PluginInfoSchema } from "./plugin-info.schema.ts";
 import {
   KEY_ID_BYTES,
@@ -13,23 +14,22 @@ import {
 // changes. After hello_ack the socket carries RPC frames, which these schemas never see.
 
 /** Each side's half of a challenge, hex. */
-const NonceSchema = zod.string().check(zod.regex(new RegExp(`^[0-9a-f]{${NONCE_BYTES * 2}}$`)));
+const NonceSchema = zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(NONCE_BYTES)));
 
 /** HMAC-SHA256 over the role and both nonces (Proof), hex. */
-const ProofSchema = zod.string().check(zod.regex(new RegExp(`^[0-9a-f]{${PROOF_BYTES * 2}}$`)));
+const ProofSchema = zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(PROOF_BYTES)));
 
 /** A paired plugin's key, hex: the server keeps it in bridge.json, the plugin in clientStorage. */
 const PluginKeySchema = zod.object({
-  id: zod.string().check(zod.regex(new RegExp(`^[0-9a-f]{${KEY_ID_BYTES * 2}}$`))),
-  secret: zod.string().check(zod.regex(new RegExp(`^[0-9a-f]{${KEY_SECRET_BYTES * 2}}$`))),
+  id: zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(KEY_ID_BYTES))),
+  secret: zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(KEY_SECRET_BYTES))),
 });
 
-/** Why the plugin must pair: locked means too many wrong codes, and pairing is paused for expiresInMs. */
-const PairingReasonSchema = zod.enum(["no_key", "unknown_key", "wrong_code", "expired", "locked"]);
+const PairingReasonSchema = zod.enum(PAIRING_REASON);
 
 /** plugin → server, the first frame: within 5 s, or the socket is closed 4408. */
 const HelloSchema = zod.object({
-  type: zod.literal("hello"),
+  type: zod.literal(HANDSHAKE_TYPE.hello),
   protocol: zod.int(),
   plugin: PluginInfoSchema,
   /** The stored key's id, or null before the plugin is paired. */
@@ -43,7 +43,7 @@ const HelloSchema = zod.object({
  * into the status hint.
  */
 export const HelloProtocolSchema = zod.looseObject({
-  type: zod.literal("hello"),
+  type: zod.literal(HANDSHAKE_TYPE.hello),
   protocol: zod.int(),
   plugin: zod.catch(
     zod.nullable(
@@ -54,37 +54,37 @@ export const HelloProtocolSchema = zod.looseObject({
 });
 
 /** What a plugin may send before its hello_ack: hello, the proof of its key, or the code the user typed. */
-export const PluginHandshakeSchema = zod.discriminatedUnion("type", [
+export const PluginHandshakeSchema = zod.discriminatedUnion(FRAME_TYPE_FIELD, [
   HelloSchema,
   zod.object({
-    type: zod.literal("auth"),
+    type: zod.literal(HANDSHAKE_TYPE.auth),
     proof: ProofSchema,
   }),
   zod.object({
-    type: zod.literal("pair"),
-    code: zod.string().check(zod.regex(new RegExp(`^\\d{${PAIRING_CODE_DIGITS}}$`))),
+    type: zod.literal(HANDSHAKE_TYPE.pair),
+    code: zod.string().check(zod.regex(HANDSHAKE_PATTERN.digits(PAIRING_CODE_DIGITS))),
   }),
 ]);
 
 /** What the server sends before RPC starts: it proves the key first, asks for the code, hands a key out, lets in. */
-export const ServerHandshakeSchema = zod.discriminatedUnion("type", [
+export const ServerHandshakeSchema = zod.discriminatedUnion(FRAME_TYPE_FIELD, [
   zod.object({
-    type: zod.literal("challenge"),
+    type: zod.literal(HANDSHAKE_TYPE.challenge),
     nonce: NonceSchema,
     proof: ProofSchema,
   }),
   zod.object({
-    type: zod.literal("pairing_required"),
+    type: zod.literal(HANDSHAKE_TYPE.pairingRequired),
     reason: PairingReasonSchema,
     attemptsLeft: zod.int().check(zod.gte(0)),
     expiresInMs: zod.int().check(zod.gte(0)),
   }),
   zod.object({
-    type: zod.literal("paired"),
+    type: zod.literal(HANDSHAKE_TYPE.paired),
     key: PluginKeySchema,
   }),
   zod.object({
-    type: zod.literal("hello_ack"),
+    type: zod.literal(HANDSHAKE_TYPE.helloAck),
     protocol: zod.int(),
     sessionId: zod.string(),
     server: zod.object({

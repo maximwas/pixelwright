@@ -1,2 +1,3 @@
-/** Who proves it knows the shared secret: the bridge's server or the plugin (the peer handshake adds owner and peer). */
-export type ProofRole = "server" | "plugin";
+import type { PROOF_ROLE } from "./proof.constants.ts";
+
+export type ProofRole = (typeof PROOF_ROLE)[keyof typeof PROOF_ROLE];

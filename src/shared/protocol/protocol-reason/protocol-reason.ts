@@ -1,5 +1,4 @@
-/** `protocol N required`, and nothing else. */
-const REQUIRED = /^protocol (\d+) required$/;
+import { PROTOCOL_REASON_TEXT } from "./protocol-reason.constants.ts";
 
 /**
  * The close reason of a 4426 (S-004), a value object: `protocol N required`, naming the protocol the closing side
@@ -20,12 +19,12 @@ export class ProtocolReason {
 
   /** The reason the other side closed with, or null for any other close reason. */
   static parse(reason: string | null): ProtocolReason | null {
-    const match = REQUIRED.exec(reason ?? "");
+    const match = reason === null ? null : PROTOCOL_REASON_TEXT.pattern.exec(reason);
 
     return match === null ? null : new ProtocolReason(Number(match[1]));
   }
 
   text(): string {
-    return `protocol ${this.protocol} required`;
+    return PROTOCOL_REASON_TEXT.required(this.protocol);
   }
 }

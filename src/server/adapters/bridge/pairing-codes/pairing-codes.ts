@@ -1,14 +1,19 @@
 import { randomInt, timingSafeEqual } from "node:crypto";
 import { inject, injectable } from "@needle-di/core";
 import { CLOCK } from "../../../../core/ports/clock/clock.port.ts";
+import { LOG_COMPONENT } from "../../../../core/ports/logger/logger.constants.ts";
 import { LOGGER } from "../../../../core/ports/logger/logger.port.ts";
 import type { PairingStatus } from "../../../../core/ports/plugin-link/plugin-link.port.ts";
+import { PAIRING_REASON } from "../../../../shared/protocol/handshake.constants.ts";
 import type { PairingReason } from "../../../../shared/protocol/handshake.schema.ts";
 import { PAIRING_CODE_DIGITS } from "../../../../shared/protocol/protocol.constants.ts";
 import {
+  CODE_CHECK,
   PAIRING_ATTEMPTS,
+  PAIRING_CODE_PAD,
   PAIRING_CODE_TTL_MS,
   PAIRING_LOCK_MS,
+  PAIRING_LOG,
   PAIRING_MAX_LOCK_MS,
 } from "./pairing-codes.constants.ts";
 import type { ActiveCode, CodeCheck, PairingPrompt } from "./pairing-codes.types.ts";
@@ -62,7 +67,7 @@ export class PairingCodes {
 
     if (this.#locked()) {
       return {
-        reason: "locked",
+        reason: PAIRING_REASON.locked,
         attemptsLeft: 0,
         expiresInMs: this.#lockedUntil - now,
       };
@@ -81,7 +86,7 @@ export class PairingCodes {
   check(typed: string): CodeCheck {
     if (this.#locked()) {
       return {
-        outcome: "locked",
+        outcome: CODE_CHECK.locked,
         until: this.#lockedUntil,
       };
     }
@@ -89,14 +94,14 @@ export class PairingCodes {
     const active = this.#active();
 
     if (active === null) {
-      return { outcome: "expired" };
+      return { outcome: CODE_CHECK.expired };
     }
 
     if (this.#matches(typed, active.code)) {
       this.#current = null;
       this.#nextLockMs = PAIRING_LOCK_MS;
 
-      return { outcome: "ok" };
+      return { outcome: CODE_CHECK.ok };
     }
 
     return active.attemptsLeft > 1 ? this.#spend(active) : this.#lock();
@@ -110,12 +115,12 @@ export class PairingCodes {
     }
 
     this.#current = {
-      code: String(randomInt(0, 10 ** PAIRING_CODE_DIGITS)).padStart(PAIRING_CODE_DIGITS, "0"),
+      code: String(randomInt(0, 10 ** PAIRING_CODE_DIGITS)).padStart(PAIRING_CODE_DIGITS, PAIRING_CODE_PAD),
       expiresAt: this.#clock.now() + PAIRING_CODE_TTL_MS,
       attemptsLeft: PAIRING_ATTEMPTS,
     };
-    this.#logger.info("pairing code minted", {
-      component: "bridge",
+    this.#logger.info(PAIRING_LOG.minted, {
+      component: LOG_COMPONENT.bridge,
       expiresInMs: PAIRING_CODE_TTL_MS,
       attempts: PAIRING_ATTEMPTS,
       waiting,
@@ -140,7 +145,7 @@ export class PairingCodes {
     };
 
     return {
-      outcome: "wrong",
+      outcome: CODE_CHECK.wrong,
       attemptsLeft,
     };
   }
@@ -148,8 +153,8 @@ export class PairingCodes {
   #lock(): CodeCheck {
     const until = this.#clock.now() + this.#nextLockMs;
 
-    this.#logger.warn("pairing locked: a code's tries are spent", {
-      component: "bridge",
+    this.#logger.warn(PAIRING_LOG.locked, {
+      component: LOG_COMPONENT.bridge,
       lockedForMs: this.#nextLockMs,
     });
     this.#current = null;
@@ -157,7 +162,7 @@ export class PairingCodes {
     this.#nextLockMs = Math.min(this.#nextLockMs * 2, PAIRING_MAX_LOCK_MS);
 
     return {
-      outcome: "locked",
+      outcome: CODE_CHECK.locked,
       until,
     };
   }

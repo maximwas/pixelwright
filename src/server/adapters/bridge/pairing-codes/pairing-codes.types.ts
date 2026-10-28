@@ -1,4 +1,5 @@
 import type { PairingReason } from "../../../../shared/protocol/handshake.schema.ts";
+import type { CODE_CHECK } from "./pairing-codes.constants.ts";
 
 /** The one code in force. */
 export interface ActiveCode {
@@ -16,13 +17,15 @@ export interface PairingPrompt {
 
 /** What a typed code earned: a pairing, a spent try, nothing (no code in force), or the pause. */
 export type CodeCheck =
-  | { readonly outcome: "ok" }
+  | { readonly outcome: typeof CODE_CHECK.ok }
   | {
-    readonly outcome: "wrong";
+    readonly outcome: typeof CODE_CHECK.wrong;
     readonly attemptsLeft: number;
   }
-  | { readonly outcome: "expired" }
+  | { readonly outcome: typeof CODE_CHECK.expired }
   | {
-    readonly outcome: "locked";
+    readonly outcome: typeof CODE_CHECK.locked;
     readonly until: number;
   };
+
+export type CodeOutcome = CodeCheck["outcome"];

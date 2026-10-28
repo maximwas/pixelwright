@@ -1,4 +1,5 @@
 import { inject, injectable } from "@needle-di/core";
+import { LOG_COMPONENT } from "../../../../../core/ports/logger/logger.constants.ts";
 import { LOGGER } from "../../../../../core/ports/logger/logger.port.ts";
 import type { ConnectedFile, PairingStatus } from "../../../../../core/ports/plugin-link/plugin-link.port.ts";
 import type { PluginInfo } from "../../../../../shared/protocol/plugin-info.schema.ts";
@@ -6,7 +7,7 @@ import { CLOSE_CODE } from "../../../../../shared/protocol/protocol.constants.ts
 import { PAIRING_CODES } from "../../pairing-codes/pairing-codes.tokens.ts";
 import type { UpgradeRejection } from "../../upgrade-guard/upgrade-guard.types.ts";
 import type { BridgeSession } from "../bridge-session/bridge-session.ts";
-import { MAX_SESSIONS, MAX_WAITING } from "./session-registry.constants.ts";
+import { MAX_SESSIONS, MAX_WAITING, SESSION_LOG, SUPERSEDED_REASON } from "./session-registry.constants.ts";
 import type { ProtocolRefusal } from "./session-registry.types.ts";
 
 /**
@@ -71,14 +72,14 @@ export class SessionRegistry {
 
     if (older !== undefined) {
       this.#sessions.delete(older.id);
-      older.close(CLOSE_CODE.superseded, "superseded by a newer connection of the same plugin window");
+      older.close(CLOSE_CODE.superseded, SUPERSEDED_REASON);
     }
 
     this.#sessions.set(session.id, session);
     this.#rejection = null;
     this.#refusal = null;
-    this.#logger.info("plugin connected", {
-      component: "bridge",
+    this.#logger.info(SESSION_LOG.connected, {
+      component: LOG_COMPONENT.bridge,
       file: session.info.file.name,
       pluginVersion: session.info.pluginVersion,
       sessions: this.#sessions.size,
@@ -95,8 +96,8 @@ export class SessionRegistry {
     }
 
     this.#sessions.delete(session.id);
-    this.#logger.info("plugin disconnected", {
-      component: "bridge",
+    this.#logger.info(SESSION_LOG.disconnected, {
+      component: LOG_COMPONENT.bridge,
       file: session.info.file.name,
       code,
       sessions: this.#sessions.size,
