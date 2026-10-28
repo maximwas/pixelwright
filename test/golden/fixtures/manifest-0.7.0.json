@@ -1,0 +1,1 @@
+{"api":"1.0.0","editorType":["figma","dev"],"id":"1691873879456586177","name":"Pixelwright","main":"build/main.js","ui":"build/ui.js","capabilities":["inspect"],"documentAccess":"dynamic-page","permissions":["teamlibrary"],"networkAccess":{"allowedDomains":["ws://localhost:18720"],"reasoning":"Connects to the Pixelwright MCP server running on this computer."}}
