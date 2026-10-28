@@ -65,10 +65,7 @@ export class McpEndpoint {
       annotations,
     };
 
-    server.registerTool(name, config, async (
-      args,
-      context,
-    ) => {
+    server.registerTool(name, config, async (args, context) => {
       const answer = await this.#runner.run({
         manifest,
         args,

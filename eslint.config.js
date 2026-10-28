@@ -75,8 +75,12 @@ const INJECTION = [
   },
 ];
 
-/** @stylistic's function-paren-newline for signatures only: as it is, it would also break every call of two arguments. */
+/**
+ * @stylistic's function-paren-newline for signatures only: declarations, methods and constructors, and functions not
+ * passed as an argument. As it is, it would also break every call of two arguments and every callback.
+ */
 const PAREN_NEWLINE = stylistic.rules["function-paren-newline"];
+const SIGNATURES = "FunctionDeclaration, FunctionExpression:not(.arguments), ArrowFunctionExpression:not(.arguments)";
 const LAYOUT = {
   rules: {
     "signature-paren-newline": {
@@ -84,7 +88,7 @@ const LAYOUT = {
       create(context) {
         const [check] = Object.values(PAREN_NEWLINE.create(context));
 
-        return { "FunctionDeclaration, FunctionExpression, ArrowFunctionExpression": check };
+        return { [SIGNATURES]: check };
       },
     },
   },

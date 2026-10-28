@@ -35,6 +35,8 @@ const EXPECTED: Record<string, string[]> = {
   "src/server/tools/beta/beta.tool.ts": [],
   "src/core/xml/index.ts": [],
   "src/core/kernel/names/slug.ts": [],
+  // Clean by rule: a callback argument keeps its parameters on one line.
+  "src/core/callback-params.ts": [],
 };
 
 /** The repo's ESLint config; project-structure takes its root from the folder above node_modules, so it moves here. */
@@ -109,10 +111,7 @@ describe("guard rails refuse each planted sample with exactly its rules", () => 
     expect([...found.keys()].sort()).toEqual(Object.keys(EXPECTED).sort());
   });
 
-  it.each(Object.entries(EXPECTED))("%s", (
-    file,
-    rules,
-  ) => {
+  it.each(Object.entries(EXPECTED))("%s", (file, rules) => {
     expect(found.get(file)).toEqual([...rules].sort());
   });
 });
