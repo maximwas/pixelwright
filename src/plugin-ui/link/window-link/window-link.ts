@@ -35,7 +35,10 @@ export class WindowLink implements LinkObserver {
 
   start(): void {
     this.#instanceId = bytesToHex(randomBytes(INSTANCE_ID_BYTES));
-    this.#view.mount((code) => this.#link.pair(code));
+    this.#view.mount(
+      (code) => this.#link.pair(code),
+      (on) => this.#allowEdits(on),
+    );
     this.#channel.onWindow((message) => this.#take(message));
     this.#channel.onServer((epoch, text) => this.#link.relay(epoch, text));
     this.#channel.start();
@@ -84,10 +87,29 @@ export class WindowLink implements LinkObserver {
     });
   }
 
+  /** The switch: main keeps it per file, and the next hello carries it. */
+  #allowEdits(on: boolean): void {
+    if (this.#context !== null) {
+      this.#context = {
+        ...this.#context,
+        allowEdits: on,
+      };
+    }
+
+    this.#channel.post({
+      ch: UI_CHANNEL_NAME.window,
+      d: {
+        type: WINDOW_MESSAGE.allowEdits,
+        on,
+      },
+    });
+  }
+
   /** Main's answer to ready: the link starts once, with the key and the context it carries. */
   #take(message: WindowMessage): void {
     if (message.type === WINDOW_MESSAGE.start && this.#context === null) {
       this.#context = message.context;
+      this.#view.showEdits(message.context.allowEdits);
       this.#link.start(message.key, this);
     }
   }

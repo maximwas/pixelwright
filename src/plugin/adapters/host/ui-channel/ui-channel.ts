@@ -11,6 +11,7 @@ import { type UiMessage, UiMessageSchema, type WindowMessage } from "@/shared/wi
 @injectable()
 export class UiChannel {
   #onWindow: (message: WindowMessage) => void = () => {};
+  #onServer: (epoch: number, text: string) => void = () => {};
 
   start(): void {
     figma.ui.on(UI_EVENT.message, (message: unknown) => this.#receive(message));
@@ -20,6 +21,11 @@ export class UiChannel {
     this.#onWindow = listener;
   }
 
+  /** A server frame the window relayed, with the epoch of the socket it came over. */
+  onServer(listener: (epoch: number, text: string) => void): void {
+    this.#onServer = listener;
+  }
+
   post(message: UiMessage): void {
     figma.ui.postMessage(message);
   }
@@ -27,9 +33,14 @@ export class UiChannel {
   #receive(data: unknown): void {
     const message = zod.safeParse(UiMessageSchema, data);
 
-    // shortcut: server frames have no taker until item 05 attaches ServerRpc to this channel; until then they drop here.
-    if (message.success && message.data.ch === UI_CHANNEL_NAME.window) {
+    if (!message.success) {
+      return;
+    }
+
+    if (message.data.ch === UI_CHANNEL_NAME.window) {
       this.#onWindow(message.data.d);
+    } else {
+      this.#onServer(message.data.e, message.data.d);
     }
   }
 }

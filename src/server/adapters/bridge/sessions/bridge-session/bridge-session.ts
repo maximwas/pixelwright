@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { ConnectedFile } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import type { ConnectedFile, ProbeResult } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { PluginRpc } from "@/server/adapters/bridge/plugin-rpc/plugin-rpc.ts";
 import type { SessionSocket } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.types.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
+import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
 import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 
 /**
@@ -11,6 +14,8 @@ import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 export class BridgeSession {
   readonly id = randomUUID();
   readonly info: PluginInfo;
+  /** The plugin's ops, over this session's socket (A§5.4). */
+  readonly rpc: PluginRpc;
   readonly #socket: SessionSocket;
   readonly #connected: number;
   readonly #lastVisible: number;
@@ -22,6 +27,7 @@ export class BridgeSession {
   ) {
     this.#socket = socket;
     this.info = info;
+    this.rpc = new PluginRpc(socket);
     this.#connected = connected;
     this.#lastVisible = info.visible ? connected : 0;
   }
@@ -32,6 +38,27 @@ export class BridgeSession {
     reason: string,
   ): void {
     this.#socket.close(code, reason);
+  }
+
+  /** status probe (T-021): one ping's round trip, rounded to the ms, or why it failed. */
+  async probe(): Promise<ProbeResult> {
+    const started = performance.now();
+
+    try {
+      await this.rpc.run(pingOp, {});
+
+      return {
+        ok: true,
+        ms: Math.round(performance.now() - started),
+        error: null,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        ms: null,
+        error: error instanceof PixelwrightError ? error.text() : String(error),
+      };
+    }
   }
 
   /** Whether a tool that names no file takes this one before `other`: in front last, else connected last. */

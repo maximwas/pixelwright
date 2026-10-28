@@ -26,6 +26,13 @@ export interface ConnectedFile {
   readonly pluginVersion: string;
 }
 
+/** status probe's answer (T-021): the active file's plugin answered a ping in `ms`, or why it did not. */
+export interface ProbeResult {
+  readonly ok: boolean;
+  readonly ms: number | null;
+  readonly error: string | null;
+}
+
 /** Where this server stands with the Figma plugins, as status shows it. */
 export interface PluginLinkState {
   readonly role: PluginLinkRole;
@@ -37,13 +44,15 @@ export interface PluginLinkState {
   readonly hint: string | null;
 }
 
-/** This server's way to the Figma plugins. Ops arrive with the bridge (items 03-05); status reads the state now. */
+/** This server's way to the Figma plugins. status reads its state and pings the active file's plugin. */
 export interface PluginLink {
   /** Takes the bridge up; a bridge that cannot start says why in its state instead of throwing. */
   start(): Promise<void>;
   /** Frees the port first, so another server can take it at once (S-013). */
   close(): Promise<void>;
   state(): PluginLinkState;
+  /** Pings the active file's plugin. */
+  probe(): Promise<ProbeResult>;
 }
 
 export const PLUGIN_LINK = new InjectionToken<PluginLink>("PluginLink");

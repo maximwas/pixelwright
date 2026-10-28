@@ -84,7 +84,9 @@
     "@needle-di/core": "1.2.1",
     "@noble/hashes": "2.4.0",
     "atomically": "2.1.1",
+    "birpc": "4.2.0",
     "close-with-grace": "2.5.0",
+    "p-timeout": "7.0.1",
     "pino": "10.4.0",
     "ws": "8.22.0",
     "zod": "4.6.7"

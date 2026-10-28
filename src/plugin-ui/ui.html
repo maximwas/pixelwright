@@ -55,6 +55,14 @@
       button {
         font: inherit;
       }
+      .edits {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .edits input {
+        flex: none;
+      }
     </style>
   </head>
   <body>
@@ -75,6 +83,7 @@
         <button type="submit">Pair</button>
       </form>
       <p id="pairing-note" class="detail" hidden></p>
+      <label class="edits"><input id="allow-edits" type="checkbox" /> Allow edits</label>
     </main>
     <script>
       /* ui.js */
