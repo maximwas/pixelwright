@@ -38,6 +38,7 @@ export class WindowLink implements LinkObserver {
     this.#view.mount(
       (code) => this.#link.pair(code),
       (on) => this.#allowEdits(on),
+      (on) => this.#visible(on),
     );
     this.#channel.onWindow((message) => this.#take(message));
     this.#channel.onServer((epoch, text) => this.#link.relay(epoch, text));
@@ -46,6 +47,7 @@ export class WindowLink implements LinkObserver {
       ch: UI_CHANNEL_NAME.window,
       d: { type: WINDOW_MESSAGE.ready },
     });
+    this.#visible(this.#view.visible());
   }
 
   info(): PluginInfo {
@@ -100,6 +102,17 @@ export class WindowLink implements LinkObserver {
       ch: UI_CHANNEL_NAME.window,
       d: {
         type: WINDOW_MESSAGE.allowEdits,
+        on,
+      },
+    });
+  }
+
+  /** Only the window's document knows whether its tab is in front: main hears it for the plugin info (S-012). */
+  #visible(on: boolean): void {
+    this.#channel.post({
+      ch: UI_CHANNEL_NAME.window,
+      d: {
+        type: WINDOW_MESSAGE.visible,
         on,
       },
     });

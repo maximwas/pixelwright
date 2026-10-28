@@ -25,6 +25,7 @@ export const WINDOW_EVENT = {
   submit: "submit",
   change: "change",
   visible: "visible",
+  visibilityChange: "visibilitychange",
 } as const;
 
 /** What the window says of the link, 0.7.0's words (P-041, P-044). */

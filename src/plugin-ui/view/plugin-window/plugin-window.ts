@@ -22,11 +22,17 @@ import { PAIRING_CODE_DIGITS } from "@/shared/protocol/protocol.constants.ts";
 export class PluginWindow {
   #parts: WindowParts | null = null;
 
-  /** Finds ui.html's elements; sends a typed code to `onPair` once it has its six digits, the switch to `onEdits`. */
+  /**
+   * Finds ui.html's elements; sends a typed code to `onPair` once it has its six digits, the switch to `onEdits`, and
+   * whether the window's tab is in front to `onVisible` each time that changes.
+   */
   mount(
     onPair: (code: string) => void,
     onEdits: (on: boolean) => void,
+    onVisible: (on: boolean) => void,
   ): void {
+    document.addEventListener(WINDOW_EVENT.visibilityChange, () => onVisible(this.visible()));
+
     const parts: WindowParts = {
       dot: this.#element(WINDOW_ELEMENT.dot),
       title: this.#element(WINDOW_ELEMENT.title),

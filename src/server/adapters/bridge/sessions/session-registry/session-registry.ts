@@ -117,6 +117,11 @@ export class SessionRegistry {
     );
   }
 
+  /** The session of that id, or undefined once its socket closed (S-042). */
+  find(id: string): BridgeSession | undefined {
+    return this.#sessions.get(id);
+  }
+
   /** The connected files, the active one marked. */
   files(): ConnectedFile[] {
     const active = this.active();

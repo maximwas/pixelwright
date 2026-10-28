@@ -1,8 +1,9 @@
 import { inject, injectable } from "@needle-di/core";
-import { PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link/plugin-link.constants.ts";
-import type { PluginLink, PluginLinkState, ProbeResult } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { LINK_TEXT, PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link/plugin-link.constants.ts";
+import type { ConnectedFile, PluginLink, PluginLinkState } from "@/core/ports/plugin-link/plugin-link.port.ts";
 import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints/status-hints.tokens.ts";
-import { NO_PROBE } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.constants.ts";
+import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 
 /** The link while the bridge is off (PIXELWRIGHT_PLUGIN_BRIDGE=off): no port is taken, no plugin reaches this server. */
@@ -18,8 +19,12 @@ export class NoBridge implements PluginLink {
 
   async close(): Promise<void> {}
 
-  async probe(): Promise<ProbeResult> {
-    return NO_PROBE;
+  files(): readonly ConnectedFile[] {
+    return [];
+  }
+
+  async request(): Promise<unknown> {
+    throw new PixelwrightError(ERROR_CODE.pluginNotConnected, LINK_TEXT.notConnected);
   }
 
   state(): PluginLinkState {

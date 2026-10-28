@@ -14,6 +14,7 @@ const FileSchema = zod.object({
   page: zod.string(),
   editorType: zod.string(),
   allowEdits: zod.boolean(),
+  visible: zod.boolean().check(zod.describe(STATUS_FIELD.visible)),
   active: zod.boolean(),
   pluginVersion: zod.string(),
 });

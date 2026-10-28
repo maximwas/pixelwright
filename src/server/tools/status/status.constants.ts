@@ -10,4 +10,12 @@ export const STATUS_TOOL = {
 export const STATUS_FIELD = {
   probe: "Also ping the active file's plugin and report the round trip.",
   key: "The file key of figma.com links; null when Figma gives none (see note).",
+  visible: "Its tab is the one in front in Figma; a file behind other tabs answers slowly.",
+} as const;
+
+/** Why files have no key, and where the model takes it from (T-023). */
+export const STATUS_NOTE = {
+  separator: ", ",
+  keyless: (names: string) =>
+    `Figma gives the file key only to private organization plugins, so ${names} has key null: when you need the key, ask the user for the file's link (Share, Copy link) and take the key from it.`,
 } as const;

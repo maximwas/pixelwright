@@ -36,7 +36,14 @@ export class ShutdownHooks {
       },
     );
 
-    process.stdin.once(STDIN_EVENT.end, () => hooks.close());
-    process.stdin.once(STDIN_EVENT.close, () => hooks.close());
+    // stdin says end, then close: the first one closes the server, once.
+    const closeOnce = () => {
+      process.stdin.off(STDIN_EVENT.end, closeOnce);
+      process.stdin.off(STDIN_EVENT.close, closeOnce);
+      hooks.close();
+    };
+
+    process.stdin.once(STDIN_EVENT.end, closeOnce);
+    process.stdin.once(STDIN_EVENT.close, closeOnce);
   }
 }

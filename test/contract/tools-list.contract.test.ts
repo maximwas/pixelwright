@@ -53,7 +53,7 @@ describe("the MCP contract", () => {
       expect(JSON.stringify(tool, null, 2)).toBe(JSON.stringify(entry, null, 2));
     }
 
-    expect(tools.map(({ name }) => name)).toEqual(["status"]);
+    expect(tools.map(({ name }) => name)).toEqual(["status", "selection_get"]);
   });
 
   it("answers status with role disabled and the hint, as structuredContent and the same JSON as text", async () => {

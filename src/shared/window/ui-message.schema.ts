@@ -30,6 +30,11 @@ const WindowMessageSchema = zod.discriminatedUnion(WINDOW_MESSAGE_FIELD, [
     type: zod.literal(WINDOW_MESSAGE.allowEdits),
     on: zod.boolean(),
   }),
+  /** The window's file tab came to the front or went behind: only the window's document knows (S-012, FX-010). */
+  zod.object({
+    type: zod.literal(WINDOW_MESSAGE.visible),
+    on: zod.boolean(),
+  }),
 ]);
 
 /**

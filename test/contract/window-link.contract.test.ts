@@ -40,6 +40,7 @@ class Frame {
   constructor() {
     vi.stubGlobal("document", {
       visibilityState: "visible",
+      addEventListener: () => undefined,
       getElementById: (id: string) => this.element(id),
     });
     vi.stubGlobal("window", {
@@ -101,6 +102,14 @@ describe("WindowLink", () => {
         ch: "window",
         d: { type: "ready" },
       },
+      // Only the window knows whether its tab is in front: main hears it at once (S-012).
+      {
+        ch: "window",
+        d: {
+          type: "visible",
+          on: true,
+        },
+      },
     ]);
 
     frame.fromMain({
@@ -118,7 +127,8 @@ describe("WindowLink", () => {
     frame.element("code").value = ` ${bridge.code()} `;
     frame.element("pairing").submit();
 
-    const saved = frame.posted.at(-1);
+    // The session's opened frame for main comes after it.
+    const saved = frame.posted.find((message) => message.ch === "window" && message.d.type === "save_pairing");
     const key = saved?.ch === "window" && saved.d.type === "save_pairing" ? saved.d.key : null;
 
     expect(key).not.toBeNull();

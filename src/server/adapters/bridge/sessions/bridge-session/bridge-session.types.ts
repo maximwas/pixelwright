@@ -4,3 +4,8 @@ export interface SessionSocket {
   send(text: string): void;
   close(code: number, reason: string): void;
 }
+
+/** The registry's sequence: connecting and coming to the front take the next position, so sessions never tie. */
+export interface SessionSequence {
+  next(): number;
+}

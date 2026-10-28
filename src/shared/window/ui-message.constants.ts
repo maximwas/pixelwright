@@ -22,4 +22,11 @@ export const WINDOW_MESSAGE = {
   start: "start",
   savePairing: "save_pairing",
   allowEdits: "allow_edits",
+  visible: "visible",
 } as const;
+
+/**
+ * The frame the window relays to main when a socket's session starts, before the server sends anything: main opens its
+ * RPC peer for that epoch at once, so plugin info events reach the new socket (S-012). It is not an RPC frame.
+ */
+export const LINK_OPENED_FRAME = "";

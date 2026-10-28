@@ -45,17 +45,21 @@ export class ToolRunner {
     return step === undefined ? this.#execute(call) : step.handle(call, (next) => this.#handle(next, index + 1));
   }
 
-  async #execute({ manifest, args, callId, signal }: ToolCall): Promise<ToolAnswer> {
+  async #execute({ manifest, args, callId, signal, session }: ToolCall): Promise<ToolAnswer> {
     const logger = this.#logger.child({
       component: LOG_COMPONENT.tool,
       tool: manifest.name,
       callId: callId.value,
     });
-    const tool = await this.#tools.create(manifest, {
-      callId,
-      logger,
-      signal,
-    });
+    const tool = await this.#tools.create(
+      manifest,
+      {
+        callId,
+        logger,
+        signal,
+      },
+      session,
+    );
 
     return tool.execute(args);
   }

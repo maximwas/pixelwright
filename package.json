@@ -27,7 +27,7 @@
     "try": "tsx scripts/try.ts",
     "try:hello": "tsx scripts/try-hello.ts",
     "test": "vitest run --project unit --project contract",
-    "test:live": "vitest run --project live",
+    "test:live": "pnpm build && vitest run --project live",
     "check:deps": "depcruise src scripts test",
     "size": "size-limit",
     "gates": "mkdir -p node_modules/.cache/gates && for gate in lint typecheck test build size; do pnpm -s $gate > node_modules/.cache/gates/$gate.log 2>&1 && echo \"$gate ok\" || { echo \"$gate FAILED, full log: node_modules/.cache/gates/$gate.log\"; tail -30 node_modules/.cache/gates/$gate.log; exit 1; }; done; grep -h -E '^ +Tests ' node_modules/.cache/gates/test.log"
@@ -86,6 +86,7 @@
     "atomically": "2.1.1",
     "birpc": "4.2.0",
     "close-with-grace": "2.5.0",
+    "nanoevents": "10.0.0",
     "p-timeout": "7.0.1",
     "pino": "10.4.0",
     "ws": "8.22.0",

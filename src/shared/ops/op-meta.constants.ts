@@ -12,4 +12,5 @@ export const OP_TURN = {
 /** Every op's name: the catalog's keys and the `run` call's first argument. */
 export const OP_NAME = {
   ping: "ping",
+  selection: "selection",
 } as const;

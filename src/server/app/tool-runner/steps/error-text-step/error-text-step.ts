@@ -7,6 +7,7 @@ import type {
   ToolCallStep,
   ToolStepNext,
 } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
+import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
 
 /**
@@ -38,8 +39,11 @@ export class ErrorTextStep implements ToolCallStep {
     call: ToolCall,
     error: unknown,
   ): string {
+    // A timeout names the tool (A§6.5): the op's own words say whether a write may still run.
     if (error instanceof PixelwrightError) {
-      return error.text();
+      return error.code === ERROR_CODE.timeout
+        ? ERROR_TEXT.timedOut(error.code, call.manifest.name, error.message)
+        : error.text();
     }
 
     const firstLine = (error instanceof Error ? error.message : String(error)).split(ERROR_TEXT.lineBreak)[0];

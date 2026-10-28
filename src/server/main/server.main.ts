@@ -13,9 +13,16 @@ import { LOG_DESTINATIONS, LOG_SETTINGS } from "@/server/adapters/logging/loggin
 import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 import { SharedLogFile } from "@/server/adapters/logging/shared-log-file/shared-log-file.ts";
 import { StdoutGuard } from "@/server/adapters/mcp/stdout-guard/stdout-guard.ts";
+import { OP_CALL_STEPS } from "@/server/app/sessions/plugin-session/plugin-session.tokens.ts";
+import { PLUGIN_SESSIONS, PluginSessions } from "@/server/app/sessions/plugin-sessions/plugin-sessions.ts";
+import { OpLogStep } from "@/server/app/sessions/steps/op-log-step/op-log-step.ts";
+import { OpResultStep } from "@/server/app/sessions/steps/op-result-step/op-result-step.ts";
+import { OpTimerStep } from "@/server/app/sessions/steps/op-timer-step/op-timer-step.ts";
+import { TARGET_RESOLVER, TargetResolver } from "@/server/app/sessions/target-resolver/target-resolver.ts";
 import { CallLogStep } from "@/server/app/tool-runner/steps/call-log-step/call-log-step.ts";
 import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step/error-text-step.ts";
 import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step/output-check-step.ts";
+import { TargetStep } from "@/server/app/tool-runner/steps/target-step/target-step.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
 import { ToolRunner } from "@/server/app/tool-runner/tool-runner/tool-runner.ts";
 import { BridgeProviders } from "@/server/main/bridge-providers/bridge-providers.ts";
@@ -136,27 +143,43 @@ export class ServerMain {
       });
   }
 
+  /** The plugin sessions (A§6.1): target resolution, and each op's chain, outermost first: log, timeout text, result. */
+  #bindSessions(container: Container): void {
+    for (const step of [OpLogStep, OpTimerStep, OpResultStep]) {
+      container.bind({
+        provide: OP_CALL_STEPS,
+        multi: true,
+        useClass: step,
+      });
+    }
+
+    container
+      .bind({
+        provide: TARGET_RESOLVER,
+        useClass: TargetResolver,
+      })
+      .bind({
+        provide: PLUGIN_SESSIONS,
+        useClass: PluginSessions,
+      });
+  }
+
   #bindServices(container: Container): void {
+    this.#bindSessions(container);
+
+    // The runner's chain, outermost first: error text, call log, target, output check.
+    for (const step of [ErrorTextStep, CallLogStep, TargetStep, OutputCheckStep]) {
+      container.bind({
+        provide: TOOL_CALL_STEPS,
+        multi: true,
+        useClass: step,
+      });
+    }
+
     container
       .bind({
         provide: TOOL_CATALOG,
         useClass: ToolCatalog,
-      })
-      // The runner's chain, outermost first: error text, call log, output check.
-      .bind({
-        provide: TOOL_CALL_STEPS,
-        multi: true,
-        useClass: ErrorTextStep,
-      })
-      .bind({
-        provide: TOOL_CALL_STEPS,
-        multi: true,
-        useClass: CallLogStep,
-      })
-      .bind({
-        provide: TOOL_CALL_STEPS,
-        multi: true,
-        useClass: OutputCheckStep,
       })
       .bind({
         provide: TOOL_FACTORY,

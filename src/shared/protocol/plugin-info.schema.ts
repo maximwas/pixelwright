@@ -26,3 +26,11 @@ export const PluginInfoSchema = zod.object({
 });
 
 export type PluginInfo = zod.output<typeof PluginInfoSchema>;
+
+/**
+ * A plugin info event (S-012): what main knows of the file when its page, Allow edits or tab changes. The window's
+ * instance id stays the hello's, so main never needs it.
+ */
+export const PluginInfoUpdateSchema = zod.omit(PluginInfoSchema, { instanceId: true });
+
+export type PluginInfoUpdate = zod.output<typeof PluginInfoUpdateSchema>;
