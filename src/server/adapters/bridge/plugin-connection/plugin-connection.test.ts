@@ -213,6 +213,29 @@ describe("PluginConnection, a paired plugin", () => {
     ]);
   });
 
+  it("closes a seventeenth file with 4429, yet lets a connected window reconnect", () => {
+    const probe = new HandshakeProbe();
+    const key = probe.keys.addKey();
+    const admit = (instanceId: string) => {
+      const socket = probe.connect(hello(key.id, instanceId));
+
+      socket.receive(auth(socket, key.secret));
+
+      return socket;
+    };
+
+    for (let index = 0; index < 16; index += 1) {
+      admit(`window-${index}`);
+    }
+
+    expect(admit("window-16").closed).toEqual({
+      code: 4429,
+      reason: "too many plugin sessions",
+    });
+    expect(admit("window-3").closed).toBeNull();
+    expect(probe.sessions.files()).toHaveLength(16);
+  });
+
   it("closes a plugin whose proof is wrong with 4401", () => {
     const probe = new HandshakeProbe();
     const socket = probe.connect(hello(probe.keys.addKey().id));
