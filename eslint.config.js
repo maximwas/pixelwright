@@ -5,7 +5,7 @@ import figmaPlugins from "@figma/eslint-plugin-figma-plugins";
 import stylistic from "@stylistic/eslint-plugin";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
-import { builtinRules } from "eslint/use-at-your-own-risk";
+import createNoRestrictedSyntax from "eslint-no-restricted/syntax";
 import antfu from "eslint-plugin-antfu";
 import noRelativeImportPaths from "eslint-plugin-no-relative-import-paths";
 import {
@@ -80,7 +80,7 @@ const INJECTION = [
 /**
  * Where a string literal names code instead of holding a value: module specifiers and import attributes, property keys
  * and `in`, typeof checks, and an InjectionToken's description (a debug name needle-di prints when a provider is
- * missing; it never leaves the process). A literal type is left to TYPE_LITERAL, so it is reported once.
+ * missing; it never leaves the process). A literal type is left to shape/no-string-type, so it is reported once.
  */
 const NOT_VALUES = [
   "ImportDeclaration > Literal.source",
@@ -100,24 +100,31 @@ const NOT_VALUES = [
   "Property[key.name='component'] > Literal.value",
 ];
 
-/** No string in code: every text lives in an `as const` object of a .constants.ts. */
-const STRING_LITERALS = [
+/**
+ * No string in code: every text lives in an `as const` object of a .constants.ts. One named rule per kind
+ * (eslint-no-restricted), so they compose apart from no-restricted-syntax and each has its own severity.
+ */
+const SHAPE = createNoRestrictedSyntax(
+  "shape",
   {
+    name: "no-string-literal",
     selector: `Literal[raw=/^['"]/]:not(${NOT_VALUES.join(", ")})`,
     message: "No string in code: take it from an `as const` object in the class's or topic's .constants.ts.",
   },
   {
+    name: "no-string-type",
     selector: `TSLiteralType > Literal[raw=/^['"]/]:not(TSImportType Literal)`,
     message: "No hand-written string type: infer it from the schema, or write (typeof X)[keyof typeof X].",
   },
   {
+    name: "no-text-template",
     selector: "TemplateLiteral:has(> TemplateElement[value.raw!=''])",
     message: "Text with values is a constant arrow in a .constants.ts object: portTaken: (port: number) => `...`.",
   },
-];
+);
 
-/** ESLint's no-restricted-syntax under its own name, so the literal list composes apart from the other bans. */
-const SHAPE = { rules: { "no-string-literal": builtinRules.get("no-restricted-syntax") } };
+/** Every shape rule at one level. */
+const SHAPE_RULES = (level) => Object.fromEntries(Object.keys(SHAPE.rules).map((name) => [`shape/${name}`, level]));
 
 /** Phase A of the shape pass: item 03 is still writing these; they take both rules in phase B. */
 const ITEM_03 = [
@@ -352,7 +359,7 @@ export default [
     files: ["src/**/*.ts"],
     ignores: [...TESTS, "**/*.constants.ts"],
     plugins: { shape: SHAPE },
-    rules: { "shape/no-string-literal": ["warn", ...STRING_LITERALS] },
+    rules: SHAPE_RULES("error"),
   },
   // Imports across folders go through `@/` (the src root); `./` stays for the folder itself and below. A path out of
   // src (package.json) has no alias and stays relative. `eslint --fix` rewrites the rest.
@@ -382,7 +389,11 @@ export default [
     rules: {
       "no-restricted-imports": [
         "error",
-        { patterns: [{ regex: "^@/", message: "scripts/ run under raw node, which cannot resolve @/: import relatively." }] },
+        {
+          patterns: [
+            { regex: "^@/", message: "scripts/ run under raw node, which cannot resolve @/: import relatively." },
+          ],
+        },
       ],
     },
   },
@@ -391,7 +402,7 @@ export default [
   {
     files: ITEM_03,
     ignores: [...TESTS, "**/*.constants.ts"],
-    rules: { "shape/no-string-literal": "warn" },
+    rules: SHAPE_RULES("warn"),
   },
   {
     files: ITEM_03,

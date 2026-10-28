@@ -32,7 +32,11 @@ const EXPECTED: Record<string, string[]> = {
   "src/server/app/service-locator/service-locator.ts": ["no-restricted-syntax"],
   "src/server/app/injected-class/injected-class.ts": ["no-restricted-syntax"],
   "src/server/app/loose-class.ts": ["project-structure/folder-structure"],
-  "src/core/welcome-text/welcome-text.ts": ["shape/no-string-literal"],
+  "src/core/welcome-text/welcome-text.ts": [
+    "shape/no-string-literal",
+    "shape/no-string-type",
+    "shape/no-text-template",
+  ],
   "src/core/kernel/names/slug-length/slug-length.ts": ["no-relative-import-paths/no-relative-import-paths"],
   "test/support/slug-reach/slug-reach.ts": ["no-restricted-imports"],
   "src/core/lost-import/lost-import.ts": ["no-unresolved-alias"],
@@ -78,7 +82,9 @@ async function eslintFindings(): Promise<Map<string, Set<string>>> {
   const findings = new Map<string, Set<string>>();
 
   for (const result of await eslint.lintFiles(["src", "test"])) {
-    const rules = result.messages.map((message) => message.ruleId ?? `fatal: ${message.message}`);
+    // Errors only: a rule turned down to a warning no longer refuses anything, so its case fails.
+    const errors = result.messages.filter((message) => message.severity === 2);
+    const rules = errors.map((message) => message.ruleId ?? `fatal: ${message.message}`);
 
     findings.set(relative(SAMPLES, result.filePath), new Set(rules));
   }

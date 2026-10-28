@@ -1,6 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { pino } from "pino";
-import { REDACTED, REDACTED_PATHS } from "@/server/adapters/logging/logging.constants.ts";
+import { LOG_LEVEL, REDACTED, REDACTED_PATHS } from "@/server/adapters/logging/logging.constants.ts";
 import { LOG_DESTINATIONS, LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
 import { PinoLines } from "@/server/adapters/logging/pino-lines/pino-lines.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
@@ -35,7 +35,7 @@ export class PinoLogger extends PinoLines {
         pino.multistream(
           destinations.map((stream) => ({
             stream,
-            level: "trace",
+            level: LOG_LEVEL.trace,
           })),
         ),
       ),

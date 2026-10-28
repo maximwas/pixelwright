@@ -1,4 +1,5 @@
 import { inspect } from "node:util";
+import { STDOUT_GUARD } from "./stdout-guard.constants.ts";
 
 /**
  * stdout carries MCP JSON-RPC only (S-056), so console output goes to stderr. Libraries log through the global console
@@ -27,7 +28,7 @@ export class StdoutGuard {
       item,
       options,
     ) => {
-      this.#stderr.write(`${inspect(item, options)}\n`);
+      this.#stderr.write(STDOUT_GUARD.line(inspect(item, options)));
     };
   }
 }

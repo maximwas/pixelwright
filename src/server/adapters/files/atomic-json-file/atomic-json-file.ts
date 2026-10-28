@@ -6,6 +6,8 @@ import { writeFileSync as writeAtomically } from "atomically";
 import * as zod from "zod/mini";
 import type { JsonFile } from "@/core/ports/json-file/json-file.port.ts";
 import { LOGGER } from "@/core/ports/logger/logger.port.ts";
+import { FILE_ERROR } from "@/server/adapters/files/file-error.constants.ts";
+import { ATOMIC_JSON_FILE, ATOMIC_JSON_FILE_LOG } from "./atomic-json-file.constants.ts";
 
 /**
  * JSON files of the home folder, private to the user (folder 0700, file 0600). A read never throws: a missing file is
@@ -39,10 +41,12 @@ export class AtomicJsonFile implements JsonFile {
       return parsed.data;
     }
 
-    this.#logger.warn("file does not match its schema: read as the default", {
+    this.#logger.warn(ATOMIC_JSON_FILE_LOG.offSchema, {
       component: "server",
       file: path,
-      issues: parsed.error.issues.map(({ path: at, message }) => `${at.join(".") || "(top)"}: ${message}`),
+      issues: parsed.error.issues.map(({ path: at, message }) =>
+        ATOMIC_JSON_FILE_LOG.issue(at.join(ATOMIC_JSON_FILE_LOG.pathSeparator) || ATOMIC_JSON_FILE_LOG.top, message),
+      ),
     });
 
     return fallback;
@@ -61,17 +65,17 @@ export class AtomicJsonFile implements JsonFile {
   ): void {
     this.#writing(path, () => {
       // link(2) of a private temp file is an atomic "create if absent": two servers starting at once agree on one file.
-      const temp = `${path}.${randomUUID()}.tmp`;
+      const temp = ATOMIC_JSON_FILE.temp(path, randomUUID());
 
       writeFileSync(temp, this.#text(initial), {
         mode: 0o600,
-        flag: "wx",
+        flag: ATOMIC_JSON_FILE.createFlag,
       });
 
       try {
         linkSync(temp, path);
       } catch (error) {
-        if (this.#code(error) !== "EEXIST") {
+        if (this.#code(error) !== FILE_ERROR.exists) {
           throw error;
         }
 
@@ -87,9 +91,9 @@ export class AtomicJsonFile implements JsonFile {
     let text: string;
 
     try {
-      text = readFileSync(path, "utf8");
+      text = readFileSync(path, ATOMIC_JSON_FILE.encoding);
     } catch (error) {
-      if (this.#code(error) !== "ENOENT") {
+      if (this.#code(error) !== FILE_ERROR.missing) {
         this.#unreadable(path, this.#code(error));
       }
 
@@ -100,7 +104,7 @@ export class AtomicJsonFile implements JsonFile {
       return JSON.parse(text);
     } catch {
       // JSON.parse's message quotes the text around the error: never logged.
-      this.#unreadable(path, "not JSON");
+      this.#unreadable(path, ATOMIC_JSON_FILE_LOG.notJson);
 
       return undefined;
     }
@@ -118,7 +122,7 @@ export class AtomicJsonFile implements JsonFile {
       });
       write();
     } catch (error) {
-      this.#logger.warn("file could not be written", {
+      this.#logger.warn(ATOMIC_JSON_FILE_LOG.unwritten, {
         component: "server",
         file: path,
         reason: this.#code(error),
@@ -139,7 +143,7 @@ export class AtomicJsonFile implements JsonFile {
     path: string,
     reason: string,
   ): void {
-    this.#logger.warn("file could not be read: read as the default", {
+    this.#logger.warn(ATOMIC_JSON_FILE_LOG.unreadable, {
       component: "server",
       file: path,
       reason,
@@ -147,10 +151,10 @@ export class AtomicJsonFile implements JsonFile {
   }
 
   #text(value: unknown): string {
-    return `${JSON.stringify(value, null, 2)}\n`;
+    return ATOMIC_JSON_FILE.text(JSON.stringify(value, null, 2));
   }
 
   #code(error: unknown): string {
-    return error instanceof Error && "code" in error ? String(error.code) : "unknown";
+    return error instanceof Error && "code" in error ? String(error.code) : ATOMIC_JSON_FILE_LOG.unknownCode;
   }
 }

@@ -1,6 +1,7 @@
 import type { Logger } from "@/core/ports/logger/logger.port.ts";
 import type { CallId } from "@/server/app/tool-runner/call-id/call-id.ts";
 import type { Tool } from "@/server/app/tool-runner/tool/tool.ts";
+import type { TOOL_CONTENT_TYPE } from "@/server/app/tool-runner/tool-content.constants.ts";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 
 /** A tool call as the MCP endpoint hands it over: arguments already checked by the SDK against the input schema. */
@@ -17,7 +18,7 @@ export interface ToolCall extends ToolRequest {
 
 /** What a call answers, in the shape of an MCP CallToolResult. */
 export interface ToolAnswer {
-  readonly content: readonly { readonly type: "text"; readonly text: string }[];
+  readonly content: readonly { readonly type: typeof TOOL_CONTENT_TYPE.text; readonly text: string }[];
   readonly structuredContent?: Readonly<Record<string, unknown>>;
   readonly isError?: boolean;
 }

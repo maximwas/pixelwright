@@ -8,6 +8,7 @@ import type {
   ToolStepNext,
 } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
+import { CALL_LOG } from "./call-log-step.constants.ts";
 
 /**
  * The tool-call log (S-058): one line per call with its tool, callId, the file it named and ms. An expected failure
@@ -36,7 +37,7 @@ export class CallLogStep implements ToolCallStep {
     try {
       const answer = await next(call);
 
-      this.#logger.info(`tool ${name}`, this.#fields(call, started));
+      this.#logger.info(CALL_LOG.called(name), this.#fields(call, started));
 
       return answer;
     } catch (error) {
@@ -46,9 +47,9 @@ export class CallLogStep implements ToolCallStep {
       };
 
       if (error instanceof PixelwrightError) {
-        this.#logger.warn(`tool ${name} failed`, fields);
+        this.#logger.warn(CALL_LOG.failed(name), fields);
       } else {
-        this.#logger.error(`tool ${name} failed`, fields);
+        this.#logger.error(CALL_LOG.failed(name), fields);
       }
 
       throw error;

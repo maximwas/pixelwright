@@ -1,4 +1,5 @@
 import type { ErrorCode } from "@/shared/errors/error-code.constants.ts";
+import { PIXELWRIGHT_ERROR } from "./pixelwright-error.constants.ts";
 
 /** An expected failure: the call cannot answer, and its code tells the model what to do next (T-003). */
 export class PixelwrightError extends Error {
@@ -10,12 +11,12 @@ export class PixelwrightError extends Error {
     options?: ErrorOptions,
   ) {
     super(message, options);
-    this.name = "PixelwrightError";
+    this.name = PIXELWRIGHT_ERROR.name;
     this.code = code;
   }
 
   /** The text the MCP client shows: the code first. */
   text(): string {
-    return `${this.code}: ${this.message}`;
+    return PIXELWRIGHT_ERROR.text(this.code, this.message);
   }
 }

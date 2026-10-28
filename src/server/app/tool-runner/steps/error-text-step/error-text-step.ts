@@ -1,4 +1,5 @@
 import { injectable } from "@needle-di/core";
+import { TOOL_CONTENT_TYPE } from "@/server/app/tool-runner/tool-content.constants.ts";
 import type {
   ToolAnswer,
   ToolCall,
@@ -6,6 +7,7 @@ import type {
   ToolStepNext,
 } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
+import { ERROR_TEXT } from "./error-text-step.constants.ts";
 
 /**
  * The outermost step: a failed call becomes an isError answer. An expected failure reads `CODE: message`, so the model
@@ -24,7 +26,7 @@ export class ErrorTextStep implements ToolCallStep {
         isError: true,
         content: [
           {
-            type: "text",
+            type: TOOL_CONTENT_TYPE.text,
             text: this.#text(call, error),
           },
         ],
@@ -40,8 +42,8 @@ export class ErrorTextStep implements ToolCallStep {
       return error.text();
     }
 
-    const firstLine = (error instanceof Error ? error.message : String(error)).split("\n")[0];
+    const firstLine = (error instanceof Error ? error.message : String(error)).split(ERROR_TEXT.lineBreak)[0];
 
-    return `Internal error in ${call.manifest.name}: ${firstLine}; see pixelwright logs`;
+    return ERROR_TEXT.internal(call.manifest.name, firstLine);
   }
 }
