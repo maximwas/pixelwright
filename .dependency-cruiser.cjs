@@ -12,8 +12,6 @@ module.exports = {
     rule("shared-is-the-floor", { path: "^src/shared/" }, { path: "^src/", pathNot: "^src/shared/" }),
     rule("core-on-shared", { path: "^src/core/" }, { path: "^src/", pathNot: "^src/(core|shared)/" }),
     rule("kernel-on-nothing", { path: "^src/core/kernel/" }, { path: "^src/core/", pathNot: "^src/core/kernel/" }),
-    rule("core-domains-by-index", { path: "^src/core/([^/]+)/" },
-      { path: "^src/core/[^/]+/.+", pathNot: ["^src/core/$1/", "^src/core/[^/]+/index\\.ts$"] }),
     rule("no-node-without-node", { path: "^src/(shared|core|plugin|plugin-ui)/" }, { dependencyTypes: ["core"] }),
     rule("no-server-packages", { path: "^src/(shared|core|plugin|plugin-ui)/" }, { path: SERVER_ONLY }),
     rule("server-app", { path: "^src/server/app/" }, { path: "^src/", pathNot: "^src/(server/app|core|shared)/" }),

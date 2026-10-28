@@ -190,7 +190,7 @@ export class PluginConnection {
 
     this.#state = { name: CONNECTION_STATE.pairing, info };
     this.#expire(PAIRING_CODE_TTL_MS, CLOSE_REASON.codeTimeout);
-    this.#send({ type: HANDSHAKE_TYPE.pairingRequired, ...this.#services.pairing.prompt(reason) });
+    this.#promptPairing(reason);
   }
 
   /** The plugin's proof, over the server's nonce and its own: right lets it in, anything else is 4401. */
@@ -211,10 +211,7 @@ export class PluginConnection {
     const check = this.#services.pairing.check(code);
 
     if (check.outcome !== CODE_CHECK.ok) {
-      this.#send({
-        type: HANDSHAKE_TYPE.pairingRequired,
-        ...this.#services.pairing.prompt(NOT_PAIRED_REASONS[check.outcome]),
-      });
+      this.#promptPairing(NOT_PAIRED_REASONS[check.outcome]);
 
       return;
     }
@@ -284,6 +281,11 @@ export class PluginConnection {
   #expire(ms: number, reason: string): void {
     clearTimeout(this.#deadline);
     this.#deadline = setTimeout(() => this.close(CLOSE_CODE.helloTimeout, reason), ms);
+  }
+
+  /** Asks the window for the code: why, and the tries left (S-022). */
+  #promptPairing(reason: PairingReason): void {
+    this.#send({ type: HANDSHAKE_TYPE.pairingRequired, ...this.#services.pairing.prompt(reason) });
   }
 
   #send(frame: ServerHandshake): void {

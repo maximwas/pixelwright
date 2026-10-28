@@ -10,7 +10,7 @@ import { UI_CHANNEL_NAME, WINDOW_MESSAGE } from "@/shared/window/ui-message.cons
 import type { PluginContext, WindowMessage } from "@/shared/window/ui-message.schema.ts";
 
 /**
- * The window's side of the link (Observer of SocketLink): it says ready, connects once main handed over the stored key
+ * The window's side of the link (listener of SocketLink): it says ready, connects once main handed over the stored key
  * and the file's context (by message, never through showUI, FX-001), shows each link state, gives main a key a pairing
  * issued, and relays session frames both ways stamped with their socket's epoch.
  */

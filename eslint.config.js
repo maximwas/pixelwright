@@ -179,13 +179,12 @@ const LIMITS = {
 };
 
 /**
- * File names of K-architecture 9.1: `x.ts`, `x.<suffix>.ts`, tests beside them, `index.ts`, `data/*.json`. src/: one
+ * File names of K-architecture 9.1: `x.ts`, `x.<suffix>.ts`, tests beside them, `data/*.json`. src/: one
  * folder per topic. A topic folder holds its class files loose, each with its token and types (config/config-reader.ts,
  * config-reader.schema.ts, config-reader.test.ts), one constants file named after the folder, a layer's catalog, a
  * composition root; a tool or an operation keeps a folder of its own.
  */
 const FILES = [
-  { name: "index.ts" },
   { name: "{kebab-case}(.{suffix})?(.test)?.ts" },
   { name: "{kebab-case}.(html|md)" },
   { name: "data", children: [{ name: "{kebab-case}.json" }] },
@@ -201,12 +200,7 @@ const FOLDER_STRUCTURE = createFolderStructure({
     folder: { name: "{kebab-case}", children: [...FILES, { ruleId: "folder" }] },
     // A root holds its entry points only, and a root's composition test; everything else lives in folders under it.
     entryRoot: {
-      children: [
-        { name: "(bin|{kebab-case}.main)(.test)?.ts" },
-        { name: "{kebab-case}.html" },
-        { name: "index.ts" },
-        { ruleId: "folder" },
-      ],
+      children: [{ name: "(bin|{kebab-case}.main)(.test)?.ts" }, { name: "{kebab-case}.html" }, { ruleId: "folder" }],
     },
   },
 });

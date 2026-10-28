@@ -79,7 +79,7 @@ export class PluginBridge implements PluginLink {
   /** A handed-over server's tools say to restart it, not that no file is open (S-034). */
   files(): readonly ConnectedFile[] {
     if (this.#role === PLUGIN_LINK_ROLE.handedOver) {
-      throw new PixelwrightError(ERROR_CODE.pluginNotConnected, BRIDGE_ROLE_HINT.handedOver);
+      throw this.#handedOver();
     }
 
     return this.#role === PLUGIN_LINK_ROLE.owner ? this.#owner.files() : this.#peer.files();
@@ -87,10 +87,14 @@ export class PluginBridge implements PluginLink {
 
   request(request: OpRequest): Promise<unknown> {
     if (this.#role === PLUGIN_LINK_ROLE.handedOver) {
-      return Promise.reject(new PixelwrightError(ERROR_CODE.pluginNotConnected, BRIDGE_ROLE_HINT.handedOver));
+      return Promise.reject(this.#handedOver());
     }
 
     return this.#role === PLUGIN_LINK_ROLE.owner ? this.#owner.request(request) : this.#peer.request(request);
+  }
+
+  #handedOver(): PixelwrightError {
+    return new PixelwrightError(ERROR_CODE.pluginNotConnected, BRIDGE_ROLE_HINT.handedOver);
   }
 
   /** The port if it is free, else the owner that holds it; else unavailable, and again later. */
