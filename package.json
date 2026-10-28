@@ -29,7 +29,8 @@
     "test": "vitest run --project unit --project contract",
     "test:live": "vitest run --project live",
     "check:deps": "depcruise src scripts test",
-    "size": "size-limit"
+    "size": "size-limit",
+    "gates": "mkdir -p node_modules/.cache/gates && for gate in lint typecheck test build size; do pnpm -s $gate > node_modules/.cache/gates/$gate.log 2>&1 && echo \"$gate ok\" || { echo \"$gate FAILED, full log: node_modules/.cache/gates/$gate.log\"; tail -30 node_modules/.cache/gates/$gate.log; exit 1; }; done; grep -h -E '^ +Tests ' node_modules/.cache/gates/test.log"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint && pnpm typecheck",

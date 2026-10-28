@@ -8,5 +8,6 @@
     "scripts/*.ts"
   ],
   "project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
-  "ignore": ["old/**", "test/guards/samples/**"]
+  "ignore": ["old/**", "test/guards/samples/**"],
+  "ignoreBinaries": ["tail"]
 }
