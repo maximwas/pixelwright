@@ -1,0 +1,11 @@
+# The root graph is for the 0.8.0 code only; old/ keeps its own graph in old/graphify-out/.
+old/
+dist/
+node_modules/
+research/
+# Golden data is copied from old/ byte for byte: data, not code.
+test/golden/fixtures/
+test/golden/__golden__/
+test/golden/cases/
+# Planted rule violations for the guards test: they would show up as callers of real modules.
+test/guards/samples/

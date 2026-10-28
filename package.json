@@ -1,0 +1,62 @@
+{
+  "name": "pixelwright",
+  "version": "0.8.0-dev.0",
+  "description": "Open-source MCP server that lets AI agents read and edit Figma files through a Figma plugin: no REST API, no token, no seat quota. Unofficial, not affiliated with Figma.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "pixelwright": "./dist/bin.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.11.0"
+  },
+  "packageManager": "pnpm@12.14.0",
+  "scripts": {
+    "prepare": "simple-git-hooks",
+    "lint": "pnpm check:deps && biome check . && eslint . && knip && node scripts/check-names.ts",
+    "format": "biome check --write . && eslint --fix .",
+    "typecheck": "tsc -b",
+    "test": "vitest run --project unit --project contract",
+    "test:live": "vitest run --project live",
+    "check:deps": "depcruise src scripts test",
+    "size": "size-limit"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint && pnpm typecheck"
+  },
+  "size-limit": [
+    {
+      "name": "plugin main thread",
+      "path": "dist/plugin/main.js",
+      "limit": "450 KB",
+      "gzip": false
+    },
+    {
+      "name": "plugin window",
+      "path": "dist/plugin/ui.html",
+      "limit": "160 KB",
+      "gzip": false
+    }
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "2.6.3",
+    "@figma/eslint-plugin-figma-plugins": "1.0.0",
+    "@figma/plugin-typings": "1.142.0",
+    "@size-limit/file": "14.3.0",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "@types/node": "26.6.5",
+    "@typescript-eslint/parser": "8.72.1",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "dependency-cruiser": "18.7.0",
+    "eslint": "10.13.0",
+    "eslint-plugin-project-structure": "3.14.5",
+    "knip": "6.43.0",
+    "simple-git-hooks": "2.14.0",
+    "size-limit": "14.3.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "vitest": "5.0.5"
+  }
+}
