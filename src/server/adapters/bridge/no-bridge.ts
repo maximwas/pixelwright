@@ -1,6 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { LINK_TEXT, PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link.constants.ts";
-import type { ConnectedFile, PluginLink, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
+import type { ConnectedFile, PluginLink, PluginLinkRole, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
 import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
@@ -27,7 +27,11 @@ export class NoBridge implements PluginLink {
     throw new PixelwrightError(ERROR_CODE.pluginNotConnected, LINK_TEXT.notConnected);
   }
 
-  state(): PluginLinkState {
+  role(): PluginLinkRole {
+    return PLUGIN_LINK_ROLE.disabled;
+  }
+
+  async state(): Promise<PluginLinkState> {
     return {
       role: PLUGIN_LINK_ROLE.disabled,
       port: CHANNEL.port,

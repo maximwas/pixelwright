@@ -15,23 +15,22 @@ const ConnectedFileSchema = zod.object({
   pluginVersion: zod.string(),
 });
 
-/** What the owner tells its peers on every change (S-033): its files, and the pairing code it made. */
-const PeerStatusSchema = zod.object({
-  files: zod.array(ConnectedFileSchema),
-  pairing: zod.nullable(
-    zod.object({
-      code: zod.nullable(zod.string()),
-      expiresInSeconds: zod.nullable(zod.int()),
-      lockedForSeconds: zod.nullable(zod.int()),
-      waiting: zod.int(),
-    }),
-  ),
+/** What the owner tells its peers on every change (S-033): its files. */
+const PeerStatusSchema = zod.object({ files: zod.array(ConnectedFileSchema) });
+
+/** While a window waits: the code in force, minted by this very ask, or the pause (S-020, S-021). */
+const PairingStatusSchema = zod.object({
+  code: zod.nullable(zod.string()),
+  expiresInSeconds: zod.nullable(zod.int()),
+  lockedForSeconds: zod.nullable(zod.int()),
+  waiting: zod.int(),
 });
 
 /**
  * What the owner serves its peers over oRPC (A§5.3 step 4), plain data (A§5.4): `request` runs one op on a session's
- * plugin and returns its envelope; `status` is an event iterator of the owner's files and pairing. The owner never
- * calls a peer, so one contract on one channel is enough.
+ * plugin and returns its envelope; `status` is an event iterator of the owner's files; `pairing` answers the pairing
+ * now, which mints the code, so only a peer's status asks (S-020). The owner never calls a peer, so one contract on
+ * one channel is enough.
  */
 export const OWNER_CONTRACT = {
   request: oc
@@ -45,6 +44,7 @@ export const OWNER_CONTRACT = {
     )
     .output(zod.unknown()),
   status: oc.output(eventIterator(PeerStatusSchema)),
+  pairing: oc.output(zod.nullable(PairingStatusSchema)),
 };
 
 export type PeerStatus = zod.output<typeof PeerStatusSchema>;

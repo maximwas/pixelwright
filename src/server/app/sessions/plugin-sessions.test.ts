@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
-import type { ConnectedFile, OpRequest, PluginLink, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
+import type {
+  ConnectedFile,
+  OpRequest,
+  PluginLink,
+  PluginLinkRole,
+  PluginLinkState,
+} from "@/core/ports/plugin-link.port.ts";
 import { PluginSessions } from "@/server/app/sessions/plugin-sessions.ts";
 import { OpResultStep } from "@/server/app/sessions/steps/op-result-step.ts";
 import { OpTimerStep } from "@/server/app/sessions/steps/op-timer-step.ts";
@@ -43,8 +49,12 @@ class FakeLink implements PluginLink {
 
   async close(): Promise<void> {}
 
-  state(): PluginLinkState {
-    return { role: "owner", port: 18_721, files: this.connected, pairing: null, hint: null };
+  async state(): Promise<PluginLinkState> {
+    return { role: this.role(), port: 18_721, files: this.connected, pairing: null, hint: null };
+  }
+
+  role(): PluginLinkRole {
+    return "owner";
   }
 
   files(): readonly ConnectedFile[] {

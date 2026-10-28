@@ -182,10 +182,11 @@ const LIMITS = {
  * File names of K-architecture 9.1: `x.ts`, `x.<suffix>.ts`, tests beside them, `data/*.json`. src/: one
  * folder per topic. A topic folder holds its class files loose, each with its token and types (config/config-reader.ts,
  * config-reader.schema.ts, config-reader.test.ts), one constants file named after the folder, a layer's catalog, a
- * composition root; a tool or an operation keeps a folder of its own.
+ * composition root; a tool or an operation keeps a folder of its own. No index.ts: a barrel hides cycles and slows the
+ * tools, so a class is imported from its own file.
  */
 const FILES = [
-  { name: "{kebab-case}(.{suffix})?(.test)?.ts" },
+  { name: "(?!index.ts$){kebab-case}(.{suffix})?(.test)?.ts" },
   { name: "{kebab-case}.(html|md)" },
   { name: "data", children: [{ name: "{kebab-case}.json" }] },
 ];
