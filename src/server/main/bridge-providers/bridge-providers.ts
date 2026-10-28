@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { Container } from "@needle-di/core";
 import { PLUGIN_LINK } from "../../../core/ports/plugin-link/plugin-link.port.ts";
 import { BRIDGE_SETTINGS } from "../../adapters/bridge/bridge.tokens.ts";
+import { BRIDGE_FILE } from "../../adapters/bridge/bridge-config/bridge-config.constants.ts";
 import { BRIDGE_CONFIG } from "../../adapters/bridge/bridge-config/bridge-config.tokens.ts";
 import { BridgeConfig } from "../../adapters/bridge/bridge-config/bridge-config.ts";
 import { BRIDGE_LISTENER } from "../../adapters/bridge/bridge-listener/bridge-listener.tokens.ts";
@@ -13,39 +14,33 @@ import { NoBridge } from "../../adapters/bridge/no-bridge/no-bridge.ts";
 import { OwnerBridge } from "../../adapters/bridge/owner-bridge/owner-bridge.ts";
 import { PAIRING_CODES } from "../../adapters/bridge/pairing-codes/pairing-codes.tokens.ts";
 import { PairingCodes } from "../../adapters/bridge/pairing-codes/pairing-codes.ts";
+import { PLUGIN_CONNECTIONS } from "../../adapters/bridge/plugin-connections/plugin-connections.tokens.ts";
+import { PluginConnections } from "../../adapters/bridge/plugin-connections/plugin-connections.ts";
+import { SESSION_REGISTRY } from "../../adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
+import { SessionRegistry } from "../../adapters/bridge/sessions/session-registry/session-registry.ts";
 import { UPGRADE_GUARD } from "../../adapters/bridge/upgrade-guard/upgrade-guard.tokens.ts";
 import { UpgradeGuard } from "../../adapters/bridge/upgrade-guard/upgrade-guard.ts";
 import type { ServerConfig } from "../config-reader/config-reader.types.ts";
 
 /**
- * The bridge's bindings: its settings, bridge.json, pairing codes, the upgrade guard, the listener and the status hint
- * table in priority order, and PLUGIN_LINK: the owner, or NoBridge with PIXELWRIGHT_PLUGIN_BRIDGE=off.
+ * The bridge's bindings: its settings, bridge.json, pairing codes, the session registry, the plugin connections, the
+ * upgrade guard, the listener and the status hint table in priority order, and PLUGIN_LINK: the owner, or NoBridge
+ * with PIXELWRIGHT_PLUGIN_BRIDGE=off.
  */
 export class BridgeProviders {
   register(
     container: Container,
     { bridgePort, pluginOrigins, home, pluginBridge }: ServerConfig,
   ): void {
-    for (const rule of STATUS_HINT_ORDER) {
-      container.bind({
-        provide: STATUS_HINT_RULES,
-        multi: true,
-        useClass: rule,
-      });
-    }
-
+    this.#bindHints(container);
     container
       .bind({
         provide: BRIDGE_SETTINGS,
         useValue: {
           port: bridgePort,
           pluginOrigins,
-          configFile: join(home, "bridge.json"),
+          configFile: join(home, BRIDGE_FILE),
         },
-      })
-      .bind({
-        provide: STATUS_HINTS,
-        useClass: StatusHints,
       })
       .bind({
         provide: BRIDGE_CONFIG,
@@ -54,6 +49,14 @@ export class BridgeProviders {
       .bind({
         provide: PAIRING_CODES,
         useClass: PairingCodes,
+      })
+      .bind({
+        provide: SESSION_REGISTRY,
+        useClass: SessionRegistry,
+      })
+      .bind({
+        provide: PLUGIN_CONNECTIONS,
+        useClass: PluginConnections,
       })
       .bind({
         provide: UPGRADE_GUARD,
@@ -68,5 +71,21 @@ export class BridgeProviders {
         provide: PLUGIN_LINK,
         useClass: pluginBridge ? OwnerBridge : NoBridge,
       });
+  }
+
+  /** The status hint table: its rows in priority order, and the table that tries them. */
+  #bindHints(container: Container): void {
+    for (const rule of STATUS_HINT_ORDER) {
+      container.bind({
+        provide: STATUS_HINT_RULES,
+        multi: true,
+        useClass: rule,
+      });
+    }
+
+    container.bind({
+      provide: STATUS_HINTS,
+      useClass: StatusHints,
+    });
   }
 }

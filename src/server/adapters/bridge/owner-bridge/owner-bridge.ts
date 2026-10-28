@@ -1,31 +1,34 @@
 import { inject, injectable } from "@needle-di/core";
+import { PLUGIN_LINK_ROLE } from "../../../../core/ports/plugin-link/plugin-link.constants.ts";
 import type { PluginLink, PluginLinkState } from "../../../../core/ports/plugin-link/plugin-link.port.ts";
 import { BRIDGE_CONFIG } from "../bridge-config/bridge-config.tokens.ts";
 import { BRIDGE_LISTENER } from "../bridge-listener/bridge-listener.tokens.ts";
 import { STATUS_HINTS } from "../hints/status-hints/status-hints.tokens.ts";
-import { PAIRING_CODES } from "../pairing-codes/pairing-codes.tokens.ts";
+import { SESSION_REGISTRY } from "../sessions/session-registry/session-registry.tokens.ts";
+import { OWNER_FAILURE } from "./owner-bridge.constants.ts";
 
 /**
  * The server that owns the bridge's port (A§4.1 step 5): bridge.json first, where keys and the peers' token live, then
- * the port. A bridge that cannot start keeps the reason for status instead of stopping the server.
+ * the port. A bridge that cannot start keeps the reason for status instead of stopping the server. Its state is the
+ * session registry's: the files connected, the windows waiting for a code, the plugins turned away.
  */
 @injectable()
 export class OwnerBridge implements PluginLink {
   readonly #listener;
   readonly #config;
-  readonly #pairing;
+  readonly #sessions;
   readonly #hints;
   #failure: string | null = null;
 
   constructor(
     listener = inject(BRIDGE_LISTENER),
     config = inject(BRIDGE_CONFIG),
-    pairing = inject(PAIRING_CODES),
+    sessions = inject(SESSION_REGISTRY),
     hints = inject(STATUS_HINTS),
   ) {
     this.#listener = listener;
     this.#config = config;
-    this.#pairing = pairing;
+    this.#sessions = sessions;
     this.#hints = hints;
   }
 
@@ -43,14 +46,15 @@ export class OwnerBridge implements PluginLink {
   }
 
   state(): PluginLinkState {
-    const role = this.#failure === null ? "owner" : "failed";
+    const role = this.#failure === null ? PLUGIN_LINK_ROLE.owner : PLUGIN_LINK_ROLE.failed;
     const port = this.#listener.port();
-    // shortcut: no window waits until item 03 counts the unpaired sockets, so no code is minted yet.
-    const pairing = this.#pairing.status(0);
+    const pairing = this.#sessions.pairing();
+    const files = this.#sessions.files();
 
     return {
       role,
       port,
+      files,
       pairing,
       hint: this.#hints.hint({
         role,
@@ -58,19 +62,21 @@ export class OwnerBridge implements PluginLink {
         failure: this.#failure,
         closeCode: null,
         pairing,
-        // shortcut: sessions arrive in item 06; until then no file is connected.
-        files: 0,
-        rejection: this.#listener.rejection(),
+        files: files.length,
+        rejection: this.#sessions.rejection(),
+        refusal: this.#sessions.refusal(),
       }),
     };
   }
 
-  /** In words for the hint: a taken port says who may hold it (item 07 joins such an owner as a peer). */
+  /** In words for the hint: a taken port says who may hold it. */
   #reason(error: unknown): string {
-    if (error instanceof Error && "code" in error && error.code === "EADDRINUSE") {
-      return `port ${this.#listener.port()} is taken by another program or another Pixelwright server.`;
+    if (!(error instanceof Error)) {
+      return String(error);
     }
 
-    return error instanceof Error ? error.message : String(error);
+    return (error as NodeJS.ErrnoException).code === OWNER_FAILURE.portTakenCode
+      ? OWNER_FAILURE.portTaken(this.#listener.port())
+      : error.message;
   }
 }

@@ -1,15 +1,21 @@
 import { BRIDGE_PATH, PEER_PATH } from "../../../../shared/protocol/protocol.constants.ts";
 import type { UpgradeRole } from "./upgrade-guard.types.ts";
 
+/** Who upgrades: the plugin's window, or another Pixelwright server joining the owner. */
+export const UPGRADE_ROLE = {
+  plugin: "plugin",
+  peer: "peer",
+} as const satisfies Record<string, UpgradeRole>;
+
 /** Who may upgrade on which path; any other path is 404. */
 export const UPGRADE_PATHS: readonly { readonly path: string; readonly role: UpgradeRole }[] = [
   {
     path: BRIDGE_PATH,
-    role: "plugin",
+    role: UPGRADE_ROLE.plugin,
   },
   {
     path: PEER_PATH,
-    role: "peer",
+    role: UPGRADE_ROLE.peer,
   },
 ];
 

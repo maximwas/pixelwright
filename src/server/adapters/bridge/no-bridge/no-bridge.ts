@@ -1,4 +1,5 @@
 import { inject, injectable } from "@needle-di/core";
+import { PLUGIN_LINK_ROLE } from "../../../../core/ports/plugin-link/plugin-link.constants.ts";
 import type { PluginLink, PluginLinkState } from "../../../../core/ports/plugin-link/plugin-link.port.ts";
 import { CHANNEL } from "../../../../shared/protocol/channel.constants.ts";
 import { STATUS_HINTS } from "../hints/status-hints/status-hints.tokens.ts";
@@ -18,17 +19,19 @@ export class NoBridge implements PluginLink {
 
   state(): PluginLinkState {
     return {
-      role: "disabled",
+      role: PLUGIN_LINK_ROLE.disabled,
       port: CHANNEL.port,
+      files: [],
       pairing: null,
       hint: this.#hints.hint({
-        role: "disabled",
+        role: PLUGIN_LINK_ROLE.disabled,
         port: CHANNEL.port,
         failure: null,
         closeCode: null,
         pairing: null,
         files: 0,
         rejection: null,
+        refusal: null,
       }),
     };
   }
