@@ -9,8 +9,8 @@ import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 
 /**
  * The owner's side of OWNER_CONTRACT (A§5.3): a peer's request runs on that session's plugin like the owner's own,
- * its PixelwrightError crossing as an ORPCError with the same code; status pushes the owner's files and pairing at
- * once and on every change of the session registry (S-033).
+ * its PixelwrightError crossing as an ORPCError with the same code; status pushes the owner's files at once and on
+ * every change of the session registry (S-033); pairing is the registry's, minted by a peer's status asking (S-020).
  */
 @injectable()
 export class OwnerRouter {
@@ -33,6 +33,7 @@ export class OwnerRouter {
     return {
       request: procedures.request.handler(({ input }) => this.#request(input)),
       status: procedures.status.handler(({ signal }) => this.statuses(signal)),
+      pairing: procedures.pairing.handler(() => this.#sessions.pairing()),
     };
   }
 
@@ -54,7 +55,7 @@ export class OwnerRouter {
   }
 
   #snapshot(): PeerStatus {
-    return { files: [...this.#sessions.files()], pairing: this.#sessions.pairing() };
+    return { files: [...this.#sessions.files()] };
   }
 }
 

@@ -2,7 +2,14 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import pTimeout from "p-timeout";
 import type { WebSocket } from "ws";
 import { LINK_TEXT, PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link.constants.ts";
-import type { ConnectedFile, OpRequest, PluginLink, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
+import type {
+  ConnectedFile,
+  OpRequest,
+  PairingStatus,
+  PluginLink,
+  PluginLinkRole,
+  PluginLinkState,
+} from "@/core/ports/plugin-link.port.ts";
 import { BRIDGE_SETTINGS } from "@/server/adapters/bridge/bridge.tokens.ts";
 import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints.ts";
 import { BRIDGE_CONFIG } from "@/server/adapters/bridge/listener/bridge-config.ts";
@@ -10,6 +17,7 @@ import type { PeerStatus } from "@/server/adapters/bridge/owner-contract.schema.
 import { OwnerClient } from "@/server/adapters/bridge/peer/owner-client.ts";
 import {
   PEER_BRIDGE_TEXT,
+  PEER_PAIRING_TIMEOUT_MS,
   PEER_SOCKET_EVENT,
   PEER_TIMEOUT_MARGIN_MS,
 } from "@/server/adapters/bridge/peer/peer.constants.ts";
@@ -20,12 +28,13 @@ import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { PEER_JOIN_TIMEOUT_MS } from "@/shared/protocol/peer-handshake.constants.ts";
 import { CLOSE_CODE } from "@/shared/protocol/protocol.constants.ts";
 
-const NO_STATUS: PeerStatus = { files: [], pairing: null };
+const NO_STATUS: PeerStatus = { files: [] };
 
 /**
- * A server whose port another Pixelwright owns (S-030): it joins that owner, shows the owner's files and pairing code
- * as they change (S-033), and relays every op to it, waiting the owner's timer plus 5 s (S-032). Until it has joined,
- * or once the owner is gone, it is unavailable with the close code that says why.
+ * A server whose port another Pixelwright owns (S-030): it joins that owner, shows the owner's files as they change
+ * (S-033) and the owner's pairing as each status asks for it (S-020), and relays every op to it, waiting the owner's
+ * timer plus 5 s (S-032). Until it has joined, or once the owner is gone, it is unavailable with the close code that
+ * says why.
  */
 @injectable()
 export class PeerBridge implements PluginLink {
@@ -98,9 +107,14 @@ export class PeerBridge implements PluginLink {
     owner?.socket.close(CLOSE_CODE.goingAway);
   }
 
-  state(): PluginLinkState {
-    const role = this.#owner === null ? PLUGIN_LINK_ROLE.unavailable : PLUGIN_LINK_ROLE.peer;
-    const { files, pairing } = this.#status;
+  role(): PluginLinkRole {
+    return this.#owner === null ? PLUGIN_LINK_ROLE.unavailable : PLUGIN_LINK_ROLE.peer;
+  }
+
+  async state(): Promise<PluginLinkState> {
+    const pairing = await this.#pairing();
+    const role = this.role();
+    const { files } = this.#status;
 
     return {
       role,
@@ -135,6 +149,22 @@ export class PeerBridge implements PluginLink {
       milliseconds: request.timeoutMs + SERVER_GRACE_MS + PEER_TIMEOUT_MARGIN_MS,
       message: new PixelwrightError(ERROR_CODE.timeout, PEER_BRIDGE_TEXT.timeout(request.op)),
     });
+  }
+
+  /** The owner's pairing, asked now: the ask mints its code while a window waits (S-020); none if it does not answer. */
+  async #pairing(): Promise<PairingStatus | null> {
+    const owner = this.#owner;
+
+    if (owner === null) {
+      return null;
+    }
+
+    try {
+      return await pTimeout(owner.client.pairing(), { milliseconds: PEER_PAIRING_TIMEOUT_MS });
+    } catch {
+      // The owner went, or a half-open socket keeps quiet: status still answers, without a code.
+      return null;
+    }
   }
 
   async #follow(owner: JoinedOwner, statuses: AsyncIterator<PeerStatus>): Promise<void> {

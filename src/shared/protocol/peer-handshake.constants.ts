@@ -5,8 +5,11 @@ export const PEER_HANDSHAKE_TYPE = {
   peerAuth: "peer_auth",
 } as const;
 
-/** The peer protocol: 0.7.0 spoke 2; 0.8.0's owner contract (oRPC) is 3. An older peer is closed 4426 (S-034). */
-export const PEER_PROTOCOL = 3;
+/**
+ * The peer protocol: 0.7.0 spoke 2; 0.8.0's owner contract (oRPC) was 3, and is 4 since peers ask the owner for its
+ * pairing instead of reading it from the status stream. An older peer is closed 4426 (S-034).
+ */
+export const PEER_PROTOCOL = 4;
 
 /** A peer joins within this, or the port's holder is not a Pixelwright that answers: server start never stalls (S-031). */
 export const PEER_JOIN_TIMEOUT_MS = 3_000;

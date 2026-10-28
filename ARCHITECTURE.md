@@ -52,7 +52,7 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   each op is apart from the others. `core/kernel` imports no other core domain. `pnpm check:deps` (dependency-cruiser)
   enforces all of this, cycles included, and that `shared`, `core`, `plugin` and `plugin-ui` use no Node module and no
   server-only package.
-- No barrels: a class is imported from its own file.
+- No barrels: a class is imported from its own file; the project-structure lint refuses an `index.ts`.
 - Only composition roots and the `main/` folders see the DI `Container`. Everything else asks for its dependencies as
   constructor defaults, `inject(TOKEN)`, by token, never by class.
 - Every import of `src` goes through the `@/` alias from the root of `src/`; no `../` anywhere.
@@ -87,8 +87,8 @@ code in force, which only the status tool mints; the user types it in the window
 
 **Is the owner, and is a peer.** The first server of a channel takes the port and becomes the owner (`OwnerBridge`,
 with `OwnerPeers`, `PeerConnection` and `OwnerRouter` serving the owner's contract over oRPC). A server that finds the
-port taken joins the owner as a peer (`PeerBridge`, `PeerJoin`, `OwnerClient`), shows the owner's files and runs its
-ops through it. A newer server takes the bridge over and the older one is handed over for good. With neither,
+port taken joins the owner as a peer (`PeerBridge`, `PeerJoin`, `OwnerClient`), shows the owner's files, asks it for
+the pairing code on each status, and runs its ops through it. A newer server takes the bridge over and the older one is handed over for good. With neither,
 `PluginBridge` stays unavailable and retries. `PIXELWRIGHT_PLUGIN_BRIDGE=off` binds `NoBridge`.
 
 **Holds the tokens.** A class's token sits at the bottom of the class's own file; a port's token in its `x.port.ts`;

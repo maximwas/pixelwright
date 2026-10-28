@@ -1,6 +1,12 @@
 import { inject, injectable } from "@needle-di/core";
 import { PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link.constants.ts";
-import type { ConnectedFile, OpRequest, PluginLink, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
+import type {
+  ConnectedFile,
+  OpRequest,
+  PluginLink,
+  PluginLinkRole,
+  PluginLinkState,
+} from "@/core/ports/plugin-link.port.ts";
 import { PEER_RETRY_MS, RETRY_JITTER } from "@/server/adapters/bridge/bridge.constants.ts";
 import { BRIDGE_ROLE_HINT } from "@/server/adapters/bridge/hints/hints.constants.ts";
 import { OWNER_BRIDGE } from "@/server/adapters/bridge/owner/owner-bridge.ts";
@@ -58,7 +64,15 @@ export class PluginBridge implements PluginLink {
     await this.#owner.close();
   }
 
-  state(): PluginLinkState {
+  role(): PluginLinkRole {
+    if (this.#role === PLUGIN_LINK_ROLE.owner) {
+      return this.#owner.role();
+    }
+
+    return this.#role === PLUGIN_LINK_ROLE.handedOver ? this.#role : this.#peer.role();
+  }
+
+  async state(): Promise<PluginLinkState> {
     if (this.#role === PLUGIN_LINK_ROLE.owner) {
       return this.#owner.state();
     }
@@ -66,7 +80,7 @@ export class PluginBridge implements PluginLink {
     if (this.#role === PLUGIN_LINK_ROLE.handedOver) {
       return {
         role: PLUGIN_LINK_ROLE.handedOver,
-        port: this.#owner.state().port,
+        port: (await this.#owner.state()).port,
         files: [],
         pairing: null,
         hint: BRIDGE_ROLE_HINT.handedOver,

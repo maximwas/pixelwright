@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ConnectedFile, PluginLink, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
+import type { ConnectedFile, PluginLink, PluginLinkRole, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
 import { PluginSessions } from "@/server/app/sessions/plugin-sessions.ts";
 import { TargetResolver } from "@/server/app/sessions/target-resolver.ts";
 import { StatusTool } from "@/server/tools/status/status.tool.ts";
@@ -17,8 +17,12 @@ class LinkState implements PluginLink {
 
   async close(): Promise<void> {}
 
-  state(): PluginLinkState {
+  async state(): Promise<PluginLinkState> {
     return this.#state;
+  }
+
+  role(): PluginLinkRole {
+    return this.#state.role;
   }
 
   files(): readonly ConnectedFile[] {

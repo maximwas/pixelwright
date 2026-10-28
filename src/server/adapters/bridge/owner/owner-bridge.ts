@@ -1,6 +1,12 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { LINK_TEXT, PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link.constants.ts";
-import type { ConnectedFile, OpRequest, PluginLink, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
+import type {
+  ConnectedFile,
+  OpRequest,
+  PluginLink,
+  PluginLinkRole,
+  PluginLinkState,
+} from "@/core/ports/plugin-link.port.ts";
 import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints.ts";
 import { BRIDGE_CONFIG } from "@/server/adapters/bridge/listener/bridge-config.ts";
 import { BRIDGE_LISTENER } from "@/server/adapters/bridge/listener/bridge-listener.ts";
@@ -76,8 +82,12 @@ export class OwnerBridge implements PluginLink {
       : new PixelwrightError(ERROR_CODE.fileNotFound, LINK_TEXT.sessionGone(session));
   }
 
-  state(): PluginLinkState {
-    const role = this.#failure === null ? PLUGIN_LINK_ROLE.owner : PLUGIN_LINK_ROLE.failed;
+  role(): PluginLinkRole {
+    return this.#failure === null ? PLUGIN_LINK_ROLE.owner : PLUGIN_LINK_ROLE.failed;
+  }
+
+  async state(): Promise<PluginLinkState> {
+    const role = this.role();
     const port = this.#listener.port();
     const pairing = this.#sessions.pairing();
     const files = this.#sessions.files();

@@ -3,7 +3,7 @@ import { RPCLink } from "@orpc/client/websocket";
 import type { ContractRouterClient } from "@orpc/contract";
 import type { WebSocket } from "ws";
 import * as zod from "zod/mini";
-import type { OpRequest } from "@/core/ports/plugin-link.port.ts";
+import type { OpRequest, PairingStatus } from "@/core/ports/plugin-link.port.ts";
 import type { OWNER_CONTRACT, PeerStatus } from "@/server/adapters/bridge/owner-contract.schema.ts";
 import { OWNER_CLIENT_TEXT } from "@/server/adapters/bridge/peer/peer.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
@@ -32,6 +32,11 @@ export class OwnerClient {
   /** The owner's status now, then on every change; ends with the socket (an abort would be sent on it). */
   status(): Promise<AsyncIterator<PeerStatus>> {
     return this.#client.status(undefined);
+  }
+
+  /** The owner's pairing now: asking mints its code while a window waits (S-020), so only status asks. */
+  pairing(): Promise<PairingStatus | null> {
+    return this.#client.pairing(undefined);
   }
 
   #failure(error: unknown): PixelwrightError {

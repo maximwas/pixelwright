@@ -68,7 +68,7 @@ export class ServerMain {
     container
       .get(LOGGER)
       .child({ component: LOG_COMPONENT.server })
-      .info(SERVER_LOG.ready, { role: container.get(PLUGIN_LINK).state().role });
+      .info(SERVER_LOG.ready, { role: container.get(PLUGIN_LINK).role() });
   }
 
   /** Takes the plugin bridge up: the owner listens on the channel's port. The contract tests start it without stdio. */

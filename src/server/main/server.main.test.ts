@@ -63,12 +63,12 @@ describe("ServerMain's composition", () => {
     expect(root(false).get(PLUGIN_LINK)).toBeInstanceOf(NoBridge);
   });
 
-  it("gives the owner, the listener and the plugin connections one session registry", () => {
+  it("gives the owner, the listener and the plugin connections one session registry", async () => {
     const container = root(true);
     const sessions = container.get(SESSION_REGISTRY);
 
     sessions.refused({ protocol: 5, pluginVersion: "0.7.0" });
 
-    expect(container.get(OWNER_BRIDGE).state().hint).toContain("0.7.0");
+    expect((await container.get(OWNER_BRIDGE).state()).hint).toContain("0.7.0");
   });
 });

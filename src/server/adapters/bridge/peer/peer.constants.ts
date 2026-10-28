@@ -1,3 +1,4 @@
+import { PEER_JOIN_TIMEOUT_MS } from "@/shared/protocol/peer-handshake.constants.ts";
 import { PEER_PATH } from "@/shared/protocol/protocol.constants.ts";
 
 export const OWNER_CLIENT_TEXT = {
@@ -7,6 +8,9 @@ export const OWNER_CLIENT_TEXT = {
 
 /** A peer waits the owner's timer plus this, so the owner's TIMEOUT, worded for the op, arrives first (S-032). */
 export const PEER_TIMEOUT_MARGIN_MS = 5_000;
+
+/** A peer's status waits this long for the owner's pairing, as long as a join may take, then shows none (S-031). */
+export const PEER_PAIRING_TIMEOUT_MS = PEER_JOIN_TIMEOUT_MS;
 
 export const PEER_BRIDGE_TEXT = {
   timeout: (op: string) => `${op}: the Pixelwright server that owns the Figma bridge did not answer in time`,

@@ -61,7 +61,10 @@ export interface PluginLink {
   start(): Promise<void>;
   /** Frees the port first, so another server can take it at once (S-013). */
   close(): Promise<void>;
-  state(): PluginLinkState;
+  /** What status shows; a peer asks its owner for the pairing, so it is async. */
+  state(): Promise<PluginLinkState>;
+  /** The role alone, minting no pairing code: what the server's ready line logs. */
+  role(): PluginLinkRole;
   /** The connected files, without minting a pairing code: what target resolution reads (T-001). */
   files(): readonly ConnectedFile[];
   /** The plugin's raw answer (an envelope, unparsed); a session that is gone fails FILE_NOT_FOUND (S-042). */

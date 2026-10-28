@@ -2,9 +2,7 @@ import { randomBytes } from "node:crypto";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import * as zod from "zod/mini";
 import { LOG_COMPONENT } from "@/core/ports/logger.constants.ts";
-import type { Logger } from "@/core/ports/logger.port.ts";
-import type { BridgeConfig, PluginKey } from "@/server/adapters/bridge/listener/bridge-config.ts";
-import type { PairingCodes } from "@/server/adapters/bridge/plugin/pairing-codes.ts";
+import type { PluginKey } from "@/server/adapters/bridge/listener/bridge-config.ts";
 import {
   CLOSE_REASON,
   CODE_CHECK,
@@ -15,8 +13,8 @@ import {
   NOT_PAIRED_REASONS,
   PAIRING_CODE_TTL_MS,
 } from "@/server/adapters/bridge/plugin/plugin.constants.ts";
+import type { ConnectionState, HandshakeServices } from "@/server/adapters/bridge/plugin/plugin.types.ts";
 import { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-session.ts";
-import type { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { HANDSHAKE_TYPE, PAIRING_REASON } from "@/shared/protocol/handshake.constants.ts";
 import {
@@ -305,26 +303,3 @@ export class PluginConnection {
     }
   }
 }
-
-/** The owner's services one connection works with; PluginConnections hands the same ones to each. */
-export interface HandshakeServices {
-  /** bridge.json's paired keys. */
-  readonly keys: BridgeConfig;
-  readonly pairing: PairingCodes;
-  readonly sessions: SessionRegistry;
-  readonly logger: Logger;
-}
-
-/** Where a connection stands: its one state field. */
-export type ConnectionState =
-  | { readonly name: typeof CONNECTION_STATE.hello }
-  | {
-    readonly name: typeof CONNECTION_STATE.challenged;
-    readonly info: PluginInfo;
-    readonly key: PluginKey;
-    readonly pluginNonce: string;
-    readonly serverNonce: string;
-  }
-  | { readonly name: typeof CONNECTION_STATE.pairing; readonly info: PluginInfo }
-  | { readonly name: typeof CONNECTION_STATE.session; readonly session: BridgeSession }
-  | { readonly name: typeof CONNECTION_STATE.closed };

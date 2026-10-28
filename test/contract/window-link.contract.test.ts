@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MainChannel } from "@/plugin-ui/adapters/main-channel.ts";
 import { Backoff } from "@/plugin-ui/link/backoff.ts";
@@ -126,5 +127,14 @@ describe("WindowLink", () => {
     expect(frame.posted.at(-1)).toEqual({ ch: "server", e: 1, d: '{"call":1}' });
     expect(bridge.plugins[0]?.sent.at(-1)).toEqual({ answer: 1 });
     expect(bridge.plugins).toHaveLength(1);
+  });
+});
+
+describe("ui.html", () => {
+  // The 06 bug: a display rule showed the pairing field while it was hidden; the stand-in elements above have no CSS.
+  it("hides every element with the hidden attribute, whatever its display rule", () => {
+    const html = readFileSync(new URL("../../src/plugin-ui/ui.html", import.meta.url), "utf8");
+
+    expect(html).toMatch(/\[hidden\]\s*\{\s*display:\s*none;?\s*\}/);
   });
 });

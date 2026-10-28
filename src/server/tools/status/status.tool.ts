@@ -36,7 +36,7 @@ export class StatusTool extends Tool<StatusInput, StatusOutput> {
 
   protected async run(input: StatusInput): Promise<StatusOutput> {
     // Asking is what mints a pairing code while a plugin waits (S-020): status is the only caller.
-    const { role, port, files, pairing, hint } = this.#link.state();
+    const { role, port, files, pairing, hint } = await this.#link.state();
     const keyless = files.filter((file) => file.key === null).map((file) => file.name);
 
     return {

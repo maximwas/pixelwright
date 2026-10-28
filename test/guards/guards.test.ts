@@ -32,6 +32,7 @@ const EXPECTED: Record<string, string[]> = {
   "src/server/app/service-locator/service-locator.ts": ["no-restricted-syntax"],
   "src/server/app/injected-class/injected-class.ts": ["no-restricted-syntax"],
   "src/server/app/LooseName.ts": ["project-structure/folder-structure"],
+  "src/core/xml/index.ts": ["project-structure/folder-structure"],
   "src/core/welcome-text/welcome-text.ts": [
     "shape/no-string-literal",
     "shape/no-string-type",
