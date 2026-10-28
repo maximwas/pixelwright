@@ -1,0 +1,4 @@
+# pnpm 12 refuses to install while a dependency's build script is neither allowed nor denied. simple-git-hooks'
+# postinstall is denied: the "prepare" script installs the hook instead.
+allowBuilds:
+  simple-git-hooks: false

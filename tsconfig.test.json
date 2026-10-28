@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024"],
+    "types": ["node"]
+  },
+  "include": ["test", "src/**/*.test.ts", "scripts/**/*.test.ts"],
+  "exclude": ["test/guards/samples"]
+}

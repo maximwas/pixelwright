@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/cli/bin.ts",
+    "src/plugin/main/plugin.main.ts",
+    "src/plugin-ui/ui.main.ts",
+    "src/**/index.ts",
+    "scripts/*.ts"
+  ],
+  "project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
+  "ignore": ["old/**", "test/guards/samples/**"]
+}
