@@ -1,6 +1,10 @@
 // Planted: the plugin imports a server-side core domain. Refused by plugin-no-server-core.
-import { escapeXml } from "../../../core/xml/index.ts";
+import { XmlEscaper } from "../../../core/xml/index.ts";
 
-export function xmlRead(text: string): string {
-  return escapeXml(text);
+export class XmlReadOperation {
+  readonly #escaper = new XmlEscaper();
+
+  run(text: string): string {
+    return this.#escaper.escape(text);
+  }
 }

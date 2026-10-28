@@ -12,6 +12,9 @@
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "erasableSyntaxOnly": true,
+    // Legacy decorators for needle-di's @injectable(): oxc (vitest, tsdown) and Node 24 cannot lower or run TC39
+    // decorators yet. Standard decorators later are this flag only: injectable() reads the class alone.
+    "experimentalDecorators": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,

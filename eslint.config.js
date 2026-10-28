@@ -3,7 +3,9 @@
 // (`typescript` is the @typescript/typescript6 alias), because typescript-eslint does not support TypeScript 7 yet.
 import figmaPlugins from "@figma/eslint-plugin-figma-plugins";
 import stylistic from "@stylistic/eslint-plugin";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import antfu from "eslint-plugin-antfu";
 import {
   createFileComposition,
   createFolderStructure,
@@ -48,6 +50,58 @@ const BANNED_SYNTAX = [
   NO_CSS_ASYNC,
 ];
 
+/** Every module in src/ is a class: a function travels only as a method of one. */
+const CLASS_MODULES = [
+  {
+    selector: "ExportNamedDeclaration > FunctionDeclaration, ExportDefaultDeclaration > :function",
+    message: "Export a class, not a function: every module in src/ is a class.",
+  },
+  {
+    selector: "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator > :function.init",
+    message: "Export a class, not a function in a const: every module in src/ is a class.",
+  },
+];
+
+/** needle-di: dependencies come in as constructor defaults, and only by token. */
+const INJECTION = [
+  {
+    selector:
+      "CallExpression[callee.name='inject']:not(MethodDefinition[kind='constructor'] > FunctionExpression > AssignmentPattern > CallExpression)",
+    message: "inject() only as a constructor default parameter: a class never looks its services up itself.",
+  },
+  {
+    selector: "CallExpression[callee.name='inject'] > Identifier.arguments:first-child:not([name=/^[A-Z][A-Z0-9_]*$/])",
+    message: "inject() takes an InjectionToken constant: a child container builds a second instance of a class (#110).",
+  },
+];
+
+/**
+ * @stylistic's function-paren-newline for signatures only: declarations, methods and constructors, and functions not
+ * passed as an argument. As it is, it would also break every call of two arguments and every callback.
+ */
+const PAREN_NEWLINE = stylistic.rules["function-paren-newline"];
+const SIGNATURES = "FunctionDeclaration, FunctionExpression:not(.arguments), ArrowFunctionExpression:not(.arguments)";
+const LAYOUT = {
+  rules: {
+    "signature-paren-newline": {
+      meta: PAREN_NEWLINE.meta,
+      create(context) {
+        const [check] = Object.values(PAREN_NEWLINE.create(context));
+
+        return { [SIGNATURES]: check };
+      },
+    },
+  },
+};
+
+/** consistent-list-newline for parameters only: other lists keep Biome's layout. */
+const PARAMETER_LISTS = Object.fromEntries(
+  Object.keys(antfu.rules["consistent-list-newline"].meta.schema[0].properties).map((kind) => [
+    kind,
+    ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"].includes(kind),
+  ]),
+);
+
 /** A function fits on a screen, a file is one cohesive module, more than four parameters go in an options object. */
 const LIMITS = {
   "max-lines-per-function": ["error", { max: 50, skipBlankLines: true, skipComments: true }],
@@ -61,21 +115,36 @@ const LIMITS = {
 };
 
 /** File names of K-architecture 9.1: `x.ts`, `x.<suffix>.ts`, tests beside them, `index.ts`, `data/*.json`. */
-const FILES = [
+const SCRIPT_FILES = [
   { name: "index.ts" },
   { name: "{kebab-case}(.{suffix})?(.test)?.ts" },
   { name: "{kebab-case}.(html|md)" },
   { name: "data", children: [{ name: "{kebab-case}.json" }] },
 ];
 
+/**
+ * src/: one folder per class. A class, port, tool or operation file and its satellites carry the name of their folder
+ * (config-reader/config-reader.ts, config-reader.schema.ts, config-reader.test.ts). Loose in a topic folder: data that
+ * belongs to no class (constants, types, tokens, schemas), a layer's catalog, a composition root.
+ */
+const FILES = [
+  { name: "index.ts" },
+  { name: "{folder-name}(.{suffix})?(.test)?.ts" },
+  { name: "{kebab-case}.(constants|types|tokens|schema)(.test)?.ts" },
+  { name: "{kebab-case}.(catalog|main)(.test)?.ts" },
+  { name: "{kebab-case}.(html|md)" },
+  { name: "data", children: [{ name: "{kebab-case}.json" }] },
+];
+
 const FOLDER_STRUCTURE = createFolderStructure({
-  regexParameters: { suffix: "(types|constants|schema|port|manifest|tool|operation|catalog|contract|main)" },
+  regexParameters: { suffix: "(types|constants|schema|port|manifest|tool|operation|catalog|contract|main|tokens)" },
   structure: [
     { name: "src", children: [{ name: "(cli|plugin-ui)", ruleId: "entryRoot" }, { ruleId: "folder" }] },
-    { name: "scripts", children: [...FILES, { ruleId: "folder" }] },
+    { name: "scripts", children: [...SCRIPT_FILES, { ruleId: "scriptFolder" }] },
   ],
   rules: {
     folder: { name: "{kebab-case}", children: [...FILES, { ruleId: "folder" }] },
+    scriptFolder: { name: "{kebab-case}", children: [...SCRIPT_FILES, { ruleId: "scriptFolder" }] },
     // A root holds its entry points only; everything else lives in folders under it.
     entryRoot: {
       children: [
@@ -122,9 +191,28 @@ export default [
   {
     files: ["**/*.ts"],
     languageOptions: { parser: tsParser },
-    plugins: { "@stylistic": stylistic, "project-structure": projectStructurePlugin },
+    plugins: { "@stylistic": stylistic, "project-structure": projectStructurePlugin, antfu, layout: LAYOUT },
     rules: {
       "no-restricted-syntax": ["error", NO_CSS_ASYNC],
+      // Two or more parameters: each on its own line. Biome formats first and would put them back on one line,
+      // so ESLint fixes after it, re-indents what it moved, and checks the layout in pnpm lint.
+      "layout/signature-paren-newline": ["error", { minItems: 2 }],
+      "antfu/consistent-list-newline": ["error", PARAMETER_LISTS],
+      "@stylistic/indent": ["error", 2, { SwitchCase: 1 }],
+      "@stylistic/no-trailing-spaces": "error",
+      "@stylistic/comma-dangle": [
+        "error",
+        {
+          arrays: "ignore",
+          objects: "ignore",
+          imports: "ignore",
+          exports: "ignore",
+          functions: "always-multiline",
+          enums: "ignore",
+          generics: "ignore",
+          tuples: "ignore",
+        },
+      ],
       "@stylistic/padding-line-between-statements": [
         "error",
         { blankLine: "always", prev: "*", next: ["return", "throw"] },
@@ -151,7 +239,25 @@ export default [
   },
   {
     files: CODE,
-    rules: { ...LIMITS, "project-structure/file-composition": ["error", FILE_COMPOSITION] },
+    plugins: { "@typescript-eslint": tsPlugin },
+    rules: {
+      ...LIMITS,
+      "project-structure/file-composition": ["error", FILE_COMPOSITION],
+      // A class of static members is a free function in disguise; statics live only beside instance members.
+      "@typescript-eslint/no-extraneous-class": ["error", { allowStaticOnly: false, allowWithDecorator: false }],
+    },
+  },
+  {
+    files: ["src/**/*.ts"],
+    ignores: TESTS,
+    rules: {
+      "no-restricted-syntax": ["error", ...BANNED_SYNTAX, BY_ID_OUTSIDE_LOOKUP, ...CLASS_MODULES, ...INJECTION],
+    },
+  },
+  // Names say what a value is: no `e`, `i`, `c` or `cfg`; x and y stay for coordinates.
+  {
+    files: ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
+    rules: { "id-length": ["error", { min: 2, properties: "never", exceptions: ["x", "y"] }] },
   },
   {
     files: TESTS,
@@ -159,7 +265,8 @@ export default [
   },
   {
     files: ["src/plugin/adapters/figma/lookup/**/*.ts"],
-    rules: { "no-restricted-syntax": ["error", ...BANNED_SYNTAX] },
+    ignores: TESTS,
+    rules: { "no-restricted-syntax": ["error", ...BANNED_SYNTAX, ...CLASS_MODULES, ...INJECTION] },
   },
   {
     files: ["src/plugin/adapters/**/*.ts", "src/plugin/main/**/*.ts"],
