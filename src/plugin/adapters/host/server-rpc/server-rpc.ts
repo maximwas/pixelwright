@@ -54,7 +54,16 @@ export class ServerRpc {
       on: (deliver: (text: string) => void) => {
         this.#deliver = deliver;
       },
-      serialize: (value: unknown) => JSON.stringify(value),
+      // birpc would send a thrown Error as {} through JSON (P1): keep its name and message.
+      serialize: (value: unknown) =>
+        JSON.stringify(value, (_key, item: unknown) =>
+          item instanceof Error
+            ? {
+              name: item.name,
+              message: item.message,
+            }
+            : item,
+        ),
       deserialize: (text: string): unknown => JSON.parse(text),
       timeout: RPC_TIMEOUT_MS,
     });
