@@ -25,7 +25,8 @@
     "size": "size-limit"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm lint && pnpm typecheck"
+    "pre-commit": "pnpm lint && pnpm typecheck",
+    "preserveUnused": true
   },
   "size-limit": [
     {
