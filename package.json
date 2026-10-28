@@ -17,7 +17,7 @@
   "scripts": {
     "prepare": "simple-git-hooks",
     "lint": "pnpm check:deps && biome check --formatter-enabled=false . && eslint . && knip && node scripts/check-names.ts",
-    "format": "biome check --write . && eslint --fix .",
+    "format": "biome check --write . && eslint --fix . && biome check --write . && eslint --fix .",
     "typecheck": "tsc -b",
     "build": "tsdown",
     "try": "node scripts/try.ts",

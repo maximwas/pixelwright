@@ -17,7 +17,7 @@ export class CallLogStep implements ToolCallStep {
     logger = inject(LOGGER),
     clock = inject(CLOCK),
   ) {
-    this.#logger = logger.child({ component: "tool-runner" });
+    this.#logger = logger;
     this.#clock = clock;
   }
 
@@ -57,6 +57,7 @@ export class CallLogStep implements ToolCallStep {
     const file = typeof args === "object" && args !== null && "file" in args ? args.file : undefined;
 
     return {
+      component: "tool-runner",
       tool: manifest.name,
       callId: callId.value,
       ...(typeof file === "string" ? { file } : {}),

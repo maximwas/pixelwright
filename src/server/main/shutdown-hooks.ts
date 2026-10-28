@@ -12,10 +12,11 @@ export class ShutdownHooks {
   readonly #logger;
 
   constructor(logger = inject(LOGGER)) {
-    this.#logger = logger.child({ component: "server" });
+    this.#logger = logger;
   }
 
   install(close: () => Promise<void>): void {
+    const logger = this.#logger.child({ component: "server" });
     const hooks = closeWithGrace(
       {
         delay: SHUTDOWN_DELAY_MS,
@@ -23,9 +24,9 @@ export class ShutdownHooks {
       },
       async ({ signal, err: error, manual }) => {
         if (error === undefined) {
-          this.#logger.info("shutting down", { reason: signal ?? (manual ? "stdin closed" : "nothing left to do") });
+          logger.info("shutting down", { reason: signal ?? (manual ? "stdin closed" : "nothing left to do") });
         } else {
-          this.#logger.error("shutting down after an uncaught error", { err: error });
+          logger.error("shutting down after an uncaught error", { err: error });
         }
 
         await close();

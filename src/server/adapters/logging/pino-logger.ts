@@ -16,7 +16,7 @@ export class PinoLogger extends PinoLines {
     settings = inject(LOG_SETTINGS),
     destinations = inject(LOG_DESTINATIONS, { multi: true }),
   ) {
-    super(
+    super(() =>
       pino(
         {
           level: settings.level,

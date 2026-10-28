@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -22,6 +22,15 @@ class LogFolder {
 }
 
 describe("SharedLogFile", () => {
+  it("opens nothing until its first line: building it touches no file", () => {
+    const folder = new LogFolder();
+    const log = folder.open();
+
+    expect(existsSync(join(folder.root, "logs"))).toBe(false);
+    log.write("first\n");
+    expect(folder.text()).toBe("first\n");
+  });
+
   it("appends lines to a file only the owner may read, in a folder only the owner may open", () => {
     const folder = new LogFolder();
     const log = folder.open();
@@ -38,6 +47,7 @@ describe("SharedLogFile", () => {
     const folder = new LogFolder();
     const log = folder.open();
 
+    log.write("before\n");
     writeFileSync(folder.file, "x".repeat(LOG_FILE_MAX_BYTES + 1));
     log.write("after\n");
 

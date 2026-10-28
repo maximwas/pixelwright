@@ -13,21 +13,22 @@ import { LOG_FILE_MAX_BYTES } from "./shared-log-file.constants.ts";
 @injectable()
 export class SharedLogFile implements DestinationStream {
   readonly #path: string;
-  #fd: number | null;
+  /** undefined until the first line opens the file; null when it could not be opened. */
+  #fd: number | null | undefined;
   /** The full file could not be set aside: written on, tried again once it changes. */
   #stuck = false;
 
   constructor(settings = inject(LOG_SETTINGS)) {
     this.#path = settings.file;
-    this.#fd = this.#open();
   }
 
   /** pino's destination: a log that cannot be written is not the server's failure, so nothing is thrown. */
   write(line: string): boolean {
     try {
+      this.#fd ??= this.#open();
       this.#follow();
 
-      if (this.#fd !== null) {
+      if (typeof this.#fd === "number") {
         writeSync(this.#fd, line);
       }
     } catch {
@@ -39,7 +40,7 @@ export class SharedLogFile implements DestinationStream {
 
   /** The file at the path, reopened when another process set it aside, set aside when it grew past its size. */
   #follow(): void {
-    if (this.#fd === null) {
+    if (typeof this.#fd !== "number") {
       return;
     }
 
@@ -71,7 +72,7 @@ export class SharedLogFile implements DestinationStream {
   #reopen(): void {
     const fd = this.#open();
 
-    if (fd !== null && this.#fd !== null) {
+    if (fd !== null && typeof this.#fd === "number") {
       closeSync(this.#fd);
       this.#fd = fd;
       this.#stuck = false;

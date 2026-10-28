@@ -10,10 +10,6 @@ const TEST_FILE = "Test MCP";
 
 class TryClient {
   readonly #bin = fileURLToPath(new URL("../dist/bin.mjs", import.meta.url));
-  readonly #client = new Client({
-    name: "pixelwright-try",
-    version: "1.0.0",
-  });
 
   /** The process exit code: 1 when the answer is an error. */
   async run(argv: readonly string[]): Promise<number> {
@@ -27,8 +23,13 @@ class TryClient {
       throw new Error("Usage: pnpm try <tool> ['<json arguments>']");
     }
 
+    const client = new Client({
+      name: "pixelwright-try",
+      version: "1.0.0",
+    });
+
     // The server's stderr (its log lines) shows in this terminal; the environment passes through, PIXELWRIGHT_* too.
-    await this.#client.connect(
+    await client.connect(
       new StdioClientTransport({
         command: process.execPath,
         args: [this.#bin],
@@ -38,25 +39,26 @@ class TryClient {
     );
 
     try {
-      const answer = await this.#client.callTool({
+      const answer = await client.callTool({
         name: tool,
-        arguments: await this.#pinned(tool, JSON.parse(json)),
+        arguments: await this.#pinned(client, tool, JSON.parse(json)),
       });
 
       process.stdout.write(`${JSON.stringify(answer.structuredContent ?? answer.content, null, 2)}\n`);
 
       return answer.isError ? 1 : 0;
     } finally {
-      await this.#client.close();
+      await client.close();
     }
   }
 
   /** The arguments with `file: "Test MCP"` added for a tool that takes a file; any other file is refused. */
   async #pinned(
+    client: Client,
     tool: string,
     args: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    const { tools } = await this.#client.listTools();
+    const { tools } = await client.listTools();
     const takesFile = tools.find(({ name }) => name === tool)?.inputSchema.properties?.file !== undefined;
 
     if (args.file !== undefined && args.file !== TEST_FILE) {

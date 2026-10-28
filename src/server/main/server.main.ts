@@ -28,34 +28,55 @@ import { ShutdownHooks } from "./shutdown-hooks.ts";
  * concrete classes resolve by themselves, and nothing else in src/ sees the container.
  */
 export class ServerMain {
-  readonly #container = new Container();
+  /** Given by the contract tests; read from the environment otherwise. */
+  readonly #config: ServerConfig | undefined;
+  #container: Container | undefined;
 
-  constructor(config: ServerConfig = new ConfigReader().read()) {
-    this.#bindLogging(config);
-    this.#bindServices();
+  constructor(config?: ServerConfig) {
+    this.#config = config;
   }
 
-  /** The MCP endpoint with every tool registered: start() connects it to stdio, the contract tests to memory. */
+  /** The MCP endpoint: start() connects it to stdio, the contract tests to memory. */
   endpoint(): McpEndpoint {
-    return this.#container.get(McpEndpoint);
+    return this.#composed().get(McpEndpoint);
   }
 
   async start(): Promise<void> {
     // First, before anything can print: stdout carries MCP only (S-056).
     new StdoutGuard().install();
 
-    const endpoint = this.endpoint();
+    const container = this.#composed();
+    const endpoint = container.get(McpEndpoint);
 
-    this.#container.get(ShutdownHooks).install(() => endpoint.close());
+    container.get(ShutdownHooks).install(() => endpoint.close());
     await endpoint.connect(new StdioServerTransport());
-    this.#container
+    container
       .get(LOGGER)
       .child({ component: "server" })
-      .info("pixelwright ready on stdio", { role: this.#container.get(PLUGIN_LINK).state().role });
+      .info("pixelwright ready on stdio", { role: container.get(PLUGIN_LINK).state().role });
   }
 
-  #bindLogging({ logLevel, home }: ServerConfig): void {
-    this.#container
+  /** The container with every binding, built once at first use: reading the environment is no constructor's work. */
+  #composed(): Container {
+    this.#container ??= this.#compose(this.#config ?? new ConfigReader().read());
+
+    return this.#container;
+  }
+
+  #compose(config: ServerConfig): Container {
+    const container = new Container();
+
+    this.#bindLogging(container, config);
+    this.#bindServices(container);
+
+    return container;
+  }
+
+  #bindLogging(
+    container: Container,
+    { logLevel, home }: ServerConfig,
+  ): void {
+    container
       .bind({
         provide: LOG_SETTINGS,
         useValue: {
@@ -86,8 +107,8 @@ export class ServerMain {
       });
   }
 
-  #bindServices(): void {
-    this.#container
+  #bindServices(container: Container): void {
+    container
       // shortcut: every run is bridge-off until item 02 binds OwnerBridge when config.pluginBridge is true.
       .bind({
         provide: PLUGIN_LINK,
@@ -115,7 +136,7 @@ export class ServerMain {
       })
       .bind({
         provide: TOOL_FACTORY,
-        useValue: new ContainerToolFactory(this.#container),
+        useValue: new ContainerToolFactory(container),
       })
       .bind({
         provide: TOOL_RUNNER,
