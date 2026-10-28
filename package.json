@@ -70,6 +70,7 @@
   "dependencies": {
     "@modelcontextprotocol/server": "2.4.0",
     "@needle-di/core": "1.2.1",
+    "@noble/hashes": "2.4.0",
     "atomically": "2.1.1",
     "close-with-grace": "2.5.0",
     "pino": "10.4.0",
