@@ -21,6 +21,7 @@
     "typecheck": "tsc -b",
     "build": "tsdown",
     "try": "node scripts/try.ts",
+    "try:hello": "node scripts/try-hello.ts",
     "test": "vitest run --project unit --project contract",
     "test:live": "vitest run --project live",
     "check:deps": "depcruise src scripts test",

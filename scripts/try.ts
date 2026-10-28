@@ -1,5 +1,6 @@
-// `pnpm try [--hold <s>] <tool> ['<json>']`: runs one tool call against the built server (dist/bin.mjs) over stdio and
-// prints the answer; --hold keeps the server up that long afterwards, so its bridge can be probed or a code typed.
+// `pnpm try [--hold <s> [--every <s>]] <tool> ['<json>']`: runs one tool call against the built server (dist/bin.mjs)
+// over stdio and prints the answer; --hold keeps the server up that long afterwards, so its bridge can be probed or a
+// code typed, and --every repeats the call that often while it holds, so the answer can be watched change.
 // Written here, not the MCP Inspector CLI, because a call must never reach a file other than "Test MCP" (R-001).
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
@@ -18,13 +19,17 @@ class TryClient {
     const { positionals, values } = parseArgs({
       args: [...argv],
       allowPositionals: true,
-      options: { hold: { type: "string" } },
+      options: {
+        hold: { type: "string" },
+        every: { type: "string" },
+      },
     });
     const [tool, json = "{}"] = positionals;
     const holdSeconds = Number(values.hold ?? 0);
+    const everySeconds = values.every === undefined ? null : Number(values.every);
 
-    if (tool === undefined || !Number.isFinite(holdSeconds) || holdSeconds < 0) {
-      throw new Error("Usage: pnpm try [--hold <seconds>] <tool> ['<json arguments>']");
+    if (tool === undefined || !(holdSeconds >= 0) || (everySeconds !== null && !(everySeconds > 0))) {
+      throw new Error("Usage: pnpm try [--hold <seconds> [--every <seconds>]] <tool> ['<json arguments>']");
     }
 
     const client = new Client({
@@ -43,21 +48,45 @@ class TryClient {
     );
 
     try {
-      const answer = await client.callTool({
-        name: tool,
-        arguments: await this.#pinned(client, tool, JSON.parse(json)),
-      });
+      const args = await this.#pinned(client, tool, JSON.parse(json));
+      const call = async () => {
+        const answer = await client.callTool({
+          name: tool,
+          arguments: args,
+        });
 
-      process.stdout.write(`${JSON.stringify(answer.structuredContent ?? answer.content, null, 2)}\n`);
+        process.stdout.write(`${JSON.stringify(answer.structuredContent ?? answer.content, null, 2)}\n`);
 
-      if (holdSeconds > 0) {
-        process.stderr.write(`Holding the server for ${holdSeconds} s.\n`);
-        await sleep(holdSeconds * 1000);
-      }
+        return answer;
+      };
+      const answer = await call();
+
+      await this.#hold(holdSeconds, everySeconds, call);
 
       return answer.isError ? 1 : 0;
     } finally {
       await client.close();
+    }
+  }
+
+  /** Keeps the server up for `holdSeconds`, calling again every `everySeconds` when given. */
+  async #hold(
+    holdSeconds: number,
+    everySeconds: number | null,
+    call: () => Promise<unknown>,
+  ): Promise<void> {
+    const step = everySeconds ?? holdSeconds;
+
+    if (holdSeconds > 0) {
+      process.stderr.write(`Holding the server for ${holdSeconds} s.\n`);
+    }
+
+    for (let held = step; holdSeconds > 0 && held <= holdSeconds; held += step) {
+      await sleep(step * 1000);
+
+      if (everySeconds !== null) {
+        await call();
+      }
     }
   }
 
