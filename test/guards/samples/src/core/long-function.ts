@@ -1,5 +1,6 @@
 // Planted: a function of 60 lines. Refused by max-lines-per-function (50).
-export function longSteps(): number[] {
+export class Steps {
+  long(): number[] {
   const steps: number[] = [];
 
   steps.push(1);
@@ -60,4 +61,5 @@ export function longSteps(): number[] {
   steps.push(56);
 
   return steps;
+  }
 }

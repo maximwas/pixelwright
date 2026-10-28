@@ -23,6 +23,13 @@ const EXPECTED: Record<string, string[]> = {
   "src/core/long-function.ts": ["max-lines-per-function"],
   "src/core/is-on.ts": ["no-restricted-syntax"],
   "src/core/counter.ts": ["no-restricted-syntax"],
+  "src/core/exported-function.ts": ["no-restricted-syntax"],
+  "src/core/exported-arrow.ts": ["no-restricted-syntax"],
+  "src/core/default-function.ts": ["no-restricted-syntax"],
+  "src/core/static-only.ts": ["@typescript-eslint/no-extraneous-class"],
+  "src/core/short-name.ts": ["id-length"],
+  "src/server/app/service-locator.ts": ["no-restricted-syntax"],
+  "src/server/app/injected-class.ts": ["no-restricted-syntax"],
   // Targets of the planted imports: clean themselves.
   "src/server/tools/beta/beta.tool.ts": [],
   "src/core/xml/index.ts": [],

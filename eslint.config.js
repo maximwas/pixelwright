@@ -3,6 +3,7 @@
 // (`typescript` is the @typescript/typescript6 alias), because typescript-eslint does not support TypeScript 7 yet.
 import figmaPlugins from "@figma/eslint-plugin-figma-plugins";
 import stylistic from "@stylistic/eslint-plugin";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import {
   createFileComposition,
@@ -48,6 +49,31 @@ const BANNED_SYNTAX = [
   NO_CSS_ASYNC,
 ];
 
+/** Every module in src/ is a class: a function travels only as a method of one. */
+const CLASS_MODULES = [
+  {
+    selector: "ExportNamedDeclaration > FunctionDeclaration, ExportDefaultDeclaration > :function",
+    message: "Export a class, not a function: every module in src/ is a class.",
+  },
+  {
+    selector: "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator > :function.init",
+    message: "Export a class, not a function in a const: every module in src/ is a class.",
+  },
+];
+
+/** needle-di: dependencies come in as constructor defaults, and only by token. */
+const INJECTION = [
+  {
+    selector:
+      "CallExpression[callee.name='inject']:not(MethodDefinition[kind='constructor'] > FunctionExpression > AssignmentPattern > CallExpression)",
+    message: "inject() only as a constructor default parameter: a class never looks its services up itself.",
+  },
+  {
+    selector: "CallExpression[callee.name='inject'] > Identifier.arguments:first-child:not([name=/^[A-Z][A-Z0-9_]*$/])",
+    message: "inject() takes an InjectionToken constant: a child container builds a second instance of a class (#110).",
+  },
+];
+
 /** A function fits on a screen, a file is one cohesive module, more than four parameters go in an options object. */
 const LIMITS = {
   "max-lines-per-function": ["error", { max: 50, skipBlankLines: true, skipComments: true }],
@@ -69,7 +95,7 @@ const FILES = [
 ];
 
 const FOLDER_STRUCTURE = createFolderStructure({
-  regexParameters: { suffix: "(types|constants|schema|port|manifest|tool|operation|catalog|contract|main)" },
+  regexParameters: { suffix: "(types|constants|schema|port|manifest|tool|operation|catalog|contract|main|tokens)" },
   structure: [
     { name: "src", children: [{ name: "(cli|plugin-ui)", ruleId: "entryRoot" }, { ruleId: "folder" }] },
     { name: "scripts", children: [...FILES, { ruleId: "folder" }] },
@@ -151,7 +177,25 @@ export default [
   },
   {
     files: CODE,
-    rules: { ...LIMITS, "project-structure/file-composition": ["error", FILE_COMPOSITION] },
+    plugins: { "@typescript-eslint": tsPlugin },
+    rules: {
+      ...LIMITS,
+      "project-structure/file-composition": ["error", FILE_COMPOSITION],
+      // A class of static members is a free function in disguise; statics live only beside instance members.
+      "@typescript-eslint/no-extraneous-class": ["error", { allowStaticOnly: false, allowWithDecorator: false }],
+    },
+  },
+  {
+    files: ["src/**/*.ts"],
+    ignores: TESTS,
+    rules: {
+      "no-restricted-syntax": ["error", ...BANNED_SYNTAX, BY_ID_OUTSIDE_LOOKUP, ...CLASS_MODULES, ...INJECTION],
+    },
+  },
+  // Names say what a value is: no `e`, `i`, `c` or `cfg`; x and y stay for coordinates.
+  {
+    files: ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
+    rules: { "id-length": ["error", { min: 2, properties: "never", exceptions: ["x", "y"] }] },
   },
   {
     files: TESTS,
@@ -159,7 +203,8 @@ export default [
   },
   {
     files: ["src/plugin/adapters/figma/lookup/**/*.ts"],
-    rules: { "no-restricted-syntax": ["error", ...BANNED_SYNTAX] },
+    ignores: TESTS,
+    rules: { "no-restricted-syntax": ["error", ...BANNED_SYNTAX, ...CLASS_MODULES, ...INJECTION] },
   },
   {
     files: ["src/plugin/adapters/**/*.ts", "src/plugin/main/**/*.ts"],
