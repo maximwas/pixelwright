@@ -19,10 +19,7 @@ class TryClient {
     const { positionals, values } = parseArgs({
       args: [...argv],
       allowPositionals: true,
-      options: {
-        hold: { type: "string" },
-        every: { type: "string" },
-      },
+      options: { hold: { type: "string" }, every: { type: "string" } },
     });
     const [tool, json = "{}"] = positionals;
     const holdSeconds = Number(values.hold ?? 0);
@@ -32,28 +29,17 @@ class TryClient {
       throw new Error("Usage: pnpm try [--hold <seconds> [--every <seconds>]] <tool> ['<json arguments>']");
     }
 
-    const client = new Client({
-      name: "pixelwright-try",
-      version: "1.0.0",
-    });
+    const client = new Client({ name: "pixelwright-try", version: "1.0.0" });
 
     // The server's stderr (its log lines) shows in this terminal; the environment passes through, PIXELWRIGHT_* too.
     await client.connect(
-      new StdioClientTransport({
-        command: process.execPath,
-        args: [this.#bin],
-        env: this.#env(),
-        stderr: "inherit",
-      }),
+      new StdioClientTransport({ command: process.execPath, args: [this.#bin], env: this.#env(), stderr: "inherit" }),
     );
 
     try {
       const args = await this.#pinned(client, tool, JSON.parse(json));
       const call = async () => {
-        const answer = await client.callTool({
-          name: tool,
-          arguments: args,
-        });
+        const answer = await client.callTool({ name: tool, arguments: args });
 
         process.stdout.write(`${JSON.stringify(answer.structuredContent ?? answer.content, null, 2)}\n`);
 
@@ -103,12 +89,7 @@ class TryClient {
       throw new Error(`pnpm try works on "${TEST_FILE}" only, not on ${JSON.stringify(args.file)}.`);
     }
 
-    return takesFile
-      ? {
-        ...args,
-        file: TEST_FILE,
-      }
-      : args;
+    return takesFile ? { ...args, file: TEST_FILE } : args;
   }
 
   #env(): Record<string, string> {

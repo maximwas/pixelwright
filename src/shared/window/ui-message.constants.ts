@@ -2,10 +2,7 @@
  * The two virtual channels on figma.ui (A§4.3): the server's frames, which the window relays to and from its socket
  * unread, and the window's own messages to the plugin's main thread.
  */
-export const UI_CHANNEL_NAME = {
-  server: "server",
-  window: "window",
-} as const;
+export const UI_CHANNEL_NAME = { server: "server", window: "window" } as const;
 
 /** The field that names a figma.ui message's channel. */
 export const UI_CHANNEL_FIELD = "ch";

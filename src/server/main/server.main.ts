@@ -2,36 +2,34 @@ import { join } from "node:path";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
-import { CLOCK } from "@/core/ports/clock/clock.port.ts";
-import { JSON_FILE } from "@/core/ports/json-file/json-file.port.ts";
-import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
-import { LOGGER } from "@/core/ports/logger/logger.port.ts";
-import { PLUGIN_LINK } from "@/core/ports/plugin-link/plugin-link.port.ts";
-import { SystemClock } from "@/server/adapters/clock/system-clock/system-clock.ts";
-import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file/atomic-json-file.ts";
+import { CLOCK } from "@/core/ports/clock.port.ts";
+import { JSON_FILE } from "@/core/ports/json-file.port.ts";
+import { LOG_COMPONENT } from "@/core/ports/logger.constants.ts";
+import { LOGGER } from "@/core/ports/logger.port.ts";
+import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
+import { SystemClock } from "@/server/adapters/clock/system-clock.ts";
+import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { LOG_DESTINATIONS, LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
-import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
-import { SharedLogFile } from "@/server/adapters/logging/shared-log-file/shared-log-file.ts";
-import { StdoutGuard } from "@/server/adapters/mcp/stdout-guard/stdout-guard.ts";
-import { OP_CALL_STEPS } from "@/server/app/sessions/plugin-session/plugin-session.tokens.ts";
-import { PLUGIN_SESSIONS, PluginSessions } from "@/server/app/sessions/plugin-sessions/plugin-sessions.ts";
-import { OpLogStep } from "@/server/app/sessions/steps/op-log-step/op-log-step.ts";
-import { OpResultStep } from "@/server/app/sessions/steps/op-result-step/op-result-step.ts";
-import { OpTimerStep } from "@/server/app/sessions/steps/op-timer-step/op-timer-step.ts";
-import { TARGET_RESOLVER, TargetResolver } from "@/server/app/sessions/target-resolver/target-resolver.ts";
-import { CallLogStep } from "@/server/app/tool-runner/steps/call-log-step/call-log-step.ts";
-import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step/error-text-step.ts";
-import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step/output-check-step.ts";
-import { TargetStep } from "@/server/app/tool-runner/steps/target-step/target-step.ts";
-import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
-import { ToolRunner } from "@/server/app/tool-runner/tool-runner/tool-runner.ts";
-import { BridgeProviders } from "@/server/main/bridge-providers/bridge-providers.ts";
-import { ConfigReader } from "@/server/main/config-reader/config-reader.ts";
-import type { ServerConfig } from "@/server/main/config-reader/config-reader.types.ts";
-import { ContainerToolFactory } from "@/server/main/container-tool-factory/container-tool-factory.ts";
-import { McpEndpoint } from "@/server/main/mcp-endpoint/mcp-endpoint.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger.ts";
+import { SharedLogFile } from "@/server/adapters/logging/shared-log-file.ts";
+import { StdoutGuard } from "@/server/adapters/mcp/stdout-guard.ts";
+import { OP_CALL_STEPS } from "@/server/app/sessions/plugin-session.ts";
+import { PLUGIN_SESSIONS, PluginSessions } from "@/server/app/sessions/plugin-sessions.ts";
+import { OpLogStep } from "@/server/app/sessions/steps/op-log-step.ts";
+import { OpResultStep } from "@/server/app/sessions/steps/op-result-step.ts";
+import { OpTimerStep } from "@/server/app/sessions/steps/op-timer-step.ts";
+import { TARGET_RESOLVER, TargetResolver } from "@/server/app/sessions/target-resolver.ts";
+import { CallLogStep } from "@/server/app/tool-runner/steps/call-log-step.ts";
+import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step.ts";
+import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step.ts";
+import { TargetStep } from "@/server/app/tool-runner/steps/target-step.ts";
+import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER, ToolRunner } from "@/server/app/tool-runner/tool-runner.ts";
+import { BridgeProviders } from "@/server/main/bridge-providers.ts";
+import { ConfigReader, type ServerConfig } from "@/server/main/config/config-reader.ts";
+import { ContainerToolFactory } from "@/server/main/container-tool-factory.ts";
+import { McpEndpoint } from "@/server/main/mcp/mcp-endpoint.ts";
 import { LOG_FILE, SERVER_LOG } from "@/server/main/server.constants.ts";
-import { ShutdownHooks } from "@/server/main/shutdown-hooks/shutdown-hooks.ts";
+import { ShutdownHooks } from "@/server/main/shutdown-hooks.ts";
 import { TOOL_CATALOG, ToolCatalog } from "@/server/tools/tool.catalog.ts";
 
 /**
@@ -104,64 +102,25 @@ export class ServerMain {
   }
 
   /** The log, the clock and the home's JSON files: what every other service may need. */
-  #bindInfra(
-    container: Container,
-    { logLevel, home }: ServerConfig,
-  ): void {
+  #bindInfra(container: Container, { logLevel, home }: ServerConfig): void {
     container
-      .bind({
-        provide: LOG_SETTINGS,
-        useValue: {
-          level: logLevel,
-          file: join(home, LOG_FILE.folder, LOG_FILE.name),
-        },
-      })
-      .bind({
-        provide: LOG_DESTINATIONS,
-        multi: true,
-        useValue: pino.destination({
-          dest: 2,
-          sync: true,
-        }),
-      })
-      .bind({
-        provide: LOG_DESTINATIONS,
-        multi: true,
-        useClass: SharedLogFile,
-      })
-      .bind({
-        provide: LOGGER,
-        useClass: PinoLogger,
-      })
-      .bind({
-        provide: CLOCK,
-        useClass: SystemClock,
-      })
-      .bind({
-        provide: JSON_FILE,
-        useClass: AtomicJsonFile,
-      });
+      .bind({ provide: LOG_SETTINGS, useValue: { level: logLevel, file: join(home, LOG_FILE.folder, LOG_FILE.name) } })
+      .bind({ provide: LOG_DESTINATIONS, multi: true, useValue: pino.destination({ dest: 2, sync: true }) })
+      .bind({ provide: LOG_DESTINATIONS, multi: true, useClass: SharedLogFile })
+      .bind({ provide: LOGGER, useClass: PinoLogger })
+      .bind({ provide: CLOCK, useClass: SystemClock })
+      .bind({ provide: JSON_FILE, useClass: AtomicJsonFile });
   }
 
   /** The plugin sessions (A§6.1): target resolution, and each op's chain, outermost first: log, timeout text, result. */
   #bindSessions(container: Container): void {
     for (const step of [OpLogStep, OpTimerStep, OpResultStep]) {
-      container.bind({
-        provide: OP_CALL_STEPS,
-        multi: true,
-        useClass: step,
-      });
+      container.bind({ provide: OP_CALL_STEPS, multi: true, useClass: step });
     }
 
     container
-      .bind({
-        provide: TARGET_RESOLVER,
-        useClass: TargetResolver,
-      })
-      .bind({
-        provide: PLUGIN_SESSIONS,
-        useClass: PluginSessions,
-      });
+      .bind({ provide: TARGET_RESOLVER, useClass: TargetResolver })
+      .bind({ provide: PLUGIN_SESSIONS, useClass: PluginSessions });
   }
 
   #bindServices(container: Container): void {
@@ -169,25 +128,12 @@ export class ServerMain {
 
     // The runner's chain, outermost first: error text, call log, target, output check.
     for (const step of [ErrorTextStep, CallLogStep, TargetStep, OutputCheckStep]) {
-      container.bind({
-        provide: TOOL_CALL_STEPS,
-        multi: true,
-        useClass: step,
-      });
+      container.bind({ provide: TOOL_CALL_STEPS, multi: true, useClass: step });
     }
 
     container
-      .bind({
-        provide: TOOL_CATALOG,
-        useClass: ToolCatalog,
-      })
-      .bind({
-        provide: TOOL_FACTORY,
-        useValue: new ContainerToolFactory(container),
-      })
-      .bind({
-        provide: TOOL_RUNNER,
-        useClass: ToolRunner,
-      });
+      .bind({ provide: TOOL_CATALOG, useClass: ToolCatalog })
+      .bind({ provide: TOOL_FACTORY, useValue: new ContainerToolFactory(container) })
+      .bind({ provide: TOOL_RUNNER, useClass: ToolRunner });
   }
 }

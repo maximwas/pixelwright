@@ -5,7 +5,7 @@ import { access, cp, mkdir, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PLUGIN_FILES } from "@/plugin/main/plugin-manifest/plugin-manifest.constants.ts";
+import { PLUGIN_FILES } from "@/plugin/main/plugin.constants.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 
 class PluginInstall {
@@ -19,14 +19,8 @@ class PluginInstall {
       throw new Error(`No built plugin in ${this.#source}: run pnpm build first.`);
     });
     // The home also holds bridge.json's keys: only its owner reads it.
-    await mkdir(home, {
-      recursive: true,
-      mode: 0o700,
-    });
-    await rm(target, {
-      recursive: true,
-      force: true,
-    });
+    await mkdir(home, { recursive: true, mode: 0o700 });
+    await rm(target, { recursive: true, force: true });
     await cp(this.#source, target, { recursive: true });
     process.stdout.write(
       `${CHANNEL.pluginName} installed in ${target}: every open window of it reloads now.\n` +

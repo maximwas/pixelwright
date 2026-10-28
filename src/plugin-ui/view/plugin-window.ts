@@ -1,0 +1,144 @@
+import { InjectionToken, injectable } from "@needle-di/core";
+import { LINK_STATE } from "@/plugin-ui/link/link.constants.ts";
+import type { LinkState } from "@/plugin-ui/link/socket-link.ts";
+import {
+  NOT_A_DIGIT,
+  PAIRING_NOTE,
+  STATUS_TEXT,
+  TONE,
+  WINDOW_ELEMENT,
+  WINDOW_ERROR,
+  WINDOW_EVENT,
+} from "@/plugin-ui/view/view.constants.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { PAIRING_CODE_DIGITS } from "@/shared/protocol/protocol.constants.ts";
+
+/**
+ * The plugin's small window (P-041): the status line, and the pairing field while the server waits for the code. The
+ * markup is ui.html's own; the window sets only texts, so nothing from the file is ever read as HTML.
+ */
+@injectable()
+export class PluginWindow {
+  #parts: WindowParts | null = null;
+
+  /**
+   * Finds ui.html's elements; sends a typed code to `onPair` once it has its six digits, the switch to `onEdits`, and
+   * whether the window's tab is in front to `onVisible` each time that changes.
+   */
+  mount(
+    onPair: (code: string) => void,
+    onEdits: (on: boolean) => void,
+    onVisible: (on: boolean) => void,
+  ): void {
+    document.addEventListener(WINDOW_EVENT.visibilityChange, () => onVisible(this.visible()));
+
+    const parts: WindowParts = {
+      dot: this.#element(WINDOW_ELEMENT.dot),
+      title: this.#element(WINDOW_ELEMENT.title),
+      detail: this.#element(WINDOW_ELEMENT.detail),
+      pairing: this.#element(WINDOW_ELEMENT.pairing) as HTMLFormElement,
+      code: this.#element(WINDOW_ELEMENT.code) as HTMLInputElement,
+      note: this.#element(WINDOW_ELEMENT.pairingNote),
+      edits: this.#element(WINDOW_ELEMENT.allowEdits) as HTMLInputElement,
+    };
+
+    this.#element(WINDOW_ELEMENT.brand).textContent = CHANNEL.pluginName;
+    parts.pairing.addEventListener(WINDOW_EVENT.submit, (event) => {
+      const code = parts.code.value.replace(NOT_A_DIGIT, "");
+
+      event.preventDefault();
+
+      if (code.length === PAIRING_CODE_DIGITS) {
+        onPair(code);
+        parts.code.value = "";
+      }
+    });
+    parts.edits.addEventListener(WINDOW_EVENT.change, () => onEdits(parts.edits.checked));
+    this.#parts = parts;
+  }
+
+  /** The Allow edits switch as main keeps it for this file (P-011). */
+  showEdits(on: boolean): void {
+    if (this.#parts !== null) {
+      this.#parts.edits.checked = on;
+    }
+  }
+
+  render(state: LinkState, fileName: string): void {
+    const parts = this.#parts;
+    const line = this.#line(state, fileName);
+
+    if (parts === null) {
+      return;
+    }
+
+    parts.dot.dataset.tone = line.tone;
+    parts.title.textContent = line.title;
+    parts.detail.textContent = line.detail ?? "";
+    parts.detail.hidden = line.detail === null;
+    parts.pairing.hidden = line.note === null;
+    parts.note.textContent = line.note ?? "";
+    parts.note.hidden = line.note === null;
+  }
+
+  /** The window's file tab is in front. */
+  visible(): boolean {
+    return document.visibilityState === WINDOW_EVENT.visible;
+  }
+
+  #line(state: LinkState, fileName: string): StatusLine {
+    switch (state.kind) {
+      case LINK_STATE.connected:
+        return { tone: TONE.ok, title: STATUS_TEXT.connected(fileName), detail: STATUS_TEXT.seesFile, note: null };
+      case LINK_STATE.pairing:
+        return {
+          tone: TONE.wait,
+          title: STATUS_TEXT.pairing,
+          detail: null,
+          note: PAIRING_NOTE[state.reason](state.attemptsLeft),
+        };
+      case LINK_STATE.waiting:
+        return {
+          tone: TONE.wait,
+          title: STATUS_TEXT.notConnected,
+          detail: state.reason ?? STATUS_TEXT.startServer,
+          note: null,
+        };
+      case LINK_STATE.stopped:
+        return { tone: TONE.error, title: STATUS_TEXT.stopped, detail: state.reason, note: null };
+      default:
+        return { tone: TONE.wait, title: STATUS_TEXT.connecting, detail: STATUS_TEXT.lookingForServer, note: null };
+    }
+  }
+
+  #element(id: string): HTMLElement {
+    const element = document.getElementById(id);
+
+    if (element === null) {
+      throw new Error(WINDOW_ERROR.missing(id));
+    }
+
+    return element;
+  }
+}
+
+export const PLUGIN_WINDOW = new InjectionToken<PluginWindow>("PluginWindow");
+
+/** The connection in a word and a sentence, and the line under the code field while the server waits for a code. */
+export interface StatusLine {
+  readonly tone: (typeof TONE)[keyof typeof TONE];
+  readonly title: string;
+  readonly detail: string | null;
+  readonly note: string | null;
+}
+
+/** ui.html's elements the window fills in. */
+export interface WindowParts {
+  readonly dot: HTMLElement;
+  readonly title: HTMLElement;
+  readonly detail: HTMLElement;
+  readonly pairing: HTMLFormElement;
+  readonly code: HTMLInputElement;
+  readonly note: HTMLElement;
+  readonly edits: HTMLInputElement;
+}

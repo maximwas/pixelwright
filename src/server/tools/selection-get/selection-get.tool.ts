@@ -1,6 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
-import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session/plugin-session.tokens.ts";
-import { Tool } from "@/server/app/tool-runner/tool/tool.ts";
+import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
+import { Tool } from "@/server/app/tool-runner/tool.ts";
 import {
   type SelectionGetInput,
   SelectionGetInputSchema,

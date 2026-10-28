@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runInNewContext, Script } from "node:vm";
 import { beforeAll, describe, expect, it } from "vitest";
-import { PluginManifest } from "@/plugin/main/plugin-manifest/plugin-manifest.ts";
+import { PluginManifest } from "@/plugin/main/plugin-manifest.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { VERSION } from "@/shared/version/version.constants.ts";
 import { PluginBuild } from "./plugin-build.ts";
@@ -17,12 +17,7 @@ const built = (file: string) => readFileSync(join(OUT, file), "utf8");
 const SCRIPT = /<script>([\s\S]*)<\/script>/;
 
 /** The globals Figma's main sandbox has (P1); nothing else. */
-const SANDBOX = {
-  console,
-  setTimeout,
-  clearTimeout,
-  setInterval,
-};
+const SANDBOX = { console, setTimeout, clearTimeout, setInterval };
 
 beforeAll(async () => {
   await new PluginBuild(ROOT, OUT).run(CHANNEL);

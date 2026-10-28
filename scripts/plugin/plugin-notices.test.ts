@@ -14,13 +14,7 @@ const install = (
   const folder = join(root, "node_modules/.pnpm", `${name}@1.0.0`, "node_modules", name);
 
   mkdirSync(folder, { recursive: true });
-  writeFileSync(
-    join(folder, "package.json"),
-    JSON.stringify({
-      version: "1.0.0",
-      license: "MIT",
-    }),
-  );
+  writeFileSync(join(folder, "package.json"), JSON.stringify({ version: "1.0.0", license: "MIT" }));
   writeFileSync(join(folder, "LICENSE"), licence);
 
   return `node_modules/.pnpm/${name}@1.0.0/node_modules/${name}/index.js`;

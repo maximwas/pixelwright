@@ -61,10 +61,7 @@ export const HelloProtocolSchema = zod.looseObject({
 /** What a plugin may send before its hello_ack: hello, the proof of its key, or the code the user typed. */
 export const PluginHandshakeSchema = zod.discriminatedUnion(FRAME_TYPE_FIELD, [
   HelloSchema,
-  zod.object({
-    type: zod.literal(HANDSHAKE_TYPE.auth),
-    proof: ProofSchema,
-  }),
+  zod.object({ type: zod.literal(HANDSHAKE_TYPE.auth), proof: ProofSchema }),
   zod.object({
     type: zod.literal(HANDSHAKE_TYPE.pair),
     code: zod.string().check(zod.regex(HANDSHAKE_PATTERN.digits(PAIRING_CODE_DIGITS))),
@@ -73,29 +70,19 @@ export const PluginHandshakeSchema = zod.discriminatedUnion(FRAME_TYPE_FIELD, [
 
 /** What the server sends before RPC starts: it proves the key first, asks for the code, hands a key out, lets in. */
 export const ServerHandshakeSchema = zod.discriminatedUnion(FRAME_TYPE_FIELD, [
-  zod.object({
-    type: zod.literal(HANDSHAKE_TYPE.challenge),
-    nonce: NonceSchema,
-    proof: ProofSchema,
-  }),
+  zod.object({ type: zod.literal(HANDSHAKE_TYPE.challenge), nonce: NonceSchema, proof: ProofSchema }),
   zod.object({
     type: zod.literal(HANDSHAKE_TYPE.pairingRequired),
     reason: PairingReasonSchema,
     attemptsLeft: zod.int().check(zod.gte(0)),
     expiresInMs: zod.int().check(zod.gte(0)),
   }),
-  zod.object({
-    type: zod.literal(HANDSHAKE_TYPE.paired),
-    key: PluginKeySchema,
-  }),
+  zod.object({ type: zod.literal(HANDSHAKE_TYPE.paired), key: PluginKeySchema }),
   zod.object({
     type: zod.literal(HANDSHAKE_TYPE.helloAck),
     protocol: zod.int(),
     sessionId: zod.string(),
-    server: zod.object({
-      name: zod.string(),
-      version: zod.string(),
-    }),
+    server: zod.object({ name: zod.string(), version: zod.string() }),
   }),
 ]);
 

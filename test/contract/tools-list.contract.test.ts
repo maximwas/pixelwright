@@ -20,10 +20,7 @@ class ContractClient {
     bridgePort: 0,
     pluginOrigins: [],
   }).endpoint();
-  readonly client = new Client({
-    name: "contract",
-    version: "1.0.0",
-  });
+  readonly client = new Client({ name: "contract", version: "1.0.0" });
 
   async connect(): Promise<void> {
     const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
@@ -57,38 +54,19 @@ describe("the MCP contract", () => {
   });
 
   it("answers status with role disabled and the hint, as structuredContent and the same JSON as text", async () => {
-    const answer = await contract.client.callTool({
-      name: "status",
-      arguments: {},
-    });
+    const answer = await contract.client.callTool({ name: "status", arguments: {} });
 
     expect(answer.structuredContent).toMatchObject({
-      server: {
-        role: "disabled",
-        channel: "pixelwright-new",
-      },
+      server: { role: "disabled", channel: "pixelwright-new" },
       hint: expect.stringContaining("PIXELWRIGHT_PLUGIN_BRIDGE=off"),
     });
-    expect(answer.content).toEqual([
-      {
-        type: "text",
-        text: JSON.stringify(answer.structuredContent),
-      },
-    ]);
+    expect(answer.content).toEqual([{ type: "text", text: JSON.stringify(answer.structuredContent) }]);
   });
 
   it("refuses an unknown argument by name", async () => {
-    const answer = await contract.client.callTool({
-      name: "status",
-      arguments: { bogus: 1 },
-    });
+    const answer = await contract.client.callTool({ name: "status", arguments: { bogus: 1 } });
 
     expect(answer.isError).toBe(true);
-    expect(answer.content).toEqual([
-      {
-        type: "text",
-        text: expect.stringContaining('"bogus"'),
-      },
-    ]);
+    expect(answer.content).toEqual([{ type: "text", text: expect.stringContaining('"bogus"') }]);
   });
 });

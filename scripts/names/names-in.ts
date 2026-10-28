@@ -13,10 +13,7 @@ export function namesIn(text: string): { line: number; word: string }[] {
       const hash = createHash("sha256").update(word.toLowerCase()).digest("hex");
 
       if (NAME_HASHES.has(hash)) {
-        found.push({
-          line: index + 1,
-          word,
-        });
+        found.push({ line: index + 1, word });
       }
     }
   }

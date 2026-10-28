@@ -178,24 +178,15 @@ const LIMITS = {
   ],
 };
 
-/** File names of K-architecture 9.1: `x.ts`, `x.<suffix>.ts`, tests beside them, `index.ts`, `data/*.json`. */
-const SCRIPT_FILES = [
-  { name: "index.ts" },
-  { name: "{kebab-case}(.{suffix})?(.test)?.ts" },
-  { name: "{kebab-case}.(html|md)" },
-  { name: "data", children: [{ name: "{kebab-case}.json" }] },
-];
-
 /**
- * src/: one folder per class. A class, port, tool or operation file and its satellites carry the name of their folder
- * (config-reader/config-reader.ts, config-reader.schema.ts, config-reader.test.ts). Loose in a topic folder: data that
- * belongs to no class (constants, types, tokens, schemas), a layer's catalog, a composition root.
+ * File names of K-architecture 9.1: `x.ts`, `x.<suffix>.ts`, tests beside them, `index.ts`, `data/*.json`. src/: one
+ * folder per topic. A topic folder holds its class files loose, each with its token and types (config/config-reader.ts,
+ * config-reader.schema.ts, config-reader.test.ts), one constants file named after the folder, a layer's catalog, a
+ * composition root; a tool or an operation keeps a folder of its own.
  */
 const FILES = [
   { name: "index.ts" },
-  { name: "{folder-name}(.{suffix})?(.test)?.ts" },
-  { name: "{kebab-case}.(constants|types|tokens|schema)(.test)?.ts" },
-  { name: "{kebab-case}.(catalog|main)(.test)?.ts" },
+  { name: "{kebab-case}(.{suffix})?(.test)?.ts" },
   { name: "{kebab-case}.(html|md)" },
   { name: "data", children: [{ name: "{kebab-case}.json" }] },
 ];
@@ -204,11 +195,10 @@ const FOLDER_STRUCTURE = createFolderStructure({
   regexParameters: { suffix: "(types|constants|schema|port|manifest|tool|operation|catalog|contract|main|tokens)" },
   structure: [
     { name: "src", children: [{ name: "(cli|plugin-ui)", ruleId: "entryRoot" }, { ruleId: "folder" }] },
-    { name: "scripts", children: [...SCRIPT_FILES, { ruleId: "scriptFolder" }] },
+    { name: "scripts", children: [...FILES, { ruleId: "folder" }] },
   ],
   rules: {
     folder: { name: "{kebab-case}", children: [...FILES, { ruleId: "folder" }] },
-    scriptFolder: { name: "{kebab-case}", children: [...SCRIPT_FILES, { ruleId: "scriptFolder" }] },
     // A root holds its entry points only, and a root's composition test; everything else lives in folders under it.
     entryRoot: {
       children: [
@@ -258,9 +248,9 @@ export default [
     plugins: { "@stylistic": stylistic, "project-structure": projectStructurePlugin, antfu, layout: LAYOUT },
     rules: {
       "no-restricted-syntax": ["error", NO_CSS_ASYNC],
-      // Two or more parameters: each on its own line. Biome formats first and would put them back on one line,
-      // so ESLint fixes after it, re-indents what it moved, and checks the layout in pnpm lint.
-      "layout/signature-paren-newline": ["error", { minItems: 2 }],
+      // Three or more parameters: each on its own line; one or two stay on one line. Biome formats first and would
+      // put them back on one line, so ESLint fixes after it, re-indents what it moved, and checks it in pnpm lint.
+      "layout/signature-paren-newline": ["error", { minItems: 3 }],
       "antfu/consistent-list-newline": ["error", PARAMETER_LISTS],
       "@stylistic/indent": ["error", 2, { SwitchCase: 1 }],
       "@stylistic/no-trailing-spaces": "error",
@@ -295,10 +285,7 @@ export default [
           ],
         },
       ],
-      "@stylistic/object-curly-newline": [
-        "error",
-        { ObjectExpression: { minProperties: 2, multiline: true, consistent: true } },
-      ],
+      "@stylistic/object-curly-newline": ["error", { ObjectExpression: { multiline: true, consistent: true } }],
     },
   },
   {
@@ -323,19 +310,13 @@ export default [
     files: ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
     rules: { "id-length": ["error", { min: 2, properties: "never", exceptions: ["x", "y"] }] },
   },
-  {
-    files: TESTS,
-    rules: { "max-lines-per-function": "off" },
-  },
+  { files: TESTS, rules: { "max-lines-per-function": "off" } },
   {
     files: ["src/plugin/adapters/figma/lookup/**/*.ts"],
     ignores: TESTS,
     rules: { "no-restricted-syntax": ["error", ...BANNED_SYNTAX, ...CLASS_MODULES, ...INJECTION] },
   },
-  {
-    files: ["src/plugin/adapters/**/*.ts", "src/plugin/main/**/*.ts"],
-    rules: { "no-restricted-globals": "off" },
-  },
+  { files: ["src/plugin/adapters/**/*.ts", "src/plugin/main/**/*.ts"], rules: { "no-restricted-globals": "off" } },
   {
     files: NODE_FREE,
     rules: {

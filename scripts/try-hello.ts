@@ -54,11 +54,7 @@ class HelloKnock {
     }
 
     return kind === "unknown-key"
-      ? JSON.stringify({
-        ...JSON.parse(this.#hello),
-        protocol: PROTOCOL,
-        keyId: UNKNOWN_KEY,
-      })
+      ? JSON.stringify({ ...JSON.parse(this.#hello), protocol: PROTOCOL, keyId: UNKNOWN_KEY })
       : null;
   }
 }

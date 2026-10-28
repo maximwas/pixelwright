@@ -1,11 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Backoff } from "@/plugin-ui/link/backoff/backoff.ts";
-import { SocketLink } from "@/plugin-ui/link/socket-link/socket-link.ts";
-import type { LinkObserver, LinkState, SocketOpener } from "@/plugin-ui/link/socket-link/socket-link.types.ts";
-import { LINK_TEXT } from "@/plugin-ui/link/stop-reasons/stop-reasons.constants.ts";
-import { StopReasons } from "@/plugin-ui/link/stop-reasons/stop-reasons.ts";
+import { Backoff } from "@/plugin-ui/link/backoff.ts";
+import { LINK_TEXT } from "@/plugin-ui/link/link.constants.ts";
+import { type LinkObserver, type LinkState, SocketLink, type SocketOpener } from "@/plugin-ui/link/socket-link.ts";
 import type { PluginKey } from "@/shared/protocol/handshake.schema.ts";
-import { MemorySocket } from "@/shared/protocol/memory-socket/memory-socket.ts";
+import { MemorySocket } from "@/shared/protocol/memory-socket.ts";
 import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 import { MemoryBridge as Bridge } from "./support/memory-bridge.ts";
 
@@ -46,14 +44,8 @@ class Window implements LinkObserver {
       instanceId: this.#instanceId,
       pluginVersion: "0.8.0",
       editorType: "figma",
-      file: {
-        name: "Test MCP",
-        key: null,
-      },
-      page: {
-        id: "0:1",
-        name: "Start here",
-      },
+      file: { name: "Test MCP", key: null },
+      page: { id: "0:1", name: "Start here" },
       allowEdits: false,
       visible: true,
     };
@@ -67,10 +59,7 @@ class Window implements LinkObserver {
     this.keys.push(key);
   }
 
-  frame(
-    epoch: number,
-    text: string,
-  ): void {
+  frame(epoch: number, text: string): void {
     this.frames.push([epoch, text]);
   }
 
@@ -79,7 +68,7 @@ class Window implements LinkObserver {
   }
 }
 
-const link = (opener: SocketOpener) => new SocketLink(opener, new Backoff(), new StopReasons());
+const link = (opener: SocketOpener) => new SocketLink(opener, new Backoff());
 
 const CONNECTED = { kind: "connected" };
 
@@ -94,11 +83,7 @@ describe("SocketLink against the server's PluginConnection", () => {
     const socketLink = link(bridge);
 
     socketLink.start(null, window);
-    expect(window.last()).toEqual({
-      kind: "pairing",
-      reason: "no_key",
-      attemptsLeft: 5,
-    });
+    expect(window.last()).toEqual({ kind: "pairing", reason: "no_key", attemptsLeft: 5 });
 
     socketLink.pair(bridge.code());
 
@@ -130,10 +115,7 @@ describe("SocketLink against the server's PluginConnection", () => {
     link(bridge).start(key, second);
     vi.advanceTimersByTime(60_000);
 
-    expect(first.last()).toEqual({
-      kind: "stopped",
-      reason: LINK_TEXT.superseded,
-    });
+    expect(first.last()).toEqual({ kind: "stopped", reason: LINK_TEXT.superseded });
     expect(second.last()).toEqual(CONNECTED);
     expect(bridge.plugins).toHaveLength(2);
   });
@@ -145,28 +127,16 @@ describe("SocketLink against the server's PluginConnection", () => {
     const key = bridge.keys.addKey();
     const window = new Window();
 
-    link(bridge).start(
-      {
-        id: key.id,
-        secret: "00".repeat(32),
-      },
-      window,
-    );
+    link(bridge).start({ id: key.id, secret: "00".repeat(32) }, window);
 
     expect(bridge.plugins[0]?.closed?.code).toBe(4401);
     // The window never proves its key to a server that did not prove it first.
     expect(bridge.plugins[0]?.sent.map((frame) => frame.type)).toEqual(["hello"]);
-    expect(window.last()).toMatchObject({
-      kind: "waiting",
-      reason: LINK_TEXT.unproven,
-    });
+    expect(window.last()).toMatchObject({ kind: "waiting", reason: LINK_TEXT.unproven });
 
     vi.advanceTimersByTime(750);
 
-    expect(bridge.plugins[1]?.sent[0]).toMatchObject({
-      type: "hello",
-      keyId: key.id,
-    });
+    expect(bridge.plugins[1]?.sent[0]).toMatchObject({ type: "hello", keyId: key.id });
     expect(window.keys).toEqual([]);
   });
 });
@@ -175,24 +145,13 @@ describe("SocketLink and a program that did not earn a step", () => {
   it("ignores a paired the window never asked for, and the hello_ack after it", () => {
     const window = new Window();
     const impostor = new Impostor((server) => {
-      server.send(
-        JSON.stringify({
-          type: "paired",
-          key: {
-            id: "ab".repeat(8),
-            secret: "cd".repeat(32),
-          },
-        }),
-      );
+      server.send(JSON.stringify({ type: "paired", key: { id: "ab".repeat(8), secret: "cd".repeat(32) } }));
       server.send(
         JSON.stringify({
           type: "hello_ack",
           protocol: 6,
           sessionId: "1",
-          server: {
-            name: "pixelwright-new",
-            version: "0.8.0",
-          },
+          server: { name: "pixelwright-new", version: "0.8.0" },
         }),
       );
     });
@@ -214,10 +173,7 @@ describe("SocketLink and a program that did not earn a step", () => {
 
     link(impostor).start(null, window);
 
-    expect(window.last()).toMatchObject({
-      kind,
-      reason,
-    });
+    expect(window.last()).toMatchObject({ kind, reason });
 
     vi.advanceTimersByTime(750);
 
@@ -271,5 +227,30 @@ describe("SocketLink's sessions", () => {
     const waits = window.states.flatMap((state) => (state.kind === "waiting" ? [state.retryInMs] : []));
 
     expect(waits).toEqual([250, 250]);
+  });
+});
+
+describe("SocketLink's close table", () => {
+  it.each([
+    [4426, "protocol 5 required", "waiting", LINK_TEXT.olderServer],
+    [4426, "protocol 7 required", "stopped", LINK_TEXT.update],
+    [4426, "something else", "stopped", LINK_TEXT.update],
+    [4409, "", "stopped", LINK_TEXT.superseded],
+    [4401, "the plugin could not prove its key", "waiting", LINK_TEXT.unproven],
+    [4429, "too many plugin sessions", "waiting", LINK_TEXT.tooManySessions],
+    [4408, "waited too long for the pairing code", "waiting", LINK_TEXT.helloTimeout],
+    [1001, "", "waiting", null],
+    [1011, "the key could not be stored", "waiting", null],
+    [4400, "invalid message", "waiting", null],
+    [4410, "", "waiting", null],
+    [1006, "", "waiting", null],
+  ])("after %i %j: %s", (code, reason, kind, text) => {
+    vi.useFakeTimers();
+
+    const window = new Window();
+
+    link(new Impostor((server) => server.close(code, reason))).start(null, window);
+
+    expect(window.last()).toMatchObject({ kind, reason: text });
   });
 });

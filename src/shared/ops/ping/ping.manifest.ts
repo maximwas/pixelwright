@@ -1,5 +1,5 @@
 import * as zod from "zod/mini";
-import { OpContract } from "@/shared/ops/op-contract/op-contract.ts";
+import { OpContract } from "@/shared/ops/op-contract.ts";
 import { OP_NAME, OP_TURN } from "@/shared/ops/op-meta.constants.ts";
 import { PING_TIMEOUT_MS } from "@/shared/ops/ping/ping.constants.ts";
 

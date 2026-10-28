@@ -28,10 +28,10 @@ const EXPECTED: Record<string, string[]> = {
   "src/core/default-function/default-function.ts": ["no-restricted-syntax"],
   "src/core/static-only/static-only.ts": ["@typescript-eslint/no-extraneous-class"],
   "src/core/short-name/short-name.ts": ["id-length"],
-  "src/core/two-params/two-params.ts": ["layout/signature-paren-newline"],
+  "src/core/three-params/three-params.ts": ["layout/signature-paren-newline"],
   "src/server/app/service-locator/service-locator.ts": ["no-restricted-syntax"],
   "src/server/app/injected-class/injected-class.ts": ["no-restricted-syntax"],
-  "src/server/app/loose-class.ts": ["project-structure/folder-structure"],
+  "src/server/app/LooseName.ts": ["project-structure/folder-structure"],
   "src/core/welcome-text/welcome-text.ts": [
     "shape/no-string-literal",
     "shape/no-string-type",
@@ -48,6 +48,9 @@ const EXPECTED: Record<string, string[]> = {
   "src/server/tools/beta/beta.tool.ts": [],
   "src/core/xml/index.ts": [],
   "src/core/kernel/names/slug/slug.ts": [],
+  // Clean by rule: a class file loose in its topic folder; two parameters on one line.
+  "src/server/app/loose-class.ts": [],
+  "src/core/two-params/two-params.ts": [],
   // Clean by rule: a callback argument keeps its parameters on one line.
   "src/core/callback-params/callback-params.ts": [],
 };
@@ -68,19 +71,12 @@ async function samplesConfig(): Promise<Linter.Config[]> {
         : [name, setting],
     );
 
-    return {
-      ...entry,
-      rules: Object.fromEntries(rules),
-    };
+    return { ...entry, rules: Object.fromEntries(rules) };
   });
 }
 
 async function eslintFindings(): Promise<Map<string, Set<string>>> {
-  const eslint = new ESLint({
-    cwd: SAMPLES,
-    overrideConfigFile: true,
-    baseConfig: await samplesConfig(),
-  });
+  const eslint = new ESLint({ cwd: SAMPLES, overrideConfigFile: true, baseConfig: await samplesConfig() });
   const findings = new Map<string, Set<string>>();
 
   for (const result of await eslint.lintFiles(["src", "test"])) {
@@ -102,10 +98,7 @@ async function addDepcruiseFindings(findings: Map<string, Set<string>>): Promise
 
   process.chdir(SAMPLES);
 
-  const { output } = await cruise(["src"], {
-    ...options,
-    baseDir: SAMPLES,
-  }).finally(() => process.chdir(cwd));
+  const { output } = await cruise(["src"], { ...options, baseDir: SAMPLES }).finally(() => process.chdir(cwd));
 
   if (typeof output === "string") {
     throw new Error(`dependency-cruiser returned text: ${output}`);

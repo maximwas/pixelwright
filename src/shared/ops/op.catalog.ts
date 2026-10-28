@@ -1,4 +1,4 @@
-import { OpCatalog } from "@/shared/ops/op-catalog/op-catalog.ts";
+import { OpCatalog } from "@/shared/ops/op-catalog.ts";
 import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
 import { selectionOp } from "@/shared/ops/selection/selection.manifest.ts";
 

@@ -20,13 +20,10 @@
   },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
   "linter": { "enabled": true, "rules": { "preset": "recommended", "style": { "useBlockStatements": "error" } } },
-  "javascript": { "formatter": { "quoteStyle": "double" } },
+  "javascript": { "formatter": { "quoteStyle": "double", "expand": "never" } },
   "assist": { "enabled": true, "actions": { "source": { "organizeImports": "on" } } },
   "overrides": [
-    {
-      "includes": [".dependency-cruiser.cjs"],
-      "formatter": { "enabled": false }
-    },
+    { "includes": [".dependency-cruiser.cjs"], "formatter": { "enabled": false } },
     {
       "includes": ["src/shared/**", "src/core/**", "src/plugin/**", "src/plugin-ui/**"],
       "linter": { "rules": { "correctness": { "noNodejsModules": "error" } } }

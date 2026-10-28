@@ -16,10 +16,6 @@ describe("bridge/connect", () => {
     const { status, file } = await client.waitForTestMcp();
 
     expect(status.server).toMatchObject({ protocol: 6 });
-    expect(file).toMatchObject({
-      name: inject("live").file,
-      visible: true,
-      allowEdits: true,
-    });
+    expect(file).toMatchObject({ name: inject("live").file, visible: true, allowEdits: true });
   });
 });

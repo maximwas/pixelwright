@@ -44,10 +44,7 @@ export class PluginNotices {
     return `\n/*!\n${text.replaceAll("*/", "* /").replaceAll("</", "<\\/")}*/\n`;
   }
 
-  #section(
-    name: string,
-    folder: string,
-  ): string {
+  #section(name: string, folder: string): string {
     const { version, license } = JSON.parse(readFileSync(join(folder, "package.json"), "utf8"));
     const file = readdirSync(folder).find((entry) => LICENCE_FILE.test(entry));
     const text =

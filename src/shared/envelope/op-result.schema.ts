@@ -9,11 +9,7 @@ const WireErrorSchema = zod.object({
   data: zod.optional(zod.unknown()),
 });
 
-const CutSchema = zod.object({
-  id: zod.string(),
-  reason: zod.enum(CUT_REASON),
-  detail: zod.optional(zod.string()),
-});
+const CutSchema = zod.object({ id: zod.string(), reason: zod.enum(CUT_REASON), detail: zod.optional(zod.string()) });
 
 /**
  * What `run` answers (D-05): the data with what was cut, missing and touched, or the error. Expected failures travel
@@ -27,10 +23,7 @@ export const OpResultSchema = zod.discriminatedUnion(OP_RESULT_FIELD, [
     missing: zod.array(zod.string()),
     touched: zod.array(zod.string()),
   }),
-  zod.object({
-    ok: zod.literal(false),
-    error: WireErrorSchema,
-  }),
+  zod.object({ ok: zod.literal(false), error: WireErrorSchema }),
 ]);
 
 export type WireError = zod.output<typeof WireErrorSchema>;

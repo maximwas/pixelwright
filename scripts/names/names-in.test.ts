@@ -6,21 +6,11 @@ const NAME = ["Max", "im"].join("");
 
 describe("namesIn", () => {
   it("finds a listed name in a comment, with its line", () => {
-    expect(namesIn(`const a = 1;\n// as ${NAME} asked\n`)).toEqual([
-      {
-        line: 2,
-        word: NAME,
-      },
-    ]);
+    expect(namesIn(`const a = 1;\n// as ${NAME} asked\n`)).toEqual([{ line: 2, word: NAME }]);
   });
 
   it("finds a listed name inside a camelCase identifier", () => {
-    expect(namesIn(`const ${NAME.toLowerCase()}Settings = {};`)).toEqual([
-      {
-        line: 1,
-        word: NAME.toLowerCase(),
-      },
-    ]);
+    expect(namesIn(`const ${NAME.toLowerCase()}Settings = {};`)).toEqual([{ line: 1, word: NAME.toLowerCase() }]);
   });
 
   it("leaves longer words that only start with a name", () => {
