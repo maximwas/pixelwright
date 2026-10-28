@@ -131,6 +131,14 @@ const SHAPE = createNoRestrictedSyntax(
   },
 );
 
+/** no-relative-import-paths sees `import … from` only; a dynamic import() and `export … from` take `@/` here. */
+const IMPORTS = createNoRestrictedSyntax("imports", {
+  name: "no-relative-path",
+  selector:
+    "ImportExpression[source.value=/^\\./], ExportNamedDeclaration[source.value=/^\\./], ExportAllDeclaration[source.value=/^\\./]",
+  message: "Every import of src goes through @/ (the src root), dynamic import() and export … from too.",
+});
+
 /**
  * @stylistic's function-paren-newline for signatures only: declarations, methods and constructors, and functions not
  * passed as an argument. As it is, it would also break every call of two arguments and every callback.
@@ -362,12 +370,13 @@ export default [
   // out of src (package.json) has no alias and stays relative. `eslint --fix` rewrites the rest.
   {
     files: ["src/**/*.ts"],
-    plugins: { "no-relative-import-paths": noRelativeImportPaths },
+    plugins: { "no-relative-import-paths": noRelativeImportPaths, imports: IMPORTS },
     rules: {
       "no-relative-import-paths/no-relative-import-paths": [
         "error",
         { rootDir: "src", prefix: "@", allowSameFolder: false },
       ],
+      ...IMPORTS.configs.recommended.rules,
     },
   },
   // The plugin judges only files inside its rootDir, so test/ and scripts/ take the plain ban, fixed by hand. A script

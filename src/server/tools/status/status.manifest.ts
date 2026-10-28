@@ -10,5 +10,5 @@ export const STATUS_MANIFEST: ToolManifest = {
   input: StatusInputSchema,
   output: StatusOutputSchema,
   annotations: TOOL_ANNOTATIONS.read,
-  load: async () => (await import("./status.tool.ts")).StatusTool,
+  load: async () => (await import("@/server/tools/status/status.tool.ts")).StatusTool,
 };

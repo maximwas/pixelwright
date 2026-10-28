@@ -38,6 +38,8 @@ const EXPECTED: Record<string, string[]> = {
     "shape/no-text-template",
   ],
   "src/core/kernel/names/slug-length/slug-length.ts": ["no-relative-import-paths/no-relative-import-paths"],
+  "src/core/kernel/names/slug/slug.types.ts": ["no-relative-import-paths/no-relative-import-paths"],
+  "src/server/tools/beta/beta.manifest.ts": ["imports/no-relative-path"],
   "test/support/slug-reach/slug-reach.ts": ["no-restricted-imports"],
   "src/core/lost-import/lost-import.ts": ["no-unresolved-alias"],
   // Clean by rule: texts and text arrows live in .constants.ts.
