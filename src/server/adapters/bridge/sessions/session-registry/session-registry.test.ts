@@ -42,6 +42,7 @@ class RegistryProbe {
     visible = true,
   ): BridgeSession {
     const socket = {
+      send: () => undefined,
       close: (
         code: number,
         reason: string,

@@ -1,0 +1,33 @@
+[
+  {
+    "name": "ping",
+    "meta": {
+      "write": false,
+      "dryRun": false,
+      "timeoutMs": 5000,
+      "needsAllowEdits": false,
+      "turn": "free",
+      "quiet": true
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "pong": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "pong"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

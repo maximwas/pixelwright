@@ -17,7 +17,7 @@ export class StatusTool extends Tool<StatusInput, StatusOutput> {
     this.#link = link;
   }
 
-  protected async run(): Promise<StatusOutput> {
+  protected async run(input: StatusInput): Promise<StatusOutput> {
     // Asking is what mints a pairing code while a plugin waits (S-020): status is the only caller.
     const { role, port, files, pairing, hint } = this.#link.state();
 
@@ -30,8 +30,7 @@ export class StatusTool extends Tool<StatusInput, StatusOutput> {
         port,
       },
       files: [...files],
-      // shortcut: no probe until the bridge items give the link ping (05).
-      probe: null,
+      probe: input.probe ? await this.#link.probe() : null,
       pairing,
       hint,
     };

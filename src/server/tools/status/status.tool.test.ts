@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PluginLink, PluginLinkState } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import type { PluginLink, PluginLinkState, ProbeResult } from "@/core/ports/plugin-link/plugin-link.port.ts";
 import { StatusTool } from "@/server/tools/status/status.tool.ts";
 import { VERSION } from "@/shared/version/version.constants.ts";
 
@@ -17,6 +17,14 @@ class LinkState implements PluginLink {
 
   state(): PluginLinkState {
     return this.#state;
+  }
+
+  async probe(): Promise<ProbeResult> {
+    return {
+      ok: true,
+      ms: 3,
+      error: null,
+    };
   }
 }
 

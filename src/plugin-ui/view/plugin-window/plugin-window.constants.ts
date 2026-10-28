@@ -10,6 +10,7 @@ export const WINDOW_ELEMENT = {
   pairing: "pairing",
   code: "code",
   pairingNote: "pairing-note",
+  allowEdits: "allow-edits",
 } as const;
 
 /** The status dot's colour: connected, on its way, stopped. */
@@ -22,6 +23,7 @@ export const TONE = {
 /** The form event of the code field, and the document state of a window whose file tab is in front. */
 export const WINDOW_EVENT = {
   submit: "submit",
+  change: "change",
   visible: "visible",
 } as const;
 

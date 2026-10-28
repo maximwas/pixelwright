@@ -92,11 +92,24 @@ export class PluginConnection {
     this.#socket.close(code, reason);
   }
 
+  /** One RPC frame to the plugin, once it is a session. */
+  send(text: string): void {
+    this.#socket.send(text);
+  }
+
   #receive(text: string | null): void {
     const state = this.#state;
 
-    // shortcut: a session's frames are RPC, which item 05 attaches; until then they only keep the socket alive.
-    if (state.name === CONNECTION_STATE.session || state.name === CONNECTION_STATE.closed) {
+    // A session's frames are RPC (A§5.4); the protocol never sends a binary frame.
+    if (state.name === CONNECTION_STATE.session) {
+      if (text !== null) {
+        state.session.rpc.receive(text);
+      }
+
+      return;
+    }
+
+    if (state.name === CONNECTION_STATE.closed) {
       return;
     }
 
@@ -311,6 +324,7 @@ export class PluginConnection {
     if (state.name === CONNECTION_STATE.pairing) {
       this.#services.sessions.stopWaiting(this);
     } else if (state.name === CONNECTION_STATE.session) {
+      state.session.rpc.close();
       this.#services.sessions.remove(state.session, code);
     }
   }

@@ -22,8 +22,11 @@ import { PAIRING_CODE_DIGITS } from "@/shared/protocol/protocol.constants.ts";
 export class PluginWindow {
   #parts: WindowParts | null = null;
 
-  /** Finds ui.html's elements, and sends a typed code to `onPair` once it has its six digits. */
-  mount(onPair: (code: string) => void): void {
+  /** Finds ui.html's elements; sends a typed code to `onPair` once it has its six digits, the switch to `onEdits`. */
+  mount(
+    onPair: (code: string) => void,
+    onEdits: (on: boolean) => void,
+  ): void {
     const parts: WindowParts = {
       dot: this.#element(WINDOW_ELEMENT.dot),
       title: this.#element(WINDOW_ELEMENT.title),
@@ -31,6 +34,7 @@ export class PluginWindow {
       pairing: this.#element(WINDOW_ELEMENT.pairing) as HTMLFormElement,
       code: this.#element(WINDOW_ELEMENT.code) as HTMLInputElement,
       note: this.#element(WINDOW_ELEMENT.pairingNote),
+      edits: this.#element(WINDOW_ELEMENT.allowEdits) as HTMLInputElement,
     };
 
     this.#element(WINDOW_ELEMENT.brand).textContent = CHANNEL.pluginName;
@@ -44,7 +48,15 @@ export class PluginWindow {
         parts.code.value = "";
       }
     });
+    parts.edits.addEventListener(WINDOW_EVENT.change, () => onEdits(parts.edits.checked));
     this.#parts = parts;
+  }
+
+  /** The Allow edits switch as main keeps it for this file (P-011). */
+  showEdits(on: boolean): void {
+    if (this.#parts !== null) {
+      this.#parts.edits.checked = on;
+    }
   }
 
   render(

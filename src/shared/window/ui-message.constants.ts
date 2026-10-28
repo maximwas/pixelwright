@@ -15,10 +15,11 @@ export const WINDOW_MESSAGE_FIELD = "type";
 
 /**
  * What the window and main say to each other: the window is ready, main hands it the stored key and the file's context
- * (never through showUI, FX-001), the window hands back a key a pairing issued.
+ * (never through showUI, FX-001), the window hands back a key a pairing issued and the Allow edits switch.
  */
 export const WINDOW_MESSAGE = {
   ready: "ready",
   start: "start",
   savePairing: "save_pairing",
+  allowEdits: "allow_edits",
 } as const;

@@ -26,6 +26,10 @@ const WindowMessageSchema = zod.discriminatedUnion(WINDOW_MESSAGE_FIELD, [
     type: zod.literal(WINDOW_MESSAGE.savePairing),
     key: PluginKeySchema,
   }),
+  zod.object({
+    type: zod.literal(WINDOW_MESSAGE.allowEdits),
+    on: zod.boolean(),
+  }),
 ]);
 
 /**

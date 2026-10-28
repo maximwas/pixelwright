@@ -16,4 +16,5 @@ export interface WindowParts {
   readonly pairing: HTMLFormElement;
   readonly code: HTMLInputElement;
   readonly note: HTMLElement;
+  readonly edits: HTMLInputElement;
 }

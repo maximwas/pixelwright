@@ -109,15 +109,19 @@ export class SessionRegistry {
     });
   }
 
-  /** The connected files, the active one marked. */
-  files(): ConnectedFile[] {
-    const sessions = [...this.#sessions.values()];
-    const active = sessions.reduce<BridgeSession | null>(
+  /** The session a tool uses when it names no file (S-011), or null when none is connected. */
+  active(): BridgeSession | null {
+    return [...this.#sessions.values()].reduce<BridgeSession | null>(
       (best, session) => (best === null || session.outranks(best) ? session : best),
       null,
     );
+  }
 
-    return sessions.map((session) => session.file(session === active));
+  /** The connected files, the active one marked. */
+  files(): ConnectedFile[] {
+    const active = this.active();
+
+    return [...this.#sessions.values()].map((session) => session.file(session === active));
   }
 
   /** The upgrade guard refused a plugin's window (Host or Origin). */
