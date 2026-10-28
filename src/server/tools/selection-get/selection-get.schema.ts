@@ -1,5 +1,5 @@
 import * as zod from "zod/mini";
-import { FileInputSchema } from "@/server/app/sessions/target-resolver/target-resolver.schema.ts";
+import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import { SelectionOutputSchema } from "@/shared/ops/selection/selection.schema.ts";
 
 export const SelectionGetInputSchema = zod.strictObject({ file: FileInputSchema });

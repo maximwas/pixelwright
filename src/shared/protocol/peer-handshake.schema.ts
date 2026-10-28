@@ -18,9 +18,6 @@ export const PeerChallengeSchema = zod.object({
 });
 
 /** The peer proves the token back over the owner's nonce. The token never travels. */
-export const PeerAuthSchema = zod.object({
-  type: zod.literal(PEER_HANDSHAKE_TYPE.peerAuth),
-  proof: ProofSchema,
-});
+export const PeerAuthSchema = zod.object({ type: zod.literal(PEER_HANDSHAKE_TYPE.peerAuth), proof: ProofSchema });
 
 export type PeerHello = zod.output<typeof PeerHelloSchema>;

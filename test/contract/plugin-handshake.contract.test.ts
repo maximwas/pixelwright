@@ -7,7 +7,7 @@ import { WebSocket } from "ws";
 import * as zod from "zod/mini";
 import { ServerMain } from "@/server/main/server.main.ts";
 import { type StatusOutput, StatusOutputSchema } from "@/server/tools/status/status.schema.ts";
-import { Proof } from "@/shared/protocol/proof/proof.ts";
+import { Proof } from "@/shared/protocol/proof.ts";
 
 /** Frames 0.7.0 sends, recorded from its own code, as the exact bytes on the wire. */
 const RECORDING = JSON.parse(readFileSync(new URL("../golden/fixtures/handshake-0.7.0.json", import.meta.url), "utf8"));
@@ -15,20 +15,11 @@ const PLUGIN: Record<string, string> = RECORDING.pluginToServer;
 const SERVER: Record<string, string> = RECORDING.serverToPlugin;
 
 /** A recorded plugin frame with some fields changed in place: the order stays 0.7.0's. */
-const recorded = (
-  name: string,
-  changes: Record<string, unknown> = {},
-) =>
-  JSON.stringify({
-    ...JSON.parse(PLUGIN[name] ?? "{}"),
-    ...changes,
-  });
+const recorded = (name: string, changes: Record<string, unknown> = {}) =>
+  JSON.stringify({ ...JSON.parse(PLUGIN[name] ?? "{}"), ...changes });
 
 /** Every key of a frame, nested ones as paths, in order: equal lists mean the same fields in the same places. */
-const keysOf = (
-  value: unknown,
-  path = "",
-): string[] =>
+const keysOf = (value: unknown, path = ""): string[] =>
   typeof value === "object" && value !== null
     ? Object.entries(value).flatMap(([key, inner]) => [`${path}${key}`, ...keysOf(inner, `${path}${key}.`)])
     : [];
@@ -46,12 +37,7 @@ class PluginWindow {
     this.#socket = new WebSocket(`ws://127.0.0.1:${port}/pixelwright/v1`, { origin: "null" });
     this.#socket.on("message", (data) => this.frames.push(JSON.parse(String(data))));
     this.closed = new Promise((resolve) => {
-      this.#socket.on("close", (code, reason) =>
-        resolve({
-          code,
-          reason: String(reason),
-        }),
-      );
+      this.#socket.on("close", (code, reason) => resolve({ code, reason: String(reason) }));
     });
   }
 
@@ -88,10 +74,7 @@ class Owner {
     pluginOrigins: [],
   });
 
-  readonly client = new Client({
-    name: "contract",
-    version: "1.0.0",
-  });
+  readonly client = new Client({ name: "contract", version: "1.0.0" });
 
   readonly windows: PluginWindow[] = [];
   port = 0;
@@ -116,10 +99,7 @@ class Owner {
   }
 
   async status(): Promise<StatusOutput> {
-    const answer = await this.client.callTool({
-      name: "status",
-      arguments: {},
-    });
+    const answer = await this.client.callTool({ name: "status", arguments: {} });
 
     return zod.parse(StatusOutputSchema, answer.structuredContent);
   }
@@ -155,10 +135,7 @@ describe("the plugin handshake through the composition root, with 0.7.0's record
 
     await window.send(PLUGIN.helloNoKey ?? "");
 
-    expect(await window.closed).toEqual({
-      code: 4426,
-      reason: RECORDING.versionMismatchReason,
-    });
+    expect(await window.closed).toEqual({ code: 4426, reason: RECORDING.versionMismatchReason });
     expect((await server.status()).hint).toBe(
       "The Pixelwright New plugin 0.7.0 that tried to connect is older than this server (protocol 5; this server speaks 6), so it was turned away: ask the user to install the plugin that comes with this server's version and run it again in Figma.",
     );
@@ -167,10 +144,7 @@ describe("the plugin handshake through the composition root, with 0.7.0's record
   it("asks a plugin with a key it lacks to pair, shows the code in status, and pairs it with that code", async () => {
     const server = await owner();
     const window = server.window();
-    const unknownKey = {
-      protocol: 6,
-      keyId: "feedfacefeedface",
-    };
+    const unknownKey = { protocol: 6, keyId: "feedfacefeedface" };
 
     await window.send(recorded("helloNoKey", unknownKey));
 
@@ -192,20 +166,12 @@ describe("the plugin handshake through the composition root, with 0.7.0's record
 
     const [, , paired, ack] = await window.received(4);
     const stored = JSON.parse(readFileSync(join(server.home, "bridge.json"), "utf8")).pluginKeys;
-    const file = {
-      session: ack?.sessionId,
-      name: "Test MCP",
-      active: true,
-    };
+    const file = { session: ack?.sessionId, name: "Test MCP", active: true };
 
     expect(keysOf(paired)).toEqual(recordedKeys("paired"));
     expect(keysOf(ack)).toEqual(recordedKeys("helloAck"));
     expect(stored).toEqual([expect.objectContaining(paired?.key as object)]);
-    expect(await server.status()).toMatchObject({
-      files: [file],
-      pairing: null,
-      hint: null,
-    });
+    expect(await server.status()).toMatchObject({ files: [file], pairing: null, hint: null });
   });
 
   it("challenges a paired plugin, proving the key first, and lets it in on its proof", async () => {
@@ -223,20 +189,14 @@ describe("the plugin handshake through the composition root, with 0.7.0's record
     const withKey = {
       protocol: 6,
       keyId: key.id,
-      plugin: {
-        ...JSON.parse(PLUGIN.helloWithKey ?? "{}").plugin,
-        instanceId: "another-window",
-      },
+      plugin: { ...JSON.parse(PLUGIN.helloWithKey ?? "{}").plugin, instanceId: "another-window" },
     };
 
     await window.send(recorded("helloWithKey", withKey));
 
     const [challenge] = await window.received(1);
     const nonce = String(challenge?.nonce);
-    const auth = {
-      type: "auth",
-      proof: Proof.sign(key.secret, "plugin", nonce, RECORDING.pluginNonce).hex(),
-    };
+    const auth = { type: "auth", proof: Proof.sign(key.secret, "plugin", nonce, RECORDING.pluginNonce).hex() };
 
     expect(keysOf(challenge)).toEqual(recordedKeys("challenge"));
     expect(challenge?.proof).toBe(Proof.sign(key.secret, "server", RECORDING.pluginNonce, nonce).hex());

@@ -45,10 +45,7 @@ export default async function setup(project: TestProject): Promise<() => Promise
       throw error;
     }
 
-    project.provide("live", {
-      file: TEST_MCP.file,
-      scratch: null,
-    });
+    project.provide("live", { file: TEST_MCP.file, scratch: null });
 
     return async () => {
       await owner.close();

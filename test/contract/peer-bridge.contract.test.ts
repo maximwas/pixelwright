@@ -6,34 +6,22 @@ import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
 import * as zod from "zod/mini";
-import { PLUGIN_LINK } from "@/core/ports/plugin-link/plugin-link.port.ts";
-import { OWNER_ROUTER } from "@/server/adapters/bridge/owner-router/owner-router.ts";
-import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
+import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
+import { OWNER_ROUTER } from "@/server/adapters/bridge/owner/owner-router.ts";
+import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry.ts";
 import { ServerMain } from "@/server/main/server.main.ts";
 import { type StatusOutput, StatusOutputSchema } from "@/server/tools/status/status.schema.ts";
-import { Proof } from "@/shared/protocol/proof/proof.ts";
+import { Proof } from "@/shared/protocol/proof.ts";
 
 /** One server as the composition root wires it with the bridge on, in a home it may share with another, on a port. */
 class Server {
   readonly home: string;
   readonly server: ServerMain;
-  readonly client = new Client({
-    name: "contract",
-    version: "1.0.0",
-  });
+  readonly client = new Client({ name: "contract", version: "1.0.0" });
 
-  constructor(
-    home: string,
-    port: number,
-  ) {
+  constructor(home: string, port: number) {
     this.home = home;
-    this.server = new ServerMain({
-      home,
-      logLevel: "silent",
-      pluginBridge: true,
-      bridgePort: port,
-      pluginOrigins: [],
-    });
+    this.server = new ServerMain({ home, logLevel: "silent", pluginBridge: true, bridgePort: port, pluginOrigins: [] });
   }
 
   async connect(): Promise<this> {
@@ -47,10 +35,7 @@ class Server {
   }
 
   async status(): Promise<StatusOutput> {
-    const answer = await this.client.callTool({
-      name: "status",
-      arguments: {},
-    });
+    const answer = await this.client.callTool({ name: "status", arguments: {} });
 
     return zod.parse(StatusOutputSchema, answer.structuredContent);
   }
@@ -63,10 +48,7 @@ class Server {
 
 const servers: Server[] = [];
 
-const started = async (
-  home = mkdtempSync(join(tmpdir(), "pixelwright-peer-")),
-  port = 0,
-): Promise<Server> => {
+const started = async (home = mkdtempSync(join(tmpdir(), "pixelwright-peer-")), port = 0): Promise<Server> => {
   const server = new Server(home, port);
 
   servers.push(server);
@@ -85,32 +67,15 @@ const handPeer = (
     const socket = new WebSocket(`ws://127.0.0.1:${port}/pixelwright/v1/peer`);
 
     socket.on("error", () => undefined);
-    socket.on("open", () =>
-      socket.send(
-        JSON.stringify({
-          type: "peer_hello",
-          protocol,
-          pluginProtocol: 6,
-          nonce,
-        }),
-      ),
-    );
+    socket.on("open", () => socket.send(JSON.stringify({ type: "peer_hello", protocol, pluginProtocol: 6, nonce })));
     socket.on("message", (data) => {
       const challenge = JSON.parse(String(data)) as { nonce: string };
 
       socket.send(
-        JSON.stringify({
-          type: "peer_auth",
-          proof: Proof.sign(token, "peer", challenge.nonce, nonce).hex(),
-        }),
+        JSON.stringify({ type: "peer_auth", proof: Proof.sign(token, "peer", challenge.nonce, nonce).hex() }),
       );
     });
-    socket.on("close", (code, reason) =>
-      resolve({
-        code,
-        reason: String(reason),
-      }),
-    );
+    socket.on("close", (code, reason) => resolve({ code, reason: String(reason) }));
   });
 
 const tokenOf = (home: string): string =>
@@ -126,17 +91,9 @@ describe("two servers on one bridge (S-030..S-034)", () => {
     const { port } = (await owner.status()).server;
     const peer = await started(owner.home, port);
 
-    expect((await peer.status()).server).toMatchObject({
-      role: "peer",
-      port,
-    });
+    expect((await peer.status()).server).toMatchObject({ role: "peer", port });
     await expect(
-      peer.server.container().get(PLUGIN_LINK).request({
-        session: "gone",
-        op: "ping",
-        input: {},
-        timeoutMs: 1_000,
-      }),
+      peer.server.container().get(PLUGIN_LINK).request({ session: "gone", op: "ping", input: {}, timeoutMs: 1_000 }),
     ).rejects.toMatchObject({ code: "PLUGIN_NOT_CONNECTED" });
   });
 
@@ -144,10 +101,7 @@ describe("two servers on one bridge (S-030..S-034)", () => {
     const owner = await started();
     const { port } = (await owner.status()).server;
 
-    expect(await handPeer(port, tokenOf(owner.home), 2)).toEqual({
-      code: 4426,
-      reason: "peer protocol 3 required",
-    });
+    expect(await handPeer(port, tokenOf(owner.home), 2)).toEqual({ code: 4426, reason: "peer protocol 3 required" });
   });
 
   it("hands the bridge to a newer peer after its proof; the old owner's tools ask for a restart (S-034, X-010)", async () => {
@@ -157,10 +111,7 @@ describe("two servers on one bridge (S-030..S-034)", () => {
     expect((await handPeer(port, tokenOf(owner.home), 4)).code).toBe(4410);
     expect((await owner.status()).server.role).toBe("handedOver");
 
-    const answer = await owner.client.callTool({
-      name: "selection_get",
-      arguments: {},
-    });
+    const answer = await owner.client.callTool({ name: "selection_get", arguments: {} });
 
     expect(answer.isError).toBe(true);
     expect(JSON.stringify(answer.content)).toContain("restart Pixelwright in this MCP client (/mcp in Claude Code)");
@@ -171,10 +122,7 @@ describe("two servers on one bridge (S-030..S-034)", () => {
     const container = owner.server.container();
     const statuses = container.get(OWNER_ROUTER).statuses();
 
-    expect((await statuses.next()).value).toEqual({
-      files: [],
-      pairing: null,
-    });
+    expect((await statuses.next()).value).toEqual({ files: [], pairing: null });
 
     container.get(SESSION_REGISTRY).wait({});
 

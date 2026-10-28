@@ -24,15 +24,7 @@ export default defineConfig({
           exclude,
         },
       },
-      {
-        oxc,
-        resolve,
-        test: {
-          name: "contract",
-          include: ["test/contract/**/*.contract.test.ts"],
-          exclude,
-        },
-      },
+      { oxc, resolve, test: { name: "contract", include: ["test/contract/**/*.contract.test.ts"], exclude } },
       // Real Figma (Test MCP), local only: one file at a time, and writing tests never retry.
       {
         oxc,

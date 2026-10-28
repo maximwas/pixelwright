@@ -1,6 +1,6 @@
 import { Container } from "@needle-di/core";
-import { WINDOW_LINK } from "@/plugin-ui/link/window-link/window-link.tokens.ts";
-import { UiProviders } from "@/plugin-ui/main/ui-providers/ui-providers.ts";
+import { WINDOW_LINK } from "@/plugin-ui/link/window-link.ts";
+import { UiProviders } from "@/plugin-ui/main/ui-providers.ts";
 
 /**
  * The plugin window's composition root (A§4.4, A§4b.3), the one owner of its container. The build's entry runs

@@ -1,11 +1,11 @@
 import { inject, injectable } from "@needle-di/core";
-import { CLOCK } from "@/core/ports/clock/clock.port.ts";
-import { PLUGIN_LINK, type ProbeResult } from "@/core/ports/plugin-link/plugin-link.port.ts";
-import { PLUGIN_SESSIONS } from "@/server/app/sessions/plugin-sessions/plugin-sessions.ts";
-import { Tool } from "@/server/app/tool-runner/tool/tool.ts";
+import { CLOCK } from "@/core/ports/clock.port.ts";
+import { PLUGIN_LINK, type ProbeResult } from "@/core/ports/plugin-link.port.ts";
+import { PLUGIN_SESSIONS } from "@/server/app/sessions/plugin-sessions.ts";
+import { Tool } from "@/server/app/tool-runner/tool.ts";
 import { STATUS_NOTE } from "@/server/tools/status/status.constants.ts";
 import { type StatusInput, StatusInputSchema, type StatusOutput } from "@/server/tools/status/status.schema.ts";
-import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { PROTOCOL } from "@/shared/protocol/protocol.constants.ts";
@@ -40,13 +40,7 @@ export class StatusTool extends Tool<StatusInput, StatusOutput> {
     const keyless = files.filter((file) => file.key === null).map((file) => file.name);
 
     return {
-      server: {
-        version: VERSION,
-        channel: CHANNEL.name,
-        role,
-        protocol: PROTOCOL,
-        port,
-      },
+      server: { version: VERSION, channel: CHANNEL.name, role, protocol: PROTOCOL, port },
       files: [...files],
       probe: input.probe ? await this.#probe() : null,
       pairing,
@@ -62,17 +56,9 @@ export class StatusTool extends Tool<StatusInput, StatusOutput> {
     try {
       await this.#sessions.session(undefined).run(pingOp, {});
 
-      return {
-        ok: true,
-        ms: Math.round(this.#clock.now() - started),
-        error: null,
-      };
+      return { ok: true, ms: Math.round(this.#clock.now() - started), error: null };
     } catch (error) {
-      return {
-        ok: false,
-        ms: null,
-        error: error instanceof PixelwrightError ? error.text() : String(error),
-      };
+      return { ok: false, ms: null, error: error instanceof PixelwrightError ? error.text() : String(error) };
     }
   }
 }

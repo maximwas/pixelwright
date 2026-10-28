@@ -28,10 +28,7 @@ const CALL_TIMEOUT_MS = 320_000;
  * so nothing a test does lands in another open file (R-001).
  */
 export class LiveClient {
-  readonly #client = new Client({
-    name: "pixelwright-live",
-    version: "1.0.0",
-  });
+  readonly #client = new Client({ name: "pixelwright-live", version: "1.0.0" });
   #takesFile: ReadonlySet<string> = new Set();
 
   async connect(): Promise<this> {
@@ -56,21 +53,12 @@ export class LiveClient {
   }
 
   /** The tool's structuredContent; an error answer throws with its text. */
-  async call(
-    tool: string,
-    args: ToolResult = {},
-  ): Promise<ToolResult> {
+  async call(tool: string, args: ToolResult = {}): Promise<ToolResult> {
     if (this.#takesFile.has(tool) && args.file !== TEST_MCP.file) {
       throw new Error(`live tests call ${tool} with file: "${TEST_MCP.file}" only, not ${JSON.stringify(args.file)}.`);
     }
 
-    const answer = await this.#client.callTool(
-      {
-        name: tool,
-        arguments: args,
-      },
-      { timeout: CALL_TIMEOUT_MS },
-    );
+    const answer = await this.#client.callTool({ name: tool, arguments: args }, { timeout: CALL_TIMEOUT_MS });
 
     if (answer.isError === true || typeof answer.structuredContent !== "object" || answer.structuredContent === null) {
       throw new Error(`${tool}: ${JSON.stringify(answer.content)}`);
@@ -88,10 +76,7 @@ export class LiveClient {
       const file = (status.files as StatusFile[]).find((connected) => connected.name === TEST_MCP.file);
 
       if (file !== undefined) {
-        return {
-          status,
-          file,
-        };
+        return { status, file };
       }
 
       await sleep(POLL_MS);

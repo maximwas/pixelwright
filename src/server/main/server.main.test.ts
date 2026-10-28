@@ -3,22 +3,22 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { InjectionToken } from "@needle-di/core";
 import { describe, expect, it } from "vitest";
-import { CLOCK } from "@/core/ports/clock/clock.port.ts";
-import { JSON_FILE } from "@/core/ports/json-file/json-file.port.ts";
-import { LOGGER } from "@/core/ports/logger/logger.port.ts";
-import { PLUGIN_LINK } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import { CLOCK } from "@/core/ports/clock.port.ts";
+import { JSON_FILE } from "@/core/ports/json-file.port.ts";
+import { LOGGER } from "@/core/ports/logger.port.ts";
+import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
 import { BRIDGE_SETTINGS } from "@/server/adapters/bridge/bridge.tokens.ts";
-import { BRIDGE_CONFIG } from "@/server/adapters/bridge/bridge-config/bridge-config.tokens.ts";
-import { BRIDGE_LISTENER } from "@/server/adapters/bridge/bridge-listener/bridge-listener.tokens.ts";
-import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints/status-hints.tokens.ts";
-import { NoBridge } from "@/server/adapters/bridge/no-bridge/no-bridge.ts";
-import { OWNER_BRIDGE } from "@/server/adapters/bridge/owner-bridge/owner-bridge.tokens.ts";
-import { PAIRING_CODES } from "@/server/adapters/bridge/pairing-codes/pairing-codes.tokens.ts";
-import { PluginBridge } from "@/server/adapters/bridge/plugin-bridge/plugin-bridge.ts";
-import { PLUGIN_CONNECTIONS } from "@/server/adapters/bridge/plugin-connections/plugin-connections.tokens.ts";
-import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
-import { UPGRADE_GUARD } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.tokens.ts";
-import { TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
+import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints.ts";
+import { BRIDGE_CONFIG } from "@/server/adapters/bridge/listener/bridge-config.ts";
+import { BRIDGE_LISTENER } from "@/server/adapters/bridge/listener/bridge-listener.ts";
+import { UPGRADE_GUARD } from "@/server/adapters/bridge/listener/upgrade-guard.ts";
+import { NoBridge } from "@/server/adapters/bridge/no-bridge.ts";
+import { OWNER_BRIDGE } from "@/server/adapters/bridge/owner/owner-bridge.ts";
+import { PAIRING_CODES } from "@/server/adapters/bridge/plugin/pairing-codes.ts";
+import { PLUGIN_CONNECTIONS } from "@/server/adapters/bridge/plugin/plugin-connections.ts";
+import { PluginBridge } from "@/server/adapters/bridge/plugin-bridge.ts";
+import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry.ts";
+import { TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner.ts";
 import { ServerMain } from "@/server/main/server.main.ts";
 import { TOOL_CATALOG } from "@/server/tools/tool.catalog.ts";
 
@@ -67,10 +67,7 @@ describe("ServerMain's composition", () => {
     const container = root(true);
     const sessions = container.get(SESSION_REGISTRY);
 
-    sessions.refused({
-      protocol: 5,
-      pluginVersion: "0.7.0",
-    });
+    sessions.refused({ protocol: 5, pluginVersion: "0.7.0" });
 
     expect(container.get(OWNER_BRIDGE).state().hint).toContain("0.7.0");
   });

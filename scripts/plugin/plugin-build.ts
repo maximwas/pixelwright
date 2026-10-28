@@ -1,8 +1,8 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { type BuildOptions, build } from "esbuild";
-import { PLUGIN_FILES } from "@/plugin/main/plugin-manifest/plugin-manifest.constants.ts";
-import { PluginManifest } from "@/plugin/main/plugin-manifest/plugin-manifest.ts";
+import { PLUGIN_FILES } from "@/plugin/main/plugin.constants.ts";
+import { PluginManifest } from "@/plugin/main/plugin-manifest.ts";
 import type { Channel } from "@/shared/protocol/channel.constants.ts";
 import { PluginNotices } from "./plugin-notices.ts";
 
@@ -27,10 +27,7 @@ export class PluginBuild {
   readonly #root: string;
   readonly #out: string;
 
-  constructor(
-    root: string,
-    out: string,
-  ) {
+  constructor(root: string, out: string) {
     this.#root = root;
     this.#out = out;
   }
@@ -41,10 +38,7 @@ export class PluginBuild {
       mainFields: ["module", "main"],
       tsconfig: join(this.#root, "tsconfig.plugin.json"),
     });
-    const ui = await this.#bundle(ENTRY.ui, {
-      platform: "browser",
-      tsconfig: join(this.#root, "tsconfig.ui.json"),
-    });
+    const ui = await this.#bundle(ENTRY.ui, { platform: "browser", tsconfig: join(this.#root, "tsconfig.ui.json") });
 
     // An inline script ends at the first `</script`, wherever it stands: esbuild escapes it in strings, this proves it.
     if (CLOSING_SCRIPT.test(ui)) {
@@ -53,10 +47,7 @@ export class PluginBuild {
 
     const page = await readFile(join(this.#root, "src/plugin-ui/ui.html"), "utf8");
 
-    await rm(this.#out, {
-      recursive: true,
-      force: true,
-    });
+    await rm(this.#out, { recursive: true, force: true });
     await mkdir(this.#out, { recursive: true });
     await writeFile(join(this.#out, PLUGIN_FILES.main), main);
     // A function, so `$&` and its kin in the script are not read as replacement patterns.
@@ -70,17 +61,10 @@ export class PluginBuild {
     );
   }
 
-  async #bundle(
-    entry: string,
-    options: BuildOptions,
-  ): Promise<string> {
+  async #bundle(entry: string, options: BuildOptions): Promise<string> {
     const notices = new PluginNotices(this.#root);
     const result = await build({
-      stdin: {
-        contents: entry,
-        resolveDir: this.#root,
-        loader: "ts",
-      },
+      stdin: { contents: entry, resolveDir: this.#root, loader: "ts" },
       absWorkingDir: this.#root,
       bundle: true,
       format: "iife",

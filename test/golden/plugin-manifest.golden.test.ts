@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { PluginManifest } from "@/plugin/main/plugin-manifest/plugin-manifest.ts";
+import { PluginManifest } from "@/plugin/main/plugin-manifest.ts";
 import { CHANNELS } from "@/shared/protocol/channel.constants.ts";
 
 /** 0.7.0's manifest.json as its build wrote it, byte for byte (pixelwright-old apps/plugin, the installed plugin). */
@@ -32,10 +32,7 @@ describe("PluginManifest", () => {
 
     expect(Object.keys(release)).toEqual(Object.keys(OLD));
     expect(differing(release, OLD)).toEqual(BUILD_FIELDS);
-    expect(release).toMatchObject({
-      main: "main.js",
-      ui: "ui.html",
-    });
+    expect(release).toMatchObject({ main: "main.js", ui: "ui.html" });
   });
 
   it("differs for the dev channel only in its name, its id and its port", () => {

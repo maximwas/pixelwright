@@ -12,10 +12,7 @@ import { type StatusOutput, StatusOutputSchema } from "@/server/tools/status/sta
 class OwnerClient {
   readonly home = mkdtempSync(join(tmpdir(), "pixelwright-owner-"));
   readonly server: ServerMain;
-  readonly client = new Client({
-    name: "contract",
-    version: "1.0.0",
-  });
+  readonly client = new Client({ name: "contract", version: "1.0.0" });
 
   constructor(port = 0) {
     this.server = new ServerMain({
@@ -37,10 +34,7 @@ class OwnerClient {
 
   /** The answer, read by status's own output schema. */
   async status(): Promise<StatusOutput> {
-    const answer = await this.client.callTool({
-      name: "status",
-      arguments: {},
-    });
+    const answer = await this.client.callTool({ name: "status", arguments: {} });
 
     return zod.parse(StatusOutputSchema, answer.structuredContent);
   }
@@ -95,11 +89,7 @@ describe("the owner bridge through the composition root", () => {
         host: "127.0.0.1",
         port: server.port,
         path: "/pixelwright/v1",
-        headers: {
-          connection: "Upgrade",
-          upgrade: "websocket",
-          origin: "https://evil.example",
-        },
+        headers: { connection: "Upgrade", upgrade: "websocket", origin: "https://evil.example" },
       })
         .on("response", resolve)
         .on("error", reject)
@@ -123,10 +113,7 @@ describe("the owner bridge through the composition root", () => {
       const owner = await connected(port);
 
       expect(await owner.status()).toMatchObject({
-        server: {
-          role: "unavailable",
-          port,
-        },
+        server: { role: "unavailable", port },
         hint: `Port ${port} is held by a program that is not Pixelwright: free it. This session keeps retrying.`,
       });
     } finally {

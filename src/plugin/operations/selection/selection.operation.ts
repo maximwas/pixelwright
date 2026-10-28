@@ -1,8 +1,8 @@
 import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
-import { CURRENT_SELECTION } from "@/plugin/adapters/figma/current-selection/current-selection.ts";
-import { OP_REPORT } from "@/plugin/app/op-report/op-report.tokens.ts";
-import { Operation } from "@/plugin/app/operation/operation.ts";
+import { CURRENT_SELECTION } from "@/plugin/adapters/figma/current-selection.ts";
+import { OP_REPORT } from "@/plugin/app/op-report.ts";
+import { Operation } from "@/plugin/app/operation.ts";
 import type { selectionOp } from "@/shared/ops/selection/selection.manifest.ts";
 
 /** The layers the user selected on the current page (T-030); none selected is an empty list. */
@@ -13,10 +13,7 @@ export class SelectionOperation extends Operation<
 > {
   readonly #selection;
 
-  constructor(
-    report = inject(OP_REPORT),
-    selection = inject(CURRENT_SELECTION),
-  ) {
+  constructor(report = inject(OP_REPORT), selection = inject(CURRENT_SELECTION)) {
     super(report);
     this.#selection = selection;
   }

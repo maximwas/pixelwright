@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MainChannel } from "@/plugin-ui/adapters/main-channel/main-channel.ts";
-import { Backoff } from "@/plugin-ui/link/backoff/backoff.ts";
-import { SocketLink } from "@/plugin-ui/link/socket-link/socket-link.ts";
-import { StopReasons } from "@/plugin-ui/link/stop-reasons/stop-reasons.ts";
-import { WindowLink } from "@/plugin-ui/link/window-link/window-link.ts";
-import { PluginWindow } from "@/plugin-ui/view/plugin-window/plugin-window.ts";
+import { MainChannel } from "@/plugin-ui/adapters/main-channel.ts";
+import { Backoff } from "@/plugin-ui/link/backoff.ts";
+import { SocketLink } from "@/plugin-ui/link/socket-link.ts";
+import { WindowLink } from "@/plugin-ui/link/window-link.ts";
+import { PluginWindow } from "@/plugin-ui/view/plugin-window.ts";
 import type { UiMessage } from "@/shared/window/ui-message.schema.ts";
 import { MemoryBridge as Bridge } from "./support/memory-bridge.ts";
 
@@ -19,10 +18,7 @@ class Element {
   readonly dataset: Record<string, string> = {};
   #submit: (event: { preventDefault(): void }) => void = () => {};
 
-  addEventListener(
-    _type: string,
-    listener: (event: { preventDefault(): void }) => void,
-  ): void {
+  addEventListener(_type: string, listener: (event: { preventDefault(): void }) => void): void {
     this.#submit = listener;
   }
 
@@ -44,10 +40,7 @@ class Frame {
       getElementById: (id: string) => this.element(id),
     });
     vi.stubGlobal("window", {
-      addEventListener: (
-        _type: string,
-        listener: (event: { data: unknown }) => void,
-      ) => {
+      addEventListener: (_type: string, listener: (event: { data: unknown }) => void) => {
         this.#receive = listener;
       },
     });
@@ -72,19 +65,13 @@ class Frame {
 const CONTEXT = {
   pluginVersion: "0.8.0",
   editorType: "figma",
-  file: {
-    name: "Test MCP",
-    key: null,
-  },
-  page: {
-    id: "0:1",
-    name: "Start here",
-  },
+  file: { name: "Test MCP", key: null },
+  page: { id: "0:1", name: "Start here" },
   allowEdits: false,
 };
 
 const windowLink = (bridge: Bridge) =>
-  new WindowLink(new MainChannel(), new SocketLink(bridge, new Backoff(), new StopReasons()), new PluginWindow());
+  new WindowLink(new MainChannel(), new SocketLink(bridge, new Backoff()), new PluginWindow());
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -98,28 +85,12 @@ describe("WindowLink", () => {
     windowLink(bridge).start();
 
     expect(frame.posted).toEqual([
-      {
-        ch: "window",
-        d: { type: "ready" },
-      },
+      { ch: "window", d: { type: "ready" } },
       // Only the window knows whether its tab is in front: main hears it at once (S-012).
-      {
-        ch: "window",
-        d: {
-          type: "visible",
-          on: true,
-        },
-      },
+      { ch: "window", d: { type: "visible", on: true } },
     ]);
 
-    frame.fromMain({
-      ch: "window",
-      d: {
-        type: "start",
-        key: null,
-        context: CONTEXT,
-      },
-    });
+    frame.fromMain({ ch: "window", d: { type: "start", key: null, context: CONTEXT } });
 
     expect(frame.element("title").textContent).toBe("Pair this window");
     expect(frame.element("pairing").hidden).toBe(false);
@@ -146,35 +117,13 @@ describe("WindowLink", () => {
 
     windowLink(bridge).start();
     // Main answers ready once; a second answer starts no second link.
-    frame.fromMain({
-      ch: "window",
-      d: {
-        type: "start",
-        key,
-        context: CONTEXT,
-      },
-    });
-    frame.fromMain({
-      ch: "window",
-      d: {
-        type: "start",
-        key,
-        context: CONTEXT,
-      },
-    });
+    frame.fromMain({ ch: "window", d: { type: "start", key, context: CONTEXT } });
+    frame.fromMain({ ch: "window", d: { type: "start", key, context: CONTEXT } });
     bridge.servers[0]?.send('{"call":1}');
-    frame.fromMain({
-      ch: "server",
-      e: 1,
-      d: '{"answer":1}',
-    });
+    frame.fromMain({ ch: "server", e: 1, d: '{"answer":1}' });
 
     expect(frame.element("title").textContent).toBe("Connected (Test MCP)");
-    expect(frame.posted.at(-1)).toEqual({
-      ch: "server",
-      e: 1,
-      d: '{"call":1}',
-    });
+    expect(frame.posted.at(-1)).toEqual({ ch: "server", e: 1, d: '{"call":1}' });
     expect(bridge.plugins[0]?.sent.at(-1)).toEqual({ answer: 1 });
     expect(bridge.plugins).toHaveLength(1);
   });
