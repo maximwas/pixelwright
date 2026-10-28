@@ -4,6 +4,17 @@ export const PROTOCOL = 6;
 /** Where the plugin's window connects: ws://127.0.0.1:<the channel's port><BRIDGE_PATH> (S-001). */
 export const BRIDGE_PATH = "/pixelwright/v1";
 
+/**
+ * The plugin window's view of the bridge. localhost, not 127.0.0.1: the manifest's networkAccess names localhost
+ * (P-060), and Figma lets the window reach no other origin; the guard admits both host names (S-002).
+ */
+export const BRIDGE_URL_TEXT = {
+  /** What the Figma manifest allows. */
+  origin: (port: number) => `ws://localhost:${port}`,
+  /** Where the window connects. */
+  url: (port: number) => `ws://localhost:${port}${BRIDGE_PATH}`,
+} as const;
+
 /** Where another Pixelwright server joins the owner, with no Origin, which no browser page can send (S-002). */
 export const PEER_PATH = `${BRIDGE_PATH}/peer`;
 

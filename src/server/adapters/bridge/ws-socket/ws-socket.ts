@@ -53,8 +53,8 @@ export class WsSocket implements MessageSocket {
     this.#socket.on(WS_EVENT.message, (data: RawData, isBinary: boolean) => listener(isBinary ? null : String(data)));
   }
 
-  onClose(listener: (code: number) => void): void {
-    this.#socket.on(WS_EVENT.close, (code: number) => listener(code));
+  onClose(listener: (code: number, reason: string) => void): void {
+    this.#socket.on(WS_EVENT.close, (code: number, reason: Buffer) => listener(code, String(reason)));
   }
 
   #hear(): void {

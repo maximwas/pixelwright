@@ -25,7 +25,7 @@ const NonceSchema = zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(NONCE_BYT
 const ProofSchema = zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(PROOF_BYTES)));
 
 /** A paired plugin's key, hex: the server keeps it in bridge.json, the plugin in clientStorage. */
-const PluginKeySchema = zod.object({
+export const PluginKeySchema = zod.object({
   id: zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(KEY_ID_BYTES))),
   secret: zod.string().check(zod.regex(HANDSHAKE_PATTERN.hex(KEY_SECRET_BYTES))),
 });
@@ -106,3 +106,5 @@ export type PluginHandshake = zod.output<typeof PluginHandshakeSchema>;
 export type ServerHandshake = zod.output<typeof ServerHandshakeSchema>;
 
 export type PairingReason = zod.output<typeof PairingReasonSchema>;
+
+export type PluginKey = zod.output<typeof PluginKeySchema>;
