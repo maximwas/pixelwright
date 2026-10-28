@@ -7,8 +7,8 @@ import { readFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { WebSocket } from "ws";
-import { CHANNEL } from "../src/shared/protocol/channel.constants.ts";
-import { BRIDGE_PATH, PROTOCOL } from "../src/shared/protocol/protocol.constants.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { BRIDGE_PATH, PROTOCOL } from "@/shared/protocol/protocol.constants.ts";
 
 /** A key id no bridge.json holds. */
 const UNKNOWN_KEY = "feedfacefeedface";

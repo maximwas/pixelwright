@@ -370,27 +370,14 @@ export default [
       ],
     },
   },
-  // The plugin judges only files inside its rootDir, so test/ takes the plain ban, fixed by hand.
+  // The plugin judges only files inside its rootDir, so test/ and scripts/ take the plain ban, fixed by hand. A script
+  // that imports src runs under tsx, which reads the tsconfig paths; raw node does not.
   {
-    files: ["test/**/*.ts"],
+    files: ["test/**/*.ts", "scripts/**/*.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
-        { patterns: [{ regex: "^(\\.\\./)+src/", message: "test/ imports src through @/, as src does." }] },
-      ],
-    },
-  },
-  // `pnpm try` and `pnpm lint` run scripts/ with raw node, which does not read tsconfig paths.
-  {
-    files: ["scripts/**/*.ts"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            { regex: "^@/", message: "scripts/ run under raw node, which cannot resolve @/: import relatively." },
-          ],
-        },
+        { patterns: [{ regex: "^(\\.\\./)+src/", message: "Import src through @/, as src does." }] },
       ],
     },
   },

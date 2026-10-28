@@ -7,6 +7,9 @@
   "bin": {
     "pixelwright": "./dist/bin.mjs"
   },
+  "exports": {
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist"
   ],
@@ -20,8 +23,8 @@
     "format": "biome check --write . && eslint --fix . && biome check --write . && eslint --fix .",
     "typecheck": "tsc -b",
     "build": "tsdown",
-    "try": "node scripts/try.ts",
-    "try:hello": "node scripts/try-hello.ts",
+    "try": "tsx scripts/try.ts",
+    "try:hello": "tsx scripts/try-hello.ts",
     "test": "vitest run --project unit --project contract",
     "test:live": "vitest run --project live",
     "check:deps": "depcruise src scripts test",
@@ -67,6 +70,7 @@
     "simple-git-hooks": "2.14.0",
     "size-limit": "14.3.0",
     "tsdown": "0.23.2",
+    "tsx": "4.23.15",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "vitest": "5.0.5"
   },
