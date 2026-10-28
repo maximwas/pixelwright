@@ -11,10 +11,17 @@ export class ConfigReader {
   readonly #env: Readonly<Record<string, string | undefined>>;
   /** The user's home folder; asked of the system only when the environment names none. */
   readonly #homeDir: string | undefined;
+  /** The server's working directory; asked of the process only when the environment names no project. */
+  readonly #cwd: string | undefined;
 
-  constructor(env: Readonly<Record<string, string | undefined>> = process.env, homeDir?: string) {
+  constructor(
+    env: Readonly<Record<string, string | undefined>> = process.env,
+    homeDir?: string,
+    cwd?: string,
+  ) {
     this.#env = env;
     this.#homeDir = homeDir;
+    this.#cwd = cwd;
   }
 
   read(): ServerConfig {
@@ -30,6 +37,7 @@ export class ConfigReader {
         .split(SERVER_ENV.listSeparator)
         .map((origin) => origin.trim())
         .filter((origin) => origin !== ""),
+      projectDir: env.CLAUDE_PROJECT_DIR?.trim() || (this.#cwd ?? process.cwd()),
     };
   }
 }
@@ -42,4 +50,6 @@ export interface ServerConfig {
   /** The channel's port; the contract tests give 0 for any free one. */
   readonly bridgePort: number;
   readonly pluginOrigins: readonly string[];
+  /** Where relative paths start when the MCP client lists no file root (T-008). */
+  readonly projectDir: string;
 }

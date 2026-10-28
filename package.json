@@ -86,6 +86,8 @@
     "@orpc/client": "1.16.1",
     "@orpc/contract": "1.16.1",
     "@orpc/server": "1.16.1",
+    "acorn": "8.19.0",
+    "acorn-walk": "8.3.5",
     "atomically": "2.1.1",
     "birpc": "4.2.0",
     "close-with-grace": "2.5.0",

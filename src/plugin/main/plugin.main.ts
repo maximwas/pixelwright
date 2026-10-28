@@ -3,6 +3,7 @@ import { DOCUMENT_EVENTS } from "@/core/ports/document-events.port.ts";
 import { SERVER_EVENTS } from "@/core/ports/server-events.port.ts";
 import { SERVER_RPC } from "@/plugin/adapters/host/channels/server-rpc.ts";
 import { WINDOW_HOST } from "@/plugin/adapters/host/channels/window-host.ts";
+import { CHANGE_JOURNAL } from "@/plugin/app/journal/change-journal.ts";
 import { OPERATION_RUNNER } from "@/plugin/app/operation-runner.ts";
 import { HostProviders } from "@/plugin/main/host-providers.ts";
 import { OperationProviders } from "@/plugin/main/operation-providers.ts";
@@ -26,6 +27,8 @@ export class PluginMain {
     const runner = container.get(OPERATION_RUNNER);
 
     figma.showUI(__html__, PLUGIN_WINDOW);
+    // From the window's start: changes_since tells what changed since then (T-035).
+    container.get(CHANGE_JOURNAL).start();
     // An arrow, not the runner itself: birpc calls a served function with its own `this`.
     container.get(SERVER_RPC).start({ run: (op, input) => runner.run(op, input) });
     this.#publishInfo(container);

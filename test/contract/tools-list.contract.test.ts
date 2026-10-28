@@ -19,6 +19,7 @@ class ContractClient {
     pluginBridge: false,
     bridgePort: 0,
     pluginOrigins: [],
+    projectDir: tmpdir(),
   }).endpoint();
   readonly client = new Client({ name: "contract", version: "1.0.0" });
 
@@ -50,7 +51,7 @@ describe("the MCP contract", () => {
       expect(JSON.stringify(tool, null, 2)).toBe(JSON.stringify(entry, null, 2));
     }
 
-    expect(tools.map(({ name }) => name)).toEqual(["status", "selection_get"]);
+    expect(tools.map(({ name }) => name)).toEqual(["status", "selection_get", "changes_since", "execute"]);
   });
 
   it("answers status with role disabled and the hint, as structuredContent and the same JSON as text", async () => {

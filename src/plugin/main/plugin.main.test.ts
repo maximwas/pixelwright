@@ -8,10 +8,12 @@ import { SERVER_RPC } from "@/plugin/adapters/host/channels/server-rpc.ts";
 import { UI_CHANNEL } from "@/plugin/adapters/host/channels/ui-channel.ts";
 import { WINDOW_HOST } from "@/plugin/adapters/host/channels/window-host.ts";
 import { PAIRING_STORE } from "@/plugin/adapters/host/storage/pairing-store.ts";
+import { CHANGE_JOURNAL } from "@/plugin/app/journal/change-journal.ts";
 import { Operation } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY, OPERATION_RUNNER } from "@/plugin/app/operation-runner.ts";
 import { OPERATION_TURNS } from "@/plugin/app/operation-turns.ts";
 import { PluginMain } from "@/plugin/main/plugin.main.ts";
+import { CODE_SCOPE } from "@/plugin/operations/execute/code-scope.ts";
 import { OP_CONTRACTS } from "@/shared/ops/op.catalog.ts";
 
 const SINGLETONS: [string, InjectionToken<unknown>][] = [
@@ -25,6 +27,8 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["DOCUMENT_EVENTS", DOCUMENT_EVENTS],
   ["OPERATION_TURNS", OPERATION_TURNS],
   ["OPERATION_RUNNER", OPERATION_RUNNER],
+  ["CHANGE_JOURNAL", CHANGE_JOURNAL],
+  ["CODE_SCOPE", CODE_SCOPE],
 ];
 
 // No figma global here: building the container must not touch it, only start() does.

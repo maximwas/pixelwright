@@ -23,7 +23,14 @@ class Server {
 
   constructor(home: string, port: number) {
     this.home = home;
-    this.server = new ServerMain({ home, logLevel: "silent", pluginBridge: true, bridgePort: port, pluginOrigins: [] });
+    this.server = new ServerMain({
+      home,
+      logLevel: "silent",
+      pluginBridge: true,
+      bridgePort: port,
+      pluginOrigins: [],
+      projectDir: home,
+    });
   }
 
   async connect(): Promise<this> {

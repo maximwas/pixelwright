@@ -1,5 +1,7 @@
 import { InjectionToken, injectable } from "@needle-di/core";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
+import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
+import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { SELECTION_GET_MANIFEST } from "@/server/tools/selection-get/selection-get.manifest.ts";
 import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
 
@@ -9,7 +11,12 @@ import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
  */
 @injectable()
 export class ToolCatalog {
-  readonly #manifests: readonly ToolManifest[] = [STATUS_MANIFEST, SELECTION_GET_MANIFEST];
+  readonly #manifests: readonly ToolManifest[] = [
+    STATUS_MANIFEST,
+    SELECTION_GET_MANIFEST,
+    CHANGES_SINCE_MANIFEST,
+    EXECUTE_MANIFEST,
+  ];
 
   manifests(): readonly ToolManifest[] {
     return this.#manifests;

@@ -21,6 +21,7 @@ class OwnerClient {
       pluginBridge: true,
       bridgePort: port,
       pluginOrigins: [],
+      projectDir: tmpdir(),
     });
   }
 
