@@ -5,13 +5,13 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
 import { BridgeConfig } from "@/server/adapters/bridge/bridge-config/bridge-config.ts";
+import { BridgeListener } from "@/server/adapters/bridge/bridge-listener/bridge-listener.ts";
 import { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
 import { PluginConnections } from "@/server/adapters/bridge/plugin-connections/plugin-connections.ts";
 import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry/session-registry.ts";
 import { UpgradeGuard } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file/atomic-json-file.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
-import { BridgeListener } from "./bridge-listener.ts";
 
 const UPGRADE = {
   connection: "Upgrade",

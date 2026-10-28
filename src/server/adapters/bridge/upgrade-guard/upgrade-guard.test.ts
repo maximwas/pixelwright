@@ -1,6 +1,6 @@
 import type { IncomingHttpHeaders } from "node:http";
 import { describe, expect, it } from "vitest";
-import { UpgradeGuard } from "./upgrade-guard.ts";
+import { UpgradeGuard } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.ts";
 
 const PORT = 18_721;
 

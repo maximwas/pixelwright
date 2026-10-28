@@ -4,12 +4,12 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BridgeConfig } from "@/server/adapters/bridge/bridge-config/bridge-config.ts";
 import { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
+import { PluginConnection } from "@/server/adapters/bridge/plugin-connection/plugin-connection.ts";
 import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry/session-registry.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file/atomic-json-file.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 import { MemorySocket } from "@/shared/protocol/memory-socket/memory-socket.ts";
 import { Proof } from "@/shared/protocol/proof/proof.ts";
-import { PluginConnection } from "./plugin-connection.ts";
 
 const PLUGIN_NONCE = "00112233445566778899aabbccddeeff";
 

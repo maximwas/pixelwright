@@ -4,7 +4,10 @@ import { inject, injectable } from "@needle-di/core";
 import type { DestinationStream } from "pino";
 import { FILE_ERROR } from "@/server/adapters/files/file-error.constants.ts";
 import { LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
-import { LOG_FILE_MAX_BYTES, SHARED_LOG_FILE } from "./shared-log-file.constants.ts";
+import {
+  LOG_FILE_MAX_BYTES,
+  SHARED_LOG_FILE,
+} from "@/server/adapters/logging/shared-log-file/shared-log-file.constants.ts";
 
 /**
  * The log every server of this channel shares, written line by line (S-065). A write that finds the file past 5 MiB

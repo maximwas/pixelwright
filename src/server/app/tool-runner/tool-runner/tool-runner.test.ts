@@ -7,9 +7,9 @@ import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step/er
 import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step/output-check-step.ts";
 import { Tool } from "@/server/app/tool-runner/tool/tool.ts";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
+import { ToolRunner } from "@/server/app/tool-runner/tool-runner/tool-runner.ts";
+import type { ToolContext, ToolFactory } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
-import { ToolRunner } from "./tool-runner.ts";
-import type { ToolContext, ToolFactory } from "./tool-runner.types.ts";
 
 const ProbeInput = zod.object({
   file: zod.optional(zod.string()),

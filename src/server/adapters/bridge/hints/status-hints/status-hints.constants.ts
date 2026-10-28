@@ -5,7 +5,7 @@ import { PairingCodeHint } from "@/server/adapters/bridge/hints/pairing-code-hin
 import { PairingLockHint } from "@/server/adapters/bridge/hints/pairing-lock-hint/pairing-lock-hint.ts";
 import { ProtocolRefusalHint } from "@/server/adapters/bridge/hints/protocol-refusal-hint/protocol-refusal-hint.ts";
 import { RejectionHint } from "@/server/adapters/bridge/hints/rejection-hint/rejection-hint.ts";
-import type { StatusHint } from "./status-hints.types.ts";
+import type { StatusHint } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
 
 /**
  * The hint table's rows in priority order (S-035): bridge state > pairing code > pairing pause > connected (no hint) >

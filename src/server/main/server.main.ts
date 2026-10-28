@@ -18,14 +18,14 @@ import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step/er
 import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step/output-check-step.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
 import { ToolRunner } from "@/server/app/tool-runner/tool-runner/tool-runner.ts";
+import { BridgeProviders } from "@/server/main/bridge-providers/bridge-providers.ts";
+import { ConfigReader } from "@/server/main/config-reader/config-reader.ts";
+import type { ServerConfig } from "@/server/main/config-reader/config-reader.types.ts";
+import { ContainerToolFactory } from "@/server/main/container-tool-factory/container-tool-factory.ts";
+import { McpEndpoint } from "@/server/main/mcp-endpoint/mcp-endpoint.ts";
+import { LOG_FILE, SERVER_LOG } from "@/server/main/server.constants.ts";
+import { ShutdownHooks } from "@/server/main/shutdown-hooks/shutdown-hooks.ts";
 import { TOOL_CATALOG, ToolCatalog } from "@/server/tools/tool.catalog.ts";
-import { BridgeProviders } from "./bridge-providers/bridge-providers.ts";
-import { ConfigReader } from "./config-reader/config-reader.ts";
-import type { ServerConfig } from "./config-reader/config-reader.types.ts";
-import { ContainerToolFactory } from "./container-tool-factory/container-tool-factory.ts";
-import { McpEndpoint } from "./mcp-endpoint/mcp-endpoint.ts";
-import { LOG_FILE, SERVER_LOG } from "./server.constants.ts";
-import { ShutdownHooks } from "./shutdown-hooks/shutdown-hooks.ts";
 
 /**
  * The server's composition root (A§4.1), the one owner of the container. It binds every interface and value once;

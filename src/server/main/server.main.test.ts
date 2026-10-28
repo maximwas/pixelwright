@@ -18,8 +18,8 @@ import { PLUGIN_CONNECTIONS } from "@/server/adapters/bridge/plugin-connections/
 import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry/session-registry.tokens.ts";
 import { UPGRADE_GUARD } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.tokens.ts";
 import { TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
+import { ServerMain } from "@/server/main/server.main.ts";
 import { TOOL_CATALOG } from "@/server/tools/tool.catalog.ts";
-import { ServerMain } from "./server.main.ts";
 
 /** The root as the server composes it, without start(): constructors touch nothing, so nothing listens. */
 const root = (pluginBridge: boolean) =>

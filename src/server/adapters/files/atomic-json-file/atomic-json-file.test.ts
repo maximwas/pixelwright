@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
+import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file/atomic-json-file.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
-import { AtomicJsonFile } from "./atomic-json-file.ts";
 
 const Schema = zod.object({
   version: zod.literal(1),

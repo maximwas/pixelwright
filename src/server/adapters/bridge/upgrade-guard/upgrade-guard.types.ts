@@ -1,5 +1,5 @@
 import type { IncomingMessage } from "node:http";
-import type { UPGRADE_REFUSAL, UPGRADE_ROLE } from "./upgrade-guard.constants.ts";
+import type { UPGRADE_REFUSAL, UPGRADE_ROLE } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.constants.ts";
 
 /** Who upgrades: the plugin's window, or another Pixelwright server joining the owner. */
 export type UpgradeRole = (typeof UPGRADE_ROLE)[keyof typeof UPGRADE_ROLE];

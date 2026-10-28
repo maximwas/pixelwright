@@ -1,4 +1,5 @@
 import { injectable } from "@needle-di/core";
+import { ERROR_TEXT } from "@/server/app/tool-runner/steps/error-text-step/error-text-step.constants.ts";
 import { TOOL_CONTENT_TYPE } from "@/server/app/tool-runner/tool-content.constants.ts";
 import type {
   ToolAnswer,
@@ -7,7 +8,6 @@ import type {
   ToolStepNext,
 } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
-import { ERROR_TEXT } from "./error-text-step.constants.ts";
 
 /**
  * The outermost step: a failed call becomes an isError answer. An expected failure reads `CODE: message`, so the model

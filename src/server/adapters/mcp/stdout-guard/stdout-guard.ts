@@ -1,5 +1,5 @@
 import { inspect } from "node:util";
-import { STDOUT_GUARD } from "./stdout-guard.constants.ts";
+import { STDOUT_GUARD } from "@/server/adapters/mcp/stdout-guard/stdout-guard.constants.ts";
 
 /**
  * stdout carries MCP JSON-RPC only (S-056), so console output goes to stderr. Libraries log through the global console

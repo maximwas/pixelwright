@@ -2,11 +2,11 @@ import { McpServer, type Transport } from "@modelcontextprotocol/server";
 import { inject, injectable } from "@needle-di/core";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 import { TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
+import { MCP_ENDPOINT_ERROR, SERVER_INSTRUCTIONS } from "@/server/main/mcp-endpoint/mcp-endpoint.constants.ts";
 import { McpToolSchema } from "@/server/main/mcp-tool-schema/mcp-tool-schema.ts";
 import { TOOL_CATALOG } from "@/server/tools/tool.catalog.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { VERSION } from "@/shared/version/version.constants.ts";
-import { MCP_ENDPOINT_ERROR, SERVER_INSTRUCTIONS } from "./mcp-endpoint.constants.ts";
 
 /**
  * Adapter over the SDK's McpServer: the channel's name and version, the server instructions (T-007), every catalog

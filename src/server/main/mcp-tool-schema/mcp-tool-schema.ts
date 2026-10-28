@@ -1,6 +1,6 @@
 import type { StandardSchemaWithJSON } from "@modelcontextprotocol/server";
 import * as zod from "zod/mini";
-import { TOOL_JSON_SCHEMA } from "./mcp-tool-schema.constants.ts";
+import { TOOL_JSON_SCHEMA } from "@/server/main/mcp-tool-schema/mcp-tool-schema.constants.ts";
 
 type Props<Schema extends zod.ZodMiniType> = StandardSchemaWithJSON<zod.input<Schema>, zod.output<Schema>>["~standard"];
 

@@ -1,6 +1,6 @@
 import { InjectionToken } from "@needle-di/core";
-import type { ToolRunner } from "./tool-runner.ts";
-import type { ToolCallStep, ToolContext, ToolFactory } from "./tool-runner.types.ts";
+import type { ToolRunner } from "@/server/app/tool-runner/tool-runner/tool-runner.ts";
+import type { ToolCallStep, ToolContext, ToolFactory } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 
 export const TOOL_RUNNER = new InjectionToken<ToolRunner>("ToolRunner");
 

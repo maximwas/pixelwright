@@ -1,6 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
-import { STATUS_HINT_RULES } from "./status-hints.tokens.ts";
-import type { HintFacts } from "./status-hints.types.ts";
+import { STATUS_HINT_RULES } from "@/server/adapters/bridge/hints/status-hints/status-hints.tokens.ts";
+import type { HintFacts } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
 
 /**
  * The status hint (S-035): what the user should do next, in words the model passes on. The rows are tried in their

@@ -10,7 +10,7 @@ import { CallId } from "@/server/app/tool-runner/call-id/call-id.ts";
 import { Tool } from "@/server/app/tool-runner/tool/tool.ts";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 import { TOOL_CONTEXT } from "@/server/app/tool-runner/tool-runner/tool-runner.tokens.ts";
-import { ContainerToolFactory } from "./container-tool-factory.ts";
+import { ContainerToolFactory } from "@/server/main/container-tool-factory/container-tool-factory.ts";
 
 /** A tool that shows what it was built with. */
 @injectable()

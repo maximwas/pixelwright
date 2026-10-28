@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ConfigReader } from "./config-reader.ts";
+import { ConfigReader } from "@/server/main/config-reader/config-reader.ts";
 
 const HOME = "/home/someone";
 

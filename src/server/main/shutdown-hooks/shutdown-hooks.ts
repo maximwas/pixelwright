@@ -2,7 +2,7 @@ import { inject, injectable } from "@needle-di/core";
 import closeWithGrace from "close-with-grace";
 import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
 import { LOGGER } from "@/core/ports/logger/logger.port.ts";
-import { SHUTDOWN_DELAY_MS, SHUTDOWN_LOG, STDIN_EVENT } from "./shutdown-hooks.constants.ts";
+import { SHUTDOWN_DELAY_MS, SHUTDOWN_LOG, STDIN_EVENT } from "@/server/main/shutdown-hooks/shutdown-hooks.constants.ts";
 
 /**
  * Closes the server once (S-013): when the MCP client goes away (stdin ends) or on SIGINT, SIGTERM and the other exit

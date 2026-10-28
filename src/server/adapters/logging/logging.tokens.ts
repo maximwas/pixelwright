@@ -1,6 +1,6 @@
 import { InjectionToken } from "@needle-di/core";
 import type { DestinationStream } from "pino";
-import type { LOG_LEVEL } from "./logging.constants.ts";
+import type { LOG_LEVEL } from "@/server/adapters/logging/logging.constants.ts";
 
 export type LogLevel = (typeof LOG_LEVEL)[keyof typeof LOG_LEVEL];
 

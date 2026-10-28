@@ -1,5 +1,5 @@
 import type { ErrorCode } from "@/shared/errors/error-code.constants.ts";
-import { PIXELWRIGHT_ERROR } from "./pixelwright-error.constants.ts";
+import { PIXELWRIGHT_ERROR } from "@/shared/errors/pixelwright-error/pixelwright-error.constants.ts";
 
 /** An expected failure: the call cannot answer, and its code tells the model what to do next (T-003). */
 export class PixelwrightError extends Error {

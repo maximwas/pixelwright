@@ -1,5 +1,5 @@
 import { InjectionToken } from "@needle-di/core";
-import type { PLUGIN_LINK_ROLES } from "./plugin-link.constants.ts";
+import type { PLUGIN_LINK_ROLES } from "@/core/ports/plugin-link/plugin-link.constants.ts";
 
 export type PluginLinkRole = (typeof PLUGIN_LINK_ROLES)[number];
 

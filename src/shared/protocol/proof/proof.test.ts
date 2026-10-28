@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Proof } from "./proof.ts";
-import type { ProofRole } from "./proof.types.ts";
+import { Proof } from "@/shared/protocol/proof/proof.ts";
+import type { ProofRole } from "@/shared/protocol/proof/proof.types.ts";
 
 const PLUGIN_NONCE = "00112233445566778899aabbccddeeff";
 const SERVER_NONCE = "ffeeddccbbaa99887766554433221100";

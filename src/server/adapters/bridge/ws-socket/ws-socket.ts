@@ -1,8 +1,8 @@
 import type { RawData, WebSocket } from "ws";
 import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
 import type { Logger } from "@/core/ports/logger/logger.port.ts";
+import { WS_EVENT, WS_LOG } from "@/server/adapters/bridge/ws-socket/ws-socket.constants.ts";
 import type { MessageSocket } from "@/shared/protocol/message-socket.types.ts";
-import { WS_EVENT, WS_LOG } from "./ws-socket.constants.ts";
 
 /**
  * The server's MessageSocket over a ws WebSocket (Adapter), with the heartbeat (S-007): any frame or pong counts as

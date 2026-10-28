@@ -1,6 +1,6 @@
 import * as zod from "zod/mini";
 import { PLUGIN_LINK_ROLES } from "@/core/ports/plugin-link/plugin-link.constants.ts";
-import { STATUS_FIELD } from "./status.constants.ts";
+import { STATUS_FIELD } from "@/server/tools/status/status.constants.ts";
 
 /** Strict: a misspelt argument is refused by name instead of being dropped without a word. */
 export const StatusInputSchema = zod.strictObject({

@@ -1,8 +1,8 @@
 import { hmac } from "@noble/hashes/hmac.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
-import { PROOF_TEXT } from "./proof.constants.ts";
-import type { ProofRole } from "./proof.types.ts";
+import { PROOF_TEXT } from "@/shared/protocol/proof/proof.constants.ts";
+import type { ProofRole } from "@/shared/protocol/proof/proof.types.ts";
 
 /**
  * A handshake proof (S-023), a value object: HMAC-SHA256 of the shared secret over

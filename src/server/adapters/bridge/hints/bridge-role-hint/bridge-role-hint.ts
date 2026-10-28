@@ -1,8 +1,8 @@
 import { injectable } from "@needle-di/core";
 import { PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link/plugin-link.constants.ts";
+import { BRIDGE_ROLE_HINT } from "@/server/adapters/bridge/hints/bridge-role-hint/bridge-role-hint.constants.ts";
 import type { HintFacts, StatusHint } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
 import { CLOSE_CODE } from "@/shared/protocol/protocol.constants.ts";
-import { BRIDGE_ROLE_HINT } from "./bridge-role-hint.constants.ts";
 
 /** First row: a bridge that is off, broken, handed over or out of reach says so before anything else. */
 @injectable()

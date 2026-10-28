@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
 import { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.ts";
+import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry/session-registry.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
-import { SessionRegistry } from "./session-registry.ts";
 
 const info = (
   instanceId: string,

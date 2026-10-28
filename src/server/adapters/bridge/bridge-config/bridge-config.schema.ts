@@ -1,7 +1,7 @@
 import * as zod from "zod/mini";
+import { BRIDGE_TOKEN_MIN_CHARS } from "@/server/adapters/bridge/bridge-config/bridge-config.constants.ts";
 import { HANDSHAKE_PATTERN } from "@/shared/protocol/handshake.constants.ts";
 import { KEY_ID_BYTES, KEY_SECRET_BYTES } from "@/shared/protocol/protocol.constants.ts";
-import { BRIDGE_TOKEN_MIN_CHARS } from "./bridge-config.constants.ts";
 
 /** Loose: a field a newer Pixelwright wrote is kept when this one rewrites the file (O-027). */
 const PluginKeyEntrySchema = zod.looseObject({

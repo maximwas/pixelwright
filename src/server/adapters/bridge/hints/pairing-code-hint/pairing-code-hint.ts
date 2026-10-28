@@ -1,7 +1,7 @@
 import { injectable } from "@needle-di/core";
+import { PAIRING_CODE_HINT } from "@/server/adapters/bridge/hints/pairing-code-hint/pairing-code-hint.constants.ts";
 import type { HintFacts, StatusHint } from "@/server/adapters/bridge/hints/status-hints/status-hints.types.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
-import { PAIRING_CODE_HINT } from "./pairing-code-hint.constants.ts";
 
 /** A plugin waits with a code in force: the model relays it and never types it (S-020, D-08). */
 @injectable()

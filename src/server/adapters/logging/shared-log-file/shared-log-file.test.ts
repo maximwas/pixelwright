@@ -2,8 +2,8 @@ import { existsSync, mkdtempSync, readFileSync, renameSync, statSync, writeFileS
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { LOG_FILE_MAX_BYTES } from "./shared-log-file.constants.ts";
-import { SharedLogFile } from "./shared-log-file.ts";
+import { LOG_FILE_MAX_BYTES } from "@/server/adapters/logging/shared-log-file/shared-log-file.constants.ts";
+import { SharedLogFile } from "@/server/adapters/logging/shared-log-file/shared-log-file.ts";
 
 class LogFolder {
   readonly root = mkdtempSync(join(tmpdir(), "pixelwright-log-"));

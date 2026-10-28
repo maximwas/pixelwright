@@ -2,10 +2,10 @@ import type { Logger } from "@/core/ports/logger/logger.port.ts";
 import type { BridgeConfig } from "@/server/adapters/bridge/bridge-config/bridge-config.ts";
 import type { PluginKey } from "@/server/adapters/bridge/bridge-config/bridge-config.types.ts";
 import type { PairingCodes } from "@/server/adapters/bridge/pairing-codes/pairing-codes.ts";
+import type { CONNECTION_STATE } from "@/server/adapters/bridge/plugin-connection/plugin-connection.constants.ts";
 import type { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.ts";
 import type { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry/session-registry.ts";
 import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
-import type { CONNECTION_STATE } from "./plugin-connection.constants.ts";
 
 /** The owner's services one connection works with; PluginConnections hands the same ones to each. */
 export interface HandshakeServices {

@@ -8,8 +8,13 @@ import {
   UPGRADE_REFUSAL,
   UPGRADE_ROLE,
   UPGRADE_URL,
-} from "./upgrade-guard.constants.ts";
-import type { UpgradeRefusal, UpgradeRequest, UpgradeRole, UpgradeVerdict } from "./upgrade-guard.types.ts";
+} from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.constants.ts";
+import type {
+  UpgradeRefusal,
+  UpgradeRequest,
+  UpgradeRole,
+  UpgradeVerdict,
+} from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.types.ts";
 
 /**
  * Decides a WebSocket upgrade (S-002). Every upgrade must name this server's own Host, the DNS-rebinding guard. The

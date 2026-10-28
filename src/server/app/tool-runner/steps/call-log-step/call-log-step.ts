@@ -2,6 +2,7 @@ import { inject, injectable } from "@needle-di/core";
 import { CLOCK } from "@/core/ports/clock/clock.port.ts";
 import { LOG_COMPONENT } from "@/core/ports/logger/logger.constants.ts";
 import { LOGGER, type LogFields } from "@/core/ports/logger/logger.port.ts";
+import { CALL_LOG } from "@/server/app/tool-runner/steps/call-log-step/call-log-step.constants.ts";
 import type {
   ToolAnswer,
   ToolCall,
@@ -9,7 +10,6 @@ import type {
   ToolStepNext,
 } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
-import { CALL_LOG } from "./call-log-step.constants.ts";
 
 /**
  * The tool-call log (S-058): one line per call with its tool, callId, the file it named and ms. An expected failure

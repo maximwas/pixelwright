@@ -1,5 +1,5 @@
 import * as zod from "zod/mini";
-import { PLUGIN_INFO_CHARS } from "./protocol.constants.ts";
+import { PLUGIN_INFO_CHARS } from "@/shared/protocol/protocol.constants.ts";
 
 /**
  * Who the plugin is and where it runs: sent in hello, and later in every plugin info event (S-012). Every string is

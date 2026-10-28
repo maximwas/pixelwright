@@ -1,10 +1,10 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import * as zod from "zod/mini";
+import { SERVER_ENV } from "@/server/main/config-reader/config-reader.constants.ts";
+import { ServerEnvSchema } from "@/server/main/config-reader/config-reader.schema.ts";
+import type { ServerConfig } from "@/server/main/config-reader/config-reader.types.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
-import { SERVER_ENV } from "./config-reader.constants.ts";
-import { ServerEnvSchema } from "./config-reader.schema.ts";
-import type { ServerConfig } from "./config-reader.types.ts";
 
 /** Reads the server's settings from its environment, once, before anything is built. */
 export class ConfigReader {

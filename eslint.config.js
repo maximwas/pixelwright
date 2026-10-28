@@ -358,15 +358,15 @@ export default [
     // Every shape rule as an error.
     rules: SHAPE.configs.recommended.rules,
   },
-  // Imports across folders go through `@/` (the src root); `./` stays for the folder itself and below. A path out of
-  // src (package.json) has no alias and stays relative. `eslint --fix` rewrites the rest.
+  // Every import of src goes through `@/` (the src root), the class's own satellites and subfolders too; only a path
+  // out of src (package.json) has no alias and stays relative. `eslint --fix` rewrites the rest.
   {
     files: ["src/**/*.ts"],
     plugins: { "no-relative-import-paths": noRelativeImportPaths },
     rules: {
       "no-relative-import-paths/no-relative-import-paths": [
         "error",
-        { rootDir: "src", prefix: "@", allowSameFolder: true },
+        { rootDir: "src", prefix: "@", allowSameFolder: false },
       ],
     },
   },

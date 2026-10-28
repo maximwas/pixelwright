@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { ConnectedFile } from "@/core/ports/plugin-link/plugin-link.port.ts";
+import type { SessionSocket } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.types.ts";
 import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
-import type { SessionSocket } from "./bridge-session.types.ts";
 
 /**
  * One plugin window past the handshake, one open Figma file (S-011): a random session id, what the window said in its

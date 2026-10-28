@@ -4,11 +4,16 @@ import { LOGGER } from "@/core/ports/logger/logger.port.ts";
 import type { ConnectedFile, PairingStatus } from "@/core/ports/plugin-link/plugin-link.port.ts";
 import { PAIRING_CODES } from "@/server/adapters/bridge/pairing-codes/pairing-codes.tokens.ts";
 import type { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-session/bridge-session.ts";
+import {
+  MAX_SESSIONS,
+  MAX_WAITING,
+  SESSION_LOG,
+  SUPERSEDED_REASON,
+} from "@/server/adapters/bridge/sessions/session-registry/session-registry.constants.ts";
+import type { ProtocolRefusal } from "@/server/adapters/bridge/sessions/session-registry/session-registry.types.ts";
 import type { UpgradeRejection } from "@/server/adapters/bridge/upgrade-guard/upgrade-guard.types.ts";
 import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 import { CLOSE_CODE } from "@/shared/protocol/protocol.constants.ts";
-import { MAX_SESSIONS, MAX_WAITING, SESSION_LOG, SUPERSEDED_REASON } from "./session-registry.constants.ts";
-import type { ProtocolRefusal } from "./session-registry.types.ts";
 
 /**
  * The owner's Registry of plugin windows (S-010, S-011): the sessions, one per open file; the unpaired windows waiting

@@ -1,6 +1,11 @@
 import * as zod from "zod/mini";
-import { FRAME_TYPE_FIELD, HANDSHAKE_PATTERN, HANDSHAKE_TYPE, PAIRING_REASON } from "./handshake.constants.ts";
-import { PluginInfoSchema } from "./plugin-info.schema.ts";
+import {
+  FRAME_TYPE_FIELD,
+  HANDSHAKE_PATTERN,
+  HANDSHAKE_TYPE,
+  PAIRING_REASON,
+} from "@/shared/protocol/handshake.constants.ts";
+import { PluginInfoSchema } from "@/shared/protocol/plugin-info.schema.ts";
 import {
   KEY_ID_BYTES,
   KEY_SECRET_BYTES,
@@ -8,7 +13,7 @@ import {
   PAIRING_CODE_DIGITS,
   PLUGIN_INFO_CHARS,
   PROOF_BYTES,
-} from "./protocol.constants.ts";
+} from "@/shared/protocol/protocol.constants.ts";
 
 // The plugin handshake (A§5.2), byte for byte 0.7.0's messages, fields and order (D-04): only the protocol number
 // changes. After hello_ack the socket carries RPC frames, which these schemas never see.
