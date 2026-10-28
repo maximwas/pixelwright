@@ -1,6 +1,11 @@
 import { injectable } from "@needle-di/core";
-import { PixelwrightError } from "../../../../../shared/errors/pixelwright-error/pixelwright-error.ts";
-import type { ToolAnswer, ToolCall, ToolCallStep, ToolStepNext } from "../../tool-runner/tool-runner.types.ts";
+import type {
+  ToolAnswer,
+  ToolCall,
+  ToolCallStep,
+  ToolStepNext,
+} from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error/pixelwright-error.ts";
 
 /**
  * The outermost step: a failed call becomes an isError answer. An expected failure reads `CODE: message`, so the model

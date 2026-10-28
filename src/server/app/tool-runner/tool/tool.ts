@@ -1,5 +1,5 @@
 import * as zod from "zod/mini";
-import type { ToolAnswer } from "../tool-runner/tool-runner.types.ts";
+import type { ToolAnswer } from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 
 export type ToolOutput = Readonly<Record<string, unknown>>;
 

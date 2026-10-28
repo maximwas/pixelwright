@@ -1,4 +1,4 @@
-import type { ErrorCode } from "../error-code.constants.ts";
+import type { ErrorCode } from "@/shared/errors/error-code.constants.ts";
 
 /** An expected failure: the call cannot answer, and its code tells the model what to do next (T-003). */
 export class PixelwrightError extends Error {

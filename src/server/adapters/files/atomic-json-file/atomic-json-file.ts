@@ -4,8 +4,8 @@ import { dirname } from "node:path";
 import { inject, injectable } from "@needle-di/core";
 import { writeFileSync as writeAtomically } from "atomically";
 import * as zod from "zod/mini";
-import type { JsonFile } from "../../../../core/ports/json-file/json-file.port.ts";
-import { LOGGER } from "../../../../core/ports/logger/logger.port.ts";
+import type { JsonFile } from "@/core/ports/json-file/json-file.port.ts";
+import { LOGGER } from "@/core/ports/logger/logger.port.ts";
 
 /**
  * JSON files of the home folder, private to the user (folder 0700, file 0600). A read never throws: a missing file is

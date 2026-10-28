@@ -1,5 +1,5 @@
 import { InjectionToken, injectable } from "@needle-di/core";
-import type { ToolManifest } from "../app/tool-runner/tool-manifest.types.ts";
+import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 import { STATUS_MANIFEST } from "./status/status.manifest.ts";
 
 /**

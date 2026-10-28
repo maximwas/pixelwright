@@ -1,4 +1,6 @@
 {
+  // Builds nothing itself; it extends the base so tools that read only this file (dependency-cruiser) see `@/`.
+  "extends": "./tsconfig.base.json",
   "files": [],
   "references": [
     { "path": "./tsconfig.core.json" },

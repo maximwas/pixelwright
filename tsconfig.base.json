@@ -16,6 +16,9 @@
     // decorators yet. Standard decorators later are this flag only: injectable() reads the class alone.
     "experimentalDecorators": true,
     "allowImportingTsExtensions": true,
+    // `@/` is the src root: imports across folders never climb with `../`. scripts/ run under raw node, which does not
+    // read this, so they stay relative and never import `@/`.
+    "paths": { "@/*": ["./src/*"] },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

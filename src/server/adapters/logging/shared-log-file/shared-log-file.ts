@@ -2,7 +2,7 @@ import { closeSync, fstatSync, mkdirSync, openSync, renameSync, statSync, writeS
 import { dirname } from "node:path";
 import { inject, injectable } from "@needle-di/core";
 import type { DestinationStream } from "pino";
-import { LOG_SETTINGS } from "../logging.tokens.ts";
+import { LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
 import { LOG_FILE_MAX_BYTES } from "./shared-log-file.constants.ts";
 
 /**

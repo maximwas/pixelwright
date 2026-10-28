@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
-import { PinoLogger } from "../../logging/pino-logger/pino-logger.ts";
+import { PinoLogger } from "@/server/adapters/logging/pino-logger/pino-logger.ts";
 import { AtomicJsonFile } from "./atomic-json-file.ts";
 
 const Schema = zod.object({

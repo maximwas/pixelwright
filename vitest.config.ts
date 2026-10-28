@@ -4,12 +4,15 @@ import { defineConfig } from "vitest/config";
 const exclude = ["old/**", "node_modules/**", "dist/**"];
 // needle-di's @injectable() as a legacy decorator (tsconfig.base.json says why); oxc does not read it from tsconfig.
 const oxc = { decorator: { legacy: true } };
+// The `@/` alias of tsconfig.base.json; each project is its own config, so each one turns it on.
+const resolve = { tsconfigPaths: true };
 
 export default defineConfig({
   test: {
     projects: [
       {
         oxc,
+        resolve,
         test: {
           name: "unit",
           include: [
@@ -23,6 +26,7 @@ export default defineConfig({
       },
       {
         oxc,
+        resolve,
         test: {
           name: "contract",
           include: ["test/contract/**/*.contract.test.ts"],
@@ -32,6 +36,7 @@ export default defineConfig({
       // Real Figma (Test MCP), local only: one file at a time, and writing tests never retry.
       {
         oxc,
+        resolve,
         test: {
           name: "live",
           include: ["test/live/**/*.live.test.ts"],

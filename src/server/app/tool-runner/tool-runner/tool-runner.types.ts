@@ -1,7 +1,7 @@
-import type { Logger } from "../../../../core/ports/logger/logger.port.ts";
-import type { CallId } from "../call-id/call-id.ts";
-import type { Tool } from "../tool/tool.ts";
-import type { ToolManifest } from "../tool-manifest.types.ts";
+import type { Logger } from "@/core/ports/logger/logger.port.ts";
+import type { CallId } from "@/server/app/tool-runner/call-id/call-id.ts";
+import type { Tool } from "@/server/app/tool-runner/tool/tool.ts";
+import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 
 /** A tool call as the MCP endpoint hands it over: arguments already checked by the SDK against the input schema. */
 export interface ToolRequest {

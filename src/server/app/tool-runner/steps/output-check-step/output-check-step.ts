@@ -1,6 +1,11 @@
 import { injectable } from "@needle-di/core";
 import * as zod from "zod/mini";
-import type { ToolAnswer, ToolCall, ToolCallStep, ToolStepNext } from "../../tool-runner/tool-runner.types.ts";
+import type {
+  ToolAnswer,
+  ToolCall,
+  ToolCallStep,
+  ToolStepNext,
+} from "@/server/app/tool-runner/tool-runner/tool-runner.types.ts";
 
 /**
  * Checks every answer against its tool's outputSchema before it leaves (T-004). An answer outside it is a bug, so it

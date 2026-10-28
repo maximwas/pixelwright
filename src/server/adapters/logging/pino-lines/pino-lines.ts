@@ -1,5 +1,5 @@
 import type { Logger as Pino } from "pino";
-import type { LogFields, Logger } from "../../../../core/ports/logger/logger.port.ts";
+import type { LogFields, Logger } from "@/core/ports/logger/logger.port.ts";
 
 /**
  * The Logger port over one pino logger; a child is the same over pino's child, carrying its fields. The pino logger is

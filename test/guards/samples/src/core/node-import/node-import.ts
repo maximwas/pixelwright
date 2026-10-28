@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 
 export class TextFile {
-  read(path: string): string {
-    return readFileSync(path, "utf8");
+  size(path: string): number {
+    return readFileSync(path).length;
   }
 }

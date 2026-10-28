@@ -1,6 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
-import { LOGGER } from "../../../../core/ports/logger/logger.port.ts";
-import { CallId } from "../call-id/call-id.ts";
+import { LOGGER } from "@/core/ports/logger/logger.port.ts";
+import { CallId } from "@/server/app/tool-runner/call-id/call-id.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY } from "./tool-runner.tokens.ts";
 import type { ToolAnswer, ToolCall, ToolRequest } from "./tool-runner.types.ts";
 

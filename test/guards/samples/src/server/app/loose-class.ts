@@ -2,6 +2,6 @@
 // project-structure/folder-structure (one folder per class).
 export class LooseClass {
   name(): string {
-    return "loose";
+    return LooseClass.name;
   }
 }

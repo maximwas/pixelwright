@@ -32,6 +32,12 @@ const EXPECTED: Record<string, string[]> = {
   "src/server/app/service-locator/service-locator.ts": ["no-restricted-syntax"],
   "src/server/app/injected-class/injected-class.ts": ["no-restricted-syntax"],
   "src/server/app/loose-class.ts": ["project-structure/folder-structure"],
+  "src/core/welcome-text/welcome-text.ts": ["shape/no-string-literal"],
+  "src/core/kernel/names/slug-length/slug-length.ts": ["no-relative-import-paths/no-relative-import-paths"],
+  "test/support/slug-reach/slug-reach.ts": ["no-restricted-imports"],
+  "src/core/lost-import/lost-import.ts": ["no-unresolved-alias"],
+  // Clean by rule: texts and text arrows live in .constants.ts.
+  "src/core/welcome-text/welcome-text.constants.ts": [],
   // Targets of the planted imports: clean themselves.
   "src/server/tools/beta/beta.tool.ts": [],
   "src/core/xml/index.ts": [],
@@ -71,7 +77,7 @@ async function eslintFindings(): Promise<Map<string, Set<string>>> {
   });
   const findings = new Map<string, Set<string>>();
 
-  for (const result of await eslint.lintFiles(["src"])) {
+  for (const result of await eslint.lintFiles(["src", "test"])) {
     const rules = result.messages.map((message) => message.ruleId ?? `fatal: ${message.message}`);
 
     findings.set(relative(SAMPLES, result.filePath), new Set(rules));
@@ -82,10 +88,16 @@ async function eslintFindings(): Promise<Map<string, Set<string>>> {
 
 async function addDepcruiseFindings(findings: Map<string, Set<string>>): Promise<void> {
   const options = await extractDepcruiseOptions(`${ROOT}.dependency-cruiser.cjs`);
+  // From samples/, as pnpm check:deps runs from the repo root: the config's tsconfig.json and the @/ it maps resolve
+  // against the cwd, so the planted @/ imports reach samples/src.
+  const cwd = process.cwd();
+
+  process.chdir(SAMPLES);
+
   const { output } = await cruise(["src"], {
     ...options,
     baseDir: SAMPLES,
-  });
+  }).finally(() => process.chdir(cwd));
 
   if (typeof output === "string") {
     throw new Error(`dependency-cruiser returned text: ${output}`);
