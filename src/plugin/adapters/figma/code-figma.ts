@@ -22,22 +22,15 @@ export class CodeFigma {
    * shortcut: code can still reach the real one as globalThis.figma; only a separate realm would close that.
    */
   api(): PluginAPI {
-    this.#api ??= new Proxy(figma, {
-      get: (target, key) => {
-        if (this.#hidden.has(key)) {
-          return undefined;
-        }
-
-        const value: unknown = Reflect.get(target, key);
-
-        return typeof value === "function" ? value.bind(target) : value;
-      },
+    // A blank target: Figma's methods are non-configurable, so a proxy over figma itself may not return them bound.
+    this.#api ??= new Proxy(Object.create(null) as PluginAPI, {
+      get: (_blank, key) => (this.#hidden.has(key) ? undefined : this.#bound(Reflect.get(figma, key))),
       set: (
-        target,
+        _blank,
         key,
         value,
-      ) => Reflect.set(target, key, value),
-      has: (target, key) => !this.#hidden.has(key) && Reflect.has(target, key),
+      ) => Reflect.set(figma, key, value),
+      has: (_blank, key) => !this.#hidden.has(key) && Reflect.has(figma, key),
     });
 
     return this.#api;
@@ -66,6 +59,10 @@ export class CodeFigma {
       figma.skipInvisibleInstanceChildren = skipInvisible;
       figma.commitUndo();
     }
+  }
+
+  #bound(value: unknown): unknown {
+    return typeof value === "function" ? value.bind(figma) : value;
   }
 
   async #node(id: string): Promise<BaseNode> {
