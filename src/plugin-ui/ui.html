@@ -3,79 +3,208 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      /* Figma's theme variables (themeColors), so the window follows the editor's light and dark themes (P-050); the
+         second value of each is Figma's light theme, for a page shown outside Figma. */
       body {
         margin: 0;
-        font: 12px/1.4 Inter, system-ui, sans-serif;
-        color: var(--figma-color-text, #333);
+        font: 11px/16px Inter, system-ui, sans-serif;
+        color: var(--figma-color-text, #1e1e1e);
         background: var(--figma-color-bg, #fff);
       }
       main {
-        display: grid;
-        gap: 8px;
-        padding: 12px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
       }
       p {
         margin: 0;
       }
+      .brand {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .mark {
+        display: block;
+        width: 16px;
+        height: 16px;
+      }
+      .brand-name {
+        font-size: 12px;
+        font-weight: 600;
+      }
       .status {
         display: flex;
         gap: 8px;
-        align-items: center;
+        align-items: flex-start;
       }
       .dot {
         flex: none;
         width: 8px;
         height: 8px;
+        margin-top: 4px;
         border-radius: 50%;
-        background: #f5a623;
+        background: var(--figma-color-bg-warning, #ffc21a);
       }
       .dot[data-tone="ok"] {
-        background: #14ae5c;
+        background: var(--figma-color-bg-success, #14ae5c);
       }
       .dot[data-tone="error"] {
-        background: #f24822;
+        background: var(--figma-color-bg-danger, #f24822);
       }
       .title {
+        font-size: 12px;
         font-weight: 600;
       }
       .detail {
-        color: var(--figma-color-text-secondary, #666);
+        margin-top: 2px;
+        color: var(--figma-color-text-secondary, #757575);
       }
-      form {
+      .note {
+        color: var(--figma-color-text-secondary, #757575);
+      }
+      .hint {
+        padding: 8px 10px;
+        border-radius: 6px;
+        background: var(--figma-color-bg-warning-tertiary, #fff1c2);
+      }
+      .pairing {
         display: flex;
         gap: 8px;
+      }
+      .pairing input {
+        flex: 1;
+        min-width: 0;
+        padding: 4px 8px;
+        font: 500 13px/20px Inter, system-ui, sans-serif;
+        letter-spacing: 0.2em;
+        color: var(--figma-color-text, #1e1e1e);
+        background: var(--figma-color-bg, #fff);
+        border: 1px solid var(--figma-color-border, #e6e6e6);
+        border-radius: 5px;
+      }
+      .pairing button {
+        padding: 4px 12px;
+        font: 500 11px/20px Inter, system-ui, sans-serif;
+        color: var(--figma-color-text-onbrand, #fff);
+        background: var(--figma-color-bg-brand, #0d99ff);
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .edits {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 10px;
+        border: 1px solid var(--figma-color-border, #e6e6e6);
+        border-radius: 6px;
+      }
+      .toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .toggle input {
+        appearance: none;
+        position: relative;
+        width: 28px;
+        height: 16px;
+        margin: 0;
+        border-radius: 8px;
+        background: var(--figma-color-bg-tertiary, #e6e6e6);
+        cursor: pointer;
+      }
+      .toggle input::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--figma-color-bg, #fff);
+        transition: transform 120ms;
+      }
+      .toggle input:checked {
+        background: var(--figma-color-bg-brand, #0d99ff);
+      }
+      .toggle input:checked::after {
+        transform: translateX(12px);
+      }
+      .heading {
+        margin: 0 0 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--figma-color-text-secondary, #757575);
+      }
+      .actions {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .actions li {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .actions .what {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .actions .when {
+        flex: none;
+        color: var(--figma-color-text-tertiary, #b3b3b3);
+      }
+      .actions .warning .what {
+        color: var(--figma-color-text-warning, #b86200);
+      }
+      .actions .empty {
+        color: var(--figma-color-text-tertiary, #b3b3b3);
+      }
+      .support {
+        color: var(--figma-color-text-tertiary, #b3b3b3);
+      }
+      .support a {
+        color: var(--figma-color-text-brand, #007be5);
+        text-decoration: underline;
+        cursor: pointer;
       }
       /* The display rules above would show a hidden element: the pairing field only while pairing. */
       [hidden] {
         display: none;
       }
-      input {
-        flex: 1;
-        min-width: 0;
-        padding: 4px 8px;
-        font: inherit;
-        letter-spacing: 0.2em;
-      }
-      button {
-        font: inherit;
-      }
-      .edits {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-      }
-      .edits input {
-        flex: none;
-      }
     </style>
   </head>
   <body>
     <!-- Every text here is ours: the file's own names reach the window only by message, as textContent (FX-001). -->
-    <main>
-      <strong id="brand"></strong>
-      <div class="status"><span id="dot" class="dot"></span><p id="title" class="title"></p></div>
-      <p id="detail" class="detail"></p>
-      <form id="pairing" hidden>
+    <main id="window">
+      <header class="brand">
+        <!-- Pixelwright's mark, as on the website and its tab icon: a blue tile with a white selection frame (P-054). -->
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#0d99ff" />
+          <rect x="9" y="9" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.2" />
+          <g fill="#0d99ff" stroke="#fff" stroke-width="1.8">
+            <rect x="6.2" y="6.2" width="5.6" height="5.6" />
+            <rect x="20.2" y="6.2" width="5.6" height="5.6" />
+            <rect x="6.2" y="20.2" width="5.6" height="5.6" />
+            <rect x="20.2" y="20.2" width="5.6" height="5.6" />
+          </g>
+        </svg>
+        <strong id="brand" class="brand-name"></strong>
+      </header>
+      <div class="status">
+        <span id="dot" class="dot"></span>
+        <div>
+          <p id="title" class="title"></p>
+          <p id="detail" class="detail"></p>
+        </div>
+      </div>
+      <form id="pairing" class="pairing" hidden>
         <input
           id="code"
           inputmode="numeric"
@@ -86,8 +215,18 @@
         />
         <button type="submit">Pair</button>
       </form>
-      <p id="pairing-note" class="detail" hidden></p>
-      <label class="edits"><input id="allow-edits" type="checkbox" /> Allow edits</label>
+      <p id="pairing-note" class="note" hidden></p>
+      <p id="hint" class="hint" role="alert" hidden></p>
+      <section class="edits">
+        <label class="toggle">Allow edits <input id="allow-edits" type="checkbox" /></label>
+        <p id="edits-note" class="note"></p>
+      </section>
+      <section>
+        <h2 class="heading">Activity</h2>
+        <ul id="actions" class="actions"></ul>
+      </section>
+      <p id="support" class="support"></p>
+      <p id="feedback" class="support"></p>
     </main>
     <script>
       /* ui.js */

@@ -5,10 +5,16 @@ import { BACKOFF } from "@/plugin-ui/link/backoff.ts";
 import { SOCKET_LINK, SOCKET_OPENER } from "@/plugin-ui/link/socket-link.ts";
 import { WINDOW_LINK } from "@/plugin-ui/link/window-link.ts";
 import { UiMain } from "@/plugin-ui/ui.main.ts";
+import { BUSY_STATE } from "@/plugin-ui/view/busy-state.ts";
 import { PLUGIN_WINDOW } from "@/plugin-ui/view/plugin-window.ts";
+import { RECENT_ACTIONS } from "@/plugin-ui/view/recent-actions.ts";
+import { STATUS_LINE } from "@/plugin-ui/view/status-line.ts";
 
 const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["MAIN_CHANNEL", MAIN_CHANNEL],
+  ["STATUS_LINE", STATUS_LINE],
+  ["RECENT_ACTIONS", RECENT_ACTIONS],
+  ["BUSY_STATE", BUSY_STATE],
   ["PLUGIN_WINDOW", PLUGIN_WINDOW],
   ["SOCKET_OPENER", SOCKET_OPENER],
   ["BACKOFF", BACKOFF],

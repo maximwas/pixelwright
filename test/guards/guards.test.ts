@@ -38,6 +38,7 @@ const EXPECTED: Record<string, string[]> = {
     "shape/no-string-type",
     "shape/no-text-template",
   ],
+  "src/plugin-ui/raw-html/raw-html.ts": ["no-restricted-syntax"],
   "src/core/kernel/names/slug-length/slug-length.ts": ["no-relative-import-paths/no-relative-import-paths"],
   "src/core/kernel/names/slug/slug.types.ts": ["no-relative-import-paths/no-relative-import-paths"],
   "src/server/tools/beta/beta.manifest.ts": ["imports/no-relative-path"],

@@ -16,7 +16,7 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     codes, numbers with their reason, the build's version, the messages between the plugin's window and its main thread.
 - `core/`: the pure domain and its ports.
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
-    `DocumentEvents`, `ServerEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
+    `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.
   - `tool-runner/`: `ToolRunner`, its steps, the `Tool` base class, the tool manifest and the call id.
   - `sessions/`: `PluginSessions` and `PluginSession` (one call's file), the op steps, `TargetResolver`.
@@ -38,7 +38,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   `OpReport`, `OperationTurns` (the read/write turn lock); `journal/` holds `ChangeJournal`, what changed while the
   window is open and whose hand it was.
 - `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `lookup/`, the only
-  by-id lookups); `host/` holds the window channel (`UiChannel`, `WindowHost`), the RPC peer of the server
+  by-id lookups); `host/` holds the window channel (`UiChannel`; `WindowHost`, main's side of the window: the
+  handover, the switch, the activity and busy events, the allowed links, the height), the RPC peer of the server
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file
   id).
 - `plugin/operations/`: one folder per op, one `Operation` subclass each; `execute/` also holds `CodeScope` (pw, kept
@@ -46,7 +47,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;
-  `Backoff`), `adapters/` (the browser socket, the channel to main), `view/` (`PluginWindow`), `main/` and `UiMain`.
+  `Backoff`), `adapters/` (the browser socket, the channel to main), `view/` (`PluginWindow`, the DOM; `StatusLine`,
+  its words; `RecentActions`, the last five answers; `BusyState`, what runs past its answer), `main/` and `UiMain`.
 
 `test/` holds the contract, golden, guard and live tests; `scripts/` the build, install and name checks; `old/` the
 0.7.0 source, kept for reference and imported by nothing.
@@ -77,8 +79,9 @@ outermost first: `ErrorTextStep`, `CallLogStep`, `TargetStep` (binds the call to
 reaches `PluginLink`, which is `PluginBridge`. On the owner, the request goes to the file's `BridgeSession` and out
 through `PluginRpc` (birpc) on its socket. The window relays the frame: `SocketLink` to `WindowLink` to `MainChannel`,
 then main's `UiChannel` to `ServerRpc`. `OperationRunner` runs the op through its chain, outermost first:
-`ContractStep`, `EditsStep` (Allow edits), `FrameSizeStep`, `TurnStep` (the read/write turn), `JournalStep` (a write's
-touched ids for the change journal), `WatchdogStep`.
+`ActivityStep` (each answer to the window's activity list, quiet ops left out), `ContractStep`, `EditsStep` (Allow
+edits), `FrameSizeStep`, `TurnStep` (the read/write turn), `JournalStep` (a write's touched ids for the change
+journal), `WatchdogStep` (TIMEOUT at the op's timeout; the window shows the op busy until its handler ends).
 `ContainerOperationFactory` builds the op in a child container; `Operation.run` calls the op's `execute` and wraps what
 it returns or throws in the envelope through `OpReport`. The envelope goes back the same way.
 

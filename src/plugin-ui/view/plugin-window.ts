@@ -1,47 +1,59 @@
-import { InjectionToken, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { LINK_STATE } from "@/plugin-ui/link/link.constants.ts";
 import type { LinkState } from "@/plugin-ui/link/socket-link.ts";
+import { BUSY_STATE } from "@/plugin-ui/view/busy-state.ts";
+import { RECENT_ACTIONS } from "@/plugin-ui/view/recent-actions.ts";
+import { STATUS_LINE } from "@/plugin-ui/view/status-line.ts";
 import {
+  ACTION_CLASS,
+  ACTION_TIME,
+  ACTIVITY_TEXT,
+  MS_PER_SECOND,
   NOT_A_DIGIT,
-  PAIRING_NOTE,
-  STATUS_TEXT,
-  TONE,
+  SUPPORT_TEXT,
+  UNDO_KEY,
   WINDOW_ELEMENT,
   WINDOW_ERROR,
   WINDOW_EVENT,
+  WINDOW_TAG,
 } from "@/plugin-ui/view/view.constants.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { PAIRING_CODE_DIGITS } from "@/shared/protocol/protocol.constants.ts";
+import { FEEDBACK_LINK, SUPPORT_LINKS } from "@/shared/window/ui-message.constants.ts";
+import type { ActivityEntry, BusyOp } from "@/shared/window/ui-message.schema.ts";
 
 /**
- * The plugin's small window (P-041): the status line, and the pairing field while the server waits for the code. The
- * markup is ui.html's own; the window sets only texts, so nothing from the file is ever read as HTML.
+ * The plugin's small window (P-041, P-050..P-054): its mark, the link's status line, the pairing field while the
+ * server waits for the code, the hint after a refused write, the Allow edits switch and its note, what the AI did last,
+ * and the support and feedback links. The markup and the mark are ui.html's own; the window sets texts and builds
+ * plain elements, so nothing from the file or from code is ever read as HTML.
  */
 @injectable()
 export class PluginWindow {
+  readonly #status;
+  readonly #actions;
+  readonly #busy;
   #parts: WindowParts | null = null;
+  #link: LinkState = { kind: LINK_STATE.connecting };
+  #fileName = "";
+  #allowEdits = false;
+  #ticker: ReturnType<typeof setInterval> | undefined;
 
-  /**
-   * Finds ui.html's elements; sends a typed code to `onPair` once it has its six digits, the switch to `onEdits`, and
-   * whether the window's tab is in front to `onVisible` each time that changes.
-   */
-  mount(
-    onPair: (code: string) => void,
-    onEdits: (on: boolean) => void,
-    onVisible: (on: boolean) => void,
-  ): void {
-    document.addEventListener(WINDOW_EVENT.visibilityChange, () => onVisible(this.visible()));
+  constructor(
+    status = inject(STATUS_LINE),
+    actions = inject(RECENT_ACTIONS),
+    busy = inject(BUSY_STATE),
+  ) {
+    this.#status = status;
+    this.#actions = actions;
+    this.#busy = busy;
+  }
 
-    const parts: WindowParts = {
-      dot: this.#element(WINDOW_ELEMENT.dot),
-      title: this.#element(WINDOW_ELEMENT.title),
-      detail: this.#element(WINDOW_ELEMENT.detail),
-      pairing: this.#element(WINDOW_ELEMENT.pairing) as HTMLFormElement,
-      code: this.#element(WINDOW_ELEMENT.code) as HTMLInputElement,
-      note: this.#element(WINDOW_ELEMENT.pairingNote),
-      edits: this.#element(WINDOW_ELEMENT.allowEdits) as HTMLInputElement,
-    };
+  /** Finds ui.html's elements and hands what the user does to `handlers`. */
+  mount(handlers: WindowHandlers): void {
+    const parts = this.#find();
 
+    document.addEventListener(WINDOW_EVENT.visibilityChange, () => handlers.onVisible(this.visible()));
     this.#element(WINDOW_ELEMENT.brand).textContent = CHANNEL.pluginName;
     parts.pairing.addEventListener(WINDOW_EVENT.submit, (event) => {
       const code = parts.code.value.replace(NOT_A_DIGIT, "");
@@ -49,36 +61,42 @@ export class PluginWindow {
       event.preventDefault();
 
       if (code.length === PAIRING_CODE_DIGITS) {
-        onPair(code);
+        handlers.onPair(code);
         parts.code.value = "";
       }
     });
-    parts.edits.addEventListener(WINDOW_EVENT.change, () => onEdits(parts.edits.checked));
+    parts.edits.addEventListener(WINDOW_EVENT.change, () => this.#switched(parts.edits.checked, handlers));
+    this.#links(parts, handlers);
+    // The window is as tall as what it shows: the pairing field, the hint and the activity come and go (P-002).
+    new ResizeObserver(() => handlers.onResize(parts.root.getBoundingClientRect().height)).observe(parts.root);
     this.#parts = parts;
+    this.#draw();
   }
 
   /** The Allow edits switch as main keeps it for this file (P-011). */
   showEdits(on: boolean): void {
-    if (this.#parts !== null) {
-      this.#parts.edits.checked = on;
-    }
+    this.#allowEdits = on;
+    this.#draw();
   }
 
   render(state: LinkState, fileName: string): void {
-    const parts = this.#parts;
-    const line = this.#line(state, fileName);
+    this.#link = state;
+    this.#fileName = fileName;
+    this.#draw();
+  }
 
-    if (parts === null) {
-      return;
-    }
+  /** An op main answered: the activity lists it at the time the window heard it. */
+  activity(entry: ActivityEntry): void {
+    this.#actions.add(entry, Date.now());
+    this.#draw();
+  }
 
-    parts.dot.dataset.tone = line.tone;
-    parts.title.textContent = line.title;
-    parts.detail.textContent = line.detail ?? "";
-    parts.detail.hidden = line.detail === null;
-    parts.pairing.hidden = line.note === null;
-    parts.note.textContent = line.note ?? "";
-    parts.note.hidden = line.note === null;
+  /** What still runs past its answer: the status sentence counts its seconds until nothing does. */
+  busy(ops: readonly BusyOp[]): void {
+    this.#busy.show(ops);
+    clearInterval(this.#ticker);
+    this.#ticker = this.#busy.busy() ? setInterval(() => this.#draw(), MS_PER_SECOND) : undefined;
+    this.#draw();
   }
 
   /** The window's file tab is in front. */
@@ -86,29 +104,132 @@ export class PluginWindow {
     return document.visibilityState === WINDOW_EVENT.visible;
   }
 
-  #line(state: LinkState, fileName: string): StatusLine {
-    switch (state.kind) {
-      case LINK_STATE.connected:
-        return { tone: TONE.ok, title: STATUS_TEXT.connected(fileName), detail: STATUS_TEXT.seesFile, note: null };
-      case LINK_STATE.pairing:
-        return {
-          tone: TONE.wait,
-          title: STATUS_TEXT.pairing,
-          detail: null,
-          note: PAIRING_NOTE[state.reason](state.attemptsLeft),
-        };
-      case LINK_STATE.waiting:
-        return {
-          tone: TONE.wait,
-          title: STATUS_TEXT.notConnected,
-          detail: state.reason ?? STATUS_TEXT.startServer,
-          note: null,
-        };
-      case LINK_STATE.stopped:
-        return { tone: TONE.error, title: STATUS_TEXT.stopped, detail: state.reason, note: null };
-      default:
-        return { tone: TONE.wait, title: STATUS_TEXT.connecting, detail: STATUS_TEXT.lookingForServer, note: null };
+  #switched(on: boolean, handlers: WindowHandlers): void {
+    this.#allowEdits = on;
+
+    if (on) {
+      this.#actions.forgetRefusal();
     }
+
+    handlers.onEdits(on);
+    this.#draw();
+  }
+
+  #draw(): void {
+    const parts = this.#parts;
+
+    if (parts === null) {
+      return;
+    }
+
+    const line = this.#status.line(this.#link, this.#fileName, this.#busy.line(Date.now()));
+
+    parts.dot.dataset.tone = line.tone;
+    parts.title.textContent = line.title;
+    this.#text(parts.detail, line.detail);
+    parts.pairing.hidden = line.note === null;
+    this.#text(parts.note, line.note);
+    this.#text(parts.hint, this.#status.editsHint(this.#actions.refused(), this.#allowEdits));
+    parts.edits.checked = this.#allowEdits;
+    parts.editsNote.textContent = this.#status.editsNote(this.#allowEdits, this.#actions.ranCode(), this.#undoKey());
+    parts.actions.replaceChildren(...this.#items());
+  }
+
+  /** A text that may be absent: absent, its element is hidden. */
+  #text(element: HTMLElement, text: string | null): void {
+    element.textContent = text ?? "";
+    element.hidden = text === null;
+  }
+
+  /** What the AI did last, newest first, each with its time; a line saying so when it did nothing yet. */
+  #items(): HTMLLIElement[] {
+    const lines = this.#actions.lines();
+
+    if (lines.length === 0) {
+      return [this.#item(ACTION_CLASS.empty, ACTIVITY_TEXT.nothingYet, null)];
+    }
+
+    return lines.map((line) =>
+      this.#item(
+        line.warning ? ACTION_CLASS.warning : "",
+        line.text,
+        new Date(line.at).toLocaleTimeString([], ACTION_TIME),
+      ),
+    );
+  }
+
+  #item(
+    className: string,
+    what: string,
+    when: string | null,
+  ): HTMLLIElement {
+    const item = document.createElement(WINDOW_TAG.item);
+
+    item.className = className;
+    item.append(this.#span(ACTION_CLASS.what, what));
+
+    if (when !== null) {
+      item.append(this.#span(ACTION_CLASS.when, when));
+    }
+
+    return item;
+  }
+
+  #span(className: string, text: string): HTMLSpanElement {
+    const span = document.createElement(WINDOW_TAG.text);
+
+    span.className = className;
+    span.textContent = text;
+
+    return span;
+  }
+
+  /** Where to support the project, its links joined by "or", and where to tell what works or does not (P-052). */
+  #links(parts: WindowParts, handlers: WindowHandlers): void {
+    const support = SUPPORT_LINKS.flatMap((link, index) => [
+      ...(index === 0 ? [] : [SUPPORT_TEXT.or]),
+      this.#anchor(link, handlers),
+    ]);
+
+    parts.support.replaceChildren(SUPPORT_TEXT.support, ...support, SUPPORT_TEXT.end);
+    parts.feedback.replaceChildren(SUPPORT_TEXT.feedback, this.#anchor(FEEDBACK_LINK, handlers), SUPPORT_TEXT.end);
+  }
+
+  /** A link main opens in the browser (K-102): the window itself cannot leave Figma. */
+  #anchor({ label, url }: LinkTarget, handlers: WindowHandlers): HTMLAnchorElement {
+    const anchor = document.createElement(WINDOW_TAG.link);
+
+    anchor.href = url;
+    anchor.textContent = label;
+    anchor.addEventListener(WINDOW_EVENT.click, (event) => {
+      event.preventDefault();
+      handlers.onOpenLink(url);
+    });
+
+    return anchor;
+  }
+
+  /** The undo shortcut of the system Figma runs on. */
+  #undoKey(): string {
+    return navigator.userAgent.includes(UNDO_KEY.macAgent) ? UNDO_KEY.mac : UNDO_KEY.other;
+  }
+
+  #find(): WindowParts {
+    return {
+      root: this.#element(WINDOW_ELEMENT.root),
+      dot: this.#element(WINDOW_ELEMENT.dot),
+      title: this.#element(WINDOW_ELEMENT.title),
+      detail: this.#element(WINDOW_ELEMENT.detail),
+      pairing: this.#element(WINDOW_ELEMENT.pairing) as HTMLFormElement,
+      code: this.#element(WINDOW_ELEMENT.code) as HTMLInputElement,
+      note: this.#element(WINDOW_ELEMENT.pairingNote),
+      hint: this.#element(WINDOW_ELEMENT.hint),
+      edits: this.#element(WINDOW_ELEMENT.allowEdits) as HTMLInputElement,
+      editsNote: this.#element(WINDOW_ELEMENT.editsNote),
+      actions: this.#element(WINDOW_ELEMENT.actions),
+      support: this.#element(WINDOW_ELEMENT.support),
+      feedback: this.#element(WINDOW_ELEMENT.feedback),
+    };
   }
 
   #element(id: string): HTMLElement {
@@ -124,21 +245,37 @@ export class PluginWindow {
 
 export const PLUGIN_WINDOW = new InjectionToken<PluginWindow>("PluginWindow");
 
-/** The connection in a word and a sentence, and the line under the code field while the server waits for a code. */
-export interface StatusLine {
-  readonly tone: (typeof TONE)[keyof typeof TONE];
-  readonly title: string;
-  readonly detail: string | null;
-  readonly note: string | null;
+/** What the user does in the window, for its link to pass on. */
+export interface WindowHandlers {
+  /** A code the user typed, once it has its six digits. */
+  readonly onPair: (code: string) => void;
+  readonly onEdits: (on: boolean) => void;
+  /** Whether the window's tab is in front, each time that changes. */
+  readonly onVisible: (on: boolean) => void;
+  readonly onOpenLink: (url: string) => void;
+  /** The height of what the window shows, each time it changes. */
+  readonly onResize: (height: number) => void;
+}
+
+/** A link the window shows, from the shared constants main checks it against. */
+interface LinkTarget {
+  readonly label: string;
+  readonly url: string;
 }
 
 /** ui.html's elements the window fills in. */
-export interface WindowParts {
+interface WindowParts {
+  readonly root: HTMLElement;
   readonly dot: HTMLElement;
   readonly title: HTMLElement;
   readonly detail: HTMLElement;
   readonly pairing: HTMLFormElement;
   readonly code: HTMLInputElement;
   readonly note: HTMLElement;
+  readonly hint: HTMLElement;
   readonly edits: HTMLInputElement;
+  readonly editsNote: HTMLElement;
+  readonly actions: HTMLElement;
+  readonly support: HTMLElement;
+  readonly feedback: HTMLElement;
 }
