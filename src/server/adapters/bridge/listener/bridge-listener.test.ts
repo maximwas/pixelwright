@@ -123,15 +123,6 @@ describe("BridgeListener", () => {
     expect(probe.sessions.rejection()).toBeNull();
   });
 
-  it("closes a peer 1011 until the peer handshake exists", async () => {
-    const probe = await listening();
-
-    expect(await probe.close("/pixelwright/v1/peer")).toEqual({
-      code: 1011,
-      reason: "the peer handshake is not built yet",
-    });
-  });
-
   it("refuses a foreign Host with 403, logs the reason, and keeps it for the status hint", async () => {
     const probe = await listening();
 

@@ -9,6 +9,13 @@ export interface WalkKeep<Item> {
   readonly enough: number;
 }
 
+/** How a walk looks its items up: each one's lookup, what to do with its answer, and when it has enough. */
+export interface WalkLookup<Item, Value> {
+  readonly lookup: (item: Item) => Promise<Value>;
+  readonly take: (item: Item, value: Value) => void;
+  readonly enough: () => boolean;
+}
+
 /** What a walk kept, in order, and whether its deadline cut it short. */
 export interface Walked<Item> {
   readonly kept: Item[];
@@ -27,9 +34,9 @@ export class LayerWalk {
     this.#clock = clock;
   }
 
-  /** When an op's walk must end: LIMITS.opBudgetMs from now, under the server's wait for the op. */
-  deadline(): number {
-    return this.#clock.now() + LIMITS.opBudgetMs;
+  /** When an op's walk must end: its budget from now, LIMITS.opBudgetMs unless given, under the server's wait. */
+  deadline(budgetMs: number = LIMITS.opBudgetMs): number {
+    return this.#clock.now() + budgetMs;
   }
 
   passed(deadline: number): boolean {
@@ -84,6 +91,32 @@ export class LayerWalk {
     }
 
     return { kept, cut: false };
+  }
+
+  /**
+   * Looks the items up LIMITS.mainComponentBatch at a time, in order, each answer taken, until `enough` or the deadline;
+   * true when the deadline cut it. The first batch goes even past the deadline, so a walk that spent the time still
+   * answers with what it reached (P-075, T-040): the clock is read before each later batch.
+   */
+  async lookUp<Item, Value>(
+    items: readonly Item[],
+    deadline: number,
+    lookup: WalkLookup<Item, Value>,
+  ): Promise<boolean> {
+    for (let start = 0; start < items.length && !lookup.enough(); start += LIMITS.mainComponentBatch) {
+      if (start > 0 && this.passed(deadline)) {
+        return true;
+      }
+
+      const batch = items.slice(start, start + LIMITS.mainComponentBatch);
+      const answers = await Promise.all(batch.map(async (item) => [item, await lookup.lookup(item)] as const));
+
+      for (const [item, value] of answers) {
+        lookup.take(item, value);
+      }
+    }
+
+    return false;
   }
 }
 

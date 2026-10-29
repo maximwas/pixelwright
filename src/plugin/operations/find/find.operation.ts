@@ -1,14 +1,14 @@
 import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
 import { NAME_VALUE_LIST } from "@/core/kernel/lists/name-value-list.ts";
+import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LAYER_WALK } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
 import { PAGE_LOADER } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
-import { FIND_NODE_TYPE, FIND_TEXT } from "@/plugin/operations/find/find.constants.ts";
+import { FIND_TEXT } from "@/plugin/operations/find/find.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
-import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import { FIND_COUNT } from "@/shared/ops/find/find.constants.ts";
 import type { findOp } from "@/shared/ops/find/find.manifest.ts";
 import type { Counted, Found } from "@/shared/ops/find/find.schema.ts";
@@ -59,8 +59,9 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
 
   protected async execute(input: FindInput): Promise<FindOutput> {
     const variant = input.variant === undefined ? undefined : this.#variant(input.variant);
-    // The deadline counts the page's loading too: offline, Figma takes 10 s to give up on it.
-    const deadline = this.#walk.deadline();
+    // The deadline counts the page's loading too: offline, Figma takes 10 s to give up on it. Going page by page, the
+    // server gives what is left of its one budget (P-075).
+    const deadline = this.#walk.deadline(input.budgetMs);
     const roots = await this.#loader.children(input.within);
     const byMain = input.component !== undefined || variant !== undefined || (input.counts ?? false);
     const walked = this.#walk.until(this.#walk.layers(roots), deadline, {
@@ -102,13 +103,13 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     return (node) =>
       (name === undefined || node.name.toLowerCase().includes(name)) &&
       (type === undefined || node.type === type) &&
-      (text === undefined || (node.type === FIND_NODE_TYPE.text && node.characters.toLowerCase().includes(text))) &&
-      (!instances || node.type === FIND_NODE_TYPE.instance);
+      (text === undefined || (node.type === FIGMA_NODE_TYPE.text && node.characters.toLowerCase().includes(text))) &&
+      (!instances || node.type === FIGMA_NODE_TYPE.instance);
   }
 
   /**
    * The candidates whose main component matches, looked up in batches until one past the limit is found (when
-   * counting, to the end), the instances among them counted, until the deadline.
+   * counting, to the end), the instances among them counted, until the deadline: the first batch even past it.
    */
   async #byMain(
     candidates: readonly SceneNode[],
@@ -118,34 +119,17 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
   ): Promise<Search> {
     const wanted = this.#mainMatcher(input.component, variant);
     const tally: Tally = { found: [], counts: (input.counts ?? false) ? new Map() : null, limit: input.limit };
-    const search = (cut: boolean): Search => ({
-      found: tally.found,
-      ...(tally.counts === null ? {} : { counts: [...tally.counts.values()] }),
-      cut,
-    });
-
-    for (
-      let start = 0;
-      start < candidates.length && (tally.counts !== null || tally.found.length <= input.limit);
-      start += LIMITS.mainComponentBatch
-    ) {
-      if (this.#walk.passed(deadline)) {
-        return search(true);
-      }
-
-      const batch = candidates.slice(start, start + LIMITS.mainComponentBatch);
-      const mains = await Promise.all(batch.map((node) => this.#mainOf(node)));
-
-      for (const [at, node] of batch.entries()) {
-        const main = mains[at] ?? null;
-
+    const cut = await this.#walk.lookUp(candidates, deadline, {
+      lookup: (node) => this.#mainOf(node),
+      take: (node, main) => {
         if (wanted(main)) {
           this.#take(tally, node, main);
         }
-      }
-    }
+      },
+      enough: () => tally.counts === null && tally.found.length > input.limit,
+    });
 
-    return search(false);
+    return { found: tally.found, ...(tally.counts === null ? {} : { counts: [...tally.counts.values()] }), cut };
   }
 
   /** A matching layer: listed while the list is not one past the limit, and counted when it is an instance. */
@@ -159,7 +143,7 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     }
 
     if (tally.counts !== null && main !== null) {
-      const set = main.parent?.type === FIND_NODE_TYPE.componentSet ? main.parent : null;
+      const set = main.parent?.type === FIGMA_NODE_TYPE.componentSet ? main.parent : null;
       const names = set === null ? { component: main.name } : { component: set.name, variant: main.name };
       const key = FIND_COUNT.key(names.component, names.variant);
 
@@ -169,7 +153,7 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
 
   /** An instance's main component; null for any other layer, and for an instance whose component is gone. */
   #mainOf(node: SceneNode): Promise<ComponentNode | null> {
-    return node.type === FIND_NODE_TYPE.instance ? node.getMainComponentAsync() : Promise.resolve(null);
+    return node.type === FIGMA_NODE_TYPE.instance ? node.getMainComponentAsync() : Promise.resolve(null);
   }
 
   /**
@@ -189,7 +173,7 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
         return false;
       }
 
-      const names = [main.name, main.parent?.type === FIND_NODE_TYPE.componentSet ? main.parent.name : undefined];
+      const names = [main.name, main.parent?.type === FIGMA_NODE_TYPE.componentSet ? main.parent.name : undefined];
       // A variant's values come from Figma, or from its name when Figma gives none.
       const values = new Map(this.#lowered(main.variantProperties ?? this.#lists.parse(main.name) ?? {}));
 
@@ -216,7 +200,7 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
 
     for (
       let current = node.parent;
-      current !== null && current.type !== FIND_NODE_TYPE.page && current.type !== FIND_NODE_TYPE.document;
+      current !== null && current.type !== FIGMA_NODE_TYPE.page && current.type !== FIGMA_NODE_TYPE.document;
       current = current.parent
     ) {
       names.unshift(current.name);

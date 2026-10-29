@@ -1,6 +1,7 @@
 import { inject, injectable } from "@needle-di/core";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
+import { CLOCK } from "@/core/ports/clock.port.ts";
 import { WITHIN_SCOPE } from "@/server/app/scope/within-scope.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
@@ -9,6 +10,7 @@ import {
   NodesFindInputSchema,
   type NodesFindOutput,
 } from "@/server/tools/nodes-find/nodes-find.schema.ts";
+import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import { FIND_COUNT } from "@/shared/ops/find/find.constants.ts";
 import { findOp } from "@/shared/ops/find/find.manifest.ts";
 import type { Counted, Found } from "@/shared/ops/find/find.schema.ts";
@@ -17,7 +19,8 @@ type Query = Omit<NodesFindInput, "file" | "within">;
 
 /**
  * Layers in the call's file (T-040): the plugin's find in each root `within` gives, page after page for "file" (T-041)
- * until the limit is passed, or through every page when counting, the counts added up (T-042); boxes rounded (D-15).
+ * until the limit is passed, or through every page when counting, the counts added up (T-042); all of them in one
+ * budget, the pages past it unread and the answer cut (P-075); boxes rounded (D-15).
  */
 @injectable()
 export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
@@ -25,23 +28,35 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
   readonly #session;
   readonly #scope;
   readonly #numbers;
+  readonly #clock;
 
   constructor(
     session = inject(PLUGIN_SESSION),
     scope = inject(WITHIN_SCOPE),
     numbers = inject(NUMBER_FORMAT),
+    clock = inject(CLOCK),
   ) {
     super();
     this.#session = session;
     this.#scope = scope;
     this.#numbers = numbers;
+    this.#clock = clock;
   }
 
   protected async run({ file, within, ...query }: NodesFindInput): Promise<NodesFindOutput> {
     const answers: NodesFindOutput[] = [];
+    const ends = this.#clock.now() + LIMITS.opBudgetMs;
 
     for (const root of await this.#scope.roots(this.#session, within)) {
-      const found = await this.#session.run(findOp, { ...query, within: root });
+      const budgetMs = Math.min(ends - this.#clock.now(), LIMITS.opBudgetMs);
+
+      if (budgetMs <= 0) {
+        // The roots left are unread: the answer says there is more, and that its counts are cut.
+        answers.push({ nodes: [], more: true, ...((query.counts ?? false) ? { countsCut: true as const } : {}) });
+        break;
+      }
+
+      const found = await this.#session.run(findOp, { ...query, within: root, budgetMs });
 
       answers.push(found);
 

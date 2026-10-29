@@ -3,7 +3,8 @@ import { CODE_FIGMA_HIDDEN, CODE_FIGMA_TEXT, CODE_FONTS } from "@/plugin/adapter
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 
 /**
- * Figma as execute's code gets it (T-150): the Plugin API without clientStorage and ui (D-11), Pixelwright's helpers
+ * Figma as execute's code gets it (T-150): the Plugin API without clientStorage, ui, closePlugin and showUI (D-11),
+ * Pixelwright's helpers
  * for pw (T-154), and each call run so that figma.skipInvisibleInstanceChildren is set back after it (FX-021) and what
  * it changed is one undo step (T-156).
  */
@@ -18,8 +19,10 @@ export class CodeFigma {
   }
 
   /**
-   * The API the code is given: a proxy that hides clientStorage and ui, its methods bound to Figma's own object.
-   * shortcut: code can still reach the real one as globalThis.figma; only a separate realm would close that.
+   * The API the code is given: a proxy that hides clientStorage, ui, closePlugin and showUI, its methods bound to
+   * Figma's own object.
+   * shortcut: code can still reach the real one as globalThis.figma, and through it clientStorage (the pairing key, the
+   * Allow edits flag), closePlugin and showUI; only a separate realm would close that.
    */
   api(): PluginAPI {
     // A blank target: Figma's methods are non-configurable, so a proxy over figma itself may not return them bound.

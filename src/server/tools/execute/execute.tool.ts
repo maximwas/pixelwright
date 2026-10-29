@@ -22,20 +22,13 @@ export class ExecuteTool extends Tool<ExecuteInput, ExecuteOutput> {
   protected readonly input = ExecuteInputSchema;
   readonly #session;
   readonly #folder;
-  readonly #syntax;
-  readonly #reads;
+  readonly #syntax = new SyntaxCheck();
+  readonly #reads = new ReadsOnlyCheck();
 
-  constructor(
-    session = inject(PLUGIN_SESSION),
-    folder = inject(PROJECT_FOLDER),
-    syntax = new SyntaxCheck(),
-    reads = new ReadsOnlyCheck(),
-  ) {
+  constructor(session = inject(PLUGIN_SESSION), folder = inject(PROJECT_FOLDER)) {
     super();
     this.#session = session;
     this.#folder = folder;
-    this.#syntax = syntax;
-    this.#reads = reads;
   }
 
   protected async run({ code, script, timeout }: ExecuteInput): Promise<ExecuteOutput> {

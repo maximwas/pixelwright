@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as zod from "zod/mini";
 import type { WindowEvents } from "@/core/ports/window-events.port.ts";
+import { BusyOps } from "@/plugin/app/busy-ops.ts";
 import { WatchdogStep } from "@/plugin/app/steps/watchdog-step.ts";
 import type { OpResult } from "@/shared/envelope/op-result.schema.ts";
 import { OpContract } from "@/shared/ops/op-contract.ts";
@@ -38,7 +39,10 @@ describe("WatchdogStep (D-06)", () => {
     const handler = new Promise<OpResult>((resolve) => {
       finish = resolve;
     });
-    const answer = new WatchdogStep(window).handle({ contract: slowRead, input: {} }, async () => await handler);
+    const answer = new WatchdogStep(new BusyOps(window)).handle(
+      { contract: slowRead, input: {} },
+      async () => await handler,
+    );
 
     await vi.advanceTimersByTimeAsync(1_000);
 

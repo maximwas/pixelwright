@@ -1,4 +1,5 @@
 import { InjectionToken, injectable } from "@needle-di/core";
+import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LOOKUP_TEXT } from "@/plugin/adapters/figma/lookup/lookup.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
@@ -19,6 +20,17 @@ export class NodeLookup {
     }
 
     return found;
+  }
+
+  /** The page a node is on; null for the document and a node off every page. */
+  pageOf(node: BaseNode): PageNode | null {
+    for (let current: BaseNode | null = node; current !== null; current = current.parent) {
+      if (current.type === FIGMA_NODE_TYPE.page) {
+        return current;
+      }
+    }
+
+    return null;
   }
 }
 

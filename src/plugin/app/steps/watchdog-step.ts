@@ -1,11 +1,10 @@
 import { inject, injectable } from "@needle-di/core";
 import pTimeout from "p-timeout";
-import { WINDOW_EVENTS } from "@/core/ports/window-events.port.ts";
+import { BUSY_OPS } from "@/plugin/app/busy-ops.ts";
 import type { OpCall, OperationStep, OpNext } from "@/plugin/app/operation-runner.ts";
 import { WATCHDOG_TEXT } from "@/plugin/app/steps/steps.constants.ts";
 import type { OpResult } from "@/shared/envelope/op-result.schema.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
-import type { BusyOp } from "@/shared/window/ui-message.schema.ts";
 
 /**
  * Step 7, innermost (D-06): when the handler has not settled by the op's resolved timeout, the call answers TIMEOUT and
@@ -15,11 +14,10 @@ import type { BusyOp } from "@/shared/window/ui-message.schema.ts";
  */
 @injectable()
 export class WatchdogStep implements OperationStep {
-  readonly #window;
-  #busy: readonly BusyOp[] = [];
+  readonly #busy;
 
-  constructor(window = inject(WINDOW_EVENTS)) {
-    this.#window = window;
+  constructor(busy = inject(BUSY_OPS)) {
+    this.#busy = busy;
   }
 
   handle(call: OpCall, next: OpNext): Promise<OpResult> {
@@ -30,7 +28,8 @@ export class WatchdogStep implements OperationStep {
     return pTimeout(handler, {
       milliseconds: meta.timeoutMs,
       fallback: (): OpResult => {
-        this.#runsOn({ op: call.contract.name, since }, handler);
+        // Operation.run never rejects; a step that broke still ends the busy state.
+        this.#busy.until({ op: call.contract.name, since }, handler);
 
         return {
           ok: false,
@@ -41,19 +40,5 @@ export class WatchdogStep implements OperationStep {
         };
       },
     });
-  }
-
-  /** The op is busy in the window from its TIMEOUT until its handler ends. */
-  #runsOn(op: BusyOp, handler: Promise<OpResult>): void {
-    const ended = () => this.#show(this.#busy.filter((item) => item !== op));
-
-    this.#show([...this.#busy, op]);
-    // Operation.run never rejects; a step that broke still ends the busy state.
-    void handler.then(ended, ended);
-  }
-
-  #show(ops: readonly BusyOp[]): void {
-    this.#busy = ops;
-    this.#window.busy(ops);
   }
 }

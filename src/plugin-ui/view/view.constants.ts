@@ -77,13 +77,17 @@ export const EDITS_TEXT = {
 /** The undo shortcut of the system Figma runs on, told apart by the user agent. */
 export const UNDO_KEY = { macAgent: "Mac", mac: "⌘Z", other: "Ctrl+Z" } as const;
 
-/** What the activity calls an op (P-051); an op not here goes by its name. */
+/** What the activity calls an op (P-051), 0.7.0's words; a quiet op (ping) is never listed, so it has none. */
 export const ACTION_NAME: Partial<Record<OpName, string>> = {
   [OP_NAME.selection]: "Read the selection",
   [OP_NAME.changes]: "Read the changes",
   [OP_NAME.execute]: "Ran code",
+  [OP_NAME.show]: "Showed layers",
+  [OP_NAME.viewport]: "Read the view",
+  [OP_NAME.selectionWait]: "Waited for a selection",
+  [OP_NAME.outline]: "Read the page outline",
   [OP_NAME.fileMap]: "Mapped the file",
-  [OP_NAME.find]: "Found layers",
+  [OP_NAME.find]: "Searched layers",
 };
 
 export const ACTIVITY_TEXT = {

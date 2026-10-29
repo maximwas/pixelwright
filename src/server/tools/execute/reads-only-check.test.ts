@@ -15,4 +15,15 @@ describe("ReadsOnlyCheck (T-153)", () => {
 
     expect(new ReadsOnlyCheck().readsOnly(code)).toBe(false);
   });
+
+  it.each([
+    ["destructures a writer out of a layer", "const { remove } = figma.currentPage.children[0];\nremove();"],
+    ["calls a method by a computed name", 'const layer = figma.currentPage.children[0];\nlayer["re" + "move"]();'],
+    ["deletes a property", "delete figma.currentPage.children[0].name;"],
+    ["calls a function of its own on pw", "return pw.mine();"],
+    ["reaches Figma through Reflect", 'Reflect.set(figma.currentPage, "name", "x");'],
+    ["uses this", "return this;"],
+  ])("says no for code that %s", (_case, code) => {
+    expect(new ReadsOnlyCheck().readsOnly(code)).toBe(false);
+  });
 });

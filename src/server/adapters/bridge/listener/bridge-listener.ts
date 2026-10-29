@@ -38,8 +38,8 @@ export class BridgeListener {
   #http: Server | undefined;
   #sockets: WebSocketServer | undefined;
   #port: number | null = null;
-  #onPeer: (socket: WebSocket) => void = (socket) =>
-    socket.close(CLOSE_CODE.internalError, LISTENER_TEXT.noPeerHandshake);
+  /** Set by OwnerPeers.start() as soon as this server holds the port, before an upgrade can come. */
+  #onPeer!: (socket: WebSocket) => void;
 
   constructor(
     settings = inject(BRIDGE_SETTINGS),
@@ -53,7 +53,7 @@ export class BridgeListener {
     this.#connections = connections;
   }
 
-  /** Where a socket on the peer path goes: the owner's peers (S-031); closed until they listen. */
+  /** Where a socket on the peer path goes: the owner's peers (S-031). */
   onPeer(listener: (socket: WebSocket) => void): void {
     this.#onPeer = listener;
   }

@@ -2,10 +2,11 @@ import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
 import { CANVAS_VIEW } from "@/plugin/adapters/figma/canvas-view.ts";
 import { CURRENT_SELECTION } from "@/plugin/adapters/figma/current-selection.ts";
+import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
-import { NODE_TYPE, SHOW_TEXT } from "@/plugin/operations/show/show.constants.ts";
+import { SHOW_TEXT } from "@/plugin/operations/show/show.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { SHOW } from "@/shared/ops/show/show.constants.ts";
@@ -81,20 +82,13 @@ export class ShowOperation extends Operation<ShowInput, ShowOutput> {
   /** A layer and its page; a page, the document or a node off every page is no layer to show. */
   async #layerOnPage(id: string): Promise<LayerOnPage> {
     const found = await this.#lookup.existing(id);
-    const page = this.#pageOf(found);
+    const page = this.#lookup.pageOf(found);
 
-    if (page === null || found.type === NODE_TYPE.page || found.type === NODE_TYPE.document) {
+    // A page, the document or a node off every page is no layer to show (P-112).
+    if (page === null || found.type === FIGMA_NODE_TYPE.page || found.type === FIGMA_NODE_TYPE.document) {
       throw new PixelwrightError(ERROR_CODE.nodeNotFound, SHOW_TEXT.notALayer(id));
     }
 
     return { layer: found, page };
-  }
-
-  #pageOf(node: BaseNode): PageNode | null {
-    if (node.type === NODE_TYPE.page) {
-      return node;
-    }
-
-    return node.parent === null ? null : this.#pageOf(node.parent);
   }
 }

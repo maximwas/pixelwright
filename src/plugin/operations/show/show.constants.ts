@@ -1,6 +1,3 @@
-/** The node types that are no layer to show (P-112). */
-export const NODE_TYPE = { page: "PAGE", document: "DOCUMENT" } as const;
-
 export const SHOW_TEXT = {
   giveNodes: "Give node or nodes: the layers to show.",
   notALayer: (id: string) => `${id} is not a layer on a page.`,

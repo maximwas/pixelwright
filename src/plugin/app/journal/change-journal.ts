@@ -1,5 +1,6 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
+import { CLOCK } from "@/core/ports/clock.port.ts";
 import { DOCUMENT_EVENTS, type NodeChangeRecord } from "@/core/ports/document-events.port.ts";
 import { JOURNAL } from "@/plugin/app/journal/journal.constants.ts";
 import { CHANGE_BY, CHANGE_KIND } from "@/shared/ops/changes/changes.constants.ts";
@@ -25,6 +26,7 @@ type Entry = Change & { readonly seq: number };
 @injectable()
 export class ChangeJournal {
   readonly #events;
+  readonly #clock;
   readonly #entries = new Map<string, Entry>();
   /** A touched layer's id, and until when its next report is Pixelwright's. */
   readonly #own = new Map<string, number>();
@@ -39,17 +41,20 @@ export class ChangeJournal {
   #served = 0;
   #since = "";
 
-  constructor(events = inject(DOCUMENT_EVENTS)) {
+  constructor(events = inject(DOCUMENT_EVENTS), clock = inject(CLOCK)) {
     this.#events = events;
+    this.#clock = clock;
   }
 
   /** Starts journalling the current page's changes, following the user to every page they switch to. */
   start(): void {
-    this.#start = Math.max(Date.now() * JOURNAL.cursorPerMs, this.#seq + 1);
+    const now = this.#clock.now();
+
+    this.#start = Math.max(now * JOURNAL.cursorPerMs, this.#seq + 1);
     this.#seq = this.#start;
     this.#dropped = this.#start;
     this.#served = this.#start;
-    this.#since = new Date().toISOString();
+    this.#since = new Date(now).toISOString();
     this.#events.onNodeChanges((changes) => this.#heard(changes));
   }
 
@@ -58,7 +63,7 @@ export class ChangeJournal {
     this.#writes += 1;
 
     return (touched) => {
-      const now = Date.now();
+      const now = this.#clock.now();
 
       for (const [id, until] of this.#own) {
         if (until <= now) {
@@ -81,13 +86,16 @@ export class ChangeJournal {
     };
   }
 
-  /** execute's code starts running; the function it gets says it ended, its echo counted a moment longer. */
+  /**
+   * execute's code starts running; the function it gets says the code ended, however long after its answer, its echo
+   * counted a moment longer.
+   */
   executing(): () => void {
     this.#executing += 1;
 
     return () => {
       this.#executing -= 1;
-      this.#echoUntil = Date.now() + JOURNAL.executeEchoMs;
+      this.#echoUntil = this.#clock.now() + JOURNAL.executeEchoMs;
     };
   }
 
@@ -109,7 +117,7 @@ export class ChangeJournal {
   }
 
   #heard(changes: readonly NodeChangeRecord[]): void {
-    const at = new Date().toISOString();
+    const at = new Date(this.#clock.now()).toISOString();
     const heard = changes.map((change) => ({ change, at, own: this.#ownNow(change.id) }));
 
     if (this.#writes > 0) {
@@ -120,7 +128,7 @@ export class ChangeJournal {
   }
 
   #ownNow(id: string): boolean {
-    const now = Date.now();
+    const now = this.#clock.now();
 
     return this.#executing > 0 || now < this.#echoUntil || (this.#own.get(id) ?? 0) > now;
   }

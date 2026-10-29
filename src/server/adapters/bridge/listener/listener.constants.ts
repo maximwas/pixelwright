@@ -69,8 +69,6 @@ export const LISTENER_TEXT = {
   /** The log's reason for a refusal that names no check: the path was not the bridge's. */
   pathReason: "path",
   goingAway: "server shutting down",
-  /** shortcut: the peer path has no handshake until item 07, so a peer is closed 1011. */
-  noPeerHandshake: "the peer handshake is not built yet",
 } as const;
 
 export const LISTENER_LOG = { listening: "bridge listening", refused: "bridge refused an upgrade" } as const;

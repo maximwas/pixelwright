@@ -5,7 +5,7 @@ import type { ActivityEntry, BusyOp } from "@/shared/window/ui-message.schema.ts
 export interface WindowEvents {
   /** An op answered: the window lists it. */
   activity(entry: ActivityEntry): void;
-  /** Every op whose handler still runs after the watchdog answered for it; an empty list once none does. */
+  /** Every op still running after its answer (the watchdog's TIMEOUT, execute's code past its time); [] once none is. */
   busy(ops: readonly BusyOp[]): void;
 }
 
