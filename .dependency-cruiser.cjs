@@ -27,7 +27,7 @@ module.exports = {
     rule("operations-apart", { path: "^src/plugin/operations/([^/]+)/" },
       { path: "^src/plugin/operations/[^/]+/", pathNot: "^src/plugin/operations/$1/" }),
     rule("plugin-not-server", { path: "^src/plugin/" }, { path: "^src/(server|cli|plugin-ui)/" }),
-    rule("plugin-no-server-core", { path: "^src/plugin/" }, { path: "^src/core/(xml|design|checks|diff|code-connect|images)/" }),
+    rule("plugin-no-server-core", { path: "^src/plugin/" }, { path: "^src/core/(xml|design|checks|diff|images)/" }),
     rule("ui-on-shared", { path: "^src/plugin-ui/" }, { path: "^src/", pathNot: "^src/(plugin-ui|shared)/" }),
     rule("src-not-tests", { path: "^src/" }, { path: "^test/" }),
   ],
