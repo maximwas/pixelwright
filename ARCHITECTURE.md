@@ -15,6 +15,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `envelope/`, `errors/`, `limits/`, `version/`, `window/`: the op result envelope, `PixelwrightError` and the error
     codes, numbers with their reason, the build's version, the messages between the plugin's window and its main thread.
 - `core/`: the pure domain and its ports.
+  - `kernel/`: the floor of core, importing no other domain: `numbers/` holds the D-15 precision table (`PRECISION`,
+    the places each class of value keeps) and `NumberFormat`, which every reader rounds with.
+  - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`, a Figma type's tag), the layout constants;
+    `outline/` holds `OutlineXml`, which writes the outline op's tree as XML on the server (the plugin never imports
+    `core/xml`).
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
     `DocumentEvents`, `ServerEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.

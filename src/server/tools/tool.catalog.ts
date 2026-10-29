@@ -3,6 +3,7 @@ import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.
 import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
 import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { NODE_SHOW_MANIFEST } from "@/server/tools/node-show/node-show.manifest.ts";
+import { OUTLINE_MANIFEST } from "@/server/tools/outline/outline.manifest.ts";
 import { SELECTION_GET_MANIFEST } from "@/server/tools/selection-get/selection-get.manifest.ts";
 import { SELECTION_WAIT_MANIFEST } from "@/server/tools/selection-wait/selection-wait.manifest.ts";
 import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
@@ -21,6 +22,7 @@ export class ToolCatalog {
     SELECTION_WAIT_MANIFEST,
     CHANGES_SINCE_MANIFEST,
     VIEWPORT_GET_MANIFEST,
+    OUTLINE_MANIFEST,
     EXECUTE_MANIFEST,
   ];
 

@@ -2,7 +2,7 @@ import * as zod from "zod/mini";
 import { SHOW } from "@/shared/ops/show/show.constants.ts";
 
 /** A layer's id as tools take it, e.g. 54:243. */
-const NodeIdSchema = zod.string().check(zod.minLength(1), zod.maxLength(SHOW.idChars));
+export const NodeIdSchema = zod.string().check(zod.minLength(1), zod.maxLength(SHOW.idChars));
 
 /** One layer or several on one page; the zoom that fits them, or a zoom (1 is 100%) centred on them; select or not. */
 export const ShowInputSchema = zod.strictObject({

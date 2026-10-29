@@ -5,6 +5,7 @@ import { ContainerOperationFactory } from "@/plugin/main/container-operation-fac
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { CODE_SCOPE, CodeScope } from "@/plugin/operations/execute/code-scope.ts";
 import { ExecuteOperation } from "@/plugin/operations/execute/execute.operation.ts";
+import { OutlineOperation } from "@/plugin/operations/outline/outline.operation.ts";
 import { PingOperation } from "@/plugin/operations/ping/ping.operation.ts";
 import { SelectionOperation } from "@/plugin/operations/selection/selection.operation.ts";
 import { SelectionWaitOperation } from "@/plugin/operations/selection-wait/selection-wait.operation.ts";
@@ -26,6 +27,7 @@ export class OperationProviders {
     [OP_NAME.show]: ShowOperation,
     [OP_NAME.viewport]: ViewportOperation,
     [OP_NAME.selectionWait]: SelectionWaitOperation,
+    [OP_NAME.outline]: OutlineOperation,
   };
 
   register(container: Container): void {

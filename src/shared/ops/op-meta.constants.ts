@@ -14,4 +14,5 @@ export const OP_NAME = {
   show: "show",
   viewport: "viewport",
   selectionWait: "selection_wait",
+  outline: "outline",
 } as const;

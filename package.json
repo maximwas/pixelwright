@@ -71,6 +71,7 @@
     "eslint-plugin-antfu": "3.3.1",
     "eslint-plugin-no-relative-import-paths": "1.7.3",
     "eslint-plugin-project-structure": "3.14.5",
+    "fast-check": "4.10.2",
     "knip": "6.43.0",
     "simple-git-hooks": "2.14.0",
     "size-limit": "14.3.0",
