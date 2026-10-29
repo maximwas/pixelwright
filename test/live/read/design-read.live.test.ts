@@ -148,17 +148,20 @@ return box.id;`,
     expect(pro ?? "").toMatch(/box-shadow="(var\(--Shadow-Card\)|0 12px 32px -8px [^"]+)"/);
   });
 
-  // C-112, C-123: each text's font shorthand (the read holds no styles until item 20, so no textStyle yet), and the
-  // JSON block's text styles and fonts.
-  it("reads the Install card's texts with their font and lists the fonts in the JSON (C-112, C-123)", async () => {
+  // C-112, C-123: the Install card's texts use the Body and Button text styles, so each names its style instead of a
+  // font, and the JSON block gives each style's font shorthand and the fonts.
+  it("reads the Install card's texts by their text style and lists the styles and fonts in the JSON (C-112, C-123)", async () => {
     const [xml, json] = await client.texts("design_read", { file, node: install });
     const texts = (xml ?? "").split("\n").filter((line) => line.includes("<Text "));
-    const answer = JSON.parse(json ?? "null") as { textStyles: object; fonts: Record<string, string[]> };
+    const answer = JSON.parse(json ?? "null") as {
+      textStyles: Record<string, string>;
+      fonts: Record<string, string[]>;
+    };
 
     expect(texts.length).toBeGreaterThan(0);
-    expect(texts.every((line) => / font="(italic )?\d+ \d+px\/(\d+px|normal) '[^']+'"/.test(line))).toBe(true);
-    expect(answer.textStyles).toBeTypeOf("object");
-    expect(Object.keys(answer.fonts).length).toBeGreaterThan(0);
+    expect(texts.every((line) => / textStyle="(Body|Button)"/.test(line) && !line.includes(" font="))).toBe(true);
+    expect(answer.textStyles).toMatchObject({ Body: expect.stringMatching(/^\d+ \d+px\/\d+px 'Inter'$/) });
+    expect(answer.fonts).toHaveProperty("Inter");
   });
 
   it("answers an id the read op lists as missing with NODE_NOT_FOUND and where ids come from (P-072)", async () => {
