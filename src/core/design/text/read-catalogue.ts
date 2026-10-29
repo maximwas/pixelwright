@@ -3,10 +3,11 @@ import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import { FONT_SHORTHAND } from "@/core/css/fonts/font-shorthand.ts";
 import { CASE_CSS, FONT_PATTERN } from "@/core/css/fonts/fonts.constants.ts";
 import type { TextSegment } from "@/core/css/groups/text/text-run.ts";
+import type { AssetPlan } from "@/core/design/assets/asset-plan.ts";
 import { ASSET_PLANNER } from "@/core/design/assets/asset-planner.ts";
 import type { PlannedAsset } from "@/core/design/assets/assets.types.ts";
 import { READ_TOKENS } from "@/core/design/text/read-tokens.ts";
-import { CATALOGUE_TEXT, TEXT_CONTENT } from "@/core/design/text/text.constants.ts";
+import { CATALOGUE_TEXT, TEXT_CONTENT, TOKEN_USE } from "@/core/design/text/text.constants.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
@@ -44,7 +45,12 @@ export class ReadCatalogue {
     this.#assets = assets;
   }
 
-  read(model: ReadModel): Catalogue {
+  /** `assets`: the read's one plan, shared with its XML; `xml`: the read written, whose tokens are listed. */
+  read(
+    model: ReadModel,
+    assets: AssetPlan = this.#assets.plan(model),
+    xml?: string,
+  ): Catalogue {
     const styles = new Map<string, string>();
     const fonts = new Map<string, Set<string>>();
 
@@ -62,7 +68,10 @@ export class ReadCatalogue {
     }
 
     return {
-      tokens: this.#tokens.read(model),
+      tokens: this.#tokens.read(
+        model,
+        xml === undefined ? undefined : new Set(Array.from(xml.matchAll(TOKEN_USE), ([, name]) => name ?? "")),
+      ),
       textStyles: Object.fromEntries([...styles].sort(([first], [second]) => first.localeCompare(second))),
       fonts: Object.fromEntries(
         [...fonts].map(([family, weights]) => [
@@ -70,7 +79,7 @@ export class ReadCatalogue {
           [...weights].sort((first, second) => first.localeCompare(second, TEXT_CONTENT.locale, { numeric: true })),
         ]),
       ),
-      assets: this.#assets.plan(model).assets(),
+      assets: assets.assets(),
     };
   }
 

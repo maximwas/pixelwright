@@ -1,6 +1,5 @@
 import { inject, injectable } from "@needle-di/core";
-import { DESIGN_XML } from "@/core/design/design-xml.ts";
-import { type Catalogue, READ_CATALOGUE } from "@/core/design/text/read-catalogue.ts";
+import { DESIGN_READER, type DesignAnswer } from "@/core/design/design-reader.ts";
 import { SELECTED_LAYER } from "@/server/app/scope/selected-layer.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
@@ -14,41 +13,35 @@ import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { readOp } from "@/shared/ops/read/read.manifest.ts";
 
 /** design_read's answer: the XML, and the JSON beside it. */
-type DesignReadOutput = {
-  readonly xml: string;
-  readonly json: { readonly node: string; readonly truncated: readonly string[] } & Catalogue;
-};
+type DesignReadOutput = { readonly xml: string; readonly json: { readonly node: string } & Omit<DesignAnswer, "xml"> };
 
 /**
  * A layer as design XML (A§6.1), with the text styles and fonts it uses in the JSON (C-123): the one selected when no node is given (T-051), read by the plugin's read op as the
- * read model (T-053), refused when hidden (T-052), written by core's DesignXml.
+ * read model (T-053), refused when hidden (T-052), written by core's DesignReader: fit to maxChars (T-054), runs
+ * folded when asked (T-059).
  */
 @injectable()
 export class DesignReadTool extends Tool<DesignReadInput, DesignReadOutput> {
   protected readonly input = DesignReadInputSchema;
   readonly #session;
   readonly #selected;
-  readonly #design;
-  readonly #catalogue;
+  readonly #reader;
 
   constructor(
     session = inject(PLUGIN_SESSION),
     selected = inject(SELECTED_LAYER),
-    design = inject(DESIGN_XML),
-    catalogue = inject(READ_CATALOGUE),
+    reader = inject(DESIGN_READER),
   ) {
     super();
     this.#session = session;
     this.#selected = selected;
-    this.#design = design;
-    this.#catalogue = catalogue;
+    this.#reader = reader;
   }
 
-  protected async run({ node, depth }: DesignReadInput): Promise<DesignReadOutput> {
+  protected async run({ node, depth, maxChars, repeats }: DesignReadInput): Promise<DesignReadOutput> {
     const id = node ?? (await this.#selected.id(this.#session));
     const {
       reads: [read],
-      cuts,
     } = await this.#session.run(readOp, { nodes: [id], ...(depth === undefined ? {} : { depth }) });
 
     if (read === undefined) {
@@ -59,10 +52,9 @@ export class DesignReadTool extends Tool<DesignReadInput, DesignReadOutput> {
       throw new PixelwrightError(ERROR_CODE.opFailed, DESIGN_READ_TEXT.hidden(id));
     }
 
-    return {
-      xml: this.#design.xml(read),
-      json: { node: id, truncated: cuts.map((cut) => cut.id), ...this.#catalogue.read(read) },
-    };
+    const { xml, ...json } = this.#reader.read(read, { maxChars, repeats });
+
+    return { xml, json: { node: id, ...json } };
   }
 
   /** Two text blocks and no structuredContent (T-005, FX-067): the XML, then the JSON. */

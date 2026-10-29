@@ -8,6 +8,21 @@ export type XmlContent =
   | { readonly kind: typeof XML_CONTENT.text; readonly value: string }
   | { readonly kind: typeof XML_CONTENT.span; readonly attributes: readonly XmlAttribute[]; readonly value: string };
 
+/** Where an element sits in the written lines: its first and last line, its depth and its parent's id. */
+export interface XmlSpan {
+  readonly start: number;
+  readonly end: number;
+  readonly level: number;
+  readonly parent: string | null;
+}
+
+/** A tree as written: the XML, its lines, and each element's span by its id (a fit measures branches by them). */
+export interface WrittenXml {
+  readonly xml: string;
+  readonly lines: readonly string[];
+  readonly spans: ReadonlyMap<string, XmlSpan>;
+}
+
 /**
  * The element written for one layer (C-140): its layer's id, its tag, its attributes in order, and a Text's content
  * (null for any other element) or its children. Every consumer works on this tree; the XML is written last.

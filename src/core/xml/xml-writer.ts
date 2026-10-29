@@ -1,12 +1,20 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { XML, XML_CONTENT } from "@/core/xml/xml.constants.ts";
-import type { XmlAttribute, XmlContent, XmlElement } from "@/core/xml/xml.types.ts";
+import type { WrittenXml, XmlAttribute, XmlContent, XmlElement, XmlSpan } from "@/core/xml/xml.types.ts";
 import { XML_ESCAPE } from "@/core/xml/xml-escape.ts";
 
 /**
  * A tree as light XML (C-1.1): an element per line, or a pair of lines around its children, two spaces a level. A Text
  * stays on one line with its Spans: text reads back as written only on the line of its tags.
  */
+/** Where an element is written: the lines so far, the spans, its depth and its parent's id. */
+interface XmlPlace {
+  readonly lines: string[];
+  readonly spans: Map<string, XmlSpan>;
+  readonly level: number;
+  readonly parent: string | null;
+}
+
 @injectable()
 export class XmlWriter {
   readonly #escape;
@@ -16,26 +24,42 @@ export class XmlWriter {
   }
 
   xml(root: XmlElement | null): string {
-    return root === null ? "" : this.#lines(root, 0).join(XML.lineBreak);
+    return this.written(root).xml;
   }
 
-  #lines(element: XmlElement, level: number): string[] {
+  /** The XML with its lines and each element's span. */
+  written(root: XmlElement | null): WrittenXml {
+    const lines: string[] = [];
+    const spans = new Map<string, XmlSpan>();
+
+    if (root !== null) {
+      this.#write(root, { lines, spans, level: 0, parent: null });
+    }
+
+    return { xml: lines.join(XML.lineBreak), lines, spans };
+  }
+
+  #write(element: XmlElement, place: XmlPlace): void {
+    const { lines, level } = place;
+    const start = lines.length;
     const indent = XML.indent.repeat(level);
     const attributes = this.#attributes(element.attributes);
 
     if (element.content !== null) {
-      return [XML.text(indent, element.tag, attributes, this.#content(element.content))];
+      lines.push(XML.text(indent, element.tag, attributes, this.#content(element.content)));
+    } else if (element.children.length === 0) {
+      lines.push(XML.leaf(indent, element.tag, attributes));
+    } else {
+      lines.push(XML.open(indent, element.tag, attributes));
+
+      for (const child of element.children) {
+        this.#write(child, { ...place, level: level + 1, parent: element.id });
+      }
+
+      lines.push(XML.close(indent, element.tag));
     }
 
-    if (element.children.length === 0) {
-      return [XML.leaf(indent, element.tag, attributes)];
-    }
-
-    return [
-      XML.open(indent, element.tag, attributes),
-      ...element.children.flatMap((child) => this.#lines(child, level + 1)),
-      XML.close(indent, element.tag),
-    ];
+    place.spans.set(element.id, { start, end: lines.length - 1, level, parent: place.parent });
   }
 
   #attributes(attributes: readonly XmlAttribute[]): string {

@@ -23,5 +23,8 @@ export const CATALOGUE_TEXT = {
   declaration: (property: string, value: string) => `${property}: ${value}`,
 } as const;
 
+/** A token the XML names: `var(--name)`, a fallback after its comma. */
+export const TOKEN_USE = /var\((--[^),\s]+)/g;
+
 /** The variable and style kinds a read's tokens hold a value for (T-163); text styles go to textStyles. */
 export const TOKEN_KIND = { color: "COLOR", solid: "SOLID", paint: "PAINT", effect: "EFFECT" } as const;

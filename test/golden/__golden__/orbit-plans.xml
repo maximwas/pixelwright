@@ -2,6 +2,7 @@
   <Instance id="54:244" name="Plan – Starter" component="Plan Card" props="Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter" display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="1px solid var(--color-line)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
     <Frame id="I54:244;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
       <Text id="I54:244;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Starter</Text>
+      <Instance id="I54:244;54:205" name="Badge" display="none"/>
     </Frame>
     <Text id="I54:244;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For side projects and trying things out.</Text>
     <Frame id="I54:244;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">
@@ -59,6 +60,7 @@
   <Instance id="54:292" name="Plan – Team" component="Plan Card" props="Price=$29, Popular=false, Description=For growing teams that ship together., Name=Team" display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="1px solid var(--color-line)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
     <Frame id="I54:292;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
       <Text id="I54:292;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Team</Text>
+      <Instance id="I54:292;54:205" name="Badge" display="none"/>
     </Frame>
     <Text id="I54:292;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For growing teams that ship together.</Text>
     <Frame id="I54:292;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">

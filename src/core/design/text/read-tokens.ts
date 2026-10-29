@@ -1,10 +1,12 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import type { Box } from "@/core/css/gradients/gradients.types.ts";
 import { EFFECTS_GROUP } from "@/core/css/groups/effects/effects-group.ts";
 import { PAINT_LIST } from "@/core/css/paints/paint-list.ts";
 import type { Paint } from "@/core/css/paints/solid-paint.ts";
 import { CSS_LENGTH } from "@/core/css/values/css-length.ts";
 import { TOKEN_KIND } from "@/core/design/text/text.constants.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
+import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 type Variable = ReadModel["variables"][string];
@@ -16,7 +18,8 @@ type PaintColor = NonNullable<Paint["color"]>;
 /**
  * The JSON block's tokens (T-163): each variable and paint or effect style the read uses, by its token name, with its
  * value as design_read writes it (a number in px, a colour in the file's space, a style's paints or shadows), sorted
- * by name. A gradient or image paint style has no value without a layer's box: left out.
+ * by name. With `used`, only the tokens the XML names, as 0.7.0 (a variable valued in px is then a length). A
+ * gradient paint style is valued on the box of the last layer filled with it; an image style has no value: left out.
  */
 @injectable()
 export class ReadTokens {
@@ -37,7 +40,7 @@ export class ReadTokens {
     this.#names = names;
   }
 
-  read(model: ReadModel): Record<string, string> {
+  read(model: ReadModel, used?: ReadonlySet<string>): Record<string, string> {
     const tokens = new Map<string, string>();
 
     for (const variable of Object.values(model.variables)) {
@@ -48,15 +51,28 @@ export class ReadTokens {
       }
     }
 
-    for (const style of Object.values(model.styles)) {
-      const value = this.#style(style, model);
+    for (const [id, style] of Object.entries(model.styles)) {
+      const value = this.#style(style, model, this.#filled(model.root, id));
 
       if (value !== null) {
         tokens.set(this.#names.style(style), value);
       }
     }
 
-    return Object.fromEntries([...tokens].sort(([first], [second]) => first.localeCompare(second)));
+    return Object.fromEntries(
+      [...tokens].filter(([name]) => used?.has(name) ?? true).sort(([first], [second]) => first.localeCompare(second)),
+    );
+  }
+
+  /** The last shown layer filled with a style, in document order: a gradient's value needs its box. */
+  #filled(layer: ReadLayer, id: string): Box | null {
+    if (!layer.visible) {
+      return null;
+    }
+
+    const own = layer.fillStyleId === id ? layer : null;
+
+    return (layer.children ?? []).reduce<Box | null>((last, child) => this.#filled(child, id) ?? last, own);
   }
 
   #variable(variable: Variable, model: ReadModel): string | null {
@@ -75,9 +91,13 @@ export class ReadTokens {
     return typeof css === "string" ? css : null;
   }
 
-  #style(style: Style, model: ReadModel): string | null {
+  #style(
+    style: Style,
+    model: ReadModel,
+    box: Box | null,
+  ): string | null {
     if (style.type === TOKEN_KIND.paint) {
-      const css = this.#paints.css(style.paints ?? [], undefined, model);
+      const css = this.#paints.css(style.paints ?? [], undefined, model, box);
 
       return typeof css === "string" ? css : null;
     }
