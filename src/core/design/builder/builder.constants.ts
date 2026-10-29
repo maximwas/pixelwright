@@ -18,6 +18,12 @@ export const NOTE = {
   categorised: (category: string, label: string) => `${category}: ${label}`,
 } as const;
 
+/** The CSS design_apply cannot write back, as one `$css` attribute: `property: value`, joined by `; `. */
+export const CSS_NOTES = {
+  separator: "; ",
+  line: (property: string, value: string) => `${property}: ${value}`,
+} as const;
+
 /** A layer's Dev Mode status, as design_read words it on the read's root. */
 export const DEV_STATUS_WORDS = { ready: "ready for dev", completed: "completed" } as const;
 

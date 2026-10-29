@@ -20,10 +20,14 @@ export class LayerTree {
 
   /** The root's element; null for a root that draws nothing. */
   root(model: ReadModel): XmlElement | null {
-    return this.#elements(model.root, model)[0] ?? null;
+    return this.#elements(model.root, model, null)[0] ?? null;
   }
 
-  #elements(layer: ReadLayer, model: ReadModel): XmlElement[] {
+  #elements(
+    layer: ReadLayer,
+    model: ReadModel,
+    parent: ReadLayer | null,
+  ): XmlElement[] {
     if (Object.hasOwn(INVISIBLE_TYPES, layer.type)) {
       return [];
     }
@@ -32,7 +36,7 @@ export class LayerTree {
       return [{ ...this.#builder.stub(layer), content: null, children: [] }];
     }
 
-    const element = this.#builder.element(layer, model);
+    const element = this.#builder.element(layer, model, parent);
 
     if (Object.hasOwn(TEXT_TYPES, layer.type)) {
       return [{ ...element, content: this.#content(layer), children: [] }];
@@ -45,7 +49,7 @@ export class LayerTree {
         ...element,
         attributes: [...element.attributes, ...this.#cut(layer, children.length)],
         content: null,
-        children: children.flatMap((child) => this.#elements(child, model)),
+        children: children.flatMap((child) => this.#elements(child, model, layer)),
       },
     ];
   }

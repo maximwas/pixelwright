@@ -2,18 +2,34 @@
 // offline the way design_read builds it on the server: customers, desktop-top, plans or pricing.
 import { readFileSync } from "node:fs";
 import * as zod from "zod/mini";
+import { CssReader } from "@/core/css/css-reader.ts";
+import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
+import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
+import { CssLength } from "@/core/css/values/css-length.ts";
+import { CssSplit } from "@/core/css/values/css-split.ts";
+import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
 import { XmlWriter } from "@/core/xml/xml-writer.ts";
 import { ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
 
 class DevRead {
+  readonly #format = new NumberFormat();
   readonly #design = new DesignXml(
-    new LayerTree(new DesignBuilder(new NodeTag(), new NameValueList())),
+    new LayerTree(
+      new DesignBuilder(
+        new NodeTag(),
+        new NameValueList(),
+        new CssReader(
+          new GroupRegistry([new LayoutGroup(new CssLength(new CssVar(new CssSplit()), this.#format), this.#format)]),
+        ),
+      ),
+    ),
     new XmlWriter(new XmlEscape()),
   );
 

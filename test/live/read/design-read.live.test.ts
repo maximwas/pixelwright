@@ -62,6 +62,16 @@ return { frame: frame.id, hidden: hidden.id, other: other.id };`,
     expect(JSON.parse(json ?? "null")).toMatchObject({ node: install });
   });
 
+  // C-030: the Install card is a vertical auto layout; tokens come in item 20, so the values are raw px.
+  it("reads the Install card's auto layout as flex with its padding and gap (C-030)", async () => {
+    const [xml] = await client.texts("design_read", { file, node: install });
+    const [root = ""] = (xml ?? "").split("\n");
+
+    expect(root).toContain('display="flex" flex-direction="column"');
+    expect(root).toContain('padding="24px"');
+    expect(root).toContain('gap="8px"');
+  });
+
   it("answers an id the read op lists as missing with NODE_NOT_FOUND and where ids come from (P-072)", async () => {
     await expect(client.texts("design_read", { file, node: MISSING })).rejects.toThrow(
       `NODE_NOT_FOUND: No node ${MISSING} in this file: find ids with nodes_find, outline or selection_get.`,

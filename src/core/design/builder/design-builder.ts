@@ -1,6 +1,9 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { CSS_READER } from "@/core/css/css-reader.ts";
+import type { CssDeclaration } from "@/core/css/registry/css-declarations.ts";
 import {
   BUILDER_VALUE,
+  CSS_NOTES,
   DEV_STATUS_WORDS,
   NOTE,
   PROPERTY_FIELD,
@@ -24,24 +27,41 @@ type InstanceProperties = NonNullable<ReadLayer["instance"]>["properties"];
 
 /**
  * A layer's element as design_read writes it: Figma's type as its tag and its attributes in C-1.3 order, what the layer
- * is (id, name, component, notes, status, link, mask), then the read-only `$` attributes (the component properties it
- * is bound to, its grid style). The CSS goes between them.
+ * is (id, name, component, notes, status, link, mask), its CSS in CSS_ORDER, then the read-only `$` attributes (the
+ * component properties it is bound to, the CSS it cannot write back as `$css`, its grid style).
  */
 @injectable()
 export class DesignBuilder {
   readonly #tags;
   readonly #lists;
+  readonly #css;
 
-  constructor(tags = inject(NODE_TAG), lists = inject(NAME_VALUE_LIST)) {
+  constructor(
+    tags = inject(NODE_TAG),
+    lists = inject(NAME_VALUE_LIST),
+    css = inject(CSS_READER),
+  ) {
     this.#tags = tags;
     this.#lists = lists;
+    this.#css = css;
   }
 
-  element(layer: ReadLayer, model: ReadModel): LayerElement {
+  /** `parent`: the layer's parent in the read, which decides how it sits; null for the read's root. */
+  element(
+    layer: ReadLayer,
+    model: ReadModel,
+    parent: ReadLayer | null,
+  ): LayerElement {
+    const css = this.#css.read(layer, parent, model);
+
     return {
       id: layer.id,
       tag: this.#tags.of(layer.type),
-      attributes: this.#present([...this.#metadata(layer, model), ...this.#readOnly(layer, model)]),
+      attributes: this.#present([
+        ...this.#metadata(layer, model),
+        ...css.properties,
+        ...this.#readOnly(layer, model, css.notes),
+      ]),
     };
   }
 
@@ -78,11 +98,21 @@ export class DesignBuilder {
     ];
   }
 
-  #readOnly(layer: ReadLayer, model: ReadModel): MaybeAttribute[] {
+  #readOnly(
+    layer: ReadLayer,
+    model: ReadModel,
+    notes: readonly CssDeclaration[],
+  ): MaybeAttribute[] {
     return [
       [DESIGN_ATTRIBUTE.prop, this.#property(layer, PROPERTY_FIELD.characters)],
       [DESIGN_ATTRIBUTE.visibleProp, this.#property(layer, PROPERTY_FIELD.visible)],
       [DESIGN_ATTRIBUTE.swapProp, this.#property(layer, PROPERTY_FIELD.mainComponent)],
+      [
+        DESIGN_ATTRIBUTE.css,
+        notes.length === 0
+          ? undefined
+          : notes.map(([property, value]) => CSS_NOTES.line(property, value)).join(CSS_NOTES.separator),
+      ],
       [DESIGN_ATTRIBUTE.gridStyle, layer.gridStyleId === undefined ? undefined : model.styles[layer.gridStyleId]?.name],
     ];
   }

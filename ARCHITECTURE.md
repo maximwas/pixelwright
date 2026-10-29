@@ -30,7 +30,15 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `design/`: design_read's tree over the read model, on the server (C-140: the tree first, the string last).
     `DesignXml` is the entry; `tree/` holds `LayerTree` (an element per layer, a hidden layer as a stub with
     `display="none"` and the property that shows it, D-18; a slice left out; `$children` where the read cut);
-    `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: metadata, then the `$` ones).
+    `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: metadata, the CSS from
+    `CssReader`, then the `$` ones, `$css` among them).
+  - `css/`: the Figma-to-CSS mapping table, on the server (the plugin never imports `core/css`; it sends raw fields).
+    `CssReader` is the facade: a layer, its parent and the read give its declarations in `CSS_ORDER` and its `$css`
+    notes. `registry/` holds `GroupRegistry` (the `PROPERTY_GROUPS` in order, each owning its CSS attribute names and
+    naming its read-model `sources`) and `CssDeclarations` (one builder per layer, sorted by `CSS_ORDER`). `values/`
+    holds `CssLength` (whole px, the box shorthand, bare numbers as px, D-22), `CssSplit` (top-level splitting with the
+    @csstools tokenizer) and `CssVar` (`var()` fallbacks). `groups/<group>/` holds one group each: `layout/` reads
+    auto layout as flex and a grid as its tracks.
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
     `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.
@@ -95,6 +103,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - Everything in `src/` is a class; inheritance is one level deep, from `Tool`, `Operation` or `Error` only.
 - The server's stdout is MCP only; logs go to stderr and the shared log file through the `Logger` port.
 - Data crossing a trust boundary (MCP, the bridge, files, the network) is parsed by its zod schema first.
+- Each CSS attribute belongs to one property group (`GroupRegistry` refuses two owners), and a layer's CSS is written in
+  `CSS_ORDER` whatever order the groups set it in.
 
 ## Where is the thing that...
 
@@ -152,6 +162,12 @@ wherever children were not all read. Back on the server a hidden root is refused
 `DesignXml`: `LayerTree` walks it, `DesignBuilder` gives each layer its tag and attributes, `XmlWriter` writes the
 tree. The answer is two text blocks, the XML and the JSON, with no structuredContent. `pnpm dev:read <fixture>` does
 the server's half offline for an Orbit fixture in `test/golden/fixtures/`.
+
+**Maps Figma layout to CSS.** In the plugin, `LayoutFieldReader` (one of `FIELD_READERS`) copies a layer's raw auto
+layout, grid, grid-cell and sizing fields into the read model. On the server, `DesignBuilder` asks `CssReader`, which
+runs the property groups; `LayoutGroup` (`core/css/groups/layout/`) writes display, direction, wrap, padding,
+alignment, the gaps and the grid tracks, and a negative spacing as a `$css` note. `test/golden/design-attributes.golden.test.ts`
+compares each owned attribute with the 0.7.0 XML goldens.
 
 **Adds a tool.** A folder under `server/tools/` with the manifest (name, description, schemas, annotations, `load()`),
 the schema and the tool class on `Tool`; one line in `ToolCatalog`. The `tools.json` golden changes with it.
