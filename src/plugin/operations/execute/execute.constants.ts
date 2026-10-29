@@ -20,6 +20,12 @@ export const CODE_PARAMS = ["figma", "console", "pw"] as const;
 /** Code that throws on its first line: its frame shows how the engine names the code's site and its first line. */
 export const CODE_PROBE = "throw new Error();";
 
+/** How long code may run on after its answer and still count as Pixelwright's and show busy (A§15.9, A§15.10). */
+export const CODE_RUN = {
+  /** Past this, code that never settles stops holding the window's busy line and the user's changes. */
+  capMs: 10 * 60_000,
+} as const;
+
 /** What the op gives when the code's time is up first. */
 export const TIMED_OUT = Symbol("timed out");
 

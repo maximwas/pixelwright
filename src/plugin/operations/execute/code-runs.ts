@@ -3,7 +3,7 @@ import pTimeout from "p-timeout";
 import { CLOCK } from "@/core/ports/clock.port.ts";
 import { BUSY_OPS } from "@/plugin/app/busy-ops.ts";
 import { CHANGE_JOURNAL } from "@/plugin/app/journal/change-journal.ts";
-import { TIMED_OUT } from "@/plugin/operations/execute/execute.constants.ts";
+import { CODE_RUN, TIMED_OUT } from "@/plugin/operations/execute/execute.constants.ts";
 import { OP_NAME } from "@/shared/ops/op-meta.constants.ts";
 
 /**
@@ -31,13 +31,15 @@ export class CodeRuns {
   async value(run: Promise<unknown>, timeoutMs: number): Promise<unknown> {
     const since = this.#clock.now();
     const ended = this.#journal.executing();
+    // Code that never settles would hold the busy line and the user's changes forever.
+    const runs = pTimeout(run, { milliseconds: CODE_RUN.capMs, fallback: () => undefined });
 
-    void run.then(ended, ended);
+    void runs.then(ended, ended);
 
     return await pTimeout(run, {
       milliseconds: timeoutMs,
       fallback: () => {
-        this.#busy.until({ op: OP_NAME.execute, since }, run);
+        this.#busy.until({ op: OP_NAME.execute, since }, runs);
 
         return TIMED_OUT;
       },
