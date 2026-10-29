@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { InjectionToken } from "@needle-di/core";
 import { describe, expect, it } from "vitest";
+import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
 import { JSON_FILE } from "@/core/ports/json-file.port.ts";
 import { LOGGER } from "@/core/ports/logger.port.ts";
@@ -18,6 +19,8 @@ import { PAIRING_CODES } from "@/server/adapters/bridge/plugin/pairing-codes.ts"
 import { PLUGIN_CONNECTIONS } from "@/server/adapters/bridge/plugin/plugin-connections.ts";
 import { PluginBridge } from "@/server/adapters/bridge/plugin-bridge.ts";
 import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry.ts";
+import { MCP_ROOTS } from "@/server/adapters/mcp/mcp-roots.ts";
+import { PROJECT_FOLDER } from "@/server/app/project/project-folder.ts";
 import { TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner.ts";
 import { ServerMain } from "@/server/main/server.main.ts";
 import { TOOL_CATALOG } from "@/server/tools/tool.catalog.ts";
@@ -30,6 +33,7 @@ const root = (pluginBridge: boolean) =>
     pluginBridge,
     bridgePort: 0,
     pluginOrigins: [],
+    projectDir: tmpdir(),
   }).container();
 
 const SINGLETONS: [string, InjectionToken<unknown>][] = [
@@ -48,6 +52,9 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["TOOL_CATALOG", TOOL_CATALOG],
   ["TOOL_FACTORY", TOOL_FACTORY],
   ["TOOL_RUNNER", TOOL_RUNNER],
+  ["MCP_ROOTS", MCP_ROOTS],
+  ["CLIENT_ROOTS", CLIENT_ROOTS],
+  ["PROJECT_FOLDER", PROJECT_FOLDER],
 ];
 
 describe("ServerMain's composition", () => {
@@ -56,6 +63,12 @@ describe("ServerMain's composition", () => {
 
     expect(container.get(token)).toBeDefined();
     expect(container.createChild().get(token)).toBe(container.get(token));
+  });
+
+  it("gives the project folder the roots the MCP endpoint asks: one McpRoots", () => {
+    const container = root(true);
+
+    expect(container.get(CLIENT_ROOTS)).toBe(container.get(MCP_ROOTS));
   });
 
   it("binds the owner as the plugin link, or NoBridge with the bridge off", () => {

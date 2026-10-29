@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
+import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
 import { JSON_FILE } from "@/core/ports/json-file.port.ts";
 import { LOG_COMPONENT } from "@/core/ports/logger.constants.ts";
@@ -12,7 +13,9 @@ import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { LOG_DESTINATIONS, LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger.ts";
 import { SharedLogFile } from "@/server/adapters/logging/shared-log-file.ts";
+import { MCP_ROOTS, McpRoots } from "@/server/adapters/mcp/mcp-roots.ts";
 import { StdoutGuard } from "@/server/adapters/mcp/stdout-guard.ts";
+import { PROJECT_FALLBACK, PROJECT_FOLDER, ProjectFolder } from "@/server/app/project/project-folder.ts";
 import { OP_CALL_STEPS } from "@/server/app/sessions/plugin-session.ts";
 import { PLUGIN_SESSIONS, PluginSessions } from "@/server/app/sessions/plugin-sessions.ts";
 import { OpLogStep } from "@/server/app/sessions/steps/op-log-step.ts";
@@ -101,15 +104,19 @@ export class ServerMain {
     return container;
   }
 
-  /** The log, the clock and the home's JSON files: what every other service may need. */
-  #bindInfra(container: Container, { logLevel, home }: ServerConfig): void {
+  /** The log, the clock, the home's JSON files and the project folder: what every other service may need. */
+  #bindInfra(container: Container, { logLevel, home, projectDir }: ServerConfig): void {
     container
       .bind({ provide: LOG_SETTINGS, useValue: { level: logLevel, file: join(home, LOG_FILE.folder, LOG_FILE.name) } })
       .bind({ provide: LOG_DESTINATIONS, multi: true, useValue: pino.destination({ dest: 2, sync: true }) })
       .bind({ provide: LOG_DESTINATIONS, multi: true, useClass: SharedLogFile })
       .bind({ provide: LOGGER, useClass: PinoLogger })
       .bind({ provide: CLOCK, useClass: SystemClock })
-      .bind({ provide: JSON_FILE, useClass: AtomicJsonFile });
+      .bind({ provide: JSON_FILE, useClass: AtomicJsonFile })
+      .bind({ provide: MCP_ROOTS, useClass: McpRoots })
+      .bind({ provide: CLIENT_ROOTS, useExisting: MCP_ROOTS })
+      .bind({ provide: PROJECT_FALLBACK, useValue: projectDir })
+      .bind({ provide: PROJECT_FOLDER, useClass: ProjectFolder });
   }
 
   /** The plugin sessions (A§6.1): target resolution, and each op's chain, outermost first: log, timeout text, result. */

@@ -72,6 +72,7 @@ class Owner {
     pluginBridge: true,
     bridgePort: 0,
     pluginOrigins: [],
+    projectDir: tmpdir(),
   });
 
   readonly client = new Client({ name: "contract", version: "1.0.0" });

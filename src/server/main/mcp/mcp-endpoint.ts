@@ -1,5 +1,6 @@
 import { McpServer, type Transport } from "@modelcontextprotocol/server";
 import { inject, injectable } from "@needle-di/core";
+import { MCP_ROOTS } from "@/server/adapters/mcp/mcp-roots.ts";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 import { TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner.ts";
 import { MCP_ENDPOINT_ERROR, SERVER_INSTRUCTIONS } from "@/server/main/mcp/mcp.constants.ts";
@@ -10,17 +11,24 @@ import { VERSION } from "@/shared/version/version.constants.ts";
 
 /**
  * Adapter over the SDK's McpServer: the channel's name and version, the server instructions (T-007), every catalog
- * tool registered in catalog order with its call handed to the tool runner. The SDK server is built when it connects.
+ * tool registered in catalog order with its call handed to the tool runner, and the client's roots for the project
+ * folder (T-008). The SDK server is built when it connects.
  */
 @injectable()
 export class McpEndpoint {
   readonly #catalog;
   readonly #runner;
+  readonly #roots;
   #server: McpServer | undefined;
 
-  constructor(catalog = inject(TOOL_CATALOG), runner = inject(TOOL_RUNNER)) {
+  constructor(
+    catalog = inject(TOOL_CATALOG),
+    runner = inject(TOOL_RUNNER),
+    roots = inject(MCP_ROOTS),
+  ) {
     this.#catalog = catalog;
     this.#runner = runner;
+    this.#roots = roots;
   }
 
   /** Builds the MCP server with every tool, once, and connects it to the transport. */
@@ -35,6 +43,7 @@ export class McpEndpoint {
       this.#register(server, manifest);
     }
 
+    this.#roots.attach(server.server);
     this.#server = server;
     await server.connect(transport);
   }

@@ -110,5 +110,159 @@
       ],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "changes",
+    "meta": {
+      "write": false,
+      "dryRun": false,
+      "timeoutMs": 30000,
+      "needsAllowEdits": false,
+      "turn": "free"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "since": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "cursor": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "since": {
+          "type": "string"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "change": {
+                "type": "string",
+                "enum": [
+                  "created",
+                  "deleted",
+                  "changed"
+                ]
+              },
+              "properties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "by": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "collaborator",
+                  "pixelwright"
+                ]
+              },
+              "page": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type",
+              "change",
+              "properties",
+              "by",
+              "page",
+              "at"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "cursor",
+        "since",
+        "truncated",
+        "changes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "execute",
+    "meta": {
+      "write": true,
+      "dryRun": false,
+      "timeoutMs": "per input",
+      "needsAllowEdits": true,
+      "turn": "write"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100000
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300000
+        }
+      },
+      "required": [
+        "code",
+        "timeoutMs"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "result": {},
+        "logs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "result",
+        "logs"
+      ],
+      "additionalProperties": false
+    }
   }
 ]

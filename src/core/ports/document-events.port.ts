@@ -1,4 +1,5 @@
 import { InjectionToken } from "@needle-di/core";
+import type { Change } from "@/shared/ops/changes/changes.manifest.ts";
 import type { PluginInfoUpdate } from "@/shared/protocol/plugin-info.schema.ts";
 import type { PluginContext } from "@/shared/window/ui-message.schema.ts";
 
@@ -14,6 +15,19 @@ export interface DocumentEvents {
   visible(on: boolean): void;
   /** Something the info holds changed outside Figma's events (the Allow edits switch). */
   changed(): void;
+  /** Starts listening to the current page's layer changes, following the user to every page (T-035). */
+  onNodeChanges(listener: (changes: readonly NodeChangeRecord[]) => void): void;
+}
+
+/** One layer's change as Figma reported it: name null once the layer is gone, `remote` when another user made it. */
+export interface NodeChangeRecord {
+  readonly id: string;
+  readonly name: string | null;
+  readonly type: string;
+  readonly change: Change["change"];
+  readonly properties: readonly string[];
+  readonly remote: boolean;
+  readonly page: string;
 }
 
 export const DOCUMENT_EVENTS = new InjectionToken<DocumentEvents>("DocumentEvents");

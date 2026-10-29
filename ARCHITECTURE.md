@@ -16,26 +16,33 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     codes, numbers with their reason, the build's version, the messages between the plugin's window and its main thread.
 - `core/`: the pure domain and its ports.
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
-    `DocumentEvents`, `ServerEvents`, `EditsSwitch`), each with its token.
+    `DocumentEvents`, `ServerEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.
   - `tool-runner/`: `ToolRunner`, its steps, the `Tool` base class, the tool manifest and the call id.
   - `sessions/`: `PluginSessions` and `PluginSession` (one call's file), the op steps, `TargetResolver`.
-- `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`.
+  - `project/`: `ProjectFolder`, where every relative path a tool takes starts (the client's first file root, else
+    CLAUDE_PROJECT_DIR, else cwd; never home or `/`).
+- `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
+  `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn).
 - `server/adapters/`: the port implementations on Node.
   - `bridge/`: `PluginBridge` (the role switch), `NoBridge`, the status hints, and the bridge's topics:
     `listener/` (the port, the upgrade guard, `bridge.json`, the ws socket), `plugin/` (one plugin socket's handshake,
     pairing codes, the RPC peer), `sessions/` (`SessionRegistry`, `BridgeSession`), `owner/` (the owner's side of
     the peers), `peer/` (a peer's side of its owner), `hints/` (`StatusHints`).
   - `logging/`, `files/`, `clock/`, `mcp/`: pino and the shared log file, atomic JSON files, the system clock, the
-    stdout guard.
+    stdout guard and `McpRoots` (the client's roots, asked once and again on list_changed).
 - `server/main/`: `ServerMain`, the server's composition root, its providers, `ContainerToolFactory`, the config
   reader, `McpEndpoint`, the shutdown hooks.
 - `cli/`: the `pixelwright` binary and `CliMain`.
 - `plugin/app/`: the op runtime in Figma's main thread: `OperationRunner`, its steps, the `Operation` base class,
-  `OpReport`, `OperationTurns` (the read/write turn lock).
-- `plugin/adapters/`: `figma/` reads the document; `host/` holds the window channel (`UiChannel`, `WindowHost`), the RPC
-  peer of the server (`ServerRpc`), the document events, and clientStorage (pairing key, Allow edits, file id).
-- `plugin/operations/`: one folder per op, one `Operation` subclass each.
+  `OpReport`, `OperationTurns` (the read/write turn lock); `journal/` holds `ChangeJournal`, what changed while the
+  window is open and whose hand it was.
+- `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `lookup/`, the only
+  by-id lookups); `host/` holds the window channel (`UiChannel`, `WindowHost`), the RPC peer of the server
+  (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file
+  id).
+- `plugin/operations/`: one folder per op, one `Operation` subclass each; `execute/` also holds `CodeScope` (pw, kept
+  while the window is open) and the code's console, value printer and error text.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;
@@ -70,9 +77,16 @@ outermost first: `ErrorTextStep`, `CallLogStep`, `TargetStep` (binds the call to
 reaches `PluginLink`, which is `PluginBridge`. On the owner, the request goes to the file's `BridgeSession` and out
 through `PluginRpc` (birpc) on its socket. The window relays the frame: `SocketLink` to `WindowLink` to `MainChannel`,
 then main's `UiChannel` to `ServerRpc`. `OperationRunner` runs the op through its chain, outermost first:
-`ContractStep`, `EditsStep` (Allow edits), `FrameSizeStep`, `TurnStep` (the read/write turn), `WatchdogStep`.
+`ContractStep`, `EditsStep` (Allow edits), `FrameSizeStep`, `TurnStep` (the read/write turn), `JournalStep` (a write's
+touched ids for the change journal), `WatchdogStep`.
 `ContainerOperationFactory` builds the op in a child container; `Operation.run` calls the op's `execute` and wraps what
 it returns or throws in the envelope through `OpReport`. The envelope goes back the same way.
+
+**Runs code.** `ExecuteTool` reads `script` through `ProjectFolder` at every call, refuses code that does not parse
+(`SyntaxCheck`), and runs the execute op; the op's meta makes every deadline max(30 s, timeout + 5 s). In the plugin,
+`ExecuteOperation` runs the code as an async function of `CodeFigma`'s figma proxy, `CodeConsole` and `CodeScope`'s pw,
+answers at the code's own timeout while the code runs on, and tells `ChangeJournal` it is executing, so what Figma
+reports meanwhile is Pixelwright's. Back on the server, `ReadsOnlyCheck` adds the "only reads" note from the code.
 
 **Pairs a plugin.** The window says hello through `SocketLink`. On the owner, `BridgeListener` takes the upgrade
 `UpgradeGuard` allows, and `PluginConnection` runs the handshake as a state machine. A window with a known key gets a
