@@ -12,15 +12,24 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `protocol/`: the handshake frames, the proof, the close codes and reasons, the RPC function types, the channel
     (dev or release), the message socket and its in-memory twin for tests.
   - `ops/`: one folder per op with its contract (`OpContract`: name, input and output schemas, meta), the op catalog.
+  - `read-model/`: the versioned read model (A§7.1, D-05): `ReadModelSchema`, a header (`model`, `profile`) around
+    0.7.0's snapshot field names (`LayerSchema`, K-084), which baselines v1 store and the Orbit fixtures hold. A
+    snapshot without a header (a baseline v1) reads as a design model. Strict, loose where 0.7.0 was (paints, effects,
+    reactions, `mixed`).
   - `envelope/`, `errors/`, `limits/`, `version/`, `window/`: the op result envelope, `PixelwrightError` and the error
     codes, numbers with their reason, the build's version, the messages between the plugin's window and its main thread.
 - `core/`: the pure domain and its ports.
   - `kernel/`: the floor of core, importing no other domain: `numbers/` holds the D-15 precision table (`PRECISION`,
     the places each class of value keeps) and `NumberFormat`, which every reader rounds with; `lists/` holds
     `NameValueList`, the `Name=Value, Other=Value` lists with `,` `=` `\` escaped (a variant, a component's properties).
-  - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`, a Figma type's tag), the layout constants;
-    `outline/` holds `OutlineXml`, which writes the outline op's tree as XML on the server (the plugin never imports
-    `core/xml`).
+  - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
+    and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
+    Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
+    server (the plugin never imports `core/xml`).
+  - `design/`: design_read's tree over the read model, on the server (C-140: the tree first, the string last).
+    `DesignXml` is the entry; `tree/` holds `LayerTree` (an element per layer, a hidden layer as a stub with
+    `display="none"` and the property that shows it, D-18; a slice left out; `$children` where the read cut);
+    `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: metadata, then the `$` ones).
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
     `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.
@@ -130,6 +139,10 @@ the pairing code on each status, and runs its ops through it. A newer server tak
 **Holds the tokens.** A class's token sits at the bottom of the class's own file; a port's token in its `x.port.ts`;
 tokens of config values and multi-provider lists that belong to no class in a topic's or a root's `x.tokens.ts`
 (`BRIDGE_SETTINGS`, `LOG_SETTINGS`, `LOG_DESTINATIONS`).
+
+**Reads a layer as design XML.** The read model (`ReadModelSchema`) goes to `DesignXml`: `LayerTree` walks it,
+`DesignBuilder` gives each layer its tag and attributes, `XmlWriter` writes the tree. `pnpm dev:read <fixture>` does
+it offline for an Orbit fixture in `test/golden/fixtures/`.
 
 **Adds a tool.** A folder under `server/tools/` with the manifest (name, description, schemas, annotations, `load()`),
 the schema and the tool class on `Tool`; one line in `ToolCatalog`. The `tools.json` golden changes with it.
