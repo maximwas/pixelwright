@@ -37,8 +37,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - `plugin/app/`: the op runtime in Figma's main thread: `OperationRunner`, its steps, the `Operation` base class,
   `OpReport`, `OperationTurns` (the read/write turn lock); `journal/` holds `ChangeJournal`, what changed while the
   window is open and whose hand it was.
-- `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `lookup/`, the only
-  by-id lookups); `host/` holds the window channel (`UiChannel`, `WindowHost`), the RPC peer of the server
+- `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `CurrentSelection`,
+  which also selects and hears selection changes; `LayerRefs`, a layer as lists name it; `CanvasView`, the current
+  page and the view, the one place either changes; `lookup/`, `NodeLookup`, the only by-id lookups); `host/` holds the window channel (`UiChannel`, `WindowHost`), the RPC peer of the server
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file
   id).
 - `plugin/operations/`: one folder per op, one `Operation` subclass each; `execute/` also holds `CodeScope` (pw, kept

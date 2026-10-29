@@ -1,25 +1,31 @@
-import { InjectionToken, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { FIGMA_EVENT } from "@/plugin/adapters/figma/figma.constants.ts";
+import { LAYER_REFS } from "@/plugin/adapters/figma/layer-refs.ts";
 import type { NodeRef } from "@/shared/ops/selection/selection.schema.ts";
 
 /** What the user selected on the current page (T-030), each layer with its box in page px, rounded. */
 @injectable()
 export class CurrentSelection {
-  nodes(): NodeRef[] {
-    return figma.currentPage.selection.map((node) => ({
-      id: node.id,
-      name: node.name,
-      type: node.type,
-      box: this.#box(node),
-    }));
+  readonly #refs;
+
+  constructor(refs = inject(LAYER_REFS)) {
+    this.#refs = refs;
   }
 
-  /** absoluteBoundingBox: page coordinates; null for a layer Figma gives none. */
-  #box(node: SceneNode): NodeRef["box"] {
-    const box = "absoluteBoundingBox" in node ? node.absoluteBoundingBox : null;
+  nodes(): NodeRef[] {
+    return figma.currentPage.selection.map((node) => this.#refs.ref(node));
+  }
 
-    return box === null
-      ? null
-      : { x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width), height: Math.round(box.height) };
+  /** Selects these layers of the current page in place of what was selected (T-032). */
+  select(layers: readonly SceneNode[]): void {
+    figma.currentPage.selection = layers;
+  }
+
+  /** Calls `listener` at each change of the selection until the function it returns is called (P-111). */
+  onChange(listener: () => void): () => void {
+    figma.on(FIGMA_EVENT.selectionChange, listener);
+
+    return () => figma.off(FIGMA_EVENT.selectionChange, listener);
   }
 }
 
