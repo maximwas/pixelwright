@@ -12,6 +12,33 @@ export const CSS_PATTERN = {
   spaces: /\s+/g,
 } as const;
 
+export const URL_PATTERN = {
+  /** A path CSS reads in a bare url(): no space, quote, bracket or backslash. */
+  bare: /^[^\s"'()\\]+$/,
+  /** What a quoted url() escapes. */
+  escaped: /["\\]/g,
+} as const;
+
+export const URL_VALUE = {
+  name: "url",
+  empty: "url()",
+  /** The escaped character, after a backslash. */
+  escape: "\\$&",
+} as const;
+
+const URL_NUMBER = {
+  /** How much of a refused background layer its error shows. */
+  shownChars: 40,
+} as const;
+
+export const URL_TEXT = {
+  bare: (path: string) => `url(${path})`,
+  quoted: (path: string) => `url("${path}")`,
+  unquoted: (layer: string) =>
+    `${layer.slice(0, URL_NUMBER.shownChars)}: url() without quotes cannot hold spaces, quotes, brackets or var().`,
+  quote: 'Write the file in quotes: url("my photo.png").',
+} as const;
+
 export const CSS_VALUE = {
   /** A zero length, without a unit as CSS allows. */
   zero: "0",

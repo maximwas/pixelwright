@@ -3,6 +3,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
 import { CSS_READER, CssReader } from "@/core/css/css-reader.ts";
+import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
+import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
+import { PLACEMENT, Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { GROUP_REGISTRY, GroupRegistry, PROPERTY_GROUPS } from "@/core/css/registry/group-registry.ts";
 import { CSS_LENGTH, CssLength } from "@/core/css/values/css-length.ts";
@@ -149,7 +152,10 @@ export class ServerMain {
       .bind({ provide: CSS_SPLIT, useClass: CssSplit })
       .bind({ provide: CSS_VAR, useClass: CssVar })
       .bind({ provide: CSS_LENGTH, useClass: CssLength })
+      .bind({ provide: PLACEMENT, useClass: Placement })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: LayoutGroup })
+      .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: GeometryGroup })
+      .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: AppearanceGroup })
       .bind({ provide: GROUP_REGISTRY, useClass: GroupRegistry })
       .bind({ provide: CSS_READER, useClass: CssReader })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
