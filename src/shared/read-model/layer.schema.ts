@@ -121,7 +121,7 @@ const ExportSettingSchema = zod.looseObject({
  * names, which baselines v1 store (D-33). Positions are relative to the read's root (absoluteTransform's translation);
  * properties at Figma's defaults are left out; paints, effects and reactions stay loose, so a type Figma adds passes.
  */
-export const LayerSchema = zod.strictObject({
+const LayerFieldsSchema = zod.strictObject({
   id: zod.string(),
   name: zod.string(),
   type: zod.string(),
@@ -266,9 +266,17 @@ export const LayerSchema = zod.strictObject({
   css: zod.exactOptional(zod.record(zod.string(), zod.string())),
   /** How many children the layer has; fewer listed means the read's budget cut it there (`$children`). */
   childCount: zod.int().check(zod.minimum(0)),
+});
+
+/**
+ * A layer and its children. Its type is written out (m:46f92ba7): zod infers a recursive getter's type in whichever
+ * order the compiler meets it, and the read op's schema, met first, made `children` required.
+ */
+export const LayerSchema: zod.ZodMiniType<ReadLayer> = zod.strictObject({
+  ...LayerFieldsSchema.shape,
   get children() {
     return zod.exactOptional(zod.array(LayerSchema));
   },
 });
 
-export type ReadLayer = zod.output<typeof LayerSchema>;
+export type ReadLayer = zod.output<typeof LayerFieldsSchema> & { children?: ReadLayer[] };

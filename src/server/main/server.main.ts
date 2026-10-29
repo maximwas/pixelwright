@@ -25,6 +25,7 @@ import { SharedLogFile } from "@/server/adapters/logging/shared-log-file.ts";
 import { MCP_ROOTS, McpRoots } from "@/server/adapters/mcp/mcp-roots.ts";
 import { StdoutGuard } from "@/server/adapters/mcp/stdout-guard.ts";
 import { PROJECT_FALLBACK, PROJECT_FOLDER, ProjectFolder } from "@/server/app/project/project-folder.ts";
+import { SELECTED_LAYER, SelectedLayer } from "@/server/app/scope/selected-layer.ts";
 import { WITHIN_SCOPE, WithinScope } from "@/server/app/scope/within-scope.ts";
 import { OP_CALL_STEPS } from "@/server/app/sessions/plugin-session.ts";
 import { PLUGIN_SESSIONS, PluginSessions } from "@/server/app/sessions/plugin-sessions.ts";
@@ -146,7 +147,7 @@ export class ServerMain {
 
   /**
    * The plugin sessions (A§6.1): target resolution, each op's chain, outermost first: log, timeout text, result; and
-   * the `within` scope a tool's ops go through (S-043).
+   * the `within` scope a tool's ops go through (S-043), and the one selected layer (T-051).
    */
   #bindSessions(container: Container): void {
     for (const step of [OpLogStep, OpTimerStep, OpResultStep]) {
@@ -156,7 +157,8 @@ export class ServerMain {
     container
       .bind({ provide: TARGET_RESOLVER, useClass: TargetResolver })
       .bind({ provide: PLUGIN_SESSIONS, useClass: PluginSessions })
-      .bind({ provide: WITHIN_SCOPE, useClass: WithinScope });
+      .bind({ provide: WITHIN_SCOPE, useClass: WithinScope })
+      .bind({ provide: SELECTED_LAYER, useClass: SelectedLayer });
   }
 
   #bindServices(container: Container): void {

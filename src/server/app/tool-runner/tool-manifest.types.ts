@@ -18,7 +18,8 @@ export interface ToolManifest {
   readonly title: string;
   readonly description: string;
   readonly input: zod.ZodMiniObject;
-  readonly output: zod.ZodMiniObject;
+  /** The structuredContent's schema; a tool that answers in text blocks only (design_read) has none (T-005). */
+  readonly output?: zod.ZodMiniObject;
   readonly annotations: ToolAnnotations;
   readonly load: () => Promise<ToolClass>;
 }

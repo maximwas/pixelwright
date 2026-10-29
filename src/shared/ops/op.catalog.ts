@@ -5,6 +5,7 @@ import { findOp } from "@/shared/ops/find/find.manifest.ts";
 import { OpCatalog } from "@/shared/ops/op-catalog.ts";
 import { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
 import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
+import { readOp } from "@/shared/ops/read/read.manifest.ts";
 import { selectionOp } from "@/shared/ops/selection/selection.manifest.ts";
 import { selectionWaitOp } from "@/shared/ops/selection-wait/selection-wait.manifest.ts";
 import { showOp } from "@/shared/ops/show/show.manifest.ts";
@@ -22,4 +23,5 @@ export const OP_CONTRACTS = new OpCatalog([
   outlineOp,
   fileMapOp,
   findOp,
+  readOp,
 ]);

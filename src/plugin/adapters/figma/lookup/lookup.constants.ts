@@ -1,5 +1,7 @@
+import { NODE_TEXT } from "@/shared/errors/errors.constants.ts";
+
 export const LOOKUP_TEXT = {
-  notFound: (id: string) => `No node ${id} in this file: find ids with nodes_find, outline or selection_get.`,
+  notFound: NODE_TEXT.notFound,
   document: (id: string) => `${id} is the document: give its pages or layers.`,
   noLayers: (id: string) => `${id} has no layers inside to search.`,
 } as const;

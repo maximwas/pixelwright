@@ -58,7 +58,8 @@ export class McpEndpoint {
       title,
       description,
       inputSchema: new McpToolSchema(input),
-      outputSchema: new McpToolSchema(output),
+      // A tool that answers in text blocks only lists no outputSchema (T-005): design_read.
+      ...(output === undefined ? {} : { outputSchema: new McpToolSchema(output) }),
       annotations,
     };
 

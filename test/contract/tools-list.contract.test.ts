@@ -61,6 +61,7 @@ describe("the MCP contract", () => {
       "viewport_get",
       "nodes_find",
       "outline",
+      "design_read",
       "execute",
     ]);
   });
