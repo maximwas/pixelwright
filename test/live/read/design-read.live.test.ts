@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
-const { install, customers, sticker } = TEST_MCP.ids;
+const { install, customers, sticker, planPro } = TEST_MCP.ids;
 
 const NAME = {
   frame: "live:design-read:frame",
@@ -72,19 +72,21 @@ return { frame: frame.id, hidden: hidden.id, other: other.id };`,
     expect(root).toContain('gap="8px"');
   });
 
-  // C-080, C-090: the Install card's fill and inside stroke, and its texts' fills as color; the read holds no
-  // variables until item 20, so the colours are raw.
-  it("reads the Install card's background and border, and its texts' color (C-080, C-090)", async () => {
+  // C-080, C-090: the Install card's fill (it has no stroke) and its texts' fills as color, the Pro plan card's inside
+  // stroke as border; the read holds no variables until item 20, so the colours are raw.
+  it("reads the Install card's background, its texts' color and the Pro card's border (C-080, C-090)", async () => {
     const [xml] = await client.texts("design_read", { file, node: install });
     const [root = "", ...rest] = (xml ?? "").split("\n");
     const colour = String.raw`(#[0-9A-F]{3,6}|rgba\([^)]*\)|color\(display-p3 [^)]*\))`;
+    const [pro] = await client.texts("design_read", { file, node: planPro, depth: 0 });
 
     expect(root).toMatch(new RegExp(`background="${colour}"`));
-    expect(root).toMatch(new RegExp(`border="1px solid ${colour}"`));
+    expect(root).not.toContain("border=");
     expect(
       rest.filter((line) => line.includes("<Text ")).every((line) => new RegExp(` color="${colour}"`).test(line)),
     ).toBe(true);
     expect(rest.some((line) => line.includes("<Text "))).toBe(true);
+    expect(pro ?? "").toMatch(new RegExp(`border="2px solid ${colour}"`));
   });
 
   // C-050, C-057: the sticker is turned 8 degrees in a frame without auto layout: placed by its centre, turned back.

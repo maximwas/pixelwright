@@ -13,6 +13,8 @@ export const TEST_MCP = {
     /** Orbit's Customers block, with the sticker turned 8 degrees (54:450) in it. */
     customers: "54:434",
     sticker: "54:450",
+    /** The Pro plan card: a 2px inside stroke (the Install card has none). */
+    planPro: "54:268",
     orbitComponents: "54:183",
   },
 } as const;
