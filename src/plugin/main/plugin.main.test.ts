@@ -4,6 +4,7 @@ import { DOCUMENT_EVENTS } from "@/core/ports/document-events.port.ts";
 import { EDITS_SWITCH } from "@/core/ports/edits-switch.port.ts";
 import { KEY_VALUE_STORE } from "@/core/ports/key-value-store.port.ts";
 import { SERVER_EVENTS } from "@/core/ports/server-events.port.ts";
+import { WINDOW_EVENTS } from "@/core/ports/window-events.port.ts";
 import { SERVER_RPC } from "@/plugin/adapters/host/channels/server-rpc.ts";
 import { UI_CHANNEL } from "@/plugin/adapters/host/channels/ui-channel.ts";
 import { WINDOW_HOST } from "@/plugin/adapters/host/channels/window-host.ts";
@@ -21,6 +22,7 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["KEY_VALUE_STORE", KEY_VALUE_STORE],
   ["PAIRING_STORE", PAIRING_STORE],
   ["WINDOW_HOST", WINDOW_HOST],
+  ["WINDOW_EVENTS", WINDOW_EVENTS],
   ["EDITS_SWITCH", EDITS_SWITCH],
   ["SERVER_RPC", SERVER_RPC],
   ["SERVER_EVENTS", SERVER_EVENTS],

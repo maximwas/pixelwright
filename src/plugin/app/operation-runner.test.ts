@@ -38,10 +38,13 @@ const stubOp = new OpContract({
   meta: { write: true, dryRun: false, timeoutMs: 1_000, needsAllowEdits: false, turn: "write" },
 });
 
+/** The window's events go nowhere: the busy state has its own test (watchdog-step.test.ts). */
+const QUIET_WINDOW = { activity: () => undefined, busy: () => undefined };
+
 const runner = () =>
   new OperationRunner(
     new OpCatalog([stubOp]),
-    [new ContractStep(), new TurnStep(new OperationTurns()), new WatchdogStep()],
+    [new ContractStep(), new TurnStep(new OperationTurns()), new WatchdogStep(QUIET_WINDOW)],
     new StubFactory(),
   );
 

@@ -4,7 +4,10 @@ import { MainChannel } from "@/plugin-ui/adapters/main-channel.ts";
 import { Backoff } from "@/plugin-ui/link/backoff.ts";
 import { SocketLink } from "@/plugin-ui/link/socket-link.ts";
 import { WindowLink } from "@/plugin-ui/link/window-link.ts";
+import { BusyState } from "@/plugin-ui/view/busy-state.ts";
 import { PluginWindow } from "@/plugin-ui/view/plugin-window.ts";
+import { RecentActions } from "@/plugin-ui/view/recent-actions.ts";
+import { StatusLine } from "@/plugin-ui/view/status-line.ts";
 import type { UiMessage } from "@/shared/window/ui-message.schema.ts";
 import { MemoryBridge as Bridge } from "./support/memory-bridge.ts";
 
@@ -16,8 +19,19 @@ class Element {
   textContent = "";
   hidden = false;
   value = "";
+  checked = false;
+  className = "";
   readonly dataset: Record<string, string> = {};
+  children: unknown[] = [];
   #submit: (event: { preventDefault(): void }) => void = () => {};
+
+  append(...children: unknown[]): void {
+    this.children.push(...children);
+  }
+
+  replaceChildren(...children: unknown[]): void {
+    this.children = children;
+  }
 
   addEventListener(_type: string, listener: (event: { preventDefault(): void }) => void): void {
     this.#submit = listener;
@@ -39,7 +53,15 @@ class Frame {
       visibilityState: "visible",
       addEventListener: () => undefined,
       getElementById: (id: string) => this.element(id),
+      createElement: () => new Element(),
     });
+    // The window follows its content's height (P-002): nothing is laid out here, so nothing resizes.
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe(): void {}
+      },
+    );
     vi.stubGlobal("window", {
       addEventListener: (_type: string, listener: (event: { data: unknown }) => void) => {
         this.#receive = listener;
@@ -72,7 +94,11 @@ const CONTEXT = {
 };
 
 const windowLink = (bridge: Bridge) =>
-  new WindowLink(new MainChannel(), new SocketLink(bridge, new Backoff()), new PluginWindow());
+  new WindowLink(
+    new MainChannel(),
+    new SocketLink(bridge, new Backoff()),
+    new PluginWindow(new StatusLine(), new RecentActions(), new BusyState()),
+  );
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -127,6 +153,29 @@ describe("WindowLink", () => {
     expect(frame.posted.at(-1)).toEqual({ ch: "server", e: 1, d: '{"call":1}' });
     expect(bridge.plugins[0]?.sent.at(-1)).toEqual({ answer: 1 });
     expect(bridge.plugins).toHaveLength(1);
+  });
+
+  it("shows what main reports: a refused write asks for Allow edits, an op past its answer is the status sentence", () => {
+    const frame = new Frame();
+    const bridge = new Bridge();
+
+    windowLink(bridge).start();
+    frame.fromMain({ ch: "window", d: { type: "start", key: bridge.keys.addKey(), context: CONTEXT } });
+    frame.fromMain({ ch: "window", d: { type: "activity", entry: { op: "execute", outcome: "refused" } } });
+    frame.fromMain({ ch: "window", d: { type: "busy", ops: [{ op: "execute", since: Date.now() }] } });
+
+    expect(frame.element("hint").hidden).toBe(false);
+    expect(frame.element("hint").textContent).toBe("Your AI tried to change this file: turn on Allow edits.");
+    expect(frame.element("detail").textContent).toBe("Busy: execute since 0 s");
+
+    // Turning the switch on answers the refusal; the handler's end gives the sentence back.
+    frame.element("allow-edits").checked = true;
+    frame.element("allow-edits").submit();
+    frame.fromMain({ ch: "window", d: { type: "busy", ops: [] } });
+
+    expect(frame.element("hint").hidden).toBe(true);
+    expect(frame.posted.at(-1)).toEqual({ ch: "window", d: { type: "allow_edits", on: true } });
+    expect(frame.element("detail").textContent).toBe("Your AI assistant sees this file.");
   });
 });
 

@@ -1,6 +1,12 @@
 /** The figma.ui event that carries the window's messages to main. */
 export const UI_EVENT = { message: "message" } as const;
 
+/**
+ * The window (P-002): 280 px wide, as tall as what it shows (the pairing field, the hint and the activity come and go),
+ * from a status line's height to most of a laptop screen's.
+ */
+export const WINDOW_SIZE = { width: 280, minHeight: 120, maxHeight: 560 } as const;
+
 import { CHANGE_KIND } from "@/shared/ops/changes/changes.constants.ts";
 
 /** The Figma events these adapters listen to. */

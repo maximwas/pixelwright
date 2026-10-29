@@ -12,7 +12,8 @@ import type { PluginContext, WindowMessage } from "@/shared/window/ui-message.sc
 /**
  * The window's side of the link (listener of SocketLink): it says ready, connects once main handed over the stored key
  * and the file's context (by message, never through showUI, FX-001), shows each link state, gives main a key a pairing
- * issued, and relays session frames both ways stamped with their socket's epoch.
+ * issued, and relays session frames both ways stamped with their socket's epoch. Main's activity and busy events go to
+ * the view; the links the user clicks and the window's height go to main.
  */
 @injectable()
 export class WindowLink implements LinkObserver {
@@ -34,11 +35,13 @@ export class WindowLink implements LinkObserver {
 
   start(): void {
     this.#instanceId = bytesToHex(randomBytes(INSTANCE_ID_BYTES));
-    this.#view.mount(
-      (code) => this.#link.pair(code),
-      (on) => this.#allowEdits(on),
-      (on) => this.#visible(on),
-    );
+    this.#view.mount({
+      onPair: (code) => this.#link.pair(code),
+      onEdits: (on) => this.#allowEdits(on),
+      onVisible: (on) => this.#visible(on),
+      onOpenLink: (url) => this.#toMain({ type: WINDOW_MESSAGE.openLink, url }),
+      onResize: (height) => this.#toMain({ type: WINDOW_MESSAGE.resize, height }),
+    });
     this.#channel.onWindow((message) => this.#take(message));
     this.#channel.onServer((epoch, text) => this.#link.relay(epoch, text));
     this.#channel.start();
@@ -82,9 +85,13 @@ export class WindowLink implements LinkObserver {
     this.#toMain({ type: WINDOW_MESSAGE.visible, on });
   }
 
-  /** Main's answer to ready: the link starts once, with the key and the context it carries. */
+  /** Main's answer to ready starts the link once, with the key and the context it carries; its events go to the view. */
   #take(message: WindowMessage): void {
-    if (message.type === WINDOW_MESSAGE.start && this.#context === null) {
+    if (message.type === WINDOW_MESSAGE.activity) {
+      this.#view.activity(message.entry);
+    } else if (message.type === WINDOW_MESSAGE.busy) {
+      this.#view.busy(message.ops);
+    } else if (message.type === WINDOW_MESSAGE.start && this.#context === null) {
       this.#context = message.context;
       this.#view.showEdits(message.context.allowEdits);
       this.#link.start(message.key, this);

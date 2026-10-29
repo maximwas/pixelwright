@@ -49,6 +49,12 @@ const BANNED_SYNTAX = [
       "Program > VariableDeclaration[kind='let'], Program > ExportNamedDeclaration > VariableDeclaration[kind='let']",
     message: "No module-level mutable state: keep it in an instance of a class the composition root creates.",
   },
+  {
+    selector:
+      "MemberExpression[property.name=/^(innerHTML|outerHTML)$/], CallExpression[callee.property.name='insertAdjacentHTML']",
+    message:
+      "No HTML from code: the window's markup and its mark are ui.html's own, texts go in as textContent (P-054, FX-001).",
+  },
   NO_CSS_ASYNC,
 ];
 
