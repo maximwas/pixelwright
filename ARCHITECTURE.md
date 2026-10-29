@@ -43,13 +43,18 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     @csstools tokenizer), `CssVar` (`var()` fallbacks) and `CssUrl` (`url()` written bare or quoted, an unquoted bad one
     refused with a hint). `paints/` holds `SolidPaint` (a solid paint as its colour, its bound variable's `var()`, or
     `color-mix()` past the variable's alpha, C-020) and `PaintList` (a layer's paints top first, a paint style as its
-    token, an unmapped paint marked). `groups/<group>/` holds one group each, in this order: `layout/` reads auto layout as flex and
+    token, an unmapped paint marked; gradients and images on a background only), and `ImagePaint` (an image fill as
+    its `url()` and the scale mode's size and repeat, C-082). `gradients/` holds `GradientGeometry` (Figma's transform
+    and CSS's gradient line, measured in px so a non-square box keeps its angle, FX-020), `GradientCss` (linear, an
+    axis-aligned radial, conic; stops bound to variables as tokens) and `GradientParser` (CSS gradients back to a spec,
+    radial sizes, `color-mix()` and P3 stops included, for the write side). `groups/<group>/` holds one group each, in this order: `layout/` reads auto layout as flex and
     a grid as its tracks; `geometry/` reads where a layer is and how big (`Placement`: position and edges from the
     constraints, a turned layer by its bounds' centre; `GeometryGroup`: transform, size, FILL as flex or stretch,
     limits; a flat or standing line unturned along its length); `appearance/` reads opacity, blend mode, clipping, a
     text's truncation, the radius and layout grids; `paint/` reads fills (`FillsGroup`: background top first, a text's
     colour, the fixed D-20 note for what it cannot write) and strokes (`StrokesGroup`: border, outline, per-side
-    borders, dashed, a line as one border).
+    borders, dashed, a line as one border); `effects/` reads shadows top first (`box-shadow`, a text's
+    `text-shadow`, an effect style as its token) and blurs as `filter` / `backdrop-filter` at 0.43 R (C-100).
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
     `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.
@@ -81,7 +86,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   page and the view, the one place either changes; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
   pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline; `layer-read/`:
   `LayerReader`, a layer as the read model, its header and the field readers in 0.7.0's order, `BoxFieldReader` the
-  first, a hidden layer a stub; `PaintFieldReader` and `StrokeFieldReader` the paints and how strokes are drawn; the
+  first, a hidden layer a stub; `PaintFieldReader` and `StrokeFieldReader` the paints and how strokes are drawn, `EffectFieldReader` the effects
+  and their style; the
   file's colour profile for the read's header); `host/` holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server

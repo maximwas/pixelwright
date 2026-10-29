@@ -29,16 +29,31 @@ export class SolidPaint {
     }
 
     const opacity = paint.opacity ?? 1;
+    const variable = this.#variable(paint.boundVariables, model);
+    const alpha = variable !== undefined && this.#isChannels(variable.value) ? (variable.value.a ?? 1) : 1;
+
+    return this.color(paint.color, paint.boundVariables, alpha > 0 ? opacity / alpha : opacity, model);
+  }
+
+  /**
+   * A colour as CSS (a solid's, a gradient stop's, FX-047, a shadow's, C-101): the token of the colour variable its
+   * bound variables name, mixed with transparent below an opacity of 100%; else the colour faded by the opacity.
+   */
+  color(
+    color: Channels,
+    bound: unknown,
+    opacity: number,
+    model: ReadModel,
+  ): string {
     const space = this.#space(model);
-    const variable = this.#variable(paint, model);
+    const variable = this.#variable(bound, model);
 
     if (variable === undefined) {
-      return Color.of(paint.color, space).faded(opacity).css();
+      return Color.of(color, space).faded(opacity).css();
     }
 
     const name = this.#variableToken(variable);
-    const alpha = this.#isChannels(variable.value) ? (variable.value.a ?? 1) : 1;
-    const percent = Math.round((alpha > 0 ? opacity / alpha : opacity) * PAINTS_NUMBER.percent);
+    const percent = Math.round(opacity * PAINTS_NUMBER.percent);
 
     return percent < PAINTS_NUMBER.percent ? PAINTS_TEXT.mix(space, name, percent) : PAINTS_TEXT.token(name);
   }
@@ -56,9 +71,9 @@ export class SolidPaint {
     );
   }
 
-  /** The variable an alias `{ type: "VARIABLE_ALIAS", id }` on the paint's colour points at, when the read holds it. */
-  #variable(paint: Paint, model: ReadModel): Variable | undefined {
-    const alias = paint.boundVariables?.color;
+  /** The variable an alias `{ type: "VARIABLE_ALIAS", id }` on the bound colour points at, when the read holds it. */
+  #variable(bound: unknown, model: ReadModel): Variable | undefined {
+    const alias = typeof bound === "object" && bound !== null && "color" in bound ? bound.color : undefined;
 
     return typeof alias === "object" && alias !== null && "id" in alias && typeof alias.id === "string"
       ? model.variables[alias.id]

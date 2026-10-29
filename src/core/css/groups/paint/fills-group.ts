@@ -40,7 +40,12 @@ export class FillsGroup implements PropertyGroup {
     }
 
     const property = (TEXT_TYPES[layer.type] ?? false) ? CSS_PROPERTY.color : CSS_PROPERTY.background;
-    const value = this.#paints.css(fills, fillStyleId === READ_VALUE.mixed ? undefined : fillStyleId, model);
+    const value = this.#paints.css(
+      fills,
+      fillStyleId === READ_VALUE.mixed ? undefined : fillStyleId,
+      model,
+      property === CSS_PROPERTY.background ? layer : null,
+    );
 
     if (value === UNMAPPED_PAINT) {
       css.note(property, UNMAPPED_NOTE[property]);

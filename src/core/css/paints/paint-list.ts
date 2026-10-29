@@ -1,5 +1,8 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { PAINTS_TEXT, PAINTS_VALUE, UNMAPPED_PAINT } from "@/core/css/paints/paints.constants.ts";
+import { GRADIENT_CSS } from "@/core/css/gradients/gradient-css.ts";
+import type { Box } from "@/core/css/gradients/gradients.types.ts";
+import { IMAGE_PAINT } from "@/core/css/paints/image-paint.ts";
+import { FIGMA_PAINT, PAINTS_TEXT, PAINTS_VALUE, UNMAPPED_PAINT } from "@/core/css/paints/paints.constants.ts";
 import { type Paint, SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
@@ -13,15 +16,25 @@ export type PaintCss = string | typeof UNMAPPED_PAINT | null;
 @injectable()
 export class PaintList {
   readonly #solid;
+  readonly #gradient;
+  readonly #image;
 
-  constructor(solid = inject(SOLID_PAINT)) {
+  constructor(
+    solid = inject(SOLID_PAINT),
+    gradient = inject(GRADIENT_CSS),
+    image = inject(IMAGE_PAINT),
+  ) {
     this.#solid = solid;
+    this.#gradient = gradient;
+    this.#image = image;
   }
 
+  /** The list's CSS; gradients and images only on a box (a background): a border or a text's colour takes colours. */
   css(
     paints: readonly Paint[],
     styleId: string | undefined,
     model: ReadModel,
+    box: Box | null = null,
   ): PaintCss {
     const style = styleId === undefined ? undefined : model.styles[styleId];
 
@@ -29,10 +42,8 @@ export class PaintList {
       return PAINTS_TEXT.token(this.#solid.token(style.name));
     }
 
-    const layers = [...paints]
-      .filter((paint) => paint.visible ?? true)
-      .reverse()
-      .map((paint) => this.#solid.css(paint, model));
+    const visible = [...paints].filter((paint) => paint.visible ?? true).reverse();
+    const layers = visible.map((paint) => this.#layer(paint, model, box));
 
     if (layers.length === 0) {
       return null;
@@ -42,10 +53,26 @@ export class PaintList {
       return UNMAPPED_PAINT;
     }
 
-    // Only the bottom layer of a CSS background may be a plain colour: one above it becomes a flat gradient.
+    // Only the bottom layer of a CSS background may be a plain colour: a solid above it becomes a flat gradient.
     return layers
-      .map((layer, index) => (index < layers.length - 1 ? PAINTS_TEXT.flat(layer ?? PAINTS_VALUE.none) : layer))
+      .map((layer, index) =>
+        index < layers.length - 1 && visible[index]?.type === FIGMA_PAINT.solid
+          ? PAINTS_TEXT.flat(layer ?? PAINTS_VALUE.none)
+          : layer,
+      )
       .join(PAINTS_VALUE.layerJoint);
+  }
+
+  #layer(
+    paint: Paint,
+    model: ReadModel,
+    box: Box | null,
+  ): string | null {
+    if (box === null || paint.type === FIGMA_PAINT.solid) {
+      return this.#solid.css(paint, model);
+    }
+
+    return paint.type === FIGMA_PAINT.image ? this.#image.css(paint) : this.#gradient.css(paint, box, model);
   }
 }
 

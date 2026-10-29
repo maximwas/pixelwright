@@ -2,17 +2,22 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
 import { CssReader } from "@/core/css/css-reader.ts";
+import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
+import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
+import { EffectsGroup } from "@/core/css/groups/effects/effects-group.ts";
 import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
 import { Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
 import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PaintList } from "@/core/css/paints/paint-list.ts";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
+import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
@@ -72,6 +77,11 @@ const OWNED = [
   "border-bottom",
   "border-left",
   "outline",
+  // Item 18: effects; background now covers gradients and images too.
+  "box-shadow",
+  "text-shadow",
+  "filter",
+  "backdrop-filter",
 ];
 
 /** Deliberate or not-yet differences from 0.7.0, each with the decision or item that settles it; never a silent skip. */
@@ -89,13 +99,29 @@ const KNOWN: readonly { fixture: string; id: string; attribute: string; why: str
   // A text whose runs differ in colour has mixed fills: its colour comes per run with the text item (19); the line
   // parser here reads the last color on the line, the link Span's.
   { fixture: "pricing", id: "54:242", attribute: "color", why: "mixed text runs (text item 19)" },
+  // A leaf with an image fill is an Image asset in 0.7.0 (src, no background; m:1116170e): the asset item settles it.
+  ...[
+    ["pricing", "54:317"],
+    ["pricing", "54:454"],
+    ["customers", "54:454"],
+  ].map(([fixture = "", id = ""]) => ({
+    fixture,
+    id,
+    attribute: "background",
+    why: "image leaf is an Image asset with src (m:1116170e; the asset item)",
+  })),
 ];
 
 const FIXTURES = ["desktop-top", "pricing", "plans", "customers"] as const;
 
 const format = new NumberFormat();
 const lengths = new CssLength(new CssVar(new CssSplit()), format);
-const paints = new PaintList(new SolidPaint());
+const solid = new SolidPaint();
+const paints = new PaintList(
+  solid,
+  new GradientCss(new GradientGeometry(), solid, lengths, format),
+  new ImagePaint(new CssUrl(new CssSplit())),
+);
 const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
@@ -108,6 +134,7 @@ const design = new DesignXml(
           new AppearanceGroup(lengths, format),
           new FillsGroup(paints),
           new StrokesGroup(paints, format),
+          new EffectsGroup(solid, lengths, format),
         ]),
       ),
     ),

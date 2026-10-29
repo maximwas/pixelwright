@@ -3,17 +3,22 @@ import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
 import { CSS_READER, CssReader } from "@/core/css/css-reader.ts";
+import { GRADIENT_CSS, GradientCss } from "@/core/css/gradients/gradient-css.ts";
+import { GRADIENT_GEOMETRY, GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
+import { EffectsGroup } from "@/core/css/groups/effects/effects-group.ts";
 import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
 import { PLACEMENT, Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
 import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { IMAGE_PAINT, ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PAINT_LIST, PaintList } from "@/core/css/paints/paint-list.ts";
 import { SOLID_PAINT, SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GROUP_REGISTRY, GroupRegistry, PROPERTY_GROUPS } from "@/core/css/registry/group-registry.ts";
 import { CSS_LENGTH, CssLength } from "@/core/css/values/css-length.ts";
 import { CSS_SPLIT, CssSplit } from "@/core/css/values/css-split.ts";
+import { CSS_URL, CssUrl } from "@/core/css/values/css-url.ts";
 import { CSS_VAR, CssVar } from "@/core/css/values/css-var.ts";
 import { DESIGN_BUILDER, DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
@@ -158,12 +163,17 @@ export class ServerMain {
       .bind({ provide: CSS_LENGTH, useClass: CssLength })
       .bind({ provide: PLACEMENT, useClass: Placement })
       .bind({ provide: SOLID_PAINT, useClass: SolidPaint })
+      .bind({ provide: CSS_URL, useClass: CssUrl })
+      .bind({ provide: GRADIENT_GEOMETRY, useClass: GradientGeometry })
+      .bind({ provide: GRADIENT_CSS, useClass: GradientCss })
+      .bind({ provide: IMAGE_PAINT, useClass: ImagePaint })
       .bind({ provide: PAINT_LIST, useClass: PaintList })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: LayoutGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: GeometryGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: AppearanceGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: FillsGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: StrokesGroup })
+      .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: EffectsGroup })
       .bind({ provide: GROUP_REGISTRY, useClass: GroupRegistry })
       .bind({ provide: CSS_READER, useClass: CssReader })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
