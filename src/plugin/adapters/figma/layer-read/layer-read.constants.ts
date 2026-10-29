@@ -13,5 +13,8 @@ export const APPEARANCE_FIELD = {
   start: "MIN",
 } as const;
 
+/** Figma's stroke cap the stroke reader leaves out: a line's plain end. */
+export const STROKE_FIELD = { noCap: "NONE" } as const;
+
 /** Figma's layout values the layout reader tells apart: no layout, a grid, and the defaults it leaves out. */
 export const LAYOUT_FIELD = { noLayout: "NONE", grid: "GRID", flowing: "AUTO", inherit: "INHERIT" } as const;

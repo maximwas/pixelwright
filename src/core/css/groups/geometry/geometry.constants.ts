@@ -15,6 +15,7 @@ export const FIGMA_GEOMETRY = {
   group: "GROUP",
   fixed: "FIXED",
   fill: "FILL",
+  line: "LINE",
 } as const;
 
 /** Each axis: its edges and size in CSS, its sizing and constraint in Figma, the flex direction it is the main axis of. */

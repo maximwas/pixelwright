@@ -7,6 +7,10 @@ import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.t
 import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
 import { Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
+import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
+import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { PaintList } from "@/core/css/paints/paint-list.ts";
+import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
@@ -24,6 +28,7 @@ import { ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
 class DevRead {
   readonly #format = new NumberFormat();
   readonly #lengths = new CssLength(new CssVar(new CssSplit()), this.#format);
+  readonly #paints = new PaintList(new SolidPaint());
   readonly #design = new DesignXml(
     new LayerTree(
       new DesignBuilder(
@@ -34,6 +39,8 @@ class DevRead {
             new LayoutGroup(this.#lengths, this.#format),
             new GeometryGroup(new Placement(this.#lengths, this.#format), this.#lengths, this.#format),
             new AppearanceGroup(this.#lengths, this.#format),
+            new FillsGroup(this.#paints),
+            new StrokesGroup(this.#paints, this.#format),
           ]),
         ),
       ),

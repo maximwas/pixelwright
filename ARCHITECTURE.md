@@ -23,7 +23,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `kernel/`: the floor of core, importing no other domain: `numbers/` holds the D-15 precision table (`PRECISION`,
     the places each class of value keeps) and `NumberFormat`, which every reader rounds with; `lists/` holds
     `NameValueList`, the `Name=Value, Other=Value` lists with `,` `=` `\` escaped (a variant, a component's properties); `geometry/` holds the value objects `Area` (a box's centre) and
-    `Turn` (a rotation, or a mirror matrix's angle with the flip taken out, K-068).
+    `Turn` (a rotation, or a mirror matrix's angle with the flip taken out, K-068; a line's flat or standing snap);
+    `color/` holds `Color`, the colour value object (K-063: any CSS colour through culori/fn with its modes registered
+    by hand, P3 kept P3, Dev Mode's CSS forms, the wire form with `space` only for P3, equals within 0.0005, contrast).
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -39,10 +41,15 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     naming its read-model `sources`) and `CssDeclarations` (one builder per layer, sorted by `CSS_ORDER`). `values/`
     holds `CssLength` (whole px, the box shorthand, bare numbers as px, D-22), `CssSplit` (top-level splitting with the
     @csstools tokenizer), `CssVar` (`var()` fallbacks) and `CssUrl` (`url()` written bare or quoted, an unquoted bad one
-    refused with a hint). `groups/<group>/` holds one group each, in this order: `layout/` reads auto layout as flex and
+    refused with a hint). `paints/` holds `SolidPaint` (a solid paint as its colour, its bound variable's `var()`, or
+    `color-mix()` past the variable's alpha, C-020) and `PaintList` (a layer's paints top first, a paint style as its
+    token, an unmapped paint marked). `groups/<group>/` holds one group each, in this order: `layout/` reads auto layout as flex and
     a grid as its tracks; `geometry/` reads where a layer is and how big (`Placement`: position and edges from the
     constraints, a turned layer by its bounds' centre; `GeometryGroup`: transform, size, FILL as flex or stretch,
-    limits); `appearance/` reads opacity, blend mode, clipping, a text's truncation, the radius and layout grids.
+    limits; a flat or standing line unturned along its length); `appearance/` reads opacity, blend mode, clipping, a
+    text's truncation, the radius and layout grids; `paint/` reads fills (`FillsGroup`: background top first, a text's
+    colour, the fixed D-20 note for what it cannot write) and strokes (`StrokesGroup`: border, outline, per-side
+    borders, dashed, a line as one border).
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
     `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.
@@ -74,7 +81,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   page and the view, the one place either changes; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
   pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline; `layer-read/`:
   `LayerReader`, a layer as the read model, its header and the field readers in 0.7.0's order, `BoxFieldReader` the
-  first, a hidden layer a stub); `host/` holds the
+  first, a hidden layer a stub; `PaintFieldReader` and `StrokeFieldReader` the paints and how strokes are drawn; the
+  file's colour profile for the read's header); `host/` holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file

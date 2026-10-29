@@ -43,6 +43,33 @@ function cssOf(fields: Partial<ReadLayer>, parent: ReadLayer | null = frame()) {
 }
 
 describe("GeometryGroup", () => {
+  // The line as one border: a flat line is its length wide, a standing one its length tall, neither turned; any
+  // other angle stays a turned flat line.
+  it("sizes a flat or standing line along its length, unturned, and keeps another angle turned", () => {
+    const line = (rotation: number) =>
+      cssOf({ type: "LINE", width: 18, height: 0, rotation }, frame({ layoutMode: "HORIZONTAL" }));
+
+    expect(line(0)).toEqual([["width", "18px"]]);
+    expect(line(90)).toEqual([["height", "18px"]]);
+    expect(line(-90.3)).toEqual([["height", "18px"]]);
+    expect(line(60)).toEqual([
+      ["width", "18px"],
+      ["height", "0"],
+      ["transform", "rotate(-60deg)"],
+    ]);
+  });
+
+  it("places a standing line by its drawn box in a frame without layout", () => {
+    const bounds = { x: 100, y: 100, width: 0, height: 18 };
+
+    expect(cssOf({ type: "LINE", x: 100, y: 118, width: 18, height: 0, rotation: 90, bounds })).toEqual([
+      ["position", "absolute"],
+      ["left", "100px"],
+      ["top", "100px"],
+      ["height", "18px"],
+    ]);
+  });
+
   // C-050: the constraints of a layer placed in a frame without auto layout.
   it("pins a layer to the right and bottom edges (MAX)", () => {
     expect(cssOf({ constraints: { horizontal: "MAX", vertical: "MAX" } })).toEqual([

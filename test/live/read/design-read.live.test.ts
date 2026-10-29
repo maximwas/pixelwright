@@ -72,6 +72,21 @@ return { frame: frame.id, hidden: hidden.id, other: other.id };`,
     expect(root).toContain('gap="8px"');
   });
 
+  // C-080, C-090: the Install card's fill and inside stroke, and its texts' fills as color; the read holds no
+  // variables until item 20, so the colours are raw.
+  it("reads the Install card's background and border, and its texts' color (C-080, C-090)", async () => {
+    const [xml] = await client.texts("design_read", { file, node: install });
+    const [root = "", ...rest] = (xml ?? "").split("\n");
+    const colour = String.raw`(#[0-9A-F]{3,6}|rgba\([^)]*\)|color\(display-p3 [^)]*\))`;
+
+    expect(root).toMatch(new RegExp(`background="${colour}"`));
+    expect(root).toMatch(new RegExp(`border="1px solid ${colour}"`));
+    expect(
+      rest.filter((line) => line.includes("<Text ")).every((line) => new RegExp(` color="${colour}"`).test(line)),
+    ).toBe(true);
+    expect(rest.some((line) => line.includes("<Text "))).toBe(true);
+  });
+
   // C-050, C-057: the sticker is turned 8 degrees in a frame without auto layout: placed by its centre, turned back.
   it("reads Orbit's turned sticker placed absolutely with transform rotate() (C-050, C-057)", async () => {
     const [xml] = await client.texts("design_read", { file, node: customers });

@@ -40,6 +40,11 @@ export class LayerReader {
     return { ...this.#header(node, origin), ...fields, childCount: this.children(node).length };
   }
 
+  /** The file's colour profile (LEGACY, SRGB, DISPLAY_P3): a Display P3 file's channels are P3 values (K-064). */
+  colorProfile(): string {
+    return figma.root.documentColorProfile;
+  }
+
   children(node: SceneNode): readonly SceneNode[] {
     return "children" in node ? node.children : [];
   }
