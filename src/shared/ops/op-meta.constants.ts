@@ -18,4 +18,5 @@ export const OP_NAME = {
   fileMap: "file_map",
   find: "find",
   read: "read",
+  nearby: "nearby",
 } as const;

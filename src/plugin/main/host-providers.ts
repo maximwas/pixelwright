@@ -11,6 +11,7 @@ import { CANVAS_VIEW, CanvasView } from "@/plugin/adapters/figma/canvas-view.ts"
 import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
 import { ComponentFieldReader } from "@/plugin/adapters/figma/layer-meta/component-field-reader.ts";
+import { FactFieldReader } from "@/plugin/adapters/figma/layer-meta/fact-field-reader.ts";
 import { ModeFieldReader } from "@/plugin/adapters/figma/layer-meta/mode-field-reader.ts";
 import { NoteFieldReader } from "@/plugin/adapters/figma/layer-meta/note-field-reader.ts";
 import { ReactionFieldReader } from "@/plugin/adapters/figma/layer-meta/reaction-field-reader.ts";
@@ -73,6 +74,7 @@ export class HostProviders {
       .bind({ provide: FIELD_READERS, multi: true, useClass: NoteFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: ModeFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: ReactionFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: FactFieldReader })
       .bind({ provide: STYLE_NUMBERS_READER, useClass: StyleNumbers })
       .bind({ provide: REFERENCES, useClass: References })
       .bind({ provide: LAYER_READER, useClass: LayerReader })

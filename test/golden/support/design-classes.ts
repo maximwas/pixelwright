@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import * as zod from "zod/mini";
 import { CssReader } from "@/core/css/css-reader.ts";
+import { AutoLineHeights } from "@/core/css/fonts/auto-line-heights.ts";
 import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
@@ -30,12 +31,19 @@ import { ComponentAttributes } from "@/core/design/component/component-attribute
 import { DesignReader } from "@/core/design/design-reader.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
 import { DesignFit } from "@/core/design/fit/design-fit.ts";
+import { DesignHints } from "@/core/design/hints/design-hints.ts";
+import { InferredHints } from "@/core/design/hints/inferred-hints.ts";
+import { LayerHints } from "@/core/design/hints/layer-hints.ts";
+import { LayoutGuess } from "@/core/design/hints/layout-guess.ts";
+import { TokenHints } from "@/core/design/hints/token-hints.ts";
 import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
+import { ReadJson } from "@/core/design/read-json.ts";
 import { RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { Measurements } from "@/core/inspect/measurements.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { Slug } from "@/core/kernel/names/slug.ts";
@@ -58,13 +66,15 @@ const paints = new PaintList(
   names,
 );
 const runs = new TextRun(new FontShorthand(format), paints, format, names);
-const planner = new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(lengths, new CssSplit()));
+const classifier = new AssetClassifier();
+const planner = new AssetPlanner(classifier, new Slug(), new AssetCss(lengths, new CssSplit()));
+const components = new ComponentAttributes(new NameValueList());
 
 export const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
       new NodeTag(),
-      new ComponentAttributes(new NameValueList()),
+      components,
       new CssReader(
         new GroupRegistry([
           new LayoutGroup(lengths, format),
@@ -95,7 +105,17 @@ const catalogue = new ReadCatalogue(
   planner,
 );
 
-export const reader = new DesignReader(design, fit, catalogue, planner);
+const hints = new DesignHints(
+  new LayerHints(components, new LayoutGuess(format), format),
+  new TokenHints(names, solid),
+  new InferredHints(names, format),
+  classifier,
+);
+
+export const reader = new DesignReader(design, fit, new ReadJson(catalogue, hints, new Measurements(format)), planner);
+
+/** design_read's `autoLineHeight: "px"` over a read model. */
+export const lines = new AutoLineHeights(format);
 
 /** An Orbit fixture as its read model. */
 export function fixture(name: string): ReadModel {

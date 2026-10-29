@@ -69,6 +69,8 @@ export const REFERENCE_FIELD = {
   children: "children",
   styleIdSuffix: "StyleId",
   alias: "VARIABLE_ALIAS",
+  /** Figma's own variable matches, field to variable id (C-153). */
+  inferred: "inferred",
   /** A text's characters and Figma's CSS hold no style or variable: not walked. */
   plainFields: ["characters", "css"] as readonly string[],
   /** The style fields of a page's layers the numbering reads (a text's runs left out). */

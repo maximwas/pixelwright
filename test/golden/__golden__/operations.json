@@ -3422,5 +3422,110 @@
         }
       }
     }
+  },
+  {
+    "name": "nearby",
+    "meta": {
+      "write": false,
+      "dryRun": false,
+      "timeoutMs": 30000,
+      "needsAllowEdits": false,
+      "turn": "read"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "distance": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        }
+      },
+      "required": [
+        "node",
+        "distance"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "screen": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string",
+                "description": "Its texts, top to bottom."
+              },
+              "side": {
+                "type": "string",
+                "enum": [
+                  "over",
+                  "left",
+                  "right",
+                  "above",
+                  "below"
+                ],
+                "description": "Where it sits from the screen; over it when their boxes overlap."
+              },
+              "distance": {
+                "type": "number",
+                "description": "The gap between its box and the screen's, in px."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "text",
+              "side",
+              "distance"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "more": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "screen",
+        "notes",
+        "more"
+      ],
+      "additionalProperties": false
+    }
   }
 ]

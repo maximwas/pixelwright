@@ -1,6 +1,7 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
+import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { REFERENCES } from "@/plugin/adapters/figma/layer-read/references.ts";
 import { LAYER_REFS } from "@/plugin/adapters/figma/layer-refs.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -59,14 +60,53 @@ export class LayerReader {
   /**
    * What a read's model holds beside its root: the file's colour profile (LEGACY, SRGB, DISPLAY_P3: a Display P3 file's
    * channels are P3 values, K-064), the Dev Mode status of the root or the nearest layer above it (C-134), and the
-   * styles and variables the read uses (T-163). `node` is the root's layer.
+   * styles and variables the read uses (T-163), and the page's Dev Mode measurements with a side on the read's layers
+   * (T-061). `node` is the root's layer.
    */
-  async tables(root: ReadLayer,    node: SceneNode): Promise<Pick<ReadModel, "colorProfile" | "devStatus" | "styles" | "variables">> {
+  async tables(root: ReadLayer,    node: SceneNode): Promise<Pick<ReadModel, "colorProfile" | "devStatus" | "styles" | "variables" | "measurements">> {
     return {
       colorProfile: figma.root.documentColorProfile,
       ...this.#devStatus(node),
       ...(await this.#references.tables(root, node)),
+      ...this.#measurements(node),
     };
+  }
+
+  /** The page's measurements with an end on the root or inside it; none where Figma refuses them (Dev Mode only). */
+  #measurements(node: SceneNode): Pick<ReadModel, "measurements"> {
+    let page: BaseNode | null = node;
+
+    while (page !== null && page.type !== FIGMA_NODE_TYPE.page) {
+      page = page.parent;
+    }
+
+    const owner: (PageNode & Partial<MeasurementsMixin>) | null = page?.type === FIGMA_NODE_TYPE.page ? page : null;
+    let measurements: Measurement[];
+
+    try {
+      measurements = owner?.getMeasurements?.() ?? [];
+    } catch {
+      return {};
+    }
+
+    const within = (end: BaseNode) => {
+      for (let current: BaseNode | null = end; current !== null; current = current.parent) {
+        if (current.id === node.id) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+    const read = measurements
+      .filter(({ start, end }) => within(start.node) || within(end.node))
+      .map(({ start, end, freeText }) => ({
+        start: { id: start.node.id, side: start.side },
+        end: { id: end.node.id, side: end.side },
+        ...(freeText === "" ? {} : { text: freeText }),
+      }));
+
+    return read.length === 0 ? {} : { measurements: read };
   }
 
   /** Figma marks frames and sections: the status of the layer or of the nearest one above it that has one. */

@@ -22,7 +22,8 @@ describe.each(["orbit-customers", "orbit-desktop-top", "orbit-plans", "orbit-pri
     });
 
     it("keeps the rest of the read", () => {
-      const { xml: _xml, ...rest } = reader.read(model);
+      // 0.7.0's read golden is the XML's own catalogue: the hints have their own golden below.
+      const { xml: _xml, hints: _hints, ...rest } = reader.read(model);
 
       expect(`${JSON.stringify(rest, null, 2)}\n`).toBe(golden(`${name}.read.json`));
     });
@@ -35,6 +36,10 @@ describe.each(["orbit-customers", "orbit-desktop-top", "orbit-plans", "orbit-pri
       });
 
       expect(`${JSON.stringify(plans, null, 2)}\n`).toBe(golden(`${name}.fit.json`));
+    });
+
+    it("keeps the hints (C-193)", () => {
+      expect(`${JSON.stringify(reader.read(model).hints, null, 2)}\n`).toBe(golden(`${name}.hints.json`));
     });
   },
 );

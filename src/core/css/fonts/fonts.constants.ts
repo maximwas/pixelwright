@@ -35,6 +35,16 @@ export const CASE_CSS: Readonly<Record<string, string>> = {
   TITLE: "capitalize",
 };
 
+/** What an Auto line height in px reads (T-060): where a text's lines end, and the fields that tell it. */
+export const AUTO_LINE_HEIGHT = {
+  /** Enter (a line feed, or U+2029) and Shift+Enter (U+2028). */
+  lineBreak: /[\n\u2028\u2029]/,
+  auto: "AUTO",
+  pixels: "PIXELS",
+  hugs: "WIDTH_AND_HEIGHT",
+  text: "TEXT",
+} as const;
+
 export const FONT_TEXT = {
   shorthand: (
     italic: boolean,

@@ -4,32 +4,33 @@ import type { XmlRead } from "@/core/design/design.types.ts";
 import { DESIGN_XML } from "@/core/design/design-xml.ts";
 import { DESIGN_FIT } from "@/core/design/fit/design-fit.ts";
 import { FIT } from "@/core/design/fit/fit.constants.ts";
-import { type Catalogue, READ_CATALOGUE } from "@/core/design/text/read-catalogue.ts";
+import { READ_JSON, type ReadJsonBlock } from "@/core/design/read-json.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /** design_read's answer before the tool adds the node: the XML, then the JSON block's catalogue, cuts and runs. */
-export type DesignAnswer = Catalogue & XmlRead;
+export type DesignAnswer = ReadJsonBlock & XmlRead;
 
 /**
  * design_read over a read model (T-050): the assets planned once and shared by the XML and the JSON block, the fit
- * planned once (T-054), then the read written with that plan and, when asked, its runs folded (T-059).
+ * planned once (T-054), then the read written with that plan and, when asked, its runs folded (T-059); the JSON block
+ * with its measurements and hints (T-061).
  */
 @injectable()
 export class DesignReader {
   readonly #design;
   readonly #fit;
-  readonly #catalogue;
+  readonly #json;
   readonly #planner;
 
   constructor(
     design = inject(DESIGN_XML),
     fit = inject(DESIGN_FIT),
-    catalogue = inject(READ_CATALOGUE),
+    json = inject(READ_JSON),
     planner = inject(ASSET_PLANNER),
   ) {
     this.#design = design;
     this.#fit = fit;
-    this.#catalogue = catalogue;
+    this.#json = json;
     this.#planner = planner;
   }
 
@@ -37,11 +38,11 @@ export class DesignReader {
     const { maxChars = FIT.maxChars, repeats = false } = options;
     const assets = this.#planner.plan(model);
     const plan = this.#fit.plan(model, maxChars, { assets, repeats });
-    const read = this.#design.read(model, { ...plan, assets, repeats });
+    const { read, tree } = this.#design.render(model, { ...plan, assets, repeats });
 
     return {
       xml: read.xml,
-      ...this.#catalogue.read(model, assets, read.xml),
+      ...this.#json.read(model, assets, { tree, xml: read.xml }),
       truncated: read.truncated,
       ...(read.repeats === undefined ? {} : { repeats: read.repeats }),
     };
