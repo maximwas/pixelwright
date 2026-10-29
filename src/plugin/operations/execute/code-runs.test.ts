@@ -4,7 +4,7 @@ import type { WindowEvents } from "@/core/ports/window-events.port.ts";
 import { BusyOps } from "@/plugin/app/busy-ops.ts";
 import { ChangeJournal } from "@/plugin/app/journal/change-journal.ts";
 import { CodeRuns } from "@/plugin/operations/execute/code-runs.ts";
-import { TIMED_OUT } from "@/plugin/operations/execute/execute.constants.ts";
+import { CODE_RUN, TIMED_OUT } from "@/plugin/operations/execute/execute.constants.ts";
 import type { PluginInfoUpdate } from "@/shared/protocol/plugin-info.schema.ts";
 import type { BusyOp, PluginContext } from "@/shared/window/ui-message.schema.ts";
 
@@ -83,5 +83,33 @@ it("answers TIMED_OUT at the code's time; till the code ends it shows busy and i
     ["1:1", "pixelwright"],
     ["1:2", "pixelwright"],
     ["1:3", "user"],
+  ]);
+});
+
+// Code that never settles must not hold the window's busy line and the user's changes forever.
+it("gives up on code that never ends after CODE_RUN.capMs: busy clears and later changes are the user's", async () => {
+  vi.useFakeTimers({ now: 5_000 });
+
+  const events = new ReportedChanges();
+  const window = new Window();
+  const journal = new ChangeJournal(events, Date);
+  const never = new Promise<void>(() => {});
+
+  journal.start();
+
+  const value = new CodeRuns(journal, new BusyOps(window), Date).value(never, 1_000);
+
+  await vi.advanceTimersByTimeAsync(1_000);
+  expect(await value).toBe(TIMED_OUT);
+
+  await vi.advanceTimersByTimeAsync(CODE_RUN.capMs / 2);
+  events.report("2:1");
+  await vi.advanceTimersByTimeAsync(CODE_RUN.capMs);
+  events.report("2:2");
+
+  expect(window.shown.at(-1)).toEqual([]);
+  expect(journal.changes().changes.map(({ id, by }) => [id, by])).toEqual([
+    ["2:1", "pixelwright"],
+    ["2:2", "user"],
   ]);
 });
