@@ -57,7 +57,15 @@ describe("the built server over stdio", () => {
     const answer = await server.client.callTool({ name: "status", arguments: { probe: false } });
 
     expect(server.client.getServerVersion()?.name).toBe("pixelwright-new");
-    expect(tools.map(({ name }) => name)).toEqual(["status", "selection_get", "changes_since", "execute"]);
+    expect(tools.map(({ name }) => name)).toEqual([
+      "status",
+      "selection_get",
+      "node_show",
+      "selection_wait",
+      "changes_since",
+      "viewport_get",
+      "execute",
+    ]);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });
     expect(server.errors).toEqual([]);
   });

@@ -7,6 +7,9 @@ import { CODE_SCOPE, CodeScope } from "@/plugin/operations/execute/code-scope.ts
 import { ExecuteOperation } from "@/plugin/operations/execute/execute.operation.ts";
 import { PingOperation } from "@/plugin/operations/ping/ping.operation.ts";
 import { SelectionOperation } from "@/plugin/operations/selection/selection.operation.ts";
+import { SelectionWaitOperation } from "@/plugin/operations/selection-wait/selection-wait.operation.ts";
+import { ShowOperation } from "@/plugin/operations/show/show.operation.ts";
+import { ViewportOperation } from "@/plugin/operations/viewport/viewport.operation.ts";
 import { OP_NAME } from "@/shared/ops/op-meta.constants.ts";
 import type { OpName } from "@/shared/ops/op-meta.types.ts";
 
@@ -20,6 +23,9 @@ export class OperationProviders {
     [OP_NAME.selection]: SelectionOperation,
     [OP_NAME.changes]: ChangesOperation,
     [OP_NAME.execute]: ExecuteOperation,
+    [OP_NAME.show]: ShowOperation,
+    [OP_NAME.viewport]: ViewportOperation,
+    [OP_NAME.selectionWait]: SelectionWaitOperation,
   };
 
   register(container: Container): void {

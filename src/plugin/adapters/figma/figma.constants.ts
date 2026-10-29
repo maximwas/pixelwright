@@ -8,4 +8,7 @@ export const CODE_FONTS = {
   key: (font: FontName) => `${font.family}\u0000${font.style}`,
 } as const;
 
+/** The Figma events the adapters listen to. */
+export const FIGMA_EVENT = { selectionChange: "selectionchange" } as const;
+
 export const CODE_FIGMA_TEXT = { noLayer: (id: string) => `No layer ${id} in this file.` } as const;

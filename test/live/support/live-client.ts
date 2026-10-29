@@ -52,13 +52,20 @@ export class LiveClient {
     return this;
   }
 
-  /** The tool's structuredContent; an error answer throws with its text. */
-  async call(tool: string, args: ToolResult = {}): Promise<ToolResult> {
+  /** The tool's structuredContent; an error answer throws with its text, an aborted call with the abort. */
+  async call(
+    tool: string,
+    args: ToolResult = {},
+    signal?: AbortSignal,
+  ): Promise<ToolResult> {
     if (this.#takesFile.has(tool) && args.file !== TEST_MCP.file) {
       throw new Error(`live tests call ${tool} with file: "${TEST_MCP.file}" only, not ${JSON.stringify(args.file)}.`);
     }
 
-    const answer = await this.#client.callTool({ name: tool, arguments: args }, { timeout: CALL_TIMEOUT_MS });
+    const answer = await this.#client.callTool(
+      { name: tool, arguments: args },
+      { timeout: CALL_TIMEOUT_MS, ...(signal === undefined ? {} : { signal }) },
+    );
 
     if (answer.isError === true || typeof answer.structuredContent !== "object" || answer.structuredContent === null) {
       throw new Error(`${tool}: ${JSON.stringify(answer.content)}`);
