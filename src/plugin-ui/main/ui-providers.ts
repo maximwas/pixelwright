@@ -8,6 +8,7 @@ import { BUSY_STATE, BusyState } from "@/plugin-ui/view/busy-state.ts";
 import { PLUGIN_WINDOW, PluginWindow } from "@/plugin-ui/view/plugin-window.ts";
 import { RECENT_ACTIONS, RecentActions } from "@/plugin-ui/view/recent-actions.ts";
 import { STATUS_LINE, StatusLine } from "@/plugin-ui/view/status-line.ts";
+import { UPDATE_BANNER, UpdateBanner } from "@/plugin-ui/view/update-banner.ts";
 
 /**
  * The window's bindings (A§4b.3): main's channel, the view with its words, its activity and its busy state, the
@@ -21,6 +22,7 @@ export class UiProviders {
       .bind({ provide: RECENT_ACTIONS, useClass: RecentActions })
       .bind({ provide: BUSY_STATE, useClass: BusyState })
       .bind({ provide: PLUGIN_WINDOW, useClass: PluginWindow })
+      .bind({ provide: UPDATE_BANNER, useClass: UpdateBanner })
       .bind({ provide: SOCKET_OPENER, useClass: BrowserSockets })
       .bind({ provide: BACKOFF, useClass: Backoff })
       .bind({ provide: SOCKET_LINK, useClass: SocketLink })

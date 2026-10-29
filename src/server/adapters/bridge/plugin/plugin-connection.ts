@@ -93,7 +93,7 @@ export class PluginConnection {
 
     // A session's frames are RPC (A§5.4); the protocol never sends a binary frame.
     if (state.name === CONNECTION_STATE.session) {
-      if (text !== null) {
+      if (text !== null && !this.#services.sessions.dismissal(text)) {
         state.session.rpc.receive(text);
       }
 

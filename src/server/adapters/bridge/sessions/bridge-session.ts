@@ -3,6 +3,7 @@ import * as zod from "zod/mini";
 import type { ConnectedFile } from "@/core/ports/plugin-link.port.ts";
 import { PluginRpc } from "@/server/adapters/bridge/plugin/plugin-rpc.ts";
 import { type PluginInfo, PluginInfoUpdateSchema } from "@/shared/protocol/plugin-info.schema.ts";
+import { UPDATE_FRAME } from "@/shared/protocol/update.constants.ts";
 
 /**
  * One plugin window past the handshake, one open Figma file (S-011): a random session id, what the window said in its
@@ -34,6 +35,11 @@ export class BridgeSession {
 
   get info(): PluginInfo {
     return this.#info;
+  }
+
+  /** npm's newer version, for the window's banner (S-070): a frame of its own beside the RPC, never answered. */
+  announce(version: string): void {
+    this.#socket.send(JSON.stringify({ type: UPDATE_FRAME.update, version }));
   }
 
   /** Ends it from the server's side; the registry has let it go already. */

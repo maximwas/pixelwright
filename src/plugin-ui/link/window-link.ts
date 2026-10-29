@@ -4,6 +4,7 @@ import { MAIN_CHANNEL } from "@/plugin-ui/adapters/main-channel.ts";
 import { INSTANCE_ID_BYTES, WINDOW_LINK_ERROR } from "@/plugin-ui/link/link.constants.ts";
 import { type LinkObserver, type LinkState, SOCKET_LINK } from "@/plugin-ui/link/socket-link.ts";
 import { PLUGIN_WINDOW } from "@/plugin-ui/view/plugin-window.ts";
+import { UPDATE_BANNER } from "@/plugin-ui/view/update-banner.ts";
 import type { PluginKey } from "@/shared/protocol/handshake.schema.ts";
 import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 import { UI_CHANNEL_NAME, WINDOW_MESSAGE } from "@/shared/window/ui-message.constants.ts";
@@ -20,6 +21,7 @@ export class WindowLink implements LinkObserver {
   readonly #channel;
   readonly #link;
   readonly #view;
+  readonly #banner;
   #instanceId = "";
   #context: PluginContext | null = null;
 
@@ -27,10 +29,12 @@ export class WindowLink implements LinkObserver {
     channel = inject(MAIN_CHANNEL),
     link = inject(SOCKET_LINK),
     view = inject(PLUGIN_WINDOW),
+    banner = inject(UPDATE_BANNER),
   ) {
     this.#channel = channel;
     this.#link = link;
     this.#view = view;
+    this.#banner = banner;
   }
 
   start(): void {
@@ -69,6 +73,10 @@ export class WindowLink implements LinkObserver {
 
   frame(epoch: number, text: string): void {
     this.#channel.post({ ch: UI_CHANNEL_NAME.server, e: epoch, d: text });
+  }
+
+  update(version: string): void {
+    this.#banner.show(version, () => this.#link.dismissUpdate(version));
   }
 
   /** The switch: main keeps it per file, and the next hello carries it. */

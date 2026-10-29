@@ -69,6 +69,19 @@
         border-radius: 6px;
         background: var(--figma-color-bg-warning-tertiary, #fff1c2);
       }
+      .update {
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        background: var(--figma-color-bg-brand-tertiary, #e5f4ff);
+      }
+      .update button {
+        border: 0;
+        padding: 0;
+        background: none;
+        color: inherit;
+        cursor: pointer;
+      }
       .pairing {
         display: flex;
         gap: 8px;
@@ -217,6 +230,10 @@
       </form>
       <p id="pairing-note" class="note" hidden></p>
       <p id="hint" class="hint" role="alert" hidden></p>
+      <p id="update" class="hint update" role="status" hidden>
+        <span id="update-text"></span>
+        <button id="update-close" type="button" aria-label="Close">×</button>
+      </p>
       <section class="edits">
         <label class="toggle">Allow edits <input id="allow-edits" type="checkbox" /></label>
         <p id="edits-note" class="note"></p>
