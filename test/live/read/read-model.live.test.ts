@@ -15,6 +15,13 @@ const FIXTURES = [
   { name: "pricing", node: "54:227" },
 ] as const;
 
+/**
+ * What the file gained after the fixtures were taken (2026-10-14), each with its reason: the Callout instance went into
+ * Pricing – Desktop on 2026-10-15 for the components and slots demo (its inner layers with it), and the frame grew by
+ * its height.
+ */
+const ADDED_SINCE_FIXTURES = { layers: ["81:1522"], attributes: ["54:227 height"] } as const;
+
 /** Each element's attributes by its id, its tag as `<tag>`: one element per line. */
 function elements(xml: string): Map<string, Map<string, string>> {
   const found = new Map<string, Map<string, string>>();
@@ -59,10 +66,15 @@ describe("read/read-model", () => {
         ? [`${id}: not read live`]
         : [...expected]
           .filter(([attribute, value]) => actual.get(attribute) !== value)
+          .filter(([attribute]) => !ADDED_SINCE_FIXTURES.attributes.some((known) => known === `${id} ${attribute}`))
           .map(([attribute, value]) => `${id} ${attribute}: fixture ${value}, live ${actual.get(attribute) ?? "-"}`);
     });
 
     expect(drift).toEqual([]);
-    expect([...live.keys()].sort()).toEqual([...golden.keys()].sort());
+    expect(
+      [...live.keys()]
+        .filter((id) => !ADDED_SINCE_FIXTURES.layers.some((known) => id === known || id.startsWith(`I${known};`)))
+        .sort(),
+    ).toEqual([...golden.keys()].sort());
   });
 });
