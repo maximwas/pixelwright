@@ -47,7 +47,7 @@ export class DesignXml {
     const { root, repeats } = (options.repeats ?? false) ? this.#fold.fold(built) : { root: built, repeats: null };
     const { xml, lines, spans } = this.#writer.written(root);
 
-    return { read: { xml, truncated, ...(repeats === null ? {} : { repeats }) }, lines, spans };
+    return { read: { xml, truncated, ...(repeats === null ? {} : { repeats }) }, tree: built, lines, spans };
   }
 
   /** The layers shown cut, in document order: `$children` or `$truncated` on them, folded runs included. */

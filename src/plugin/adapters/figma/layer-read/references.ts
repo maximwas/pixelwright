@@ -70,7 +70,12 @@ export class References {
     consumer: string,
     found: Found,
   ): void {
-    if (!key.endsWith(REFERENCE_FIELD.styleIdSuffix)) {
+    if (key === REFERENCE_FIELD.inferred) {
+      // Figma's own matches (C-153) name variables by id: they join the read's variables like aliases.
+      for (const id of Object.values(value ?? {})) {
+        found.variables.set(String(id), found.variables.get(String(id)) ?? consumer);
+      }
+    } else if (!key.endsWith(REFERENCE_FIELD.styleIdSuffix)) {
       if (!REFERENCE_FIELD.plainFields.includes(key)) {
         this.#value(value, consumer, found);
       }

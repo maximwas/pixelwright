@@ -66,7 +66,16 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     `$override`, the CSS words of what an instance changed, C-133; the `$prop` / `$visibleProp` / `$swapProp` bindings;
     variable modes as `data-<collection>="<mode>"`, C-135), which `DesignBuilder` calls in C-1.3 order.
     `interactions/` holds `InteractionAttributes` (prototype interactions as `$on-*` sentences, one per trigger, C-154),
-    which `LayerTree` adds last, before `$children`.
+    which `LayerTree` adds last, before `$children`. `ReadJson` (beside `DesignReader`) builds the JSON block:
+    `ReadCatalogue`, the measurements (`core/inspect`) and `hints/`: `DesignHints` over the shown layers (visible, no
+    asset) gives `TokenHints` (raw colours equal to a token, read only from CSS attributes, never a text's characters,
+    C-152; numbered and valueless styles), `LayerHints` (one per kind with a count and three examples, C-151; a frame
+    placed by hand with Figma's guess from `LayoutGuess`) and `InferredHints` (Figma's own variable matches, C-153), the
+    words frozen by `every-hint.hints.json`. `css/fonts/AutoLineHeights` turns a read model's Auto line heights into
+    the px a hugging text shows (`autoLineHeight: "px"`, T-060), before the read is written.
+  - `inspect/`: `NearbyNotes` (the notes within a distance of a screen, nearest first, the side each is on, 20 plus
+    `more`, T-058; the plugin's nearby op calls it) and `Measurements` (Dev Mode measurements with the px between
+    their sides, the JSON's `measurements`, T-061).
   - `css/`: the Figma-to-CSS mapping table, on the server (the plugin never imports `core/css`; it sends raw fields).
     `CssReader` is the facade: a layer, its parent and the read give its declarations in `CSS_ORDER` and its `$css`
     notes. `registry/` holds `GroupRegistry` (the `PROPERTY_GROUPS` in order, each owning its CSS attribute names and
@@ -138,7 +147,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file
   id).
 - `plugin/operations/`: one folder per op, one `Operation` subclass each; `read/` also holds `ReadRun`, the
-  breadth-first read under the JSON budget with its cuts; `execute/` also holds `CodeRuns` (the code's run past its answer) and `CodeScope` (pw, kept
+  breadth-first read under the JSON budget with its cuts; `nearby/` also holds `NoteCandidates` (what around a screen
+  is a note: a text, a small holder of texts and plain shapes, a layer named like a note); `execute/` also holds `CodeRuns` (the code's run past its answer) and `CodeScope` (pw, kept
   while the window is open) and the code's console, value printer and error text.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
@@ -221,7 +231,7 @@ tokens of config values and multi-provider lists that belong to no class in a to
 the read op. In the plugin, `ReadOperation` looks each id up once (one Figma cannot give is missing), and `ReadRun`
 reads the layers breadth first under `LIMITS.readJsonChars` through `LayerReader`, a hidden layer as a stub, with a cut
 wherever children were not all read. Back on the server a hidden root is refused and the read model goes to
-`DesignReader`, which fits it to `maxChars` (`DesignFit`) and has `DesignXml` write it: `LayerTree` walks it, `DesignBuilder` gives each layer its tag and attributes, `XmlWriter` writes the
+`DesignReader` (after `AutoLineHeights` with `autoLineHeight: "px"`), which fits it to `maxChars` (`DesignFit`), has `DesignXml` write it and `ReadJson` add the JSON block with its measurements and hints; with `nearby` the tool also runs the nearby op: `LayerTree` walks it, `DesignBuilder` gives each layer its tag and attributes, `XmlWriter` writes the
 tree. The answer is two text blocks, the XML and the JSON, with no structuredContent. `pnpm dev:read <fixture>` does
 the server's half offline for an Orbit fixture in `test/golden/fixtures/`.
 

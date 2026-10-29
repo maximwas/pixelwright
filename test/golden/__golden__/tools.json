@@ -1332,7 +1332,7 @@
   {
     "name": "design_read",
     "title": "Read a design",
-    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, ids to read or change a layer later; a hidden layer is a stub with display=\"none\". The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets and truncated (ids of layers the read cut: $children=\"N\" where not all children were read, $truncated=\"true\" where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat=\"N\", and JSON repeats holds each one's own values as rows. For a big frame, find its sections with outline first.",
+    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, ids to read or change a layer later; a hidden layer is a stub with display=\"none\". The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets, measurements (the designer's Dev Mode measurements, when there are any), hints (what the code should know or fix, one per kind with a count and examples) and truncated (ids of layers the read cut: $children=\"N\" where not all children were read, $truncated=\"true\" where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat=\"N\", and JSON repeats holds each one's own values as rows; with nearby, JSON nearby lists the designer's notes around the screen. For a big frame, find its sections with outline first.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1359,6 +1359,21 @@
           "default": false,
           "description": "Read each run of three or more alike neighbours as its first, with $repeat and JSON rows. Default: false.",
           "type": "boolean"
+        },
+        "autoLineHeight": {
+          "default": "normal",
+          "description": "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere. A px read sent back to design_apply fixes those line heights at that px.",
+          "type": "string",
+          "enum": [
+            "normal",
+            "px"
+          ]
+        },
+        "nearby": {
+          "description": "Also list the designer's notes on the canvas within this many px of the screen holding the layer (texts, stickies, small frames of text beside it or over it), e.g. 400: the JSON's nearby.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
         },
         "file": {
           "type": "string",

@@ -15,6 +15,8 @@ export const PRECISION = {
   textSpacing: 2,
   /** Opacity, percents, em: 0.07em is 7.000000000000001% before rounding (C-011). */
   decimal: 2,
+  /** Distances between boxes: a nearby note's gap, a Dev Mode measurement (K-062, 0.7.0's two decimals). */
+  distance: 2,
   /** rgba alpha: Figma's opacity field takes whole percents, which two decimals hold (C-1.7). */
   alpha: 2,
   /** display-p3 channels: CSS shows a P3 file's channels to 4 decimals (C-1.7). */

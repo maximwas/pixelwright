@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
 import { CSS_READER, CssReader } from "@/core/css/css-reader.ts";
+import { AUTO_LINE_HEIGHTS, AutoLineHeights } from "@/core/css/fonts/auto-line-heights.ts";
 import { FONT_SHORTHAND, FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GRADIENT_CSS, GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GRADIENT_GEOMETRY, GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
@@ -32,12 +33,19 @@ import { COMPONENT_ATTRIBUTES, ComponentAttributes } from "@/core/design/compone
 import { DESIGN_READER, DesignReader } from "@/core/design/design-reader.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
 import { DESIGN_FIT, DesignFit } from "@/core/design/fit/design-fit.ts";
+import { DESIGN_HINTS, DesignHints } from "@/core/design/hints/design-hints.ts";
+import { INFERRED_HINTS, InferredHints } from "@/core/design/hints/inferred-hints.ts";
+import { LAYER_HINTS, LayerHints } from "@/core/design/hints/layer-hints.ts";
+import { LAYOUT_GUESS, LayoutGuess } from "@/core/design/hints/layout-guess.ts";
+import { TOKEN_HINTS, TokenHints } from "@/core/design/hints/token-hints.ts";
 import { INTERACTION_ATTRIBUTES, InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
+import { READ_JSON, ReadJson } from "@/core/design/read-json.ts";
 import { REPEAT_FOLD, RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { READ_TOKENS, ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TEXT_CONTENT_READER, TextContent } from "@/core/design/text/text-content.ts";
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { MEASUREMENTS, Measurements } from "@/core/inspect/measurements.ts";
 import { EASING_CSS, EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { SLUG, Slug } from "@/core/kernel/names/slug.ts";
@@ -146,6 +154,7 @@ export class ServerMain {
 
     this.#bindInfra(container, config);
     this.#bindDomain(container);
+    this.#bindReadNotes(container);
     new BridgeProviders().register(container, config);
     this.#bindServices(container);
 
@@ -165,6 +174,19 @@ export class ServerMain {
       .bind({ provide: CLIENT_ROOTS, useExisting: MCP_ROOTS })
       .bind({ provide: PROJECT_FALLBACK, useValue: projectDir })
       .bind({ provide: PROJECT_FOLDER, useClass: ProjectFolder });
+  }
+
+  /** What design_read adds beside its XML: the hints, the measurements, Auto line heights in px (T-060, T-061). */
+  #bindReadNotes(container: Container): void {
+    container
+      .bind({ provide: LAYOUT_GUESS, useClass: LayoutGuess })
+      .bind({ provide: LAYER_HINTS, useClass: LayerHints })
+      .bind({ provide: TOKEN_HINTS, useClass: TokenHints })
+      .bind({ provide: INFERRED_HINTS, useClass: InferredHints })
+      .bind({ provide: DESIGN_HINTS, useClass: DesignHints })
+      .bind({ provide: MEASUREMENTS, useClass: Measurements })
+      .bind({ provide: READ_JSON, useClass: ReadJson })
+      .bind({ provide: AUTO_LINE_HEIGHTS, useClass: AutoLineHeights });
   }
 
   /** The core domain's classes the tools read and write with: the D-15 numbers, the CSS mapping, the XML writers. */

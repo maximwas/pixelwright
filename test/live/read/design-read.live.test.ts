@@ -9,6 +9,10 @@ const NAME = {
   hidden: "live:design-read:hidden",
   other: "live:design-read:other",
   gradient: "live:design-read:gradient",
+  nearbyScreen: "live:design-read:nearby-screen",
+  nearbyClose: "live:design-read:nearby-close",
+  nearbyFar: "live:design-read:nearby-far",
+  autoLine: "live:design-read:auto-line",
 } as const;
 
 /** Figma's transform for CSS 30deg on a 200 x 100 box: getCSSAsync reads it as 49deg (FX-020). */
@@ -220,6 +224,72 @@ return box.id;`,
       scale: 2,
     });
     expect(assets.map(({ node }) => node)).toContain("54:452");
+  });
+
+  it("lists a note 100 px from the screen and not one 6000 px away with nearby (T-058)", async () => {
+    const { result } = await client.call("execute", {
+      file,
+      code: `const section = await pw.node(${JSON.stringify(scratch)});
+await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+const screen = figma.createFrame();
+screen.name = ${JSON.stringify(NAME.nearbyScreen)};
+section.appendChild(screen);
+screen.resize(400, 300);
+const note = (name, dx, words) => {
+  const text = figma.createText();
+  text.name = name;
+  section.appendChild(text);
+  text.characters = words;
+  text.x = screen.x + screen.width + dx;
+  text.y = screen.y;
+  return text.id;
+};
+return { screen: screen.id, close: note(${JSON.stringify(NAME.nearbyClose)}, 100, "Cards lift on hover."), far: note(${JSON.stringify(NAME.nearbyFar)}, 6000, "Try a carousel?") };`,
+    });
+    const ids = result as { screen: string; close: string; far: string };
+
+    try {
+      const [, json] = await client.texts("design_read", { file, node: ids.screen, nearby: 300 });
+      const { nearby } = JSON.parse(json ?? "{}") as {
+        nearby: { screen: { id: string }; notes: { id: string; side: string; distance: number }[] };
+      };
+
+      expect(nearby.screen.id).toBe(ids.screen);
+      expect(nearby.notes).toContainEqual(expect.objectContaining({ id: ids.close, side: "right", distance: 100 }));
+      expect(nearby.notes.map(({ id }) => id)).not.toContain(ids.far);
+    } finally {
+      await client.call("execute", {
+        file,
+        code: `for (const id of ${JSON.stringify(Object.values(ids))}) (await pw.node(id)).remove();`,
+      });
+    }
+  });
+
+  it('reads a hugging Inter 16 text at 19px with autoLineHeight "px", normal without (T-060, FX-042)', async () => {
+    const { result } = await client.call("execute", {
+      file,
+      code: `const section = await pw.node(${JSON.stringify(scratch)});
+await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+const text = figma.createText();
+text.name = ${JSON.stringify(NAME.autoLine)};
+section.appendChild(text);
+text.fontName = { family: "Inter", style: "Regular" };
+text.fontSize = 16;
+text.characters = "Sign in";
+return text.id;`,
+    });
+    const id = String(result);
+
+    try {
+      const [px] = await client.texts("design_read", { file, node: id, autoLineHeight: "px" });
+      const [normal, json] = await client.texts("design_read", { file, node: id });
+
+      expect(px).toContain("400 16px/19px 'Inter'");
+      expect(normal).toContain("400 16px/normal 'Inter'");
+      expect(json).toContain('autoLineHeight: \\"px\\"');
+    } finally {
+      await client.call("execute", { file, code: `(await pw.node(${JSON.stringify(id)})).remove();` });
+    }
   });
 
   it("refuses two selected layers with NODE_NOT_FOUND and the advice to select one or pass node (T-051, D-64)", async () => {
