@@ -2,6 +2,8 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_READER } from "@/core/css/css-reader.ts";
 import { TEXT_PATH_DATA } from "@/core/css/groups/text/text-path-data.ts";
 import type { CssDeclaration } from "@/core/css/registry/css-declarations.ts";
+import type { AssetPlan } from "@/core/design/assets/asset-plan.ts";
+import { ASSET_TAG } from "@/core/design/assets/assets.constants.ts";
 import { BUILDER_VALUE, CSS_NOTES, DEV_STATUS_WORDS, NOTE } from "@/core/design/builder/builder.constants.ts";
 import { PROPERTY_FIELD } from "@/core/design/component/component.constants.ts";
 import { COMPONENT_ATTRIBUTES } from "@/core/design/component/component-attributes.ts";
@@ -19,7 +21,8 @@ type LayerElement = Pick<XmlElement, "id" | "tag" | "attributes">;
  * A layer's element as design_read writes it: Figma's type as its tag and its attributes in C-1.3 order, what the layer
  * is (id, name, component, notes, overrides, status, link, modes, mask; ComponentAttributes gives the component's
  * part), its CSS in CSS_ORDER, then the read-only `$` attributes (the
- * component properties it is bound to, the CSS it cannot write back as `$css`, its grid style).
+ * component properties it is bound to, the CSS it cannot write back as `$css`, its grid style). An asset is an `Icon` or
+ * `Image` with its planned `src` and only the CSS its element keeps (C-142, C-143).
  */
 @injectable()
 export class DesignBuilder {
@@ -45,18 +48,22 @@ export class DesignBuilder {
     layer: ReadLayer,
     model: ReadModel,
     parent: ReadLayer | null,
+    assets: AssetPlan,
   ): LayerElement {
     const css = this.#css.read(layer, parent, model);
+    const file = assets.file(layer.id);
 
     return {
       id: layer.id,
-      tag: this.#tags.of(layer.type),
+      tag: file === undefined ? this.#tags.of(layer.type) : ASSET_TAG[file.kind],
       attributes: this.#present([
         ...this.#metadata(layer, model),
         [DESIGN_ATTRIBUTE.textStyle, css.textStyle],
+        [DESIGN_ATTRIBUTE.src, file?.src],
         ...this.#path(layer),
-        ...css.properties,
-        ...this.#readOnly(layer, model, css.notes),
+        ...assets.css(layer, parent, css),
+        // An asset's notes are about CSS its file now holds.
+        ...this.#readOnly(layer, model, file === undefined ? css.notes : []),
       ]),
     };
   }

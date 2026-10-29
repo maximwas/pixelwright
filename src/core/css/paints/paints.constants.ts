@@ -30,7 +30,7 @@ export const PAINTS_TEXT = {
   ) =>
     `color-mix(in ${space}, var(${name}) ${percent}%, transparent)`,
   flat: (color: string) => `linear-gradient(${color}, ${color})`,
-  /** shortcut: the image's file by its hash until the asset item plans image files and their names. */
+  /** The image's file by its hash; design_read's AssetPlan puts the planned `<layer>-background.png` in its place. */
   asset: (hash: string) => `assets/${hash}.png`,
   image: (url: string, scale: string) => `${url} ${scale}`,
 } as const;

@@ -23,6 +23,9 @@ import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { AssetClassifier } from "@/core/design/assets/asset-classifier.ts";
+import { AssetCss } from "@/core/design/assets/asset-css.ts";
+import { AssetPlanner } from "@/core/design/assets/asset-planner.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
@@ -33,6 +36,7 @@ import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
@@ -114,35 +118,17 @@ const OWNED = [
   "$prop",
   "$visibleProp",
   "$swapProp",
+  // Item 22: assets (C-142..C-144): each element's tag and file; the element set is compared too.
+  "<tag>",
+  "src",
 ];
 
 /** The attributes named per layer rather than once: variable modes and interactions. */
 const OWNED_PATTERN = /^(data-|\$on-|\$after-)/;
 
 /** Deliberate or not-yet differences from 0.7.0, each with the decision or item that settles it; never a silent skip. */
-const KNOWN: readonly { fixture: string; id: string; attribute: string; why: string }[] = [
-  // The mirrored Arrow is an Icon in 0.7.0: an icon is exported turned, placed by its render bounds without a
-  // transform (m:1116170e). Assets are not told apart yet; the asset item settles these rows.
-  ...["pricing", "customers"].flatMap((fixture) =>
-    ["left", "top", "width", "height", "transform"].map((attribute) => ({
-      fixture,
-      id: "54:452",
-      attribute,
-      why: "asset placement by render bounds, no transform (m:1116170e; the asset item)",
-    })),
-  ),
-  // A leaf with an image fill is an Image asset in 0.7.0 (src, no background; m:1116170e): the asset item settles it.
-  ...[
-    ["pricing", "54:317"],
-    ["pricing", "54:454"],
-    ["customers", "54:454"],
-  ].map(([fixture = "", id = ""]) => ({
-    fixture,
-    id,
-    attribute: "background",
-    why: "image leaf is an Image asset with src (m:1116170e; the asset item)",
-  })),
-];
+// Item 22 settled the Arrow 54:452 rows (an Icon placed by its render bounds) and the image leaves' backgrounds.
+const KNOWN: readonly { fixture: string; id: string; attribute: string; why: string }[] = [];
 
 const FIXTURES = ["desktop-top", "pricing", "plans", "customers"] as const;
 
@@ -159,6 +145,7 @@ const paints = new PaintList(
 const fonts = new FontShorthand(format);
 const tokens = new ReadTokens(paints, lengths, new EffectsGroup(solid, lengths, format, names), names);
 const runs = new TextRun(fonts, paints, format, names);
+const planner = new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(lengths, new CssSplit()));
 const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
@@ -179,6 +166,7 @@ const design = new DesignXml(
     ),
     new TextContent(runs),
     new InteractionAttributes(new EasingCss(format)),
+    planner,
   ),
   new XmlWriter(new XmlEscape()),
 );
@@ -187,7 +175,7 @@ function read(path: string): string {
   return readFileSync(new URL(path, import.meta.url), "utf8");
 }
 
-/** Each element's attributes by its id: one element per line, as both writers put them. */
+/** Each element's attributes by its id, its tag as `<tag>`: one element per line, as both writers put them. */
 function elements(xml: string): Map<string, Map<string, string>> {
   const found = new Map<string, Map<string, string>>();
 
@@ -198,7 +186,7 @@ function elements(xml: string): Map<string, Map<string, string>> {
     const id = attributes.get("id");
 
     if (id !== undefined) {
-      found.set(id, attributes);
+      found.set(id, attributes.set("<tag>", /<(\w+)/.exec(line)?.[1] ?? ""));
     }
   }
 
@@ -240,7 +228,12 @@ describe("design XML attributes against the 0.7.0 goldens", () => {
     }
 
     expect(differences).toEqual([]);
-    expect(ours.size).toBeGreaterThan(0);
+
+    // An asset's children are in its file: both reads list the same elements, but for the hidden layers' stubs
+    // (D-18: 0.7.0 left hidden layers out).
+    const listed = [...ours].filter(([id, attributes]) => golden.has(id) || attributes.get("display") !== "none");
+
+    expect(listed.map(([id]) => id).sort()).toEqual([...golden.keys()].sort());
   });
 
   // C-1.1, C-120: a Text with its Spans is one line; compared whole, the content and every attribute on it.
@@ -260,7 +253,10 @@ describe("design XML attributes against the 0.7.0 goldens", () => {
   it("lists the tokens, text styles and fonts of the Plans row as 0.7.0 did", () => {
     const model = zod.parse(ReadModelSchema, JSON.parse(read("./fixtures/orbit-plans.json")));
 
-    expect(new ReadCatalogue(fonts, names, tokens).read(model)).toEqual({
+    const { assets, ...catalogue } = new ReadCatalogue(fonts, names, tokens, planner).read(model);
+
+    expect(assets).toHaveLength(9);
+    expect(catalogue).toEqual({
       tokens: {
         "--Shadow-Card": "0 12px 32px -8px rgba(20, 22, 31, 0.12)",
         "--color-accent": "#FF6B3D",
@@ -289,6 +285,20 @@ describe("design XML attributes against the 0.7.0 goldens", () => {
       },
       fonts: { "Space Grotesk": ["500", "700"], Inter: ["400", "600"] },
     });
+  });
+
+  // C-144: the Customers frame's files, named from the layers and their variants, a clash suffixed.
+  it("lists the assets of the Customers frame as 0.7.0 did", () => {
+    const model = zod.parse(ReadModelSchema, JSON.parse(read("./fixtures/orbit-customers.json")));
+
+    expect(new ReadCatalogue(fonts, names, tokens, planner).read(model).assets).toEqual([
+      { node: "54:437", kind: "icon", format: "SVG", src: "assets/logo-nova.svg" },
+      { node: "54:441", kind: "icon", format: "SVG", src: "assets/logo-lumen.svg" },
+      { node: "54:445", kind: "icon", format: "SVG", src: "assets/logo-nova-2.svg" },
+      { node: "54:452", kind: "icon", format: "SVG", src: "assets/arrow.svg" },
+      { node: "54:454", kind: "image", format: "PNG", src: "assets/product-shot.png", scale: 2 },
+      { node: "54:456", kind: "image", format: "PNG", src: "assets/avatar.png" },
+    ]);
   });
 
   // C-1.7, B-058: a Display P3 file's colours are P3 values: its read holds no sRGB hex; an sRGB file reads as before.

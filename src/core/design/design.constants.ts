@@ -22,6 +22,8 @@ export const DESIGN_ATTRIBUTE = {
   dev: "$dev",
   href: "href",
   textStyle: "textStyle",
+  /** An asset's planned file (C-144). */
+  src: "src",
   mask: "mask",
   /** A text on a path's path, and where on it its text starts (T-140). */
   d: "d",

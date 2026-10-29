@@ -25,6 +25,9 @@ import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { AssetClassifier } from "@/core/design/assets/asset-classifier.ts";
+import { AssetCss } from "@/core/design/assets/asset-css.ts";
+import { AssetPlanner } from "@/core/design/assets/asset-planner.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
@@ -33,6 +36,7 @@ import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
@@ -71,6 +75,7 @@ class DevRead {
       ),
       new TextContent(this.#runs),
       new InteractionAttributes(new EasingCss(this.#format)),
+      new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(this.#lengths, new CssSplit())),
     ),
     new XmlWriter(new XmlEscape()),
   );
