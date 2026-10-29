@@ -1,12 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { CssReader } from "@/core/css/css-reader.ts";
+import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
+import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
+import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
+import { TextPathData } from "@/core/css/groups/text/text-path-data.ts";
+import { TextRun } from "@/core/css/groups/text/text-run.ts";
+import { ImagePaint } from "@/core/css/paints/image-paint.ts";
+import { PaintList } from "@/core/css/paints/paint-list.ts";
+import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
+import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
+import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -17,13 +27,22 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 const format = new NumberFormat();
+const lengths = new CssLength(new CssVar(new CssSplit()), format);
+const solid = new SolidPaint();
+const paints = new PaintList(
+  solid,
+  new GradientCss(new GradientGeometry(), solid, lengths, format),
+  new ImagePaint(new CssUrl(new CssSplit())),
+);
 const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
       new NodeTag(),
       new NameValueList(),
-      new CssReader(new GroupRegistry([new LayoutGroup(new CssLength(new CssVar(new CssSplit()), format), format)])),
+      new CssReader(new GroupRegistry([new LayoutGroup(lengths, format)])),
+      new TextPathData(),
     ),
+    new TextContent(new TextRun(new FontShorthand(format), paints, format)),
   ),
   new XmlWriter(new XmlEscape()),
 );
@@ -158,6 +177,27 @@ describe("DesignXml", () => {
         '  <Instance id="3:2" name="Badge" display="none" $visibleProp="Badge"/>',
         "</Frame>",
       ].join("\n"),
+    );
+  });
+
+  // T-140 (read): a text on a path says the path it runs along, to two decimals, and where its text starts.
+  it("writes a TextPath's path as d and its start after its name", () => {
+    const xml = design.xml(
+      model({
+        ...text("1:2", "Label on arc", ""),
+        type: "TEXT_PATH",
+        textPath: {
+          vectorPaths: [
+            { windingRule: "NONE", data: "M 0 50 C 55.228 -16.667 144.772 -16.667 200.0004 50" },
+            { windingRule: "NONE", data: "M 0 60 L 200 60 Z" },
+          ],
+          textPathStartData: { segment: 0, position: 0.25 },
+        },
+      }),
+    );
+
+    expect(xml).toBe(
+      '<TextPath id="1:2" name="Label on arc" d="M 0 50 C 55.23 -16.67 144.77 -16.67 200 50 M 0 60 L 200 60 Z" start="0 0.25"></TextPath>',
     );
   });
 });

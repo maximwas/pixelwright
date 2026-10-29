@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
 import { CSS_READER, CssReader } from "@/core/css/css-reader.ts";
+import { FONT_SHORTHAND, FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GRADIENT_CSS, GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GRADIENT_GEOMETRY, GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
@@ -12,6 +13,9 @@ import { PLACEMENT, Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
 import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { TextGroup } from "@/core/css/groups/text/text-group.ts";
+import { TEXT_PATH_DATA, TextPathData } from "@/core/css/groups/text/text-path-data.ts";
+import { TEXT_RUN, TextRun } from "@/core/css/groups/text/text-run.ts";
 import { IMAGE_PAINT, ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PAINT_LIST, PaintList } from "@/core/css/paints/paint-list.ts";
 import { SOLID_PAINT, SolidPaint } from "@/core/css/paints/solid-paint.ts";
@@ -22,6 +26,8 @@ import { CSS_URL, CssUrl } from "@/core/css/values/css-url.ts";
 import { CSS_VAR, CssVar } from "@/core/css/values/css-var.ts";
 import { DESIGN_BUILDER, DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
+import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
+import { TEXT_CONTENT_READER, TextContent } from "@/core/design/text/text-content.ts";
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { NUMBER_FORMAT, NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -168,15 +174,21 @@ export class ServerMain {
       .bind({ provide: GRADIENT_CSS, useClass: GradientCss })
       .bind({ provide: IMAGE_PAINT, useClass: ImagePaint })
       .bind({ provide: PAINT_LIST, useClass: PaintList })
+      .bind({ provide: FONT_SHORTHAND, useClass: FontShorthand })
+      .bind({ provide: TEXT_RUN, useClass: TextRun })
+      .bind({ provide: TEXT_PATH_DATA, useClass: TextPathData })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: LayoutGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: GeometryGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: AppearanceGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: FillsGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: StrokesGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: EffectsGroup })
+      .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: TextGroup })
       .bind({ provide: GROUP_REGISTRY, useClass: GroupRegistry })
       .bind({ provide: CSS_READER, useClass: CssReader })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
+      .bind({ provide: TEXT_CONTENT_READER, useClass: TextContent })
+      .bind({ provide: READ_CATALOGUE, useClass: ReadCatalogue })
       .bind({ provide: LAYER_TREE, useClass: LayerTree })
       .bind({ provide: DESIGN_XML, useClass: DesignXml });
   }

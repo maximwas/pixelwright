@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
 import { CssReader } from "@/core/css/css-reader.ts";
+import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
@@ -11,6 +12,9 @@ import { Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
 import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { TextGroup } from "@/core/css/groups/text/text-group.ts";
+import { TextPathData } from "@/core/css/groups/text/text-path-data.ts";
+import { TextRun } from "@/core/css/groups/text/text-run.ts";
 import { ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PaintList } from "@/core/css/paints/paint-list.ts";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
@@ -21,6 +25,8 @@ import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
+import { ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
+import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -82,6 +88,14 @@ const OWNED = [
   "text-shadow",
   "filter",
   "backdrop-filter",
+  // Item 19: text; the Text lines are also compared whole, Spans and content included.
+  "textStyle",
+  "font",
+  "letter-spacing",
+  "text-transform",
+  "text-decoration",
+  "text-align",
+  "text-wrap",
 ];
 
 /** Deliberate or not-yet differences from 0.7.0, each with the decision or item that settles it; never a silent skip. */
@@ -96,9 +110,6 @@ const KNOWN: readonly { fixture: string; id: string; attribute: string; why: str
       why: "asset placement by render bounds, no transform (m:1116170e; the asset item)",
     })),
   ),
-  // A text whose runs differ in colour has mixed fills: its colour comes per run with the text item (19); the line
-  // parser here reads the last color on the line, the link Span's.
-  { fixture: "pricing", id: "54:242", attribute: "color", why: "mixed text runs (text item 19)" },
   // A leaf with an image fill is an Image asset in 0.7.0 (src, no background; m:1116170e): the asset item settles it.
   ...[
     ["pricing", "54:317"],
@@ -122,6 +133,8 @@ const paints = new PaintList(
   new GradientCss(new GradientGeometry(), solid, lengths, format),
   new ImagePaint(new CssUrl(new CssSplit())),
 );
+const fonts = new FontShorthand(format);
+const runs = new TextRun(fonts, paints, format);
 const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
@@ -135,9 +148,12 @@ const design = new DesignXml(
           new FillsGroup(paints),
           new StrokesGroup(paints, format),
           new EffectsGroup(solid, lengths, format),
+          new TextGroup(runs, lengths),
         ]),
       ),
+      new TextPathData(),
     ),
+    new TextContent(runs),
   ),
   new XmlWriter(new XmlEscape()),
 );
@@ -162,6 +178,17 @@ function elements(xml: string): Map<string, Map<string, string>> {
   }
 
   return found;
+}
+
+/** Each Text's (and TextPath's) whole line by its id, trimmed of its indent. */
+function textLines(xml: string): Map<string, string> {
+  return new Map(
+    xml
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => /^<Text(Path)? /.test(line))
+      .map((line) => [/ id="([^"]*)"/.exec(line)?.[1] ?? "", line]),
+  );
 }
 
 /**
@@ -205,6 +232,36 @@ describe("design XML attributes against the 0.7.0 goldens", () => {
 
     expect(differences).toEqual([]);
     expect(ours.size).toBeGreaterThan(0);
+  });
+
+  // C-1.1, C-120: a Text with its Spans is one line; compared whole, the content and every attribute on it.
+  it.each(FIXTURES)("writes orbit-%s's Text lines as 0.7.0 did", (fixture) => {
+    const model = zod.parse(ReadModelSchema, JSON.parse(read(`./fixtures/orbit-${fixture}.json`)));
+    const golden = textLines(read(`./__golden__/orbit-${fixture}.xml`));
+    const ours = textLines(design.xml(model));
+    const differences = [...golden]
+      .filter(([id, line]) => ours.has(id) && withoutTokens(line, model) !== ours.get(id))
+      .map(([id, line]) => `0.7.0 ${line}\n  now ${ours.get(id) ?? "-"}`);
+
+    expect(differences).toEqual([]);
+    expect(golden.size).toBeGreaterThan(0);
+  });
+
+  // C-123: the JSON block's text styles (font shorthand, spacing, case) and each family's weights in order.
+  it("lists the text styles and fonts of the Plans row as 0.7.0 did", () => {
+    const model = zod.parse(ReadModelSchema, JSON.parse(read("./fixtures/orbit-plans.json")));
+
+    expect(new ReadCatalogue(fonts).read(model)).toEqual({
+      textStyles: {
+        Body: "400 16px/24px 'Inter'",
+        "Body Small": "400 14px/20px 'Inter'",
+        Button: "600 15px/20px 'Inter'",
+        "Heading/H3": "500 24px/30px 'Space Grotesk'; letter-spacing: -0.01em",
+        Label: "600 12px/16px 'Inter'; letter-spacing: 0.06em; text-transform: uppercase",
+        Price: "700 48px/52px 'Space Grotesk'; letter-spacing: -0.02em",
+      },
+      fonts: { "Space Grotesk": ["500", "700"], Inter: ["400", "600"] },
+    });
   });
 
   // C-1.7, B-058: a Display P3 file's colours are P3 values: its read holds no sRGB hex; an sRGB file reads as before.
