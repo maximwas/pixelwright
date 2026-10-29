@@ -6,6 +6,7 @@ import { LAYER_HINTS } from "@/core/design/hints/layer-hints.ts";
 import { TOKEN_HINTS } from "@/core/design/hints/token-hints.ts";
 import type { XmlElement } from "@/core/xml/xml.types.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /**
@@ -14,6 +15,7 @@ import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
  */
 @injectable()
 export class DesignHints {
+  readonly #readLayers = new ReadLayers();
   readonly #layers;
   readonly #tokens;
   readonly #inferred;
@@ -37,9 +39,14 @@ export class DesignHints {
     tree: XmlElement | null,
     tokens: Readonly<Record<string, string>>,
   ): string[] {
-    const shown: ShownLayer[] = [];
-
-    this.#shown(model.root, null, model.root, shown);
+    // Every visible layer that is no asset, in document order: hints speak of the design, branches the read cut to fit
+    // included; an asset is one file, and how it is built never reaches the code.
+    const shown: ShownLayer[] = [
+      ...this.#readLayers.walk(
+        model.root,
+        (layer) => layer.visible && this.#classifier.classify(layer, model.root) === null,
+      ),
+    ];
 
     return [
       ...this.#tokens.read(model, tree, tokens),
@@ -49,27 +56,6 @@ export class DesignHints {
         shown.map(({ layer }) => layer),
       ),
     ];
-  }
-
-  /**
-   * Every visible layer that is no asset, in document order: hints speak of the design, branches the read cut to fit
-   * included; an asset is one file, and how it is built never reaches the code.
-   */
-  #shown(
-    layer: ReadLayer,
-    parent: ReadLayer | null,
-    root: ReadLayer,
-    shown: ShownLayer[],
-  ): void {
-    if (!layer.visible || this.#classifier.classify(layer, root) !== null) {
-      return;
-    }
-
-    shown.push({ layer, parent });
-
-    for (const child of layer.children ?? []) {
-      this.#shown(child, layer, root, shown);
-    }
   }
 }
 

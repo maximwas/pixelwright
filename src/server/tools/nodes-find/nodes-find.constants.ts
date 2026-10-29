@@ -12,4 +12,12 @@ export const NODES_FIND_FIELD = {
   counts:
     "Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.",
   within: 'Where to search: a layer or page id, or "file" for every page. Default: the current page.',
+  page: "Without within: the name of the current page, the one searched.",
+  hint: "When nothing was found on the current page: how to search elsewhere.",
+} as const;
+
+/** What nodes_find says of the current page it searched without within (T-040). */
+export const NODES_FIND_TEXT = {
+  nothing: (page: string) =>
+    `Nothing found on the current page, "${page}": pass within (a page id, or "file" for every page) to search elsewhere.`,
 } as const;

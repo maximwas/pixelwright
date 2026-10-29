@@ -122,4 +122,11 @@ describe("FillsGroup", () => {
     expect(read.properties).toEqual([]);
     expect(read.notes).toEqual([["background", "a gradient or other fill the table cannot write yet"]]);
   });
+
+  // B-001, D-23: a video fill is marked on the layer as a video: no file holds it, so a build cannot take it from assets.
+  it("notes a video fill as a video, not as a fill the table cannot write", () => {
+    expect(cssOf({ fills: [{ type: "VIDEO" }] }).notes).toEqual([
+      ["background", "a video fill (the Plugin API exports no file of it)"],
+    ]);
+  });
 });

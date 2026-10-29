@@ -6,10 +6,11 @@ import type { TextSegment } from "@/core/css/groups/text/text-run.ts";
 import type { AssetPlan } from "@/core/design/assets/asset-plan.ts";
 import { ASSET_PLANNER } from "@/core/design/assets/asset-planner.ts";
 import type { PlannedAsset } from "@/core/design/assets/assets.types.ts";
-import { READ_TOKENS } from "@/core/design/text/read-tokens.ts";
-import { CATALOGUE_TEXT, TEXT_CONTENT, TOKEN_USE } from "@/core/design/text/text.constants.ts";
+import { READ_TOKENS } from "@/core/design/read-tokens.ts";
+import { CATALOGUE_TEXT, TEXT_PARTS, TOKEN_USE } from "@/core/design/text/text.constants.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /** design_read's JSON beside the XML: its tokens, the text styles its texts name, the fonts they use, its assets. */
@@ -28,6 +29,7 @@ type Style = ReadModel["styles"][string];
  */
 @injectable()
 export class ReadCatalogue {
+  readonly #readLayers = new ReadLayers();
   readonly #fonts;
   readonly #names;
   readonly #tokens;
@@ -76,7 +78,7 @@ export class ReadCatalogue {
       fonts: Object.fromEntries(
         [...fonts].map(([family, weights]) => [
           family,
-          [...weights].sort((first, second) => first.localeCompare(second, TEXT_CONTENT.locale, { numeric: true })),
+          [...weights].sort((first, second) => first.localeCompare(second, TEXT_PARTS.locale, { numeric: true })),
         ]),
       ),
       assets: assets.assets(),
@@ -84,10 +86,10 @@ export class ReadCatalogue {
   }
 
   /** The runs of every text the read writes in full: a hidden layer is a stub without its children. */
-  #segments(layer: ReadLayer): TextSegment[] {
-    return layer.visible
-      ? [...(layer.text?.segments ?? []), ...(layer.children ?? []).flatMap((child) => this.#segments(child))]
-      : [];
+  #segments(root: ReadLayer): TextSegment[] {
+    return [...this.#readLayers.walk(root, (layer) => layer.visible)].flatMap(
+      ({ layer }) => layer.text?.segments ?? [],
+    );
   }
 
   /** A text style as its font shorthand, then its letter spacing and case when not the default. */
@@ -95,7 +97,7 @@ export class ReadCatalogue {
     const { fontName, fontSize, lineHeight } = style;
 
     if (
-      style.type !== TEXT_CONTENT.textStyleType ||
+      style.type !== TEXT_PARTS.textStyleType ||
       fontName === undefined ||
       fontSize === undefined ||
       lineHeight === undefined
@@ -110,7 +112,7 @@ export class ReadCatalogue {
       this.#fonts.font({ fontName, fontSize, lineHeight }),
       ...(spacing === null ? [] : [CATALOGUE_TEXT.declaration(CSS_PROPERTY.letterSpacing, spacing)]),
       ...(transform === undefined ? [] : [CATALOGUE_TEXT.declaration(CSS_PROPERTY.textTransform, transform)]),
-    ].join(TEXT_CONTENT.declarations);
+    ].join(TEXT_PARTS.declarations);
   }
 }
 

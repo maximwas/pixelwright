@@ -9,7 +9,7 @@ import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
-import { ReadTokens } from "@/core/design/text/read-tokens.ts";
+import { ReadTokens } from "@/core/design/read-tokens.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";

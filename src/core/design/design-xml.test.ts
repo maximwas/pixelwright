@@ -4,6 +4,7 @@ import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
+import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
 import { TextPathData } from "@/core/css/groups/text/text-path-data.ts";
 import { TextRun } from "@/core/css/groups/text/text-run.ts";
 import { ImagePaint } from "@/core/css/paints/image-paint.ts";
@@ -49,7 +50,7 @@ const design = new DesignXml(
     new DesignBuilder(
       new NodeTag(),
       new ComponentAttributes(new NameValueList()),
-      new CssReader(new GroupRegistry([new LayoutGroup(lengths, format)])),
+      new CssReader(new GroupRegistry([new LayoutGroup(lengths, format), new FillsGroup(paints)])),
       new TextPathData(),
     ),
     new TextContent(new TextRun(new FontShorthand(format), paints, format, new TokenNames())),
@@ -217,6 +218,48 @@ describe("DesignXml", () => {
       '<TextPath id="1:2" name="Label on arc" d="M 0 50 C 55.23 -16.67 144.77 -16.67 200 50 M 0 60 L 200 60 Z" start="0 0.25"></TextPath>',
     );
   });
+
+  // C-1.5 (m:48b67951): the properties a designer pinned in Dev Mode, in CSS words, once each, right after the notes.
+  it("writes the properties pinned in annotations in CSS words, once each, after the notes", () => {
+    const root = layer({
+      id: "1:1",
+      type: "FRAME",
+      name: "Box",
+      children: [
+        layer({
+          id: "1:2",
+          type: "FRAME",
+          name: "Card",
+          annotations: [
+            { label: "API", pins: ["width", "itemSpacing"] },
+            { pins: ["fills", "width", "gridColumnSpan", "somethingNew"] },
+          ],
+        }),
+        { ...text("1:3", "Price", "9"), annotations: [{ pins: ["fills", "textStyleId"] }] },
+      ],
+    });
+    const lines = design.xml(model(root)).split("\n");
+    const line = (id: string) => lines.find((each) => each.includes(`id="${id}"`)) ?? "";
+
+    expect(line("1:2")).toContain('note="API" $pins="width, gap, background, grid-column, somethingNew"');
+    expect(line("1:3")).toContain('$pins="color, text style"');
+    expect(line("1:3")).not.toContain("note=");
+  });
+
+  // A slice is no element: a limit counts the elements shown, and $children says only that a child that shows is left out.
+  it("lists children up to a limit of elements shown, with $children only when a shown child is left out", () => {
+    const shapes = ["1:3", "1:4", "1:5"].map((id) => layer({ id, type: "RECTANGLE", name: `Shape ${id}` }));
+    const root = layer({
+      id: "1:1",
+      type: "FRAME",
+      name: "Row",
+      children: [layer({ id: "1:2", type: "SLICE", name: "Export" }), ...shapes],
+    });
+    const first = (limit: number) => design.read(model(root), { limits: new Map([["1:1", limit]]) }).xml.split("\n")[0];
+
+    expect(first(3)).not.toContain("$children");
+    expect(first(2)).toContain('$children="4"');
+  });
 });
 
 // C-142, C-144, B-001: an asset is an Icon or Image with its file and no children; a video stays its own layer.
@@ -248,7 +291,7 @@ describe("DesignXml assets", () => {
     expect(design.xml(model(root)).split("\n").slice(2)).toEqual([
       '  <Icon id="1:3" name="Logo" src="assets/logo.svg"/>',
       '  <Image id="1:5" name="Avatar" src="assets/avatar.png"/>',
-      '  <Rectangle id="1:8" name="Clip"/>',
+      '  <Rectangle id="1:8" name="Clip" $css="background: a video fill (the Plugin API exports no file of it)"/>',
       "</Frame>",
     ]);
   });

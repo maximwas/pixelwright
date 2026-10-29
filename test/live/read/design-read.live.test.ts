@@ -13,6 +13,9 @@ const NAME = {
   nearbyClose: "live:design-read:nearby-close",
   nearbyFar: "live:design-read:nearby-far",
   autoLine: "live:design-read:auto-line",
+  video: "live:design-read:video",
+  moded: "live:design-read:moded",
+  modedChild: "live:design-read:moded-child",
 } as const;
 
 /** Figma's transform for CSS 30deg on a 200 x 100 box: getCSSAsync reads it as 49deg (FX-020). */
@@ -289,6 +292,82 @@ return text.id;`,
       expect(json).toContain('autoLineHeight: \\"px\\"');
     } finally {
       await client.call("execute", { file, code: `(await pw.node(${JSON.stringify(id)})).remove();` });
+    }
+  });
+
+  // B-001, D-23: a video fill is a $css note on its layer and a video with no file in the assets.
+  it("reads a rectangle with a video fill with the video note and lists it as a video asset (B-001)", async () => {
+    const { result } = await client.call("execute", {
+      file,
+      code: `const section = await pw.node(${JSON.stringify(scratch)});
+const clip = figma.createRectangle();
+clip.name = ${JSON.stringify(NAME.video)};
+section.appendChild(clip);
+let refused = null;
+try {
+  clip.fills = [{ type: "VIDEO", scaleMode: "FILL", videoHash: null }];
+} catch (error) {
+  refused = String(error);
+}
+return { id: clip.id, refused };`,
+    });
+    const { id, refused } = result as { id: string; refused: string | null };
+
+    try {
+      if (refused !== null) {
+        // Figma refuses a VIDEO paint it has no video for: the case cannot make one, and says so.
+        console.warn(`Figma refused a VIDEO paint without a video: ${refused}`);
+        expect(refused).not.toBe("");
+
+        return;
+      }
+
+      const [xml, json] = await client.texts("design_read", { file, node: id });
+
+      expect(xml).toContain('$css="background: a video fill (the Plugin API exports no file of it)"');
+      expect(JSON.parse(json ?? "{}")).toMatchObject({ assets: [{ node: id, kind: "video" }] });
+    } finally {
+      await client.call("execute", { file, code: `(await pw.node(${JSON.stringify(id)})).remove();` });
+    }
+  });
+
+  // m:c8a83979: a layer read alone inside a frame set to a non-default mode says that mode on its root.
+  it("gives a read's root the non-default variable mode it takes from the frame above it", async () => {
+    const { result } = await client.call("execute", {
+      file,
+      code: `const section = await pw.node(${JSON.stringify(scratch)});
+const collections = await figma.variables.getLocalVariableCollectionsAsync();
+const collection = collections.find((each) => each.modes.length > 1);
+if (collection === undefined) return { refused: "no local collection with two modes" };
+const mode = collection.modes.find((each) => each.modeId !== collection.defaultModeId);
+const frame = figma.createFrame();
+frame.name = ${JSON.stringify(NAME.moded)};
+section.appendChild(frame);
+frame.setExplicitVariableModeForCollection(collection, mode.modeId);
+const child = figma.createFrame();
+child.name = ${JSON.stringify(NAME.modedChild)};
+frame.appendChild(child);
+return { frame: frame.id, child: child.id, collection: collection.name, mode: mode.name };`,
+    });
+    const made = result as { frame?: string; child: string; collection: string; mode: string; refused?: string };
+    const slug = (name: string) =>
+      name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+    try {
+      expect(made.refused).toBeUndefined();
+
+      const [xml] = await client.texts("design_read", { file, node: made.child });
+      const [root = ""] = (xml ?? "").split("\n");
+
+      expect(root).toContain(`data-${slug(made.collection)}="${slug(made.mode)}"`);
+    } finally {
+      if (made.frame !== undefined) {
+        await client.call("execute", { file, code: `(await pw.node(${JSON.stringify(made.frame)})).remove();` });
+      }
     }
   });
 

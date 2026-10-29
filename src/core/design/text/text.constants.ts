@@ -7,7 +7,7 @@ export const SPAN_RESETS: Readonly<Record<string, string>> = {
   [CSS_PROPERTY.textDecoration]: "none",
 };
 
-export const TEXT_CONTENT = {
+export const TEXT_PARTS = {
   ellipsis: "…",
   urlLink: "URL",
   textStyle: "textStyle",

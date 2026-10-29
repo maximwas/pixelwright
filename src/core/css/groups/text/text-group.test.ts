@@ -173,4 +173,12 @@ describe("TextGroup", () => {
 
     expect(css.properties).toContainEqual(["color", "#00F"]);
   });
+
+  // C-110 (0.7.0's rule): a text's one colour is the fills group's; the text group writes it for mixed fills only.
+  it("leaves a text's one colour to the fills group", () => {
+    const red = { type: "SOLID", color: { r: 1, g: 0, b: 0 } };
+    const css = read(textLayer([segment({ fills: [red] })], { fills: [red] }));
+
+    expect(css.properties.map(([property]) => property)).not.toContain("color");
+  });
 });

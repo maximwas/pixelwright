@@ -10,6 +10,12 @@ type Note = NonNullable<ReadLayer["annotations"]>[number];
  */
 @injectable()
 export class NoteFieldReader implements FieldReader {
+  #categoriesAsked: Promise<ReadonlyMap<string, string>> | null = null;
+
+  start(): void {
+    this.#categoriesAsked = null;
+  }
+
   async read(node: SceneNode): Promise<Partial<ReadLayer>> {
     if (!("annotations" in node) || node.annotations.length === 0) {
       return {};
@@ -23,11 +29,14 @@ export class NoteFieldReader implements FieldReader {
     return notes.length === 0 ? {} : { annotations: notes };
   }
 
-  /** The file's annotation category names by id; none when Figma cannot give them. */
-  async #categories(): Promise<ReadonlyMap<string, string>> {
-    const categories = await figma.annotations.getAnnotationCategoriesAsync().catch(() => []);
+  /** The file's annotation category names by id, asked once per read; none when Figma cannot give them. */
+  #categories(): Promise<ReadonlyMap<string, string>> {
+    this.#categoriesAsked ??= figma.annotations
+      .getAnnotationCategoriesAsync()
+      .catch(() => [])
+      .then((categories) => new Map(categories.map(({ id, label }) => [id, label])));
 
-    return new Map(categories.map(({ id, label }) => [id, label]));
+    return this.#categoriesAsked;
   }
 
   #note(annotation: Annotation, categories: ReadonlyMap<string, string>): Note[] {

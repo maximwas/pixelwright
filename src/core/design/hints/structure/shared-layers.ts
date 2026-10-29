@@ -10,6 +10,7 @@ import {
   STRUCTURE_TEXT,
 } from "@/core/design/hints/structure/structure.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 
 /** A top-level frame and how many of its layers have each structure. */
 interface FrameShapes {
@@ -24,6 +25,7 @@ interface FrameShapes {
  */
 @injectable()
 export class SharedLayers {
+  readonly #readLayers = new ReadLayers();
   readonly #shape;
 
   constructor(shape = inject(LAYER_SHAPE)) {
@@ -72,16 +74,14 @@ export class SharedLayers {
   /** Every visible layer under the frame, counted by its structure. */
   #shapes(frame: ReadLayer): FrameShapes {
     const shapes = new Map<string, number>();
-    const visit = (layer: ReadLayer): void => {
-      for (const child of (layer.children ?? []).filter((each) => each.visible)) {
-        const key = this.#shape.key(child);
+
+    for (const { layer } of this.#readLayers.walk(frame, (each) => each.visible)) {
+      if (layer !== frame) {
+        const key = this.#shape.key(layer);
 
         shapes.set(key, (shapes.get(key) ?? 0) + 1);
-        visit(child);
       }
-    };
-
-    visit(frame);
+    }
 
     return { frame, shapes, size: [...shapes.values()].reduce((sum, count) => sum + count, 0) };
   }

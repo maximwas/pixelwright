@@ -1,4 +1,5 @@
-import { InjectionToken, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { LAYER_WALK } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
 import { CUT_REASON } from "@/shared/envelope/op-result.constants.ts";
 import type { ReadCut } from "@/shared/ops/read/read.schema.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -36,6 +37,7 @@ interface Walk<Node> {
   readonly limits: ReadLimits;
   readonly queue: Queued<Node>[];
   readonly cuts: ReadCut[];
+  readonly deadline: number;
   used: number;
 }
 
@@ -43,16 +45,25 @@ interface Walk<Node> {
  * Layers and their descendants, breadth first under one JSON budget for the whole call (T-053, 0.7.0's snapshot), so
  * every section of a big frame is read before any section's insides. A hidden layer below a root stays a stub (D-18).
  * Every layer whose children were not all read is a cut (K-034): `depth` stopped it, or the budget did, mid-children
- * too (m:ec973ea3). The roots are read whatever the budget.
+ * too (m:ec973ea3). The budget is the JSON's characters and the op's time (P-075). The roots are read whatever the
+ * budget.
  */
 @injectable()
 export class ReadRun {
+  readonly #walk;
+
+  constructor(walk = inject(LAYER_WALK)) {
+    this.#walk = walk;
+  }
+
   async read<Node>(
     roots: readonly Node[],
     tree: ReadTree<Node>,
     limits: ReadLimits,
   ): Promise<ReadResult> {
-    const walk: Walk<Node> = { tree, limits, queue: [], cuts: [], used: 0 };
+    // Every op's walk budget (LIMITS.opBudgetMs): each layer awaits Figma (a main component, a destination's name), and
+    // a big frame must answer with what it read before the server stops waiting.
+    const walk: Walk<Node> = { tree, limits, queue: [], cuts: [], used: 0, deadline: this.#walk.deadline() };
     const layers: ReadLayer[] = [];
 
     for (const root of roots) {
@@ -71,34 +82,24 @@ export class ReadRun {
     return { layers, cuts: walk.cuts };
   }
 
-  /** Reads a layer's children into its entry, as far as the depth and the budget go. */
-  async #expand<Node>(walk: Walk<Node>, { node, root, entry, level }: Queued<Node>): Promise<void> {
+  /** Reads a layer's children into its entry, as far as the depth, the budget and the deadline go. */
+  async #expand<Node>(walk: Walk<Node>, queued: Queued<Node>): Promise<void> {
+    const { entry, level } = queued;
     const { depth, jsonChars } = walk.limits;
 
     if (entry.childCount === 0 || (level > 0 && !entry.visible)) {
       return;
     }
 
-    if ((depth !== undefined && level >= depth) || walk.used > jsonChars) {
-      walk.cuts.push({ id: entry.id, reason: walk.used > jsonChars ? CUT_REASON.budget : CUT_REASON.children });
+    const spent = walk.used > jsonChars || this.#walk.passed(walk.deadline);
+
+    if ((depth !== undefined && level >= depth) || spent) {
+      walk.cuts.push({ id: entry.id, reason: spent ? CUT_REASON.budget : CUT_REASON.children });
 
       return;
     }
 
-    const children: ReadLayer[] = [];
-
-    for (const child of walk.tree.children(node)) {
-      const read = await walk.tree.entry(child, root);
-
-      walk.used += JSON.stringify(read).length;
-
-      if (walk.used > jsonChars) {
-        break;
-      }
-
-      children.push(read);
-      walk.queue.push({ node: child, root, entry: read, level: level + 1 });
-    }
+    const children = await this.#children(walk, queued);
 
     if (children.length > 0) {
       entry.children = children;
@@ -107,6 +108,30 @@ export class ReadRun {
     if (children.length < entry.childCount) {
       walk.cuts.push({ id: entry.id, reason: CUT_REASON.budget });
     }
+  }
+
+  /** The layer's children read in order, each queued for its own, until the budget or the deadline stops them. */
+  async #children<Node>(walk: Walk<Node>, { node, root, level }: Queued<Node>): Promise<ReadLayer[]> {
+    const children: ReadLayer[] = [];
+
+    for (const child of walk.tree.children(node)) {
+      if (this.#walk.passed(walk.deadline)) {
+        break;
+      }
+
+      const read = await walk.tree.entry(child, root);
+
+      walk.used += JSON.stringify(read).length;
+
+      if (walk.used > walk.limits.jsonChars) {
+        break;
+      }
+
+      children.push(read);
+      walk.queue.push({ node: child, root, entry: read, level: level + 1 });
+    }
+
+    return children;
   }
 }
 

@@ -9,6 +9,7 @@ import {
   STRUCTURE_TEXT,
 } from "@/core/design/hints/structure/structure.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 
 /**
  * Frames and groups built alike REPEAT_MIN times or more outside any component (Q-002): a component to make. Of nested
@@ -16,6 +17,7 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
  */
 @injectable()
 export class AlikeStructures {
+  readonly #readLayers = new ReadLayers();
   readonly #shape;
 
   constructor(shape = inject(LAYER_SHAPE)) {
@@ -58,7 +60,7 @@ export class AlikeStructures {
 
   /** A frame or group of a few layers, built by hand. */
   #built(layer: ReadLayer): boolean {
-    const children = (layer.children ?? []).filter((child) => child.visible);
+    const children = this.#readLayers.visibleChildren(layer);
 
     return (
       (layer.type === STRUCTURE_FIGMA.frame || layer.type === STRUCTURE_FIGMA.group) &&

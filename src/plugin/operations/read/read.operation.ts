@@ -46,6 +46,9 @@ export class ReadOperation extends Operation<ReadInput, ReadOutput> {
       [...new Set(nodes)].map(async (id) => ({ id, node: await this.#lookup.node(id).catch(() => null) })),
     );
     const roots = found.flatMap(({ node }) => (node === null ? [] : [this.#layer(node)]));
+
+    this.#reader.start();
+
     const { layers, cuts } = await this.#run.read(roots, this.#reader, { depth, jsonChars: LIMITS.readJsonChars });
 
     // ReadRun answers an entry per root, in the order given.

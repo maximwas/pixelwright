@@ -3,6 +3,7 @@ import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import type { CssScope, PropertyGroup } from "@/core/css/css.types.ts";
 import {
   FIGMA_PAINT_GROUP,
+  FILL_NOTE,
   FILLS_ATTRIBUTES,
   FILLS_SOURCES,
   TEXT_TYPES,
@@ -10,12 +11,12 @@ import {
   VECTOR_TYPES,
 } from "@/core/css/groups/paint/paint.constants.ts";
 import { PAINT_LIST } from "@/core/css/paints/paint-list.ts";
-import { UNMAPPED_PAINT } from "@/core/css/paints/paints.constants.ts";
+import { FIGMA_PAINT, UNMAPPED_PAINT } from "@/core/css/paints/paints.constants.ts";
 import { READ_VALUE } from "@/shared/read-model/read-model.constants.ts";
 
 /**
  * A layer's fills (C-080): a box's are its background, top first; a text's its colour. A vector's and a line's are
- * their own drawing, not CSS. A paint the table cannot write is the fixed note (D-20).
+ * their own drawing, not CSS. A paint the table cannot write is the fixed note (D-20), a video its own (D-23).
  */
 @injectable()
 export class FillsGroup implements PropertyGroup {
@@ -48,7 +49,9 @@ export class FillsGroup implements PropertyGroup {
     );
 
     if (value === UNMAPPED_PAINT) {
-      css.note(property, UNMAPPED_NOTE[property]);
+      const video = fills.some((paint) => paint.type === FIGMA_PAINT.video && (paint.visible ?? true));
+
+      css.note(property, video ? FILL_NOTE.video : UNMAPPED_NOTE[property]);
     } else if (value !== null) {
       css.set(property, value);
     }

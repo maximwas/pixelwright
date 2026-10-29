@@ -25,3 +25,45 @@ export const BUILDER_VALUE = {
   /** The hyperlink type that opens a URL; the other kind links to a layer. */
   urlLink: "URL",
 } as const;
+
+/** Figma's annotation property types as `$pins` words them (C-1.5): CSS words; a type Figma adds later stays as named. */
+export const PIN_WORDS: Readonly<Record<string, string>> = {
+  width: "width",
+  height: "height",
+  minWidth: "min-width",
+  maxWidth: "max-width",
+  minHeight: "min-height",
+  maxHeight: "max-height",
+  fills: "background",
+  strokes: "border",
+  effects: "box-shadow",
+  strokeWeight: "border-width",
+  cornerRadius: "border-radius",
+  textStyleId: "text style",
+  textAlignHorizontal: "text-align",
+  fontFamily: "font-family",
+  fontStyle: "font-style",
+  fontSize: "font-size",
+  fontWeight: "font-weight",
+  lineHeight: "line-height",
+  letterSpacing: "letter-spacing",
+  itemSpacing: "gap",
+  padding: "padding",
+  layoutMode: "flex-direction",
+  alignItems: "align-items",
+  opacity: "opacity",
+  mainComponent: "component",
+  gridRowGap: "row-gap",
+  gridColumnGap: "column-gap",
+  gridRowCount: "grid rows",
+  gridColumnCount: "grid columns",
+  gridRowAnchorIndex: "grid-row",
+  gridRowSpan: "grid-row",
+  gridColumnAnchorIndex: "grid-column",
+  gridColumnSpan: "grid-column",
+};
+
+/** A text layer's fills are its text colour. */
+export const TEXT_PIN_WORDS: Readonly<Record<string, string>> = { fills: "color" };
+
+export const PINS = { separator: ", " } as const;

@@ -12,7 +12,10 @@ import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
  * group that must ask Figma (a main component, a destination's name, a collection) answers a promise.
  */
 export interface FieldReader {
-  read(node: SceneNode, origin: Vector): Partial<ReadLayer> | Promise<Partial<ReadLayer>>;
+  /** `root`: whether the layer is the read's root, of which some fields say more (its inherited modes). */
+  read(node: SceneNode, origin: Vector, root: boolean): Partial<ReadLayer> | Promise<Partial<ReadLayer>>;
+  /** A read begins: a reader that keeps what one read shares (the file's annotation categories) forgets it. */
+  start?(): void;
 }
 
 /** The fields every entry has, a hidden layer's stub too (D-18): what the layer is, and its box from the read's root. */
@@ -42,6 +45,15 @@ export class LayerReader {
     this.#refs = refs;
   }
 
+  /** A read begins: the field readers and the references forget what the last read kept. */
+  start(): void {
+    for (const reader of this.#readers) {
+      reader.start?.();
+    }
+
+    this.#references.start();
+  }
+
   /** The layer's own entry, its children left out: ReadRun lists them. */
   async entry(node: SceneNode, root: SceneNode): Promise<ReadLayer> {
     const origin = this.#translation(root);
@@ -50,7 +62,7 @@ export class LayerReader {
     if (node.visible) {
       // In order, one after another: the model keeps the readers' field order (m:f53dbe49).
       for (const reader of this.#readers) {
-        Object.assign(fields, await reader.read(node, origin));
+        Object.assign(fields, await reader.read(node, origin, node === root));
       }
     }
 

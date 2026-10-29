@@ -53,6 +53,9 @@ export const UNMAPPED_NOTE = {
   [CSS_PROPERTY.border]: "a gradient or other stroke the table cannot write yet",
 } as const;
 
+/** B-001, D-23: a video fill is marked as one: no exported file holds it, so a build must bring its own. */
+export const FILL_NOTE = { video: "a video fill (the Plugin API exports no file of it)" } as const;
+
 export const PAINT_TEXT = {
   border: (
     weight: number,

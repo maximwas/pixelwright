@@ -14,6 +14,7 @@ import {
 import type { AssetClass } from "@/core/design/assets/assets.types.ts";
 import { TEXT_TYPES } from "@/core/design/design.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 
 /**
  * Whether a layer is a true asset, exported whole (C-142, m:1116170e): what the designer marked for export (not a PDF,
@@ -23,8 +24,10 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
  */
 @injectable()
 export class AssetClassifier {
+  readonly #readLayers = new ReadLayers();
+
   classify(layer: ReadLayer, root: ReadLayer): AssetClass | null {
-    const children = this.#visible(layer);
+    const children = this.#readLayers.visibleChildren(layer);
     const leaf = children.length === 0 && layer.childCount === 0;
 
     if (leaf && this.#painted(layer, ASSET_FIGMA.video)) {
@@ -79,12 +82,8 @@ export class AssetClassifier {
     return (
       Object.hasOwn(TEXT_TYPES, layer.type) ||
       this.#cut(layer) ||
-      this.#visible(layer).some((child) => this.#hasText(child))
+      this.#readLayers.visibleChildren(layer).some((child) => this.#hasText(child))
     );
-  }
-
-  #visible(layer: ReadLayer): ReadLayer[] {
-    return (layer.children ?? []).filter((child) => child.visible);
   }
 
   #cut(layer: ReadLayer): boolean {
@@ -107,7 +106,7 @@ export class AssetClassifier {
 
   /** A container without auto layout drawn only with shapes, at least one of them a true vector. */
   #isDrawing(layer: ReadLayer): boolean {
-    const children = this.#visible(layer);
+    const children = this.#readLayers.visibleChildren(layer);
     let vectors = 0;
 
     if (layer.layoutMode !== undefined || children.length === 0) {
@@ -140,7 +139,7 @@ export class AssetClassifier {
 
     let vectors = Object.hasOwn(VECTOR_TYPES, layer.type) ? 1 : 0;
 
-    for (const child of this.#visible(layer)) {
+    for (const child of this.#readLayers.visibleChildren(layer)) {
       const count = this.#vectors(child);
 
       if (count === null) {

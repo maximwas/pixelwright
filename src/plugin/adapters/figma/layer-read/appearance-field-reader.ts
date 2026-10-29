@@ -51,10 +51,14 @@ export class AppearanceFieldReader implements FieldReader {
       : { constraints: { horizontal, vertical } };
   }
 
+  /** The layout grids, and the grid style they come from (C-1.5: the read writes it as `$grid-style`). */
   #grids(node: SceneNode): Partial<ReadLayer> {
-    return "layoutGrids" in node && node.layoutGrids.length > 0
-      ? { layoutGrids: node.layoutGrids.map((grid) => ({ ...grid })) }
-      : {};
+    return {
+      ...("layoutGrids" in node && node.layoutGrids.length > 0
+        ? { layoutGrids: node.layoutGrids.map((grid) => ({ ...grid })) }
+        : {}),
+      ...("gridStyleId" in node && node.gridStyleId !== "" ? { gridStyleId: node.gridStyleId } : {}),
+    };
   }
 
   /** The corner radius, each corner when they differ, and the corners' smoothing. */

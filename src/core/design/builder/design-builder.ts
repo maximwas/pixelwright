@@ -4,7 +4,15 @@ import { TEXT_PATH_DATA } from "@/core/css/groups/text/text-path-data.ts";
 import type { CssDeclaration } from "@/core/css/registry/css-declarations.ts";
 import type { AssetPlan } from "@/core/design/assets/asset-plan.ts";
 import { ASSET_TAG } from "@/core/design/assets/assets.constants.ts";
-import { BUILDER_VALUE, CSS_NOTES, DEV_STATUS_WORDS, NOTE } from "@/core/design/builder/builder.constants.ts";
+import {
+  BUILDER_VALUE,
+  CSS_NOTES,
+  DEV_STATUS_WORDS,
+  NOTE,
+  PIN_WORDS,
+  PINS,
+  TEXT_PIN_WORDS,
+} from "@/core/design/builder/builder.constants.ts";
 import { PROPERTY_FIELD } from "@/core/design/component/component.constants.ts";
 import { COMPONENT_ATTRIBUTES } from "@/core/design/component/component-attributes.ts";
 import { DESIGN_ATTRIBUTE, TEXT_TYPES } from "@/core/design/design.constants.ts";
@@ -95,6 +103,7 @@ export class DesignBuilder {
       ...this.#component.instance(layer),
       [DESIGN_ATTRIBUTE.description, layer.description === "" ? undefined : layer.description],
       [DESIGN_ATTRIBUTE.note, this.#note(layer)],
+      [DESIGN_ATTRIBUTE.pins, this.#pins(layer)],
       [DESIGN_ATTRIBUTE.override, this.#component.override(layer)],
       [DESIGN_ATTRIBUTE.dev, dev],
       [DESIGN_ATTRIBUTE.href, layer.href ?? (isText ? this.#url(layer) : undefined)],
@@ -152,6 +161,18 @@ export class DesignBuilder {
     );
 
     return notes.length === 0 ? undefined : notes.join(NOTE.separator);
+  }
+
+  /** The properties pinned in the layer's annotations, in CSS words, in the order pinned, each once. */
+  #pins(layer: ReadLayer): string | undefined {
+    const isText = Object.hasOwn(TEXT_TYPES, layer.type);
+    const words = new Set(
+      (layer.annotations ?? []).flatMap(({ pins }) =>
+        (pins ?? []).map((pin) => (isText ? TEXT_PIN_WORDS[pin] : undefined) ?? PIN_WORDS[pin] ?? pin),
+      ),
+    );
+
+    return words.size === 0 ? undefined : [...words].join(PINS.separator);
   }
 
   /** The URL every run of a text links to, when they all link to the same one. */

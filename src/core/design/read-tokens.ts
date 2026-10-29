@@ -7,6 +7,7 @@ import { CSS_LENGTH } from "@/core/css/values/css-length.ts";
 import { TOKEN_KIND } from "@/core/design/text/text.constants.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 type Variable = ReadModel["variables"][string];
@@ -23,6 +24,7 @@ type PaintColor = NonNullable<Paint["color"]>;
  */
 @injectable()
 export class ReadTokens {
+  readonly #readLayers = new ReadLayers();
   readonly #paints;
   readonly #lengths;
   readonly #effects;
@@ -65,14 +67,12 @@ export class ReadTokens {
   }
 
   /** The last shown layer filled with a style, in document order: a gradient's value needs its box. */
-  #filled(layer: ReadLayer, id: string): Box | null {
-    if (!layer.visible) {
-      return null;
-    }
+  #filled(root: ReadLayer, id: string): Box | null {
+    const filled = [...this.#readLayers.walk(root, (layer) => layer.visible)].filter(
+      ({ layer }) => layer.fillStyleId === id,
+    );
 
-    const own = layer.fillStyleId === id ? layer : null;
-
-    return (layer.children ?? []).reduce<Box | null>((last, child) => this.#filled(child, id) ?? last, own);
+    return filled[filled.length - 1]?.layer ?? null;
   }
 
   #variable(variable: Variable, model: ReadModel): string | null {

@@ -37,7 +37,12 @@ export class NoteCandidates {
     for (let level: BaseNode = screen; level.parent !== null && "children" in level.parent; level = level.parent) {
       const within = level;
 
-      beside.push(...level.parent.children.filter((child) => child !== within));
+      // A loop, not push(...): a page with tens of thousands of layers would pass the argument limit.
+      for (const child of level.parent.children) {
+        if (child !== within) {
+          beside.push(child);
+        }
+      }
 
       if (level.parent.type === FIGMA_NODE_TYPE.page) {
         break;
