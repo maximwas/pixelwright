@@ -4,11 +4,12 @@ import { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 const format = new NumberFormat();
-const group = new LayoutGroup(new CssLength(new CssVar(new CssSplit()), format), format);
+const group = new LayoutGroup(new CssLength(new CssVar(new CssSplit()), format, new TokenNames()), format);
 
 function child(id: string, visible = true): ReadLayer {
   return { id, name: id, type: "FRAME", visible, x: 0, y: 0, width: 10, height: 10, childCount: 0 };

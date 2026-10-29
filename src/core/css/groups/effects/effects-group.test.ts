@@ -5,12 +5,18 @@ import { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 const format = new NumberFormat();
-const group = new EffectsGroup(new SolidPaint(), new CssLength(new CssVar(new CssSplit()), format), format);
+const group = new EffectsGroup(
+  new SolidPaint(new TokenNames()),
+  new CssLength(new CssVar(new CssSplit()), format, new TokenNames()),
+  format,
+  new TokenNames(),
+);
 
 type Effect = NonNullable<ReadLayer["effects"]>[number];
 

@@ -6,6 +6,7 @@ import { EDITS_SWITCH } from "@/core/ports/edits-switch.port.ts";
 import { KEY_VALUE_STORE } from "@/core/ports/key-value-store.port.ts";
 import { SERVER_EVENTS } from "@/core/ports/server-events.port.ts";
 import { WINDOW_EVENTS } from "@/core/ports/window-events.port.ts";
+import { STYLE_NUMBERS_READER, StyleNumbers } from "@/core/tokens/names/style-numbers.ts";
 import { CANVAS_VIEW, CanvasView } from "@/plugin/adapters/figma/canvas-view.ts";
 import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
@@ -15,8 +16,10 @@ import { EffectFieldReader } from "@/plugin/adapters/figma/layer-read/effect-fie
 import { FIELD_READERS, LAYER_READER, LayerReader } from "@/plugin/adapters/figma/layer-read/layer-reader.ts";
 import { LayoutFieldReader } from "@/plugin/adapters/figma/layer-read/layout-field-reader.ts";
 import { PaintFieldReader } from "@/plugin/adapters/figma/layer-read/paint-field-reader.ts";
+import { REFERENCES, References } from "@/plugin/adapters/figma/layer-read/references.ts";
 import { StrokeFieldReader } from "@/plugin/adapters/figma/layer-read/stroke-field-reader.ts";
 import { TextFieldReader } from "@/plugin/adapters/figma/layer-read/text-field-reader.ts";
+import { VariableFieldReader } from "@/plugin/adapters/figma/layer-read/variable-field-reader.ts";
 import { LAYER_REFS, LayerRefs } from "@/plugin/adapters/figma/layer-refs.ts";
 import { LAYER_WALK, LayerWalk } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
 import { NODE_LOOKUP, NodeLookup } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
@@ -60,6 +63,9 @@ export class HostProviders {
       .bind({ provide: FIELD_READERS, multi: true, useClass: StrokeFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: EffectFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: TextFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: VariableFieldReader })
+      .bind({ provide: STYLE_NUMBERS_READER, useClass: StyleNumbers })
+      .bind({ provide: REFERENCES, useClass: References })
       .bind({ provide: LAYER_READER, useClass: LayerReader })
       .bind({ provide: CLOCK, useValue: Date })
       .bind({ provide: PAGE_LOADER, useClass: PageLoader })

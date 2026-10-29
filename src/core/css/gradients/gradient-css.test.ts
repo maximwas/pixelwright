@@ -5,13 +5,14 @@ import { type Paint, SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 const format = new NumberFormat();
-const lengths = new CssLength(new CssVar(new CssSplit()), format);
+const lengths = new CssLength(new CssVar(new CssSplit()), format, new TokenNames());
 const geometry = new GradientGeometry();
-const gradients = new GradientCss(geometry, new SolidPaint(), lengths, format);
+const gradients = new GradientCss(geometry, new SolidPaint(new TokenNames()), lengths, format);
 
 const BOX = { width: 200, height: 100 };
 const RED = { r: 1, g: 0, b: 0, a: 1 };

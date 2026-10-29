@@ -1,5 +1,6 @@
 // `pnpm dev:read <fixture>`: the design XML of one Orbit fixture (test/golden/fixtures/orbit-<fixture>.json), built
 // offline the way design_read builds it on the server: customers, desktop-top, plans or pricing.
+
 import { readFileSync } from "node:fs";
 import * as zod from "zod/mini";
 import { CssReader } from "@/core/css/css-reader.ts";
@@ -29,6 +30,7 @@ import { DesignXml } from "@/core/design/design-xml.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
@@ -37,14 +39,15 @@ import { ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
 
 class DevRead {
   readonly #format = new NumberFormat();
-  readonly #lengths = new CssLength(new CssVar(new CssSplit()), this.#format);
-  readonly #solid = new SolidPaint();
+  readonly #lengths = new CssLength(new CssVar(new CssSplit()), this.#format, new TokenNames());
+  readonly #solid = new SolidPaint(new TokenNames());
   readonly #paints = new PaintList(
     this.#solid,
     new GradientCss(new GradientGeometry(), this.#solid, this.#lengths, this.#format),
     new ImagePaint(new CssUrl(new CssSplit())),
+    new TokenNames(),
   );
-  readonly #runs = new TextRun(new FontShorthand(this.#format), this.#paints, this.#format);
+  readonly #runs = new TextRun(new FontShorthand(this.#format), this.#paints, this.#format, new TokenNames());
   readonly #design = new DesignXml(
     new LayerTree(
       new DesignBuilder(
@@ -57,7 +60,7 @@ class DevRead {
             new AppearanceGroup(this.#lengths, this.#format),
             new FillsGroup(this.#paints),
             new StrokesGroup(this.#paints, this.#format),
-            new EffectsGroup(this.#solid, this.#lengths, this.#format),
+            new EffectsGroup(this.#solid, this.#lengths, this.#format, new TokenNames()),
             new TextGroup(this.#runs, this.#lengths),
           ]),
         ),

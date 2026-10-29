@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 
-const lengths = new CssLength(new CssVar(new CssSplit()), new NumberFormat());
+const lengths = new CssLength(new CssVar(new CssSplit()), new NumberFormat(), new TokenNames());
 
 describe("CssLength", () => {
   it("writes whole pixels, a bare 0 without a unit", () => {

@@ -15,7 +15,10 @@ type Text = NonNullable<ReadLayer["text"]>;
 export class TextFieldReader implements FieldReader {
   read(node: SceneNode): Partial<ReadLayer> {
     if (node.type === TEXT_FIELD.text) {
-      return { text: this.#text(node) };
+      const style = node.textStyleId === figma.mixed ? READ_VALUE.mixed : node.textStyleId;
+
+      // The text style the whole text takes (T-163); a text whose runs differ names theirs in its segments.
+      return { text: this.#text(node), ...(style === "" ? {} : { textStyleId: style }) };
     }
 
     if (node.type !== TEXT_FIELD.textPath) {

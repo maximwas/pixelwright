@@ -10,18 +10,22 @@ import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 const format = new NumberFormat();
-const solid = new SolidPaint();
+const solid = new SolidPaint(new TokenNames());
 const gradients = new GradientCss(
   new GradientGeometry(),
   solid,
-  new CssLength(new CssVar(new CssSplit()), format),
+  new CssLength(new CssVar(new CssSplit()), format, new TokenNames()),
   format,
 );
-const group = new StrokesGroup(new PaintList(solid, gradients, new ImagePaint(new CssUrl(new CssSplit()))), format);
+const group = new StrokesGroup(
+  new PaintList(solid, gradients, new ImagePaint(new CssUrl(new CssSplit())), new TokenNames()),
+  format,
+);
 const DARK = [{ type: "SOLID", color: { r: 25 / 255, g: 26 / 255, b: 35 / 255 } }];
 
 function cssOf(fields: Partial<ReadLayer>) {

@@ -4,6 +4,7 @@ import type { Box } from "@/core/css/gradients/gradients.types.ts";
 import { IMAGE_PAINT } from "@/core/css/paints/image-paint.ts";
 import { FIGMA_PAINT, PAINTS_TEXT, PAINTS_VALUE, UNMAPPED_PAINT } from "@/core/css/paints/paints.constants.ts";
 import { type Paint, SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
+import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /** A layer's paints as CSS: one value top first, the table's note marker, or nothing painted. */
@@ -18,15 +19,18 @@ export class PaintList {
   readonly #solid;
   readonly #gradient;
   readonly #image;
+  readonly #names;
 
   constructor(
     solid = inject(SOLID_PAINT),
     gradient = inject(GRADIENT_CSS),
     image = inject(IMAGE_PAINT),
+    names = inject(TOKEN_NAMES),
   ) {
     this.#solid = solid;
     this.#gradient = gradient;
     this.#image = image;
+    this.#names = names;
   }
 
   /** The list's CSS; gradients and images only on a box (a background): a border or a text's colour takes colours. */
@@ -39,7 +43,7 @@ export class PaintList {
     const style = styleId === undefined ? undefined : model.styles[styleId];
 
     if (style?.paints !== undefined) {
-      return PAINTS_TEXT.token(this.#solid.token(style.name));
+      return PAINTS_TEXT.token(this.#names.style(style));
     }
 
     const visible = [...paints].filter((paint) => paint.visible ?? true).reverse();

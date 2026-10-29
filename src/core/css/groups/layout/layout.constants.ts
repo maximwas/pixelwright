@@ -92,3 +92,13 @@ export const LAYOUT_SOURCES = [
   "gridRowSizes",
   "gridColumnSizes",
 ] as const;
+
+/** The fields the layout group writes as lengths, each a bound variable's var() when one is bound (T-163). */
+export const LAYOUT_FIELD = {
+  itemSpacing: "itemSpacing",
+  counterAxisSpacing: "counterAxisSpacing",
+  gridColumnGap: "gridColumnGap",
+  gridRowGap: "gridRowGap",
+} as const;
+
+export const PADDING_FIELDS = ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"] as const;

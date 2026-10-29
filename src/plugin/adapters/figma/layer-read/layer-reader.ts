@@ -1,7 +1,9 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
+import { REFERENCES } from "@/plugin/adapters/figma/layer-read/references.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /** One group of a layer's fields (Strategy, A§9.4): those Figma gives, its defaults left out, boxes from `origin`. */
 export interface FieldReader {
@@ -20,10 +22,16 @@ type Header = Pick<ReadLayer, "id" | "name" | "type" | "visible" | "x" | "y" | "
 export class LayerReader {
   readonly #readers;
   readonly #format;
+  readonly #references;
 
-  constructor(readers = inject(FIELD_READERS, { multi: true }), format = inject(NUMBER_FORMAT)) {
+  constructor(
+    readers = inject(FIELD_READERS, { multi: true }),
+    format = inject(NUMBER_FORMAT),
+    references = inject(REFERENCES),
+  ) {
     this.#readers = readers;
     this.#format = format;
+    this.#references = references;
   }
 
   /** The layer's own entry, its children left out: ReadRun lists them. */
@@ -40,9 +48,12 @@ export class LayerReader {
     return { ...this.#header(node, origin), ...fields, childCount: this.children(node).length };
   }
 
-  /** The file's colour profile (LEGACY, SRGB, DISPLAY_P3): a Display P3 file's channels are P3 values (K-064). */
-  colorProfile(): string {
-    return figma.root.documentColorProfile;
+  /**
+   * What a read's model holds beside its root: the file's colour profile (LEGACY, SRGB, DISPLAY_P3: a Display P3 file's
+   * channels are P3 values, K-064) and the styles and variables the read uses (T-163). `node` is the root's layer.
+   */
+  async tables(root: ReadLayer, node: SceneNode): Promise<Pick<ReadModel, "colorProfile" | "styles" | "variables">> {
+    return { colorProfile: figma.root.documentColorProfile, ...(await this.#references.tables(root, node)) };
   }
 
   children(node: SceneNode): readonly SceneNode[] {

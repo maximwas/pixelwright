@@ -1,4 +1,4 @@
-import { inject, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import type { CssScope, PropertyGroup } from "@/core/css/css.types.ts";
 import {
@@ -17,6 +17,7 @@ import { PAINTS_TEXT } from "@/core/css/paints/paints.constants.ts";
 import { SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
 import type { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
 import { CSS_LENGTH } from "@/core/css/values/css-length.ts";
+import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -36,15 +37,18 @@ export class EffectsGroup implements PropertyGroup {
   readonly #solid;
   readonly #lengths;
   readonly #format;
+  readonly #names;
 
   constructor(
     solid = inject(SOLID_PAINT),
     lengths = inject(CSS_LENGTH),
     format = inject(NUMBER_FORMAT),
+    names = inject(TOKEN_NAMES),
   ) {
     this.#solid = solid;
     this.#lengths = lengths;
     this.#format = format;
+    this.#names = names;
   }
 
   read({ layer, model, css }: CssScope): void {
@@ -65,9 +69,26 @@ export class EffectsGroup implements PropertyGroup {
   }
 
   /**
-   * Shadows top first, as CSS lists them (Figma keeps them bottom first, FX-058): box-shadow with inner ones inset, or a
-   * text's text-shadow, which has no inner shadow or spread. An effect style's shadows are its token.
+   * The visible shadows top first, as CSS lists them (Figma keeps them bottom first, FX-058): box-shadow's with inner
+   * ones inset, or a text's text-shadow, which has no inner shadow or spread; empty when there are none.
    */
+  shadows(
+    effects: readonly Effect[],
+    isText: boolean,
+    model: ReadModel,
+  ): string {
+    return effects
+      .filter(
+        (effect) =>
+          (effect.visible ?? true) &&
+          (effect.type === FIGMA_EFFECT.dropShadow || (effect.type === FIGMA_EFFECT.innerShadow && !isText)),
+      )
+      .reverse()
+      .map((effect) => this.#shadow(effect, isText, model))
+      .join(EFFECTS_VALUE.joint);
+  }
+
+  /** The layer's shadows; an effect style's are its token (T-163). */
   #shadows(
     layer: ReadLayer,
     effects: readonly Effect[],
@@ -75,14 +96,9 @@ export class EffectsGroup implements PropertyGroup {
     css: CssDeclarations,
   ): void {
     const isText = TEXT_TYPES[layer.type] ?? false;
-    const shadows = effects
-      .filter(
-        (effect) => effect.type === FIGMA_EFFECT.dropShadow || (effect.type === FIGMA_EFFECT.innerShadow && !isText),
-      )
-      .reverse()
-      .map((effect) => this.#shadow(effect, isText, model));
+    const shadows = this.shadows(effects, isText, model);
 
-    if (shadows.length === 0) {
+    if (shadows === "") {
       return;
     }
 
@@ -90,7 +106,7 @@ export class EffectsGroup implements PropertyGroup {
 
     css.set(
       isText ? CSS_PROPERTY.textShadow : CSS_PROPERTY.boxShadow,
-      style === undefined ? shadows.join(EFFECTS_VALUE.joint) : PAINTS_TEXT.token(this.#solid.token(style.name)),
+      style === undefined ? shadows : PAINTS_TEXT.token(this.#names.style(style)),
     );
   }
 
@@ -147,3 +163,5 @@ export class EffectsGroup implements PropertyGroup {
     return this.#format.round(radius * EFFECTS_NUMBER.blurPerRadius, PRECISION.blur);
   }
 }
+
+export const EFFECTS_GROUP = new InjectionToken<EffectsGroup>("EffectsGroup");

@@ -1,8 +1,12 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_VAR, type TokenRef } from "@/core/css/values/css-var.ts";
 import { CSS_PATTERN, CSS_VALUE } from "@/core/css/values/values.constants.ts";
+import { TOKEN_TEXT } from "@/core/kernel/names/names.constants.ts";
+import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
+import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /** A length as design_apply takes it: pixels, or a token. */
 export type LengthValue = number | TokenRef;
@@ -15,10 +19,29 @@ type BoxSides = readonly [top: string, right: string, bottom: string, left: stri
 export class CssLength {
   readonly #vars;
   readonly #format;
+  readonly #names;
 
-  constructor(vars = inject(CSS_VAR), format = inject(NUMBER_FORMAT)) {
+  constructor(
+    vars = inject(CSS_VAR),
+    format = inject(NUMBER_FORMAT),
+    names = inject(TOKEN_NAMES),
+  ) {
     this.#vars = vars;
     this.#format = format;
+    this.#names = names;
+  }
+
+  /** A layer's length in field `key`, or the var() of the variable bound to that field (T-163), as 0.7.0 wrote it. */
+  bound(
+    layer: Pick<ReadLayer, "boundVariables">,
+    key: string,
+    value: number,
+    model: ReadModel,
+  ): string {
+    const id = this.#names.alias(layer.boundVariables, key);
+    const variable = id === undefined ? undefined : model.variables[id];
+
+    return variable === undefined ? this.px(value) : TOKEN_TEXT.reference(this.#names.variable(variable));
   }
 
   /** A length in whole pixels, `0` without a unit. */

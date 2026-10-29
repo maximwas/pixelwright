@@ -5,7 +5,7 @@ import { READ_VALUE } from "@/shared/read-model/read-model.constants.ts";
 
 /**
  * A layer's fills (0.7.0's paints reader): Figma's paints as plain data, bound variables included, or mixed for a
- * text whose runs differ; none when it has none. The server maps them to CSS.
+ * text whose runs differ, none when it has none; and the paint style they come from (T-163). The server maps them to CSS.
  */
 @injectable()
 export class PaintFieldReader implements FieldReader {
@@ -14,6 +14,12 @@ export class PaintFieldReader implements FieldReader {
       return {};
     }
 
+    const style = node.fillStyleId === figma.mixed ? READ_VALUE.mixed : node.fillStyleId;
+
+    return { ...this.#fills(node), ...(style === "" ? {} : { fillStyleId: style }) };
+  }
+
+  #fills(node: SceneNode & MinimalFillsMixin): Partial<ReadLayer> {
     if (node.fills === figma.mixed) {
       return { fills: READ_VALUE.mixed };
     }

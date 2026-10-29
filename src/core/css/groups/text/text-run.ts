@@ -17,6 +17,7 @@ import {
 import { PAINT_LIST } from "@/core/css/paints/paint-list.ts";
 import { UNMAPPED_PAINT } from "@/core/css/paints/paints.constants.ts";
 import type { CssDeclaration } from "@/core/css/registry/css-declarations.ts";
+import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -46,15 +47,18 @@ export class TextRun {
   readonly #fonts;
   readonly #paints;
   readonly #format;
+  readonly #names;
 
   constructor(
     fonts = inject(FONT_SHORTHAND),
     paints = inject(PAINT_LIST),
     format = inject(NUMBER_FORMAT),
+    names = inject(TOKEN_NAMES),
   ) {
     this.#fonts = fonts;
     this.#paints = paints;
     this.#format = format;
+    this.#names = names;
   }
 
   /** C-110: the run covering the most characters, the text's own style; a tie goes to the first. */
@@ -69,7 +73,11 @@ export class TextRun {
   read(segment: TextSegment, model: ReadModel): RunCss {
     const found = segment.textStyleId === "" ? undefined : model.styles[segment.textStyleId];
     const style = found?.type === FIGMA_TEXT.textStyle ? found : undefined;
-    const run: RunCss = { properties: new Map(), notes: [], textStyle: style?.name };
+    const run: RunCss = {
+      properties: new Map(),
+      notes: [],
+      textStyle: style === undefined ? undefined : this.#names.styleName(style),
+    };
     const same = (part: StyledPart) => style !== undefined && this.#same(style, segment, part);
 
     if (!(same(STYLED_PART.fontName) && same(STYLED_PART.fontSize) && same(STYLED_PART.lineHeight))) {

@@ -48,18 +48,22 @@ export class ReadOperation extends Operation<ReadInput, ReadOutput> {
     const roots = found.flatMap(({ node }) => (node === null ? [] : [this.#layer(node)]));
     const { layers, cuts } = this.#run.read(roots, this.#reader, { depth, jsonChars: LIMITS.readJsonChars });
 
-    return {
-      reads: layers.map((root) => ({
+    // ReadRun answers an entry per root, in the order given.
+    const pairs = layers.flatMap((root, index) => {
+      const node = roots[index];
+
+      return node === undefined ? [] : [{ root, node }];
+    });
+    const reads = await Promise.all(
+      pairs.map(async ({ root, node }) => ({
         model: READ_MODEL.version,
         profile: READ_PROFILE.design,
         root,
-        colorProfile: this.#reader.colorProfile(),
-        styles: {},
-        variables: {},
+        ...(await this.#reader.tables(root, node)),
       })),
-      missing: found.filter(({ node }) => node === null).map(({ id }) => id),
-      cuts,
-    };
+    );
+
+    return { reads, missing: found.filter(({ node }) => node === null).map(({ id }) => id), cuts };
   }
 
   #layer(node: BaseNode): SceneNode {

@@ -5,11 +5,12 @@ import { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 const format = new NumberFormat();
-const lengths = new CssLength(new CssVar(new CssSplit()), format);
+const lengths = new CssLength(new CssVar(new CssSplit()), format, new TokenNames());
 const group = new GeometryGroup(new Placement(lengths, format), lengths, format);
 
 function layer(fields: Partial<ReadLayer>): ReadLayer {
