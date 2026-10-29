@@ -90,3 +90,22 @@ it("gives each page's find what the pages before it left of 20 s, and stops cut 
     countsCut: true,
   });
 });
+
+// T-040: without within, the current page is searched: the answer names it, and an empty one says how to look further.
+it("names the current page it searched, and hints within when it found nothing there", async () => {
+  const clock = new SpentClock();
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", new CountingPlugin(clock), []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+  const answer = await tool.execute({ name: "Plans" });
+
+  expect(answer.structuredContent).toEqual({
+    nodes: [],
+    more: false,
+    page: "1:1",
+    hint: 'Nothing found on the current page, "1:1": pass within (a page id, or "file" for every page) to search elsewhere.',
+  });
+});

@@ -17,6 +17,8 @@ export const DESIGN_ATTRIBUTE = {
   exposed: "$exposed",
   description: "description",
   note: "note",
+  /** The properties a designer pinned in Dev Mode annotations, in CSS words (C-1.5); read-only. */
+  pins: "$pins",
   /** What an instance changed on the layer outside its component's properties, in CSS words (C-133). */
   override: "$override",
   dev: "$dev",

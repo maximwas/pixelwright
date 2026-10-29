@@ -1,6 +1,6 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { type RunCss, TEXT_RUN, type TextSegment } from "@/core/css/groups/text/text-run.ts";
-import { SPAN_RESETS, TEXT_CONTENT } from "@/core/design/text/text.constants.ts";
+import { SPAN_RESETS, TEXT_PARTS } from "@/core/design/text/text.constants.ts";
 import { XML_CONTENT } from "@/core/xml/xml.constants.ts";
 import type { XmlAttribute, XmlContent } from "@/core/xml/xml.types.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -26,7 +26,7 @@ export class TextContent {
     const characters = layer.text?.characters ?? "";
 
     if (limit !== undefined) {
-      return [...this.#pieces(characters.slice(0, limit)), { kind: XML_CONTENT.text, value: TEXT_CONTENT.ellipsis }];
+      return [...this.#pieces(characters.slice(0, limit)), { kind: XML_CONTENT.text, value: TEXT_PARTS.ellipsis }];
     }
 
     const segments = layer.text?.segments ?? [];
@@ -60,8 +60,8 @@ export class TextContent {
     const attributes: XmlAttribute[] = [
       ...(own.textStyle === main.textStyle || own.textStyle === undefined
         ? []
-        : [[TEXT_CONTENT.textStyle, own.textStyle] as const]),
-      ...(href === undefined || href === this.#url(base) ? [] : [[TEXT_CONTENT.href, href] as const]),
+        : [[TEXT_PARTS.textStyle, own.textStyle] as const]),
+      ...(href === undefined || href === this.#url(base) ? [] : [[TEXT_PARTS.href, href] as const]),
       ...[...own.properties].filter(([property, value]) => main.properties.get(property) !== value),
       ...resets,
     ];
@@ -72,7 +72,7 @@ export class TextContent {
   }
 
   #url({ hyperlink }: TextSegment): string | undefined {
-    return hyperlink?.type === TEXT_CONTENT.urlLink ? hyperlink.value : undefined;
+    return hyperlink?.type === TEXT_PARTS.urlLink ? hyperlink.value : undefined;
   }
 
   /** Characters as content: nothing for none, as XML reads an empty text back as nothing. */
@@ -81,4 +81,4 @@ export class TextContent {
   }
 }
 
-export const TEXT_CONTENT_READER = new InjectionToken<TextContent>("TextContent");
+export const TEXT_CONTENT = new InjectionToken<TextContent>("TextContent");

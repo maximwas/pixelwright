@@ -31,6 +31,8 @@ export class References {
   readonly #lookup;
   readonly #numbers;
   readonly #walk;
+  readonly #numberings = new Map<string, Promise<NumberedStyle[]>>();
+  #deadline = 0;
 
   constructor(
     lookup = inject(NODE_LOOKUP),
@@ -40,6 +42,12 @@ export class References {
     this.#lookup = lookup;
     this.#numbers = numbers;
     this.#walk = walk;
+  }
+
+  /** A read begins: the deadline of its page walks, and no numbering kept from the last read. */
+  start(): void {
+    this.#numberings.clear();
+    this.#deadline = this.#walk.deadline();
   }
 
   /** The tables of one read: `root` its entry, `node` the layer it was read from. */
@@ -126,11 +134,22 @@ export class References {
     );
   }
 
+  /** What same-named styles are numbered among, once per page in a read: the read's roots on one page share it. */
+  #numbering(page: PageNode | null): Promise<NumberedStyle[]> {
+    const key = page?.id ?? "";
+    const numbering = this.#numberings.get(key) ?? this.#numbered(page);
+
+    this.#numberings.set(key, numbering);
+
+    return numbering;
+  }
+
   /**
-   * What same-named styles are numbered among: the file's own, and with a page the styles its layers use (a library's).
-   * shortcut: the page walk has no deadline and skips a text's runs; give it LayerWalk's deadline if big pages stall.
+   * The file's own styles, and with a page the styles its layers use (a library's), as far as the read's deadline lets
+   * the walk and the lookups go (P-075). shortcut: a text's runs are skipped; read them if a run's library style shows
+   * unnumbered.
    */
-  async #numbering(page: PageNode | null): Promise<NumberedStyle[]> {
+  async #numbered(page: PageNode | null): Promise<NumberedStyle[]> {
     const own: NumberedStyle[] = [
       ...(await figma.getLocalPaintStylesAsync()),
       ...(await figma.getLocalTextStylesAsync()),
@@ -144,21 +163,32 @@ export class References {
     await page.loadAsync();
 
     const known = new Set(own.map((style) => style.id));
-    const ids = new Set<string>();
+    const { kept } = this.#walk.until(this.#walk.layers(page.children), this.#deadline, {
+      accepts: (layer) => this.#libraryIds(layer, known).length > 0,
+      enough: Number.POSITIVE_INFINITY,
+    });
+    const ids = [...new Set(kept.flatMap((layer) => this.#libraryIds(layer, known)))];
+    // In the order asked, as the walk met them: the numbers depend on it.
+    const library = new Map<string, NumberedStyle | null>();
 
-    for (const layer of this.#walk.layers(page.children)) {
-      for (const field of REFERENCE_FIELD.styleFields) {
-        const id: unknown = Reflect.get(layer, field);
+    await this.#walk.lookUp(ids, this.#deadline, {
+      lookup: (id) => this.#lookup.style(id),
+      take: (id, style) => {
+        library.set(id, style);
+      },
+      enough: () => false,
+    });
 
-        if (typeof id === "string" && id !== "" && !known.has(id)) {
-          ids.add(id);
-        }
-      }
-    }
+    return [...own, ...[...library.values()].filter((style) => style !== null)];
+  }
 
-    const library = await Promise.all([...ids].map((id) => this.#lookup.style(id)));
+  /** The styles a layer uses that are not the file's own. */
+  #libraryIds(layer: SceneNode, known: ReadonlySet<string>): string[] {
+    return REFERENCE_FIELD.styleFields.flatMap((field) => {
+      const id: unknown = Reflect.get(layer, field);
 
-    return [...own, ...library.filter((style) => style !== null)];
+      return typeof id === "string" && id !== "" && !known.has(id) ? [id] : [];
+    });
   }
 
   /** A style as the model carries it: its name, and its value for the tokens. */

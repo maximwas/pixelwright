@@ -19,8 +19,11 @@ export const NodesFindInputSchema = zod.object({
   file: FileInputSchema,
 });
 
-/** The plugin's answer, every page's merged for "file", boxes in whole px. */
-export const NodesFindOutputSchema = findOp.output;
+/** The plugin's answer, every page's merged for "file", boxes in whole px; without within, the page it searched. */
+export const NodesFindOutputSchema = zod.extend(findOp.output, {
+  page: zod.exactOptional(zod.string()).check(zod.describe(NODES_FIND_FIELD.page)),
+  hint: zod.exactOptional(zod.string()).check(zod.describe(NODES_FIND_FIELD.hint)),
+});
 
 export type NodesFindInput = zod.output<typeof NodesFindInputSchema>;
 

@@ -4,7 +4,7 @@ import { ASSET_PLANNER } from "@/core/design/assets/asset-planner.ts";
 import { DESIGN_BUILDER } from "@/core/design/builder/design-builder.ts";
 import { DESIGN_ATTRIBUTE, DESIGN_FLAG, INVISIBLE_TYPES, TEXT_TYPES } from "@/core/design/design.constants.ts";
 import { INTERACTION_ATTRIBUTES } from "@/core/design/interactions/interaction-attributes.ts";
-import { TEXT_CONTENT_READER } from "@/core/design/text/text-content.ts";
+import { TEXT_CONTENT } from "@/core/design/text/text-content.ts";
 import type { XmlAttribute, XmlElement } from "@/core/xml/xml.types.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
@@ -24,7 +24,7 @@ export class LayerTree {
 
   constructor(
     builder = inject(DESIGN_BUILDER),
-    text = inject(TEXT_CONTENT_READER),
+    text = inject(TEXT_CONTENT),
     interactions = inject(INTERACTION_ATTRIBUTES),
     assets = inject(ASSET_PLANNER),
   ) {
@@ -84,21 +84,39 @@ export class LayerTree {
       ];
     }
 
-    const children = layer.children ?? [];
+    const { children, stopped } = this.#children(layer, model, options, limit);
 
-    return [
-      {
-        ...element,
-        attributes: [...element.attributes, ...this.#cut(layer, Math.min(children.length, limit ?? children.length))],
-        content: null,
-        children: children.flatMap((child) => this.#elements(child, model, layer, options)).slice(0, limit),
-      },
-    ];
+    return [{ ...element, attributes: [...element.attributes, ...this.#cut(layer, stopped)], content: null, children }];
   }
 
-  /** `$children` when the read listed fewer children than the layer has: its budget or the fit stopped mid-children. */
-  #cut(layer: ReadLayer, listed: number): XmlAttribute[] {
-    return listed < layer.childCount ? [[DESIGN_ATTRIBUTE.children, String(layer.childCount)]] : [];
+  /** The children's elements, built only up to `limit`; `stopped` when a child that shows was left past it. */
+  #children(
+    layer: ReadLayer,
+    model: ReadModel,
+    options: PlannedOptions,
+    limit: number | undefined,
+  ): { children: XmlElement[]; stopped: boolean } {
+    const children: XmlElement[] = [];
+
+    for (const child of layer.children ?? []) {
+      // A slice is no element: it neither counts toward the limit nor is left out by it.
+      if (!Object.hasOwn(INVISIBLE_TYPES, child.type)) {
+        if (children.length === limit) {
+          return { children, stopped: true };
+        }
+
+        children.push(...this.#elements(child, model, layer, options));
+      }
+    }
+
+    return { children, stopped: false };
+  }
+
+  /** `$children` when the read did not list every child: the fit's limit, or the read's budget, stopped mid-children. */
+  #cut(layer: ReadLayer, stopped: boolean): XmlAttribute[] {
+    return stopped || (layer.children?.length ?? 0) < layer.childCount
+      ? [[DESIGN_ATTRIBUTE.children, String(layer.childCount)]]
+      : [];
   }
 
   #truncated(truncated: boolean): XmlAttribute[] {

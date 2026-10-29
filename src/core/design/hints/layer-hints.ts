@@ -16,6 +16,7 @@ import { STRUCTURE_HINTS } from "@/core/design/hints/structure/structure-hints.t
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 
 /**
  * The hints about the read's own layers (C-151), one per kind however many layers it is about: default names, then
@@ -23,6 +24,7 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
  */
 @injectable()
 export class LayerHints {
+  readonly #readLayers = new ReadLayers();
   readonly #attributes;
   readonly #guess;
   readonly #format;
@@ -55,12 +57,7 @@ export class LayerHints {
     const found = new Map<HintKind, string[]>();
 
     for (const { layer, parent } of layers) {
-      const scope: LayerScope = {
-        layer,
-        parent,
-        root,
-        children: (layer.children ?? []).filter((child) => child.visible),
-      };
+      const scope: LayerScope = { layer, parent, root, children: this.#readLayers.visibleChildren(layer) };
 
       for (const kind of [...this.#kinds, ...this.#structure.kinds()]) {
         const example = kind.find(scope);

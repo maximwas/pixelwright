@@ -4,6 +4,7 @@ import type { TextSegment } from "@/core/css/groups/text/text-run.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 type Style = ReadModel["styles"][string];
@@ -17,6 +18,7 @@ type Style = ReadModel["styles"][string];
  */
 @injectable()
 export class AutoLineHeights {
+  readonly #readLayers = new ReadLayers();
   readonly #format;
 
   constructor(format = inject(NUMBER_FORMAT)) {
@@ -35,17 +37,15 @@ export class AutoLineHeights {
     };
   }
 
-  #find(layer: ReadLayer, found: Map<string, number>): void {
-    const [first] = layer.text?.segments ?? [];
+  #find(root: ReadLayer, found: Map<string, number>): void {
+    for (const { layer } of this.#readLayers.walk(root)) {
+      const [first] = layer.text?.segments ?? [];
 
-    if (first !== undefined && this.#hugs(layer, first) && !found.has(this.#key(first))) {
-      const lines = (layer.text?.characters ?? "").split(AUTO_LINE_HEIGHT.lineBreak).length;
+      if (first !== undefined && this.#hugs(layer, first) && !found.has(this.#key(first))) {
+        const lines = (layer.text?.characters ?? "").split(AUTO_LINE_HEIGHT.lineBreak).length;
 
-      found.set(this.#key(first), this.#format.round(layer.height / lines, PRECISION.textSpacing));
-    }
-
-    for (const child of layer.children ?? []) {
-      this.#find(child, found);
+        found.set(this.#key(first), this.#format.round(layer.height / lines, PRECISION.textSpacing));
+      }
     }
   }
 

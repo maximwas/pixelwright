@@ -1,5 +1,5 @@
 /** Figma's paint types a solid colour and an image have, and the colour profile whose channels are Display P3 values. */
-export const FIGMA_PAINT = { solid: "SOLID", image: "IMAGE", displayP3: "DISPLAY_P3" } as const;
+export const FIGMA_PAINT = { solid: "SOLID", image: "IMAGE", video: "VIDEO", displayP3: "DISPLAY_P3" } as const;
 
 /** A paint the mapping table cannot write back: a diamond or turned gradient, a video, a pattern. */
 export const UNMAPPED_PAINT: unique symbol = Symbol("unmapped paint");

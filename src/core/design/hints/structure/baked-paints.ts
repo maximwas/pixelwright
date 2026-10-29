@@ -4,6 +4,7 @@ import { ROOM_SLACK, STRUCTURE_FIGMA, STRUCTURE_TEXT } from "@/core/design/hints
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 
 type Paint = NonNullable<ReadLayer["strokes"]>[number];
 
@@ -20,6 +21,7 @@ interface Found {
  */
 @injectable()
 export class BakedPaints {
+  readonly #readLayers = new ReadLayers();
   readonly #format;
 
   constructor(format = inject(NUMBER_FORMAT)) {
@@ -46,7 +48,7 @@ export class BakedPaints {
 
     found.tiles.push(...this.#tiles(layer, fills));
 
-    const children = (layer.children ?? []).filter((child) => child.visible);
+    const children = this.#readLayers.visibleChildren(layer);
 
     children.forEach((child, index) => {
       const image = this.#under(child, children.slice(0, index));

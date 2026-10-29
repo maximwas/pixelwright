@@ -43,9 +43,9 @@ import { StructureHints } from "@/core/design/hints/structure/structure-hints.ts
 import { TokenHints } from "@/core/design/hints/token-hints.ts";
 import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { ReadJson } from "@/core/design/read-json.ts";
+import { ReadTokens } from "@/core/design/read-tokens.ts";
 import { RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
-import { ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { Measurements } from "@/core/inspect/measurements.ts";

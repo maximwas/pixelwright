@@ -5,6 +5,7 @@ import { FIT } from "@/core/design/fit/fit.constants.ts";
 import type { FitPlan } from "@/core/design/fit/fit.types.ts";
 import { FitRound } from "@/core/design/fit/fit-round.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /**
@@ -15,6 +16,7 @@ import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
  */
 @injectable()
 export class DesignFit {
+  readonly #readLayers = new ReadLayers();
   readonly #design;
 
   constructor(design = inject(DESIGN_XML)) {
@@ -53,13 +55,11 @@ export class DesignFit {
   }
 
   /** Each text layer's length by its id: the last round shortens the longest. */
-  #texts(layer: ReadLayer, found: Map<string, number>): Map<string, number> {
-    if (layer.type === TEXT_TYPES.TEXT) {
-      found.set(layer.id, layer.text?.characters.length ?? 0);
-    }
-
-    for (const child of layer.children ?? []) {
-      this.#texts(child, found);
+  #texts(root: ReadLayer, found: Map<string, number>): Map<string, number> {
+    for (const { layer } of this.#readLayers.walk(root)) {
+      if (layer.type === TEXT_TYPES.TEXT) {
+        found.set(layer.id, layer.text?.characters.length ?? 0);
+      }
     }
 
     return found;

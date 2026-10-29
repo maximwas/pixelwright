@@ -45,10 +45,10 @@ import { STRUCTURE_HINTS, StructureHints } from "@/core/design/hints/structure/s
 import { TOKEN_HINTS, TokenHints } from "@/core/design/hints/token-hints.ts";
 import { INTERACTION_ATTRIBUTES, InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { READ_JSON, ReadJson } from "@/core/design/read-json.ts";
+import { READ_TOKENS, ReadTokens } from "@/core/design/read-tokens.ts";
 import { REPEAT_FOLD, RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
-import { READ_TOKENS, ReadTokens } from "@/core/design/text/read-tokens.ts";
-import { TEXT_CONTENT_READER, TextContent } from "@/core/design/text/text-content.ts";
+import { TEXT_CONTENT, TextContent } from "@/core/design/text/text-content.ts";
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { MEASUREMENTS, Measurements } from "@/core/inspect/measurements.ts";
 import { EASING_CSS, EasingCss } from "@/core/kernel/easing/easing-css.ts";
@@ -240,7 +240,7 @@ export class ServerMain {
       .bind({ provide: ASSET_CSS, useClass: AssetCss })
       .bind({ provide: ASSET_PLANNER, useClass: AssetPlanner })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
-      .bind({ provide: TEXT_CONTENT_READER, useClass: TextContent })
+      .bind({ provide: TEXT_CONTENT, useClass: TextContent })
       .bind({ provide: READ_TOKENS, useClass: ReadTokens })
       .bind({ provide: READ_CATALOGUE, useClass: ReadCatalogue })
       .bind({ provide: LAYER_TREE, useClass: LayerTree })

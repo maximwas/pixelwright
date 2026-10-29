@@ -5,6 +5,7 @@ import { CLOCK } from "@/core/ports/clock.port.ts";
 import { WITHIN_SCOPE } from "@/server/app/scope/within-scope.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
+import { NODES_FIND_TEXT } from "@/server/tools/nodes-find/nodes-find.constants.ts";
 import {
   type NodesFindInput,
   NodesFindInputSchema,
@@ -47,7 +48,9 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
     const answers: NodesFindOutput[] = [];
     const ends = this.#clock.now() + LIMITS.opBudgetMs;
 
-    for (const root of await this.#scope.roots(this.#session, within)) {
+    const roots = await this.#scope.roots(this.#session, within);
+
+    for (const root of roots) {
       const budgetMs = Math.min(ends - this.#clock.now(), LIMITS.opBudgetMs);
 
       if (budgetMs <= 0) {
@@ -56,7 +59,7 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
         break;
       }
 
-      const found = await this.#session.run(findOp, { ...query, within: root, budgetMs });
+      const found = await this.#session.run(findOp, { ...query, within: root.id, budgetMs });
 
       answers.push(found);
 
@@ -65,7 +68,16 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
       }
     }
 
-    return this.#merged(answers, query);
+    return this.#searched(this.#merged(answers, query), within === undefined ? roots[0]?.name : undefined);
+  }
+
+  /** Without within (T-040): the current page searched, by name, and how to search further when nothing was there. */
+  #searched(answer: NodesFindOutput, page: string | undefined): NodesFindOutput {
+    if (page === undefined) {
+      return answer;
+    }
+
+    return { ...answer, page, ...(answer.nodes.length === 0 ? { hint: NODES_FIND_TEXT.nothing(page) } : {}) };
   }
 
   /** Every root's answer as one: the first layers up to the limit, and the counts added up in the order first met. */
