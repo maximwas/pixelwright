@@ -2,6 +2,10 @@ import { join } from "node:path";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
+import { DESIGN_BUILDER, DesignBuilder } from "@/core/design/builder/design-builder.ts";
+import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
+import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { NUMBER_FORMAT, NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
@@ -9,8 +13,10 @@ import { JSON_FILE } from "@/core/ports/json-file.port.ts";
 import { LOG_COMPONENT } from "@/core/ports/logger.constants.ts";
 import { LOGGER } from "@/core/ports/logger.port.ts";
 import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
+import { NODE_TAG, NodeTag } from "@/core/xml/node-tag.ts";
 import { OUTLINE_XML, OutlineXml } from "@/core/xml/outline/outline-xml.ts";
 import { XML_ESCAPE, XmlEscape } from "@/core/xml/xml-escape.ts";
+import { XML_WRITER, XmlWriter } from "@/core/xml/xml-writer.ts";
 import { SystemClock } from "@/server/adapters/clock/system-clock.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { LOG_DESTINATIONS, LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
@@ -128,8 +134,14 @@ export class ServerMain {
   #bindDomain(container: Container): void {
     container
       .bind({ provide: NUMBER_FORMAT, useClass: NumberFormat })
+      .bind({ provide: NAME_VALUE_LIST, useClass: NameValueList })
       .bind({ provide: XML_ESCAPE, useClass: XmlEscape })
-      .bind({ provide: OUTLINE_XML, useClass: OutlineXml });
+      .bind({ provide: NODE_TAG, useClass: NodeTag })
+      .bind({ provide: XML_WRITER, useClass: XmlWriter })
+      .bind({ provide: OUTLINE_XML, useClass: OutlineXml })
+      .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
+      .bind({ provide: LAYER_TREE, useClass: LayerTree })
+      .bind({ provide: DESIGN_XML, useClass: DesignXml });
   }
 
   /**

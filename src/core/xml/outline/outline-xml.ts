@@ -1,10 +1,10 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
+import { NODE_TAG } from "@/core/xml/node-tag.ts";
 import { OUTLINE_ATTRIBUTE } from "@/core/xml/outline/outline.constants.ts";
-import { TAG, TAG_RULE } from "@/core/xml/tags.constants.ts";
-import { XML } from "@/core/xml/xml.constants.ts";
-import { XML_ESCAPE } from "@/core/xml/xml-escape.ts";
+import type { XmlAttribute, XmlElement } from "@/core/xml/xml.types.ts";
+import { XML_WRITER } from "@/core/xml/xml-writer.ts";
 import type { OutlineNode } from "@/shared/ops/outline/outline.schema.ts";
 
 /** One attribute: its name and its value, none when the layer has none. */
@@ -17,15 +17,21 @@ type Attribute = readonly [name: string, value: string | number | boolean | unde
 @injectable()
 export class OutlineXml {
   readonly #numbers;
-  readonly #escape;
+  readonly #tags;
+  readonly #writer;
 
-  constructor(numbers = inject(NUMBER_FORMAT), xmlEscape = inject(XML_ESCAPE)) {
+  constructor(
+    numbers = inject(NUMBER_FORMAT),
+    tags = inject(NODE_TAG),
+    writer = inject(XML_WRITER),
+  ) {
     this.#numbers = numbers;
-    this.#escape = xmlEscape;
+    this.#tags = tags;
+    this.#writer = writer;
   }
 
   xml(root: OutlineNode): string {
-    return this.#lines(root, 0).join(XML.lineBreak);
+    return this.#writer.xml(this.#element(root));
   }
 
   /** How many layers the outline lists. */
@@ -33,24 +39,17 @@ export class OutlineXml {
     return (root.children ?? []).reduce((sum, child) => sum + this.count(child), 1);
   }
 
-  #lines(node: OutlineNode, level: number): string[] {
-    const indent = XML.indent.repeat(level);
-    const tag = this.#tag(node.type);
-    const attributes = this.#attributes(node);
-    const children = node.children ?? [];
-
-    if (children.length === 0) {
-      return [XML.leaf(indent, tag, attributes)];
-    }
-
-    return [
-      XML.open(indent, tag, attributes),
-      ...children.flatMap((child) => this.#lines(child, level + 1)),
-      XML.close(indent, tag),
-    ];
+  #element(node: OutlineNode): XmlElement {
+    return {
+      id: node.id,
+      tag: this.#tags.of(node.type),
+      attributes: this.#attributes(node),
+      content: null,
+      children: (node.children ?? []).map((child) => this.#element(child)),
+    };
   }
 
-  #attributes(node: OutlineNode): string {
+  #attributes(node: OutlineNode): XmlAttribute[] {
     const listed = node.children?.length ?? 0;
     const unlisted = node.childCount !== undefined && listed < node.childCount;
     const attributes: Attribute[] = [
@@ -67,28 +66,11 @@ export class OutlineXml {
       [OUTLINE_ATTRIBUTE.children, unlisted ? node.childCount : undefined],
     ];
 
-    return attributes
-      .flatMap(([name, value]) =>
-        value === undefined ? [] : [XML.attribute(name, this.#escape.attribute(String(value)))],
-      )
-      .join("");
+    return attributes.flatMap(([name, value]): XmlAttribute[] => (value === undefined ? [] : [[name, String(value)]]));
   }
 
   #box(value: number | undefined): number | undefined {
     return value === undefined ? undefined : this.#numbers.round(value, PRECISION.box);
-  }
-
-  /** The vocabulary's tag for the type, or 0.7.0's rule for a type it lacks: the type in PascalCase. */
-  #tag(type: string): string {
-    if (Object.hasOwn(TAG, type)) {
-      return TAG[type as keyof typeof TAG];
-    }
-
-    return type
-      .toLowerCase()
-      .split(TAG_RULE.wordSeparator)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join("");
   }
 }
 

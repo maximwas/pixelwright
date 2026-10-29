@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
+import { NodeTag } from "@/core/xml/node-tag.ts";
 import { OutlineXml } from "@/core/xml/outline/outline-xml.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
+import { XmlWriter } from "@/core/xml/xml-writer.ts";
 import type { OutlineNode } from "@/shared/ops/outline/outline.schema.ts";
 
-const outline = new OutlineXml(new NumberFormat(), new XmlEscape());
+const outline = new OutlineXml(new NumberFormat(), new NodeTag(), new XmlWriter(new XmlEscape()));
 
 /** A section with an instance whose children are past the depth, and a hidden text: boxes as the plugin reads them. */
 const SECTION: OutlineNode = {

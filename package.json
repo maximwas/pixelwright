@@ -26,6 +26,7 @@
     "plugin:install": "tsx scripts/install-plugin.ts",
     "try": "tsx scripts/try.ts",
     "try:hello": "tsx scripts/try-hello.ts",
+    "dev:read": "tsx scripts/dev-read.ts",
     "test": "vitest run --project unit --project contract",
     "test:live": "pnpm build && vitest run --project live",
     "check:deps": "depcruise src scripts test",
