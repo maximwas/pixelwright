@@ -1,10 +1,11 @@
 import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
 import { CANVAS_VIEW } from "@/plugin/adapters/figma/canvas-view.ts";
+import { LAYER_REFS } from "@/plugin/adapters/figma/layer-refs.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
-import { FIGMA_DEV_STATUS, OUTLINE_NODE_TYPE } from "@/plugin/operations/outline/outline.constants.ts";
+import { OUTLINE_NODE_TYPE } from "@/plugin/operations/outline/outline.constants.ts";
 import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import type { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
 import type { OutlineNode } from "@/shared/ops/outline/outline.schema.ts";
@@ -35,15 +36,18 @@ interface Walk {
 export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {
   readonly #lookup;
   readonly #view;
+  readonly #refs;
 
   constructor(
     report = inject(OP_REPORT),
     lookup = inject(NODE_LOOKUP),
     view = inject(CANVAS_VIEW),
+    refs = inject(LAYER_REFS),
   ) {
     super(report);
     this.#lookup = lookup;
     this.#view = view;
+    this.#refs = refs;
   }
 
   protected async execute({ node, depth }: OutlineInput): Promise<OutlineOutput> {
@@ -112,7 +116,7 @@ export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {
 
   #entry(node: BaseNode, walk: Walk): OutlineNode {
     const box = this.#box(node);
-    const dev = this.#dev(node);
+    const dev = this.#refs.devStatus(node);
     const entry: OutlineNode = {
       id: node.id,
       name: node.name,
@@ -154,13 +158,6 @@ export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {
       }),
     );
     await this.#nameComponents(instances.slice(LIMITS.mainComponentBatch), deadline);
-  }
-
-  /** The layer's Dev Mode status; none when unmarked. */
-  #dev(node: BaseNode): OutlineNode["dev"] {
-    const status = "devStatus" in node ? node.devStatus : null;
-
-    return status === null ? undefined : FIGMA_DEV_STATUS[status.type];
   }
 
   /** The layer's box in page px; null for a node Figma gives none (a page, the document). */

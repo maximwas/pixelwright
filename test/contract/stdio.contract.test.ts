@@ -63,7 +63,9 @@ describe("the built server over stdio", () => {
       "node_show",
       "selection_wait",
       "changes_since",
+      "file_map",
       "viewport_get",
+      "nodes_find",
       "outline",
       "execute",
     ]);

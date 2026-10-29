@@ -1,5 +1,7 @@
 import { changesOp } from "@/shared/ops/changes/changes.manifest.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
+import { fileMapOp } from "@/shared/ops/file-map/file-map.manifest.ts";
+import { findOp } from "@/shared/ops/find/find.manifest.ts";
 import { OpCatalog } from "@/shared/ops/op-catalog.ts";
 import { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
 import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
@@ -18,4 +20,6 @@ export const OP_CONTRACTS = new OpCatalog([
   viewportOp,
   selectionWaitOp,
   outlineOp,
+  fileMapOp,
+  findOp,
 ]);

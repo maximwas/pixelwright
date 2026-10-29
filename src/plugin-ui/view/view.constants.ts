@@ -82,6 +82,8 @@ export const ACTION_NAME: Partial<Record<OpName, string>> = {
   [OP_NAME.selection]: "Read the selection",
   [OP_NAME.changes]: "Read the changes",
   [OP_NAME.execute]: "Ran code",
+  [OP_NAME.fileMap]: "Mapped the file",
+  [OP_NAME.find]: "Found layers",
 };
 
 export const ACTIVITY_TEXT = {
