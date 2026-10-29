@@ -11,6 +11,8 @@ import { FileMapOperation } from "@/plugin/operations/file-map/file-map.operatio
 import { FindOperation } from "@/plugin/operations/find/find.operation.ts";
 import { OutlineOperation } from "@/plugin/operations/outline/outline.operation.ts";
 import { PingOperation } from "@/plugin/operations/ping/ping.operation.ts";
+import { ReadOperation } from "@/plugin/operations/read/read.operation.ts";
+import { READ_RUN, ReadRun } from "@/plugin/operations/read/read-run.ts";
 import { SelectionOperation } from "@/plugin/operations/selection/selection.operation.ts";
 import { SelectionWaitOperation } from "@/plugin/operations/selection-wait/selection-wait.operation.ts";
 import { ShowOperation } from "@/plugin/operations/show/show.operation.ts";
@@ -35,6 +37,7 @@ export class OperationProviders {
     [OP_NAME.outline]: OutlineOperation,
     [OP_NAME.fileMap]: FileMapOperation,
     [OP_NAME.find]: FindOperation,
+    [OP_NAME.read]: ReadOperation,
   };
 
   register(container: Container): void {
@@ -42,6 +45,7 @@ export class OperationProviders {
       .bind({ provide: CODE_SCOPE, useClass: CodeScope })
       .bind({ provide: CODE_RUNS, useClass: CodeRuns })
       .bind({ provide: NAME_VALUE_LIST, useClass: NameValueList })
+      .bind({ provide: READ_RUN, useClass: ReadRun })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
   }
 }

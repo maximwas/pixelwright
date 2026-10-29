@@ -17,4 +17,5 @@ export const OP_NAME = {
   outline: "outline",
   fileMap: "file_map",
   find: "find",
+  read: "read",
 } as const;

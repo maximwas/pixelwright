@@ -23,4 +23,8 @@ export const PRECISION = {
   bezier: 3,
   /** Inspect angles, rounded after the modulo (T-082). */
   angle: 2,
+  /** Read model boxes, as 0.7.0's snapshot kept them: baselines v1 and the Orbit fixtures hold 2 decimals (K-084). */
+  layer: 2,
+  /** A mirrored layer's 2x2 matrix in the read model, 0.7.0's 4 decimals: a flip's sign and its scale both show. */
+  matrix: 4,
 } as const;

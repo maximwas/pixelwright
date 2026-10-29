@@ -41,7 +41,13 @@ class TryClient {
       const call = async () => {
         const answer = await client.callTool({ name: tool, arguments: args });
 
-        process.stdout.write(`${JSON.stringify(answer.structuredContent ?? answer.content, null, 2)}\n`);
+        // A tool without structuredContent (design_read) prints its text blocks as they are: its XML reads as XML.
+        const shown =
+          answer.structuredContent === undefined
+            ? (answer.content as { readonly text?: string }[]).map(({ text }) => text ?? "").join("\n")
+            : JSON.stringify(answer.structuredContent, null, 2);
+
+        process.stdout.write(`${shown}\n`);
 
         return answer;
       };

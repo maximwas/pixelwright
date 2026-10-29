@@ -58,20 +58,24 @@ export class LiveClient {
     args: ToolResult = {},
     signal?: AbortSignal,
   ): Promise<ToolResult> {
-    if (this.#takesFile.has(tool) && args.file !== TEST_MCP.file) {
-      throw new Error(`live tests call ${tool} with file: "${TEST_MCP.file}" only, not ${JSON.stringify(args.file)}.`);
-    }
-
-    const answer = await this.#client.callTool(
-      { name: tool, arguments: args },
-      { timeout: CALL_TIMEOUT_MS, ...(signal === undefined ? {} : { signal }) },
-    );
+    const answer = await this.#answer(tool, args, signal);
 
     if (answer.isError === true || typeof answer.structuredContent !== "object" || answer.structuredContent === null) {
       throw new Error(`${tool}: ${JSON.stringify(answer.content)}`);
     }
 
     return answer.structuredContent as ToolResult;
+  }
+
+  /** The text blocks of a tool that answers without structuredContent (design_read); an error answer throws its text. */
+  async texts(tool: string, args: ToolResult = {}): Promise<string[]> {
+    const answer = await this.#answer(tool, args);
+
+    if (answer.isError === true) {
+      throw new Error(`${tool}: ${JSON.stringify(answer.content)}`);
+    }
+
+    return (answer.content as { readonly text?: string }[]).map(({ text }) => text ?? "");
   }
 
   /** status, once Test MCP's plugin is connected to this server or its owner; throws after two minutes. */
@@ -96,5 +100,20 @@ export class LiveClient {
 
   async close(): Promise<void> {
     await this.#client.close();
+  }
+
+  async #answer(
+    tool: string,
+    args: ToolResult,
+    signal?: AbortSignal,
+  ): Promise<Awaited<ReturnType<Client["callTool"]>>> {
+    if (this.#takesFile.has(tool) && args.file !== TEST_MCP.file) {
+      throw new Error(`live tests call ${tool} with file: "${TEST_MCP.file}" only, not ${JSON.stringify(args.file)}.`);
+    }
+
+    return await this.#client.callTool(
+      { name: tool, arguments: args },
+      { timeout: CALL_TIMEOUT_MS, ...(signal === undefined ? {} : { signal }) },
+    );
   }
 }

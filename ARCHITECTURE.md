@@ -12,6 +12,7 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `protocol/`: the handshake frames, the proof, the close codes and reasons, the RPC function types, the channel
     (dev or release), the message socket and its in-memory twin for tests.
   - `ops/`: one folder per op with its contract (`OpContract`: name, input and output schemas, meta), the op catalog.
+    `read/` is the read op: a read model per layer asked, the ids Figma did not give, and the cuts (A§9.4).
   - `read-model/`: the versioned read model (A§7.1, D-05): `ReadModelSchema`, a header (`model`, `profile`) around
     0.7.0's snapshot field names (`LayerSchema`, K-084), which baselines v1 store and the Orbit fixtures hold. A
     snapshot without a header (a baseline v1) reads as a design model. Strict, loose where 0.7.0 was (paints, effects,
@@ -38,7 +39,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `project/`: `ProjectFolder`, where every relative path a tool takes starts (the client's first file root, else
     CLAUDE_PROJECT_DIR, else cwd; never home or `/`).
   - `scope/`: `WithinScope`, where a tool works: the layer or page `within` names, every page for "file" (listed
-    unloaded through file_map, so the ops stay page-scoped), else the current page.
+    unloaded through file_map, so the ops stay page-scoped), else the current page. `SelectedLayer`: the one selected
+    layer a tool defaults to, NODE_NOT_FOUND with advice when none or several are (D-64).
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn).
 - `server/adapters/`: the port implementations on Node.
@@ -58,12 +60,15 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `CurrentSelection`,
   which also selects and hears selection changes; `LayerRefs`, a layer as lists name it, its Dev Mode status too; `CanvasView`, the current
   page and the view, the one place either changes; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
-  pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline); `host/` holds the
+  pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline; `layer-read/`:
+  `LayerReader`, a layer as the read model, its header and the field readers in 0.7.0's order, `BoxFieldReader` the
+  first, a hidden layer a stub); `host/` holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file
   id).
-- `plugin/operations/`: one folder per op, one `Operation` subclass each; `execute/` also holds `CodeRuns` (the code's run past its answer) and `CodeScope` (pw, kept
+- `plugin/operations/`: one folder per op, one `Operation` subclass each; `read/` also holds `ReadRun`, the
+  breadth-first read under the JSON budget with its cuts; `execute/` also holds `CodeRuns` (the code's run past its answer) and `CodeScope` (pw, kept
   while the window is open) and the code's console, value printer and error text.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
@@ -140,9 +145,13 @@ the pairing code on each status, and runs its ops through it. A newer server tak
 tokens of config values and multi-provider lists that belong to no class in a topic's or a root's `x.tokens.ts`
 (`BRIDGE_SETTINGS`, `LOG_SETTINGS`, `LOG_DESTINATIONS`).
 
-**Reads a layer as design XML.** The read model (`ReadModelSchema`) goes to `DesignXml`: `LayerTree` walks it,
-`DesignBuilder` gives each layer its tag and attributes, `XmlWriter` writes the tree. `pnpm dev:read <fixture>` does
-it offline for an Orbit fixture in `test/golden/fixtures/`.
+**Reads a layer as design XML.** `DesignReadTool` takes the node given, or the one `SelectedLayer` finds, and runs
+the read op. In the plugin, `ReadOperation` looks each id up once (one Figma cannot give is missing), and `ReadRun`
+reads the layers breadth first under `LIMITS.readJsonChars` through `LayerReader`, a hidden layer as a stub, with a cut
+wherever children were not all read. Back on the server a hidden root is refused and the read model goes to
+`DesignXml`: `LayerTree` walks it, `DesignBuilder` gives each layer its tag and attributes, `XmlWriter` writes the
+tree. The answer is two text blocks, the XML and the JSON, with no structuredContent. `pnpm dev:read <fixture>` does
+the server's half offline for an Orbit fixture in `test/golden/fixtures/`.
 
 **Adds a tool.** A folder under `server/tools/` with the manifest (name, description, schemas, annotations, `load()`),
 the schema and the tool class on `Tool`; one line in `ToolCatalog`. The `tools.json` golden changes with it.

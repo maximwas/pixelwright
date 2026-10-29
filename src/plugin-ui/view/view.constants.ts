@@ -88,6 +88,7 @@ export const ACTION_NAME: Partial<Record<OpName, string>> = {
   [OP_NAME.outline]: "Read the page outline",
   [OP_NAME.fileMap]: "Mapped the file",
   [OP_NAME.find]: "Searched layers",
+  [OP_NAME.read]: "Read a design",
 };
 
 export const ACTIVITY_TEXT = {
