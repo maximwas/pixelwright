@@ -78,6 +78,129 @@ export function textLayer(
   };
 }
 
+/** A grey no style or token has: the structure layers add no raw-colour examples. */
+const GREY = { ...RED, color: { r: 0.5, g: 0.5, b: 0.5 } };
+const IMAGE = { type: "IMAGE", visible: true, scaleMode: "FILL", imageHash: "abc" };
+
+/** A text of the given resize, with these fields. */
+function resized(
+  base: Record<string, unknown>,
+  resize: string,
+  fields: object = {},
+): Record<string, unknown> {
+  return { ...base, ...fields, text: { ...(base.text as object), textAutoResize: resize } };
+}
+
+/** The structure hints' layers (Q-001..Q-007), with ids under the prefix. */
+function structureKinds(prefix: string): object[] {
+  const items = (first: number, type: string) =>
+    [0, 1, 2, 3, 4].map((index) =>
+      layer({ id: `${prefix}:${first + index}`, name: "Item", type, width: 40, height: 10, fills: [GREY] }),
+    );
+
+  return [
+    layer({
+      id: `${prefix}:13`,
+      name: "Stack by hand",
+      layoutMode: "VERTICAL",
+      width: 400,
+      height: 100,
+      children: [0, 1, 2].map((index) =>
+        layer({
+          id: `${prefix}:${14 + index}`,
+          name: "Bar",
+          type: "RECTANGLE",
+          y: index * 30,
+          width: 40,
+          height: 20,
+          fills: [GREY],
+          layoutPositioning: "ABSOLUTE",
+        }),
+      ),
+    }),
+    layer({
+      id: `${prefix}:17`,
+      name: "Row",
+      layoutMode: "HORIZONTAL",
+      width: 400,
+      height: 40,
+      children: [
+        layer({ id: `${prefix}:18`, name: "Left", type: "RECTANGLE", width: 40, height: 40, fills: [GREY] }),
+        layer({ id: `${prefix}:19`, name: "Gap", x: 40, width: 24, height: 40 }),
+        layer({ id: `${prefix}:20`, name: "Right", type: "RECTANGLE", x: 64, width: 40, height: 40, fills: [GREY] }),
+      ],
+    }),
+    { ...textLayer(`${prefix}:21`, "Title", "Plans\nand prices"), height: 40 },
+    layer({
+      id: `${prefix}:22`,
+      name: "Dots",
+      width: 140,
+      height: 40,
+      children: [0, 50, 100].map((x, index) =>
+        layer({ id: `${prefix}:${23 + index}`, name: "Dot", type: "ELLIPSE", x, width: 40, height: 40, fills: [GREY] }),
+      ),
+    }),
+    resized(textLayer(`${prefix}:26`, "Body", "Every plan includes unlimited projects."), "HEIGHT", {
+      width: 240,
+      height: 40,
+    }),
+    layer({
+      id: `${prefix}:27`,
+      name: "Excerpt",
+      clipsContent: true,
+      width: 200,
+      height: 40,
+      children: [resized(textLayer(`${prefix}:28`, "Excerpt text", "A long excerpt"), "HEIGHT", { y: 20, height: 40 })],
+    }),
+    layer({
+      id: `${prefix}:29`,
+      name: "Hero",
+      type: "RECTANGLE",
+      x: 500,
+      width: 400,
+      height: 200,
+      fills: [IMAGE, GRADIENT],
+    }),
+    layer({
+      id: `${prefix}:30`,
+      name: "Grain",
+      type: "RECTANGLE",
+      x: 500,
+      width: 400,
+      height: 200,
+      fills: [{ ...IMAGE, scaleMode: "TILE", scalingFactor: 0.5 }],
+    }),
+    layer({
+      id: `${prefix}:31`,
+      name: "Pricing",
+      layoutMode: "VERTICAL",
+      width: 400,
+      children: items(32, "RECTANGLE"),
+    }),
+    layer({ id: `${prefix}:37`, name: "Menu", layoutMode: "VERTICAL", width: 400, children: items(38, "ELLIPSE") }),
+  ];
+}
+
+/** Three alike frames of two layers each, built by hand (Q-002). */
+function repeated(
+  prefix: string,
+  name: string,
+  types: readonly string[],
+): object[] {
+  return [1, 2, 3].map((index) =>
+    layer({
+      id: `${prefix}:${index}`,
+      name,
+      layoutMode: "HORIZONTAL",
+      width: 200,
+      height: 40,
+      children: types.map((type, place) =>
+        layer({ id: `${prefix}:${index}${place}`, name: type, type, width: 20, height: 20, fills: [GREY] }),
+      ),
+    }),
+  );
+}
+
 /** One layer or more for each layer hint, with ids under the prefix: a second copy brings the plural wordings. */
 function kinds(prefix: string): object[] {
   return [
@@ -192,6 +315,10 @@ export function everyHintModel(): ReadModel {
       children: [
         ...kinds("1"),
         ...kinds("2"),
+        ...structureKinds("1"),
+        ...structureKinds("2"),
+        ...repeated("4", "Plan", ["RECTANGLE", "ELLIPSE"]),
+        ...repeated("5", "Tag", ["ELLIPSE", "ELLIPSE"]),
         layer({
           id: "3:1",
           name: "Mark",

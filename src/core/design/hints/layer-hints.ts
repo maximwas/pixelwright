@@ -10,28 +10,12 @@ import {
   OVERFLOW_SLACK,
   TURN_SLACK,
 } from "@/core/design/hints/hints.constants.ts";
+import type { HintKind, LayerScope, ShownLayer } from "@/core/design/hints/hints.types.ts";
 import { LAYOUT_GUESS } from "@/core/design/hints/layout-guess.ts";
+import { STRUCTURE_HINTS } from "@/core/design/hints/structure/structure-hints.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
-
-/** A layer the read shows as a layer, with the parent it sits in. */
-export interface ShownLayer {
-  readonly layer: ReadLayer;
-  readonly parent: ReadLayer | null;
-}
-
-/** What a hint looks at on a layer: the layer, its parent, the read's root and the layer's shown children. */
-interface LayerScope extends ShownLayer {
-  readonly root: ReadLayer;
-  readonly children: readonly ReadLayer[];
-}
-
-/** A kind of hint about layers: the example a layer gives of it (null for none), and the hint for all of them. */
-interface HintKind {
-  readonly find: (scope: LayerScope) => string | null;
-  readonly say: (examples: readonly string[]) => string;
-}
 
 /**
  * The hints about the read's own layers (C-151), one per kind however many layers it is about: default names, then
@@ -42,6 +26,7 @@ export class LayerHints {
   readonly #attributes;
   readonly #guess;
   readonly #format;
+  readonly #structure;
   readonly #kinds: readonly HintKind[] = [
     { find: (scope) => this.#manual(scope), say: HINT_TEXT.manual },
     { find: (scope) => this.#overridden(scope), say: HINT_TEXT.overridden },
@@ -58,10 +43,12 @@ export class LayerHints {
     attributes = inject(COMPONENT_ATTRIBUTES),
     guess = inject(LAYOUT_GUESS),
     format = inject(NUMBER_FORMAT),
+    structure = inject(STRUCTURE_HINTS),
   ) {
     this.#attributes = attributes;
     this.#guess = guess;
     this.#format = format;
+    this.#structure = structure;
   }
 
   read(layers: readonly ShownLayer[], root: ReadLayer): string[] {
@@ -75,7 +62,7 @@ export class LayerHints {
         children: (layer.children ?? []).filter((child) => child.visible),
       };
 
-      for (const kind of this.#kinds) {
+      for (const kind of [...this.#kinds, ...this.#structure.kinds()]) {
         const example = kind.find(scope);
 
         if (example !== null) {
@@ -89,6 +76,7 @@ export class LayerHints {
     return [
       ...this.#defaultNames(nodes),
       ...[...found].map(([kind, examples]) => kind.say(examples)),
+      ...this.#structure.read(layers, root),
       ...this.#missingFonts(nodes),
     ];
   }

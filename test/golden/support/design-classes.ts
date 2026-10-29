@@ -35,6 +35,11 @@ import { DesignHints } from "@/core/design/hints/design-hints.ts";
 import { InferredHints } from "@/core/design/hints/inferred-hints.ts";
 import { LayerHints } from "@/core/design/hints/layer-hints.ts";
 import { LayoutGuess } from "@/core/design/hints/layout-guess.ts";
+import { AlikeStructures } from "@/core/design/hints/structure/alike-structures.ts";
+import { BakedPaints } from "@/core/design/hints/structure/baked-paints.ts";
+import { LayerShape } from "@/core/design/hints/structure/layer-shape.ts";
+import { SharedLayers } from "@/core/design/hints/structure/shared-layers.ts";
+import { StructureHints } from "@/core/design/hints/structure/structure-hints.ts";
 import { TokenHints } from "@/core/design/hints/token-hints.ts";
 import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { ReadJson } from "@/core/design/read-json.ts";
@@ -69,6 +74,7 @@ const runs = new TextRun(new FontShorthand(format), paints, format, names);
 const classifier = new AssetClassifier();
 const planner = new AssetPlanner(classifier, new Slug(), new AssetCss(lengths, new CssSplit()));
 const components = new ComponentAttributes(new NameValueList());
+const shape = new LayerShape();
 
 export const design = new DesignXml(
   new LayerTree(
@@ -106,7 +112,12 @@ const catalogue = new ReadCatalogue(
 );
 
 const hints = new DesignHints(
-  new LayerHints(components, new LayoutGuess(format), format),
+  new LayerHints(
+    components,
+    new LayoutGuess(format),
+    format,
+    new StructureHints(format, new AlikeStructures(shape), new SharedLayers(shape), new BakedPaints(format)),
+  ),
   new TokenHints(names, solid),
   new InferredHints(names, format),
   classifier,
