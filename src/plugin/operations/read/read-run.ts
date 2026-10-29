@@ -6,7 +6,7 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 /** What a read walks, so its budget is tested over plain data: a node's own entry and its children. */
 export interface ReadTree<Node> {
   /** The node's entry without its children, its box from `root`'s corner; a hidden one a stub. */
-  entry(node: Node, root: Node): ReadLayer;
+  entry(node: Node, root: Node): ReadLayer | Promise<ReadLayer>;
   children(node: Node): readonly Node[];
 }
 
@@ -47,31 +47,32 @@ interface Walk<Node> {
  */
 @injectable()
 export class ReadRun {
-  read<Node>(
+  async read<Node>(
     roots: readonly Node[],
     tree: ReadTree<Node>,
     limits: ReadLimits,
-  ): ReadResult {
+  ): Promise<ReadResult> {
     const walk: Walk<Node> = { tree, limits, queue: [], cuts: [], used: 0 };
-    const layers = roots.map((root) => {
-      const entry = tree.entry(root, root);
+    const layers: ReadLayer[] = [];
+
+    for (const root of roots) {
+      const entry = await tree.entry(root, root);
 
       walk.used += JSON.stringify(entry).length;
       walk.queue.push({ node: root, root, entry, level: 0 });
-
-      return entry;
-    });
+      layers.push(entry);
+    }
 
     // The queue grows while it is walked: for...of reads its length at every step, which makes the walk breadth first.
     for (const queued of walk.queue) {
-      this.#expand(walk, queued);
+      await this.#expand(walk, queued);
     }
 
     return { layers, cuts: walk.cuts };
   }
 
   /** Reads a layer's children into its entry, as far as the depth and the budget go. */
-  #expand<Node>(walk: Walk<Node>, { node, root, entry, level }: Queued<Node>): void {
+  async #expand<Node>(walk: Walk<Node>, { node, root, entry, level }: Queued<Node>): Promise<void> {
     const { depth, jsonChars } = walk.limits;
 
     if (entry.childCount === 0 || (level > 0 && !entry.visible)) {
@@ -87,7 +88,7 @@ export class ReadRun {
     const children: ReadLayer[] = [];
 
     for (const child of walk.tree.children(node)) {
-      const read = walk.tree.entry(child, root);
+      const read = await walk.tree.entry(child, root);
 
       walk.used += JSON.stringify(read).length;
 

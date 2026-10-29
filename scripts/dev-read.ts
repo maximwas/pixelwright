@@ -26,9 +26,12 @@ import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
+import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
+import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -52,7 +55,7 @@ class DevRead {
     new LayerTree(
       new DesignBuilder(
         new NodeTag(),
-        new NameValueList(),
+        new ComponentAttributes(new NameValueList()),
         new CssReader(
           new GroupRegistry([
             new LayoutGroup(this.#lengths, this.#format),
@@ -67,6 +70,7 @@ class DevRead {
         new TextPathData(),
       ),
       new TextContent(this.#runs),
+      new InteractionAttributes(new EasingCss(this.#format)),
     ),
     new XmlWriter(new XmlEscape()),
   );

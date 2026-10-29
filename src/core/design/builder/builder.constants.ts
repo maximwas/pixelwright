@@ -1,15 +1,3 @@
-/**
- * The instance properties an element lists: the variant's values in `variant`; the instance's own texts and toggles in
- * `props` (a swapped instance and a slot show as children).
- */
-export const PROPERTY_TYPES = { variant: { VARIANT: "VARIANT" }, own: { TEXT: "TEXT", BOOLEAN: "BOOLEAN" } } as const;
-
-/** The fields a component's layer binds to its properties (componentPropertyReferences): text, visibility, swap. */
-export const PROPERTY_FIELD = { characters: "characters", visible: "visible", mainComponent: "mainComponent" } as const;
-
-/** Figma suffixes a non-variant property's name with its id ("Label#12:0"); people read the bare name. */
-export const PROPERTY_NAME = { idSuffix: /#[^#]*$/ } as const;
-
 /** Dev Mode notes as one attribute: `Category: label`, joined by ` | `; a bar or backslash inside a note is escaped. */
 export const NOTE = {
   separator: " | ",

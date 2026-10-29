@@ -32,13 +32,13 @@ class PlainTree implements ReadTree<PlainNode> {
 }
 
 // K-034, m:ec973ea3: the budget can stop a read mid-children, and that layer is a cut as much as one left unread.
-it("reads breadth first under the budget and reports a layer cut mid-children as a cut, and one left unread", () => {
+it("reads breadth first under the budget and reports a layer cut mid-children as a cut, and one left unread", async () => {
   const tree = new PlainTree();
   const root = layer("r0", [layer("a0", [layer("a1"), layer("a2")]), layer("b0"), layer("c0", [layer("c1")])]);
   const size = JSON.stringify(tree.entry(root)).length;
 
   // The root, its three children and a0's first child fit; a0's second does not, and c0 is never opened.
-  const { layers, cuts } = new ReadRun().read([root], tree, { jsonChars: 5 * size });
+  const { layers, cuts } = await new ReadRun().read([root], tree, { jsonChars: 5 * size });
   const [top] = layers;
 
   expect(top?.children?.map(({ id }) => id)).toEqual(["a0", "b0", "c0"]);

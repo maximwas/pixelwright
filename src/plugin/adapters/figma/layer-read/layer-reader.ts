@@ -2,12 +2,16 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import { REFERENCES } from "@/plugin/adapters/figma/layer-read/references.ts";
+import { LAYER_REFS } from "@/plugin/adapters/figma/layer-refs.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
-/** One group of a layer's fields (Strategy, A§9.4): those Figma gives, its defaults left out, boxes from `origin`. */
+/**
+ * One group of a layer's fields (Strategy, A§9.4): those Figma gives, its defaults left out, boxes from `origin`. A
+ * group that must ask Figma (a main component, a destination's name, a collection) answers a promise.
+ */
 export interface FieldReader {
-  read(node: SceneNode, origin: Vector): Partial<ReadLayer>;
+  read(node: SceneNode, origin: Vector): Partial<ReadLayer> | Promise<Partial<ReadLayer>>;
 }
 
 /** The fields every entry has, a hidden layer's stub too (D-18): what the layer is, and its box from the read's root. */
@@ -23,25 +27,29 @@ export class LayerReader {
   readonly #readers;
   readonly #format;
   readonly #references;
+  readonly #refs;
 
   constructor(
     readers = inject(FIELD_READERS, { multi: true }),
     format = inject(NUMBER_FORMAT),
     references = inject(REFERENCES),
+    refs = inject(LAYER_REFS),
   ) {
     this.#readers = readers;
     this.#format = format;
     this.#references = references;
+    this.#refs = refs;
   }
 
   /** The layer's own entry, its children left out: ReadRun lists them. */
-  entry(node: SceneNode, root: SceneNode): ReadLayer {
+  async entry(node: SceneNode, root: SceneNode): Promise<ReadLayer> {
     const origin = this.#translation(root);
     const fields: Partial<ReadLayer> = {};
 
     if (node.visible) {
+      // In order, one after another: the model keeps the readers' field order (m:f53dbe49).
       for (const reader of this.#readers) {
-        Object.assign(fields, reader.read(node, origin));
+        Object.assign(fields, await reader.read(node, origin));
       }
     }
 
@@ -50,10 +58,28 @@ export class LayerReader {
 
   /**
    * What a read's model holds beside its root: the file's colour profile (LEGACY, SRGB, DISPLAY_P3: a Display P3 file's
-   * channels are P3 values, K-064) and the styles and variables the read uses (T-163). `node` is the root's layer.
+   * channels are P3 values, K-064), the Dev Mode status of the root or the nearest layer above it (C-134), and the
+   * styles and variables the read uses (T-163). `node` is the root's layer.
    */
-  async tables(root: ReadLayer, node: SceneNode): Promise<Pick<ReadModel, "colorProfile" | "styles" | "variables">> {
-    return { colorProfile: figma.root.documentColorProfile, ...(await this.#references.tables(root, node)) };
+  async tables(root: ReadLayer,    node: SceneNode): Promise<Pick<ReadModel, "colorProfile" | "devStatus" | "styles" | "variables">> {
+    return {
+      colorProfile: figma.root.documentColorProfile,
+      ...this.#devStatus(node),
+      ...(await this.#references.tables(root, node)),
+    };
+  }
+
+  /** Figma marks frames and sections: the status of the layer or of the nearest one above it that has one. */
+  #devStatus(node: SceneNode): Pick<ReadModel, "devStatus"> {
+    for (let current: BaseNode | null = node; current !== null; current = current.parent) {
+      const devStatus = this.#refs.devStatus(current);
+
+      if (devStatus !== undefined) {
+        return { devStatus };
+      }
+    }
+
+    return {};
   }
 
   children(node: SceneNode): readonly SceneNode[] {

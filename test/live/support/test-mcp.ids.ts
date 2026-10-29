@@ -15,6 +15,10 @@ export const TEST_MCP = {
     sticker: "54:450",
     /** The Pro plan card: a 2px inside stroke (the Install card has none). */
     planPro: "54:268",
+    /** The Starter plan card: a Plan Card instance with its texts and a toggle as properties. */
+    planStarter: "54:244",
+    /** The header's Sign in: a Button variant (Variant=Secondary, State=Default). */
+    signIn: "54:236",
     orbitComponents: "54:183",
   },
 } as const;

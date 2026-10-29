@@ -15,9 +15,12 @@ import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
+import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
+import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -40,11 +43,12 @@ const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
       new NodeTag(),
-      new NameValueList(),
+      new ComponentAttributes(new NameValueList()),
       new CssReader(new GroupRegistry([new LayoutGroup(lengths, format)])),
       new TextPathData(),
     ),
     new TextContent(new TextRun(new FontShorthand(format), paints, format, new TokenNames())),
+    new InteractionAttributes(new EasingCss(format)),
   ),
   new XmlWriter(new XmlEscape()),
 );
@@ -97,7 +101,10 @@ describe("DesignXml", () => {
         },
       },
       annotations: [{ label: "Opens | the cart", category: "Behaviour" }],
+      overrides: ["strokes"],
       href: "https://orbit.test/cart",
+      modes: [{ collection: "Brand", mode: "Ocean Blue" }],
+      reactions: [{ trigger: { type: "ON_CLICK" }, actions: [{ type: "BACK" }] }],
       componentPropertyReferences: { visible: "Shown#5:6" },
       gridStyleId: "S:grid",
       childCount: 3,
@@ -108,8 +115,9 @@ describe("DesignXml", () => {
     expect(design.xml(model(root, { devStatus: "ready", styles }))).toBe(
       [
         '<Instance id="1:1" name="Buy button" component="Button" variant="State=Hover" props="Label=Buy\\, now, Icon=true"' +
-          ' $exposed="true" note="Behaviour: Opens \\| the cart" $dev="ready for dev" href="https://orbit.test/cart"' +
-          ' $visibleProp="Shown" $grid-style="Grid/12" $children="3">',
+          ' $exposed="true" note="Behaviour: Opens \\| the cart" $override="border" $dev="ready for dev"' +
+          ' href="https://orbit.test/cart" data-brand="ocean-blue" $visibleProp="Shown" $grid-style="Grid/12"' +
+          ' $on-click="back" $children="3">',
         '  <Rectangle id="1:2" name="Fill" mask="alpha"/>',
         "</Instance>",
       ].join("\n"),
