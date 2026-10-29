@@ -3,7 +3,14 @@ import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
 const { startSection } = TEST_MCP.ids;
+// Plan Card is a plain component with 9 instances (Pricing – Desktop, Mobile, Tablet); Button is a variant set, and
+// "Sign in" 54:236 is its Variant=Secondary, State=Default. Like 0.7.0, `name` matches layer names only and
+// `component` matches the main component or its set (the plan's Try-it used `name` for Plan Card, which finds only
+// the component itself).
 const PLAN_CARD = "Plan Card";
+const PLAN_CARD_INSTANCES = 9;
+const BUTTON = "Button";
+const SIGN_IN = "54:236";
 
 interface Found {
   readonly id: string;
@@ -29,41 +36,32 @@ describe("read/nodes_find", () => {
 
   afterAll(() => client.close());
 
-  it("finds Plan Card within the file, page by page, its instances counted by variant (T-040, T-041, T-042)", async () => {
+  it("finds Plan Card's instances within the file, page by page, with paths and counts (T-040, T-041, T-042)", async () => {
     const { nodes, more, counts, countsCut } = await client.call("nodes_find", {
       file,
-      name: PLAN_CARD,
+      component: PLAN_CARD,
       within: "file",
       counts: true,
     });
     const found = nodes as Found[];
-    const counted = counts as Counted[];
-    const instances = found.filter(({ type }) => type === "INSTANCE");
 
-    expect(instances.length).toBeGreaterThan(0);
-    expect(found.every(({ path }) => Array.isArray(path))).toBe(true);
+    expect(found).toHaveLength(PLAN_CARD_INSTANCES);
+    expect(found.every(({ type, path }) => type === "INSTANCE" && path.length > 0)).toBe(true);
     expect(more).toBe(false);
     expect(countsCut).toBeUndefined();
-    expect(counted.length).toBeGreaterThan(0);
-    expect(counted.every(({ component, count }) => component.includes(PLAN_CARD) && count >= 1)).toBe(true);
-    expect(counted.reduce((sum, { count }) => sum + count, 0)).toBeGreaterThanOrEqual(instances.length);
+    expect(counts as Counted[]).toEqual([{ component: PLAN_CARD, count: PLAN_CARD_INSTANCES }]);
   });
 
   it("finds the instances of one variant, its values in another order and case (T-040)", async () => {
-    const { counts } = await client.call("nodes_find", { file, component: PLAN_CARD, within: "file", counts: true });
-    const [first] = counts as Counted[];
-    const asked = (first?.variant ?? "").split(", ").toReversed().join(", ").toLowerCase();
-
     const { nodes, variant } = await client.call("nodes_find", {
       file,
-      component: PLAN_CARD,
-      variant: asked,
+      component: BUTTON,
+      variant: "state=default, variant=secondary",
       within: "file",
-      limit: 500,
     });
 
-    expect((nodes as Found[]).length).toBe(first?.count);
-    expect(Object.keys(variant as object)).toHaveLength((first?.variant ?? "").split(", ").length);
+    expect((nodes as Found[]).map(({ id }) => id)).toContain(SIGN_IN);
+    expect(variant).toEqual({ state: "default", variant: "secondary" });
   });
 
   it("searches the current page when within is left out (S-043)", async () => {
