@@ -10,6 +10,10 @@ import { STYLE_NUMBERS_READER, StyleNumbers } from "@/core/tokens/names/style-nu
 import { CANVAS_VIEW, CanvasView } from "@/plugin/adapters/figma/canvas-view.ts";
 import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
+import { ComponentFieldReader } from "@/plugin/adapters/figma/layer-meta/component-field-reader.ts";
+import { ModeFieldReader } from "@/plugin/adapters/figma/layer-meta/mode-field-reader.ts";
+import { NoteFieldReader } from "@/plugin/adapters/figma/layer-meta/note-field-reader.ts";
+import { ReactionFieldReader } from "@/plugin/adapters/figma/layer-meta/reaction-field-reader.ts";
 import { AppearanceFieldReader } from "@/plugin/adapters/figma/layer-read/appearance-field-reader.ts";
 import { BoxFieldReader } from "@/plugin/adapters/figma/layer-read/box-field-reader.ts";
 import { EffectFieldReader } from "@/plugin/adapters/figma/layer-read/effect-field-reader.ts";
@@ -37,7 +41,8 @@ import { PAIRING_STORE, PairingStore } from "@/plugin/adapters/host/storage/pair
  * The host's bindings (A§4b.3): figma.ui's channel, clientStorage, the pairing key, the file id and Allow edits, the
  * server's RPC peer and its events, the file's events, the selection, layer refs, the page and the view, lookups by
  * id, the pages' loading and the deadline walk with the clock (Date is the system clock: its now() is the port's),
- * the read's layer reader with its field readers in 0.7.0's order (m:f53dbe49) and the rounding, execute's figma, and
+ * the read's layer reader with its field readers in 0.7.0's order (m:f53dbe49; layer-meta's after the CSS fields) and
+ * the rounding, execute's figma, and
  * main's side of the window with the window's events.
  */
 export class HostProviders {
@@ -64,6 +69,10 @@ export class HostProviders {
       .bind({ provide: FIELD_READERS, multi: true, useClass: EffectFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: TextFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: VariableFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: ComponentFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: NoteFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: ModeFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: ReactionFieldReader })
       .bind({ provide: STYLE_NUMBERS_READER, useClass: StyleNumbers })
       .bind({ provide: REFERENCES, useClass: References })
       .bind({ provide: LAYER_READER, useClass: LayerReader })

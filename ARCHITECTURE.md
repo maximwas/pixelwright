@@ -28,7 +28,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     by hand, P3 kept P3, Dev Mode's CSS forms, the wire form with `space` only for P3, equals within 0.0005, contrast);
     `names/` holds `TokenNames` (T-163: a style's or variable's `--Name`, Unicode letters and digits kept, a name with
     none `--token-<fnv1a>`, K-070; a variable's WEB code syntax wins; a same-named style `--Black-2`, its XML name
-    `h1-2`; the variable an alias binds to a field).
+    `h1-2`; the variable an alias binds to a field); `easing/` holds `EasingCss`, the one easing writer (D-64, K-066: a
+    CSS keyword, else `cubic-bezier()` to 3 decimals, a hold as `step-end`; a spring writes nothing until the Motion
+    item, its preset numbers unverified, D-24).
   - `tokens/`: `names/` holds `StyleNumbers`, the one numbering of same-named styles (the file's own by id, then library
     ones, D-29: library numbers depend on the page read, a known quirk); the plugin's `References` numbers with it.
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
@@ -44,7 +46,12 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     the resets, C-120; a character limit cuts with `…`) and `ReadCatalogue` (the JSON block's `tokens`, `textStyles` and
     `fonts`, C-123), its tokens from `ReadTokens` (each variable and paint or effect style the read uses, by name, with
     its value as written, T-163). Every bound value is written as `var(--name)`: `CssLength.bound` for lengths (padding,
-    gap, radius, sizes), `SolidPaint` for colours, `PaintList` and `EffectsGroup` for styles.
+    gap, radius, sizes), `SolidPaint` for colours, `PaintList` and `EffectsGroup` for styles. `component/` holds
+    `ComponentAttributes` (an instance's `component`, `variant` and `props` with `#id` cut and `\`, `,`, `=` escaped;
+    `$override`, the CSS words of what an instance changed, C-133; the `$prop` / `$visibleProp` / `$swapProp` bindings;
+    variable modes as `data-<collection>="<mode>"`, C-135), which `DesignBuilder` calls in C-1.3 order.
+    `interactions/` holds `InteractionAttributes` (prototype interactions as `$on-*` sentences, one per trigger, C-154),
+    which `LayerTree` adds last, before `$children`.
   - `css/`: the Figma-to-CSS mapping table, on the server (the plugin never imports `core/css`; it sends raw fields).
     `CssReader` is the facade: a layer, its parent and the read give its declarations in `CSS_ORDER` and its `$css`
     notes. `registry/` holds `GroupRegistry` (the `PROPERTY_GROUPS` in order, each owning its CSS attribute names and
@@ -105,7 +112,12 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   paragraph fields, a TextPath's path and start; `VariableFieldReader` the variables bound to the layer's fields; the paint,
   stroke, effect and text readers send the style ids; `References` the styles and variables the read uses, each looked
   up once by id (`NodeLookup`), same-named styles numbered by `StyleNumbers` over the file's own and the page's; the
-  file's colour profile for the read's header); `host/` holds the
+  file's colour profile and the Dev Mode status of the root or the nearest layer above it for the read's header);
+  `layer-meta/`: what a layer is rather than how it looks, under the same `FIELD_READERS` (a reader may answer a
+  promise, so `LayerReader.entry` and `ReadRun` are async): `ComponentFieldReader` (an instance's main component, set
+  and properties without a slot's, a component's description and bindings, the overrides of the instances around it),
+  `NoteFieldReader` (Dev Mode annotations with their category), `ModeFieldReader` (explicit variable modes by name) and
+  `ReactionFieldReader` (reactions, `actions ?? [action]`, each destination named once, P-089; the URL as href); `host/` holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file

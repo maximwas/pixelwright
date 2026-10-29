@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
-const { install, customers, sticker, planPro } = TEST_MCP.ids;
+const { install, customers, sticker, planPro, planStarter, signIn } = TEST_MCP.ids;
 
 const NAME = {
   frame: "live:design-read:frame",
@@ -162,6 +162,25 @@ return box.id;`,
     expect(texts.every((line) => / textStyle="(Body|Button)"/.test(line) && !line.includes(" font="))).toBe(true);
     expect(answer.textStyles).toMatchObject({ Body: expect.stringMatching(/^\d+ \d+px\/\d+px 'Inter'$/) });
     expect(answer.fonts).toHaveProperty("Inter");
+  });
+
+  // C-136: an instance names its component (a variant its set), its variant values and its own properties, ids cut.
+  it("reads a Plan Card instance's component and props, and the Sign in button's variant (C-136)", async () => {
+    const [card = ""] = ((await client.texts("design_read", { file, node: planStarter }))[0] ?? "").split("\n");
+    const [button = ""] = ((await client.texts("design_read", { file, node: signIn }))[0] ?? "").split("\n");
+
+    expect(card).toContain(' component="Plan Card" ');
+    expect(card).toMatch(/ props="[^"]*Name=Starter[^"]*"/);
+    expect(card).not.toMatch(/ props="[^"]*#/);
+    expect(button).toContain(' component="Button" variant="Variant=Secondary, State=Default" props="Label=Sign in"');
+  });
+
+  // C-154, P-089: the Pro card's click goes to the checkout screen, its destination named; its Dev Mode note is read.
+  it("reads the Pro card's click as a sentence and its Dev Mode note (C-154, P-089)", async () => {
+    const [root = ""] = ((await client.texts("design_read", { file, node: planPro }))[0] ?? "").split("\n");
+
+    expect(root).toContain(' $on-click="go to Checkout – Desktop; dissolve 300ms ease-out"');
+    expect(root).toContain(' note="The price comes from the billing API.');
   });
 
   it("answers an id the read op lists as missing with NODE_NOT_FOUND and where ids come from (P-072)", async () => {

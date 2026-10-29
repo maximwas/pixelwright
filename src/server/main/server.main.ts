@@ -25,11 +25,14 @@ import { CSS_SPLIT, CssSplit } from "@/core/css/values/css-split.ts";
 import { CSS_URL, CssUrl } from "@/core/css/values/css-url.ts";
 import { CSS_VAR, CssVar } from "@/core/css/values/css-var.ts";
 import { DESIGN_BUILDER, DesignBuilder } from "@/core/design/builder/design-builder.ts";
+import { COMPONENT_ATTRIBUTES, ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
+import { INTERACTION_ATTRIBUTES, InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { READ_TOKENS, ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TEXT_CONTENT_READER, TextContent } from "@/core/design/text/text-content.ts";
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { EASING_CSS, EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NUMBER_FORMAT, NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -162,6 +165,7 @@ export class ServerMain {
     container
       .bind({ provide: NUMBER_FORMAT, useClass: NumberFormat })
       .bind({ provide: NAME_VALUE_LIST, useClass: NameValueList })
+      .bind({ provide: EASING_CSS, useClass: EasingCss })
       .bind({ provide: XML_ESCAPE, useClass: XmlEscape })
       .bind({ provide: NODE_TAG, useClass: NodeTag })
       .bind({ provide: XML_WRITER, useClass: XmlWriter })
@@ -190,6 +194,8 @@ export class ServerMain {
       .bind({ provide: EFFECTS_GROUP, useClass: EffectsGroup })
       .bind({ provide: GROUP_REGISTRY, useClass: GroupRegistry })
       .bind({ provide: CSS_READER, useClass: CssReader })
+      .bind({ provide: COMPONENT_ATTRIBUTES, useClass: ComponentAttributes })
+      .bind({ provide: INTERACTION_ATTRIBUTES, useClass: InteractionAttributes })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
       .bind({ provide: TEXT_CONTENT_READER, useClass: TextContent })
       .bind({ provide: READ_TOKENS, useClass: ReadTokens })

@@ -24,11 +24,14 @@ import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
+import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
+import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -99,7 +102,22 @@ const OWNED = [
   "text-align",
   "text-wrap",
   // Item 20: no new names; every bound value is compared as written, var() and all (T-163).
+  // Item 21: what a layer is (C-133..C-136, C-154); every `data-*` mode and `$on-*` interaction is compared too.
+  "component",
+  "variant",
+  "props",
+  "$exposed",
+  "note",
+  "$override",
+  "$dev",
+  "href",
+  "$prop",
+  "$visibleProp",
+  "$swapProp",
 ];
+
+/** The attributes named per layer rather than once: variable modes and interactions. */
+const OWNED_PATTERN = /^(data-|\$on-|\$after-)/;
 
 /** Deliberate or not-yet differences from 0.7.0, each with the decision or item that settles it; never a silent skip. */
 const KNOWN: readonly { fixture: string; id: string; attribute: string; why: string }[] = [
@@ -145,7 +163,7 @@ const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
       new NodeTag(),
-      new NameValueList(),
+      new ComponentAttributes(new NameValueList()),
       new CssReader(
         new GroupRegistry([
           new LayoutGroup(lengths, format),
@@ -160,6 +178,7 @@ const design = new DesignXml(
       new TextPathData(),
     ),
     new TextContent(runs),
+    new InteractionAttributes(new EasingCss(format)),
   ),
   new XmlWriter(new XmlEscape()),
 );
@@ -207,7 +226,9 @@ describe("design XML attributes against the 0.7.0 goldens", () => {
     for (const [id, expected] of golden) {
       const actual = ours.get(id);
 
-      for (const attribute of actual === undefined ? [] : OWNED) {
+      const named = [...expected.keys(), ...(actual?.keys() ?? [])].filter((name) => OWNED_PATTERN.test(name));
+
+      for (const attribute of actual === undefined ? [] : new Set([...OWNED, ...named])) {
         const want = expected.get(attribute);
         const have = actual?.get(attribute);
         const known = KNOWN.some((row) => row.fixture === fixture && row.id === id && row.attribute === attribute);
