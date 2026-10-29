@@ -1,5 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { DESIGN_XML } from "@/core/design/design-xml.ts";
+import { type Catalogue, READ_CATALOGUE } from "@/core/design/text/read-catalogue.ts";
 import { SELECTED_LAYER } from "@/server/app/scope/selected-layer.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
@@ -15,11 +16,11 @@ import { readOp } from "@/shared/ops/read/read.manifest.ts";
 /** design_read's answer: the XML, and the JSON beside it. */
 type DesignReadOutput = {
   readonly xml: string;
-  readonly json: { readonly node: string; readonly truncated: readonly string[] };
+  readonly json: { readonly node: string; readonly truncated: readonly string[] } & Catalogue;
 };
 
 /**
- * A layer as design XML (A§6.1): the one selected when no node is given (T-051), read by the plugin's read op as the
+ * A layer as design XML (A§6.1), with the text styles and fonts it uses in the JSON (C-123): the one selected when no node is given (T-051), read by the plugin's read op as the
  * read model (T-053), refused when hidden (T-052), written by core's DesignXml.
  */
 @injectable()
@@ -28,16 +29,19 @@ export class DesignReadTool extends Tool<DesignReadInput, DesignReadOutput> {
   readonly #session;
   readonly #selected;
   readonly #design;
+  readonly #catalogue;
 
   constructor(
     session = inject(PLUGIN_SESSION),
     selected = inject(SELECTED_LAYER),
     design = inject(DESIGN_XML),
+    catalogue = inject(READ_CATALOGUE),
   ) {
     super();
     this.#session = session;
     this.#selected = selected;
     this.#design = design;
+    this.#catalogue = catalogue;
   }
 
   protected async run({ node, depth }: DesignReadInput): Promise<DesignReadOutput> {
@@ -55,7 +59,10 @@ export class DesignReadTool extends Tool<DesignReadInput, DesignReadOutput> {
       throw new PixelwrightError(ERROR_CODE.opFailed, DESIGN_READ_TEXT.hidden(id));
     }
 
-    return { xml: this.#design.xml(read), json: { node: id, truncated: cuts.map((cut) => cut.id) } };
+    return {
+      xml: this.#design.xml(read),
+      json: { node: id, truncated: cuts.map((cut) => cut.id), ...this.#catalogue.read(read) },
+    };
   }
 
   /** Two text blocks and no structuredContent (T-005, FX-067): the XML, then the JSON. */

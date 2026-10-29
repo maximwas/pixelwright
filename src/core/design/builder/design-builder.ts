@@ -1,5 +1,6 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_READER } from "@/core/css/css-reader.ts";
+import { TEXT_PATH_DATA } from "@/core/css/groups/text/text-path-data.ts";
 import type { CssDeclaration } from "@/core/css/registry/css-declarations.ts";
 import {
   BUILDER_VALUE,
@@ -35,15 +36,18 @@ export class DesignBuilder {
   readonly #tags;
   readonly #lists;
   readonly #css;
+  readonly #paths;
 
   constructor(
     tags = inject(NODE_TAG),
     lists = inject(NAME_VALUE_LIST),
     css = inject(CSS_READER),
+    paths = inject(TEXT_PATH_DATA),
   ) {
     this.#tags = tags;
     this.#lists = lists;
     this.#css = css;
+    this.#paths = paths;
   }
 
   /** `parent`: the layer's parent in the read, which decides how it sits; null for the read's root. */
@@ -59,6 +63,8 @@ export class DesignBuilder {
       tag: this.#tags.of(layer.type),
       attributes: this.#present([
         ...this.#metadata(layer, model),
+        [DESIGN_ATTRIBUTE.textStyle, css.textStyle],
+        ...this.#path(layer),
         ...css.properties,
         ...this.#readOnly(layer, model, css.notes),
       ]),
@@ -95,6 +101,20 @@ export class DesignBuilder {
       [DESIGN_ATTRIBUTE.dev, dev],
       [DESIGN_ATTRIBUTE.href, layer.href ?? (isText ? this.#url(layer) : undefined)],
       [DESIGN_ATTRIBUTE.mask, layer.isMask ? (layer.maskType ?? BUILDER_VALUE.defaultMask).toLowerCase() : undefined],
+    ];
+  }
+
+  /** A text on a path's path and start (T-140). */
+  #path(layer: ReadLayer): MaybeAttribute[] {
+    if (layer.textPath === undefined) {
+      return [];
+    }
+
+    const { d, start } = this.#paths.read(layer.textPath);
+
+    return [
+      [DESIGN_ATTRIBUTE.d, d],
+      [DESIGN_ATTRIBUTE.start, start],
     ];
   }
 

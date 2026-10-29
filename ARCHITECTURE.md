@@ -33,8 +33,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `design/`: design_read's tree over the read model, on the server (C-140: the tree first, the string last).
     `DesignXml` is the entry; `tree/` holds `LayerTree` (an element per layer, a hidden layer as a stub with
     `display="none"` and the property that shows it, D-18; a slice left out; `$children` where the read cut);
-    `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: metadata, the CSS from
-    `CssReader`, then the `$` ones, `$css` among them).
+    `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: metadata, a Text's `textStyle`
+    and a TextPath's `d` and `start`, the CSS from `CssReader`, then the `$` ones, `$css` among them). `text/` holds
+    `TextContent` (a Text's characters with the runs that differ from its main one as Spans: only the differences and
+    the resets, C-120; a character limit cuts with `…`) and `ReadCatalogue` (the JSON block's `textStyles` and `fonts`,
+    C-123).
   - `css/`: the Figma-to-CSS mapping table, on the server (the plugin never imports `core/css`; it sends raw fields).
     `CssReader` is the facade: a layer, its parent and the read give its declarations in `CSS_ORDER` and its `$css`
     notes. `registry/` holds `GroupRegistry` (the `PROPERTY_GROUPS` in order, each owning its CSS attribute names and
@@ -44,7 +47,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     refused with a hint). `paints/` holds `SolidPaint` (a solid paint as its colour, its bound variable's `var()`, or
     `color-mix()` past the variable's alpha, C-020) and `PaintList` (a layer's paints top first, a paint style as its
     token, an unmapped paint marked; gradients and images on a background only), and `ImagePaint` (an image fill as
-    its `url()` and the scale mode's size and repeat, C-082). `gradients/` holds `GradientGeometry` (Figma's transform
+    its `url()` and the scale mode's size and repeat, C-082). `fonts/` holds `FontShorthand` (`[italic] weight
+    size/line-height 'Family'` with the family escaped, O-021; letter spacing in em = percent / 100, C-112, C-114). `gradients/` holds `GradientGeometry` (Figma's transform
     and CSS's gradient line, measured in px so a non-square box keeps its angle, FX-020), `GradientCss` (linear, an
     axis-aligned radial, conic; stops bound to variables as tokens) and `GradientParser` (CSS gradients back to a spec,
     radial sizes, `color-mix()` and P3 stops included, for the write side). `groups/<group>/` holds one group each, in this order: `layout/` reads auto layout as flex and
@@ -54,7 +58,10 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     text's truncation, the radius and layout grids; `paint/` reads fills (`FillsGroup`: background top first, a text's
     colour, the fixed D-20 note for what it cannot write) and strokes (`StrokesGroup`: border, outline, per-side
     borders, dashed, a line as one border); `effects/` reads shadows top first (`box-shadow`, a text's
-    `text-shadow`, an effect style as its token) and blurs as `filter` / `backdrop-filter` at 0.43 R (C-100).
+    `text-shadow`, an effect style as its token) and blurs as `filter` / `backdrop-filter` at 0.43 R (C-100); `text/` reads a text: `TextRun` (a run's font,
+    spacing, case, decoration and colour, left out where its text style sets them the same; features and the axes a
+    browser would not draw as notes, FX-066), `TextGroup` (alignment, the longest run as the text's own, wrap and the
+    block's notes, C-110, C-116) and `TextPathData` (a TextPath's `d` through svg-path-commander, and its start).
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
     `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.
@@ -87,7 +94,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline; `layer-read/`:
   `LayerReader`, a layer as the read model, its header and the field readers in 0.7.0's order, `BoxFieldReader` the
   first, a hidden layer a stub; `PaintFieldReader` and `StrokeFieldReader` the paints and how strokes are drawn, `EffectFieldReader` the effects
-  and their style; the
+  and their style; `TextFieldReader` a text's characters, runs (the newer run fields asked first, FX-012) and
+  paragraph fields, a TextPath's path and start; the
   file's colour profile for the read's header); `host/` holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server

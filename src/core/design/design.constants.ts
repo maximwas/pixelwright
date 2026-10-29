@@ -19,7 +19,11 @@ export const DESIGN_ATTRIBUTE = {
   note: "note",
   dev: "$dev",
   href: "href",
+  textStyle: "textStyle",
   mask: "mask",
+  /** A text on a path's path, and where on it its text starts (T-140). */
+  d: "d",
+  start: "start",
   display: "display",
   prop: "$prop",
   visibleProp: "$visibleProp",

@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import * as zod from "zod/mini";
 import { CssReader } from "@/core/css/css-reader.ts";
+import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
@@ -12,6 +13,9 @@ import { Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
 import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { TextGroup } from "@/core/css/groups/text/text-group.ts";
+import { TextPathData } from "@/core/css/groups/text/text-path-data.ts";
+import { TextRun } from "@/core/css/groups/text/text-run.ts";
 import { ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PaintList } from "@/core/css/paints/paint-list.ts";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
@@ -22,6 +26,7 @@ import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
+import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -39,6 +44,7 @@ class DevRead {
     new GradientCss(new GradientGeometry(), this.#solid, this.#lengths, this.#format),
     new ImagePaint(new CssUrl(new CssSplit())),
   );
+  readonly #runs = new TextRun(new FontShorthand(this.#format), this.#paints, this.#format);
   readonly #design = new DesignXml(
     new LayerTree(
       new DesignBuilder(
@@ -52,9 +58,12 @@ class DevRead {
             new FillsGroup(this.#paints),
             new StrokesGroup(this.#paints, this.#format),
             new EffectsGroup(this.#solid, this.#lengths, this.#format),
+            new TextGroup(this.#runs, this.#lengths),
           ]),
         ),
+        new TextPathData(),
       ),
+      new TextContent(this.#runs),
     ),
     new XmlWriter(new XmlEscape()),
   );

@@ -16,6 +16,7 @@ import { FIELD_READERS, LAYER_READER, LayerReader } from "@/plugin/adapters/figm
 import { LayoutFieldReader } from "@/plugin/adapters/figma/layer-read/layout-field-reader.ts";
 import { PaintFieldReader } from "@/plugin/adapters/figma/layer-read/paint-field-reader.ts";
 import { StrokeFieldReader } from "@/plugin/adapters/figma/layer-read/stroke-field-reader.ts";
+import { TextFieldReader } from "@/plugin/adapters/figma/layer-read/text-field-reader.ts";
 import { LAYER_REFS, LayerRefs } from "@/plugin/adapters/figma/layer-refs.ts";
 import { LAYER_WALK, LayerWalk } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
 import { NODE_LOOKUP, NodeLookup } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
@@ -58,6 +59,7 @@ export class HostProviders {
       .bind({ provide: FIELD_READERS, multi: true, useClass: PaintFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: StrokeFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: EffectFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: TextFieldReader })
       .bind({ provide: LAYER_READER, useClass: LayerReader })
       .bind({ provide: CLOCK, useValue: Date })
       .bind({ provide: PAGE_LOADER, useClass: PageLoader })

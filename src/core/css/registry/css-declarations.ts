@@ -7,12 +7,15 @@ export type CssDeclaration = readonly [property: string, value: string];
 export interface LayerCss {
   readonly properties: CssDeclaration[];
   readonly notes: CssDeclaration[];
+  /** The text style a Text's main run names: metadata, written before the CSS. */
+  readonly textStyle: string | undefined;
 }
 
 /** A layer's CSS as the groups read it, one builder per layer: properties sorted by CSS_ORDER, notes as given. */
 export class CssDeclarations {
   readonly #properties = new Map<string, string>();
   readonly #notes: CssDeclaration[] = [];
+  #textStyle: string | undefined;
 
   set(property: string, value: string): void {
     this.#properties.set(property, value);
@@ -27,8 +30,14 @@ export class CssDeclarations {
     this.#notes.push([property, value]);
   }
 
+  /** The text style the layer's text names. */
+  style(name: string): void {
+    this.#textStyle = name;
+  }
+
   build(): LayerCss {
     return {
+      textStyle: this.#textStyle,
       properties: [...this.#properties].sort(([first], [second]) => this.#rank(first) - this.#rank(second)),
       notes: [...this.#notes],
     };
