@@ -206,7 +206,7 @@ return box.id;`,
     const [xml = "", json = "{}"] = await client.texts("design_read", { file, node: customers });
     const { assets } = JSON.parse(json) as { assets: { node: string; src?: string }[] };
 
-    expect(hero).toMatch(/<Icon id="[^"]+"[^>]* src="assets\/[\w-]+\.svg"/);
+    expect(hero).toContain('<Image id="54:317" name="Planet" src="assets/planet.png"');
     expect((JSON.parse(heroJson) as { assets: unknown[] }).assets.length).toBeGreaterThan(0);
     expect(xml).toContain(
       '<Icon id="54:437" name="Logo" component="Logo" variant="Brand=Nova" src="assets/logo-nova.svg"',
