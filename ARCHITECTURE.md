@@ -70,7 +70,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     `ReadCatalogue`, the measurements (`core/inspect`) and `hints/`: `DesignHints` over the shown layers (visible, no
     asset) gives `TokenHints` (raw colours equal to a token, read only from CSS attributes, never a text's characters,
     C-152; numbered and valueless styles), `LayerHints` (one per kind with a count and three examples, C-151; a frame
-    placed by hand with Figma's guess from `LayoutGuess`) and `InferredHints` (Figma's own variable matches, C-153), the
+    placed by hand with Figma's guess from `LayoutGuess`) and `InferredHints` (Figma's own variable matches, C-153); `hints/structure/` adds the guide's structure rules,
+    read on structure and never on names (Q-001..Q-007): `StructureHints` (absolute children in a flow, spacers, texts
+    broken by hand, even gaps without auto layout, fixed widths and clipping heights, its kinds joining `LayerHints`'
+    table), `AlikeStructures` (built alike 3+ times: a component), `SharedLayers` (top-level frames as states),
+    `BakedPaints` (fades baked into images, tiled textures) and `LayerShape` (a layer's structure as a key); the
     words frozen by `every-hint.hints.json`. `css/fonts/AutoLineHeights` turns a read model's Auto line heights into
     the px a hugging text shows (`autoLineHeight: "px"`, T-060), before the read is written.
   - `inspect/`: `NearbyNotes` (the notes within a distance of a screen, nearest first, the side each is on, 20 plus

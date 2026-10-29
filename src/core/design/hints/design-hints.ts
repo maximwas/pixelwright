@@ -1,7 +1,8 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { ASSET_CLASSIFIER } from "@/core/design/assets/asset-classifier.ts";
+import type { ShownLayer } from "@/core/design/hints/hints.types.ts";
 import { INFERRED_HINTS } from "@/core/design/hints/inferred-hints.ts";
-import { LAYER_HINTS, type ShownLayer } from "@/core/design/hints/layer-hints.ts";
+import { LAYER_HINTS } from "@/core/design/hints/layer-hints.ts";
 import { TOKEN_HINTS } from "@/core/design/hints/token-hints.ts";
 import type { XmlElement } from "@/core/xml/xml.types.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";

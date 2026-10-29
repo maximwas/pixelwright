@@ -37,6 +37,11 @@ import { DESIGN_HINTS, DesignHints } from "@/core/design/hints/design-hints.ts";
 import { INFERRED_HINTS, InferredHints } from "@/core/design/hints/inferred-hints.ts";
 import { LAYER_HINTS, LayerHints } from "@/core/design/hints/layer-hints.ts";
 import { LAYOUT_GUESS, LayoutGuess } from "@/core/design/hints/layout-guess.ts";
+import { ALIKE_STRUCTURES, AlikeStructures } from "@/core/design/hints/structure/alike-structures.ts";
+import { BAKED_PAINTS, BakedPaints } from "@/core/design/hints/structure/baked-paints.ts";
+import { LAYER_SHAPE, LayerShape } from "@/core/design/hints/structure/layer-shape.ts";
+import { SHARED_LAYERS, SharedLayers } from "@/core/design/hints/structure/shared-layers.ts";
+import { STRUCTURE_HINTS, StructureHints } from "@/core/design/hints/structure/structure-hints.ts";
 import { TOKEN_HINTS, TokenHints } from "@/core/design/hints/token-hints.ts";
 import { INTERACTION_ATTRIBUTES, InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { READ_JSON, ReadJson } from "@/core/design/read-json.ts";
@@ -180,6 +185,11 @@ export class ServerMain {
   #bindReadNotes(container: Container): void {
     container
       .bind({ provide: LAYOUT_GUESS, useClass: LayoutGuess })
+      .bind({ provide: LAYER_SHAPE, useClass: LayerShape })
+      .bind({ provide: ALIKE_STRUCTURES, useClass: AlikeStructures })
+      .bind({ provide: SHARED_LAYERS, useClass: SharedLayers })
+      .bind({ provide: BAKED_PAINTS, useClass: BakedPaints })
+      .bind({ provide: STRUCTURE_HINTS, useClass: StructureHints })
       .bind({ provide: LAYER_HINTS, useClass: LayerHints })
       .bind({ provide: TOKEN_HINTS, useClass: TokenHints })
       .bind({ provide: INFERRED_HINTS, useClass: InferredHints })
