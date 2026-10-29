@@ -16,7 +16,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     codes, numbers with their reason, the build's version, the messages between the plugin's window and its main thread.
 - `core/`: the pure domain and its ports.
   - `kernel/`: the floor of core, importing no other domain: `numbers/` holds the D-15 precision table (`PRECISION`,
-    the places each class of value keeps) and `NumberFormat`, which every reader rounds with.
+    the places each class of value keeps) and `NumberFormat`, which every reader rounds with; `lists/` holds
+    `NameValueList`, the `Name=Value, Other=Value` lists with `,` `=` `\` escaped (a variant, a component's properties).
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`, a Figma type's tag), the layout constants;
     `outline/` holds `OutlineXml`, which writes the outline op's tree as XML on the server (the plugin never imports
     `core/xml`).
@@ -27,6 +28,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `sessions/`: `PluginSessions` and `PluginSession` (one call's file), the op steps, `TargetResolver`.
   - `project/`: `ProjectFolder`, where every relative path a tool takes starts (the client's first file root, else
     CLAUDE_PROJECT_DIR, else cwd; never home or `/`).
+  - `scope/`: `WithinScope`, where a tool works: the layer or page `within` names, every page for "file" (listed
+    unloaded through file_map, so the ops stay page-scoped), else the current page.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn).
 - `server/adapters/`: the port implementations on Node.
@@ -43,8 +46,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   `OpReport`, `OperationTurns` (the read/write turn lock); `journal/` holds `ChangeJournal`, what changed while the
   window is open and whose hand it was.
 - `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `CurrentSelection`,
-  which also selects and hears selection changes; `LayerRefs`, a layer as lists name it; `CanvasView`, the current
-  page and the view, the one place either changes; `lookup/`, `NodeLookup`, the only by-id lookups); `host/` holds the
+  which also selects and hears selection changes; `LayerRefs`, a layer as lists name it, its Dev Mode status too; `CanvasView`, the current
+  page and the view, the one place either changes; `lookup/`: `NodeLookup`, the only by-id lookups, `PageLoader`, the
+  pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline); `host/` holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file
@@ -97,6 +101,12 @@ it returns or throws in the envelope through `OpReport`. The envelope goes back 
 `ExecuteOperation` runs the code as an async function of `CodeFigma`'s figma proxy, `CodeConsole` and `CodeScope`'s pw,
 answers at the code's own timeout while the code runs on, and tells `ChangeJournal` it is executing, so what Figma
 reports meanwhile is Pixelwright's. Back on the server, `ReadsOnlyCheck` adds the "only reads" note from the code.
+
+**Searches the file.** `NodesFindTool` asks `WithinScope` for its roots: the id given, the current page, or for "file"
+every page from file_map's unloaded list. It runs the find op once per root, page by page, and stops past the limit
+unless it counts; it adds the counts up and rounds the boxes. In the plugin, `FindOperation` gets the root's layers from
+`PageLoader` (a page other than the current one loaded first), walks them with `LayerWalk` until the op's deadline (the
+clock read every 500 layers, since findAll cannot be stopped), then looks main components up in batches.
 
 **Pairs a plugin.** The window says hello through `SocketLink`. On the owner, `BridgeListener` takes the upgrade
 `UpgradeGuard` allows, and `PluginConnection` runs the handshake as a state machine. A window with a known key gets a

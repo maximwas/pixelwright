@@ -22,6 +22,7 @@ import { PluginBridge } from "@/server/adapters/bridge/plugin-bridge.ts";
 import { SESSION_REGISTRY } from "@/server/adapters/bridge/sessions/session-registry.ts";
 import { MCP_ROOTS } from "@/server/adapters/mcp/mcp-roots.ts";
 import { PROJECT_FOLDER } from "@/server/app/project/project-folder.ts";
+import { WITHIN_SCOPE } from "@/server/app/scope/within-scope.ts";
 import { TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner.ts";
 import { ServerMain } from "@/server/main/server.main.ts";
 import { TOOL_CATALOG } from "@/server/tools/tool.catalog.ts";
@@ -57,6 +58,7 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["CLIENT_ROOTS", CLIENT_ROOTS],
   ["PROJECT_FOLDER", PROJECT_FOLDER],
   ["OUTLINE_XML", OUTLINE_XML],
+  ["WITHIN_SCOPE", WITHIN_SCOPE],
 ];
 
 describe("ServerMain's composition", () => {

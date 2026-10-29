@@ -15,4 +15,6 @@ export const OP_NAME = {
   viewport: "viewport",
   selectionWait: "selection_wait",
   outline: "outline",
+  fileMap: "file_map",
+  find: "find",
 } as const;

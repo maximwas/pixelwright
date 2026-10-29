@@ -1,4 +1,5 @@
 import type { Container } from "@needle-di/core";
+import { CLOCK } from "@/core/ports/clock.port.ts";
 import { DOCUMENT_EVENTS } from "@/core/ports/document-events.port.ts";
 import { EDITS_SWITCH } from "@/core/ports/edits-switch.port.ts";
 import { KEY_VALUE_STORE } from "@/core/ports/key-value-store.port.ts";
@@ -8,7 +9,9 @@ import { CANVAS_VIEW, CanvasView } from "@/plugin/adapters/figma/canvas-view.ts"
 import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
 import { LAYER_REFS, LayerRefs } from "@/plugin/adapters/figma/layer-refs.ts";
+import { LAYER_WALK, LayerWalk } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
 import { NODE_LOOKUP, NodeLookup } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
+import { PAGE_LOADER, PageLoader } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { FigmaDocumentEvents } from "@/plugin/adapters/host/channels/figma-document-events.ts";
 import { SERVER_RPC, ServerRpc } from "@/plugin/adapters/host/channels/server-rpc.ts";
 import { UI_CHANNEL, UiChannel } from "@/plugin/adapters/host/channels/ui-channel.ts";
@@ -21,7 +24,8 @@ import { PAIRING_STORE, PairingStore } from "@/plugin/adapters/host/storage/pair
 /**
  * The host's bindings (A§4b.3): figma.ui's channel, clientStorage, the pairing key, the file id and Allow edits, the
  * server's RPC peer and its events, the file's events, the selection, layer refs, the page and the view, lookups by
- * id, execute's figma, and main's side of the window with the window's events.
+ * id, the pages' loading and the deadline walk with the clock (Date is the system clock: its now() is the port's),
+ * execute's figma, and main's side of the window with the window's events.
  */
 export class HostProviders {
   register(container: Container): void {
@@ -38,6 +42,9 @@ export class HostProviders {
       .bind({ provide: LAYER_REFS, useClass: LayerRefs })
       .bind({ provide: CANVAS_VIEW, useClass: CanvasView })
       .bind({ provide: NODE_LOOKUP, useClass: NodeLookup })
+      .bind({ provide: CLOCK, useValue: Date })
+      .bind({ provide: PAGE_LOADER, useClass: PageLoader })
+      .bind({ provide: LAYER_WALK, useClass: LayerWalk })
       .bind({ provide: CODE_FIGMA, useClass: CodeFigma })
       .bind({ provide: WINDOW_HOST, useClass: WindowHost })
       .bind({ provide: WINDOW_EVENTS, useExisting: WINDOW_HOST });

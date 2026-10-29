@@ -57,7 +57,9 @@ describe("the MCP contract", () => {
       "node_show",
       "selection_wait",
       "changes_since",
+      "file_map",
       "viewport_get",
+      "nodes_find",
       "outline",
       "execute",
     ]);
