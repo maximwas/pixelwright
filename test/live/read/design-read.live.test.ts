@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
-const { install } = TEST_MCP.ids;
+const { install, customers, sticker } = TEST_MCP.ids;
 
 const NAME = {
   frame: "live:design-read:frame",
@@ -70,6 +70,15 @@ return { frame: frame.id, hidden: hidden.id, other: other.id };`,
     expect(root).toContain('display="flex" flex-direction="column"');
     expect(root).toContain('padding="24px"');
     expect(root).toContain('gap="8px"');
+  });
+
+  // C-050, C-057: the sticker is turned 8 degrees in a frame without auto layout: placed by its centre, turned back.
+  it("reads Orbit's turned sticker placed absolutely with transform rotate() (C-050, C-057)", async () => {
+    const [xml] = await client.texts("design_read", { file, node: customers });
+    const line = (xml ?? "").split("\n").find((row) => row.includes(`id="${sticker}"`)) ?? "";
+
+    expect(line).toContain('position="absolute"');
+    expect(line).toMatch(/transform="rotate\(-8deg\)"/);
   });
 
   it("answers an id the read op lists as missing with NODE_NOT_FOUND and where ids come from (P-072)", async () => {

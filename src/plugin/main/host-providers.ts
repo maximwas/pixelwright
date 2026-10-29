@@ -9,6 +9,7 @@ import { WINDOW_EVENTS } from "@/core/ports/window-events.port.ts";
 import { CANVAS_VIEW, CanvasView } from "@/plugin/adapters/figma/canvas-view.ts";
 import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
+import { AppearanceFieldReader } from "@/plugin/adapters/figma/layer-read/appearance-field-reader.ts";
 import { BoxFieldReader } from "@/plugin/adapters/figma/layer-read/box-field-reader.ts";
 import { FIELD_READERS, LAYER_READER, LayerReader } from "@/plugin/adapters/figma/layer-read/layer-reader.ts";
 import { LayoutFieldReader } from "@/plugin/adapters/figma/layer-read/layout-field-reader.ts";
@@ -50,6 +51,7 @@ export class HostProviders {
       .bind({ provide: NUMBER_FORMAT, useClass: NumberFormat })
       .bind({ provide: FIELD_READERS, multi: true, useClass: BoxFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: LayoutFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: AppearanceFieldReader })
       .bind({ provide: LAYER_READER, useClass: LayerReader })
       .bind({ provide: CLOCK, useValue: Date })
       .bind({ provide: PAGE_LOADER, useClass: PageLoader })

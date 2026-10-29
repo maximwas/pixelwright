@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
 import { CssReader } from "@/core/css/css-reader.ts";
+import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
+import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
+import { Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
@@ -35,20 +38,59 @@ const OWNED = [
   "row-gap",
   "grid-template-columns",
   "grid-template-rows",
+  // Item 16: the geometry and appearance groups.
+  "position",
+  "left",
+  "right",
+  "top",
+  "bottom",
+  "width",
+  "height",
+  "min-width",
+  "max-width",
+  "min-height",
+  "max-height",
+  "flex",
+  "align-self",
+  "transform",
+  "opacity",
+  "mix-blend-mode",
+  "overflow",
+  "text-overflow",
+  "white-space",
+  "border-radius",
 ];
 
 /** Deliberate or not-yet differences from 0.7.0, each with the decision or item that settles it; never a silent skip. */
-const KNOWN: readonly { fixture: string; id: string; attribute: string; why: string }[] = [];
+const KNOWN: readonly { fixture: string; id: string; attribute: string; why: string }[] = [
+  // The mirrored Arrow is an Icon in 0.7.0: an icon is exported turned, placed by its render bounds without a
+  // transform (m:1116170e). Assets are not told apart yet; the asset item settles these rows.
+  ...["pricing", "customers"].flatMap((fixture) =>
+    ["left", "top", "width", "height", "transform"].map((attribute) => ({
+      fixture,
+      id: "54:452",
+      attribute,
+      why: "asset placement by render bounds, no transform (m:1116170e; the asset item)",
+    })),
+  ),
+];
 
 const FIXTURES = ["desktop-top", "pricing", "plans", "customers"] as const;
 
 const format = new NumberFormat();
+const lengths = new CssLength(new CssVar(new CssSplit()), format);
 const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
       new NodeTag(),
       new NameValueList(),
-      new CssReader(new GroupRegistry([new LayoutGroup(new CssLength(new CssVar(new CssSplit()), format), format)])),
+      new CssReader(
+        new GroupRegistry([
+          new LayoutGroup(lengths, format),
+          new GeometryGroup(new Placement(lengths, format), lengths, format),
+          new AppearanceGroup(lengths, format),
+        ]),
+      ),
     ),
   ),
   new XmlWriter(new XmlEscape()),

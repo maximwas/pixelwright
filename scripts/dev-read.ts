@@ -3,6 +3,9 @@
 import { readFileSync } from "node:fs";
 import * as zod from "zod/mini";
 import { CssReader } from "@/core/css/css-reader.ts";
+import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
+import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
+import { Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
@@ -20,13 +23,18 @@ import { ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
 
 class DevRead {
   readonly #format = new NumberFormat();
+  readonly #lengths = new CssLength(new CssVar(new CssSplit()), this.#format);
   readonly #design = new DesignXml(
     new LayerTree(
       new DesignBuilder(
         new NodeTag(),
         new NameValueList(),
         new CssReader(
-          new GroupRegistry([new LayoutGroup(new CssLength(new CssVar(new CssSplit()), this.#format), this.#format)]),
+          new GroupRegistry([
+            new LayoutGroup(this.#lengths, this.#format),
+            new GeometryGroup(new Placement(this.#lengths, this.#format), this.#lengths, this.#format),
+            new AppearanceGroup(this.#lengths, this.#format),
+          ]),
         ),
       ),
     ),

@@ -22,7 +22,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - `core/`: the pure domain and its ports.
   - `kernel/`: the floor of core, importing no other domain: `numbers/` holds the D-15 precision table (`PRECISION`,
     the places each class of value keeps) and `NumberFormat`, which every reader rounds with; `lists/` holds
-    `NameValueList`, the `Name=Value, Other=Value` lists with `,` `=` `\` escaped (a variant, a component's properties).
+    `NameValueList`, the `Name=Value, Other=Value` lists with `,` `=` `\` escaped (a variant, a component's properties); `geometry/` holds the value objects `Area` (a box's centre) and
+    `Turn` (a rotation, or a mirror matrix's angle with the flip taken out, K-068).
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -37,8 +38,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     notes. `registry/` holds `GroupRegistry` (the `PROPERTY_GROUPS` in order, each owning its CSS attribute names and
     naming its read-model `sources`) and `CssDeclarations` (one builder per layer, sorted by `CSS_ORDER`). `values/`
     holds `CssLength` (whole px, the box shorthand, bare numbers as px, D-22), `CssSplit` (top-level splitting with the
-    @csstools tokenizer) and `CssVar` (`var()` fallbacks). `groups/<group>/` holds one group each: `layout/` reads
-    auto layout as flex and a grid as its tracks.
+    @csstools tokenizer), `CssVar` (`var()` fallbacks) and `CssUrl` (`url()` written bare or quoted, an unquoted bad one
+    refused with a hint). `groups/<group>/` holds one group each, in this order: `layout/` reads auto layout as flex and
+    a grid as its tracks; `geometry/` reads where a layer is and how big (`Placement`: position and edges from the
+    constraints, a turned layer by its bounds' centre; `GeometryGroup`: transform, size, FILL as flex or stretch,
+    limits); `appearance/` reads opacity, blend mode, clipping, a text's truncation, the radius and layout grids.
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
     `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
 - `server/app/`: the services a tool call runs through.
@@ -166,7 +170,9 @@ the server's half offline for an Orbit fixture in `test/golden/fixtures/`.
 **Maps Figma layout to CSS.** In the plugin, `LayoutFieldReader` (one of `FIELD_READERS`) copies a layer's raw auto
 layout, grid, grid-cell and sizing fields into the read model. On the server, `DesignBuilder` asks `CssReader`, which
 runs the property groups; `LayoutGroup` (`core/css/groups/layout/`) writes display, direction, wrap, padding,
-alignment, the gaps and the grid tracks, and a negative spacing as a `$css` note. `test/golden/design-attributes.golden.test.ts`
+alignment, the gaps and the grid tracks, and a negative spacing as a `$css` note; `GeometryGroup` and `AppearanceGroup`
+(their fields from the plugin's `BoxFieldReader` and `AppearanceFieldReader`) write the place, size, transform and
+look. `test/golden/design-attributes.golden.test.ts`
 compares each owned attribute with the 0.7.0 XML goldens.
 
 **Adds a tool.** A folder under `server/tools/` with the manifest (name, description, schemas, annotations, `load()`),
