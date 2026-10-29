@@ -11,19 +11,21 @@ import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 const format = new NumberFormat();
-const lengths = new CssLength(new CssVar(new CssSplit()), format);
-const solid = new SolidPaint();
+const lengths = new CssLength(new CssVar(new CssSplit()), format, new TokenNames());
+const solid = new SolidPaint(new TokenNames());
 const paints = new PaintList(
   solid,
   new GradientCss(new GradientGeometry(), solid, lengths, format),
   new ImagePaint(new CssUrl(new CssSplit())),
+  new TokenNames(),
 );
-const content = new TextContent(new TextRun(new FontShorthand(format), paints, format));
+const content = new TextContent(new TextRun(new FontShorthand(format), paints, format, new TokenNames()));
 
 function segment(
   characters: string,

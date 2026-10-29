@@ -63,3 +63,19 @@ export const STROKE_FIELD = { noCap: "NONE" } as const;
 
 /** Figma's layout values the layout reader tells apart: no layout, a grid, and the defaults it leaves out. */
 export const LAYOUT_FIELD = { noLayout: "NONE", grid: "GRID", flowing: "AUTO", inherit: "INHERIT" } as const;
+
+/** What References looks for in a read's entries and on a page (T-163). */
+export const REFERENCE_FIELD = {
+  children: "children",
+  styleIdSuffix: "StyleId",
+  alias: "VARIABLE_ALIAS",
+  /** A text's characters and Figma's CSS hold no style or variable: not walked. */
+  plainFields: ["characters", "css"] as readonly string[],
+  /** The style fields of a page's layers the numbering reads (a text's runs left out). */
+  styleFields: ["fillStyleId", "strokeStyleId", "effectStyleId", "textStyleId"] as readonly string[],
+  paint: "PAINT",
+  text: "TEXT",
+  effect: "EFFECT",
+  /** A style's number when no other of its kind shares its name: its token stays unnumbered. */
+  firstNumber: 1,
+} as const;

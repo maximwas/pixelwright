@@ -9,15 +9,8 @@ export const PAINTS_NUMBER = {
   percent: 100,
 } as const;
 
-export const PAINTS_PATTERN = {
-  /** What a custom property's name cannot hold: anything but letters and digits of any script, `_` and `-`. */
-  unnamed: /[^\p{L}\p{N}_-]+/gu,
-  edgeDashes: /^-+|-+$/g,
-  /** A WEB code syntax written as var(--name, …). */
-  wrapped: /^var\(\s*(--[^,)\s]+)/,
-} as const;
-
-export const PAINTS_VALUE = { dash: "-", none: "", prefix: "--", layerJoint: ", ", image: "image" } as const;
+/** `boundColor`: the field of a paint's bound variables that holds its colour's alias. */
+export const PAINTS_VALUE = { none: "", layerJoint: ", ", image: "image", boundColor: "color" } as const;
 
 /** C-082: an image as CSS sizes and repeats it per Figma scale mode; FILL and CROP cover (the crop itself is lost). */
 export const IMAGE_COVER = "center / cover no-repeat";
@@ -30,7 +23,6 @@ export const IMAGE_SCALE: Readonly<Record<string, string>> = {
 
 export const PAINTS_TEXT = {
   token: (name: string) => `var(${name})`,
-  property: (name: string) => `--${name}`,
   mix: (
     space: string,
     name: string,

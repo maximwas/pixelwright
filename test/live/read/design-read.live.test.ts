@@ -75,16 +75,27 @@ return { frame: frame.id, hidden: hidden.id, other: other.id };`,
     const [root = ""] = (xml ?? "").split("\n");
 
     expect(root).toContain('display="flex" flex-direction="column"');
-    expect(root).toContain('padding="24px"');
-    expect(root).toContain('gap="8px"');
+  });
+
+  // T-163: the card's padding, gap and radius are bound to Orbit's variables: written as var(), valued in the JSON.
+  it("reads the Install card's bound padding, gap and radius as tokens and lists them in the JSON (T-163)", async () => {
+    const [xml, json] = await client.texts("design_read", { file, node: install });
+    const [root = ""] = (xml ?? "").split("\n");
+    const answer = JSON.parse(json ?? "null") as { tokens: Record<string, string> };
+
+    expect(root).toContain('padding="var(--space-24)"');
+    expect(root).toContain('gap="var(--space-8)"');
+    expect(root).toContain('border-radius="var(--radius-md)"');
+    expect(answer.tokens).toMatchObject({ "--space-24": "24px", "--space-8": "8px" });
+    expect(answer.tokens["--radius-md"]).toMatch(/^\d+px$/);
   });
 
   // C-080, C-090: the Install card's fill (it has no stroke) and its texts' fills as color, the Pro plan card's inside
-  // stroke as border; the read holds no variables until item 20, so the colours are raw.
+  // stroke as border; a colour bound to a variable reads as its var() (T-163).
   it("reads the Install card's background, its texts' color and the Pro card's border (C-080, C-090)", async () => {
     const [xml] = await client.texts("design_read", { file, node: install });
     const [root = "", ...rest] = (xml ?? "").split("\n");
-    const colour = String.raw`(#[0-9A-F]{3,6}|rgba\([^)]*\)|color\(display-p3 [^)]*\))`;
+    const colour = String.raw`(#[0-9A-F]{3,6}|rgba\([^)]*\)|color\(display-p3 [^)]*\)|var\(--[^)]+\))`;
     const [pro] = await client.texts("design_read", { file, node: planPro, depth: 0 });
 
     expect(root).toMatch(new RegExp(`background="${colour}"`));

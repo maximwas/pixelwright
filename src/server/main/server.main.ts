@@ -7,7 +7,7 @@ import { FONT_SHORTHAND, FontShorthand } from "@/core/css/fonts/font-shorthand.t
 import { GRADIENT_CSS, GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GRADIENT_GEOMETRY, GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.ts";
-import { EffectsGroup } from "@/core/css/groups/effects/effects-group.ts";
+import { EFFECTS_GROUP, EffectsGroup } from "@/core/css/groups/effects/effects-group.ts";
 import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
 import { PLACEMENT, Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
@@ -27,9 +27,11 @@ import { CSS_VAR, CssVar } from "@/core/css/values/css-var.ts";
 import { DESIGN_BUILDER, DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
 import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
+import { READ_TOKENS, ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TEXT_CONTENT_READER, TextContent } from "@/core/design/text/text-content.ts";
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NUMBER_FORMAT, NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
@@ -165,6 +167,7 @@ export class ServerMain {
       .bind({ provide: XML_WRITER, useClass: XmlWriter })
       .bind({ provide: OUTLINE_XML, useClass: OutlineXml })
       .bind({ provide: CSS_SPLIT, useClass: CssSplit })
+      .bind({ provide: TOKEN_NAMES, useClass: TokenNames })
       .bind({ provide: CSS_VAR, useClass: CssVar })
       .bind({ provide: CSS_LENGTH, useClass: CssLength })
       .bind({ provide: PLACEMENT, useClass: Placement })
@@ -184,10 +187,12 @@ export class ServerMain {
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: StrokesGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: EffectsGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: TextGroup })
+      .bind({ provide: EFFECTS_GROUP, useClass: EffectsGroup })
       .bind({ provide: GROUP_REGISTRY, useClass: GroupRegistry })
       .bind({ provide: CSS_READER, useClass: CssReader })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
       .bind({ provide: TEXT_CONTENT_READER, useClass: TextContent })
+      .bind({ provide: READ_TOKENS, useClass: ReadTokens })
       .bind({ provide: READ_CATALOGUE, useClass: ReadCatalogue })
       .bind({ provide: LAYER_TREE, useClass: LayerTree })
       .bind({ provide: DESIGN_XML, useClass: DesignXml });

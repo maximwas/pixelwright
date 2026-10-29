@@ -12,19 +12,21 @@ import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 const format = new NumberFormat();
-const lengths = new CssLength(new CssVar(new CssSplit()), format);
-const solid = new SolidPaint();
+const lengths = new CssLength(new CssVar(new CssSplit()), format, new TokenNames());
+const solid = new SolidPaint(new TokenNames());
 const paints = new PaintList(
   solid,
   new GradientCss(new GradientGeometry(), solid, lengths, format),
   new ImagePaint(new CssUrl(new CssSplit())),
+  new TokenNames(),
 );
-const group = new TextGroup(new TextRun(new FontShorthand(format), paints, format), lengths);
+const group = new TextGroup(new TextRun(new FontShorthand(format), paints, format, new TokenNames()), lengths);
 
 const BODY = "S:body";
 

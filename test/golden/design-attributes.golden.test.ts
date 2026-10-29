@@ -26,14 +26,16 @@ import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
 import { ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
+import { ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
 import { XmlWriter } from "@/core/xml/xml-writer.ts";
-import { type ReadModel, ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
+import { ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
 
 /**
  * The 0.7.0 design XML as the oracle, attribute by attribute: each item adds the names its groups own, until item 24
@@ -96,6 +98,7 @@ const OWNED = [
   "text-decoration",
   "text-align",
   "text-wrap",
+  // Item 20: no new names; every bound value is compared as written, var() and all (T-163).
 ];
 
 /** Deliberate or not-yet differences from 0.7.0, each with the decision or item that settles it; never a silent skip. */
@@ -126,15 +129,18 @@ const KNOWN: readonly { fixture: string; id: string; attribute: string; why: str
 const FIXTURES = ["desktop-top", "pricing", "plans", "customers"] as const;
 
 const format = new NumberFormat();
-const lengths = new CssLength(new CssVar(new CssSplit()), format);
-const solid = new SolidPaint();
+const names = new TokenNames();
+const lengths = new CssLength(new CssVar(new CssSplit()), format, names);
+const solid = new SolidPaint(names);
 const paints = new PaintList(
   solid,
   new GradientCss(new GradientGeometry(), solid, lengths, format),
   new ImagePaint(new CssUrl(new CssSplit())),
+  names,
 );
 const fonts = new FontShorthand(format);
-const runs = new TextRun(fonts, paints, format);
+const tokens = new ReadTokens(paints, lengths, new EffectsGroup(solid, lengths, format, names), names);
+const runs = new TextRun(fonts, paints, format, names);
 const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
@@ -147,7 +153,7 @@ const design = new DesignXml(
           new AppearanceGroup(lengths, format),
           new FillsGroup(paints),
           new StrokesGroup(paints, format),
-          new EffectsGroup(solid, lengths, format),
+          new EffectsGroup(solid, lengths, format, names),
           new TextGroup(runs, lengths),
         ]),
       ),
@@ -191,24 +197,6 @@ function textLines(xml: string): Map<string, string> {
   );
 }
 
-/**
- * The px a golden's var() stands for: 0.7.0 wrote bound variables as tokens, which come in item 20; until then the
- * values are compared through the fixture's variable values (Orbit names its tokens after them: space/64 = --space-64).
- */
-function withoutTokens(value: string, model: ReadModel): string {
-  const pixels = new Map(
-    Object.values(model.variables).flatMap((variable) =>
-      typeof variable.value === "number" ? [[`--${variable.name.replaceAll("/", "-")}`, variable.value]] : [],
-    ),
-  );
-
-  return value.replace(/var\((--[^)]+)\)/g, (token, name: string) => {
-    const pixel = pixels.get(name);
-
-    return pixel === undefined ? token : pixel === 0 ? "0" : `${pixel}px`;
-  });
-}
-
 describe("design XML attributes against the 0.7.0 goldens", () => {
   it.each(FIXTURES)("writes orbit-%s's owned attributes as 0.7.0 did", (fixture) => {
     const model = zod.parse(ReadModelSchema, JSON.parse(read(`./fixtures/orbit-${fixture}.json`)));
@@ -224,7 +212,7 @@ describe("design XML attributes against the 0.7.0 goldens", () => {
         const have = actual?.get(attribute);
         const known = KNOWN.some((row) => row.fixture === fixture && row.id === id && row.attribute === attribute);
 
-        if ((want === undefined ? undefined : withoutTokens(want, model)) !== have && !known) {
+        if (want !== have && !known) {
           differences.push(`${id} ${attribute}: 0.7.0 ${want ?? "-"}, now ${have ?? "-"}`);
         }
       }
@@ -240,18 +228,36 @@ describe("design XML attributes against the 0.7.0 goldens", () => {
     const golden = textLines(read(`./__golden__/orbit-${fixture}.xml`));
     const ours = textLines(design.xml(model));
     const differences = [...golden]
-      .filter(([id, line]) => ours.has(id) && withoutTokens(line, model) !== ours.get(id))
+      .filter(([id, line]) => ours.has(id) && line !== ours.get(id))
       .map(([id, line]) => `0.7.0 ${line}\n  now ${ours.get(id) ?? "-"}`);
 
     expect(differences).toEqual([]);
     expect(golden.size).toBeGreaterThan(0);
   });
 
-  // C-123: the JSON block's text styles (font shorthand, spacing, case) and each family's weights in order.
-  it("lists the text styles and fonts of the Plans row as 0.7.0 did", () => {
+  // T-163, C-123: the JSON block's tokens, text styles (font shorthand, spacing, case) and each family's weights.
+  it("lists the tokens, text styles and fonts of the Plans row as 0.7.0 did", () => {
     const model = zod.parse(ReadModelSchema, JSON.parse(read("./fixtures/orbit-plans.json")));
 
-    expect(new ReadCatalogue(fonts).read(model)).toEqual({
+    expect(new ReadCatalogue(fonts, names, tokens).read(model)).toEqual({
+      tokens: {
+        "--Shadow-Card": "0 12px 32px -8px rgba(20, 22, 31, 0.12)",
+        "--color-accent": "#FF6B3D",
+        "--color-brand": "#3B2FD9",
+        "--color-ink": "#14161F",
+        "--color-ink-muted": "#4A4F5E",
+        "--color-line": "#E1E5EE",
+        "--color-on-brand": "#FFF",
+        "--color-surface": "#FFF",
+        "--radius-lg": "24px",
+        "--radius-md": "12px",
+        "--radius-pill": "999px",
+        "--space-12": "12px",
+        "--space-24": "24px",
+        "--space-32": "32px",
+        "--space-4": "4px",
+        "--space-8": "8px",
+      },
       textStyles: {
         Body: "400 16px/24px 'Inter'",
         "Body Small": "400 14px/20px 'Inter'",

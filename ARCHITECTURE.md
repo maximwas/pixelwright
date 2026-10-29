@@ -25,7 +25,12 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     `NameValueList`, the `Name=Value, Other=Value` lists with `,` `=` `\` escaped (a variant, a component's properties); `geometry/` holds the value objects `Area` (a box's centre) and
     `Turn` (a rotation, or a mirror matrix's angle with the flip taken out, K-068; a line's flat or standing snap);
     `color/` holds `Color`, the colour value object (K-063: any CSS colour through culori/fn with its modes registered
-    by hand, P3 kept P3, Dev Mode's CSS forms, the wire form with `space` only for P3, equals within 0.0005, contrast).
+    by hand, P3 kept P3, Dev Mode's CSS forms, the wire form with `space` only for P3, equals within 0.0005, contrast);
+    `names/` holds `TokenNames` (T-163: a style's or variable's `--Name`, Unicode letters and digits kept, a name with
+    none `--token-<fnv1a>`, K-070; a variable's WEB code syntax wins; a same-named style `--Black-2`, its XML name
+    `h1-2`; the variable an alias binds to a field).
+  - `tokens/`: `names/` holds `StyleNumbers`, the one numbering of same-named styles (the file's own by id, then library
+    ones, D-29: library numbers depend on the page read, a known quirk); the plugin's `References` numbers with it.
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -36,8 +41,10 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: metadata, a Text's `textStyle`
     and a TextPath's `d` and `start`, the CSS from `CssReader`, then the `$` ones, `$css` among them). `text/` holds
     `TextContent` (a Text's characters with the runs that differ from its main one as Spans: only the differences and
-    the resets, C-120; a character limit cuts with `…`) and `ReadCatalogue` (the JSON block's `textStyles` and `fonts`,
-    C-123).
+    the resets, C-120; a character limit cuts with `…`) and `ReadCatalogue` (the JSON block's `tokens`, `textStyles` and
+    `fonts`, C-123), its tokens from `ReadTokens` (each variable and paint or effect style the read uses, by name, with
+    its value as written, T-163). Every bound value is written as `var(--name)`: `CssLength.bound` for lengths (padding,
+    gap, radius, sizes), `SolidPaint` for colours, `PaintList` and `EffectsGroup` for styles.
   - `css/`: the Figma-to-CSS mapping table, on the server (the plugin never imports `core/css`; it sends raw fields).
     `CssReader` is the facade: a layer, its parent and the read give its declarations in `CSS_ORDER` and its `$css`
     notes. `registry/` holds `GroupRegistry` (the `PROPERTY_GROUPS` in order, each owning its CSS attribute names and
@@ -95,7 +102,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   `LayerReader`, a layer as the read model, its header and the field readers in 0.7.0's order, `BoxFieldReader` the
   first, a hidden layer a stub; `PaintFieldReader` and `StrokeFieldReader` the paints and how strokes are drawn, `EffectFieldReader` the effects
   and their style; `TextFieldReader` a text's characters, runs (the newer run fields asked first, FX-012) and
-  paragraph fields, a TextPath's path and start; the
+  paragraph fields, a TextPath's path and start; `VariableFieldReader` the variables bound to the layer's fields; the paint,
+  stroke, effect and text readers send the style ids; `References` the styles and variables the read uses, each looked
+  up once by id (`NodeLookup`), same-named styles numbered by `StyleNumbers` over the file's own and the page's; the
   file's colour profile for the read's header); `host/` holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server

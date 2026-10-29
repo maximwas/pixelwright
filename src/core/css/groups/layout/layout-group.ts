@@ -6,11 +6,13 @@ import {
   FIGMA_LAYOUT,
   JUSTIFY_CSS,
   LAYOUT_ATTRIBUTES,
+  LAYOUT_FIELD,
   LAYOUT_MODE,
   LAYOUT_NUMBER,
   LAYOUT_SOURCES,
   LAYOUT_TEXT,
   LAYOUT_VALUE,
+  PADDING_FIELDS,
   SPREAD,
 } from "@/core/css/groups/layout/layout.constants.ts";
 import type { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
@@ -21,6 +23,8 @@ import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 type Tracks = ReadLayer["gridColumnSizes"];
+
+type LengthField = (typeof LAYOUT_FIELD)[keyof typeof LAYOUT_FIELD];
 
 /**
  * A frame's own layout read as CSS (C-030): auto layout as flex (direction, wrap, padding, alignment, the gap between
@@ -38,15 +42,18 @@ export class LayoutGroup implements PropertyGroup {
     this.#format = format;
   }
 
-  read({ layer, css }: CssScope): void {
-    if (layer.layoutMode === LAYOUT_MODE.grid) {
-      this.#grid(layer, css);
-    } else if (layer.layoutMode === LAYOUT_MODE.horizontal || layer.layoutMode === LAYOUT_MODE.vertical) {
-      this.#flex(layer, css);
+  read(scope: CssScope): void {
+    const { layoutMode } = scope.layer;
+
+    if (layoutMode === LAYOUT_MODE.grid) {
+      this.#grid(scope);
+    } else if (layoutMode === LAYOUT_MODE.horizontal || layoutMode === LAYOUT_MODE.vertical) {
+      this.#flex(scope);
     }
   }
 
-  #flex(layer: ReadLayer, css: CssDeclarations): void {
+  #flex(scope: CssScope): void {
+    const { layer, css } = scope;
     const wraps = layer.layoutWrap === FIGMA_LAYOUT.wrap;
 
     css.set(CSS_PROPERTY.display, LAYOUT_VALUE.flex);
@@ -59,12 +66,12 @@ export class LayoutGroup implements PropertyGroup {
       css.set(CSS_PROPERTY.flexWrap, LAYOUT_VALUE.wrap);
     }
 
-    this.#padding(layer, css);
+    this.#padding(scope);
     this.#alignment(layer, css);
-    this.#gap(layer, css);
+    this.#gap(scope);
 
     if (wraps) {
-      this.#lines(layer, css);
+      this.#lines(scope);
     }
   }
 
@@ -82,7 +89,8 @@ export class LayoutGroup implements PropertyGroup {
   }
 
   /** C-031, C-032: a gap only between two visible children or more, not when spread; a negative one is a note. */
-  #gap(layer: ReadLayer, css: CssDeclarations): void {
+  #gap(scope: CssScope): void {
+    const { layer, css } = scope;
     const spaced = layer.children?.filter((child) => child.visible).length ?? layer.childCount;
     const spacing = layer.itemSpacing ?? 0;
 
@@ -96,7 +104,7 @@ export class LayoutGroup implements PropertyGroup {
     if (spacing < 0) {
       css.note(CSS_PROPERTY.gap, LAYOUT_TEXT.overlap(this.#lengths.px(spacing)));
     } else {
-      this.#length(css, CSS_PROPERTY.gap, spacing);
+      this.#length(scope, CSS_PROPERTY.gap, LAYOUT_FIELD.itemSpacing);
     }
   }
 
@@ -104,11 +112,11 @@ export class LayoutGroup implements PropertyGroup {
    * C-033: between wrapped lines, rows of a horizontal wrap and columns of a vertical one. CSS's gap spaces the lines
    * too, so the line gap is written only when it differs from the gap written, 0 included; Figma's null follows it.
    */
-  #lines(layer: ReadLayer, css: CssDeclarations): void {
+  #lines({ layer, css, model }: CssScope): void {
     const between = layer.layoutMode === LAYOUT_MODE.vertical ? CSS_PROPERTY.columnGap : CSS_PROPERTY.rowGap;
 
     if (typeof layer.counterAxisSpacing === "number") {
-      const lines = this.#lengths.px(layer.counterAxisSpacing);
+      const lines = this.#lengths.bound(layer, LAYOUT_FIELD.counterAxisSpacing, layer.counterAxisSpacing, model);
 
       if (lines !== (css.get(CSS_PROPERTY.gap) ?? CSS_VALUE.zero)) {
         css.set(between, lines);
@@ -121,7 +129,8 @@ export class LayoutGroup implements PropertyGroup {
   }
 
   /** A grid: its tracks (or its column count when the read has no track sizes), padding and gaps. */
-  #grid(layer: ReadLayer, css: CssDeclarations): void {
+  #grid(scope: CssScope): void {
+    const { layer, css } = scope;
     const count = layer.gridColumnCount;
     const columns =
       this.#tracks(layer.gridColumnSizes) ??
@@ -138,9 +147,9 @@ export class LayoutGroup implements PropertyGroup {
       css.set(CSS_PROPERTY.gridTemplateRows, rows);
     }
 
-    this.#padding(layer, css);
-    this.#length(css, CSS_PROPERTY.columnGap, layer.gridColumnGap);
-    this.#length(css, CSS_PROPERTY.rowGap, layer.gridRowGap);
+    this.#padding(scope);
+    this.#length(scope, CSS_PROPERTY.columnGap, LAYOUT_FIELD.gridColumnGap);
+    this.#length(scope, CSS_PROPERTY.rowGap, LAYOUT_FIELD.gridRowGap);
   }
 
   /** Grid tracks: a flex track in `fr`, a fixed one in pixels, a hugging one `auto`; equal tracks as repeat(). */
@@ -165,11 +174,9 @@ export class LayoutGroup implements PropertyGroup {
       : sizes.join(LAYOUT_VALUE.trackJoint);
   }
 
-  /** The padding as its shorthand, flex or grid alike; none when every side is 0. */
-  #padding(layer: ReadLayer, css: CssDeclarations): void {
-    const sides = [layer.paddingTop, layer.paddingRight, layer.paddingBottom, layer.paddingLeft].map((side) =>
-      this.#lengths.px(side ?? 0),
-    );
+  /** The padding as its shorthand, flex or grid alike, a bound side as its var(); none when every side is 0. */
+  #padding({ layer, css, model }: CssScope): void {
+    const sides = PADDING_FIELDS.map((field) => this.#lengths.bound(layer, field, layer[field] ?? 0, model));
     const [top = "", right = "", bottom = "", left = ""] = sides;
 
     if (sides.some((side) => side !== CSS_VALUE.zero)) {
@@ -177,13 +184,14 @@ export class LayoutGroup implements PropertyGroup {
     }
   }
 
-  /** A length as `property`; nothing for a zero or a missing one. */
+  /** A length field as `property`, its variable's var() when bound; nothing for a zero or a missing one. */
   #length(
-    css: CssDeclarations,
+    { layer, css, model }: CssScope,
     property: string,
-    value: number | undefined,
+    field: LengthField,
   ): void {
-    const written = value === undefined ? CSS_VALUE.zero : this.#lengths.px(value);
+    const value = layer[field];
+    const written = typeof value === "number" ? this.#lengths.bound(layer, field, value, model) : CSS_VALUE.zero;
 
     if (written !== CSS_VALUE.zero) {
       css.set(property, written);

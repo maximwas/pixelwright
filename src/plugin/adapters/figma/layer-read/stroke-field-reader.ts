@@ -17,6 +17,7 @@ export class StrokeFieldReader implements FieldReader {
 
     return {
       strokes: JSON.parse(JSON.stringify(node.strokes)),
+      ...(node.strokeStyleId === "" ? {} : { strokeStyleId: node.strokeStyleId }),
       ...this.#weight(node),
       strokeAlign: node.strokeAlign,
       ...("strokeCap" in node && node.strokeCap !== figma.mixed && node.strokeCap !== STROKE_FIELD.noCap

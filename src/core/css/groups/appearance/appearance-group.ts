@@ -39,7 +39,9 @@ export class AppearanceGroup implements PropertyGroup {
     this.#format = format;
   }
 
-  read({ layer, css }: CssScope): void {
+  read(scope: CssScope): void {
+    const { layer, css } = scope;
+
     if (layer.opacity !== undefined) {
       css.set(CSS_PROPERTY.opacity, String(this.#format.round(layer.opacity, PRECISION.decimal)));
     }
@@ -51,7 +53,7 @@ export class AppearanceGroup implements PropertyGroup {
     }
 
     this.#truncation(layer, css);
-    this.#radius(layer, css);
+    this.#radius(scope);
     this.#grids(layer, css);
   }
 
@@ -91,17 +93,22 @@ export class AppearanceGroup implements PropertyGroup {
   }
 
   /** C-071: an ellipse is round; else one radius, or four when the corners differ, top left first. */
-  #radius(layer: ReadLayer, css: CssDeclarations): void {
+  #radius({ layer, css, model }: CssScope): void {
     if (layer.type === FIGMA_APPEARANCE.ellipse) {
       css.set(CSS_PROPERTY.borderRadius, APPEARANCE_VALUE.round);
     } else if ((UNROUNDED[layer.type] ?? false) || layer.cornerRadius === undefined) {
       return;
     } else if (layer.cornerRadius === READ_VALUE.mixed) {
-      const corners = CORNERS.map((corner) => this.#lengths.px(layer[corner] ?? 0));
+      const corners = CORNERS.map((corner) => this.#lengths.bound(layer, corner, layer[corner] ?? 0, model));
 
       css.set(CSS_PROPERTY.borderRadius, corners.join(APPEARANCE_VALUE.cornerJoint));
-    } else if (this.#lengths.px(layer.cornerRadius) !== CSS_VALUE.zero) {
-      css.set(CSS_PROPERTY.borderRadius, this.#lengths.px(layer.cornerRadius));
+    } else {
+      // One radius binds all four corners alike: the top left one's variable names it, as 0.7.0 read it (T-163).
+      const radius = this.#lengths.bound(layer, CORNERS[0], layer.cornerRadius, model);
+
+      if (radius !== CSS_VALUE.zero) {
+        css.set(CSS_PROPERTY.borderRadius, radius);
+      }
     }
   }
 

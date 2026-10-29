@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 type Paint = NonNullable<ReadLayer["strokes"]>[number];
 
-const solid = new SolidPaint();
+const solid = new SolidPaint(new TokenNames());
 const LINE = { r: 23 / 255, g: 49 / 255, b: 38 / 255 };
 const ALIAS = { color: { type: "VARIABLE_ALIAS", id: "V:1" } };
 const VARIABLE = {

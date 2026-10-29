@@ -11,6 +11,21 @@ export class NodeLookup {
     return figma.getNodeByIdAsync(id);
   }
 
+  /** A style by id; null when Figma cannot give it (a library offline, FX-015). */
+  style(id: string): Promise<BaseStyle | null> {
+    return figma.getStyleByIdAsync(id).catch(() => null);
+  }
+
+  /** A variable by id; null when Figma cannot give it. */
+  variable(id: string): Promise<Variable | null> {
+    return figma.variables.getVariableByIdAsync(id).catch(() => null);
+  }
+
+  /** A variable collection by id; null when Figma cannot give it. */
+  collection(id: string): Promise<VariableCollection | null> {
+    return figma.variables.getVariableCollectionByIdAsync(id).catch(() => null);
+  }
+
   /** The node, or NODE_NOT_FOUND naming the tools that find ids. */
   async existing(id: string): Promise<BaseNode> {
     const found = await this.node(id);

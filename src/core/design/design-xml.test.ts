@@ -19,6 +19,7 @@ import { DesignXml } from "@/core/design/design-xml.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
@@ -27,12 +28,13 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 const format = new NumberFormat();
-const lengths = new CssLength(new CssVar(new CssSplit()), format);
-const solid = new SolidPaint();
+const lengths = new CssLength(new CssVar(new CssSplit()), format, new TokenNames());
+const solid = new SolidPaint(new TokenNames());
 const paints = new PaintList(
   solid,
   new GradientCss(new GradientGeometry(), solid, lengths, format),
   new ImagePaint(new CssUrl(new CssSplit())),
+  new TokenNames(),
 );
 const design = new DesignXml(
   new LayerTree(
@@ -42,7 +44,7 @@ const design = new DesignXml(
       new CssReader(new GroupRegistry([new LayoutGroup(lengths, format)])),
       new TextPathData(),
     ),
-    new TextContent(new TextRun(new FontShorthand(format), paints, format)),
+    new TextContent(new TextRun(new FontShorthand(format), paints, format, new TokenNames())),
   ),
   new XmlWriter(new XmlEscape()),
 );

@@ -53,7 +53,8 @@ export class GeometryGroup implements PropertyGroup {
 
     for (const [property, field] of SIZE_LIMITS) {
       const limit = scope.layer[field];
-      const written = limit === undefined ? CSS_VALUE.zero : this.#lengths.px(limit);
+      const written =
+        limit === undefined ? CSS_VALUE.zero : this.#lengths.bound(scope.layer, field, limit, scope.model);
 
       if (written !== CSS_VALUE.zero) {
         scope.css.set(property, written);
@@ -100,7 +101,7 @@ export class GeometryGroup implements PropertyGroup {
 
   /** One axis's size: the one the constraints decided, the layer's own where fixed, or how it fills a flex parent. */
   #size(
-    { layer, parent, css }: CssScope,
+    { layer, parent, css, model }: CssScope,
     axis: GeometryAxis,
     decided: SizeOverride,
   ): void {
@@ -112,7 +113,7 @@ export class GeometryGroup implements PropertyGroup {
         css.set(axis.size, given);
       }
     } else if (parent === null || sizing === FIGMA_GEOMETRY.fixed || sizing === undefined) {
-      css.set(axis.size, this.#lengths.px(layer[axis.size]));
+      css.set(axis.size, this.#lengths.bound(layer, axis.size, layer[axis.size], model));
     } else if (
       sizing === FIGMA_GEOMETRY.fill &&
       this.#flows(parent) &&
