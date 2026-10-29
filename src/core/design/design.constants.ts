@@ -24,6 +24,8 @@ export const DESIGN_ATTRIBUTE = {
   prop: "$prop",
   visibleProp: "$visibleProp",
   swapProp: "$swapProp",
+  /** The CSS design_apply cannot write back (a negative gap, ...), as `property: value; ...`. */
+  css: "$css",
   gridStyle: "$grid-style",
   /** How many children a layer has when the read did not list them all: read that layer on its own. */
   children: "$children",

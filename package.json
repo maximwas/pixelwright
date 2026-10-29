@@ -82,6 +82,8 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
+    "@csstools/css-parser-algorithms": "4.0.2",
+    "@csstools/css-tokenizer": "4.0.2",
     "@modelcontextprotocol/server": "2.4.0",
     "@needle-di/core": "1.2.1",
     "@noble/hashes": "2.4.0",

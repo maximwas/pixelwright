@@ -1,16 +1,30 @@
 import { describe, expect, it } from "vitest";
+import { CssReader } from "@/core/css/css-reader.ts";
+import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
+import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
+import { CssLength } from "@/core/css/values/css-length.ts";
+import { CssSplit } from "@/core/css/values/css-split.ts";
+import { CssVar } from "@/core/css/values/css-var.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
 import { XmlWriter } from "@/core/xml/xml-writer.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
+const format = new NumberFormat();
 const design = new DesignXml(
-  new LayerTree(new DesignBuilder(new NodeTag(), new NameValueList())),
+  new LayerTree(
+    new DesignBuilder(
+      new NodeTag(),
+      new NameValueList(),
+      new CssReader(new GroupRegistry([new LayoutGroup(new CssLength(new CssVar(new CssSplit()), format), format)])),
+    ),
+  ),
   new XmlWriter(new XmlEscape()),
 );
 
@@ -96,6 +110,28 @@ describe("DesignXml", () => {
         '  <Text id="2:3" name="Price">$9&#10;a month</Text>',
         "</Frame>",
       ].join("\n"),
+    );
+  });
+
+  // C-1.3: the CSS goes after the metadata in CSS_ORDER, its read-only notes in $css before the other $ attributes.
+  it("writes a layer's CSS between its metadata and its read-only attributes, the notes as $css", () => {
+    const root = layer({
+      id: "4:1",
+      type: "FRAME",
+      name: "Avatars",
+      layoutMode: "VERTICAL",
+      itemSpacing: -8,
+      paddingTop: 8,
+      paddingRight: 16,
+      paddingBottom: 8,
+      paddingLeft: 16,
+      componentPropertyReferences: { visible: "Shown#1:2" },
+      children: [layer({ id: "4:2", type: "ELLIPSE", name: "A" }), layer({ id: "4:3", type: "ELLIPSE", name: "B" })],
+    });
+
+    expect(design.xml(model(root)).split("\n")[0]).toBe(
+      '<Frame id="4:1" name="Avatars" display="flex" flex-direction="column" padding="8px 16px"' +
+        ' $visibleProp="Shown" $css="gap: -8px (the children overlap)">',
     );
   });
 

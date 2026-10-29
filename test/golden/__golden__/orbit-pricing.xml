@@ -1,0 +1,127 @@
+<Frame id="54:227" name="Pricing – Desktop" display="flex" flex-direction="column" width="1440px" height="1620px" padding="var(--space-64) var(--space-120) var(--space-120)" gap="var(--space-64)" overflow="hidden" background="var(--color-canvas)" $css="layout-grid: 12 columns stretch, gutter 24px, margin 120px">
+  <Frame id="54:228" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+    <Frame id="54:229" name="Logo" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+      <Ellipse id="54:230" name="Mark" width="28px" height="28px" border-radius="50%" background="var(--Orbit-Gradient)"/>
+      <Text id="54:231" name="Wordmark" textStyle="Heading/H3" color="var(--color-ink)">Orbit</Text>
+    </Frame>
+    <Frame id="54:232" name="Nav" display="flex" align-items="center" gap="var(--space-32)" overflow="hidden">
+      <Text id="54:233" textStyle="Body" color="var(--color-ink-muted)">Product</Text>
+      <Text id="54:234" textStyle="Body" color="var(--color-ink-muted)">Pricing</Text>
+      <Text id="54:235" textStyle="Body" color="var(--color-ink-muted)">Docs</Text>
+    </Frame>
+    <Instance id="54:236" name="Sign in" component="Button" variant="Variant=Secondary, State=Default" props="Label=Sign in" display="flex" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" border="1px solid var(--color-line)" background="var(--color-surface)">
+      <Text id="I54:236;54:196" name="Label" textStyle="Button" color="var(--color-ink)">Sign in</Text>
+    </Instance>
+  </Frame>
+  <Frame id="54:238" name="Hero" display="flex" align-self="stretch" align-items="center" gap="var(--space-64)" overflow="hidden">
+    <Frame id="54:239" name="Copy" display="flex" flex-direction="column" flex="1" gap="13px" overflow="hidden">
+      <Text id="54:240" name="Eyebrow" textStyle="Label" color="var(--color-brand)">Pricing</Text>
+      <Text id="54:241" name="Title" textStyle="Display" align-self="stretch" color="var(--color-ink)">Plans that grow with your orbit</Text>
+      <Text id="54:242" name="Lede" textStyle="Body" align-self="stretch" color="var(--color-ink-muted)">Start free, upgrade when your team takes off. Every plan includes unlimited projects and a 14-day trial of Pro. <Span href="https://orbit.example/plans" text-decoration="underline" color="var(--color-brand)">See what's included.</Span></Text>
+    </Frame>
+    <Image id="54:317" name="Planet" src="assets/planet.png" width="480px" height="360px" border-radius="var(--radius-lg)"/>
+  </Frame>
+  <Frame id="54:243" name="Plans" display="flex" align-self="stretch" gap="var(--space-24)">
+    <Instance id="54:244" name="Plan – Starter" component="Plan Card" props="Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter" display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="1px solid var(--color-line)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
+      <Frame id="I54:244;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+        <Text id="I54:244;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Starter</Text>
+      </Frame>
+      <Text id="I54:244;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For side projects and trying things out.</Text>
+      <Frame id="I54:244;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">
+        <Text id="I54:244;54:209" name="Amount" textStyle="Price" color="var(--color-ink)">$0</Text>
+        <Text id="I54:244;54:210" name="Period" textStyle="Body" color="var(--color-ink-muted)">/ month</Text>
+      </Frame>
+      <Instance id="I54:244;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Start free" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+        <Text id="I54:244;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Start free</Text>
+      </Instance>
+      <Frame id="I54:244;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+        <Frame id="I54:244;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:244;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check.svg" width="20px" height="20px"/>
+          <Text id="I54:244;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+        </Frame>
+        <Frame id="I54:244;54:218" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:244;54:219" name="Icon/Check" component="Icon/Check" src="assets/icon-check-2.svg" width="20px" height="20px"/>
+          <Text id="I54:244;54:221" name="Text" textStyle="Body Small" color="var(--color-ink)">Version history for 30 days</Text>
+        </Frame>
+        <Frame id="I54:244;54:222" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:244;54:223" name="Icon/Check" component="Icon/Check" src="assets/icon-check-3.svg" width="20px" height="20px"/>
+          <Text id="I54:244;54:225" name="Text" textStyle="Body Small" color="var(--color-ink)">Email support</Text>
+        </Frame>
+      </Frame>
+    </Instance>
+    <Instance id="54:268" name="Plan – Pro" component="Plan Card" props="Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro" note="The price comes from the billing API. Show the Popular badge only on the plan the API marks popular." display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="2px solid var(--color-brand)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)" $on-click="go to Checkout – Desktop; dissolve 300ms ease-out">
+      <Frame id="I54:268;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+        <Text id="I54:268;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Pro</Text>
+        <Instance id="I54:268;54:205" name="Badge" component="Badge" props="Label=Popular" display="flex" padding="var(--space-4) var(--space-12)" align-items="center" border-radius="var(--radius-pill)" background="var(--color-accent)">
+          <Text id="I54:268;54:205;54:188" name="Label" textStyle="Label" color="var(--color-on-brand)">Popular</Text>
+        </Instance>
+      </Frame>
+      <Text id="I54:268;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For freelancers shipping fast.</Text>
+      <Frame id="I54:268;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">
+        <Text id="I54:268;54:209" name="Amount" textStyle="Price" color="var(--color-ink)">$12</Text>
+        <Text id="I54:268;54:210" name="Period" textStyle="Body" color="var(--color-ink-muted)">/ month</Text>
+      </Frame>
+      <Instance id="I54:268;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Get started" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+        <Text id="I54:268;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Get started</Text>
+      </Instance>
+      <Frame id="I54:268;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+        <Frame id="I54:268;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:268;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check-4.svg" width="20px" height="20px"/>
+          <Text id="I54:268;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+        </Frame>
+        <Frame id="I54:268;54:218" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:268;54:219" name="Icon/Check" component="Icon/Check" src="assets/icon-check-5.svg" width="20px" height="20px"/>
+          <Text id="I54:268;54:221" name="Text" textStyle="Body Small" color="var(--color-ink)">Version history for 30 days</Text>
+        </Frame>
+        <Frame id="I54:268;54:222" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:268;54:223" name="Icon/Check" component="Icon/Check" src="assets/icon-check-6.svg" width="20px" height="20px"/>
+          <Text id="I54:268;54:225" name="Text" textStyle="Body Small" color="var(--color-ink)">Email support</Text>
+        </Frame>
+      </Frame>
+    </Instance>
+    <Instance id="54:292" name="Plan – Team" component="Plan Card" props="Price=$29, Popular=false, Description=For growing teams that ship together., Name=Team" display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="1px solid var(--color-line)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)">
+      <Frame id="I54:292;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+        <Text id="I54:292;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Team</Text>
+      </Frame>
+      <Text id="I54:292;54:207" name="Description" textStyle="Body Small" align-self="stretch" color="var(--color-ink-muted)">For growing teams that ship together.</Text>
+      <Frame id="I54:292;54:208" name="Price" display="flex" align-items="baseline" gap="var(--space-4)" overflow="hidden">
+        <Text id="I54:292;54:209" name="Amount" textStyle="Price" color="var(--color-ink)">$29</Text>
+        <Text id="I54:292;54:210" name="Period" textStyle="Body" color="var(--color-ink-muted)">/ month</Text>
+      </Frame>
+      <Instance id="I54:292;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Contact sales" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
+        <Text id="I54:292;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Contact sales</Text>
+      </Instance>
+      <Frame id="I54:292;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
+        <Frame id="I54:292;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:292;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check-7.svg" width="20px" height="20px"/>
+          <Text id="I54:292;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
+        </Frame>
+        <Frame id="I54:292;54:218" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:292;54:219" name="Icon/Check" component="Icon/Check" src="assets/icon-check-8.svg" width="20px" height="20px"/>
+          <Text id="I54:292;54:221" name="Text" textStyle="Body Small" color="var(--color-ink)">Version history for 30 days</Text>
+        </Frame>
+        <Frame id="I54:292;54:222" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
+          <Icon id="I54:292;54:223" name="Icon/Check" component="Icon/Check" src="assets/icon-check-9.svg" width="20px" height="20px"/>
+          <Text id="I54:292;54:225" name="Text" textStyle="Body Small" color="var(--color-ink)">Email support</Text>
+        </Frame>
+      </Frame>
+    </Instance>
+  </Frame>
+  <Frame id="54:434" name="Customers" height="360px" align-self="stretch" overflow="hidden" border-radius="24px" background="var(--color-surface)">
+    <Text id="54:435" name="Title" textStyle="Heading/H3" position="absolute" left="40px" top="40px" width="251px" height="30px" color="var(--color-ink)">Teams already in orbit</Text>
+    <Text id="54:436" name="Trusted" position="absolute" left="40px" top="80px" width="170px" height="17px" font="500 14px/normal 'Inter'" color="var(--color-ink-muted)">Trusted by 2,000+ teams</Text>
+    <Icon id="54:437" name="Logo" component="Logo" variant="Brand=Nova" src="assets/logo-nova.svg" position="absolute" left="40px" top="124px" width="120px" height="32px"/>
+    <Icon id="54:441" name="Logo" component="Logo" variant="Brand=Lumen" src="assets/logo-lumen.svg" position="absolute" left="190px" top="124px" width="120px" height="32px"/>
+    <Icon id="54:445" name="Logo" component="Logo" variant="Brand=Nova" src="assets/logo-nova-2.svg" position="absolute" left="340px" top="124px" width="120px" height="32px"/>
+    <Text id="54:449" name="Quote" position="absolute" left="112px" top="230px" width="520px" height="48px" font="400 16px/24px 'Inter'" color="var(--color-ink)">“Orbit replaced three tools for us.” <Span font="600 16px/24px 'Inter'">Maya Chen</Span>, Head of Design at Nova</Text>
+    <Frame id="54:450" name="Sticker" display="flex" position="absolute" left="521px" top="282px" padding="6px 12px" transform="rotate(-8deg)" overflow="hidden" border-radius="999px" background="var(--color-accent)">
+      <Text id="54:451" textStyle="Label" color="var(--color-on-brand)">Save 20% yearly</Text>
+    </Frame>
+    <Icon id="54:452" name="Arrow" src="assets/arrow.svg" position="absolute" left="670px" top="257px" width="80px" height="42px"/>
+    <Image id="54:454" name="Product shot" src="assets/product-shot.png" position="absolute" left="760px" top="56px" width="400px" height="248px" border-radius="12px"/>
+    <Image id="54:456" name="Avatar" src="assets/avatar.png" position="absolute" left="40px" top="226px" width="56px" height="56px"/>
+    <Text id="54:457" position="absolute" left="112px" top="204px" width="74px" height="17px" font="400 14px/normal 'Inter'" color="#FF6B3D">★★★★★</Text>
+    <Rectangle id="54:458" name="Rectangle 1" position="absolute" left="40px" top="188px" width="560px" height="1px" background="#E1E5EE"/>
+  </Frame>
+  <Text id="54:316" name="Footnote" textStyle="Body Small" align-self="stretch" text-align="center" color="#B5B9C4">Prices in USD. Taxes may apply.</Text>
+</Frame>

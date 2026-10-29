@@ -2,6 +2,12 @@ import { join } from "node:path";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
+import { CSS_READER, CssReader } from "@/core/css/css-reader.ts";
+import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
+import { GROUP_REGISTRY, GroupRegistry, PROPERTY_GROUPS } from "@/core/css/registry/group-registry.ts";
+import { CSS_LENGTH, CssLength } from "@/core/css/values/css-length.ts";
+import { CSS_SPLIT, CssSplit } from "@/core/css/values/css-split.ts";
+import { CSS_VAR, CssVar } from "@/core/css/values/css-var.ts";
 import { DESIGN_BUILDER, DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
@@ -131,7 +137,7 @@ export class ServerMain {
       .bind({ provide: PROJECT_FOLDER, useClass: ProjectFolder });
   }
 
-  /** The core domain's classes the tools read and write with: the D-15 numbers and the XML writers. */
+  /** The core domain's classes the tools read and write with: the D-15 numbers, the CSS mapping, the XML writers. */
   #bindDomain(container: Container): void {
     container
       .bind({ provide: NUMBER_FORMAT, useClass: NumberFormat })
@@ -140,6 +146,12 @@ export class ServerMain {
       .bind({ provide: NODE_TAG, useClass: NodeTag })
       .bind({ provide: XML_WRITER, useClass: XmlWriter })
       .bind({ provide: OUTLINE_XML, useClass: OutlineXml })
+      .bind({ provide: CSS_SPLIT, useClass: CssSplit })
+      .bind({ provide: CSS_VAR, useClass: CssVar })
+      .bind({ provide: CSS_LENGTH, useClass: CssLength })
+      .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: LayoutGroup })
+      .bind({ provide: GROUP_REGISTRY, useClass: GroupRegistry })
+      .bind({ provide: CSS_READER, useClass: CssReader })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
       .bind({ provide: LAYER_TREE, useClass: LayerTree })
       .bind({ provide: DESIGN_XML, useClass: DesignXml });
