@@ -46,13 +46,18 @@ return rectangle.id;`);
     });
   });
 
-  it("hands the code a figma without clientStorage and ui, so it cannot flip Allow edits (D-11)", async () => {
+  it("hands the code a figma without clientStorage, ui, closePlugin and showUI: it cannot flip Allow edits or the window (D-11)", async () => {
     expect(
-      (await run("return [typeof figma.clientStorage, typeof figma.ui, typeof figma.createFrame];")).result,
-    ).toEqual(["undefined", "undefined", "function"]);
+      (
+        await run(
+          "return [typeof figma.clientStorage, typeof figma.ui, typeof figma.closePlugin, typeof figma.showUI, typeof figma.createFrame];",
+        )
+      ).result,
+    ).toEqual(["undefined", "undefined", "undefined", "undefined", "function"]);
   });
 
-  it("keeps running code that outlives its call, and its layer appears later (T-156)", async () => {
+  it("keeps running code that outlives its call; its layer appears later, as pixelwright's change (T-156, A§15.9)", async () => {
+    const { cursor } = await client.call("changes_since", { file });
     const started = await run(
       `await new Promise((resolve) => setTimeout(resolve, 2000));
 const section = await pw.node(${JSON.stringify(scratch)});
@@ -72,5 +77,13 @@ return section.findChild((node) => node.name === ${JSON.stringify(NAME.later)})?
     }, LATER_WAIT_MS);
 
     expect(later).toEqual(expect.any(String));
+
+    const change = await until(async () => {
+      const { changes } = await client.call("changes_since", { file, cursor });
+
+      return (changes as { id: string; by: string }[]).find(({ id }) => id === later) ?? null;
+    }, LATER_WAIT_MS);
+
+    expect(change).toMatchObject({ id: later, name: NAME.later, change: "created", by: "pixelwright" });
   });
 });

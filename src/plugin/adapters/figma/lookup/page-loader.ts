@@ -1,6 +1,7 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CANVAS_VIEW } from "@/plugin/adapters/figma/canvas-view.ts";
-import { LOOKUP_NODE_TYPE, LOOKUP_TEXT } from "@/plugin/adapters/figma/lookup/lookup.constants.ts";
+import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import { LOOKUP_TEXT } from "@/plugin/adapters/figma/lookup/lookup.constants.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
@@ -48,11 +49,16 @@ export class PageLoader {
     }
   }
 
+  /** Where an op starts: the layer or page by id, or the current page when none is given. */
+  async root(id: string | undefined): Promise<BaseNode> {
+    return id === undefined ? this.#view.page() : await this.#lookup.existing(id);
+  }
+
   /** The layers right inside the layer or page by id, its page loaded first; the current page's when none is given. */
   async children(id: string | undefined): Promise<readonly SceneNode[]> {
-    const node = id === undefined ? this.#view.page() : await this.#lookup.existing(id);
+    const node = await this.root(id);
 
-    if (node.type === LOOKUP_NODE_TYPE.document) {
+    if (node.type === FIGMA_NODE_TYPE.document) {
       throw new PixelwrightError(ERROR_CODE.nodeNotFound, LOOKUP_TEXT.document(node.id));
     }
 
@@ -60,23 +66,13 @@ export class PageLoader {
       throw new PixelwrightError(ERROR_CODE.nodeNotFound, LOOKUP_TEXT.noLayers(node.id));
     }
 
-    const page = this.#pageOf(node);
+    const page = this.#lookup.pageOf(node);
 
     if (page !== null) {
       await this.load(page);
     }
 
     return node.children;
-  }
-
-  #pageOf(node: BaseNode): PageNode | null {
-    for (let current: BaseNode | null = node; current !== null; current = current.parent) {
-      if (current.type === LOOKUP_NODE_TYPE.page) {
-        return current;
-      }
-    }
-
-    return null;
   }
 }
 

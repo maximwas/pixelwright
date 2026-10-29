@@ -80,7 +80,7 @@ export class PluginBridge implements PluginLink {
     if (this.#role === PLUGIN_LINK_ROLE.handedOver) {
       return {
         role: PLUGIN_LINK_ROLE.handedOver,
-        port: (await this.#owner.state()).port,
+        port: this.#owner.port(),
         files: [],
         pairing: null,
         hint: BRIDGE_ROLE_HINT.handedOver,

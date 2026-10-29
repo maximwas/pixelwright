@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RecentActions } from "@/plugin-ui/view/recent-actions.ts";
+import { ACTION_NAME } from "@/plugin-ui/view/view.constants.ts";
+import { OP_CONTRACTS } from "@/shared/ops/op.catalog.ts";
 
 describe("RecentActions (P-051)", () => {
   it("keeps the last five actions newest first, each with its time, a failure as a warning", () => {
@@ -20,6 +22,14 @@ describe("RecentActions (P-051)", () => {
     ]);
     // Code that failed still ran, and may outlive the switch (P-012).
     expect(actions.ranCode()).toBe(true);
+  });
+
+  it("names every op the activity lists: none goes by its bare op name", () => {
+    const unnamed = OP_CONTRACTS.all()
+      .filter((contract) => !(contract.declared.quiet ?? false) && ACTION_NAME[contract.name] === undefined)
+      .map(({ name }) => name);
+
+    expect(unnamed).toEqual([]);
   });
 
   it("words a refused write, and remembers it until Allow edits goes on (P-012)", () => {

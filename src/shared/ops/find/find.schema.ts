@@ -1,4 +1,5 @@
 import * as zod from "zod/mini";
+import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import { FIND, FIND_FIELD } from "@/shared/ops/find/find.constants.ts";
 import { NodeRefSchema } from "@/shared/ops/selection/selection.schema.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
@@ -18,6 +19,8 @@ export const FindOpInputSchema = zod.strictObject({
   counts: zod.exactOptional(zod.boolean()),
   within: zod.exactOptional(NodeIdSchema),
   limit: zod.int().check(zod.minimum(FIND.minLimit), zod.maximum(FIND.maxLimit)),
+  /** What is left of the server's one budget when it goes page by page (P-075); the op's own when left out. */
+  budgetMs: zod.exactOptional(zod.int().check(zod.minimum(1), zod.maximum(LIMITS.opBudgetMs))),
 });
 
 /** A layer found, its box in page px as Figma gives it (the server rounds it, D-15), and its ancestors' names. */

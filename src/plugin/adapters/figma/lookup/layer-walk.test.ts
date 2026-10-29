@@ -32,3 +32,18 @@ it("stops a long walk soon after its deadline, reading the clock once per 500 la
   expect(walked.kept).toEqual([...numbers(1_500)]);
   expect(clock.reads).toBe(4);
 });
+
+// P-075, T-040: a walk the deadline cut answers with what it reached, so its first batch is looked up all the same.
+it("looks up the first batch of what a cut walk kept, then stops at the passed deadline", async () => {
+  const walk = new LayerWalk(new TickingClock());
+  const taken: [number, number][] = [];
+
+  const cut = await walk.lookUp([...numbers(60)], 0, {
+    lookup: async (item) => await Promise.resolve(item * 10),
+    take: (item, value) => taken.push([item, value]),
+    enough: () => false,
+  });
+
+  expect(cut).toBe(true);
+  expect(taken).toEqual([...numbers(25)].map((item) => [item, item * 10]));
+});

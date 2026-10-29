@@ -4,6 +4,7 @@ import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
+import { CODE_RUNS, CodeRuns } from "@/plugin/operations/execute/code-runs.ts";
 import { CODE_SCOPE, CodeScope } from "@/plugin/operations/execute/code-scope.ts";
 import { ExecuteOperation } from "@/plugin/operations/execute/execute.operation.ts";
 import { FileMapOperation } from "@/plugin/operations/file-map/file-map.operation.ts";
@@ -19,7 +20,8 @@ import type { OpName } from "@/shared/ops/op-meta.types.ts";
 
 /**
  * Every op's class by name (A§4b.3): a contract without one here fails to type, so no op is left unserved. execute's
- * pw scope lives as long as the window (T-154); find reads variants with core's Name=Value lists (K-069).
+ * pw scope lives as long as the window (T-154), its code's runs outlive their answers (T-156); find reads variants with
+ * core's Name=Value lists (K-069).
  */
 export class OperationProviders {
   readonly #classes: Readonly<Record<OpName, OperationClass>> = {
@@ -38,6 +40,7 @@ export class OperationProviders {
   register(container: Container): void {
     container
       .bind({ provide: CODE_SCOPE, useClass: CodeScope })
+      .bind({ provide: CODE_RUNS, useClass: CodeRuns })
       .bind({ provide: NAME_VALUE_LIST, useClass: NameValueList })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
   }

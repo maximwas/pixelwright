@@ -43,17 +43,18 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   reader, `McpEndpoint`, the shutdown hooks.
 - `cli/`: the `pixelwright` binary and `CliMain`.
 - `plugin/app/`: the op runtime in Figma's main thread: `OperationRunner`, its steps, the `Operation` base class,
-  `OpReport`, `OperationTurns` (the read/write turn lock); `journal/` holds `ChangeJournal`, what changed while the
+  `OpReport`, `OperationTurns` (the read/write turn lock), `BusyOps` (what runs past its answer, as the window shows
+  it); `journal/` holds `ChangeJournal`, what changed while the
   window is open and whose hand it was.
 - `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `CurrentSelection`,
   which also selects and hears selection changes; `LayerRefs`, a layer as lists name it, its Dev Mode status too; `CanvasView`, the current
-  page and the view, the one place either changes; `lookup/`: `NodeLookup`, the only by-id lookups, `PageLoader`, the
+  page and the view, the one place either changes; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
   pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline); `host/` holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file
   id).
-- `plugin/operations/`: one folder per op, one `Operation` subclass each; `execute/` also holds `CodeScope` (pw, kept
+- `plugin/operations/`: one folder per op, one `Operation` subclass each; `execute/` also holds `CodeRuns` (the code's run past its answer) and `CodeScope` (pw, kept
   while the window is open) and the code's console, value printer and error text.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
@@ -99,14 +100,15 @@ it returns or throws in the envelope through `OpReport`. The envelope goes back 
 **Runs code.** `ExecuteTool` reads `script` through `ProjectFolder` at every call, refuses code that does not parse
 (`SyntaxCheck`), and runs the execute op; the op's meta makes every deadline max(30 s, timeout + 5 s). In the plugin,
 `ExecuteOperation` runs the code as an async function of `CodeFigma`'s figma proxy, `CodeConsole` and `CodeScope`'s pw,
-answers at the code's own timeout while the code runs on, and tells `ChangeJournal` it is executing, so what Figma
-reports meanwhile is Pixelwright's. Back on the server, `ReadsOnlyCheck` adds the "only reads" note from the code.
+answers at the code's own timeout while the code runs on. `CodeRuns` keeps `ChangeJournal`'s execute window open until
+the code itself ends, a second more, so what Figma reports meanwhile is Pixelwright's, and shows code past its time
+busy in the window through `BusyOps`. Back on the server, `ReadsOnlyCheck` adds the "only reads" note from the code.
 
 **Searches the file.** `NodesFindTool` asks `WithinScope` for its roots: the id given, the current page, or for "file"
-every page from file_map's unloaded list. It runs the find op once per root, page by page, and stops past the limit
-unless it counts; it adds the counts up and rounds the boxes. In the plugin, `FindOperation` gets the root's layers from
+every page from file_map's unloaded list. It runs the find op once per root, page by page, in one 20 s budget, and stops
+past the limit unless it counts; it adds the counts up and rounds the boxes. In the plugin, `FindOperation` gets the root's layers from
 `PageLoader` (a page other than the current one loaded first), walks them with `LayerWalk` until the op's deadline (the
-clock read every 500 layers, since findAll cannot be stopped), then looks main components up in batches.
+clock read every 500 layers, since findAll cannot be stopped), then looks main components up in batches (`LayerWalk.lookUp`: the first batch even past the deadline).
 
 **Pairs a plugin.** The window says hello through `SocketLink`. On the owner, `BridgeListener` takes the upgrade
 `UpgradeGuard` allows, and `PluginConnection` runs the handshake as a state machine. A window with a known key gets a

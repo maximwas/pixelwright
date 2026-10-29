@@ -86,6 +86,11 @@ export class OwnerBridge implements PluginLink {
     return this.#failure === null ? PLUGIN_LINK_ROLE.owner : PLUGIN_LINK_ROLE.failed;
   }
 
+  /** The port it listens on, read without state(), which would mint a pairing code. */
+  port(): number {
+    return this.#listener.port();
+  }
+
   async state(): Promise<PluginLinkState> {
     const role = this.role();
     const port = this.#listener.port();

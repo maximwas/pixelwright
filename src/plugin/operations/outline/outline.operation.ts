@@ -1,11 +1,11 @@
 import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
-import { CANVAS_VIEW } from "@/plugin/adapters/figma/canvas-view.ts";
+import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LAYER_REFS } from "@/plugin/adapters/figma/layer-refs.ts";
-import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
+import { LAYER_WALK } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
+import { PAGE_LOADER } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
-import { OUTLINE_NODE_TYPE } from "@/plugin/operations/outline/outline.constants.ts";
 import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import type { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
 import type { OutlineNode } from "@/shared/ops/outline/outline.schema.ts";
@@ -30,42 +30,49 @@ interface Walk {
 /**
  * The layer tree under a layer or a page, the current page when none is given, to `depth` levels (T-044), breadth
  * first, so a big frame keeps every section before any loses its children to the node limit. Boxes are relative to the
- * outlined node and unrounded: the server rounds them (D-15). The document lists its pages, unloaded.
+ * outlined node and unrounded: the server rounds them (D-15). The document lists its pages, unloaded. Instances name
+ * their component until the op's deadline (P-075).
  */
 @injectable()
 export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {
-  readonly #lookup;
-  readonly #view;
+  readonly #loader;
   readonly #refs;
+  readonly #layerWalk;
 
   constructor(
     report = inject(OP_REPORT),
-    lookup = inject(NODE_LOOKUP),
-    view = inject(CANVAS_VIEW),
+    loader = inject(PAGE_LOADER),
     refs = inject(LAYER_REFS),
+    layerWalk = inject(LAYER_WALK),
   ) {
     super(report);
-    this.#lookup = lookup;
-    this.#view = view;
+    this.#loader = loader;
     this.#refs = refs;
+    this.#layerWalk = layerWalk;
   }
 
   protected async execute({ node, depth }: OutlineInput): Promise<OutlineOutput> {
-    const root = node === undefined ? this.#view.page() : await this.#lookup.existing(node);
+    // The deadline counts the page's loading too, as find's does.
+    const deadline = this.#layerWalk.deadline();
+    const root = await this.#loader.root(node);
 
-    if (root.type === OUTLINE_NODE_TYPE.document) {
+    if (root.type === FIGMA_NODE_TYPE.document) {
       return { root: this.#pages(root) };
     }
 
-    if (root.type === OUTLINE_NODE_TYPE.page && root !== this.#view.page()) {
+    if (root.type === FIGMA_NODE_TYPE.page) {
       // dynamic-page: a page the user is not on has no children until it is loaded.
-      await root.loadAsync();
+      await this.#loader.load(root);
     }
 
     const walk: Walk = { origin: this.#box(root) ?? { x: 0, y: 0 }, instances: [] };
     const top = this.#tree(root, depth, walk);
 
-    await this.#nameComponents(walk.instances, Date.now() + LIMITS.opBudgetMs);
+    await this.#layerWalk.lookUp(walk.instances, deadline, {
+      lookup: async ([, instance]) => await instance.getMainComponentAsync(),
+      take: ([entry], main) => this.#named(entry, main),
+      enough: () => false,
+    });
 
     return { root: top };
   }
@@ -129,35 +136,20 @@ export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {
       childCount: this.#children(node).length,
     };
 
-    if (node.type === OUTLINE_NODE_TYPE.instance) {
+    if (node.type === FIGMA_NODE_TYPE.instance) {
       walk.instances.push([entry, node]);
     }
 
     return entry;
   }
 
-  /**
-   * Each listed instance's component, by its set's name for a variant with the variant as Figma names it, looked up in
-   * batches until the op's time is spent; instances past it stay unnamed.
-   */
-  async #nameComponents(instances: readonly [OutlineNode, InstanceNode][], deadline: number): Promise<void> {
-    const batch = instances.slice(0, LIMITS.mainComponentBatch);
+  /** An instance's entry names its component: by its set's name for a variant, with the variant as Figma names it. */
+  #named(entry: OutlineNode, main: ComponentNode | null): void {
+    const set = main?.parent?.type === FIGMA_NODE_TYPE.componentSet ? main.parent : null;
 
-    if (batch.length === 0 || Date.now() >= deadline) {
-      return;
+    if (main !== null) {
+      Object.assign(entry, set === null ? { component: main.name } : { component: set.name, variant: main.name });
     }
-
-    await Promise.all(
-      batch.map(async ([entry, instance]) => {
-        const main = await instance.getMainComponentAsync();
-        const set = main?.parent?.type === OUTLINE_NODE_TYPE.componentSet ? main.parent : null;
-
-        if (main !== null) {
-          Object.assign(entry, set === null ? { component: main.name } : { component: set.name, variant: main.name });
-        }
-      }),
-    );
-    await this.#nameComponents(instances.slice(LIMITS.mainComponentBatch), deadline);
   }
 
   /** The layer's box in page px; null for a node Figma gives none (a page, the document). */

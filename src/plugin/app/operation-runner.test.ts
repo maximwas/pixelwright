@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as zod from "zod/mini";
+import { BusyOps } from "@/plugin/app/busy-ops.ts";
 import { OpReport } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
 import { type OpCall, type OperationFactory, OperationRunner } from "@/plugin/app/operation-runner.ts";
@@ -44,7 +45,7 @@ const QUIET_WINDOW = { activity: () => undefined, busy: () => undefined };
 const runner = () =>
   new OperationRunner(
     new OpCatalog([stubOp]),
-    [new ContractStep(), new TurnStep(new OperationTurns()), new WatchdogStep(QUIET_WINDOW)],
+    [new ContractStep(), new TurnStep(new OperationTurns()), new WatchdogStep(new BusyOps(QUIET_WINDOW))],
     new StubFactory(),
   );
 

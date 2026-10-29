@@ -922,6 +922,11 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 500
+        },
+        "budgetMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20000
         }
       },
       "required": [

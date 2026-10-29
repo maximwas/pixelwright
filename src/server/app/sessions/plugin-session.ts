@@ -4,6 +4,8 @@ import type { PluginLink } from "@/core/ports/plugin-link.port.ts";
 import type { AnyOpContract, OpContract } from "@/shared/ops/op-contract.ts";
 import type { ResolvedOpMeta } from "@/shared/ops/op-meta.types.ts";
 
+type Schema = zod.ZodMiniType;
+
 /**
  * One call's file (T-002): every op of the call goes to this session, even when another file comes to the front
  * meanwhile. Each op passes the session's chain (log, timeout text, result check) to the link and back, so a tool
@@ -24,8 +26,8 @@ export class PluginSession {
     this.#steps = steps;
   }
 
-  async run<Input extends zod.ZodMiniType, Output extends zod.ZodMiniType>(contract: OpContract<Input, Output>,    input: zod.output<Input>): Promise<zod.output<Output>> {
-    const output = await this.#handle({ session: this.id, contract, input, meta: contract.meta(input) }, 0);
+  async run<Input extends Schema, Output extends Schema>(op: OpContract<Input, Output>, input: zod.output<Input>) {
+    const output = await this.#handle({ session: this.id, contract: op, input, meta: op.meta(input) }, 0);
 
     // OpResultStep parsed it with this very contract's output schema.
     return output as zod.output<Output>;
