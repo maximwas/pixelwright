@@ -28,7 +28,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     by hand, P3 kept P3, Dev Mode's CSS forms, the wire form with `space` only for P3, equals within 0.0005, contrast);
     `names/` holds `TokenNames` (T-163: a style's or variable's `--Name`, Unicode letters and digits kept, a name with
     none `--token-<fnv1a>`, K-070; a variable's WEB code syntax wins; a same-named style `--Black-2`, its XML name
-    `h1-2`; the variable an alias binds to a field); `easing/` holds `EasingCss`, the one easing writer (D-64, K-066: a
+    `h1-2`; the variable an alias binds to a field) and `Slug` (K-075: an asset file name, slugify with Ukrainian
+    transliteration, 60 characters, `asset` when empty); `easing/` holds `EasingCss`, the one easing writer (D-64, K-066: a
     CSS keyword, else `cubic-bezier()` to 3 decimals, a hold as `step-end`; a spring writes nothing until the Motion
     item, its preset numbers unverified, D-24).
   - `tokens/`: `names/` holds `StyleNumbers`, the one numbering of same-named styles (the file's own by id, then library
@@ -39,7 +40,14 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     server (the plugin never imports `core/xml`).
   - `design/`: design_read's tree over the read model, on the server (C-140: the tree first, the string last).
     `DesignXml` is the entry; `tree/` holds `LayerTree` (an element per layer, a hidden layer as a stub with
-    `display="none"` and the property that shows it, D-18; a slice left out; `$children` where the read cut);
+    `display="none"` and the property that shows it, D-18; a slice left out; `$children` where the read cut; an
+    asset with no children); `assets/` holds `AssetClassifier` (C-142: Icon only from shapes with a true vector, Image
+    for mask groups, image, pattern or shader fills and noise, texture or glass effects; the designer's export settings
+    win except a PDF, text or the root; a video fill is a video, B-001, D-23), `AssetCss` (C-143: placement only,
+    images also radius, outer shadows and outline; an icon placed by its render bounds, a turned asset without its
+    transform) and `AssetPlanner` (C-144: one `AssetPlan` per read, names `-2`, `-3` per full file name, one
+    `<layer>-background.png` per image hash, a video listed with no file), which `LayerTree` and `ReadCatalogue` (the
+    JSON block's `assets`) share;
     `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: metadata, a Text's `textStyle`
     and a TextPath's `d` and `start`, the CSS from `CssReader`, then the `$` ones, `$css` among them). `text/` holds
     `TextContent` (a Text's characters with the runs that differ from its main one as Spans: only the differences and

@@ -18,3 +18,22 @@ export const TOKEN_TEXT = {
   numbered: (name: string, number: number) => `${name}-${number}`,
   reference: (name: string) => `var(${name})`,
 } as const;
+
+/** How a layer name becomes a file name (K-075). */
+export const SLUG_RULE = {
+  /** NFKC folds ligatures and the like ("ﬁ" to "fi"). */
+  form: "NFKC",
+  /** Apostrophes join a word ("Kid's" to "kids"). */
+  apostrophes: /['’]/g,
+  /** Every run of anything but letters, digits and marks parts words: slugify's strict mode would run them together. */
+  separators: /[^\p{L}\p{N}\p{M}]+/gu,
+  trailingDashes: /-+$/,
+  /** Cyrillic transliterated by the Ukrainian rules ("Логотип компанії" to "lohotyp-kompaniyi"). */
+  locale: "uk",
+  /** A file name stays readable and far below any file system's limit. */
+  maxLength: 60,
+  space: " ",
+  none: "",
+  /** The name of a layer whose name keeps nothing. */
+  empty: "asset",
+} as const;

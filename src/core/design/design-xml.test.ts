@@ -14,6 +14,9 @@ import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { AssetClassifier } from "@/core/design/assets/asset-classifier.ts";
+import { AssetCss } from "@/core/design/assets/asset-css.ts";
+import { AssetPlanner } from "@/core/design/assets/asset-planner.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
@@ -22,6 +25,7 @@ import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
@@ -49,6 +53,7 @@ const design = new DesignXml(
     ),
     new TextContent(new TextRun(new FontShorthand(format), paints, format, new TokenNames())),
     new InteractionAttributes(new EasingCss(format)),
+    new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(lengths, new CssSplit())),
   ),
   new XmlWriter(new XmlEscape()),
 );
@@ -209,5 +214,40 @@ describe("DesignXml", () => {
     expect(xml).toBe(
       '<TextPath id="1:2" name="Label on arc" d="M 0 50 C 55.23 -16.67 144.77 -16.67 200 50 M 0 60 L 200 60 Z" start="0 0.25"></TextPath>',
     );
+  });
+});
+
+// C-142, C-144, B-001: an asset is an Icon or Image with its file and no children; a video stays its own layer.
+describe("DesignXml assets", () => {
+  it("writes an icon and an image with their src and without children, and a video fill as its own layer", () => {
+    const mask = layer({ id: "1:6", type: "ELLIPSE", name: "Mask", isMask: true });
+    const root = layer({
+      id: "1:1",
+      type: "FRAME",
+      name: "Row",
+      children: [
+        text("1:2", "Copy", "Copy"),
+        layer({
+          id: "1:3",
+          type: "INSTANCE",
+          name: "Logo",
+          children: [layer({ id: "1:4", type: "VECTOR", name: "Mark" })],
+        }),
+        layer({
+          id: "1:5",
+          type: "GROUP",
+          name: "Avatar",
+          children: [mask, layer({ id: "1:7", type: "RECTANGLE", name: "Photo" })],
+        }),
+        layer({ id: "1:8", type: "RECTANGLE", name: "Clip", fills: [{ type: "VIDEO" }] }),
+      ],
+    });
+
+    expect(design.xml(model(root)).split("\n").slice(2)).toEqual([
+      '  <Icon id="1:3" name="Logo" src="assets/logo.svg"/>',
+      '  <Image id="1:5" name="Avatar" src="assets/avatar.png"/>',
+      '  <Rectangle id="1:8" name="Clip"/>',
+      "</Frame>",
+    ]);
   });
 });

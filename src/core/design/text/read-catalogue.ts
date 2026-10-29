@@ -3,17 +3,20 @@ import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import { FONT_SHORTHAND } from "@/core/css/fonts/font-shorthand.ts";
 import { CASE_CSS, FONT_PATTERN } from "@/core/css/fonts/fonts.constants.ts";
 import type { TextSegment } from "@/core/css/groups/text/text-run.ts";
+import { ASSET_PLANNER } from "@/core/design/assets/asset-planner.ts";
+import type { PlannedAsset } from "@/core/design/assets/assets.types.ts";
 import { READ_TOKENS } from "@/core/design/text/read-tokens.ts";
 import { CATALOGUE_TEXT, TEXT_CONTENT } from "@/core/design/text/text.constants.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
-/** design_read's JSON beside the XML: its tokens, the text styles its texts name, and the fonts they use. */
+/** design_read's JSON beside the XML: its tokens, the text styles its texts name, the fonts they use, its assets. */
 export interface Catalogue {
   readonly tokens: Record<string, string>;
   readonly textStyles: Record<string, string>;
   readonly fonts: Record<string, string[]>;
+  readonly assets: readonly PlannedAsset[];
 }
 
 type Style = ReadModel["styles"][string];
@@ -27,15 +30,18 @@ export class ReadCatalogue {
   readonly #fonts;
   readonly #names;
   readonly #tokens;
+  readonly #assets;
 
   constructor(
     fonts = inject(FONT_SHORTHAND),
     names = inject(TOKEN_NAMES),
     tokens = inject(READ_TOKENS),
+    assets = inject(ASSET_PLANNER),
   ) {
     this.#fonts = fonts;
     this.#names = names;
     this.#tokens = tokens;
+    this.#assets = assets;
   }
 
   read(model: ReadModel): Catalogue {
@@ -64,6 +70,7 @@ export class ReadCatalogue {
           [...weights].sort((first, second) => first.localeCompare(second, TEXT_CONTENT.locale, { numeric: true })),
         ]),
       ),
+      assets: this.#assets.plan(model).assets(),
     };
   }
 

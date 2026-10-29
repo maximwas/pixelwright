@@ -214,6 +214,9 @@ importers:
       pino:
         specifier: 10.4.0
         version: 10.4.0
+      slugify:
+        specifier: 1.6.9
+        version: 1.6.9
       svg-path-commander:
         specifier: 2.3.3
         version: 2.3.3
@@ -2084,6 +2087,10 @@ packages:
     engines: {node: ^22.19.0 || ^24.5.0 || >=26.0.0}
     hasBin: true
 
+  slugify@1.6.9:
+    resolution: {integrity: sha512-vZ7rfeehZui7wQs438JXBckYLkIIdfHOXsaVEUMyS5fHo1483l1bMdo0EDSWYclY0yZKFOipDy4KHuKs6ssvdg==}
+    engines: {node: '>=8.0.0'}
+
   smol-toml@1.9.1:
     resolution: {integrity: sha512-j7WyPdf0CJoutMzMoPLF/bVXHtKZIT9Rb4eGeEbWw8X2t5oirjPgpL+OpaENZrILYaXqYwnVH+qgUwVbl+pUJQ==}
     engines: {node: '>= 18'}
@@ -3953,6 +3960,8 @@ snapshots:
     dependencies:
       lilconfig: 3.1.4
       nanospinner: 1.2.2
+
+  slugify@1.6.9: {}
 
   smol-toml@1.9.1: {}
 

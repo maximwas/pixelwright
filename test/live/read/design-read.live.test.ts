@@ -17,6 +17,9 @@ const THIRTY_DEGREES = [
   [0.928203, 0.267949, -0.098076],
 ];
 
+/** Orbit's Pricing hero: its icons and images are assets. */
+const HERO = "54:238";
+
 /** An id no file has: the read op lists it as missing. */
 const MISSING = "999999:1";
 
@@ -196,6 +199,27 @@ return box.id;`,
     await expect(client.texts("design_read", { file, node: made.hidden })).rejects.toThrow(
       `OP_FAILED: ${made.hidden} is hidden in Figma`,
     );
+  });
+
+  it("reads Orbit's icons as Icon and its images as Image with their files, and lists them in the JSON (C-142, C-144)", async () => {
+    const [hero = "", heroJson = "{}"] = await client.texts("design_read", { file, node: HERO });
+    const [xml = "", json = "{}"] = await client.texts("design_read", { file, node: customers });
+    const { assets } = JSON.parse(json) as { assets: { node: string; src?: string }[] };
+
+    expect(hero).toMatch(/<Icon id="[^"]+"[^>]* src="assets\/[\w-]+\.svg"/);
+    expect((JSON.parse(heroJson) as { assets: unknown[] }).assets.length).toBeGreaterThan(0);
+    expect(xml).toContain(
+      '<Icon id="54:437" name="Logo" component="Logo" variant="Brand=Nova" src="assets/logo-nova.svg"',
+    );
+    expect(xml).toMatch(/<Image id="54:454" name="Product shot" src="assets\/product-shot\.png"/);
+    expect(assets).toContainEqual({
+      node: "54:454",
+      kind: "image",
+      format: "PNG",
+      src: "assets/product-shot.png",
+      scale: 2,
+    });
+    expect(assets.map(({ node }) => node)).toContain("54:452");
   });
 
   it("refuses two selected layers with NODE_NOT_FOUND and the advice to select one or pass node (T-051, D-64)", async () => {

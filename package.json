@@ -99,6 +99,7 @@
     "culori": "4.0.2",
     "p-timeout": "7.0.1",
     "pino": "10.4.0",
+    "slugify": "1.6.9",
     "svg-path-commander": "2.3.3",
     "ws": "8.22.0",
     "zod": "4.6.7"

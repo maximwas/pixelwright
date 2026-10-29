@@ -6,12 +6,25 @@ import { READ_VALUE } from "@/shared/read-model/read-model.constants.ts";
 
 /**
  * How a layer shows and sits (0.7.0's blending, layout grid and corner readers): opacity, blend mode, mask, clipping,
- * constraints, layout grids and corners. Figma's raw values, its defaults left out; the server maps them to CSS.
+ * constraints, layout grids, corners, and the designer's export settings (C-142). Figma's raw values, its defaults left out; the server maps them to CSS.
  */
 @injectable()
 export class AppearanceFieldReader implements FieldReader {
   read(node: SceneNode): Partial<ReadLayer> {
-    return { ...this.#blending(node), ...this.#constraints(node), ...this.#grids(node), ...this.#corners(node) };
+    return {
+      ...this.#blending(node),
+      ...this.#constraints(node),
+      ...this.#grids(node),
+      ...this.#corners(node),
+      ...this.#exports(node),
+    };
+  }
+
+  /** The designer's export settings: the layer is meant to be an asset, in this format and scale. */
+  #exports(node: SceneNode): Partial<ReadLayer> {
+    return "exportSettings" in node && node.exportSettings.length > 0
+      ? { exportSettings: node.exportSettings.map((setting) => ({ ...setting })) }
+      : {};
   }
 
   #blending(node: SceneNode): Partial<ReadLayer> {

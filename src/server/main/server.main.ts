@@ -24,6 +24,9 @@ import { CSS_LENGTH, CssLength } from "@/core/css/values/css-length.ts";
 import { CSS_SPLIT, CssSplit } from "@/core/css/values/css-split.ts";
 import { CSS_URL, CssUrl } from "@/core/css/values/css-url.ts";
 import { CSS_VAR, CssVar } from "@/core/css/values/css-var.ts";
+import { ASSET_CLASSIFIER, AssetClassifier } from "@/core/design/assets/asset-classifier.ts";
+import { ASSET_CSS, AssetCss } from "@/core/design/assets/asset-css.ts";
+import { ASSET_PLANNER, AssetPlanner } from "@/core/design/assets/asset-planner.ts";
 import { DESIGN_BUILDER, DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { COMPONENT_ATTRIBUTES, ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
@@ -34,6 +37,7 @@ import { TEXT_CONTENT_READER, TextContent } from "@/core/design/text/text-conten
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { EASING_CSS, EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { SLUG, Slug } from "@/core/kernel/names/slug.ts";
 import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NUMBER_FORMAT, NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
@@ -196,6 +200,10 @@ export class ServerMain {
       .bind({ provide: CSS_READER, useClass: CssReader })
       .bind({ provide: COMPONENT_ATTRIBUTES, useClass: ComponentAttributes })
       .bind({ provide: INTERACTION_ATTRIBUTES, useClass: InteractionAttributes })
+      .bind({ provide: SLUG, useClass: Slug })
+      .bind({ provide: ASSET_CLASSIFIER, useClass: AssetClassifier })
+      .bind({ provide: ASSET_CSS, useClass: AssetCss })
+      .bind({ provide: ASSET_PLANNER, useClass: AssetPlanner })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
       .bind({ provide: TEXT_CONTENT_READER, useClass: TextContent })
       .bind({ provide: READ_TOKENS, useClass: ReadTokens })
