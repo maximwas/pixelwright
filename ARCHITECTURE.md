@@ -39,7 +39,14 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
     server (the plugin never imports `core/xml`).
   - `design/`: design_read's tree over the read model, on the server (C-140: the tree first, the string last).
-    `DesignXml` is the entry; `tree/` holds `LayerTree` (an element per layer, a hidden layer as a stub with
+    `DesignReader` is the entry (T-050): it plans the assets once for the XML and the JSON block, plans the fit once
+    and writes the read with that plan. `DesignXml` builds the tree, folds runs when asked and writes it with
+    `XmlWriter.written` (the lines and each element's span); `fit/` holds `DesignFit` and `FitRound` (T-054: in up to
+    8 rounds, each checked by a real render, branches emptied deepest first and largest first at one depth with
+    `$truncated="true"`, then the widest lists cut to their first children with `$children`, then the longest texts
+    shortened with `…`; a folded run is cut whole, never inside); `repeats/` holds `RepeatFold` (T-059: each run of
+    three or more alike neighbours read as its first with `$repeat="N"`, the JSON `repeats` rows holding each one's
+    own values); `tree/` holds `LayerTree` (an element per layer, a hidden layer as a stub with
     `display="none"` and the property that shows it, D-18; a slice left out; `$children` where the read cut; an
     asset with no children); `assets/` holds `AssetClassifier` (C-142: Icon only from shapes with a true vector, Image
     for mask groups, image, pattern or shader fills and noise, texture or glass effects; the designer's export settings
@@ -214,7 +221,7 @@ tokens of config values and multi-provider lists that belong to no class in a to
 the read op. In the plugin, `ReadOperation` looks each id up once (one Figma cannot give is missing), and `ReadRun`
 reads the layers breadth first under `LIMITS.readJsonChars` through `LayerReader`, a hidden layer as a stub, with a cut
 wherever children were not all read. Back on the server a hidden root is refused and the read model goes to
-`DesignXml`: `LayerTree` walks it, `DesignBuilder` gives each layer its tag and attributes, `XmlWriter` writes the
+`DesignReader`, which fits it to `maxChars` (`DesignFit`) and has `DesignXml` write it: `LayerTree` walks it, `DesignBuilder` gives each layer its tag and attributes, `XmlWriter` writes the
 tree. The answer is two text blocks, the XML and the JSON, with no structuredContent. `pnpm dev:read <fixture>` does
 the server's half offline for an Orbit fixture in `test/golden/fixtures/`.
 
@@ -223,8 +230,9 @@ layout, grid, grid-cell and sizing fields into the read model. On the server, `D
 runs the property groups; `LayoutGroup` (`core/css/groups/layout/`) writes display, direction, wrap, padding,
 alignment, the gaps and the grid tracks, and a negative spacing as a `$css` note; `GeometryGroup` and `AppearanceGroup`
 (their fields from the plugin's `BoxFieldReader` and `AppearanceFieldReader`) write the place, size, transform and
-look. `test/golden/design-attributes.golden.test.ts`
-compares each owned attribute with the 0.7.0 XML goldens.
+look. `test/golden/design.golden.test.ts` holds the four Orbit XML goldens, `*.read.json` and `*.fit.json` byte for
+byte (C-191, C-192, D-21): a golden moves only in its own commit with its decision (D-18 stubs, D-20 notes, a D-15
+value); any other move is a bug. `test/live/read/read-model.live.test.ts` checks the live Orbit roots against them.
 
 **Adds a tool.** A folder under `server/tools/` with the manifest (name, description, schemas, annotations, `load()`),
 the schema and the tool class on `Tool`; one line in `ToolCatalog`. The `tools.json` golden changes with it.

@@ -30,6 +30,7 @@ import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
 import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
+import { RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
@@ -169,6 +170,7 @@ const design = new DesignXml(
     planner,
   ),
   new XmlWriter(new XmlEscape()),
+  new RepeatFold(),
 );
 
 function read(path: string): string {

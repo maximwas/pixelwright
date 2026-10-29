@@ -6,7 +6,7 @@ export const INVISIBLE_TYPES = { SLICE: "SLICE" } as const;
 
 /**
  * A layer element's attributes, in the order it writes them (C-1.3): what the layer is (metadata), its CSS (from
- * `display`), then the read-only `$` attributes design_apply leaves alone, `$children` last.
+ * `display`), then the read-only `$` attributes design_apply leaves alone, `$children`, `$truncated` and `$repeat` last.
  */
 export const DESIGN_ATTRIBUTE = {
   id: "id",
@@ -37,4 +37,11 @@ export const DESIGN_ATTRIBUTE = {
   gridStyle: "$grid-style",
   /** How many children a layer has when the read did not list them all: read that layer on its own. */
   children: "$children",
+  /** A branch emptied or a text shortened to fit maxChars (T-054): read that layer on its own. */
+  truncated: "$truncated",
+  /** How many alike neighbours a run's first stands for (T-059). */
+  repeat: "$repeat",
 } as const;
+
+/** The value of a flag attribute such as `$truncated`. */
+export const DESIGN_FLAG = { on: "true" } as const;

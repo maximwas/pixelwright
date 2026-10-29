@@ -29,8 +29,11 @@ import { ASSET_CSS, AssetCss } from "@/core/design/assets/asset-css.ts";
 import { ASSET_PLANNER, AssetPlanner } from "@/core/design/assets/asset-planner.ts";
 import { DESIGN_BUILDER, DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { COMPONENT_ATTRIBUTES, ComponentAttributes } from "@/core/design/component/component-attributes.ts";
+import { DESIGN_READER, DesignReader } from "@/core/design/design-reader.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
+import { DESIGN_FIT, DesignFit } from "@/core/design/fit/design-fit.ts";
 import { INTERACTION_ATTRIBUTES, InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
+import { REPEAT_FOLD, RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { READ_TOKENS, ReadTokens } from "@/core/design/text/read-tokens.ts";
 import { TEXT_CONTENT_READER, TextContent } from "@/core/design/text/text-content.ts";
@@ -209,7 +212,10 @@ export class ServerMain {
       .bind({ provide: READ_TOKENS, useClass: ReadTokens })
       .bind({ provide: READ_CATALOGUE, useClass: ReadCatalogue })
       .bind({ provide: LAYER_TREE, useClass: LayerTree })
-      .bind({ provide: DESIGN_XML, useClass: DesignXml });
+      .bind({ provide: REPEAT_FOLD, useClass: RepeatFold })
+      .bind({ provide: DESIGN_XML, useClass: DesignXml })
+      .bind({ provide: DESIGN_FIT, useClass: DesignFit })
+      .bind({ provide: DESIGN_READER, useClass: DesignReader });
   }
 
   /**

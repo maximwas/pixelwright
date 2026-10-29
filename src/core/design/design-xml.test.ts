@@ -21,6 +21,7 @@ import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { DesignXml } from "@/core/design/design-xml.ts";
 import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
+import { RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
@@ -56,6 +57,7 @@ const design = new DesignXml(
     new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(lengths, new CssSplit())),
   ),
   new XmlWriter(new XmlEscape()),
+  new RepeatFold(),
 );
 
 /** A layer with the fields every layer has, and those the case sets. */
