@@ -1,4 +1,4 @@
-import { GEOMETRY } from "@/core/kernel/geometry/geometry.constants.ts";
+import { GEOMETRY, LINE_AXIS } from "@/core/kernel/geometry/geometry.constants.ts";
 
 /**
  * A layer's turn as Figma keeps it (K-068): its rotation, and for a mirrored layer the 2x2 matrix [a, b, c, d]. Figma
@@ -25,6 +25,18 @@ export class Turn {
     const [m00 = -1, m01 = 0] = this.#mirror;
 
     return (Math.atan2(m01, -m00) * GEOMETRY.halfTurnDegrees) / Math.PI;
+  }
+
+  /** How a line at this turn lies: flat or standing within half a degree, else null (a turned line). */
+  lineAxis(): (typeof LINE_AXIS)[keyof typeof LINE_AXIS] | null {
+    const half = GEOMETRY.halfTurnDegrees;
+    const angle = ((this.degrees() % half) + half) % half;
+
+    if (Math.abs(angle - GEOMETRY.rightAngleDegrees) <= GEOMETRY.lineSnapDegrees) {
+      return LINE_AXIS.standing;
+    }
+
+    return angle <= GEOMETRY.lineSnapDegrees || angle >= half - GEOMETRY.lineSnapDegrees ? LINE_AXIS.flat : null;
   }
 
   mirrored(): boolean {

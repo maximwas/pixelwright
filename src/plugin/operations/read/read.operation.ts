@@ -53,6 +53,7 @@ export class ReadOperation extends Operation<ReadInput, ReadOutput> {
         model: READ_MODEL.version,
         profile: READ_PROFILE.design,
         root,
+        colorProfile: this.#reader.colorProfile(),
         styles: {},
         variables: {},
       })),

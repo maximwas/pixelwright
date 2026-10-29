@@ -7,6 +7,10 @@ import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.t
 import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
 import { PLACEMENT, Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
+import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
+import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { PAINT_LIST, PaintList } from "@/core/css/paints/paint-list.ts";
+import { SOLID_PAINT, SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GROUP_REGISTRY, GroupRegistry, PROPERTY_GROUPS } from "@/core/css/registry/group-registry.ts";
 import { CSS_LENGTH, CssLength } from "@/core/css/values/css-length.ts";
 import { CSS_SPLIT, CssSplit } from "@/core/css/values/css-split.ts";
@@ -153,9 +157,13 @@ export class ServerMain {
       .bind({ provide: CSS_VAR, useClass: CssVar })
       .bind({ provide: CSS_LENGTH, useClass: CssLength })
       .bind({ provide: PLACEMENT, useClass: Placement })
+      .bind({ provide: SOLID_PAINT, useClass: SolidPaint })
+      .bind({ provide: PAINT_LIST, useClass: PaintList })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: LayoutGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: GeometryGroup })
       .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: AppearanceGroup })
+      .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: FillsGroup })
+      .bind({ provide: PROPERTY_GROUPS, multi: true, useClass: StrokesGroup })
       .bind({ provide: GROUP_REGISTRY, useClass: GroupRegistry })
       .bind({ provide: CSS_READER, useClass: CssReader })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })

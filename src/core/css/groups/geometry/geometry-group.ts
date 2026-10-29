@@ -15,6 +15,7 @@ import { LAYOUT_MODE } from "@/core/css/groups/layout/layout.constants.ts";
 import type { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
 import { CSS_LENGTH } from "@/core/css/values/css-length.ts";
 import { CSS_VALUE } from "@/core/css/values/values.constants.ts";
+import { LINE_AXIS } from "@/core/kernel/geometry/geometry.constants.ts";
 import { Turn } from "@/core/kernel/geometry/turn.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
@@ -42,8 +43,9 @@ export class GeometryGroup implements PropertyGroup {
     this.#format = format;
   }
 
-  read(scope: CssScope): void {
-    const decided = this.#placement.read(scope);
+  read(given: CssScope): void {
+    const [scope, thin] = this.#upright(given);
+    const decided = { ...this.#placement.read(scope), ...thin };
 
     this.#transform(scope.layer, scope.css);
     this.#size(scope, GEOMETRY_AXIS.horizontal, decided);
@@ -57,6 +59,26 @@ export class GeometryGroup implements PropertyGroup {
         scope.css.set(property, written);
       }
     }
+  }
+
+  /**
+   * A line lying flat or standing (within half a degree) is an unturned box one border thick (the strokes group draws
+   * the border): its length along its axis, no size across. A standing one is that box upright, placed by its centre.
+   */
+  #upright(scope: CssScope): [CssScope, SizeOverride] {
+    const { layer } = scope;
+    const axis = layer.type === FIGMA_GEOMETRY.line ? new Turn(layer.rotation, undefined).lineAxis() : null;
+
+    if (axis === null) {
+      return [scope, {}];
+    }
+
+    const standing = axis === LINE_AXIS.standing;
+    const upright = standing
+      ? { ...layer, rotation: 0, width: layer.height, height: layer.width }
+      : { ...layer, rotation: 0 };
+
+    return [{ ...scope, layer: upright }, { [standing ? CSS_PROPERTY.width : CSS_PROPERTY.height]: null }];
   }
 
   /**

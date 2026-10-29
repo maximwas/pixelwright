@@ -6,6 +6,10 @@ import { AppearanceGroup } from "@/core/css/groups/appearance/appearance-group.t
 import { GeometryGroup } from "@/core/css/groups/geometry/geometry-group.ts";
 import { Placement } from "@/core/css/groups/geometry/placement.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
+import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
+import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { PaintList } from "@/core/css/paints/paint-list.ts";
+import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
@@ -59,6 +63,15 @@ const OWNED = [
   "text-overflow",
   "white-space",
   "border-radius",
+  // Item 17: fills, strokes and the line border.
+  "background",
+  "color",
+  "border",
+  "border-top",
+  "border-right",
+  "border-bottom",
+  "border-left",
+  "outline",
 ];
 
 /** Deliberate or not-yet differences from 0.7.0, each with the decision or item that settles it; never a silent skip. */
@@ -73,12 +86,16 @@ const KNOWN: readonly { fixture: string; id: string; attribute: string; why: str
       why: "asset placement by render bounds, no transform (m:1116170e; the asset item)",
     })),
   ),
+  // A text whose runs differ in colour has mixed fills: its colour comes per run with the text item (19); the line
+  // parser here reads the last color on the line, the link Span's.
+  { fixture: "pricing", id: "54:242", attribute: "color", why: "mixed text runs (text item 19)" },
 ];
 
 const FIXTURES = ["desktop-top", "pricing", "plans", "customers"] as const;
 
 const format = new NumberFormat();
 const lengths = new CssLength(new CssVar(new CssSplit()), format);
+const paints = new PaintList(new SolidPaint());
 const design = new DesignXml(
   new LayerTree(
     new DesignBuilder(
@@ -89,6 +106,8 @@ const design = new DesignXml(
           new LayoutGroup(lengths, format),
           new GeometryGroup(new Placement(lengths, format), lengths, format),
           new AppearanceGroup(lengths, format),
+          new FillsGroup(paints),
+          new StrokesGroup(paints, format),
         ]),
       ),
     ),
@@ -159,5 +178,15 @@ describe("design XML attributes against the 0.7.0 goldens", () => {
 
     expect(differences).toEqual([]);
     expect(ours.size).toBeGreaterThan(0);
+  });
+
+  // C-1.7, B-058: a Display P3 file's colours are P3 values: its read holds no sRGB hex; an sRGB file reads as before.
+  it("writes a Display P3 file's colours as color(display-p3 …) and an sRGB file's as before", () => {
+    const model = zod.parse(ReadModelSchema, JSON.parse(read("./fixtures/orbit-customers.json")));
+    const p3 = design.xml({ ...model, colorProfile: "DISPLAY_P3" });
+
+    expect(p3).toContain("color(display-p3 ");
+    expect(p3).not.toMatch(/="[^"]*#[0-9A-Fa-f]{3,8}\b/);
+    expect(design.xml({ ...model, colorProfile: "SRGB" })).toBe(design.xml(model));
   });
 });
