@@ -6,7 +6,7 @@ import {
   stringify,
 } from "@csstools/css-parser-algorithms";
 import { isTokenBadURL, isTokenString, isTokenURL } from "@csstools/css-tokenizer";
-import { inject, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_SPLIT } from "@/core/css/values/css-split.ts";
 import { URL_PATTERN, URL_TEXT, URL_VALUE } from "@/core/css/values/values.constants.ts";
 
@@ -99,3 +99,5 @@ export class CssUrl {
     return isFunctionNode(node) && node.getName().toLowerCase() === URL_VALUE.name;
   }
 }
+
+export const CSS_URL = new InjectionToken<CssUrl>("CssUrl");

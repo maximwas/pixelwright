@@ -1,13 +1,27 @@
 import { describe, expect, it } from "vitest";
+import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
+import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { StrokesGroup } from "@/core/css/groups/paint/strokes-group.ts";
+import { ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PaintList } from "@/core/css/paints/paint-list.ts";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
+import { CssLength } from "@/core/css/values/css-length.ts";
+import { CssSplit } from "@/core/css/values/css-split.ts";
+import { CssUrl } from "@/core/css/values/css-url.ts";
+import { CssVar } from "@/core/css/values/css-var.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 const format = new NumberFormat();
-const group = new StrokesGroup(new PaintList(new SolidPaint()), format);
+const solid = new SolidPaint();
+const gradients = new GradientCss(
+  new GradientGeometry(),
+  solid,
+  new CssLength(new CssVar(new CssSplit()), format),
+  format,
+);
+const group = new StrokesGroup(new PaintList(solid, gradients, new ImagePaint(new CssUrl(new CssSplit()))), format);
 const DARK = [{ type: "SOLID", color: { r: 25 / 255, g: 26 / 255, b: 35 / 255 } }];
 
 function cssOf(fields: Partial<ReadLayer>) {

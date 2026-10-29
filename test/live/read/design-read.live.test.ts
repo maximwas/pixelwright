@@ -8,7 +8,14 @@ const NAME = {
   frame: "live:design-read:frame",
   hidden: "live:design-read:hidden",
   other: "live:design-read:other",
+  gradient: "live:design-read:gradient",
 } as const;
+
+/** Figma's transform for CSS 30deg on a 200 x 100 box: getCSSAsync reads it as 49deg (FX-020). */
+const THIRTY_DEGREES = [
+  [0.535898, -0.464102, 0.464102],
+  [0.928203, 0.267949, -0.098076],
+];
 
 /** An id no file has: the read op lists it as missing. */
 const MISSING = "999999:1";
@@ -96,6 +103,38 @@ return { frame: frame.id, hidden: hidden.id, other: other.id };`,
 
     expect(line).toContain('position="absolute"');
     expect(line).toMatch(/transform="rotate\(-8deg\)"/);
+  });
+
+  // C-083, C-100, C-101: the aspect-corrected angle, a blur of radius 20 as blur(8.6px) (0.43 R), a card's shadow.
+  it("reads a gradient and a blur execute made, and the Pro card's shadow (C-083, C-100, C-101)", async () => {
+    const { result } = await client.call("execute", {
+      file,
+      code: `const section = await pw.node(${JSON.stringify(scratch)});
+const box = figma.createRectangle();
+box.name = ${JSON.stringify(NAME.gradient)};
+section.appendChild(box);
+box.resize(200, 100);
+box.fills = [{ type: "GRADIENT_LINEAR", gradientTransform: ${JSON.stringify(THIRTY_DEGREES)}, gradientStops: [
+  { position: 0, color: { r: 1, g: 0, b: 0, a: 1 } },
+  { position: 1, color: { r: 0, g: 0, b: 1, a: 1 } },
+] }];
+box.effects = [{ type: "LAYER_BLUR", blurType: "NORMAL", radius: 20, visible: true }];
+return box.id;`,
+    });
+    const id = String(result);
+
+    try {
+      const [xml] = await client.texts("design_read", { file, node: id });
+
+      expect(xml).toContain('background="linear-gradient(30deg, #F00 0%, #00F 100%)"');
+      expect(xml).toContain('filter="blur(8.6px)"');
+    } finally {
+      await client.call("execute", { file, code: `(await pw.node(${JSON.stringify(id)})).remove();` });
+    }
+
+    const [pro] = await client.texts("design_read", { file, node: planPro, depth: 0 });
+
+    expect(pro ?? "").toMatch(/box-shadow="(var\(--Shadow-Card\)|0 12px 32px -8px [^"]+)"/);
   });
 
   it("answers an id the read op lists as missing with NODE_NOT_FOUND and where ids come from (P-072)", async () => {

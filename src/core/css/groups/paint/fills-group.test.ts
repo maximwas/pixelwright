@@ -1,12 +1,28 @@
 import { describe, expect, it } from "vitest";
+import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
+import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
+import { ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PaintList } from "@/core/css/paints/paint-list.ts";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
+import { CssLength } from "@/core/css/values/css-length.ts";
+import { CssSplit } from "@/core/css/values/css-split.ts";
+import { CssUrl } from "@/core/css/values/css-url.ts";
+import { CssVar } from "@/core/css/values/css-var.ts";
+import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
-const group = new FillsGroup(new PaintList(new SolidPaint()));
+const format = new NumberFormat();
+const solid = new SolidPaint();
+const gradients = new GradientCss(
+  new GradientGeometry(),
+  solid,
+  new CssLength(new CssVar(new CssSplit()), format),
+  format,
+);
+const group = new FillsGroup(new PaintList(solid, gradients, new ImagePaint(new CssUrl(new CssSplit()))));
 const RED = { r: 1, g: 0, b: 0 };
 const BLUE = { r: 0, g: 0, b: 1 };
 
@@ -64,6 +80,36 @@ describe("FillsGroup", () => {
     expect(cssOf({ fills: [{ type: "SOLID", color: RED }], fillStyleId: "S:1," }, styles).properties).toEqual([
       ["background", "var(--Orbit-Gradient)"],
     ]);
+  });
+
+  // C-082: an image as its file, FILL and CROP covering, FIT contained, TILE repeated.
+  it("writes an image fill as its url with the scale mode's size and repeat", () => {
+    const image = (scaleMode: string) => cssOf({ fills: [{ type: "IMAGE", imageHash: "abc", scaleMode }] }).properties;
+
+    expect(image("FILL")).toEqual([["background", "url(assets/abc.png) center / cover no-repeat"]]);
+    expect(image("CROP")).toEqual([["background", "url(assets/abc.png) center / cover no-repeat"]]);
+    expect(image("FIT")).toEqual([["background", "url(assets/abc.png) center / contain no-repeat"]]);
+    expect(image("TILE")).toEqual([["background", "url(assets/abc.png) repeat"]]);
+  });
+
+  // C-083: a gradient above the bottom layer is a layer of its own, not wrapped as a flat solid is.
+  it("writes a gradient above an image as its own layer, and a text's gradient as the note", () => {
+    const gradient = {
+      type: "GRADIENT_LINEAR",
+      gradientTransform: [
+        [1, 0, 0],
+        [0, 1, 0],
+      ],
+      gradientStops: [
+        { position: 0, color: { r: 1, g: 0, b: 0, a: 1 } },
+        { position: 1, color: { r: 0, g: 0, b: 1, a: 1 } },
+      ],
+    };
+
+    expect(cssOf({ fills: [{ type: "IMAGE", imageHash: "abc", scaleMode: "FILL" }, gradient] }).properties).toEqual([
+      ["background", "linear-gradient(90deg, #F00 0%, #00F 100%), url(assets/abc.png) center / cover no-repeat"],
+    ]);
+    expect(cssOf({ type: "TEXT", fills: [gradient] }).notes).toEqual([["color", "a gradient or image fill"]]);
   });
 
   // D-20: a paint the table cannot write gets the fixed note, never Figma's own CSS (getCSSAsync hangs and is wrong).

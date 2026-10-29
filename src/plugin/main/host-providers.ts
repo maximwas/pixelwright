@@ -11,6 +11,7 @@ import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
 import { AppearanceFieldReader } from "@/plugin/adapters/figma/layer-read/appearance-field-reader.ts";
 import { BoxFieldReader } from "@/plugin/adapters/figma/layer-read/box-field-reader.ts";
+import { EffectFieldReader } from "@/plugin/adapters/figma/layer-read/effect-field-reader.ts";
 import { FIELD_READERS, LAYER_READER, LayerReader } from "@/plugin/adapters/figma/layer-read/layer-reader.ts";
 import { LayoutFieldReader } from "@/plugin/adapters/figma/layer-read/layout-field-reader.ts";
 import { PaintFieldReader } from "@/plugin/adapters/figma/layer-read/paint-field-reader.ts";
@@ -56,6 +57,7 @@ export class HostProviders {
       .bind({ provide: FIELD_READERS, multi: true, useClass: AppearanceFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: PaintFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: StrokeFieldReader })
+      .bind({ provide: FIELD_READERS, multi: true, useClass: EffectFieldReader })
       .bind({ provide: LAYER_READER, useClass: LayerReader })
       .bind({ provide: CLOCK, useValue: Date })
       .bind({ provide: PAGE_LOADER, useClass: PageLoader })
