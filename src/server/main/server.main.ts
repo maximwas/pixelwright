@@ -2,12 +2,15 @@ import { join } from "node:path";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
+import { NUMBER_FORMAT, NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
 import { JSON_FILE } from "@/core/ports/json-file.port.ts";
 import { LOG_COMPONENT } from "@/core/ports/logger.constants.ts";
 import { LOGGER } from "@/core/ports/logger.port.ts";
 import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
+import { OUTLINE_XML, OutlineXml } from "@/core/xml/outline/outline-xml.ts";
+import { XML_ESCAPE, XmlEscape } from "@/core/xml/xml-escape.ts";
 import { SystemClock } from "@/server/adapters/clock/system-clock.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { LOG_DESTINATIONS, LOG_SETTINGS } from "@/server/adapters/logging/logging.tokens.ts";
@@ -98,6 +101,7 @@ export class ServerMain {
     const container = new Container();
 
     this.#bindInfra(container, config);
+    this.#bindDomain(container);
     new BridgeProviders().register(container, config);
     this.#bindServices(container);
 
@@ -117,6 +121,14 @@ export class ServerMain {
       .bind({ provide: CLIENT_ROOTS, useExisting: MCP_ROOTS })
       .bind({ provide: PROJECT_FALLBACK, useValue: projectDir })
       .bind({ provide: PROJECT_FOLDER, useClass: ProjectFolder });
+  }
+
+  /** The core domain's classes the tools read and write with: the D-15 numbers and the XML writers. */
+  #bindDomain(container: Container): void {
+    container
+      .bind({ provide: NUMBER_FORMAT, useClass: NumberFormat })
+      .bind({ provide: XML_ESCAPE, useClass: XmlEscape })
+      .bind({ provide: OUTLINE_XML, useClass: OutlineXml });
   }
 
   /** The plugin sessions (A§6.1): target resolution, and each op's chain, outermost first: log, timeout text, result. */

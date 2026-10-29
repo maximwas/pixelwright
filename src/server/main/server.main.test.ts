@@ -8,6 +8,7 @@ import { CLOCK } from "@/core/ports/clock.port.ts";
 import { JSON_FILE } from "@/core/ports/json-file.port.ts";
 import { LOGGER } from "@/core/ports/logger.port.ts";
 import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
+import { OUTLINE_XML } from "@/core/xml/outline/outline-xml.ts";
 import { BRIDGE_SETTINGS } from "@/server/adapters/bridge/bridge.tokens.ts";
 import { STATUS_HINTS } from "@/server/adapters/bridge/hints/status-hints.ts";
 import { BRIDGE_CONFIG } from "@/server/adapters/bridge/listener/bridge-config.ts";
@@ -55,6 +56,7 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["MCP_ROOTS", MCP_ROOTS],
   ["CLIENT_ROOTS", CLIENT_ROOTS],
   ["PROJECT_FOLDER", PROJECT_FOLDER],
+  ["OUTLINE_XML", OUTLINE_XML],
 ];
 
 describe("ServerMain's composition", () => {

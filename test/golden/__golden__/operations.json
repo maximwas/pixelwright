@@ -603,5 +603,108 @@
       ],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "outline",
+    "meta": {
+      "write": false,
+      "dryRun": false,
+      "timeoutMs": 30000,
+      "needsAllowEdits": false,
+      "turn": "read"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "depth"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/__schema0"
+        }
+      },
+      "required": [
+        "root"
+      ],
+      "additionalProperties": false,
+      "$defs": {
+        "__schema0": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "component": {
+              "type": "string"
+            },
+            "variant": {
+              "type": "string"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "hidden": {
+              "type": "boolean",
+              "const": true
+            },
+            "dev": {
+              "type": "string",
+              "enum": [
+                "ready",
+                "completed"
+              ]
+            },
+            "childCount": {
+              "type": "number"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
   }
 ]

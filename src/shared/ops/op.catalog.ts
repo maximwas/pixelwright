@@ -1,6 +1,7 @@
 import { changesOp } from "@/shared/ops/changes/changes.manifest.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
 import { OpCatalog } from "@/shared/ops/op-catalog.ts";
+import { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
 import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
 import { selectionOp } from "@/shared/ops/selection/selection.manifest.ts";
 import { selectionWaitOp } from "@/shared/ops/selection-wait/selection-wait.manifest.ts";
@@ -16,4 +17,5 @@ export const OP_CONTRACTS = new OpCatalog([
   showOp,
   viewportOp,
   selectionWaitOp,
+  outlineOp,
 ]);
