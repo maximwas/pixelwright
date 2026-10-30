@@ -4,6 +4,8 @@ import { join } from "node:path";
 import type { InjectionToken } from "@needle-di/core";
 import { describe, expect, it } from "vitest";
 import { DESIGN_XML } from "@/core/design/design-xml.ts";
+import { INSPECT_VIEW } from "@/core/inspect/inspect-view.ts";
+import { MEASURE } from "@/core/inspect/measure.ts";
 import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
 import { JSON_FILE } from "@/core/ports/json-file.port.ts";
@@ -63,6 +65,8 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["DESIGN_XML", DESIGN_XML],
   ["WITHIN_SCOPE", WITHIN_SCOPE],
   ["SELECTED_LAYER", SELECTED_LAYER],
+  ["INSPECT_VIEW", INSPECT_VIEW],
+  ["MEASURE", MEASURE],
 ];
 
 describe("ServerMain's composition", () => {

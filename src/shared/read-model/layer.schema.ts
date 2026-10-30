@@ -121,7 +121,7 @@ const ExportSettingSchema = zod.looseObject({
  * names, which baselines v1 store (D-33). Positions are relative to the read's root (absoluteTransform's translation);
  * properties at Figma's defaults are left out; paints, effects and reactions stay loose, so a type Figma adds passes.
  */
-const LayerFieldsSchema = zod.strictObject({
+export const LayerFieldsSchema = zod.strictObject({
   id: zod.string(),
   name: zod.string(),
   type: zod.string(),
