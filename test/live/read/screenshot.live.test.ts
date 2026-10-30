@@ -14,11 +14,7 @@ const JPEG = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x
 const CLIP = { x: 0, y: 0, width: 100, height: 60 };
 
 /** One row of a PNG's pixels, from its left edge, `width` pixels long. */
-const row = (
-  png: DecodedPng,
-  y: number,
-  width: number,
-) => [
+const row = (png: DecodedPng, y: number, width: number) => [
   ...png.data.subarray(y * png.width * png.channels, (y * png.width + width) * png.channels),
 ];
 
@@ -41,12 +37,22 @@ describe("read/screenshot", () => {
     return decode(Buffer.from(block?.data ?? "", "base64"));
   };
 
-  it("renders the Install card at scale 2 twice its size at scale 1 (T-070)", async () => {
+  // The Install card is 1004 × 320: scale 1 is twice scale 0.5, and scale 2 (2008 px) comes back fitted to 2000 px.
+  it("renders the Install card at scale 1 twice its size at scale 0.5 (T-070)", async () => {
+    const half = await image({ scale: 0.5, effects: false });
+    const one = await image({ scale: 1, effects: false });
+
+    expect(Math.abs(one.width - 2 * half.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(one.height - 2 * half.height)).toBeLessThanOrEqual(1);
+  });
+
+  it("fits an inline render wider than 2000 px to 2000 px a side, keeping its proportions (T-071)", async () => {
     const one = await image({ scale: 1, effects: false });
     const two = await image({ scale: 2, effects: false });
 
-    expect(Math.abs(two.width - 2 * one.width)).toBeLessThanOrEqual(1);
-    expect(Math.abs(two.height - 2 * one.height)).toBeLessThanOrEqual(1);
+    expect(Math.max(two.width, two.height)).toBeLessThanOrEqual(2000);
+    expect(two.width).toBeGreaterThan(one.width);
+    expect(Math.abs(two.width / two.height - one.width / one.height)).toBeLessThan(0.02);
   });
 
   it("clips the same pixels a crop of the whole render holds (T-073)", async () => {
