@@ -1,6 +1,7 @@
 import { InjectionToken, injectable } from "@needle-di/core";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
+import { DESIGN_LINT_MANIFEST } from "@/server/tools/design-lint/design-lint.manifest.ts";
 import { DESIGN_READ_MANIFEST } from "@/server/tools/design-read/design-read.manifest.ts";
 import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { FILE_MAP_MANIFEST } from "@/server/tools/file-map/file-map.manifest.ts";
@@ -29,6 +30,7 @@ export class ToolCatalog {
     NODES_FIND_MANIFEST,
     OUTLINE_MANIFEST,
     DESIGN_READ_MANIFEST,
+    DESIGN_LINT_MANIFEST,
     EXECUTE_MANIFEST,
   ];
 

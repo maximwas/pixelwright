@@ -68,6 +68,7 @@ describe("the built server over stdio", () => {
       "nodes_find",
       "outline",
       "design_read",
+      "design_lint",
       "execute",
     ]);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });
