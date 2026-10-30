@@ -19,6 +19,15 @@ export const WINDOW_ELEMENT = {
   actions: "actions",
   support: "support",
   feedback: "feedback",
+  update: "update",
+  updateText: "update-text",
+  updateClose: "update-close",
+} as const;
+
+/** The update banner's words (S-070): how to update, since the window opens no links but its own few. */
+export const UPDATE_TEXT = {
+  out: (version: string) =>
+    `Pixelwright ${version} is out. To update, run npx -y pixelwright@latest setup, then restart your MCP client.`,
 } as const;
 
 /** The elements the window builds itself: the activity's lines and the links. */

@@ -23,6 +23,8 @@ import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 import { Proof } from "@/shared/protocol/proof.ts";
 import { CLOSE_CODE, NONCE_BYTES, PROOF_ROLE, PROTOCOL } from "@/shared/protocol/protocol.constants.ts";
 import { ProtocolReason } from "@/shared/protocol/protocol-reason.ts";
+import { UPDATE_FRAME, UPDATE_FRAME_HEAD } from "@/shared/protocol/update.constants.ts";
+import { UpdateFrameSchema } from "@/shared/protocol/update.schema.ts";
 import { LINK_OPENED_FRAME } from "@/shared/window/ui-message.constants.ts";
 
 /**
@@ -69,6 +71,13 @@ export class SocketLink {
     }
   }
 
+  /** The user closed the update banner: the server keeps the version, so it comes back only with a newer one. */
+  dismissUpdate(version: string): void {
+    if (this.#handshake.name === HANDSHAKE_STATE.session) {
+      this.#socket?.send(JSON.stringify({ type: UPDATE_FRAME.dismiss, version }));
+    }
+  }
+
   #open(): void {
     const observer = this.#observer;
 
@@ -98,7 +107,7 @@ export class SocketLink {
   #receive(text: string | null): void {
     if (this.#handshake.name === HANDSHAKE_STATE.session) {
       if (text !== null) {
-        this.#observer?.frame(this.#epoch, text);
+        this.#session(text);
       }
 
       return;
@@ -109,6 +118,21 @@ export class SocketLink {
 
     if (frame.success && takenIn.includes(this.#handshake.name)) {
       this.#take(frame.data);
+    }
+  }
+
+  /** A session frame: the server's update notice is the window's own (S-070); the rest goes to main unread. */
+  #session(text: string): void {
+    if (!text.startsWith(UPDATE_FRAME_HEAD.update)) {
+      this.#observer?.frame(this.#epoch, text);
+
+      return;
+    }
+
+    const frame = zod.safeParse(UpdateFrameSchema, this.#json(text));
+
+    if (frame.success) {
+      this.#observer?.update(frame.data.version);
     }
   }
 
@@ -231,6 +255,8 @@ export interface LinkObserver {
   paired(key: PluginKey): void;
   /** A frame of the session on the socket of `epoch`, unread: main's RPC takes it. */
   frame(epoch: number, text: string): void;
+  /** npm has a newer version (S-070): the window shows its banner. */
+  update(version: string): void;
 }
 
 /** Where one socket's handshake stands: the link's one state field. */

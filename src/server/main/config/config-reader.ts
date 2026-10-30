@@ -38,6 +38,7 @@ export class ConfigReader {
         .map((origin) => origin.trim())
         .filter((origin) => origin !== ""),
       projectDir: env.CLAUDE_PROJECT_DIR?.trim() || (this.#cwd ?? process.cwd()),
+      updateCheck: !env.PIXELWRIGHT_NO_UPDATE_CHECK?.trim(),
     };
   }
 }
@@ -52,4 +53,6 @@ export interface ServerConfig {
   readonly pluginOrigins: readonly string[];
   /** Where relative paths start when the MCP client lists no file root (T-008). */
   readonly projectDir: string;
+  /** Whether npm is asked for the update banner (S-070); the configs tests build leave it out, so it stays off. */
+  readonly updateCheck?: boolean;
 }

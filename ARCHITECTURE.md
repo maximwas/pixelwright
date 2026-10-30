@@ -123,9 +123,15 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     the peers), `peer/` (a peer's side of its owner), `hints/` (`StatusHints`).
   - `logging/`, `files/`, `clock/`, `mcp/`: pino and the shared log file, atomic JSON files, the system clock, the
     stdout guard and `McpRoots` (the client's roots, asked once and again on list_changed).
+  - `process/`: `ExecFileRunner`, the `ProcessRunner` port on execFile; `http/`: `NpmRegistry`, npm's newest release.
 - `server/main/`: `ServerMain`, the server's composition root, its providers, `ContainerToolFactory`, the config
   reader, `McpEndpoint`, the shutdown hooks.
-- `cli/`: the `pixelwright` binary and `CliMain`.
+- `cli/`: the `pixelwright` binary: `bin.ts` (the Node gate, then a dynamic import) and `CliMain`, the CLI's
+  composition root. `main/`: `CommandLine` (parseArgs; one `CliCommand` per command), `ServeCommand`, `NodeGate`,
+  `CommandProviders`. `setup/`: `SetupWizard` (@clack/prompts), `SetupPrint`, `McpClients` (Claude Code and Codex
+  through their commands, Cursor's mcp.json merged with a .bak, the blocks to paste), `PluginCopy` (the one copy
+  path, `pnpm plugin:install`'s too). `logs/`: `LogFollower`, the shared log polled across the .1 hand-over.
+  Everything the setup writes is named by `CHANNEL`; every process goes through the `ProcessRunner` port.
 - `plugin/app/`: the op runtime in Figma's main thread: `OperationRunner`, its steps, the `Operation` base class,
   `OpReport`, `OperationTurns` (the read/write turn lock), `BusyOps` (what runs past its answer, as the window shows
   it); `journal/` holds `ChangeJournal`, what changed while the
@@ -220,6 +226,12 @@ code in force, which only the status tool mints; the user types it in the window
 **Reconnects.** On a close, `SocketLink` decides from its close table whether to stop or try again, waiting as
 `Backoff` says. On the server, a new socket from the same window replaces its older session in `SessionRegistry`;
 `ServerRpc` tells sockets apart by the epoch the window stamps on each frame.
+
+**Tells of an update.** `ServerMain` starts `UpdateFeed`: `UpdateState` (`server/app/stores/`) keeps `latest.json` in
+the channel's home and asks npm through `NpmRegistry` at most once a day (off with `PIXELWRIGHT_NO_UPDATE_CHECK`). A
+version newer than this server and than the one dismissed goes to `SessionRegistry.announce`, which sends each window
+an `update` frame beside the RPC, now and at each connect. `SocketLink` takes that frame before main's RPC and
+`UpdateBanner` shows it; closing it sends a `dismiss_update` frame the registry hands back to the feed.
 
 **Is the owner, and is a peer.** The first server of a channel takes the port and becomes the owner (`OwnerBridge`,
 with `OwnerPeers`, `PeerConnection` and `OwnerRouter` serving the owner's contract over oRPC). A server that finds the

@@ -8,6 +8,7 @@ import { BusyState } from "@/plugin-ui/view/busy-state.ts";
 import { PluginWindow } from "@/plugin-ui/view/plugin-window.ts";
 import { RecentActions } from "@/plugin-ui/view/recent-actions.ts";
 import { StatusLine } from "@/plugin-ui/view/status-line.ts";
+import { UpdateBanner } from "@/plugin-ui/view/update-banner.ts";
 import type { UiMessage } from "@/shared/window/ui-message.schema.ts";
 import { MemoryBridge as Bridge } from "./support/memory-bridge.ts";
 
@@ -98,6 +99,7 @@ const windowLink = (bridge: Bridge) =>
     new MainChannel(),
     new SocketLink(bridge, new Backoff()),
     new PluginWindow(new StatusLine(), new RecentActions(), new BusyState()),
+    new UpdateBanner(),
   );
 
 afterEach(() => {

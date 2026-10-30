@@ -1,4 +1,5 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import * as zod from "zod/mini";
 import { LOG_COMPONENT } from "@/core/ports/logger.constants.ts";
 import { LOGGER, type LogFields } from "@/core/ports/logger.port.ts";
 import type { ConnectedFile, PairingStatus } from "@/core/ports/plugin-link.port.ts";
@@ -13,6 +14,8 @@ import {
 } from "@/server/adapters/bridge/sessions/sessions.constants.ts";
 import type { PluginInfo } from "@/shared/protocol/plugin-info.schema.ts";
 import { CLOSE_CODE } from "@/shared/protocol/protocol.constants.ts";
+import { UPDATE_FRAME_HEAD } from "@/shared/protocol/update.constants.ts";
+import { DismissFrameSchema } from "@/shared/protocol/update.schema.ts";
 
 /**
  * The owner's Registry of plugin windows (S-010, S-011): the sessions, one per open file; the unpaired windows waiting
@@ -26,6 +29,8 @@ export class SessionRegistry {
   readonly #sessions = new Map<string, BridgeSession>();
   readonly #waiting = new Set<object>();
   #onChange: (() => void) | null = null;
+  #onDismiss: ((version: string) => void) | null = null;
+  #latest: string | null = null;
   #sequence = 0;
   #rejection: UpgradeRejection | null = null;
   #refusal: ProtocolRefusal | null = null;
@@ -91,6 +96,11 @@ export class SessionRegistry {
     }
 
     this.#sessions.set(session.id, session);
+
+    if (this.#latest !== null) {
+      session.announce(this.#latest);
+    }
+
     this.#rejection = null;
     this.#refusal = null;
     this.#logChange(SESSION_LOG.connected, session, { pluginVersion: session.info.pluginVersion });
@@ -144,6 +154,46 @@ export class SessionRegistry {
   /** The last plugin turned away for its protocol since a plugin last connected. */
   refusal(): ProtocolRefusal | null {
     return this.#refusal;
+  }
+
+  /** npm's newer version for the banner (S-070): every window hears it now, and each that connects later. */
+  announce(version: string): void {
+    this.#latest = version;
+
+    for (const session of this.#sessions.values()) {
+      session.announce(version);
+    }
+  }
+
+  /** Calls `listener`, the update feed, with the version whose banner a window closed. */
+  onDismiss(listener: (version: string) => void): void {
+    this.#onDismiss = listener;
+  }
+
+  /** Whether a session frame is a window closing its update banner, handled here, rather than RPC. */
+  dismissal(text: string): boolean {
+    if (!text.startsWith(UPDATE_FRAME_HEAD.dismiss)) {
+      return false;
+    }
+
+    const frame = zod.safeParse(DismissFrameSchema, this.#json(text));
+
+    if (frame.success) {
+      // Windows connecting later no longer hear it; the feed keeps the dismissal in latest.json.
+      this.#latest = this.#latest === frame.data.version ? null : this.#latest;
+      this.#onDismiss?.(frame.data.version);
+    }
+
+    return true;
+  }
+
+  /** The frame as JSON, or undefined when it is not JSON. */
+  #json(text: string): unknown {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return undefined;
+    }
   }
 
   /** A session came or left: one line with its file and the sessions there are now, then the change. */

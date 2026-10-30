@@ -33,6 +33,7 @@ class Window implements LinkObserver {
   readonly states: LinkState[] = [];
   readonly keys: PluginKey[] = [];
   readonly frames: [number, string][] = [];
+  readonly updates: string[] = [];
   readonly #instanceId: string;
 
   constructor(instanceId = "window-a") {
@@ -63,6 +64,10 @@ class Window implements LinkObserver {
     this.frames.push([epoch, text]);
   }
 
+  update(version: string): void {
+    this.updates.push(version);
+  }
+
   last(): LinkState | undefined {
     return this.states.at(-1);
   }
@@ -91,6 +96,23 @@ describe("SocketLink against the server's PluginConnection", () => {
     expect(bridge.keys.findKey(window.keys[0]?.id ?? "")).toEqual(window.keys[0]);
     expect(window.last()).toEqual(CONNECTED);
     expect(bridge.sessions.files().map((file) => file.name)).toEqual(["Test MCP"]);
+  });
+
+  it("shows the newest version the server announces, even to a window joining later; the server hears it closed (S-070)", () => {
+    const bridge = new Bridge();
+    const window = new Window();
+    const socketLink = link(bridge);
+    const dismissed: string[] = [];
+
+    bridge.sessions.onDismiss((version) => dismissed.push(version));
+    bridge.sessions.announce("9.0.0");
+    socketLink.start(bridge.keys.addKey(), window);
+    socketLink.dismissUpdate("9.0.0");
+
+    expect(window.updates).toEqual(["9.0.0"]);
+    // The update frame is the window's own: main's RPC never sees it.
+    expect(window.frames.map(([, text]) => text).some((text) => text.includes("9.0.0"))).toBe(false);
+    expect(dismissed).toEqual(["9.0.0"]);
   });
 
   it("reconnects with the stored key: the server proves it first, and no code is asked", () => {

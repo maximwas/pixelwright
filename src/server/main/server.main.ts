@@ -93,6 +93,7 @@ import { ContainerToolFactory } from "@/server/main/container-tool-factory.ts";
 import { McpEndpoint } from "@/server/main/mcp/mcp-endpoint.ts";
 import { LOG_FILE, SERVER_LOG } from "@/server/main/server.constants.ts";
 import { ShutdownHooks } from "@/server/main/shutdown-hooks.ts";
+import { UPDATE_FEED } from "@/server/main/update-feed.ts";
 import { TOOL_CATALOG, ToolCatalog } from "@/server/tools/tool.catalog.ts";
 
 /**
@@ -126,6 +127,7 @@ export class ServerMain {
 
     // The bridge before MCP (A§4.1): the first status call already sees the owner.
     await this.listen();
+    container.get(UPDATE_FEED).start();
     container.get(ShutdownHooks).install(() => this.close());
     await container.get(McpEndpoint).connect(new StdioServerTransport());
     container
