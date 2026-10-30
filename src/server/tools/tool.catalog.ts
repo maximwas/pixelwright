@@ -5,6 +5,8 @@ import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-sin
 import { DESIGN_READ_MANIFEST } from "@/server/tools/design-read/design-read.manifest.ts";
 import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { FILE_MAP_MANIFEST } from "@/server/tools/file-map/file-map.manifest.ts";
+import { FONTS_CHECK_MANIFEST } from "@/server/tools/fonts-check/fonts-check.manifest.ts";
+import { IMAGE_COMPARE_MANIFEST } from "@/server/tools/image-compare/image-compare.manifest.ts";
 import { NODE_SHOW_MANIFEST } from "@/server/tools/node-show/node-show.manifest.ts";
 import { NODES_FIND_MANIFEST } from "@/server/tools/nodes-find/nodes-find.manifest.ts";
 import { OUTLINE_MANIFEST } from "@/server/tools/outline/outline.manifest.ts";
@@ -33,7 +35,9 @@ export class ToolCatalog {
     OUTLINE_MANIFEST,
     SCREENSHOT_MANIFEST,
     DESIGN_READ_MANIFEST,
+    IMAGE_COMPARE_MANIFEST,
     STYLES_COMPARE_MANIFEST,
+    FONTS_CHECK_MANIFEST,
     EXECUTE_MANIFEST,
     ASSETS_EXPORT_MANIFEST,
   ];

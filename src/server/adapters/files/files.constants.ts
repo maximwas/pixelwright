@@ -11,10 +11,19 @@ export const ATOMIC_JSON_FILE = {
 /** Where a screenshot may be saved (T-072): a .png path. */
 export const PNG_FILE = { extension: ".png" } as const;
 
-/** 0.7.0's words for a save path refused: a read-only tool never writes over a file the user keeps (D-14). */
+/** The largest PNG read to compare with (T-089): a full-page screenshot at 2x fits. */
+export const PNG_READ = { megabytes: 50, maxBytes: 50 * 1024 * 1024 } as const;
+
+/**
+ * 0.7.0's words for a save path refused, as a read-only tool never writes over a file the user keeps (D-14), and for
+ * a PNG to compare with refused (T-089).
+ */
 export const PNG_FILE_TEXT = {
   notPngPath: (path: string) => `save must be a .png path, not ${path}.`,
   notPngFile: (path: string) => `${path} exists and is not a PNG: choose another path, it is not overwritten.`,
+  missing: (path: string) => `There is no file at ${path}.`,
+  tooLarge: (path: string) => `${path} is over ${PNG_READ.megabytes} MB.`,
+  notPng: (path: string) => `${path} is not a PNG: save the screenshot to compare as PNG.`,
 } as const;
 
 /** The log lines of a file that cannot be read or written: they name the file and why, never its content. */

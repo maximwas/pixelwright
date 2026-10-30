@@ -69,7 +69,9 @@ describe("the built server over stdio", () => {
       "outline",
       "screenshot",
       "design_read",
+      "image_compare",
       "styles_compare",
+      "fonts_check",
       "execute",
       "assets_export",
     ]);

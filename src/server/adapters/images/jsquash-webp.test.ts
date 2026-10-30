@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import decode, { init } from "@jsquash/webp/decode.js";
 import { encode } from "fast-png";
 import { beforeAll, describe, expect, it } from "vitest";
+import { Rgba } from "@/core/images/rgba.ts";
 import { FastPngCodec } from "@/server/adapters/images/fast-png-codec.ts";
 import { JsquashWebp } from "@/server/adapters/images/jsquash-webp.ts";
 
@@ -29,7 +30,7 @@ beforeAll(async () => {
 describe("WebP encoding", () => {
   it.each([1, 85])("keeps a transparent PNG's alpha exactly at quality %i (S-095)", async (quality) => {
     const png = encode({ width: SIDE, height: SIDE, channels: 4, data: PIXELS });
-    const webp = await new JsquashWebp(new FastPngCodec()).encode(png, quality);
+    const webp = await new JsquashWebp(new FastPngCodec(), new Rgba()).encode(png, quality);
     const back = await decode(Uint8Array.from(webp).buffer);
 
     expect([back.width, back.height]).toEqual([SIDE, SIDE]);

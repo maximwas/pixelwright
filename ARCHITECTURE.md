@@ -112,10 +112,12 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     browser would not draw as notes, FX-066), `TextGroup` (alignment, the longest run as the text's own, wrap and the
     block's notes, C-110, C-116) and `TextPathData` (a TextPath's `d` through svg-path-commander, and its start).
   - `images/`: `Crop`, a region of an image's pixels as an image of its own, transparent where the image does not
-    reach (T-073), and `IMAGE_FORMAT`, the format names a sniffer gives.
+    reach (T-073), and `IMAGE_FORMAT`, the format names a sniffer gives; `Rgba`, any PNG's pixels as 8-bit RGBA and
+    laid over white; image_compare's numbers (T-089): `Rmse`, `EdgeDiff` (S-094, edges paired by the pixels on them,
+    B-007) and `ImageComparison`, which compares the part both images cover through the `PixelDiff` port.
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
     `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`, `ImageCodec`, `ImageSniffer`,
-    `PngFiles`), each with its token.
+    `PngFiles`, `PixelDiff`, `FontDirectory`), each with its token.
 - `server/app/`: the services a tool call runs through.
   - `tool-runner/`: `ToolRunner`, its steps, the `Tool` base class, the tool manifest and the call id.
   - `sessions/`: `PluginSessions` and `PluginSession` (one call's file), the op steps, `TargetResolver`.
@@ -148,8 +150,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     stdout guard and `McpRoots` (the client's roots, asked once and again on list_changed).
   - `images/`: `FastPngCodec` (fast-png: PNG to pixels and back, an indexed PNG as its colours) and
     `ImageSizeSniffer` (image-size: what bytes really are, whatever their file is called), `JsquashWebp`
-    (@jsquash/webp 1.5.0: PNG to WebP, its wasm read from the package, the alpha kept exactly).
-  - `process/`: `ExecFileRunner`, the `ProcessRunner` port on execFile; `http/`: `NpmRegistry`, npm's newest release.
+    (@jsquash/webp 1.5.0: PNG to WebP, its wasm read from the package, the alpha kept exactly), `PixelmatchDiff`
+    (pixelmatch 8.0.0: the differing pixels, their box and the difference image, A§15.7).
+  - `process/`: `ExecFileRunner`, the `ProcessRunner` port on execFile; `http/`: `NpmRegistry`, npm's newest release;
+    `FontsourceDirectory` (Fontsource's API, A§15.5) with `GoogleMetadataDirectory` (Google's catalogue) as its
+    fallback, what Google Fonts serves for fonts_check, read once for the server.
 - `server/main/`: `ServerMain`, the server's composition root, its providers, `ContainerToolFactory`, the config
   reader, `McpEndpoint`, the shutdown hooks.
 - `cli/`: the `pixelwright` binary: `bin.ts` (the Node gate, then a dynamic import) and `CliMain`, the CLI's
@@ -295,6 +300,8 @@ asks `ExportPull.start`: the export op renders with `maxSide` 2000 and holds the
 an answer over 3.5 MiB is rendered again smaller before a byte moves, else `ExportPull.bytes` reads it with the chunk
 op, 2 MiB a frame. A clip first asks the cover op (the box, what the render covers, the cover layer), then `PngRender`
 crops the whole render with `Crop` through the `ImageCodec` port; `save` writes the full PNG through `PngFiles`.
+`image_compare` renders through `PngRender` the same way (`ComparedImages`), reads its reference through `PngFiles`,
+and `ImageComparison` gives rmse, the differing pixels (`PixelDiff`) and the edges (`EdgeDiff`).
 
 **Adds a tool.** A folder under `server/tools/` with the manifest (name, description, schemas, annotations, `load()`),
 the schema and the tool class on `Tool`; one line in `ToolCatalog`. The `tools.json` golden changes with it.
