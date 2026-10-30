@@ -337,8 +337,19 @@ return { id: clip.id, refused };`,
       file,
       code: `const section = await pw.node(${JSON.stringify(scratch)});
 const collections = await figma.variables.getLocalVariableCollectionsAsync();
-const collection = collections.find((each) => each.modes.length > 1);
-if (collection === undefined) return { refused: "no local collection with two modes" };
+let collection = collections.find((each) => each.modes.length > 1);
+let made;
+if (collection === undefined) {
+  made = figma.variables.createVariableCollection(${JSON.stringify(NAME.moded)});
+  try {
+    made.addMode("Dark");
+  } catch (error) {
+    made.remove();
+    return { refused: String(error) };
+  }
+  figma.variables.createVariable("live", made, "FLOAT");
+  collection = made;
+}
 const mode = collection.modes.find((each) => each.modeId !== collection.defaultModeId);
 const frame = figma.createFrame();
 frame.name = ${JSON.stringify(NAME.moded)};
@@ -347,9 +358,25 @@ frame.setExplicitVariableModeForCollection(collection, mode.modeId);
 const child = figma.createFrame();
 child.name = ${JSON.stringify(NAME.modedChild)};
 frame.appendChild(child);
-return { frame: frame.id, child: child.id, collection: collection.name, mode: mode.name };`,
+return { frame: frame.id, child: child.id, collection: collection.name, mode: mode.name, made: made?.id };`,
     });
-    const made = result as { frame?: string; child: string; collection: string; mode: string; refused?: string };
+    const made = result as {
+      frame?: string;
+      child: string;
+      collection: string;
+      mode: string;
+      made?: string;
+      refused?: string;
+    };
+
+    // m:ffb695f2: Test MCP's plan allows one mode per collection, so the case can only run where Figma allows two;
+    // the unit test (mode-field-reader.test.ts) covers the reader. Any other refusal is a failure.
+    if (made.refused !== undefined) {
+      expect(made.refused).toContain("Limited to 1 modes");
+
+      return;
+    }
+
     const slug = (name: string) =>
       name
         .trim()
@@ -358,16 +385,16 @@ return { frame: frame.id, child: child.id, collection: collection.name, mode: mo
         .replace(/^-|-$/g, "");
 
     try {
-      expect(made.refused).toBeUndefined();
-
       const [xml] = await client.texts("design_read", { file, node: made.child });
       const [root = ""] = (xml ?? "").split("\n");
 
       expect(root).toContain(`data-${slug(made.collection)}="${slug(made.mode)}"`);
     } finally {
-      if (made.frame !== undefined) {
-        await client.call("execute", { file, code: `(await pw.node(${JSON.stringify(made.frame)})).remove();` });
-      }
+      await client.call("execute", {
+        file,
+        code: `(await pw.node(${JSON.stringify(made.frame)})).remove();
+${made.made === undefined ? "" : `(await figma.variables.getVariableCollectionByIdAsync(${JSON.stringify(made.made)})).remove();`}`,
+      });
     }
   });
 

@@ -66,9 +66,11 @@ describe("read/nodes_find", () => {
 
   it("searches the current page when within is left out (S-043)", async () => {
     const { pages } = await client.call("file_map", { file });
-    const current = (pages as { id: string; current: boolean }[]).find((page) => page.current);
-    const onPage = await client.call("nodes_find", { file, type: "SECTION" });
+    const current = (pages as { id: string; name: string; current: boolean }[]).find((page) => page.current);
+    // T-040: without within the answer also names the page it searched.
+    const { page, ...onPage } = await client.call("nodes_find", { file, type: "SECTION" });
 
+    expect(page).toBe(current?.name);
     expect(onPage).toEqual(await client.call("nodes_find", { file, type: "SECTION", within: current?.id }));
     expect((onPage.nodes as Found[]).map(({ id }) => id)).toContain(startSection);
   });
