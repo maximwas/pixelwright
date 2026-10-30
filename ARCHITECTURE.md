@@ -79,7 +79,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     the px a hugging text shows (`autoLineHeight: "px"`, T-060), before the read is written.
   - `inspect/`: `NearbyNotes` (the notes within a distance of a screen, nearest first, the side each is on, 20 plus
     `more`, T-058; the plugin's nearby op calls it) and `Measurements` (Dev Mode measurements with the px between
-    their sides, the JSON's `measurements`, T-061).
+    their sides, the JSON's `measurements`, T-061); `InspectView` turns the inspect op's layers into inspect's answer
+    (boxes and centres, `around` distance and CSS angle rounded after the modulo, overflow, text lines, interactions,
+    variant) with `InspectFills` (blend modes with their CSS names, strokes, fills with their style and variables,
+    every fill type, bound fields by design_read's token, O-026); `Measure` measures each layer from the one before
+    (gaps, edges and centres aligned within 0.01, insets, painted boxes, a sentence per pair).
   - `checks/`: `build-styles/` is styles_compare's engine (T-090). `BuildStyles` finds each pair's layer in the reads
     (in its parent when another pair's read holds it, else as its own read's root: the read op gives no parent) and
     takes its CSS as design_read writes it (`DesignBuilder`, the asset plan, `ReadCatalogue`'s tokens and text
@@ -137,7 +141,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `stores/`: `UpdateState` (latest.json) and `WrittenFiles` (written-files.json: the SHA-1 of every asset file
     written, its layers, the newest 5000), both through the `JsonFile` port in the channel's home.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
-  `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn).
+  `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn); `inspect/` and `measure/` read through the inspect op (an
+  `around` layer is a second inspect of it in the same origin; a selection past 100 is cut and counted in `left`).
 - `server/adapters/`: the port implementations on Node.
   - `bridge/`: `PluginBridge` (the role switch), `NoBridge`, the status hints, and the bridge's topics:
     `listener/` (the port, the upgrade guard, `bridge.json`, the ws socket), `plugin/` (one plugin socket's handshake,
@@ -189,7 +194,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   while the window is open) and the code's console, value printer and error text. `export/` renders a layer with
   exportAsync (PNG, JPG, SVG or PDF) into `ChunkStreams`, `image/` holds an image fill's original bytes there by its
   hash, `chunk/` hands a part of either out as base64, `cover/` also holds `ClipCover`, the
-  smallest opaque layer that shows a clip's region alone, over the layer's tree as plain values (T-073).
+  smallest opaque layer that shows a clip's region alone, over the layer's tree as plain values (T-073). `inspect/`
+  reads each layer's entry on its own (`LayerReader.at`, boxes from `relativeTo` or the page) with its parent, layout
+  and painted boxes and its parent's room, and what its paints use (`LayerReader.shared`); it never needs Allow edits.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;

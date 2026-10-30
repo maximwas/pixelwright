@@ -50,6 +50,9 @@ import { REPEAT_FOLD, RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { TEXT_CONTENT, TextContent } from "@/core/design/text/text-content.ts";
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { INSPECT_FILLS, InspectFills } from "@/core/inspect/inspect-fills.ts";
+import { INSPECT_VIEW, InspectView } from "@/core/inspect/inspect-view.ts";
+import { MEASURE, Measure } from "@/core/inspect/measure.ts";
 import { MEASUREMENTS, Measurements } from "@/core/inspect/measurements.ts";
 import { EASING_CSS, EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
@@ -204,6 +207,9 @@ export class ServerMain {
       .bind({ provide: INFERRED_HINTS, useClass: InferredHints })
       .bind({ provide: DESIGN_HINTS, useClass: DesignHints })
       .bind({ provide: MEASUREMENTS, useClass: Measurements })
+      .bind({ provide: INSPECT_FILLS, useClass: InspectFills })
+      .bind({ provide: INSPECT_VIEW, useClass: InspectView })
+      .bind({ provide: MEASURE, useClass: Measure })
       .bind({ provide: READ_JSON, useClass: ReadJson })
       .bind({ provide: AUTO_LINE_HEIGHTS, useClass: AutoLineHeights });
   }

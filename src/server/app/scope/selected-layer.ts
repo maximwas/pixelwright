@@ -24,6 +24,13 @@ export class SelectedLayer {
 
     return only.id;
   }
+
+  /** Every layer selected, in order, for a tool whose layers default to the selection (inspect, measure). */
+  async ids(session: PluginSession): Promise<string[]> {
+    const { nodes } = await session.run(selectionOp, {});
+
+    return nodes.map(({ id }) => id);
+  }
 }
 
 export const SELECTED_LAYER = new InjectionToken<SelectedLayer>("SelectedLayer");

@@ -6,6 +6,7 @@ import { exportOp } from "@/shared/ops/export/export.manifest.ts";
 import { fileMapOp } from "@/shared/ops/file-map/file-map.manifest.ts";
 import { findOp } from "@/shared/ops/find/find.manifest.ts";
 import { imageOp } from "@/shared/ops/image/image.manifest.ts";
+import { inspectOp } from "@/shared/ops/inspect/inspect.manifest.ts";
 import { nearbyOp } from "@/shared/ops/nearby/nearby.manifest.ts";
 import { OpCatalog } from "@/shared/ops/op-catalog.ts";
 import { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
@@ -34,4 +35,5 @@ export const OP_CONTRACTS = new OpCatalog([
   chunkOp,
   coverOp,
   imageOp,
+  inspectOp,
 ]);

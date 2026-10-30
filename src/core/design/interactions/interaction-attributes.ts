@@ -45,9 +45,14 @@ export class InteractionAttributes {
     return [...byAttribute].map(([attribute, sentences]) => [attribute, sentences.join(INTERACTION_TEXT.joiner)]);
   }
 
+  /** One interaction in words, as its attribute holds it (inspect's summary, T-080). */
+  sentence({ trigger, actions = [] }: Reaction): string {
+    return this.#sentence(trigger, actions);
+  }
+
   /** One interaction in words: a wait, what it does, how it moves. */
-  #sentence(trigger: Trigger, actions: readonly Action[]): string {
-    const wait = trigger.timeout ?? trigger.delay ?? 0;
+  #sentence(trigger: Trigger | null, actions: readonly Action[]): string {
+    const wait = trigger?.timeout ?? trigger?.delay ?? 0;
 
     return [
       ...(wait > 0 ? [INTERACTION_TEXT.after(this.#ms(wait))] : []),

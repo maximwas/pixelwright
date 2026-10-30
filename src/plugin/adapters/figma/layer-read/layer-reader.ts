@@ -55,14 +55,44 @@ export class LayerReader {
   }
 
   /** The layer's own entry, its children left out: ReadRun lists them. */
-  async entry(node: SceneNode, root: SceneNode): Promise<ReadLayer> {
-    const origin = this.#translation(root);
+  entry(node: SceneNode, root: SceneNode): Promise<ReadLayer> {
+    return this.#entry(node, this.#translation(root), node === root);
+  }
+
+  /** A layer's own entry read on its own (inspect), its boxes from `origin`: relativeTo's corner, or the page's. */
+  at(node: SceneNode, origin: Vector): Promise<ReadLayer> {
+    return this.#entry(node, origin, false);
+  }
+
+  /**
+   * What an inspect's layers share: the file's colour profile, and the styles and variables they use, a variable's
+   * value as the first layer that uses it sees it.
+   */
+  async shared(read: readonly { readonly entry: ReadLayer; readonly node: SceneNode }[]): Promise<Pick<ReadModel, "colorProfile" | "styles" | "variables">> {
+    let styles: ReadModel["styles"] = {};
+    let variables: ReadModel["variables"] = {};
+
+    for (const { entry, node } of read) {
+      const tables = await this.#references.tables(entry, node);
+
+      styles = { ...tables.styles, ...styles };
+      variables = { ...tables.variables, ...variables };
+    }
+
+    return { colorProfile: figma.root.documentColorProfile, styles, variables };
+  }
+
+  async #entry(
+    node: SceneNode,
+    origin: Vector,
+    root: boolean,
+  ): Promise<ReadLayer> {
     const fields: Partial<ReadLayer> = {};
 
     if (node.visible) {
       // In order, one after another: the model keeps the readers' field order (m:f53dbe49).
       for (const reader of this.#readers) {
-        Object.assign(fields, await reader.read(node, origin, node === root));
+        Object.assign(fields, await reader.read(node, origin, root));
       }
     }
 

@@ -1398,7 +1398,7 @@
   {
     "name": "inspect",
     "title": "Inspect layers",
-    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to), how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component's variant. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise).",
+    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill with CSS's mix-blend-mode name, the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to) and every fill's type (a video's too), the variables bound to its padding, gap, radius and size by the token design_read writes, how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component's variant. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1445,10 +1445,10 @@
           ]
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema"
@@ -1596,6 +1596,14 @@
               "rotation": {
                 "description": "Figma's rotation in degrees, counter-clockwise: CSS turns it as rotate(-rotation), as design_read writes.",
                 "type": "number"
+              },
+              "blendMode": {
+                "description": "Figma's blend mode, when it blends (SOFT_LIGHT, MULTIPLY): what design_read writes as mix-blend-mode.",
+                "type": "string"
+              },
+              "mixBlendMode": {
+                "description": "The blend mode as CSS's mix-blend-mode, when CSS has it.",
+                "type": "string"
               },
               "overflow": {
                 "description": "How far the layer reaches past the room its parent gives it, in px.",
@@ -1851,7 +1859,7 @@
                 "properties": {
                   "css": {
                     "type": "string",
-                    "description": "The fill as a CSS value, top paint first: a colour, a gradient as Figma writes it."
+                    "description": "The fill as a CSS value, top paint first: a colour, a gradient; a paint CSS cannot hold (a video) says so."
                   },
                   "style": {
                     "description": "The paint style it comes from, and the token design_read names it by.",
@@ -1879,12 +1887,63 @@
                     "additionalProperties": {
                       "type": "string"
                     }
+                  },
+                  "paints": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "blendMode": {
+                          "description": "Figma's blend mode, when it blends (SOFT_LIGHT, MULTIPLY): what design_read writes as mix-blend-mode.",
+                          "type": "string"
+                        },
+                        "mixBlendMode": {
+                          "description": "The blend mode as CSS's mix-blend-mode, when CSS has it.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "Every visible fill, top first: its type (SOLID, GRADIENT_LINEAR, IMAGE, VIDEO) and its blend mode."
                   }
                 },
                 "required": [
-                  "css"
+                  "css",
+                  "paints"
                 ],
                 "additionalProperties": false
+              },
+              "bound": {
+                "description": "The variables bound to the layer's own fields (padding, gap, radius, size), by Figma field: the token design_read writes in var(), and its value.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": [
+                        "number",
+                        "string",
+                        "boolean"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "token"
+                  ],
+                  "additionalProperties": false
+                }
               },
               "interactions": {
                 "type": "array",
@@ -3703,10 +3762,10 @@
           "type": "boolean"
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema"
