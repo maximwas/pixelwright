@@ -77,15 +77,6 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     `BakedPaints` (fades baked into images, tiled textures) and `LayerShape` (a layer's structure as a key); the
     words frozen by `every-hint.hints.json`. `css/fonts/AutoLineHeights` turns a read model's Auto line heights into
     the px a hugging text shows (`autoLineHeight: "px"`, T-060), before the read is written.
-  - `checks/`: the checks a design should pass before it is built. `DesignLint` is the facade (design_lint over
-    read models, K-031): findings errors first, each rule listed at its most severe finding, unread layers opening
-    the summary as "Not checked" (K-033). `lint/` holds `LintRegistry` (the 14 rules of `LINT_RULES` in their fixed
-    order with severities, each with the check its rule set gives; this build checks six, item 54 the rest),
-    `LintWalk` (the read's layers in document order over `ReadLayers`; a hidden layer only for rules that read
-    hidden layers, never its insides; an instance's content skipped except what was put into its slot, K-032) and
-    the rule sets as private methods: `TokenRules` (text-style, effect-style, raw-number and off-scale on the grid
-    of `LINT_GRID`, a variable known from the read's `inferred`, K-036) and `LayoutRules` (no-auto-layout from
-    Figma's `inferredLayout`, K-037; overflow with 1 px slack, a clipping parent counting only texts, K-038).
   - `inspect/`: `NearbyNotes` (the notes within a distance of a screen, nearest first, the side each is on, 20 plus
     `more`, T-058; the plugin's nearby op calls it) and `Measurements` (Dev Mode measurements with the px between
     their sides, the JSON's `measurements`, T-061).

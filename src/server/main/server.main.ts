@@ -2,11 +2,6 @@ import { join } from "node:path";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
-import { DESIGN_LINT, DesignLint } from "@/core/checks/design-lint.ts";
-import { LAYOUT_RULES, LayoutRules } from "@/core/checks/lint/layout-rules.ts";
-import { LINT_REGISTRY, LintRegistry } from "@/core/checks/lint/lint-registry.ts";
-import { LINT_WALK, LintWalk } from "@/core/checks/lint/lint-walk.ts";
-import { TOKEN_RULES, TokenRules } from "@/core/checks/lint/token-rules.ts";
 import { CSS_READER, CssReader } from "@/core/css/css-reader.ts";
 import { AUTO_LINE_HEIGHTS, AutoLineHeights } from "@/core/css/fonts/auto-line-heights.ts";
 import { FONT_SHORTHAND, FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
@@ -168,7 +163,6 @@ export class ServerMain {
     this.#bindInfra(container, config);
     this.#bindDomain(container);
     this.#bindReadNotes(container);
-    this.#bindChecks(container);
     new RenderProviders().register(container);
     new BridgeProviders().register(container, config);
     this.#bindServices(container);
@@ -209,15 +203,6 @@ export class ServerMain {
       .bind({ provide: AUTO_LINE_HEIGHTS, useClass: AutoLineHeights });
   }
 
-  /** design_lint's registry, walk and rule sets (K-031). */
-  #bindChecks(container: Container): void {
-    container
-      .bind({ provide: TOKEN_RULES, useClass: TokenRules })
-      .bind({ provide: LAYOUT_RULES, useClass: LayoutRules })
-      .bind({ provide: LINT_REGISTRY, useClass: LintRegistry })
-      .bind({ provide: LINT_WALK, useClass: LintWalk })
-      .bind({ provide: DESIGN_LINT, useClass: DesignLint });
-  }
 
   /** The core domain's classes the tools read and write with: the D-15 numbers, the CSS mapping, the XML writers. */
   #bindDomain(container: Container): void {

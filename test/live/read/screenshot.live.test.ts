@@ -14,7 +14,11 @@ const JPEG = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x
 const CLIP = { x: 0, y: 0, width: 100, height: 60 };
 
 /** One row of a PNG's pixels, from its left edge, `width` pixels long. */
-const row = (png: DecodedPng, y: number, width: number) => [
+const row = (
+  png: DecodedPng,
+  y: number,
+  width: number,
+) => [
   ...png.data.subarray(y * png.width * png.channels, (y * png.width + width) * png.channels),
 ];
 
