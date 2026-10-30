@@ -1,4 +1,4 @@
-/** @jsquash/webp's wasm builds and the pixels its encoder takes (S-095). */
+/** @jsquash/webp's wasm builds and the colour space its encoder takes (S-095). */
 export const WEBP = {
   /** A wasm module using SIMD, as wasm-feature-detect tests it: the encoder picks its build by the same test. */
   simdProbe: [
@@ -10,8 +10,11 @@ export const WEBP = {
   /** The server's lib (ES2024 and Node's types) declares no WebAssembly global, though Node has one. */
   wasmGlobal: "WebAssembly",
   colorSpace: "srgb",
-  /** The encoder takes RGBA at 8 bits a channel: grey is spread to RGB, 16-bit channels keep their high byte. */
-  rgba: 4,
-  rgb: 3,
-  depth: 8,
 } as const;
+
+/**
+ * pixelmatch's options (A§15.7): its own threshold, the render faded to 30% in the difference as 0.7.0 faded it, both
+ * images laid over white rather than a checkerboard; `red` is its colour for a differing pixel, which no faded pixel
+ * (always grey) and no antialiased one (yellow) has.
+ */
+export const PIXELMATCH = { options: { threshold: 0.1, alpha: 0.3, checkerboard: false }, red: [0xff, 0, 0] } as const;

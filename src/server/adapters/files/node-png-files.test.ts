@@ -28,3 +28,18 @@ it("refuses a path that is not .png and a .png path holding JPEG bytes, and repl
   await files.write(shot, PNG);
   expect(new Uint8Array(await readFile(shot))).toEqual(PNG);
 });
+
+// T-089: image_compare's reference, read only when it is a PNG.
+it("reads a PNG to compare with, and refuses a missing file and one that is not a PNG", async () => {
+  const folder = await mkdtemp(join(tmpdir(), "pixelwright-png-"));
+  const files = new NodePngFiles(new ImageSizeSniffer());
+  const build = join(folder, "build.png");
+  const photo = join(folder, "photo.png");
+
+  await writeFile(build, PNG);
+  await writeFile(photo, JPEG);
+
+  expect(await files.read(build)).toEqual(PNG);
+  await expect(files.read(join(folder, "none.png"))).rejects.toThrow(/There is no file at .*none\.png\./);
+  await expect(files.read(photo)).rejects.toThrow(/photo\.png is not a PNG: save the screenshot to compare as PNG\./);
+});

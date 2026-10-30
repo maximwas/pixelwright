@@ -9,6 +9,7 @@ import { INSPECT_VIEW } from "@/core/inspect/inspect-view.ts";
 import { MEASURE } from "@/core/inspect/measure.ts";
 import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
+import { FONT_DIRECTORY } from "@/core/ports/font-directory.port.ts";
 import { JSON_FILE } from "@/core/ports/json-file.port.ts";
 import { LOGGER } from "@/core/ports/logger.port.ts";
 import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
@@ -69,6 +70,7 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["BUILD_STYLES", BUILD_STYLES],
   ["INSPECT_VIEW", INSPECT_VIEW],
   ["MEASURE", MEASURE],
+  ["FONT_DIRECTORY", FONT_DIRECTORY],
 ];
 
 describe("ServerMain's composition", () => {

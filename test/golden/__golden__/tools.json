@@ -3320,20 +3320,6 @@
             "height"
           ]
         },
-        "modes": {
-          "description": "Render in these variable modes, by collection and mode name, e.g. {\"Theme\": \"Dark\"}: set on the layer for the render, then set back (needs Allow edits; the file is left as it was).",
-          "type": "object",
-          "propertyNames": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "additionalProperties": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          }
-        },
         "diff": {
           "description": "A .png path to write the difference to: the render faded, every differing pixel red. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
           "type": "string",
@@ -3341,10 +3327,10 @@
           "maxLength": 4096
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "required": [
@@ -3544,7 +3530,7 @@
   {
     "name": "styles_compare",
     "title": "Compare a build's styles with the design",
-    "description": "Whether a build has each style the design sets, property by property. Give pairs: a layer (design_read's id) and the computed styles of the element that draws it, as the browser gives them: Object.fromEntries([...getComputedStyle(el)].map((p) => [p, getComputedStyle(el).getPropertyValue(p)])), or only the properties a first call lists in notGiven. Each layer is read as design_read writes it: in its parent when another pair's layer holds it, else as a read of its own (its size, not its place); its tokens and text style in and its shorthands spread into longhands (padding into padding-top…, border into each side's width, style and colour, font into family, size, weight, style and line height, gap into row-gap and column-gap, the main axis's only in a flex that does not wrap). mismatches gives each property the build has otherwise with both values and the token or text style it comes from; notGiven what the build's styles leave out; notCompared what a computed style cannot be held against (offsets in percent or calc(), fr tracks). Sizes and places may be off by tolerance px; other lengths, colours (hex or rgb()), shadows, gradients and transforms compare by value. What the design leaves unset is not checked, nor a hidden layer. Layers with differences come first. Works while Allow edits is off.",
+    "description": "Whether a build has each style the design sets, property by property. Give pairs: a layer (design_read's id) and the computed styles of the element that draws it, as the browser gives them: Object.fromEntries([...getComputedStyle(el)].map((p) => [p, getComputedStyle(el).getPropertyValue(p)])), or only the properties a first call lists in notGiven. Each layer is read as design_read writes it: in its parent when another pair's layer holds it, else as a read of its own (its size, not its place); its tokens and text style in and its shorthands spread into longhands (padding into padding-top…, border into each side's width, style and colour, font into family, size, weight, style and line height, gap into row-gap and column-gap, the main axis's only in a flex that does not wrap). mismatches gives each property the build has otherwise with both values and the token or text style it comes from; notGiven what the build's styles leave out; notCompared what a computed style cannot be held against (offsets in percent or calc(), fr tracks). Sizes and places may be off by tolerance px; other lengths, colours (hex or rgb()), shadows, gradients and transforms compare by value. What the design leaves unset is not checked, nor a hidden layer. Layers with differences come first. image_compare compares the pixels. Works while Allow edits is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4239,10 +4225,10 @@
           "maxLength": 200
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema"

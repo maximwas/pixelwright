@@ -1,5 +1,6 @@
 import type { Container } from "@needle-di/core";
 import { CROP, Crop } from "@/core/images/crop.ts";
+import { RGBA, Rgba } from "@/core/images/rgba.ts";
 import { IMAGE_CODEC } from "@/core/ports/image-codec.port.ts";
 import { IMAGE_SNIFFER } from "@/core/ports/image-sniffer.port.ts";
 import { PNG_FILES } from "@/core/ports/png-files.port.ts";
@@ -28,6 +29,7 @@ export class RenderProviders {
       .bind({ provide: IMAGE_CODEC, useClass: FastPngCodec })
       .bind({ provide: IMAGE_SNIFFER, useClass: ImageSizeSniffer })
       .bind({ provide: CROP, useClass: Crop })
+      .bind({ provide: RGBA, useClass: Rgba })
       .bind({ provide: PNG_FILES, useClass: NodePngFiles })
       .bind({ provide: EXPORT_PULL, useClass: ExportPull })
       .bind({ provide: PNG_RENDER, useClass: PngRender })

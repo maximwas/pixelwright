@@ -1,16 +1,17 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, extname } from "node:path";
 import { inject, injectable } from "@needle-di/core";
 import { IMAGE_FORMAT } from "@/core/images/images.constants.ts";
 import { IMAGE_SNIFFER } from "@/core/ports/image-sniffer.port.ts";
 import type { PngFiles } from "@/core/ports/png-files.port.ts";
-import { PNG_FILE, PNG_FILE_TEXT } from "@/server/adapters/files/files.constants.ts";
+import { PNG_FILE, PNG_FILE_TEXT, PNG_READ } from "@/server/adapters/files/files.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 
 /**
  * Screenshots on disk (T-072): a tool that only reads Figma must not destroy a file the user keeps (D-14), so a PNG goes
- * only to a .png path, and never over a file whose bytes are not a PNG; an earlier screenshot is replaced.
+ * only to a .png path, and never over a file whose bytes are not a PNG; an earlier screenshot is replaced. A PNG to
+ * compare with (T-089) is read only when it is one, and not past 50 MB.
  */
 @injectable()
 export class NodePngFiles implements PngFiles {
@@ -38,5 +39,25 @@ export class NodePngFiles implements PngFiles {
     await this.check(path);
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, png);
+  }
+
+  async read(path: string): Promise<Uint8Array> {
+    const info = await stat(path).catch(() => null);
+
+    if (info?.isFile() !== true) {
+      throw new PixelwrightError(ERROR_CODE.opFailed, PNG_FILE_TEXT.missing(path));
+    }
+
+    if (info.size > PNG_READ.maxBytes) {
+      throw new PixelwrightError(ERROR_CODE.opFailed, PNG_FILE_TEXT.tooLarge(path));
+    }
+
+    const bytes = new Uint8Array(await readFile(path));
+
+    if (this.#sniffer.sniff(bytes)?.format !== IMAGE_FORMAT.png) {
+      throw new PixelwrightError(ERROR_CODE.opFailed, PNG_FILE_TEXT.notPng(path));
+    }
+
+    return bytes;
   }
 }
