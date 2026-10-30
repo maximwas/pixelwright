@@ -91,6 +91,7 @@ import { BridgeProviders } from "@/server/main/bridge-providers.ts";
 import { ConfigReader, type ServerConfig } from "@/server/main/config/config-reader.ts";
 import { ContainerToolFactory } from "@/server/main/container-tool-factory.ts";
 import { McpEndpoint } from "@/server/main/mcp/mcp-endpoint.ts";
+import { RenderProviders } from "@/server/main/render-providers.ts";
 import { LOG_FILE, SERVER_LOG } from "@/server/main/server.constants.ts";
 import { ShutdownHooks } from "@/server/main/shutdown-hooks.ts";
 import { UPDATE_FEED } from "@/server/main/update-feed.ts";
@@ -162,6 +163,7 @@ export class ServerMain {
     this.#bindInfra(container, config);
     this.#bindDomain(container);
     this.#bindReadNotes(container);
+    new RenderProviders().register(container);
     new BridgeProviders().register(container, config);
     this.#bindServices(container);
 

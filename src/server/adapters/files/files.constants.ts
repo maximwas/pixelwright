@@ -8,6 +8,15 @@ export const ATOMIC_JSON_FILE = {
   text: (json: string) => `${json}\n`,
 } as const;
 
+/** Where a screenshot may be saved (T-072): a .png path. */
+export const PNG_FILE = { extension: ".png" } as const;
+
+/** 0.7.0's words for a save path refused: a read-only tool never writes over a file the user keeps (D-14). */
+export const PNG_FILE_TEXT = {
+  notPngPath: (path: string) => `save must be a .png path, not ${path}.`,
+  notPngFile: (path: string) => `${path} exists and is not a PNG: choose another path, it is not overwritten.`,
+} as const;
+
 /** The log lines of a file that cannot be read or written: they name the file and why, never its content. */
 export const ATOMIC_JSON_FILE_LOG = {
   offSchema: "file does not match its schema: read as the default",

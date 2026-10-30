@@ -131,7 +131,8 @@ describe("PluginSessions", () => {
       },
     );
 
-    expect(answer.content[0]?.text).toBe(
+    expect(answer.content[0]).toHaveProperty(
+      "text",
       "TIMEOUT: nodes_delete: the plugin may still be writing: read the layers before you retry",
     );
   });

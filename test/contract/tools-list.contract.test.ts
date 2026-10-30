@@ -61,8 +61,18 @@ describe("the MCP contract", () => {
       "viewport_get",
       "nodes_find",
       "outline",
+      "screenshot",
       "design_read",
       "execute",
+    ]);
+  });
+
+  it("lists no outputSchema for the tools that answer in content blocks, so a client keeps the image (T-005)", async () => {
+    const { tools } = await contract.client.listTools();
+
+    expect(tools.filter(({ outputSchema }) => outputSchema === undefined).map(({ name }) => name)).toEqual([
+      "screenshot",
+      "design_read",
     ]);
   });
 

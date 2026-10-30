@@ -1305,25 +1305,11 @@
             "height"
           ]
         },
-        "modes": {
-          "description": "Render in these variable modes, by collection and mode name, e.g. {\"Theme\": \"Dark\"}: set on the layer for the render, then set back (needs Allow edits; the file is left as it was).",
-          "type": "object",
-          "propertyNames": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "additionalProperties": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          }
-        },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "required": [
@@ -1355,6 +1341,11 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 100
+        },
+        "screenshot": {
+          "default": false,
+          "description": "Also return the layer's image, to compare your build with.",
+          "type": "boolean"
         },
         "maxChars": {
           "default": 80000,

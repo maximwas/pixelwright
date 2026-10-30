@@ -8,6 +8,14 @@ import { TEST_MCP } from "./test-mcp.ids.ts";
 /** A tool's answer: its structuredContent. */
 export type ToolResult = Record<string, unknown>;
 
+/** One content block of an answer: a text, or an image as base64 with its type. */
+export interface LiveBlock {
+  readonly type: string;
+  readonly text?: string;
+  readonly data?: string;
+  readonly mimeType?: string;
+}
+
 /** A file as status lists it, the fields the harness reads. */
 export interface StatusFile {
   readonly session: string;
@@ -76,6 +84,13 @@ export class LiveClient {
     }
 
     return (answer.content as { readonly text?: string }[]).map(({ text }) => text ?? "");
+  }
+
+  /** A tool's raw answer: its content blocks, images too, and whether it is an error; it never throws on one. */
+  async blocks(tool: string, args: ToolResult = {}): Promise<{ isError: boolean; content: LiveBlock[] }> {
+    const answer = await this.#answer(tool, args);
+
+    return { isError: answer.isError === true, content: answer.content as LiveBlock[] };
   }
 
   /** status, once Test MCP's plugin is connected to this server or its owner; throws after two minutes. */

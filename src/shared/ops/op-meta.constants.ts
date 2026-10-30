@@ -19,4 +19,7 @@ export const OP_NAME = {
   find: "find",
   read: "read",
   nearby: "nearby",
+  export: "export",
+  chunk: "chunk",
+  cover: "cover",
 } as const;

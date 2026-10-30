@@ -7,6 +7,7 @@ import { FILE_MAP_MANIFEST } from "@/server/tools/file-map/file-map.manifest.ts"
 import { NODE_SHOW_MANIFEST } from "@/server/tools/node-show/node-show.manifest.ts";
 import { NODES_FIND_MANIFEST } from "@/server/tools/nodes-find/nodes-find.manifest.ts";
 import { OUTLINE_MANIFEST } from "@/server/tools/outline/outline.manifest.ts";
+import { SCREENSHOT_MANIFEST } from "@/server/tools/screenshot/screenshot.manifest.ts";
 import { SELECTION_GET_MANIFEST } from "@/server/tools/selection-get/selection-get.manifest.ts";
 import { SELECTION_WAIT_MANIFEST } from "@/server/tools/selection-wait/selection-wait.manifest.ts";
 import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
@@ -28,6 +29,7 @@ export class ToolCatalog {
     VIEWPORT_GET_MANIFEST,
     NODES_FIND_MANIFEST,
     OUTLINE_MANIFEST,
+    SCREENSHOT_MANIFEST,
     DESIGN_READ_MANIFEST,
     EXECUTE_MANIFEST,
   ];

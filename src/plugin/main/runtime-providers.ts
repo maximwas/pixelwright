@@ -10,6 +10,7 @@ import { FrameSizeStep } from "@/plugin/app/steps/frame-size-step.ts";
 import { JournalStep } from "@/plugin/app/steps/journal-step.ts";
 import { TurnStep } from "@/plugin/app/steps/turn-step.ts";
 import { WatchdogStep } from "@/plugin/app/steps/watchdog-step.ts";
+import { CHUNK_STREAMS, ChunkStreams } from "@/plugin/app/streams/chunk-streams.ts";
 import { OP_CONTRACTS } from "@/shared/ops/op.catalog.ts";
 
 /**
@@ -32,6 +33,7 @@ export class RuntimeProviders {
       .bind({ provide: OPERATION_STEPS, multi: true, useClass: TurnStep })
       .bind({ provide: OPERATION_STEPS, multi: true, useClass: JournalStep })
       .bind({ provide: OPERATION_STEPS, multi: true, useClass: WatchdogStep })
+      .bind({ provide: CHUNK_STREAMS, useClass: ChunkStreams })
       .bind({ provide: OPERATION_RUNNER, useClass: OperationRunner });
   }
 }

@@ -5,9 +5,13 @@ import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
+import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
+import { CLIP_COVER, ClipCover } from "@/plugin/operations/cover/clip-cover.ts";
+import { CoverOperation } from "@/plugin/operations/cover/cover.operation.ts";
 import { CODE_RUNS, CodeRuns } from "@/plugin/operations/execute/code-runs.ts";
 import { CODE_SCOPE, CodeScope } from "@/plugin/operations/execute/code-scope.ts";
 import { ExecuteOperation } from "@/plugin/operations/execute/execute.operation.ts";
+import { ExportOperation } from "@/plugin/operations/export/export.operation.ts";
 import { FileMapOperation } from "@/plugin/operations/file-map/file-map.operation.ts";
 import { FindOperation } from "@/plugin/operations/find/find.operation.ts";
 import { NearbyOperation } from "@/plugin/operations/nearby/nearby.operation.ts";
@@ -42,6 +46,9 @@ export class OperationProviders {
     [OP_NAME.find]: FindOperation,
     [OP_NAME.read]: ReadOperation,
     [OP_NAME.nearby]: NearbyOperation,
+    [OP_NAME.export]: ExportOperation,
+    [OP_NAME.chunk]: ChunkOperation,
+    [OP_NAME.cover]: CoverOperation,
   };
 
   register(container: Container): void {
@@ -52,6 +59,7 @@ export class OperationProviders {
       .bind({ provide: READ_RUN, useClass: ReadRun })
       .bind({ provide: NOTE_CANDIDATES, useClass: NoteCandidates })
       .bind({ provide: NEARBY_NOTES, useClass: NearbyNotes })
+      .bind({ provide: CLIP_COVER, useClass: ClipCover })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
   }
 }

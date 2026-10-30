@@ -99,6 +99,7 @@ export const ACTION_NAME: Partial<Record<OpName, string>> = {
   [OP_NAME.find]: "Searched layers",
   [OP_NAME.read]: "Read a design",
   [OP_NAME.nearby]: "Read the notes nearby",
+  [OP_NAME.export]: "Exported an image",
 };
 
 export const ACTIVITY_TEXT = {

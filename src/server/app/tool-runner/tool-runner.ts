@@ -72,10 +72,15 @@ export interface ToolCall extends ToolRequest {
 
 /** What a call answers, in the shape of an MCP CallToolResult. */
 export interface ToolAnswer {
-  readonly content: readonly { readonly type: typeof TOOL_CONTENT_TYPE.text; readonly text: string }[];
+  readonly content: readonly ToolContent[];
   readonly structuredContent?: Readonly<Record<string, unknown>>;
   readonly isError?: boolean;
 }
+
+/** One block of an answer: a text, or an image as base64 with its MIME type (screenshot, design_read, T-005). */
+export type ToolContent =
+  | { readonly type: typeof TOOL_CONTENT_TYPE.text; readonly text: string }
+  | { readonly type: typeof TOOL_CONTENT_TYPE.image; readonly data: string; readonly mimeType: string };
 
 export type ToolStepNext = (call: ToolCall) => Promise<ToolAnswer>;
 
