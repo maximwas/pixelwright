@@ -22,4 +22,5 @@ export const OP_NAME = {
   export: "export",
   chunk: "chunk",
   cover: "cover",
+  image: "image",
 } as const;

@@ -10,6 +10,8 @@ export const TEST_MCP = {
     startSection: "81:1541",
     install: "81:1627",
     orbitPricing: "54:226",
+    /** Orbit's hero: the Image Planet (54:317) is its asset, rendered to a file. */
+    hero: "54:238",
     /** Orbit's Customers block, with the sticker turned 8 degrees (54:450) in it. */
     customers: "54:434",
     sticker: "54:450",

@@ -15,6 +15,8 @@ export const DESIGN_READ_FIELD = {
   repeats: "Read each run of three or more alike neighbours as its first, with $repeat and JSON rows. Default: false.",
   autoLineHeight:
     "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere. A px read sent back to design_apply fixes those line heights at that px.",
+  assetsDir:
+    "Write the read's assets into this folder (icons as SVG, images as PNG at 2x, backgrounds as the original image) and point each src at its file; created if missing, a file already there is never overwritten with other bytes. Without it src names are plans. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
   nearby:
     "Also list the designer's notes on the canvas within this many px of the screen holding the layer (texts, stickies, small frames of text beside it or over it), e.g. 400: the JSON's nearby.",
 } as const;
@@ -23,10 +25,17 @@ export const DESIGN_READ_FIELD = {
 export const DESIGN_READ_LINE_HEIGHT = { normal: "normal", px: "px" } as const;
 
 /** maxChars' range, as 0.7.0 (T-050): under 2,000 no section reads usefully; 400,000 is far past any client's text block. */
-export const DESIGN_READ_LIMITS = { minChars: 2_000, maxChars: 400_000 } as const;
+export const DESIGN_READ_LIMITS = {
+  minChars: 2_000,
+  maxChars: 400_000,
+  /** assetsDir: a path as long as the file systems take. */
+  pathChars: 4_096,
+} as const;
 
 /** What design_read says of a layer it does not read. */
 export const DESIGN_READ_TEXT = {
+  notWritten: (count: number) =>
+    `${count} assets are planned but not written, so their src names are plans: pass assetsDir to write them with their real names, or take each path assets_export gives.`,
   hidden: (id: string) =>
     `${id} is hidden in Figma, and a hidden layer is read as a name and a box only: show it, or read a visible one.`,
   /** A plugin of an earlier release does not know the nearby op: the server updates on its own, the plugin does not. */

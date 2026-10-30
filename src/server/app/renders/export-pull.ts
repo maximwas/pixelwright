@@ -8,6 +8,7 @@ import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import { chunkOp } from "@/shared/ops/chunk/chunk.manifest.ts";
 import { exportOp } from "@/shared/ops/export/export.manifest.ts";
+import { imageOp } from "@/shared/ops/image/image.manifest.ts";
 
 /** A layer to render: what the export op takes but the stream, which each export gets its own of. */
 export type ExportRequest = Omit<zod.output<typeof exportOp.input>, "stream">;
@@ -42,7 +43,7 @@ export class ExportPull {
   }
 
   /** A held export's bytes, chunk after chunk. */
-  async bytes(session: PluginSession, held: HeldExport): Promise<Uint8Array> {
+  async bytes(session: PluginSession, held: Omit<HeldExport, "scale">): Promise<Uint8Array> {
     const chunks: Uint8Array[] = [];
     let received = 0;
 
@@ -75,6 +76,18 @@ export class ExportPull {
     const held = await this.start(session, request);
 
     return { bytes: await this.bytes(session, held), scale: held.scale };
+  }
+
+  /** An image fill's original bytes by its hash (T-055): as placed, not cropped, filtered or scaled. */
+  async original(
+    session: PluginSession,
+    node: string,
+    hash: string,
+  ): Promise<Uint8Array> {
+    const stream = randomUUID();
+    const { totalBytes } = await session.run(imageOp, { hash, stream });
+
+    return await this.bytes(session, { node, stream, totalBytes });
   }
 }
 

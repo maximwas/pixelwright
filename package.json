@@ -87,6 +87,7 @@
     "@clack/prompts": "1.8.1",
     "@csstools/css-parser-algorithms": "4.0.2",
     "@csstools/css-tokenizer": "4.0.2",
+    "@jsquash/webp": "1.5.0",
     "@modelcontextprotocol/server": "2.4.0",
     "@needle-di/core": "1.2.1",
     "@noble/hashes": "2.4.0",

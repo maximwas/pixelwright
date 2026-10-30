@@ -26,7 +26,8 @@ import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 export class AssetClassifier {
   readonly #readLayers = new ReadLayers();
 
-  classify(layer: ReadLayer, root: ReadLayer): AssetClass | null {
+  /** `root`: the read's root; null for a layer exported on its own, whose own export settings then count. */
+  classify(layer: ReadLayer, root: ReadLayer | null): AssetClass | null {
     const children = this.#readLayers.visibleChildren(layer);
     const leaf = children.length === 0 && layer.childCount === 0;
 
@@ -60,7 +61,7 @@ export class AssetClassifier {
   }
 
   /** What the designer's export settings make of a layer: nothing for a PDF, the read's root or a layer with text. */
-  #exported(layer: ReadLayer, root: ReadLayer): AssetClass | null {
+  #exported(layer: ReadLayer, root: ReadLayer | null): AssetClass | null {
     const [setting] = layer.exportSettings ?? [];
 
     if (setting === undefined || setting.format === ASSET_FORMAT.pdf || layer === root || this.#hasText(layer)) {

@@ -53,6 +53,14 @@ export class AssetPlan {
     return this.#assets;
   }
 
+  /** The plan with each file's src as `src` gives it: the path it was written to (T-055). */
+  moved(src: (file: PlannedFile) => string): AssetPlan {
+    return new AssetPlan(
+      this.#assets.map((asset) => (asset.kind === ASSET_KIND.video ? asset : { ...asset, src: src(asset) })),
+      this.#css,
+    );
+  }
+
   /** ImagePaint names an image by its hash: the planned file takes its place. */
   #background(value: string): string {
     return [...this.#backgrounds].reduce((css, [hash, src]) => css.replaceAll(PAINTS_TEXT.asset(hash), src), value);

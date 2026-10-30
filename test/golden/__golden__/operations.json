@@ -3549,7 +3549,10 @@
         "format": {
           "type": "string",
           "enum": [
-            "PNG"
+            "PNG",
+            "JPG",
+            "SVG",
+            "PDF"
           ]
         },
         "scale": {
@@ -3798,6 +3801,52 @@
         "box",
         "rendered",
         "cover"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "image",
+    "meta": {
+      "write": false,
+      "dryRun": false,
+      "timeoutMs": 30000,
+      "needsAllowEdits": false,
+      "turn": "read"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "hash": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "stream": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "hash",
+        "stream"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "totalBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "totalBytes"
       ],
       "additionalProperties": false
     }
