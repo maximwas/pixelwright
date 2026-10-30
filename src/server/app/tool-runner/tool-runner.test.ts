@@ -158,7 +158,10 @@ describe("ToolRunner", () => {
     const answer = await new RunnerProbe().run({ text: "", fail: "schema" });
 
     expect(answer.isError).toBe(true);
-    expect(answer.content[0]?.text).toMatch(/^Internal error in probe: the answer does not match its outputSchema/);
+    expect(answer.content[0]).toHaveProperty(
+      "text",
+      expect.stringMatching(/^Internal error in probe: the answer does not match its outputSchema/),
+    );
   });
 
   it("logs each call with its tool, callId, file and ms, never its arguments", async () => {

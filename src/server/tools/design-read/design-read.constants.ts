@@ -9,6 +9,7 @@ export const DESIGN_READ_TOOL = {
 export const DESIGN_READ_FIELD = {
   node: "The layer's id, e.g. 54:243. Default: the one layer selected in Figma.",
   depth: "Levels below the layer to read. Default: all.",
+  screenshot: "Also return the layer's image, to compare your build with.",
   maxChars:
     "The most characters of XML: past it the deepest branches, then long lists, then long texts are cut. Default: 80000.",
   repeats: "Read each run of three or more alike neighbours as its first, with $repeat and JSON rows. Default: false.",
@@ -32,3 +33,6 @@ export const DESIGN_READ_TEXT = {
   oldPlugin:
     "The Pixelwright plugin in this file is older than the server and cannot read the notes around a screen: run npx -y pixelwright@latest to update it, or read without nearby.",
 } as const;
+
+/** design_read's image (T-056): the layer at scale 1 with its effects, as the screenshot tool renders it. */
+export const DESIGN_READ_SHOT = { scale: 1, effects: true } as const;

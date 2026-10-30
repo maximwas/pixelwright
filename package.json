@@ -99,6 +99,8 @@
     "birpc": "4.2.0",
     "close-with-grace": "2.5.0",
     "culori": "4.0.2",
+    "fast-png": "8.0.0",
+    "image-size": "2.0.4",
     "p-timeout": "7.0.1",
     "pino": "10.4.0",
     "pino-pretty": "13.2.0",

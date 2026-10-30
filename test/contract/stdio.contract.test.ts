@@ -67,6 +67,7 @@ describe("the built server over stdio", () => {
       "viewport_get",
       "nodes_find",
       "outline",
+      "screenshot",
       "design_read",
       "design_lint",
       "execute",

@@ -1,5 +1,8 @@
 import { changesOp } from "@/shared/ops/changes/changes.manifest.ts";
+import { chunkOp } from "@/shared/ops/chunk/chunk.manifest.ts";
+import { coverOp } from "@/shared/ops/cover/cover.manifest.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
+import { exportOp } from "@/shared/ops/export/export.manifest.ts";
 import { fileMapOp } from "@/shared/ops/file-map/file-map.manifest.ts";
 import { findOp } from "@/shared/ops/find/find.manifest.ts";
 import { nearbyOp } from "@/shared/ops/nearby/nearby.manifest.ts";
@@ -26,4 +29,7 @@ export const OP_CONTRACTS = new OpCatalog([
   findOp,
   readOp,
   nearbyOp,
+  exportOp,
+  chunkOp,
+  coverOp,
 ]);

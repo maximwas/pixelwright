@@ -113,8 +113,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     spacing, case, decoration and colour, left out where its text style sets them the same; features and the axes a
     browser would not draw as notes, FX-066), `TextGroup` (alignment, the longest run as the text's own, wrap and the
     block's notes, C-110, C-116) and `TextPathData` (a TextPath's `d` through svg-path-commander, and its start).
+  - `images/`: `Crop`, a region of an image's pixels as an image of its own, transparent where the image does not
+    reach (T-073), and `IMAGE_FORMAT`, the format names a sniffer gives.
   - `ports/`: the interfaces the outer layers implement (`PluginLink`, `Logger`, `Clock`, `JsonFile`, `KeyValueStore`,
-    `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`), each with its token.
+    `DocumentEvents`, `ServerEvents`, `WindowEvents`, `EditsSwitch`, `ClientRoots`, `ImageCodec`, `ImageSniffer`,
+    `PngFiles`), each with its token.
 - `server/app/`: the services a tool call runs through.
   - `tool-runner/`: `ToolRunner`, its steps, the `Tool` base class, the tool manifest and the call id.
   - `sessions/`: `PluginSessions` and `PluginSession` (one call's file), the op steps, `TargetResolver`.
@@ -123,6 +126,12 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `scope/`: `WithinScope`, where a tool works: the layer or page `within` names, every page for "file" (listed
     unloaded through file_map, so the ops stay page-scoped), else the current page. `SelectedLayer`: the one selected
     layer a tool defaults to, NODE_NOT_FOUND with advice when none or several are (D-64).
+  - `renders/`: a layer rendered to PNG. `ExportPull` (the export op renders under a random stream, the chunk op hands
+    it out in 2 MiB parts; a changed total or an empty part is an error, T-075), `PngRender` (full size, or a clip cut
+    from the whole render, measured by the cover op; past 64 Mpx the cover layer alone, O-014), `RenderToFit` (inline
+    images: 2000 px, which the plugin fits, and 3.5 MiB, up to three renders at 0.9 of the estimated scale, T-071),
+    `Screenshots` (the screenshot tool's engine and design_read's: saved through `PngFiles`, or inline) and `Shot`, the
+    answer's image and text blocks.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn).
 - `server/adapters/`: the port implementations on Node.
@@ -130,8 +139,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     `listener/` (the port, the upgrade guard, `bridge.json`, the ws socket), `plugin/` (one plugin socket's handshake,
     pairing codes, the RPC peer), `sessions/` (`SessionRegistry`, `BridgeSession`), `owner/` (the owner's side of
     the peers), `peer/` (a peer's side of its owner), `hints/` (`StatusHints`).
-  - `logging/`, `files/`, `clock/`, `mcp/`: pino and the shared log file, atomic JSON files, the system clock, the
+  - `logging/`, `files/`, `clock/`, `mcp/`: pino and the shared log file, atomic JSON files and `NodePngFiles` (screenshots,
+    only to `.png` paths and never over a file that is not a PNG, T-072), the system clock, the
     stdout guard and `McpRoots` (the client's roots, asked once and again on list_changed).
+  - `images/`: `FastPngCodec` (fast-png: PNG to pixels and back, an indexed PNG as its colours) and
+    `ImageSizeSniffer` (image-size: what bytes really are, whatever their file is called).
   - `process/`: `ExecFileRunner`, the `ProcessRunner` port on execFile; `http/`: `NpmRegistry`, npm's newest release.
 - `server/main/`: `ServerMain`, the server's composition root, its providers, `ContainerToolFactory`, the config
   reader, `McpEndpoint`, the shutdown hooks.
@@ -144,10 +156,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - `plugin/app/`: the op runtime in Figma's main thread: `OperationRunner`, its steps, the `Operation` base class,
   `OpReport`, `OperationTurns` (the read/write turn lock), `BusyOps` (what runs past its answer, as the window shows
   it); `journal/` holds `ChangeJournal`, what changed while the
-  window is open and whose hand it was.
+  window is open and whose hand it was; `streams/` holds `ChunkStreams`, the renders the server pulls in chunks, one
+  per stream, four at most, each dropped once read whole (T-075).
 - `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `CurrentSelection`,
   which also selects and hears selection changes; `LayerRefs`, a layer as lists name it, its Dev Mode status too; `CanvasView`, the current
-  page and the view, the one place either changes; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
+  page and the view, the one place either changes; `FigmaBase64`, bytes as base64 for the bridge; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
   pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline; `layer-read/`:
   `LayerReader`, a layer as the read model, its header and the field readers in 0.7.0's order, `BoxFieldReader` the
   first, a hidden layer a stub; `PaintFieldReader` and `StrokeFieldReader` the paints and how strokes are drawn, `EffectFieldReader` the effects
@@ -168,7 +181,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - `plugin/operations/`: one folder per op, one `Operation` subclass each; `read/` also holds `ReadRun`, the
   breadth-first read under the JSON budget with its cuts; `nearby/` also holds `NoteCandidates` (what around a screen
   is a note: a text, a small holder of texts and plain shapes, a layer named like a note); `execute/` also holds `CodeRuns` (the code's run past its answer) and `CodeScope` (pw, kept
-  while the window is open) and the code's console, value printer and error text.
+  while the window is open) and the code's console, value printer and error text. `export/` renders a layer with
+  exportAsync into `ChunkStreams`, `chunk/` hands a part of it out as base64, `cover/` also holds `ClipCover`, the
+  smallest opaque layer that shows a clip's region alone, over the layer's tree as plain values (T-073).
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;
@@ -268,6 +283,12 @@ alignment, the gaps and the grid tracks, and a negative spacing as a `$css` note
 look. `test/golden/design.golden.test.ts` holds the four Orbit XML goldens, `*.read.json` and `*.fit.json` byte for
 byte (C-191, C-192, D-21): a golden moves only in its own commit with its decision (D-18 stubs, D-20 notes, a D-15
 value); any other move is a bug. `test/live/read/read-model.live.test.ts` checks the live Orbit roots against them.
+
+**Renders a layer.** `screenshot` (and design_read with `screenshot: true`) asks `Screenshots`. Inline, `RenderToFit`
+asks `ExportPull.start`: the export op renders with `maxSide` 2000 and holds the bytes under the call's random stream;
+an answer over 3.5 MiB is rendered again smaller before a byte moves, else `ExportPull.bytes` reads it with the chunk
+op, 2 MiB a frame. A clip first asks the cover op (the box, what the render covers, the cover layer), then `PngRender`
+crops the whole render with `Crop` through the `ImageCodec` port; `save` writes the full PNG through `PngFiles`.
 
 **Adds a tool.** A folder under `server/tools/` with the manifest (name, description, schemas, annotations, `load()`),
 the schema and the tool class on `Tool`; one line in `ToolCatalog`. The `tools.json` golden changes with it.

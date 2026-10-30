@@ -16,6 +16,7 @@ const { distance } = nearbyOp.input.shape;
 export const DesignReadInputSchema = zod.object({
   node: zod.exactOptional(NodeIdSchema).check(zod.describe(DESIGN_READ_FIELD.node)),
   depth: depth.check(zod.describe(DESIGN_READ_FIELD.depth)),
+  screenshot: zod._default(zod.boolean(), false).check(zod.describe(DESIGN_READ_FIELD.screenshot)),
   maxChars: zod
     ._default(
       zod.int().check(zod.minimum(DESIGN_READ_LIMITS.minChars), zod.maximum(DESIGN_READ_LIMITS.maxChars)),

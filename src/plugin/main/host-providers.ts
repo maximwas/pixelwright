@@ -10,6 +10,7 @@ import { STYLE_NUMBERS_READER, StyleNumbers } from "@/core/tokens/names/style-nu
 import { CANVAS_VIEW, CanvasView } from "@/plugin/adapters/figma/canvas-view.ts";
 import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
+import { FIGMA_BASE64, FigmaBase64 } from "@/plugin/adapters/figma/figma-base64.ts";
 import { ComponentFieldReader } from "@/plugin/adapters/figma/layer-meta/component-field-reader.ts";
 import { FactFieldReader } from "@/plugin/adapters/figma/layer-meta/fact-field-reader.ts";
 import { ModeFieldReader } from "@/plugin/adapters/figma/layer-meta/mode-field-reader.ts";
@@ -60,6 +61,7 @@ export class HostProviders {
       .bind({ provide: CURRENT_SELECTION, useClass: CurrentSelection })
       .bind({ provide: LAYER_REFS, useClass: LayerRefs })
       .bind({ provide: CANVAS_VIEW, useClass: CanvasView })
+      .bind({ provide: FIGMA_BASE64, useClass: FigmaBase64 })
       .bind({ provide: NODE_LOOKUP, useClass: NodeLookup })
       .bind({ provide: NUMBER_FORMAT, useClass: NumberFormat })
       .bind({ provide: FIELD_READERS, multi: true, useClass: BoxFieldReader })
