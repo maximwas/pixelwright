@@ -80,6 +80,13 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `inspect/`: `NearbyNotes` (the notes within a distance of a screen, nearest first, the side each is on, 20 plus
     `more`, T-058; the plugin's nearby op calls it) and `Measurements` (Dev Mode measurements with the px between
     their sides, the JSON's `measurements`, T-061).
+  - `checks/`: `build-styles/` is styles_compare's engine (T-090). `BuildStyles` finds each pair's layer in the reads
+    (in its parent when another pair's read holds it, else as its own read's root: the read op gives no parent) and
+    takes its CSS as design_read writes it (`DesignBuilder`, the asset plan, `ReadCatalogue`'s tokens and text
+    styles), never through a second mapping; `StyleCheck` holds the build's computed styles against it: `Shorthands`
+    spreads design_read's shorthands into longhands (a nowrap flex's gap on its main axis only), `StyleMatch`
+    compares by kind (sizes and places within the tolerance, K-049, K-050), `ShapeMatch` colours, shadows,
+    gradients and transforms, `Dimension` reads one CSS number.
   - `css/`: the Figma-to-CSS mapping table, on the server (the plugin never imports `core/css`; it sends raw fields).
     `CssReader` is the facade: a layer, its parent and the read give its declarations in `CSS_ORDER` and its `$css`
     notes. `registry/` holds `GroupRegistry` (the `PROPERTY_GROUPS` in order, each owning its CSS attribute names and
