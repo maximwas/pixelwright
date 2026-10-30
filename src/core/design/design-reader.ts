@@ -1,4 +1,5 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import type { AssetPlan } from "@/core/design/assets/asset-plan.ts";
 import { ASSET_PLANNER } from "@/core/design/assets/asset-planner.ts";
 import type { XmlRead } from "@/core/design/design.types.ts";
 import { DESIGN_XML } from "@/core/design/design-xml.ts";
@@ -34,9 +35,10 @@ export class DesignReader {
     this.#planner = planner;
   }
 
-  read(model: ReadModel, options: { readonly maxChars?: number; readonly repeats?: boolean } = {}): DesignAnswer {
+  /** `assets`: the read's plan when the caller made it (its files written, T-055); planned here otherwise. */
+  read(model: ReadModel,    options: { readonly maxChars?: number; readonly repeats?: boolean; readonly assets?: AssetPlan } = {}): DesignAnswer {
     const { maxChars = FIT.maxChars, repeats = false } = options;
-    const assets = this.#planner.plan(model);
+    const assets = options.assets ?? this.#planner.plan(model);
     const plan = this.#fit.plan(model, maxChars, { assets, repeats });
     const { read, tree } = this.#design.render(model, { ...plan, assets, repeats });
 

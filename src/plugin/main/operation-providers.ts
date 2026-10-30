@@ -14,6 +14,7 @@ import { ExecuteOperation } from "@/plugin/operations/execute/execute.operation.
 import { ExportOperation } from "@/plugin/operations/export/export.operation.ts";
 import { FileMapOperation } from "@/plugin/operations/file-map/file-map.operation.ts";
 import { FindOperation } from "@/plugin/operations/find/find.operation.ts";
+import { ImageOperation } from "@/plugin/operations/image/image.operation.ts";
 import { NearbyOperation } from "@/plugin/operations/nearby/nearby.operation.ts";
 import { NOTE_CANDIDATES, NoteCandidates } from "@/plugin/operations/nearby/note-candidates.ts";
 import { OutlineOperation } from "@/plugin/operations/outline/outline.operation.ts";
@@ -49,6 +50,7 @@ export class OperationProviders {
     [OP_NAME.export]: ExportOperation,
     [OP_NAME.chunk]: ChunkOperation,
     [OP_NAME.cover]: CoverOperation,
+    [OP_NAME.image]: ImageOperation,
   };
 
   register(container: Container): void {

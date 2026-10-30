@@ -131,7 +131,13 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     from the whole render, measured by the cover op; past 64 Mpx the cover layer alone, O-014), `RenderToFit` (inline
     images: 2000 px, which the plugin fits, and 3.5 MiB, up to three renders at 0.9 of the estimated scale, T-071),
     `Screenshots` (the screenshot tool's engine and design_read's: saved through `PngFiles`, or inline) and `Shot`, the
-    answer's image and text blocks.
+    answer's image and text blocks; `ExportPull.original` pulls an image fill's original bytes the same way (image op).
+  - `assets/`: asset files (T-055, T-194, T-195). `AssetFiles` fetches each planned file (an original by its hash, else
+    a render in its format: rasters at 2x, vectors at their size, icons with their effects; WebP encoded on the server
+    through the `WebpEncoder` port) and `AssetWriter` writes them: the same bytes once, `-2` for a name holding other
+    bytes, never over another file, an original with the extension its bytes have.
+  - `stores/`: `UpdateState` (latest.json) and `WrittenFiles` (written-files.json: the SHA-1 of every asset file
+    written, its layers, the newest 5000), both through the `JsonFile` port in the channel's home.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn).
 - `server/adapters/`: the port implementations on Node.
@@ -143,7 +149,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     only to `.png` paths and never over a file that is not a PNG, T-072), the system clock, the
     stdout guard and `McpRoots` (the client's roots, asked once and again on list_changed).
   - `images/`: `FastPngCodec` (fast-png: PNG to pixels and back, an indexed PNG as its colours) and
-    `ImageSizeSniffer` (image-size: what bytes really are, whatever their file is called).
+    `ImageSizeSniffer` (image-size: what bytes really are, whatever their file is called), `JsquashWebp`
+    (@jsquash/webp 1.5.0: PNG to WebP, its wasm read from the package, the alpha kept exactly).
   - `process/`: `ExecFileRunner`, the `ProcessRunner` port on execFile; `http/`: `NpmRegistry`, npm's newest release.
 - `server/main/`: `ServerMain`, the server's composition root, its providers, `ContainerToolFactory`, the config
   reader, `McpEndpoint`, the shutdown hooks.
@@ -182,7 +189,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   breadth-first read under the JSON budget with its cuts; `nearby/` also holds `NoteCandidates` (what around a screen
   is a note: a text, a small holder of texts and plain shapes, a layer named like a note); `execute/` also holds `CodeRuns` (the code's run past its answer) and `CodeScope` (pw, kept
   while the window is open) and the code's console, value printer and error text. `export/` renders a layer with
-  exportAsync into `ChunkStreams`, `chunk/` hands a part of it out as base64, `cover/` also holds `ClipCover`, the
+  exportAsync (PNG, JPG, SVG or PDF) into `ChunkStreams`, `image/` holds an image fill's original bytes there by its
+  hash, `chunk/` hands a part of either out as base64, `cover/` also holds `ClipCover`, the
   smallest opaque layer that shows a clip's region alone, over the layer's tree as plain values (T-073).
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.

@@ -28,6 +28,9 @@ export const DesignReadInputSchema = zod.object({
     ._default(zod.enum(DESIGN_READ_LINE_HEIGHT), DESIGN_READ_LINE_HEIGHT.normal)
     .check(zod.describe(DESIGN_READ_FIELD.autoLineHeight)),
   nearby: zod.exactOptional(distance).check(zod.describe(DESIGN_READ_FIELD.nearby)),
+  assetsDir: zod
+    .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(DESIGN_READ_LIMITS.pathChars)))
+    .check(zod.describe(DESIGN_READ_FIELD.assetsDir)),
   file: FileInputSchema,
 });
 

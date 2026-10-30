@@ -100,6 +100,7 @@ export const ACTION_NAME: Partial<Record<OpName, string>> = {
   [OP_NAME.read]: "Read a design",
   [OP_NAME.nearby]: "Read the notes nearby",
   [OP_NAME.export]: "Exported an image",
+  [OP_NAME.image]: "Read an original image",
 };
 
 export const ACTIVITY_TEXT = {

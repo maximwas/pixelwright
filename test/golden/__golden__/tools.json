@@ -1374,6 +1374,12 @@
           "minimum": 0,
           "maximum": 5000
         },
+        "assetsDir": {
+          "description": "Write the read's assets into this folder (icons as SVG, images as PNG at 2x, backgrounds as the original image) and point each src at its file; created if missing, a file already there is never overwritten with other bytes. Without it src names are plans. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
         "file": {
           "type": "string",
           "minLength": 1,
@@ -8402,14 +8408,14 @@
         },
         "original": {
           "default": false,
-          "description": "Write the images as they were placed (not cropped, filtered or scaled) instead of renders, with their real format.",
+          "description": "Write the images as they were placed (not cropped, filtered or scaled) instead of renders, with their real format: with nodes, each layer's topmost visible image fill, any others noted. A video fill cannot be exported.",
           "type": "boolean"
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "required": [
@@ -8475,6 +8481,11 @@
               },
               "message": {
                 "type": "string"
+              },
+              "kind": {
+                "description": "video: the layer is filled with a video, which the Plugin API cannot export.",
+                "type": "string",
+                "const": "video"
               }
             },
             "required": [

@@ -1,5 +1,6 @@
 import { InjectionToken, injectable } from "@needle-di/core";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
+import { ASSETS_EXPORT_MANIFEST } from "@/server/tools/assets-export/assets-export.manifest.ts";
 import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
 import { DESIGN_LINT_MANIFEST } from "@/server/tools/design-lint/design-lint.manifest.ts";
 import { DESIGN_READ_MANIFEST } from "@/server/tools/design-read/design-read.manifest.ts";
@@ -34,6 +35,7 @@ export class ToolCatalog {
     DESIGN_READ_MANIFEST,
     DESIGN_LINT_MANIFEST,
     EXECUTE_MANIFEST,
+    ASSETS_EXPORT_MANIFEST,
   ];
 
   manifests(): readonly ToolManifest[] {

@@ -26,6 +26,11 @@ export class NodeLookup {
     return figma.variables.getVariableCollectionByIdAsync(id).catch(() => null);
   }
 
+  /** An image fill's image by its hash (T-055); null when the file has none. */
+  image(hash: string): Image | null {
+    return figma.getImageByHash(hash);
+  }
+
   /** The node, or NODE_NOT_FOUND naming the tools that find ids. */
   async existing(id: string): Promise<BaseNode> {
     const found = await this.node(id);

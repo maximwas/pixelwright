@@ -87,6 +87,8 @@ import { OpLogStep } from "@/server/app/sessions/steps/op-log-step.ts";
 import { OpResultStep } from "@/server/app/sessions/steps/op-result-step.ts";
 import { OpTimerStep } from "@/server/app/sessions/steps/op-timer-step.ts";
 import { TARGET_RESOLVER, TargetResolver } from "@/server/app/sessions/target-resolver.ts";
+import { WRITTEN_STORE } from "@/server/app/stores/stores.constants.ts";
+import { WRITTEN_FILES_PATH } from "@/server/app/stores/written-files.ts";
 import { CallLogStep } from "@/server/app/tool-runner/steps/call-log-step.ts";
 import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step.ts";
 import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step.ts";
@@ -188,7 +190,8 @@ export class ServerMain {
       .bind({ provide: MCP_ROOTS, useClass: McpRoots })
       .bind({ provide: CLIENT_ROOTS, useExisting: MCP_ROOTS })
       .bind({ provide: PROJECT_FALLBACK, useValue: projectDir })
-      .bind({ provide: PROJECT_FOLDER, useClass: ProjectFolder });
+      .bind({ provide: PROJECT_FOLDER, useClass: ProjectFolder })
+      .bind({ provide: WRITTEN_FILES_PATH, useValue: join(home, WRITTEN_STORE.file) });
   }
 
   /** What design_read adds beside its XML: the hints, the measurements, Auto line heights in px (T-060, T-061). */
