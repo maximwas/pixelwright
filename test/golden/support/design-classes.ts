@@ -72,39 +72,39 @@ const paints = new PaintList(
 );
 const runs = new TextRun(new FontShorthand(format), paints, format, names);
 const classifier = new AssetClassifier();
-const planner = new AssetPlanner(classifier, new Slug(), new AssetCss(lengths, new CssSplit()));
+
+export const planner = new AssetPlanner(classifier, new Slug(), new AssetCss(lengths, new CssSplit()));
+
 const components = new ComponentAttributes(new NameValueList());
 const shape = new LayerShape();
 
-export const design = new DesignXml(
-  new LayerTree(
-    new DesignBuilder(
-      new NodeTag(),
-      components,
-      new CssReader(
-        new GroupRegistry([
-          new LayoutGroup(lengths, format),
-          new GeometryGroup(new Placement(lengths, format), lengths, format),
-          new AppearanceGroup(lengths, format),
-          new FillsGroup(paints),
-          new StrokesGroup(paints, format),
-          new EffectsGroup(solid, lengths, format, names),
-          new TextGroup(runs, lengths),
-        ]),
-      ),
-      new TextPathData(),
-    ),
-    new TextContent(runs),
-    new InteractionAttributes(new EasingCss(format)),
-    planner,
+/** design_read's element builder: a layer's tag and attributes. */
+export const builder = new DesignBuilder(
+  new NodeTag(),
+  components,
+  new CssReader(
+    new GroupRegistry([
+      new LayoutGroup(lengths, format),
+      new GeometryGroup(new Placement(lengths, format), lengths, format),
+      new AppearanceGroup(lengths, format),
+      new FillsGroup(paints),
+      new StrokesGroup(paints, format),
+      new EffectsGroup(solid, lengths, format, names),
+      new TextGroup(runs, lengths),
+    ]),
   ),
+  new TextPathData(),
+);
+
+export const design = new DesignXml(
+  new LayerTree(builder, new TextContent(runs), new InteractionAttributes(new EasingCss(format)), planner),
   new XmlWriter(new XmlEscape()),
   new RepeatFold(),
 );
 
 export const fit = new DesignFit(design);
 
-const catalogue = new ReadCatalogue(
+export const catalogue = new ReadCatalogue(
   new FontShorthand(format),
   names,
   new ReadTokens(paints, lengths, new EffectsGroup(solid, lengths, format, names), names),

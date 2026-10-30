@@ -90,6 +90,7 @@ import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-ste
 import { TargetStep } from "@/server/app/tool-runner/steps/target-step.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER, ToolRunner } from "@/server/app/tool-runner/tool-runner.ts";
 import { BridgeProviders } from "@/server/main/bridge-providers.ts";
+import { CheckProviders } from "@/server/main/check-providers.ts";
 import { ConfigReader, type ServerConfig } from "@/server/main/config/config-reader.ts";
 import { ContainerToolFactory } from "@/server/main/container-tool-factory.ts";
 import { McpEndpoint } from "@/server/main/mcp/mcp-endpoint.ts";
@@ -166,6 +167,7 @@ export class ServerMain {
     this.#bindDomain(container);
     this.#bindReadNotes(container);
     new RenderProviders().register(container);
+    new CheckProviders().register(container);
     new BridgeProviders().register(container, config);
     this.#bindServices(container);
 
@@ -205,7 +207,6 @@ export class ServerMain {
       .bind({ provide: READ_JSON, useClass: ReadJson })
       .bind({ provide: AUTO_LINE_HEIGHTS, useClass: AutoLineHeights });
   }
-
 
   /** The core domain's classes the tools read and write with: the D-15 numbers, the CSS mapping, the XML writers. */
   #bindDomain(container: Container): void {

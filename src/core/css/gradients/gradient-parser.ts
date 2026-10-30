@@ -1,5 +1,5 @@
 import { isTokenDimension, isTokenEOF, isTokenNumber, isTokenPercentage, tokenize } from "@csstools/css-tokenizer";
-import { inject, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { GRADIENT_GEOMETRY } from "@/core/css/gradients/gradient-geometry.ts";
 import {
   ANGLE_UNITS,
@@ -231,3 +231,5 @@ export class GradientParser {
     return isTokenNumber(token) ? { value: token[4].value, unit: "" } : null;
   }
 }
+
+export const GRADIENT_PARSER = new InjectionToken<GradientParser>("GradientParser");

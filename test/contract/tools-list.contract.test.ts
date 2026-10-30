@@ -63,6 +63,7 @@ describe("the MCP contract", () => {
       "outline",
       "screenshot",
       "design_read",
+      "styles_compare",
       "execute",
       "assets_export",
     ]);

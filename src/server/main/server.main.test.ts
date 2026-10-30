@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { InjectionToken } from "@needle-di/core";
 import { describe, expect, it } from "vitest";
+import { BUILD_STYLES } from "@/core/checks/build-styles/build-styles.ts";
 import { DESIGN_XML } from "@/core/design/design-xml.ts";
 import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
@@ -63,6 +64,7 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["DESIGN_XML", DESIGN_XML],
   ["WITHIN_SCOPE", WITHIN_SCOPE],
   ["SELECTED_LAYER", SELECTED_LAYER],
+  ["BUILD_STYLES", BUILD_STYLES],
 ];
 
 describe("ServerMain's composition", () => {
