@@ -29,4 +29,5 @@ export const OP_NAME = {
   flows: "flows",
   components: "components",
   variables: "variables",
+  usage: "usage",
 } as const;

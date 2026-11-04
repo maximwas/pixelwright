@@ -23,6 +23,7 @@ import { SELECTION_WAIT_MANIFEST } from "@/server/tools/selection-wait/selection
 import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
 import { STYLES_COMPARE_MANIFEST } from "@/server/tools/styles-compare/styles-compare.manifest.ts";
 import { TOKENS_READ_MANIFEST } from "@/server/tools/tokens-read/tokens-read.manifest.ts";
+import { TOKENS_USAGE_MANIFEST } from "@/server/tools/tokens-usage/tokens-usage.manifest.ts";
 import { VARIANTS_READ_MANIFEST } from "@/server/tools/variants-read/variants-read.manifest.ts";
 import { VIEWPORT_GET_MANIFEST } from "@/server/tools/viewport-get/viewport-get.manifest.ts";
 
@@ -55,6 +56,7 @@ export class ToolCatalog {
     FONTS_CHECK_MANIFEST,
     EXECUTE_MANIFEST,
     TOKENS_READ_MANIFEST,
+    TOKENS_USAGE_MANIFEST,
     COMPONENTS_READ_MANIFEST,
     LIBRARY_SEARCH_MANIFEST,
     ASSETS_EXPORT_MANIFEST,

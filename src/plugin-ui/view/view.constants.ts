@@ -107,6 +107,7 @@ export const ACTION_NAME: Partial<Record<OpName, string>> = {
   [OP_NAME.flows]: "Mapped the prototype",
   [OP_NAME.components]: "Read the components",
   [OP_NAME.variables]: "Read the tokens",
+  [OP_NAME.usage]: "Found where a token is used",
 };
 
 export const ACTIVITY_TEXT = {

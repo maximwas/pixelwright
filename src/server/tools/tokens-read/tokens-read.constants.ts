@@ -6,8 +6,11 @@ export const TOKENS_READ_TOOL = {
     "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable's scopes (when not every field) and code syntax, which tokens_apply takes back; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
 } as const;
 
-/** The formats tokens_read writes: css in this build; json and dtcg come with their own items. */
-export const TOKEN_FORMAT = { css: "css" } as const;
+/** The formats tokens_read writes: css and json in this build; dtcg comes with its own item. */
+export const TOKEN_FORMAT = { css: "css", json: "json" } as const;
+
+/** The output field each format writes its tokens in. */
+export const TOKEN_FORMAT_FIELD = { css: "css", json: "tokens" } as const;
 
 /** tokens_read's bounds, as 0.7.0 took them. */
 export const TOKENS_READ = {
@@ -16,8 +19,11 @@ export const TOKENS_READ = {
   maxName: 200,
   minCollections: 1,
   maxCollections: 50,
-  /** The longest output: 80 000 characters by default, the size a client reads in one go; 2 000 to 400 000. */
-  minChars: 2_000,
+  /**
+   * The longest output: 80 000 characters by default, the size a client reads in one go; 500 to 400 000, 500 still
+   * holding a few whole tokens with the summary.
+   */
+  minChars: 500,
   maxChars: 400_000,
   defaultChars: 80_000,
   /** The collections a too-long note names as parts to read one at a time. */
@@ -33,18 +39,22 @@ export const TOKENS_READ_FIELD = {
   format:
     "css: ready custom properties, a block per extra mode. json: the token model, per collection and mode. dtcg: Design Tokens Format (DTCG 2025.10) trees, one per collection mode (`<collection>.<mode>`) and one of styles, each to save as its own .json file.",
   maxChars:
-    "Longest output; past it the summary comes back (with format json, also the first tokens that fit) and you read collections one at a time.",
+    "Longest output; past it the summary comes back with the first whole tokens that fit, and you read collections one at a time.",
 } as const;
 
 export const TOKENS_READ_TEXT = {
   noCollection: (missing: readonly string[], names: readonly string[]) =>
     `No collection is named ${missing.join(", ")}: the file has ${names.join(", ") || "none"}.`,
+  noLibrary: "No library with variables is enabled in this file: libraries add nothing here.",
   tooLong: (
     size: number,
     maxChars: number,
+    first: { readonly field: string; readonly shown: number; readonly total: number },
     names: readonly string[],
   ) =>
-    `The tokens are ${size} characters, past maxChars (${maxChars}): read them a part at a time, e.g. ${names
+    `The tokens are ${size} characters, past maxChars (${maxChars}): ${first.field} holds the first ${first.shown} of ${
+      first.total
+    } variables and styles, in order. Read the rest a part at a time, e.g. ${names
       .map((name) => `collections: ${JSON.stringify([name])}`)
-      .join(", ")}.`,
+      .join(", ")}, or with a larger maxChars.`,
 } as const;

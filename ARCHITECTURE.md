@@ -42,7 +42,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     `StyleTokens` (K-006 through design_read's own mapping: `PaintList` on a square for paint styles, so gradients
     come from the paints, C-022; `--Name-font` with letter spacing and case for text; shadows, and blurs as
     `--Name-filter` / `--Name-backdrop-filter`, D-26, for effects); `formats/css/` holds `TokensCss`, the CSS format
-    (`:root` with each default mode and the styles, a block per mode of a collection with several).
+    (`:root` with each default mode and the styles, a block per mode of a collection with several); format json is
+    the model itself (`TokensSchema`). `model/` also holds `ModelSummary` (T-161: past maxChars, each collection's
+    modes and size, and the most whole tokens that fit, in order, for any format).
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -170,7 +172,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   link, as the project file it points at, the longest existing end for a branch with slashes); `library-search/` saves
   a file's own published components through the components op and searches every saved catalogue with Fuse.js, which
   stays on the server. `tokens-read/` makes the variables op's raw tokens into core's token model and writes it as
-  CSS (format css; json and dtcg come with their items).
+  CSS or JSON (dtcg comes with its item), past maxChars the summary with the first whole tokens that fit;
+  `tokens-usage/` names the token with `TokenNames` over the variables op's raw tokens, then lists the usage op's
+  layers (500 at most, within the caller's budgetMs, D-48).
 - `server/adapters/`: the port implementations on Node.
   - `bridge/`: `PluginBridge` (the role switch), `NoBridge`, the status hints, and the bridge's topics:
     `listener/` (the port, the upgrade guard, `bridge.json`, the ws socket), `plugin/` (one plugin socket's handshake,
@@ -218,8 +222,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   `NoteFieldReader` (Dev Mode annotations with their category), `ModeFieldReader` (explicit variable modes by name) and
   `ReactionFieldReader` (reactions, `actions ?? [action]`, each destination named once, P-089; the URL as href); `variables/` holds `FileTokens` (the file's collections, variables and styles, and those
   the layers under `within` or on the current page use, every variable an alias points at in turn; styles numbered
-  by `References`; no style CSS asked of Figma, D-20), `UsedTokens` (the style ids and bound variables of the layers,
-  within the op's deadline) and `LibraryCatalogue` (the enabled libraries' variables by name, 500 at most); `host/`
+  by `References`; no style CSS asked of Figma, D-20), `UsedTokens` (the style ids and bound variables of the layers and
+  of a mixed text's runs, O-024, within the op's deadline; where one layer uses a style or variable, for the usage
+  op) and `LibraryCatalogue` (the enabled libraries' variables by name, 500 at most); `host/`
   holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server

@@ -7494,5 +7494,97 @@
       ],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "usage",
+    "meta": {
+      "write": false,
+      "dryRun": false,
+      "timeoutMs": 30000,
+      "needsAllowEdits": false,
+      "turn": "read"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "variable": {
+          "type": "boolean"
+        },
+        "within": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "budgetMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20000
+        }
+      },
+      "required": [
+        "id",
+        "variable",
+        "budgetMs"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "property": {
+                "type": "string",
+                "description": "Where the layer uses it: fill, stroke, effect, text, a text run, or a field."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type",
+              "property"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "more": {
+          "type": "boolean"
+        },
+        "cut": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "layers",
+        "more",
+        "cut"
+      ],
+      "additionalProperties": false
+    }
   }
 ]

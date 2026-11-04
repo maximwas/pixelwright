@@ -5010,7 +5010,7 @@
   {
     "name": "tokens_usage",
     "title": "Where a token is used",
-    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch.",
+    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5034,11 +5034,18 @@
             }
           ]
         },
+        "budgetMs": {
+          "default": 20000,
+          "description": "How long the scan may take, in ms; when it is spent the layers found so far come back with a note. Default: 20000.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20000
+        },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "required": [
@@ -5094,6 +5101,12 @@
         },
         "more": {
           "type": "boolean"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -5407,14 +5420,15 @@
           "description": "css: ready custom properties, a block per extra mode. json: the token model, per collection and mode. dtcg: Design Tokens Format (DTCG 2025.10) trees, one per collection mode (`<collection>.<mode>`) and one of styles, each to save as its own .json file.",
           "type": "string",
           "enum": [
-            "css"
+            "css",
+            "json"
           ]
         },
         "maxChars": {
           "default": 80000,
-          "description": "Longest output; past it the summary comes back (with format json, also the first tokens that fit) and you read collections one at a time.",
+          "description": "Longest output; past it the summary comes back with the first whole tokens that fit, and you read collections one at a time.",
           "type": "integer",
-          "minimum": 2000,
+          "minimum": 500,
           "maximum": 400000
         },
         "file": {
@@ -5432,7 +5446,8 @@
         "format": {
           "type": "string",
           "enum": [
-            "css"
+            "css",
+            "json"
           ]
         },
         "css": {
