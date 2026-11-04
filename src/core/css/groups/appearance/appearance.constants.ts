@@ -64,10 +64,20 @@ export const APPEARANCE_NUMBER = {
   oneLine: 1,
   /** A line grid without a count has one line. */
   oneLineGrid: 1,
+  /** Figma's corner smoothing is 0 to 1; its panel shows percent. */
+  percent: 100,
 } as const;
 
 /** CSS design_apply cannot write back, shown in `$css`. */
-export const APPEARANCE_NOTE = { layoutGrid: "layout-grid", lineClamp: "line-clamp" } as const;
+export const APPEARANCE_NOTE = {
+  layoutGrid: "layout-grid",
+  lineClamp: "line-clamp",
+  /**
+   * Figma's corner smoothing: its curve runs on past the radius into the edges. CSS's corner-shape: superellipse()
+   * keeps it inside the radius, so no value matches (squircle cuts the corner less, not longer): border-radius stays.
+   */
+  cornerSmoothing: "corner-smoothing",
+} as const;
 
 export const APPEARANCE_TEXT = {
   blend: (mode: string) => mode.toLowerCase().replaceAll("_", "-"),
@@ -80,6 +90,7 @@ export const APPEARANCE_TEXT = {
   wide: (size: string) => ` ${size} wide`,
   gutter: (size: string) => `, gutter ${size}`,
   edge: (name: string, size: string) => `, ${name} ${size}`,
+  percent: (value: number) => `${value}%`,
 } as const;
 
 /** A box's corners as Figma names them, top left first and clockwise, as CSS's border-radius lists them. */
@@ -104,6 +115,7 @@ export const APPEARANCE_SOURCES = [
   "text",
   "cornerRadius",
   ...CORNERS,
+  "cornerSmoothing",
   "layoutGrids",
   "css",
 ] as const;

@@ -24,6 +24,8 @@ export const BUILDER_VALUE = {
   hidden: "none",
   /** The hyperlink type that opens a URL; the other kind links to a layer. */
   urlLink: "URL",
+  /** HTML's target for a link that opens in a new tab. */
+  newTab: "_blank",
 } as const;
 
 /** Figma's annotation property types as `$pins` words them (C-1.5): CSS words; a type Figma adds later stays as named. */

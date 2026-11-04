@@ -13,7 +13,7 @@ import {
   RENDERED_EFFECTS,
 } from "@/core/css/groups/effects/effects.constants.ts";
 import { TEXT_TYPES } from "@/core/css/groups/paint/paint.constants.ts";
-import { PAINTS_TEXT } from "@/core/css/paints/paints.constants.ts";
+import { FIGMA_PAINT, PAINTS_TEXT } from "@/core/css/paints/paints.constants.ts";
 import { SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
 import type { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
 import { CSS_LENGTH } from "@/core/css/values/css-length.ts";
@@ -27,8 +27,8 @@ type Effect = NonNullable<ReadLayer["effects"]>[number];
 
 /**
  * A layer's visible effects (C-100..C-102): shadows top first as box-shadow or a text's text-shadow, an effect style's
- * as its token; blurs as filter and backdrop-filter at 0.43 R, a progressive one's end radius with a note; effects
- * CSS has no property for as a note.
+ * as its token, a drop shadow Figma shows behind the layer as a filter's drop-shadow(); blurs as filter and
+ * backdrop-filter at 0.43 R, a progressive one's end radius with a note; effects CSS has no property for as a note.
  */
 @injectable()
 export class EffectsGroup implements PropertyGroup {
@@ -53,11 +53,19 @@ export class EffectsGroup implements PropertyGroup {
 
   read({ layer, model, css }: CssScope): void {
     const effects = (layer.effects ?? []).filter((effect) => effect.visible ?? true);
-
-    this.#shadows(layer, effects, model, css);
+    // A drop-shadow() goes before the layer's blur(), which blurs the shadow with the layer.
+    const filters = this.#shadows(layer, effects, model, css);
 
     for (const [property, value] of this.blurs(effects)) {
-      css.set(property, value);
+      if (property === CSS_PROPERTY.filter) {
+        filters.push(value);
+      } else {
+        css.set(property, value);
+      }
+    }
+
+    if (filters.length > 0) {
+      css.set(CSS_PROPERTY.filter, filters.join(EFFECTS_VALUE.space));
     }
 
     for (const effect of effects) {
@@ -87,7 +95,7 @@ export class EffectsGroup implements PropertyGroup {
           (effect.type === FIGMA_EFFECT.dropShadow || (effect.type === FIGMA_EFFECT.innerShadow && !isText)),
       )
       .reverse()
-      .map((effect) => this.#shadow(effect, isText, model))
+      .map((effect) => this.#shadow(effect, !isText, model))
       .join(EFFECTS_VALUE.joint);
   }
 
@@ -102,32 +110,67 @@ export class EffectsGroup implements PropertyGroup {
       });
   }
 
-  /** The layer's shadows; an effect style's are its token (T-163). */
+  /**
+   * The layer's shadows; an effect style's are its token (T-163). A box's drop shadow Figma shows behind it
+   * (showShadowBehindNode) is returned as drop-shadow(), top first: CSS cuts a box-shadow out under the box, while
+   * drop-shadow() draws under its see-through pixels. One with a spread, which drop-shadow() has not, or in an effect
+   * style stays a box-shadow with a note. A text-shadow is drawn under the glyphs already, and an opaque box hides it.
+   */
   #shadows(
     layer: ReadLayer,
     effects: readonly Effect[],
     model: ModelTables,
     css: CssDeclarations,
-  ): void {
+  ): string[] {
     const isText = TEXT_TYPES[layer.type] ?? false;
-    const shadows = this.shadows(effects, isText, model);
+    const style = layer.effectStyleId === undefined ? undefined : model.styles[layer.effectStyleId];
+    const behind =
+      isText || this.#opaque(layer)
+        ? []
+        : effects.filter((effect) => effect.type === FIGMA_EFFECT.dropShadow && (effect.showShadowBehindNode ?? false));
+    const dropped = style === undefined ? behind.filter((effect) => (effect.spread ?? 0) === 0) : [];
+    const shadows = this.shadows(
+      effects.filter((effect) => !dropped.includes(effect)),
+      isText,
+      model,
+    );
 
-    if (shadows === "") {
-      return;
+    if (shadows !== "") {
+      css.set(
+        isText ? CSS_PROPERTY.textShadow : CSS_PROPERTY.boxShadow,
+        style === undefined ? shadows : PAINTS_TEXT.token(this.#names.style(style)),
+      );
     }
 
-    const style = layer.effectStyleId === undefined ? undefined : model.styles[layer.effectStyleId];
+    for (const effect of behind.filter((shadow) => !dropped.includes(shadow))) {
+      css.note(EFFECTS_VALUE.behind, this.#shadow(effect, true, model));
+    }
 
-    css.set(
-      isText ? CSS_PROPERTY.textShadow : CSS_PROPERTY.boxShadow,
-      style === undefined ? shadows : PAINTS_TEXT.token(this.#names.style(style)),
+    return dropped.reverse().map((effect) => {
+      const deviation = (effect.radius ?? 0) / EFFECTS_NUMBER.radiusPerDeviation;
+
+      return EFFECTS_TEXT.dropShadow(this.#shadow({ ...effect, radius: deviation }, false, model));
+    });
+  }
+
+  /** A visible solid fill at full opacity and alpha: nothing under the box shows through it. */
+  #opaque(layer: ReadLayer): boolean {
+    return (
+      Array.isArray(layer.fills) &&
+      layer.fills.some(
+        (fill) =>
+          fill.type === FIGMA_PAINT.solid &&
+          (fill.visible ?? true) &&
+          (fill.opacity ?? EFFECTS_NUMBER.opaque) === EFFECTS_NUMBER.opaque &&
+          (fill.color?.a ?? EFFECTS_NUMBER.opaque) === EFFECTS_NUMBER.opaque,
+      )
     );
   }
 
   /** `[inset] x y blur [spread] colour`, the colour its variable's token when bound. */
   #shadow(
     effect: Effect,
-    isText: boolean,
+    spread: boolean,
     model: ModelTables,
   ): string {
     return [
@@ -135,7 +178,7 @@ export class EffectsGroup implements PropertyGroup {
       this.#lengths.px(effect.offset?.x ?? 0),
       this.#lengths.px(effect.offset?.y ?? 0),
       this.#lengths.px(effect.radius ?? 0),
-      isText ? null : this.#lengths.px(effect.spread ?? 0),
+      spread ? this.#lengths.px(effect.spread ?? 0) : null,
       effect.color === undefined ? null : this.#solid.color(effect.color, effect.boundVariables, 1, model),
     ]
       .filter((part) => part !== null)

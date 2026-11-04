@@ -3167,6 +3167,9 @@
             "detached": {
               "type": "boolean"
             },
+            "locked": {
+              "type": "boolean"
+            },
             "pathHash": {
               "type": "string"
             },
@@ -3261,6 +3264,9 @@
                         },
                         "url": {
                           "type": "string"
+                        },
+                        "openInNewTab": {
+                          "type": "boolean"
                         },
                         "transition": {
                           "anyOf": [
@@ -5477,6 +5483,9 @@
               "detached": {
                 "type": "boolean"
               },
+              "locked": {
+                "type": "boolean"
+              },
               "pathHash": {
                 "type": "string"
               },
@@ -5571,6 +5580,9 @@
                           },
                           "url": {
                             "type": "string"
+                          },
+                          "openInNewTab": {
+                            "type": "boolean"
                           },
                           "transition": {
                             "anyOf": [
@@ -6545,6 +6557,9 @@
                           },
                           "url": {
                             "type": "string"
+                          },
+                          "openInNewTab": {
+                            "type": "boolean"
                           },
                           "transition": {
                             "anyOf": [

@@ -98,6 +98,24 @@ describe("EffectsGroup", () => {
     );
   });
 
+  // A drop shadow Figma shows behind the layer: CSS cuts a box-shadow out under the box, drop-shadow() draws under it
+  // with a standard deviation for blur (half box-shadow's radius) and no spread.
+  it("writes a drop shadow shown behind the layer as drop-shadow() before the blur, one with a spread as a note", () => {
+    const behind = { ...CARD, showShadowBehindNode: true };
+    const spread = cssOf({ effects: [{ ...behind, spread: 2 }] });
+
+    expect(cssOf({ effects: [RIM, behind, blur("LAYER_BLUR", 20)] }).properties).toEqual([
+      ["box-shadow", "inset 0 2px 4px 1px #000"],
+      ["filter", "drop-shadow(0 4px 6px rgba(20, 23, 31, 0.16)) blur(8.6px)"],
+    ]);
+    expect(spread.properties).toEqual([["box-shadow", "0 4px 12px 2px rgba(20, 23, 31, 0.16)"]]);
+    expect(spread.notes).toEqual([["shadow-behind", "0 4px 12px 2px rgba(20, 23, 31, 0.16)"]]);
+    // An opaque fill hides what is under the box: the flag changes nothing there.
+    expect(cssOf({ fills: [{ type: "SOLID", color: BLACK }], effects: [behind] }).properties).toEqual([
+      ["box-shadow", "0 4px 12px 0 rgba(20, 23, 31, 0.16)"],
+    ]);
+  });
+
   // C-102: CSS has no blur that changes across a box: the end radius, and how it runs as a note.
   it("reads a progressive blur as its end radius and a note, and an effect CSS lacks as a note", () => {
     const progressive = blur("LAYER_BLUR", 20, {

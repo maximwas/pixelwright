@@ -250,6 +250,8 @@ export const LayerFieldsSchema = zod.strictObject({
   modes: zod.exactOptional(zod.array(zod.strictObject({ collection: zod.string(), mode: zod.string() }))),
   /** A frame detached from a component (Figma keeps where from): the component may be worth using instead. */
   detached: zod.exactOptional(zod.boolean()),
+  /** A layer locked on Figma's canvas: sent only when locked. */
+  locked: zod.exactOptional(zod.boolean()),
   /** A vector's paths, hashed: two icons alike in everything else may still draw something else. */
   pathHash: zod.exactOptional(zod.string()),
   /** A frame's layout grids, as Figma has them. */

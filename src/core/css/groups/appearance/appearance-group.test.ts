@@ -37,6 +37,14 @@ function cssOf(fields: Partial<ReadLayer>) {
 }
 
 describe("AppearanceGroup", () => {
+  // CSS's corner-shape keeps its curve inside the radius, Figma's smoothing runs it on into the edges: no match.
+  it("keeps a smoothed corner's border-radius and notes Figma's smoothing", () => {
+    const read = cssOf({ cornerRadius: 24, cornerSmoothing: 0.6000000238418579 });
+
+    expect(read.properties).toEqual([["border-radius", "24px"]]);
+    expect(read.notes).toEqual([["corner-smoothing", "60%"]]);
+  });
+
   // C-070: opacity, a blend mode CSS has, clipping; a blend mode it has not is a note, with Figma's own CSS if read.
   it("reads opacity, the blend mode and clipping, and notes a blend mode CSS has not", () => {
     expect(cssOf({ opacity: 0.5, blendMode: "LINEAR_BURN", clipsContent: true }).properties).toEqual([

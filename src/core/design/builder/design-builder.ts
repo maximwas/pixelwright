@@ -15,8 +15,9 @@ import {
 } from "@/core/design/builder/builder.constants.ts";
 import { PROPERTY_FIELD } from "@/core/design/component/component.constants.ts";
 import { COMPONENT_ATTRIBUTES } from "@/core/design/component/component-attributes.ts";
-import { DESIGN_ATTRIBUTE, TEXT_TYPES } from "@/core/design/design.constants.ts";
+import { DESIGN_ATTRIBUTE, DESIGN_FLAG, TEXT_TYPES } from "@/core/design/design.constants.ts";
 import type { MaybeAttribute } from "@/core/design/design.types.ts";
+import { ACTION_TYPE } from "@/core/design/interactions/interactions.constants.ts";
 import { NODE_TAG } from "@/core/xml/node-tag.ts";
 import type { XmlAttribute, XmlElement } from "@/core/xml/xml.types.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -27,7 +28,7 @@ type LayerElement = Pick<XmlElement, "id" | "tag" | "attributes">;
 
 /**
  * A layer's element as design_read writes it: Figma's type as its tag and its attributes in C-1.3 order, what the layer
- * is (id, name, component, notes, overrides, status, link, modes, mask; ComponentAttributes gives the component's
+ * is (id, name, component, notes, overrides, status, lock, link, modes, mask; ComponentAttributes gives the component's
  * part), its CSS in CSS_ORDER, then the read-only `$` attributes (the
  * component properties it is bound to, the CSS it cannot write back as `$css`, its grid style). An asset is an `Icon` or
  * `Image` with its planned `src` and only the CSS its element keeps (C-142, C-143).
@@ -107,7 +108,9 @@ export class DesignBuilder {
       [DESIGN_ATTRIBUTE.pins, this.#pins(layer)],
       [DESIGN_ATTRIBUTE.override, this.#component.override(layer)],
       [DESIGN_ATTRIBUTE.dev, dev],
+      [DESIGN_ATTRIBUTE.locked, (layer.locked ?? false) ? DESIGN_FLAG.on : undefined],
       [DESIGN_ATTRIBUTE.href, layer.href ?? (isText ? this.#url(layer) : undefined)],
+      [DESIGN_ATTRIBUTE.target, this.#target(layer)],
       ...this.#component.modes(layer),
     ];
   }
@@ -173,6 +176,15 @@ export class DesignBuilder {
     );
 
     return words.size === 0 ? undefined : [...words].join(PINS.separator);
+  }
+
+  /** `_blank` when the URL the layer's prototype opens (the plugin's href: the first one) opens in a new tab. */
+  #target(layer: ReadLayer): string | undefined {
+    const opens = (layer.reactions ?? [])
+      .flatMap(({ actions = [] }) => actions)
+      .find((action) => action.type === ACTION_TYPE.url);
+
+    return (opens?.openInNewTab ?? false) ? BUILDER_VALUE.newTab : undefined;
   }
 
   /** The URL every run of a text links to, when they all link to the same one. */

@@ -42,7 +42,7 @@ export const INTERACTION_TEXT = {
   nothing: "nothing",
   instant: "instant",
   link: "a link",
-  open: (url: string) => `open ${url}`,
+  open: (url: string, newTab: boolean) => `open ${url}${newTab ? " in a new tab" : ""}`,
   after: (ms: string) => `after ${ms}`,
   ms: (ms: number) => `${ms}ms`,
   goes: (what: string, where: string) => `${what} ${where}`,

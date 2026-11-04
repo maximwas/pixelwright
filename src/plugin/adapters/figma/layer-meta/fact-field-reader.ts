@@ -5,7 +5,7 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 /**
  * What the hints read of a layer (C-151): the auto layout Figma guesses for a frame without one, a frame detached from
- * a component, a text whose font this machine lacks.
+ * a component, a text whose font this machine lacks; and a locked layer, which design_read says.
  */
 @injectable()
 export class FactFieldReader implements FieldReader {
@@ -31,6 +31,7 @@ export class FactFieldReader implements FieldReader {
         }),
       ...(detached ? { detached: true } : {}),
       ...(missingFont ? { missingFont: true } : {}),
+      ...(node.locked ? { locked: true } : {}),
     };
   }
 }

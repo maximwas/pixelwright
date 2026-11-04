@@ -77,6 +77,8 @@ export const ReactionSchema = zod.looseObject({
         destinationName: zod.exactOptional(zod.string()),
         navigation: zod.exactOptional(zod.string()),
         url: zod.exactOptional(zod.string()),
+        /** A URL action that opens its page in a new tab. */
+        openInNewTab: zod.exactOptional(zod.boolean()),
         transition: zod.exactOptional(
           zod.nullable(
             zod.looseObject({

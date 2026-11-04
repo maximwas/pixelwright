@@ -2018,6 +2018,9 @@
                               "url": {
                                 "type": "string"
                               },
+                              "openInNewTab": {
+                                "type": "boolean"
+                              },
                               "transition": {
                                 "anyOf": [
                                   {

@@ -73,7 +73,7 @@ export class InteractionAttributes {
     }
 
     if (action.type === ACTION_TYPE.url) {
-      return INTERACTION_TEXT.open(action.url ?? INTERACTION_TEXT.link);
+      return INTERACTION_TEXT.open(action.url ?? INTERACTION_TEXT.link, action.openInNewTab ?? false);
     }
 
     return SIMPLE_ACTIONS[action.type] ?? this.#words(action.type);

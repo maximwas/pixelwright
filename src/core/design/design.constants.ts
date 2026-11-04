@@ -22,7 +22,11 @@ export const DESIGN_ATTRIBUTE = {
   /** What an instance changed on the layer outside its component's properties, in CSS words (C-133). */
   override: "$override",
   dev: "$dev",
+  /** A layer locked on Figma's canvas; read-only. */
+  locked: "$locked",
   href: "href",
+  /** `_blank` when the prototype link opens in a new tab, as HTML's target. */
+  target: "target",
   textStyle: "textStyle",
   /** An asset's planned file (C-144). */
   src: "src",
