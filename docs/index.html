@@ -580,8 +580,8 @@ shows it), no box and no children. Slices are left out.</li>
 <code>variant</code> (&quot;Size=Large, State=Default&quot;) on instances, <code>props</code> (an instance&#39;s text and boolean properties,
 &quot;Label=Sign up, Icon=true&quot;; a comma, = or backslash inside a name or value comes escaped with a backslash),
 <code>$exposed</code>, <code>description</code> (components), <code>note</code> (Dev Mode annotations, &quot;Category: text&quot;, several joined with
-&quot; | &quot;), <code>$pins</code>, <code>$override</code>, <code>$dev</code> (see Read-only attributes), <code>href</code> (a prototype link, or a text&#39;s hyperlink),
-<code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>; the read&#39;s root also has the
+&quot; | &quot;), <code>$pins</code>, <code>$override</code>, <code>$dev</code>, <code>$locked</code> (see Read-only attributes), <code>href</code> (a prototype link, or a text&#39;s
+hyperlink), <code>target</code> (<code>_blank</code> when the prototype link opens in a new tab), <code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>; the read&#39;s root also has the
 modes it takes from above), <code>textStyle</code>, <code>mask</code> (alpha, vector or luminance: the layer masks the layers above it in
 its parent), <code>src</code> (assets), <code>d</code> and <code>start</code> (a text on a path). The CSS attributes come next, then <code>$prop</code>,
 <code>$visibleProp</code>, <code>$swapProp</code>, <code>$css</code>, <code>$grid-style</code> and <code>$on-…</code>, and last <code>$children</code>, <code>$truncated</code> and <code>$repeat</code>.</p>
@@ -626,6 +626,11 @@ outside stroke is twice as wide with <code>paint-order=&quot;stroke fill&quot;</
 no CSS and is in <code>$css</code> as <code>stroke-align: inside</code>.</li>
 <li><code>text-decoration</code> is on a <code>Text</code> only when every run has it: CSS draws a parent&#39;s underline through every child, so
 otherwise each underlined or struck-through <code>Span</code> carries its own.</li>
+<li>A drop shadow Figma shows behind a see-through layer is <code>filter=&quot;drop-shadow(0 4px 6px #000)&quot;</code>, before the
+layer&#39;s <code>blur()</code>: CSS cuts a <code>box-shadow</code> out under the box, while <code>drop-shadow()</code> draws under the layer&#39;s see-through
+pixels, following their alpha (children too). Its blur is a standard deviation, half a <code>box-shadow</code>&#39;s blur radius, so
+it is half Figma&#39;s radius. One with a spread, which <code>drop-shadow()</code> has not, stays a <code>box-shadow</code> with
+<code>shadow-behind</code> in <code>$css</code>.</li>
 <li><code>mask=&quot;alpha&quot;</code> (or vector, luminance) makes the layer the mask of the layers above it in its parent.</li>
 </ul>
 <h3>Layout as the XML shows it</h3>
@@ -656,8 +661,11 @@ modes CSS has no name for, a video fill, line clamps, lists, a negative gap (&qu
 <code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8.6px at 50% 100%</code> (a
 blur that changes across the layer; <code>filter</code> holds its end radius), <code>stroke-align: center</code> (half of the stroke
 paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box), <code>list-spacing: 8px</code>
-(the space between a list&#39;s items, apart from paragraph spacing) and <code>stroke-linecap: round</code> (a line&#39;s round or
-square ends, which a CSS border does not draw).</li>
+(the space between a list&#39;s items, apart from paragraph spacing), <code>stroke-linecap: round</code> (a line&#39;s round or
+square ends, which a CSS border does not draw), <code>corner-smoothing: 60%</code> (Figma&#39;s smoothing runs the corner&#39;s curve on
+past the radius into the edges; CSS&#39;s <code>corner-shape</code> keeps it inside the radius and has no match, so <code>border-radius</code>
+is the nearest) and <code>shadow-behind: 0 4px 12px 2px #000</code> (a box-shadow Figma also shows through the layer&#39;s
+see-through fill, which CSS cuts out under the box: draw it on an element behind).</li>
 <li><code>$children=&quot;N&quot;</code>: the layer has N children and not all are listed (<code>depth</code>, or maxChars).</li>
 <li><code>$truncated=&quot;true&quot;</code>: the branch was emptied, or the text shortened, to fit maxChars; its id is in <code>truncated</code>.</li>
 <li><code>$repeat=&quot;N&quot;</code>: with <code>repeats: true</code>, the first of N alike neighbours (list items, cards, rows) stands for all of
@@ -670,6 +678,7 @@ component&#39;s props.</li>
 <li><code>$override=&quot;text, background&quot;</code>: what this layer of an instance changes that its component&#39;s properties do not say
 (a feature text rewritten, an icon recoloured). Code built from the component cannot show it: give the component a
 property or a variant for it, or build that instance as a one-off. A hint lists them all.</li>
+<li><code>$locked=&quot;true&quot;</code>: the layer is locked on Figma&#39;s canvas. Nothing to build; it is said so an agent leaves it be.</li>
 <li><code>$dev=&quot;ready for dev&quot;</code> on the read&#39;s root: the designer marked it (or a frame or section around it) ready for
 development (or <code>completed</code>).</li>
 <li><code>$grid-style=&quot;Desktop 12&quot;</code>: the grid style the frame&#39;s layout grid comes from.</li>
@@ -678,7 +687,8 @@ take those values exactly.</li>
 <li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>, <code>$on-mouse-down</code>,
 <code>$on-mouse-up</code>, <code>$on-key</code>, <code>$after-timeout</code>, <code>$on-media-hit</code>, <code>$on-media-end</code> (any other trigger as
 <code>$on-&lt;trigger&gt;</code>): the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state); the easing is valid CSS, and a
-spring, which has no CSS, is named by its Figma type (<code>200ms gentle</code>). A link stays <code>href</code>.</li>
+spring, which has no CSS, is named by its Figma type (<code>200ms gentle</code>). A link stays <code>href</code>, with <code>target=&quot;_blank&quot;</code>
+when it opens in a new tab.</li>
 </ul>
 <h3>Text</h3>
 <ul>

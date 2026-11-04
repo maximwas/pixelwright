@@ -66,6 +66,9 @@ apart from the changes below. The plugin is new too: put it in place with the se
 <li><code>design_read</code> writes a text&#39;s stroke as <code>-webkit-text-stroke</code> (an outside stroke twice as wide with
 <code>paint-order: stroke fill</code>; an inside one with a note, since CSS has none), and a layer&#39;s fill blend modes as
 <code>background-blend-mode</code>, one per background, top first.</li>
+<li><code>design_read</code> says more of what Figma shows: a drop shadow Figma draws behind a see-through layer is
+<code>filter: drop-shadow()</code> (CSS cuts a <code>box-shadow</code> out under the box), a link that opens in a new tab has
+<code>target=&quot;_blank&quot;</code>, a locked layer has <code>$locked</code>, and corner smoothing is a <code>$css</code> note with Figma&#39;s value.</li>
 <li><code>design_read</code> takes <code>autoLineHeight: &quot;px&quot;</code>: Figma&#39;s Auto line heights are written as the px Figma renders them at,
 wherever a text that hugs its lines shows that for its font and size. Elsewhere, and by default, they stay <code>normal</code>,
 and the line-height hint names only the texts still written <code>normal</code>.</li>
