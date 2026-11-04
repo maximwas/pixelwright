@@ -28,7 +28,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     by hand, P3 kept P3, Dev Mode's CSS forms, the wire form with `space` only for P3, equals within 0.0005, contrast);
     `names/` holds `TokenNames` (T-163: a style's or variable's `--Name`, Unicode letters and digits kept, a name with
     none `--token-<fnv1a>`, K-070; a variable's WEB code syntax wins; a same-named style `--Black-2`, its XML name
-    `h1-2`; the variable an alias binds to a field; a collection's or mode's data attribute slug, C-135) and `Slug` (K-075: an asset file name, slugify with Ukrainian
+    `h1-2`; the variable an alias binds to a field; a collection's or mode's data attribute slug, C-135), `FontWeight` (K-074: a weight guessed from a font
+    style's name, for the font shorthand and DTCG typography) and `Slug` (K-075: an asset file name, slugify with Ukrainian
     transliteration, 60 characters, `asset` when empty); `easing/` holds `EasingCss`, the one easing writer (D-64, K-066: a
     CSS keyword, else `cubic-bezier()` to 3 decimals, a hold as `step-end`; a spring writes nothing until the Motion
     item, its preset numbers unverified, D-24).
@@ -42,7 +43,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     `StyleTokens` (K-006 through design_read's own mapping: `PaintList` on a square for paint styles, so gradients
     come from the paints, C-022; `--Name-font` with letter spacing and case for text; shadows, and blurs as
     `--Name-filter` / `--Name-backdrop-filter`, D-26, for effects); `formats/css/` holds `TokensCss`, the CSS format
-    (`:root` with each default mode and the styles, a block per mode of a collection with several); format json is
+    (`:root` with each default mode and the styles, a block per mode of a collection with several); `formats/dtcg/` holds
+    `TokensDtcg` (K-013..K-017, D-27: DTCG 2025.10 trees, one per collection mode and one of styles, from the raw
+    tokens of what the model holds; `DtcgPaths` paths, keys and `$root`, `DtcgTypes` types from scopes over aliases,
+    `DtcgReferences` each token's place and alias, `DtcgValues` colours as colorSpace objects with a composed colour
+    resolved, `DtcgStyles` colour, gradient, typography and shadow tokens); format json is
     the model itself (`TokensSchema`). `model/` also holds `ModelSummary` (T-161: past maxChars, each collection's
     modes and size, and the most whole tokens that fit, in order, for any format).
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,

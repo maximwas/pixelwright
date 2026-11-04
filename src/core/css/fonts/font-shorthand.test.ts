@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 
-const fonts = new FontShorthand(new NumberFormat());
+const fonts = new FontShorthand(new NumberFormat(), new FontWeight());
 
 describe("FontShorthand", () => {
   // C-112: italic and the weight from the style's name when the run gives none; a percent line height in px.

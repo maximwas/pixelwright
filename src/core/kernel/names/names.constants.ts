@@ -47,3 +47,21 @@ export const SLUG_RULE = {
   /** The name of a layer whose name keeps nothing. */
   empty: "asset",
 } as const;
+
+/**
+ * K-074: a font weight from its style's name, a guess (a text style keeps a font name, no weight). The first match
+ * wins, so Semi Bold is found before Bold.
+ */
+export const FONT_WEIGHT_NAMES: readonly (readonly [pattern: RegExp, weight: number])[] = [
+  [/thin|hairline/i, 100],
+  [/extra ?light|ultra ?light/i, 200],
+  [/semi ?bold|demi ?bold/i, 600],
+  [/extra ?bold|ultra ?bold/i, 800],
+  [/black|heavy/i, 900],
+  [/light/i, 300],
+  [/medium/i, 500],
+  [/bold/i, 700],
+];
+
+/** A style whose name says no weight is regular. */
+export const FONT_WEIGHT_NUMBER = { regular: 400 } as const;

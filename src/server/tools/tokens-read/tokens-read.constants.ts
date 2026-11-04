@@ -6,11 +6,11 @@ export const TOKENS_READ_TOOL = {
     "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable's scopes (when not every field) and code syntax, which tokens_apply takes back; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
 } as const;
 
-/** The formats tokens_read writes: css and json in this build; dtcg comes with its own item. */
-export const TOKEN_FORMAT = { css: "css", json: "json" } as const;
+/** The formats tokens_read writes. */
+export const TOKEN_FORMAT = { css: "css", json: "json", dtcg: "dtcg" } as const;
 
 /** The output field each format writes its tokens in. */
-export const TOKEN_FORMAT_FIELD = { css: "css", json: "tokens" } as const;
+export const TOKEN_FORMAT_FIELD = { css: "css", json: "tokens", dtcg: "dtcg" } as const;
 
 /** tokens_read's bounds, as 0.7.0 took them. */
 export const TOKENS_READ = {

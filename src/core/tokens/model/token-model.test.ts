@@ -11,6 +11,7 @@ import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { NumberUnits } from "@/core/tokens/model/number-units.ts";
@@ -32,7 +33,12 @@ const paints = new PaintList(
 const units = new NumberUnits();
 const tokens = new TokenModel(
   new VariableCss(solid, new EasingCss(format), format, units),
-  new StyleTokens(paints, new EffectsGroup(solid, lengths, format, names), new FontShorthand(format), names),
+  new StyleTokens(
+    paints,
+    new EffectsGroup(solid, lengths, format, names),
+    new FontShorthand(format, new FontWeight()),
+    names,
+  ),
   units,
   names,
 );

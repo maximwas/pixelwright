@@ -37,6 +37,7 @@ import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -55,7 +56,12 @@ class DevRead {
     new ImagePaint(new CssUrl(new CssSplit())),
     new TokenNames(),
   );
-  readonly #runs = new TextRun(new FontShorthand(this.#format), this.#paints, this.#format, new TokenNames());
+  readonly #runs = new TextRun(
+    new FontShorthand(this.#format, new FontWeight()),
+    this.#paints,
+    this.#format,
+    new TokenNames(),
+  );
   readonly #design = new DesignXml(
     new LayerTree(
       new DesignBuilder(

@@ -21,6 +21,8 @@ export const PRECISION = {
   alpha: 2,
   /** display-p3 channels: CSS shows a P3 file's channels to 4 decimals (C-1.7). */
   p3Channel: 4,
+  /** DTCG token files: numbers to 4 decimals, as 0.7.0 wrote them (K-016). */
+  dtcg: 4,
   /** cubic-bezier points: 3 decimals hold Figma's easing curves (K-066). */
   bezier: 3,
   /** Inspect angles, rounded after the modulo (T-082). */

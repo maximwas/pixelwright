@@ -5405,7 +5405,8 @@
           "type": "string",
           "enum": [
             "css",
-            "json"
+            "json",
+            "dtcg"
           ]
         },
         "maxChars": {
@@ -5431,7 +5432,8 @@
           "type": "string",
           "enum": [
             "css",
-            "json"
+            "json",
+            "dtcg"
           ]
         },
         "css": {
