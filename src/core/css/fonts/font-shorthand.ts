@@ -1,12 +1,6 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import {
-  FONT_NUMBER,
-  FONT_PATTERN,
-  FONT_TEXT,
-  FONT_UNIT,
-  FONT_VALUE,
-  FONT_WEIGHTS,
-} from "@/core/css/fonts/fonts.constants.ts";
+import { FONT_NUMBER, FONT_PATTERN, FONT_TEXT, FONT_UNIT, FONT_VALUE } from "@/core/css/fonts/fonts.constants.ts";
+import { FONT_WEIGHT } from "@/core/kernel/names/font-weight.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 
@@ -28,9 +22,11 @@ export interface FontParts {
 @injectable()
 export class FontShorthand {
   readonly #format;
+  readonly #weight;
 
-  constructor(format = inject(NUMBER_FORMAT)) {
+  constructor(format = inject(NUMBER_FORMAT), weight = inject(FONT_WEIGHT)) {
     this.#format = format;
+    this.#weight = weight;
   }
 
   /**
@@ -40,7 +36,7 @@ export class FontShorthand {
   font(parts: FontParts): string {
     return FONT_TEXT.shorthand(
       FONT_PATTERN.italic.test(parts.fontName.style),
-      parts.fontWeight ?? this.#weight(parts.fontName.style),
+      parts.fontWeight ?? this.#weight.guess(parts.fontName.style),
       FONT_TEXT.size(this.#px(parts.fontSize), this.#lineHeight(parts.lineHeight, parts.fontSize)),
       parts.fontName.family.replace(FONT_PATTERN.unsafe, FONT_TEXT.escaped),
     );
@@ -72,10 +68,6 @@ export class FontShorthand {
 
   #px(value: number): string {
     return FONT_TEXT.px(this.#format.round(value, PRECISION.textSpacing));
-  }
-
-  #weight(style: string): number {
-    return FONT_WEIGHTS.find(([pattern]) => pattern.test(style))?.[1] ?? FONT_NUMBER.regular;
   }
 }
 

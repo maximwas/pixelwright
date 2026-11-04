@@ -11,6 +11,7 @@ import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -25,7 +26,9 @@ const paints = new PaintList(
   new ImagePaint(new CssUrl(new CssSplit())),
   new TokenNames(),
 );
-const content = new TextContent(new TextRun(new FontShorthand(format), paints, format, new TokenNames()));
+const content = new TextContent(
+  new TextRun(new FontShorthand(format, new FontWeight()), paints, format, new TokenNames()),
+);
 
 function segment(
   characters: string,

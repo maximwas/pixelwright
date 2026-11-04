@@ -51,6 +51,7 @@ import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { Measurements } from "@/core/inspect/measurements.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -70,7 +71,7 @@ const paints = new PaintList(
   new ImagePaint(new CssUrl(new CssSplit())),
   names,
 );
-const runs = new TextRun(new FontShorthand(format), paints, format, names);
+const runs = new TextRun(new FontShorthand(format, new FontWeight()), paints, format, names);
 const classifier = new AssetClassifier();
 
 export const planner = new AssetPlanner(classifier, new Slug(), new AssetCss(lengths, new CssSplit()));
@@ -109,7 +110,7 @@ export const design = new DesignXml(tree, new XmlWriter(new XmlEscape()), new Re
 export const fit = new DesignFit(design);
 
 export const catalogue = new ReadCatalogue(
-  new FontShorthand(format),
+  new FontShorthand(format, new FontWeight()),
   names,
   new ReadTokens(paints, lengths, new EffectsGroup(solid, lengths, format, names), names),
   planner,

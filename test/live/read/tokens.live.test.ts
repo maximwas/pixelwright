@@ -1,3 +1,4 @@
+import { defineConfig, parse } from "@terrazzo/parser";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import * as zod from "zod/mini";
 import { TokensSchema } from "@/core/tokens/model/model.schema.ts";
@@ -73,6 +74,33 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
     expect(format).toBe("json");
     expect(model).toEqual(tokens);
     expect(model.collections.flatMap(({ variables }) => variables.map(({ token }) => token))).toContain("--space-24");
+  });
+
+  it("writes format dtcg: a tree per collection mode and one of styles, colours as colorSpace objects, which Terrazzo parses (K-013, K-016)", async () => {
+    const { format, dtcg } = await client.call("tokens_read", { file, format: "dtcg", used: false });
+    const { tokens } = await client.call("tokens_read", { file, format: "json", used: false });
+    const modes = zod
+      .parse(TokensSchema, tokens)
+      .collections.reduce((sum, collection) => sum + collection.modes.length, 0);
+    const trees = dtcg as Record<string, object>;
+    const keys = Object.keys(trees);
+    // One mode of each collection and the styles: the token files of one theme, the others' aliases left unresolved.
+    const theme = keys.filter(
+      (key, index) => keys.findIndex((other) => other.split(".")[0] === key.split(".")[0]) === index,
+    );
+
+    expect(format).toBe("dtcg");
+    expect(keys).toHaveLength(modes + 1);
+    expect(keys.at(-1)).toBe("styles");
+    expect(JSON.stringify(trees)).toMatch(
+      /"\$type":"color","\$value":\{"colorSpace":"(srgb|display-p3)","components":\[/,
+    );
+    await expect(
+      parse(
+        theme.map((key) => ({ filename: new URL(`file:///${key}.json`), src: JSON.stringify(trees[key]) })),
+        { config: defineConfig({}, { cwd: new URL(import.meta.url) }), resolveAliases: false },
+      ),
+    ).resolves.toMatchObject({ tokens: expect.any(Object) });
   });
 
   it("gives the summary past maxChars: the first whole tokens that fit, and the collections to read (T-161)", async () => {

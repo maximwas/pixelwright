@@ -27,6 +27,7 @@ import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -53,7 +54,7 @@ const design = new DesignXml(
       new CssReader(new GroupRegistry([new LayoutGroup(lengths, format), new FillsGroup(paints)])),
       new TextPathData(),
     ),
-    new TextContent(new TextRun(new FontShorthand(format), paints, format, new TokenNames())),
+    new TextContent(new TextRun(new FontShorthand(format, new FontWeight()), paints, format, new TokenNames())),
     new InteractionAttributes(new EasingCss(format)),
     new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(lengths, new CssSplit())),
   ),
