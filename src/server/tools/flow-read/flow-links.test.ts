@@ -10,7 +10,7 @@ const links = new FlowLinks(new InteractionAttributes(new EasingCss(new NumberFo
 const HOME = { id: "9:1", name: "Home", width: 375, height: 812 };
 const DETAIL = { id: "9:3", name: "Detail", width: 375, height: 812 };
 
-/** Home's Open goes to Detail with a smart animate and turns to its hover state; Detail's Back goes back, Docs opens a URL. */
+/** Home's Open goes to Detail with a smart animate and turns to its hover state; Detail's Back goes back, Docs opens a URL in a new tab. */
 const PROTOTYPE: FlowsRaw = {
   page: "App",
   starts: [{ id: "9:1", name: "Main" }],
@@ -49,7 +49,12 @@ const PROTOTYPE: FlowsRaw = {
       screen: "9:3",
       id: "9:5",
       name: "Docs",
-      reactions: [{ trigger: { type: "ON_CLICK" }, actions: [{ type: "URL", url: "https://pixelwright.dev/docs" }] }],
+      reactions: [
+        {
+          trigger: { type: "ON_CLICK" },
+          actions: [{ type: "URL", url: "https://pixelwright.dev/docs", openInNewTab: true }],
+        },
+      ],
     },
   ],
   more: false,
@@ -89,7 +94,7 @@ describe("FlowLinks", () => {
           action: "URL",
           to: null,
           url: "https://pixelwright.dev/docs",
-          summary: "open https://pixelwright.dev/docs",
+          summary: "open https://pixelwright.dev/docs in a new tab",
         },
       ],
       more: false,

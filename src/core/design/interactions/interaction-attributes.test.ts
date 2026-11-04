@@ -27,6 +27,16 @@ describe("InteractionAttributes", () => {
     ).toEqual([["$on-click", "go to Checkout – Desktop; dissolve 300ms ease-out"]]);
   });
 
+  it("says when a URL opens in a new tab", () => {
+    const open = (openInNewTab: boolean) => ({
+      trigger: { type: "ON_CLICK" },
+      actions: [{ type: "URL", url: "https://orbit.test", openInNewTab }],
+    });
+
+    expect(interactions.sentence(open(true))).toBe("open https://orbit.test in a new tab");
+    expect(interactions.sentence(open(false))).toBe("open https://orbit.test");
+  });
+
   it("joins a trigger's interactions, words waits, directions, springs and triggers it has no name for", () => {
     const change = (destinationName: string, easing: { type: string }) => ({
       type: "NODE",

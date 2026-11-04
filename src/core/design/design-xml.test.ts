@@ -92,7 +92,7 @@ function model(root: ReadLayer, header: Partial<ReadModel> = {}): ReadModel {
 }
 
 describe("DesignXml", () => {
-  // C-1.3: id, name, component, variant, props, notes and status, href, mask, then the read-only $ attributes.
+  // C-1.3: id, name, component, variant, props, notes, status and lock, href and target, mask, then the $ attributes.
   it("writes a layer's metadata, then its read-only attributes, in their order", () => {
     const root = layer({
       id: "1:1",
@@ -113,7 +113,14 @@ describe("DesignXml", () => {
       overrides: ["strokes"],
       href: "https://orbit.test/cart",
       modes: [{ collection: "Brand", mode: "Ocean Blue" }],
-      reactions: [{ trigger: { type: "ON_CLICK" }, actions: [{ type: "BACK" }] }],
+      reactions: [
+        { trigger: { type: "ON_CLICK" }, actions: [{ type: "BACK" }] },
+        {
+          trigger: { type: "ON_PRESS" },
+          actions: [{ type: "URL", url: "https://orbit.test/cart", openInNewTab: true }],
+        },
+      ],
+      locked: true,
       componentPropertyReferences: { visible: "Shown#5:6" },
       gridStyleId: "S:grid",
       childCount: 3,
@@ -125,7 +132,8 @@ describe("DesignXml", () => {
       [
         '<Instance id="1:1" name="Buy button" component="Button" variant="State=Hover" props="Label=Buy\\, now, Icon=true"' +
           ' $exposed="true" note="Behaviour: Opens \\| the cart" $override="border" $dev="ready for dev"' +
-          ' href="https://orbit.test/cart" data-brand="ocean-blue" $visibleProp="Shown" $grid-style="Grid/12"' +
+          ' $locked="true" href="https://orbit.test/cart" target="_blank" data-brand="ocean-blue" $visibleProp="Shown"' +
+          ' $grid-style="Grid/12"' +
           ' $on-click="back" $children="3">',
         '  <Rectangle id="1:2" name="Fill" mask="alpha"/>',
         "</Instance>",

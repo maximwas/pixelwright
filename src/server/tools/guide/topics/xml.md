@@ -22,8 +22,8 @@ paste it.
 `variant` ("Size=Large, State=Default") on instances, `props` (an instance's text and boolean properties,
 "Label=Sign up, Icon=true"; a comma, = or backslash inside a name or value comes escaped with a backslash),
 `$exposed`, `description` (components), `note` (Dev Mode annotations, "Category: text", several joined with
-" | "), `$pins`, `$override`, `$dev` (see Read-only attributes), `href` (a prototype link, or a text's hyperlink),
-`data-<collection>` (a variable mode set on the layer, `data-color-modes="dark"`; the read's root also has the
+" | "), `$pins`, `$override`, `$dev`, `$locked` (see Read-only attributes), `href` (a prototype link, or a text's
+hyperlink), `target` (`_blank` when the prototype link opens in a new tab), `data-<collection>` (a variable mode set on the layer, `data-color-modes="dark"`; the read's root also has the
 modes it takes from above), `textStyle`, `mask` (alpha, vector or luminance: the layer masks the layers above it in
 its parent), `src` (assets), `d` and `start` (a text on a path). The CSS attributes come next, then `$prop`,
 `$visibleProp`, `$swapProp`, `$css`, `$grid-style` and `$on-…`, and last `$children`, `$truncated` and `$repeat`.
@@ -71,6 +71,11 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
   no CSS and is in `$css` as `stroke-align: inside`.
 - `text-decoration` is on a `Text` only when every run has it: CSS draws a parent's underline through every child, so
   otherwise each underlined or struck-through `Span` carries its own.
+- A drop shadow Figma shows behind a see-through layer is `filter="drop-shadow(0 4px 6px #000)"`, before the
+  layer's `blur()`: CSS cuts a `box-shadow` out under the box, while `drop-shadow()` draws under the layer's see-through
+  pixels, following their alpha (children too). Its blur is a standard deviation, half a `box-shadow`'s blur radius, so
+  it is half Figma's radius. One with a spread, which `drop-shadow()` has not, stays a `box-shadow` with
+  `shadow-behind` in `$css`.
 - `mask="alpha"` (or vector, luminance) makes the layer the mask of the layers above it in its parent.
 
 ## Layout as the XML shows it
@@ -101,8 +106,11 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
   `property: value` pairs only, explained in hints: `blur: progressive from 0px at 50% 0% to 8.6px at 50% 100%` (a
   blur that changes across the layer; `filter` holds its end radius), `stroke-align: center` (half of the stroke
   paints outside the box, which a border-box border does not; `inspect` gives the painted box), `list-spacing: 8px`
-  (the space between a list's items, apart from paragraph spacing) and `stroke-linecap: round` (a line's round or
-  square ends, which a CSS border does not draw).
+  (the space between a list's items, apart from paragraph spacing), `stroke-linecap: round` (a line's round or
+  square ends, which a CSS border does not draw), `corner-smoothing: 60%` (Figma's smoothing runs the corner's curve on
+  past the radius into the edges; CSS's `corner-shape` keeps it inside the radius and has no match, so `border-radius`
+  is the nearest) and `shadow-behind: 0 4px 12px 2px #000` (a box-shadow Figma also shows through the layer's
+  see-through fill, which CSS cuts out under the box: draw it on an element behind).
 - `$children="N"`: the layer has N children and not all are listed (`depth`, or maxChars).
 - `$truncated="true"`: the branch was emptied, or the text shortened, to fit maxChars; its id is in `truncated`.
 - `$repeat="N"`: with `repeats: true`, the first of N alike neighbours (list items, cards, rows) stands for all of
@@ -115,6 +123,7 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
 - `$override="text, background"`: what this layer of an instance changes that its component's properties do not say
   (a feature text rewritten, an icon recoloured). Code built from the component cannot show it: give the component a
   property or a variant for it, or build that instance as a one-off. A hint lists them all.
+- `$locked="true"`: the layer is locked on Figma's canvas. Nothing to build; it is said so an agent leaves it be.
 - `$dev="ready for dev"` on the read's root: the designer marked it (or a frame or section around it) ready for
   development (or `completed`).
 - `$grid-style="Desktop 12"`: the grid style the frame's layout grid comes from.
@@ -124,7 +133,8 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
   `$on-mouse-up`, `$on-key`, `$after-timeout`, `$on-media-hit`, `$on-media-end` (any other trigger as
   `$on-<trigger>`): the layer's prototype interactions, e.g. `$on-hover="change to Type=Hover; smart animate 300ms
   ease-out"` (a variant to switch to on hover, and how: build it as the hover state); the easing is valid CSS, and a
-  spring, which has no CSS, is named by its Figma type (`200ms gentle`). A link stays `href`.
+  spring, which has no CSS, is named by its Figma type (`200ms gentle`). A link stays `href`, with `target="_blank"`
+  when it opens in a new tab.
 
 ## Text
 

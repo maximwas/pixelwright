@@ -22,16 +22,32 @@ export const EFFECTS_NUMBER = {
    * 0.43 R (measured on layer and background blurs of radius 4 to 40 against Chrome); Dev Mode's R / 2 is softer.
    */
   blurPerRadius: 0.43,
+  /**
+   * box-shadow's blur radius is twice the Gaussian's standard deviation (CSS Backgrounds 3), and drop-shadow() takes the
+   * deviation itself (Filter Effects 1): a shadow drawn as drop-shadow() halves Figma's radius to keep its look.
+   */
+  radiusPerDeviation: 2,
+  /** A fill's full opacity and alpha: such a solid fill hides what is under the box. */
+  opaque: 1,
   percent: 100,
 } as const;
 
 /** Where a progressive blur starts and ends when Figma leaves its offsets out: top centre to bottom centre. */
 export const PROGRESSIVE_ENDS = { start: { x: 0.5, y: 0 }, end: { x: 0.5, y: 1 } } as const;
 
-export const EFFECTS_VALUE = { inset: "inset", space: " ", joint: ", ", zero: "0", effect: "effect" } as const;
+export const EFFECTS_VALUE = {
+  inset: "inset",
+  space: " ",
+  joint: ", ",
+  zero: "0",
+  effect: "effect",
+  /** A drop shadow Figma shows behind the layer that stays a box-shadow, which CSS cuts out under the box. */
+  behind: "shadow-behind",
+} as const;
 
 export const EFFECTS_TEXT = {
   blur: (length: string) => `blur(${length})`,
+  dropShadow: (shadow: string) => `drop-shadow(${shadow})`,
   px: (value: number) => `${value}px`,
   at: (x: number, y: number) => `${x}% ${y}%`,
   progressive: (
@@ -50,4 +66,4 @@ export const EFFECTS_ATTRIBUTES = [
   CSS_PROPERTY.filter,
   CSS_PROPERTY.backdropFilter,
 ];
-export const EFFECTS_SOURCES = ["effects", "effectStyleId"];
+export const EFFECTS_SOURCES = ["effects", "effectStyleId", "fills"];

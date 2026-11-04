@@ -92,7 +92,10 @@ export class AppearanceGroup implements PropertyGroup {
     }
   }
 
-  /** C-071: an ellipse is round; else one radius, or four when the corners differ, top left first. */
+  /**
+   * C-071: an ellipse is round; else one radius, or four when the corners differ, top left first; Figma's corner
+   * smoothing a note beside it (APPEARANCE_NOTE.cornerSmoothing).
+   */
   #radius({ layer, css, model }: CssScope): void {
     if (layer.type === FIGMA_APPEARANCE.ellipse) {
       css.set(CSS_PROPERTY.borderRadius, APPEARANCE_VALUE.round);
@@ -109,6 +112,15 @@ export class AppearanceGroup implements PropertyGroup {
       if (radius !== CSS_VALUE.zero) {
         css.set(CSS_PROPERTY.borderRadius, radius);
       }
+    }
+
+    const smoothing = layer.cornerSmoothing ?? 0;
+
+    if (smoothing > 0 && css.get(CSS_PROPERTY.borderRadius) !== undefined) {
+      css.note(
+        APPEARANCE_NOTE.cornerSmoothing,
+        APPEARANCE_TEXT.percent(Math.round(smoothing * APPEARANCE_NUMBER.percent)),
+      );
     }
   }
 
