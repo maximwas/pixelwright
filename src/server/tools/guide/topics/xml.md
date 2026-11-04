@@ -115,8 +115,8 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
 - `$on-click`, `$on-hover`, `$on-press`, `$on-drag`, `$on-mouse-enter`, `$on-mouse-leave`, `$on-mouse-down`,
   `$on-mouse-up`, `$on-key`, `$after-timeout`, `$on-media-hit`, `$on-media-end` (any other trigger as
   `$on-<trigger>`): the layer's prototype interactions, e.g. `$on-hover="change to Type=Hover; smart animate 300ms
-  ease-out"` (a variant to switch to on hover, and how: build it as the hover state); the easing is valid CSS, a
-  spring drawn as `linear()`. A link stays `href`.
+  ease-out"` (a variant to switch to on hover, and how: build it as the hover state); the easing is valid CSS, and a
+  spring, which has no CSS, is named by its Figma type (`200ms gentle`). A link stays `href`.
 
 ## Text
 

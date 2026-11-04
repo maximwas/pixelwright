@@ -37,7 +37,7 @@ export const DESIGN_READ_TEXT = {
   notWritten: (count: number) =>
     `${count} assets are planned but not written, so their src names are plans: pass assetsDir to write them with their real names, or take each path assets_export gives.`,
   hidden: (id: string) =>
-    `${id} is hidden in Figma, and a hidden layer is read as a name and a box only: show it, or read a visible one.`,
+    `${id} is hidden in Figma, and a hidden layer is read as its id and name only, with no box and no children: show it, or read a visible one.`,
   /** A plugin of an earlier release does not know the nearby op: the server updates on its own, the plugin does not. */
   oldPlugin:
     "The Pixelwright plugin in this file is older than the server and cannot read the notes around a screen: run npx -y pixelwright@latest to update it, or read without nearby.",
