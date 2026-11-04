@@ -49,6 +49,7 @@ export const CSS_PROPERTY = {
   borderLeft: "border-left",
   outline: "outline",
   background: "background",
+  backgroundBlendMode: "background-blend-mode",
   boxShadow: "box-shadow",
   textShadow: "text-shadow",
   filter: "filter",
@@ -62,6 +63,8 @@ export const CSS_PROPERTY = {
   textAlign: "text-align",
   textWrap: "text-wrap",
   color: "color",
+  webkitTextStroke: "-webkit-text-stroke",
+  paintOrder: "paint-order",
 } as const;
 
 /** CSS_PROPERTY's values in its order: the one order a layer's CSS is written in. */

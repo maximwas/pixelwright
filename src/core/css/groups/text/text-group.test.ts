@@ -33,6 +33,7 @@ const group = new TextGroup(
 );
 
 const BODY = "S:body";
+const LINK = "S:link";
 
 /** A run of Inter Regular 16/24 with the fields the case sets. */
 function segment(fields: Partial<TextSegment> = {}): TextSegment {
@@ -97,6 +98,17 @@ const model: ReadModel = {
       textCase: "ORIGINAL",
       textDecoration: "NONE",
     },
+    [LINK]: {
+      name: "Link",
+      type: "TEXT",
+      remote: false,
+      fontName: { family: "Inter", style: "Regular" },
+      fontSize: 16,
+      lineHeight: { unit: "PIXELS", value: 24 },
+      letterSpacing: { unit: "PERCENT", value: 0 },
+      textCase: "ORIGINAL",
+      textDecoration: "UNDERLINE",
+    },
   },
   variables: {},
 };
@@ -159,6 +171,31 @@ describe("TextGroup", () => {
       ["list-style", "decimal"],
       ["paragraph-spacing", "8px"],
     ]);
+  });
+
+  // CSS cannot take an ancestor's decoration back off a child: the text has one only when every run has it.
+  it("gives the text no decoration when its longest run is underlined and the others are not", () => {
+    const css = read(
+      textLayer([
+        segment({ characters: "Bold ", end: 5, fontWeight: 700, fontName: { family: "Inter", style: "Bold" } }),
+        segment({ characters: "underline", start: 5, end: 14, textDecoration: "UNDERLINE" }),
+        segment({ characters: " strike", start: 14, end: 21, textDecoration: "STRIKETHROUGH" }),
+      ]),
+    );
+
+    expect(css.properties.map(([property]) => property)).not.toContain("text-decoration");
+  });
+
+  it("cancels its text style's underline when one of its runs has none", () => {
+    const css = read(
+      textLayer([
+        segment({ characters: "Read the ", end: 9, textStyleId: LINK }),
+        segment({ characters: "docs", start: 9, end: 13, textStyleId: LINK, textDecoration: "UNDERLINE" }),
+      ]),
+    );
+
+    expect(css.textStyle).toBe("Link");
+    expect(css.properties).toEqual([["text-decoration", "none"]]);
   });
 
   // C-110: a text whose runs differ in colour takes the colour of the run covering the most characters.

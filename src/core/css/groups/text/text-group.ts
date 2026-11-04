@@ -39,17 +39,17 @@ export class TextGroup implements PropertyGroup {
   read({ layer, model, css }: CssScope): void {
     const text = layer.text;
     const align = text === undefined ? undefined : ALIGN_CSS[text.textAlignHorizontal];
-    const base = text === undefined ? undefined : this.#runs.base(text.segments);
+    const main = text === undefined ? undefined : this.#runs.main(text.segments, model);
 
     if (align !== undefined) {
       css.set(CSS_PROPERTY.textAlign, align);
     }
 
-    if (text === undefined || base === undefined) {
+    if (text === undefined || main === undefined) {
       return;
     }
 
-    const run = this.#runs.read(base, model);
+    const run = main.css;
     // The fills group writes a text's one colour; a mixed one is its main run's.
     const own = ([property]: readonly [string, string]) =>
       property !== CSS_PROPERTY.color || layer.fills === READ_VALUE.mixed;
@@ -66,7 +66,7 @@ export class TextGroup implements PropertyGroup {
       css.style(run.textStyle);
     }
 
-    this.#block(layer, text, base, css);
+    this.#block(layer, text, main.base, css);
   }
 
   /** What the box does as a whole: wrap, a fixed height's vertical alignment, lists and paragraphs. */

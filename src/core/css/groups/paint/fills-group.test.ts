@@ -115,6 +115,25 @@ describe("FillsGroup", () => {
     expect(cssOf({ type: "TEXT", fills: [gradient] }).notes).toEqual([["color", "a gradient or image fill"]]);
   });
 
+  // A fill's blend mode blends it with the fills under it: one background-blend-mode per background, top first.
+  it("writes the fills' blend modes as background-blend-mode, a mode CSS lacks and a text's as notes", () => {
+    const over = (blendMode: string) => [
+      { type: "SOLID", color: BLUE },
+      { type: "SOLID", color: RED, blendMode },
+    ];
+    const multiply = cssOf({ fills: over("MULTIPLY") });
+    const burn = cssOf({ fills: over("LINEAR_BURN") });
+    const text = cssOf({ type: "TEXT", fills: [{ type: "SOLID", color: RED, blendMode: "MULTIPLY" }] });
+
+    expect(multiply.properties).toEqual([
+      ["background", "linear-gradient(#F00, #F00), #00F"],
+      ["background-blend-mode", "multiply, normal"],
+    ]);
+    expect(burn.properties.map(([property]) => property)).toEqual(["background"]);
+    expect(burn.notes).toEqual([["background-blend-mode", "linear-burn, normal"]]);
+    expect(text.notes).toEqual([["fill-blend-mode", "multiply"]]);
+  });
+
   // D-20: a paint the table cannot write gets the fixed note, never Figma's own CSS (getCSSAsync hangs and is wrong).
   it("notes a paint it cannot write with the fixed text, not Figma's CSS", () => {
     const read = cssOf({ fills: [{ type: "GRADIENT_DIAMOND" }], css: { background: "figma's own" } });

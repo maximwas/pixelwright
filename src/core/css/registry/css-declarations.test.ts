@@ -52,6 +52,7 @@ describe("CssDeclarations", () => {
       "border-left",
       "outline",
       "background",
+      "background-blend-mode",
       "box-shadow",
       "text-shadow",
       "filter",
@@ -65,6 +66,8 @@ describe("CssDeclarations", () => {
       "text-align",
       "text-wrap",
       "color",
+      "-webkit-text-stroke",
+      "paint-order",
     ]);
   });
 

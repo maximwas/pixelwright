@@ -76,10 +76,30 @@ function textLayer(segments: TextSegment[]): ReadLayer {
 
 const model: ReadModel = { model: 1, profile: "design", root: textLayer([]), styles: {}, variables: {} };
 
+const LINK = "S:link";
+
+/** A text style that underlines, at the runs' own font. */
+const linked: ReadModel = {
+  ...model,
+  styles: {
+    [LINK]: {
+      name: "Link",
+      type: "TEXT",
+      remote: false,
+      fontName: { family: "Inter", style: "Regular" },
+      fontSize: 16,
+      lineHeight: { unit: "AUTO" },
+      letterSpacing: { unit: "PIXELS", value: 0 },
+      textCase: "ORIGINAL",
+      textDecoration: "UNDERLINE",
+    },
+  },
+};
+
 describe("TextContent", () => {
   // C-120: the longest run is the text's own; a Span says only what differs, and resets what it lacks.
   it("writes a differing run as a Span with only its differences and the resets", () => {
-    const spaced = { letterSpacing: { unit: "PERCENT", value: 5 }, textDecoration: "UNDERLINE" };
+    const spaced = { letterSpacing: { unit: "PERCENT", value: 5 } };
     const layer = textLayer([
       segment("Fast and ", 0, spaced),
       segment("free", 9, { fontWeight: 700, fontName: { family: "Inter", style: "Bold" } }),
@@ -92,10 +112,38 @@ describe("TextContent", () => {
         attributes: [
           ["font", "700 16px/normal 'Inter'"],
           ["letter-spacing", "0"],
-          ["text-decoration", "none"],
         ],
         value: "free",
       },
+    ]);
+  });
+
+  // CSS draws an ancestor's decoration through every child: a decoration not every run has goes on its runs' Spans.
+  it("underlines only the underlined run when the longest run is the underlined one", () => {
+    const layer = textLayer([
+      segment("Bold ", 0, { fontWeight: 700, fontName: { family: "Inter", style: "Bold" } }),
+      segment("italic ", 5, { fontName: { family: "Inter", style: "Italic" } }),
+      segment("underline", 12, { textDecoration: "UNDERLINE" }),
+      segment(" strike", 21, { textDecoration: "STRIKETHROUGH" }),
+      segment(" colour", 28, { fills: [{ type: "SOLID", color: { r: 1, g: 0, b: 0 } }] }),
+    ]);
+    const decorations = content
+      .content(layer, model)
+      .map((piece) => (piece.kind === "span" ? new Map(piece.attributes).get("text-decoration") : undefined));
+
+    expect(decorations).toEqual([undefined, undefined, "underline", "line-through", undefined]);
+  });
+
+  // The text cancels its style's underline (text-decoration: none), so the underlined run writes its own.
+  it("writes the underline on the run that has it when the text style underlines and another run does not", () => {
+    const layer = textLayer([
+      segment("Read the ", 0, { textStyleId: LINK }),
+      segment("docs", 9, { textStyleId: LINK, textDecoration: "UNDERLINE" }),
+    ]);
+
+    expect(content.content(layer, linked)).toEqual([
+      { kind: "text", value: "Read the " },
+      { kind: "span", attributes: [["text-decoration", "underline"]], value: "docs" },
     ]);
   });
 

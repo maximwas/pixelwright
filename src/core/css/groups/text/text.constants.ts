@@ -42,6 +42,13 @@ export const DECORATION_LINES: Readonly<Record<string, string>> = {
   STRIKETHROUGH: "line-through",
 };
 
+/** A decoration's CSS: the text leaves it to its runs' Spans when not every run has the same one. */
+export const DECORATION_PROPERTIES = [
+  CSS_PROPERTY.textDecoration,
+  CSS_PROPERTY.textUnderlineOffset,
+  CSS_PROPERTY.textDecorationThickness,
+] as const;
+
 export const DECORATION_STYLES: Readonly<Record<string, string>> = { WAVY: "wavy", DOTTED: "dotted", DASHED: "dashed" };
 
 export const SMALL_CAPS: Readonly<Record<string, string>> = {
@@ -72,7 +79,13 @@ export const STYLED_PART = {
   textDecoration: "textDecoration",
 } as const;
 
-export const TEXT_VALUE = { space: " ", joint: ", ", trimBoth: "trim-both cap alphabetic", first: "first" } as const;
+export const TEXT_VALUE = {
+  space: " ",
+  joint: ", ",
+  trimBoth: "trim-both cap alphabetic",
+  first: "first",
+  none: "none",
+} as const;
 
 export const TEXT_NUMBER = {
   /** A text on a path's d keeps two decimals, as 0.7.0 wrote it: a path's fractions past that are noise. */
