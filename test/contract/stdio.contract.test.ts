@@ -79,6 +79,8 @@ describe("the built server over stdio", () => {
       "variants_read",
       "fonts_check",
       "execute",
+      "components_read",
+      "library_search",
       "assets_export",
     ]);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });

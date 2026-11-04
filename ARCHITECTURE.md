@@ -148,13 +148,19 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     through the `WebpEncoder` port) and `AssetWriter` writes them: the same bytes once, `-2` for a name holding other
     bytes, never over another file, an original with the extension its bytes have.
   - `stores/`: `UpdateState` (latest.json) and `WrittenFiles` (written-files.json: the SHA-1 of every asset file
-    written, its layers, the newest 5000), both through the `JsonFile` port in the channel's home.
+    written, its layers, the newest 5000) and `LibraryStore` (`libraries/<slug of the file name>.json`, the catalogue
+    library_search saved for a library file, an unreadable one noted), all through the `JsonFile` port in the
+    channel's home.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn); `inspect/` and `measure/` read through the inspect op (an
   `around` layer is a second inspect of it in the same origin; a selection past 100 is cut and counted in `left`).
   `nodes-diff/` reads both layers with one read op and cuts each list to 200; `variants-read/` finds the set with the
   set_of op and reads it whole; `breakpoints-find/` scores the screens op's answer; `flow-read/` also holds
   `FlowLinks`, which turns the flows op's layers with interactions into links in design_read's words (T-088).
+  `components-read/` also holds `LinkPaths` (a Dev Mode link to a GitHub, GitLab or Bitbucket file, or a vscode://file
+  link, as the project file it points at, the longest existing end for a branch with slashes); `library-search/` saves
+  a file's own published components through the components op and searches every saved catalogue with Fuse.js, which
+  stays on the server.
 - `server/adapters/`: the port implementations on Node.
   - `bridge/`: `PluginBridge` (the role switch), `NoBridge`, the status hints, and the bridge's topics:
     `listener/` (the port, the upgrade guard, `bridge.json`, the ws socket), `plugin/` (one plugin socket's handshake,
@@ -186,7 +192,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `CurrentSelection`,
   which also selects and hears selection changes; `LayerRefs`, a layer as lists name it, its Dev Mode status too; `CanvasView`, the current
   page and the view, the one place either changes; `FigmaBase64`, bytes as base64 for the bridge; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
-  pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline; `layer-read/`:
+  pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline; `dev-resources/`:
+  `DevResources`, Dev Mode links from Figma's servers within 5 s, a refusal (403 without Dev Mode) in Figma's words; `layer-read/`:
   `LayerReader`, a layer as the read model, its header and the field readers in 0.7.0's order, `BoxFieldReader` the
   first, a hidden layer a stub; `PaintFieldReader` and `StrokeFieldReader` the paints and how strokes are drawn, `EffectFieldReader` the effects
   and their style; `TextFieldReader` a text's characters, runs (the newer run fields asked first, FX-012) and
@@ -216,6 +223,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   the page's other screens with their children's names (P-123); `flows/` the page's flow starts, screens and layers
   with interactions (`ReactionFieldReader`, 500 at most within the op's budget, P-121); screens are
   `PageLoader.screens`: frames, components and instances at the page's top or in its sections.
+  `components/` also holds `ComponentFinder` (local: the sets and lone components of every page or of `within`; used:
+  the mains of the instances, a batch at a time, counted), `ComponentEntries` (properties from the set or a lone
+  component only, FX-028), `ExposedInstances` and `ComponentLinks` (the file asked first, then each component's).
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;

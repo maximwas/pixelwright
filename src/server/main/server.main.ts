@@ -94,6 +94,7 @@ import { TargetStep } from "@/server/app/tool-runner/steps/target-step.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER, ToolRunner } from "@/server/app/tool-runner/tool-runner.ts";
 import { BridgeProviders } from "@/server/main/bridge-providers.ts";
 import { CheckProviders } from "@/server/main/check-providers.ts";
+import { ComponentProviders } from "@/server/main/component-providers.ts";
 import { ConfigReader, type ServerConfig } from "@/server/main/config/config-reader.ts";
 import { ContainerToolFactory } from "@/server/main/container-tool-factory.ts";
 import { McpEndpoint } from "@/server/main/mcp/mcp-endpoint.ts";
@@ -171,6 +172,7 @@ export class ServerMain {
     this.#bindReadNotes(container);
     new RenderProviders().register(container);
     new CheckProviders().register(container);
+    new ComponentProviders().register(container, config.home);
     new BridgeProviders().register(container, config);
     this.#bindServices(container);
 

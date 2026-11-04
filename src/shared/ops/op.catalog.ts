@@ -1,5 +1,6 @@
 import { changesOp } from "@/shared/ops/changes/changes.manifest.ts";
 import { chunkOp } from "@/shared/ops/chunk/chunk.manifest.ts";
+import { componentsOp } from "@/shared/ops/components/components.manifest.ts";
 import { coverOp } from "@/shared/ops/cover/cover.manifest.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
 import { exportOp } from "@/shared/ops/export/export.manifest.ts";
@@ -42,4 +43,5 @@ export const OP_CONTRACTS = new OpCatalog([
   setOfOp,
   screensOp,
   flowsOp,
+  componentsOp,
 ]);

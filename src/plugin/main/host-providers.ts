@@ -10,6 +10,7 @@ import { STYLE_NUMBERS_READER, StyleNumbers } from "@/core/tokens/names/style-nu
 import { CANVAS_VIEW, CanvasView } from "@/plugin/adapters/figma/canvas-view.ts";
 import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
+import { DEV_RESOURCES, DevResources } from "@/plugin/adapters/figma/dev-resources/dev-resources.ts";
 import { FIGMA_BASE64, FigmaBase64 } from "@/plugin/adapters/figma/figma-base64.ts";
 import { ComponentFieldReader } from "@/plugin/adapters/figma/layer-meta/component-field-reader.ts";
 import { FactFieldReader } from "@/plugin/adapters/figma/layer-meta/fact-field-reader.ts";
@@ -47,7 +48,7 @@ import { PAIRING_STORE, PairingStore } from "@/plugin/adapters/host/storage/pair
  * server's RPC peer and its events, the file's events, the selection, layer refs, the page and the view, lookups by
  * id, the pages' loading and the deadline walk with the clock (Date is the system clock: its now() is the port's),
  * the read's layer reader with its field readers in 0.7.0's order (m:f53dbe49; layer-meta's after the CSS fields) and
- * the rounding, execute's figma, and
+ * the rounding, Dev Mode links from Figma's servers, execute's figma, and
  * main's side of the window with the window's events.
  */
 export class HostProviders {
@@ -87,6 +88,7 @@ export class HostProviders {
       .bind({ provide: CLOCK, useValue: Date })
       .bind({ provide: PAGE_LOADER, useClass: PageLoader })
       .bind({ provide: LAYER_WALK, useClass: LayerWalk })
+      .bind({ provide: DEV_RESOURCES, useClass: DevResources })
       .bind({ provide: CODE_FIGMA, useClass: CodeFigma })
       .bind({ provide: WINDOW_HOST, useClass: WindowHost })
       .bind({ provide: WINDOW_EVENTS, useExisting: WINDOW_HOST });

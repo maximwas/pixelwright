@@ -32,7 +32,7 @@ const MapPageSchema = zod.object({
 });
 
 /** Pages Figma could not load (offline, say), each with its words: their layers are not read. */
-const PageNotReadSchema = zod.object({ name: zod.string(), error: zod.string() });
+export const PageNotReadSchema = zod.object({ name: zod.string(), error: zod.string() });
 
 export const FileMapOpOutputSchema = zod.object({
   pages: zod.array(MapPageSchema),

@@ -6,6 +6,11 @@ import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
+import { COMPONENT_ENTRIES, ComponentEntries } from "@/plugin/operations/components/component-entries.ts";
+import { COMPONENT_FINDER, ComponentFinder } from "@/plugin/operations/components/component-finder.ts";
+import { COMPONENT_LINKS, ComponentLinks } from "@/plugin/operations/components/component-links.ts";
+import { ComponentsOperation } from "@/plugin/operations/components/components.operation.ts";
+import { EXPOSED_INSTANCES, ExposedInstances } from "@/plugin/operations/components/exposed-instances.ts";
 import { CLIP_COVER, ClipCover } from "@/plugin/operations/cover/clip-cover.ts";
 import { CoverOperation } from "@/plugin/operations/cover/cover.operation.ts";
 import { CODE_RUNS, CodeRuns } from "@/plugin/operations/execute/code-runs.ts";
@@ -35,7 +40,7 @@ import type { OpName } from "@/shared/ops/op-meta.types.ts";
 /**
  * Every op's class by name (A§4b.3): a contract without one here fails to type, so no op is left unserved. execute's
  * pw scope lives as long as the window (T-154), its code's runs outlive their answers (T-156); find reads variants with
- * core's Name=Value lists (K-069).
+ * core's Name=Value lists (K-069); components finds, lists, exposes and links components (T-190, T-192).
  */
 export class OperationProviders {
   readonly #classes: Readonly<Record<OpName, OperationClass>> = {
@@ -59,6 +64,7 @@ export class OperationProviders {
     [OP_NAME.setOf]: SetOfOperation,
     [OP_NAME.screens]: ScreensOperation,
     [OP_NAME.flows]: FlowsOperation,
+    [OP_NAME.components]: ComponentsOperation,
   };
 
   register(container: Container): void {
@@ -70,6 +76,10 @@ export class OperationProviders {
       .bind({ provide: NOTE_CANDIDATES, useClass: NoteCandidates })
       .bind({ provide: NEARBY_NOTES, useClass: NearbyNotes })
       .bind({ provide: CLIP_COVER, useClass: ClipCover })
+      .bind({ provide: COMPONENT_ENTRIES, useClass: ComponentEntries })
+      .bind({ provide: COMPONENT_FINDER, useClass: ComponentFinder })
+      .bind({ provide: EXPOSED_INSTANCES, useClass: ExposedInstances })
+      .bind({ provide: COMPONENT_LINKS, useClass: ComponentLinks })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
   }
 }

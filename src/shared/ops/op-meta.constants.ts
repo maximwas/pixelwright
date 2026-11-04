@@ -27,4 +27,5 @@ export const OP_NAME = {
   setOf: "set_of",
   screens: "screens",
   flows: "flows",
+  components: "components",
 } as const;

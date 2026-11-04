@@ -105,6 +105,7 @@ export const ACTION_NAME: Partial<Record<OpName, string>> = {
   [OP_NAME.setOf]: "Found a component's set",
   [OP_NAME.screens]: "Compared the page's screens",
   [OP_NAME.flows]: "Mapped the prototype",
+  [OP_NAME.components]: "Read the components",
 };
 
 export const ACTIVITY_TEXT = {
