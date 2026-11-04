@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { decode } from "fast-png";
@@ -38,7 +38,10 @@ describe("read/fonts-images", () => {
     await client.blocks("screenshot", { file, node: install, save: shot });
   });
 
-  afterAll(() => client.close());
+  afterAll(async () => {
+    await client.close();
+    await rm(folder, { recursive: true, force: true });
+  });
 
   const compare = async (args: Record<string, unknown>): Promise<Compared> =>
     (await client.call("image_compare", { file, node: install, ...args })) as Compared;

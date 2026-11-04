@@ -6,7 +6,7 @@ import { READ } from "@/shared/ops/read/read.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 /** 0.7.0's input (T-085): the two layers, how deep to compare, the file. */
-export const NodesDiffInputSchema = zod.object({
+export const NodesDiffInputSchema = zod.strictObject({
   a: NodeIdSchema.check(zod.describe(NODES_DIFF_FIELD.a)),
   b: NodeIdSchema.check(zod.describe(NODES_DIFF_FIELD.b)),
   depth: zod

@@ -7,7 +7,7 @@ import { findOp } from "@/shared/ops/find/find.manifest.ts";
 
 const { name, type, text, component, variant, counts, limit } = findOp.input.shape;
 
-export const NodesFindInputSchema = zod.object({
+export const NodesFindInputSchema = zod.strictObject({
   name,
   type,
   text,

@@ -112,6 +112,36 @@ describe("DTCG values", () => {
     expect(notes.join("\n")).not.toMatch(/font\/sans/);
   });
 
+  it("writes a token whose alias took another type as its value, so no reference names a token of another type (K-015)", () => {
+    const { trees, notes } = dtcgTrees(
+      raw([
+        variable({ id: "V:700", name: "scale/700", resolvedType: "FLOAT", valuesByMode: { "M:o": 700 } }),
+        variable({
+          id: "V:wide",
+          name: "gap/wide",
+          resolvedType: "FLOAT",
+          scopes: ["GAP"],
+          valuesByMode: { "M:o": alias("V:700") },
+        }),
+        variable({
+          id: "V:bold",
+          name: "weight/bold",
+          resolvedType: "FLOAT",
+          scopes: ["FONT_WEIGHT"],
+          valuesByMode: { "M:o": alias("V:700") },
+        }),
+      ]),
+    );
+
+    // The first link types the primitive: the gap's length.
+    expect(trees.orbit).toEqual({
+      scale: { 700: { $type: "dimension", $value: { value: 700, unit: "px" } } },
+      gap: { wide: { $type: "dimension", $value: "{scale.700}" } },
+      weight: { bold: { $type: "fontWeight", $value: 700 } },
+    });
+    expect(notes.join("\n")).toMatch(/weight\/bold \(Light\) points at a dimension token: .*written resolved/);
+  });
+
   it("writes a composed colour as one colour with its alpha, a variable in it resolved, else its colour's reference (K-016)", () => {
     const { trees, notes } = dtcgTrees(
       raw([

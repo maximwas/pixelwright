@@ -30,7 +30,7 @@ const PairSchema = zod.object({
 });
 
 /** 0.7.0's input (T-090): the pairs, the tolerance for sizes and places, the file. */
-export const StylesCompareInputSchema = zod.object({
+export const StylesCompareInputSchema = zod.strictObject({
   pairs: zod
     .array(PairSchema)
     .check(zod.minLength(1), zod.maxLength(STYLES_COMPARE.pairsMax), zod.describe(STYLES_COMPARE_FIELD.pairs)),

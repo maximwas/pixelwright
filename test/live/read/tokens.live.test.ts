@@ -77,7 +77,7 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
   });
 
   it("writes format dtcg: a tree per collection mode and one of styles, colours as colorSpace objects, which Terrazzo parses (K-013, K-016)", async () => {
-    const { format, dtcg } = await client.call("tokens_read", { file, format: "dtcg", used: false });
+    const { format, dtcg, notes } = await client.call("tokens_read", { file, format: "dtcg", used: false });
     const { tokens } = await client.call("tokens_read", { file, format: "json", used: false });
     const modes = zod
       .parse(TokensSchema, tokens)
@@ -92,6 +92,8 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
     expect(format).toBe("dtcg");
     expect(keys).toHaveLength(modes + 1);
     expect(keys.at(-1)).toBe("styles");
+    // Orbit's Label is uppercase: DTCG's typography has no case, so a note names it.
+    expect(JSON.stringify(notes)).toContain("Label (text-transform)");
     expect(JSON.stringify(trees)).toMatch(
       /"\$type":"color","\$value":\{"colorSpace":"(srgb|display-p3)","components":\[/,
     );
@@ -118,6 +120,12 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
 
     expect(kind).toBe("variable");
     expect(layers).toContainEqual(expect.objectContaining({ id: install }));
+  });
+
+  it("finds the text style a part token tokens_read writes names: --Label-text-transform is Label's (D-20)", async () => {
+    const { kind, name } = await client.call("tokens_usage", { file, token: "--Label-text-transform", within: "file" });
+
+    expect({ kind, name }).toEqual({ kind: "text style", name: "Label" });
   });
 
   it("stops the scan when its budget is spent, with a note (D-48)", async () => {

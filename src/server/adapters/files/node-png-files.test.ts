@@ -1,8 +1,9 @@
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { encode } from "fast-png";
 import { expect, it } from "vitest";
+import { PNG_READ } from "@/server/adapters/files/files.constants.ts";
 import { NodePngFiles } from "@/server/adapters/files/node-png-files.ts";
 import { ImageSizeSniffer } from "@/server/adapters/images/image-size-sniffer.ts";
 
@@ -42,4 +43,18 @@ it("reads a PNG to compare with, and refuses a missing file and one that is not 
   expect(await files.read(build)).toEqual(PNG);
   await expect(files.read(join(folder, "none.png"))).rejects.toThrow(/There is no file at .*none\.png\./);
   await expect(files.read(photo)).rejects.toThrow(/photo\.png is not a PNG: save the screenshot to compare as PNG\./);
+});
+
+// T-089: a reference past 50 MB is refused by its size before a byte is read; a sparse file stands in for a real one.
+it("refuses a PNG to compare with past 50 MB", async () => {
+  const folder = await mkdtemp(join(tmpdir(), "pixelwright-png-"));
+  const huge = join(folder, "huge.png");
+
+  try {
+    await writeFile(huge, PNG);
+    await truncate(huge, PNG_READ.maxBytes + 1);
+    await expect(new NodePngFiles(new ImageSizeSniffer()).read(huge)).rejects.toThrow(/huge\.png is over 50 MB\./);
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
 });

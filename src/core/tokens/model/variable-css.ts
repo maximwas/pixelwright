@@ -1,6 +1,5 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
-import type { Channels } from "@/core/kernel/color/color.ts";
 import { EASING_CSS, type FigmaEasing } from "@/core/kernel/easing/easing-css.ts";
 import { TOKEN_TEXT } from "@/core/kernel/names/names.constants.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
@@ -121,19 +120,25 @@ export class VariableCss {
     variable: RawVariable,
     context: VariableContext,
   ): string | null {
-    if (this.#isChannels(value)) {
-      return this.#solid.color(value, undefined, MODEL_NUMBER.fraction, context.tables);
+    const channels = this.#units.channels(value);
+
+    if (channels !== null) {
+      return this.#solid.color(channels, undefined, MODEL_NUMBER.fraction, context.tables);
     }
 
-    if (typeof value !== "object" || value === null || !("color" in value) || !("opacity" in value)) {
+    const composed = this.#units.composed(value);
+
+    if (composed === null) {
       return null;
     }
 
-    const color = this.#isChannels(value.color)
-      ? this.#solid.color(value.color, undefined, MODEL_NUMBER.fraction, context.tables)
-      : this.css(value.color, variable, context);
+    const own = this.#units.channels(composed.color);
+    const color =
+      own === null
+        ? this.css(composed.color, variable, context)
+        : this.#solid.color(own, undefined, MODEL_NUMBER.fraction, context.tables);
 
-    return MODEL_TEXT.mix(color, this.#opacity(value.opacity, variable, context));
+    return MODEL_TEXT.mix(color, this.#opacity(composed.opacity, variable, context));
   }
 
   /** A composed colour's opacity: Figma keeps it in percents (up to 1 it is a fraction); a variable's by its unit. */
@@ -143,9 +148,7 @@ export class VariableCss {
     context: VariableContext,
   ): string {
     if (typeof opacity === "number") {
-      return MODEL_TEXT.percent(
-        this.#decimal(opacity > MODEL_NUMBER.fraction ? opacity : opacity * MODEL_NUMBER.percent),
-      );
+      return MODEL_TEXT.percent(this.#decimal(this.#units.fraction(opacity) * MODEL_NUMBER.percent));
     }
 
     const target = this.#units.alias(opacity);
@@ -162,20 +165,12 @@ export class VariableCss {
       return MODEL_TEXT.px(this.#decimal(value));
     }
 
-    // An opacity is a percentage in Figma's opacity fields; CSS wants a fraction. A value up to 1 already is one.
-    return MODEL_TEXT.number(
-      this.#decimal(
-        unit === NUMBER_UNIT.opacity && value > MODEL_NUMBER.fraction ? value / MODEL_NUMBER.percent : value,
-      ),
-    );
+    // An opacity is a percentage in Figma's opacity fields; CSS wants a fraction.
+    return MODEL_TEXT.number(this.#decimal(unit === NUMBER_UNIT.opacity ? this.#units.fraction(value) : value));
   }
 
   #decimal(value: number): number {
     return this.#format.round(value, PRECISION.decimal);
-  }
-
-  #isChannels(value: unknown): value is Channels {
-    return typeof value === "object" && value !== null && "r" in value && "g" in value && "b" in value;
   }
 
   #isEasing(value: unknown): value is FigmaEasing {

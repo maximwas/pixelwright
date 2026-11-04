@@ -59,4 +59,9 @@ describe("UsedTokens", () => {
     expect(used.where(card, "V:space", true)).toBe("paddingLeft");
     expect(used.where(card, "S:accent", false)).toBeNull();
   });
+
+  it("says when the op's deadline cut the scan, so tokens_read can say the used tokens are only some (P-075)", () => {
+    expect(used.under(card, -1)).toEqual({ styles: [], variables: [], cut: true });
+    expect(used.under(card, walk.deadline()).cut).toBe(false);
+  });
 });

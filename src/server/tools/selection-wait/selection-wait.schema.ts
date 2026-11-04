@@ -6,7 +6,7 @@ import {
 } from "@/server/tools/selection-wait/selection-wait.constants.ts";
 import { SelectionOutputSchema } from "@/shared/ops/selection/selection.schema.ts";
 
-export const SelectionWaitInputSchema = zod.object({
+export const SelectionWaitInputSchema = zod.strictObject({
   timeout: zod
     ._default(
       zod.number().check(zod.minimum(SELECTION_WAIT_SECONDS.min), zod.maximum(SELECTION_WAIT_SECONDS.max)),

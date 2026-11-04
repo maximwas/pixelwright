@@ -12,6 +12,11 @@ export interface UsedIds {
   readonly variables: string[];
 }
 
+/** What a scan under a layer or page found; cut when the op's deadline stopped it short of every layer. */
+interface Scanned extends UsedIds {
+  readonly cut: boolean;
+}
+
 /**
  * What layers use (P-096, P-098): the paint, text and effect styles they name and the variables their fields, paints
  * and effects are bound to, and where a text's own fields say mixed, its runs' (O-024); under a layer or page as far
@@ -27,8 +32,8 @@ export class UsedTokens {
     this.#lookup = lookup;
   }
 
-  under(root: BaseNode, deadline: number): UsedIds {
-    const { kept } = this.#walk.until(this.#walk.layers(this.#layersOf(root)), deadline, {
+  under(root: BaseNode, deadline: number): Scanned {
+    const { kept, cut } = this.#walk.until(this.#walk.layers(this.#layersOf(root)), deadline, {
       accepts: (layer) => this.#styleIds(layer).length > 0 || this.#bound(layer) !== undefined || this.#mixed(layer),
       enough: Number.POSITIVE_INFINITY,
     });
@@ -37,6 +42,7 @@ export class UsedTokens {
     return {
       styles: [...new Set(used.flatMap(({ styles }) => styles))],
       variables: [...new Set(used.flatMap(({ variables }) => variables))],
+      cut,
     };
   }
 

@@ -1,3 +1,5 @@
+import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
+import { MODEL_VALUE } from "@/core/tokens/model/model.constants.ts";
 import { LIMITS } from "@/shared/limits/limits.constants.ts";
 
 /** tokens_usage as clients list it (tools.json pins every word): 0.7.0's words, with its budget (D-48). */
@@ -28,11 +30,21 @@ export const TOKEN_KIND = {
 
 export type TokenKind = (typeof TOKEN_KIND)[keyof typeof TOKEN_KIND];
 
-/** A style's kind by Figma's style type; a grid style has no token. */
-export const STYLE_KIND: Readonly<Record<string, TokenKind>> = {
-  PAINT: TOKEN_KIND.paint,
-  TEXT: TOKEN_KIND.text,
-  EFFECT: TOKEN_KIND.effect,
+/**
+ * A style's kind by Figma's style type, and the tokens tokens_read writes it as (K-006, D-20): its own token (a paint's,
+ * an effect's shadows) but a text style's, whose font shorthand is --<name>-font; then its parts, a text's letter
+ * spacing and case, an effect's blurs. A grid style has no token.
+ */
+export const STYLE_KIND: Readonly<
+  Record<string, { readonly kind: TokenKind; readonly own: boolean; readonly parts: readonly string[] }>
+> = {
+  PAINT: { kind: TOKEN_KIND.paint, own: true, parts: [] },
+  TEXT: {
+    kind: TOKEN_KIND.text,
+    own: false,
+    parts: [MODEL_VALUE.font, CSS_PROPERTY.letterSpacing, CSS_PROPERTY.textTransform],
+  },
+  EFFECT: { kind: TOKEN_KIND.effect, own: true, parts: [CSS_PROPERTY.filter, CSS_PROPERTY.backdropFilter] },
 };
 
 export const TOKENS_USAGE_TEXT = {

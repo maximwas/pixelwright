@@ -4,7 +4,7 @@ import { MEASURE, MEASURE_INPUT } from "@/server/tools/measure/measure.constants
 import { INSPECT } from "@/shared/ops/inspect/inspect.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
-export const MeasureInputSchema = zod.object({
+export const MeasureInputSchema = zod.strictObject({
   nodes: zod
     .exactOptional(zod.array(NodeIdSchema).check(zod.minLength(MEASURE.minLayers), zod.maxLength(INSPECT.maxLayers)))
     .check(zod.describe(MEASURE_INPUT.nodes)),

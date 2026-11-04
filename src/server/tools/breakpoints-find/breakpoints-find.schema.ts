@@ -5,7 +5,7 @@ import { BREAKPOINTS_FIND_FIELD } from "@/server/tools/breakpoints-find/breakpoi
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 /** 0.7.0's input (T-087): a screen or a layer on one, and the file. */
-export const BreakpointsFindInputSchema = zod.object({
+export const BreakpointsFindInputSchema = zod.strictObject({
   node: NodeIdSchema.check(zod.describe(BREAKPOINTS_FIND_FIELD.node)),
   file: FileInputSchema,
 });

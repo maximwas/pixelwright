@@ -63,6 +63,15 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
 
     expect(gap).not.toBe("");
     expect(Object.keys(own).length).toBeGreaterThan(5);
+    // The design's own numbers (design_read writes the card with padding 24px and gap 8px): a design value read wrong
+    // would otherwise be compared with itself and pass.
+    expect(own).toMatchObject({
+      "padding-top": "24px",
+      "padding-right": "24px",
+      "padding-bottom": "24px",
+      "padding-left": "24px",
+      "row-gap": "8px",
+    });
     expect(result).toMatchObject({
       same: true,
       missing: [],

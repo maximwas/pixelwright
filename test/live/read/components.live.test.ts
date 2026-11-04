@@ -1,4 +1,4 @@
-import { copyFile, mkdtemp } from "node:fs/promises";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
@@ -149,6 +149,7 @@ return component.id;`);
       expect(found.components?.find(({ name }) => name === "Plan Card")?.component).toMatch(/^key:\w+/);
     } finally {
       await libraries.close();
+      await rm(home, { recursive: true, force: true });
     }
   });
 });

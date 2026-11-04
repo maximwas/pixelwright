@@ -104,12 +104,21 @@ describe("the MCP contract", () => {
     expect(answer.content).toEqual([{ type: "text", text: JSON.stringify(answer.structuredContent) }]);
   });
 
+  it("closes every tool's input to arguments it does not name, so a wrong one is an error and not a default", async () => {
+    const { tools } = await contract.client.listTools();
+
+    expect(
+      tools.filter(({ inputSchema }) => inputSchema.additionalProperties !== false).map(({ name }) => name),
+    ).toEqual([]);
+  });
+
   // A removed argument is an error that names it: a client that still sends screenshot's `modes` must not believe the
   // render switched modes.
   it.each([
     ["status", { bogus: 1 }, "bogus"],
     ["screenshot", { node: "1:2", modes: { Theme: "Dark" } }, "modes"],
     ["image_compare", { node: "1:2", bogus: 1 }, "bogus"],
+    ["components_read", { local: true }, "local"],
   ])("refuses an unknown argument of %s by name", async (name, args, key) => {
     const answer = await contract.client.callTool({ name, arguments: args });
 

@@ -46,6 +46,8 @@ export const TOKENS_READ_TEXT = {
   noCollection: (missing: readonly string[], names: readonly string[]) =>
     `No collection is named ${missing.join(", ")}: the file has ${names.join(", ") || "none"}.`,
   noLibrary: "No library with variables is enabled in this file: libraries add nothing here.",
+  usedCut:
+    "The scan for the tokens the layers use ran out of time: the used styles and variables are the ones it reached. Read a smaller within to take them all.",
   tooLong: (
     size: number,
     maxChars: number,

@@ -262,6 +262,7 @@
     "White has the same DTCG path as another token: written as White-2.",
     "Glow (paint), Photo (paint), Shadow/Card (effect), Frost (effect): no DTCG type for these styles, left out.",
     "Body: Auto line height, written as 1.2 (CSS's normal); give the style a line height in Figma to match exactly.",
-    "Heading/H1, Body: fontWeight is guessed from the font style's name (Semi Bold 600, Bold 700), since a text style keeps no weight of its own; a variable font's real weight can differ."
+    "Heading/H1, Body: fontWeight is guessed from the font style's name (Semi Bold 600, Bold 700), since a text style keeps no weight of its own; a variable font's real weight can differ.",
+    "Heading/H1 (text-transform), Glow/Drawn (gradient angle): DTCG has no field for these, left out; format css writes them."
   ]
 }

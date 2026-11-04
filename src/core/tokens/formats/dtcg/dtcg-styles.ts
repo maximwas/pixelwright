@@ -1,10 +1,12 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { AUTO_LINE_HEIGHT, FONT_NUMBER, FONT_UNIT } from "@/core/css/fonts/fonts.constants.ts";
+import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
+import { AUTO_LINE_HEIGHT, CASE_CSS, FONT_NUMBER, FONT_UNIT } from "@/core/css/fonts/fonts.constants.ts";
 import { FIGMA_PAINT } from "@/core/css/paints/paints.constants.ts";
 import type { ColorSpace } from "@/core/kernel/color/color.ts";
 import { FONT_WEIGHT } from "@/core/kernel/names/font-weight.ts";
 import {
   DTCG_KEY,
+  DTCG_LOST,
   DTCG_NOTE,
   DTCG_NUMBER,
   DTCG_SHADOW_COLOR,
@@ -18,16 +20,21 @@ import { DTCG_VALUES } from "@/core/tokens/formats/dtcg/dtcg-values.ts";
 import { STYLE_GROUP, STYLE_GROUPS } from "@/core/tokens/model/model.constants.ts";
 import type { RawStyle } from "@/shared/ops/variables/variables.schema.ts";
 
-/** The text styles DTCG holds with a stand-in: Auto line height as 1.2, a weight guessed from the style's name. */
+/**
+ * What DTCG holds of the styles with a stand-in (Auto line height as 1.2, a weight guessed from the style's name), and
+ * what it has no field for (a gradient's angle, a text's case).
+ */
 interface StandIns {
   readonly auto: string[];
   readonly guessed: string[];
+  readonly noField: string[];
 }
 
 /**
  * The styles' tree (K-017): a paint style as a colour or a gradient (each stop's alpha kept, faded by the paint's
  * opacity; DTCG keeps no angle), a text style as typography (the weight from a variable font's axis, else guessed from
- * the style's name, K-074), drop and inner shadows as a shadow token; what DTCG has no type for is named in the notes.
+ * the style's name, K-074), drop and inner shadows as a shadow token; what DTCG has no type or field for is named in
+ * the notes.
  */
 @injectable()
 export class DtcgStyles {
@@ -49,7 +56,7 @@ export class DtcgStyles {
     const tree: DtcgGroup = {};
     const renamed: string[] = [];
     const untyped: string[] = [];
-    const standIns: StandIns = { auto: [], guessed: [] };
+    const standIns: StandIns = { auto: [], guessed: [], noField: [] };
     const placed = this.#paths.places(
       styles.map(({ id, name }) => ({ id, name, path: this.#paths.path(name) })),
       renamed,
@@ -72,6 +79,7 @@ export class DtcgStyles {
         ...(untyped.length === 0 ? [] : [DTCG_NOTE.untypedStyles(untyped)]),
         ...(standIns.auto.length === 0 ? [] : [DTCG_NOTE.autoLineHeight(standIns.auto, DTCG_NUMBER.autoLineHeight)]),
         ...(standIns.guessed.length === 0 ? [] : [DTCG_NOTE.weightGuess(standIns.guessed)]),
+        ...(standIns.noField.length === 0 ? [] : [DTCG_NOTE.noField(standIns.noField)]),
       ],
     };
   }
@@ -83,7 +91,7 @@ export class DtcgStyles {
   ): DtcgToken | null {
     switch (STYLE_GROUPS[style.type]) {
       case STYLE_GROUP.paint:
-        return this.#paint(style, space);
+        return this.#paint(style, space, standIns);
       case STYLE_GROUP.text:
         return this.#typography(style, standIns);
       case STYLE_GROUP.effect:
@@ -94,7 +102,11 @@ export class DtcgStyles {
   }
 
   /** One visible solid paint as a colour, one visible gradient as a gradient; DTCG has nothing for the rest. */
-  #paint(style: RawStyle, space: ColorSpace): DtcgToken | null {
+  #paint(
+    style: RawStyle,
+    space: ColorSpace,
+    standIns: StandIns,
+  ): DtcgToken | null {
     const paints = (style.paints ?? []).filter((paint) => paint.visible ?? true);
     const [paint] = paints;
 
@@ -111,6 +123,8 @@ export class DtcgStyles {
     if (!paint.type.startsWith(DTCG_KEY.gradient) || paint.gradientStops === undefined) {
       return null;
     }
+
+    standIns.noField.push(DTCG_TEXT.typed(style.name, DTCG_LOST.angle));
 
     // Each stop keeps its alpha and the paint's opacity fades them all (K-017: 0.7.0 dropped both).
     return {
@@ -139,6 +153,10 @@ export class DtcgStyles {
 
     if (axis === undefined) {
       standIns.guessed.push(style.name);
+    }
+
+    if (style.textCase !== undefined && style.textCase in CASE_CSS) {
+      standIns.noField.push(DTCG_TEXT.typed(style.name, CSS_PROPERTY.textTransform));
     }
 
     return {

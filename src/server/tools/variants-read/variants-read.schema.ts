@@ -5,7 +5,7 @@ import { VARIANTS_READ_FIELD } from "@/server/tools/variants-read/variants-read.
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 /** 0.7.0's input (T-086): a set, a variant or an instance, and the file. */
-export const VariantsReadInputSchema = zod.object({
+export const VariantsReadInputSchema = zod.strictObject({
   node: NodeIdSchema.check(zod.describe(VARIANTS_READ_FIELD.node)),
   file: FileInputSchema,
 });

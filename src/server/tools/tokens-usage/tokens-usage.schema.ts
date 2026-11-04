@@ -6,7 +6,7 @@ import { usageOp } from "@/shared/ops/usage/usage.manifest.ts";
 
 const { within, budgetMs } = usageOp.input.shape;
 
-export const TokensUsageInputSchema = zod.object({
+export const TokensUsageInputSchema = zod.strictObject({
   token: zod
     .string()
     .check(

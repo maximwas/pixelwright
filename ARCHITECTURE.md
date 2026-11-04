@@ -374,6 +374,8 @@ and `ImageComparison` gives rmse, the differing pixels (`PixelDiff`) and the edg
 
 **Adds a tool.** A folder under `server/tools/` with the manifest (name, description, schemas, annotations, `load()`),
 the schema and the tool class on `Tool`; one line in `ToolCatalog`. The `tools.json` golden changes with it.
+Its input is a `zod.strictObject`: an argument it does not name is an error naming it (the MCP contract test checks
+every listed tool).
 
 **Adds an op.** A folder under `shared/ops/` with the manifest (`new OpContract(...)`, its meta), its name in
 `OP_NAME`, one line in the op catalog; a folder under `plugin/operations/` with the `Operation` subclass; one line in

@@ -73,13 +73,17 @@ export class TokensReadTool extends Tool<TokensReadInput, TokensReadOutput> {
     };
   }
 
-  /** What the read itself says: why the libraries are missing, cut or add nothing, and collections that do not exist. */
+  /**
+   * What the read itself says: why the libraries are missing, cut or add nothing, that the scan for the used tokens
+   * was cut, and collections that do not exist.
+   */
   #readingNotes(raw: RawTokens, collections: readonly string[] | undefined): string[] {
     const known = new Set(raw.collections.map(({ name }) => name.toLowerCase()));
     const missing = (collections ?? []).filter((name) => !known.has(name.toLowerCase()));
 
     return [
       ...(raw.libraryNote === undefined ? [] : [raw.libraryNote]),
+      ...(raw.usedCut === undefined ? [] : [TOKENS_READ_TEXT.usedCut]),
       ...(raw.library?.length === 0 && raw.libraryNote === undefined ? [TOKENS_READ_TEXT.noLibrary] : []),
       ...(missing.length === 0
         ? []

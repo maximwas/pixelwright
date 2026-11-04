@@ -21,13 +21,7 @@ export class DtcgTypes {
 
   types(variables: readonly RawVariable[]): Map<string, DtcgType | null> {
     const types = new Map(variables.map((variable) => [variable.id, this.#own(variable)]));
-    const links = variables.flatMap((variable) =>
-      Object.values(variable.valuesByMode).flatMap((value) => {
-        const target = this.#units.alias(value);
-
-        return target === null ? [] : [[variable.id, target] as const];
-      }),
-    );
+    const links = this.#units.links(variables);
     let changed = true;
 
     while (changed) {

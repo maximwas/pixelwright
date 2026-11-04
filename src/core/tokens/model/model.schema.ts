@@ -1,5 +1,24 @@
 import * as zod from "zod/mini";
-import { MODEL_FIELD } from "@/core/tokens/model/model.constants.ts";
+import { MODEL_FIELD, VARIABLE_VALUE } from "@/core/tokens/model/model.constants.ts";
+
+/** A variable's value that points at another variable, as Figma keeps it. */
+export const VariableAliasSchema = zod.object({ type: zod.literal(VARIABLE_VALUE.alias), id: zod.string() });
+
+/** A colour as Figma keeps it: channels from 0 to 1, alpha when it has one. */
+export const RawColorSchema = zod.object({
+  r: zod.number(),
+  g: zod.number(),
+  b: zod.number(),
+  a: zod.exactOptional(zod.number()),
+});
+
+/** A composed colour (K-016): a colour and an opacity in percent, either of them a variable. */
+export const ComposedColorSchema = zod.object({
+  color: zod.union([RawColorSchema, VariableAliasSchema]),
+  opacity: zod.union([zod.number(), VariableAliasSchema]),
+});
+
+export type ComposedColor = zod.output<typeof ComposedColorSchema>;
 
 /** A style as a token (K-006): its custom property and CSS value, and its other parts as tokens of their own. */
 const StyleTokenSchema = zod.object({

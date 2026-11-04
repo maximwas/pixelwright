@@ -14,7 +14,7 @@ interface Asked {
  * The file's tokens as Figma keeps them (P-098): every local collection with its modes and every variable's value per
  * mode, aliases kept; the file's own paint, text and effect styles; with `used`, the styles and variables the layers
  * under `within` (or on the current page) use, a team library's among them; and in turn every variable an alias points
- * at, so each var() written is defined. Same-named styles are numbered as design_read numbers them (D-29). No style's
+ * at, so each var() written is defined; usedCut when the op's deadline stopped that scan. Same-named styles are numbered as design_read numbers them (D-29). No style's
  * CSS is asked of Figma: core draws gradients from the paints (C-022, D-20).
  */
 @injectable()
@@ -35,7 +35,7 @@ export class FileTokens {
 
   async read({ used, within }: Asked, deadline: number): Promise<RawTokens> {
     const root = used ? await this.#root(within) : null;
-    const found = root === null ? { styles: [], variables: [] } : this.#used.under(root, deadline);
+    const found = root === null ? { styles: [], variables: [], cut: false } : this.#used.under(root, deadline);
     const raw: RawTokens = {
       collections: (await figma.variables.getLocalVariableCollectionsAsync()).map((each) => this.#collection(each)),
       variables: (await figma.variables.getLocalVariablesAsync()).map((each) => this.#variable(each)),
@@ -43,6 +43,11 @@ export class FileTokens {
       styles: await this.#styles(found.styles, root ?? figma.currentPage),
       colorProfile: figma.root.documentColorProfile,
     };
+
+    if (found.cut) {
+      raw.usedCut = true;
+    }
+
     const values = [
       ...raw.variables.map((variable) => variable.valuesByMode),
       ...raw.styles.map((style) => style.effects),
