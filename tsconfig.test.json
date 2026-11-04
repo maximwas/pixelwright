@@ -6,6 +6,6 @@
     "lib": ["ES2024", "DOM"],
     "types": ["node"]
   },
-  "include": ["test", "src/**/*.test.ts", "scripts/**/*.test.ts"],
+  "include": ["test", "src/**/*.test.ts", "scripts/**/*.test.ts", "src/server/tools/guide/markdown.d.ts"],
   "exclude": ["test/guards/samples", "src/plugin/**/*.test.ts"]
 }

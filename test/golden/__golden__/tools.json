@@ -1333,7 +1333,7 @@
   {
     "name": "design_read",
     "title": "Read a design",
-    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, ids to read or change a layer later; a hidden layer is a stub with display=\"none\". The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets, measurements (the designer's Dev Mode measurements, when there are any), hints (what the code should know or fix, one per kind with a count and examples) and truncated (ids of layers the read cut: $children=\"N\" where not all children were read, $truncated=\"true\" where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat=\"N\", and JSON repeats holds each one's own values as rows; with nearby, JSON nearby lists the designer's notes around the screen. For a big frame, find its sections with outline first.",
+    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, ids to name a layer in the other tools; a hidden layer is a stub with display=\"none\". The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets, measurements (the designer's Dev Mode measurements, when there are any), hints (what the code should know or fix, one per kind with a count and examples) and truncated (ids of layers the read cut: $children=\"N\" where not all children were read, $truncated=\"true\" where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat=\"N\", and JSON repeats holds each one's own values as rows; with nearby, JSON nearby lists the designer's notes around the screen. For a big frame, find its sections with outline first; guide xml explains every tag and attribute.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1368,7 +1368,7 @@
         },
         "autoLineHeight": {
           "default": "normal",
-          "description": "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere. A px read sent back to design_apply fixes those line heights at that px.",
+          "description": "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere.",
           "type": "string",
           "enum": [
             "normal",
@@ -5401,7 +5401,7 @@
   {
     "name": "tokens_read",
     "title": "Read the design tokens",
-    "description": "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable's scopes (when not every field) and code syntax, which tokens_apply takes back; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
+    "description": "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable's scopes (when not every field) and code syntax; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -7960,7 +7960,7 @@
   {
     "name": "library_search",
     "title": "Search the saved component libraries",
-    "description": "Finds components in the team's libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer, in the libraries folder of Pixelwright's home; save again after the library changes. Then query from any file: every word must appear in a component's name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:<key>) and properties: insert it with design_apply <Instance component=\"key:…\" variant=\"State=Hover\" props=\"Label=Buy\"/>, which works once the library is published. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.",
+    "description": "Finds components in the team's libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer, in the libraries folder of Pixelwright's home; save again after the library changes. Then query from any file: every word must appear in a component's name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:<key>, the component's key in its library) and properties, which in code are its props. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -8055,7 +8055,7 @@
               },
               "component": {
                 "type": "string",
-                "description": "design_apply's <Instance component=\"key:…\">."
+                "description": "The component's key in its library, as key:<key>."
               }
             },
             "required": [
@@ -8577,7 +8577,7 @@
   {
     "name": "guide",
     "title": "Pixelwright guide",
-    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files.); xml (The XML design_read returns: tags, metadata, CSS attributes, read-only attributes.); tokens (How tokens are named and written: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, and how files are named.); write (design_apply: changing, creating, copying and moving layers, components, instances and images with the same XML.); layout (design_apply layouts: when to use flex, grid or absolute placement; grid tracks, spans and cells; pinned and centred layers.); code-connect (Figma Code Connect: templates and batch files, keys, how design_read runs them, what the code leaves out, mapping a design system.); email (Turning the XML into an HTML email that renders in Gmail, Outlook and Apple Mail.). Read workflow first in a new task, and xml before building from design_read.",
+    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named and read: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).). Read workflow first in a new task, and xml before building from design_read.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -8588,15 +8588,12 @@
             "workflow",
             "xml",
             "tokens",
-            "assets",
-            "write",
-            "layout",
-            "code-connect",
-            "email"
+            "assets"
           ]
         }
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",

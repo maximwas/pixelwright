@@ -3,7 +3,7 @@ export const DESIGN_READ_TOOL = {
   name: "design_read",
   title: "Read a design",
   description:
-    'Reads a layer (a section, a card, a screen) as Pixelwright\'s XML: Figma\'s layer types as tags, ids to read or change a layer later; a hidden layer is a stub with display="none". The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets, measurements (the designer\'s Dev Mode measurements, when there are any), hints (what the code should know or fix, one per kind with a count and examples) and truncated (ids of layers the read cut: $children="N" where not all children were read, $truncated="true" where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat="N", and JSON repeats holds each one\'s own values as rows; with nearby, JSON nearby lists the designer\'s notes around the screen. For a big frame, find its sections with outline first.',
+    'Reads a layer (a section, a card, a screen) as Pixelwright\'s XML: Figma\'s layer types as tags, ids to name a layer in the other tools; a hidden layer is a stub with display="none". The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets, measurements (the designer\'s Dev Mode measurements, when there are any), hints (what the code should know or fix, one per kind with a count and examples) and truncated (ids of layers the read cut: $children="N" where not all children were read, $truncated="true" where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat="N", and JSON repeats holds each one\'s own values as rows; with nearby, JSON nearby lists the designer\'s notes around the screen. For a big frame, find its sections with outline first; guide xml explains every tag and attribute.',
 } as const;
 
 export const DESIGN_READ_FIELD = {
@@ -14,7 +14,7 @@ export const DESIGN_READ_FIELD = {
     "The most characters of XML: past it the deepest branches, then long lists, then long texts are cut. Default: 80000.",
   repeats: "Read each run of three or more alike neighbours as its first, with $repeat and JSON rows. Default: false.",
   autoLineHeight:
-    "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere. A px read sent back to design_apply fixes those line heights at that px.",
+    "How to write Figma's Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere.",
   assetsDir:
     "Write the read's assets into this folder (icons as SVG, images as PNG at 2x, backgrounds as the original image) and point each src at its file; created if missing, a file already there is never overwritten with other bytes. Without it src names are plans. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
   nearby:

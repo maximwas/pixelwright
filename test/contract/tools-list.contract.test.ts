@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
@@ -9,6 +9,16 @@ import { ServerMain } from "@/server/main/server.main.ts";
 const GOLDEN: { name: string }[] = JSON.parse(
   readFileSync(new URL("../golden/__golden__/tools.json", import.meta.url), "utf8"),
 );
+
+/** guide's topics as files: what guide lists and answers comes from them (T-210). */
+const TOPICS = new URL("../../src/server/tools/guide/topics/", import.meta.url);
+const TOPIC_NAMES = readdirSync(TOPICS)
+  .map((file) => file.replace(/\.md$/, ""))
+  .sort();
+
+function topicText(name: string): string {
+  return readFileSync(new URL(`${name}.md`, TOPICS), "utf8");
+}
 
 /** A client of the server as the composition root wires it, bridge off, over an in-memory transport. */
 class ContractClient {
@@ -81,9 +91,10 @@ describe("the MCP contract", () => {
         "baseline_save",
         "baseline_diff",
         "assets_export",
+        "guide",
       ]),
     );
-    expect(tools).toHaveLength(28);
+    expect(tools).toHaveLength(29);
   });
 
   it("lists no outputSchema for the tools that answer in content blocks, so a client keeps the image (T-005)", async () => {
@@ -125,5 +136,45 @@ describe("the MCP contract", () => {
 
     expect(answer.isError).toBe(true);
     expect(answer.content).toEqual([{ type: "text", text: expect.stringContaining(`"${key}"`) }]);
+  });
+
+  it("lists guide's topics as the files in topics/, in its enum and its description, and answers each with its file", async () => {
+    const { tools } = await contract.client.listTools();
+    const guide = tools.find(({ name }) => name === "guide");
+    const index = await contract.client.callTool({ name: "guide", arguments: {} });
+    const topic = guide?.inputSchema.properties?.topic as { enum: string[] } | undefined;
+    const topics = (index.structuredContent as { topics?: { name: string }[] } | undefined)?.topics ?? [];
+
+    expect([...(topic?.enum ?? [])].sort()).toEqual(TOPIC_NAMES);
+    expect(TOPIC_NAMES.filter((name) => !guide?.description?.includes(`${name} (`))).toEqual([]);
+    expect(index.structuredContent).toMatchObject({ topic: "index", markdown: expect.stringMatching(/^# /) });
+    expect(topics.map(({ name }) => name).sort()).toEqual(TOPIC_NAMES);
+
+    for (const name of TOPIC_NAMES) {
+      const answer = await contract.client.callTool({ name: "guide", arguments: { topic: name } });
+
+      expect(topicText(name)).toMatch(/^# /);
+      expect(answer.structuredContent).toEqual({ topic: name, markdown: topicText(name) });
+    }
+  });
+
+  it("names in its topics only the tools it lists, so a renamed tool fails here (R-038)", async () => {
+    const listed = new Set((await contract.client.listTools()).tools.map(({ name }) => name));
+    const named = TOPIC_NAMES.flatMap((name) => topicText(name).match(/\b[a-z]+(?:_[a-z]+)+\b/g) ?? []);
+
+    expect(named.length).toBeGreaterThan(0);
+    expect([...new Set(named.filter((word) => !listed.has(word)))]).toEqual([]);
+  });
+
+  // 0.8.0 reads only (plan 5.0): a description, a schema, the instructions or a topic that names a write tool sends
+  // the model after a tool it cannot call.
+  it("names no tool it does not register in its tools, its instructions or the guide", async () => {
+    const { tools } = await contract.client.listTools();
+    const listed = new Set(tools.map(({ name }) => name));
+    const unregistered = GOLDEN.map(({ name }) => name).filter((name) => !listed.has(name));
+    const texts = [JSON.stringify(tools), contract.client.getInstructions() ?? "", ...TOPIC_NAMES.map(topicText)];
+
+    expect(unregistered.length).toBeGreaterThan(0);
+    expect(unregistered.filter((name) => texts.some((text) => new RegExp(`\\b${name}\\b`).test(text)))).toEqual([]);
   });
 });

@@ -11,4 +11,6 @@ export default defineConfig({
   clean: true,
   // The server config extends tsconfig.base.json, whose experimentalDecorators lowers @injectable().
   tsconfig: "tsconfig.server.json",
+  // The guide's topics are Markdown files, inlined as strings: the npm package ships dist/ alone.
+  loader: { ".md": "text" },
 });

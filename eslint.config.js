@@ -84,10 +84,10 @@ const INJECTION = [
 ];
 
 /**
- * Where a string literal names code instead of holding a value: module specifiers and import attributes, property keys
- * (`"~standard"`, `x["~standard"]`, `in`), typeof checks, and an InjectionToken's description (a debug name needle-di
- * prints when a provider is missing; it never leaves the process). The empty string holds no text, as 0 holds no
- * number. A literal type is left to shape/no-string-type, so it is reported once.
+ * Where a string literal names code instead of holding a value: module specifiers (an ambient `declare module` too) and
+ * import attributes, property keys (`"~standard"`, `x["~standard"]`, `in`), typeof checks, and an InjectionToken's
+ * description (a debug name needle-di prints when a provider is missing; it never leaves the process). The empty
+ * string holds no text, as 0 holds no number. A literal type is left to shape/no-string-type, so it is reported once.
  */
 const NOT_VALUES = [
   "ImportDeclaration > Literal.source",
@@ -95,6 +95,7 @@ const NOT_VALUES = [
   "ExportAllDeclaration > Literal.source",
   "ImportExpression > Literal.source",
   "ImportAttribute > Literal.value",
+  "TSModuleDeclaration > Literal.id",
   "TSImportType Literal",
   "Property > Literal.key",
   "PropertyDefinition > Literal.key",
@@ -193,14 +194,34 @@ const LIMITS = {
  */
 const FILES = [
   { name: "(?!index.ts$){kebab-case}(.{suffix})?(.test)?.ts" },
-  { name: "{kebab-case}.(html|md)" },
+  { name: "{kebab-case}.html" },
   { name: "data", children: [{ name: "{kebab-case}.json" }] },
 ];
+
+/** guide alone keeps Markdown: its topics, bundled as text, and the declaration that types them (src/server/tools/guide). */
+const GUIDE = {
+  name: "guide",
+  children: [...FILES, { name: "markdown.d.ts" }, { name: "topics", children: [{ name: "{kebab-case}.md" }] }],
+};
 
 const FOLDER_STRUCTURE = createFolderStructure({
   regexParameters: { suffix: "(types|constants|schema|port|manifest|tool|operation|catalog|contract|main|tokens)" },
   structure: [
-    { name: "src", children: [{ name: "(cli|plugin-ui)", ruleId: "entryRoot" }, { ruleId: "folder" }] },
+    {
+      name: "src",
+      children: [
+        { name: "(cli|plugin-ui)", ruleId: "entryRoot" },
+        {
+          name: "server",
+          children: [
+            { name: "tools", children: [GUIDE, ...FILES, { ruleId: "folder" }] },
+            ...FILES,
+            { ruleId: "folder" },
+          ],
+        },
+        { ruleId: "folder" },
+      ],
+    },
     { name: "scripts", children: [...FILES, { ruleId: "folder" }] },
   ],
   rules: {
