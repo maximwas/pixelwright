@@ -95,7 +95,7 @@ copy.paddingTop += 8;`);
 
     const { accept } = (await client.call("baseline_diff", { file, name: "install-copy" })) as { accept: string };
 
-    await client.call("baseline_save", { file, name: "install-copy", accept });
+    await client.call("baseline_save", { name: "install-copy", accept });
 
     const again = (await client.call("baseline_diff", { file })) as Overview;
 

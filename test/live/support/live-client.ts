@@ -126,7 +126,10 @@ export class LiveClient {
     args: ToolResult,
     signal?: AbortSignal,
   ): Promise<Awaited<ReturnType<Client["callTool"]>>> {
-    if (this.#takesFile.has(tool) && args.file !== TEST_MCP.file) {
+    // An accept keeps the design a baseline_diff compared and reaches no file; baseline_save refuses `file` beside it.
+    const reachesNoFile = tool === "baseline_save" && args.accept !== undefined && args.file === undefined;
+
+    if (this.#takesFile.has(tool) && args.file !== TEST_MCP.file && !reachesNoFile) {
       throw new Error(`live tests call ${tool} with file: "${TEST_MCP.file}" only, not ${JSON.stringify(args.file)}.`);
     }
 
