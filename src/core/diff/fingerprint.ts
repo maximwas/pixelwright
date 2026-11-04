@@ -1,7 +1,6 @@
 import { InjectionToken, injectable } from "@needle-di/core";
 import { isEqual } from "es-toolkit";
 import { NOT_DRAWING } from "@/core/diff/diff.constants.ts";
-import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 /**
  * What draws a layer (K-052): its read-model entry and its insides without what names or places it or says what it
@@ -12,7 +11,8 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 export class Fingerprint {
   readonly #notDrawing: ReadonlySet<string> = new Set(NOT_DRAWING);
 
-  same(first: ReadLayer | undefined, second: ReadLayer | undefined): boolean {
+  /** Two layers' reads (or the fields of them both hold) draw the same. */
+  same(first: unknown, second: unknown): boolean {
     return isEqual(this.#drawing(first ?? null), this.#drawing(second ?? null));
   }
 

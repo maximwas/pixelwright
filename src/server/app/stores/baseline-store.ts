@@ -1,4 +1,4 @@
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { writeFile } from "atomically";
@@ -39,13 +39,13 @@ export class BaselineStore {
 
   /** One baseline, named by its file; null when the project has none of that name; an error naming an unreadable file. */
   async read(name: string): Promise<BaselineFile | null> {
-    const path = join(await this.#folder(), BASELINE_FILES.file(name));
+    const path = await this.path(name);
     let text: string;
 
     try {
       text = await readFile(path, BASELINE_FILES.encoding);
     } catch (error) {
-      if (error instanceof Error && "code" in error && error.code === BASELINE_FILES.missing) {
+      if (this.#missing(error)) {
         return null;
       }
 
@@ -53,6 +53,33 @@ export class BaselineStore {
     }
 
     return { ...this.#parsed(path, text), name };
+  }
+
+  /** The project's baselines by name, in order; none before the first is kept. */
+  async names(): Promise<string[]> {
+    const folder = await this.#folder();
+    let files: string[];
+
+    try {
+      files = await readdir(folder);
+    } catch (error) {
+      if (this.#missing(error)) {
+        return [];
+      }
+
+      throw this.#unreadable(folder, error);
+    }
+
+    return files
+      .filter((file) => file.endsWith(BASELINE_FILES.extension))
+      .map((file) => file.slice(0, -BASELINE_FILES.extension.length))
+      .filter((name) => BASELINE_FILES.name.test(name))
+      .sort();
+  }
+
+  /** Where the baseline of a name lives, kept or not. */
+  async path(name: string): Promise<string> {
+    return join(await this.#folder(), BASELINE_FILES.file(name));
   }
 
   /** Writes a baseline whole or not at all, under its name, which no path can be. */
@@ -72,6 +99,10 @@ export class BaselineStore {
 
   async #folder(): Promise<string> {
     return join(await this.root(), BASELINE_FILES.folder);
+  }
+
+  #missing(error: unknown): boolean {
+    return error instanceof Error && "code" in error && error.code === BASELINE_FILES.missing;
   }
 
   /** The file's baseline; one a newer Pixelwright wrote is refused, not misread. */

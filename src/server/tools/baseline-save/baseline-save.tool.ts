@@ -1,8 +1,9 @@
 import { inject, injectable } from "@needle-di/core";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
+import { BASELINE_CAPTURE } from "@/server/app/stores/baseline-capture.ts";
 import { SEEN_DESIGNS } from "@/server/app/stores/seen-designs.ts";
+import { BASELINE_TEXT } from "@/server/app/stores/stores.constants.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
-import { BASELINE_CAPTURE } from "@/server/tools/baseline-save/baseline-capture.ts";
 import { BASELINE_KEEPER, type CodePaths } from "@/server/tools/baseline-save/baseline-keeper.ts";
 import { BASELINE_SAVE_TEXT } from "@/server/tools/baseline-save/baseline-save.constants.ts";
 import {
@@ -60,7 +61,13 @@ export class BaselineSaveTool extends Tool<BaselineSaveInput, BaselineSaveOutput
 
   /** The layer read now and kept; a name already kept is refused unless replace starts it over. */
   async #saveRead(input: BaselineSaveInput, code: CodePaths | undefined): Promise<BaselineSaveOutput> {
-    const { baseline, notes } = await this.#capture.capture(this.#session, input.node, input.name);
+    const captured = await this.#capture.capture(this.#session, input.node, input.name);
+
+    if ("hidden" in captured) {
+      throw new PixelwrightError(ERROR_CODE.opFailed, BASELINE_SAVE_TEXT.hidden(captured.hidden));
+    }
+
+    const { baseline, notes } = captured;
     const existing = await this.#keeper.existing(baseline.name, input.replace);
 
     if (existing !== null && !input.replace) {
@@ -70,7 +77,7 @@ export class BaselineSaveTool extends Tool<BaselineSaveInput, BaselineSaveOutput
           baseline.name,
           existing.node.name,
           existing.node.id,
-          BASELINE_SAVE_TEXT.utc(existing.capturedAt),
+          BASELINE_TEXT.utc(existing.capturedAt),
         ),
       );
     }

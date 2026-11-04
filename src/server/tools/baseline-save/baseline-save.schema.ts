@@ -1,23 +1,17 @@
 import * as zod from "zod/mini";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
-import { BASELINE_FILES } from "@/server/app/stores/stores.constants.ts";
-import { BaselineFigmaFileSchema, BaselineNodeSchema, NamedSchema } from "@/server/app/stores/stores.schema.ts";
+import {
+  BaselineFigmaFileSchema,
+  BaselineNameSchema,
+  BaselineNodeSchema,
+  NamedSchema,
+} from "@/server/app/stores/stores.schema.ts";
 import { BASELINE_SAVE, BASELINE_SAVE_FIELD } from "@/server/tools/baseline-save/baseline-save.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 export const BaselineSaveInputSchema = zod.object({
   node: zod.exactOptional(NodeIdSchema).check(zod.describe(BASELINE_SAVE_FIELD.node)),
-  name: zod
-    .exactOptional(
-      zod
-        .string()
-        .check(
-          zod.minLength(BASELINE_FILES.minName),
-          zod.maxLength(BASELINE_FILES.maxName),
-          zod.regex(BASELINE_FILES.name),
-        ),
-    )
-    .check(zod.describe(BASELINE_SAVE_FIELD.name)),
+  name: zod.exactOptional(BaselineNameSchema).check(zod.describe(BASELINE_SAVE_FIELD.name)),
   code: zod
     .exactOptional(
       zod

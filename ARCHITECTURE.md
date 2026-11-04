@@ -101,7 +101,13 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     or image's drawing without what names or places it (es-toolkit `isEqual`, K-052); `VariantDiff` holds each
     variant of a set against the default or the variant one property away, with the pseudo-class a state suggests
     (T-086, K-053; names parsed by `NameValueList`); `Breakpoints` scores the page's screens against the asked one by
-    names without size words and children's names, weights as data (T-087, K-054).
+    names without size words and children's names, weights as data (T-087, K-054). `diff/baseline/`: `BaselineDiff`
+    compares a baseline's read with the read now, both built as design_read builds them (T-205, K-055): `LayerPairs`
+    pairs the roots, the shared ids, then tag and name, then name alone, nothing under a `$children` cut on either
+    side; `LayerChanges` gives each pair's attributes as [before, now] (src, a cut's marks and the root's place aside,
+    url() emptied, props and variant by the pairs that differ, `$text` as XML, `$page`, `was` for a layer made
+    again) and a drawing by `Fingerprint` or a fill's image; `StructureChanges` the topmost added and removed (hidden
+    said), the moved and the reordered; 200 per list with `more`.
   - `checks/`: `build-styles/` is styles_compare's engine (T-090). `BuildStyles` finds each pair's layer in the reads
     (in its parent when another pair's read holds it, else as its own read's root: the read op gives no parent) and
     takes its CSS as design_read writes it (`DesignBuilder`, the asset plan, `ReadCatalogue`'s tokens and text
@@ -164,7 +170,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     channel's home; `BaselineStore` (the project's `.pixelwright/baselines/<name>.json`, format 1 as 0.7.0 wrote it:
     compact JSON, header first, one rename by atomically; the file's name wins over the one inside; home and `/`
     refused through `ProjectFolder`) and `SeenDesigns` (the last 8 designs a one-baseline diff compared, under random
-    16-hex accept ids, in memory).
+    16-hex accept ids, in memory); `BaselineCapture` reads a layer as a baseline keeps it (the read op with `pathHash`,
+    the variables op's tokens its aliases reach), for baseline_save and baseline_diff both.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn); `inspect/` and `measure/` read through the inspect op (an
   `around` layer is a second inspect of it in the same origin; a selection past 100 is cut and counted in `left`).
@@ -319,12 +326,20 @@ code in force, which only the status tool mints; the user types it in the window
 `ServerRpc` tells sockets apart by the epoch the window stamps on each frame.
 
 **Keeps a baseline.** `BaselineSaveTool` (`server/tools/baseline-save/`) checks the project first (`BaselineKeeper`),
-then `BaselineCapture` reads the layer with the read op (`pathHash`; a hidden root refused, as design_read refuses it)
+then `BaselineCapture` (`server/app/stores/`) reads the layer with the read op (`pathHash`; a hidden root refused, as design_read refuses it)
 and the variables op (`used`, `within`), keeping only the variables the read's aliases reach (never Figma's inferred
 match) and the styles the read names. `BaselineKeeper` checks the code paths, finds the baseline a name holds and
 writes through `BaselineStore`, answering layers, tokens, `cut` (shown layers with fewer children than childCount)
 and, with replace, `DesignDiff`'s counts. `accept` takes its design from `SeenDesigns` and reads nothing; an
 existing name needs accept, replace or code alone.
+
+**Compares with a baseline.** `BaselineDiffTool` (`server/tools/baseline-diff/`) reads the named baseline (an
+unknown name lists the project's, an unreadable file says why). `BaselineTarget` picks the file: `file`, else the
+baseline's by key, else by name, never the active file (node ids repeat across files). `BaselineRoot` finds its
+layer: `node`, else its id (outline), else the one layer of its name and type on its page (find), else missing with
+three look-alikes; unavailable when the id holds another type and name. `BaselineCompare` reads it through
+`BaselineCapture` and compares with core's `BaselineDiff`; the design compared goes into `SeenDesigns` under the
+answer's `accept`.
 
 **Tells of an update.** `ServerMain` starts `UpdateFeed`: `UpdateState` (`server/app/stores/`) keeps `latest.json` in
 the channel's home and asks npm through `NpmRegistry` at most once a day (off with `PIXELWRIGHT_NO_UPDATE_CHECK`). A
