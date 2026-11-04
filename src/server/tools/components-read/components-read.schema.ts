@@ -15,7 +15,7 @@ const ListedLinkSchema = zod.extend(ComponentLinkSchema, {
 /** A component as components_read lists it whole. */
 const ListedSchema = zod.extend(ComponentEntrySchema, { links: zod.exactOptional(zod.array(ListedLinkSchema)) });
 
-export const ComponentsReadInputSchema = zod.object({
+export const ComponentsReadInputSchema = zod.strictObject({
   scope: zod._default(scope, COMPONENTS_SCOPE.used).check(zod.describe(COMPONENTS_READ_FIELD.scope)),
   within: within.check(zod.describe(COMPONENTS_READ_FIELD.within)),
   query: query.check(zod.describe(COMPONENTS_READ_FIELD.query)),

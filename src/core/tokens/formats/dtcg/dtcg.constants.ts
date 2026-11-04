@@ -61,14 +61,16 @@ export const DTCG_KEY = {
 export const DTCG_NUMBER = {
   /** Figma's Auto line height as DTCG gets it: CSS's `normal`, about 1.2 times the size for most fonts. */
   autoLineHeight: 1.2,
-  /** An opacity: Figma keeps a composed colour's in percent, and a value up to 1 is a fraction already. */
+  /** A colour's alpha when nothing fades it. */
   opaque: 1,
-  percent: 100,
   /** Aliases followed to resolve a composed colour: Figma refuses a loop, the bound guards a broken file. */
   aliasHops: 16,
   /** The number the second path or key that wants a taken one gets. */
   firstCopy: 2,
 } as const;
+
+/** What a style holds that DTCG has no field for (K-017): named in a note. */
+export const DTCG_LOST = { angle: "gradient angle" } as const;
 
 export const DTCG_PATTERN = {
   /** DTCG reserves `.`, `{` and `}` in a name, and `$` at its start. */
@@ -110,6 +112,16 @@ export const DTCG_NOTE = {
     `${name} (${mode}) is a colour at an opacity with a variable in it: DTCG cannot fade a reference, so it is written resolved.`,
   unfaded: (name: string, mode: string) =>
     `${name} (${mode}) is a colour at an opacity whose colour cannot be resolved here: written as a reference to that colour, without its opacity.`,
+  crossed: (
+    name: string,
+    mode: string,
+    type: string,
+  ) =>
+    `${name} (${mode}) points at a ${type} token: a DTCG reference names a token of its own type, so it is written resolved.`,
+  noField: (listed: readonly string[]) =>
+    `${listed.join(", ")}: DTCG has no field for ${listed.length === 1 ? "it" : "these"}, left out; format css writes ${
+      listed.length === 1 ? "it" : "them"
+    }.`,
   unwritable: (name: string, mode: string) => `${name} (${mode}) holds no value DTCG can write as its type: left out.`,
   untypedStyles: (listed: readonly string[]) =>
     `${listed.join(", ")}: no DTCG type for ${listed.length === 1 ? "this style" : "these styles"}, left out.`,

@@ -7484,6 +7484,10 @@
         },
         "libraryNote": {
           "type": "string"
+        },
+        "usedCut": {
+          "type": "boolean",
+          "const": true
         }
       },
       "required": [

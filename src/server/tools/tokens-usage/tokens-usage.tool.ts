@@ -1,6 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
-import { MODEL_TEXT, MODEL_VALUE } from "@/core/tokens/model/model.constants.ts";
+import { MODEL_TEXT } from "@/core/tokens/model/model.constants.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
 import {
@@ -20,6 +20,9 @@ import { USAGE_WITHIN } from "@/shared/ops/usage/usage.constants.ts";
 import { usageOp } from "@/shared/ops/usage/usage.manifest.ts";
 import { variablesOp } from "@/shared/ops/variables/variables.manifest.ts";
 import type { RawStyle, RawTokens } from "@/shared/ops/variables/variables.schema.ts";
+
+/** How tokens_read writes a style of one kind. */
+type StyleWritten = (typeof STYLE_KIND)[string];
 
 /** The style or variable a token names. */
 interface Target {
@@ -66,13 +69,16 @@ export class TokensUsageTool extends Tool<TokensUsageInput, TokensUsageOutput> {
     };
   }
 
-  /** The style the token names (a text style's ends in -font), else the variable; none is NODE_NOT_FOUND. */
+  /**
+   * The style tokens_read writes the token for (a text style's font shorthand, spacing or case, an effect's blur too),
+   * else the variable; none is NODE_NOT_FOUND.
+   */
   #target(raw: RawTokens, token: string): Target {
     for (const style of raw.styles) {
-      const kind = STYLE_KIND[style.type];
+      const written = STYLE_KIND[style.type];
 
-      if (kind !== undefined && this.#styleToken(style, kind) === token) {
-        return { id: style.id, kind, name: style.name };
+      if (written !== undefined && this.#styleTokens(style, written).includes(token)) {
+        return { id: style.id, kind: written.kind, name: style.name };
       }
     }
 
@@ -85,10 +91,10 @@ export class TokensUsageTool extends Tool<TokensUsageInput, TokensUsageOutput> {
     return { id: variable.id, kind: TOKEN_KIND.variable, name: variable.name };
   }
 
-  /** A style's token as tokens_read writes it: a text style's font shorthand is --<name>-font. */
-  #styleToken(style: RawStyle, kind: TokenKind): string {
+  /** The tokens tokens_read writes a style as: its own, then its parts (--h1-font, --h1-letter-spacing, --Glass-filter). */
+  #styleTokens(style: RawStyle, written: StyleWritten): string[] {
     const token = this.#names.style(style);
 
-    return kind === TOKEN_KIND.text ? MODEL_TEXT.part(token, MODEL_VALUE.font) : token;
+    return [...(written.own ? [token] : []), ...written.parts.map((part) => MODEL_TEXT.part(token, part))];
   }
 }

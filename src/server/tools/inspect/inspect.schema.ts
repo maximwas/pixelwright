@@ -6,7 +6,7 @@ import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 const { nodes, relativeTo } = inspectOp.input.shape;
 
-export const InspectInputSchema = zod.object({
+export const InspectInputSchema = zod.strictObject({
   nodes: zod.exactOptional(nodes).check(zod.describe(INSPECT_INPUT.nodes)),
   relativeTo: relativeTo.check(zod.describe(INSPECT_INPUT.relativeTo)),
   around: zod

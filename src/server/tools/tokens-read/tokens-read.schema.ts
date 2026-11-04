@@ -7,7 +7,7 @@ import { LibraryCollectionSchema } from "@/shared/ops/variables/variables.schema
 
 const { within } = variablesOp.input.shape;
 
-export const TokensReadInputSchema = zod.object({
+export const TokensReadInputSchema = zod.strictObject({
   collections: zod
     .exactOptional(
       zod

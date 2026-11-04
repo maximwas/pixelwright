@@ -13,7 +13,7 @@ import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 const { depth } = readOp.input.shape;
 const { distance } = nearbyOp.input.shape;
 
-export const DesignReadInputSchema = zod.object({
+export const DesignReadInputSchema = zod.strictObject({
   node: zod.exactOptional(NodeIdSchema).check(zod.describe(DESIGN_READ_FIELD.node)),
   depth: depth.check(zod.describe(DESIGN_READ_FIELD.depth)),
   screenshot: zod._default(zod.boolean(), false).check(zod.describe(DESIGN_READ_FIELD.screenshot)),

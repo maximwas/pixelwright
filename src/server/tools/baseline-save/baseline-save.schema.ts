@@ -9,7 +9,7 @@ import {
 import { BASELINE_SAVE, BASELINE_SAVE_FIELD } from "@/server/tools/baseline-save/baseline-save.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
-export const BaselineSaveInputSchema = zod.object({
+export const BaselineSaveInputSchema = zod.strictObject({
   node: zod.exactOptional(NodeIdSchema).check(zod.describe(BASELINE_SAVE_FIELD.node)),
   name: zod.exactOptional(BaselineNameSchema).check(zod.describe(BASELINE_SAVE_FIELD.name)),
   code: zod

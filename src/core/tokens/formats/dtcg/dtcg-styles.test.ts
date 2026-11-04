@@ -65,6 +65,7 @@ const STYLES = [
     fontSize: 24,
     lineHeight: { unit: "PIXELS", value: 30 },
     letterSpacing: { unit: "PERCENT", value: -1 },
+    textCase: "UPPER",
   }),
   style({
     id: "S:body",
@@ -147,5 +148,6 @@ describe("DTCG styles", () => {
     expect(text).toMatch(/Photo \(paint\), Glass \(effect\): no DTCG type/);
     expect(text).toMatch(/Body: Auto line height, written as 1\.2/);
     expect(text).toMatch(/Heading\/H3, Body: fontWeight is guessed from the font style's name/);
+    expect(text).toMatch(/Hero gradient \(gradient angle\), Heading\/H3 \(text-transform\): DTCG has no field/);
   });
 });

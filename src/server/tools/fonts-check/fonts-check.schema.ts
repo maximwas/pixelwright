@@ -3,7 +3,7 @@ import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts
 import { FONTS_CHECK_FIELD } from "@/server/tools/fonts-check/fonts-check.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
-export const FontsCheckInputSchema = zod.object({
+export const FontsCheckInputSchema = zod.strictObject({
   node: zod.exactOptional(NodeIdSchema).check(zod.describe(FONTS_CHECK_FIELD.node)),
   file: FileInputSchema,
 });

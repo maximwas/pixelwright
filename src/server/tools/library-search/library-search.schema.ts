@@ -3,7 +3,7 @@ import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts
 import { LibraryComponentSchema } from "@/server/app/stores/stores.schema.ts";
 import { LIBRARY_SEARCH, LIBRARY_SEARCH_FIELD } from "@/server/tools/library-search/library-search.constants.ts";
 
-export const LibrarySearchInputSchema = zod.object({
+export const LibrarySearchInputSchema = zod.strictObject({
   query: zod
     .exactOptional(zod.string().check(zod.minLength(LIBRARY_SEARCH.minChars), zod.maxLength(LIBRARY_SEARCH.maxChars)))
     .check(zod.describe(LIBRARY_SEARCH_FIELD.query)),

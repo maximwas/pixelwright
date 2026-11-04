@@ -6,7 +6,7 @@ import { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
 
 const { node, depth } = outlineOp.input.shape;
 
-export const OutlineInputSchema = zod.object({
+export const OutlineInputSchema = zod.strictObject({
   node: node.check(zod.describe(OUTLINE_FIELD.node)),
   depth: zod._default(depth, OUTLINE.defaultDepth).check(zod.describe(OUTLINE_FIELD.depth)),
   file: FileInputSchema,

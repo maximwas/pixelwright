@@ -63,6 +63,8 @@ export const RawTokensSchema = zod.object({
   colorProfile: zod.exactOptional(zod.string()),
   /** Why the library catalogue is missing or cut although it was asked for. */
   libraryNote: zod.exactOptional(zod.string()),
+  /** The op's deadline stopped the scan for the tokens the layers use: those listed are the ones it reached. */
+  usedCut: zod.exactOptional(zod.literal(true)),
 });
 
 export type RawTokens = zod.output<typeof RawTokensSchema>;

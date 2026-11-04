@@ -7,7 +7,7 @@ import { ExportScaleSchema } from "@/shared/ops/export/export.schema.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 /** 0.7.0's input (T-194); exactly one of nodes and from, which the tool checks. */
-export const AssetsExportInputSchema = zod.object({
+export const AssetsExportInputSchema = zod.strictObject({
   nodes: zod
     .exactOptional(zod.array(NodeIdSchema).check(zod.minLength(1), zod.maxLength(ASSETS_EXPORT.maxNodes)))
     .check(zod.describe(ASSETS_EXPORT_FIELD.nodes)),

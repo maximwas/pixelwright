@@ -16,12 +16,6 @@ import type { RawCollection, RawVariable } from "@/shared/ops/variables/variable
 
 type RawMode = RawCollection["modes"][number];
 
-/** A composed colour as Figma keeps it: a colour and an opacity, either of them a variable. */
-interface Composed {
-  readonly color: unknown;
-  readonly opacity: unknown;
-}
-
 /**
  * Values as DTCG writes them (K-016): a variable's token in one mode, a colour as `{colorSpace, components, alpha,
  * hex}` in the file's space with the sRGB hex as its fallback, a length in px, numbers to four decimals.
@@ -43,7 +37,8 @@ export class DtcgValues {
   }
 
   /**
-   * A variable's token in one mode: an alias as a reference `{path}`; else its value as its type holds it, a composed
+   * A variable's token in one mode: an alias as a reference `{path}`, or resolved, noted, when its target took another
+   * type (a reference names a token of its own type, K-015); else its value as its type holds it, a composed
    * colour as one colour with its alpha (a variable in it resolved through the mode, said in a note), or, when its
    * colour cannot be resolved, a reference to that colour without its opacity. Null, noted, when it has no DTCG type
    * or no value its type can hold.
@@ -63,17 +58,23 @@ export class DtcgValues {
 
     const value = variable.valuesByMode[mode.modeId];
     const alias = this.#units.alias(value);
-    const literal = alias === null ? this.#literal(type, value, mode.modeId, writing) : null;
+    const crossed = this.#crossed(alias, type, writing);
+    const literal =
+      alias === null || crossed !== null
+        ? this.#literal(type, this.#resolved(value, mode.modeId, writing), mode.modeId, writing)
+        : null;
 
     if (literal !== null) {
-      if (this.#mixesVariable(value)) {
+      if (crossed !== null) {
+        writing.unwritten.add(DTCG_NOTE.crossed(variable.name, mode.name, crossed));
+      } else if (this.#mixesVariable(value)) {
         writing.unwritten.add(DTCG_NOTE.resolved(variable.name, mode.name));
       }
 
       return this.#made(variable, type, literal);
     }
 
-    const target = alias ?? (this.#isComposed(value) ? this.#units.alias(value.color) : null);
+    const target = alias ?? this.#units.alias(this.#units.composed(value)?.color);
 
     if (target === null) {
       writing.unwritten.add(DTCG_NOTE.unwritable(variable.name, mode.name));
@@ -177,23 +178,24 @@ export class DtcgValues {
     mode: string,
     writing: DtcgWriting,
   ): DtcgColor | null {
-    if (this.#isChannels(value)) {
-      return this.color(value, DTCG_NUMBER.opaque, writing.space);
+    const own = this.#units.channels(value);
+
+    if (own !== null) {
+      return this.color(own, DTCG_NUMBER.opaque, writing.space);
     }
 
-    if (!this.#isComposed(value)) {
+    const composed = this.#units.composed(value);
+
+    if (composed === null) {
       return null;
     }
 
-    const channels = this.#resolved(value.color, mode, writing);
-    const opacity = this.#resolved(value.opacity, mode, writing);
+    const channels = this.#units.channels(this.#resolved(composed.color, mode, writing));
+    const opacity = this.#resolved(composed.opacity, mode, writing);
 
-    if (!this.#isChannels(channels) || typeof opacity !== "number") {
-      return null;
-    }
-
-    // Figma keeps the opacity in percent; a value up to 1 is a fraction already (as the CSS reads it).
-    return this.color(channels, opacity > DTCG_NUMBER.opaque ? opacity / DTCG_NUMBER.percent : opacity, writing.space);
+    return channels === null || typeof opacity !== "number"
+      ? null
+      : this.color(channels, this.#units.fraction(opacity), writing.space);
   }
 
   /** A value with its aliases followed: through the same mode, or another collection's default; null for none. */
@@ -223,15 +225,20 @@ export class DtcgValues {
   }
 
   #mixesVariable(value: unknown): boolean {
-    return this.#isComposed(value) && (this.#units.alias(value.color) ?? this.#units.alias(value.opacity)) !== null;
+    const composed = this.#units.composed(value);
+
+    return composed !== null && (this.#units.alias(composed.color) ?? this.#units.alias(composed.opacity)) !== null;
   }
 
-  #isComposed(value: unknown): value is Composed {
-    return typeof value === "object" && value !== null && "color" in value && "opacity" in value;
-  }
+  /** The type of the token an alias points at, when it took another than this one's (K-015); else null. */
+  #crossed(
+    alias: string | null,
+    type: DtcgType,
+    writing: DtcgWriting,
+  ): DtcgType | null {
+    const target = alias === null ? null : (writing.places.types.get(alias) ?? null);
 
-  #isChannels(value: unknown): value is Channels {
-    return typeof value === "object" && value !== null && "r" in value && "g" in value && "b" in value;
+    return target === null || target === type ? null : target;
   }
 }
 

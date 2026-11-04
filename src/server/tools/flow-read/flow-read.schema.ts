@@ -5,7 +5,7 @@ import { FlowScreenSchema } from "@/shared/ops/flows/flows.schema.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 /** 0.7.0's input (T-088): the page, the current one by default, and the file. */
-export const FlowReadInputSchema = zod.object({
+export const FlowReadInputSchema = zod.strictObject({
   page: zod.exactOptional(NodeIdSchema).check(zod.describe(FLOW_READ_FIELD.page)),
   file: FileInputSchema,
 });
