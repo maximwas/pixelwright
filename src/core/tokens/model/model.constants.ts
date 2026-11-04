@@ -45,9 +45,6 @@ export const NOTED_GROUPS = [
   ["Text", STYLE_GROUP.text],
 ] as const;
 
-/** A style has no box: its gradient reads as on a square, the shape its transform is kept in (K-006). */
-export const STYLE_BOX = { width: 1, height: 1 } as const;
-
 export const MODEL_VALUE = {
   /** An opacity variable is a fraction in CSS (0.5 is half): a composed colour takes it as 100%. */
   wholePercent: "100%",

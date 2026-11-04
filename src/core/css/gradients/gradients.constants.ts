@@ -8,6 +8,12 @@ export const FIGMA_GRADIENT: Readonly<Record<string, (typeof GRADIENT_KIND)[keyo
   GRADIENT_ANGULAR: GRADIENT_KIND.angular,
 };
 
+/**
+ * A paint style has no box: its gradient reads as on a square, the shape its transform is kept in (K-006), so its token
+ * has one value in tokens_read and design_read alike, whatever layer it is bound on.
+ */
+export const STYLE_BOX = { width: 1, height: 1 } as const;
+
 /** The units a centre or a radius is kept in. */
 export const GRADIENT_UNIT = { px: "px", percent: "%" } as const;
 

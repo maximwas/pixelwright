@@ -66,6 +66,9 @@ export const ICON_KEEPS: readonly string[] = [
   CSS_PROPERTY.maxHeight,
   CSS_PROPERTY.flex,
   CSS_PROPERTY.alignSelf,
+  CSS_PROPERTY.gridRow,
+  CSS_PROPERTY.gridColumn,
+  CSS_PROPERTY.justifySelf,
   CSS_PROPERTY.transform,
   CSS_PROPERTY.mixBlendMode,
 ];

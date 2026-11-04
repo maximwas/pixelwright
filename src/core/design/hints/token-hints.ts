@@ -1,28 +1,38 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
+import { PAINT_LIST } from "@/core/css/paints/paint-list.ts";
 import { SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
 import { HINT_FIGMA, HINT_LABEL, HINT_TEXT, RAW_COLOR, VAR_USE } from "@/core/design/hints/hints.constants.ts";
 import type { Channels } from "@/core/kernel/color/color.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import { XML_CONTENT } from "@/core/xml/xml.constants.ts";
 import type { XmlAttribute, XmlElement } from "@/core/xml/xml.types.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 type Tokens = Readonly<Record<string, string>>;
 
 /**
  * What the read's tokens leave to the code (C-152): paint styles named without a value, numbered styles, raw colours a
- * token holds. Only CSS attributes are looked at: a colour in a text's characters, a name or a link is no CSS.
+ * token holds, a gradient style whose layer's own box draws it at another angle than its token's square. Only CSS
+ * attributes are looked at: a colour in a text's characters, a name or a link is no CSS.
  */
 @injectable()
 export class TokenHints {
   readonly #names;
   readonly #solid;
+  readonly #paints;
+  readonly #readLayers = new ReadLayers();
   readonly #css: ReadonlySet<string> = new Set(Object.values(CSS_PROPERTY));
 
-  constructor(names = inject(TOKEN_NAMES), solid = inject(SOLID_PAINT)) {
+  constructor(
+    names = inject(TOKEN_NAMES),
+    solid = inject(SOLID_PAINT),
+    paints = inject(PAINT_LIST),
+  ) {
     this.#names = names;
     this.#solid = solid;
+    this.#paints = paints;
   }
 
   /** `tree`: the read as built; `tokens`: the JSON block's, by name. */
@@ -38,6 +48,7 @@ export class TokenHints {
       ...this.#valueless(model, values, tokens),
       ...this.#numbered(model, values, tokens),
       ...this.#raw(model, elements),
+      ...this.#boxed(model, elements, tokens),
     ];
   }
 
@@ -107,6 +118,41 @@ export class TokenHints {
     }
 
     return [...uses].map(([color, places]) => HINT_TEXT.raw(color, places, tokens.get(color)));
+  }
+
+  /**
+   * A paint style is one token valued on a square, as tokens_read values it, but Figma draws it on each layer's own
+   * box: each element that names it where its gradient turns another way there, with that layer's own background.
+   */
+  #boxed(
+    model: ReadModel,
+    elements: readonly XmlElement[],
+    tokens: Tokens,
+  ): string[] {
+    const layers = new Map([...this.#readLayers.walk(model.root)].map(({ layer }) => [layer.id, layer]));
+    const places = new Map<string, string[]>();
+
+    for (const element of elements) {
+      const layer = layers.get(element.id);
+      const style = layer?.fillStyleId === undefined ? undefined : model.styles[layer.fillStyleId];
+
+      if (layer === undefined || style?.paints === undefined) {
+        continue;
+      }
+
+      const name = this.#names.style(style);
+      const drawn = this.#paints.css(style.paints, undefined, model, layer);
+      const named = element.attributes.some(([, value]) => value.includes(HINT_LABEL.var(name)));
+
+      if (named && typeof drawn === "string" && tokens[name] !== undefined && drawn !== tokens[name]) {
+        places.set(name, [
+          ...(places.get(name) ?? []),
+          HINT_LABEL.css(HINT_LABEL.attribute(CSS_PROPERTY.background, element.id), drawn),
+        ]);
+      }
+    }
+
+    return [...places].map(([name, found]) => HINT_TEXT.boxed(name, tokens[name] ?? "", found));
   }
 
   /** The CSS of each colour a one-colour paint style or a colour variable holds, as design_read writes it, by token. */

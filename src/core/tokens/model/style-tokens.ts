@@ -2,6 +2,7 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import { FONT_SHORTHAND } from "@/core/css/fonts/font-shorthand.ts";
 import { CASE_CSS } from "@/core/css/fonts/fonts.constants.ts";
+import { STYLE_BOX } from "@/core/css/gradients/gradients.constants.ts";
 import { EFFECTS_GROUP } from "@/core/css/groups/effects/effects-group.ts";
 import { PAINT_LIST } from "@/core/css/paints/paint-list.ts";
 import { FIGMA_PAINT } from "@/core/css/paints/paints.constants.ts";
@@ -11,7 +12,6 @@ import {
   MODEL_TEXT,
   MODEL_VALUE,
   NOTED_GROUPS,
-  STYLE_BOX,
   STYLE_GROUP,
   STYLE_GROUPS,
   type StyleGroup,

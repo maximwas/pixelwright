@@ -18,7 +18,10 @@ export const FIGMA_GEOMETRY = {
   line: "LINE",
 } as const;
 
-/** Each axis: its edges and size in CSS, its sizing and constraint in Figma, the flex direction it is the main axis of. */
+/**
+ * Each axis: its edges and size in CSS, its sizing and constraint in Figma, the flex direction it is the main axis of;
+ * in a grid, its line and its self-alignment in CSS, its anchor, span and alignment in Figma.
+ */
 export const GEOMETRY_AXIS = {
   horizontal: {
     start: CSS_PROPERTY.left,
@@ -27,6 +30,11 @@ export const GEOMETRY_AXIS = {
     sizing: "layoutSizingHorizontal",
     constraint: "horizontal",
     direction: "HORIZONTAL",
+    line: CSS_PROPERTY.gridColumn,
+    anchor: "gridColumnAnchorIndex",
+    span: "gridColumnSpan",
+    self: "gridChildHorizontalAlign",
+    align: CSS_PROPERTY.justifySelf,
   },
   vertical: {
     start: CSS_PROPERTY.top,
@@ -35,6 +43,11 @@ export const GEOMETRY_AXIS = {
     sizing: "layoutSizingVertical",
     constraint: "vertical",
     direction: "VERTICAL",
+    line: CSS_PROPERTY.gridRow,
+    anchor: "gridRowAnchorIndex",
+    span: "gridRowSpan",
+    self: "gridChildVerticalAlign",
+    align: CSS_PROPERTY.alignSelf,
   },
 } as const;
 
@@ -57,15 +70,24 @@ export const GEOMETRY_VALUE = {
   partJoint: " ",
 } as const;
 
+/** A grid child's own alignment in its cell as CSS (C-058); AUTO, the cell's own, writes nothing. */
+export const GRID_SELF: Readonly<Record<string, string>> = { MIN: "start", CENTER: "center", MAX: "end" };
+
 export const GEOMETRY_NUMBER = {
   /** A scaled layer's start and size are percents of its parent. */
   percent: 100,
+  /** CSS counts grid lines from 1, Figma's anchors from 0. */
+  firstLine: 1,
+  /** A child in one track is its line alone; past it, `N / span M`. */
+  oneTrack: 1,
 } as const;
 
 export const GEOMETRY_TEXT = {
   fromCentre: (sign: string, pixels: string) => `calc(50% ${sign} ${pixels})`,
   percent: (value: number) => `${value}%`,
   rotate: (degrees: number) => `rotate(${degrees}deg)`,
+  line: (line: number) => `${line}`,
+  span: (line: number, span: number) => `${line} / span ${span}`,
 } as const;
 
 /** The CSS the geometry group owns: where a layer is, how big, and how it is turned. */
@@ -83,6 +105,9 @@ export const GEOMETRY_ATTRIBUTES = [
   CSS_PROPERTY.maxHeight,
   CSS_PROPERTY.flex,
   CSS_PROPERTY.alignSelf,
+  CSS_PROPERTY.gridRow,
+  CSS_PROPERTY.gridColumn,
+  CSS_PROPERTY.justifySelf,
   CSS_PROPERTY.transform,
 ] as const;
 
@@ -99,6 +124,12 @@ export const GEOMETRY_SOURCES = [
   "layoutPositioning",
   "layoutSizingHorizontal",
   "layoutSizingVertical",
+  "gridRowAnchorIndex",
+  "gridColumnAnchorIndex",
+  "gridRowSpan",
+  "gridColumnSpan",
+  "gridChildHorizontalAlign",
+  "gridChildVerticalAlign",
   "minWidth",
   "maxWidth",
   "minHeight",

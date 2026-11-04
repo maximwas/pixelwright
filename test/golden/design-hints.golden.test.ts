@@ -35,6 +35,58 @@ describe("golden hints", () => {
   });
 });
 
+/** Orbit's gradient: CSS 135deg on a square, its stops at 14.64% and 85.36% of that line. */
+const ORBIT_GRADIENT = {
+  type: "GRADIENT_LINEAR",
+  visible: true,
+  gradientStops: [
+    { position: 0, color: { r: 0.23137255012989044, g: 0.18431372940540314, b: 0.8509804010391235, a: 1 } },
+    { position: 1, color: { r: 0.545098066329956, g: 0.3607843220233917, b: 0.9647058844566345, a: 1 } },
+  ],
+  gradientTransform: [
+    [0.707099974155426, 0.707099974155426, -0.2071000039577484],
+    [-0.707099974155426, 0.707099974155426, 0.5],
+  ],
+};
+
+// A token is one value in every tool: tokens_read values a paint style on a square, so design_read's JSON does too,
+// whatever layer it is bound on; a 200 x 120 tile draws it at 149.04deg in Figma, which a hint gives (the coverage
+// read of 185:282 found 149.04deg in the JSON and 135deg in tokens_read).
+describe("a gradient paint style bound on a box that is no square", () => {
+  it("is one token valued on a square, with the tile's own background as a hint", () => {
+    const read = reader.read(
+      model(
+        layer({
+          id: "1:1",
+          name: "Fills",
+          width: 240,
+          height: 160,
+          children: [
+            layer({
+              id: "1:2",
+              name: "Tile",
+              x: 20,
+              y: 20,
+              width: 200,
+              height: 120,
+              fills: [ORBIT_GRADIENT],
+              fillStyleId: "S:gradient",
+            }),
+          ],
+        }),
+        {
+          styles: { "S:gradient": { name: "Orbit/Gradient", type: "PAINT", remote: false, paints: [ORBIT_GRADIENT] } },
+        },
+      ),
+    );
+
+    expect(read.tokens["--Orbit-Gradient"]).toBe("linear-gradient(135deg, #3B2FD9 14.64%, #8B5CF6 85.36%)");
+    expect(read.hints).toContain(
+      "--Orbit-Gradient is linear-gradient(135deg, #3B2FD9 14.64%, #8B5CF6 85.36%) on a square, as tokens_read gives it; Figma draws it on each layer's own box, so where the box is no square write that layer's own background (background of 1:2: linear-gradient(149.04deg, #3B2FD9 14.64%, #8B5CF6 85.36%)): var(--Orbit-Gradient) would keep the square's angle.",
+    );
+  });
+});
+
 /** A card of frames with a left padding of 16, under a root without one. */
 const cards = (children: object[], variables: object = {}) =>
   model(layer({ id: "1:1", name: "Cards", layoutMode: "VERTICAL", children }), {
