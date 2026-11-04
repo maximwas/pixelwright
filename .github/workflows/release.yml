@@ -1,0 +1,113 @@
+name: Release
+
+# A tag v1.2.3 releases that version (S-133): the pixelwright package goes to npm, with the Figma plugin's build inside,
+# and a GitHub release carries the plugin as a zip for Import plugin from manifest, with the version's section of
+# CHANGELOG.md as its notes. npm trusts this workflow (trusted publishing, set on the package's npm settings page:
+# maximwas/pixelwright, release.yml, no environment), so the repository holds no token and the package gets provenance.
+# Only the publish job gets write permissions, and it runs none of the project's code (O-029).
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.engines.outputs.node }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      # The lowest Node package.json's engines allows, as CI runs.
+      - id: engines
+        run: echo "node=$(jq -r '.engines.node' package.json | tr -d '>= ')" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ steps.engines.outputs.node }}
+          cache: pnpm
+      # package.json's version is the one version source: the server, the CLI and the plugin read it.
+      - name: The tag is package.json's version
+        id: version
+        run: |
+          version="$(jq -r '.version' package.json)"
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "package.json is $version, the tag is $GITHUB_REF_NAME"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: CHANGELOG.md has this version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          grep -q "^## $VERSION — " CHANGELOG.md || { echo "Add a '## $VERSION — <YYYY-MM-DD>' section to CHANGELOG.md"; exit 1; }
+      # Until the release, builds are the dev channel (pixelwright-new, port 18721): npm must never get one.
+      - name: The build is the release channel
+        run: |
+          node --input-type=module -e '
+            import { CHANNEL } from "./src/shared/protocol/channel.constants.ts";
+            import manifest from "./package.json" with { type: "json" };
+            if (CHANNEL.name !== manifest.name) {
+              console.error(`src/shared/protocol/channel.constants.ts builds ${CHANNEL.name}, not ${manifest.name}`);
+              process.exit(1);
+            }'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm size
+      # Packs the package like npm publish, installs it into an empty folder and runs it there.
+      - run: pnpm check:pack
+      # What the publish job ships: this tarball (prepack builds it again), the plugin zip and the notes.
+      - name: The package, the plugin zip and the release notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          pnpm pack --pack-destination "$RUNNER_TEMP/release"
+          (cd dist/plugin && zip -r "$RUNNER_TEMP/release/pixelwright-figma-plugin-$VERSION.zip" .)
+          awk -v heading="## $VERSION — " 'index($0, heading) == 1 { on = 1; next } on && /^## / { exit } on' CHANGELOG.md > "$RUNNER_TEMP/release/notes.md"
+          printf '\nSet up: `npx -y pixelwright@latest setup` in a terminal, then restart Pixelwright in MCP clients that are still open (`/mcp` in Claude Code). The zip below is the Figma plugin for Plugins → Development → Import plugin from manifest.\n' >> "$RUNNER_TEMP/release/notes.md"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release
+          path: ${{ runner.temp }}/release/
+          if-no-files-found: error
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # the GitHub release
+      id-token: write # npm trusted publishing, with provenance
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release
+          path: release
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ needs.check.outputs.node }}
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or newer.
+      - run: npm install -g npm@11.17.0
+      # Safe to rerun (R-040+r): a version npm has already is left alone; npm shows a new one a minute or two later.
+      - name: Publish to npm, unless this version is there already
+        run: |
+          if [ -n "$(npm view "pixelwright@$VERSION" version 2>/dev/null)" ]; then
+            echo "pixelwright@$VERSION is on npm already"
+          else
+            npm publish release/*.tgz --access public
+          fi
+      - name: GitHub release with the plugin zip, unless it exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "The release $GITHUB_REF_NAME exists already"
+          else
+            gh release create "$GITHUB_REF_NAME" "release/pixelwright-figma-plugin-$VERSION.zip" --repo "$GITHUB_REPOSITORY" \
+              --title "Pixelwright $VERSION" --notes-file release/notes.md
+          fi

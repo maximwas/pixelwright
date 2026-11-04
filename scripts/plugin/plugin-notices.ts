@@ -5,7 +5,8 @@ import type { Metafile } from "esbuild";
 /** The package folder in a bundled input's path: the last node_modules, as pnpm nests them under .pnpm/<id>/. */
 const PACKAGE_PATH = /^(.*node_modules\/((?:@[^/]+\/)?[^/]+))\//;
 const LICENCE_FILE = /^licen[cs]e/i;
-const HEADER = "Third-party software in this bundle of the Pixelwright Figma plugin.";
+
+export const NOTICES_HEADER = "Third-party software in this bundle of the Pixelwright Figma plugin.";
 
 /**
  * The licence notices of every package a plugin bundle holds code of (P-063): MIT and its kin ask that their notice
@@ -36,7 +37,7 @@ export class PluginNotices {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([name, folder]) => this.#section(name, folder));
 
-    return `${HEADER}\n\n${sections.join("\n")}`;
+    return `${NOTICES_HEADER}\n\n${sections.join("\n")}`;
   }
 
   /** The notices as a comment at the end of a script: `*\/` would end the comment early, `</` an inline script. */

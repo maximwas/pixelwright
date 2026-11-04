@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixelwright docs</title>
+    <meta name="description" content="How to set up Pixelwright, what each of its tools reads, and the guide your agent reads: the workflow, the XML, tokens and assets." />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="./site.css" />
+    <script src="./nav.js" defer></script>
+  </head>
+  <body class="docs">
+    <a class="skip" href="#main">Skip to the content</a>
+    <div class="progress" aria-hidden="true"></div>
+    <header class="top">
+      <div class="top-inner">
+        <a class="wordmark" href="./" aria-label="Pixelwright docs">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d99ff" /><rect x="9" y="9" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.2" /><g fill="#0d99ff" stroke="#fff" stroke-width="1.8"><rect x="6.2" y="6.2" width="5.6" height="5.6" /><rect x="20.2" y="6.2" width="5.6" height="5.6" /><rect x="6.2" y="20.2" width="5.6" height="5.6" /><rect x="20.2" y="20.2" width="5.6" height="5.6" /></g></svg>
+          <span class="wordmark-text">Pixelwright</span>
+        </a>
+        <nav class="links" aria-label="Site">
+          <a href="./">Docs</a>
+          <a href="./changelog/">Changelog</a>
+          <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="https://ko-fi.com/maksymvasianin">Support</a>
+        </nav>
+        <a class="github" href="https://github.com/maximwas/pixelwright">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </header>
+    <div class="doc">
+      <nav class="toc" aria-label="On this page" data-follow="first">
+        <ol>
+          <li><a href="#quick-start">Quick start</a></li>
+          <li><a href="#try-it-on-the-demo">Try it on the demo</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#safety">Safety</a></li>
+          <li><a href="#limits">Limits</a></li>
+          <li><a href="#commands">Commands</a></li>
+          <li><a href="#updating">Updating</a></li>
+          <li><a href="#tools">Tools</a></li>
+          <li><a href="#guide-workflow">Guide: workflow</a></li>
+          <li><a href="#guide-xml">Guide: xml</a></li>
+          <li><a href="#guide-tokens">Guide: tokens</a></li>
+          <li><a href="#guide-assets">Guide: assets</a></li>
+        </ol>
+      </nav>
+      <main id="main" class="doc-body">
+        <h1>Pixelwright docs</h1>
+        <section id="quick-start">
+          <h2>Quick start</h2>
+<p>Requires Node.js 24.11 or newer and Figma Desktop. Run the setup in a terminal:</p>
+<pre><code class="language-bash">npx -y pixelwright@latest setup
+</code></pre>
+<p>It connects Claude Code and Cursor, shows what to paste for Codex and other MCP clients, and puts the Figma plugin in
+<code>~/.pixelwright/plugin</code>. Then, in Figma Desktop:</p>
+<ol>
+<li><strong>Plugins → Development → Import plugin from manifest…</strong> and pick <code>~/.pixelwright/plugin/manifest.json</code>, once.
+Figma loads the plugin from there every time you run it, and the setup puts the new one there on every update.</li>
+<li>Open your file and run <strong>Plugins → Development → Pixelwright</strong>. Keep its small window open while you work.</li>
+<li>The first time, the window asks for a pairing code: your agent shows it (from <code>status</code>); type it in.</li>
+<li>Select a section in Figma and ask your agent to build it.</li>
+</ol>
+<p><code>npx -y pixelwright@latest setup --print</code> asks nothing: it puts the plugin in place and prints the commands and config
+blocks, for scripts.</p>
+
+        </section>
+        <section id="try-it-on-the-demo">
+          <h2>Try it on the demo</h2>
+<p><a href="https://www.figma.com/design/JHfoyeEnpNChVEtjBGwhIo/Test-MCP?node-id=81-1541">Open the Orbit demo in Figma</a>: a small
+pricing site made for Pixelwright. Duplicate it to your drafts, run the plugin in your copy and ask your agent to read
+it: three breakpoints, an A/B hero, a prototype flow, Dev Mode notes and measurements, variables and styles, and
+components with variants, an exposed instance and a slot.</p>
+
+        </section>
+        <section id="how-it-works">
+          <h2>How it works</h2>
+<pre><code class="language-text">Claude Code ──stdio──► pixelwright ──ws://localhost:18720──► Pixelwright plugin ──Plugin API──► your Figma file
+</code></pre>
+<p>The plugin runs inside the file and answers the server on your computer. Every read goes through the Figma Plugin API,
+so nothing reaches api.figma.com and no seat or plan limits the number of calls. Several files can be connected at
+once; tools work on the one whose plugin window was in front last, or on the file you name.</p>
+
+        </section>
+        <section id="safety">
+          <h2>Safety</h2>
+<ul>
+<li><strong>No REST API, no token.</strong> The plugin reads the file through Figma&#39;s Plugin API, on your computer. The server
+listens on localhost only, and a plugin pairs once with a code you type in; unpaired windows get nothing.</li>
+<li><strong>This version reads.</strong> Every tool reads, except <code>execute</code>, which runs plugin code the agent writes, to read what no
+tool shows. <strong>Allow edits</strong> in the plugin window is off until you turn it on for a file; while it is off, the plugin
+refuses every write that code tries. Your choice is remembered per file on your computer. Ask for an edit, and your
+agent warns that editing is not supported in this version and goes on only when you say so.</li>
+<li><code>execute</code> runs code the agent writes: use Pixelwright with agents you trust, as you would with their build scripts.</li>
+<li><strong>What is stored where.</strong> <code>~/.pixelwright/</code> holds the plugin, the bridge&#39;s state (<code>bridge.json</code>), the shared log in
+<code>logs/</code>, npm&#39;s newest version (<code>latest.json</code>), the asset files written (<code>written-files.json</code>) and the library
+catalogues <code>library_search</code> saved (<code>libraries/</code>). Baselines go into the project&#39;s <code>.pixelwright/baselines/</code>. The
+plugin keeps its pairing key and your Allow edits choice in Figma&#39;s storage on your computer.</li>
+<li><strong>What goes online.</strong> The server asks npm for the newest version once a day, and <code>fonts_check</code> asks Fontsource and
+Google Fonts which fonts they serve. The plugin&#39;s only network access is the server on localhost.</li>
+</ul>
+
+        </section>
+        <section id="limits">
+          <h2>Limits</h2>
+<ul>
+<li>The file must be open in Figma Desktop with the plugin&#39;s window open. Figma slows plugins in background tabs: keep
+the file&#39;s tab in front during a long read.</li>
+<li>This version reads only. The tools that write to the file, and the design checks, come back in 0.9.0 and 0.10.0.</li>
+<li>Tested on macOS. On Windows the setup gives Claude Code <code>cmd /c npx …</code>, as its documentation asks; Windows itself is
+not tested yet.</li>
+</ul>
+
+        </section>
+        <section id="commands">
+          <h2>Commands</h2>
+<pre><code class="language-text">pixelwright                 in a terminal: the setup; started by an MCP client: the MCP server on stdio
+pixelwright setup           the setup: connects your MCP clients and puts the Figma plugin in place
+pixelwright setup --print   no questions: the plugin put in place, the commands and config blocks printed
+pixelwright serve           the MCP server, however it is started
+pixelwright logs            follow the logs of every running server on this machine: tool calls, plugins, errors
+pixelwright --version
+</code></pre>
+<p><code>PIXELWRIGHT_HOME</code> moves <code>~/.pixelwright</code>; <code>CLAUDE_PROJECT_DIR</code> names the project (baselines, and relative paths when
+the client gives no root); <code>PIXELWRIGHT_PLUGIN_BRIDGE=off</code> starts the server without the bridge;
+<code>PIXELWRIGHT_NO_UPDATE_CHECK=1</code> stops asking npm for a newer version (see Updating); <code>PIXELWRIGHT_LOG_LEVEL=debug</code>
+adds the bridge&#39;s details to the log.</p>
+
+        </section>
+        <section id="updating">
+          <h2>Updating</h2>
+<p>MCP clients start <code>pixelwright@latest</code>, so a client started again runs the newest server. The plugin is a copy on your
+computer: run <code>npx -y pixelwright@latest setup</code> again (or <code>setup --print</code>) to put the matching one in
+<code>~/.pixelwright/plugin</code>. Figma Desktop loads it the next time you run the plugin. When the plugin&#39;s window says the
+protocol versions differ, this is the fix.</p>
+<p>When a newer version is out, the plugin&#39;s window says so at the top. Close it, and it stays closed until the next
+version. The server asks npm for the newest version once a day (the answer kept in <code>~/.pixelwright/latest.json</code>);
+<code>PIXELWRIGHT_NO_UPDATE_CHECK=1</code> turns that off.</p>
+<p>Every MCP client session runs its own server. The first one holds the bridge port and the others work through it, so
+every client sees every connected file. A newer server takes the bridge over; the older one then asks you to restart
+Pixelwright in its client (<code>/mcp</code> in Claude Code).</p>
+<h4>From 0.7.0 to 0.8.0</h4>
+<ul>
+<li><strong>Put the new plugin in place.</strong> Run <code>npx -y pixelwright@latest setup</code> and run the plugin again: a 0.7.0 plugin
+cannot connect to 0.8.0, whose protocol changed. The plugin&#39;s path is the same, so you import nothing again.</li>
+<li><strong>Restart Pixelwright in every MCP client still open</strong> (<code>/mcp</code> in Claude Code): a 0.7.0 server that keeps running
+keeps 0.7.0&#39;s answers.</li>
+<li><strong>0.8.0 reads.</strong> The tools that wrote to the file, and the design checks, are gone until 0.9.0 and 0.10.0; <code>execute</code>
+stays, to read. Code Connect is gone too: the XML no longer carries your project&#39;s code for an instance.</li>
+<li><strong>An argument a tool does not name is an error now</strong>, which names it; 0.7.0 ignored it.</li>
+<li>Baselines 0.7.0 saved still read: <code>baseline_diff</code> compares against them as they are.</li>
+</ul>
+
+        </section>
+        <section id="tools">
+          <h2>Tools</h2>
+<p>Every tool the server registers, as your agent sees it. A tool marked <span class="writes">can write</span> changes the file only while Allow edits is on in the plugin's window.</p>
+<section class="tool" id="tool-assets_export">
+<h3><code>assets_export</code> Export assets</h3>
+<p>Writes files out of the design into dir. nodes: up to 50 layers, one file each (SVG for an icon, PNG at 2x otherwise, or the format and scale given; PDF too; WEBP keeps transparency exactly at any quality, which sets how lossy its colours are, 85 by default). from: every true asset inside one layer, the icons and images design_read would plan. original: the images as they were placed instead of renders (photos at full size, in their own format). Files are named after their layer (Rectangle 61: rectangle-61.png), or as names gives a layer id. The same bytes are written once, a name taken by other bytes gets -2, and a file already in dir is never overwritten with other bytes. A layer that cannot be exported is reported in errors and the rest are still written.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>Layers to write, one file each: SVG for an icon, PNG otherwise, unless format says. Give nodes or from.</td></tr>
+<tr><td><code>from</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer to write every true asset of (its icons and images, as design_read plans them). Give nodes or from.</td></tr>
+<tr><td><code>dir</code></td><td><code>string</code></td><td>The folder to write into; created if missing. Files already there are never overwritten with other bytes. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
+<tr><td><code>names</code><span class="optional">optional</span></td><td><code>object</code></td><td>A file name per layer id, e.g. {&quot;54:12&quot;: &quot;hero-mountains&quot;}: slugged, the extension added. The other layers are named after themselves (Rectangle 61: rectangle-61.png).</td></tr>
+<tr><td><code>format</code><span class="optional">optional</span></td><td><code>&quot;PNG&quot; | &quot;JPG&quot; | &quot;WEBP&quot; | &quot;SVG&quot; | &quot;PDF&quot;</code></td><td>For nodes: the format of every file. WEBP is rendered as PNG by Figma and encoded here.</td></tr>
+<tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code></td><td>For PNG, JPG and WEBP: pixels per Figma pixel, or per CSS px with width. Default 2.</td></tr>
+<tr><td><code>width</code><span class="optional">optional</span></td><td><code>number</code></td><td>For nodes as PNG, JPG or WEBP: the CSS width the build shows the layer at; the file is width × scale px wide (110 at scale 2: 220 px).</td></tr>
+<tr><td><code>quality</code><span class="optional">optional</span></td><td><code>integer</code></td><td>For WEBP: the colours&#39; quality, 1 to 100. Default 85. Transparency is kept exactly at any quality.</td></tr>
+<tr><td><code>original</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Write the images as they were placed (not cropped, filtered or scaled) instead of renders, with their real format: with nodes, each layer&#39;s topmost visible image fill, any others noted. A video fill cannot be exported.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-baseline_diff">
+<h3><code>baseline_diff</code> What changed since a baseline</h3>
+<p>What the designer changed since baseline_save, in design_read&#39;s terms: each layer changed (its attributes as [before, after], a text&#39;s content as XML), added (with its XML when short), removed or hidden, moved to another parent or reordered; a change made in a component once, with the instances it reached and how many were compared (of); tokens whose value changed in any mode, renamed, newly used or no longer used; icons and images drawn anew (drawing: export them again). Layers are followed by id, a replaced one by its name. It sees what changes_since and Figma&#39;s own Changed mark miss: edits made while the plugin was closed, accepted library updates, variable and style values. Without name: every baseline in the project with how much changed; call it when a session starts or the user says the design changed. It reads the file the baseline came from and works while Allow edits is off. Change only the code it names (code lists the files), then call baseline_save with the accept it gives.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td>One baseline in detail. Without it: every baseline in the project, with how much changed.</td></tr>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>Compare with this layer instead of the baseline&#39;s own, e.g. a v2 the designer made beside it. Needs name.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>With name: compare in this file (a session from status, or a file name). Without name: only this file&#39;s baselines. Default: the file each baseline came from.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-baseline_save">
+<h3><code>baseline_save</code> Keep a baseline</h3>
+<p>Keeps a layer as you build code from it, so baseline_diff can tell later what the designer changed: its read and the values of the tokens it uses, in every mode, go into .pixelwright/baselines/&lt;name&gt;.json in the project (it holds the design&#39;s texts: commit the folder to share it, or leave it out of git). Save right after the design_read you build a screen or section from; name it after your code (pricing, plan-card) and list in code the files you build from it. Once your code has the changes a baseline_diff listed, pass the accept it gave: exactly the design it compared is kept, so what the designer changed after it still shows next time. An existing name is replaced only with accept or replace: true; code alone changes its file list. Writes nothing to Figma, so it works while Allow edits is off.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer the code is built from: a frame, section, component or instance. Default: the one selected layer. Not with accept.</td></tr>
+<tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td>Named after the code: pricing, plan-card. Default: the layer&#39;s name as a slug. Required with accept.</td></tr>
+<tr><td><code>code</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The project&#39;s files built from the layer, relative to the project. Default: the list the baseline already has.</td></tr>
+<tr><td><code>accept</code><span class="optional">optional</span></td><td><code>string</code></td><td>The accept a baseline_diff answer gave: keeps exactly the design that diff compared.</td></tr>
+<tr><td><code>replace</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Start the named baseline over from the layer as it is now. Not with accept.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-breakpoints_find">
+<h3><code>breakpoints_find</code> Find a screen's other widths</h3>
+<p>Finds the screen a layer is on at the page&#39;s other widths (Desktop, Tablet, Mobile): the page&#39;s frames, and those in its sections, whose names match once size words are left out (Desktop, Mobile, 1440, 375px) and whose children share names with it, narrowest first, each with a score. Compare them with nodes_diff to write the media queries.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code></td><td><code>string</code></td><td>A screen&#39;s id, or a layer&#39;s on it.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-changes_since">
+<h3><code>changes_since</code> What changed</h3>
+<p>What changed in the file since the plugin started watching (its window opened) or since an earlier answer&#39;s cursor: each layer created, deleted or changed (with the properties), by the user, a collaborator or Pixelwright itself, on the page the user was on. Ask with no cursor once to start, then with the cursor it gives, to read again only what the designer changed. Only pages the user had open while the plugin ran are watched. Pixelwright&#39;s own are the layers its writes touched, and what execute&#39;s code changed while it ran (or within a second after); in a background tab Figma tells of changes up to a minute late, so those of execute then count as the user&#39;s, as do changes from code execute left running. What changed while the plugin was closed, and token values, baseline_diff tells against a saved baseline.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>cursor</code><span class="optional">optional</span></td><td><code>integer</code></td><td>The cursor an earlier answer gave: only what changed after it. Default: all the plugin has seen.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-components_read">
+<h3><code>components_read</code> Read the components</h3>
+<p>Lists components: scope used (default) gives the ones the instances on the current page, or inside <code>within</code>, come from (a library&#39;s among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description and <code>exposed</code> (the nested instances whose properties its instances show: in code they are its props too). <code>links: true</code> also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in <code>path</code>. A big section lists long: <code>fields</code> keeps only the ones named, so scope local with query &quot;icon/&quot; and fields [&quot;name&quot;] lists the icon sets by name.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>scope</code><span class="optional">optional</span></td><td><code>&quot;local&quot; | &quot;used&quot;</code><br /><span class="default">default &quot;used&quot;</span></td><td>used: what the page (or within) uses; local: what the file defines.</td></tr>
+<tr><td><code>within</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer or page id to look in. Default: the current page (used) or every page (local).</td></tr>
+<tr><td><code>query</code><span class="optional">optional</span></td><td><code>string</code></td><td>Only components whose name contains this, e.g. &quot;icon/&quot; for the icon sets.</td></tr>
+<tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 100</span></td><td></td></tr>
+<tr><td><code>fields</code><span class="optional">optional</span></td><td><code>&quot;id&quot; | &quot;key&quot; | &quot;type&quot; | &quot;name&quot; | &quot;page&quot; | &quot;remote&quot; | &quot;description&quot; | &quot;variants&quot; | &quot;properties&quot; | &quot;instances&quot; | &quot;exposed&quot; | &quot;links&quot; | &quot;error&quot;[]</code></td><td>Only these fields of each component, e.g. [&quot;name&quot;, &quot;id&quot;, &quot;description&quot;]. Default: all.</td></tr>
+<tr><td><code>links</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also read the links people attached in Dev Mode (Figma&#39;s servers, paid plans only).</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-design_read">
+<h3><code>design_read</code> Read a design</h3>
+<p>Reads a layer (a section, a card, a screen) as Pixelwright&#39;s XML: Figma&#39;s layer types as tags, ids to name a layer in the other tools; a hidden layer is a stub with display=&quot;none&quot;. The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets, measurements (the designer&#39;s Dev Mode measurements, when there are any), hints (what the code should know or fix, one per kind with a count and examples) and truncated (ids of layers the read cut: $children=&quot;N&quot; where not all children were read, $truncated=&quot;true&quot; where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat=&quot;N&quot;, and JSON repeats holds each one&#39;s own values as rows; with nearby, JSON nearby lists the designer&#39;s notes around the screen. For a big frame, find its sections with outline first; guide xml explains every tag and attribute.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243. Default: the one layer selected in Figma.</td></tr>
+<tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below the layer to read. Default: all.</td></tr>
+<tr><td><code>screenshot</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also return the layer&#39;s image, to compare your build with.</td></tr>
+<tr><td><code>maxChars</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 80000</span></td><td>The most characters of XML: past it the deepest branches, then long lists, then long texts are cut. Default: 80000.</td></tr>
+<tr><td><code>repeats</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Read each run of three or more alike neighbours as its first, with $repeat and JSON rows. Default: false.</td></tr>
+<tr><td><code>autoLineHeight</code><span class="optional">optional</span></td><td><code>&quot;normal&quot; | &quot;px&quot;</code><br /><span class="default">default &quot;normal&quot;</span></td><td>How to write Figma&#39;s Auto line height: normal (default), or px, the px Figma renders it at where the read can tell (a text that hugs its lines shows it for its font and size), normal elsewhere.</td></tr>
+<tr><td><code>nearby</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Also list the designer&#39;s notes on the canvas within this many px of the screen holding the layer (texts, stickies, small frames of text beside it or over it), e.g. 400: the JSON&#39;s nearby.</td></tr>
+<tr><td><code>assetsDir</code><span class="optional">optional</span></td><td><code>string</code></td><td>Write the read&#39;s assets into this folder (icons as SVG, images as PNG at 2x, backgrounds as the original image) and point each src at its file; created if missing, a file already there is never overwritten with other bytes. Without it src names are plans. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-execute">
+<h3><code>execute</code> Run plugin code <span class="writes">can write</span></h3>
+<p>Runs JavaScript in the Pixelwright plugin to read the file, for what the read tools do not show: the code is the body of an async function given <code>figma</code> (the Plugin API, without clientStorage, ui, closePlugin and showUI), <code>console</code> and <code>pw</code>; <code>return</code> gives <code>result</code> (layers come back as {id, type, name}, figma.mixed as &quot;mixed&quot;), and what it logs comes back as <code>logs</code>. What it throws comes back as <code>error</code>, with the logs before it. <code>pw</code> stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright&#39;s helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess &quot;dynamic-page&quot;: use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma&#39;s own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin&#39;s Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in <code>note</code>.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>code</code><span class="optional">optional</span></td><td><code>string</code></td><td>JavaScript run as the body of an async function with <code>figma</code> (the Plugin API) and <code>console</code>: <code>await</code> works, <code>return</code> gives the result. Give code or script.</td></tr>
+<tr><td><code>script</code><span class="optional">optional</span></td><td><code>string</code></td><td>A file of such code on the server&#39;s disk, run instead of code. It is read at every call, so the file as it is now runs, after a plugin restart too. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
+<tr><td><code>timeout</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 10</span></td><td>Seconds to wait for the code: 10 by default, up to 300 for a long task.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-file_map">
+<h3><code>file_map</code> Map the file</h3>
+<p>Every page of the file by id and name, with its top layers (frames, sections, components) and, inside each section, its own, with their types and sizes, in one call: where to start in a big file. Pages load one at a time; past the time a call has, more: true and the pages left have no nodes (outline them one by one). A page Figma cannot load (its connection is down, say) has no nodes either and is in pagesNotRead with Figma&#39;s words; the other pages are still mapped.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-flow_read">
+<h3><code>flow_read</code> Map the prototype</h3>
+<p>A page&#39;s prototype as a map, for an app&#39;s routes: where its flows start, its screens (the page&#39;s frames, and those in its sections) with their sizes, and every interaction that leaves its layer: from which screen and layer, on what trigger, to which screen (or back, close, a URL), and how it moves (&quot;navigate to Detail; smart animate 300ms ease-out&quot;). A variant switch stays inside its component and is read by design_read as $on-*.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>page</code><span class="optional">optional</span></td><td><code>string</code></td><td>The page&#39;s id. Default: the current page.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-fonts_check">
+<h3><code>fonts_check</code> Check the fonts</h3>
+<p>The fonts a layer&#39;s texts use (the selected layer&#39;s by default), by family with the weights used, and where the build gets each: whether Google Fonts serves it, with a ready css2 link for those weights, and the weights it lacks; a family Google Fonts does not have needs its own files. Google Fonts&#39; public catalogue is read once (no key); offline, the fonts are still listed.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer whose texts&#39; fonts to check (a section, a screen). Default: the one layer selected in Figma.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-guide">
+<h3><code>guide</code> Pixelwright guide</h3>
+<p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named and read: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).). Read workflow first in a new task, and xml before building from design_read.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-image_compare">
+<h3><code>image_compare</code> Compare a layer with an image or a layer</h3>
+<p>Renders a layer as screenshot does (scale, effects and clip alike) and compares it with a PNG on disk, typically a screenshot of your build at the same size, or with another layer (against) rendered the same way, a variant against its default or a rebuilt frame against the original: rmse (0 to 255) and the share of differing pixels over the part both cover, the box around the differences, and the edges: each horizontal (rows, by y) and vertical (columns, by x) edge of the reference matched, shifted by a few px (by: how far the render&#39;s is off), missing, or extra in the render. diff writes a PNG of the difference. Take the reference at the render&#39;s density (scale 2 for a 2x screenshot). Works while Allow edits is off.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243.</td></tr>
+<tr><td><code>reference</code><span class="optional">optional</span></td><td><code>string</code></td><td>The PNG to compare with, e.g. a screenshot of your build at the same size: its path. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
+<tr><td><code>against</code><span class="optional">optional</span></td><td><code>string</code></td><td>Another layer&#39;s id to compare with instead of a PNG, rendered the same way: a variant against its default, a rebuilt frame against the original.</td></tr>
+<tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel of the render: the reference&#39;s density.</td></tr>
+<tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Render shadows and outside strokes around the layer; false renders only its own box.</td></tr>
+<tr><td><code>clip</code><span class="optional">optional</span></td><td><code>object</code></td><td>Only this region of the layer, in Figma px from its box&#39;s top left (before scale); with effects on it may reach into what paints around the box.</td></tr>
+<tr><td><code>diff</code><span class="optional">optional</span></td><td><code>string</code></td><td>A .png path to write the difference to: the render faded, every differing pixel red. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-inspect">
+<h3><code>inspect</code> Inspect layers</h3>
+<p>Reads layers as Figma has them, for what design_read&#39;s CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill with CSS&#39;s mix-blend-mode name, the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to) and every fill&#39;s type (a video&#39;s too), the variables bound to its padding, gap, radius and size by the token design_read writes, how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma&#39;s own parameters (a progressive blur&#39;s start and end, noise, texture), a text&#39;s lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component&#39;s variant. Boxes and each layer&#39;s centre are measured from relativeTo&#39;s top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle&#39;s id, or a point) adds each centre&#39;s distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids, e.g. [&quot;54:243&quot;]. Default: the layers selected in Figma.</td></tr>
+<tr><td><code>relativeTo</code><span class="optional">optional</span></td><td><code>string</code></td><td>A layer (a section, a frame) whose top left the boxes are measured from. Default: the page&#39;s.</td></tr>
+<tr><td><code>around</code><span class="optional">optional</span></td><td><code>string | object</code></td><td>A point to measure each layer&#39;s distance and angle from: a layer&#39;s id (its centre, e.g. a ring&#39;s), or {x, y} in the boxes&#39; origin (relativeTo&#39;s top left, or the page&#39;s). The angle matches CSS rotate(): 0 straight up, then clockwise to 360.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-library_search">
+<h3><code>library_search</code> Search the saved component libraries</h3>
+<p>Finds components in the team&#39;s libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer, in the libraries folder of Pixelwright&#39;s home; save again after the library changes. Then query from any file: every word must appear in a component&#39;s name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:&lt;key&gt;, the component&#39;s key in its library) and properties, which in code are its props. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>query</code><span class="optional">optional</span></td><td><code>string</code></td><td>Words to find in the components&#39; names, descriptions, pages and variants, in any order (button hover); a typo still finds. Left out, the saved libraries are listed.</td></tr>
+<tr><td><code>save</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Save the file&#39;s own published components as a library first, replacing what was saved for it before: call it in the library file, open in Figma Desktop with the Pixelwright plugin.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+<tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 20</span></td><td>The most components to give.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-measure">
+<h3><code>measure</code> Measure between layers</h3>
+<p>Measures the distances between layers, each from the one before it in the list (a→b, b→c, so a row&#39;s rhythm shows): the gap between their boxes on each axis (negative where they overlap), how their edges and centres line up (B&#39;s minus A&#39;s: 0 is aligned), and, when one holds the other, how far it sits from each edge, as padding. Layout boxes by default; painted: true measures what is painted (strokes, shadows). A sentence per pair says it plainly. Works while Allow edits is off.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>The layers&#39; ids in the order to measure, each from the one before, e.g. [&quot;54:244&quot;, &quot;54:268&quot;]. Default: the layers selected in Figma.</td></tr>
+<tr><td><code>painted</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Measure what is painted (centred or outside strokes, shadows, blur) instead of the layout boxes.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-node_show">
+<h3><code>node_show</code> Show layers</h3>
+<p>Brings layers into view in Figma (switching to their page when needed) and selects them, so the user sees what you mean: one layer, or several on one page, fitted in view or at a zoom (1 is 100%) centred on them; select: false only moves the view. Changes only the view and the selection, never the file.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243. Give node or nodes.</td></tr>
+<tr><td><code>nodes</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>Several layers on one page, fitted in view together.</td></tr>
+<tr><td><code>zoom</code><span class="optional">optional</span></td><td><code>&quot;fit&quot; | number</code><br /><span class="default">default &quot;fit&quot;</span></td><td>&quot;fit&quot; (default), or a zoom: 1 is 100%, 0.5 is 50%.</td></tr>
+<tr><td><code>select</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Select them too (default), or only bring them into view.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-nodes_diff">
+<h3><code>nodes_diff</code> Compare two layers</h3>
+<p>Compares two layers (A/B variants of a screen, a card and its copy) as design_read reads them: layers are matched by their path of names below each root (same-named siblings in order), and the answer lists the layers only A or only B has, and for each layer both have, the attributes that differ as [A&#39;s, B&#39;s] (text as $text, an instance&#39;s variant and props too) and whether an icon&#39;s or image&#39;s own drawing differs (paths, colours, inner layers). Ids and the two roots&#39; own names and places are left out. Works while Allow edits is off. To compare a layer with how it was when you built it, use baseline_diff.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>a</code></td><td><code>string</code></td><td>The first layer&#39;s id (variant A), e.g. 54:243.</td></tr>
+<tr><td><code>b</code></td><td><code>string</code></td><td>The second layer&#39;s id (variant B).</td></tr>
+<tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code></td><td>Levels below each layer to compare. Default: all.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-nodes_find">
+<h3><code>nodes_find</code> Find layers</h3>
+<p>Finds layers on the current page, or inside <code>within</code> (a layer, a page, or &quot;file&quot; for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring), component (an instance&#39;s component or component set name) or variant (an instance&#39;s variant values, &quot;State=Hover, Size=L&quot;). Returns ids, names, types, boxes and the names of their ancestors, at most <code>limit</code> (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>name</code><span class="optional">optional</span></td><td><code>string</code></td><td></td></tr>
+<tr><td><code>type</code><span class="optional">optional</span></td><td><code>string</code></td><td></td></tr>
+<tr><td><code>text</code><span class="optional">optional</span></td><td><code>string</code></td><td></td></tr>
+<tr><td><code>component</code><span class="optional">optional</span></td><td><code>string</code></td><td></td></tr>
+<tr><td><code>variant</code><span class="optional">optional</span></td><td><code>string</code></td><td>Instances of one variant, e.g. &quot;State=Hover, Size=L&quot;: every value given must be the main component&#39;s (in any order and case; the rest may be anything).</td></tr>
+<tr><td><code>counts</code><span class="optional">optional</span></td><td><code>boolean</code></td><td>Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.</td></tr>
+<tr><td><code>within</code><span class="optional">optional</span></td><td><code>&quot;file&quot; | string</code></td><td>Where to search: a layer or page id, or &quot;file&quot; for every page. Default: the current page.</td></tr>
+<tr><td><code>limit</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 50</span></td><td></td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-outline">
+<h3><code>outline</code> Outline a frame</h3>
+<p>The layer tree of a frame, a page or the current page, as light XML: tag (the Figma type), id, name and box (x and y relative to the outlined node) per layer, to <code>depth</code> levels; an instance also names its component and variant, so repeated components show. Use it to find the sections of a big frame before reading one with design_read. A layer with <code>$children=&quot;N&quot;</code> has N children not listed here: outline it on its own.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer or page id, or 0:0 for the list of pages. Default: the current page.</td></tr>
+<tr><td><code>depth</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 3</span></td><td>How many levels below the node to list (1 to 10).</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-screenshot">
+<h3><code>screenshot</code> Screenshot a layer</h3>
+<p>Renders a layer to PNG so you can see it: a section to build, or your result to check. Returned inline at most 2000 px on a side: a larger layer comes scaled down to fit, and the text says its full size. For details of a tall layer screenshot one section of it (outline lists them), or pass clip for a region of it; pass save to write the PNG full size to a file instead.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code></td><td><code>string</code></td><td>The layer&#39;s id, e.g. 54:243.</td></tr>
+<tr><td><code>scale</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>Pixels per Figma pixel: 2 for a sharp look, below 1 to fit.</td></tr>
+<tr><td><code>effects</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Include shadows and outside strokes around the layer; false renders only its own box.</td></tr>
+<tr><td><code>save</code><span class="optional">optional</span></td><td><code>string</code></td><td>Write the PNG to this file (any size) instead of returning it. A relative path starts in the project folder: the MCP client&#39;s root, else CLAUDE_PROJECT_DIR, else the server&#39;s working directory.</td></tr>
+<tr><td><code>clip</code><span class="optional">optional</span></td><td><code>object</code></td><td>Only this region of the layer, in Figma px from its box&#39;s top left (before scale); with effects on it may reach into what paints around the box.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-selection_get">
+<h3><code>selection_get</code> Read the selection</h3>
+<p>Lists the layers the user selected in Figma (id, name, type, box in page coordinates). Call it when the user says &quot;this&quot;, &quot;the selected one&quot; or &quot;what I picked&quot;, then read those ids with design_read or outline.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-selection_wait">
+<h3><code>selection_wait</code> Wait for a selection</h3>
+<p>Waits until the user selects something in Figma, then answers with the selection, as selection_get does (changed: false when the time ran out first). Tell the user what to select before calling it: &quot;select the card you mean in Figma&quot;.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>timeout</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 60</span></td><td>Seconds to wait for the user to select something: 60 by default, 300 at most.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-status">
+<h3><code>status</code> Connection status</h3>
+<p>Lists the Figma files whose Pixelwright plugin is connected (name, current page, editor, whether Allow edits is on) and marks the active one: the file whose plugin window was in front last, which every tool uses when no file is named. Call it first, and whenever a tool says no file is connected: hint says what to do. While a plugin waits to be paired, pairing holds the code: tell the user to type it into the Pixelwright window, and never type or send it yourself. probe: true also pings the active file&#39;s plugin. key is the file key of figma.com links, given by Figma to private organization plugins only, so it is mostly null: then ask the user for the file&#39;s link.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>probe</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also ping the active file&#39;s plugin and report the round trip.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-styles_compare">
+<h3><code>styles_compare</code> Compare a build's styles with the design</h3>
+<p>Whether a build has each style the design sets, property by property. Give pairs: a layer (design_read&#39;s id) and the computed styles of the element that draws it, as the browser gives them: Object.fromEntries([...getComputedStyle(el)].map((p) =&gt; [p, getComputedStyle(el).getPropertyValue(p)])), or only the properties a first call lists in notGiven. Each layer is read as design_read writes it: in its parent when another pair&#39;s layer holds it, else as a read of its own (its size, not its place); its tokens and text style in and its shorthands spread into longhands (padding into padding-top…, border into each side&#39;s width, style and colour, font into family, size, weight, style and line height, gap into row-gap and column-gap, the main axis&#39;s only in a flex that does not wrap). mismatches gives each property the build has otherwise with both values and the token or text style it comes from; notGiven what the build&#39;s styles leave out; notCompared what a computed style cannot be held against (offsets in percent or calc(), fr tracks). Sizes and places may be off by tolerance px; other lengths, colours (hex or rgb()), shadows, gradients and transforms compare by value. What the design leaves unset is not checked, nor a hidden layer. Layers with differences come first. image_compare compares the pixels. Works while Allow edits is off.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>pairs</code></td><td><code>object[]</code></td><td>Each layer with the build&#39;s computed styles for it.</td></tr>
+<tr><td><code>tolerance</code><span class="optional">optional</span></td><td><code>number</code><br /><span class="default">default 1</span></td><td>How far a size or a place may be off, in px (1 by default): layout rounds them. Other lengths, colours and numbers compare as CSS computes them.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-tokens_read">
+<h3><code>tokens_read</code> Read the design tokens</h3>
+<p>Reads the file&#39;s design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection&#39;s default mode and the styles, and every mode of a collection with several is a block [data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;] (the default&#39;s too, so an element in it resets inside another mode&#39;s) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable&#39;s scopes (when not every field) and code syntax; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries&#39; variables by name. notes say what could not be written.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>collections</code><span class="optional">optional</span></td><td><code>string[]</code></td><td>Only these variable collections, by name (case does not matter). Default: all of them.</td></tr>
+<tr><td><code>libraries</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default false</span></td><td>Also list the enabled libraries&#39; variables, by name and type: their values are read only once the file uses them.</td></tr>
+<tr><td><code>used</code><span class="optional">optional</span></td><td><code>boolean</code><br /><span class="default">default true</span></td><td>Also take the styles and variables the layers on the current page (or within) use, a team library&#39;s among them. A file that uses a library has its tokens there.</td></tr>
+<tr><td><code>within</code><span class="optional">optional</span></td><td><code>string</code></td><td>The layer or page whose used tokens to take. Default: the current page.</td></tr>
+<tr><td><code>format</code><span class="optional">optional</span></td><td><code>&quot;css&quot; | &quot;json&quot; | &quot;dtcg&quot;</code><br /><span class="default">default &quot;css&quot;</span></td><td>css: ready custom properties, a block per extra mode. json: the token model, per collection and mode. dtcg: Design Tokens Format (DTCG 2025.10) trees, one per collection mode (<code>&lt;collection&gt;.&lt;mode&gt;</code>) and one of styles, each to save as its own .json file.</td></tr>
+<tr><td><code>maxChars</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 80000</span></td><td>Longest output; past it the summary comes back with the first whole tokens that fit, and you read collections one at a time.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-tokens_usage">
+<h3><code>tokens_usage</code> Where a token is used</h3>
+<p>The layers on the current page (or inside within, or on every page with within: &quot;file&quot;) that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>token</code></td><td><code>string</code></td><td>A style&#39;s or variable&#39;s token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg.</td></tr>
+<tr><td><code>within</code><span class="optional">optional</span></td><td><code>&quot;file&quot; | string</code></td><td>The layer or page to look in, or &quot;file&quot; for every page (loading them all is slow on a big file). Default: the current page.</td></tr>
+<tr><td><code>budgetMs</code><span class="optional">optional</span></td><td><code>integer</code><br /><span class="default">default 20000</span></td><td>How long the scan may take, in ms; when it is spent the layers found so far come back with a note. Default: 20000.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-variants_read">
+<h3><code>variants_read</code> Read a component's states</h3>
+<p>How each variant of a component set differs from its default one (the top-left, as Figma takes it), as nodes_diff says it: the attributes each changes as [the default&#39;s, this one&#39;s], the layers only one has, its properties, and the CSS pseudo-class a state value suggests (Hover → :hover, Pressed → :active, Focused → :focus-visible, Disabled → :disabled). Give the set, a variant or an instance. Build the default, then each state as its difference.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>node</code></td><td><code>string</code></td><td>A component set&#39;s id, or one of its variants&#39;, or an instance&#39;s: its set is read.</td></tr>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+<section class="tool" id="tool-viewport_get">
+<h3><code>viewport_get</code> What the user sees</h3>
+<p>What the user is looking at in Figma now: the page, the zoom, the part of the page in view (page px), and the page&#39;s layers and their children that meet it, outermost first. Use it when the user says &quot;this&quot; or &quot;here&quot; without selecting anything; selection_get gives what is selected.</p>
+<table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
+<tr><td><code>file</code><span class="optional">optional</span></td><td><code>string</code></td><td>The file to work on: its session from status or its name. Default: the active file.</td></tr>
+</tbody></table>
+</section>
+        </section>
+        <section id="guide-workflow">
+          <h2>Guide: workflow</h2>
+<p class="topic-about">Which tool to use when, from finding a section to its files, and how to read a design like a web developer. The agent reads this with <code>guide</code> topic <code>workflow</code>.</p>
+<p>Pixelwright reads the files open in Figma Desktop through its plugin; nothing goes through Figma&#39;s REST API. This
+version reads only: no tool changes the file. Every tool that reads a file takes <code>file</code> (a session id from <code>status</code>,
+or a file name); without it, the active file.</p>
+<ol>
+<li><strong>Connection.</strong> <code>status</code> lists the connected files and which one is active. None connected: the user runs the
+Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code <code>status</code>
+shows into the plugin window; never type or send it yourself).</li>
+<li><strong>Find what to read.</strong><ul>
+<li><code>file_map</code>: every page with its frames, sections and components, in one call: where to start in a big file.</li>
+<li><code>selection_get</code>: what the user selected (&quot;this&quot;, &quot;the selected one&quot;). <code>selection_wait</code>: ask the user to select
+something, then wait for it. <code>viewport_get</code>: what the user is looking at, when &quot;this&quot; comes with no selection.</li>
+<li><code>outline</code>: the layer tree with boxes, x and y relative to the outlined layer; <code>node: &quot;0:0&quot;</code> lists the pages. A
+layer with <code>$children=&quot;N&quot;</code> has more children than listed: outline it on its own. An instance names its
+<code>component</code> and <code>variant</code>, so repeated cards show without a read; <code>dev</code> marks what the designer handed over for
+development: build those first, not drafts.</li>
+<li><code>nodes_find</code>: layers by name, type, text, component or an instance&#39;s <code>variant</code> (&quot;State=Hover, Size=L&quot;), on the
+current page, inside a layer or across the file (<code>within: &quot;file&quot;</code>). <code>counts: true</code> counts every instance found
+by component and variant: which variants the layers use.</li>
+<li><code>node_show</code>: brings layers into view and selects them, so the user sees which you mean.</li>
+<li><code>changes_since</code>: what the designer changed since you last looked (a cursor), to read again only that.</li>
+</ul>
+</li>
+<li><strong>Read one section.</strong> <code>design_read</code> returns the section as XML (<code>guide xml</code> explains every tag and attribute),
+then JSON with tokens, text styles, fonts, assets, hints and truncated, plus <code>measurements</code> (the designer&#39;s Dev
+Mode measurements, in px) when the section has them. Read sections, not whole pages: past <code>maxChars</code> (80 000) the
+deepest branches are left empty with <code>$truncated=&quot;true&quot;</code> and their ids listed in <code>truncated</code>; read each on its own.
+Pass <code>assetsDir</code> (e.g. src/assets) to get its icons and images written as files (<code>guide assets</code>).
+<code>repeats: true</code> reads a list of alike items once (<code>$repeat</code>), with their data as rows: shorter, and the list&#39;s
+shape plain. <code>nearby: 400</code> adds the designer&#39;s notes on the canvas around the screen (texts and stickies beside
+it, nearest first): read them, they often say what the layers cannot (states, motion, copy to change).</li>
+<li><strong>Look at it.</strong> <code>screenshot</code> renders a layer to PNG (inline up to 2000 px a side, scaled down to fit; <code>save</code>
+writes a .png file full size; <code>clip</code> takes a region of it, in px from its box). Compare your build with it:
+<code>image_compare</code> renders a layer the same way and compares it with a PNG of your build, or with another layer
+(<code>against</code>): rmse, the share of pixels that differ, the box around them, edges off by N px; <code>diff</code> writes the
+difference as a PNG. <code>styles_compare</code> checks the build&#39;s computed styles (getComputedStyle) against each layer,
+property by property: the values that differ with the token or text style behind them, and the properties the
+build left out.
+<strong>Measure it.</strong> <code>inspect</code> reads layers as Figma has them, without code: the layout box and the painted box (a
+centred stroke, shadows and blur reach past it), the blend mode of the layer and of each fill, the fill with the
+style or variables behind it (what a <code>var()</code> resolves to) and every fill&#39;s type (a video&#39;s too), how strokes
+paint, every effect&#39;s parameters (a progressive blur&#39;s start and end), a text&#39;s lines and line heights, overflow,
+interactions with their transitions, a component&#39;s variant, and each layer&#39;s centre. Items set around a circle (a
+round menu, labels on a dial): <code>around</code> (the circle&#39;s id, or a point) gives each centre&#39;s distance from it and its
+angle as CSS <code>rotate()</code> turns, 0 at the top, clockwise. <code>measure</code> gives the distances between layers, each from
+the one before (gaps, aligned edges, insets).
+<strong>Compare.</strong> <code>nodes_diff</code> says how one layer differs from another (A/B screens, a card and its copy): the layers
+only one has, the attributes that differ, and icons whose drawing differs. <code>variants_read</code> gives a component&#39;s
+states as differences from its default (build :hover, :active, :disabled from them). <code>breakpoints_find</code> finds a
+screen at the page&#39;s other widths, for the media queries. <code>flow_read</code> maps the prototype: screens and the links
+between them.</li>
+<li><strong>The design system.</strong> <code>tokens_read</code>: variables with every mode (light, dark…) and styles, as CSS, JSON or DTCG
+token files (<code>guide tokens</code>). <code>tokens_usage</code>: the layers a token is used on. <code>components_read</code>: the components a
+page uses, or the file defines, with variants and properties. <code>library_search</code>: components of the team&#39;s
+libraries, saved once from each library file. <code>fonts_check</code>: the fonts used and where the build gets each (Google
+Fonts links).</li>
+<li><strong>Files.</strong> <code>assets_export</code>: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
+images as they were placed (<code>original: true</code>); <code>width</code> sizes a render by the CSS width the build shows it at (110
+at scale 2: 220 px). When a file gets another name than design_read planned (<code>planned</code>), use the path it gives.</li>
+<li><strong>Keep the code in step with the design.</strong> Right after the <code>design_read</code> you build a screen or section from,
+<code>baseline_save {node, name, code}</code> keeps it in the project (<code>.pixelwright/baselines/</code>: commit it to share, or leave
+it out of git, since it holds the design&#39;s texts). When a session starts, or the user says the design changed,
+<code>baseline_diff</code> says which baselines changed; with <code>name</code> it lists the changes in the XML&#39;s terms. Change only the
+code they name: export again what is marked <code>drawing</code>; build added layers from their <code>xml</code> (or <code>design_read</code> when
+it is left out). Then <code>baseline_save {name, accept}</code> with the <code>accept</code> the diff gave. <code>changes_since</code> stays the
+live view while the plugin is open.</li>
+<li><strong>Code, the exception.</strong> <code>execute</code> runs JavaScript in the plugin, for what no read tool shows: try the read tools
+first (<code>design_read</code>, <code>inspect</code>, <code>measure</code>, <code>nodes_find</code>), which need no code. It reads too: this version does not
+support editing. If the user explicitly asks for an edit through it, warn that editing is not supported or stable
+in this version and go on only when the user says so; the plugin&#39;s Allow edits switch still gates every write.</li>
+</ol>
+<h3>Reading a design like a web developer</h3>
+<p>A design shows the look, not the build. <code>design_read</code>&#39;s hints say where the two part; read them before you write
+code.</p>
+<ol>
+<li><strong>Workarounds.</strong> Children placed absolutely inside an auto layout parent, empty layers that only make space, and
+texts broken into lines by hand are often how the design tool got the look: build a flow with that gap, use the
+parent&#39;s gap or padding, and let the text wrap in its width.</li>
+<li><strong>Gaps and components.</strong> Children spaced evenly in a frame without auto layout are a flex or grid with that gap.
+A structure built three times or more without a component (cards, rows, tabs) is one component with instances
+(<code>repeats: true</code> reads them once, their data as rows).</li>
+<li><strong>Fixed sizes.</strong> A text or content frame of fixed width narrower than its column fills it with a max-width; a
+frame of fixed height that clips its content grows with it, unless the build means to cut it.</li>
+<li><strong>Baked fades.</strong> A fade baked into an image (a gradient over a photo, often at a section&#39;s edge) stretches with
+the box once exported flat: export the raw image (<code>assets_export</code> with <code>original: true</code>) and build the gradient
+in CSS (<code>guide assets</code>).</li>
+<li><strong>Tiled textures.</strong> A frame filled with a tiled texture renders coarser or finer at another scale: the hint gives
+the scale; export one tile at it and repeat it.</li>
+<li><strong>Blend modes and video.</strong> They change the look completely: <code>inspect</code> gives the layer&#39;s and each fill&#39;s blend
+mode and each fill&#39;s type; <code>design_read</code> writes <code>mix-blend-mode</code>, and lists a video fill as an asset no file holds
+(<code>guide assets</code>).</li>
+<li><strong>States.</strong> Top-level frames of one size that share most of their layers (a section and its copy with another tab
+active) are states of one component: build it once, with variants; <code>nodes_diff</code> lists what differs.</li>
+<li><strong>Missing fonts.</strong> A text whose font is not installed here was laid out with a fallback, and the hints name it:
+its spacing may differ only for that reason, so do not &quot;fix&quot; it. <code>fonts_check</code> says where the build gets each font.</li>
+</ol>
+<p>Build the code from the XML with the project&#39;s own components, tokens and layout conventions: the XML is the spec,
+not the code to paste. Hints in design_read also say what Figma left unbound (raw colours equal to tokens, raw
+spacing, radii and strokes Figma itself matches to a token, unnamed layers, frames without auto layout) and what
+instances changed outside their component&#39;s properties.</p>
+
+        </section>
+        <section id="guide-xml">
+          <h2>Guide: xml</h2>
+<p class="topic-about">The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes. The agent reads this with <code>guide</code> topic <code>xml</code>.</p>
+<p><code>design_read</code> writes a section as XML: one element per layer, Figma&#39;s layer type as the tag, CSS properties as
+attributes. The XML is the design&#39;s spec: build the code from it with the project&#39;s own components and tokens, do not
+paste it.</p>
+<h3>Tags</h3>
+<ul>
+<li>Figma&#39;s types in PascalCase: <code>Frame</code>, <code>Group</code>, <code>Section</code>, <code>Component</code>, <code>ComponentSet</code>, <code>Instance</code>, <code>Text</code>,
+<code>Rectangle</code>, <code>Ellipse</code>, <code>Line</code>, <code>Slot</code>…</li>
+<li><code>Image</code>: a true image (a photo, a layer filled with an image, a masked group, a layer with an effect CSS cannot
+draw). Its <code>src</code> is a PNG of what it shows.</li>
+<li><code>Icon</code>: a vector, or a group or instance drawn only with vector shapes (a logo). Its <code>src</code> is one SVG.</li>
+<li><code>TextPath</code>: Figma&#39;s text on a path (a label along an arc), its text written as a <code>Text</code>&#39;s (see Text below).</li>
+<li><code>Span</code>: a run inside a <code>Text</code> whose style differs from the text&#39;s own.</li>
+<li>A hidden layer is a stub with <code>display=&quot;none&quot;</code>: its id, name and box, without children. Slices are left out.</li>
+</ul>
+<h3>Metadata attributes, in this order</h3>
+<p><code>id</code> (instance children keep <code>I…;…</code> ids), <code>name</code> (left out on a text named by its content), <code>component</code> and
+<code>variant</code> (&quot;Size=Large, State=Default&quot;) on instances, <code>props</code> (an instance&#39;s text and boolean properties,
+&quot;Label=Sign up, Icon=true&quot;; a comma, = or backslash inside a name or value comes escaped with a backslash),
+<code>description</code> (components), <code>note</code> (Dev Mode annotations, &quot;Category: text&quot;, several joined with &quot; | &quot;), <code>href</code>
+(a prototype link, or a text&#39;s hyperlink), <code>mask</code> (alpha, vector or luminance: the layer masks the layers above it in
+its parent), <code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>; the read&#39;s root also
+has the modes it takes from above), <code>textStyle</code>, <code>src</code> (assets), <code>d</code> and <code>start</code> (a text on a path).</p>
+<p>A <code>data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;</code> attribute is the selector tokens_read&#39;s CSS writes for that mode: put it on the
+element in the build too, and the element takes that mode&#39;s values.</p>
+<h3>CSS attributes</h3>
+<p>Ready CSS values, in this order: display, flex-direction, flex-wrap, position, left, right, top, bottom, width,
+height, min/max sizes, flex, align-self, grid-row, grid-column, justify-self, padding, justify-content,
+align-items, align-content, gap, column-gap, row-gap, grid-template-columns/rows, transform, opacity,
+mix-blend-mode, overflow, text-overflow, white-space, border-radius, border (or border-top…, outline), background,
+box-shadow, text-shadow, filter, backdrop-filter, font, letter-spacing, text-transform, text-decoration (with
+text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.</p>
+<ul>
+<li>Sizes: fixed sizes in px; hug writes nothing; fill is <code>flex: 1</code> along the parent&#39;s direction and
+<code>align-self: stretch</code> across it. The layer you read always has its width and height.</li>
+<li>A turned layer has <code>transform: rotate()</code> and is placed by its centre; a mirrored one <code>scaleX(-1)</code>.</li>
+<li>Colours bound to a style or variable are <code>var(--Name)</code>, a shadow&#39;s colour too (see <code>guide tokens</code>); the values
+behind them are in the JSON <code>tokens</code>. In a Display P3 file every colour is <code>color(display-p3 r g b)</code> (as
+tokens_read writes it too): keep it so, it is what the designer chose. A text with a <code>textStyle</code> carries only what
+differs from the style; <code>textStyles</code> holds the style&#39;s font.</li>
+<li>Lengths are whole pixels; stroke widths and blurs keep two decimals, and letter spacing keeps its fractions.</li>
+<li><code>filter: blur()</code> and <code>backdrop-filter: blur()</code> are 0.43 of Figma&#39;s blur radius: Figma renders a radius R as a
+Gaussian of about 0.43 R (measured on layer and background blurs of radius 4 to 40 against Chrome), so radius 20 is
+<code>blur(8.6px)</code>, and a <code>blur(v)</code> here is Figma&#39;s radius v / 0.43. Dev Mode writes radius / 2, which is softer.</li>
+</ul>
+<h3>Values</h3>
+<ul>
+<li>Lengths are px (<code>0</code> stays bare); a token where the designer bound one (<code>gap=&quot;var(--space-16)&quot;</code>).</li>
+<li><code>font</code> is the shorthand <code>[italic] weight size/line-height &#39;Family&#39;</code>: <code>font=&quot;italic 500 14px/20px &#39;Inter&#39;&quot;</code>, the
+line height in px, or <code>normal</code> for Figma&#39;s Auto (see Text).</li>
+<li><code>background</code> holds colours and gradients, the top paint first as CSS stacks them: <code>linear-gradient(&lt;angle&gt;, &lt;stops&gt;)</code>,
+<code>radial-gradient(&lt;rx&gt; &lt;ry&gt; at &lt;x&gt; &lt;y&gt;, &lt;stops&gt;)</code> and <code>conic-gradient(from &lt;angle&gt; at &lt;x&gt; &lt;y&gt;, &lt;stops&gt;)</code>, a stop a
+colour or a token and its place in percent. A diamond gradient, a turned radial one and repeating gradients are in
+<code>$css</code>, as Figma&#39;s own CSS.</li>
+<li><code>mix-blend-mode</code> is how the layer blends (multiply, screen, overlay…); a blend mode CSS has no name for is in
+<code>$css</code>.</li>
+<li><code>mask=&quot;alpha&quot;</code> (or vector, luminance) makes the layer the mask of the layers above it in its parent.</li>
+</ul>
+<h3>Layout as the XML shows it</h3>
+<ul>
+<li><strong>Flex.</strong> Auto layout is <code>display=&quot;flex&quot;</code>: a row, or <code>flex-direction=&quot;column&quot;</code>, <code>flex-wrap=&quot;wrap&quot;</code> when it wraps;
+defaults are left out (row, flex-start, gap 0), and a gap is written only between two or more children.
+<code>justify-content</code> aligns along the direction (<code>flex-start</code>, <code>center</code>, <code>flex-end</code>, <code>space-between</code>), <code>align-items</code>
+across it (<code>flex-start</code>, <code>center</code>, <code>flex-end</code>, <code>baseline</code>). Figma aligns all children alike, so a child&#39;s
+<code>align-self</code> is only ever <code>stretch</code>.</li>
+<li><strong>Grid.</strong> Grid auto layout is <code>display=&quot;grid&quot;</code> with <code>grid-template-columns</code> and <code>grid-template-rows</code>, each a list
+of tracks: <code>200px</code> is fixed, <code>1fr</code> takes a share of the room left, <code>auto</code> fits its content; three or more equal
+tracks are <code>repeat(3, 1fr)</code>. <code>row-gap</code> and <code>column-gap</code> space them. Each child has its <code>grid-row</code> and <code>grid-column</code>,
+lines counted from 1 as in CSS, with <code>span</code> when it spans (<code>grid-column=&quot;1 / span 2&quot;</code>); a cell holds one child. In
+its cell a child sits where <code>justify-self</code> (horizontally) and <code>align-self</code> (vertically) put it: <code>start</code>, <code>center</code>,
+<code>end</code>, or <code>stretch</code> when it fills the cell. A grid has no <code>justify-content</code> or <code>align-items</code>: each child aligns in
+its cell.</li>
+<li><strong>Absolute.</strong> A child of a frame without auto layout, a section&#39;s child, and a child taken out of an auto layout
+flow have <code>position: absolute</code> and are placed against their parent element: give that parent <code>position: relative</code>
+in the build. Their edges follow the constraints: <code>left</code>/<code>top</code> when pinned to the start, <code>right</code>/<code>bottom</code> when
+pinned to the end, <code>left</code> and <code>right</code> without a width when stretched, <code>calc(50% - Npx)</code> when centred
+(<code>left=&quot;calc(50% - 24px)&quot;</code> centres a layer 48 px wide, half its size), and percents when scaled with the parent.
+Later in the XML is drawn on top (there is no <code>z-index</code>).</li>
+</ul>
+<h3>Read-only attributes (start with $)</h3>
+<ul>
+<li><code>$css</code>: what the CSS attributes cannot say, as Figma&#39;s own CSS: a diamond gradient, a turned radial one, blend
+modes CSS has no name for, a video fill, line clamps, lists, a negative gap (&quot;children overlap&quot;). It holds
+<code>property: value</code> pairs only, explained in hints: <code>blur: progressive from 0px at 50% 0% to 8.6px at 50% 100%</code> (a
+blur that changes across the layer; <code>filter</code> holds its end radius), <code>stroke-align: center</code> (half of the stroke
+paints outside the box, which a border-box border does not; <code>inspect</code> gives the painted box), <code>list-spacing: 8px</code>
+(the space between a list&#39;s items, apart from paragraph spacing) and <code>stroke-linecap: round</code> (a line&#39;s round or
+square ends, which a CSS border does not draw).</li>
+<li><code>$children=&quot;N&quot;</code>: the layer has N children and not all are listed (<code>depth</code>, or maxChars).</li>
+<li><code>$truncated=&quot;true&quot;</code>: the branch was emptied, or the text shortened, to fit maxChars; its id is in <code>truncated</code>.</li>
+<li><code>$repeat=&quot;N&quot;</code>: with <code>repeats: true</code>, the first of N alike neighbours (list items, cards, rows) stands for all of
+them; the JSON&#39;s <code>repeats</code> lists the run&#39;s layers and, a row per layer, the values they hold apart (texts, src,
+variant, props, href, position). Build one component and map the rows over it.</li>
+<li><code>$exposed=&quot;true&quot;</code>: a nested instance its component exposes: its properties are the component&#39;s API too.</li>
+<li><code>$visibleProp=&quot;Show subtitle&quot;</code>, <code>$prop=&quot;Title&quot;</code>, <code>$swapProp=&quot;Icon&quot;</code>: a component&#39;s layer bound to its properties:
+the boolean one that shows it, the text one its characters show, the instance swap one it is. In code they are the
+component&#39;s props.</li>
+<li><code>$override=&quot;text, background&quot;</code>: what this layer of an instance changes that its component&#39;s properties do not say
+(a feature text rewritten, an icon recoloured). Code built from the component cannot show it: give the component a
+property or a variant for it, or build that instance as a one-off. A hint lists them all.</li>
+<li><code>$dev=&quot;ready for dev&quot;</code> on the read&#39;s root: the designer marked it (or a frame or section around it) ready for
+development (or <code>completed</code>).</li>
+<li><code>$grid-style=&quot;Desktop 12&quot;</code>: the grid style the frame&#39;s layout grid comes from.</li>
+<li><code>$pins=&quot;width, padding&quot;</code>: the properties the designer pinned in the layer&#39;s Dev Mode annotations, in CSS words:
+take those values exactly.</li>
+<li><code>$on-click</code>, <code>$on-hover</code>, <code>$on-press</code>, <code>$on-drag</code>, <code>$on-mouse-enter</code>, <code>$on-mouse-leave</code>, <code>$on-mouse-down</code>,
+<code>$on-mouse-up</code>, <code>$on-key</code>, <code>$after-timeout</code>, <code>$on-media-hit</code>, <code>$on-media-end</code> (any other trigger as
+<code>$on-&lt;trigger&gt;</code>): the layer&#39;s prototype interactions, e.g. <code>$on-hover=&quot;change to Type=Hover; smart animate 300ms ease-out&quot;</code> (a variant to switch to on hover, and how: build it as the hover state); the easing is valid CSS, a
+spring drawn as <code>linear()</code>. A link stays <code>href</code>.</li>
+</ul>
+<h3>Text</h3>
+<ul>
+<li><code>&amp;#10;</code> is a paragraph break (Enter), <code>&amp;#8232;</code> a line break inside a paragraph (Shift+Enter, <code>&lt;br&gt;</code> in HTML):
+never spaces.</li>
+<li><code>line-height: normal</code> is Figma&#39;s Auto line height, the font&#39;s own spacing (about 1.2× the size for most fonts).
+Where the build must match, read with <code>autoLineHeight: &quot;px&quot;</code>: it writes the px Figma renders where the read can
+tell (a text that hugs its lines shows it for its font and size), and normal elsewhere.</li>
+<li>A <code>TextPath</code> is a text set along a path. Its characters, spans and text CSS are a <code>Text</code>&#39;s (it has no line height,
+decoration, wrapping or truncation of its own); <code>d</code> is the path in the layer&#39;s own box, which <code>left</code> and <code>top</code>
+place as for any layer, and <code>start</code> where the text begins on it: the path&#39;s segment (from 0) and the place along
+that segment (0 to 1). <code>text-align</code> is anchored there: <code>center</code> centres the text on <code>start</code>, <code>right</code> ends it there.
+In code an SVG <code>&lt;textPath&gt;</code> over a <code>&lt;path d=&quot;…&quot;&gt;</code> draws it:</li>
+</ul>
+<pre><code class="language-xml">&lt;TextPath id=&quot;12:41&quot; name=&quot;Label&quot; d=&quot;M 0 50 C 55.23 -16.67 144.77 -16.67 200 50&quot; start=&quot;0 0.5&quot; position=&quot;absolute&quot; left=&quot;100px&quot; top=&quot;20px&quot; width=&quot;200px&quot; height=&quot;50px&quot; font=&quot;500 14px/normal &#39;Inter&#39;&quot; color=&quot;var(--color-ink)&quot;&gt;Share&lt;/TextPath&gt;
+</code></pre>
+<h3>Example (Orbit, a pricing card, abridged)</h3>
+<pre><code class="language-xml">&lt;Instance id=&quot;54:268&quot; name=&quot;Plan – Pro&quot; component=&quot;Plan Card&quot; props=&quot;Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro&quot; note=&quot;The price comes from the billing API. Show the Popular badge only on the plan the API marks popular.&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; width=&quot;385px&quot; height=&quot;394px&quot; padding=&quot;var(--space-32)&quot; gap=&quot;var(--space-24)&quot; border-radius=&quot;var(--radius-lg)&quot; border=&quot;2px solid var(--color-brand)&quot; background=&quot;var(--color-surface)&quot; box-shadow=&quot;var(--Shadow-Card)&quot; $on-click=&quot;go to Checkout – Desktop; dissolve 300ms ease-out&quot;&gt;
+  …
+  &lt;Instance id=&quot;I54:268;54:211&quot; name=&quot;Button&quot; component=&quot;Button&quot; variant=&quot;Variant=Primary, State=Default&quot; props=&quot;Label=Get started&quot; display=&quot;flex&quot; align-self=&quot;stretch&quot; padding=&quot;var(--space-12) var(--space-24)&quot; justify-content=&quot;center&quot; align-items=&quot;center&quot; border-radius=&quot;var(--radius-md)&quot; background=&quot;var(--color-brand)&quot;&gt;
+    &lt;Text id=&quot;I54:268;54:211;54:190&quot; name=&quot;Label&quot; textStyle=&quot;Button&quot; color=&quot;var(--color-on-brand)&quot;&gt;Get started&lt;/Text&gt;
+  &lt;/Instance&gt;
+  &lt;Frame id=&quot;I54:268;54:213&quot; name=&quot;Features&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; align-self=&quot;stretch&quot; gap=&quot;var(--space-12)&quot; overflow=&quot;hidden&quot;&gt;
+    &lt;Frame id=&quot;I54:268;54:214&quot; name=&quot;Feature&quot; display=&quot;flex&quot; align-items=&quot;center&quot; gap=&quot;var(--space-8)&quot; overflow=&quot;hidden&quot;&gt;
+      &lt;Icon id=&quot;I54:268;54:215&quot; name=&quot;Icon/Check&quot; component=&quot;Icon/Check&quot; src=&quot;assets/icon-check.svg&quot; width=&quot;20px&quot; height=&quot;20px&quot;/&gt;
+      &lt;Text id=&quot;I54:268;54:217&quot; name=&quot;Text&quot; textStyle=&quot;Body Small&quot; color=&quot;var(--color-ink)&quot;&gt;Unlimited projects&lt;/Text&gt;
+    &lt;/Frame&gt;
+    …
+  &lt;/Frame&gt;
+&lt;/Instance&gt;
+</code></pre>
+
+        </section>
+        <section id="guide-tokens">
+          <h2>Guide: tokens</h2>
+<p class="topic-about">How tokens are named and read: styles, variables, modes, aliases, units, libraries. The agent reads this with <code>guide</code> topic <code>tokens</code>.</p>
+<p><code>design_read</code> writes a bound colour or length as <code>var(--Name)</code> and lists the values it used in <code>tokens</code>;
+<code>tokens_read</code> returns the whole set, and <code>tokens_usage</code> the layers that use one.</p>
+<h3>Names</h3>
+<ul>
+<li>A style: its name with every run of other characters than letters, digits, _ and - turned into &quot;-&quot;: &quot;Dark&quot; →
+<code>--Dark</code>, &quot;Brand/Primary 500&quot; → <code>--Brand-Primary-500</code>. Letters of any script stay.</li>
+<li>A variable: its Web code syntax when the designer set one (var(--surface) → <code>--surface</code>), else its name the same
+way (&quot;space/4&quot; → <code>--space-4</code>).</li>
+<li>A text style is <code>--&lt;name&gt;-font</code>, holding its font shorthand: <code>font: var(--h3-font)</code>. Its letter spacing and case,
+when they are not the default, are <code>--&lt;name&gt;-letter-spacing</code> and <code>--&lt;name&gt;-text-transform</code>; an effect style&#39;s blurs
+are <code>--&lt;name&gt;-filter</code> and <code>--&lt;name&gt;-backdrop-filter</code> beside its shadows.</li>
+<li>Two styles of one kind with one name (two paint styles &quot;Black&quot;) are different tokens: the file&#39;s first keeps
+<code>--Black</code>, the next are <code>--Black-2</code>, <code>--Black-3</code> (tokens_read notes them with their values). Use the one the layer
+names. The file&#39;s own styles come first; library styles are numbered among those the page uses, so every tool means
+one style by a name on that page (a read from another page may number a library&#39;s Black differently). Text styles
+are numbered alike: the second &quot;h1&quot; is <code>--h1-2-font</code> and <code>textStyle=&quot;h1-2&quot;</code>.</li>
+</ul>
+<h3>tokens_read</h3>
+<ul>
+<li>It takes the file&#39;s own styles and variables, and with <code>used</code> those the current page (or <code>within</code>) uses, a team
+library&#39;s among them: a file built on a library has its tokens there.</li>
+<li>format css (default): <code>:root</code> holds every collection&#39;s default mode and the styles; every mode of a collection
+with several is a block <code>[data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;]</code> with that collection&#39;s variables, the default&#39;s too (an
+element in it takes the default back inside another mode&#39;s). Put the attribute where design_read writes it
+(<code>data-brand=&quot;dark&quot;</code> on a section) or on the html element for the whole page: a token in <code>:root</code> that points at
+another collection&#39;s token is computed in <code>:root</code> and does not follow a mode set lower in the page.</li>
+<li>format json: per collection, its modes and each variable&#39;s value in every mode, with its scopes (when not every
+field) and its code syntax.</li>
+<li>format dtcg: Design Tokens Format (DTCG 2025.10) trees, one per mode of each collection, keyed
+<code>&lt;collection&gt;.&lt;mode&gt;</code> (the collection alone when it has one mode), and one of styles, each to save as its own
+.json file for Style Dictionary or other DTCG tools. Aliases are <code>{path}</code>; a token whose path is also a group sits at
+the group&#39;s <code>$root</code>; a token takes the type of the tokens it is aliased with (a number a gap points at is a
+dimension), and one whose alias target took another type is written resolved, with a note. Named in <code>notes</code>: an
+alias to a token no tree here holds (a library&#39;s, a collection left out), a name taken twice (the second suffixed
+-2), what DTCG has no type or field for (a text variable, a boolean, an image style, a gradient&#39;s angle, a text
+style&#39;s case).</li>
+<li><code>collections</code> keeps only the named ones; <code>libraries: true</code> adds the enabled libraries&#39; variables by name and type.</li>
+<li>Past <code>maxChars</code> (80 000) the summary comes back with the first whole tokens that fit, and the collections to read
+one at a time.</li>
+<li>An alias to a token the output leaves out (a collection you did not ask for) is named in <code>notes</code>.</li>
+</ul>
+<h3>tokens_usage</h3>
+<p><code>tokens_usage {token}</code> lists the layers on the current page (or inside <code>within</code>, or on every page with
+<code>within: &quot;file&quot;</code>) that use a style or variable, named by its token as above (<code>--White-2</code>, <code>--h1-font</code>,
+<code>--h1-letter-spacing</code>), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to
+tell same-named styles apart, or to see what a change to a token would touch.</p>
+<h3>Values</h3>
+<ul>
+<li>Colours as hex (rgba when see-through); a colour with an opacity variable as
+<code>color-mix(in srgb, … N%, transparent)</code>.</li>
+<li>Numbers in px, except opacity and font weight, which have no unit.</li>
+<li>Strings quoted; booleans as true or false (CSS has no booleans: a note says so).</li>
+<li>An alias is <code>var(--other)</code>. One that points nowhere is a comment and a note.</li>
+<li>A gradient paint style is a token as linear-, radial- or conic-gradient().</li>
+</ul>
+<h3>Not tokens yet</h3>
+<p>Paint styles CSS cannot draw (an image, a diamond or a turned radial gradient, one without stops), effect styles with
+no shadow or blur CSS can write, and library variables the file does not use (Figma gives their values only once
+they are imported into the file: <code>libraries: true</code> lists them by name and type). The styles left out are named in
+<code>notes</code>; a <code>var()</code> design_read writes without a value is named in its hints.</p>
+
+        </section>
+        <section id="guide-assets">
+          <h2>Guide: assets</h2>
+<p class="topic-about">What becomes a file, in which format, how files are named, and what no file holds (a video). The agent reads this with <code>guide</code> topic <code>assets</code>.</p>
+<p>Only true assets become files; everything else is CSS.</p>
+<h3>What is an asset</h3>
+<ul>
+<li><code>Icon</code> (SVG): a vector, Figma Draw&#39;s transform group, or a group, frame or instance without auto layout drawn only
+with vector shapes, at least one of them a true vector (a logo, an arrow in a circle). Exported with everything it
+draws, strokes outside its box included, and sized by that box.</li>
+<li><code>Image</code> (PNG at 2x): a layer filled with an image, a mask group (its bottom layer is the mask), a layer with a
+pattern or shader fill or a noise, texture or glass effect. Exported as its own box: its corners, drop shadows and
+outline stay CSS around it, and the rest of its look (opacity, blur, inner shadows) is left to the file, as Figma
+renders it.</li>
+<li>A layer the designer marked for export (PNG, JPG or SVG; a PDF export is not a web asset), in that format, when it
+holds no text (an export on a section with text is a preview, read as layers). A frame with an image fill and
+children keeps its children: the image is its <code>background</code>, written as the original image.</li>
+<li>Plain rectangles, ellipses, buttons, cards, shadows are CSS, never images.</li>
+</ul>
+<h3>Video</h3>
+<p>A layer filled with a video is no file: the Plugin API exports none. <code>design_read</code> lists it in <code>assets</code> with
+<code>kind: &quot;video&quot;</code> and no <code>src</code>, its <code>$css</code> says the fill is a video, <code>inspect</code> gives the fill&#39;s type <code>VIDEO</code>, and
+<code>assets_export</code> reports it in <code>errors</code> with <code>kind: &quot;video&quot;</code> while it writes the rest. The build brings its own video
+file: ask the user for it, and use a render of the layer (<code>screenshot</code>) only as its poster.</p>
+<h3>Fades and textures baked into images</h3>
+<ul>
+<li>A fade baked into an image (a gradient fill on the photo&#39;s layer, or a gradient layer over a photo at a section&#39;s
+edge; design_read&#39;s hints name them) is flattened by an export and stretches with the box on wide screens. Export
+the raw image with <code>assets_export</code> and <code>original: true</code>, and build the gradient in CSS over it.</li>
+<li>A frame filled with a tiled texture (a noise image repeated at a scale) renders coarser or finer at another scale:
+the hint gives the scale. Export one tile at that scale and repeat it in CSS, or replace it.</li>
+</ul>
+<h3>design_read vs assets_export</h3>
+<ul>
+<li><code>design_read</code> with <code>assetsDir</code> writes the assets of the section it reads, and its XML points at the files.</li>
+<li><code>assets_export</code> writes files on their own: <code>nodes</code> (up to 50 layers, one file each, in the format and scale you
+give: PNG, JPG, WebP, SVG or PDF; <code>width</code>, the CSS width the build shows a layer at, sets the render to width ×
+scale px) or <code>from</code> (every asset inside one layer). <code>original: true</code> writes the images as they were placed, full
+size and in their own format, instead of renders.</li>
+<li>WebP keeps transparency exactly: its alpha is stored without loss at any <code>quality</code>. <code>quality</code> (1 to 100, 85 by
+default) is how lossy its colours are, so a transparent PNG becomes a WebP with the same see-through pixels.</li>
+<li>design_read without <code>assetsDir</code> only plans names. When assets_export writes a file under another name (the name
+holds other bytes, the same bytes are another layer&#39;s file, an original is a JPEG), the file has <code>planned</code>: use its
+<code>path</code> in the <code>src</code>.</li>
+</ul>
+<h3>Files</h3>
+<p>Named after the layer (<code>Hero photo</code> → hero-photo.png, a component&#39;s variant added: brand-logo-dark.svg), or, in
+assets_export, as <code>names</code> gives a layer id (<code>{&quot;54:12&quot;: &quot;hero-mountains&quot;}</code> → hero-mountains.png, slugged the same
+way). The same bytes are written once and shared; a name already taken by other bytes gets -2; a file already in the
+folder is never overwritten with other bytes.</p>
+
+        </section>
+      </main>
+    </div>
+    <footer class="bottom">
+      <div class="bottom-inner">
+        <div>
+          <p>Built from README.md, the tools' manifests and the guide's topics (scripts/build-docs.ts). Pixelwright is open source under the <a href="https://github.com/maximwas/pixelwright/blob/main/LICENSE">MIT license</a>. Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
+        </div>
+        <p class="footer-links">
+          <a href="./">Docs</a>
+          <a href="https://github.com/maximwas/pixelwright">GitHub</a>
+          <a href="https://www.npmjs.com/package/pixelwright">npm</a>
+          <a href="./changelog/">Changelog</a>
+          <a href="https://github.com/maximwas/pixelwright/discussions">Feedback</a>
+          <a href="https://ko-fi.com/maksymvasianin">Ko-fi</a>
+          <a href="https://send.monobank.ua/jar/7o9oMrbXTj">monobank</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
