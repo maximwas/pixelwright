@@ -2386,10 +2386,10 @@
           "type": "boolean"
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema"
@@ -2543,28 +2543,12 @@
                 },
                 "removed": {
                   "type": "number"
-                },
-                "moved": {
-                  "type": "number"
-                },
-                "reordered": {
-                  "type": "number"
-                },
-                "components": {
-                  "type": "number"
-                },
-                "tokens": {
-                  "type": "number"
                 }
               },
               "required": [
                 "changed",
                 "added",
-                "removed",
-                "moved",
-                "reordered",
-                "components",
-                "tokens"
+                "removed"
               ],
               "additionalProperties": false
             }

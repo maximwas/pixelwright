@@ -84,10 +84,11 @@ describe("the built server over stdio", () => {
         "tokens_usage",
         "components_read",
         "library_search",
+        "baseline_save",
         "assets_export",
       ]),
     );
-    expect(tools).toHaveLength(26);
+    expect(tools).toHaveLength(27);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });
     expect(server.errors).toEqual([]);
   });

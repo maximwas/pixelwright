@@ -161,7 +161,10 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `stores/`: `UpdateState` (latest.json) and `WrittenFiles` (written-files.json: the SHA-1 of every asset file
     written, its layers, the newest 5000) and `LibraryStore` (`libraries/<slug of the file name>.json`, the catalogue
     library_search saved for a library file, an unreadable one noted), all through the `JsonFile` port in the
-    channel's home.
+    channel's home; `BaselineStore` (the project's `.pixelwright/baselines/<name>.json`, format 1 as 0.7.0 wrote it:
+    compact JSON, header first, one rename by atomically; the file's name wins over the one inside; home and `/`
+    refused through `ProjectFolder`) and `SeenDesigns` (the last 8 designs a one-baseline diff compared, under random
+    16-hex accept ids, in memory).
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn); `inspect/` and `measure/` read through the inspect op (an
   `around` layer is a second inspect of it in the same origin; a selection past 100 is cut and counted in `left`).
@@ -314,6 +317,14 @@ code in force, which only the status tool mints; the user types it in the window
 **Reconnects.** On a close, `SocketLink` decides from its close table whether to stop or try again, waiting as
 `Backoff` says. On the server, a new socket from the same window replaces its older session in `SessionRegistry`;
 `ServerRpc` tells sockets apart by the epoch the window stamps on each frame.
+
+**Keeps a baseline.** `BaselineSaveTool` (`server/tools/baseline-save/`) checks the project first (`BaselineKeeper`),
+then `BaselineCapture` reads the layer with the read op (`pathHash`; a hidden root refused, as design_read refuses it)
+and the variables op (`used`, `within`), keeping only the variables the read's aliases reach (never Figma's inferred
+match) and the styles the read names. `BaselineKeeper` checks the code paths, finds the baseline a name holds and
+writes through `BaselineStore`, answering layers, tokens, `cut` (shown layers with fewer children than childCount)
+and, with replace, `DesignDiff`'s counts. `accept` takes its design from `SeenDesigns` and reads nothing; an
+existing name needs accept, replace or code alone.
 
 **Tells of an update.** `ServerMain` starts `UpdateFeed`: `UpdateState` (`server/app/stores/`) keeps `latest.json` in
 the channel's home and asks npm through `NpmRegistry` at most once a day (off with `PIXELWRIGHT_NO_UPDATE_CHECK`). A

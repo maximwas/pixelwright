@@ -1,6 +1,7 @@
 import { InjectionToken, injectable } from "@needle-di/core";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 import { ASSETS_EXPORT_MANIFEST } from "@/server/tools/assets-export/assets-export.manifest.ts";
+import { BASELINE_SAVE_MANIFEST } from "@/server/tools/baseline-save/baseline-save.manifest.ts";
 import { BREAKPOINTS_FIND_MANIFEST } from "@/server/tools/breakpoints-find/breakpoints-find.manifest.ts";
 import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
 import { COMPONENTS_READ_MANIFEST } from "@/server/tools/components-read/components-read.manifest.ts";
@@ -50,6 +51,7 @@ export class ToolCatalog {
     INSPECT_MANIFEST,
     MEASURE_MANIFEST,
     NODES_DIFF_MANIFEST,
+    BASELINE_SAVE_MANIFEST,
     BREAKPOINTS_FIND_MANIFEST,
     FLOW_READ_MANIFEST,
     VARIANTS_READ_MANIFEST,
