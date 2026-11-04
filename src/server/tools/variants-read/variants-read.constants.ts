@@ -8,4 +8,10 @@ export const VARIANTS_READ_TOOL = {
 
 export const VARIANTS_READ_FIELD = {
   node: "A component set's id, or one of its variants', or an instance's: its set is read.",
+  cut: "Set when the read of the set stopped short: below the cut the variants were not compared.",
+} as const;
+
+export const VARIANTS_READ_TEXT = {
+  cut: (count: number) =>
+    `Read cut at ${count} ${count === 1 ? "layer" : "layers"}: what lies below them was not compared; compare two variants with nodes_diff and a depth.`,
 } as const;

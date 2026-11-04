@@ -24,7 +24,8 @@ export interface AssetPlace {
  * Writes assets into a folder (T-195, S-100), each under its planned file name: the same bytes once, a later layer
  * getting the first file's path; a name is free when no file holds it or the file holds these very bytes, else `-2`,
  * `-3`, so a file an earlier read wrote, which code may import, is never overwritten; an original gets the extension
- * of what its bytes are. Each file is remembered as its layers' (S-101).
+ * of what its bytes are. Each file is remembered as its layers' (S-101). Assets come one at a time, each written before
+ * the next is asked for: only digests and names are kept (O-014).
  */
 @injectable()
 export class AssetWriter {
@@ -36,14 +37,15 @@ export class AssetWriter {
     this.#files = files;
   }
 
-  async write(fetched: readonly FetchedAsset[], { folder, dir }: AssetPlace): Promise<WrittenAsset[]> {
+  async write(fetched: AsyncIterable<FetchedAsset> | Iterable<FetchedAsset>,    { folder, dir }: AssetPlace): Promise<WrittenAsset[]> {
     const byDigest = new Map<string, string>();
     const taken = new Set<string>();
     const written: WrittenAsset[] = [];
+    const stored: { readonly sha1: string; readonly node: string }[] = [];
 
     await mkdir(folder, { recursive: true });
 
-    for (const { asset, bytes } of fetched) {
+    for await (const { asset, bytes } of fetched) {
       const digest = this.#digest(bytes, ASSET_DIGEST.same);
       const name = byDigest.get(digest) ?? (await this.#place(this.#named(asset, bytes), bytes, folder, taken));
 
@@ -56,11 +58,10 @@ export class AssetWriter {
         planned: join(dir, basename(asset.src)),
         bytes: bytes.length,
       });
+      stored.push({ sha1: this.#digest(bytes, ASSET_DIGEST.store), node: asset.node });
     }
 
-    this.#files.add(
-      fetched.map(({ asset, bytes }) => ({ sha1: this.#digest(bytes, ASSET_DIGEST.store), node: asset.node })),
-    );
+    this.#files.add(stored);
 
     return written;
   }

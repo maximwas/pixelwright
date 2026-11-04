@@ -5,10 +5,6 @@ import { SHORTHANDS, Shorthands } from "@/core/checks/build-styles/shorthands.ts
 import { STYLE_CHECK, StyleCheck } from "@/core/checks/build-styles/style-check.ts";
 import { STYLE_MATCH, StyleMatch } from "@/core/checks/build-styles/style-match.ts";
 import { GRADIENT_PARSER, GradientParser } from "@/core/css/gradients/gradient-parser.ts";
-import { BREAKPOINTS_FINDER, Breakpoints } from "@/core/diff/breakpoints.ts";
-import { DESIGN_DIFF, DesignDiff } from "@/core/diff/design-diff.ts";
-import { FINGERPRINT, Fingerprint } from "@/core/diff/fingerprint.ts";
-import { VARIANT_DIFF, VariantDiff } from "@/core/diff/variant-diff.ts";
 import { EDGE_DIFF, EdgeDiff } from "@/core/images/edge-diff.ts";
 import { IMAGE_COMPARISON, ImageComparison } from "@/core/images/image-comparison.ts";
 import { RMSE, Rmse } from "@/core/images/rmse.ts";
@@ -17,14 +13,12 @@ import { PIXEL_DIFF } from "@/core/ports/pixel-diff.port.ts";
 import { FontsourceDirectory } from "@/server/adapters/http/fontsource-directory.ts";
 import { GoogleMetadataDirectory } from "@/server/adapters/http/google-metadata-directory.ts";
 import { PixelmatchDiff } from "@/server/adapters/images/pixelmatch-diff.ts";
-import { FLOW_LINKS, FlowLinks } from "@/server/tools/flow-read/flow-links.ts";
 import { FONT_SOURCES, FontSources } from "@/server/tools/fonts-check/font-sources.ts";
 import { COMPARED_IMAGES, ComparedImages } from "@/server/tools/image-compare/compared-images.ts";
 
 /**
  * The checks' bindings: styles_compare's build styles and the gradient reader they compare gradients with (T-090);
- * image_compare's comparison and images (T-089); fonts_check's font directories, read once for the server (T-101);
- * nodes_diff's, variants_read's and breakpoints_find's core/diff and flow_read's links (T-085..T-088).
+ * image_compare's comparison and images (T-089); fonts_check's font directories, read once for the server (T-101).
  */
 export class CheckProviders {
   register(container: Container): void {
@@ -42,11 +36,6 @@ export class CheckProviders {
       .bind({ provide: FONT_DIRECTORY, useClass: FontsourceDirectory })
       .bind({ provide: FONT_DIRECTORY_FALLBACK, useClass: GoogleMetadataDirectory })
       .bind({ provide: FONT_SOURCES, useClass: FontSources })
-      .bind({ provide: BUILD_STYLES, useClass: BuildStyles })
-      .bind({ provide: FINGERPRINT, useClass: Fingerprint })
-      .bind({ provide: DESIGN_DIFF, useClass: DesignDiff })
-      .bind({ provide: VARIANT_DIFF, useClass: VariantDiff })
-      .bind({ provide: BREAKPOINTS_FINDER, useClass: Breakpoints })
-      .bind({ provide: FLOW_LINKS, useClass: FlowLinks });
+      .bind({ provide: BUILD_STYLES, useClass: BuildStyles });
   }
 }

@@ -40,33 +40,35 @@ export class ReadOperation extends Operation<ReadInput, ReadOutput> {
     this.#run = run;
   }
 
-  protected async execute({ nodes, depth }: ReadInput): Promise<ReadOutput> {
+  protected async execute({ nodes, depth, pathHash, ancestors }: ReadInput): Promise<ReadOutput> {
     // Figma throws for a lookup it cannot answer (offline, an instance's hidden layer gone): that id is missing (FX-015).
     const found = await Promise.all(
       [...new Set(nodes)].map(async (id) => ({ id, node: await this.#lookup.node(id).catch(() => null) })),
     );
     const roots = found.flatMap(({ node }) => (node === null ? [] : [this.#layer(node)]));
 
-    this.#reader.start();
+    this.#reader.start({ pathHash: pathHash ?? false });
 
-    const { layers, cuts } = await this.#run.read(roots, this.#reader, { depth, jsonChars: LIMITS.readJsonChars });
+    const read = await this.#run.read(roots, this.#reader, { depth, ancestors, jsonChars: LIMITS.readJsonChars });
 
-    // ReadRun answers an entry per root, in the order given.
-    const pairs = layers.flatMap((root, index) => {
+    // ReadRun answers an entry per root, in the order given, and the layers above each when asked.
+    const pairs = read.layers.flatMap((root, index) => {
       const node = roots[index];
+      const above = read.ancestors[index];
 
-      return node === undefined ? [] : [{ root, node }];
+      return node === undefined ? [] : [{ root, node, ...(above === undefined ? {} : { ancestors: above }) }];
     });
     const reads = await Promise.all(
-      pairs.map(async ({ root, node }) => ({
+      pairs.map(async ({ root, node, ...above }) => ({
         model: READ_MODEL.version,
         profile: READ_PROFILE.design,
         root,
+        ...above,
         ...(await this.#reader.tables(root, node)),
       })),
     );
 
-    return { reads, missing: found.filter(({ node }) => node === null).map(({ id }) => id), cuts };
+    return { reads, missing: found.filter(({ node }) => node === null).map(({ id }) => id), cuts: read.cuts };
   }
 
   #layer(node: BaseNode): SceneNode {

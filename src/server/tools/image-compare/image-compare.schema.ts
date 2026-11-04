@@ -7,8 +7,11 @@ import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 const PathSchema = zod.string().check(zod.minLength(1), zod.maxLength(IMAGE_COMPARE.pathChars));
 
-/** 0.8.0 reads only (plan 5.0): no `modes`, which switches a layer's variable modes for the render. */
-export const ImageCompareInputSchema = zod.object({
+/**
+ * 0.8.0 reads only (plan 5.0): no `modes`, which switches a layer's variable modes for the render. Strict, so a client
+ * that still sends it hears so rather than taking a plain render for one in its modes.
+ */
+export const ImageCompareInputSchema = zod.strictObject({
   node: NodeIdSchema.check(zod.describe(IMAGE_COMPARE_FIELD.node)),
   reference: zod.exactOptional(PathSchema).check(zod.describe(IMAGE_COMPARE_FIELD.reference)),
   against: zod.exactOptional(NodeIdSchema).check(zod.describe(IMAGE_COMPARE_FIELD.against)),

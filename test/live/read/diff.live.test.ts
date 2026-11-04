@@ -4,15 +4,21 @@ import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
 const { hero, heroB, signIn, pricingDesktop, orbitPricing, checkoutPay, success } = TEST_MCP.ids;
 
-type Diff = { same: boolean; onlyInA: unknown[]; onlyInB: unknown[]; changed: { path: string }[] };
+type Diff = { same: boolean; onlyInA: unknown[]; onlyInB: unknown[]; changed: { path: string; drawing?: boolean }[] };
 type Variants = { variants: { name: string; pseudo?: string }[] };
 type Breakpoints = { widths: { id: string; width: number; this?: true }[] };
 type Flows = { starts: unknown[]; links: { layer: { id: string }; to: { id: string; name: string } | null }[] };
 
-// Reads only, on Orbit as Test MCP has it (m:8cfa2bfd): nothing is written.
+/** The prefix of the layers this file makes in the Live tests Section, removed after. */
+const PREFIX = "live:diff:";
+
+// Reads, on Orbit as Test MCP has it (m:8cfa2bfd), but for two drawings made in the Live tests Section
+// (live:diff:<case>, removed after), since no two layers of Test MCP differ in their outline alone.
 describe("read/diff", () => {
-  const { file } = inject("live");
+  const { file, scratch } = inject("live");
   let client: LiveClient;
+
+  const run = async (code: string): Promise<unknown> => (await client.call("execute", { file, code })).result;
 
   beforeAll(async () => {
     client = await new LiveClient().connect();
@@ -20,6 +26,10 @@ describe("read/diff", () => {
   });
 
   afterAll(async () => {
+    await run(`const section = await pw.node(${JSON.stringify(scratch)});
+for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}))) {
+  if (!node.removed) node.remove();
+}`);
     await client.close();
   });
 
@@ -61,5 +71,29 @@ describe("read/diff", () => {
         to: expect.objectContaining({ id: success }),
       }),
     );
+  });
+
+  // T-085, K-052: two drawings alike in size, fill and names but not in outline differ by their paths' hash.
+  it("names the drawing changed between a square and a triangle in frames alike in all else", async () => {
+    const [square = "", triangle = ""] = (await run(`const section = await pw.node(${JSON.stringify(scratch)});
+const outlines = [["square", "M 0 0 L 24 0 L 24 24 L 0 24 Z"], ["triangle", "M 0 0 L 24 0 L 0 24 Z"]];
+return outlines.map(([shape, data], index) => {
+  const frame = figma.createFrame();
+  frame.name = ${JSON.stringify(PREFIX)} + shape;
+  frame.resize(24, 24);
+  frame.fills = [];
+  const vector = figma.createVector();
+  vector.name = "Drawing";
+  vector.vectorPaths = [{ windingRule: "NONZERO", data }];
+  vector.fills = [{ type: "SOLID", color: { r: 0.1, g: 0.1, b: 0.1 } }];
+  frame.appendChild(vector);
+  section.appendChild(frame);
+  frame.x = index * 40;
+  return frame.id;
+});`)) as string[];
+    const diff = (await client.call("nodes_diff", { file, a: square, b: triangle })) as Diff;
+
+    expect(diff.same).toBe(false);
+    expect(diff.changed).toContainEqual(expect.objectContaining({ drawing: true }));
   });
 });

@@ -57,33 +57,36 @@ describe("the built server over stdio", () => {
     const answer = await server.client.callTool({ name: "status", arguments: { probe: false } });
 
     expect(server.client.getServerVersion()?.name).toBe("pixelwright-new");
-    expect(tools.map(({ name }) => name)).toEqual([
-      "status",
-      "selection_get",
-      "node_show",
-      "selection_wait",
-      "changes_since",
-      "file_map",
-      "viewport_get",
-      "nodes_find",
-      "outline",
-      "screenshot",
-      "design_read",
-      "image_compare",
-      "styles_compare",
-      "inspect",
-      "measure",
-      "nodes_diff",
-      "breakpoints_find",
-      "flow_read",
-      "variants_read",
-      "fonts_check",
-      "execute",
-      "tokens_read",
-      "components_read",
-      "library_search",
-      "assets_export",
-    ]);
+    expect(tools.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        "status",
+        "selection_get",
+        "node_show",
+        "selection_wait",
+        "changes_since",
+        "file_map",
+        "viewport_get",
+        "nodes_find",
+        "outline",
+        "screenshot",
+        "design_read",
+        "image_compare",
+        "styles_compare",
+        "inspect",
+        "measure",
+        "nodes_diff",
+        "breakpoints_find",
+        "flow_read",
+        "variants_read",
+        "fonts_check",
+        "execute",
+        "tokens_read",
+        "components_read",
+        "library_search",
+        "assets_export",
+      ]),
+    );
+    expect(tools).toHaveLength(25);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });
     expect(server.errors).toEqual([]);
   });

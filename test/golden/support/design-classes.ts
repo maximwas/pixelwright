@@ -96,11 +96,15 @@ export const builder = new DesignBuilder(
   new TextPathData(),
 );
 
-export const design = new DesignXml(
-  new LayerTree(builder, new TextContent(runs), new InteractionAttributes(new EasingCss(format)), planner),
-  new XmlWriter(new XmlEscape()),
-  new RepeatFold(),
+/** design_read's layer tree: a read as the XML's elements. */
+export const tree = new LayerTree(
+  builder,
+  new TextContent(runs),
+  new InteractionAttributes(new EasingCss(format)),
+  planner,
 );
+
+export const design = new DesignXml(tree, new XmlWriter(new XmlEscape()), new RepeatFold());
 
 export const fit = new DesignFit(design);
 

@@ -13,7 +13,7 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
-/** A layer as a diff compares it, or a run of a text's (a span, with no id): its layers or runs are its children. */
+/** A layer as a diff compares it, or a run of a text's (a span, its text's id): its layers or runs are its children. */
 interface Compared {
   readonly id: string;
   readonly tag: string;
@@ -175,7 +175,7 @@ export class DesignDiff {
       piece.kind === XML_CONTENT.span
         ? [
           {
-            id: "",
+            id: element.id,
             tag: DIFF.span,
             attributes: Object.fromEntries(piece.attributes),
             text: piece.value === "" ? null : piece.value,

@@ -4,10 +4,16 @@ import { READ } from "@/shared/ops/read/read.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 import { ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
 
-/** The layers to read, each with its descendants to `depth` levels below it (all when left out). */
+/**
+ * The layers to read, each with its descendants to `depth` levels below it (all when left out); asked for, a vector's
+ * paths as a hash (the tools that tell two drawings apart) and each root's layers above it (the tools that place a
+ * layer in its parent).
+ */
 export const ReadOpInputSchema = zod.strictObject({
   nodes: zod.array(NodeIdSchema).check(zod.minLength(1)),
   depth: zod.exactOptional(zod.int().check(zod.minimum(READ.minDepth), zod.maximum(READ.maxDepth))),
+  pathHash: zod.exactOptional(zod.boolean()),
+  ancestors: zod.exactOptional(zod.boolean()),
 });
 
 /** A layer whose children the read did not list in full (K-034): `depth` stopped there, or the budget ran out. */

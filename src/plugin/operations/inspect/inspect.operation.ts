@@ -2,6 +2,7 @@ import { inject, injectable } from "@needle-di/core";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import { LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { LAYER_READER } from "@/plugin/adapters/figma/layer-read/layer-reader.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
@@ -19,6 +20,8 @@ type Box = InspectedLayer["box"];
  */
 @injectable()
 export class InspectOperation extends Operation<InspectInput, InspectRaw> {
+  readonly #boxes = new LayerBoxes();
+
   readonly #lookup;
   readonly #reader;
   readonly #format;
@@ -70,21 +73,21 @@ export class InspectOperation extends Operation<InspectInput, InspectRaw> {
     return {
       ...entry,
       parent: parent === null ? null : { id: parent.id, name: parent.name, type: parent.type },
-      box: this.#box(node.absoluteBoundingBox, corner) ?? {
+      box: this.#box(this.#boxes.layout(node), corner) ?? {
         x: entry.x,
         y: entry.y,
         width: entry.width,
         height: entry.height,
       },
-      paintedBox: this.#box("absoluteRenderBounds" in node ? node.absoluteRenderBounds : null, corner),
-      parentBox: parentLayer === null ? null : this.#box(parentLayer.absoluteBoundingBox, corner),
+      paintedBox: this.#box(this.#boxes.painted(node), corner),
+      parentBox: parentLayer === null ? null : this.#box(this.#boxes.layout(parentLayer), corner),
       parentPadding: this.#padding(parentLayer),
     };
   }
 
   /** Where the boxes start: relativeTo's top left; the page's for a page, or without relativeTo. */
   #corner(origin: BaseNode | null): Vector {
-    const box = origin !== null && "absoluteBoundingBox" in origin ? origin.absoluteBoundingBox : null;
+    const box = origin === null ? null : this.#boxes.layout(origin);
 
     return { x: box?.x ?? 0, y: box?.y ?? 0 };
   }

@@ -33,8 +33,6 @@ const view = new InspectView(
 );
 
 const DARK = { r: 0.098, g: 0.102, b: 0.137 };
-const WHITE = { r: 1, g: 1, b: 1 };
-const RED = { r: 1, g: 0, b: 0 };
 
 /** A layer as the inspect op gives it: a 100 x 40 box at the page's corner, with no parent. */
 function layer(fields: Partial<InspectedLayer>): InspectedLayer {

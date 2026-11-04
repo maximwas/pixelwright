@@ -1,5 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
+import { LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
@@ -18,6 +19,8 @@ type CoverOutput = zod.output<typeof coverOp.output>;
  */
 @injectable()
 export class CoverOperation extends Operation<CoverInput, CoverOutput> {
+  readonly #boxes = new LayerBoxes();
+
   readonly #lookup;
   readonly #cover;
 
@@ -48,12 +51,12 @@ export class CoverOperation extends Operation<CoverInput, CoverOutput> {
 
   /** A Figma layer as plain values; its children read only when the cover goes down to them. */
   #layer(node: BaseNode): CoverLayer {
-    const box = "absoluteBoundingBox" in node ? node.absoluteBoundingBox : null;
+    const box = this.#boxes.layout(node);
 
     return {
       id: node.id,
       box,
-      painted: ("absoluteRenderBounds" in node ? node.absoluteRenderBounds : null) ?? box,
+      painted: this.#boxes.painted(node) ?? box,
       visible: !("visible" in node) || node.visible,
       plain: this.#plain(node),
       mask: "isMask" in node && node.isMask,
