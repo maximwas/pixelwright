@@ -1,15 +1,18 @@
 import { InjectionToken, injectable } from "@needle-di/core";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 import { ASSETS_EXPORT_MANIFEST } from "@/server/tools/assets-export/assets-export.manifest.ts";
+import { BREAKPOINTS_FIND_MANIFEST } from "@/server/tools/breakpoints-find/breakpoints-find.manifest.ts";
 import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
 import { DESIGN_READ_MANIFEST } from "@/server/tools/design-read/design-read.manifest.ts";
 import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { FILE_MAP_MANIFEST } from "@/server/tools/file-map/file-map.manifest.ts";
+import { FLOW_READ_MANIFEST } from "@/server/tools/flow-read/flow-read.manifest.ts";
 import { FONTS_CHECK_MANIFEST } from "@/server/tools/fonts-check/fonts-check.manifest.ts";
 import { IMAGE_COMPARE_MANIFEST } from "@/server/tools/image-compare/image-compare.manifest.ts";
 import { INSPECT_MANIFEST } from "@/server/tools/inspect/inspect.manifest.ts";
 import { MEASURE_MANIFEST } from "@/server/tools/measure/measure.manifest.ts";
 import { NODE_SHOW_MANIFEST } from "@/server/tools/node-show/node-show.manifest.ts";
+import { NODES_DIFF_MANIFEST } from "@/server/tools/nodes-diff/nodes-diff.manifest.ts";
 import { NODES_FIND_MANIFEST } from "@/server/tools/nodes-find/nodes-find.manifest.ts";
 import { OUTLINE_MANIFEST } from "@/server/tools/outline/outline.manifest.ts";
 import { SCREENSHOT_MANIFEST } from "@/server/tools/screenshot/screenshot.manifest.ts";
@@ -17,6 +20,7 @@ import { SELECTION_GET_MANIFEST } from "@/server/tools/selection-get/selection-g
 import { SELECTION_WAIT_MANIFEST } from "@/server/tools/selection-wait/selection-wait.manifest.ts";
 import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
 import { STYLES_COMPARE_MANIFEST } from "@/server/tools/styles-compare/styles-compare.manifest.ts";
+import { VARIANTS_READ_MANIFEST } from "@/server/tools/variants-read/variants-read.manifest.ts";
 import { VIEWPORT_GET_MANIFEST } from "@/server/tools/viewport-get/viewport-get.manifest.ts";
 
 /**
@@ -41,6 +45,10 @@ export class ToolCatalog {
     STYLES_COMPARE_MANIFEST,
     INSPECT_MANIFEST,
     MEASURE_MANIFEST,
+    NODES_DIFF_MANIFEST,
+    BREAKPOINTS_FIND_MANIFEST,
+    FLOW_READ_MANIFEST,
+    VARIANTS_READ_MANIFEST,
     FONTS_CHECK_MANIFEST,
     EXECUTE_MANIFEST,
     ASSETS_EXPORT_MANIFEST,

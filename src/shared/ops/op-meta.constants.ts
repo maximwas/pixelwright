@@ -24,4 +24,7 @@ export const OP_NAME = {
   cover: "cover",
   image: "image",
   inspect: "inspect",
+  setOf: "set_of",
+  screens: "screens",
+  flows: "flows",
 } as const;

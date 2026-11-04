@@ -14,6 +14,11 @@ export const TEST_MCP = {
     pricingDesktop: "54:227",
     /** Orbit's hero: the Image Planet (54:317) is its asset, rendered to a file. */
     hero: "54:238",
+    /** Hero – B: Hero with another eyebrow and title, nothing else (nodes_diff). */
+    heroB: "81:1617",
+    /** Checkout's Pay button: its click goes to Success – Desktop (flow_read). */
+    checkoutPay: "54:420",
+    success: "80:1378",
     /** Orbit's Customers block, with the sticker turned 8 degrees (54:450) in it. */
     customers: "54:434",
     sticker: "54:450",

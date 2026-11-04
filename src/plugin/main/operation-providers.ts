@@ -14,6 +14,7 @@ import { ExecuteOperation } from "@/plugin/operations/execute/execute.operation.
 import { ExportOperation } from "@/plugin/operations/export/export.operation.ts";
 import { FileMapOperation } from "@/plugin/operations/file-map/file-map.operation.ts";
 import { FindOperation } from "@/plugin/operations/find/find.operation.ts";
+import { FlowsOperation } from "@/plugin/operations/flows/flows.operation.ts";
 import { ImageOperation } from "@/plugin/operations/image/image.operation.ts";
 import { InspectOperation } from "@/plugin/operations/inspect/inspect.operation.ts";
 import { NearbyOperation } from "@/plugin/operations/nearby/nearby.operation.ts";
@@ -22,8 +23,10 @@ import { OutlineOperation } from "@/plugin/operations/outline/outline.operation.
 import { PingOperation } from "@/plugin/operations/ping/ping.operation.ts";
 import { ReadOperation } from "@/plugin/operations/read/read.operation.ts";
 import { READ_RUN, ReadRun } from "@/plugin/operations/read/read-run.ts";
+import { ScreensOperation } from "@/plugin/operations/screens/screens.operation.ts";
 import { SelectionOperation } from "@/plugin/operations/selection/selection.operation.ts";
 import { SelectionWaitOperation } from "@/plugin/operations/selection-wait/selection-wait.operation.ts";
+import { SetOfOperation } from "@/plugin/operations/set-of/set-of.operation.ts";
 import { ShowOperation } from "@/plugin/operations/show/show.operation.ts";
 import { ViewportOperation } from "@/plugin/operations/viewport/viewport.operation.ts";
 import { OP_NAME } from "@/shared/ops/op-meta.constants.ts";
@@ -53,6 +56,9 @@ export class OperationProviders {
     [OP_NAME.cover]: CoverOperation,
     [OP_NAME.image]: ImageOperation,
     [OP_NAME.inspect]: InspectOperation,
+    [OP_NAME.setOf]: SetOfOperation,
+    [OP_NAME.screens]: ScreensOperation,
+    [OP_NAME.flows]: FlowsOperation,
   };
 
   register(container: Container): void {

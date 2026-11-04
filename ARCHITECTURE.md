@@ -84,6 +84,13 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     variant) with `InspectFills` (blend modes with their CSS names, strokes, fills with their style and variables,
     every fill type, bound fields by design_read's token, O-026); `Measure` measures each layer from the one before
     (gaps, edges and centres aligned within 0.01, insets, painted boxes, a sentence per pair).
+  - `diff/`: `DesignDiff` compares two reads as design_read's tree (`LayerTree`): layers matched by their path of
+    tags and names below the roots (same-named siblings in order), attributes and text as [A, B], a text's spans as
+    its children, ids and the roots' own names and places left out (T-085, K-051); `Fingerprint` compares an icon's
+    or image's drawing without what names or places it (es-toolkit `isEqual`, K-052); `VariantDiff` holds each
+    variant of a set against the default or the variant one property away, with the pseudo-class a state suggests
+    (T-086, K-053; names parsed by `NameValueList`); `Breakpoints` scores the page's screens against the asked one by
+    names without size words and children's names, weights as data (T-087, K-054).
   - `checks/`: `build-styles/` is styles_compare's engine (T-090). `BuildStyles` finds each pair's layer in the reads
     (in its parent when another pair's read holds it, else as its own read's root: the read op gives no parent) and
     takes its CSS as design_read writes it (`DesignBuilder`, the asset plan, `ReadCatalogue`'s tokens and text
@@ -145,6 +152,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn); `inspect/` and `measure/` read through the inspect op (an
   `around` layer is a second inspect of it in the same origin; a selection past 100 is cut and counted in `left`).
+  `nodes-diff/` reads both layers with one read op and cuts each list to 200; `variants-read/` finds the set with the
+  set_of op and reads it whole; `breakpoints-find/` scores the screens op's answer; `flow-read/` also holds
+  `FlowLinks`, which turns the flows op's layers with interactions into links in design_read's words (T-088).
 - `server/adapters/`: the port implementations on Node.
   - `bridge/`: `PluginBridge` (the role switch), `NoBridge`, the status hints, and the bridge's topics:
     `listener/` (the port, the upgrade guard, `bridge.json`, the ws socket), `plugin/` (one plugin socket's handshake,
@@ -202,6 +212,10 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   smallest opaque layer that shows a clip's region alone, over the layer's tree as plain values (T-073). `inspect/`
   reads each layer's entry on its own (`LayerReader.at`, boxes from `relativeTo` or the page) with its parent, layout
   and painted boxes and its parent's room, and what its paints use (`LayerReader.shared`); it never needs Allow edits.
+  `set-of/` gives the component set a layer is, holds or comes from (P-116); `screens/` the screen a layer is on and
+  the page's other screens with their children's names (P-123); `flows/` the page's flow starts, screens and layers
+  with interactions (`ReactionFieldReader`, 500 at most within the op's budget, P-121); screens are
+  `PageLoader.screens`: frames, components and instances at the page's top or in its sections.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;
