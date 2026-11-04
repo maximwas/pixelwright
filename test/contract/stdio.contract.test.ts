@@ -87,11 +87,21 @@ describe("the built server over stdio", () => {
         "baseline_save",
         "baseline_diff",
         "assets_export",
+        "guide",
       ]),
     );
-    expect(tools).toHaveLength(28);
+    expect(tools).toHaveLength(29);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });
     expect(server.errors).toEqual([]);
+  });
+
+  it("answers guide's xml topic from the bundle, its Markdown inlined by tsdown's text loader", async () => {
+    const answer = await server.client.callTool({ name: "guide", arguments: { topic: "xml" } });
+
+    expect(answer.structuredContent).toEqual({
+      topic: "xml",
+      markdown: readFileSync(new URL("../../src/server/tools/guide/topics/xml.md", import.meta.url), "utf8"),
+    });
   });
 
   it("writes the call to the shared log with its callId and ms, and shuts down when stdin ends", async () => {

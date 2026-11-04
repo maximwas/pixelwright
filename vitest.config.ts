@@ -6,6 +6,15 @@ const exclude = ["old/**", "node_modules/**", "dist/**"];
 const oxc = { decorator: { legacy: true } };
 // The `@/` alias of tsconfig.base.json; each project is its own config, so each one turns it on.
 const resolve = { tsconfigPaths: true };
+// The guide's topics as tsdown's text loader bundles them (tsdown.config.ts): a .md module is its text.
+const plugins = [
+  {
+    name: "markdown-text",
+    transform(code: string, id: string) {
+      return id.endsWith(".md") ? `export default ${JSON.stringify(code)};` : null;
+    },
+  },
+];
 
 export default defineConfig({
   test: {
@@ -13,6 +22,7 @@ export default defineConfig({
       {
         oxc,
         resolve,
+        plugins,
         test: {
           name: "unit",
           include: [
@@ -24,7 +34,7 @@ export default defineConfig({
           exclude,
         },
       },
-      { oxc, resolve, test: { name: "contract", include: ["test/contract/**/*.contract.test.ts"], exclude } },
+      { oxc, resolve, plugins, test: { name: "contract", include: ["test/contract/**/*.contract.test.ts"], exclude } },
       // Real Figma (Test MCP), local only: one file at a time, and writing tests never retry.
       {
         oxc,

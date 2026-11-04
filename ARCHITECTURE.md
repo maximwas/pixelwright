@@ -190,6 +190,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   CSS or JSON (dtcg comes with its item), past maxChars the summary with the first whole tokens that fit;
   `tokens-usage/` names the token with `TokenNames` over the variables op's raw tokens, then lists the usage op's
   layers (500 at most, within the caller's budgetMs, D-48).
+  `guide/` answers its topics from `topics/*.md`, Markdown that tsdown's text loader inlines into the bundle (vitest.config.ts
+  makes a .md module its text alike), so the package ships `dist/` alone; `markdown.d.ts` types the import.
 - `server/adapters/`: the port implementations on Node.
   - `bridge/`: `PluginBridge` (the role switch), `NoBridge`, the status hints, and the bridge's topics:
     `listener/` (the port, the upgrade guard, `bridge.json`, the ws socket), `plugin/` (one plugin socket's handshake,

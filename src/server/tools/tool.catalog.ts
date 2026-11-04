@@ -11,6 +11,7 @@ import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { FILE_MAP_MANIFEST } from "@/server/tools/file-map/file-map.manifest.ts";
 import { FLOW_READ_MANIFEST } from "@/server/tools/flow-read/flow-read.manifest.ts";
 import { FONTS_CHECK_MANIFEST } from "@/server/tools/fonts-check/fonts-check.manifest.ts";
+import { GUIDE_MANIFEST } from "@/server/tools/guide/guide.manifest.ts";
 import { IMAGE_COMPARE_MANIFEST } from "@/server/tools/image-compare/image-compare.manifest.ts";
 import { INSPECT_MANIFEST } from "@/server/tools/inspect/inspect.manifest.ts";
 import { LIBRARY_SEARCH_MANIFEST } from "@/server/tools/library-search/library-search.manifest.ts";
@@ -64,6 +65,7 @@ export class ToolCatalog {
     COMPONENTS_READ_MANIFEST,
     LIBRARY_SEARCH_MANIFEST,
     ASSETS_EXPORT_MANIFEST,
+    GUIDE_MANIFEST,
   ];
 
   manifests(): readonly ToolManifest[] {

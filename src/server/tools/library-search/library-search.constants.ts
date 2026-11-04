@@ -3,7 +3,7 @@ export const LIBRARY_SEARCH_TOOL = {
   name: "library_search",
   title: "Search the saved component libraries",
   description:
-    'Finds components in the team\'s libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer, in the libraries folder of Pixelwright\'s home; save again after the library changes. Then query from any file: every word must appear in a component\'s name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:<key>) and properties: insert it with design_apply <Instance component="key:…" variant="State=Hover" props="Label=Buy"/>, which works once the library is published. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.',
+    "Finds components in the team's libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer, in the libraries folder of Pixelwright's home; save again after the library changes. Then query from any file: every word must appear in a component's name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:<key>, the component's key in its library) and properties, which in code are its props. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.",
 } as const;
 
 export const LIBRARY_SEARCH_FIELD = {
@@ -11,7 +11,7 @@ export const LIBRARY_SEARCH_FIELD = {
     "Words to find in the components' names, descriptions, pages and variants, in any order (button hover); a typo still finds. Left out, the saved libraries are listed.",
   save: "Save the file's own published components as a library first, replacing what was saved for it before: call it in the library file, open in Figma Desktop with the Pixelwright plugin.",
   limit: "The most components to give.",
-  component: 'design_apply\'s <Instance component="key:…">.',
+  component: "The component's key in its library, as key:<key>.",
   components: "What the query found, best first.",
   libraries: "Every saved library.",
 } as const;
