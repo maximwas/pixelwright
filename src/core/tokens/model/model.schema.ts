@@ -47,7 +47,7 @@ export const TokensSchema = zod.object({
   }),
 });
 
-type Tokens = zod.output<typeof TokensSchema>;
+export type Tokens = zod.output<typeof TokensSchema>;
 
 export type TokenCollection = Tokens["collections"][number];
 
@@ -56,6 +56,14 @@ export type TokenVariable = TokenCollection["variables"][number];
 export type StyleTokenGroups = Tokens["styles"];
 
 export type StyleToken = StyleTokenGroups["paint"][number];
+
+/** A model too long for one answer, counted (T-161): each collection's modes and variables, and the styles. */
+export const SummarySchema = zod.object({
+  collections: zod.array(zod.object({ name: zod.string(), modes: zod.array(zod.string()), variables: zod.number() })),
+  styles: zod.object({ paint: zod.number(), text: zod.number(), effect: zod.number() }),
+});
+
+export type Summary = zod.output<typeof SummarySchema>;
 
 /** The tokens and what could not be written as asked: unresolved aliases, values CSS cannot hold, missing targets. */
 export type ReadyTokens = Tokens & { readonly notes: string[] };

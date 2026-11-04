@@ -1,5 +1,5 @@
 import * as zod from "zod/mini";
-import { TokensSchema } from "@/core/tokens/model/model.schema.ts";
+import { SummarySchema, TokensSchema } from "@/core/tokens/model/model.schema.ts";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import { TOKEN_FORMAT, TOKENS_READ, TOKENS_READ_FIELD } from "@/server/tools/tokens-read/tokens-read.constants.ts";
 import { variablesOp } from "@/shared/ops/variables/variables.manifest.ts";
@@ -26,12 +26,6 @@ export const TokensReadInputSchema = zod.object({
     )
     .check(zod.describe(TOKENS_READ_FIELD.maxChars)),
   file: FileInputSchema,
-});
-
-/** What a too-long read gives instead of the tokens (item 46 fills it): each collection's size and the styles'. */
-const SummarySchema = zod.object({
-  collections: zod.array(zod.object({ name: zod.string(), modes: zod.array(zod.string()), variables: zod.number() })),
-  styles: zod.object({ paint: zod.number(), text: zod.number(), effect: zod.number() }),
 });
 
 export const TokensReadOutputSchema = zod.object({

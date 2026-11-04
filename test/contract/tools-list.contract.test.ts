@@ -74,6 +74,7 @@ describe("the MCP contract", () => {
       "fonts_check",
       "execute",
       "tokens_read",
+      "tokens_usage",
       "components_read",
       "library_search",
       "assets_export",
