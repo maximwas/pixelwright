@@ -1,7 +1,6 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { BUILDER_VALUE } from "@/core/design/builder/builder.constants.ts";
 import {
-  MODE_ATTRIBUTE,
   OVERRIDE,
   OVERRIDE_NOISE,
   OVERRIDE_ORDER,
@@ -13,6 +12,8 @@ import {
 import { DESIGN_ATTRIBUTE, TEXT_TYPES } from "@/core/design/design.constants.ts";
 import type { MaybeAttribute } from "@/core/design/design.types.ts";
 import { NAME_VALUE_LIST } from "@/core/kernel/lists/name-value-list.ts";
+import { MODE_ATTRIBUTE } from "@/core/kernel/names/names.constants.ts";
+import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 type InstanceProperties = NonNullable<ReadLayer["instance"]>["properties"];
@@ -24,9 +25,11 @@ type InstanceProperties = NonNullable<ReadLayer["instance"]>["properties"];
 @injectable()
 export class ComponentAttributes {
   readonly #lists;
+  readonly #names;
 
-  constructor(lists = inject(NAME_VALUE_LIST)) {
+  constructor(lists = inject(NAME_VALUE_LIST), names = inject(TOKEN_NAMES)) {
     this.#lists = lists;
+    this.#names = names;
   }
 
   /** An instance's component (its set's name for a variant), its variant values, its own properties, its exposure. */
@@ -63,8 +66,8 @@ export class ComponentAttributes {
   /** The variable modes set on the layer, as the data attributes tokens_read's CSS selects on. */
   modes(layer: ReadLayer): MaybeAttribute[] {
     return (layer.modes ?? []).map(({ collection, mode }) => [
-      MODE_ATTRIBUTE.name(this.#slug(collection)),
-      this.#slug(mode),
+      MODE_ATTRIBUTE.name(this.#names.attribute(collection)),
+      this.#names.attribute(mode),
     ]);
   }
 
@@ -92,16 +95,6 @@ export class ComponentAttributes {
     const at = OVERRIDE_ORDER.indexOf(word);
 
     return at === -1 ? OVERRIDE_ORDER.length : at;
-  }
-
-  #slug(name: string): string {
-    const slug = name
-      .trim()
-      .toLowerCase()
-      .replace(MODE_ATTRIBUTE.other, MODE_ATTRIBUTE.dash)
-      .replace(MODE_ATTRIBUTE.edges, "");
-
-    return slug === "" ? MODE_ATTRIBUTE.empty : slug;
   }
 }
 

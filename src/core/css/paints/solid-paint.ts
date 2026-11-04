@@ -4,7 +4,7 @@ import { COLOR_SPACE } from "@/core/kernel/color/color.constants.ts";
 import { type Channels, Color, type ColorSpace } from "@/core/kernel/color/color.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
-import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
+import type { ModelTables, ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 export type Paint = NonNullable<ReadLayer["strokes"]>[number];
 
@@ -24,7 +24,7 @@ export class SolidPaint {
   }
 
   /** The paint's CSS; null when it is no solid with a colour. */
-  css(paint: Paint, model: ReadModel): string | null {
+  css(paint: Paint, model: ModelTables): string | null {
     if (paint.type !== FIGMA_PAINT.solid || paint.color === undefined) {
       return null;
     }
@@ -44,7 +44,7 @@ export class SolidPaint {
     color: Channels,
     bound: unknown,
     opacity: number,
-    model: ReadModel,
+    model: ModelTables,
   ): string {
     const space = this.#space(model);
     const variable = this.#variable(bound, model);
@@ -60,7 +60,7 @@ export class SolidPaint {
   }
 
   /** The variable an alias `{ type: "VARIABLE_ALIAS", id }` on the bound colour points at, when the read holds it. */
-  #variable(bound: unknown, model: ReadModel): Variable | undefined {
+  #variable(bound: unknown, model: ModelTables): Variable | undefined {
     const id = this.#names.alias(bound, PAINTS_VALUE.boundColor);
 
     return id === undefined ? undefined : model.variables[id];
@@ -71,7 +71,7 @@ export class SolidPaint {
   }
 
   /** Display P3 in a DISPLAY_P3 file; sRGB in LEGACY and SRGB ones, or when the read does not say. */
-  #space(model: ReadModel): ColorSpace {
+  #space(model: ModelTables): ColorSpace {
     return model.colorProfile === FIGMA_PAINT.displayP3 ? COLOR_SPACE.displayP3 : COLOR_SPACE.srgb;
   }
 }

@@ -1,5 +1,5 @@
 import { InjectionToken, injectable } from "@needle-di/core";
-import { FNV, TOKEN_PATTERN, TOKEN_TEXT, TOKEN_VALUE } from "@/core/kernel/names/names.constants.ts";
+import { FNV, MODE_ATTRIBUTE, TOKEN_PATTERN, TOKEN_TEXT, TOKEN_VALUE } from "@/core/kernel/names/names.constants.ts";
 
 /** A style as its name and its number among same-named styles of its kind (StyleNumbers). */
 interface NamedStyle {
@@ -52,6 +52,17 @@ export class TokenNames {
     return (
       TOKEN_PATTERN.wrapped.exec(web)?.[1] ?? (web.startsWith(TOKEN_VALUE.prefix) ? web : TOKEN_TEXT.property(web))
     );
+  }
+
+  /** A collection's or mode's name as its data attribute's slug (C-135): what design_read writes, tokens_read selects on. */
+  attribute(name: string): string {
+    const slug = name
+      .trim()
+      .toLowerCase()
+      .replace(MODE_ATTRIBUTE.other, TOKEN_VALUE.dash)
+      .replace(TOKEN_PATTERN.edgeDashes, TOKEN_VALUE.none);
+
+    return slug === TOKEN_VALUE.none ? MODE_ATTRIBUTE.empty : slug;
   }
 
   /** The id of the variable an alias (`{ type: "VARIABLE_ALIAS", id }`) binds to field `key`, if any. */

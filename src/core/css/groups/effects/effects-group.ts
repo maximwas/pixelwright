@@ -21,7 +21,7 @@ import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
-import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
+import type { ModelTables } from "@/shared/read-model/read-model.schema.ts";
 
 type Effect = NonNullable<ReadLayer["effects"]>[number];
 
@@ -56,11 +56,14 @@ export class EffectsGroup implements PropertyGroup {
 
     this.#shadows(layer, effects, model, css);
 
+    for (const [property, value] of this.blurs(effects)) {
+      css.set(property, value);
+    }
+
     for (const effect of effects) {
       const blur = BLURS[effect.type];
 
       if (blur !== undefined) {
-        css.set(blur.property, EFFECTS_TEXT.blur(this.#blur(effect.radius ?? 0)));
         this.#progressive(effect, blur.note, css);
       } else if (RENDERED_EFFECTS[effect.type] ?? false) {
         css.note(EFFECTS_VALUE.effect, EFFECTS_TEXT.rendered(effect.type));
@@ -75,7 +78,7 @@ export class EffectsGroup implements PropertyGroup {
   shadows(
     effects: readonly Effect[],
     isText: boolean,
-    model: ReadModel,
+    model: ModelTables,
   ): string {
     return effects
       .filter(
@@ -88,11 +91,22 @@ export class EffectsGroup implements PropertyGroup {
       .join(EFFECTS_VALUE.joint);
   }
 
+  /** The visible blurs, each as its CSS property (filter, backdrop-filter) and its blur() at 0.43 R (C-100, D-26). */
+  blurs(effects: readonly Effect[]): [string, string][] {
+    return effects
+      .filter((effect) => effect.visible ?? true)
+      .flatMap((effect): [string, string][] => {
+        const blur = BLURS[effect.type];
+
+        return blur === undefined ? [] : [[blur.property, EFFECTS_TEXT.blur(this.#blur(effect.radius ?? 0))]];
+      });
+  }
+
   /** The layer's shadows; an effect style's are its token (T-163). */
   #shadows(
     layer: ReadLayer,
     effects: readonly Effect[],
-    model: ReadModel,
+    model: ModelTables,
     css: CssDeclarations,
   ): void {
     const isText = TEXT_TYPES[layer.type] ?? false;
@@ -114,7 +128,7 @@ export class EffectsGroup implements PropertyGroup {
   #shadow(
     effect: Effect,
     isText: boolean,
-    model: ReadModel,
+    model: ModelTables,
   ): string {
     return [
       effect.type === FIGMA_EFFECT.innerShadow ? EFFECTS_VALUE.inset : null,

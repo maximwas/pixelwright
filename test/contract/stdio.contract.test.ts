@@ -79,6 +79,7 @@ describe("the built server over stdio", () => {
       "variants_read",
       "fonts_check",
       "execute",
+      "tokens_read",
       "components_read",
       "library_search",
       "assets_export",

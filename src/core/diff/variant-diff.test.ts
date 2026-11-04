@@ -48,7 +48,7 @@ const paints = new PaintList(
 const tree = new LayerTree(
   new DesignBuilder(
     new NodeTag(),
-    new ComponentAttributes(new NameValueList()),
+    new ComponentAttributes(new NameValueList(), new TokenNames()),
     new CssReader(new GroupRegistry([new FillsGroup(paints)])),
     new TextPathData(),
   ),

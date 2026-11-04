@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
-const attributes = new ComponentAttributes(new NameValueList());
+const attributes = new ComponentAttributes(new NameValueList(), new TokenNames());
 
 function layer(fields: Partial<ReadLayer>): ReadLayer {
   return {

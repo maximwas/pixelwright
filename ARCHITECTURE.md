@@ -28,12 +28,21 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     by hand, P3 kept P3, Dev Mode's CSS forms, the wire form with `space` only for P3, equals within 0.0005, contrast);
     `names/` holds `TokenNames` (T-163: a style's or variable's `--Name`, Unicode letters and digits kept, a name with
     none `--token-<fnv1a>`, K-070; a variable's WEB code syntax wins; a same-named style `--Black-2`, its XML name
-    `h1-2`; the variable an alias binds to a field) and `Slug` (K-075: an asset file name, slugify with Ukrainian
+    `h1-2`; the variable an alias binds to a field; a collection's or mode's data attribute slug, C-135) and `Slug` (K-075: an asset file name, slugify with Ukrainian
     transliteration, 60 characters, `asset` when empty); `easing/` holds `EasingCss`, the one easing writer (D-64, K-066: a
     CSS keyword, else `cubic-bezier()` to 3 decimals, a hold as `step-end`; a spring writes nothing until the Motion
     item, its preset numbers unverified, D-24).
   - `tokens/`: `names/` holds `StyleNumbers`, the one numbering of same-named styles (the file's own by id, then library
     ones, D-29: library numbers depend on the page read, a known quirk); the plugin's `References` numbers with it.
+    `model/` holds `TokenModel` (T-160: the variables op's raw tokens as collections with their modes and
+    `[data-<collection>="<mode>"]` selectors, variables as CSS, styles and notes; the collections asked for, a var()
+    target the output leaves out noted from the aliases themselves, K-005), `VariableCss` (T-164: hex or rgba,
+    `color-mix()` for a composed colour, px but for opacities and weights, quoted strings, easings, seconds, `var()`),
+    `NumberUnits` (K-003: a FLOAT's unit from its scopes, else its alias group's by union-find, else px) and
+    `StyleTokens` (K-006 through design_read's own mapping: `PaintList` on a square for paint styles, so gradients
+    come from the paints, C-022; `--Name-font` with letter spacing and case for text; shadows, and blurs as
+    `--Name-filter` / `--Name-backdrop-filter`, D-26, for effects); `formats/css/` holds `TokensCss`, the CSS format
+    (`:root` with each default mode and the styles, a block per mode of a collection with several).
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -160,7 +169,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   `components-read/` also holds `LinkPaths` (a Dev Mode link to a GitHub, GitLab or Bitbucket file, or a vscode://file
   link, as the project file it points at, the longest existing end for a branch with slashes); `library-search/` saves
   a file's own published components through the components op and searches every saved catalogue with Fuse.js, which
-  stays on the server.
+  stays on the server. `tokens-read/` makes the variables op's raw tokens into core's token model and writes it as
+  CSS (format css; json and dtcg come with their items).
 - `server/adapters/`: the port implementations on Node.
   - `bridge/`: `PluginBridge` (the role switch), `NoBridge`, the status hints, and the bridge's topics:
     `listener/` (the port, the upgrade guard, `bridge.json`, the ws socket), `plugin/` (one plugin socket's handshake,
@@ -205,7 +215,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   promise, so `LayerReader.entry` and `ReadRun` are async): `ComponentFieldReader` (an instance's main component, set
   and properties without a slot's, a component's description and bindings, the overrides of the instances around it),
   `NoteFieldReader` (Dev Mode annotations with their category), `ModeFieldReader` (explicit variable modes by name) and
-  `ReactionFieldReader` (reactions, `actions ?? [action]`, each destination named once, P-089; the URL as href); `host/` holds the
+  `ReactionFieldReader` (reactions, `actions ?? [action]`, each destination named once, P-089; the URL as href); `variables/` holds `FileTokens` (the file's collections, variables and styles, and those
+  the layers under `within` or on the current page use, every variable an alias points at in turn; styles numbered
+  by `References`; no style CSS asked of Figma, D-20), `UsedTokens` (the style ids and bound variables of the layers,
+  within the op's deadline) and `LibraryCatalogue` (the enabled libraries' variables by name, 500 at most); `host/`
+  holds the
   window channel (`UiChannel`; `WindowHost`, main's side of the window: the handover, the switch, the activity and busy
   events, the allowed links, the height), the RPC peer of the server
   (`ServerRpc`), the document events with the page's layer changes, and clientStorage (pairing key, Allow edits, file
@@ -226,6 +240,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   `components/` also holds `ComponentFinder` (local: the sets and lone components of every page or of `within`; used:
   the mains of the instances, a batch at a time, counted), `ComponentEntries` (properties from the set or a lone
   component only, FX-028), `ExposedInstances` and `ComponentLinks` (the file asked first, then each component's).
+  `variables/` returns the raw tokens through `FileTokens` and `LibraryCatalogue`: the server builds the model, the
+  plugin carries no `core/tokens`.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;

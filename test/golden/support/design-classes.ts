@@ -75,7 +75,7 @@ const classifier = new AssetClassifier();
 
 export const planner = new AssetPlanner(classifier, new Slug(), new AssetCss(lengths, new CssSplit()));
 
-const components = new ComponentAttributes(new NameValueList());
+const components = new ComponentAttributes(new NameValueList(), new TokenNames());
 const shape = new LayerShape();
 
 /** design_read's element builder: a layer's tag and attributes. */

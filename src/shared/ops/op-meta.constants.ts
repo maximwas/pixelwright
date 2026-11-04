@@ -28,4 +28,5 @@ export const OP_NAME = {
   screens: "screens",
   flows: "flows",
   components: "components",
+  variables: "variables",
 } as const;

@@ -5,7 +5,7 @@ import { IMAGE_PAINT } from "@/core/css/paints/image-paint.ts";
 import { FIGMA_PAINT, PAINTS_TEXT, PAINTS_VALUE, UNMAPPED_PAINT } from "@/core/css/paints/paints.constants.ts";
 import { type Paint, SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
-import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
+import type { ModelTables } from "@/shared/read-model/read-model.schema.ts";
 
 /** A layer's paints as CSS: one value top first, the table's note marker, or nothing painted. */
 export type PaintCss = string | typeof UNMAPPED_PAINT | null;
@@ -37,7 +37,7 @@ export class PaintList {
   css(
     paints: readonly Paint[],
     styleId: string | undefined,
-    model: ReadModel,
+    model: ModelTables,
     box: Box | null = null,
   ): PaintCss {
     const style = styleId === undefined ? undefined : model.styles[styleId];
@@ -69,7 +69,7 @@ export class PaintList {
 
   #layer(
     paint: Paint,
-    model: ReadModel,
+    model: ModelTables,
     box: Box | null,
   ): string | null {
     if (box === null || paint.type === FIGMA_PAINT.solid) {
