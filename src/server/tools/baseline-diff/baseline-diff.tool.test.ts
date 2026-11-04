@@ -31,6 +31,7 @@ import { StructureChanges } from "@/core/diff/baseline/structure-changes.ts";
 import { Fingerprint } from "@/core/diff/fingerprint.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -85,7 +86,7 @@ const tree = new LayerTree(
     new CssReader(new GroupRegistry([])),
     new TextPathData(),
   ),
-  new TextContent(new TextRun(new FontShorthand(format), paints, format, names)),
+  new TextContent(new TextRun(new FontShorthand(format, new FontWeight()), paints, format, names)),
   new InteractionAttributes(new EasingCss(format)),
   new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(lengths, new CssSplit())),
 );
