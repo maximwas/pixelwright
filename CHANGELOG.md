@@ -26,6 +26,9 @@ apart from the changes below. The plugin is new too: put it in place with the se
 
 ### Added
 
+- `design_read` writes a text's stroke as `-webkit-text-stroke` (an outside stroke twice as wide with
+  `paint-order: stroke fill`; an inside one with a note, since CSS has none), and a layer's fill blend modes as
+  `background-blend-mode`, one per background, top first.
 - `design_read` takes `autoLineHeight: "px"`: Figma's Auto line heights are written as the px Figma renders them at,
   wherever a text that hugs its lines shows that for its font and size. Elsewhere, and by default, they stay `normal`,
   and the line-height hint names only the texts still written `normal`.
@@ -89,6 +92,11 @@ apart from the changes below. The plugin is new too: put it in place with the se
 
 ### Fixed
 
+- One underlined or struck-through word no longer decorates the whole text in `design_read`: a decoration stays on
+  the text only when every run has it, since CSS cannot take a parent's decoration off a span; otherwise each span
+  carries its own.
+- A gradient paint style has one value in `design_read` and `tokens_read`. A layer whose box draws the gradient at
+  another angle keeps the token, with a hint giving the background as Figma draws it there.
 - A video fill reads as a video: `design_read` notes it in `$css` and lists its asset with no file, `inspect` names
   it, and `assets_export` answers its layer with `kind: "video"` and asks for the file from the designer, since the
   Plugin API cannot export a video.

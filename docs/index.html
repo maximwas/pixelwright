@@ -618,6 +618,14 @@ colour or a token and its place in percent. A diamond gradient, a turned radial 
 <code>$css</code>, as Figma&#39;s own CSS.</li>
 <li><code>mix-blend-mode</code> is how the layer blends (multiply, screen, overlay…); a blend mode CSS has no name for is in
 <code>$css</code>.</li>
+<li><code>background-blend-mode</code> follows <code>background</code> when a fill blends with the fills under it: one mode per background,
+top first (<code>multiply, normal</code>). A mode it has no name for (linear burn or dodge) is in <code>$css</code>, and so is a text&#39;s
+(<code>fill-blend-mode</code>: <code>color</code> cannot blend).</li>
+<li>A text&#39;s stroke follows <code>color</code> as <code>-webkit-text-stroke=&quot;2px #3B2FD9&quot;</code>, which CSS centres on the glyph&#39;s edge: an
+outside stroke is twice as wide with <code>paint-order=&quot;stroke fill&quot;</code>, so the fill hides its inner half; an inside one has
+no CSS and is in <code>$css</code> as <code>stroke-align: inside</code>.</li>
+<li><code>text-decoration</code> is on a <code>Text</code> only when every run has it: CSS draws a parent&#39;s underline through every child, so
+otherwise each underlined or struck-through <code>Span</code> carries its own.</li>
 <li><code>mask=&quot;alpha&quot;</code> (or vector, luminance) makes the layer the mask of the layers above it in its parent.</li>
 </ul>
 <h3>Layout as the XML shows it</h3>
