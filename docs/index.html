@@ -457,7 +457,8 @@ stays, to read. Code Connect is gone too: the XML no longer carries your project
 <p class="topic-about">Which tool to use when, from finding a section to its files, and how to read a design like a web developer. The agent reads this with <code>guide</code> topic <code>workflow</code>.</p>
 <p>Pixelwright reads the files open in Figma Desktop through its plugin; nothing goes through Figma&#39;s REST API. This
 version reads only: no tool changes the file. Every tool that reads a file takes <code>file</code> (a session id from <code>status</code>,
-or a file name); without it, the active file.</p>
+or a file name); without it, the active file, except baseline_diff, which compares a baseline in the file it was
+saved from.</p>
 <ol>
 <li><strong>Connection.</strong> <code>status</code> lists the connected files and which one is active. None connected: the user runs the
 Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code <code>status</code>
@@ -571,16 +572,19 @@ draw). Its <code>src</code> is a PNG of what it shows.</li>
 <li><code>Icon</code>: a vector, or a group or instance drawn only with vector shapes (a logo). Its <code>src</code> is one SVG.</li>
 <li><code>TextPath</code>: Figma&#39;s text on a path (a label along an arc), its text written as a <code>Text</code>&#39;s (see Text below).</li>
 <li><code>Span</code>: a run inside a <code>Text</code> whose style differs from the text&#39;s own.</li>
-<li>A hidden layer is a stub with <code>display=&quot;none&quot;</code>: its id, name and box, without children. Slices are left out.</li>
+<li>A hidden layer is a stub with <code>display=&quot;none&quot;</code>: its id and name (and <code>$visibleProp</code> when a component property
+shows it), no box and no children. Slices are left out.</li>
 </ul>
 <h3>Metadata attributes, in this order</h3>
 <p><code>id</code> (instance children keep <code>I…;…</code> ids), <code>name</code> (left out on a text named by its content), <code>component</code> and
 <code>variant</code> (&quot;Size=Large, State=Default&quot;) on instances, <code>props</code> (an instance&#39;s text and boolean properties,
 &quot;Label=Sign up, Icon=true&quot;; a comma, = or backslash inside a name or value comes escaped with a backslash),
-<code>description</code> (components), <code>note</code> (Dev Mode annotations, &quot;Category: text&quot;, several joined with &quot; | &quot;), <code>href</code>
-(a prototype link, or a text&#39;s hyperlink), <code>mask</code> (alpha, vector or luminance: the layer masks the layers above it in
-its parent), <code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>; the read&#39;s root also
-has the modes it takes from above), <code>textStyle</code>, <code>src</code> (assets), <code>d</code> and <code>start</code> (a text on a path).</p>
+<code>$exposed</code>, <code>description</code> (components), <code>note</code> (Dev Mode annotations, &quot;Category: text&quot;, several joined with
+&quot; | &quot;), <code>$pins</code>, <code>$override</code>, <code>$dev</code> (see Read-only attributes), <code>href</code> (a prototype link, or a text&#39;s hyperlink),
+<code>data-&lt;collection&gt;</code> (a variable mode set on the layer, <code>data-color-modes=&quot;dark&quot;</code>; the read&#39;s root also has the
+modes it takes from above), <code>textStyle</code>, <code>mask</code> (alpha, vector or luminance: the layer masks the layers above it in
+its parent), <code>src</code> (assets), <code>d</code> and <code>start</code> (a text on a path). The CSS attributes come next, then <code>$prop</code>,
+<code>$visibleProp</code>, <code>$swapProp</code>, <code>$css</code>, <code>$grid-style</code> and <code>$on-…</code>, and last <code>$children</code>, <code>$truncated</code> and <code>$repeat</code>.</p>
 <p>A <code>data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;</code> attribute is the selector tokens_read&#39;s CSS writes for that mode: put it on the
 element in the build too, and the element takes that mode&#39;s values.</p>
 <h3>CSS attributes</h3>
@@ -684,14 +688,20 @@ In code an SVG <code>&lt;textPath&gt;</code> over a <code>&lt;path d=&quot;…&q
 <pre><code class="language-xml">&lt;TextPath id=&quot;12:41&quot; name=&quot;Label&quot; d=&quot;M 0 50 C 55.23 -16.67 144.77 -16.67 200 50&quot; start=&quot;0 0.5&quot; position=&quot;absolute&quot; left=&quot;100px&quot; top=&quot;20px&quot; width=&quot;200px&quot; height=&quot;50px&quot; font=&quot;500 14px/normal &#39;Inter&#39;&quot; color=&quot;var(--color-ink)&quot;&gt;Share&lt;/TextPath&gt;
 </code></pre>
 <h3>Example (Orbit, a pricing card, abridged)</h3>
-<pre><code class="language-xml">&lt;Instance id=&quot;54:268&quot; name=&quot;Plan – Pro&quot; component=&quot;Plan Card&quot; props=&quot;Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro&quot; note=&quot;The price comes from the billing API. Show the Popular badge only on the plan the API marks popular.&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; width=&quot;385px&quot; height=&quot;394px&quot; padding=&quot;var(--space-32)&quot; gap=&quot;var(--space-24)&quot; border-radius=&quot;var(--radius-lg)&quot; border=&quot;2px solid var(--color-brand)&quot; background=&quot;var(--color-surface)&quot; box-shadow=&quot;var(--Shadow-Card)&quot; $on-click=&quot;go to Checkout – Desktop; dissolve 300ms ease-out&quot;&gt;
+<pre><code class="language-xml">&lt;Instance id=&quot;54:268&quot; name=&quot;Plan – Pro&quot; component=&quot;Plan Card&quot; props=&quot;Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro&quot; note=&quot;The price comes from the billing API. Show the Popular badge only on the plan the API marks popular.&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; flex=&quot;1&quot; padding=&quot;var(--space-32)&quot; gap=&quot;var(--space-24)&quot; border-radius=&quot;var(--radius-lg)&quot; border=&quot;2px solid var(--color-brand)&quot; background=&quot;var(--color-surface)&quot; box-shadow=&quot;var(--Shadow-Card)&quot; $on-click=&quot;go to Checkout – Desktop; dissolve 300ms ease-out&quot;&gt;
+  &lt;Frame id=&quot;I54:268;54:203&quot; name=&quot;Header&quot; display=&quot;flex&quot; align-self=&quot;stretch&quot; justify-content=&quot;space-between&quot; align-items=&quot;center&quot; overflow=&quot;hidden&quot;&gt;
+    &lt;Text id=&quot;I54:268;54:204&quot; name=&quot;Name&quot; textStyle=&quot;Heading/H3&quot; color=&quot;var(--color-ink)&quot;&gt;Pro&lt;/Text&gt;
+    &lt;Instance id=&quot;I54:268;54:205&quot; name=&quot;Badge&quot; component=&quot;Badge&quot; props=&quot;Label=Popular&quot; display=&quot;flex&quot; padding=&quot;var(--space-4) var(--space-12)&quot; align-items=&quot;center&quot; border-radius=&quot;var(--radius-pill)&quot; background=&quot;var(--color-accent)&quot;&gt;
+      &lt;Text id=&quot;I54:268;54:205;54:188&quot; name=&quot;Label&quot; textStyle=&quot;Label&quot; color=&quot;var(--color-on-brand)&quot;&gt;Popular&lt;/Text&gt;
+    &lt;/Instance&gt;
+  &lt;/Frame&gt;
   …
   &lt;Instance id=&quot;I54:268;54:211&quot; name=&quot;Button&quot; component=&quot;Button&quot; variant=&quot;Variant=Primary, State=Default&quot; props=&quot;Label=Get started&quot; display=&quot;flex&quot; align-self=&quot;stretch&quot; padding=&quot;var(--space-12) var(--space-24)&quot; justify-content=&quot;center&quot; align-items=&quot;center&quot; border-radius=&quot;var(--radius-md)&quot; background=&quot;var(--color-brand)&quot;&gt;
     &lt;Text id=&quot;I54:268;54:211;54:190&quot; name=&quot;Label&quot; textStyle=&quot;Button&quot; color=&quot;var(--color-on-brand)&quot;&gt;Get started&lt;/Text&gt;
   &lt;/Instance&gt;
   &lt;Frame id=&quot;I54:268;54:213&quot; name=&quot;Features&quot; display=&quot;flex&quot; flex-direction=&quot;column&quot; align-self=&quot;stretch&quot; gap=&quot;var(--space-12)&quot; overflow=&quot;hidden&quot;&gt;
     &lt;Frame id=&quot;I54:268;54:214&quot; name=&quot;Feature&quot; display=&quot;flex&quot; align-items=&quot;center&quot; gap=&quot;var(--space-8)&quot; overflow=&quot;hidden&quot;&gt;
-      &lt;Icon id=&quot;I54:268;54:215&quot; name=&quot;Icon/Check&quot; component=&quot;Icon/Check&quot; src=&quot;assets/icon-check.svg&quot; width=&quot;20px&quot; height=&quot;20px&quot;/&gt;
+      &lt;Icon id=&quot;I54:268;54:215&quot; name=&quot;Icon/Check&quot; component=&quot;Icon/Check&quot; src=&quot;assets/icon-check-4.svg&quot; width=&quot;20px&quot; height=&quot;20px&quot;/&gt;
       &lt;Text id=&quot;I54:268;54:217&quot; name=&quot;Text&quot; textStyle=&quot;Body Small&quot; color=&quot;var(--color-ink)&quot;&gt;Unlimited projects&lt;/Text&gt;
     &lt;/Frame&gt;
     …
