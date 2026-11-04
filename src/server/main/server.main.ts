@@ -45,7 +45,6 @@ import { STRUCTURE_HINTS, StructureHints } from "@/core/design/hints/structure/s
 import { TOKEN_HINTS, TokenHints } from "@/core/design/hints/token-hints.ts";
 import { INTERACTION_ATTRIBUTES, InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { READ_JSON, ReadJson } from "@/core/design/read-json.ts";
-import { READ_TOKENS, ReadTokens } from "@/core/design/read-tokens.ts";
 import { REPEAT_FOLD, RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { TEXT_CONTENT, TextContent } from "@/core/design/text/text-content.ts";
@@ -54,10 +53,8 @@ import { INSPECT_FILLS, InspectFills } from "@/core/inspect/inspect-fills.ts";
 import { INSPECT_VIEW, InspectView } from "@/core/inspect/inspect-view.ts";
 import { MEASURE, Measure } from "@/core/inspect/measure.ts";
 import { MEASUREMENTS, Measurements } from "@/core/inspect/measurements.ts";
-import { EASING_CSS, EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { SLUG, Slug } from "@/core/kernel/names/slug.ts";
-import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NUMBER_FORMAT, NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { CLIENT_ROOTS } from "@/core/ports/client-roots.port.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
@@ -101,6 +98,7 @@ import { McpEndpoint } from "@/server/main/mcp/mcp-endpoint.ts";
 import { RenderProviders } from "@/server/main/render-providers.ts";
 import { LOG_FILE, SERVER_LOG } from "@/server/main/server.constants.ts";
 import { ShutdownHooks } from "@/server/main/shutdown-hooks.ts";
+import { TokenProviders } from "@/server/main/token-providers.ts";
 import { UPDATE_FEED } from "@/server/main/update-feed.ts";
 import { TOOL_CATALOG, ToolCatalog } from "@/server/tools/tool.catalog.ts";
 
@@ -173,6 +171,7 @@ export class ServerMain {
     new RenderProviders().register(container);
     new CheckProviders().register(container);
     new ComponentProviders().register(container, config.home);
+    new TokenProviders().register(container);
     new BridgeProviders().register(container, config);
     this.#bindServices(container);
 
@@ -221,13 +220,11 @@ export class ServerMain {
     container
       .bind({ provide: NUMBER_FORMAT, useClass: NumberFormat })
       .bind({ provide: NAME_VALUE_LIST, useClass: NameValueList })
-      .bind({ provide: EASING_CSS, useClass: EasingCss })
       .bind({ provide: XML_ESCAPE, useClass: XmlEscape })
       .bind({ provide: NODE_TAG, useClass: NodeTag })
       .bind({ provide: XML_WRITER, useClass: XmlWriter })
       .bind({ provide: OUTLINE_XML, useClass: OutlineXml })
       .bind({ provide: CSS_SPLIT, useClass: CssSplit })
-      .bind({ provide: TOKEN_NAMES, useClass: TokenNames })
       .bind({ provide: CSS_VAR, useClass: CssVar })
       .bind({ provide: CSS_LENGTH, useClass: CssLength })
       .bind({ provide: PLACEMENT, useClass: Placement })
@@ -258,7 +255,6 @@ export class ServerMain {
       .bind({ provide: ASSET_PLANNER, useClass: AssetPlanner })
       .bind({ provide: DESIGN_BUILDER, useClass: DesignBuilder })
       .bind({ provide: TEXT_CONTENT, useClass: TextContent })
-      .bind({ provide: READ_TOKENS, useClass: ReadTokens })
       .bind({ provide: READ_CATALOGUE, useClass: ReadCatalogue })
       .bind({ provide: LAYER_TREE, useClass: LayerTree })
       .bind({ provide: REPEAT_FOLD, useClass: RepeatFold })

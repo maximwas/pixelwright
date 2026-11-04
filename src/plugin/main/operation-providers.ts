@@ -1,6 +1,9 @@
 import type { Container } from "@needle-di/core";
 import { NEARBY_NOTES, NearbyNotes } from "@/core/inspect/nearby.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { FILE_TOKENS, FileTokens } from "@/plugin/adapters/figma/variables/file-tokens.ts";
+import { LIBRARY_CATALOGUE, LibraryCatalogue } from "@/plugin/adapters/figma/variables/library-catalogue.ts";
+import { USED_TOKENS, UsedTokens } from "@/plugin/adapters/figma/variables/used-tokens.ts";
 import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
@@ -33,6 +36,7 @@ import { SelectionOperation } from "@/plugin/operations/selection/selection.oper
 import { SelectionWaitOperation } from "@/plugin/operations/selection-wait/selection-wait.operation.ts";
 import { SetOfOperation } from "@/plugin/operations/set-of/set-of.operation.ts";
 import { ShowOperation } from "@/plugin/operations/show/show.operation.ts";
+import { VariablesOperation } from "@/plugin/operations/variables/variables.operation.ts";
 import { ViewportOperation } from "@/plugin/operations/viewport/viewport.operation.ts";
 import { OP_NAME } from "@/shared/ops/op-meta.constants.ts";
 import type { OpName } from "@/shared/ops/op-meta.types.ts";
@@ -40,7 +44,7 @@ import type { OpName } from "@/shared/ops/op-meta.types.ts";
 /**
  * Every op's class by name (A§4b.3): a contract without one here fails to type, so no op is left unserved. execute's
  * pw scope lives as long as the window (T-154), its code's runs outlive their answers (T-156); find reads variants with
- * core's Name=Value lists (K-069); components finds, lists, exposes and links components (T-190, T-192).
+ * core's Name=Value lists (K-069); components finds, lists, exposes and links components (T-190, T-192); variables reads the file's raw tokens (P-125).
  */
 export class OperationProviders {
   readonly #classes: Readonly<Record<OpName, OperationClass>> = {
@@ -65,6 +69,7 @@ export class OperationProviders {
     [OP_NAME.screens]: ScreensOperation,
     [OP_NAME.flows]: FlowsOperation,
     [OP_NAME.components]: ComponentsOperation,
+    [OP_NAME.variables]: VariablesOperation,
   };
 
   register(container: Container): void {
@@ -80,6 +85,9 @@ export class OperationProviders {
       .bind({ provide: COMPONENT_FINDER, useClass: ComponentFinder })
       .bind({ provide: EXPOSED_INSTANCES, useClass: ExposedInstances })
       .bind({ provide: COMPONENT_LINKS, useClass: ComponentLinks })
+      .bind({ provide: USED_TOKENS, useClass: UsedTokens })
+      .bind({ provide: FILE_TOKENS, useClass: FileTokens })
+      .bind({ provide: LIBRARY_CATALOGUE, useClass: LibraryCatalogue })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
   }
 }

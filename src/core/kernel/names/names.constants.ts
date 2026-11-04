@@ -9,6 +9,16 @@ export const TOKEN_PATTERN = {
 
 export const TOKEN_VALUE = { dash: "-", none: "", prefix: "--" } as const;
 
+/**
+ * A variable mode as the attribute tokens_read's CSS selects on (C-135): `data-<collection slug>="<mode slug>"`, a slug
+ * lower case with letters and digits of any script, the rest as "-"; a name with none is "mode".
+ */
+export const MODE_ATTRIBUTE = {
+  name: (slug: string) => `data-${slug}`,
+  other: /[^\p{L}\p{N}]+/gu,
+  empty: "mode",
+} as const;
+
 /** FNV-1a 32-bit (K-070): its offset basis and prime; base 36 keeps the hash short. Not cryptographic. */
 export const FNV = { offset: 0x811c9dc5, prime: 0x01000193, radix: 36 } as const;
 

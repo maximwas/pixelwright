@@ -6,7 +6,7 @@ import { EffectSchema, PaintSchema } from "@/shared/read-model/layer-values.sche
 import { READ_MODEL, READ_PROFILE } from "@/shared/read-model/read-model.constants.ts";
 
 /** A style the read's layers use: its name, and its value for the tokens. */
-const StyleSchema = zod.looseObject({
+export const StyleSchema = zod.looseObject({
   name: zod.string(),
   type: zod.string(),
   remote: zod.boolean(),
@@ -66,3 +66,6 @@ export const ReadModelSchema = zod.strictObject({
 });
 
 export type ReadModel = zod.output<typeof ReadModelSchema>;
+
+/** What the CSS mapping reads of a read beside its layers: the colour profile, and the styles and variables by id. */
+export type ModelTables = Pick<ReadModel, "colorProfile" | "styles" | "variables">;

@@ -116,15 +116,3 @@ export const OVERRIDE_ORDER: readonly string[] = [
 ];
 
 export const OVERRIDE = { separator: ", " } as const;
-
-/**
- * A variable mode as the attribute tokens_read's CSS selects on (C-135): `data-<collection slug>="<mode slug>"`, a slug
- * lower case with letters and digits of any script, the rest as "-"; a name with none is "mode".
- */
-export const MODE_ATTRIBUTE = {
-  name: (slug: string) => `data-${slug}`,
-  other: /[^\p{L}\p{N}]+/gu,
-  edges: /^-+|-+$/g,
-  dash: "-",
-  empty: "mode",
-} as const;

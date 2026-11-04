@@ -5401,9 +5401,7 @@
           "description": "css: ready custom properties, a block per extra mode. json: the token model, per collection and mode. dtcg: Design Tokens Format (DTCG 2025.10) trees, one per collection mode (`<collection>.<mode>`) and one of styles, each to save as its own .json file.",
           "type": "string",
           "enum": [
-            "css",
-            "json",
-            "dtcg"
+            "css"
           ]
         },
         "maxChars": {
@@ -5414,10 +5412,10 @@
           "maximum": 400000
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema"
@@ -5428,9 +5426,7 @@
         "format": {
           "type": "string",
           "enum": [
-            "css",
-            "json",
-            "dtcg"
+            "css"
           ]
         },
         "css": {
@@ -5621,7 +5617,7 @@
                         "type": "string"
                       },
                       "also": {
-                        "description": "A text style's letter spacing and case, as tokens of their own.",
+                        "description": "A text style's letter spacing and case, an effect style's blurs, as tokens of their own.",
                         "type": "array",
                         "items": {
                           "type": "object",
@@ -5664,7 +5660,7 @@
                         "type": "string"
                       },
                       "also": {
-                        "description": "A text style's letter spacing and case, as tokens of their own.",
+                        "description": "A text style's letter spacing and case, an effect style's blurs, as tokens of their own.",
                         "type": "array",
                         "items": {
                           "type": "object",
@@ -5707,7 +5703,7 @@
                         "type": "string"
                       },
                       "also": {
-                        "description": "A text style's letter spacing and case, as tokens of their own.",
+                        "description": "A text style's letter spacing and case, an effect style's blurs, as tokens of their own.",
                         "type": "array",
                         "items": {
                           "type": "object",

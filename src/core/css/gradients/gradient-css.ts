@@ -12,7 +12,7 @@ import { type Paint, SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
 import { CSS_LENGTH } from "@/core/css/values/css-length.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
-import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
+import type { ModelTables } from "@/shared/read-model/read-model.schema.ts";
 
 type Stop = NonNullable<Paint["gradientStops"]>[number];
 
@@ -44,7 +44,7 @@ export class GradientCss {
   css(
     paint: Paint,
     box: Box,
-    model: ReadModel,
+    model: ModelTables,
   ): string | null {
     const kind = FIGMA_GRADIENT[paint.type];
     const transform = this.#transform(paint.gradientTransform);
@@ -142,7 +142,7 @@ export class GradientCss {
   #color(
     stop: Stop,
     paint: Paint,
-    model: ReadModel,
+    model: ModelTables,
   ): string {
     // Figma's ColorStop carries its bound variables as a loose field.
     const { boundVariables } = stop;

@@ -19,6 +19,7 @@ import { selectionOp } from "@/shared/ops/selection/selection.manifest.ts";
 import { selectionWaitOp } from "@/shared/ops/selection-wait/selection-wait.manifest.ts";
 import { setOfOp } from "@/shared/ops/set-of/set-of.manifest.ts";
 import { showOp } from "@/shared/ops/show/show.manifest.ts";
+import { variablesOp } from "@/shared/ops/variables/variables.manifest.ts";
 import { viewportOp } from "@/shared/ops/viewport/viewport.manifest.ts";
 
 /** The ops this build has, in the golden's order (test/golden/operations.golden.test.ts). */
@@ -44,4 +45,5 @@ export const OP_CONTRACTS = new OpCatalog([
   screensOp,
   flowsOp,
   componentsOp,
+  variablesOp,
 ]);

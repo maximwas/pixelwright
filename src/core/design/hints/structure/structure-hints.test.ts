@@ -10,13 +10,14 @@ import { LayerShape } from "@/core/design/hints/structure/layer-shape.ts";
 import { SharedLayers } from "@/core/design/hints/structure/shared-layers.ts";
 import { StructureHints } from "@/core/design/hints/structure/structure-hints.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { LayerSchema, type ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 const format = new NumberFormat();
 const shape = new LayerShape();
 const hints = new LayerHints(
-  new ComponentAttributes(new NameValueList()),
+  new ComponentAttributes(new NameValueList(), new TokenNames()),
   new LayoutGuess(format),
   format,
   new StructureHints(format, new AlikeStructures(shape), new SharedLayers(shape), new BakedPaints(format)),

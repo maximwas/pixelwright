@@ -56,7 +56,7 @@ export class References {
 
     this.#layer(root, found);
 
-    return { styles: await this.#styles(found.styles, node), variables: await this.#variables(found.variables, node) };
+    return { styles: await this.styles(found.styles, node), variables: await this.#variables(found.variables, node) };
   }
 
   #layer(layer: ReadLayer, found: Found): void {
@@ -112,7 +112,8 @@ export class References {
     }
   }
 
-  async #styles(ids: ReadonlySet<string>, node: SceneNode): Promise<Tables["styles"]> {
+  /** The styles with these ids by id, numbered among the file's own and, once one is a library's, `node`'s page's. */
+  async styles(ids: ReadonlySet<string>, node: BaseNode): Promise<Tables["styles"]> {
     const used = (await Promise.all([...ids].map((id) => this.#lookup.style(id)))).filter((style) => style !== null);
 
     if (used.length === 0) {
