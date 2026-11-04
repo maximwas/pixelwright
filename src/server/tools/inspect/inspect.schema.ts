@@ -10,7 +10,7 @@ export const InspectInputSchema = zod.strictObject({
   nodes: zod.exactOptional(nodes).check(zod.describe(INSPECT_INPUT.nodes)),
   relativeTo: relativeTo.check(zod.describe(INSPECT_INPUT.relativeTo)),
   around: zod
-    .exactOptional(zod.union([NodeIdSchema, zod.object({ x: zod.number(), y: zod.number() })]))
+    .exactOptional(zod.union([NodeIdSchema, zod.strictObject({ x: zod.number(), y: zod.number() })]))
     .check(zod.describe(INSPECT_INPUT.around)),
   file: FileInputSchema,
 });

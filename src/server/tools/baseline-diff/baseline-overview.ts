@@ -1,7 +1,7 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CLOCK } from "@/core/ports/clock.port.ts";
-import { BASELINE_STORE } from "@/server/app/stores/baseline-store.ts";
-import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
+import { BASELINE_STORE } from "@/server/app/baselines/baseline-store.ts";
+import type { BaselineFile } from "@/server/app/baselines/baselines.schema.ts";
 import {
   BASELINE_COMPARE,
   type BaselineCompare,
@@ -14,8 +14,6 @@ import {
 } from "@/server/tools/baseline-diff/baseline-diff.constants.ts";
 import type { BaselineDiffOutput, BaselineEntry } from "@/server/tools/baseline-diff/baseline-diff.schema.ts";
 import { BASELINE_TARGET, type BaselineTarget } from "@/server/tools/baseline-diff/baseline-target.ts";
-import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
-import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 
 /** A project's baseline by name: its file, or why it cannot be read. */
 type Listed =
@@ -53,15 +51,9 @@ export class BaselineOverview {
     this.#clock = clock;
   }
 
-  /** One baseline by name; an unknown name lists the project's. */
+  /** One baseline by name with where it lives; an unknown name lists the project's (BaselineStore.required). */
   async one(name: string): Promise<Found> {
-    const baseline = await this.#store.read(name);
-
-    if (baseline === null) {
-      throw new PixelwrightError(ERROR_CODE.opFailed, BASELINE_DIFF_TEXT.noBaseline(name, await this.#store.names()));
-    }
-
-    return { baseline, path: await this.#store.path(name) };
+    return { baseline: await this.#store.required(name), path: await this.#store.path(name) };
   }
 
   async all(file: string | undefined, signal: AbortSignal): Promise<BaselineDiffOutput> {

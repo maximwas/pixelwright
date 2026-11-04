@@ -1,8 +1,8 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import type { BaselineComparison } from "@/core/diff/baseline/baseline.types.ts";
 import { BASELINE_DIFF } from "@/core/diff/baseline/baseline-diff.ts";
-import { BASELINE_CAPTURE } from "@/server/app/stores/baseline-capture.ts";
-import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
+import { BASELINE_CAPTURE } from "@/server/app/baselines/baseline-capture.ts";
+import type { BaselineFile } from "@/server/app/baselines/baselines.schema.ts";
 import { BASELINE_DIFF_TEXT, BASELINE_STATUS } from "@/server/tools/baseline-diff/baseline-diff.constants.ts";
 import { BASELINE_ROOT, type LayerNow } from "@/server/tools/baseline-diff/baseline-root.ts";
 import { BASELINE_TARGET } from "@/server/tools/baseline-diff/baseline-target.ts";

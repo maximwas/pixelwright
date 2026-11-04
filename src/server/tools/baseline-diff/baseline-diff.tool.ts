@@ -1,9 +1,9 @@
 import { inject, injectable } from "@needle-di/core";
 import { COMPONENT_CHANGE } from "@/core/diff/baseline/baseline.constants.ts";
 import type { BaselineChanges, BaselineCounts } from "@/core/diff/baseline/baseline.schema.ts";
-import { SEEN_DESIGNS } from "@/server/app/stores/seen-designs.ts";
-import { BASELINE_TEXT } from "@/server/app/stores/stores.constants.ts";
-import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
+import { BASELINE_TEXT } from "@/server/app/baselines/baselines.constants.ts";
+import type { BaselineFile } from "@/server/app/baselines/baselines.schema.ts";
+import { SEEN_DESIGNS } from "@/server/app/baselines/seen-designs.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
 import { TOOL_CONTEXT, type ToolContext } from "@/server/app/tool-runner/tool-runner.ts";
 import { BASELINE_COMPARE, type BaselineCompare } from "@/server/tools/baseline-diff/baseline-compare.ts";

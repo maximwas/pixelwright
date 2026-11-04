@@ -17,10 +17,16 @@ type ReadInput = zod.output<typeof readOp.input>;
 
 type ReadOutput = zod.output<typeof readOp.output>;
 
+/** An id asked for, with its layer and the page it is on; null when Figma gives no layer on a page for it. */
+interface Found {
+  readonly id: string;
+  readonly root: { readonly node: SceneNode; readonly page: { readonly id: string; readonly name: string } } | null;
+}
+
 /**
  * Layers as the read model (A§9.4): each id looked up once, one Figma cannot give listed as missing rather than failing
  * the read (P-070); the layers read breadth first under the call's JSON budget (T-053), a model each, in the order
- * asked. The document and its pages are refused: a read starts at a layer.
+ * asked, with the page each is on (T-206). The document and its pages are refused: a read starts at a layer.
  */
 @injectable()
 export class ReadOperation extends Operation<ReadInput, ReadOutput> {
@@ -41,34 +47,53 @@ export class ReadOperation extends Operation<ReadInput, ReadOutput> {
   }
 
   protected async execute({ nodes, depth, pathHash, ancestors }: ReadInput): Promise<ReadOutput> {
-    // Figma throws for a lookup it cannot answer (offline, an instance's hidden layer gone): that id is missing (FX-015).
-    const found = await Promise.all(
-      [...new Set(nodes)].map(async (id) => ({ id, node: await this.#lookup.node(id).catch(() => null) })),
-    );
-    const roots = found.flatMap(({ node }) => (node === null ? [] : [this.#layer(node)]));
+    const found = await Promise.all([...new Set(nodes)].map(async (id) => this.#found(id)));
+    const roots = found.flatMap(({ root }) => (root === null ? [] : [root]));
 
     this.#reader.start({ pathHash: pathHash ?? false });
 
-    const read = await this.#run.read(roots, this.#reader, { depth, ancestors, jsonChars: LIMITS.readJsonChars });
+    const read = await this.#run.read(
+      roots.map(({ node }) => node),
+      this.#reader,
+      { depth, ancestors, jsonChars: LIMITS.readJsonChars },
+    );
 
     // ReadRun answers an entry per root, in the order given, and the layers above each when asked.
-    const pairs = read.layers.flatMap((root, index) => {
-      const node = roots[index];
+    const pairs = read.layers.flatMap((layer, index) => {
+      const root = roots[index];
       const above = read.ancestors[index];
 
-      return node === undefined ? [] : [{ root, node, ...(above === undefined ? {} : { ancestors: above }) }];
+      return root === undefined ? [] : [{ layer, ...root, ...(above === undefined ? {} : { ancestors: above }) }];
     });
     const reads = await Promise.all(
-      pairs.map(async ({ root, node, ...above }) => ({
+      pairs.map(async ({ layer, node, page, ...above }) => ({
         model: READ_MODEL.version,
         profile: READ_PROFILE.design,
-        root,
+        root: layer,
         ...above,
-        ...(await this.#reader.tables(root, node)),
+        ...(await this.#reader.tables(layer, node)),
+        page,
       })),
     );
 
-    return { reads, missing: found.filter(({ node }) => node === null).map(({ id }) => id), cuts: read.cuts };
+    return { reads, missing: found.flatMap(({ id, root }) => (root === null ? [id] : [])), cuts: read.cuts };
+  }
+
+  /**
+   * The layer of an id with its page, or null: Figma throws for a lookup it cannot answer (offline, an instance's hidden
+   * layer gone: FX-015), and a layer on no page was removed meanwhile.
+   */
+  async #found(id: string): Promise<Found> {
+    const node = await this.#lookup.node(id).catch(() => null);
+
+    if (node === null) {
+      return { id, root: null };
+    }
+
+    const layer = this.#layer(node);
+    const page = this.#lookup.pageOf(layer);
+
+    return { id, root: page === null ? null : { node: layer, page: { id: page.id, name: page.name } } };
   }
 
   #layer(node: BaseNode): SceneNode {

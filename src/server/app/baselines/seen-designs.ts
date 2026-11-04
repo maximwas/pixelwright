@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { InjectionToken, injectable } from "@needle-di/core";
-import { SEEN_DESIGN_IDS } from "@/server/app/stores/stores.constants.ts";
-import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
+import { SEEN_DESIGN_IDS } from "@/server/app/baselines/baselines.constants.ts";
+import type { BaselineFile } from "@/server/app/baselines/baselines.schema.ts";
 
 /** A design a one-baseline diff compared: what baseline_save keeps when it is accepted. */
 export interface SeenDesign {

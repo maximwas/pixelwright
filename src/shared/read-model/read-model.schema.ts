@@ -36,6 +36,9 @@ const VariableSchema = zod.strictObject({
 /** One end of a Dev Mode measurement: a layer's id and the side measured from (Figma's TOP, RIGHT, BOTTOM, LEFT). */
 const MeasuredSideSchema = zod.strictObject({ id: zod.string(), side: zod.string() });
 
+/** The page a read layer is on, by id and name. */
+export const ReadPageSchema = zod.strictObject({ id: zod.string(), name: zod.string() });
+
 /**
  * One read of a layer (A§7.1, D-05): a versioned header around 0.7.0's snapshot, whose field names it keeps (K-084).
  * A baseline v1 snapshot has no header and reads as a design model.
@@ -61,8 +64,8 @@ export const ReadModelSchema = zod.strictObject({
       zod.strictObject({ start: MeasuredSideSchema, end: MeasuredSideSchema, text: zod.exactOptional(zod.string()) }),
     ),
   ),
-  /** The page the read layer is on; plugins before 0.7.0's stage 11 leave it out. */
-  page: zod.exactOptional(zod.strictObject({ id: zod.string(), name: zod.string() })),
+  /** The page the read layer is on: the read op names it (T-206); plugins before 0.7.0's stage 11 left it out. */
+  page: zod.exactOptional(ReadPageSchema),
 });
 
 export type ReadModel = zod.output<typeof ReadModelSchema>;

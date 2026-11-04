@@ -11,12 +11,12 @@ import type {
   PluginLinkRole,
   PluginLinkState,
 } from "@/core/ports/plugin-link.port.ts";
+import { BaselineCapture } from "@/server/app/baselines/baseline-capture.ts";
+import { BaselineStore } from "@/server/app/baselines/baseline-store.ts";
+import { SeenDesigns } from "@/server/app/baselines/seen-designs.ts";
 import { ProjectFolder } from "@/server/app/project/project-folder.ts";
 import { SelectedLayer } from "@/server/app/scope/selected-layer.ts";
 import { PluginSession } from "@/server/app/sessions/plugin-session.ts";
-import { BaselineCapture } from "@/server/app/stores/baseline-capture.ts";
-import { BaselineStore } from "@/server/app/stores/baseline-store.ts";
-import { SeenDesigns } from "@/server/app/stores/seen-designs.ts";
 import { BaselineKeeper } from "@/server/tools/baseline-save/baseline-keeper.ts";
 import { BaselineSaveOutputSchema } from "@/server/tools/baseline-save/baseline-save.schema.ts";
 import { BaselineSaveTool } from "@/server/tools/baseline-save/baseline-save.tool.ts";

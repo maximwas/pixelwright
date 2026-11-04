@@ -1,13 +1,13 @@
 import * as zod from "zod/mini";
 import { BaselineChangesSchema, BaselineCountsSchema } from "@/core/diff/baseline/baseline.schema.ts";
-import { FILE_INPUT } from "@/server/app/sessions/sessions.constants.ts";
 import {
   BaselineFigmaFileSchema,
   BaselineNameSchema,
   BaselineNodeSchema,
   BaselineVersionSchema,
   NamedSchema,
-} from "@/server/app/stores/stores.schema.ts";
+} from "@/server/app/baselines/baselines.schema.ts";
+import { FILE_INPUT } from "@/server/app/sessions/sessions.constants.ts";
 import { BASELINE_DIFF_FIELD, BASELINE_STATUS } from "@/server/tools/baseline-diff/baseline-diff.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 

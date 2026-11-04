@@ -1,8 +1,8 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { type ConnectedFile, PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
+import type { BaselineFile } from "@/server/app/baselines/baselines.schema.ts";
 import type { PluginSession } from "@/server/app/sessions/plugin-session.ts";
 import { PLUGIN_SESSIONS } from "@/server/app/sessions/plugin-sessions.ts";
-import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
 import { BASELINE_DIFF_TEXT } from "@/server/tools/baseline-diff/baseline-diff.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";

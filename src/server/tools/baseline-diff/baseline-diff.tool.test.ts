@@ -45,14 +45,14 @@ import type {
 import { NodeTag } from "@/core/xml/node-tag.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
 import { XmlWriter } from "@/core/xml/xml-writer.ts";
+import { BaselineCapture } from "@/server/app/baselines/baseline-capture.ts";
+import { BaselineStore } from "@/server/app/baselines/baseline-store.ts";
+import { SeenDesigns } from "@/server/app/baselines/seen-designs.ts";
 import { ProjectFolder } from "@/server/app/project/project-folder.ts";
 import { SelectedLayer } from "@/server/app/scope/selected-layer.ts";
 import { PluginSession } from "@/server/app/sessions/plugin-session.ts";
 import { PluginSessions } from "@/server/app/sessions/plugin-sessions.ts";
 import { TargetResolver } from "@/server/app/sessions/target-resolver.ts";
-import { BaselineCapture } from "@/server/app/stores/baseline-capture.ts";
-import { BaselineStore } from "@/server/app/stores/baseline-store.ts";
-import { SeenDesigns } from "@/server/app/stores/seen-designs.ts";
 import { BaselineCompare } from "@/server/tools/baseline-diff/baseline-compare.ts";
 import { BaselineDiffOutputSchema } from "@/server/tools/baseline-diff/baseline-diff.schema.ts";
 import { BaselineDiffTool } from "@/server/tools/baseline-diff/baseline-diff.tool.ts";
@@ -306,6 +306,7 @@ describe("the baseline_diff tool: one baseline", () => {
     expect(found.baselines[0]).toMatchObject({ status: "changed", now: { id: "9:1", name: "Pricing" } });
     expect(found.changes?.changed.map(({ id, was }) => [id, was])).toEqual([["9:1", "1:1"]]);
     expect(found.notes).toContain("1:1 is gone: compared with Pricing (9:1), the one layer of its name.");
+    expect(plugin.requests.find(({ op }) => op === "find")?.input).toMatchObject({ within: "0:1" });
 
     plugin.deletedPage = "0:1";
     expect((await diff({ name: "pricing" })).baselines[0]).toMatchObject({ status: "changed", now: { id: "9:1" } });

@@ -1,8 +1,8 @@
 import { inject, injectable } from "@needle-di/core";
+import { BASELINE_CAPTURE } from "@/server/app/baselines/baseline-capture.ts";
+import { BASELINE_TEXT } from "@/server/app/baselines/baselines.constants.ts";
+import { SEEN_DESIGNS } from "@/server/app/baselines/seen-designs.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
-import { BASELINE_CAPTURE } from "@/server/app/stores/baseline-capture.ts";
-import { SEEN_DESIGNS } from "@/server/app/stores/seen-designs.ts";
-import { BASELINE_TEXT } from "@/server/app/stores/stores.constants.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
 import { BASELINE_KEEPER, type CodePaths } from "@/server/tools/baseline-save/baseline-keeper.ts";
 import { BASELINE_SAVE_TEXT } from "@/server/tools/baseline-save/baseline-save.constants.ts";

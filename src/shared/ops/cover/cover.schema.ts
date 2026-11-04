@@ -3,7 +3,7 @@ import { BoxSchema } from "@/shared/ops/selection/selection.schema.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 /** A region of a layer, in Figma px from its box's top left (before scale). */
-export const ClipSchema = zod.object({
+export const ClipSchema = zod.strictObject({
   x: zod.number(),
   y: zod.number(),
   width: zod.number().check(zod.positive()),

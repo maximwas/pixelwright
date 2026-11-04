@@ -3,10 +3,10 @@ import { SLUG } from "@/core/kernel/names/slug.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
 import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
 import { VARIABLE_VALUE } from "@/core/tokens/model/model.constants.ts";
+import { BASELINE_FILES, BASELINE_TEXT } from "@/server/app/baselines/baselines.constants.ts";
+import type { BaselineFile } from "@/server/app/baselines/baselines.schema.ts";
 import { SELECTED_LAYER } from "@/server/app/scope/selected-layer.ts";
 import type { PluginSession } from "@/server/app/sessions/plugin-session.ts";
-import { BASELINE_FILES, BASELINE_TEXT } from "@/server/app/stores/stores.constants.ts";
-import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { NODE_TEXT } from "@/shared/errors/errors.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
@@ -89,7 +89,7 @@ export class BaselineCapture {
         capturedAt,
         by: { server: VERSION, plugin: connected?.pluginVersion ?? null },
         file: { name: connected?.name ?? "", key: connected?.key ?? null },
-        page: read.page ?? null,
+        page: read.page,
         node: { id: root.id, name: root.name, type: root.type },
         code: [],
         version: null,

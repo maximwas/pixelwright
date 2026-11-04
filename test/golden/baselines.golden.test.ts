@@ -2,8 +2,8 @@ import { copyFile, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { BaselineStore } from "@/server/app/baselines/baseline-store.ts";
 import { ProjectFolder } from "@/server/app/project/project-folder.ts";
-import { BaselineStore } from "@/server/app/stores/baseline-store.ts";
 import { editedPricing, rawTokensOf, withIconPaths } from "./support/baseline-edits.ts";
 import { baselines, fixture } from "./support/design-classes.ts";
 

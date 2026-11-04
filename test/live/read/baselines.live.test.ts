@@ -12,6 +12,7 @@ const PREFIX = "live:baselines:";
 
 type Changes = { changes: { changed: { path: string; attributes: Record<string, unknown> }[] } };
 type Overview = { summary: string; baselines: { name: string; status: string }[] };
+type One = { baselines: { status: string; reason?: string; now?: { id: string } }[]; notes: string[] };
 
 // The server starts in a temp project folder (CLAUDE_PROJECT_DIR; the client lists no root), so no baseline lands in
 // the repo (m:335a001e); the folder goes after. baseline_save writes nothing to Figma.
@@ -21,6 +22,13 @@ describe("read/baselines", () => {
   let project: string;
 
   const run = async (code: string): Promise<unknown> => (await client.call("execute", { file, code })).result;
+
+  /** A copy of the Install card in the Live tests section, named with the prefix; its id. */
+  const copy = async (name: string): Promise<string> =>
+    (await run(`const copy = (await pw.node(${JSON.stringify(install)})).clone();
+(await pw.node(${JSON.stringify(scratch)})).appendChild(copy);
+copy.name = ${JSON.stringify(`${PREFIX}${name}`)};
+return copy.id;`)) as string;
 
   beforeAll(async () => {
     project = await mkdtemp(join(tmpdir(), "pixelwright-live-baselines-"));
@@ -39,6 +47,9 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
 
   it("keeps the Install card and the tokens it binds in the project's .pixelwright/baselines, header first (T-200, K-058)", async () => {
     const saved = await client.call("baseline_save", { file, node: install, name: "install" });
+    const page = await run(`let node = await pw.node(${JSON.stringify(install)});
+while (node.type !== "PAGE") node = node.parent;
+return { id: node.id, name: node.name };`);
     const path = join(project, ".pixelwright", "baselines", "install.json");
     const text = await readFile(path, "utf8");
     const kept = JSON.parse(text);
@@ -48,6 +59,9 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
     expect(text).toMatch(/^\{"pixelwrightBaseline":1,"name":"install","capturedAt":"/);
     expect(kept.snapshot.root.id).toBe(install);
     expect(kept.tokens).not.toBeNull();
+    // T-206: the page comes from the read op, so a remade root is looked for on it.
+    expect(saved.page).toEqual(page);
+    expect(kept.page).toEqual(page);
   });
 
   it("refuses the same name again, and starts it over with replace: the same layer read again changed nothing (T-201)", async () => {
@@ -101,5 +115,43 @@ copy.paddingTop += 8;`);
 
     expect(again.baselines).toContainEqual(expect.objectContaining({ name: "install-copy", status: "same" }));
     expect(again.summary).toMatch(/^2 baselines: install the same, install-copy the same\.$/);
+  });
+
+  // T-206 from here on, after the overview above counted two baselines.
+  it("says hidden, with why, for a copy hidden since its baseline (T-206)", async () => {
+    const id = await copy("hidden");
+
+    await client.call("baseline_save", { file, node: id, name: "hidden-copy" });
+    await run(`(await pw.node(${JSON.stringify(id)})).visible = false;`);
+
+    const diff = (await client.call("baseline_diff", { file, name: "hidden-copy" })) as One;
+
+    expect(diff.baselines[0]).toMatchObject({ status: "hidden", reason: expect.any(String) });
+  });
+
+  it("says missing for a copy deleted since its baseline, with how to start over (T-206)", async () => {
+    const id = await copy("deleted");
+
+    await client.call("baseline_save", { file, node: id, name: "deleted-copy" });
+    await run(`(await pw.node(${JSON.stringify(id)})).remove();`);
+
+    const diff = (await client.call("baseline_diff", { file, name: "deleted-copy" })) as One;
+
+    expect(diff.baselines[0]).toMatchObject({ status: "missing", reason: expect.stringContaining("is gone") });
+  });
+
+  // Live layers stay in the Live tests section, so the root is remade on the page it was on; one remade on a page
+  // other than the current one is the unit test's (baseline-diff.tool.test.ts, T-206): find runs within its page.
+  it("compares a copy deleted and made again under its name with the one on its page (T-206)", async () => {
+    const id = await copy("remade");
+
+    await client.call("baseline_save", { file, node: id, name: "remade-copy" });
+    await run(`(await pw.node(${JSON.stringify(id)})).remove();`);
+
+    const remade = await copy("remade");
+    const diff = (await client.call("baseline_diff", { file, name: "remade-copy" })) as One;
+
+    expect(diff.baselines[0]).toMatchObject({ now: { id: remade } });
+    expect(diff.notes).toContainEqual(expect.stringContaining(`${id} is gone: compared with`));
   });
 });

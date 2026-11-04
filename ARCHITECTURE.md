@@ -71,8 +71,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     transform) and `AssetPlanner` (C-144: one `AssetPlan` per read, names `-2`, `-3` per full file name, one
     `<layer>-background.png` per image hash, a video listed with no file), which `LayerTree` and `ReadCatalogue` (the
     JSON block's `assets`) share;
-    `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: metadata, a Text's `textStyle`
-    and a TextPath's `d` and `start`, the CSS from `CssReader`, then the `$` ones, `$css` among them). `text/` holds
+    `builder/` holds `DesignBuilder` (a layer's tag and its attributes in C-1.3 order: id, name, component, variant,
+    props, `$exposed`, description, note, `$pins`, `$override`, `$dev`, href, `data-<collection>`, a Text's
+    `textStyle`, `mask`, `src`, a TextPath's `d` and `start`; then the CSS from `CssReader`; then `$prop`,
+    `$visibleProp`, `$swapProp`, `$css`, `$grid-style`, `$on-…`; last `$children`, `$truncated`, `$repeat`).
+    `text/` holds
     `TextContent` (a Text's characters with the runs that differ from its main one as Spans: only the differences and
     the resets, C-120; a character limit cuts with `…`) and `ReadCatalogue` (the JSON block's `tokens`, `textStyles` and
     `fonts`, C-123), its tokens from `ReadTokens` (each variable and paint or effect style the read uses, by name, with
@@ -175,10 +178,12 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `stores/`: `UpdateState` (latest.json) and `WrittenFiles` (written-files.json: the SHA-1 of every asset file
     written, its layers, the newest 5000) and `LibraryStore` (`libraries/<slug of the file name>.json`, the catalogue
     library_search saved for a library file, an unreadable one noted), all through the `JsonFile` port in the
-    channel's home; `BaselineStore` (the project's `.pixelwright/baselines/<name>.json`, format 1 as 0.7.0 wrote it:
+    channel's home.
+  - `baselines/`: `BaselineStore` (the project's `.pixelwright/baselines/<name>.json`, format 1 as 0.7.0 wrote it:
     compact JSON, header first, one rename by atomically; the file's name wins over the one inside; home and `/`
-    refused through `ProjectFolder`) and `SeenDesigns` (the last 8 designs a one-baseline diff compared, under random
+    refused through `ProjectFolder`; `required` names the project's baselines for an unknown name) and `SeenDesigns` (the last 8 designs a one-baseline diff compared, under random
     16-hex accept ids, in memory); `BaselineCapture` reads a layer as a baseline keeps it (the read op with `pathHash`,
+    the page its read names,
     the variables op's tokens its aliases reach), for baseline_save and baseline_diff both.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
   `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn); `inspect/` and `measure/` read through the inspect op (an
@@ -336,7 +341,7 @@ code in force, which only the status tool mints; the user types it in the window
 `ServerRpc` tells sockets apart by the epoch the window stamps on each frame.
 
 **Keeps a baseline.** `BaselineSaveTool` (`server/tools/baseline-save/`) checks the project first (`BaselineKeeper`),
-then `BaselineCapture` (`server/app/stores/`) reads the layer with the read op (`pathHash`; a hidden root refused, as design_read refuses it)
+then `BaselineCapture` (`server/app/baselines/`) reads the layer with the read op (`pathHash`; a hidden root refused, as design_read refuses it)
 and the variables op (`used`, `within`), keeping only the variables the read's aliases reach (never Figma's inferred
 match) and the styles the read names. `BaselineKeeper` checks the code paths, finds the baseline a name holds and
 writes through `BaselineStore`, answering layers, tokens, `cut` (shown layers with fewer children than childCount)

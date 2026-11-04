@@ -2,9 +2,9 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { BaselineStore } from "@/server/app/baselines/baseline-store.ts";
+import type { BaselineFile } from "@/server/app/baselines/baselines.schema.ts";
 import { ProjectFolder } from "@/server/app/project/project-folder.ts";
-import { BaselineStore } from "@/server/app/stores/baseline-store.ts";
-import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
 
 const projects: string[] = [];
 

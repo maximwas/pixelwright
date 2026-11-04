@@ -1,6 +1,6 @@
 import { InjectionToken, injectable } from "@needle-di/core";
+import type { BaselineFile } from "@/server/app/baselines/baselines.schema.ts";
 import type { PluginSession } from "@/server/app/sessions/plugin-session.ts";
-import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
 import {
   BASELINE_DIFF_TEXT,
   BASELINE_LOOKUP,
