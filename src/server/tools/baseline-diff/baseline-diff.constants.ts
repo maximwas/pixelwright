@@ -59,8 +59,6 @@ export const BASELINE_DIFF_TEXT = {
   redrawn: "redrawn",
   tokenChanged: "token changed",
   tokensChanged: "tokens changed",
-  noBaseline: (name: string, names: readonly string[]) =>
-    `No baseline named ${name} in this project${names.length === 0 ? "" : ` (it has ${names.join(", ")})`}: baseline_save keeps one.`,
   keyNotConnected: (name: string, key: string) =>
     `${name} (key ${key}) is not connected: open it in Figma Desktop with the Pixelwright plugin; a copy shares the name, not the key.`,
   notConnected: (name: string) =>

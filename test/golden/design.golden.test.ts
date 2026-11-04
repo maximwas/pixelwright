@@ -1,10 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import { design, fit, fixture, reader } from "./support/design-classes.ts";
 
 /** A golden file as written. */
 function golden(name: string): string {
   return readFileSync(new URL(`./__golden__/${name}`, import.meta.url), "utf8");
+}
+
+/** The layer of an id in a read, at any depth. */
+function layerOf(layer: ReadLayer, id: string): ReadLayer | undefined {
+  return layer.id === id ? layer : (layer.children ?? []).map((child) => layerOf(child, id)).find(Boolean);
 }
 
 /**
@@ -43,3 +49,12 @@ describe.each(["orbit-customers", "orbit-desktop-top", "orbit-plans", "orbit-pri
     });
   },
 );
+
+// C-1.3 as 0.7.0 wrote it: a Text's textStyle, then mask, then src; only a Text that is a mask shows the order.
+it("writes a masking Text's textStyle before its mask (C-1.3)", () => {
+  const model = fixture("orbit-pricing");
+
+  Object.assign(layerOf(model.root, "54:231") ?? {}, { isMask: true, maskType: "ALPHA" });
+
+  expect(design.read(model).xml).toContain('<Text id="54:231" name="Wordmark" textStyle="Heading/H3" mask="alpha"');
+});

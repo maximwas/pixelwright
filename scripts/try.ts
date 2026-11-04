@@ -95,7 +95,19 @@ class TryClient {
       throw new Error(`pnpm try works on "${TEST_FILE}" only, not on ${JSON.stringify(args.file)}.`);
     }
 
-    return takesFile ? { ...args, file: TEST_FILE } : args;
+    return takesFile && !this.#readsNoLayer(tool, args) ? { ...args, file: TEST_FILE } : args;
+  }
+
+  /**
+   * baseline_save's accept and its `code` alone read no layer: accept refuses `file`, and `code` with `file` reads the
+   * layer again instead of changing the list. An accept is held by the server that gave it, so it is tried in one
+   * session (the live test), not across two try runs.
+   */
+  #readsNoLayer(tool: string, args: Record<string, unknown>): boolean {
+    // shortcut: `code` alone for a name not saved yet reads the active file's selection; the dev plugin runs in Test MCP only.
+    const codeAlone = args.code !== undefined && args.node === undefined && args.replace !== true;
+
+    return tool === "baseline_save" && (args.accept !== undefined || codeAlone);
   }
 
   #env(): Record<string, string> {

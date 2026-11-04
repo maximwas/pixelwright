@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type SeenDesign, SeenDesigns } from "@/server/app/stores/seen-designs.ts";
+import { type SeenDesign, SeenDesigns } from "@/server/app/baselines/seen-designs.ts";
 
 const DESIGN: SeenDesign = {
   name: "pricing",

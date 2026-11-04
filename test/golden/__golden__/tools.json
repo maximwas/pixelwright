@@ -1309,7 +1309,8 @@
             "y",
             "width",
             "height"
-          ]
+          ],
+          "additionalProperties": false
         },
         "file": {
           "type": "string",
@@ -1448,7 +1449,8 @@
               "required": [
                 "x",
                 "y"
-              ]
+              ],
+              "additionalProperties": false
             }
           ]
         },
@@ -3335,7 +3337,8 @@
             "y",
             "width",
             "height"
-          ]
+          ],
+          "additionalProperties": false
         },
         "diff": {
           "description": "A .png path to write the difference to: the render faded, every differing pixel red. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
@@ -3588,7 +3591,8 @@
             "required": [
               "node",
               "css"
-            ]
+            ],
+            "additionalProperties": false
           },
           "description": "Each layer with the build's computed styles for it."
         },

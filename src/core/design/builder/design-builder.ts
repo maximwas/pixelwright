@@ -67,6 +67,7 @@ export class DesignBuilder {
       attributes: this.#present([
         ...this.#metadata(layer, model),
         [DESIGN_ATTRIBUTE.textStyle, css.textStyle],
+        [DESIGN_ATTRIBUTE.mask, layer.isMask ? (layer.maskType ?? BUILDER_VALUE.defaultMask).toLowerCase() : undefined],
         [DESIGN_ATTRIBUTE.src, file?.src],
         ...this.#path(layer),
         ...assets.css(layer, parent, css),
@@ -108,7 +109,6 @@ export class DesignBuilder {
       [DESIGN_ATTRIBUTE.dev, dev],
       [DESIGN_ATTRIBUTE.href, layer.href ?? (isText ? this.#url(layer) : undefined)],
       ...this.#component.modes(layer),
-      [DESIGN_ATTRIBUTE.mask, layer.isMask ? (layer.maskType ?? BUILDER_VALUE.defaultMask).toLowerCase() : undefined],
     ];
   }
 

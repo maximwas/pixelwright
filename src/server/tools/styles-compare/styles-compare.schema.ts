@@ -19,7 +19,7 @@ const ComputedStylesSchema = zod
     zod.describe(STYLES_COMPARE_FIELD.css),
   );
 
-const PairSchema = zod.object({
+const PairSchema = zod.strictObject({
   node: zod
     .string()
     .check(zod.minLength(1), zod.maxLength(STYLES_COMPARE.nodeChars), zod.describe(STYLES_COMPARE_FIELD.node)),

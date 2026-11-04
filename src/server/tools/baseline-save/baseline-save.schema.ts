@@ -1,12 +1,12 @@
 import * as zod from "zod/mini";
 import { BaselineCountsSchema } from "@/core/diff/baseline/baseline.schema.ts";
-import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import {
   BaselineFigmaFileSchema,
   BaselineNameSchema,
   BaselineNodeSchema,
   NamedSchema,
-} from "@/server/app/stores/stores.schema.ts";
+} from "@/server/app/baselines/baselines.schema.ts";
+import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import { BASELINE_SAVE, BASELINE_SAVE_FIELD } from "@/server/tools/baseline-save/baseline-save.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 

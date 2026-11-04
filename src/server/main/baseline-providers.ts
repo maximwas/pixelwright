@@ -3,9 +3,9 @@ import { BASELINE_DIFF, BaselineDiff } from "@/core/diff/baseline/baseline-diff.
 import { LAYER_CHANGES, LayerChanges } from "@/core/diff/baseline/layer-changes.ts";
 import { STRUCTURE_CHANGES, StructureChanges } from "@/core/diff/baseline/structure-changes.ts";
 import { TOKEN_CHANGES, TokenChanges } from "@/core/diff/baseline/token-changes.ts";
-import { BASELINE_CAPTURE, BaselineCapture } from "@/server/app/stores/baseline-capture.ts";
-import { BASELINE_STORE, BaselineStore } from "@/server/app/stores/baseline-store.ts";
-import { SEEN_DESIGNS, SeenDesigns } from "@/server/app/stores/seen-designs.ts";
+import { BASELINE_CAPTURE, BaselineCapture } from "@/server/app/baselines/baseline-capture.ts";
+import { BASELINE_STORE, BaselineStore } from "@/server/app/baselines/baseline-store.ts";
+import { SEEN_DESIGNS, SeenDesigns } from "@/server/app/baselines/seen-designs.ts";
 import { BASELINE_COMPARE, BaselineCompare } from "@/server/tools/baseline-diff/baseline-compare.ts";
 import { BASELINE_OVERVIEW, BaselineOverview } from "@/server/tools/baseline-diff/baseline-overview.ts";
 import { BASELINE_ROOT, BaselineRoot } from "@/server/tools/baseline-diff/baseline-root.ts";

@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { writeFile } from "atomically";
 import * as zod from "zod/mini";
+import { BASELINE_FILES, BASELINE_TEXT } from "@/server/app/baselines/baselines.constants.ts";
+import { type BaselineFile, BaselineFileSchema } from "@/server/app/baselines/baselines.schema.ts";
 import { PROJECT_FOLDER } from "@/server/app/project/project-folder.ts";
-import { BASELINE_FILES, BASELINE_TEXT } from "@/server/app/stores/stores.constants.ts";
-import { type BaselineFile, BaselineFileSchema } from "@/server/app/stores/stores.schema.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 
@@ -53,6 +53,17 @@ export class BaselineStore {
     }
 
     return { ...this.#parsed(path, text), name };
+  }
+
+  /** One baseline by name; an unknown name lists the project's. */
+  async required(name: string): Promise<BaselineFile> {
+    const baseline = await this.read(name);
+
+    if (baseline === null) {
+      throw new PixelwrightError(ERROR_CODE.opFailed, BASELINE_TEXT.noBaseline(name, await this.names()));
+    }
+
+    return baseline;
   }
 
   /** The project's baselines by name, in order; none before the first is kept. */

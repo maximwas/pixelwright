@@ -20,6 +20,29 @@ function topicText(name: string): string {
   return readFileSync(new URL(`${name}.md`, TOPICS), "utf8");
 }
 
+/** Where a JSON schema has an object that takes keys it does not name, nested ones too: `path` names each. */
+function openObjects(schema: unknown, path: string): string[] {
+  if (typeof schema !== "object" || schema === null) {
+    return [];
+  }
+
+  const node = schema as Record<string, unknown>;
+  const own = node.properties !== undefined && node.additionalProperties !== false ? [path] : [];
+  const nested = Object.entries(node).flatMap(([key, value]) => {
+    if (key === "properties" && typeof value === "object" && value !== null) {
+      return Object.entries(value).flatMap(([name, child]) => openObjects(child, `${path}.${name}`));
+    }
+
+    if (Array.isArray(value)) {
+      return value.flatMap((child, index) => openObjects(child, `${path}.${key}[${index}]`));
+    }
+
+    return key === "items" || key === "additionalProperties" ? openObjects(value, `${path}[]`) : [];
+  });
+
+  return [...own, ...nested];
+}
+
 /** A client of the server as the composition root wires it, bridge off, over an in-memory transport. */
 class ContractClient {
   readonly home = mkdtempSync(join(tmpdir(), "pixelwright-contract-"));
@@ -116,12 +139,10 @@ describe("the MCP contract", () => {
     expect(answer.content).toEqual([{ type: "text", text: JSON.stringify(answer.structuredContent) }]);
   });
 
-  it("closes every tool's input to arguments it does not name, so a wrong one is an error and not a default", async () => {
+  it("closes every tool's input, nested objects too, to arguments it does not name, so a wrong one is an error and not a default", async () => {
     const { tools } = await contract.client.listTools();
 
-    expect(
-      tools.filter(({ inputSchema }) => inputSchema.additionalProperties !== false).map(({ name }) => name),
-    ).toEqual([]);
+    expect(tools.flatMap(({ name, inputSchema }) => openObjects(inputSchema, name))).toEqual([]);
   });
 
   // A removed argument is an error that names it: a client that still sends screenshot's `modes` must not believe the
@@ -158,22 +179,35 @@ describe("the MCP contract", () => {
     }
   });
 
-  it("names in its topics only the tools it lists, so a renamed tool fails here (R-038)", async () => {
-    const listed = new Set((await contract.client.listTools()).tools.map(({ name }) => name));
-    const named = TOPIC_NAMES.flatMap((name) => topicText(name).match(/\b[a-z]+(?:_[a-z]+)+\b/g) ?? []);
+  // xml.md's example is design_read's own XML of the Orbit fixture, abridged by whole elements, so it cannot drift.
+  it("takes guide xml's Orbit example line by line from the Orbit pricing golden", () => {
+    const golden = readFileSync(new URL("../golden/__golden__/orbit-pricing.xml", import.meta.url), "utf8")
+      .split("\n")
+      .map((line) => line.trim());
+    const example = topicText("xml").split("## Example (Orbit")[1]?.split("```xml\n")[1]?.split("\n```")[0] ?? "";
+    const lines = example
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line !== "…");
+
+    expect(lines.length).toBeGreaterThan(5);
+    expect(lines.filter((line) => !golden.includes(line))).toEqual([]);
+  });
+
+  // 0.8.0 reads only (plan 5.0): a description, a schema, the instructions or a topic that names a tool this build
+  // does not register sends the model after a tool it cannot call; a topic naming a renamed tool fails too (R-038).
+  it("names only the tools it registers, in its tools, its instructions and the guide", async () => {
+    const { tools } = await contract.client.listTools();
+    const listed = new Set(tools.map(({ name }) => name));
+    // tools.json keeps 0.7.0's entries of the tools this build leaves out on purpose: they are the names looked for
+    // here, and 0.9.0 registers them again.
+    const unregistered = GOLDEN.map(({ name }) => name).filter((name) => !listed.has(name));
+    const topics = TOPIC_NAMES.map(topicText);
+    const texts = [JSON.stringify(tools), contract.client.getInstructions() ?? "", ...topics];
+    const named = topics.flatMap((text) => text.match(/\b[a-z]+(?:_[a-z]+)+\b/g) ?? []);
 
     expect(named.length).toBeGreaterThan(0);
     expect([...new Set(named.filter((word) => !listed.has(word)))]).toEqual([]);
-  });
-
-  // 0.8.0 reads only (plan 5.0): a description, a schema, the instructions or a topic that names a write tool sends
-  // the model after a tool it cannot call.
-  it("names no tool it does not register in its tools, its instructions or the guide", async () => {
-    const { tools } = await contract.client.listTools();
-    const listed = new Set(tools.map(({ name }) => name));
-    const unregistered = GOLDEN.map(({ name }) => name).filter((name) => !listed.has(name));
-    const texts = [JSON.stringify(tools), contract.client.getInstructions() ?? "", ...TOPIC_NAMES.map(topicText)];
-
     expect(unregistered.length).toBeGreaterThan(0);
     expect(unregistered.filter((name) => texts.some((text) => new RegExp(`\\b${name}\\b`).test(text)))).toEqual([]);
   });

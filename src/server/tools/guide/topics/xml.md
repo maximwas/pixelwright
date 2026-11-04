@@ -13,17 +13,20 @@ paste it.
 - `Icon`: a vector, or a group or instance drawn only with vector shapes (a logo). Its `src` is one SVG.
 - `TextPath`: Figma's text on a path (a label along an arc), its text written as a `Text`'s (see Text below).
 - `Span`: a run inside a `Text` whose style differs from the text's own.
-- A hidden layer is a stub with `display="none"`: its id, name and box, without children. Slices are left out.
+- A hidden layer is a stub with `display="none"`: its id and name (and `$visibleProp` when a component property
+  shows it), no box and no children. Slices are left out.
 
 ## Metadata attributes, in this order
 
 `id` (instance children keep `I…;…` ids), `name` (left out on a text named by its content), `component` and
 `variant` ("Size=Large, State=Default") on instances, `props` (an instance's text and boolean properties,
 "Label=Sign up, Icon=true"; a comma, = or backslash inside a name or value comes escaped with a backslash),
-`description` (components), `note` (Dev Mode annotations, "Category: text", several joined with " | "), `href`
-(a prototype link, or a text's hyperlink), `mask` (alpha, vector or luminance: the layer masks the layers above it in
-its parent), `data-<collection>` (a variable mode set on the layer, `data-color-modes="dark"`; the read's root also
-has the modes it takes from above), `textStyle`, `src` (assets), `d` and `start` (a text on a path).
+`$exposed`, `description` (components), `note` (Dev Mode annotations, "Category: text", several joined with
+" | "), `$pins`, `$override`, `$dev` (see Read-only attributes), `href` (a prototype link, or a text's hyperlink),
+`data-<collection>` (a variable mode set on the layer, `data-color-modes="dark"`; the read's root also has the
+modes it takes from above), `textStyle`, `mask` (alpha, vector or luminance: the layer masks the layers above it in
+its parent), `src` (assets), `d` and `start` (a text on a path). The CSS attributes come next, then `$prop`,
+`$visibleProp`, `$swapProp`, `$css`, `$grid-style` and `$on-…`, and last `$children`, `$truncated` and `$repeat`.
 
 A `data-<collection>="<mode>"` attribute is the selector tokens_read's CSS writes for that mode: put it on the
 element in the build too, and the element takes that mode's values.
@@ -135,14 +138,20 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
 ## Example (Orbit, a pricing card, abridged)
 
 ```xml
-<Instance id="54:268" name="Plan – Pro" component="Plan Card" props="Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro" note="The price comes from the billing API. Show the Popular badge only on the plan the API marks popular." display="flex" flex-direction="column" width="385px" height="394px" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="2px solid var(--color-brand)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)" $on-click="go to Checkout – Desktop; dissolve 300ms ease-out">
+<Instance id="54:268" name="Plan – Pro" component="Plan Card" props="Price=$12, Popular=true, Description=For freelancers shipping fast., Name=Pro" note="The price comes from the billing API. Show the Popular badge only on the plan the API marks popular." display="flex" flex-direction="column" flex="1" padding="var(--space-32)" gap="var(--space-24)" border-radius="var(--radius-lg)" border="2px solid var(--color-brand)" background="var(--color-surface)" box-shadow="var(--Shadow-Card)" $on-click="go to Checkout – Desktop; dissolve 300ms ease-out">
+  <Frame id="I54:268;54:203" name="Header" display="flex" align-self="stretch" justify-content="space-between" align-items="center" overflow="hidden">
+    <Text id="I54:268;54:204" name="Name" textStyle="Heading/H3" color="var(--color-ink)">Pro</Text>
+    <Instance id="I54:268;54:205" name="Badge" component="Badge" props="Label=Popular" display="flex" padding="var(--space-4) var(--space-12)" align-items="center" border-radius="var(--radius-pill)" background="var(--color-accent)">
+      <Text id="I54:268;54:205;54:188" name="Label" textStyle="Label" color="var(--color-on-brand)">Popular</Text>
+    </Instance>
+  </Frame>
   …
   <Instance id="I54:268;54:211" name="Button" component="Button" variant="Variant=Primary, State=Default" props="Label=Get started" display="flex" align-self="stretch" padding="var(--space-12) var(--space-24)" justify-content="center" align-items="center" border-radius="var(--radius-md)" background="var(--color-brand)">
     <Text id="I54:268;54:211;54:190" name="Label" textStyle="Button" color="var(--color-on-brand)">Get started</Text>
   </Instance>
   <Frame id="I54:268;54:213" name="Features" display="flex" flex-direction="column" align-self="stretch" gap="var(--space-12)" overflow="hidden">
     <Frame id="I54:268;54:214" name="Feature" display="flex" align-items="center" gap="var(--space-8)" overflow="hidden">
-      <Icon id="I54:268;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check.svg" width="20px" height="20px"/>
+      <Icon id="I54:268;54:215" name="Icon/Check" component="Icon/Check" src="assets/icon-check-4.svg" width="20px" height="20px"/>
       <Text id="I54:268;54:217" name="Text" textStyle="Body Small" color="var(--color-ink)">Unlimited projects</Text>
     </Frame>
     …

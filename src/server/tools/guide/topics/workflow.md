@@ -2,7 +2,8 @@
 
 Pixelwright reads the files open in Figma Desktop through its plugin; nothing goes through Figma's REST API. This
 version reads only: no tool changes the file. Every tool that reads a file takes `file` (a session id from `status`,
-or a file name); without it, the active file.
+or a file name); without it, the active file, except baseline_diff, which compares a baseline in the file it was
+saved from.
 
 1. **Connection.** `status` lists the connected files and which one is active. None connected: the user runs the
    Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code `status`
