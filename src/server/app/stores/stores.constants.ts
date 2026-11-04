@@ -17,6 +17,7 @@ export const WRITTEN_STORE = { file: "written-files.json", limit: 5_000, version
 export const BASELINE_FILES = {
   folder: ".pixelwright/baselines",
   file: (name: string) => `${name}.json`,
+  extension: ".json",
   format: 1,
   /** A baseline's name: lowercase words joined by hyphens, as code names files (pricing, plan-card); no path is one. */
   name: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
@@ -37,6 +38,10 @@ export const BASELINE_TEXT = {
   offFormat: (at: string, message: string) => `${at || "the file"}: ${message}`,
   pathSeparator: ".",
   notName: (name: string) => `${JSON.stringify(name)} is not a baseline name (pricing, plan-card).`,
+  /** An ISO time as the answers write it, its date and its hours and minutes: 2026-11-04 09:12 UTC. */
+  utc: (iso: string) => `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`,
+  tokensUnread: (why: string) =>
+    `The tokens could not be read (${why}): a diff compares them as the reads wrote them, one mode.`,
 } as const;
 
 /** The designs one-baseline diffs compared, kept for accept (T-202, D-39): the last 8, each under 8 random bytes in hex. */

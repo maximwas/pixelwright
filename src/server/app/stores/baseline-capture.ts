@@ -5,9 +5,8 @@ import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
 import { VARIABLE_VALUE } from "@/core/tokens/model/model.constants.ts";
 import { SELECTED_LAYER } from "@/server/app/scope/selected-layer.ts";
 import type { PluginSession } from "@/server/app/sessions/plugin-session.ts";
-import { BASELINE_FILES } from "@/server/app/stores/stores.constants.ts";
+import { BASELINE_FILES, BASELINE_TEXT } from "@/server/app/stores/stores.constants.ts";
 import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
-import { BASELINE_SAVE_TEXT } from "@/server/tools/baseline-save/baseline-save.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { NODE_TEXT } from "@/shared/errors/errors.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
@@ -23,6 +22,11 @@ export interface Capture {
   readonly notes: string[];
 }
 
+/** A hidden root, by its id: design_read reads no hidden layer, so nothing is kept or compared. */
+export interface HiddenRoot {
+  readonly hidden: string;
+}
+
 /** The tokens a read binds, or null and why not. */
 interface ReadTokens {
   readonly tokens: RawTokens | null;
@@ -31,8 +35,9 @@ interface ReadTokens {
 
 /**
  * A layer read as a baseline keeps it (T-200, K-058), on the call's one session: the read op's read with vector paths
- * hashed, so a later diff tells two drawings apart, then the tokens it binds with every mode. A hidden layer is refused
- * as design_read refuses it: no code is built from it. Tokens that cannot be read leave a note, not a failure.
+ * hashed, so a later diff tells two drawings apart, then the tokens it binds with every mode; baseline_save and
+ * baseline_diff both read through it. A hidden layer comes back as hidden: design_read reads none, so no code is built
+ * from it. Tokens that cannot be read leave a note, not a failure.
  */
 @injectable()
 export class BaselineCapture {
@@ -58,7 +63,7 @@ export class BaselineCapture {
     session: PluginSession,
     node: string | undefined,
     name: string | undefined,
-  ): Promise<Capture> {
+  ): Promise<Capture | HiddenRoot> {
     const id = node ?? (await this.#selected.id(session));
     const capturedAt = new Date(this.#clock.now()).toISOString();
     const {
@@ -70,7 +75,7 @@ export class BaselineCapture {
     }
 
     if (!read.root.visible) {
-      throw new PixelwrightError(ERROR_CODE.opFailed, BASELINE_SAVE_TEXT.hidden(id));
+      return { hidden: id };
     }
 
     const { tokens, notes } = await this.#tokens(session, id, read);
@@ -107,7 +112,7 @@ export class BaselineCapture {
     } catch (error) {
       const why = error instanceof Error ? error.message : String(error);
 
-      return { tokens: null, notes: [BASELINE_SAVE_TEXT.tokensUnread(why)] };
+      return { tokens: null, notes: [BASELINE_TEXT.tokensUnread(why)] };
     }
   }
 

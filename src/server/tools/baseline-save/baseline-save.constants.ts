@@ -46,8 +46,6 @@ export const BASELINE_SAVE_TEXT = {
     saved: string,
   ) =>
     `${name} exists (${layer}, ${id}, saved ${saved}): pass the accept a baseline_diff gave, replace: true to start over, code alone to change its files, or another name.`,
-  /** An ISO time as the answers write it, its date and its hours and minutes: 2026-11-04 09:12 UTC. */
-  utc: (iso: string) => `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`,
   acceptAlone:
     "accept keeps the design a baseline_diff compared: give the baseline's name with it (and code, to change its files), nothing else.",
   notHeld: "That diff is no longer held (the server restarted): run baseline_diff again.",
@@ -59,6 +57,4 @@ export const BASELINE_SAVE_TEXT = {
   madeFolder: (root: string) =>
     `Made .pixelwright/baselines in ${root}: commit it to share baselines with the team, or leave it out of git: it holds the design's texts.`,
   cut: "Save these branches as baselines of their own: baseline_diff does not compare inside them.",
-  tokensUnread: (why: string) =>
-    `The tokens could not be read (${why}): a diff compares them as the reads wrote them, one mode.`,
 } as const;

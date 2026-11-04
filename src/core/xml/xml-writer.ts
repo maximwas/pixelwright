@@ -39,6 +39,17 @@ export class XmlWriter {
     return { xml: lines.join(XML.lineBreak), lines, spans };
   }
 
+  /** A Text's content as its element holds it: its characters escaped, its Spans written (a baseline diff's $text). */
+  content(content: readonly XmlContent[]): string {
+    return content
+      .map((piece) =>
+        piece.kind === XML_CONTENT.text
+          ? this.#escape.text(piece.value)
+          : XML.text("", XML.spanTag, this.#attributes(piece.attributes), this.#escape.text(piece.value)),
+      )
+      .join("");
+  }
+
   #write(element: XmlElement, place: XmlPlace): void {
     const { lines, level } = place;
     const start = lines.length;
@@ -46,7 +57,7 @@ export class XmlWriter {
     const attributes = this.#attributes(element.attributes);
 
     if (element.content !== null) {
-      lines.push(XML.text(indent, element.tag, attributes, this.#content(element.content)));
+      lines.push(XML.text(indent, element.tag, attributes, this.content(element.content)));
     } else if (element.children.length === 0) {
       lines.push(XML.leaf(indent, element.tag, attributes));
     } else {
@@ -64,16 +75,6 @@ export class XmlWriter {
 
   #attributes(attributes: readonly XmlAttribute[]): string {
     return attributes.map(([name, value]) => XML.attribute(name, this.#escape.attribute(value))).join("");
-  }
-
-  #content(content: readonly XmlContent[]): string {
-    return content
-      .map((piece) =>
-        piece.kind === XML_CONTENT.text
-          ? this.#escape.text(piece.value)
-          : XML.text("", XML.spanTag, this.#attributes(piece.attributes), this.#escape.text(piece.value)),
-      )
-      .join("");
   }
 }
 

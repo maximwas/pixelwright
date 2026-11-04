@@ -79,10 +79,11 @@ describe("the MCP contract", () => {
         "components_read",
         "library_search",
         "baseline_save",
+        "baseline_diff",
         "assets_export",
       ]),
     );
-    expect(tools).toHaveLength(27);
+    expect(tools).toHaveLength(28);
   });
 
   it("lists no outputSchema for the tools that answer in content blocks, so a client keeps the image (T-005)", async () => {
