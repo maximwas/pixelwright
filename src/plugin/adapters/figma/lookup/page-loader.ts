@@ -1,7 +1,7 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CANVAS_VIEW } from "@/plugin/adapters/figma/canvas-view.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
-import { LOOKUP_TEXT } from "@/plugin/adapters/figma/lookup/lookup.constants.ts";
+import { LOOKUP_TEXT, SCREEN } from "@/plugin/adapters/figma/lookup/lookup.constants.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
@@ -13,6 +13,7 @@ import type { PageNotRead } from "@/shared/ops/file-map/file-map.schema.ts";
  */
 @injectable()
 export class PageLoader {
+  readonly #screenTypes: ReadonlySet<string> = new Set(SCREEN.types);
   readonly #lookup;
   readonly #view;
 
@@ -47,6 +48,13 @@ export class PageLoader {
 
       return false;
     }
+  }
+
+  /** A page's screens (P-121, P-123): its frames, components and instances, at its top or in its sections. */
+  screens(page: PageNode): SceneNode[] {
+    return page.children
+      .flatMap((node) => (node.type === SCREEN.section ? node.children : [node]))
+      .filter((node) => this.#screenTypes.has(node.type));
   }
 
   /** Where an op starts: the layer or page by id, or the current page when none is given. */

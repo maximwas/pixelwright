@@ -15,7 +15,10 @@ import { ComponentFieldReader } from "@/plugin/adapters/figma/layer-meta/compone
 import { FactFieldReader } from "@/plugin/adapters/figma/layer-meta/fact-field-reader.ts";
 import { ModeFieldReader } from "@/plugin/adapters/figma/layer-meta/mode-field-reader.ts";
 import { NoteFieldReader } from "@/plugin/adapters/figma/layer-meta/note-field-reader.ts";
-import { ReactionFieldReader } from "@/plugin/adapters/figma/layer-meta/reaction-field-reader.ts";
+import {
+  REACTION_FIELD_READER,
+  ReactionFieldReader,
+} from "@/plugin/adapters/figma/layer-meta/reaction-field-reader.ts";
 import { AppearanceFieldReader } from "@/plugin/adapters/figma/layer-read/appearance-field-reader.ts";
 import { BoxFieldReader } from "@/plugin/adapters/figma/layer-read/box-field-reader.ts";
 import { EffectFieldReader } from "@/plugin/adapters/figma/layer-read/effect-field-reader.ts";
@@ -76,6 +79,7 @@ export class HostProviders {
       .bind({ provide: FIELD_READERS, multi: true, useClass: NoteFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: ModeFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: ReactionFieldReader })
+      .bind({ provide: REACTION_FIELD_READER, useClass: ReactionFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: FactFieldReader })
       .bind({ provide: STYLE_NUMBERS_READER, useClass: StyleNumbers })
       .bind({ provide: REFERENCES, useClass: References })

@@ -6,5 +6,8 @@ export const LOOKUP_TEXT = {
   noLayers: (id: string) => `${id} has no layers inside to search.`,
 } as const;
 
+/** A page's screens (P-121): frames, components and instances, at its top or in its sections. */
+export const SCREEN = { section: "SECTION", types: ["FRAME", "COMPONENT", "INSTANCE"] } as const;
+
 /** How often a walk reads the clock (P-075): every 500 layers is cheap beside the walk and soon after the deadline. */
 export const WALK = { checkEvery: 500 } as const;

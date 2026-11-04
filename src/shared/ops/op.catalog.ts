@@ -5,6 +5,7 @@ import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
 import { exportOp } from "@/shared/ops/export/export.manifest.ts";
 import { fileMapOp } from "@/shared/ops/file-map/file-map.manifest.ts";
 import { findOp } from "@/shared/ops/find/find.manifest.ts";
+import { flowsOp } from "@/shared/ops/flows/flows.manifest.ts";
 import { imageOp } from "@/shared/ops/image/image.manifest.ts";
 import { inspectOp } from "@/shared/ops/inspect/inspect.manifest.ts";
 import { nearbyOp } from "@/shared/ops/nearby/nearby.manifest.ts";
@@ -12,8 +13,10 @@ import { OpCatalog } from "@/shared/ops/op-catalog.ts";
 import { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
 import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
 import { readOp } from "@/shared/ops/read/read.manifest.ts";
+import { screensOp } from "@/shared/ops/screens/screens.manifest.ts";
 import { selectionOp } from "@/shared/ops/selection/selection.manifest.ts";
 import { selectionWaitOp } from "@/shared/ops/selection-wait/selection-wait.manifest.ts";
+import { setOfOp } from "@/shared/ops/set-of/set-of.manifest.ts";
 import { showOp } from "@/shared/ops/show/show.manifest.ts";
 import { viewportOp } from "@/shared/ops/viewport/viewport.manifest.ts";
 
@@ -36,4 +39,7 @@ export const OP_CONTRACTS = new OpCatalog([
   coverOp,
   imageOp,
   inspectOp,
+  setOfOp,
+  screensOp,
+  flowsOp,
 ]);

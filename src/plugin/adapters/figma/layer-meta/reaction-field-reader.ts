@@ -1,4 +1,4 @@
-import { inject, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { FIGMA_ACTION_TYPE } from "@/plugin/adapters/figma/layer-meta/layer-meta.constants.ts";
 import type { FieldReader } from "@/plugin/adapters/figma/layer-read/layer-reader.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
@@ -70,3 +70,6 @@ export class ReactionFieldReader implements FieldReader {
     return JSON.parse(JSON.stringify(value)) as Value;
   }
 }
+
+/** The reader on its own, for the flows op (P-121): it reads a layer's interactions alone. */
+export const REACTION_FIELD_READER = new InjectionToken<ReactionFieldReader>("ReactionFieldReader");
