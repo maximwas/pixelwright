@@ -101,6 +101,7 @@
     "close-with-grace": "2.5.0",
     "culori": "4.0.2",
     "fast-png": "8.0.0",
+    "fuse.js": "7.5.0",
     "google-fonts-helper": "3.7.4",
     "image-size": "2.0.4",
     "p-timeout": "7.0.1",

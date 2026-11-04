@@ -7639,7 +7639,7 @@
   {
     "name": "components_read",
     "title": "Read the components",
-    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description, `exposed` (the nested instances whose properties its instances show: in code they are its props too) and `code`: the project's Code Connect template or batch row that connects it ({component, source, template, by}), or null. `mapped: false` lists only the components without code yet: connect each with a batch row keyed by its key (guide topic code-connect). `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
+    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -7689,14 +7689,9 @@
               "instances",
               "exposed",
               "links",
-              "error",
-              "code"
+              "error"
             ]
           }
-        },
-        "mapped": {
-          "description": "true: only components a Code Connect file connects; false: only those none connects. Default: all.",
-          "type": "boolean"
         },
         "links": {
           "default": false,
@@ -7704,10 +7699,10 @@
           "type": "boolean"
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema"
@@ -7895,50 +7890,6 @@
               },
               "error": {
                 "type": "string"
-              },
-              "code": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "component": {
-                        "type": "string",
-                        "description": "The code component's name."
-                      },
-                      "source": {
-                        "description": "Its file or package, as the Code Connect file writes it.",
-                        "type": "string"
-                      },
-                      "missing": {
-                        "description": "The source names a file that does not exist.",
-                        "type": "boolean",
-                        "const": true
-                      },
-                      "template": {
-                        "type": "string",
-                        "description": "The template file, or the batch row as <batch file>#<n>."
-                      },
-                      "by": {
-                        "type": "string",
-                        "enum": [
-                          "key",
-                          "id",
-                          "name"
-                        ],
-                        "description": "How it matched: the component's key, the id its url names, or the name."
-                      }
-                    },
-                    "required": [
-                      "component",
-                      "template",
-                      "by"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
               }
             },
             "additionalProperties": false
@@ -7971,7 +7922,7 @@
   {
     "name": "library_search",
     "title": "Search the saved component libraries",
-    "description": "Finds components in the team's libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer in ~/.pixelwright/libraries; save again after the library changes. Then query from any file: every word must appear in a component's name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:<key>) and properties: insert it with design_apply <Instance component=\"key:…\" variant=\"State=Hover\" props=\"Label=Buy\"/>, which works once the library is published. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.",
+    "description": "Finds components in the team's libraries, which the Plugin API cannot list from another file. First, in each library file (open in Figma Desktop with the Pixelwright plugin), call save: true: its own published components (keys, variants, properties, descriptions) are saved on this computer, in the libraries folder of Pixelwright's home; save again after the library changes. Then query from any file: every word must appear in a component's name, description, page or variant values, in any order, and a typo still finds. Each result gives component (key:<key>) and properties: insert it with design_apply <Instance component=\"key:…\" variant=\"State=Hover\" props=\"Label=Buy\"/>, which works once the library is published. Without query, lists the saved libraries with when each was saved. Writes nothing to Figma, so it works while Allow edits is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -7987,10 +7938,10 @@
           "type": "boolean"
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         },
         "limit": {
           "default": 20,

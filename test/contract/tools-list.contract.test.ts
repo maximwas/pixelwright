@@ -69,6 +69,8 @@ describe("the MCP contract", () => {
       "measure",
       "fonts_check",
       "execute",
+      "components_read",
+      "library_search",
       "assets_export",
     ]);
   });

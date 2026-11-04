@@ -2,12 +2,14 @@ import { InjectionToken, injectable } from "@needle-di/core";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
 import { ASSETS_EXPORT_MANIFEST } from "@/server/tools/assets-export/assets-export.manifest.ts";
 import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
+import { COMPONENTS_READ_MANIFEST } from "@/server/tools/components-read/components-read.manifest.ts";
 import { DESIGN_READ_MANIFEST } from "@/server/tools/design-read/design-read.manifest.ts";
 import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { FILE_MAP_MANIFEST } from "@/server/tools/file-map/file-map.manifest.ts";
 import { FONTS_CHECK_MANIFEST } from "@/server/tools/fonts-check/fonts-check.manifest.ts";
 import { IMAGE_COMPARE_MANIFEST } from "@/server/tools/image-compare/image-compare.manifest.ts";
 import { INSPECT_MANIFEST } from "@/server/tools/inspect/inspect.manifest.ts";
+import { LIBRARY_SEARCH_MANIFEST } from "@/server/tools/library-search/library-search.manifest.ts";
 import { MEASURE_MANIFEST } from "@/server/tools/measure/measure.manifest.ts";
 import { NODE_SHOW_MANIFEST } from "@/server/tools/node-show/node-show.manifest.ts";
 import { NODES_FIND_MANIFEST } from "@/server/tools/nodes-find/nodes-find.manifest.ts";
@@ -43,6 +45,8 @@ export class ToolCatalog {
     MEASURE_MANIFEST,
     FONTS_CHECK_MANIFEST,
     EXECUTE_MANIFEST,
+    COMPONENTS_READ_MANIFEST,
+    LIBRARY_SEARCH_MANIFEST,
     ASSETS_EXPORT_MANIFEST,
   ];
 

@@ -39,14 +39,18 @@ export class LiveClient {
   readonly #client = new Client({ name: "pixelwright-live", version: "1.0.0" });
   #takesFile: ReadonlySet<string> = new Set();
 
-  async connect(): Promise<this> {
+  /** The server with the test's environment, and these variables over it (a temp PIXELWRIGHT_HOME, say). */
+  async connect(env: Readonly<Record<string, string>> = {}): Promise<this> {
     await this.#client.connect(
       new StdioClientTransport({
         command: process.execPath,
         args: [join(process.cwd(), "dist", "bin.mjs")],
-        env: Object.fromEntries(
-          Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
-        ),
+        env: {
+          ...Object.fromEntries(
+            Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
+          ),
+          ...env,
+        },
         stderr: "ignore",
       }),
     );

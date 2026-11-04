@@ -9,3 +9,11 @@ export const LATEST_FILE = "latest.json";
  * enough to read on every call.
  */
 export const WRITTEN_STORE = { file: "written-files.json", limit: 5_000, version: 1 } as const;
+
+/** Library catalogues (T-193): one per library file, under its name, in the libraries folder of the channel's home. */
+export const LIBRARY_FILES = {
+  folder: "libraries",
+  extension: ".json",
+  file: (slug: string) => `${slug}.json`,
+  version: 1,
+} as const;

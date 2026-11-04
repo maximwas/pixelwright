@@ -24,4 +24,5 @@ export const OP_NAME = {
   cover: "cover",
   image: "image",
   inspect: "inspect",
+  components: "components",
 } as const;
