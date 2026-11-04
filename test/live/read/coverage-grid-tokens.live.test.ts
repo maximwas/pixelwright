@@ -3,7 +3,7 @@ import * as zod from "zod/mini";
 import { TokensSchema } from "@/core/tokens/model/model.schema.ts";
 import { LiveClient } from "../support/live-client.ts";
 
-/** The coverage frame of Test MCP (Maxim 2026-11-04): read only, never changed. */
+/** The coverage frame of Test MCP, the fixture of read-only live cases: read only, never changed. */
 const COVERAGE = "185:239";
 
 /** The bento's children: Wide spans two columns, Row two spans two from column 2, the Dot sits centred. */
