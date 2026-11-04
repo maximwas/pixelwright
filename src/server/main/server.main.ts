@@ -73,6 +73,7 @@ import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step.ts
 import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step.ts";
 import { TargetStep } from "@/server/app/tool-runner/steps/target-step.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER, ToolRunner } from "@/server/app/tool-runner/tool-runner.ts";
+import { BaselineProviders } from "@/server/main/baseline-providers.ts";
 import { BridgeProviders } from "@/server/main/bridge-providers.ts";
 import { CheckProviders } from "@/server/main/check-providers.ts";
 import { ComponentProviders } from "@/server/main/component-providers.ts";
@@ -157,6 +158,7 @@ export class ServerMain {
     new RenderProviders().register(container);
     new CheckProviders().register(container);
     new DiffProviders().register(container);
+    new BaselineProviders().register(container);
     new ComponentProviders().register(container, config.home);
     new TokenProviders().register(container);
     new BridgeProviders().register(container, config);

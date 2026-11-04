@@ -27,12 +27,12 @@ export class ProjectFolder {
     return isAbsolute(path) ? resolve(path) : resolve(await this.root(), path);
   }
 
-  /** The project folder itself; the client's roots are asked as McpRoots caches them. */
-  async root(): Promise<string> {
+  /** The project folder itself; the client's roots are asked as McpRoots caches them. `refusal` says why one is none. */
+  async root(refusal: (folder: string) => string = PROJECT_TEXT.noProject): Promise<string> {
     const folder = resolve(this.#fileRoot(await this.#roots.uris()) ?? this.#fallback);
 
     if (folder === homedir() || folder === parse(folder).root) {
-      throw new PixelwrightError(ERROR_CODE.opFailed, PROJECT_TEXT.noProject(folder));
+      throw new PixelwrightError(ERROR_CODE.opFailed, refusal(folder));
     }
 
     return folder;
