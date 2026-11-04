@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -56,6 +56,7 @@ import { SeenDesigns } from "@/server/app/stores/seen-designs.ts";
 import { BaselineCompare } from "@/server/tools/baseline-diff/baseline-compare.ts";
 import { BaselineDiffOutputSchema } from "@/server/tools/baseline-diff/baseline-diff.schema.ts";
 import { BaselineDiffTool } from "@/server/tools/baseline-diff/baseline-diff.tool.ts";
+import { BaselineOverview } from "@/server/tools/baseline-diff/baseline-overview.ts";
 import { BaselineRoot } from "@/server/tools/baseline-diff/baseline-root.ts";
 import { BaselineTarget } from "@/server/tools/baseline-diff/baseline-target.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
@@ -245,10 +246,12 @@ async function setup() {
     tree,
     new LayerChanges(new Fingerprint(), new CssUrl(new CssSplit()), new NameValueList(), writer),
     new StructureChanges(writer),
+    { of: () => [] },
   );
   const sessions = new PluginSessions(plugin, new TargetResolver(), []);
   const compare = new BaselineCompare(new BaselineTarget(plugin, sessions), new BaselineRoot(), capture, baselines);
-  const tool = new BaselineDiffTool(store, seen, compare);
+  const overview = new BaselineOverview(store, compare, { connected: () => undefined }, { now: Date.now });
+  const tool = new BaselineDiffTool(seen, compare, overview, { signal: new AbortController().signal });
   const saved = await capture.capture(new PluginSession(SESSION, plugin, []), "1:1", "pricing");
 
   if ("baseline" in saved) {
@@ -335,8 +338,8 @@ describe("the baseline_diff tool: one baseline", () => {
     });
   });
 
-  it("notes a read by another plugin version, refuses an unknown name and names a file it cannot read (T-207, T-208)", async () => {
-    const { root, plugin, diff } = await setup();
+  it("notes a read by another plugin version, and refuses an unknown name naming the project's (T-207, T-208)", async () => {
+    const { plugin, diff } = await setup();
 
     plugin.version = "0.9.0";
     expect((await diff({ name: "pricing" })).notes).toContain(
@@ -345,11 +348,5 @@ describe("the baseline_diff tool: one baseline", () => {
     await expect(diff({ name: "checkout" })).rejects.toThrow(
       "No baseline named checkout in this project (it has pricing): baseline_save keeps one.",
     );
-
-    const folder = join(root, ".pixelwright", "baselines");
-
-    await mkdir(folder, { recursive: true });
-    await writeFile(join(folder, "broken.json"), "{");
-    await expect(diff({ name: "broken" })).rejects.toThrow(`${join(folder, "broken.json")} cannot be read: `);
   });
 });

@@ -3,9 +3,11 @@ import { LAYER_TREE } from "@/core/design/tree/layer-tree.ts";
 import { BASELINE_CHANGE, BASELINE_CHANGE_TEXT } from "@/core/diff/baseline/baseline.constants.ts";
 import type { BaselineChanges, BaselineCounts } from "@/core/diff/baseline/baseline.schema.ts";
 import type { BaselineComparison, BaselineSide, Placed, Side } from "@/core/diff/baseline/baseline.types.ts";
+import { ComponentChanges } from "@/core/diff/baseline/component-changes.ts";
 import { LAYER_CHANGES } from "@/core/diff/baseline/layer-changes.ts";
 import { LayerPairs } from "@/core/diff/baseline/layer-pairs.ts";
 import { STRUCTURE_CHANGES } from "@/core/diff/baseline/structure-changes.ts";
+import { TOKEN_CHANGES, type TokenChanges } from "@/core/diff/baseline/token-changes.ts";
 import { DIFF, DIFF_TEXT } from "@/core/diff/diff.constants.ts";
 import type { XmlElement } from "@/core/xml/xml.types.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
@@ -15,10 +17,12 @@ import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /**
- * What changed between a baseline and the design now, in design_read's terms (T-205, K-055): both reads built as
- * today's design_read builds them, layers paired by id, then by tag and name, then by name (LayerPairs); each pair's
- * changes (LayerChanges) and the structure's (StructureChanges); each list cut to DIFF.maxEntries, `more` counting the
- * rest. `same` ignores what was not compared.
+ * What changed between a baseline and the design now, in design_read's terms (T-205, K-055..K-057): both reads built
+ * as today's design_read builds them (the baseline with the live names of the tokens both use, so a renamed token is
+ * one token change, not a var() change on every layer), layers paired by id, then by tag and name, then by name
+ * (LayerPairs); each pair's changes (LayerChanges) and the structure's (StructureChanges); a change two or more
+ * instances share once (ComponentChanges); the tokens in every mode (TokenChanges); each list cut to DIFF.maxEntries,
+ * `more` counting the rest. `same` ignores what was not compared.
  */
 @injectable()
 export class BaselineDiff {
@@ -26,15 +30,18 @@ export class BaselineDiff {
   readonly #tree;
   readonly #changes;
   readonly #structure;
+  readonly #tokens;
 
   constructor(
     tree = inject(LAYER_TREE),
     changes = inject(LAYER_CHANGES),
     structure = inject(STRUCTURE_CHANGES),
+    tokens: Pick<TokenChanges, "of"> = inject(TOKEN_CHANGES),
   ) {
     this.#tree = tree;
     this.#changes = changes;
     this.#structure = structure;
+    this.#tokens = tokens;
   }
 
   compare(
@@ -42,22 +49,61 @@ export class BaselineDiff {
     after: BaselineSide,
     sameReader: boolean,
   ): BaselineComparison {
-    const sides = { before: this.#layers(before.snapshot), after: this.#layers(after.snapshot) };
-    const pairs = new LayerPairs(this.#side(before.snapshot, sides.before), this.#side(after.snapshot, sides.after));
+    const live = this.#liveNames(before.snapshot, after.snapshot);
+    const sides = { before: this.#layers(live), after: this.#layers(after.snapshot) };
+    const pairs = new LayerPairs(this.#side(live, sides.before), this.#side(after.snapshot, sides.after));
     const pages = [before.snapshot.page, after.snapshot.page] as const;
     const layers = this.#changes.of(pairs, { ...sides, sameReader, pages });
+    const { added, removed, moved, reordered } = this.#structure.of(pairs, sides);
+    const notes = this.#profile(before.snapshot, after.snapshot);
+    const skip = pairs.excluded();
+    const tokens = this.#tokens.of(
+      {
+        before: { raw: before.tokens, snapshot: before.snapshot, layers: pairs.before, skip: skip.before },
+        after: { raw: after.tokens, snapshot: after.snapshot, layers: pairs.after, skip: skip.after },
+      },
+      notes,
+    );
+    const folded = new ComponentChanges(pairs, sides).fold({ changed: layers.changed, added, removed });
 
     return this.#capped(
-      {
-        changed: layers.changed,
-        ...this.#structure.of(pairs, sides),
-        // shortcut: components (K-056) and tokens stay empty until their folds land beside these lists.
-        components: [],
-        tokens: [],
-        notCompared: [...this.#structure.cut(pairs), ...layers.notCompared],
-      },
-      this.#profile(before.snapshot, after.snapshot),
+      { ...folded, moved, reordered, tokens, notCompared: [...this.#structure.cut(pairs), ...layers.notCompared] },
+      notes,
     );
+  }
+
+  /** The baseline's read with the live read's names (and code syntax, and number) of the tokens both use, by id. */
+  #liveNames(before: ReadModel, after: ReadModel): ReadModel {
+    const variables = Object.entries(before.variables).map(([id, variable]) => {
+      const live = after.variables[id];
+
+      if (live === undefined) {
+        return [id, variable] as const;
+      }
+
+      const renamed = { ...variable, name: live.name };
+
+      // The live side's code syntax names the token now: none there is none.
+      delete renamed.codeSyntax;
+
+      return [id, live.codeSyntax === undefined ? renamed : { ...renamed, codeSyntax: live.codeSyntax }] as const;
+    });
+    const styles = Object.entries(before.styles).map(([id, style]) => {
+      const live = after.styles[id];
+
+      if (live === undefined) {
+        return [id, style] as const;
+      }
+
+      const renamed = { ...style, name: live.name };
+
+      // The live side's number among namesakes (--Black-2): none there is none.
+      delete renamed.duplicate;
+
+      return [id, live.duplicate === undefined ? renamed : { ...renamed, duplicate: live.duplicate }] as const;
+    });
+
+    return { ...before, variables: Object.fromEntries(variables), styles: Object.fromEntries(styles) };
   }
 
   #layers(model: ReadModel): Map<string, ReadLayer> {

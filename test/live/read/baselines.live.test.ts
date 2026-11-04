@@ -11,6 +11,7 @@ const { install } = TEST_MCP.ids;
 const PREFIX = "live:baselines:";
 
 type Changes = { changes: { changed: { path: string; attributes: Record<string, unknown> }[] } };
+type Overview = { summary: string; baselines: { name: string; status: string }[] };
 
 // The server starts in a temp project folder (CLAUDE_PROJECT_DIR; the client lists no root), so no baseline lands in
 // the repo (m:335a001e); the folder goes after. baseline_save writes nothing to Figma.
@@ -79,5 +80,26 @@ copy.paddingTop += 8;`);
 
     expect(diff).toMatchObject({ baselines: [{ status: "changed" }], accept: expect.stringMatching(/^[0-9a-f]{16}$/) });
     expect(Object.keys(root?.attributes ?? {})).toContainEqual(expect.stringMatching(/^padding/));
+  });
+
+  // T-204 after the cases above: install was saved as it is, install-copy has its padding changed.
+  it("lists every baseline of the file with its status; the copy accepted, the next overview reads it the same (T-204, T-201)", async () => {
+    const overview = (await client.call("baseline_diff", { file })) as Overview;
+
+    expect(overview.baselines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "install", status: "same" }),
+        expect.objectContaining({ name: "install-copy", status: "changed" }),
+      ]),
+    );
+
+    const { accept } = (await client.call("baseline_diff", { file, name: "install-copy" })) as { accept: string };
+
+    await client.call("baseline_save", { file, name: "install-copy", accept });
+
+    const again = (await client.call("baseline_diff", { file })) as Overview;
+
+    expect(again.baselines).toContainEqual(expect.objectContaining({ name: "install-copy", status: "same" }));
+    expect(again.summary).toMatch(/^2 baselines: install the same, install-copy the same\.$/);
   });
 });

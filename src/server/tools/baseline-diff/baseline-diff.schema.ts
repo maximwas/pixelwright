@@ -11,7 +11,7 @@ import {
 import { BASELINE_DIFF_FIELD, BASELINE_STATUS } from "@/server/tools/baseline-diff/baseline-diff.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
-export const BaselineDiffInputSchema = zod.object({
+export const BaselineDiffInputSchema = zod.strictObject({
   name: zod.exactOptional(BaselineNameSchema).check(zod.describe(BASELINE_DIFF_FIELD.name)),
   node: zod.exactOptional(NodeIdSchema).check(zod.describe(BASELINE_DIFF_FIELD.node)),
   file: zod

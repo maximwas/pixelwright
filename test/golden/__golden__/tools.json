@@ -2392,7 +2392,8 @@
           "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -2543,12 +2544,28 @@
                 },
                 "removed": {
                   "type": "number"
+                },
+                "moved": {
+                  "type": "number"
+                },
+                "reordered": {
+                  "type": "number"
+                },
+                "components": {
+                  "type": "number"
+                },
+                "tokens": {
+                  "type": "number"
                 }
               },
               "required": [
                 "changed",
                 "added",
-                "removed"
+                "removed",
+                "moved",
+                "reordered",
+                "components",
+                "tokens"
               ],
               "additionalProperties": false
             }
@@ -2616,7 +2633,8 @@
           "maxLength": 1024
         }
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",

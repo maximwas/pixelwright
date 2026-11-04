@@ -38,7 +38,30 @@ export const NOT_COMPARED = { children: "children", drawing: "drawing" } as cons
 /** How a change made in a component reached its instances (K-056). */
 export const COMPONENT_CHANGE = { changed: "changed", added: "added", removed: "removed" } as const;
 
+/** Reading the tokens a side's layers use (K-057). */
+export const TOKEN_CHANGE = {
+  /** Fields naming variables a layer does not use: Figma's own matches for raw values, and its CSS (m:335a001e). */
+  notBound: ["inferred", "css"],
+  styleIdSuffix: "StyleId",
+  children: "children",
+  /** The one collection and mode a read's own variable table stands in as when a side has no raw tokens. */
+  readCollection: "read",
+  readMode: "read",
+} as const;
+
+/** One change shared by a component's instances (K-056). */
+export const COMPONENT_FOLD = {
+  /** A change in one instance may be an override; in two or more it is the component's. */
+  minInstances: 2,
+  instanceType: "INSTANCE",
+  /** The path of a change on the instance itself. */
+  instancePath: "(instance)",
+} as const;
+
 export const BASELINE_CHANGE_TEXT = {
+  tokensAsRead: (baselineMissing: boolean) =>
+    `Tokens were compared as the reads wrote them, one mode each: ${baselineMissing ? "the baseline" : "the design now"} has no token values.`,
+  used: (token: string) => `var(${token})`,
   profile: (was: string, now: string) =>
     `The file's colour profile changed from ${was} to ${now}: colours are compared as each read wrote them.`,
 } as const;

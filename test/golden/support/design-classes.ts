@@ -48,6 +48,11 @@ import { RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { TextContent } from "@/core/design/text/text-content.ts";
 import { LayerTree } from "@/core/design/tree/layer-tree.ts";
+import { BaselineDiff } from "@/core/diff/baseline/baseline-diff.ts";
+import { LayerChanges } from "@/core/diff/baseline/layer-changes.ts";
+import { StructureChanges } from "@/core/diff/baseline/structure-changes.ts";
+import { TokenChanges } from "@/core/diff/baseline/token-changes.ts";
+import { Fingerprint } from "@/core/diff/fingerprint.ts";
 import { Measurements } from "@/core/inspect/measurements.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
@@ -55,6 +60,9 @@ import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
+import { NumberUnits } from "@/core/tokens/model/number-units.ts";
+import { StyleTokens } from "@/core/tokens/model/style-tokens.ts";
+import { VariableCss } from "@/core/tokens/model/variable-css.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
 import { XmlWriter } from "@/core/xml/xml-writer.ts";
@@ -132,6 +140,27 @@ export const reader = new DesignReader(design, fit, new ReadJson(catalogue, hint
 
 /** design_read's `autoLineHeight: "px"` over a read model. */
 export const lines = new AutoLineHeights(format);
+
+const writer = new XmlWriter(new XmlEscape());
+const units = new NumberUnits();
+
+/** baseline_diff's core comparison over design_read's whole tree, its tokens written as tokens_read writes them. */
+export const baselines = new BaselineDiff(
+  tree,
+  new LayerChanges(new Fingerprint(), new CssUrl(new CssSplit()), new NameValueList(), writer),
+  new StructureChanges(writer),
+  new TokenChanges(
+    new VariableCss(solid, new EasingCss(format), format, units),
+    new StyleTokens(
+      paints,
+      new EffectsGroup(solid, lengths, format, names),
+      new FontShorthand(format, new FontWeight()),
+      names,
+    ),
+    units,
+    names,
+  ),
+);
 
 /** An Orbit fixture as its read model. */
 export function fixture(name: string): ReadModel {

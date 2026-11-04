@@ -1,4 +1,5 @@
 import * as zod from "zod/mini";
+import { BaselineCountsSchema } from "@/core/diff/baseline/baseline.schema.ts";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import {
   BaselineFigmaFileSchema,
@@ -9,7 +10,7 @@ import {
 import { BASELINE_SAVE, BASELINE_SAVE_FIELD } from "@/server/tools/baseline-save/baseline-save.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
-export const BaselineSaveInputSchema = zod.object({
+export const BaselineSaveInputSchema = zod.strictObject({
   node: zod.exactOptional(NodeIdSchema).check(zod.describe(BASELINE_SAVE_FIELD.node)),
   name: zod.exactOptional(BaselineNameSchema).check(zod.describe(BASELINE_SAVE_FIELD.name)),
   code: zod
@@ -26,9 +27,6 @@ export const BaselineSaveInputSchema = zod.object({
   file: FileInputSchema,
 });
 
-/** How much a new read took in against the baseline it replaced, counted as nodes_diff counts layers (T-201). */
-const CountsSchema = zod.object({ changed: zod.number(), added: zod.number(), removed: zod.number() });
-
 export const BaselineSaveOutputSchema = zod.object({
   name: zod.string(),
   path: zod.string().check(zod.describe(BASELINE_SAVE_FIELD.path)),
@@ -41,7 +39,7 @@ export const BaselineSaveOutputSchema = zod.object({
   tokens: zod.number().check(zod.describe(BASELINE_SAVE_FIELD.tokens)),
   cut: zod.array(zod.extend(NamedSchema, { children: zod.number() })).check(zod.describe(BASELINE_SAVE_FIELD.cut)),
   replaced: zod
-    .exactOptional(zod.object({ node: NamedSchema, capturedAt: zod.string(), counts: CountsSchema }))
+    .exactOptional(zod.object({ node: NamedSchema, capturedAt: zod.string(), counts: BaselineCountsSchema }))
     .check(zod.describe(BASELINE_SAVE_FIELD.replaced)),
   notes: zod.array(zod.string()),
 });

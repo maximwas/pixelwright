@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { DESIGN_DIFF, type DesignDiff } from "@/core/diff/design-diff.ts";
+import { BASELINE_DIFF, type BaselineDiff } from "@/core/diff/baseline/baseline-diff.ts";
 import { BASELINE_STORE } from "@/server/app/stores/baseline-store.ts";
 import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
 import { BASELINE_SAVE, BASELINE_SAVE_TEXT } from "@/server/tools/baseline-save/baseline-save.constants.ts";
@@ -22,14 +22,14 @@ type Replaced = NonNullable<BaselineSaveOutput["replaced"]>;
  * The project's baselines as baseline_save keeps them: the project they live in, the code files they list (T-201),
  * the one a name holds, and a baseline written with what the answer says of it: its layers and tokens, the branches
  * its read did not hold whole (T-203), and with replace what the new read took in against the old one, counted as
- * nodes_diff counts layers.
+ * baseline_diff counts its lists (T-201).
  */
 @injectable()
 export class BaselineKeeper {
   readonly #store;
   readonly #diff;
 
-  constructor(store = inject(BASELINE_STORE), diff: Pick<DesignDiff, "diff"> = inject(DESIGN_DIFF)) {
+  constructor(store = inject(BASELINE_STORE), diff: Pick<BaselineDiff, "compare"> = inject(BASELINE_DIFF)) {
     this.#store = store;
     this.#diff = diff;
   }
@@ -104,13 +104,13 @@ export class BaselineKeeper {
   }
 
   #replaced(before: BaselineFile, after: BaselineFile): Replaced {
-    const { changed, onlyInA, onlyInB } = this.#diff.diff(before.snapshot, after.snapshot);
+    const { counts } = this.#diff.compare(
+      { snapshot: before.snapshot, tokens: before.tokens },
+      { snapshot: after.snapshot, tokens: after.tokens },
+      before.by.plugin === after.by.plugin,
+    );
 
-    return {
-      node: { id: before.node.id, name: before.node.name },
-      capturedAt: before.capturedAt,
-      counts: { changed: changed.length, added: onlyInB.length, removed: onlyInA.length },
-    };
+    return { node: { id: before.node.id, name: before.node.name }, capturedAt: before.capturedAt, counts };
   }
 
   /** The shown layers whose read lacks some of their children: the read's budget cut them there. */

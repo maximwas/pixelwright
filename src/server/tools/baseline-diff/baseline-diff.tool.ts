@@ -1,58 +1,60 @@
 import { inject, injectable } from "@needle-di/core";
-import type { BaselineCounts } from "@/core/diff/baseline/baseline.schema.ts";
-import { BASELINE_STORE } from "@/server/app/stores/baseline-store.ts";
+import { COMPONENT_CHANGE } from "@/core/diff/baseline/baseline.constants.ts";
+import type { BaselineChanges, BaselineCounts } from "@/core/diff/baseline/baseline.schema.ts";
 import { SEEN_DESIGNS } from "@/server/app/stores/seen-designs.ts";
 import { BASELINE_TEXT } from "@/server/app/stores/stores.constants.ts";
 import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
-import { BASELINE_COMPARE, type Comparison } from "@/server/tools/baseline-diff/baseline-compare.ts";
+import { TOOL_CONTEXT, type ToolContext } from "@/server/app/tool-runner/tool-runner.ts";
+import { BASELINE_COMPARE, type BaselineCompare } from "@/server/tools/baseline-diff/baseline-compare.ts";
 import { BASELINE_DIFF_TEXT } from "@/server/tools/baseline-diff/baseline-diff.constants.ts";
 import {
   type BaselineDiffInput,
   BaselineDiffInputSchema,
   type BaselineDiffOutput,
-  type BaselineEntry,
 } from "@/server/tools/baseline-diff/baseline-diff.schema.ts";
+import { BASELINE_OVERVIEW } from "@/server/tools/baseline-diff/baseline-overview.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 
 /**
- * baseline_diff with a name (T-205..T-208): the project's baseline against the design now, change by change in
- * design_read's terms, in the file it came from and with its own layer found again. The design compared is kept under
- * the answer's accept, so baseline_save keeps exactly what was reviewed. Reads only.
+ * baseline_diff (T-204..T-208): with a name, the project's baseline against the design now, change by change in
+ * design_read's terms, in the file it came from and with its own layer found again; the design compared is kept under
+ * the answer's accept, so baseline_save keeps exactly what was reviewed. Without one, every baseline's status. Reads only.
  */
 @injectable()
 export class BaselineDiffTool extends Tool<BaselineDiffInput, BaselineDiffOutput> {
   protected readonly input = BaselineDiffInputSchema;
-  readonly #store;
   readonly #seen;
   readonly #compare;
+  readonly #overview;
+  readonly #context;
 
   constructor(
-    store = inject(BASELINE_STORE),
     seen = inject(SEEN_DESIGNS),
-    compare = inject(BASELINE_COMPARE),
+    compare: Pick<BaselineCompare, "compare"> = inject(BASELINE_COMPARE),
+    overview = inject(BASELINE_OVERVIEW),
+    context: Pick<ToolContext, "signal"> = inject(TOOL_CONTEXT),
   ) {
     super();
-    this.#store = store;
     this.#seen = seen;
     this.#compare = compare;
+    this.#overview = overview;
+    this.#context = context;
   }
 
   protected async run({ name, node, file }: BaselineDiffInput): Promise<BaselineDiffOutput> {
-    // shortcut: without a name 0.7.0 gave every baseline's status; that overview is not built yet.
     if (name === undefined) {
-      throw new PixelwrightError(ERROR_CODE.opFailed, BASELINE_DIFF_TEXT.nameNeeded);
+      if (node !== undefined) {
+        throw new PixelwrightError(ERROR_CODE.opFailed, BASELINE_DIFF_TEXT.nodeNeedsName);
+      }
+
+      return this.#overview.all(file, this.#context.signal);
     }
 
-    const baseline = await this.#store.read(name);
-
-    if (baseline === null) {
-      throw new PixelwrightError(ERROR_CODE.opFailed, BASELINE_DIFF_TEXT.noBaseline(name, await this.#store.names()));
-    }
-
+    const { baseline, path } = await this.#overview.one(name);
     const comparison = await this.#compare.compare(baseline, node, file);
-    const baselines = [this.#entry(baseline, await this.#store.path(name), comparison)];
+    const baselines = [this.#overview.entry(baseline, path, comparison)];
 
     if (!("diff" in comparison)) {
       return { summary: BASELINE_DIFF_TEXT.notCompared(name, comparison.reason), baselines, notes: comparison.notes };
@@ -72,7 +74,7 @@ export class BaselineDiffTool extends Tool<BaselineDiffInput, BaselineDiffOutput
     });
 
     return {
-      summary: this.#summary(baseline, diff.counts),
+      summary: this.#summary(baseline, diff.changes, diff.counts),
       baselines,
       changes: diff.changes,
       accept,
@@ -81,44 +83,45 @@ export class BaselineDiffTool extends Tool<BaselineDiffInput, BaselineDiffOutput
     };
   }
 
-  /** A baseline as the answer lists it: what it holds, and how it compares now. */
-  #entry(
+  /** What changed since the baseline was saved (layers, each component change, tokens), or that it reads the same. */
+  #summary(
     baseline: BaselineFile,
-    path: string,
-    comparison: Comparison,
-  ): BaselineEntry {
-    const { node, file, page, capturedAt, code, version } = baseline;
+    changes: BaselineChanges,
+    counts: BaselineCounts,
+  ): string {
+    const text = BASELINE_DIFF_TEXT;
+    const head = text.head(baseline.name, baseline.node.name, baseline.node.id);
+    const since = BASELINE_TEXT.utc(baseline.capturedAt);
 
-    return {
-      name: baseline.name,
-      path,
-      node,
-      file,
-      page,
-      capturedAt,
-      code,
-      ...(version === null ? {} : { version }),
-      status: comparison.status,
-      ...("diff" in comparison && comparison.now !== undefined ? { now: comparison.now } : {}),
-      ...("reason" in comparison ? { reason: comparison.reason } : {}),
-      ...("diff" in comparison ? { counts: comparison.diff.counts } : {}),
-    };
+    if (Object.values(counts).every((count) => count === 0)) {
+      return text.same(head, since);
+    }
+
+    const layers = [
+      text.counted(counts.changed, text.layerChanged, text.layersChanged),
+      text.counted(counts.added, text.added),
+      text.counted(counts.removed, text.removed),
+      text.counted(counts.moved, text.moved),
+      text.counted(counts.reordered, text.reordered),
+    ].filter((part) => part !== "");
+    const components = changes.components.map((entry) =>
+      text.component(entry.component, this.#verb(entry), entry.instances.length, entry.of),
+    );
+    const tokens = text.counted(counts.tokens, text.tokenChanged, text.tokensChanged);
+
+    return text.since(
+      head,
+      since,
+      [layers.join(text.partJoiner), ...components, tokens].filter((part) => part !== ""),
+    );
   }
 
-  /** What changed since the baseline was saved, or that it reads the same. */
-  #summary(baseline: BaselineFile, counts: BaselineCounts): string {
-    const head = BASELINE_DIFF_TEXT.head(baseline.name, baseline.node.name, baseline.node.id);
-    const since = BASELINE_TEXT.utc(baseline.capturedAt);
-    const layers = [
-      BASELINE_DIFF_TEXT.counted(counts.changed, BASELINE_DIFF_TEXT.layerChanged, BASELINE_DIFF_TEXT.layersChanged),
-      BASELINE_DIFF_TEXT.counted(counts.added, BASELINE_DIFF_TEXT.added),
-      BASELINE_DIFF_TEXT.counted(counts.removed, BASELINE_DIFF_TEXT.removed),
-      BASELINE_DIFF_TEXT.counted(counts.moved, BASELINE_DIFF_TEXT.moved),
-      BASELINE_DIFF_TEXT.counted(counts.reordered, BASELINE_DIFF_TEXT.reordered),
-    ].filter((part) => part !== "");
+  /** A component change in a word: added, removed, redrawn when only its drawing changed, else changed. */
+  #verb(entry: BaselineChanges["components"][number]): string {
+    if (entry.change !== COMPONENT_CHANGE.changed) {
+      return entry.change;
+    }
 
-    return layers.length === 0
-      ? BASELINE_DIFF_TEXT.same(head, since)
-      : BASELINE_DIFF_TEXT.since(head, since, [layers.join(BASELINE_DIFF_TEXT.partJoiner)]);
+    return entry.drawing !== undefined && entry.attributes === undefined ? BASELINE_DIFF_TEXT.redrawn : entry.change;
   }
 }
