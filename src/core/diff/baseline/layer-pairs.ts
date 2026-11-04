@@ -1,6 +1,6 @@
 import { groupBy } from "es-toolkit";
 import { DESIGN_ATTRIBUTE } from "@/core/design/design.constants.ts";
-import type { Placed, PlacedPair, Side } from "@/core/diff/baseline/baseline.types.ts";
+import type { Both, Placed, PlacedPair, Side } from "@/core/diff/baseline/baseline.types.ts";
 import { DIFF_TEXT } from "@/core/diff/diff.constants.ts";
 import type { XmlElement } from "@/core/xml/xml.types.ts";
 
@@ -56,6 +56,11 @@ export class LayerPairs {
 
       return before === undefined ? [] : [[before, now] as const];
     });
+  }
+
+  /** The layers under a cut on either side, by side: nothing in them is paired, and their tokens are left out. */
+  excluded(): Both<ReadonlySet<string>> {
+    return { before: this.#excludedBefore, after: this.#excludedAfter };
   }
 
   /** The layers of now without a pair, under no cut, in document order. */

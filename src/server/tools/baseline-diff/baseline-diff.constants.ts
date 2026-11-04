@@ -26,11 +26,39 @@ export const BASELINE_STATUS = {
   unchecked: "unchecked",
 } as const;
 
+/** The overview without a name (T-204), as 0.7.0 bounded it. */
+export const OVERVIEW_LIMIT = {
+  /** The most baselines one answer lists; `more` counts the rest. */
+  maxBaselines: 50,
+  /** How long the overview compares; the baselines past it are unchecked, so one slow file cannot hold the answer. */
+  checkMs: 60_000,
+} as const;
+
 /** Looking for a baseline's layer again (T-206), as 0.7.0 did: the layer alone, 50 found by name, 3 named. */
 export const BASELINE_LOOKUP = { depth: 1, limit: 50, lookAlikes: 3 } as const;
 
 export const BASELINE_DIFF_TEXT = {
-  nameNeeded: "Pass name: the baseline to compare.",
+  nodeNeedsName: "node compares one baseline with another layer: give the baseline's name too.",
+  noBaselines: "No baselines in this project yet: baseline_save keeps one right after the design_read you build from.",
+  /** "3 baselines: pricing changed, checkout the same, and 2 more." */
+  overview: (
+    total: number,
+    statuses: readonly string[],
+    more: number,
+  ) =>
+    `${total} ${total === 1 ? "baseline" : "baselines"}: ${statuses.join(", ")}${more > 0 ? `, and ${more} more` : ""}.`,
+  status: (name: string, status: string) => `${name} ${status === BASELINE_STATUS.same ? "the same" : status}`,
+  /** "Plan Card changed in 3 of 3 instances". */
+  component: (
+    component: string,
+    verb: string,
+    instances: number,
+    of: number,
+  ) =>
+    `${component} ${verb} in ${instances} of ${of} instances`,
+  redrawn: "redrawn",
+  tokenChanged: "token changed",
+  tokensChanged: "tokens changed",
   noBaseline: (name: string, names: readonly string[]) =>
     `No baseline named ${name} in this project${names.length === 0 ? "" : ` (it has ${names.join(", ")})`}: baseline_save keeps one.`,
   keyNotConnected: (name: string, key: string) =>

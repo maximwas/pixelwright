@@ -112,7 +112,10 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     side; `LayerChanges` gives each pair's attributes as [before, now] (src, a cut's marks and the root's place aside,
     url() emptied, props and variant by the pairs that differ, `$text` as XML, `$page`, `was` for a layer made
     again) and a drawing by `Fingerprint` or a fill's image; `StructureChanges` the topmost added and removed (hidden
-    said), the moved and the reordered; 200 per list with `more`.
+    said), the moved and the reordered; `ComponentChanges` folds a change two or more instances of one component
+    share into one entry with its instances and `of` (K-056); `TokenChanges` compares the tokens the layers bind (an
+    alias anywhere in the read, never `inferred`) and those their aliases reach, by variable id and mode id, with the
+    baseline read under the live names (K-057); 200 per list with `more`.
   - `checks/`: `build-styles/` is styles_compare's engine (T-090). `BuildStyles` finds each pair's layer in the reads
     (in its parent when another pair's read holds it, else as its own read's root: the read op gives no parent) and
     takes its CSS as design_read writes it (`DesignBuilder`, the asset plan, `ReadCatalogue`'s tokens and text
@@ -335,7 +338,7 @@ then `BaselineCapture` (`server/app/stores/`) reads the layer with the read op (
 and the variables op (`used`, `within`), keeping only the variables the read's aliases reach (never Figma's inferred
 match) and the styles the read names. `BaselineKeeper` checks the code paths, finds the baseline a name holds and
 writes through `BaselineStore`, answering layers, tokens, `cut` (shown layers with fewer children than childCount)
-and, with replace, `DesignDiff`'s counts. `accept` takes its design from `SeenDesigns` and reads nothing; an
+and, with replace, `BaselineDiff`'s counts. `accept` takes its design from `SeenDesigns` and reads nothing; an
 existing name needs accept, replace or code alone.
 
 **Compares with a baseline.** `BaselineDiffTool` (`server/tools/baseline-diff/`) reads the named baseline (an
@@ -344,7 +347,9 @@ baseline's by key, else by name, never the active file (node ids repeat across f
 layer: `node`, else its id (outline), else the one layer of its name and type on its page (find), else missing with
 three look-alikes; unavailable when the id holds another type and name. `BaselineCompare` reads it through
 `BaselineCapture` and compares with core's `BaselineDiff`; the design compared goes into `SeenDesigns` under the
-answer's `accept`.
+answer's `accept`. Without a name `BaselineOverview` compares every baseline (of `file`) one at a time: at most 50
+within 60 s, the rest or all after a cancel unchecked, one whose file is not connected unavailable with why. Its
+manifest's `ownTarget` lets the call past `TargetStep` unbound: each baseline finds its own file.
 
 **Tells of an update.** `ServerMain` starts `UpdateFeed`: `UpdateState` (`server/app/stores/`) keeps `latest.json` in
 the channel's home and asks npm through `NpmRegistry` at most once a day (off with `PIXELWRIGHT_NO_UPDATE_CHECK`). A

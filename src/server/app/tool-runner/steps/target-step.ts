@@ -6,7 +6,8 @@ import type { ToolAnswer, ToolCall, ToolCallStep, ToolStepNext } from "@/server/
 
 /**
  * Binds a call that takes `file` to one plugin session before the tool's code loads (A§6.1 steps 2-3, T-002): no file
- * connected, a name two files share, or one no file has fails here, before any work.
+ * connected, a name two files share, or one no file has fails here, before any work. A tool that finds its own files
+ * (`ownTarget`) is let through unbound.
  */
 @injectable()
 export class TargetStep implements ToolCallStep {
@@ -17,7 +18,7 @@ export class TargetStep implements ToolCallStep {
   }
 
   async handle(call: ToolCall, next: ToolStepNext): Promise<ToolAnswer> {
-    if (call.manifest.input.shape.file === undefined) {
+    if (call.manifest.input.shape.file === undefined || (call.manifest.ownTarget ?? false)) {
       return next(call);
     }
 

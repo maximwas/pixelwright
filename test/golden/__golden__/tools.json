@@ -2553,12 +2553,28 @@
                 },
                 "removed": {
                   "type": "number"
+                },
+                "moved": {
+                  "type": "number"
+                },
+                "reordered": {
+                  "type": "number"
+                },
+                "components": {
+                  "type": "number"
+                },
+                "tokens": {
+                  "type": "number"
                 }
               },
               "required": [
                 "changed",
                 "added",
-                "removed"
+                "removed",
+                "moved",
+                "reordered",
+                "components",
+                "tokens"
               ],
               "additionalProperties": false
             }

@@ -3,6 +3,7 @@ import { CssReader } from "@/core/css/css-reader.ts";
 import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
+import { EffectsGroup } from "@/core/css/groups/effects/effects-group.ts";
 import { FillsGroup } from "@/core/css/groups/paint/fills-group.ts";
 import { TextPathData } from "@/core/css/groups/text/text-path-data.ts";
 import { TextRun } from "@/core/css/groups/text/text-run.ts";
@@ -25,6 +26,7 @@ import { LayerTree } from "@/core/design/tree/layer-tree.ts";
 import { BaselineDiff } from "@/core/diff/baseline/baseline-diff.ts";
 import { LayerChanges } from "@/core/diff/baseline/layer-changes.ts";
 import { StructureChanges } from "@/core/diff/baseline/structure-changes.ts";
+import { TokenChanges } from "@/core/diff/baseline/token-changes.ts";
 import { Fingerprint } from "@/core/diff/fingerprint.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
@@ -32,6 +34,9 @@ import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
+import { NumberUnits } from "@/core/tokens/model/number-units.ts";
+import { StyleTokens } from "@/core/tokens/model/style-tokens.ts";
+import { VariableCss } from "@/core/tokens/model/variable-css.ts";
 import { NodeTag } from "@/core/xml/node-tag.ts";
 import { XmlEscape } from "@/core/xml/xml-escape.ts";
 import { XmlWriter } from "@/core/xml/xml-writer.ts";
@@ -66,6 +71,17 @@ const baselines = new BaselineDiff(
   tree,
   new LayerChanges(new Fingerprint(), urls, new NameValueList(), writer),
   new StructureChanges(writer),
+  new TokenChanges(
+    new VariableCss(solid, new EasingCss(format), format, new NumberUnits()),
+    new StyleTokens(
+      paints,
+      new EffectsGroup(solid, lengths, format, names),
+      new FontShorthand(format, new FontWeight()),
+      names,
+    ),
+    new NumberUnits(),
+    names,
+  ),
 );
 
 const RED = { type: "SOLID", visible: true, color: { r: 1, g: 0, b: 0 } };
@@ -149,7 +165,11 @@ const pricing = column("1:1", "Pricing", [
 
 describe("BaselineDiff: layers (K-055)", () => {
   it("finds nothing between a read and itself", () => {
-    expect(diff(model(pricing), model(pricing))).toMatchObject({ same: true, more: 0, notes: [] });
+    expect(diff(model(pricing), model(pricing))).toMatchObject({
+      same: true,
+      more: 0,
+      notes: ["Tokens were compared as the reads wrote them, one mode each: the baseline has no token values."],
+    });
   });
 
   it("reports changes by id with their path, the root's rename and page but not its place", () => {

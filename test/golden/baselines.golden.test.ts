@@ -4,6 +4,23 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ProjectFolder } from "@/server/app/project/project-folder.ts";
 import { BaselineStore } from "@/server/app/stores/baseline-store.ts";
+import { editedPricing, rawTokensOf, withIconPaths } from "./support/baseline-edits.ts";
+import { baselines, fixture } from "./support/design-classes.ts";
+
+// 0.7.0's golden, byte for byte: Orbit's pricing page with illustrative edits since its baseline (T-205, K-055..K-057).
+describe("golden baseline diff", () => {
+  it("keeps what changed on Orbit's pricing page since its baseline, list by list", async () => {
+    const before = withIconPaths(fixture("orbit-pricing"), "v1");
+    const after = editedPricing(before);
+    const result = baselines.compare(
+      { snapshot: before, tokens: rawTokensOf(before) },
+      { snapshot: after, tokens: rawTokensOf(after) },
+      true,
+    );
+
+    await expect(`${JSON.stringify(result, null, 2)}\n`).toMatchFileSnapshot("__golden__/baseline-diff.orbit.json");
+  });
+});
 
 // The baseline 0.7.0 kept of Orbit's Plans (server 0.2.0, plugin 0.3.0), as a project commits it: format 1 stays (D-33).
 describe("a baseline 0.7.0 wrote", () => {

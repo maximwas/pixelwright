@@ -1,5 +1,5 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
+import { type ConnectedFile, PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
 import type { PluginSession } from "@/server/app/sessions/plugin-session.ts";
 import { PLUGIN_SESSIONS } from "@/server/app/sessions/plugin-sessions.ts";
 import type { BaselineFile } from "@/server/app/stores/stores.schema.ts";
@@ -38,6 +38,13 @@ export class BaselineTarget {
     const differs = connected !== undefined && (connected.name !== came.name || connected.key !== came.key);
 
     return { session, notes: differs ? [BASELINE_DIFF_TEXT.comparedIn(connected.name, came.name)] : [] };
+  }
+
+  /** The connected file `file` names (a session from status, or a file name); none, or several, is an error. */
+  connected(file: string): ConnectedFile | undefined {
+    const session = this.#sessions.session(file);
+
+    return this.#link.files().find((each) => each.session === session.id);
   }
 
   /** The session of the file a baseline came from: by its key when Figma gave one, else by its one name. */

@@ -182,14 +182,9 @@ async function setup(project?: string) {
   const store = new BaselineStore(new ProjectFolder({ uris: async () => [] }, root));
   const seen = new SeenDesigns();
   const capture = new BaselineCapture(new SelectedLayer(), plugin, { now: () => Date.parse(NOW) }, new Slug());
-  const diff = {
-    diff: () => ({
-      same: false,
-      onlyInA: [],
-      onlyInB: [{ path: "Pricing/New", id: "1:9" }],
-      changed: [{ path: "Pricing/Plans", a: "1:2", b: "1:2", attributes: {} }],
-    }),
-  };
+  const counts = { changed: 1, added: 1, removed: 0, moved: 0, reordered: 1, components: 0, tokens: 2 };
+  const lists = { changed: [], added: [], removed: [], moved: [], reordered: [], components: [], tokens: [] };
+  const diff = { compare: () => ({ same: false, changes: { ...lists, notCompared: [] }, counts, more: 0, notes: [] }) };
   const tool = new BaselineSaveTool(
     new PluginSession(SESSION, plugin, []),
     capture,
@@ -282,7 +277,11 @@ describe("the baseline_save tool", () => {
 
     expect(replaced).toMatchObject({
       code: ["src/pricing.tsx"],
-      replaced: { node: { id: "1:1", name: "Pricing" }, capturedAt: NOW, counts: { changed: 1, added: 1, removed: 0 } },
+      replaced: {
+        node: { id: "1:1", name: "Pricing" },
+        capturedAt: NOW,
+        counts: { changed: 1, added: 1, removed: 0, moved: 0, reordered: 1, components: 0, tokens: 2 },
+      },
     });
 
     const before = plugin.requests.length;

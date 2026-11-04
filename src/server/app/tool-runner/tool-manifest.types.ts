@@ -21,5 +21,10 @@ export interface ToolManifest {
   /** The structuredContent's schema; a tool that answers in text blocks only (design_read) has none (T-005). */
   readonly output?: zod.ZodMiniObject;
   readonly annotations: ToolAnnotations;
+  /**
+   * The tool finds the file of each thing it reads itself (baseline_diff: each baseline's own file), so `file` binds no
+   * session before it runs, and a call with no file connected still answers.
+   */
+  readonly ownTarget?: boolean;
   readonly load: () => Promise<ToolClass>;
 }
