@@ -3,12 +3,13 @@ import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
 const { startSection } = TEST_MCP.ids;
-// Plan Card is a plain component with 9 instances (Pricing – Desktop, Mobile, Tablet); Button is a variant set, and
+// Plan Card is a plain component with 10 instances (Pricing – Desktop, Mobile, Tablet, and 185:461 in the coverage
+// frame 185:239 on Start here); Button is a variant set, and
 // "Sign in" 54:236 is its Variant=Secondary, State=Default. Like 0.7.0, `name` matches layer names only and
 // `component` matches the main component or its set (the plan's Try-it used `name` for Plan Card, which finds only
 // the component itself).
 const PLAN_CARD = "Plan Card";
-const PLAN_CARD_INSTANCES = 9;
+const PLAN_CARD_INSTANCES = 10;
 const BUTTON = "Button";
 const SIGN_IN = "54:236";
 
