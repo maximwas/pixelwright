@@ -2,10 +2,12 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient } from "../support/live-client.ts";
 
 /** Every custom property the CSS declares, and every one its values name in var(). */
-const declared = (css: string): Set<string> => new Set([...css.matchAll(/^\s*(--[^:\s]+):/gm)].map(([, name]) => name ?? ""));
+const declared = (css: string): Set<string> =>
+  new Set([...css.matchAll(/^\s*(--[^:\s]+):/gm)].map(([, name]) => name ?? ""));
 
+// Comments left out: the text styles' heading shows the use, `font: var(--name-font)`, with no such token.
 const referenced = (css: string): Set<string> =>
-  new Set([...css.matchAll(/var\((--[^),\s]+)/g)].map(([, name]) => name ?? ""));
+  new Set([...css.replaceAll(/\/\*[\s\S]*?\*\//g, "").matchAll(/var\((--[^),\s]+)/g)].map(([, name]) => name ?? ""));
 
 // It only reads: nothing to clean up, and a failed case may run again.
 describe("read/tokens", () => {
