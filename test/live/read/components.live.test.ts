@@ -8,8 +8,14 @@ import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
 const { orbitComponents, pricingDesktop } = TEST_MCP.ids;
 
-/** The Callout component on Start here: a SLOT property, and a Button its instances expose. */
+/** Callout's instance on Pricing – Desktop: its component (81:1514) has a SLOT property, Actions, holding two Buttons. */
 const CALLOUT = "81:1522";
+
+/** Button's Variant=Primary, State=Default: the component the made layer exposes an instance of. */
+const BUTTON_PRIMARY = "54:189";
+
+/** The prefix of the layers this file makes in the Live tests Section, removed after. */
+const PREFIX = "live:components:";
 
 interface Listed {
   readonly name: string;
@@ -35,18 +41,27 @@ interface Libraries extends ToolResult {
   readonly libraries: { name: string; path: string }[];
 }
 
-// Reads only. library_search writes its catalogue into a temp home, never the channel's: that server shares the
+// Reads, but for one component made in the Live tests Section (live:components:<case>, removed after), since no
+// layer of Test MCP exposes an instance. library_search writes its catalogue into a temp home, never the channel's: that server shares the
 // channel's bridge.json, so it reaches Test MCP's plugin as the others do.
 describe("read/components", () => {
-  const { file } = inject("live");
+  const { file, scratch } = inject("live");
   let client: LiveClient;
+
+  const run = async (code: string): Promise<unknown> => (await client.call("execute", { file, code })).result;
 
   beforeAll(async () => {
     client = await new LiveClient().connect();
     await client.waitForTestMcp();
   });
 
-  afterAll(() => client.close());
+  afterAll(async () => {
+    await run(`const section = await pw.node(${JSON.stringify(scratch)});
+for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}))) {
+  if (!node.removed) node.remove();
+}`);
+    await client.close();
+  });
 
   const read = async (args: Record<string, unknown>): Promise<Components> =>
     (await client.call("components_read", { file, ...args })) as Components;
@@ -70,15 +85,30 @@ describe("read/components", () => {
     ).toBe(true);
   });
 
-  it("lists Callout's SLOT property without a default, and the Button it exposes (B-060)", async () => {
-    const { components } = await read({ scope: "local", within: CALLOUT });
-    const [callout] = components;
+  it("lists Callout's SLOT property without a default, read through its instance (B-060)", async () => {
+    const { components } = await read({ scope: "used", within: CALLOUT });
+    const callout = components.find(({ name }) => name === "Callout");
     const slot = Object.values(callout?.properties ?? {}).find(({ type }) => type === "SLOT");
 
-    expect(components).toHaveLength(1);
+    expect(callout).toMatchObject({ type: "COMPONENT", instances: 1 });
     expect(slot).toBeDefined();
     expect(slot).not.toHaveProperty("default");
-    expect(callout?.exposed?.map(({ component }) => component)).toContain("Button");
+  });
+
+  it("lists the Button a component exposes (T-190)", async () => {
+    const made = await run(`const section = await pw.node(${JSON.stringify(scratch)});
+const button = await pw.node(${JSON.stringify(BUTTON_PRIMARY)});
+const component = figma.createComponent();
+component.name = ${JSON.stringify(`${PREFIX}exposed`)};
+section.appendChild(component);
+const inner = button.createInstance();
+component.appendChild(inner);
+inner.isExposedInstance = true;
+return component.id;`);
+    const { components } = await read({ scope: "local", within: made });
+
+    expect(components).toHaveLength(1);
+    expect(components[0]?.exposed?.map(({ component }) => component)).toEqual(["Button"]);
   });
 
   it("counts the instances Pricing – Desktop uses: three Plan Cards (T-190)", async () => {

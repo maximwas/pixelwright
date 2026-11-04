@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
-const { hero, heroB, planStarter, pricingDesktop, orbitPricing, checkoutPay, success } = TEST_MCP.ids;
+const { hero, heroB, signIn, pricingDesktop, orbitPricing, checkoutPay, success } = TEST_MCP.ids;
 
 type Diff = { same: boolean; onlyInA: unknown[]; onlyInB: unknown[]; changed: { path: string }[] };
 type Variants = { variants: { name: string; pseudo?: string }[] };
@@ -33,9 +33,9 @@ describe("read/diff", () => {
     expect(paths).toEqual([expect.stringMatching(/eyebrow/i), expect.stringMatching(/title/i)]);
   });
 
-  // T-086: the Starter card is a Plan Card instance, so its set is read.
-  it("reads Plan Card's Hover state as :hover", async () => {
-    const view = (await client.call("variants_read", { file, node: planStarter })) as Variants;
+  // T-086: Sign in is a Button instance, so the Button set is read (Plan Card is a lone component).
+  it("reads the Button set's Hover state as :hover", async () => {
+    const view = (await client.call("variants_read", { file, node: signIn })) as Variants;
 
     expect(view.variants).toContainEqual(
       expect.objectContaining({ name: expect.stringMatching(/hover/i), pseudo: ":hover" }),
