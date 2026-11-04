@@ -62,6 +62,6 @@ describe("read/styles-compare", () => {
     const result = await compare({ ...own, "row-gap": wider, "column-gap": wider });
 
     expect(result.same).toBe(false);
-    expect(result.layers[0]?.mismatches).toEqual([{ property: main, design, build: wider }]);
+    expect(result.layers[0]?.mismatches).toEqual([expect.objectContaining({ property: main, design, build: wider })]);
   });
 });

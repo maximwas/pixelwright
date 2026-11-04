@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient, type ToolResult } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
-const { install, orbitPricing } = TEST_MCP.ids;
+const { install, pricingDesktop } = TEST_MCP.ids;
 
 interface FontsChecked extends ToolResult {
   readonly summary: string;
@@ -45,7 +45,7 @@ describe("read/fonts-images", () => {
 
   // Online Google serves Inter with a css2 link; offline the fonts are still listed, google null.
   it("lists Inter with its weights on Orbit's pricing page, and whether Google Fonts serves it (T-101)", async () => {
-    const result = (await client.call("fonts_check", { file, node: orbitPricing })) as FontsChecked;
+    const result = (await client.call("fonts_check", { file, node: pricingDesktop })) as FontsChecked;
     const inter = result.fonts.find(({ family }) => family === "Inter");
     const online = inter?.google === true;
 
