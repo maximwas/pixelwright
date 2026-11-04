@@ -41,7 +41,7 @@ describe("read/screenshot", () => {
     return decode(Buffer.from(block?.data ?? "", "base64"));
   };
 
-  // The Install card is 1004 × 320: scale 1 is twice scale 0.5, and scale 2 (2008 px) comes back fitted to 2000 px.
+  // The Install card is 1004 × 212: scale 1 is twice scale 0.5, and scale 2 (2008 px) comes back fitted to 2000 px.
   it("renders the Install card at scale 1 twice its size at scale 0.5 (T-070)", async () => {
     const half = await image({ scale: 0.5, effects: false });
     const one = await image({ scale: 1, effects: false });
