@@ -1,8 +1,23 @@
 {
   "name": "pixelwright",
   "version": "0.8.0-dev.0",
-  "description": "Open-source MCP server that lets AI agents read and edit Figma files through a Figma plugin: no REST API, no token, no seat quota. Unofficial, not affiliated with Figma.",
+  "description": "Open-source MCP server that lets AI agents read Figma files through a Figma plugin, to build code from them: no REST API, no token, no seat quota. Unofficial, not affiliated with Figma.",
   "license": "MIT",
+  "funding": [
+    {
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/maksymvasianin"
+    },
+    {
+      "type": "individual",
+      "url": "https://send.monobank.ua/jar/7o9oMrbXTj"
+    }
+  ],
+  "homepage": "https://maximwas.github.io/pixelwright/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maximwas/pixelwright.git"
+  },
   "type": "module",
   "bin": {
     "pixelwright": "./dist/bin.mjs"
@@ -11,11 +26,23 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=24.11.0"
   },
+  "keywords": [
+    "mcp",
+    "figma",
+    "claude",
+    "claude-code",
+    "cursor",
+    "ai",
+    "design-to-code",
+    "open-source"
+  ],
   "packageManager": "pnpm@12.14.0",
   "scripts": {
     "prepare": "simple-git-hooks",
@@ -23,6 +50,7 @@
     "format": "biome check --write . && eslint --fix . && biome check --write . && eslint --fix .",
     "typecheck": "tsc -b",
     "build": "tsdown && tsx scripts/build-plugin.ts",
+    "prepack": "pnpm build",
     "plugin:install": "tsx scripts/install-plugin.ts",
     "try": "tsx scripts/try.ts",
     "try:hello": "tsx scripts/try-hello.ts",
@@ -31,6 +59,8 @@
     "test:live": "pnpm build && vitest run --project live",
     "check:deps": "depcruise src scripts test",
     "size": "size-limit",
+    "build:docs": "tsx scripts/build-docs.ts",
+    "check:pack": "tsx scripts/check-pack.ts",
     "gates": "mkdir -p node_modules/.cache/gates && for gate in lint typecheck test build size; do pnpm -s $gate > node_modules/.cache/gates/$gate.log 2>&1 && echo \"$gate ok\" || { echo \"$gate FAILED, full log: node_modules/.cache/gates/$gate.log\"; tail -30 node_modules/.cache/gates/$gate.log; exit 1; }; done; grep -h -E '^ +Tests ' node_modules/.cache/gates/test.log"
   },
   "simple-git-hooks": {
@@ -77,6 +107,7 @@
     "eslint-plugin-project-structure": "3.14.5",
     "fast-check": "4.10.2",
     "knip": "6.43.0",
+    "marked": "18.1.2",
     "simple-git-hooks": "2.14.0",
     "size-limit": "14.3.0",
     "style-dictionary": "5.7.1",

@@ -274,7 +274,7 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   `Backoff`), `adapters/` (the browser socket, the channel to main), `view/` (`PluginWindow`, the DOM; `StatusLine`,
   its words; `RecentActions`, the last five answers; `BusyState`, what runs past its answer), `main/` and `UiMain`.
 
-`test/` holds the contract, golden, guard and live tests; `scripts/` the build, install and name checks; `old/` the
+`test/` holds the contract, golden, guard and live tests; `scripts/` the build, install and name checks, `check-pack.ts` (the tarball installed and run in a temp folder) and `build-docs.ts` (the site in `docs/` from README, the manifests, the guide topics and CHANGELOG.md); `old/` the
 0.7.0 source, kept for reference and imported by nothing.
 
 ## Invariants
