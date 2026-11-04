@@ -163,4 +163,54 @@ describe("GeometryGroup", () => {
       ["align-self", "stretch"],
     ]);
   });
+
+  // C-058: a grid child's cell as 1-based lines, `N / span M` past one track; in its cell it sits by its own
+  // alignment, stretched on an axis it fills; one track and the cell's own (AUTO) alignment add nothing more.
+  it("places a grid child by 1-based lines and aligns it in its cell, stretched where it fills", () => {
+    const bento = frame({ layoutMode: "GRID", gridColumnCount: 3, gridRowCount: 2 });
+    const cell = (fields: Partial<ReadLayer>) =>
+      cssOf(
+        {
+          layoutSizingHorizontal: "FIXED",
+          layoutSizingVertical: "FIXED",
+          gridRowAnchorIndex: 0,
+          gridColumnAnchorIndex: 0,
+          gridRowSpan: 1,
+          gridColumnSpan: 1,
+          gridChildHorizontalAlign: "AUTO",
+          gridChildVerticalAlign: "AUTO",
+          ...fields,
+        },
+        bento,
+      );
+
+    expect(cell({ gridColumnSpan: 2, layoutSizingHorizontal: "FILL", layoutSizingVertical: "FILL" })).toEqual([
+      ["align-self", "stretch"],
+      ["grid-row", "1"],
+      ["grid-column", "1 / span 2"],
+      ["justify-self", "stretch"],
+    ]);
+    expect(cell({ gridRowAnchorIndex: 1, gridColumnAnchorIndex: 1, gridColumnSpan: 2 })).toEqual([
+      ["width", "100px"],
+      ["height", "100px"],
+      ["grid-row", "2"],
+      ["grid-column", "2 / span 2"],
+    ]);
+    expect(
+      cell({
+        gridRowAnchorIndex: 1,
+        width: 12,
+        height: 12,
+        gridChildHorizontalAlign: "CENTER",
+        gridChildVerticalAlign: "MAX",
+      }),
+    ).toEqual([
+      ["width", "12px"],
+      ["height", "12px"],
+      ["align-self", "end"],
+      ["grid-row", "2"],
+      ["grid-column", "1"],
+      ["justify-self", "center"],
+    ]);
+  });
 });

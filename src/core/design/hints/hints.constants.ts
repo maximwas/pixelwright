@@ -151,6 +151,13 @@ export const HINT_TEXT = {
     token: string | undefined,
   ) =>
     `${color} is written raw ${places.length === 1 ? "once" : `${places.length} times`} (${places.slice(0, EXAMPLES).join(", ")}) and equals ${token}: use the token.`,
+  /** A gradient style's token, valued on a square, and the backgrounds the layers whose box is no square draw. */
+  boxed: (
+    token: string,
+    value: string,
+    places: readonly string[],
+  ) =>
+    `${token} is ${value} on a square, as tokens_read gives it; Figma draws it on each layer's own box, so where the box is no square write that layer's own background (${HINT_LABEL.listed(places)}): var(${token}) would keep the square's angle.`,
   inferred: (
     word: string,
     value: string,

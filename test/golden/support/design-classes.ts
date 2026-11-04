@@ -131,7 +131,7 @@ const hints = new DesignHints(
     format,
     new StructureHints(format, new AlikeStructures(shape), new SharedLayers(shape), new BakedPaints(format)),
   ),
-  new TokenHints(names, solid),
+  new TokenHints(names, solid, paints),
   new InferredHints(names, format),
   classifier,
 );

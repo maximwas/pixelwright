@@ -5,9 +5,11 @@ import {
   FIGMA_GEOMETRY,
   GEOMETRY_ATTRIBUTES,
   GEOMETRY_AXIS,
+  GEOMETRY_NUMBER,
   GEOMETRY_SOURCES,
   GEOMETRY_TEXT,
   GEOMETRY_VALUE,
+  GRID_SELF,
   SIZE_LIMITS,
 } from "@/core/css/groups/geometry/geometry.constants.ts";
 import { type GeometryAxis, PLACEMENT, type SizeOverride } from "@/core/css/groups/geometry/placement.ts";
@@ -23,7 +25,8 @@ import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 
 /**
  * Where a layer is and how big (C-050, C-054, C-057): its turn and mirror, its place from its constraints, its size
- * (the read's root always has one; FILL in a flex parent is flex or stretch; HUG is left out) and its limits.
+ * (the read's root always has one; FILL in a flex parent is flex or stretch; HUG is left out), its limits, and its
+ * cell in a grid (C-058).
  */
 @injectable()
 export class GeometryGroup implements PropertyGroup {
@@ -50,6 +53,8 @@ export class GeometryGroup implements PropertyGroup {
     this.#transform(scope.layer, scope.css);
     this.#size(scope, GEOMETRY_AXIS.horizontal, decided);
     this.#size(scope, GEOMETRY_AXIS.vertical, decided);
+    this.#cell(scope, GEOMETRY_AXIS.horizontal);
+    this.#cell(scope, GEOMETRY_AXIS.vertical);
 
     for (const [property, field] of SIZE_LIMITS) {
       const limit = scope.layer[field];
@@ -124,6 +129,31 @@ export class GeometryGroup implements PropertyGroup {
       } else {
         css.set(CSS_PROPERTY.alignSelf, GEOMETRY_VALUE.stretch);
       }
+    }
+  }
+
+  /**
+   * One axis of a grid child's cell (C-058, as 0.7.0): its first line counted from 1 as in CSS, `N / span M` past one
+   * track, and its own alignment in the cell, stretch on an axis it fills; the cell's own alignment (AUTO) is left out.
+   */
+  #cell({ layer, parent, css }: CssScope, axis: GeometryAxis): void {
+    if (parent?.layoutMode !== LAYOUT_MODE.grid || layer.layoutPositioning === FIGMA_GEOMETRY.absolute) {
+      return;
+    }
+
+    const anchor = layer[axis.anchor];
+    const span = layer[axis.span] ?? GEOMETRY_NUMBER.oneTrack;
+    const align =
+      layer[axis.sizing] === FIGMA_GEOMETRY.fill ? GEOMETRY_VALUE.stretch : GRID_SELF[layer[axis.self] ?? ""];
+
+    if (anchor !== undefined) {
+      const line = anchor + GEOMETRY_NUMBER.firstLine;
+
+      css.set(axis.line, span > GEOMETRY_NUMBER.oneTrack ? GEOMETRY_TEXT.span(line, span) : GEOMETRY_TEXT.line(line));
+    }
+
+    if (align !== undefined) {
+      css.set(axis.align, align);
     }
   }
 
