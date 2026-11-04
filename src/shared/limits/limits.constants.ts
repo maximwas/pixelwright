@@ -37,8 +37,6 @@ export const LIMITS = {
   outlineNodes: 2_000,
   /** The most layers viewport_get lists as in view. */
   viewportLayers: 50,
-  /** The most prototype links flow_read lists. */
-  flowLinks: 500,
   /** The most layers file_map lists in all; past it a page says how many it has. */
   fileMapNodes: 1_500,
   /** A frame or group with more layers than this is a design of its own, not a note. */
@@ -51,8 +49,6 @@ export const LIMITS = {
   versionSettleMs: 5_000,
   /** Main components looked up at once for components_read. */
   mainComponentBatch: 25,
-  /** Components whose Dev Mode links are asked for at once: each ask goes to Figma's servers. */
-  devLinksBatch: 25,
   /** How close two colour channels count as the same: CSS shows a P3 file's channels to 4 decimals. */
   colorEpsilon: 0.0005,
 } as const;

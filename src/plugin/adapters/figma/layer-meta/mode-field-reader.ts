@@ -20,7 +20,7 @@ export class ModeFieldReader implements FieldReader {
 
   async read(
     node: SceneNode,
-    origin: Vector,
+    _origin: Vector,
     root: boolean,
   ): Promise<Partial<ReadLayer>> {
     const explicit = "explicitVariableModes" in node ? node.explicitVariableModes : {};

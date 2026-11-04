@@ -3,7 +3,6 @@ import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { Container } from "@needle-di/core";
 import { pino } from "pino";
 import { CSS_READER, CssReader } from "@/core/css/css-reader.ts";
-import { AUTO_LINE_HEIGHTS, AutoLineHeights } from "@/core/css/fonts/auto-line-heights.ts";
 import { FONT_SHORTHAND, FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GRADIENT_CSS, GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GRADIENT_GEOMETRY, GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
@@ -33,27 +32,12 @@ import { COMPONENT_ATTRIBUTES, ComponentAttributes } from "@/core/design/compone
 import { DESIGN_READER, DesignReader } from "@/core/design/design-reader.ts";
 import { DESIGN_XML, DesignXml } from "@/core/design/design-xml.ts";
 import { DESIGN_FIT, DesignFit } from "@/core/design/fit/design-fit.ts";
-import { DESIGN_HINTS, DesignHints } from "@/core/design/hints/design-hints.ts";
-import { INFERRED_HINTS, InferredHints } from "@/core/design/hints/inferred-hints.ts";
-import { LAYER_HINTS, LayerHints } from "@/core/design/hints/layer-hints.ts";
-import { LAYOUT_GUESS, LayoutGuess } from "@/core/design/hints/layout-guess.ts";
-import { ALIKE_STRUCTURES, AlikeStructures } from "@/core/design/hints/structure/alike-structures.ts";
-import { BAKED_PAINTS, BakedPaints } from "@/core/design/hints/structure/baked-paints.ts";
-import { LAYER_SHAPE, LayerShape } from "@/core/design/hints/structure/layer-shape.ts";
-import { SHARED_LAYERS, SharedLayers } from "@/core/design/hints/structure/shared-layers.ts";
-import { STRUCTURE_HINTS, StructureHints } from "@/core/design/hints/structure/structure-hints.ts";
-import { TOKEN_HINTS, TokenHints } from "@/core/design/hints/token-hints.ts";
 import { INTERACTION_ATTRIBUTES, InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
-import { READ_JSON, ReadJson } from "@/core/design/read-json.ts";
 import { READ_TOKENS, ReadTokens } from "@/core/design/read-tokens.ts";
 import { REPEAT_FOLD, RepeatFold } from "@/core/design/repeats/repeat-fold.ts";
 import { READ_CATALOGUE, ReadCatalogue } from "@/core/design/text/read-catalogue.ts";
 import { TEXT_CONTENT, TextContent } from "@/core/design/text/text-content.ts";
 import { LAYER_TREE, LayerTree } from "@/core/design/tree/layer-tree.ts";
-import { INSPECT_FILLS, InspectFills } from "@/core/inspect/inspect-fills.ts";
-import { INSPECT_VIEW, InspectView } from "@/core/inspect/inspect-view.ts";
-import { MEASURE, Measure } from "@/core/inspect/measure.ts";
-import { MEASUREMENTS, Measurements } from "@/core/inspect/measurements.ts";
 import { EASING_CSS, EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { SLUG, Slug } from "@/core/kernel/names/slug.ts";
@@ -97,7 +81,9 @@ import { CheckProviders } from "@/server/main/check-providers.ts";
 import { ComponentProviders } from "@/server/main/component-providers.ts";
 import { ConfigReader, type ServerConfig } from "@/server/main/config/config-reader.ts";
 import { ContainerToolFactory } from "@/server/main/container-tool-factory.ts";
+import { DiffProviders } from "@/server/main/diff-providers.ts";
 import { McpEndpoint } from "@/server/main/mcp/mcp-endpoint.ts";
+import { ReadProviders } from "@/server/main/read-providers.ts";
 import { RenderProviders } from "@/server/main/render-providers.ts";
 import { LOG_FILE, SERVER_LOG } from "@/server/main/server.constants.ts";
 import { ShutdownHooks } from "@/server/main/shutdown-hooks.ts";
@@ -169,9 +155,10 @@ export class ServerMain {
 
     this.#bindInfra(container, config);
     this.#bindDomain(container);
-    this.#bindReadNotes(container);
+    new ReadProviders().register(container);
     new RenderProviders().register(container);
     new CheckProviders().register(container);
+    new DiffProviders().register(container);
     new ComponentProviders().register(container, config.home);
     new BridgeProviders().register(container, config);
     this.#bindServices(container);
@@ -193,27 +180,6 @@ export class ServerMain {
       .bind({ provide: PROJECT_FALLBACK, useValue: projectDir })
       .bind({ provide: PROJECT_FOLDER, useClass: ProjectFolder })
       .bind({ provide: WRITTEN_FILES_PATH, useValue: join(home, WRITTEN_STORE.file) });
-  }
-
-  /** What design_read adds beside its XML: the hints, the measurements, Auto line heights in px (T-060, T-061). */
-  #bindReadNotes(container: Container): void {
-    container
-      .bind({ provide: LAYOUT_GUESS, useClass: LayoutGuess })
-      .bind({ provide: LAYER_SHAPE, useClass: LayerShape })
-      .bind({ provide: ALIKE_STRUCTURES, useClass: AlikeStructures })
-      .bind({ provide: SHARED_LAYERS, useClass: SharedLayers })
-      .bind({ provide: BAKED_PAINTS, useClass: BakedPaints })
-      .bind({ provide: STRUCTURE_HINTS, useClass: StructureHints })
-      .bind({ provide: LAYER_HINTS, useClass: LayerHints })
-      .bind({ provide: TOKEN_HINTS, useClass: TokenHints })
-      .bind({ provide: INFERRED_HINTS, useClass: InferredHints })
-      .bind({ provide: DESIGN_HINTS, useClass: DesignHints })
-      .bind({ provide: MEASUREMENTS, useClass: Measurements })
-      .bind({ provide: INSPECT_FILLS, useClass: InspectFills })
-      .bind({ provide: INSPECT_VIEW, useClass: InspectView })
-      .bind({ provide: MEASURE, useClass: Measure })
-      .bind({ provide: READ_JSON, useClass: ReadJson })
-      .bind({ provide: AUTO_LINE_HEIGHTS, useClass: AutoLineHeights });
   }
 
   /** The core domain's classes the tools read and write with: the D-15 numbers, the CSS mapping, the XML writers. */

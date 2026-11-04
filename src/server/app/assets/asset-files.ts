@@ -20,8 +20,8 @@ interface AssetsWritten {
  * Asset files out of the design (T-055, T-194, S-100): each asset's bytes from the plugin, an original image by its
  * hash or a render in its format (rasters at 2x unless it says, vectors at their size; an icon with everything it
  * draws, since centred and outside strokes would be cut at its box, an image as its own box), WebP encoded here from
- * Figma's PNG; then written into dir, a relative one from the project folder. An asset that cannot be had goes to
- * errors and the rest are written.
+ * Figma's PNG; each written into dir (a relative one from the project folder) before the next is fetched, so one asset's
+ * bytes are held at a time (O-014). An asset that cannot be had goes to errors and the rest are written.
  */
 @injectable()
 export class AssetFiles {
@@ -49,18 +49,30 @@ export class AssetFiles {
     quality: number = WEBP_QUALITY.default,
   ): Promise<AssetsWritten> {
     const folder = await this.#folder.resolve(dir);
-    const fetched: FetchedAsset[] = [];
     const errors: AssetError[] = [];
+    const written = await this.#writer.write(this.#fetched(session, assets, quality, errors), { folder, dir });
 
+    return { written, errors };
+  }
+
+  /** Each asset's bytes as the writer asks for the next; one that cannot be had goes to errors and the rest go on. */
+  async *#fetched(
+    session: PluginSession,
+    assets: readonly PlannedFile[],
+    quality: number,
+    errors: AssetError[],
+  ): AsyncGenerator<FetchedAsset> {
     for (const asset of assets) {
-      try {
-        fetched.push({ asset, bytes: await this.#bytes(session, asset, quality) });
-      } catch (error) {
+      const bytes = await this.#bytes(session, asset, quality).catch((error: unknown) => {
         errors.push({ node: asset.node, message: error instanceof Error ? error.message : String(error) });
+
+        return null;
+      });
+
+      if (bytes !== null) {
+        yield { asset, bytes };
       }
     }
-
-    return { written: await this.#writer.write(fetched, { folder, dir }), errors };
   }
 
   async #bytes(

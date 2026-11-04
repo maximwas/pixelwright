@@ -9,6 +9,7 @@ import {
   type NodesDiffInput,
   NodesDiffInputSchema,
 } from "@/server/tools/nodes-diff/nodes-diff.schema.ts";
+import { CUT_REASON } from "@/shared/envelope/op-result.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { NODE_TEXT } from "@/shared/errors/errors.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
@@ -17,7 +18,8 @@ import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /**
  * nodes_diff (T-085): both layers read by one read op, so from one file even if the user switches files, compared by
- * core's DesignDiff; each list cut to DIFF.maxEntries, `more` counting the rest. Reads only.
+ * core's DesignDiff, drawings by their paths' hash; each list cut to DIFF.maxEntries, `more` counting the rest; a read
+ * the budget cut is said, since below the cut nothing was compared. Reads only.
  */
 @injectable()
 export class NodesDiffTool extends Tool<NodesDiffInput, NodesDiffAnswer> {
@@ -32,13 +34,19 @@ export class NodesDiffTool extends Tool<NodesDiffInput, NodesDiffAnswer> {
   }
 
   protected async run({ a, b, depth }: NodesDiffInput): Promise<NodesDiffAnswer> {
-    const { reads } = await this.#session.run(readOp, { nodes: [a, b], ...(depth === undefined ? {} : { depth }) });
+    const { reads, cuts } = await this.#session.run(readOp, {
+      nodes: [a, b],
+      pathHash: true,
+      ...(depth === undefined ? {} : { depth }),
+    });
     const left = this.#read(reads, a);
     const right = this.#read(reads, b);
     const { same, onlyInA, onlyInB, changed } = this.#diff.diff(left, right);
     const more = [onlyInA, onlyInB, changed].reduce((sum, list) => sum + Math.max(0, list.length - DIFF.maxEntries), 0);
     const named = [this.#named(left), this.#named(right)] as const;
     const counts = { changed: changed.length, onlyInA: onlyInA.length, onlyInB: onlyInB.length };
+    // A depth's cuts are asked for, and both layers stop at it alike.
+    const cut = cuts.filter(({ reason }) => reason === CUT_REASON.budget).length;
 
     return {
       same,
@@ -47,6 +55,7 @@ export class NodesDiffTool extends Tool<NodesDiffInput, NodesDiffAnswer> {
       changed: changed.slice(0, DIFF.maxEntries),
       summary: same ? NODES_DIFF_TEXT.same(...named) : NODES_DIFF_TEXT.differs(...named, counts),
       ...(more === 0 ? {} : { more }),
+      ...(cut === 0 ? {} : { cut: NODES_DIFF_TEXT.cut(cut) }),
     };
   }
 

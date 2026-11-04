@@ -1,6 +1,7 @@
 import { inject, injectable } from "@needle-di/core";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
+import { LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { LAYER_READ } from "@/plugin/adapters/figma/layer-read/layer-read.constants.ts";
 import type { FieldReader } from "@/plugin/adapters/figma/layer-read/layer-reader.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -13,6 +14,8 @@ type Box = NonNullable<ReadLayer["bounds"]>;
  */
 @injectable()
 export class BoxFieldReader implements FieldReader {
+  readonly #boxes = new LayerBoxes();
+
   readonly #format;
 
   constructor(format = inject(NUMBER_FORMAT)) {
@@ -22,8 +25,8 @@ export class BoxFieldReader implements FieldReader {
   read(node: SceneNode, origin: Vector): Partial<ReadLayer> {
     const rotation = "rotation" in node && node.rotation !== 0 ? node.rotation : undefined;
     const mirror = this.#mirror(node.relativeTransform);
-    const own = node.absoluteBoundingBox;
-    const drawn = "absoluteRenderBounds" in node ? node.absoluteRenderBounds : null;
+    const own = this.#boxes.layout(node);
+    const drawn = this.#boxes.painted(node);
     const turned = rotation !== undefined || mirror !== undefined;
 
     return {

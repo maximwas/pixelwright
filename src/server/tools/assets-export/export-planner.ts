@@ -13,6 +13,7 @@ import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { EXPORT_SCALE } from "@/shared/ops/export/export.constants.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
 /** What assets_export writes: the files planned, the layers it cannot write with why, and what to know. */
@@ -39,6 +40,7 @@ interface ImageFill {
  */
 @injectable()
 export class ExportPlanner {
+  readonly #readLayers = new ReadLayers();
   readonly #planner;
   readonly #classifier;
   readonly #slug;
@@ -76,7 +78,7 @@ export class ExportPlanner {
   /** Every true asset inside the layer read, as design_read plans them; with original, its images as placed. */
   inside(read: ReadModel, original: boolean): ExportPlan {
     const plan: ExportPlan = { assets: [], errors: [], notes: [] };
-    const layers = new Map(this.#tree(read.root).map((layer) => [layer.id, layer]));
+    const layers = new Map([...this.#readLayers.walk(read.root)].map(({ layer }) => [layer.id, layer]));
 
     for (const asset of this.#planner.plan(read).assets()) {
       if (asset.kind === ASSET_KIND.video) {
@@ -142,6 +144,10 @@ export class ExportPlanner {
     if (images.length > 1) {
       plan.notes.push(ASSETS_EXPORT_TEXT.otherImages(layer.id, images.length - 1));
     }
+
+    if (this.#hasVideo(layer)) {
+      plan.notes.push(ASSETS_EXPORT_TEXT.video(layer.id));
+    }
   }
 
   /** The layer rendered: an icon stays an icon in any format, rendered with everything it draws. */
@@ -175,7 +181,8 @@ export class ExportPlanner {
     scale: number | undefined,
     width: number | undefined,
   ): number | undefined {
-    if (width === undefined) {
+    // A line has no width to size by: it renders at the density asked.
+    if (width === undefined || layer.width === 0) {
       return scale;
     }
 
@@ -214,10 +221,6 @@ export class ExportPlanner {
 
   #video(node: string): AssetError {
     return { node, kind: ASSET_KIND.video, message: ASSETS_EXPORT_TEXT.video(node) };
-  }
-
-  #tree(layer: ReadLayer): ReadLayer[] {
-    return [layer, ...(layer.children ?? []).flatMap((child) => this.#tree(child))];
   }
 }
 

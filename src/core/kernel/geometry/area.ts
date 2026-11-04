@@ -7,7 +7,7 @@ export interface Point {
 }
 
 /** A box in px: where it starts and how big it is (a layer, its bounds, a Figma rect). */
-interface Box extends Point {
+export interface Box extends Point {
   readonly width: number;
   readonly height: number;
 }
@@ -28,5 +28,18 @@ export class Area {
     const { x, y, width, height } = this.#box;
 
     return { x: x + width / GEOMETRY.halves, y: y + height / GEOMETRY.halves };
+  }
+
+  /** Whether the two boxes share some area; boxes that only touch do not. */
+  overlaps(other: Area): boolean {
+    const own = this.#box;
+    const theirs = other.#box;
+
+    return (
+      own.x < theirs.x + theirs.width &&
+      theirs.x < own.x + own.width &&
+      own.y < theirs.y + theirs.height &&
+      theirs.y < own.y + own.height
+    );
   }
 }

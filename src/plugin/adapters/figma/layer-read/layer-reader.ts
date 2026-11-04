@@ -1,7 +1,9 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import type { Box } from "@/core/kernel/geometry/area.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import { LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { REFERENCES } from "@/plugin/adapters/figma/layer-read/references.ts";
 import { LAYER_REFS } from "@/plugin/adapters/figma/layer-refs.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
@@ -14,8 +16,14 @@ import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 export interface FieldReader {
   /** `root`: whether the layer is the read's root, of which some fields say more (its inherited modes). */
   read(node: SceneNode, origin: Vector, root: boolean): Partial<ReadLayer> | Promise<Partial<ReadLayer>>;
-  /** A read begins: a reader that keeps what one read shares (the file's annotation categories) forgets it. */
-  start?(): void;
+  /** A read begins with what it asks: a reader that keeps what one read shares (annotation categories) forgets it. */
+  start?(options: ReadOptions): void;
+}
+
+/** What one read asks beyond the fields every read has. */
+export interface ReadOptions {
+  /** A vector's paths as a hash (pathHash), for the tools that tell two drawings apart. */
+  readonly pathHash: boolean;
 }
 
 /** The fields every entry has, a hidden layer's stub too (D-18): what the layer is, and its box from the read's root. */
@@ -23,11 +31,12 @@ type Header = Pick<ReadLayer, "id" | "name" | "type" | "visible" | "x" | "y" | "
 
 /**
  * A layer as the read model holds it (Registry over the field readers, run in 0.7.0's order, m:f53dbe49): its header,
- * each group's fields, its child count; a hidden layer is its header and child count (D-18). Boxes are relative to the
- * read's root, to 0.7.0's 2 decimals.
+ * each group's fields, its child count; a hidden layer below the read's root is its header and child count (D-18).
+ * Boxes are relative to the read's root, to 0.7.0's 2 decimals.
  */
 @injectable()
 export class LayerReader {
+  readonly #boxes = new LayerBoxes();
   readonly #readers;
   readonly #format;
   readonly #references;
@@ -45,10 +54,10 @@ export class LayerReader {
     this.#refs = refs;
   }
 
-  /** A read begins: the field readers and the references forget what the last read kept. */
-  start(): void {
+  /** A read begins with what it asks: the field readers and the references forget what the last read kept. */
+  start(options: ReadOptions = { pathHash: false }): void {
     for (const reader of this.#readers) {
-      reader.start?.();
+      reader.start?.(options);
     }
 
     this.#references.start();
@@ -89,7 +98,8 @@ export class LayerReader {
   ): Promise<ReadLayer> {
     const fields: Partial<ReadLayer> = {};
 
-    if (node.visible) {
+    // A hidden root is read whole: it was asked for, so its design is wanted (T-090); below a root it is a stub (D-18).
+    if (node.visible || root) {
       // In order, one after another: the model keeps the readers' field order (m:f53dbe49).
       for (const reader of this.#readers) {
         Object.assign(fields, await reader.read(node, origin, root));
@@ -166,6 +176,20 @@ export class LayerReader {
 
   children(node: SceneNode): readonly SceneNode[] {
     return "children" in node ? node.children : [];
+  }
+
+  /** The layer a node sits in; null at its page. */
+  parent(node: SceneNode): SceneNode | null {
+    const { parent } = node;
+
+    return parent === null || parent.type === FIGMA_NODE_TYPE.page || parent.type === FIGMA_NODE_TYPE.document
+      ? null
+      : parent;
+  }
+
+  /** A shown layer's layout box on the canvas: what decides whether it lies behind or over a read's root. */
+  box(node: SceneNode): Box | null {
+    return node.visible ? this.#boxes.layout(node) : null;
   }
 
   #header(node: SceneNode, origin: Vector): Header {

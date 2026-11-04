@@ -1315,7 +1315,8 @@
       "required": [
         "node"
       ],
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "annotations": {
       "readOnlyHint": true,
@@ -2322,6 +2323,10 @@
           "type": "integer",
           "minimum": -9007199254740991,
           "maximum": 9007199254740991
+        },
+        "cut": {
+          "description": "Set when the read stopped short of the layers' insides: below the cut nothing was compared.",
+          "type": "string"
         }
       },
       "required": [
@@ -3336,7 +3341,8 @@
       "required": [
         "node"
       ],
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -8335,6 +8341,10 @@
           "type": "integer",
           "minimum": -9007199254740991,
           "maximum": 9007199254740991
+        },
+        "cut": {
+          "description": "Set when the read of the set stopped short: below the cut the variants were not compared.",
+          "type": "string"
         }
       },
       "required": [

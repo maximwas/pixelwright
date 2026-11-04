@@ -191,11 +191,12 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   per stream, four at most, each dropped once read whole (T-075).
 - `plugin/adapters/`: `figma/` reads the document (`CodeFigma`, execute's figma and pw helpers; `CurrentSelection`,
   which also selects and hears selection changes; `LayerRefs`, a layer as lists name it, its Dev Mode status too; `CanvasView`, the current
-  page and the view, the one place either changes; `FigmaBase64`, bytes as base64 for the bridge; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
+  page and the view, the one place either changes; `FigmaBase64`, bytes as base64 for the bridge;
+  `LayerBoxes`, a layer's layout and painted boxes, the one place they are measured; `lookup/`: `NodeLookup`, the only by-id lookups and a node's page, `PageLoader`, the
   pages and their loading, a page Figma cannot load noted, and `LayerWalk`, the walk with a deadline; `dev-resources/`:
   `DevResources`, Dev Mode links from Figma's servers within 5 s, a refusal (403 without Dev Mode) in Figma's words; `layer-read/`:
   `LayerReader`, a layer as the read model, its header and the field readers in 0.7.0's order, `BoxFieldReader` the
-  first, a hidden layer a stub; `PaintFieldReader` and `StrokeFieldReader` the paints and how strokes are drawn, `EffectFieldReader` the effects
+  first, a hidden layer below the root a stub (a hidden root read whole); `PaintFieldReader` (a vector's pathHash when asked) and `StrokeFieldReader` the paints and how strokes are drawn, `EffectFieldReader` the effects
   and their style; `TextFieldReader` a text's characters, runs (the newer run fields asked first, FX-012) and
   paragraph fields, a TextPath's path and start; `VariableFieldReader` the variables bound to the layer's fields; the paint,
   stroke, effect and text readers send the style ids; `References` the styles and variables the read uses, each looked

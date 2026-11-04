@@ -33,6 +33,22 @@ const STICKER_ID = "54:450";
 /** The read op's read of the sticker alone: the sticker as its root. */
 const STICKER = { ...CUSTOMERS, root: CUSTOMERS.root.children?.find(({ id }) => id === STICKER_ID) ?? CUSTOMERS.root };
 
+/** The sticker hidden, as the read op reads a hidden root: whole. */
+const HIDDEN = { ...STICKER, root: { ...STICKER.root, visible: false } };
+
+/** Customers with the sticker hidden in it: below a root a hidden layer is a stub, its header alone (D-18). */
+const STUBBED = {
+  ...CUSTOMERS,
+  root: {
+    ...CUSTOMERS.root,
+    children: (CUSTOMERS.root.children ?? []).map((child) => {
+      const { id, name, type, x, y, width, height, childCount } = child;
+
+      return id === STICKER_ID ? { id, name, type, visible: false, x, y, width, height, childCount } : child;
+    }),
+  },
+};
+
 describe("styles_compare over a read", () => {
   it("holds a build's computed styles against each layer as design_read writes it in its parent", () => {
     const result = styles.compare(
@@ -116,5 +132,23 @@ describe("styles_compare over a read", () => {
 
     expect(layer?.notGiven).toEqual(expect.arrayContaining(["width", "height"]));
     expect(layer?.notGiven).not.toContain("left");
+  });
+
+  // T-090, 0.7.0's decision 1: the read op gives a root's parent (ancestors), so a layer alone sits where it is.
+  it("places a layer no other pair's read holds in its parent from the read's ancestors: its place, not its size", () => {
+    const placed = { ...STICKER, ancestors: [{ ...CUSTOMERS.root, children: [STICKER.root] }] };
+    const [layer] = styles.compare([placed], [{ node: STICKER_ID, css: {} }], 1).layers;
+
+    expect(layer?.notGiven).toEqual(expect.arrayContaining(["position", "left", "top"]));
+  });
+
+  // T-090: the read op reads a hidden root whole, so it is compared as shown; below a root it is a stub (D-18).
+  it.each([
+    ["its own read first", [HIDDEN, STUBBED]],
+    ["the stub's read first", [STUBBED, HIDDEN]],
+  ] as const)("compares a hidden root as shown and never its stub in another read, %s", (_order, reads) => {
+    const result = styles.compare(reads, [{ node: STICKER_ID, css: {} }], 1);
+
+    expect(result.layers[0]?.notGiven).toEqual(expect.arrayContaining(["width", "height", "padding-top"]));
   });
 });

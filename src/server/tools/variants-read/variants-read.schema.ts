@@ -10,6 +10,11 @@ export const VariantsReadInputSchema = zod.object({
   file: FileInputSchema,
 });
 
-export const VariantsReadOutputSchema = VariantsViewSchema;
+export const VariantsReadOutputSchema = zod.strictObject({
+  ...VariantsViewSchema.shape,
+  cut: zod.exactOptional(zod.string()).check(zod.describe(VARIANTS_READ_FIELD.cut)),
+});
+
+export type VariantsReadAnswer = zod.output<typeof VariantsReadOutputSchema>;
 
 export type VariantsReadInput = zod.output<typeof VariantsReadInputSchema>;

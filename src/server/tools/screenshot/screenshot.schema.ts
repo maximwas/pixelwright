@@ -5,8 +5,11 @@ import { ClipSchema } from "@/shared/ops/cover/cover.schema.ts";
 import { ExportScaleSchema } from "@/shared/ops/export/export.schema.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
-/** 0.8.0 reads only (plan 5.0): no `modes`, which switches a layer's variable modes for the render. */
-export const ScreenshotInputSchema = zod.object({
+/**
+ * 0.8.0 reads only (plan 5.0): no `modes`, which switches a layer's variable modes for the render. Strict, so a client
+ * that still sends it hears so rather than taking a plain render for one in its modes.
+ */
+export const ScreenshotInputSchema = zod.strictObject({
   node: NodeIdSchema.check(zod.describe(SCREENSHOT_FIELD.node)),
   scale: zod._default(ExportScaleSchema, SCREENSHOT.scale).check(zod.describe(SCREENSHOT_FIELD.scale)),
   effects: zod._default(zod.boolean(), SCREENSHOT.effects).check(zod.describe(SCREENSHOT_FIELD.effects)),

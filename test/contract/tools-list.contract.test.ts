@@ -51,32 +51,35 @@ describe("the MCP contract", () => {
       expect(JSON.stringify(tool, null, 2)).toBe(JSON.stringify(entry, null, 2));
     }
 
-    expect(tools.map(({ name }) => name)).toEqual([
-      "status",
-      "selection_get",
-      "node_show",
-      "selection_wait",
-      "changes_since",
-      "file_map",
-      "viewport_get",
-      "nodes_find",
-      "outline",
-      "screenshot",
-      "design_read",
-      "image_compare",
-      "styles_compare",
-      "inspect",
-      "measure",
-      "nodes_diff",
-      "breakpoints_find",
-      "flow_read",
-      "variants_read",
-      "fonts_check",
-      "execute",
-      "components_read",
-      "library_search",
-      "assets_export",
-    ]);
+    expect(tools.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        "status",
+        "selection_get",
+        "node_show",
+        "selection_wait",
+        "changes_since",
+        "file_map",
+        "viewport_get",
+        "nodes_find",
+        "outline",
+        "screenshot",
+        "design_read",
+        "image_compare",
+        "styles_compare",
+        "inspect",
+        "measure",
+        "nodes_diff",
+        "breakpoints_find",
+        "flow_read",
+        "variants_read",
+        "fonts_check",
+        "execute",
+        "components_read",
+        "library_search",
+        "assets_export",
+      ]),
+    );
+    expect(tools).toHaveLength(24);
   });
 
   it("lists no outputSchema for the tools that answer in content blocks, so a client keeps the image (T-005)", async () => {
@@ -98,10 +101,16 @@ describe("the MCP contract", () => {
     expect(answer.content).toEqual([{ type: "text", text: JSON.stringify(answer.structuredContent) }]);
   });
 
-  it("refuses an unknown argument by name", async () => {
-    const answer = await contract.client.callTool({ name: "status", arguments: { bogus: 1 } });
+  // A removed argument is an error that names it: a client that still sends screenshot's `modes` must not believe the
+  // render switched modes.
+  it.each([
+    ["status", { bogus: 1 }, "bogus"],
+    ["screenshot", { node: "1:2", modes: { Theme: "Dark" } }, "modes"],
+    ["image_compare", { node: "1:2", bogus: 1 }, "bogus"],
+  ])("refuses an unknown argument of %s by name", async (name, args, key) => {
+    const answer = await contract.client.callTool({ name, arguments: args });
 
     expect(answer.isError).toBe(true);
-    expect(answer.content).toEqual([{ type: "text", text: expect.stringContaining('"bogus"') }]);
+    expect(answer.content).toEqual([{ type: "text", text: expect.stringContaining(`"${key}"`) }]);
   });
 });

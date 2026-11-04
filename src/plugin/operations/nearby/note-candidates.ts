@@ -90,6 +90,7 @@ export class NoteCandidates {
 
       if (node.visible) {
         layers.push(node);
+        // A spread is safe here: `room` refused more than NOTE.layersMax children above.
         stack.push(...("children" in node ? node.children : []));
       }
     }

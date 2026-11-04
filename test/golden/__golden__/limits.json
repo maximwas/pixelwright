@@ -15,13 +15,11 @@
   "opBudgetMs": 20000,
   "outlineNodes": 2000,
   "viewportLayers": 50,
-  "flowLinks": 500,
   "fileMapNodes": 1500,
   "noteLayers": 20,
   "noteTextChars": 2000,
   "nearbyMs": 5000,
   "versionSettleMs": 5000,
   "mainComponentBatch": 25,
-  "devLinksBatch": 25,
   "colorEpsilon": 0.0005
 }

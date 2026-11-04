@@ -19,6 +19,7 @@ export const NodesDiffOutputSchema = zod.strictObject({
   ...DesignDiffSchema.shape,
   summary: zod.string(),
   more: zod.exactOptional(zod.int()).check(zod.describe(NODES_DIFF_FIELD.more)),
+  cut: zod.exactOptional(zod.string()).check(zod.describe(NODES_DIFF_FIELD.cut)),
 });
 
 export type NodesDiffInput = zod.output<typeof NodesDiffInputSchema>;

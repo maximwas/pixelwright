@@ -79,4 +79,25 @@ describe("assets_export plan", () => {
       },
     ]);
   });
+
+  it("takes an image fill beside a video fill as the original and notes the video it cannot write (B-001)", () => {
+    const both = layer({
+      id: "1:5",
+      fills: [image("e".repeat(40)), { type: "VIDEO", videoHash: "f".repeat(40), scaleMode: "FILL" }],
+    });
+    const { assets, errors, notes } = planner.layers([read(both)], ORIGINAL);
+
+    expect(assets.map(({ imageHash }) => imageHash)).toEqual(["e".repeat(40)]);
+    expect(errors).toEqual([]);
+    expect(notes).toEqual([expect.stringContaining("1:5 is filled with a video")]);
+  });
+
+  it("renders a line, which has no width to size by, at the density asked instead of dividing by zero", () => {
+    const line = layer({ id: "1:6", type: "LINE", width: 0, height: 1 });
+    const { assets, errors } = planner.layers([read(line)], { original: false, width: 300 });
+
+    expect(errors).toEqual([]);
+    expect(assets).toEqual([expect.objectContaining({ node: "1:6", format: "PNG" })]);
+    expect(assets[0]?.scale).toBeUndefined();
+  });
 });

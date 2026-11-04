@@ -11,6 +11,7 @@ export const NODES_DIFF_FIELD = {
   b: "The second layer's id (variant B).",
   depth: "Levels below each layer to compare. Default: all.",
   more: "Differences past the ones listed: compare smaller parts of the two layers.",
+  cut: "Set when the read stopped short of the layers' insides: below the cut nothing was compared.",
 } as const;
 
 export const NODES_DIFF_TEXT = {
@@ -22,4 +23,6 @@ export const NODES_DIFF_TEXT = {
     counts: { readonly changed: number; readonly onlyInA: number; readonly onlyInB: number },
   ) =>
     `${first} and ${second}: ${counts.changed} ${counts.changed === 1 ? "layer differs" : "layers differ"}, ${counts.onlyInA} only in A, ${counts.onlyInB} only in B.`,
+  cut: (count: number) =>
+    `Read cut at ${count} ${count === 1 ? "layer" : "layers"}: what lies below them was not compared; pass smaller layers or a depth.`,
 } as const;

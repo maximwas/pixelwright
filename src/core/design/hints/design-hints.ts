@@ -5,7 +5,6 @@ import { INFERRED_HINTS } from "@/core/design/hints/inferred-hints.ts";
 import { LAYER_HINTS } from "@/core/design/hints/layer-hints.ts";
 import { TOKEN_HINTS } from "@/core/design/hints/token-hints.ts";
 import type { XmlElement } from "@/core/xml/xml.types.ts";
-import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import { ReadLayers } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 

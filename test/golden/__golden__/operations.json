@@ -1079,6 +1079,12 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 100
+        },
+        "pathHash": {
+          "type": "boolean"
+        },
+        "ancestors": {
+          "type": "boolean"
         }
       },
       "required": [

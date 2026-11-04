@@ -26,7 +26,7 @@ export class TokenNames {
       .replace(TOKEN_PATTERN.unnamed, TOKEN_VALUE.dash)
       .replace(TOKEN_PATTERN.edgeDashes, TOKEN_VALUE.none);
 
-    return cleaned === TOKEN_VALUE.none ? TOKEN_TEXT.hashed(this.#hash(name)) : TOKEN_TEXT.property(cleaned);
+    return cleaned === TOKEN_VALUE.none ? TOKEN_TEXT.hashed(this.hash(name)) : TOKEN_TEXT.property(cleaned);
   }
 
   /** A style's custom property: its name's, numbered when other styles of its kind share the name (--Black-2). */
@@ -63,8 +63,11 @@ export class TokenNames {
       : undefined;
   }
 
-  /** FNV-1a over code points, in base 36: short, stable, enough to keep a few odd names apart. */
-  #hash(text: string): string {
+  /**
+   * FNV-1a over code points, in base 36: short, stable, enough to keep a few odd names apart; the code base's one hash
+   * (a vector's paths too, pathHash).
+   */
+  hash(text: string): string {
     let value: number = FNV.offset;
 
     for (const char of text) {

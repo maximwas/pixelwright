@@ -1,5 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
+import { LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
@@ -20,6 +21,8 @@ type ExportOutput = zod.output<typeof exportOp.output>;
  */
 @injectable()
 export class ExportOperation extends Operation<ExportInput, ExportOutput> {
+  readonly #boxes = new LayerBoxes();
+
   readonly #lookup;
   readonly #streams;
 
@@ -67,8 +70,7 @@ export class ExportOperation extends Operation<ExportInput, ExportOutput> {
     effects: boolean,
     maxSide: number,
   ): number {
-    const painted = effects && "absoluteRenderBounds" in node ? node.absoluteRenderBounds : null;
-    const box = painted ?? ("absoluteBoundingBox" in node ? node.absoluteBoundingBox : null);
+    const box = (effects ? this.#boxes.painted(node) : null) ?? this.#boxes.layout(node);
 
     if (box === null) {
       return asked;

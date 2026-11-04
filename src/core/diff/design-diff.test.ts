@@ -189,8 +189,8 @@ describe("DesignDiff", () => {
     expect(found).toEqual({
       same: false,
       onlyInA: [],
-      onlyInB: [{ path: 'Text "Promo" / Span ""[2]', id: "" }],
-      changed: [{ path: 'Text "Promo" / Span ""', a: "", b: "", attributes: { $text: ["20%", "30%"] } }],
+      onlyInB: [{ path: 'Text "Promo" / Span ""[2]', id: "20:2" }],
+      changed: [{ path: 'Text "Promo" / Span ""', a: "10:2", b: "20:2", attributes: { $text: ["20%", "30%"] } }],
     });
   });
 });

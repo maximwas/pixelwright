@@ -9,6 +9,7 @@ import { ASSET_PLANNER } from "@/core/design/assets/asset-planner.ts";
 import { DESIGN_BUILDER } from "@/core/design/builder/design-builder.ts";
 import { DESIGN_ATTRIBUTE } from "@/core/design/design.constants.ts";
 import { READ_CATALOGUE } from "@/core/design/text/read-catalogue.ts";
+import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import { ReadLayers, type WalkedLayer } from "@/shared/read-model/read-layers.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 
@@ -29,9 +30,10 @@ interface FoundLayer extends WalkedLayer {
 /**
  * styles_compare's engine (T-090): each pair's layer is found in the reads and written as design_read writes it (its
  * element's CSS through DesignBuilder and the read's asset plan, the read's tokens and text styles); StyleCheck holds
- * the build's computed styles against it. A layer another pair's read holds sits in its parent there; any other is
- * its own read's root (its size, not its place: the read op gives no parent). A hidden layer (a stub in the read) and
- * one an icon or an image draws are noted, not compared. Layers with differences come first.
+ * the build's computed styles against it, in its parent: another pair's read's, else its own read's ancestors' (its own
+ * read's root with neither: its size, not its place). A hidden root is compared as shown, since the read op reads it
+ * whole; a hidden layer below a root (a stub, D-18) and one an icon or an image draws are noted, not compared. Layers
+ * with differences come first.
  */
 @injectable()
 export class BuildStyles {
@@ -85,30 +87,50 @@ export class BuildStyles {
     };
   }
 
-  /** Every layer of the reads by id; one another read holds in its parent wins over the read whose root it is. */
+  /**
+   * Every layer of the reads by id. One another read holds in its parent wins over the read whose root it is, unless it
+   * is a hidden stub there; a root sits in the first of its read's ancestors, its parent.
+   */
   #found(reads: readonly ReadModel[]): Map<string, FoundLayer> {
     const found = new Map<string, FoundLayer>();
 
-    for (const model of reads) {
-      const plan = this.#planner.plan(model);
-      const { tokens, textStyles } = this.#catalogue.read(model, plan);
-      const read = { model, plan, tokens, textStyles };
+    for (const read of reads) {
+      const planned = this.#planned(read);
+      const { model, plan } = planned;
       const drawn = new Set<string>();
 
-      for (const walked of this.#readLayers.walk(model.root)) {
-        const { layer, parent } = walked;
-
+      for (const { layer, parent } of this.#readLayers.walk(model.root)) {
         if (parent !== null && (drawn.has(parent.id) || plan.file(parent.id) !== undefined)) {
           drawn.add(layer.id);
         }
 
-        if (parent !== null || !found.has(layer.id)) {
-          found.set(layer.id, { ...walked, read, drawn: drawn.has(layer.id) });
+        if (this.#wins(found.get(layer.id), layer, parent)) {
+          const placed = parent ?? model.ancestors?.[0] ?? null;
+
+          found.set(layer.id, { layer, parent: placed, read: planned, drawn: drawn.has(layer.id) });
         }
       }
     }
 
     return found;
+  }
+
+  /** A read with what its layers' CSS needs; a hidden root as shown, since the read op reads it whole (T-090). */
+  #planned(read: ReadModel): PlannedRead {
+    const model = read.root.visible ? read : { ...read, root: { ...read.root, visible: true } };
+    const plan = this.#planner.plan(model);
+    const { tokens, textStyles } = this.#catalogue.read(model, plan);
+
+    return { model, plan, tokens, textStyles };
+  }
+
+  /** Whether a layer's entry here beats the one held: in a parent over a root, a whole entry over a stub. */
+  #wins(
+    held: FoundLayer | undefined,
+    layer: ReadLayer,
+    parent: ReadLayer | null,
+  ): boolean {
+    return held === undefined || (parent === null ? !held.layer.visible : layer.visible);
   }
 
   #compared(
