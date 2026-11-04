@@ -63,6 +63,14 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
   `$css`, as Figma's own CSS.
 - `mix-blend-mode` is how the layer blends (multiply, screen, overlay…); a blend mode CSS has no name for is in
   `$css`.
+- `background-blend-mode` follows `background` when a fill blends with the fills under it: one mode per background,
+  top first (`multiply, normal`). A mode it has no name for (linear burn or dodge) is in `$css`, and so is a text's
+  (`fill-blend-mode`: `color` cannot blend).
+- A text's stroke follows `color` as `-webkit-text-stroke="2px #3B2FD9"`, which CSS centres on the glyph's edge: an
+  outside stroke is twice as wide with `paint-order="stroke fill"`, so the fill hides its inner half; an inside one has
+  no CSS and is in `$css` as `stroke-align: inside`.
+- `text-decoration` is on a `Text` only when every run has it: CSS draws a parent's underline through every child, so
+  otherwise each underlined or struck-through `Span` carries its own.
 - `mask="alpha"` (or vector, luminance) makes the layer the mask of the layers above it in its parent.
 
 ## Layout as the XML shows it

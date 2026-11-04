@@ -27,7 +27,8 @@ import { READ_VALUE } from "@/shared/read-model/read-model.constants.ts";
 /**
  * A layer's strokes (C-090): an inside or centred stroke is a border (with box-sizing: border-box it keeps the size),
  * an outside one an outline; per-side weights are a border per side. A line is one border: across its top when it
- * lies flat or turned, down its left when it stands (the geometry group sizes it). Texts and vectors draw their own.
+ * lies flat or turned, down its left when it stands (the geometry group sizes it). A text's stroke is
+ * -webkit-text-stroke; vectors draw their own.
  */
 @injectable()
 export class StrokesGroup implements PropertyGroup {
@@ -42,13 +43,15 @@ export class StrokesGroup implements PropertyGroup {
   }
 
   read({ layer, model, css }: CssScope): void {
-    if ((TEXT_TYPES[layer.type] ?? false) || (VECTOR_TYPES[layer.type] ?? false)) {
+    if (VECTOR_TYPES[layer.type] ?? false) {
       return;
     }
 
     const color = this.#paints.css(layer.strokes ?? [], layer.strokeStyleId, model);
 
-    if (layer.type === FIGMA_PAINT_GROUP.line) {
+    if (TEXT_TYPES[layer.type] ?? false) {
+      this.#text(layer, color, css);
+    } else if (layer.type === FIGMA_PAINT_GROUP.line) {
       this.#line(layer, color, css);
     } else if (color === UNMAPPED_PAINT) {
       css.note(CSS_PROPERTY.border, UNMAPPED_NOTE[CSS_PROPERTY.border]);
@@ -86,11 +89,10 @@ export class StrokesGroup implements PropertyGroup {
     css: CssDeclarations,
   ): void {
     const standing = new Turn(layer.rotation, undefined).lineAxis() === LINE_AXIS.standing;
-    const weight = typeof layer.strokeWeight === "number" ? layer.strokeWeight : PAINT_NUMBER.defaultWeight;
 
     css.set(
       standing ? CSS_PROPERTY.borderLeft : CSS_PROPERTY.borderTop,
-      this.#border(layer, weight, typeof color === "string" ? color : PAINT_VALUE.currentColor),
+      this.#border(layer, this.#weight(layer), typeof color === "string" ? color : PAINT_VALUE.currentColor),
     );
 
     if (color !== null) {
@@ -102,6 +104,38 @@ export class StrokesGroup implements PropertyGroup {
     if (cap !== undefined) {
       css.note(PAINT_NOTE.lineCap, cap.toLowerCase());
     }
+  }
+
+  /**
+   * A text's stroke, which CSS centres on the glyph's edge: an outside one twice as wide and painted under the fill,
+   * an inside one (no CSS draws it) a note; a gradient or image stroke the fixed note (D-20).
+   */
+  #text(
+    layer: ReadLayer,
+    color: PaintCss,
+    css: CssDeclarations,
+  ): void {
+    const outside = layer.strokeAlign === FIGMA_PAINT_GROUP.outside;
+    const weight = this.#weight(layer) * (outside ? PAINT_NUMBER.outsideTextStroke : 1);
+
+    if (color === UNMAPPED_PAINT) {
+      css.note(CSS_PROPERTY.webkitTextStroke, UNMAPPED_NOTE[CSS_PROPERTY.border]);
+    } else if (color !== null) {
+      css.set(
+        CSS_PROPERTY.webkitTextStroke,
+        PAINT_TEXT.textStroke(this.#format.round(weight, PRECISION.stroke), color),
+      );
+
+      if (outside) {
+        css.set(CSS_PROPERTY.paintOrder, PAINT_VALUE.strokeFirst);
+      } else if (layer.strokeAlign === FIGMA_PAINT_GROUP.inside) {
+        css.note(PAINT_NOTE.strokeAlign, PAINT_VALUE.inside);
+      }
+    }
+  }
+
+  #weight(layer: ReadLayer): number {
+    return typeof layer.strokeWeight === "number" ? layer.strokeWeight : PAINT_NUMBER.defaultWeight;
   }
 
   /** `1px solid <colour>`: the weight to 2 decimals (C-012), dashed when the stroke has a dash pattern. */

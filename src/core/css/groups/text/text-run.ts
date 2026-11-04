@@ -5,6 +5,7 @@ import { CASE_CSS } from "@/core/css/fonts/fonts.constants.ts";
 import { UNMAPPED_NOTE } from "@/core/css/groups/paint/paint.constants.ts";
 import {
   DECORATION_LINES,
+  DECORATION_PROPERTIES,
   DECORATION_STYLES,
   DEFAULT_FONT_AXES,
   FIGMA_TEXT,
@@ -38,6 +39,14 @@ export interface RunCss {
   readonly textStyle: string | undefined;
 }
 
+/** A text's own run: the segment it comes from, its CSS, and whether the text carries its runs' one decoration. */
+export interface MainRun {
+  readonly base: TextSegment;
+  readonly css: RunCss;
+  /** Every run has the same decoration, so the text carries it; otherwise each run's Span writes its own in full. */
+  readonly sharedDecoration: boolean;
+}
+
 /**
  * A run of text as CSS (C-110, C-111, C-117): the font shorthand, spacing, case, decoration and colour, each left out
  * where its text style sets it the same; OpenType features and the axes a browser would not draw by itself as notes.
@@ -61,8 +70,37 @@ export class TextRun {
     this.#names = names;
   }
 
+  /**
+   * The text's own run (C-110). CSS draws an ancestor's decoration through every child and no Span can take it off,
+   * so the text keeps a decoration only when every run has the same one; otherwise it has none (`none` over a text
+   * style that sets one) and each run's Span writes its own (`read` with `fullDecoration`).
+   */
+  main(segments: readonly TextSegment[], model: ReadModel): MainRun | undefined {
+    const base = this.#base(segments);
+
+    if (base === undefined) {
+      return undefined;
+    }
+
+    const css = this.read(base, model);
+    const sharedDecoration = new Set(segments.map((segment) => this.#decorationOf(segment, model))).size === 1;
+    const styled = DECORATION_LINES[this.#style(base, model)?.textDecoration ?? ""] !== undefined;
+
+    if (!sharedDecoration) {
+      for (const property of DECORATION_PROPERTIES) {
+        css.properties.delete(property);
+      }
+    }
+
+    if (styled && !(sharedDecoration && DECORATION_LINES[base.textDecoration] !== undefined)) {
+      css.properties.set(CSS_PROPERTY.textDecoration, TEXT_VALUE.none);
+    }
+
+    return { base, css, sharedDecoration };
+  }
+
   /** C-110: the run covering the most characters, the text's own style; a tie goes to the first. */
-  base(segments: readonly TextSegment[]): TextSegment | undefined {
+  #base(segments: readonly TextSegment[]): TextSegment | undefined {
     return segments.reduce<TextSegment | undefined>(
       (longest, segment) =>
         longest === undefined || segment.end - segment.start > longest.end - longest.start ? segment : longest,
@@ -70,9 +108,13 @@ export class TextRun {
     );
   }
 
-  read(segment: TextSegment, model: ReadModel): RunCss {
-    const found = segment.textStyleId === "" ? undefined : model.styles[segment.textStyleId];
-    const style = found?.type === FIGMA_TEXT.textStyle ? found : undefined;
+  /** A run as CSS; with `fullDecoration`, its decoration even where its text style sets the same (see `main`). */
+  read(
+    segment: TextSegment,
+    model: ReadModel,
+    fullDecoration = false,
+  ): RunCss {
+    const style = this.#style(segment, model);
     const run: RunCss = {
       properties: new Map(),
       notes: [],
@@ -94,7 +136,7 @@ export class TextRun {
 
     const line = DECORATION_LINES[segment.textDecoration];
 
-    if (line !== undefined && !same(STYLED_PART.textDecoration)) {
+    if (line !== undefined && (fullDecoration || !same(STYLED_PART.textDecoration))) {
       this.#decoration(segment, line, model, run.properties);
     }
 
@@ -102,6 +144,24 @@ export class TextRun {
     this.#color(segment, model, run);
 
     return run;
+  }
+
+  #style(segment: TextSegment, model: ReadModel): Style | undefined {
+    const found = segment.textStyleId === "" ? undefined : model.styles[segment.textStyleId];
+
+    return found?.type === FIGMA_TEXT.textStyle ? found : undefined;
+  }
+
+  /** A run's decoration in full, as one text to compare runs by; empty for none. */
+  #decorationOf(segment: TextSegment, model: ReadModel): string {
+    const line = DECORATION_LINES[segment.textDecoration];
+    const properties = new Map<string, string>();
+
+    if (line !== undefined) {
+      this.#decoration(segment, line, model, properties);
+    }
+
+    return JSON.stringify([...properties]);
   }
 
   #case(

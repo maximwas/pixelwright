@@ -92,6 +92,22 @@ describe("StrokesGroup", () => {
     ]);
   });
 
+  // A text's stroke is -webkit-text-stroke, centred on the glyph's edge; outside is twice as wide under the fill.
+  it("writes a text's stroke as -webkit-text-stroke, an outside one doubled and painted under the fill", () => {
+    const outside = cssOf({ type: "TEXT", strokeWeight: 2, strokeAlign: "OUTSIDE" });
+    const inside = cssOf({ type: "TEXT", strokeWeight: 2 });
+
+    expect(outside.properties).toEqual([
+      ["-webkit-text-stroke", "4px #191A23"],
+      ["paint-order", "stroke fill"],
+    ]);
+    expect(inside.properties).toEqual([["-webkit-text-stroke", "2px #191A23"]]);
+    expect(inside.notes).toEqual([["stroke-align", "inside"]]);
+    expect(cssOf({ type: "TEXT", strokes: [{ type: "GRADIENT_LINEAR" }] }).notes).toEqual([
+      ["-webkit-text-stroke", "a gradient or other stroke the table cannot write yet"],
+    ]);
+  });
+
   // The line as one border: flat is border-top, standing (within half a degree) border-left, any other angle a turned
   // flat line; a centred stroke and a round cap are notes.
   it("draws a line as one border: top when it lies flat or turned, left when it stands", () => {
