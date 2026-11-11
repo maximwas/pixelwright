@@ -82,7 +82,10 @@ describe("XmlParser errors", () => {
       column: 4,
       message: expect.stringContaining("write &lt;"),
     });
-    expect(failure("<A b=c/>").message).toContain('The value of b needs quotes: b="…".');
+    expect(failure("<A b=c/>")).toMatchObject({
+      column: 6,
+      message: expect.stringContaining('The value of b needs quotes: b="…".'),
+    });
     expect(failure("<A b/>").message).toContain("needs quotes");
   });
 

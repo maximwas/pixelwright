@@ -16,6 +16,10 @@ describe("Closest", () => {
     expect(closest.of("abcdefghi", ["abcdewxyz"])).toBeNull();
   });
 
+  it("answers the first of two equally near names", () => {
+    expect(closest.of("widht", ["right", "width"])).toBe("right");
+  });
+
   it("answers null for no candidates", () => {
     expect(closest.of("width", [])).toBeNull();
   });

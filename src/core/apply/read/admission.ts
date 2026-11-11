@@ -1,11 +1,4 @@
-import {
-  APPLY_PATTERN,
-  APPLY_TAG,
-  ATTRIBUTE,
-  CREATABLE_TAGS,
-  KNOWN_TAGS,
-  UNDRAWN_TAGS,
-} from "@/core/apply/apply.constants.ts";
+import { APPLY_PATTERN, APPLY_TAG, CREATABLE_TAGS, KNOWN_TAGS, UNDRAWN_TAGS } from "@/core/apply/apply.constants.ts";
 import type { ElementNode } from "@/core/apply/apply.types.ts";
 import {
   ADMISSION_ACTION,
