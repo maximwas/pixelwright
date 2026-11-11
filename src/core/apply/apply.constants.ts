@@ -1,6 +1,9 @@
 import { CSS_ORDER, CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import { TAG } from "@/core/xml/tags.constants.ts";
 
+/** What a change does to its layer. */
+export const CHANGE_KIND = { create: "create", update: "update" } as const;
+
 /** Tags of design_apply that Figma's node types do not name. */
 export const APPLY_TAG = { span: "Span", image: "Image", icon: "Icon", root: "root" } as const;
 

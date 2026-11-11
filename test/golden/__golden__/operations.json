@@ -1223,6 +1223,13 @@
         },
         "ancestors": {
           "type": "boolean"
+        },
+        "profile": {
+          "type": "string",
+          "enum": [
+            "design",
+            "apply"
+          ]
         }
       },
       "required": [
