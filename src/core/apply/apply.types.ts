@@ -6,15 +6,15 @@ import type { XML_CONTENT } from "@/core/xml/xml.constants.ts";
 export type ElementNode = Extract<XmlNode, { readonly kind: typeof XML_NODE_KIND.element }>;
 
 /** A piece of a Text element's content as design_apply reads it, and where in the XML it starts. */
-export type ContentPiece = XmlLocation &
-  (
-    | { readonly kind: typeof XML_CONTENT.text; readonly value: string }
-    | {
-        readonly kind: typeof XML_CONTENT.span;
-        readonly attributes: Readonly<Record<string, string>>;
-        readonly value: string;
-      }
-  );
+type TextPiece = { readonly kind: typeof XML_CONTENT.text; readonly value: string };
+
+type SpanPiece = {
+  readonly kind: typeof XML_CONTENT.span;
+  readonly attributes: Readonly<Record<string, string>>;
+  readonly value: string;
+};
+
+export type ContentPiece = XmlLocation & (TextPiece | SpanPiece);
 
 /** One element of a design_apply XML: an existing layer to change (id) or a new one to create (ref "new:<line>"). */
 export interface ApplyElement extends XmlLocation {
