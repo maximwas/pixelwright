@@ -88,6 +88,10 @@ const ids = (entries: readonly { id: string }[]): string[] => byId(entries).map(
 
 const smallest = (size: Found["fontSize"]): number => Math.min(...[size ?? Number.POSITIVE_INFINITY].flat());
 
+/** A paint group's colours: its CSS, and the values of the tokens it uses (a bound fill reads var(--x) in css). */
+const paintText = (paints?: { css?: string; tokens?: Record<string, string> }): string =>
+  [paints?.css ?? "", ...Object.values(paints?.tokens ?? {})].join(" ");
+
 /** The #RRGGBB colours a CSS value or a colour text holds, upper case, from #RGB, #RRGGBB, #RRGGBBAA or rgb()/rgba(). */
 const hexesIn = (css: string): string[] =>
   [...css.matchAll(/#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})\b|rgba?\((\d+)[ ,]+(\d+)[ ,]+(\d+)/gi)]
@@ -244,7 +248,7 @@ return { id: map.id, width: map.width, fill: hex(map.fills.find((p) => p.type ==
     const [layer] = await inspect({ nodes: [truth.id], fields: ["box", "fills"] });
 
     expect(named).toContain(truth.id);
-    expect({ width: layer?.box?.width, fill: hexesIn(layer?.fills?.css ?? "")[0] }).toEqual({ width: truth.width, fill: truth.fill });
+    expect({ width: layer?.box?.width, fill: hexesIn(paintText(layer?.fills))[0] }).toEqual({ width: truth.width, fill: truth.fill });
   });
 
   it("C1: the text layers on any page matching one of several phrases, with their frame ids and visibility", async () => {
@@ -321,7 +325,7 @@ return [card, ...card.findAll(() => true)].map((n) => ({ id: n.id, fills: solid(
     const named = (tokens: Record<string, string> | undefined) => [...new Set(Object.keys(tokens ?? {}).map(slug))].sort();
     const answer = layers.map(({ id, fills, strokes, bound }) => ({
       id,
-      fills: hexesIn(fills?.css ?? ""),
+      fills: hexesIn(paintText(fills)),
       strokes: (strokes?.colors ?? []).flatMap(hexesIn).sort(),
       fillVars: named(fills?.tokens),
       strokeVars: named(strokes?.tokens),
