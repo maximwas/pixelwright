@@ -15,10 +15,19 @@ describe("DesignApplyTool", () => {
     });
   });
 
-  it("accepts good XML in a dry run, saying how many elements it read", async () => {
-    const answer = await tool().execute({ xml: "<Frame><Text>&mdash;</Text></Frame>", dryRun: true });
+  it("answers a dry run with the elements it read and every refusal", async () => {
+    const answer = await tool().execute({ xml: '<Frame><Text x="10">&mdash;</Text></Frame>', dryRun: true });
+    const content = answer.structuredContent as {
+      elements: { tag: string; ref: string }[];
+      errors: { attribute?: string }[];
+    };
 
-    expect(answer.structuredContent).toMatchObject({ dry: true, elements: 2 });
+    expect(content).toMatchObject({ dry: true });
+    expect(content.elements.map(({ tag, ref }) => [tag, ref])).toEqual([
+      ["Frame", "new:1"],
+      ["Text", "new:1:8"],
+    ]);
+    expect(content.errors.map(({ attribute }) => attribute)).toEqual(["x"]);
   });
 
   it("refuses a real run until the writing half lands", async () => {
