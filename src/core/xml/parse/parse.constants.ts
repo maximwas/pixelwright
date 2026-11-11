@@ -23,7 +23,17 @@ export const XML_PARSE = {
   closeChars: 2,
   declarationChars: 2,
   quotes: /["']/,
-  chars: { amp: "&", lt: "<", newline: "\n", tab: "\t", space: " ", single: "'", double: '"', closeOpen: "</", instruction: "<?" },
+  chars: {
+    amp: "&",
+    lt: "<",
+    newline: "\n",
+    tab: "\t",
+    space: " ",
+    single: "'",
+    double: '"',
+    closeOpen: "</",
+    instruction: "<?",
+  },
 } as const;
 
 export const XML_PARSE_TEXT = {

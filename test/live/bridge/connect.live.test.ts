@@ -12,10 +12,10 @@ describe("bridge/connect", () => {
     await client.close();
   });
 
-  it("status shows protocol 6 and Test MCP connected, visible, with Allow edits on", async () => {
+  it("status shows protocol 7 and Test MCP connected, visible, with Allow edits on", async () => {
     const { status, file } = await client.waitForTestMcp();
 
-    expect(status.server).toMatchObject({ protocol: 6 });
+    expect(status.server).toMatchObject({ protocol: 7 });
     expect(file).toMatchObject({ name: inject("live").file, visible: true, allowEdits: true });
   });
 });

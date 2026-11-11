@@ -49,7 +49,7 @@ describe("StatusTool", () => {
     const answer = await status(link).execute({});
 
     expect(answer.structuredContent).toEqual({
-      server: { version: VERSION, channel: "pixelwright-new", role: "disabled", protocol: 6, port: 18_721 },
+      server: { version: VERSION, channel: "pixelwright-new", role: "disabled", protocol: 7, port: 18_721 },
       files: [],
       probe: null,
       pairing: null,

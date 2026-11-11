@@ -76,6 +76,7 @@ import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-ste
 import { TargetStep } from "@/server/app/tool-runner/steps/target-step.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER, ToolRunner } from "@/server/app/tool-runner/tool-runner.ts";
 import { VERSIONED_WRITE, VersionedWrite } from "@/server/app/writes/versioned-write.ts";
+import { ApplyProviders } from "@/server/main/apply-providers.ts";
 import { BaselineProviders } from "@/server/main/baseline-providers.ts";
 import { BridgeProviders } from "@/server/main/bridge-providers.ts";
 import { CheckProviders } from "@/server/main/check-providers.ts";
@@ -158,6 +159,7 @@ export class ServerMain {
     this.#bindInfra(container, config);
     this.#bindDomain(container);
     new ReadProviders().register(container);
+    new ApplyProviders().register(container);
     new RenderProviders().register(container);
     new CheckProviders().register(container);
     new DiffProviders().register(container);

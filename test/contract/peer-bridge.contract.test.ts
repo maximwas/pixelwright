@@ -76,7 +76,7 @@ const handPeer = (
     const socket = new WebSocket(`ws://127.0.0.1:${port}/pixelwright/v1/peer`);
 
     socket.on("error", () => undefined);
-    socket.on("open", () => socket.send(JSON.stringify({ type: "peer_hello", protocol, pluginProtocol: 6, nonce })));
+    socket.on("open", () => socket.send(JSON.stringify({ type: "peer_hello", protocol, pluginProtocol: 7, nonce })));
     socket.on("message", (data) => {
       const challenge = JSON.parse(String(data)) as { nonce: string };
 

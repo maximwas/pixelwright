@@ -1,6 +1,8 @@
+import type { CHANGE_KIND } from "@/core/apply/apply.constants.ts";
 import type { XML_NODE_KIND } from "@/core/xml/parse/parse.constants.ts";
 import type { XmlLocation, XmlNode } from "@/core/xml/parse/parse.types.ts";
 import type { XML_CONTENT } from "@/core/xml/xml.constants.ts";
+import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /** An element of the parsed XML. */
 export type ElementNode = Extract<XmlNode, { readonly kind: typeof XML_NODE_KIND.element }>;
@@ -50,4 +52,26 @@ export interface ApplyReading {
   readonly errors: ApplyError[];
   /** The XML did not parse: errors holds that one fault, and the edge answers INVALID_XML. */
   readonly invalidXml: boolean;
+}
+
+/** One layer to create or change, in Figma's terms (C-171). */
+export interface ApplyChange extends XmlLocation {
+  readonly kind: (typeof CHANGE_KIND)[keyof typeof CHANGE_KIND];
+  readonly ref: string;
+  readonly id: string | null;
+  readonly tag: string;
+  readonly parent: string | null;
+  readonly index: number;
+  /** A top-level create placed next to an existing layer. */
+  readonly before?: string;
+  readonly after?: string;
+  readonly props: FigmaProps;
+  /** The attribute each property was read from, so the plugin's errors name it. */
+  readonly sources: Readonly<Partial<Record<keyof FigmaProps, string>>>;
+  /** A create that starts as a clone of this layer. */
+  readonly copyOf?: string;
+  /** Inside a copy or a new instance: the layer whose counterpart this change writes. */
+  readonly source?: string;
+  /** The copy or new instance the change is inside: its counterparts, and the layers before/after name, are there. */
+  readonly copy?: string;
 }

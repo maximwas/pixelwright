@@ -1,4 +1,5 @@
 import * as zod from "zod/mini";
+import { CHANGE_KIND } from "@/core/apply/apply.constants.ts";
 import { XML_CONTENT } from "@/core/xml/xml.constants.ts";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import { DryRunInputSchema, VersionInputSchema, WRITER_OUTPUT } from "@/server/app/writes/writes.schema.ts";
@@ -33,6 +34,7 @@ const ElementSchema = zod.object({
   content: zod.exactOptional(zod.array(ContentPieceSchema)),
   source: zod.exactOptional(zod.string()),
   copy: zod.exactOptional(zod.string()),
+  notWritten: zod.exactOptional(zod.array(zod.string())),
 });
 
 const ErrorSchema = zod.object({
@@ -44,9 +46,24 @@ const ErrorSchema = zod.object({
   hint: zod.exactOptional(zod.string()),
 });
 
+/** One layer the call makes or changes, in Figma's terms: only what the layer does not have yet. */
+const ChangeSchema = zod.object({
+  line: zod.number(),
+  column: zod.number(),
+  kind: zod.enum(CHANGE_KIND),
+  id: zod.nullable(zod.string()),
+  ref: zod.string(),
+  tag: zod.string(),
+  parent: zod.nullable(zod.string()),
+  // The write-intent contract (FigmaPropsSchema) is the op's input; listing it here would add ~1,900 lines to tools/list.
+  props: zod.record(zod.string(), zod.unknown()),
+  sources: zod.record(zod.string(), zod.string()),
+});
+
 export const DesignApplyOutputSchema = zod.object({
   elements: zod.array(ElementSchema).check(zod.describe(DESIGN_APPLY_FIELD.elements)),
   errors: zod.array(ErrorSchema).check(zod.describe(DESIGN_APPLY_FIELD.errors)),
+  changes: zod.array(ChangeSchema).check(zod.describe(DESIGN_APPLY_FIELD.changes)),
   ...WRITER_OUTPUT,
 });
 
