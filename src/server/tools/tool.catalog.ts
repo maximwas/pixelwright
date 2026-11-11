@@ -6,6 +6,7 @@ import { BASELINE_SAVE_MANIFEST } from "@/server/tools/baseline-save/baseline-sa
 import { BREAKPOINTS_FIND_MANIFEST } from "@/server/tools/breakpoints-find/breakpoints-find.manifest.ts";
 import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
 import { COMPONENTS_READ_MANIFEST } from "@/server/tools/components-read/components-read.manifest.ts";
+import { DESIGN_APPLY_MANIFEST } from "@/server/tools/design-apply/design-apply.manifest.ts";
 import { DESIGN_READ_MANIFEST } from "@/server/tools/design-read/design-read.manifest.ts";
 import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { FILE_MAP_MANIFEST } from "@/server/tools/file-map/file-map.manifest.ts";
@@ -62,6 +63,7 @@ export class ToolCatalog {
     FLOW_READ_MANIFEST,
     VARIANTS_READ_MANIFEST,
     FONTS_CHECK_MANIFEST,
+    DESIGN_APPLY_MANIFEST,
     EXECUTE_MANIFEST,
     TOKENS_READ_MANIFEST,
     TOKENS_USAGE_MANIFEST,
