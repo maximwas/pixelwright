@@ -6,7 +6,7 @@ import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 
 /**
  * The version titles tried lately, by file (T-181): the same title in the same file within ten minutes is refused, as
- * a version cannot be deleted. A try is noted before Figma is asked; a clear refusal forgets it, a timeout keeps it
+ * a version cannot be deleted. A try is claimed (checked and noted in one synchronous step) before Figma is asked; a clear refusal forgets it, a timeout keeps it
  * (the version may be saved). One set per server, by plugin session: file keys are null.
  */
 @injectable()
@@ -18,25 +18,24 @@ export class VersionTries {
     this.#clock = clock;
   }
 
-  /** Refuses the title when it was tried in this file within the window, saying how long ago. */
-  check(file: string, title: string): void {
+  /**
+   * Refuses the title when it was tried in this file within the window, saying how long ago; else notes the try and
+   * returns the noted moment as ISO text (the stamp of the version asked for).
+   */
+  claim(file: string, title: string): string {
+    const now = this.#clock.now();
     const at = this.#tried.get(VERSION_REPEAT.key(file, title));
-    const ago = at === undefined ? Number.POSITIVE_INFINITY : this.#clock.now() - at;
+    const ago = at === undefined ? Number.POSITIVE_INFINITY : now - at;
 
     if (ago < VERSION_REPEAT.repeatMs) {
       const minutes = Math.max(1, Math.round(ago / VERSION_REPEAT.minuteMs));
 
       throw new PixelwrightError(ERROR_CODE.opFailed, STORES_TEXT.repeated(title, minutes));
     }
-  }
 
-  /** The injected clock's time as ISO text: the stamp of a version tried (the tool has no room for a fifth dependency). */
-  timestamp(): string {
-    return new Date(this.#clock.now()).toISOString();
-  }
+    this.#tried.set(VERSION_REPEAT.key(file, title), now);
 
-  note(file: string, title: string): void {
-    this.#tried.set(VERSION_REPEAT.key(file, title), this.#clock.now());
+    return new Date(now).toISOString();
   }
 
   forget(file: string, title: string): void {

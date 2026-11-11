@@ -8,7 +8,11 @@ import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 const NOW = Date.parse("2026-11-11T09:00:00.000Z");
 
 /** A tool on a fake session: Figma answers with `saved` (or throws it), and `current` waits for `gate` if given. */
-function build(saved: PixelwrightError | undefined, gate: Promise<void> = Promise.resolve()) {
+function build(
+  saved: PixelwrightError | undefined,
+  gate: Promise<void> = Promise.resolve(),
+  unreadable?: PixelwrightError,
+) {
   const stamped: unknown[] = [];
   const session = new PluginSession(
     "session-1",
@@ -27,7 +31,13 @@ function build(saved: PixelwrightError | undefined, gate: Promise<void> = Promis
   const baselines = {
     named: async () => [],
     target: () => ({ session, notes: [] }),
-    current: async () => await gate,
+    current: async () => {
+      if (unreadable !== undefined) {
+        throw unreadable;
+      }
+
+      await gate;
+    },
     stamp: async (_baselines: unknown, version: unknown) => {
       stamped.push(version);
 
@@ -61,14 +71,21 @@ describe("VersionSaveTool", () => {
     const { tool, tries } = build(new PixelwrightError(ERROR_CODE.timeout, "slow"));
 
     await expect(tool.execute({ title: "Before launch" })).rejects.toThrow("slow");
-    expect(() => tries.check("session-1", "Before launch")).toThrow();
+    expect(() => tries.claim("session-1", "Before launch")).toThrow();
+  });
+
+  it("forgets the try when the baseline read times out: nothing was sent to save", async () => {
+    const { tool, tries } = build(undefined, undefined, new PixelwrightError(ERROR_CODE.timeout, "slow read"));
+
+    await expect(tool.execute({ title: "Before launch" })).rejects.toThrow("slow read");
+    expect(() => tries.claim("session-1", "Before launch")).not.toThrow();
   });
 
   it("forgets the try after a refusal, so the same title can be sent again", async () => {
     const { tool, tries } = build(new PixelwrightError(ERROR_CODE.opFailed, "Figma said no"));
 
     await expect(tool.execute({ title: "Before launch" })).rejects.toThrow("Figma said no");
-    expect(() => tries.check("session-1", "Before launch")).not.toThrow();
+    expect(() => tries.claim("session-1", "Before launch")).not.toThrow();
   });
 
   it("stamps the time the injected clock gives", async () => {

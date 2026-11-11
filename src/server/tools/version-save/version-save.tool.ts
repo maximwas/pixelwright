@@ -55,12 +55,10 @@ export class VersionSaveTool extends Tool<VersionSaveInput, VersionSaveOutput> {
     const connected = this.#link.files().find(({ session }) => session === target.session.id);
 
     this.#checkFile(baselines, connected, title);
-    this.#tries.check(target.session.id, title);
-    // Noted before any await: a second call with this title must see it (T-181).
-    this.#tries.note(target.session.id, title);
 
+    const savedAt = this.#tries.claim(target.session.id, title);
     const id = await this.#checkedSave(target.session, title, baselines, this.#description(description, baselines));
-    const stamped = await this.#baselines.stamp(baselines, { id, title, savedAt: this.#tries.timestamp() });
+    const stamped = await this.#baselines.stamp(baselines, { id, title, savedAt });
     const support = this.#support.due();
 
     return {
@@ -101,14 +99,18 @@ export class VersionSaveTool extends Tool<VersionSaveInput, VersionSaveOutput> {
     baselines: readonly BaselineFile[],
     description: string,
   ): Promise<string | null> {
+    let sent = false;
+
     try {
       await this.#baselines.current(baselines, session.id);
+      sent = true;
 
       return (await session.run(saveVersionOp, { title, description })).id;
     } catch (error) {
       const code = error instanceof PixelwrightError ? error.code : ERROR_CODE.opFailed;
 
-      if (code !== ERROR_CODE.timeout) {
+      // Only a timeout of the save itself keeps the try; the baseline read sent nothing to Figma.
+      if (!sent || code !== ERROR_CODE.timeout) {
         this.#tries.forget(session.id, title);
       }
 

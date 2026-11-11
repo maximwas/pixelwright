@@ -18,23 +18,29 @@ describe("VersionTries", () => {
     const clock = new FakeClock();
     const tries = new VersionTries(clock);
 
-    tries.note("session-1", "Before launch");
+    tries.claim("session-1", "Before launch");
     clock.time += TEN_MINUTES - 1;
 
-    expect(() => tries.check("session-1", "  BEFORE launch ")).toThrow("BEFORE launch");
-    expect(() => tries.check("session-2", "Before launch")).not.toThrow();
+    expect(() => tries.claim("session-1", "  BEFORE launch ")).toThrow("BEFORE launch");
+    expect(() => tries.claim("session-2", "Before launch")).not.toThrow();
 
     clock.time += 1;
 
-    expect(() => tries.check("session-1", "Before launch")).not.toThrow();
+    expect(() => tries.claim("session-1", "Before launch")).not.toThrow();
+  });
+
+  it("returns the moment it noted as ISO text", () => {
+    const tries = new VersionTries(new FakeClock());
+
+    expect(tries.claim("session-1", "Before launch")).toBe("1970-01-01T00:16:40.000Z");
   });
 
   it("allows the title again once the try is forgotten", () => {
     const tries = new VersionTries(new FakeClock());
 
-    tries.note("session-1", "Before launch");
+    tries.claim("session-1", "Before launch");
     tries.forget("session-1", "before launch");
 
-    expect(() => tries.check("session-1", "Before launch")).not.toThrow();
+    expect(() => tries.claim("session-1", "Before launch")).not.toThrow();
   });
 });

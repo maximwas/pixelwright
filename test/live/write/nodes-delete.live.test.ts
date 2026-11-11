@@ -5,6 +5,7 @@ const NAME = {
   rectangle: "live:nodes-delete:rectangle-",
   component: "live:nodes-delete:component",
   instance: "live:nodes-delete:instance",
+  plain: "live:nodes-delete:plain",
   versioned: "live:nodes-delete:versioned",
 } as const;
 
@@ -68,7 +69,7 @@ return ids.filter((_id, index) => found[index] !== null && !found[index].removed
   });
 
   it("refuses a layer inside an instance with its reason and deletes the rest (T-045, P-160)", async () => {
-    const [instance, inside] = (await run(`const section = await pw.node(${JSON.stringify(scratch)});
+    const [plain, inside] = (await run(`const section = await pw.node(${JSON.stringify(scratch)});
 const component = figma.createComponent();
 component.name = ${JSON.stringify(NAME.component)};
 component.appendChild(figma.createRectangle());
@@ -76,12 +77,15 @@ section.appendChild(component);
 const instance = component.createInstance();
 instance.name = ${JSON.stringify(NAME.instance)};
 section.appendChild(instance);
-return [instance.id, instance.children[0].id];`)) as [string, string];
+const plain = figma.createRectangle();
+plain.name = ${JSON.stringify(NAME.plain)};
+section.appendChild(plain);
+return [plain.id, instance.children[0].id];`)) as [string, string];
 
-    const answer = await remove({ nodes: [inside, instance] });
+    const answer = await remove({ nodes: [inside, plain] });
 
     expect(answer).toEqual({
-      deleted: [instance],
+      deleted: [plain],
       errors: [{ id: inside, message: expect.stringContaining("inside an instance") }],
     });
   });
