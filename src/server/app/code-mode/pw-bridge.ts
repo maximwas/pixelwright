@@ -123,7 +123,10 @@ export class PwBridge implements PwCalls {
   ): unknown {
     const plain = typeof args === "object" && args !== null && !Array.isArray(args);
 
-    return file !== undefined && plain && CODE_TEXT.file in input.shape && !(CODE_TEXT.file in args)
+    return file !== undefined &&
+      plain &&
+      CODE_TEXT.file in input.shape &&
+      (args as Record<string, unknown>)[CODE_TEXT.file] === undefined
       ? { ...args, [CODE_TEXT.file]: file }
       : args;
   }

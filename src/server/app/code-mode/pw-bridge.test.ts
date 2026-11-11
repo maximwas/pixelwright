@@ -133,6 +133,8 @@ describe("PwBridge", () => {
   it("gives a call without a file the run's file, lets a file in the call win, and skips a tool that takes none", async () => {
     expect((await bridge.call("status", {}, signal, "A")).value).toEqual({ file: "A" });
     expect((await bridge.call("status", { file: "B" }, signal, "A")).value).toEqual({ file: "B" });
+    // { file: opts.file } with no file given still means "none named".
+    expect((await bridge.call("status", { file: undefined }, signal, "A")).value).toEqual({ file: "A" });
     expect((await bridge.call("nodesFind", { name: "Card" }, signal, "A")).value).toEqual({
       found: [{ id: "1:2", name: "Card" }],
     });
