@@ -31,7 +31,8 @@ type Issue = {
 export interface PwCalls {
   names(): readonly string[];
   shapes(): Readonly<Record<string, AnswerShape>>;
-  call(name: string, args: unknown, signal: AbortSignal): Promise<PwAnswer>;
+  /** `file` is the file the call reads when its own arguments name none. */
+  call(name: string, args: unknown, signal: AbortSignal, file?: string): Promise<PwAnswer>;
 }
 
 /**
@@ -81,6 +82,7 @@ export class PwBridge implements PwCalls {
     name: string,
     args: unknown,
     signal: AbortSignal,
+    file?: string,
   ): Promise<PwAnswer> {
     const manifest = this.#tools.get(name);
 
@@ -88,7 +90,7 @@ export class PwBridge implements PwCalls {
       throw new Error(CODE_TEXT.unknown(name));
     }
 
-    const bounded = this.#clamped(name, manifest.input, args);
+    const bounded = this.#clamped(name, manifest.input, this.#filed(manifest.input, args, file));
     const parsed = zod.safeParse(manifest.input, bounded.args);
 
     if (!parsed.success) {
@@ -111,6 +113,19 @@ export class PwBridge implements PwCalls {
       images: answer.content.filter(this.#image),
       ...(bounded.clamped.length === 0 ? {} : { clamped: bounded.clamped }),
     };
+  }
+
+  /** The arguments with the run's file in them when the tool takes a file and they name none. */
+  #filed(
+    input: zod.ZodMiniObject,
+    args: unknown,
+    file: string | undefined,
+  ): unknown {
+    const plain = typeof args === "object" && args !== null && !Array.isArray(args);
+
+    return file !== undefined && plain && CODE_TEXT.file in input.shape && !(CODE_TEXT.file in args)
+      ? { ...args, [CODE_TEXT.file]: file }
+      : args;
   }
 
   /** The arguments with each number past its bound set to the bound, and what was set; unchanged when none was. */

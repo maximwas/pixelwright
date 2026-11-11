@@ -7,7 +7,7 @@ import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
 import { TOOL_CONTENT_TYPE } from "@/server/app/tool-runner/tool-content.constants.ts";
 import { TOOL_CONTEXT, type ToolAnswer } from "@/server/app/tool-runner/tool-runner.ts";
-import { EXECUTE_SCRIPT, EXECUTE_SECONDS, EXECUTE_TEXT } from "@/server/tools/execute/execute.constants.ts";
+import { EXECUTE_CODE_PATH, EXECUTE_SECONDS, EXECUTE_TEXT } from "@/server/tools/execute/execute.constants.ts";
 import { type ExecuteInput, ExecuteInputSchema, type ExecuteOutput } from "@/server/tools/execute/execute.schema.ts";
 import { ReadsOnlyCheck } from "@/server/tools/execute/reads-only-check.ts";
 import { SyntaxCheck } from "@/server/tools/execute/syntax-check.ts";
@@ -49,7 +49,7 @@ export class ExecuteTool extends Tool<ExecuteInput, ExecuteRun> {
     this.#context = context;
   }
 
-  protected async run({ code, codePath, script, timeout }: ExecuteInput): Promise<ExecuteRun> {
+  protected async run({ code, codePath, script, timeout, file }: ExecuteInput): Promise<ExecuteRun> {
     if ([code, codePath, script].filter((field) => field !== undefined).length !== 1) {
       throw new PixelwrightError(ERROR_CODE.opFailed, EXECUTE_TEXT.oneOf);
     }
@@ -60,6 +60,7 @@ export class ExecuteTool extends Tool<ExecuteInput, ExecuteRun> {
       const { answer, images } = await this.#runner.run({
         code: script,
         timeoutMs: seconds * EXECUTE_SECONDS.perSecond,
+        ...(file === undefined ? {} : { file }),
         signal,
         logger,
       });
@@ -109,11 +110,11 @@ export class ExecuteTool extends Tool<ExecuteInput, ExecuteRun> {
     }
 
     // Too many bytes is too many characters, whatever the file holds: it is refused before it is read.
-    if (info.size > EXECUTE.codeChars * EXECUTE_SCRIPT.maxBytesPerChar) {
+    if (info.size > EXECUTE.codeChars * EXECUTE_CODE_PATH.maxBytesPerChar) {
       throw new PixelwrightError(ERROR_CODE.opFailed, EXECUTE_TEXT.tooBig(codePath, info.size));
     }
 
-    const text = await readFile(path, EXECUTE_SCRIPT.encoding);
+    const text = await readFile(path, EXECUTE_CODE_PATH.encoding);
 
     if (text.length === 0 || text.length > EXECUTE.codeChars) {
       throw new PixelwrightError(ERROR_CODE.opFailed, EXECUTE_TEXT.wrongLength(codePath, text.length));

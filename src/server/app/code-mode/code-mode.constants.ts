@@ -6,8 +6,8 @@ const LOG_CHARS = 4_000;
 
 /** A run's limits (research §6), to tune by the measurement. */
 export const CODE_LIMITS = {
-  /** A run's wall time by default: a few dozen Figma round trips; each pw call gets what is left of it. */
-  timeoutMs: 60_000,
+  /** A run's wall time by default: 30 s, since many clients time a request out at 60 s; each pw call gets what is left of it. */
+  timeoutMs: 30_000,
   /** The longest a run may ask for: classic execute's own ceiling. */
   maxTimeoutMs: 300_000,
   perSecond: MS_PER_SECOND,
@@ -38,6 +38,8 @@ export const CODE_LIMITS = {
 } as const;
 
 export const CODE_TEXT = {
+  /** The argument that names the file a tool reads. */
+  file: "file",
   call: (name: string) => `pw.${name}`,
   handle: (index: number) => `image-${index}`,
   tooManyCalls: (name: string) =>

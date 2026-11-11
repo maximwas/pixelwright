@@ -57,6 +57,17 @@ class ReadTool extends Tool<zod.output<typeof ReadInput>> {
   }
 }
 
+const WhichInput = zod.strictObject({ file: zod.exactOptional(zod.string()) });
+
+/** Answers the file it ran with. */
+class WhichFile extends Tool<zod.output<typeof WhichInput>> {
+  protected readonly input = WhichInput;
+
+  protected async run({ file }: zod.output<typeof WhichInput>) {
+    return { file: file ?? null };
+  }
+}
+
 const ANNOTATIONS = { readOnlyHint: true, idempotentHint: true, openWorldHint: false };
 const FIND: ToolManifest = {
   name: "nodes_find",
@@ -73,6 +84,15 @@ const READ: ToolManifest = {
   input: ReadInput,
   annotations: ANNOTATIONS,
   load: async () => ReadTool,
+};
+
+const WHICH: ToolManifest = {
+  name: "status",
+  title: "Which",
+  description: "Names its file.",
+  input: WhichInput,
+  annotations: ANNOTATIONS,
+  load: async () => WhichFile,
 };
 
 const OUTLINE: ToolManifest = {
@@ -102,12 +122,22 @@ const bridge = new PwBridge(
     ["nodesFind", FIND],
     ["designRead", READ],
     ["outline", OUTLINE],
+    ["status", WHICH],
   ]),
   new AnswerShapes(),
 );
 const signal = new AbortController().signal;
 
 describe("PwBridge", () => {
+  // execute's own file is the file of every pw call that names none; a tool without a file key is left alone.
+  it("gives a call without a file the run's file, lets a file in the call win, and skips a tool that takes none", async () => {
+    expect((await bridge.call("status", {}, signal, "A")).value).toEqual({ file: "A" });
+    expect((await bridge.call("status", { file: "B" }, signal, "A")).value).toEqual({ file: "B" });
+    expect((await bridge.call("nodesFind", { name: "Card" }, signal, "A")).value).toEqual({
+      found: [{ id: "1:2", name: "Card" }],
+    });
+  });
+
   it("checks the arguments with the tool's own input schema and names the function and each wrong path, before the tool runs", async () => {
     await expect(bridge.call("nodesFind", { name: "Card", limit: "ten", bogus: 1 }, signal)).rejects.toThrow(
       /^pw\.nodesFind: limit: Invalid input.*; args: Unrecognized key: "bogus" \(accepted: name, limit\)$/,

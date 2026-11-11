@@ -216,6 +216,17 @@ return { count: layers.length, last: layers[149], more, doubled, red: utils.colo
       expect((await run(code, { shapes, call })).result).toEqual([true, "undefined", 1, ["1:2"], true]);
     });
 
+    // A new Proxy on every read made a.rows[0] === a.rows[0] false, and indexOf, includes and Set stopped working.
+    it("gives the same object for the same element, so identity, indexOf, includes and Set work", async () => {
+      const code = [
+        "const answer = await pw.echo();",
+        "const rows = answer.args.rows;",
+        "return [rows[0] === rows[0], rows.indexOf(rows[0]), rows.includes(rows[0]), new Set([rows[0], answer.args.rows[0]]).size];",
+      ].join("\n");
+
+      expect((await run(code, { shapes, call })).result).toEqual([true, 0, true, 1]);
+    });
+
     it("serialises a wrapped answer as the plain one", async () => {
       const plain = { name: "echo", args: { n: 1, rows: [{ id: "1:2" }] } };
 

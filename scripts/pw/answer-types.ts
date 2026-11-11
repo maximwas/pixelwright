@@ -103,13 +103,6 @@ export interface DesignElement {
   children: DesignElement[];
 }
 `,
-  screenshot: `export interface ScreenshotResult {
-  /** What the image is (its size and scale), or where it was saved. */
-  text: string;
-  /** The image's handle when it comes inline: return it and execute shows the image after its answer. */
-  image?: string;
-}
-`,
 };
 /** prettier 3's objectWrap collapse: an object type that fits in 120 characters on one line. */
 const OPTIONS = {

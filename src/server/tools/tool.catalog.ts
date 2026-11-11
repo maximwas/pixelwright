@@ -74,9 +74,19 @@ export class ToolCatalog {
     return this.#manifests;
   }
 
-  /** What an execute script's pw calls: every read but guide and types_read, which describe Pixelwright, not the file. */
+  /**
+   * What an execute script's pw calls: every read but guide and types_read, which describe Pixelwright, not the file;
+   * screenshot, whose image a client likely never shows from a script (T-005); node_show and selection_wait, which act
+   * on the user's view.
+   */
   reads(): readonly ToolManifest[] {
-    const apart = new Set([GUIDE_MANIFEST.name, TYPES_READ_MANIFEST.name]);
+    const apart = new Set([
+      GUIDE_MANIFEST.name,
+      TYPES_READ_MANIFEST.name,
+      SCREENSHOT_MANIFEST.name,
+      NODE_SHOW_MANIFEST.name,
+      SELECTION_WAIT_MANIFEST.name,
+    ]);
 
     return this.#manifests.filter(({ name, annotations }) => annotations.readOnlyHint && !apart.has(name));
   }

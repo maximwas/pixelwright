@@ -20,7 +20,7 @@ the first answer; a script is for an answer that needs several of them.
 
 ## Limits
 
-- 60 s a run by default, `timeout` up to 300 s; a call gets what is left of it.
+- 30 s a run by default, `timeout` up to 300 s; a call gets what is left of it.
 - 50 pw calls a run, 4 at once (the rest wait their turn).
 - 64 MB of memory; code that keeps the CPU busy 1 s without a pause (an endless loop) is stopped.
 - `result` is cut past 24,000 characters: a long list or text ends in a `--- TRUNCATED ---` marker, and `resultChars`
@@ -29,9 +29,10 @@ the first answer; a script is for an answer that needs several of them.
 
 ## Images
 
-`pw.screenshot` (and `pw.designRead` with `screenshot: true`) answers a handle, `image: "image-1"`, and keeps the
-image on the server. Return the handle, alone or inside the result, and execute sends the image after its answer: at
-most 4 a run, the others named in `notShown`.
+A script cannot show an image: there is no `pw.screenshot` (nor `pw.nodeShow` or `pw.selectionWait`, which act on the
+user's view), because a client that shows only execute's structured answer drops the image blocks. Call `screenshot`
+itself for an image. `pw.designRead` with `screenshot: true` answers a handle, `image: "image-1"`; returned, execute
+sends the image after its answer, but a client may not show it.
 
 ## Design XML in a script
 

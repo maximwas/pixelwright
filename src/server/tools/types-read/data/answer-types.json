@@ -10,16 +10,6 @@
     "type": "export interface SelectionGetResult {\n  nodes: {\n    id: string;\n    name: string;\n    type: string;\n    box: { x: number; y: number; width: number; height: number } | null;\n  }[];\n}"
   },
   {
-    "tool": "node_show",
-    "call": "pw.nodeShow",
-    "type": "export interface NodeShowResult {\n  nodes: { id: string; name: string }[];\n  page: string;\n  zoom: number;\n}"
-  },
-  {
-    "tool": "selection_wait",
-    "call": "pw.selectionWait",
-    "type": "export interface SelectionWaitResult {\n  /**\n   * Whether the user selected something else before the time ran out.\n   */\n  changed: boolean;\n  /**\n   * The selection now.\n   */\n  nodes: {\n    id: string;\n    name: string;\n    type: string;\n    box: { x: number; y: number; width: number; height: number } | null;\n  }[];\n}"
-  },
-  {
     "tool": "changes_since",
     "call": "pw.changesSince",
     "type": "export interface ChangesSinceResult {\n  cursor: number;\n  since: string;\n  truncated: boolean;\n  changes: {\n    id: string;\n    name: string;\n    type: string;\n    change: \"created\" | \"deleted\" | \"changed\";\n    properties: string[];\n    by: \"user\" | \"collaborator\" | \"pixelwright\";\n    page: string;\n    at: string;\n  }[];\n}"
@@ -43,11 +33,6 @@
     "tool": "outline",
     "call": "pw.outline",
     "type": "export interface OutlineResult {\n  xml: string;\n  /**\n   * How many layers the XML lists.\n   */\n  nodes: number;\n}"
-  },
-  {
-    "tool": "screenshot",
-    "call": "pw.screenshot",
-    "type": "export interface ScreenshotResult {\n  /** What the image is (its size and scale), or where it was saved. */\n  text: string;\n  /** The image's handle when it comes inline: return it and execute shows the image after its answer. */\n  image?: string;\n}"
   },
   {
     "tool": "design_read",

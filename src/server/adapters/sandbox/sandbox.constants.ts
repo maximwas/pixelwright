@@ -34,16 +34,20 @@ export const SANDBOX_SCRIPT = {
   globalThis.console = Object.freeze({ log: line, info: line, warn: line, error: line, debug: line });
   const shapes = JSON.parse(shapesText);
   const passing = ["then", "toJSON", "length"];
+  const proxies = new WeakMap();
   const wrap = (name, value, shape) => {
     if (typeof value !== "object" || value === null || shape === undefined) return value;
+    if (proxies.has(value)) return proxies.get(value);
     const array = Array.isArray(value);
-    return new Proxy(value, { get(target, key, receiver) {
+    const proxy = new Proxy(value, { get(target, key, receiver) {
       const child = Reflect.get(target, key, receiver);
       if (typeof key === "symbol" || passing.includes(key)) return child;
       if (Object.hasOwn(target, key)) return wrap(name, child, array ? shape.items : (shape.fields?.[key] ?? shape.values));
       if (array || key in target || shape.keys === undefined || shape.keys.includes(key)) return child;
       throw new Error("pw." + name + ": no field " + JSON.stringify(key) + " here; fields: " + shape.keys.join(", "));
     } });
+    proxies.set(value, proxy);
+    return proxy;
   };
   globalThis.pw = Object.freeze(Object.fromEntries(JSON.parse(names).map((name) => [name, async (args) => wrap(name, JSON.parse(await call(name, JSON.stringify(args === undefined ? {} : args))), shapes[name])])));
   globalThis.utils = Object.freeze(guestUtils(globalThis.pw));

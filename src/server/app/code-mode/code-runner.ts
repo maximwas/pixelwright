@@ -29,7 +29,7 @@ export class CodeRunner {
     this.#cut = cut;
   }
 
-  async run({ code, timeoutMs, signal, logger }: CodeRequest): Promise<CodeOutcome> {
+  async run({ code, timeoutMs, file, signal, logger }: CodeRequest): Promise<CodeOutcome> {
     const controller = new AbortController();
     let end: (reason: string) => void = () => undefined;
     const stop = new Promise<string>((resolve) => {
@@ -41,7 +41,7 @@ export class CodeRunner {
     };
     const cancel = () => halt(CODE_TEXT.cancelled);
     const timer = setTimeout(() => halt(CODE_TEXT.timedOut(timeoutMs)), timeoutMs);
-    const calls = new RunCalls(this.#calls, controller.signal);
+    const calls = new RunCalls(this.#calls, controller.signal, file);
 
     signal.addEventListener(CODE_TEXT.abortEvent, cancel, { once: true });
 

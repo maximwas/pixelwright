@@ -21,7 +21,6 @@ interface Run {
 // Reads only: execute's script, run on the server, every pw call inside it naming Test MCP itself.
 describe("read/execute-script", () => {
   const { file } = inject("live");
-  const named = JSON.stringify(file);
   let client: LiveClient;
 
   beforeAll(async () => {
@@ -41,11 +40,10 @@ describe("read/execute-script", () => {
   }
 
   it("loops over the 10 Plan Card instances with nodesFind and inspect, and returns a short list", async () => {
-    const { answer } =
-      await run(`const { nodes } = await pw.nodesFind({ component: "Plan Card", within: "file", file: ${named} });
+    const { answer } = await run(`const { nodes } = await pw.nodesFind({ component: "Plan Card", within: "file" });
 const cards = [];
 for (const { id, name } of nodes) {
-  const { layers: [layer] } = await pw.inspect({ nodes: [id], file: ${named} });
+  const { layers: [layer] } = await pw.inspect({ nodes: [id] });
   cards.push({ id, name, width: layer.box.width });
 }
 return cards;`);
@@ -59,7 +57,7 @@ return cards;`);
   });
 
   it("reads 185:421 with designRead and filters its tree in the script, no XML parsed", async () => {
-    const { answer } = await run(`const { xml, tree } = await pw.designRead({ node: "${MIXED_RUNS}", file: ${named} });
+    const { answer } = await run(`const { xml, tree } = await pw.designRead({ node: "${MIXED_RUNS}" });
 const texts = [];
 const walk = (element) => {
   if (element.tag === "Text") texts.push({ id: element.id, text: element.text });
@@ -77,9 +75,8 @@ return { xmlChars: xml.length, root: tree.id, texts };`);
   });
 
   it("answers every text of the coverage frame with its font sizes through utils.layers, inspect in batches", async () => {
-    const { answer } =
-      await run(`const { nodes } = await pw.nodesFind({ type: "TEXT", within: "${COVERAGE}", file: ${named} });
-const { layers } = await utils.layers({ type: "TEXT", within: "${COVERAGE}", file: ${named} }, { fields: ["text"] });
+    const { answer } = await run(`const { nodes } = await pw.nodesFind({ type: "TEXT", within: "${COVERAGE}" });
+const { layers } = await utils.layers({ type: "TEXT", within: "${COVERAGE}" }, { fields: ["text"] });
 return { found: nodes.map(({ id }) => id), texts: layers.map(({ id, text }) => ({ id, fontSizes: text.fontSizes })) };`);
     const { found, texts } = answer.result as { found: string[]; texts: { id: string; fontSizes: number[] }[] };
 
@@ -89,11 +86,20 @@ return { found: nodes.map(({ id }) => id), texts: layers.map(({ id, text }) => (
     expect(answer.calls).toEqual({ "pw.nodesFind": 2, "pw.inspect": Math.ceil(found.length / 100) });
   });
 
-  it("brings a screenshot back as an image after the answer, by the handle the result returns", async () => {
-    const { answer, images } = await run(`return await pw.screenshot({ node: "${MIXED_RUNS}", file: ${named} });`);
+  it("has no pw.screenshot, node_show or selection_wait: a script cannot show an image or act on the user's view", async () => {
+    const { answer } = await run(
+      "return [typeof pw.screenshot, typeof pw.nodeShow, typeof pw.selectionWait, typeof pw.nodesFind];",
+    );
 
-    expect(answer.result).toMatchObject({ image: "image-1", text: expect.any(String) });
-    expect(images).toEqual([expect.objectContaining({ type: "image", mimeType: "image/png" })]);
+    expect(answer.result).toEqual(["undefined", "undefined", "undefined", "function"]);
+  });
+
+  it("reads execute's file for a pw call that names none, and the file a call names when it does", async () => {
+    const { answer } = await run(
+      'const own = await pw.status();\nconst other = await pw.status({ file: "No such file" }).catch((error) => error.message);\nreturn { own: typeof own, other };',
+    );
+
+    expect(answer.result).toMatchObject({ own: "object", other: expect.stringMatching(/^pw\.status: /) });
   });
 
   it("refuses the 51st pw call of a run, and still lists the 50 that succeeded", async () => {
@@ -105,7 +111,7 @@ return { found: nodes.map(({ id }) => id), texts: layers.map(({ id, text }) => (
 
   it("answers a syntax error with its line before any pw call runs", async () => {
     const { answer } = await run(
-      `const plans = await pw.nodesFind({ component: "Plan Card", file: ${named} });\nreturn plans.nodes.map((node) => node.id;`,
+      `const plans = await pw.nodesFind({ component: "Plan Card" });\nreturn plans.nodes.map((node) => node.id;`,
     );
 
     expect(answer.error).toMatch(/^SyntaxError: .+\n {4}at line 2, column \d+\nline 2: return plans\.nodes/);
@@ -113,8 +119,7 @@ return { found: nodes.map(({ id }) => id), texts: layers.map(({ id, text }) => (
   });
 
   it("throws on a key a read's answer type does not have, naming its fields", async () => {
-    const { answer } =
-      await run(`const answer = await pw.nodesFind({ type: "TEXT", within: "${COVERAGE}", file: ${named} });
+    const { answer } = await run(`const answer = await pw.nodesFind({ type: "TEXT", within: "${COVERAGE}" });
 return answer.layers;`);
 
     expect(answer.error).toMatch(/^Error: pw\.nodesFind: no field "layers" here; fields: nodes, /);

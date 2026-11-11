@@ -1,6 +1,6 @@
 import * as zod from "zod/mini";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
-import { EXECUTE_FIELD, EXECUTE_SCRIPT, EXECUTE_SECONDS } from "@/server/tools/execute/execute.constants.ts";
+import { EXECUTE_CODE_PATH, EXECUTE_FIELD, EXECUTE_SECONDS } from "@/server/tools/execute/execute.constants.ts";
 import { EXECUTE } from "@/shared/ops/execute/execute.constants.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
 
@@ -10,7 +10,7 @@ export const ExecuteInputSchema = zod.strictObject({
     .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(EXECUTE.codeChars)))
     .check(zod.describe(EXECUTE_FIELD.code)),
   codePath: zod
-    .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(EXECUTE_SCRIPT.pathChars)))
+    .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(EXECUTE_CODE_PATH.pathChars)))
     .check(zod.describe(EXECUTE_FIELD.codePath)),
   script: zod
     .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(EXECUTE.codeChars)))

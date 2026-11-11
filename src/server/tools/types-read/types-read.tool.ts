@@ -12,7 +12,7 @@ import {
 
 /**
  * Each read's whole answer type as TypeScript, for a script (execute script): written at build time from the tools'
- * output schemas (`pnpm build:pw`, data/answer-types.json), by hand for design_read and screenshot, which have none. A
+ * output schemas (`pnpm build:pw`, data/answer-types.json), by hand for design_read, which has none. A
  * read is named by its tool's name or as a script calls it; the names that are none are listed, not thrown.
  */
 @injectable()

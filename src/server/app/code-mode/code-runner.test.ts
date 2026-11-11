@@ -36,6 +36,8 @@ class FakeCalls implements PwCalls {
   most = 0;
   /** Each call's signal, in the order the calls reached the bridge. */
   readonly signals: AbortSignal[] = [];
+  /** Each call's default file, in the same order. */
+  readonly files: (string | undefined)[] = [];
 
   names(): readonly string[] {
     return ["echo", "shot", "wait"];
@@ -49,8 +51,10 @@ class FakeCalls implements PwCalls {
     name: string,
     args: unknown,
     signal: AbortSignal,
+    file?: string,
   ): Promise<PwAnswer> {
     this.signals.push(signal);
+    this.files.push(file);
 
     if (name === "wait") {
       return await new Promise(() => undefined);
@@ -100,6 +104,14 @@ function request(
 }
 
 describe("CodeRunner", () => {
+  it("hands the request's file to every pw call as the file they default to", async () => {
+    const calls = new FakeCalls();
+
+    await runner(async (pw) => await pw.echo?.(), calls).run({ ...request(), file: "A" });
+
+    expect(calls.files).toEqual(["A"]);
+  });
+
   it("refuses the 51st pw call of a run, naming the cap, and answers the calls that succeeded", async () => {
     const { answer } = await runner(async (pw) => {
       for (let index = 0; index < 51; index += 1) {

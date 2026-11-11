@@ -12,6 +12,8 @@ export type Clamp = { readonly call: string; readonly path: string; readonly giv
 export interface CodeRequest {
   readonly code: string;
   readonly timeoutMs: number;
+  /** The file execute was called for: the one every pw call reads that names none. */
+  readonly file?: string;
   readonly signal: AbortSignal;
   readonly logger: Logger;
 }

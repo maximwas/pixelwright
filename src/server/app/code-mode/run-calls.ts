@@ -11,6 +11,7 @@ import type { PwCalls } from "@/server/app/code-mode/pw-bridge.ts";
 export class RunCalls {
   readonly #calls: PwCalls;
   readonly #signal: AbortSignal;
+  readonly #file: string | undefined;
   readonly #limit = pLimit(CODE_LIMITS.inFlight);
   readonly #done = new Map<string, number>();
   readonly #images = new Map<string, ToolImage>();
@@ -18,9 +19,14 @@ export class RunCalls {
   #made = 0;
   #innerChars = 0;
 
-  constructor(calls: PwCalls, signal: AbortSignal) {
+  constructor(
+    calls: PwCalls,
+    signal: AbortSignal,
+    file?: string,
+  ) {
     this.#calls = calls;
     this.#signal = signal;
+    this.#file = file;
   }
 
   async call(name: string, args: unknown): Promise<unknown> {
@@ -38,7 +44,7 @@ export class RunCalls {
       // A call still queued when the run ended (or stopped) never reaches the plugin.
       this.#signal.throwIfAborted();
 
-      return await this.#calls.call(name, args, this.#signal);
+      return await this.#calls.call(name, args, this.#signal, this.#file);
     });
     const key = CODE_TEXT.call(name);
 
