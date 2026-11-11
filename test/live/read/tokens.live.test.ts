@@ -47,12 +47,18 @@ describe("read/tokens", () => {
   });
 
   afterAll(async () => {
-    await run(removeAliasPair);
-    await run(`const section = await pw.node(${JSON.stringify(scratch)});
+    try {
+      await run(removeAliasPair);
+    } finally {
+      try {
+        await run(`const section = await pw.node(${JSON.stringify(scratch)});
 for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}))) {
   if (!node.removed) node.remove();
 }`);
-    await client.close();
+      } finally {
+        await client.close();
+      }
+    }
   });
 
   it("writes Test MCP's spacing, radius and text style tokens as CSS in :root (T-160, T-164, K-006)", async () => {
