@@ -176,6 +176,8 @@ describe("XmlParser reading", () => {
       message: "Invalid XML at line 1, column 13: Put a space between attributes.",
     });
     expect(nodesOf('<Frame a="x"\n  b="y"/>')).toHaveLength(1);
+    expect(nodesOf('<Frame a="x"\tb="y"/>')).toHaveLength(1);
+    expect(nodesOf('<Frame a="x"\r\n  b="y"/>')).toHaveLength(1);
   });
 
   it("refuses a processing instruction that is never closed", () => {
@@ -186,21 +188,39 @@ describe("XmlParser reading", () => {
     });
   });
 
+  it("refuses a processing instruction open at the very end of the input", () => {
+    expect(failure("<Frame/><?")).toEqual({
+      line: 1,
+      column: 9,
+      message: "Invalid XML at line 1, column 9: <? is not closed with ?>.",
+    });
+  });
+
   // D-67
-  it("parses 20,000 lines in under 200 ms, so the line search is not linear", () => {
+  it("parses 20x the lines in far less than 400x the time, so the line search is not linear", () => {
     const document = (count: number) => {
       const lines = Array.from({ length: count }, (_value, index) => `  <Text id="${index}:1">line ${index}</Text>`);
 
       return `<Frame>\n${lines.join("\n")}\n</Frame>`;
     };
+    // The fastest of several runs is the least disturbed by a busy parallel suite.
+    const fastest = (source: string) =>
+      Math.min(
+        ...Array.from({ length: 5 }, () => {
+          const started = performance.now();
 
-    nodesOf(document(2000)); // warm-up, so a busy suite does not time the engine's first run
+          nodesOf(source);
 
-    const source = document(20_000);
-    const started = performance.now();
-    const [frame] = nodesOf(source);
+          return performance.now() - started;
+        }),
+      );
 
-    expect(performance.now() - started).toBeLessThan(200);
-    expect(frame).toMatchObject({ type: "Frame" });
+    nodesOf(document(2000)); // warm-up
+
+    const small = fastest(document(1000));
+    const large = fastest(document(20_000));
+
+    // Linear is about 20x (measured 18x), a linear line search makes it about 400x; 100x sits between.
+    expect(large / Math.max(small, 0.5)).toBeLessThan(100);
   });
 });

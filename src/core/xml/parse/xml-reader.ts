@@ -194,6 +194,11 @@ export class XmlReader implements TokenizerCallbacks {
   onend(): void {
     this.#flushText();
 
+    // The tokenizer emits no text after a final `<?`, so ontext never sees it.
+    if (this.#source.endsWith(XML_PARSE.chars.instruction)) {
+      throw this.#fail(this.#source.length - XML_PARSE.instructionOpenChars, XML_PARSE_TEXT.instructionNotClosed);
+    }
+
     const attribute = this.#attribute;
 
     if (attribute !== null) {
