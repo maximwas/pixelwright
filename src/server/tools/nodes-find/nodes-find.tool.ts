@@ -1,4 +1,5 @@
 import { inject, injectable } from "@needle-di/core";
+import safeRegex from "safe-regex2";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
@@ -13,6 +14,8 @@ import {
   NodesFindInputSchema,
   type NodesFindOutput,
 } from "@/server/tools/nodes-find/nodes-find.schema.ts";
+import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
+import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import { FIND_COUNT } from "@/shared/ops/find/find.constants.ts";
 import { findOp } from "@/shared/ops/find/find.manifest.ts";
@@ -47,6 +50,8 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
   }
 
   protected async run({ file, within, fields, ...query }: NodesFindInput): Promise<NodesFindOutput> {
+    this.#checked(query.textRegex);
+
     const answers: NodesFindOutput[] = [];
     const ends = this.#clock.now() + LIMITS.opBudgetMs;
 
@@ -76,9 +81,37 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
     );
   }
 
+  /**
+   * A pattern that may backtrack for ever is refused here: one test() in the plugin cannot be interrupted and freezes
+   * Figma. A pattern JavaScript cannot read passes, for the plugin to refuse with its words.
+   * shortcut: safe-regex2 catches nested repetition (exponential); polynomial patterns such as a*a*a*b stay possible,
+   * bounded by the text's length; upgrade when a real freeze shows up.
+   */
+  #checked(textRegex: string | undefined): void {
+    if (textRegex === undefined) {
+      return;
+    }
+
+    try {
+      new RegExp(textRegex);
+    } catch {
+      return;
+    }
+
+    if (!safeRegex(textRegex)) {
+      throw new PixelwrightError(ERROR_CODE.opFailed, NODES_FIND_TEXT.unsafeRegex);
+    }
+  }
+
   /** Within "file" the server knows which page gave each answer: every layer found names its page. */
   #onPage(found: NodesFindOutput, page: ScopeRoot): NodesFindOutput {
-    return { ...found, nodes: found.nodes.map((node) => ({ ...node, page: { id: page.id, name: page.name ?? "" } })) };
+    if (page.name === undefined) {
+      return found;
+    }
+
+    const named = { id: page.id, name: page.name };
+
+    return { ...found, nodes: found.nodes.map((node) => ({ ...node, page: named })) };
   }
 
   /** With fields, only the asked fields of each layer, those it has, with id, name and type. */

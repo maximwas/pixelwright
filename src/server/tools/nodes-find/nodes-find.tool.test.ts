@@ -163,3 +163,33 @@ it("names the current page it searched, and hints within when it found nothing t
     hint: 'Nothing found on the current page, "1:1": pass within (a page id, or "file" for every page) to search elsewhere.',
   });
 });
+
+// A pattern that backtracks exponentially would freeze Figma in one uninterruptible test: it is refused before the op.
+it.each([["(a+)+$"], ["^(\\w+\\s?)*$"]])("refuses the pattern %s without calling the plugin", async (textRegex) => {
+  const clock = new SpentClock();
+  const plugin = new CountingPlugin(clock);
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", plugin, []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+
+  await expect(tool.execute({ within: "1:1", textRegex })).rejects.toThrow(/freezes Figma/);
+  expect(plugin.finds).toEqual([]);
+});
+
+it.each([["\\d+px"], ["^\\$\\d+"]])("sends the pattern %s to the plugin", async (textRegex) => {
+  const clock = new SpentClock();
+  const plugin = new CountingPlugin(clock);
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", plugin, []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+
+  await tool.execute({ within: "1:1", textRegex });
+
+  expect(plugin.finds).toHaveLength(1);
+});

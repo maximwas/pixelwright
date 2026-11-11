@@ -30,8 +30,8 @@ interface Walk {
 /**
  * The layer tree under a layer or a page, the current page when none is given, to `depth` levels (T-044), breadth
  * first, so a big frame keeps every section before any loses its children to the node limit. Boxes are relative to the
- * outlined node, or in page coordinates with `absolute`, and unrounded: the server rounds them (D-15). The document lists its pages, unloaded. Instances name
- * their component until the op's deadline (P-075).
+ * outlined node, or in page coordinates with `absolute`, and unrounded: the server rounds them (D-15). The document
+ * lists its pages, unloaded. Instances name their component until the op's deadline (P-075).
  */
 @injectable()
 export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {

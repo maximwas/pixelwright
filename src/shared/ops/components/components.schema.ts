@@ -77,6 +77,7 @@ export const ComponentEntrySchema = zod.object({
   instances: zod.exactOptional(zod.int()),
   instanceNodes: zod.exactOptional(zod.array(InstanceNodeSchema)).check(zod.describe(COMPONENTS_FIELD.instanceNodes)),
   instanceNodesMore: zod.exactOptional(zod.literal(true)).check(zod.describe(COMPONENTS_FIELD.instanceNodesMore)),
+  instanceNodesSkipped: zod.exactOptional(zod.literal(true)).check(zod.describe(COMPONENTS_FIELD.instanceNodesSkipped)),
   references: zod
     .exactOptional(zod.record(zod.string(), zod.array(ReferenceSchema)))
     .check(zod.describe(COMPONENTS_FIELD.references)),

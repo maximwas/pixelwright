@@ -6,11 +6,15 @@ const { startSection, install, pricingDesktop } = TEST_MCP.ids;
 
 /** Each layer's id and box corner as an outline's XML writes them. */
 const corners = (xml: unknown): { id: string; x: number; y: number }[] =>
-  [...String(xml).matchAll(/<\w+ id="([^"]+)" name="[^"]*" x="([^"]+)" y="([^"]+)"/g)].map(([, id, x, y]) => ({
-    id: id ?? "",
-    x: Number(x),
-    y: Number(y),
-  }));
+  [...String(xml).matchAll(/<\w+ [^>]*>/g)]
+    .map(([tag]) => ({
+      id: /\bid="([^"]+)"/.exec(tag)?.[1],
+      x: /\bx="([^"]+)"/.exec(tag)?.[1],
+      y: /\by="([^"]+)"/.exec(tag)?.[1],
+    }))
+    .flatMap(({ id, x, y }) =>
+      id === undefined || x === undefined || y === undefined ? [] : [{ id, x: Number(x), y: Number(y) }],
+    );
 
 /** The page names an outline of the document lists, in order. */
 const pageNames = (xml: unknown): string[] =>

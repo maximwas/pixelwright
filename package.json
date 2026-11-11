@@ -142,6 +142,7 @@
     "pino": "10.4.0",
     "pino-pretty": "13.2.0",
     "pixelmatch": "8.0.0",
+    "safe-regex2": "5.1.2",
     "semver": "7.8.5",
     "slugify": "1.6.9",
     "svg-path-commander": "2.3.3",

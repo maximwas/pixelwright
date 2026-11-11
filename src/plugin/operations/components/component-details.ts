@@ -1,7 +1,7 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { COMPONENT_ENTRIES } from "@/plugin/operations/components/component-entries.ts";
-import { PROPERTY_NAME } from "@/plugin/operations/components/components.constants.ts";
+import { COMPONENT_DETAILS_TEXT, PROPERTY_NAME } from "@/plugin/operations/components/components.constants.ts";
 import type { ComponentOwner } from "@/plugin/operations/components/components.types.ts";
 import { EXPOSED_INSTANCES } from "@/plugin/operations/components/exposed-instances.ts";
 import { COMPONENT_TYPE, COMPONENTS } from "@/shared/ops/components/components.constants.ts";
@@ -44,18 +44,34 @@ export class ComponentDetails {
 
     const exposed = await this.#exposed.of(owner);
 
+    const instances = (asked.instances ?? false) ? await this.#instances(owner) : {};
+    const references = (asked.references ?? false) ? this.#references(owner) : {};
+    const errors = [entry.error, instances.error, references.error].filter((error) => error !== undefined);
+
     return {
       ...entry,
       ...(exposed.length === 0 ? {} : { exposed }),
-      ...((asked.instances ?? false) ? await this.#instances(owner) : {}),
-      ...((asked.references ?? false) ? { references: this.#references(owner) } : {}),
+      ...instances,
+      ...references,
+      ...(errors.length === 0 ? {} : { error: errors.join(COMPONENT_DETAILS_TEXT.separator) }),
     };
   }
 
   /** The component's instances, a set's of every variant, at most COMPONENTS.instancesCap, each with its page. */
-  async #instances(owner: ComponentOwner): Promise<Pick<ComponentEntry, "instanceNodes" | "instanceNodesMore">> {
+  async #instances(owner: ComponentOwner): Promise<Pick<ComponentEntry, "instanceNodes" | "instanceNodesMore" | "error">> {
     const mains = owner.type === COMPONENT_TYPE.set ? this.#entries.variants(owner) : [owner];
-    const found = (await Promise.all(mains.map((main) => main.getInstancesAsync()))).flat();
+    let failed = false;
+    // A remote or unloadable component rejects: it lists none, and the entry says so, instead of failing the call.
+    const lists = await Promise.all(
+      mains.map((main) =>
+        main.getInstancesAsync().catch(() => {
+          failed = true;
+
+          return [];
+        }),
+      ),
+    );
+    const found = lists.flat();
 
     return {
       instanceNodes: found
@@ -66,6 +82,7 @@ export class ComponentDetails {
           page: this.#lookup.pageOf(instance)?.name ?? null,
         })),
       ...(found.length > COMPONENTS.instancesCap ? { instanceNodesMore: true as const } : {}),
+      ...(failed ? { error: COMPONENT_DETAILS_TEXT.instancesFailed } : {}),
     };
   }
 
@@ -73,7 +90,15 @@ export class ComponentDetails {
    * Per property by the name Figma shows, the layers inside the component bound to it (componentPropertyReferences);
    * a nested instance's own properties are not the component's, so only its definitions' keys count.
    */
-  #references(owner: ComponentOwner): Record<string, PropertyReference[]> {
+  #references(owner: ComponentOwner): Pick<ComponentEntry, "references" | "error"> {
+    try {
+      return { references: this.#bound(owner) };
+    } catch {
+      return { error: COMPONENT_DETAILS_TEXT.referencesFailed };
+    }
+  }
+
+  #bound(owner: ComponentOwner): Record<string, PropertyReference[]> {
     const keys = new Set(Object.keys(this.#definitions(owner)));
     const bound: Record<string, PropertyReference[]> = {};
 

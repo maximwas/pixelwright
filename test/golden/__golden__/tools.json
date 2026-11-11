@@ -943,7 +943,7 @@
   {
     "name": "nodes_find",
     "title": "Find layers",
-    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance's component or component set name), componentId (an instance's component, or any variant of a component set, by id) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes, a text's characters (its first 200, cut: true past them), and its ancestors' ids, names and types in `path` (within \"file\" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults; properties: true gives every property's value), fontSize ({\"lt\": 14} keeps texts with any size under 14 px), and `fields` keeps only the named fields of each layer (id, name and type stay: fields [\"fontSize\"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
+    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance's component or component set name), componentId (an instance's component, or any variant of a component set, by id) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes, a text's characters (its first 200, cut: true past them), and its ancestors' ids, names and types in `path` (within \"file\" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults; properties: true gives every property's value), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {\"gte\": 12, \"lt\": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields [\"fontSize\"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -984,7 +984,7 @@
           "maxLength": 200
         },
         "fontSize": {
-          "description": "Texts by font size in px: {\"lt\": 14} for those under 14; a text with mixed sizes matches when any size does.",
+          "description": "Texts by font size in px: lt (under), lte (up to), gt (over) and gte (from), e.g. {\"gte\": 12, \"lt\": 16} for 12 up to under 16; a text with mixed sizes matches when any size does.",
           "type": "object",
           "properties": {
             "lt": {
@@ -8022,7 +8022,7 @@
   {
     "name": "components_read",
     "title": "Read the components",
-    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, and for a VARIANT property its options: the values it can take), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `instances: true` lists its instances in `instanceNodes` {id, name, page} (100 at most, instanceNodesMore past them); `references: true` lists per property the layers bound to it {id, name, field}. `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
+    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, and for a VARIANT property its options: the values it can take), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `instances: true` lists its instances in `instanceNodes` {id, name, page} (100 at most, instanceNodesMore past them; for the first 25 components listed only, the rest carry instanceNodesSkipped); `references: true` lists per property the layers bound to it {id, name, field}. `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -8072,6 +8072,7 @@
               "instances",
               "instanceNodes",
               "instanceNodesMore",
+              "instanceNodesSkipped",
               "references",
               "exposed",
               "links",
@@ -8085,7 +8086,7 @@
           "type": "boolean"
         },
         "instances": {
-          "description": "Also list each component's instances (a set's, of every variant) with their pages, 100 at most.",
+          "description": "Also list each component's instances (a set's, of every variant) with their pages, 100 at most, for the first 25 components listed (the rest say instanceNodesSkipped).",
           "type": "boolean"
         },
         "references": {
@@ -8221,6 +8222,11 @@
               },
               "instanceNodesMore": {
                 "description": "There are more than the 100 instances listed.",
+                "type": "boolean",
+                "const": true
+              },
+              "instanceNodesSkipped": {
+                "description": "With instances: its instances were not listed, only the first 25 components listed get them; ask with query or a smaller limit.",
                 "type": "boolean",
                 "const": true
               },

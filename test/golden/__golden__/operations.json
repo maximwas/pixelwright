@@ -7007,6 +7007,11 @@
                 "type": "boolean",
                 "const": true
               },
+              "instanceNodesSkipped": {
+                "description": "With instances: its instances were not listed, only the first 25 components listed get them; ask with query or a smaller limit.",
+                "type": "boolean",
+                "const": true
+              },
               "references": {
                 "description": "With references: per property, the layers inside the component bound to it, and the field each binds.",
                 "type": "object",

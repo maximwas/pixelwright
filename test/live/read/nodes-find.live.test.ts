@@ -226,6 +226,23 @@ return page.findAll((node) => node.type === "TEXT" && shown(node) && sizes(node)
     expect((nodes as Record<string, unknown>[]).every((node) => !("box" in node) && !("path" in node))).toBe(true);
   });
 
+  // Gap 7: a size range plugin code wrote as two comparisons, both bounds named.
+  it("finds the texts from 12 up to under 16 px by fontSize with gte and lt", async () => {
+    const truth = (await run(`const page = await figma.getNodeByIdAsync(${JSON.stringify(orbitPricing)});
+await page.loadAsync();
+const sizes = (node) => typeof node.fontSize === "number" ? [node.fontSize] : node.getStyledTextSegments(["fontSize"]).map((run) => run.fontSize);
+return page.findAll((node) => node.type === "TEXT" && sizes(node).some((size) => size >= 12 && size < 16)).map((node) => node.id);`)) as string[];
+    const { nodes } = await client.call("nodes_find", {
+      file,
+      within: orbitPricing,
+      type: "TEXT",
+      fontSize: { gte: 12, lt: 16 },
+      limit: 500,
+    });
+
+    expect((nodes as Found[]).map(({ id }) => id).sort()).toEqual([...truth].sort());
+  });
+
   // Gap 2: the ancestors plugin code walked up with node.parent, ids and types too, and the page within the file.
   it("gives each layer found its ancestors with ids up to the page, and its page within the file", async () => {
     const { nodes } = await client.call("nodes_find", { file, component: PLAN_CARD, within: "file" });

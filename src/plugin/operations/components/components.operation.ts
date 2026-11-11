@@ -6,7 +6,7 @@ import { COMPONENT_DETAILS, type DetailsAsked } from "@/plugin/operations/compon
 import { COMPONENT_FINDER } from "@/plugin/operations/components/component-finder.ts";
 import { COMPONENT_LINKS, type Linked } from "@/plugin/operations/components/component-links.ts";
 import type { FoundComponents } from "@/plugin/operations/components/components.types.ts";
-import { COMPONENTS_SCOPE } from "@/shared/ops/components/components.constants.ts";
+import { COMPONENTS, COMPONENTS_SCOPE } from "@/shared/ops/components/components.constants.ts";
 import type { componentsOp } from "@/shared/ops/components/components.manifest.ts";
 import type { ComponentEntry } from "@/shared/ops/components/components.schema.ts";
 
@@ -68,6 +68,17 @@ export class ComponentsOperation extends Operation<ComponentsInput, ComponentsOu
     found: FoundComponents,
     asked: DetailsAsked,
   ): Promise<ComponentEntry[]> {
-    return Promise.all(entries.map((entry) => this.#details.of(entry, found.owners.get(entry.id), asked)));
+    return Promise.all(
+      entries.map(async (entry, index) => {
+        const skipped = (asked.instances ?? false) && index >= COMPONENTS.instanceEntries;
+        const detailed = await this.#details.of(
+          entry,
+          found.owners.get(entry.id),
+          skipped ? { ...asked, instances: false } : asked,
+        );
+
+        return skipped ? { ...detailed, instanceNodesSkipped: true as const } : detailed;
+      }),
+    );
   }
 }
