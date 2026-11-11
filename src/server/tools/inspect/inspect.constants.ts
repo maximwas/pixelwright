@@ -12,7 +12,7 @@ export const INSPECT_INPUT = {
     "Instead of nodes: this layer and every layer under it, in document order, at most 100 a call (more: true and leftIds when there are more). With fields, only the layers that carry one of those groups are listed and counted.",
   depth: "With within: how many levels below it to read (0: the layer alone). Default: all.",
   fields:
-    'Only these groups of each layer, besides id, name and type: box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields ["layout"] lists the auto layout and grid frames of a subtree. box (with center) and parent come only when asked: fields ["layout", "box"].',
+    'Only these groups of each layer, besides id, name and type (without fields every group comes): box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields ["layout"] lists the auto layout and grid frames of a subtree. box (with center) and parent come only when asked: fields ["layout", "box"].',
   relativeTo: "A layer (a section, a frame) whose top left the boxes are measured from. Default: the page's.",
   around:
     "A point to measure each layer's distance and angle from: a layer's id (its centre, e.g. a ring's), or {x, y} in the boxes' origin (relativeTo's top left, or the page's). The angle matches CSS rotate(): 0 straight up, then clockwise to 360.",

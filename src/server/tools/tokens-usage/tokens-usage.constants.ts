@@ -16,7 +16,7 @@ export const TOKENS_USAGE = { minToken: 3, maxToken: 300 } as const;
 export const TOKENS_USAGE_FIELD = {
   token:
     "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg. Give token or raw, not both.",
-  raw: "true: list the colours bound to no style and no variable instead of a token's layers.",
+  raw: "true: list the colours bound to no style and no variable (fills with gradient stops, strokes, a mixed text's runs, effect colours) instead of a token's layers.",
   colors:
     "With raw: each raw colour as #RRGGBB, its count of layer uses and those layers (property fills, strokes, text for a text run, or effects; hidden when a viewer does not see it), most used first.",
   within:

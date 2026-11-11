@@ -1617,7 +1617,7 @@
           "maximum": 9007199254740991
         },
         "fields": {
-          "description": "Only these groups of each layer, besides id, name and type: box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields [\"layout\"] lists the auto layout and grid frames of a subtree. box (with center) and parent come only when asked: fields [\"layout\", \"box\"].",
+          "description": "Only these groups of each layer, besides id, name and type (without fields every group comes): box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields [\"layout\"] lists the auto layout and grid frames of a subtree. box (with center) and parent come only when asked: fields [\"layout\", \"box\"].",
           "minItems": 1,
           "type": "array",
           "items": {
@@ -5404,7 +5404,7 @@
           "maxLength": 300
         },
         "raw": {
-          "description": "true: list the colours bound to no style and no variable instead of a token's layers.",
+          "description": "true: list the colours bound to no style and no variable (fills with gradient stops, strokes, a mixed text's runs, effect colours) instead of a token's layers.",
           "type": "boolean",
           "const": true
         },
