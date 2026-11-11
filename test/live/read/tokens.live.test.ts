@@ -167,4 +167,65 @@ return { id: text.id, style: style.name };`)) as { id: string; style: string };
     expect(uses.sort()).toEqual(["#000000 54:455", "#B5B9C4 54:316", "#E1E5EE 54:458", "#FF6B3D 54:457"]);
     expect(uses.some((use) => use.endsWith(planStarter))).toBe(false);
   });
+
+  // RG-3 gap 6, with the truth from the Plugin API: local variables, their ids and their alias chains.
+  describe("RG-3: a token by name, with its id and alias chain", () => {
+    const TRUTH = `const collections = await figma.variables.getLocalVariableCollectionsAsync();
+const variables = await figma.variables.getLocalVariablesAsync();
+const byId = new Map(variables.map((variable) => [variable.id, variable]));
+const defaultMode = new Map(collections.map((collection) => [collection.id, collection.defaultModeId]));
+const chain = (variable, modeId) => {
+  const links = [];
+  for (let value = variable.valuesByMode[modeId]; value && value.type === "VARIABLE_ALIAS"; ) {
+    const target = byId.get(value.id);
+    if (!target) break;
+    links.push(target.id);
+    value = target.valuesByMode[defaultMode.get(target.variableCollectionId)];
+  }
+  return links;
+};`;
+
+    const model = async (args: Record<string, unknown>) =>
+      zod.parse(
+        TokensSchema,
+        (await client.call("tokens_read", { file, format: "json", used: false, ...args })).tokens,
+      );
+
+    it("keeps the variables whose name has the text, in any case, each with its Figma id", async () => {
+      const truth = (await run(`${TRUTH}
+const word = variables[0].name.split("/").pop().slice(0, 4);
+return { word, ids: variables.filter((variable) => variable.name.toLowerCase().includes(word.toLowerCase())).map((variable) => variable.id) };`)) as {
+        word: string;
+        ids: string[];
+      };
+      const read = await model({ query: truth.word.toUpperCase() });
+
+      expect(truth.ids.length).toBeGreaterThan(0);
+      expect(read.collections.flatMap(({ variables }) => variables.map(({ id }) => id)).sort()).toEqual(
+        truth.ids.sort(),
+      );
+    });
+
+    it("gives a variable that aliases another its chain down to the one holding the value", async () => {
+      const truth = (await run(`${TRUTH}
+const aliased = variables.map((variable) => ({ variable, links: chain(variable, defaultMode.get(variable.variableCollectionId)) })).find(({ links }) => links.length > 0);
+const collection = collections.find(({ id }) => id === aliased.variable.variableCollectionId);
+return { id: aliased.variable.id, name: aliased.variable.name, mode: collection.modes.find(({ modeId }) => modeId === collection.defaultModeId).name, links: aliased.links, final: byId.get(aliased.links.at(-1)).name };`)) as {
+        id: string;
+        name: string;
+        mode: string;
+        links: string[];
+        final: string;
+      };
+      const read = await model({ query: [truth.name] });
+      const variable = read.collections.flatMap(({ variables }) => variables).find(({ id }) => id === truth.id);
+
+      expect(variable?.aliasOf?.[truth.mode]).toHaveLength(truth.links.length);
+
+      const everything = (await model({})).collections.flatMap(({ variables }) => variables);
+      const last = variable?.aliasOf?.[truth.mode]?.at(-1);
+
+      expect(everything.find(({ token }) => token === last)?.name).toBe(truth.final);
+    });
+  });
 });

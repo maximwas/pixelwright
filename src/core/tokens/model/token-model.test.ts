@@ -114,3 +114,39 @@ describe("token model: what the output uses but leaves out (K-005)", () => {
     ]);
   });
 });
+
+describe("token model: id, alias chain and query (RG-3)", () => {
+  const CHAINED: RawTokens = {
+    ...RAW,
+    variables: [
+      ...RAW.variables,
+      {
+        id: "V:link",
+        name: "link",
+        collectionId: "C:sem",
+        resolvedType: "COLOR",
+        scopes: ["ALL_SCOPES"],
+        valuesByMode: { "C:sem:mode": alias("V:bg") },
+      },
+    ],
+  };
+
+  it("gives each variable its Figma id, and an alias the tokens it passes through down to the last", () => {
+    const [primitives, semantic] = tokens.model(CHAINED).collections;
+    const [link] = semantic?.variables.slice(-1) ?? [];
+
+    expect(primitives?.variables[0]).toMatchObject({ id: "V:gray" });
+    expect(primitives?.variables[0]?.aliasOf).toBeUndefined();
+    expect(link).toMatchObject({ id: "V:link", aliasOf: { Light: ["--bg", "--gray-900"] } });
+  });
+
+  it("keeps the variables whose name or token has any of the substrings, in any case, and drops empty collections", () => {
+    const model = tokens.model(CHAINED, undefined, ["GRAY", "vei"]);
+
+    expect(model.collections.map(({ name, variables }) => [name, variables.map(({ id }) => id)])).toEqual([
+      ["Primitives", ["V:gray"]],
+      ["Semantic", ["V:veil"]],
+    ]);
+    expect(tokens.model(CHAINED, undefined, ["opacity"]).collections.map(({ name }) => name)).toEqual(["Primitives"]);
+  });
+});

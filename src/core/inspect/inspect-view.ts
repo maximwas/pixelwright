@@ -1,6 +1,13 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { INTERACTION_ATTRIBUTES } from "@/core/design/interactions/interaction-attributes.ts";
-import { INSPECT_NUMBER, INSPECT_TEXT, INSPECT_VALUE, TEXT_BREAKS } from "@/core/inspect/inspect.constants.ts";
+import {
+  INSPECT_ALWAYS,
+  INSPECT_GROUP_KEYS,
+  INSPECT_NUMBER,
+  INSPECT_TEXT,
+  INSPECT_VALUE,
+  TEXT_BREAKS,
+} from "@/core/inspect/inspect.constants.ts";
 import type { InspectAnswer, InspectLayerView } from "@/core/inspect/inspect.schema.ts";
 import { INSPECT_FILLS } from "@/core/inspect/inspect-fills.ts";
 import { INSPECT_LAYOUT } from "@/core/inspect/inspect-layout.ts";
@@ -43,13 +50,29 @@ export class InspectView {
     this.#layout = layout;
   }
 
-  build(raw: InspectRaw, around?: Point): InspectAnswer {
+  build(
+    raw: InspectRaw,
+    around?: Point,
+    fields?: readonly string[],
+  ): InspectAnswer {
     return {
       relativeTo: raw.origin === null ? INSPECT_TEXT.page : INSPECT_TEXT.layer(raw.origin.id, raw.origin.name),
       ...(around === undefined ? {} : { around }),
-      layers: raw.layers.map((layer) => this.#layer(layer, raw, around)),
+      layers: raw.layers.map((layer) => this.#kept(this.#layer(layer, raw, around), fields)),
       missing: raw.missing,
+      ...(raw.more === undefined ? {} : { more: raw.more, leftIds: raw.leftIds ?? [] }),
     };
+  }
+
+  /** Only the fields of the named groups, besides id, name and type; all without groups. */
+  #kept(layer: InspectLayerView, fields: readonly string[] | undefined): InspectLayerView {
+    if (fields === undefined) {
+      return layer;
+    }
+
+    const keys = new Set<string>([...INSPECT_ALWAYS, ...fields.flatMap((group) => INSPECT_GROUP_KEYS[group] ?? [])]);
+
+    return Object.fromEntries(Object.entries(layer).filter(([key]) => keys.has(key))) as InspectLayerView;
   }
 
   /** A box's centre, to 2 decimals: a turned layer's too, as its box bounds it (m:07ad610a). */
@@ -74,14 +97,16 @@ export class InspectView {
       parent,
       box,
       center,
+      ...(layer.path === undefined || layer.path.length === 0 ? {} : { path: layer.path }),
       ...(around === undefined ? {} : this.#bearing(around, center)),
       ...(paintedBox === null || this.#same(paintedBox, box) ? {} : { paintedBox }),
       ...(rotation === undefined || rotation === 0 ? {} : { rotation }),
       ...this.#overflow(layer),
       ...this.#fills.read(layer, raw),
       ...this.#layout.read(layer),
+      ...this.#layout.parent(layer),
       ...(effects.length === 0 ? {} : { effects }),
-      ...this.#text(layer),
+      ...this.#text(layer, raw),
       ...this.#interactions(layer),
       ...(instance === undefined ? {} : { component: this.#component(instance, layer.defaults ?? {}) }),
     };
@@ -134,7 +159,9 @@ export class InspectView {
   }
 
   /** A text's lines, its distinct line heights and font sizes, how it resizes, its paragraph spacing. */
-  #text({ text }: InspectedLayer): Pick<InspectLayerView, "text"> {
+  #text(layer: InspectedLayer, raw: InspectRaw): Pick<InspectLayerView, "text"> {
+    const { text } = layer;
+
     if (text === undefined) {
       return {};
     }
@@ -147,8 +174,30 @@ export class InspectView {
         lineHeights: [...new Set(segments.map((segment) => this.#lineHeight(segment)))],
         fontSizes: [...new Set(segments.map(({ fontSize }) => fontSize))],
         autoResize: text.textAutoResize,
+        ...(segments.length > 1 ? { segments: segments.map((segment) => this.#run(segment, layer, raw)) } : {}),
         ...(typeof paragraphSpacing === "number" && paragraphSpacing !== 0 ? { paragraphSpacing } : {}),
       },
+    };
+  }
+
+  /** One run of a text that mixes styles. */
+  #run(
+    segment: Segment,
+    layer: InspectedLayer,
+    raw: InspectRaw,
+  ): NonNullable<TextView["segments"]>[number] {
+    const { start, end, characters, fontName, fontSize, textDecoration } = segment;
+    const fill = this.#fills.runFill(segment, layer, raw);
+
+    return {
+      start,
+      end,
+      characters,
+      fontFamily: fontName.family,
+      fontStyle: segment.fontStyle ?? fontName.style,
+      fontSize,
+      textDecoration,
+      ...(fill === undefined ? {} : { fill }),
     };
   }
 

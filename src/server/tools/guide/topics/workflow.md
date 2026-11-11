@@ -53,7 +53,7 @@ saved from.
    screen at the page's other widths, for the media queries. `flow_read` maps the prototype: screens and the links
    between them.
 5. **The design system.** `tokens_read`: variables with every mode (light, dark…) and styles, as CSS, JSON or DTCG
-   token files (`guide tokens`). `tokens_usage`: the layers a token is used on; with `raw: true`, the colours bound to no style or variable, each with the layers using it. `components_read`: the components a
+   token files (`guide tokens`); `query` keeps the ones whose name has that text, each variable carries its `id`. `tokens_usage`: the layers a token is used on; with `raw: true`, the colours bound to no style or variable, each with the layers using it. `components_read`: the components a
    page uses, or the file defines, with variants and properties. `library_search`: components of the team's
    libraries, saved once from each library file. `fonts_check`: the fonts used and where the build gets each (Google
    Fonts links).
@@ -67,12 +67,18 @@ saved from.
    code they name: export again what is marked `drawing`; build added layers from their `xml` (or `design_read` when
    it is left out). Then `baseline_save {name, accept}` with the `accept` the diff gave. `changes_since` stays the
    live view while the plugin is open.
-8. **Code, the exception.** The reads answer what code is most often written for: texts by size and visibility and
-   instances' changed properties (`nodes_find`), auto layout numbers and instance properties with their defaults
-   (`inspect`), raw colours (`tokens_usage` with `raw: true`). `execute` runs JavaScript in the plugin, for what no read tool shows: try the read tools
-   first (`design_read`, `inspect`, `measure`, `nodes_find`), which need no code. It reads too: this version does not
-   support editing. If the user explicitly asks for an edit through it, warn that editing is not supported or stable
-   in this version and go on only when the user says so; the plugin's Allow edits switch still gates every write.
+8. **Code, the exception.** The reads answer what code is most often written for, a line per question:
+   - texts by content, size or visibility, instances by component or changed property, with ancestors and page:
+     `nodes_find` (`text` list, `textRegex`, `fontSize`, `visible`, `componentId`, `properties`, `fields`);
+   - every auto layout gap and padding, a text's style runs, a component's properties in a frame: `inspect` with
+     `within` (+ `depth`, `fields: ["layout"]` lists only the layers that carry it), nested instance ids too;
+   - a layer's parent layout and ancestors by id: `inspect` (`parentLayout`, `path`);
+   - a token by name, its Figma id and what an alias leads to: `tokens_read` with `query`;
+   - colours bound to no token: `tokens_usage` with `raw: true`.
+     `execute` runs JavaScript in the plugin, for what no read tool shows: try the read tools
+     first (`design_read`, `inspect`, `measure`, `nodes_find`), which need no code. It reads too: this version does not
+     support editing. If the user explicitly asks for an edit through it, warn that editing is not supported or stable
+     in this version and go on only when the user says so; the plugin's Allow edits switch still gates every write.
 
 ## Reading a design like a web developer
 

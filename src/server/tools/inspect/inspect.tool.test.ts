@@ -69,7 +69,7 @@ const RULE = layer("2:4", { x: 0, y: 100, width: 100, height: 0 }, { x: -0.5, y:
  * The ring 2:9 at the top left of section 2:1, which sits at (300, 300) on the page: the op gives its box from the
  * origin it is asked for; 9:9 is no layer.
  */
-function inspected({ nodes, relativeTo }: InspectInput): InspectRaw {
+function inspected({ nodes = [], relativeTo }: InspectInput): InspectRaw {
   const ring = layer("2:9", {
     x: relativeTo === "2:1" ? 0 : 300,
     y: relativeTo === "2:1" ? 0 : 300,
@@ -181,5 +181,145 @@ describe("inspect around", () => {
     await expect(tool().inspect.execute({ nodes: ["2:4"], around: "9:9" })).rejects.toThrow(
       "around: 9:9 is not a layer of this file.",
     );
+  });
+});
+
+const RUN = {
+  fontName: { family: "Inter", style: "Regular" },
+  fontWeight: 400,
+  textDecoration: "NONE",
+  textCase: "ORIGINAL",
+};
+
+/** A text of two runs: "Save " in 14 px, "20%" in 16 px bold and underlined. */
+const MIXED = {
+  ...layer("4:1", { x: 0, y: 0, width: 80, height: 20 }),
+  type: "TEXT",
+  text: {
+    characters: "Save 20%",
+    textAutoResize: "WIDTH_AND_HEIGHT",
+    textAlignHorizontal: "LEFT",
+    textAlignVertical: "TOP",
+    segments: [
+      {
+        ...RUN,
+        characters: "Save ",
+        start: 0,
+        end: 5,
+        fontSize: 14,
+        lineHeight: { unit: "AUTO" },
+        letterSpacing: { unit: "PERCENT", value: 0 },
+        fills: [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }],
+        fillStyleId: "",
+        textStyleId: "",
+      },
+      {
+        ...RUN,
+        fontName: { family: "Inter", style: "Bold" },
+        fontWeight: 700,
+        textDecoration: "UNDERLINE",
+        characters: "20%",
+        start: 5,
+        end: 8,
+        fontSize: 16,
+        lineHeight: { unit: "AUTO" },
+        letterSpacing: { unit: "PERCENT", value: 0 },
+        fills: [{ type: "SOLID", color: { r: 1, g: 0, b: 0 } }],
+        fillStyleId: "",
+        textStyleId: "",
+      },
+    ],
+  },
+};
+
+const answerOf = (raw: Partial<InspectRaw>, input: Record<string, unknown> = {}) =>
+  new InspectTool(
+    new PluginSession(
+      "6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13",
+      new InspectPlugin([], () => ({ origin: null, layers: [], missing: [], styles: {}, variables: {}, ...raw })),
+      [],
+    ),
+    new SelectedLayer(),
+    view,
+  )
+    .execute({ nodes: ["4:1"], ...input })
+    .then((result) => result.structuredContent as Record<string, any>);
+
+// RG-3: what agents wrote plugin code for: text runs, the parent's layout, the way up, a subtree, only some groups.
+describe("inspect: runs, parent layout, path, subtree and fields", () => {
+  it("lists a mixed text's runs with font, size, decoration and colour, and none for a text of one style", async () => {
+    const [mixed] = (await answerOf({ layers: [MIXED] })).layers;
+    const [single] = (
+      await answerOf({ layers: [{ ...MIXED, text: { ...MIXED.text, segments: MIXED.text.segments.slice(0, 1) } }] })
+    ).layers;
+
+    expect(mixed.text.segments).toEqual([
+      {
+        start: 0,
+        end: 5,
+        characters: "Save ",
+        fontFamily: "Inter",
+        fontStyle: "Regular",
+        fontSize: 14,
+        textDecoration: "NONE",
+        fill: "#000",
+      },
+      {
+        start: 5,
+        end: 8,
+        characters: "20%",
+        fontFamily: "Inter",
+        fontStyle: "Bold",
+        fontSize: 16,
+        textDecoration: "UNDERLINE",
+        fill: "#F00",
+      },
+    ]);
+    expect(single.text.segments).toBeUndefined();
+  });
+
+  it("gives a layer in auto layout its parent's layout as CSS longhands, and the way up with ids", async () => {
+    const child = {
+      ...layer("4:2", { x: 0, y: 0, width: 10, height: 10 }),
+      parentLayout: {
+        childCount: 3,
+        layoutMode: "HORIZONTAL",
+        itemSpacing: 8,
+        paddingLeft: 4,
+        paddingRight: 4,
+        paddingTop: 2,
+        paddingBottom: 2,
+      },
+      path: [{ id: "1:2", name: "Card", type: "FRAME" }],
+    };
+    const [read] = (await answerOf({ layers: [child] })).layers;
+
+    expect(read.parentLayout).toMatchObject({ display: "flex", gap: 8, "padding-left": 4 });
+    expect(read.path).toEqual([{ id: "1:2", name: "Card", type: "FRAME" }]);
+  });
+
+  it("asks the op for a subtree and says which layers it left", async () => {
+    const plugin = new InspectPlugin([], () => ({
+      origin: null,
+      layers: [MIXED],
+      missing: [],
+      more: true,
+      leftIds: ["4:9"],
+      styles: {},
+      variables: {},
+    }));
+    const session = new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", plugin, []);
+    const answer = (
+      await new InspectTool(session, new SelectedLayer(), view).execute({ within: "4:0", depth: 2, fields: ["text"] })
+    ).structuredContent;
+
+    expect(plugin.requests).toEqual([{ op: "inspect", input: { within: "4:0", depth: 2, fields: ["text"] } }]);
+    expect(answer).toMatchObject({ more: true, leftIds: ["4:9"] });
+  });
+
+  it("keeps only the named groups, besides the id, name and type", async () => {
+    const [read] = (await answerOf({ layers: [MIXED] }, { fields: ["text"] })).layers;
+
+    expect(Object.keys(read).sort()).toEqual(["id", "name", "text", "type"]);
   });
 });

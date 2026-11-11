@@ -26,6 +26,22 @@ const FillsViewSchema = zod.object({
 });
 
 const TextViewSchema = zod.object({
+  segments: zod
+    .exactOptional(
+      zod.array(
+        zod.object({
+          start: zod.number(),
+          end: zod.number(),
+          characters: zod.string(),
+          fontFamily: zod.string(),
+          fontStyle: zod.string(),
+          fontSize: zod.number(),
+          textDecoration: zod.string(),
+          fill: zod.exactOptional(zod.string()),
+        }),
+      ),
+    )
+    .check(zod.describe(INSPECT_FIELD.segments)),
   lines: zod.array(zod.object({ text: zod.string(), break: zod.nullable(zod.enum(TEXT_BREAK)) })),
   lineHeights: zod.array(zod.string()),
   fontSizes: zod.array(zod.number()),
@@ -41,6 +57,9 @@ const LayerViewSchema = zod.object({
   parent: zod.nullable(zod.object({ id: zod.string(), name: zod.string(), type: zod.string() })),
   box: BoxSchema.check(zod.describe(INSPECT_FIELD.box)),
   center: PointSchema.check(zod.describe(INSPECT_FIELD.center)),
+  path: zod
+    .exactOptional(zod.array(zod.object({ id: zod.string(), name: zod.string(), type: zod.string() })))
+    .check(zod.describe(INSPECT_FIELD.path)),
   distance: zod.exactOptional(zod.number()).check(zod.describe(INSPECT_FIELD.distance)),
   angle: zod.exactOptional(zod.number()).check(zod.describe(INSPECT_FIELD.angle)),
   paintedBox: zod.exactOptional(BoxSchema).check(zod.describe(INSPECT_FIELD.paintedBox)),
@@ -74,6 +93,9 @@ const LayerViewSchema = zod.object({
   layout: zod
     .exactOptional(zod.record(zod.string(), zod.union([zod.number(), zod.string()])))
     .check(zod.describe(INSPECT_FIELD.layout)),
+  parentLayout: zod
+    .exactOptional(zod.record(zod.string(), zod.union([zod.number(), zod.string()])))
+    .check(zod.describe(INSPECT_FIELD.parentLayout)),
   fills: zod.exactOptional(FillsViewSchema),
   bound: zod
     .exactOptional(
@@ -115,6 +137,8 @@ export const InspectViewSchema = zod.object({
   layers: zod.array(LayerViewSchema),
   missing: zod.array(zod.string()).check(zod.describe(INSPECT_FIELD.missing)),
   left: zod.exactOptional(zod.int()).check(zod.describe(INSPECT_FIELD.left)),
+  more: zod.exactOptional(zod.literal(true)).check(zod.describe(INSPECT_FIELD.more)),
+  leftIds: zod.exactOptional(zod.array(zod.string())).check(zod.describe(INSPECT_FIELD.leftIds)),
 });
 
 export type InspectAnswer = zod.output<typeof InspectViewSchema>;

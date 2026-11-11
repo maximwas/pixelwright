@@ -2,7 +2,12 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { MODE_ATTRIBUTE } from "@/core/kernel/names/names.constants.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import { MODEL_NOTE, MODEL_NUMBER, MODEL_TEXT, VARIABLE_VALUE } from "@/core/tokens/model/model.constants.ts";
-import type { ReadyTokens, TokenCollection, TokenVariable } from "@/core/tokens/model/model.schema.ts";
+import type {
+  ReadyTokens,
+  StyleTokenGroups,
+  TokenCollection,
+  TokenVariable,
+} from "@/core/tokens/model/model.schema.ts";
 import { NUMBER_UNITS } from "@/core/tokens/model/number-units.ts";
 import { STYLE_TOKENS } from "@/core/tokens/model/style-tokens.ts";
 import { VARIABLE_CSS, type VariableContext } from "@/core/tokens/model/variable-css.ts";
@@ -36,7 +41,11 @@ export class TokenModel {
     this.#names = names;
   }
 
-  model(raw: RawTokens, collections?: readonly string[]): ReadyTokens {
+  model(
+    raw: RawTokens,
+    collections?: readonly string[],
+    query?: readonly string[],
+  ): ReadyTokens {
     const names = this.#tokenNames(raw);
     const context: VariableContext = {
       tables: this.#tables(raw),
@@ -48,7 +57,11 @@ export class TokenModel {
     const kept = raw.collections.filter(
       (collection) => collections === undefined || wanted.has(collection.name.toLowerCase()),
     );
-    const drafts = kept.map((collection) => this.#draft(collection, raw.variables, context));
+    const matches = this.#matcher(query);
+    const scope = raw.variables.filter((variable) => matches(variable.name, context.names.get(variable.id) ?? ""));
+    const drafts = kept
+      .map((collection) => this.#draft(collection, scope, context))
+      .filter(({ variables }) => query === undefined || variables.length > 0);
     const selectors = this.#selectors(drafts, context.notes);
     const written = drafts.map(({ variables, ...collection }, index) => ({
       ...collection,
@@ -56,11 +69,26 @@ export class TokenModel {
       variables,
     }));
 
-    this.#noteMissing(kept, raw, names, context.notes);
+    this.#noteMissing(kept, scope, raw, context);
 
-    const styles = this.#styles.tokens(raw.styles, context.tables, context.notes);
+    const styles = this.#queried(this.#styles.tokens(raw.styles, context.tables, context.notes), matches);
 
     return { collections: written, styles, notes: [...context.notes] };
+  }
+
+  /** Whether any of the words is in the texts given, in any case; every text without a query. */
+  #matcher(query: readonly string[] | undefined): (...texts: string[]) => boolean {
+    const words = query?.map((word) => word.toLowerCase());
+
+    return (...texts) =>
+      words === undefined || words.some((word) => texts.some((text) => text.toLowerCase().includes(word)));
+  }
+
+  /** The styles whose name or token has a word of the query. */
+  #queried(styles: StyleTokenGroups, matches: (...texts: string[]) => boolean): StyleTokenGroups {
+    const keep = (group: StyleTokenGroups["paint"]) => group.filter(({ name, token }) => matches(name, token));
+
+    return { paint: keep(styles.paint), text: keep(styles.text), effect: keep(styles.effect) };
   }
 
   /** Every variable's CSS name by id, the file's own and the libraries' its aliases point at. */
@@ -127,7 +155,14 @@ export class TokenModel {
   ): TokenVariable {
     const everyField = variable.scopes.length === 1 && variable.scopes[0] === VARIABLE_VALUE.allScopes;
 
+    const chains = collection.modes.flatMap(({ modeId, name }) => {
+      const links = this.#variables.chain(variable.valuesByMode[modeId], context);
+
+      return links === null ? [] : [[name, links] as const];
+    });
+
     return {
+      id: variable.id,
       name: variable.name,
       token: context.names.get(variable.id) ?? this.#names.token(variable.name),
       type: variable.resolvedType,
@@ -137,6 +172,7 @@ export class TokenModel {
           this.#variables.css(variable.valuesByMode[modeId], variable, context),
         ]),
       ),
+      ...(chains.length === 0 ? {} : { aliasOf: Object.fromEntries(chains) }),
       ...(variable.description === undefined ? {} : { description: variable.description }),
       ...(everyField ? {} : { scopes: [...variable.scopes] }),
       ...(Object.keys(variable.codeSyntax ?? {}).length === 0 ? {} : { codeSyntax: { ...variable.codeSyntax } }),
@@ -189,14 +225,12 @@ export class TokenModel {
   /** Every var() target the written values point at but the output does not define, noted with where it lives. */
   #noteMissing(
     kept: readonly RawCollection[],
+    scope: readonly RawVariable[],
     raw: RawTokens,
-    names: ReadonlyMap<string, string>,
-    notes: Set<string>,
+    { names, notes }: VariableContext,
   ): void {
     const written = kept.flatMap((collection) =>
-      raw.variables
-        .filter((variable) => variable.collectionId === collection.id)
-        .map((variable) => ({ variable, collection })),
+      scope.filter((variable) => variable.collectionId === collection.id).map((variable) => ({ variable, collection })),
     );
     const defined = new Set(written.map(({ variable }) => names.get(variable.id)));
     const homes = this.#homes(raw, names);

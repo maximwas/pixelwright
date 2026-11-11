@@ -4025,15 +4025,42 @@
             "maxLength": 200
           }
         },
+        "within": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fields": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "box",
+              "parent",
+              "path",
+              "fills",
+              "strokes",
+              "effects",
+              "layout",
+              "bound",
+              "text",
+              "component",
+              "interactions"
+            ]
+          }
+        },
         "relativeTo": {
           "type": "string",
           "minLength": 1,
           "maxLength": 200
         }
       },
-      "required": [
-        "nodes"
-      ],
       "additionalProperties": false
     },
     "output": {
@@ -6022,6 +6049,125 @@
                     "boolean"
                   ]
                 }
+              },
+              "path": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "parentLayout": {
+                "type": "object",
+                "properties": {
+                  "layoutMode": {
+                    "type": "string"
+                  },
+                  "layoutWrap": {
+                    "type": "string"
+                  },
+                  "primaryAxisAlignItems": {
+                    "type": "string"
+                  },
+                  "counterAxisAlignItems": {
+                    "type": "string"
+                  },
+                  "counterAxisAlignContent": {
+                    "type": "string"
+                  },
+                  "itemSpacing": {
+                    "type": "number"
+                  },
+                  "counterAxisSpacing": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "paddingTop": {
+                    "type": "number"
+                  },
+                  "paddingRight": {
+                    "type": "number"
+                  },
+                  "paddingBottom": {
+                    "type": "number"
+                  },
+                  "paddingLeft": {
+                    "type": "number"
+                  },
+                  "gridRowCount": {
+                    "type": "number"
+                  },
+                  "gridColumnCount": {
+                    "type": "number"
+                  },
+                  "gridRowGap": {
+                    "type": "number"
+                  },
+                  "gridColumnGap": {
+                    "type": "number"
+                  },
+                  "gridRowSizes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "gridColumnSizes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "childCount": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "childCount"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -6044,6 +6190,16 @@
           }
         },
         "missing": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "more": {
+          "type": "boolean",
+          "const": true
+        },
+        "leftIds": {
           "type": "array",
           "items": {
             "type": "string"
