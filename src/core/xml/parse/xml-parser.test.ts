@@ -139,16 +139,16 @@ describe("XmlParser reading", () => {
   it("decodes HTML named entities, numeric ones and the six XML ones", () => {
     const [element] = nodesOf('<A t="&copy;">&mdash; &#x41;&#66; &lt;&amp;&gt;&quot;&apos;&nbsp;</A>');
 
-    expect(element).toMatchObject({ props: { t: "©" }, children: [{ value: "— AB <&>\"' " }] });
+    expect(element).toMatchObject({ props: { t: "©" }, children: [{ value: "— AB <&>\"'\u00a0" }] });
     expect(failure("<A>&#0;</A>").message).toContain("no entity");
     expect(failure("<A>&#x110000;</A>").message).toContain("no entity");
   });
 
   // C-004, B-059
   it("keeps edge spaces written as references, line and paragraph separators and no-break spaces", () => {
-    const [element] = nodesOf("<A>&#32;a b c &#32;</A>");
+    const [element] = nodesOf("<A>&#32;a\u2028b\u2029c\u00a0&#32;</A>");
 
-    expect(element).toMatchObject({ children: [{ value: " a b c  " }] });
+    expect(element).toMatchObject({ children: [{ value: " a\u2028b\u2029c\u00a0 " }] });
   });
 
   it("drops indentation and joins lines by one space, and keeps a lone space between two spans", () => {
