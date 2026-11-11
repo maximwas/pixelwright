@@ -80,6 +80,7 @@ describe("the built server over stdio", () => {
         "variants_read",
         "fonts_check",
         "execute",
+        "types_read",
         "tokens_read",
         "tokens_usage",
         "components_read",
@@ -90,7 +91,7 @@ describe("the built server over stdio", () => {
         "guide",
       ]),
     );
-    expect(tools).toHaveLength(29);
+    expect(tools).toHaveLength(30);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });
     expect(server.errors).toEqual([]);
   });

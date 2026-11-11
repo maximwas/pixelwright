@@ -1,3 +1,4 @@
+import { CODE_LIMITS } from "@/server/app/code-mode/code-mode.constants.ts";
 import { EXECUTE } from "@/shared/ops/execute/execute.constants.ts";
 
 const MS_PER_SECOND = 1_000;
@@ -7,15 +8,20 @@ export const EXECUTE_TOOL = {
   name: "execute",
   title: "Run plugin code",
   description:
-    'Runs JavaScript in the Pixelwright plugin to read the file, for what the read tools do not show: the code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as "mixed"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright\'s helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess "dynamic-page": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma\'s own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin\'s Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. The reads answer what code is most often written for: layers by text (a list, or textRegex), size, visibility, component and the properties instances change, with their ancestors and page (nodes_find, outline, file_map, components_read); a whole subtree with its auto layout gaps and paddings, parent layout, text runs and component properties (inspect within and fields); a token by name with its id and alias chain (tokens_read query); colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.',
+    "Runs JavaScript to read the file, given one of three: `code`, Plugin API code run in the Pixelwright plugin, for what the read tools do not show; `codePath`, the path of a file of such code; `script`, code run on the server where pw.<read>(args) calls a read tool by its camelCase name with its own arguments (pw.nodesFind, pw.inspect, pw.designRead) and utils helps filter and join their answers, for one answer that needs several reads filtered or joined: a script never writes, and reading a key its answer type lacks throws (types_read gives each read's answer type before you write a script; guide script has the limits and utils). Plugin code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep long plugin code in a file and pass its path as codePath: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. The reads answer what code is most often written for: layers by text (a list, or textRegex), size, visibility, component and the properties instances change, with their ancestors and page (nodes_find, outline, file_map, components_read); a whole subtree with its auto layout gaps and paddings, parent layout, text runs and component properties (inspect within and fields); a token by name with its id and alias chain (tokens_read query); colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
 } as const;
 
 export const EXECUTE_FIELD = {
-  code: "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give code or script.",
-  script:
+  code: "JavaScript run in the plugin as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give one of code, codePath or script.",
+  codePath:
     "A file of such code on the server's disk, run instead of code. It is read at every call, so the file as it is now runs, after a plugin restart too. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
-  timeout: "Seconds to wait for the code: 10 by default, up to 300 for a long task.",
+  script: `JavaScript run on the server, apart from Figma, as the body of an async function given pw (each read tool by its camelCase name: await pw.nodesFind({ ... })), utils and console: \`return\` gives the result, cut past ${CODE_LIMITS.resultChars} characters. At most ${CODE_LIMITS.calls} pw calls a run, ${CODE_LIMITS.inFlight} at once; nothing in it writes.`,
+  timeout: `Seconds to wait: ${EXECUTE.defaultMs / MS_PER_SECOND} by default for code and ${CODE_LIMITS.timeoutMs / MS_PER_SECOND} for a script, up to ${EXECUTE.maxMs / MS_PER_SECOND} for a long task.`,
   note: "When the code ran and only reads (nothing in it writes): the tools that read without code.",
+  calls: "A script's pw calls that succeeded, by function.",
+  clamped: "A script's numbers past their bound, and the bound each call ran with.",
+  resultChars: "The script's result's characters before it was cut to fit.",
+  notShown: "Image handles the script returned past the ones shown after the answer.",
 } as const;
 
 /** The call's timeout in seconds, as the tool takes it: the op's bounds in ms. */
@@ -24,13 +30,15 @@ export const EXECUTE_SECONDS = {
   min: 1,
   max: EXECUTE.maxMs / MS_PER_SECOND,
   default: EXECUTE.defaultMs / MS_PER_SECOND,
+  /** A script's own default: a few dozen reads, each a Figma round trip. */
+  scriptDefault: CODE_LIMITS.timeoutMs / MS_PER_SECOND,
 } as const;
 
-/** A script file (T-151): its path's bound, how it is read, and that a character is at most 4 bytes in UTF-8. */
+/** A codePath file (T-151): its path's bound, how it is read, and that a character is at most 4 bytes in UTF-8. */
 export const EXECUTE_SCRIPT = { pathChars: 1_024, encoding: "utf8", maxBytesPerChar: 4 } as const;
 
 export const EXECUTE_TEXT = {
-  oneOf: "Give code or script, one of them: the code itself, or the path of a file with it.",
+  oneOf: "Give one of code, codePath or script: plugin code, the path of a file of it, or a script over the reads.",
   notAFile: (script: string, path: string) => `${script} is not a file the server can read (${path}).`,
   tooBig: (script: string, bytes: number) =>
     `${script} is ${bytes} bytes: execute runs at most ${EXECUTE.codeChars} characters.`,
@@ -62,7 +70,7 @@ export const SYNTAX = {
   quoted: (line: number, text: string) => `line ${line}: ${text}`,
   atEnd: "    at the end of the code",
   cut: (chars: number) =>
-    `The code ends there, after ${chars} characters: if you sent more, the rest was cut on its way to Pixelwright (a model's reply is limited in tokens). Keep long code or data in a file and pass its path as script.`,
+    `The code ends there, after ${chars} characters: if you sent more, the rest was cut on its way to Pixelwright (a model's reply is limited in tokens). Keep long code or data in a file and pass its path as codePath.`,
 } as const;
 
 /**

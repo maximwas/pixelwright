@@ -107,6 +107,7 @@ describe("the MCP contract", () => {
         "variants_read",
         "fonts_check",
         "execute",
+        "types_read",
         "tokens_read",
         "tokens_usage",
         "components_read",
@@ -117,7 +118,7 @@ describe("the MCP contract", () => {
         "guide",
       ]),
     );
-    expect(tools).toHaveLength(29);
+    expect(tools).toHaveLength(30);
   });
 
   it("lists no outputSchema for the tools that answer in content blocks, so a client keeps the image (T-005)", async () => {

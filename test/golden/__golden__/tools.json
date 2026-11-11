@@ -5801,25 +5801,30 @@
   {
     "name": "execute",
     "title": "Run plugin code",
-    "description": "Runs JavaScript in the Pixelwright plugin to read the file, for what the read tools do not show: the code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. The reads answer what code is most often written for: layers by text (a list, or textRegex), size, visibility, component and the properties instances change, with their ancestors and page (nodes_find, outline, file_map, components_read); a whole subtree with its auto layout gaps and paddings, parent layout, text runs and component properties (inspect within and fields); a token by name with its id and alias chain (tokens_read query); colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
+    "description": "Runs JavaScript to read the file, given one of three: `code`, Plugin API code run in the Pixelwright plugin, for what the read tools do not show; `codePath`, the path of a file of such code; `script`, code run on the server where pw.<read>(args) calls a read tool by its camelCase name with its own arguments (pw.nodesFind, pw.inspect, pw.designRead) and utils helps filter and join their answers, for one answer that needs several reads filtered or joined: a script never writes, and reading a key its answer type lacks throws (types_read gives each read's answer type before you write a script; guide script has the limits and utils). Plugin code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep long plugin code in a file and pass its path as codePath: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. The reads answer what code is most often written for: layers by text (a list, or textRegex), size, visibility, component and the properties instances change, with their ancestors and page (nodes_find, outline, file_map, components_read); a whole subtree with its auto layout gaps and paddings, parent layout, text runs and component properties (inspect within and fields); a token by name with its id and alias chain (tokens_read query); colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "code": {
-          "description": "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give code or script.",
+          "description": "JavaScript run in the plugin as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give one of code, codePath or script.",
           "type": "string",
           "minLength": 1,
           "maxLength": 100000
         },
-        "script": {
+        "codePath": {
           "description": "A file of such code on the server's disk, run instead of code. It is read at every call, so the file as it is now runs, after a plugin restart too. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
           "type": "string",
           "minLength": 1,
           "maxLength": 1024
         },
+        "script": {
+          "description": "JavaScript run on the server, apart from Figma, as the body of an async function given pw (each read tool by its camelCase name: await pw.nodesFind({ ... })), utils and console: `return` gives the result, cut past 24000 characters. At most 50 pw calls a run, 4 at once; nothing in it writes.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100000
+        },
         "timeout": {
-          "default": 10,
-          "description": "Seconds to wait for the code: 10 by default, up to 300 for a long task.",
+          "description": "Seconds to wait: 10 by default for code and 60 for a script, up to 300 for a long task.",
           "type": "number",
           "minimum": 1,
           "maximum": 300
@@ -5850,6 +5855,55 @@
         "note": {
           "description": "When the code ran and only reads (nothing in it writes): the tools that read without code.",
           "type": "string"
+        },
+        "calls": {
+          "description": "A script's pw calls that succeeded, by function.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "clamped": {
+          "description": "A script's numbers past their bound, and the bound each call ran with.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "call": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "given": {
+                "type": "number"
+              },
+              "used": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "call",
+              "path",
+              "given",
+              "used"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "resultChars": {
+          "description": "The script's result's characters before it was cut to fit.",
+          "type": "number"
+        },
+        "notShown": {
+          "description": "Image handles the script returned past the ones shown after the answer.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -5863,6 +5917,79 @@
       "readOnlyHint": false,
       "destructiveHint": true,
       "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "types_read",
+    "title": "Read answer types",
+    "description": "Gives the whole answer type of each named read as TypeScript, every field at every level with its comment, from the tool's own output schema: read it before an execute script uses an answer, since a script that reads a key the type lacks throws. Name a tool as this list does (nodes_find) or as a script calls it (nodesFind, pw.nodesFind); names that are no read come back in unknown.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tools": {
+          "minItems": 1,
+          "maxItems": 40,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": "The reads to describe, e.g. nodes_find, inspect, design_read."
+        }
+      },
+      "required": [
+        "tools"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "types": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string"
+              },
+              "call": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "tool",
+              "call",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          "description": "One per read named, in the order asked: its tool's name, how a script calls it, and its answer type."
+        },
+        "unknown": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The names asked that are no read a script can call."
+        }
+      },
+      "required": [
+        "types",
+        "unknown"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
       "openWorldHint": false
     }
   },
@@ -9162,7 +9289,7 @@
   {
     "name": "guide",
     "title": "Pixelwright guide",
-    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named and read: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).). Read workflow first in a new task, and xml before building from design_read.",
+    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named and read: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).); script (An execute script over the reads: its limits, its utils, images and the answer types it reads by.). Read workflow first in a new task, and xml before building from design_read.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -9173,7 +9300,8 @@
             "workflow",
             "xml",
             "tokens",
-            "assets"
+            "assets",
+            "script"
           ]
         }
       },

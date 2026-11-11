@@ -76,6 +76,7 @@ import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER, ToolRunner } from "@/server
 import { BaselineProviders } from "@/server/main/baseline-providers.ts";
 import { BridgeProviders } from "@/server/main/bridge-providers.ts";
 import { CheckProviders } from "@/server/main/check-providers.ts";
+import { CodeModeProviders } from "@/server/main/code-mode-providers.ts";
 import { ComponentProviders } from "@/server/main/component-providers.ts";
 import { ConfigReader, type ServerConfig } from "@/server/main/config/config-reader.ts";
 import { ContainerToolFactory } from "@/server/main/container-tool-factory.ts";
@@ -162,6 +163,7 @@ export class ServerMain {
     new ComponentProviders().register(container, config.home);
     new TokenProviders().register(container);
     new BridgeProviders().register(container, config);
+    new CodeModeProviders().register(container);
     this.#bindServices(container);
 
     return container;
