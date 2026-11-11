@@ -5384,7 +5384,7 @@
   {
     "name": "design_apply",
     "title": "Write a design",
-    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=\"none\", width=\"auto\" to hug, display=\"block\" to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; a TextPath (text on a path) along d, an SVG path, or arc=\"cx cy r from to\" in its parent, whose text and start change later but whose path does not; an Instance by component=\"Name\" variant=\"Prop=Value\" props=\"Label=Text\"; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=\"id\" copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write. Files (src, url()) are read from the server's disk. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
+    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. Strict XML: an unclosed tag, a wrong closing tag, a duplicate attribute, a bare & or a < in a value is refused as INVALID_XML with its line and column. Names may hold $ ($css), HTML entities like &mdash; are read, CDATA is text as written. dryRun checks the XML without writing.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5394,143 +5394,44 @@
           "maxLength": 2000000,
           "description": "Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer."
         },
-        "parent": {
-          "description": "Where top-level new layers go: a frame's or page's id. Default: the current page, beside its layers.",
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
-        },
         "dryRun": {
           "default": false,
-          "description": "Check ids, tokens and fonts without writing, listing the layers it would create (without ids) and change; works with Allow edits off.",
+          "description": "Check without writing: the answer says what would change. Works with Allow edits off.",
           "type": "boolean"
         },
         "version": {
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens."
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "required": [
         "xml"
       ],
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
       "properties": {
-        "created": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "line": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "ref": {
-                "type": "string"
-              },
-              "id": {
-                "type": "string"
-              },
-              "tag": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "line",
-              "ref",
-              "tag"
-            ],
-            "additionalProperties": false
-          }
+        "elements": {
+          "type": "number",
+          "description": "How many elements the XML holds."
         },
-        "changed": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "errors": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "line": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "column": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "id": {
-                "type": "string"
-              },
-              "attribute": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "hint": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "line",
-              "column",
-              "message"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "properties": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "component": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "TEXT",
-                  "BOOLEAN",
-                  "INSTANCE_SWAP"
-                ]
-              }
-            },
-            "required": [
-              "component",
-              "name",
-              "type"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "dryRun": {
-          "type": "boolean"
+        "dry": {
+          "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
+          "type": "boolean",
+          "const": true
         },
         "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
           "type": "object",
           "properties": {
             "id": {
@@ -5554,10 +5455,7 @@
         }
       },
       "required": [
-        "created",
-        "changed",
-        "errors",
-        "dryRun"
+        "elements"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false

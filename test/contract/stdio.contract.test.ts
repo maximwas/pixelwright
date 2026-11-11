@@ -92,7 +92,7 @@ describe("the built server over stdio", () => {
         "guide",
       ]),
     );
-    expect(tools).toHaveLength(31);
+    expect(tools).toHaveLength(32);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });
     expect(server.errors).toEqual([]);
   });
