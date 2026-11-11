@@ -282,6 +282,23 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 `test/` holds the contract, golden, guard and live tests; `scripts/` the build, install and name checks, `check-pack.ts` (the tarball installed and run in a temp folder) and `build-docs.ts` (the site in `docs/` from README, the manifests, the guide topics and CHANGELOG.md); `old/` the
 0.7.0 source, kept for reference and imported by nothing.
 
+### The script sandbox (execute script)
+
+`execute { script }` runs model-written JavaScript on the server, never in Figma: `ExecuteTool` hands it to
+`server/app/code-mode/CodeRunner` (deadline, cancel, the result cut by `ResultCut`, the images named after the answer),
+which runs it through the `CodeSandbox` port (`core/ports/code-sandbox.port.ts`); the adapter is
+`server/adapters/sandbox/QuickJsSandbox` (quickjs-emscripten-core with the quickjs-ng WASM build: a fresh runtime per
+run, 64 MB, 256 KB stack, 1 s CPU slices). In the run, `pw.<read>(args)` crosses back to the host as plain JSON:
+`RunCalls` (50 calls, 4 at once) and `PwBridge` parse the args with the tool's own input schema and run the tool
+through `ToolRunner` like any MCP call; `ToolAnswer.value` is what a script gets in place of structuredContent
+(design_read's xml, json and tree), and `McpEndpoint` strips it from client answers. The prelude
+(`sandbox.constants.ts`) wraps each answer in a Proxy by its `AnswerShape`, which `AnswerShapes` derives from the
+tool's outputSchema: an unknown key throws with the fields there are. `utils` is `sandbox/guest/pw-utils.ts`, bundled
+by `pnpm build:pw` into `sandbox/data/pw-utils.json`; the same script writes `types_read`'s answer types
+(`tools/types-read/data/answer-types.json`) from the outputSchemas with json-schema-to-typescript. `PW_TOOLS`
+(`ToolCatalog.reads()`, camelCase names) is bound in `server/main/code-mode-providers.ts`. The plugin is not involved
+beyond the reads' own ops.
+
 ## Invariants
 
 - Imports go one way: `shared` imports nothing from `src`; `core` imports `shared`; `server/app` imports `core` and

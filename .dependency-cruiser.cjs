@@ -1,5 +1,5 @@
 // .dependency-cruiser.cjs  (pnpm check:deps, part of pnpm lint)
-const SERVER_ONLY = "node_modules/(ws|pino|atomically|@modelcontextprotocol|@orpc|@clack|fast-png|pixelmatch|@jsquash|image-size|acorn|acorn-walk|fuse\\.js|semver)/";
+const SERVER_ONLY = "node_modules/(ws|pino|atomically|@modelcontextprotocol|@orpc|@clack|fast-png|pixelmatch|@jsquash|image-size|acorn|acorn-walk|fuse\\.js|semver|quickjs-emscripten-core|@jitl|p-limit)/";
 const rule = (name, from, to) => ({ name, severity: "error", from, to });
 
 module.exports = {
