@@ -2,17 +2,17 @@ import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
 import { NAME_VALUE_LIST } from "@/core/kernel/lists/name-value-list.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
-import { InstanceProperties } from "@/plugin/adapters/figma/layer-meta/instance-properties.ts";
 import { LAYER_WALK } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
 import { PAGE_LOADER } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
-import { FIND_RUN, FIND_TEXT } from "@/plugin/operations/find/find.constants.ts";
+import { FIND_REGEX, FIND_TEXT } from "@/plugin/operations/find/find.constants.ts";
+import { FoundLayer } from "@/plugin/operations/find/found-layer.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { FIND_COUNT } from "@/shared/ops/find/find.constants.ts";
 import type { findOp } from "@/shared/ops/find/find.manifest.ts";
-import type { Counted, Found } from "@/shared/ops/find/find.schema.ts";
+import type { Counted, SizeRange } from "@/shared/ops/find/find.schema.ts";
 
 type FindInput = zod.output<typeof findOp.input>;
 
@@ -43,7 +43,7 @@ interface Tally {
  */
 @injectable()
 export class FindOperation extends Operation<FindInput, FindOutput> {
-  readonly #properties = new InstanceProperties();
+  readonly #layers;
   readonly #loader;
   readonly #walk;
   readonly #lists;
@@ -58,6 +58,7 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     this.#loader = loader;
     this.#walk = walk;
     this.#lists = lists;
+    this.#layers = new FoundLayer(walk);
   }
 
   protected async execute(input: FindInput): Promise<FindOutput> {
@@ -66,7 +67,11 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     // server gives what is left of its one budget (P-075).
     const deadline = this.#walk.deadline(input.budgetMs);
     const roots = await this.#loader.children(input.within);
-    const byMain = input.component !== undefined || variant !== undefined || (input.counts ?? false);
+    const byMain =
+      input.component !== undefined ||
+      input.componentId !== undefined ||
+      variant !== undefined ||
+      (input.counts ?? false);
     const walked = this.#walk.until(this.#walk.layers(roots), deadline, {
       accepts: this.#matcher(input),
       enough: byMain ? Number.POSITIVE_INFINITY : input.limit + 1,
@@ -77,7 +82,9 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     const cut = walked.cut || search.cut;
 
     return {
-      nodes: await Promise.all(search.found.slice(0, input.limit).map((node) => this.#found(node))),
+      nodes: await Promise.all(
+        search.found.slice(0, input.limit).map((node) => this.#layers.of(node, input.properties ?? false)),
+      ),
       more: cut || search.found.length > input.limit,
       ...(variant === undefined ? {} : { variant }),
       ...(search.counts === undefined ? {} : { counts: search.counts }),
@@ -103,15 +110,55 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
   #matcher(input: FindInput): (node: SceneNode) => boolean {
     const name = input.name?.toLowerCase();
     const type = input.type?.toUpperCase();
-    const text = input.text?.toLowerCase();
-    const instances = input.component !== undefined || input.variant !== undefined;
+    const text = this.#textMatcher(input);
+    const instances = input.component !== undefined || input.variant !== undefined || input.componentId !== undefined;
 
     return (node) =>
       (name === undefined || node.name.toLowerCase().includes(name)) &&
       (type === undefined || node.type === type) &&
-      (text === undefined || (node.type === FIGMA_NODE_TYPE.text && node.characters.toLowerCase().includes(text))) &&
+      (text === null || (node.type === FIGMA_NODE_TYPE.text && text(node.characters))) &&
+      (input.fontSize === undefined || (node.type === FIGMA_NODE_TYPE.text && this.#sized(node, input.fontSize))) &&
       (!instances || node.type === FIGMA_NODE_TYPE.instance) &&
       (input.visible === undefined || this.#walk.hidden(node) !== input.visible);
+  }
+
+  /** Whether any of a text's font sizes is within every bound asked for (a mixed text's runs each count). */
+  #sized(node: TextNode, { lt, lte, gt, gte }: SizeRange): boolean {
+    return [this.#layers.fontSize(node)]
+      .flat()
+      .some(
+        (size) =>
+          (lt === undefined || size < lt) &&
+          (lte === undefined || size <= lte) &&
+          (gt === undefined || size > gt) &&
+          (gte === undefined || size >= gte),
+      );
+  }
+
+  /** Whether characters hold any phrase asked for and match the pattern, in any case; null when neither is asked. */
+  #textMatcher({ text, textRegex }: FindInput): ((characters: string) => boolean) | null {
+    if (text === undefined && textRegex === undefined) {
+      return null;
+    }
+
+    const phrases = text === undefined ? [] : [text].flat().map((phrase) => phrase.toLowerCase());
+    const pattern = textRegex === undefined ? null : this.#regex(textRegex);
+
+    return (characters) =>
+      (phrases.length === 0 || phrases.some((phrase) => characters.toLowerCase().includes(phrase))) &&
+      (pattern === null || pattern.test(characters));
+  }
+
+  /** The pattern asked for; one JavaScript cannot read is refused with its words. */
+  #regex(source: string): RegExp {
+    try {
+      return new RegExp(source, FIND_REGEX.flags);
+    } catch (error) {
+      throw new PixelwrightError(
+        ERROR_CODE.opFailed,
+        FIND_TEXT.regex(error instanceof Error ? error.message : String(error)),
+      );
+    }
   }
 
   /**
@@ -124,7 +171,7 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     variant: Values | undefined,
     deadline: number,
   ): Promise<Search> {
-    const wanted = this.#mainMatcher(input.component, variant);
+    const wanted = this.#mainMatcher(input, variant);
     const tally: Tally = { found: [], counts: (input.counts ?? false) ? new Map() : null, limit: input.limit };
     const cut = await this.#walk.lookUp(candidates, deadline, {
       lookup: (node) => this.#mainOf(node),
@@ -164,11 +211,12 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
   }
 
   /**
-   * Whether a main component is named like the component asked for (its own name or its set's) and has every variant
-   * value asked for, names and values in any case; with neither asked, every layer matches.
+   * Whether a main component is the one asked for by id (itself or its set), is named like the component asked for (its
+   * own name or its set's) and has every variant value asked for, names and values in any case; with none asked, every
+   * layer matches.
    */
-  #mainMatcher(component: string | undefined, variant: Values | undefined): (main: ComponentNode | null) => boolean {
-    if (component === undefined && variant === undefined) {
+  #mainMatcher({ component, componentId }: FindInput,    variant: Values | undefined): (main: ComponentNode | null) => boolean {
+    if (component === undefined && componentId === undefined && variant === undefined) {
       return () => true;
     }
 
@@ -180,11 +228,13 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
         return false;
       }
 
-      const names = [main.name, main.parent?.type === FIGMA_NODE_TYPE.componentSet ? main.parent.name : undefined];
+      const set = main.parent?.type === FIGMA_NODE_TYPE.componentSet ? main.parent : null;
+      const names = [main.name, set?.name];
       // A variant's values come from Figma, or from its name when Figma gives none.
       const values = new Map(this.#lowered(main.variantProperties ?? this.#lists.parse(main.name) ?? {}));
 
       return (
+        (componentId === undefined || main.id === componentId || set?.id === componentId) &&
         (query === undefined || names.some((name) => name?.toLowerCase().includes(query))) &&
         pairs.every(([name, value]) => values.get(name) === value)
       );
@@ -193,50 +243,5 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
 
   #lowered(values: Values): [string, string][] {
     return Object.entries(values).map(([name, value]) => [name.toLowerCase(), value.toLowerCase()]);
-  }
-
-  async #found(node: SceneNode): Promise<Found> {
-    const box = "absoluteBoundingBox" in node ? node.absoluteBoundingBox : null;
-
-    return {
-      id: node.id,
-      name: node.name,
-      type: node.type,
-      box,
-      path: this.#path(node),
-      ...(this.#walk.hidden(node) ? { hidden: true as const } : {}),
-      ...(node.type === FIGMA_NODE_TYPE.text ? { fontSize: this.#fontSize(node) } : {}),
-      ...(node.type === FIGMA_NODE_TYPE.instance ? await this.#changed(node) : {}),
-    };
-  }
-
-  /** A text's font size, or its distinct sizes in text order when it mixes them (Figma's mixed is a symbol). */
-  #fontSize(node: TextNode): number | number[] {
-    return typeof node.fontSize === "number"
-      ? node.fontSize
-      : [...new Set(node.getStyledTextSegments([...FIND_RUN.fontSize]).map(({ fontSize }) => fontSize))];
-  }
-
-  /** The instance's properties that differ from its component's defaults; none when nothing differs. */
-  async #changed(node: InstanceNode): Promise<Pick<Found, "changed">> {
-    const main = await node.getMainComponentAsync();
-    const changed = main === null ? {} : this.#properties.changed(node, main);
-
-    return Object.keys(changed).length === 0 ? {} : { changed };
-  }
-
-  /** The names of a layer's ancestors below its page, outermost first. */
-  #path(node: SceneNode): string[] {
-    const names: string[] = [];
-
-    for (
-      let current = node.parent;
-      current !== null && current.type !== FIGMA_NODE_TYPE.page && current.type !== FIGMA_NODE_TYPE.document;
-      current = current.parent
-    ) {
-      names.unshift(current.name);
-    }
-
-    return names;
   }
 }

@@ -626,6 +626,9 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 10
+        },
+        "absolute": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -747,6 +750,11 @@
               "current": {
                 "type": "boolean"
               },
+              "childCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
               "total": {
                 "type": "integer",
                 "minimum": -9007199254740991,
@@ -779,6 +787,11 @@
                         "completed"
                       ]
                     },
+                    "childCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "children": {
                       "type": "array",
                       "items": {
@@ -805,6 +818,11 @@
                               "ready",
                               "completed"
                             ]
+                          },
+                          "childCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
                           }
                         },
                         "required": [
@@ -896,9 +914,54 @@
           "maxLength": 200
         },
         "text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            {
+              "minItems": 1,
+              "maxItems": 50,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            }
+          ]
+        },
+        "textRegex": {
           "type": "string",
           "minLength": 1,
           "maxLength": 200
+        },
+        "fontSize": {
+          "type": "object",
+          "properties": {
+            "lt": {
+              "type": "number"
+            },
+            "lte": {
+              "type": "number"
+            },
+            "gt": {
+              "type": "number"
+            },
+            "gte": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "componentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "properties": {
+          "type": "boolean"
         },
         "component": {
           "type": "string",
@@ -989,7 +1052,47 @@
               "path": {
                 "type": "array",
                 "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "The layer's ancestors below its page, outermost first, each by id, name and type."
+              },
+              "characters": {
+                "description": "A text's characters, its first 200.",
+                "type": "string"
+              },
+              "cut": {
+                "description": "The text has more than the 200 characters given.",
+                "type": "boolean",
+                "const": true
+              },
+              "properties": {
+                "description": "With properties: every component property's value on the instance, by name.",
+                "type": "object",
+                "propertyNames": {
                   "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "boolean"
+                  ]
                 }
               },
               "hidden": {
@@ -6766,6 +6869,12 @@
         },
         "links": {
           "type": "boolean"
+        },
+        "instances": {
+          "type": "boolean"
+        },
+        "references": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -6865,6 +6974,73 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
+              },
+              "instanceNodes": {
+                "description": "With instances: the component's instances (a set's, of every variant), each with its page; 100 at most.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "page": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "page"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "instanceNodesMore": {
+                "description": "There are more than the 100 instances listed.",
+                "type": "boolean",
+                "const": true
+              },
+              "instanceNodesSkipped": {
+                "description": "With instances: its instances were not listed, only the first 25 components listed get them; ask with query or a smaller limit.",
+                "type": "boolean",
+                "const": true
+              },
+              "references": {
+                "description": "With references: per property, the layers inside the component bound to it, and the field each binds.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "field"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
               },
               "exposed": {
                 "type": "array",

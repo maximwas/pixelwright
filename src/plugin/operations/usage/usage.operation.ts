@@ -122,10 +122,10 @@ export class UsageOperation extends Operation<UsageInput, UsageOutput> {
     );
   }
 
-  /** The visible paints' colours bound to no variable: a solid's, and each gradient stop's. */
+  /** The visible paints' colours (opacity above 0) bound to no variable: a solid's, and each gradient stop's. */
   #raw(property: string, paints: readonly Paint[]): RawUse[] {
     return paints
-      .filter((paint) => paint.visible ?? true)
+      .filter((paint) => (paint.visible ?? true) && (paint.opacity ?? 1) > 0)
       .flatMap((paint) => {
         if (paint.type === USAGE_PAINT.solid) {
           return paint.boundVariables?.color === undefined ? [this.#channels(paint.color)] : [];

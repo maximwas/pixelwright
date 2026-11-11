@@ -5,7 +5,7 @@ import { COMPONENTS, COMPONENTS_SCOPE } from "@/shared/ops/components/components
 import { componentsOp } from "@/shared/ops/components/components.manifest.ts";
 import { ComponentEntrySchema, ComponentLinkSchema } from "@/shared/ops/components/components.schema.ts";
 
-const { scope, within, query, limit } = componentsOp.input.shape;
+const { scope, within, query, limit, instances, references } = componentsOp.input.shape;
 
 /** A Dev Mode link with the project file a code link points at (T-192). */
 const ListedLinkSchema = zod.extend(ComponentLinkSchema, {
@@ -24,6 +24,8 @@ export const ComponentsReadInputSchema = zod.strictObject({
     .exactOptional(zod.array(zod.keyof(ListedSchema)).check(zod.minLength(1)))
     .check(zod.describe(COMPONENTS_READ_FIELD.fields)),
   links: zod._default(zod.boolean(), false).check(zod.describe(COMPONENTS_READ_FIELD.links)),
+  instances: instances.check(zod.describe(COMPONENTS_READ_FIELD.instances)),
+  references: references.check(zod.describe(COMPONENTS_READ_FIELD.references)),
   file: FileInputSchema,
 });
 

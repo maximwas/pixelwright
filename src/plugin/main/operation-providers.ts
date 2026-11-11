@@ -9,6 +9,7 @@ import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
+import { COMPONENT_DETAILS, ComponentDetails } from "@/plugin/operations/components/component-details.ts";
 import { COMPONENT_ENTRIES, ComponentEntries } from "@/plugin/operations/components/component-entries.ts";
 import { COMPONENT_FINDER, ComponentFinder } from "@/plugin/operations/components/component-finder.ts";
 import { COMPONENT_LINKS, ComponentLinks } from "@/plugin/operations/components/component-links.ts";
@@ -87,6 +88,7 @@ export class OperationProviders {
       .bind({ provide: COMPONENT_ENTRIES, useClass: ComponentEntries })
       .bind({ provide: COMPONENT_FINDER, useClass: ComponentFinder })
       .bind({ provide: EXPOSED_INSTANCES, useClass: ExposedInstances })
+      .bind({ provide: COMPONENT_DETAILS, useClass: ComponentDetails })
       .bind({ provide: COMPONENT_LINKS, useClass: ComponentLinks })
       .bind({ provide: USED_TOKENS, useClass: UsedTokens })
       .bind({ provide: FILE_TOKENS, useClass: FileTokens })

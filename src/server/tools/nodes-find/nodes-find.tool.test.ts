@@ -66,6 +66,60 @@ class CountingPlugin implements PluginLink {
   }
 }
 
+/** A plugin whose every page has one Card frame at its top. */
+class CardsPlugin extends CountingPlugin {
+  override async request(request: OpRequest): Promise<unknown> {
+    if (request.op === "file_map") {
+      return super.request(request);
+    }
+
+    const { within } = request.input as { within: string };
+
+    return { nodes: [{ id: `${within}5`, name: "Card", type: "FRAME", box: null, path: [] }], more: false };
+  }
+}
+
+// Within "file", each layer found names the page it is on: the server knows which page's find gave it.
+it("names the page of every layer found within the file", async () => {
+  const clock = new SpentClock();
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", new CardsPlugin(clock), []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+  const answer = await tool.execute({ within: "file", name: "Card" });
+
+  expect(answer.structuredContent).toEqual({
+    nodes: PAGES.map((page) => ({
+      id: `${page}5`,
+      name: "Card",
+      type: "FRAME",
+      box: null,
+      path: [],
+      page: { id: page, name: page },
+    })),
+    more: false,
+  });
+});
+
+// fields keeps a long answer short: only the fields named, id, name and type always.
+it("keeps only the fields asked for, with id, name and type", async () => {
+  const clock = new SpentClock();
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", new CardsPlugin(clock), []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+  const answer = await tool.execute({ within: "file", name: "Card", fields: ["page"] });
+
+  expect(answer.structuredContent).toEqual({
+    nodes: PAGES.map((page) => ({ id: `${page}5`, name: "Card", type: "FRAME", page: { id: page, name: page } })),
+    more: false,
+  });
+});
+
 // P-075: counting through the file has one 20 s budget, not one per page; what is left unread says more and countsCut.
 it("gives each page's find what the pages before it left of 20 s, and stops cut once it is spent", async () => {
   const clock = new SpentClock();
@@ -108,4 +162,34 @@ it("names the current page it searched, and hints within when it found nothing t
     page: "1:1",
     hint: 'Nothing found on the current page, "1:1": pass within (a page id, or "file" for every page) to search elsewhere.',
   });
+});
+
+// A pattern that backtracks exponentially would freeze Figma in one uninterruptible test: it is refused before the op.
+it.each([["(a+)+$"], ["^(\\w+\\s?)*$"]])("refuses the pattern %s without calling the plugin", async (textRegex) => {
+  const clock = new SpentClock();
+  const plugin = new CountingPlugin(clock);
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", plugin, []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+
+  await expect(tool.execute({ within: "1:1", textRegex })).rejects.toThrow(/freezes Figma/);
+  expect(plugin.finds).toEqual([]);
+});
+
+it.each([["\\d+px"], ["^\\$\\d+"]])("sends the pattern %s to the plugin", async (textRegex) => {
+  const clock = new SpentClock();
+  const plugin = new CountingPlugin(clock);
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", plugin, []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+
+  await tool.execute({ within: "1:1", textRegex });
+
+  expect(plugin.finds).toHaveLength(1);
 });

@@ -621,7 +621,7 @@
   {
     "name": "file_map",
     "title": "Map the file",
-    "description": "Every page of the file by id and name, with its top layers (frames, sections, components) and, inside each section, its own, with their types and sizes, in one call: where to start in a big file. Pages load one at a time; past the time a call has, more: true and the pages left have no nodes (outline them one by one). A page Figma cannot load (its connection is down, say) has no nodes either and is in pagesNotRead with Figma's words; the other pages are still mapped.",
+    "description": "Every page of the file by id and name, with its top layers (frames, sections, components) and, inside each section, its own, with their types, sizes and childCount (how many children each has; a page's childCount is its top layers), in one call: where to start in a big file. Pages load one at a time; past the time a call has, more: true and the pages left have no nodes (outline them one by one). A page Figma cannot load (its connection is down, say) has no nodes either and is in pagesNotRead with Figma's words; the other pages are still mapped.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -651,6 +651,11 @@
               },
               "current": {
                 "type": "boolean"
+              },
+              "childCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "total": {
                 "type": "integer",
@@ -684,6 +689,11 @@
                         "completed"
                       ]
                     },
+                    "childCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "children": {
                       "type": "array",
                       "items": {
@@ -710,6 +720,11 @@
                               "ready",
                               "completed"
                             ]
+                          },
+                          "childCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
                           }
                         },
                         "required": [
@@ -928,7 +943,7 @@
   {
     "name": "nodes_find",
     "title": "Find layers",
-    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring), component (an instance's component or component set name) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes and the names of their ancestors, with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
+    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance's component or component set name), componentId (an instance's component, or any variant of a component set, by id) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes, a text's characters (its first 200, cut: true past them), and its ancestors' ids, names and types in `path` (within \"file\" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults; properties: true gives every property's value), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {\"gte\": 12, \"lt\": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields [\"fontSize\"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -943,14 +958,64 @@
           "maxLength": 200
         },
         "text": {
+          "description": "Texts whose characters contain this, or any of these phrases, in any case.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            {
+              "minItems": 1,
+              "maxItems": 50,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            }
+          ]
+        },
+        "textRegex": {
+          "description": "Texts whose characters match this JavaScript regular expression, in any case, e.g. \"^\\$\\d+\".",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
+        },
+        "fontSize": {
+          "description": "Texts by font size in px: lt (under), lte (up to), gt (over) and gte (from), e.g. {\"gte\": 12, \"lt\": 16} for 12 up to under 16; a text with mixed sizes matches when any size does.",
+          "type": "object",
+          "properties": {
+            "lt": {
+              "type": "number"
+            },
+            "lte": {
+              "type": "number"
+            },
+            "gt": {
+              "type": "number"
+            },
+            "gte": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
         },
         "component": {
           "type": "string",
           "minLength": 1,
           "maxLength": 200
+        },
+        "componentId": {
+          "description": "Instances of this component, or of any variant of this component set, by id.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "properties": {
+          "description": "Also give every component property's value on each instance found.",
+          "type": "boolean"
         },
         "variant": {
           "description": "Instances of one variant, e.g. \"State=Hover, Size=L\": every value given must be the main component's (in any order and case; the rest may be anything).",
@@ -985,6 +1050,28 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 500
+        },
+        "fields": {
+          "description": "Only these fields of each layer found, besides id, name and type, e.g. [\"fontSize\"] drops box and path. Default: all.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "type",
+              "box",
+              "path",
+              "characters",
+              "cut",
+              "properties",
+              "hidden",
+              "fontSize",
+              "changed",
+              "page"
+            ]
+          }
         },
         "file": {
           "type": "string",
@@ -1047,7 +1134,47 @@
               "path": {
                 "type": "array",
                 "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "The layer's ancestors below its page, outermost first, each by id, name and type."
+              },
+              "characters": {
+                "description": "A text's characters, its first 200.",
+                "type": "string"
+              },
+              "cut": {
+                "description": "The text has more than the 200 characters given.",
+                "type": "boolean",
+                "const": true
+              },
+              "properties": {
+                "description": "With properties: every component property's value on the instance, by name.",
+                "type": "object",
+                "propertyNames": {
                   "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "boolean"
+                  ]
                 }
               },
               "hidden": {
@@ -1081,14 +1208,29 @@
                     "boolean"
                   ]
                 }
+              },
+              "page": {
+                "description": "Within \"file\": the page the layer is on.",
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
               "id",
               "name",
-              "type",
-              "box",
-              "path"
+              "type"
             ],
             "additionalProperties": false
           }
@@ -1163,7 +1305,7 @@
   {
     "name": "outline",
     "title": "Outline a frame",
-    "description": "The layer tree of a frame, a page or the current page, as light XML: tag (the Figma type), id, name and box (x and y relative to the outlined node) per layer, to `depth` levels; an instance also names its component and variant, so repeated components show. Use it to find the sections of a big frame before reading one with design_read. A layer with `$children=\"N\"` has N children not listed here: outline it on its own.",
+    "description": "The layer tree of a frame, a page or the current page, as light XML: tag (the Figma type), id, name and box (x and y relative to the outlined node; absolute: true gives them in page coordinates) per layer, to `depth` levels; an instance also names its component and variant, so repeated components show. Use it to find the sections of a big frame before reading one with design_read. A layer with `$children=\"N\"` has N children not listed here: outline it on its own.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1179,6 +1321,10 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 10
+        },
+        "absolute": {
+          "description": "true: x and y in page coordinates, as Figma's absoluteBoundingBox. Default: relative to the outlined node.",
+          "type": "boolean"
         },
         "file": {
           "type": "string",
@@ -7876,7 +8022,7 @@
   {
     "name": "components_read",
     "title": "Read the components",
-    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
+    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, and for a VARIANT property its options: the values it can take), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `instances: true` lists its instances in `instanceNodes` {id, name, page} (100 at most, instanceNodesMore past them; for the first 25 components listed only, the rest carry instanceNodesSkipped); `references: true` lists per property the layers bound to it {id, name, field}. `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -7924,6 +8070,10 @@
               "variants",
               "properties",
               "instances",
+              "instanceNodes",
+              "instanceNodesMore",
+              "instanceNodesSkipped",
+              "references",
               "exposed",
               "links",
               "error"
@@ -7933,6 +8083,14 @@
         "links": {
           "default": false,
           "description": "Also read the links people attached in Dev Mode (Figma's servers, paid plans only).",
+          "type": "boolean"
+        },
+        "instances": {
+          "description": "Also list each component's instances (a set's, of every variant) with their pages, 100 at most, for the first 25 components listed (the rest say instanceNodesSkipped).",
+          "type": "boolean"
+        },
+        "references": {
+          "description": "Also list, per property, the layers inside the component bound to it and the field each binds (visible, characters, mainComponent).",
           "type": "boolean"
         },
         "file": {
@@ -8034,6 +8192,73 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
+              },
+              "instanceNodes": {
+                "description": "With instances: the component's instances (a set's, of every variant), each with its page; 100 at most.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "page": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "page"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "instanceNodesMore": {
+                "description": "There are more than the 100 instances listed.",
+                "type": "boolean",
+                "const": true
+              },
+              "instanceNodesSkipped": {
+                "description": "With instances: its instances were not listed, only the first 25 components listed get them; ask with query or a smaller limit.",
+                "type": "boolean",
+                "const": true
+              },
+              "references": {
+                "description": "With references: per property, the layers inside the component bound to it, and the field each binds.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "field"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
               },
               "exposed": {
                 "type": "array",

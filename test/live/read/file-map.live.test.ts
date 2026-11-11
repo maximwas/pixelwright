@@ -5,7 +5,9 @@ import { TEST_MCP } from "../support/test-mcp.ids.ts";
 const START_HERE = TEST_MCP.pages[0];
 
 interface MapLayer {
+  readonly id: string;
   readonly name: string;
+  readonly childCount?: number;
   readonly width: number;
   readonly height: number;
   readonly devStatus?: string;
@@ -13,7 +15,9 @@ interface MapLayer {
 }
 
 interface MapPage {
+  readonly id: string;
   readonly name: string;
+  readonly childCount?: number;
   readonly current: boolean;
   readonly nodes?: MapLayer[];
 }
@@ -29,6 +33,28 @@ describe("read/file_map", () => {
   });
 
   afterAll(() => client.close());
+
+  const run = async (code: string): Promise<unknown> => (await client.call("execute", { file, code })).result;
+
+  // Gap 3: the counts plugin code read from children.length, of each page and of each layer the map lists.
+  it("gives each page's top-level layer count and each listed layer's children count", async () => {
+    const { pages } = await client.call("file_map", { file });
+    const truth = await run(`await figma.loadAllPagesAsync();
+return figma.root.children.map((page) => ({
+  id: page.id,
+  childCount: page.children.length,
+  layers: Object.fromEntries([...page.children, ...page.children.flatMap((node) => node.type === "SECTION" ? node.children : [])].map((node) => [node.id, "children" in node ? node.children.length : null])),
+}));`);
+    const answer = (pages as MapPage[]).map(({ id, childCount, nodes = [] }) => ({
+      id,
+      childCount,
+      layers: Object.fromEntries(
+        [...nodes, ...nodes.flatMap(({ children = [] }) => children)].map((node) => [node.id, node.childCount ?? null]),
+      ),
+    }));
+
+    expect(answer).toEqual(truth);
+  });
 
   it("maps the three pages, the current one marked, Pricing – Desktop ready for dev, sizes in whole px (T-034)", async () => {
     const { pages, more, pagesNotRead } = await client.call("file_map", { file });
