@@ -3,7 +3,7 @@ export const COMPONENTS_READ_TOOL = {
   name: "components_read",
   title: "Read the components",
   description:
-    'Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library\'s among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, options), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query "icon/" and fields ["name"] lists the icon sets by name.',
+    'Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library\'s among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, and for a VARIANT property its options: the values it can take), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `instances: true` lists its instances in `instanceNodes` {id, name, page} (100 at most, instanceNodesMore past them); `references: true` lists per property the layers bound to it {id, name, field}. `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query "icon/" and fields ["name"] lists the icon sets by name.',
 } as const;
 
 export const COMPONENTS_READ_FIELD = {
@@ -11,6 +11,9 @@ export const COMPONENTS_READ_FIELD = {
   within: "A layer or page id to look in. Default: the current page (used) or every page (local).",
   query: 'Only components whose name contains this, e.g. "icon/" for the icon sets.',
   fields: 'Only these fields of each component, e.g. ["name", "id", "description"]. Default: all.',
+  instances: "Also list each component's instances (a set's, of every variant) with their pages, 100 at most.",
+  references:
+    "Also list, per property, the layers inside the component bound to it and the field each binds (visible, characters, mainComponent).",
   links: "Also read the links people attached in Dev Mode (Figma's servers, paid plans only).",
   path: "The project file a code link points at.",
   components: "Each component, with only the fields asked for when fields is given.",

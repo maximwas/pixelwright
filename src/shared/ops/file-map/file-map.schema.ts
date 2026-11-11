@@ -13,6 +13,8 @@ const MapLayerSchema = zod.object({
   height: zod.number(),
   /** What the designer marked in Dev Mode: ready for development, or completed. */
   devStatus: zod.exactOptional(zod.enum(DEV_STATUS)),
+  /** How many children the layer has; none for a layer that cannot have any. */
+  childCount: zod.exactOptional(zod.int()),
 });
 
 /** A page's top layer: a section lists its own layers inside it, and how many it has when not all fit (B-036). */
@@ -25,6 +27,8 @@ const MapPageSchema = zod.object({
   id: zod.string(),
   name: zod.string(),
   current: zod.boolean(),
+  /** How many top layers the page has, for every page read. */
+  childCount: zod.exactOptional(zod.int()),
   /** How many top layers the page has, when not all are listed. */
   total: zod.exactOptional(zod.int()),
   /** None for a page not read: Figma could not load it, or the time or the layer limit ran out first. */

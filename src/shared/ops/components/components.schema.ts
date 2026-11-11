@@ -19,6 +19,10 @@ export const ComponentsOpInputSchema = zod.strictObject({
   query: zod.exactOptional(zod.string().check(zod.minLength(COMPONENTS.minChars), zod.maxLength(COMPONENTS.maxChars))),
   limit: zod.int().check(zod.minimum(COMPONENTS.minLimit), zod.maximum(COMPONENTS.maxLimit)),
   links: zod.boolean(),
+  /** Each component's instances, with their pages. */
+  instances: zod.exactOptional(zod.boolean()),
+  /** Per property, the layers bound to it. */
+  references: zod.exactOptional(zod.boolean()),
 });
 
 /** A property's definition by the name Figma shows: a variant with its options, a slot without a default (B-060). */
@@ -43,6 +47,12 @@ const ExposedSchema = zod.object({
   variants: zod.exactOptional(zod.array(zod.string())),
 });
 
+/** An instance of a component, and the page it is on. */
+const InstanceNodeSchema = zod.object({ id: zod.string(), name: zod.string(), page: zod.nullable(zod.string()) });
+
+/** A layer bound to a property: which of its fields the property drives (visible, characters, mainComponent). */
+const ReferenceSchema = zod.object({ id: zod.string(), name: zod.string(), field: zod.string() });
+
 /** A Dev Mode link people attached (T-192): on a set, the variant it is on. */
 export const ComponentLinkSchema = zod.object({
   name: zod.string(),
@@ -65,6 +75,11 @@ export const ComponentEntrySchema = zod.object({
   variants: zod.exactOptional(zod.array(zod.object({ id: zod.string(), name: zod.string() }))),
   properties: PropertiesSchema,
   instances: zod.exactOptional(zod.int()),
+  instanceNodes: zod.exactOptional(zod.array(InstanceNodeSchema)).check(zod.describe(COMPONENTS_FIELD.instanceNodes)),
+  instanceNodesMore: zod.exactOptional(zod.literal(true)).check(zod.describe(COMPONENTS_FIELD.instanceNodesMore)),
+  references: zod
+    .exactOptional(zod.record(zod.string(), zod.array(ReferenceSchema)))
+    .check(zod.describe(COMPONENTS_FIELD.references)),
   exposed: zod.exactOptional(zod.array(ExposedSchema)),
   links: zod.exactOptional(zod.array(ComponentLinkSchema)),
   error: zod.exactOptional(zod.string()),
@@ -85,3 +100,5 @@ export type ComponentLink = zod.output<typeof ComponentLinkSchema>;
 export type ExposedInstance = zod.output<typeof ExposedSchema>;
 
 export type PropertyDefinitions = zod.output<typeof PropertiesSchema>;
+
+export type PropertyReference = zod.output<typeof ReferenceSchema>;

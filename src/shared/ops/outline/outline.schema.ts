@@ -6,6 +6,8 @@ import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 export const OutlineOpInputSchema = zod.strictObject({
   node: zod.exactOptional(NodeIdSchema),
   depth: zod.int().check(zod.minimum(OUTLINE.minDepth), zod.maximum(OUTLINE.maxDepth)),
+  /** true: every box in page coordinates; relative to the outlined node when left out. */
+  absolute: zod.exactOptional(zod.boolean()),
 });
 
 /**

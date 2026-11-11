@@ -66,6 +66,60 @@ class CountingPlugin implements PluginLink {
   }
 }
 
+/** A plugin whose every page has one Card frame at its top. */
+class CardsPlugin extends CountingPlugin {
+  override async request(request: OpRequest): Promise<unknown> {
+    if (request.op === "file_map") {
+      return super.request(request);
+    }
+
+    const { within } = request.input as { within: string };
+
+    return { nodes: [{ id: `${within}5`, name: "Card", type: "FRAME", box: null, path: [] }], more: false };
+  }
+}
+
+// Within "file", each layer found names the page it is on: the server knows which page's find gave it.
+it("names the page of every layer found within the file", async () => {
+  const clock = new SpentClock();
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", new CardsPlugin(clock), []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+  const answer = await tool.execute({ within: "file", name: "Card" });
+
+  expect(answer.structuredContent).toEqual({
+    nodes: PAGES.map((page) => ({
+      id: `${page}5`,
+      name: "Card",
+      type: "FRAME",
+      box: null,
+      path: [],
+      page: { id: page, name: page },
+    })),
+    more: false,
+  });
+});
+
+// fields keeps a long answer short: only the fields named, id, name and type always.
+it("keeps only the fields asked for, with id, name and type", async () => {
+  const clock = new SpentClock();
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", new CardsPlugin(clock), []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+  const answer = await tool.execute({ within: "file", name: "Card", fields: ["page"] });
+
+  expect(answer.structuredContent).toEqual({
+    nodes: PAGES.map((page) => ({ id: `${page}5`, name: "Card", type: "FRAME", page: { id: page, name: page } })),
+    more: false,
+  });
+});
+
 // P-075: counting through the file has one 20 s budget, not one per page; what is left unread says more and countsCut.
 it("gives each page's find what the pages before it left of 20 s, and stops cut once it is spent", async () => {
   const clock = new SpentClock();

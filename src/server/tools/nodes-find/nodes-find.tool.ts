@@ -2,11 +2,13 @@ import { inject, injectable } from "@needle-di/core";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import { CLOCK } from "@/core/ports/clock.port.ts";
-import { WITHIN_SCOPE } from "@/server/app/scope/within-scope.ts";
+import { WITHIN } from "@/server/app/scope/scope.constants.ts";
+import { type ScopeRoot, WITHIN_SCOPE } from "@/server/app/scope/within-scope.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
-import { NODES_FIND_TEXT } from "@/server/tools/nodes-find/nodes-find.constants.ts";
+import { NODES_FIND_KEPT, NODES_FIND_TEXT } from "@/server/tools/nodes-find/nodes-find.constants.ts";
 import {
+  type NodeFound,
   type NodesFindInput,
   NodesFindInputSchema,
   type NodesFindOutput,
@@ -14,9 +16,9 @@ import {
 import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import { FIND_COUNT } from "@/shared/ops/find/find.constants.ts";
 import { findOp } from "@/shared/ops/find/find.manifest.ts";
-import type { Counted, Found } from "@/shared/ops/find/find.schema.ts";
+import type { Counted } from "@/shared/ops/find/find.schema.ts";
 
-type Query = Omit<NodesFindInput, "file" | "within">;
+type Query = Omit<NodesFindInput, "file" | "within" | "fields">;
 
 /**
  * Layers in the call's file (T-040): the plugin's find in each root `within` gives, page after page for "file" (T-041)
@@ -44,7 +46,7 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
     this.#clock = clock;
   }
 
-  protected async run({ file, within, ...query }: NodesFindInput): Promise<NodesFindOutput> {
+  protected async run({ file, within, fields, ...query }: NodesFindInput): Promise<NodesFindOutput> {
     const answers: NodesFindOutput[] = [];
     const ends = this.#clock.now() + LIMITS.opBudgetMs;
 
@@ -61,14 +63,39 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
 
       const found = await this.#session.run(findOp, { ...query, within: root.id, budgetMs });
 
-      answers.push(found);
+      answers.push(within === WITHIN.file ? this.#onPage(found, root) : found);
 
       if (!(query.counts ?? false) && (found.more || answers.flatMap(({ nodes }) => nodes).length > query.limit)) {
         break;
       }
     }
 
-    return this.#searched(this.#merged(answers, query), within === undefined ? roots[0]?.name : undefined);
+    return this.#searched(
+      this.#picked(this.#merged(answers, query), fields),
+      within === undefined ? roots[0]?.name : undefined,
+    );
+  }
+
+  /** Within "file" the server knows which page gave each answer: every layer found names its page. */
+  #onPage(found: NodesFindOutput, page: ScopeRoot): NodesFindOutput {
+    return { ...found, nodes: found.nodes.map((node) => ({ ...node, page: { id: page.id, name: page.name ?? "" } })) };
+  }
+
+  /** With fields, only the asked fields of each layer, those it has, with id, name and type. */
+  #picked(answer: NodesFindOutput, fields: NodesFindInput["fields"]): NodesFindOutput {
+    if (fields === undefined) {
+      return answer;
+    }
+
+    const kept = [...NODES_FIND_KEPT, ...fields];
+
+    return {
+      ...answer,
+      nodes: answer.nodes.map(
+        (node) =>
+          Object.fromEntries(kept.filter((field) => field in node).map((field) => [field, node[field]])) as NodeFound,
+      ),
+    };
   }
 
   /** Without within (T-040): the current page searched, by name, and how to search further when nothing was there. */
@@ -102,14 +129,16 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
   }
 
   /** The layer with its box in whole px (D-15). */
-  #rounded(node: Found): Found {
+  #rounded(node: NodeFound): NodeFound {
     const { box } = node;
     const round = (value: number) => this.#numbers.round(value, PRECISION.box);
 
     return {
       ...node,
       box:
-        box === null ? null : { x: round(box.x), y: round(box.y), width: round(box.width), height: round(box.height) },
+        box === null || box === undefined
+          ? null
+          : { x: round(box.x), y: round(box.y), width: round(box.width), height: round(box.height) },
     };
   }
 }
