@@ -157,6 +157,35 @@ describe("XmlParser reading", () => {
     expect(nodesOf("<A>   </A><B>\n \n</B>")).toMatchObject([{ children: [{ value: "   " }] }, { children: [] }]);
   });
 
+  it("refuses elements nested deeper than 256 levels at the tag that goes too deep, and never overflows the stack", () => {
+    const nested = (depth: number) => `${"<A>".repeat(depth)}${"</A>".repeat(depth)}`;
+
+    expect(nodesOf(nested(256))).toHaveLength(1);
+    expect(failure(nested(257))).toEqual({
+      line: 1,
+      column: 769,
+      message: "Invalid XML at line 1, column 769: Elements nest deeper than 256 levels.",
+    });
+    expect(failure(nested(100_000)).message).toContain("nest deeper than 256 levels");
+  });
+
+  it("wants a space between attributes", () => {
+    expect(failure('<Frame a="x"b="y"/>')).toEqual({
+      line: 1,
+      column: 13,
+      message: "Invalid XML at line 1, column 13: Put a space between attributes.",
+    });
+    expect(nodesOf('<Frame a="x"\n  b="y"/>')).toHaveLength(1);
+  });
+
+  it("refuses a processing instruction that is never closed", () => {
+    expect(failure("<Frame/><?pi")).toEqual({
+      line: 1,
+      column: 9,
+      message: "Invalid XML at line 1, column 9: <? is not closed with ?>.",
+    });
+  });
+
   // D-67
   it("parses 20,000 lines in under 200 ms, so the line search is not linear", () => {
     const document = (count: number) => {

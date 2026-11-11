@@ -12,7 +12,7 @@ import {
 } from "@/server/tools/design-apply/design-apply.schema.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
-import { deleteOp } from "@/shared/ops/delete/delete.manifest.ts";
+import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
 
 /** What prepare read: how many elements. */
 interface Read {
@@ -26,8 +26,9 @@ interface Read {
 @injectable()
 export class DesignApplyTool extends WriteTool<DesignApplyInput, Read, DesignApplyOutput, DesignApplyOutput> {
   protected readonly input = DesignApplyInputSchema;
-  // shortcut: a stand-in, never reached while answerNow answers every call; the writing item gives design_apply its op.
-  protected readonly op = deleteOp;
+  // shortcut: a stand-in, the plainest read op, never reached while answerNow answers every call; the writing item
+  // replaces it with design_apply's own op.
+  protected readonly op = pingOp;
 
   protected async prepare({ xml, dryRun }: DesignApplyInput): Promise<Read> {
     const parsed = new XmlParser().parse(xml);

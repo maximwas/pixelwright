@@ -8,18 +8,22 @@ export const XML_PARSE = {
   maxCodePoint: 0x10ffff,
   // How much of the text after a bad & the error quotes.
   entityPreview: 10,
+  // Figma designs nest a few dozen levels; every later walk of XmlNode recurses, so this bound protects them all.
+  maxDepth: 256,
   // XML's whitespace: a no-break or an em space is a character like any other (B-059).
   space: /^[ \t\r\n]*/,
+  spaceChar: /[ \t\r\n]/,
   lineBreak: /\r\n|\n|\r/,
   tokenizer: { xmlMode: true, decodeEntities: false, recognizeSelfClosing: true },
   // `<![CDATA[` and `<!--` are this long before their content; the tokenizer reports the content only.
   cdataOpenChars: 9,
   commentOpenChars: 4,
   openChars: 1,
+  instructionOpenChars: 2,
   closeChars: 2,
   declarationChars: 2,
   quotes: /["']/,
-  chars: { amp: "&", lt: "<", newline: "\n", tab: "\t", space: " ", single: "'", double: '"', closeOpen: "</" },
+  chars: { amp: "&", lt: "<", newline: "\n", tab: "\t", space: " ", single: "'", double: '"', closeOpen: "</", instruction: "<?" },
 } as const;
 
 export const XML_PARSE_TEXT = {
@@ -45,5 +49,8 @@ export const XML_PARSE_TEXT = {
   expectedTagName: "Expected a tag name after <.",
   expectedAttribute: "Expected an attribute, > or />.",
   commentNotClosed: "<!-- is not closed with -->.",
+  tooDeep: (depth: number) => `Elements nest deeper than ${depth} levels.`,
+  noSpace: "Put a space between attributes.",
+  instructionNotClosed: "<? is not closed with ?>.",
   cdataNotClosed: "<![CDATA[ is not closed with ]]>.",
 } as const;

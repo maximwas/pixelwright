@@ -58,6 +58,10 @@ export class XmlReader implements TokenizerCallbacks {
       throw this.#fail(start, XML_PARSE_TEXT.expectedTagName);
     }
 
+    if (this.#stack.length >= XML_PARSE.maxDepth) {
+      throw this.#fail(start - XML_PARSE.openChars, XML_PARSE_TEXT.tooDeep(XML_PARSE.maxDepth));
+    }
+
     this.#tag = { type, at: this.#lines.locate(start - XML_PARSE.openChars), attributes: new Map(), children: [] };
     this.#stack.push(this.#tag);
   }
@@ -67,6 +71,10 @@ export class XmlReader implements TokenizerCallbacks {
 
     if (!XML_PARSE.name.test(name)) {
       throw this.#fail(start, XML_PARSE_TEXT.expectedAttribute);
+    }
+
+    if (!XML_PARSE.spaceChar.test(this.#source.charAt(start - 1))) {
+      throw this.#fail(start, XML_PARSE_TEXT.noSpace);
     }
 
     if (this.#tag?.attributes.has(name)) {
@@ -132,6 +140,11 @@ export class XmlReader implements TokenizerCallbacks {
   }
 
   ontext(start: number, end: number): void {
+    // Text that starts right after `<?` is what the tokenizer hands over when the instruction never closes.
+    if (this.#source.slice(start - XML_PARSE.instructionOpenChars, start) === XML_PARSE.chars.instruction) {
+      throw this.#fail(start - XML_PARSE.instructionOpenChars, XML_PARSE_TEXT.instructionNotClosed);
+    }
+
     if (this.#pending?.end === start) {
       this.#pending.end = end;
     } else {
