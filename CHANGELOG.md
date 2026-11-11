@@ -121,6 +121,8 @@ apart from the changes below. The plugin is new too: put it in place with the se
 
 ### Removed
 
+- The plugin window no longer lists the AI's last actions. Its notes stay: the hint after a refused edit, and
+  the reminder that code `execute` started may run on after Allow edits goes off.
 - The tools that write, until the editing versions: `design_apply`, `nodes_delete` and `version_save` come back in
   0.9.0; `tokens_apply`, `tokens_bind`, `texts_replace`, `effects_apply`, `instances_reattach` and `icons_insert` in
   0.10.0.
