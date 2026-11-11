@@ -1,5 +1,6 @@
 import type { Container } from "@needle-di/core";
 import { AUTO_LINE_HEIGHTS, AutoLineHeights } from "@/core/css/fonts/auto-line-heights.ts";
+import { LAYOUT_GROUP, LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { DESIGN_HINTS, DesignHints } from "@/core/design/hints/design-hints.ts";
 import { INFERRED_HINTS, InferredHints } from "@/core/design/hints/inferred-hints.ts";
 import { LAYER_HINTS, LayerHints } from "@/core/design/hints/layer-hints.ts";
@@ -12,6 +13,7 @@ import { STRUCTURE_HINTS, StructureHints } from "@/core/design/hints/structure/s
 import { TOKEN_HINTS, TokenHints } from "@/core/design/hints/token-hints.ts";
 import { READ_JSON, ReadJson } from "@/core/design/read-json.ts";
 import { INSPECT_FILLS, InspectFills } from "@/core/inspect/inspect-fills.ts";
+import { INSPECT_LAYOUT, InspectLayout } from "@/core/inspect/inspect-layout.ts";
 import { INSPECT_VIEW, InspectView } from "@/core/inspect/inspect-view.ts";
 import { MEASURE, Measure } from "@/core/inspect/measure.ts";
 import { MEASUREMENTS, Measurements } from "@/core/inspect/measurements.ts";
@@ -35,6 +37,8 @@ export class ReadProviders {
       .bind({ provide: DESIGN_HINTS, useClass: DesignHints })
       .bind({ provide: MEASUREMENTS, useClass: Measurements })
       .bind({ provide: INSPECT_FILLS, useClass: InspectFills })
+      .bind({ provide: LAYOUT_GROUP, useClass: LayoutGroup })
+      .bind({ provide: INSPECT_LAYOUT, useClass: InspectLayout })
       .bind({ provide: INSPECT_VIEW, useClass: InspectView })
       .bind({ provide: MEASURE, useClass: Measure })
       .bind({ provide: READ_JSON, useClass: ReadJson })

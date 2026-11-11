@@ -1,9 +1,11 @@
 import { inject, injectable } from "@needle-di/core";
+import { Color } from "@/core/kernel/color/color.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import { MODEL_TEXT } from "@/core/tokens/model/model.constants.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
 import { Tool } from "@/server/app/tool-runner/tool.ts";
 import {
+  RAW_USE,
   STYLE_KIND,
   TOKEN_KIND,
   TOKENS_USAGE_TEXT,
@@ -21,6 +23,10 @@ import { usageOp } from "@/shared/ops/usage/usage.manifest.ts";
 import { variablesOp } from "@/shared/ops/variables/variables.manifest.ts";
 import type { RawStyle, RawTokens } from "@/shared/ops/variables/variables.schema.ts";
 
+type UsageLayer = NonNullable<TokensUsageOutput["layers"]>[number];
+
+type RawColor = NonNullable<TokensUsageOutput["colors"]>[number];
+
 /** How tokens_read writes a style of one kind. */
 type StyleWritten = (typeof STYLE_KIND)[string];
 
@@ -35,6 +41,7 @@ interface Target {
  * tokens_usage (T-106): the token found as design_read names it, through the one naming (TokenNames) over the
  * variables op's raw tokens of the file and of the layers scanned (a library's among them), then the usage op's
  * layers that use it, at most 500, within the caller's budget (D-48): a scan the budget stopped says so in a note.
+ * With raw, the usage op's raw colour uses as hex colours, each layer's use once, most used first.
  */
 @injectable()
 export class TokensUsageTool extends Tool<TokensUsageInput, TokensUsageOutput> {
@@ -48,7 +55,31 @@ export class TokensUsageTool extends Tool<TokensUsageInput, TokensUsageOutput> {
     this.#names = names;
   }
 
-  protected async run({ token, within, budgetMs }: TokensUsageInput): Promise<TokensUsageOutput> {
+  protected async run({ token, raw, within, budgetMs }: TokensUsageInput): Promise<TokensUsageOutput> {
+    if ((token === undefined) === (raw === undefined)) {
+      throw new PixelwrightError(ERROR_CODE.opFailed, TOKENS_USAGE_TEXT.oneOf);
+    }
+
+    const where = within === undefined ? {} : { within };
+
+    if (token === undefined) {
+      const { layers, more, cut } = await this.#session.run(usageOp, { raw: true, budgetMs, ...where });
+
+      return {
+        colors: this.#colors(layers),
+        more,
+        ...(cut ? { notes: [TOKENS_USAGE_TEXT.cut(budgetMs, layers.length)] } : {}),
+      };
+    }
+
+    return this.#token(token, within, budgetMs);
+  }
+
+  async #token(
+    token: string,
+    within: TokensUsageInput["within"],
+    budgetMs: number,
+  ): Promise<TokensUsageOutput> {
     const layer = within === undefined || within === USAGE_WITHIN.file ? {} : { within };
     const raw = await this.#session.run(variablesOp, { libraries: false, used: true, ...layer });
     const { id, kind, name } = this.#target(raw, token);
@@ -67,6 +98,26 @@ export class TokensUsageTool extends Tool<TokensUsageInput, TokensUsageOutput> {
       more,
       ...(cut ? { notes: [TOKENS_USAGE_TEXT.cut(budgetMs, layers.length)] } : {}),
     };
+  }
+
+  /** Raw colour uses by hex, in the order first met, each layer's use under a property once; most layers first. */
+  #colors(uses: readonly UsageLayer[]): RawColor[] {
+    const colors = new Map<string, UsageLayer[]>();
+    const seen = new Set<string>();
+
+    for (const { color, ...layer } of uses) {
+      const hex = color === undefined ? undefined : Color.of(color).hex();
+      const key = hex === undefined ? undefined : RAW_USE.key(hex, layer.id, layer.property);
+
+      if (hex !== undefined && key !== undefined && !seen.has(key)) {
+        seen.add(key);
+        colors.set(hex, [...(colors.get(hex) ?? []), layer]);
+      }
+    }
+
+    return [...colors]
+      .map(([color, layers]) => ({ color, count: layers.length, layers }))
+      .sort((first, second) => second.count - first.count);
   }
 
   /**

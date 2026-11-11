@@ -43,6 +43,17 @@ export class LayerWalk {
     return this.#clock.now() > deadline;
   }
 
+  /** Whether the layer or an ancestor below its page is hidden: a viewer does not see it. */
+  hidden(node: SceneNode): boolean {
+    for (let current: BaseNode | null = node; current !== null && "visible" in current; current = current.parent) {
+      if (!current.visible) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /** The roots and the layers under them, depth first in document order (findAll's), each once however roots nest. */
   *layers(roots: readonly SceneNode[]): Generator<SceneNode> {
     const seen = new Set<string>();

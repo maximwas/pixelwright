@@ -4,6 +4,8 @@ import { EffectSchema, ReactionSchema } from "@/shared/read-model/layer-values.s
 
 const BoxSchema = zod.object({ x: zod.number(), y: zod.number(), width: zod.number(), height: zod.number() });
 
+const PropertyValueSchema = zod.union([zod.string(), zod.boolean()]);
+
 const PointSchema = zod.object({ x: zod.number(), y: zod.number() });
 
 const SidesSchema = zod.object({ top: zod.number(), right: zod.number(), bottom: zod.number(), left: zod.number() });
@@ -61,11 +63,17 @@ const LayerViewSchema = zod.object({
       weights: zod.exactOptional(SidesSchema),
       dashes: zod.exactOptional(zod.array(zod.number())),
       colors: zod.array(zod.string()),
+      tokens: zod
+        .exactOptional(zod.record(zod.string(), zod.string()))
+        .check(zod.describe(INSPECT_FIELD.strokesTokens)),
       includedInLayout: zod.exactOptional(zod.boolean()),
     }),
   ),
   effects: zod.exactOptional(zod.array(EffectSchema)).check(zod.describe(INSPECT_FIELD.effects)),
   text: zod.exactOptional(TextViewSchema),
+  layout: zod
+    .exactOptional(zod.record(zod.string(), zod.union([zod.number(), zod.string()])))
+    .check(zod.describe(INSPECT_FIELD.layout)),
   fills: zod.exactOptional(FillsViewSchema),
   bound: zod
     .exactOptional(
@@ -86,6 +94,16 @@ const LayerViewSchema = zod.object({
       name: zod.string(),
       set: zod.exactOptional(zod.string()),
       variant: zod.record(zod.string(), zod.string()),
+      properties: zod
+        .record(
+          zod.string(),
+          zod.object({
+            type: zod.string(),
+            value: PropertyValueSchema,
+            default: zod.exactOptional(PropertyValueSchema),
+          }),
+        )
+        .check(zod.describe(INSPECT_FIELD.componentProperties)),
     }),
   ),
 });

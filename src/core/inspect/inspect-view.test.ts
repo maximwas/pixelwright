@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
+import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PaintList } from "@/core/css/paints/paint-list.ts";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
@@ -10,6 +11,7 @@ import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { InspectFills } from "@/core/inspect/inspect-fills.ts";
+import { InspectLayout } from "@/core/inspect/inspect-layout.ts";
 import { InspectView } from "@/core/inspect/inspect-view.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
@@ -30,6 +32,7 @@ const view = new InspectView(
   format,
   new InspectFills(paints, solid, names),
   new InteractionAttributes(new EasingCss(format)),
+  new InspectLayout(new LayoutGroup(lengths, format), lengths),
 );
 
 const DARK = { r: 0.098, g: 0.102, b: 0.137 };
@@ -237,5 +240,56 @@ describe("inspect around a point", () => {
     );
 
     expect(answer.layers.map(({ angle }) => angle)).toEqual([0.19, 90.11]);
+  });
+});
+
+describe("inspect's layout and component properties", () => {
+  // design_read's names, as longhands and px numbers; a bound side reads its number, its token stays in bound.
+  it("gives a wrapping auto layout's padding, gap and line gap as design_read's CSS longhands in px", () => {
+    const frame = layer({
+      type: "FRAME",
+      childCount: 3,
+      layoutMode: "HORIZONTAL",
+      layoutWrap: "WRAP",
+      paddingTop: 6,
+      paddingRight: 10,
+      paddingBottom: 6,
+      paddingLeft: 10,
+      itemSpacing: 6,
+      counterAxisSpacing: 8,
+      boundVariables: { paddingTop: { type: "VARIABLE_ALIAS", id: "V:6" } },
+    });
+
+    expect(view.build(raw([frame])).layers[0]?.layout).toEqual({
+      display: "flex",
+      "flex-wrap": "wrap",
+      "padding-top": 6,
+      "padding-right": 10,
+      "padding-bottom": 6,
+      "padding-left": 10,
+      gap: 6,
+      "row-gap": 8,
+    });
+  });
+
+  it("gives an instance's every property with its value and the component's default, Figma's #id left out", () => {
+    const card = layer({
+      type: "INSTANCE",
+      instance: {
+        componentId: "1:1",
+        componentName: "Plan Card",
+        componentKey: "k",
+        properties: {
+          "Name#1:0": { type: "TEXT", value: "Starter" },
+          "Popular#1:1": { type: "BOOLEAN", value: false },
+        },
+      },
+      defaults: { "Name#1:0": "Pro", "Popular#1:1": false },
+    });
+
+    expect(view.build(raw([card])).layers[0]?.component?.properties).toEqual({
+      Name: { type: "TEXT", value: "Starter", default: "Pro" },
+      Popular: { type: "BOOLEAN", value: false, default: false },
+    });
   });
 });

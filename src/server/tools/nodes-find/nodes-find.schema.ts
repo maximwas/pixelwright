@@ -5,7 +5,7 @@ import { NODES_FIND_FIELD } from "@/server/tools/nodes-find/nodes-find.constants
 import { FIND } from "@/shared/ops/find/find.constants.ts";
 import { findOp } from "@/shared/ops/find/find.manifest.ts";
 
-const { name, type, text, component, variant, counts, limit } = findOp.input.shape;
+const { name, type, text, component, variant, counts, visible, limit } = findOp.input.shape;
 
 export const NodesFindInputSchema = zod.strictObject({
   name,
@@ -14,6 +14,7 @@ export const NodesFindInputSchema = zod.strictObject({
   component,
   variant: variant.check(zod.describe(NODES_FIND_FIELD.variant)),
   counts: counts.check(zod.describe(NODES_FIND_FIELD.counts)),
+  visible: visible.check(zod.describe(NODES_FIND_FIELD.visible)),
   within: zod.exactOptional(WithinSchema).check(zod.describe(NODES_FIND_FIELD.within)),
   limit: zod._default(limit, FIND.defaultLimit),
   file: FileInputSchema,

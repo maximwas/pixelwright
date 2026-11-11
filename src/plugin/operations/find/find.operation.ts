@@ -2,11 +2,12 @@ import { inject, injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
 import { NAME_VALUE_LIST } from "@/core/kernel/lists/name-value-list.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import { InstanceProperties } from "@/plugin/adapters/figma/layer-meta/instance-properties.ts";
 import { LAYER_WALK } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
 import { PAGE_LOADER } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
-import { FIND_TEXT } from "@/plugin/operations/find/find.constants.ts";
+import { FIND_RUN, FIND_TEXT } from "@/plugin/operations/find/find.constants.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { FIND_COUNT } from "@/shared/ops/find/find.constants.ts";
@@ -37,10 +38,12 @@ interface Tally {
  * Layers inside a layer or a page, the current page when none is given (T-040), in document order: by name, type and
  * text, an instance's component or variant; with `counts`, every instance found is also counted by component and
  * variant, past the limit listed (T-042). The walk stops at the op's deadline (P-075): what it reached is answered, with
- * `more` (and `countsCut`). Boxes are Figma's: the server rounds them (D-15).
+ * `more` (and `countsCut`). Shown or hidden layers only with `visible`; each says when it is hidden, a text its font
+ * size, an instance the properties it changes. Boxes are Figma's: the server rounds them (D-15).
  */
 @injectable()
 export class FindOperation extends Operation<FindInput, FindOutput> {
+  readonly #properties = new InstanceProperties();
   readonly #loader;
   readonly #walk;
   readonly #lists;
@@ -74,7 +77,7 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     const cut = walked.cut || search.cut;
 
     return {
-      nodes: search.found.slice(0, input.limit).map((node) => this.#found(node)),
+      nodes: await Promise.all(search.found.slice(0, input.limit).map((node) => this.#found(node))),
       more: cut || search.found.length > input.limit,
       ...(variant === undefined ? {} : { variant }),
       ...(search.counts === undefined ? {} : { counts: search.counts }),
@@ -93,7 +96,10 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     return values;
   }
 
-  /** Whether a layer matches the name, type and text, and is an instance when a component or variant is asked for. */
+  /**
+   * Whether a layer matches the name, type, text and visibility, and is an instance when a component or variant is
+   * asked for.
+   */
   #matcher(input: FindInput): (node: SceneNode) => boolean {
     const name = input.name?.toLowerCase();
     const type = input.type?.toUpperCase();
@@ -104,7 +110,8 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
       (name === undefined || node.name.toLowerCase().includes(name)) &&
       (type === undefined || node.type === type) &&
       (text === undefined || (node.type === FIGMA_NODE_TYPE.text && node.characters.toLowerCase().includes(text))) &&
-      (!instances || node.type === FIGMA_NODE_TYPE.instance);
+      (!instances || node.type === FIGMA_NODE_TYPE.instance) &&
+      (input.visible === undefined || this.#walk.hidden(node) !== input.visible);
   }
 
   /**
@@ -188,10 +195,34 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
     return Object.entries(values).map(([name, value]) => [name.toLowerCase(), value.toLowerCase()]);
   }
 
-  #found(node: SceneNode): Found {
+  async #found(node: SceneNode): Promise<Found> {
     const box = "absoluteBoundingBox" in node ? node.absoluteBoundingBox : null;
 
-    return { id: node.id, name: node.name, type: node.type, box, path: this.#path(node) };
+    return {
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      box,
+      path: this.#path(node),
+      ...(this.#walk.hidden(node) ? { hidden: true as const } : {}),
+      ...(node.type === FIGMA_NODE_TYPE.text ? { fontSize: this.#fontSize(node) } : {}),
+      ...(node.type === FIGMA_NODE_TYPE.instance ? await this.#changed(node) : {}),
+    };
+  }
+
+  /** A text's font size, or its distinct sizes in text order when it mixes them (Figma's mixed is a symbol). */
+  #fontSize(node: TextNode): number | number[] {
+    return typeof node.fontSize === "number"
+      ? node.fontSize
+      : [...new Set(node.getStyledTextSegments([...FIND_RUN.fontSize]).map(({ fontSize }) => fontSize))];
+  }
+
+  /** The instance's properties that differ from its component's defaults; none when nothing differs. */
+  async #changed(node: InstanceNode): Promise<Pick<Found, "changed">> {
+    const main = await node.getMainComponentAsync();
+    const changed = main === null ? {} : this.#properties.changed(node, main);
+
+    return Object.keys(changed).length === 0 ? {} : { changed };
   }
 
   /** The names of a layer's ancestors below its page, outermost first. */

@@ -52,3 +52,9 @@ export const READ_VALUE = {
   /** A text decoration drawn in the text's own colour. */
   autoColor: "AUTO",
 } as const;
+
+/** A component property's key as Figma gives it, "Name#12:0" (a variant's has no #id), and its name as people see it. */
+export const PROPERTY_KEY = {
+  separator: "#",
+  name: (key: string) => key.split(PROPERTY_KEY.separator)[0] ?? key,
+} as const;

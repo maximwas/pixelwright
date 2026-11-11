@@ -1,4 +1,4 @@
-import { inject, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import type { CssScope, PropertyGroup } from "@/core/css/css.types.ts";
 import {
@@ -198,3 +198,5 @@ export class LayoutGroup implements PropertyGroup {
     }
   }
 }
+
+export const LAYOUT_GROUP = new InjectionToken<LayoutGroup>("LayoutGroup");

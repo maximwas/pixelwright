@@ -22,7 +22,8 @@ export const InspectOpInputSchema = zod.strictObject({
 /**
  * One layer as Figma has it (T-080, K-059): its read-model entry, children left out, with its parent, its layout box
  * (absoluteBoundingBox: a turned layer's bounds) and painted box (absoluteRenderBounds, null when Figma gives none) from
- * the origin, its parent's box and the padding of a parent whose auto layout places it (null for any other parent).
+ * the origin, its parent's box and the padding of a parent whose auto layout places it (null for any other parent);
+ * an instance's component's default of each property, keyed as its properties.
  */
 const InspectedLayerSchema = zod.strictObject({
   ...LayerFieldsSchema.shape,
@@ -31,6 +32,7 @@ const InspectedLayerSchema = zod.strictObject({
   paintedBox: zod.nullable(BoxSchema),
   parentBox: zod.nullable(BoxSchema),
   parentPadding: zod.nullable(SidesSchema),
+  defaults: zod.exactOptional(zod.record(zod.string(), zod.union([zod.string(), zod.boolean()]))),
 });
 
 const { colorProfile, styles, variables } = ReadModelSchema.shape;

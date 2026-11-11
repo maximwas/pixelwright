@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
+import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PaintList } from "@/core/css/paints/paint-list.ts";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
@@ -10,6 +11,7 @@ import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
 import { InspectFills } from "@/core/inspect/inspect-fills.ts";
+import { InspectLayout } from "@/core/inspect/inspect-layout.ts";
 import { InspectView } from "@/core/inspect/inspect-view.ts";
 import { EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
@@ -29,9 +31,10 @@ import type { InspectedLayer, InspectInput, InspectRaw } from "@/shared/ops/insp
 const format = new NumberFormat();
 const names = new TokenNames();
 const solid = new SolidPaint(names);
+const lengths = new CssLength(new CssVar(new CssSplit()), format, names);
 const paints = new PaintList(
   solid,
-  new GradientCss(new GradientGeometry(), solid, new CssLength(new CssVar(new CssSplit()), format, names), format),
+  new GradientCss(new GradientGeometry(), solid, lengths, format),
   new ImagePaint(new CssUrl(new CssSplit())),
   names,
 );
@@ -39,6 +42,7 @@ const view = new InspectView(
   format,
   new InspectFills(paints, solid, names),
   new InteractionAttributes(new EasingCss(format)),
+  new InspectLayout(new LayoutGroup(lengths, format), lengths),
 );
 
 /** A rule 100 px wide at (0, 100), its centred stroke painting half a pixel out; and a 200 px ring. */

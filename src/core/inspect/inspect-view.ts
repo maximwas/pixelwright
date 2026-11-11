@@ -3,11 +3,13 @@ import { INTERACTION_ATTRIBUTES } from "@/core/design/interactions/interaction-a
 import { INSPECT_NUMBER, INSPECT_TEXT, INSPECT_VALUE, TEXT_BREAKS } from "@/core/inspect/inspect.constants.ts";
 import type { InspectAnswer, InspectLayerView } from "@/core/inspect/inspect.schema.ts";
 import { INSPECT_FILLS } from "@/core/inspect/inspect-fills.ts";
+import { INSPECT_LAYOUT } from "@/core/inspect/inspect-layout.ts";
 import { Area, type Point } from "@/core/kernel/geometry/area.ts";
 import { GEOMETRY } from "@/core/kernel/geometry/geometry.constants.ts";
 import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import type { InspectedLayer, InspectRaw } from "@/shared/ops/inspect/inspect.schema.ts";
+import { PROPERTY_KEY } from "@/shared/read-model/read-model.constants.ts";
 
 type Box = InspectedLayer["box"];
 
@@ -18,7 +20,8 @@ type Segment = NonNullable<InspectedLayer["text"]>["segments"][number];
 /**
  * The inspect op's layers as the inspect tool's answer (A§9.3, T-080..T-083, K-059, K-060): boxes and centres in the
  * op's origin, the painted box when it differs, rotation, how far a layer overflows its parent's room, what paints it
- * (InspectFills), every effect as Figma has it, a text's lines and line heights, its interactions and its variant;
+ * (InspectFills), its auto layout as design_read's CSS longhands (InspectLayout), every effect as Figma has it, a
+ * text's lines and line heights, its interactions, its variant and its properties with their defaults;
  * with `around`, each centre's distance and CSS rotate() angle from that point. Nothing here is guessed from CSS.
  */
 @injectable()
@@ -26,15 +29,18 @@ export class InspectView {
   readonly #format;
   readonly #fills;
   readonly #sentences;
+  readonly #layout;
 
   constructor(
     format = inject(NUMBER_FORMAT),
     fills = inject(INSPECT_FILLS),
     sentences = inject(INTERACTION_ATTRIBUTES),
+    layout = inject(INSPECT_LAYOUT),
   ) {
     this.#format = format;
     this.#fills = fills;
     this.#sentences = sentences;
+    this.#layout = layout;
   }
 
   build(raw: InspectRaw, around?: Point): InspectAnswer {
@@ -73,10 +79,11 @@ export class InspectView {
       ...(rotation === undefined || rotation === 0 ? {} : { rotation }),
       ...this.#overflow(layer),
       ...this.#fills.read(layer, raw),
+      ...this.#layout.read(layer),
       ...(effects.length === 0 ? {} : { effects }),
       ...this.#text(layer),
       ...this.#interactions(layer),
-      ...(instance === undefined ? {} : { component: this.#component(instance) }),
+      ...(instance === undefined ? {} : { component: this.#component(instance, layer.defaults ?? {}) }),
     };
   }
 
@@ -197,12 +204,11 @@ export class InspectView {
       };
   }
 
-  /** An instance's component: its name, its set's, and its variant's values. */
-  #component({
-    componentName,
-    setName,
-    properties,
-  }: NonNullable<InspectedLayer["instance"]>): NonNullable<InspectLayerView["component"]> {
+  /**
+   * An instance's component: its name, its set's, its variant's values, and every property by name (Figma's #id left
+   * out) with its value and the component's default.
+   */
+  #component({ componentName, setName, properties }: NonNullable<InspectedLayer["instance"]>,    defaults: NonNullable<InspectedLayer["defaults"]>): NonNullable<InspectLayerView["component"]> {
     return {
       name: componentName,
       ...(setName === undefined ? {} : { set: setName }),
@@ -210,6 +216,12 @@ export class InspectView {
         Object.entries(properties)
           .filter(([, property]) => property.type === INSPECT_VALUE.variant)
           .map(([key, property]) => [key, String(property.value)]),
+      ),
+      properties: Object.fromEntries(
+        Object.entries(properties).map(([key, { type, value }]) => [
+          PROPERTY_KEY.name(key),
+          { type, value, ...(Object.hasOwn(defaults, key) ? { default: defaults[key] } : {}) },
+        ]),
       ),
     };
   }

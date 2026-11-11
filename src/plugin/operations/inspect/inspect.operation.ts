@@ -3,6 +3,7 @@ import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
 import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
+import { InstanceProperties } from "@/plugin/adapters/figma/layer-meta/instance-properties.ts";
 import { LAYER_READER } from "@/plugin/adapters/figma/layer-read/layer-reader.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
@@ -15,12 +16,14 @@ type Box = InspectedLayer["box"];
 /**
  * Layers as Figma has them, for inspect and measure (T-080, T-081): each layer's read-model entry read on its own (the
  * read op's field readers, one source), with its parent, its layout and painted boxes and its parent's room, all from
- * `relativeTo`'s top left (the page's without it), and the styles and variables its paints use. It only reads, so it
+ * `relativeTo`'s top left (the page's without it), an instance's property defaults, and the styles and variables its
+ * paints use. It only reads, so it
  * works while Allow edits is off (B-043); an id that is no layer is missing.
  */
 @injectable()
 export class InspectOperation extends Operation<InspectInput, InspectRaw> {
   readonly #boxes = new LayerBoxes();
+  readonly #properties = new InstanceProperties();
 
   readonly #lookup;
   readonly #reader;
@@ -82,7 +85,15 @@ export class InspectOperation extends Operation<InspectInput, InspectRaw> {
       paintedBox: this.#box(this.#boxes.painted(node), corner),
       parentBox: parentLayer === null ? null : this.#box(this.#boxes.layout(parentLayer), corner),
       parentPadding: this.#padding(parentLayer),
+      ...(node.type === FIGMA_NODE_TYPE.instance ? await this.#defaults(node) : {}),
     };
+  }
+
+  /** An instance's component's default of each property; none when its component is gone. */
+  async #defaults(node: InstanceNode): Promise<Pick<InspectedLayer, "defaults">> {
+    const main = await node.getMainComponentAsync();
+
+    return main === null ? {} : { defaults: this.#properties.defaults(main) };
   }
 
   /** Where the boxes start: relativeTo's top left; the page's for a page, or without relativeTo. */

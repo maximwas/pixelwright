@@ -18,7 +18,9 @@ saved from.
      development: build those first, not drafts.
    - `nodes_find`: layers by name, type, text, component or an instance's `variant` ("State=Hover, Size=L"), on the
      current page, inside a layer or across the file (`within: "file"`). `counts: true` counts every instance found
-     by component and variant: which variants the layers use.
+     by component and variant: which variants the layers use. Each layer says `hidden` when a viewer does not see
+     it (`visible: true` or `false` keeps only shown or hidden ones), a text its `fontSize`, an instance the
+     properties it `changed` from its component's defaults.
    - `node_show`: brings layers into view and selects them, so the user sees which you mean.
    - `changes_since`: what the designer changed since you last looked (a cursor), to read again only that.
 3. **Read one section.** `design_read` returns the section as XML (`guide xml` explains every tag and attribute),
@@ -39,8 +41,9 @@ saved from.
    **Measure it.** `inspect` reads layers as Figma has them, without code: the layout box and the painted box (a
    centred stroke, shadows and blur reach past it), the blend mode of the layer and of each fill, the fill with the
    style or variables behind it (what a `var()` resolves to) and every fill's type (a video's too), how strokes
-   paint, every effect's parameters (a progressive blur's start and end), a text's lines and line heights, overflow,
-   interactions with their transitions, a component's variant, and each layer's centre. Items set around a circle (a
+   paint and the variables their colours are bound to, a frame's auto layout as `layout` (design_read's CSS
+   longhands in px: `padding-top`, `gap`, `row-gap`), every effect's parameters (a progressive blur's start and end), a text's lines and line heights, overflow,
+   interactions with their transitions, a component's variant and properties with their defaults, and each layer's centre. Items set around a circle (a
    round menu, labels on a dial): `around` (the circle's id, or a point) gives each centre's distance from it and its
    angle as CSS `rotate()` turns, 0 at the top, clockwise. `measure` gives the distances between layers, each from
    the one before (gaps, aligned edges, insets).
@@ -50,7 +53,7 @@ saved from.
    screen at the page's other widths, for the media queries. `flow_read` maps the prototype: screens and the links
    between them.
 5. **The design system.** `tokens_read`: variables with every mode (light, dark…) and styles, as CSS, JSON or DTCG
-   token files (`guide tokens`). `tokens_usage`: the layers a token is used on. `components_read`: the components a
+   token files (`guide tokens`). `tokens_usage`: the layers a token is used on; with `raw: true`, the colours bound to no style or variable, each with the layers using it. `components_read`: the components a
    page uses, or the file defines, with variants and properties. `library_search`: components of the team's
    libraries, saved once from each library file. `fonts_check`: the fonts used and where the build gets each (Google
    Fonts links).
@@ -64,7 +67,9 @@ saved from.
    code they name: export again what is marked `drawing`; build added layers from their `xml` (or `design_read` when
    it is left out). Then `baseline_save {name, accept}` with the `accept` the diff gave. `changes_since` stays the
    live view while the plugin is open.
-8. **Code, the exception.** `execute` runs JavaScript in the plugin, for what no read tool shows: try the read tools
+8. **Code, the exception.** The reads answer what code is most often written for: texts by size and visibility and
+   instances' changed properties (`nodes_find`), auto layout numbers and instance properties with their defaults
+   (`inspect`), raw colours (`tokens_usage` with `raw: true`). `execute` runs JavaScript in the plugin, for what no read tool shows: try the read tools
    first (`design_read`, `inspect`, `measure`, `nodes_find`), which need no code. It reads too: this version does not
    support editing. If the user explicitly asks for an edit through it, warn that editing is not supported or stable
    in this version and go on only when the user says so; the plugin's Allow edits switch still gates every write.

@@ -145,4 +145,44 @@ return dots.length;`);
     expect(pair?.gap.x).toBeGreaterThan(0);
     expect(pair?.summary).toMatch(new RegExp(`^${planPro} ".+" is [\\d.]+ px right of ${planStarter} ".+"`));
   });
+
+  // The answer key: the coverage frame's auto layout sides off a 4 px scale, as CSS longhands.
+  it("reads auto layout and grid numbers under design_read's CSS names, 185:437's as design_read writes them", async () => {
+    const off: Record<string, Record<string, number>> = {
+      "185:274": { "padding-right": 10, "padding-left": 10 },
+      "185:437": { "padding-top": 6, "padding-bottom": 6, gap: 6 },
+      "185:448": { "padding-top": 6, "padding-bottom": 6, gap: 6 },
+    };
+    const { layers } = (await client.call("inspect", { file, nodes: [...Object.keys(off), "185:259"] })) as {
+      layers: { id: string; layout?: Record<string, string | number> }[];
+    };
+    const layout = Object.fromEntries(layers.map(({ id, layout: read }) => [id, read ?? {}]));
+    const [xml = ""] = await client.texts("design_read", { file, node: "185:437" });
+    const chip = /<\w+ id="185:437"[^>]*>/.exec(xml)?.[0] ?? "";
+    const attribute = (name: string) => new RegExp(` ${name}="([^"]*)"`).exec(chip)?.[1];
+    const [top, right = top, bottom = top, left = right] = (attribute("padding") ?? "").split(" ");
+    const px = (value: string | undefined) => Number.parseFloat(value ?? "0");
+
+    for (const [id, sides] of Object.entries(off)) {
+      expect(layout[id]).toMatchObject(sides);
+    }
+
+    expect(layout["185:259"]?.display).toBe("grid");
+    expect(layout["185:437"]).toMatchObject({
+      display: attribute("display"),
+      "padding-top": px(top),
+      "padding-right": px(right),
+      "padding-bottom": px(bottom),
+      "padding-left": px(left),
+      gap: px(attribute("gap")),
+    });
+  });
+
+  it("says the Starter card's stroke colour is bound, as its fills say theirs", async () => {
+    const { layers } = (await client.call("inspect", { file, nodes: [planStarter] })) as {
+      layers: { strokes?: { colors: string[]; tokens?: Record<string, string> } }[];
+    };
+
+    expect(layers[0]?.strokes?.tokens).toEqual({ "--color-line": "#E1E5EE" });
+  });
 });
