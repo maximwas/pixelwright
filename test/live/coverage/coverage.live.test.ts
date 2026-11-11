@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient, type ToolResult } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
-const { startHere, orbitPricing, pricingDesktop, planStarter, planPro, signIn, orbitComponents, customers } =
+const { startHere, startSection, orbitPricing, pricingDesktop, planStarter, planPro, signIn, orbitComponents, customers } =
   TEST_MCP.ids;
 
 /** The coverage frame (read only) and the layers of Test MCP the questions point at. */
@@ -66,8 +66,8 @@ interface Layer {
   readonly overflow?: Record<string, number>;
   readonly layout?: Record<string, number | string>;
   readonly parentLayout?: Record<string, number | string>;
-  readonly fills?: { css: string };
-  readonly strokes?: { colors: string[]; weight?: number };
+  readonly fills?: { css: string; tokens?: Record<string, string> };
+  readonly strokes?: { colors: string[]; weight?: number; tokens?: Record<string, string> };
   readonly bound?: Record<string, unknown>;
   readonly component?: { variant: Record<string, string> };
   readonly text?: { segments?: Record<string, unknown>[] };
@@ -88,15 +88,46 @@ const ids = (entries: readonly { id: string }[]): string[] => byId(entries).map(
 
 const smallest = (size: Found["fontSize"]): number => Math.min(...[size ?? Number.POSITIVE_INFINITY].flat());
 
-/** The #RRGGBB colours a CSS value or a colour text holds, upper case, from hex or rgb()/rgba(). */
+/** The #RRGGBB colours a CSS value or a colour text holds, upper case, from #RGB, #RRGGBB, #RRGGBBAA or rgb()/rgba(). */
 const hexesIn = (css: string): string[] =>
-  [...css.matchAll(/#[0-9a-f]{6}\b|rgba?\((\d+)[ ,]+(\d+)[ ,]+(\d+)/gi)]
-    .map((match) =>
-      match[1] === undefined
-        ? match[0].toUpperCase()
-        : `#${[match[1], match[2], match[3]].map((part) => Number(part).toString(16).padStart(2, "0")).join("")}`.toUpperCase(),
-    )
+  [...css.matchAll(/#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})\b|rgba?\((\d+)[ ,]+(\d+)[ ,]+(\d+)/gi)]
+    .map((match) => {
+      if (match[1] !== undefined) {
+        return `#${[match[1], match[2], match[3]].map((part) => Number(part).toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+      }
+
+      const digits = match[0].slice(1);
+
+      return `#${digits.length === 3 ? [...digits].map((digit) => digit + digit).join("") : digits.slice(0, 6)}`.toUpperCase();
+    })
     .sort();
+
+/** A token or variable name as one comparable word: `--color-brand` and `color/brand` both become color-brand. */
+const slug = (name: string): string => name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "");
+
+interface Run {
+  readonly start: number;
+  readonly end: number;
+  readonly characters: string;
+  readonly fontSize: number;
+  readonly fontFamily: string;
+  readonly fontStyle: string;
+  readonly textDecoration: string;
+}
+
+/** Adjacent runs with the same face, size and decoration as one: the read may split on more fields than the truth asks. */
+const mergeRuns = (runs: readonly Run[]): Run[] =>
+  runs.reduce<Run[]>((merged, run) => {
+    const last = merged.at(-1);
+
+    if (last && last.fontSize === run.fontSize && last.fontFamily === run.fontFamily && last.fontStyle === run.fontStyle && last.textDecoration === run.textDecoration) {
+      merged[merged.length - 1] = { ...last, end: run.end, characters: last.characters + run.characters };
+    } else {
+      merged.push({ start: run.start, end: run.end, characters: run.characters, fontSize: run.fontSize, fontFamily: run.fontFamily, fontStyle: run.fontStyle, textDecoration: run.textDecoration });
+    }
+
+    return merged;
+  }, []);
 
 const countsOf = (list: readonly { id: string; hex: string }[]): Record<string, number> => {
   const layers: Record<string, Set<string>> = {};
@@ -180,11 +211,14 @@ for (const n of [root, ...root.findAll(() => true)]) {
   const add = (prop, value) => { if (typeof value === "number" && Math.abs(value / 4 - Math.round(value / 4)) > 1e-6) off.push(n.id + " " + prop + " " + roundTwo(value)); };
   add("padding-top", n.paddingTop); add("padding-right", n.paddingRight); add("padding-bottom", n.paddingBottom); add("padding-left", n.paddingLeft);
   if (n.layoutMode === "GRID") { add("row-gap", n.gridRowGap); add("column-gap", n.gridColumnGap); continue; }
-  if (n.primaryAxisAlignItems !== "SPACE_BETWEEN") add("gap", n.itemSpacing);
-  if (n.layoutWrap === "WRAP" && n.counterAxisSpacing !== null) add(n.layoutMode === "HORIZONTAL" ? "row-gap" : "column-gap", n.counterAxisSpacing);
+  // The layout group leaves out a gap of fewer than 2 visible children, a negative one and a line gap equal to the gap written.
+  const written = n.primaryAxisAlignItems !== "SPACE_BETWEEN" && n.children.filter((c) => c.visible).length >= 2 && n.itemSpacing >= 0;
+  if (written) add("gap", n.itemSpacing);
+  if (n.layoutWrap === "WRAP" && n.counterAxisSpacing !== null && n.counterAxisSpacing !== (written ? n.itemSpacing : 0)) add(n.layoutMode === "HORIZONTAL" ? "row-gap" : "column-gap", n.counterAxisSpacing);
 }
 return off;`)) as string[];
-    const layers = await inspect({ within: COVERAGE_FRAME, fields: ["layout"] });
+    const reply = await ask("inspect", { within: COVERAGE_FRAME, fields: ["layout"] });
+    const layers = (reply.layers as Layer[]) ?? [];
     const answer = layers.flatMap(({ id, layout }) =>
       sides.flatMap((side) => {
         const value = layout?.[side];
@@ -193,6 +227,7 @@ return off;`)) as string[];
       }),
     );
 
+    expect(reply.more).toBeUndefined();
     expect(truth.length).toBeGreaterThan(0);
     expect(answer.sort()).toEqual(truth.sort());
   });
@@ -272,22 +307,31 @@ return out;`)) as Record<string, Record<string, string>>;
 
   it("C5: every fill, stroke and bound variable under a card", async () => {
     const truth = (await run(`const card = await node(${JSON.stringify(planPro)});
+const names = {};
+for (const variable of await figma.variables.getLocalVariablesAsync("COLOR")) names[variable.id] = variable.name;
+const bound = (list) => Array.isArray(list) ? [...new Set(list.filter((p) => p.visible !== false).flatMap((p) => [p.boundVariables?.color, ...(p.gradientStops ?? []).map((s) => s.boundVariables?.color)]).filter(Boolean).map((alias) => names[alias.id] ?? alias.id))].sort() : [];
 const solid = (list) => Array.isArray(list) ? list.filter((p) => p.type === "SOLID" && p.visible !== false).map((p) => hex(p.color)).sort() : [];
-return [card, ...card.findAll(() => true)].map((n) => ({ id: n.id, fills: solid(n.fills), strokes: solid(n.strokes), weight: solid(n.strokes).length > 0 && typeof n.strokeWeight === "number" ? n.strokeWeight : undefined, bound: Object.keys(n.boundVariables ?? {}).filter((key) => !["fills", "strokes", "effects", "textRangeFills"].includes(key)).sort() })).filter((n) => n.fills.length + n.strokes.length + n.bound.length > 0);`)) as {
+return [card, ...card.findAll(() => true)].map((n) => ({ id: n.id, fills: solid(n.fills), strokes: solid(n.strokes), fillVars: bound(n.fills), strokeVars: bound(n.strokes), weight: solid(n.strokes).length > 0 && typeof n.strokeWeight === "number" ? n.strokeWeight : undefined, bound: Object.keys(n.boundVariables ?? {}).filter((key) => !["fills", "strokes", "effects", "textRangeFills"].includes(key)).sort() })).filter((n) => n.fills.length + n.strokes.length + n.bound.length > 0);`)) as {
       id: string;
       fills: string[];
+      fillVars: string[];
+      strokeVars: string[];
     }[];
     const layers = await inspect({ within: planPro, fields: ["fills", "strokes", "bound"] });
+    const named = (tokens: Record<string, string> | undefined) => [...new Set(Object.keys(tokens ?? {}).map(slug))].sort();
     const answer = layers.map(({ id, fills, strokes, bound }) => ({
       id,
       fills: hexesIn(fills?.css ?? ""),
       strokes: (strokes?.colors ?? []).flatMap(hexesIn).sort(),
+      fillVars: named(fills?.tokens),
+      strokeVars: named(strokes?.tokens),
       weight: strokes?.weight,
       bound: Object.keys(bound ?? {}).sort(),
     }));
 
     expect(truth.length).toBeGreaterThan(3);
-    expect(byId(answer.filter((entry) => entry.fills.length + entry.strokes.length + entry.bound.length > 0))).toEqual(byId(truth));
+    expect(truth.some((entry) => entry.fillVars.length + entry.strokeVars.length > 0)).toBe(true);
+    expect(byId(answer.filter((entry) => entry.fills.length + entry.strokes.length + entry.bound.length > 0))).toEqual(byId(truth.map((entry) => ({ ...entry, fillVars: entry.fillVars.map(slug), strokeVars: entry.strokeVars.map(slug) }))));
   });
 
   it("C6: the layers of a frame with a colour that is no style and no variable", async () => {
@@ -394,7 +438,7 @@ return { id: alias.id, modes: collection.modes.map((m) => m.name), mode: collect
       chain: string[];
       hex: string;
     };
-    const model = (await ask("tokens_read", { format: "json", query: "live/" })) as unknown as TokenModel;
+    const model = ((await ask("tokens_read", { format: "json", query: "live/" })) as unknown as { tokens: TokenModel }).tokens;
     const collection = model.collections.find(({ variables }) => variables.some(({ id }) => id === truth.id));
     const alias = collection?.variables.find(({ id }) => id === truth.id);
     const last = alias?.aliasOf?.[truth.mode]?.at(-1);
@@ -412,7 +456,7 @@ return text.getStyledTextSegments(["fontSize", "fontName", "textDecoration"]).ma
     const [layer] = await inspect({ nodes: [MIXED_RUNS_TEXT], fields: ["text"] });
 
     expect(truth.length).toBeGreaterThan(1);
-    expect(layer?.text?.segments).toMatchObject(truth);
+    expect(mergeRuns((layer?.text?.segments ?? []) as unknown as Run[])).toEqual(mergeRuns(truth as Run[]));
   });
 
   it("C14: where every instance of a main component is, on which page", async () => {
@@ -431,17 +475,33 @@ return { setId: set.id, pages: out };`)) as { setId: string; pages: Record<strin
   });
 
   it("C15: whether a frame's content overflows its height, and by how much", async () => {
-    const truth = (await run(`const frame = await node(${JSON.stringify(customers)});
+    // Its own fixture in the Live tests section: a 200x100 frame that does not clip, with a child 30 px past its bottom.
+    const frameId = (await run(`const frame = figma.createFrame();
+frame.name = "live:coverage:C15-overflow";
+frame.resize(200, 100);
+frame.clipsContent = false;
+const child = figma.createRectangle();
+frame.appendChild(child);
+child.resize(100, 50);
+child.y = 80;
+(await node(${JSON.stringify(startSection)})).appendChild(frame);
+return frame.id;`)) as string;
+
+    try {
+      const truth = (await run(`const frame = await node(${JSON.stringify(frameId)});
 const box = frame.absoluteBoundingBox;
 const pad = frame.layoutMode && frame.layoutMode !== "NONE" ? frame.paddingBottom : 0;
 return frame.children.filter((c) => c.layoutPositioning !== "ABSOLUTE").map((c) => ({ id: c.id, bottom: roundTwo(c.absoluteBoundingBox.y + c.absoluteBoundingBox.height - (box.y + box.height - pad)) })).filter((c) => c.bottom > 0.5);`)) as {
-      id: string;
-      bottom: number;
-    }[];
-    const layers = (await inspect({ within: customers, depth: 1, fields: ["box"] })).filter(({ id }) => id !== customers);
-    const answer = layers.flatMap(({ id, overflow }) => (overflow?.bottom === undefined ? [] : [{ id, bottom: overflow.bottom }]));
+        id: string;
+        bottom: number;
+      }[];
+      const layers = (await inspect({ within: frameId, depth: 1, fields: ["box"] })).filter(({ id }) => id !== frameId);
+      const answer = layers.flatMap(({ id, overflow }) => (overflow?.bottom === undefined ? [] : [{ id, bottom: overflow.bottom }]));
 
-    expect(truth.length).toBeGreaterThan(0);
-    expect(byId(answer)).toEqual(byId(truth));
+      expect(truth).toHaveLength(1);
+      expect(byId(answer)).toEqual(byId(truth));
+    } finally {
+      await run(`(await node(${JSON.stringify(frameId)}))?.remove();`);
+    }
   });
 });
