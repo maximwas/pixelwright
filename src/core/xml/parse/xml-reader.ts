@@ -16,6 +16,8 @@ interface OpenAttribute {
   readonly name: string;
   readonly at: XmlLocation;
   readonly nameEnd: number;
+  /** Where the value starts: 0.7.0 reports a missing quote there. */
+  valueAt?: XmlLocation;
   raw: string;
 }
 
@@ -86,6 +88,7 @@ export class XmlReader implements TokenizerCallbacks {
 
   onattribdata(start: number, end: number): void {
     if (this.#attribute !== null) {
+      this.#attribute.valueAt ??= this.#lines.locate(start);
       this.#attribute.raw += this.#source.slice(start, end);
     }
   }
@@ -100,7 +103,7 @@ export class XmlReader implements TokenizerCallbacks {
     }
 
     if (quote === QuoteType.NoValue || quote === QuoteType.Unquoted) {
-      throw new XmlSyntaxError(attribute.at, XML_PARSE_TEXT.needsQuotes(attribute.name));
+      throw new XmlSyntaxError(attribute.valueAt ?? attribute.at, XML_PARSE_TEXT.needsQuotes(attribute.name));
     }
 
     if (attribute.raw.includes(XML_PARSE.chars.lt)) {

@@ -5652,7 +5652,7 @@
   {
     "name": "design_apply",
     "title": "Write a design",
-    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. Strict XML: an unclosed tag, a wrong closing tag, a duplicate attribute, a bare & or a < in a value is refused as INVALID_XML with its line and column. Names may hold $ ($css), HTML entities like &mdash; are read, CDATA is text as written. dryRun checks the XML without writing.",
+    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. Strict XML: an unclosed tag, a wrong closing tag, a duplicate attribute, a bare & or a < in a value is refused as INVALID_XML with its line and column. Names may hold $ ($css), HTML entities like &mdash; are read, CDATA is text as written. dryRun reads the XML without writing and answers the elements it read and every refusal (an unknown attribute, a Did you mean hint, a habit such as x or fill with the CSS to write instead).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5690,8 +5690,139 @@
       "type": "object",
       "properties": {
         "elements": {
-          "type": "number",
-          "description": "How many elements the XML holds."
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "number"
+              },
+              "column": {
+                "type": "number"
+              },
+              "tag": {
+                "type": "string"
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "ref": {
+                "type": "string"
+              },
+              "parent": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "index": {
+                "type": "number"
+              },
+              "attributes": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "content": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "line": {
+                      "type": "number"
+                    },
+                    "column": {
+                      "type": "number"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "span"
+                      ]
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "attributes": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "line",
+                    "column",
+                    "kind",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "source": {
+                "type": "string"
+              },
+              "copy": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "tag",
+              "id",
+              "ref",
+              "parent",
+              "index",
+              "attributes"
+            ],
+            "additionalProperties": false
+          },
+          "description": "The elements read, in document order: line and column, tag, id (null for a new layer), ref (new:<line> for a new one), parent ref, index among its siblings, the attributes kept, a Text's content pieces, and for an element inside a copy its source and copy."
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "number"
+              },
+              "column": {
+                "type": "number"
+              },
+              "id": {
+                "type": "string"
+              },
+              "attribute": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Every refusal, in document order: line and column, the id and attribute it concerns, the message and a hint. An element that is refused is not in elements; an attribute that is refused is left out of it."
         },
         "dry": {
           "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
@@ -5723,7 +5854,8 @@
         }
       },
       "required": [
-        "elements"
+        "elements",
+        "errors"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false
