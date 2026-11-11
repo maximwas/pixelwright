@@ -7606,5 +7606,122 @@
       ],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "delete",
+    "meta": {
+      "write": "per input",
+      "dryRun": true,
+      "timeoutMs": 30000,
+      "needsAllowEdits": "per input",
+      "turn": "write"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "minItems": 1,
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "dryRun": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "nodes",
+        "dryRun"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "deleted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "deleted",
+        "errors"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "save_version",
+    "meta": {
+      "write": true,
+      "dryRun": false,
+      "timeoutMs": 30000,
+      "needsAllowEdits": true,
+      "turn": "write"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      },
+      "required": [
+        "title",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
   }
 ]

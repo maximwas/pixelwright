@@ -2,6 +2,7 @@ import { changesOp } from "@/shared/ops/changes/changes.manifest.ts";
 import { chunkOp } from "@/shared/ops/chunk/chunk.manifest.ts";
 import { componentsOp } from "@/shared/ops/components/components.manifest.ts";
 import { coverOp } from "@/shared/ops/cover/cover.manifest.ts";
+import { deleteOp } from "@/shared/ops/delete/delete.manifest.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
 import { exportOp } from "@/shared/ops/export/export.manifest.ts";
 import { fileMapOp } from "@/shared/ops/file-map/file-map.manifest.ts";
@@ -14,6 +15,7 @@ import { OpCatalog } from "@/shared/ops/op-catalog.ts";
 import { outlineOp } from "@/shared/ops/outline/outline.manifest.ts";
 import { pingOp } from "@/shared/ops/ping/ping.manifest.ts";
 import { readOp } from "@/shared/ops/read/read.manifest.ts";
+import { saveVersionOp } from "@/shared/ops/save-version/save-version.manifest.ts";
 import { screensOp } from "@/shared/ops/screens/screens.manifest.ts";
 import { selectionOp } from "@/shared/ops/selection/selection.manifest.ts";
 import { selectionWaitOp } from "@/shared/ops/selection-wait/selection-wait.manifest.ts";
@@ -48,4 +50,6 @@ export const OP_CONTRACTS = new OpCatalog([
   componentsOp,
   variablesOp,
   usageOp,
+  deleteOp,
+  saveVersionOp,
 ]);

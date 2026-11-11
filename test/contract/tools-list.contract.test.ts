@@ -95,6 +95,7 @@ describe("the MCP contract", () => {
         "viewport_get",
         "nodes_find",
         "outline",
+        "nodes_delete",
         "screenshot",
         "design_read",
         "image_compare",
@@ -111,13 +112,14 @@ describe("the MCP contract", () => {
         "tokens_usage",
         "components_read",
         "library_search",
+        "version_save",
         "baseline_save",
         "baseline_diff",
         "assets_export",
         "guide",
       ]),
     );
-    expect(tools).toHaveLength(29);
+    expect(tools).toHaveLength(31);
   });
 
   it("lists no outputSchema for the tools that answer in content blocks, so a client keeps the image (T-005)", async () => {

@@ -1181,7 +1181,7 @@
   {
     "name": "nodes_delete",
     "title": "Delete layers",
-    "description": "Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display=\"none\" in design_apply instead) stays, with why. What an instance's slot holds is the instance's own and is deleted. One call is one undo step in Figma. Refused while the plugin's Allow edits switch is off.",
+    "description": "Deletes up to 500 layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component) stays, with why. What an instance's slot holds is the instance's own and is deleted. One call is one undo step in Figma. dryRun lists what would be deleted and works with Allow edits off; version saves a named version first. Refused while the plugin's Allow edits switch is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1196,17 +1196,29 @@
           },
           "description": "The layers' ids, e.g. [\"54:243\"]."
         },
-        "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
+        "dryRun": {
+          "default": false,
+          "description": "Check without writing: the answer says what would change. Works with Allow edits off.",
+          "type": "boolean"
+        },
+        "version": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens."
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "required": [
         "nodes"
       ],
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -1215,7 +1227,8 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The layers deleted; in a dry run, the layers that would be."
         },
         "errors": {
           "type": "array",
@@ -1234,7 +1247,33 @@
               "message"
             ],
             "additionalProperties": false
-          }
+          },
+          "description": "The layers left, each with why."
+        },
+        "dry": {
+          "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
+          "type": "boolean",
+          "const": true
+        },
+        "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
         },
         "support": {
           "type": "string"
@@ -5363,6 +5402,12 @@
           "minimum": 1,
           "maximum": 300
         },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens."
+        },
         "file": {
           "type": "string",
           "minLength": 1,
@@ -5389,6 +5434,26 @@
         "note": {
           "description": "When the code ran and only reads (nothing in it writes): the tools that read without code.",
           "type": "string"
+        },
+        "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -7585,13 +7650,12 @@
           "description": "The version's name in Version history, e.g. \"Built: pricing\"."
         },
         "description": {
-          "description": "Shown under the title. Everyone with the file sees it: no local paths or private repository names.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1000
+          "maxLength": 1000,
+          "description": "Shown under the title. Everyone with the file sees it: no local paths or private repository names."
         },
         "baselines": {
-          "description": "The baselines this version goes with: it is saved only while the design still matches each one, and they record it.",
           "minItems": 1,
           "maxItems": 10,
           "type": "array",
@@ -7600,19 +7664,21 @@
             "minLength": 1,
             "maxLength": 64,
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-          }
+          },
+          "description": "The baselines this version goes with: it is saved only while the design still matches each one, and they record it."
         },
         "file": {
-          "description": "A session from status, or a file name. Default: the file of the first baseline, else the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "A session from status, or a file name. Default: the file of the first baseline, else the active file."
         }
       },
       "required": [
         "title"
       ],
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",

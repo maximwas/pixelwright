@@ -68,6 +68,7 @@ describe("the built server over stdio", () => {
         "viewport_get",
         "nodes_find",
         "outline",
+        "nodes_delete",
         "screenshot",
         "design_read",
         "image_compare",
@@ -84,13 +85,14 @@ describe("the built server over stdio", () => {
         "tokens_usage",
         "components_read",
         "library_search",
+        "version_save",
         "baseline_save",
         "baseline_diff",
         "assets_export",
         "guide",
       ]),
     );
-    expect(tools).toHaveLength(29);
+    expect(tools).toHaveLength(31);
     expect(answer.structuredContent).toMatchObject({ server: { role: "disabled" } });
     expect(server.errors).toEqual([]);
   });

@@ -29,6 +29,8 @@ import { MCP_ROOTS } from "@/server/adapters/mcp/mcp-roots.ts";
 import { PROJECT_FOLDER } from "@/server/app/project/project-folder.ts";
 import { SELECTED_LAYER } from "@/server/app/scope/selected-layer.ts";
 import { WITHIN_SCOPE } from "@/server/app/scope/within-scope.ts";
+import { SUPPORT_NOTE } from "@/server/app/stores/support-note.ts";
+import { VERSION_TRIES } from "@/server/app/stores/version-tries.ts";
 import { TOOL_FACTORY, TOOL_RUNNER } from "@/server/app/tool-runner/tool-runner.ts";
 import { ServerMain } from "@/server/main/server.main.ts";
 import { TOOL_CATALOG } from "@/server/tools/tool.catalog.ts";
@@ -58,6 +60,8 @@ const SINGLETONS: [string, InjectionToken<unknown>][] = [
   ["BRIDGE_LISTENER", BRIDGE_LISTENER],
   ["STATUS_HINTS", STATUS_HINTS],
   ["TOOL_CATALOG", TOOL_CATALOG],
+  ["VERSION_TRIES", VERSION_TRIES],
+  ["SUPPORT_NOTE", SUPPORT_NOTE],
   ["TOOL_FACTORY", TOOL_FACTORY],
   ["TOOL_RUNNER", TOOL_RUNNER],
   ["MCP_ROOTS", MCP_ROOTS],

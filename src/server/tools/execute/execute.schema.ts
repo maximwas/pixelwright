@@ -1,5 +1,6 @@
 import * as zod from "zod/mini";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
+import { VersionInputSchema, WRITER_OUTPUT } from "@/server/app/writes/writes.schema.ts";
 import { EXECUTE_FIELD, EXECUTE_SCRIPT, EXECUTE_SECONDS } from "@/server/tools/execute/execute.constants.ts";
 import { EXECUTE } from "@/shared/ops/execute/execute.constants.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
@@ -17,12 +18,14 @@ export const ExecuteInputSchema = zod.strictObject({
       EXECUTE_SECONDS.default,
     )
     .check(zod.describe(EXECUTE_FIELD.timeout)),
+  version: VersionInputSchema,
   file: FileInputSchema,
 });
 
 /** The op's answer and, when the code ran and nothing in it writes, the note (T-153). */
 export const ExecuteOutputSchema = zod.extend(executeOp.output, {
   note: zod.exactOptional(zod.string()).check(zod.describe(EXECUTE_FIELD.note)),
+  version: WRITER_OUTPUT.version,
 });
 
 export type ExecuteInput = zod.output<typeof ExecuteInputSchema>;
