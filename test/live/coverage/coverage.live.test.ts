@@ -58,6 +58,7 @@ interface Found {
   readonly hidden?: true;
   readonly fontSize?: number | number[];
   readonly changed?: Record<string, string | boolean>;
+  readonly properties?: Record<string, string | boolean>;
 }
 
 interface Layer {
@@ -72,6 +73,7 @@ interface Layer {
   readonly component?: { variant: Record<string, string> };
   readonly text?: { segments?: Record<string, unknown>[] };
   readonly path?: Ref[];
+  readonly page?: Ref;
 }
 
 interface TokenModel {
@@ -302,11 +304,14 @@ for (const inst of frame.findAllWithCriteria({ types: ["INSTANCE"] })) {
   if (main?.parent?.id === set.id) out[inst.id] = main.variantProperties;
 }
 return out;`)) as Record<string, Record<string, string>>;
-    const nodes = await found({ component: "Button", within: pricingDesktop });
-    const layers = await inspect({ nodes: nodes.map(({ id }) => id), fields: ["component"] });
+    const nodes = await found({ component: "Button", within: pricingDesktop, properties: true });
+    const variantOf = (properties: Record<string, string | boolean> | undefined, wanted: Record<string, string>) =>
+      Object.fromEntries(Object.keys(wanted).map((key) => [key, properties?.[key]]));
 
     expect(Object.keys(truth).length).toBeGreaterThan(1);
-    expect(Object.fromEntries(layers.map(({ id, component }) => [id, component?.variant]))).toEqual(truth);
+    expect(Object.fromEntries(nodes.map(({ id, properties }) => [id, variantOf(properties, truth[id] ?? {})]))).toEqual(
+      truth,
+    );
   });
 
   it("C5: every fill, stroke and bound variable under a card", async () => {
@@ -396,6 +401,10 @@ return { id: label.id, characters: label.characters, path, page: { id: page.id, 
 
     expect(truth.path.length).toBeGreaterThan(1);
     expect({ path: layer?.path, page: layer?.page }).toEqual({ path: truth.path, page: truth.page });
+
+    const [inspected] = await inspect({ nodes: [truth.id], fields: ["path"] });
+
+    expect({ path: inspected?.path, page: inspected?.page }).toEqual({ path: truth.path, page: truth.page });
   });
 
   it("C10: a layer's auto layout and its parent's", async () => {

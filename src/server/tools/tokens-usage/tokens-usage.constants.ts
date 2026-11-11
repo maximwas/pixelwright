@@ -7,7 +7,7 @@ export const TOKENS_USAGE_TOOL = {
   name: "tokens_usage",
   title: "Where a token is used",
   description:
-    'The layers on the current page (or inside within, or on every page with within: "file") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. raw: true in place of token lists the colours bound to no style and no variable (fills, strokes, text runs, effects, gradient stops), each as #RRGGBB with its count and layers, most used first. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.',
+    'The layers on the current page (or inside within, or on every page with within: "file") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. raw: true in place of token lists the colours bound to no style and no variable (fills, strokes, text runs, effects, gradient stops), each as #RRGGBB with its count and layers, most used first; under within it is complete when `more` is not true and there is no cut note (500 layer uses at most); paints with opacity 0 or hidden are not counted. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.',
 } as const;
 
 /** A token's length, 0.7.0's bounds: `--x` is the shortest. */
@@ -16,7 +16,7 @@ export const TOKENS_USAGE = { minToken: 3, maxToken: 300 } as const;
 export const TOKENS_USAGE_FIELD = {
   token:
     "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg. Give token or raw, not both.",
-  raw: "true: list the colours bound to no style and no variable (fills with gradient stops, strokes, a mixed text's runs, effect colours) instead of a token's layers.",
+  raw: "true: list the colours bound to no style and no variable (fills with gradient stops, strokes, a mixed text's runs, effect colours) instead of a token's layers. Under within, complete when `more` is not true and there is no cut note (500 layer uses at most); paints with opacity 0 or hidden are not counted.",
   colors:
     "With raw: each raw colour as #RRGGBB, its count of layer uses and those layers (property fills, strokes, text for a text run, or effects; hidden when a viewer does not see it), most used first.",
   within:

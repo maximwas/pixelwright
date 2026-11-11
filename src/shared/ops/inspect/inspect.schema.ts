@@ -63,6 +63,8 @@ const InspectedLayerSchema = zod.strictObject({
   defaults: zod.exactOptional(zod.record(zod.string(), zod.union([zod.string(), zod.boolean()]))),
   /** Its ancestors below the page, outermost first. */
   path: zod.exactOptional(zod.array(zod.strictObject({ id: zod.string(), name: zod.string(), type: zod.string() }))),
+  /** The page the layer is on. */
+  page: zod.exactOptional(zod.strictObject({ id: zod.string(), name: zod.string() })),
   /** The layout fields of a parent whose auto layout or grid places it. */
   parentLayout: zod.exactOptional(ParentLayoutSchema),
 });

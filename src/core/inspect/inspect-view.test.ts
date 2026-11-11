@@ -137,6 +137,21 @@ const RULE = layer({
 });
 
 describe("inspect", () => {
+  // T14: the ancestors by id, and the page they hang on.
+  it("gives a layer's path and the page it is on, and leaves both out for a layer at the page's top", () => {
+    const page = { id: "0:1", name: "Pricing" };
+    const [nested, top] = view.build(
+      raw([
+        layer({ path: [{ id: "2:9", name: "Card", type: "FRAME" }], page }),
+        layer({ id: "2:2", path: [], page }),
+      ]),
+    ).layers;
+
+    expect(nested?.path).toEqual([{ id: "2:9", name: "Card", type: "FRAME" }]);
+    expect(nested?.page).toEqual(page);
+    expect(top?.page).toEqual(page);
+  });
+
   it("names what the boxes are relative to and which ids it could not find", () => {
     const answer = view.build(raw([TITLE], { origin: { id: "2:1", name: "Section" }, missing: ["9:9"] }));
 

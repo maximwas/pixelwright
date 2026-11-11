@@ -1083,7 +1083,7 @@
                 "const": true
               },
               "properties": {
-                "description": "With properties: every component property's value on the instance, by name.",
+                "description": "With properties: every component property's value on the instance, by name; variant properties too.",
                 "type": "object",
                 "propertyNames": {
                   "type": "string"
@@ -6072,6 +6072,22 @@
                   ],
                   "additionalProperties": false
                 }
+              },
+              "page": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
               },
               "parentLayout": {
                 "type": "object",
