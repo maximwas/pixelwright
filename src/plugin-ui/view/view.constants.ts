@@ -1,5 +1,3 @@
-import { OP_NAME } from "@/shared/ops/op-meta.constants.ts";
-import type { OpName } from "@/shared/ops/op-meta.types.ts";
 import { PAIRING_REASON } from "@/shared/protocol/handshake.constants.ts";
 import type { PairingReason } from "@/shared/protocol/handshake.schema.ts";
 
@@ -16,7 +14,6 @@ export const WINDOW_ELEMENT = {
   hint: "hint",
   allowEdits: "allow-edits",
   editsNote: "edits-note",
-  actions: "actions",
   support: "support",
   feedback: "feedback",
   update: "update",
@@ -30,11 +27,8 @@ export const UPDATE_TEXT = {
     `Pixelwright ${version} is out. To update, run npx -y pixelwright@latest setup, then restart your MCP client.`,
 } as const;
 
-/** The elements the window builds itself: the activity's lines and the links. */
-export const WINDOW_TAG = { item: "li", text: "span", link: "a" } as const;
-
-/** ui.html's classes of an activity line. */
-export const ACTION_CLASS = { what: "what", when: "when", warning: "warning", empty: "empty" } as const;
+/** The element the window builds itself: the links. */
+export const WINDOW_TAG = { link: "a" } as const;
 
 /** The status dot's colour: connected, on its way, stopped. */
 export const TONE = { ok: "ok", wait: "wait", error: "error" } as const;
@@ -85,42 +79,6 @@ export const EDITS_TEXT = {
 
 /** The undo shortcut of the system Figma runs on, told apart by the user agent. */
 export const UNDO_KEY = { macAgent: "Mac", mac: "⌘Z", other: "Ctrl+Z" } as const;
-
-/** What the activity calls an op (P-051), 0.7.0's words; a quiet op (ping) is never listed, so it has none. */
-export const ACTION_NAME: Partial<Record<OpName, string>> = {
-  [OP_NAME.selection]: "Read the selection",
-  [OP_NAME.changes]: "Read the changes",
-  [OP_NAME.execute]: "Ran code",
-  [OP_NAME.show]: "Showed layers",
-  [OP_NAME.viewport]: "Read the view",
-  [OP_NAME.selectionWait]: "Waited for a selection",
-  [OP_NAME.outline]: "Read the page outline",
-  [OP_NAME.fileMap]: "Mapped the file",
-  [OP_NAME.find]: "Searched layers",
-  [OP_NAME.read]: "Read a design",
-  [OP_NAME.nearby]: "Read the notes nearby",
-  [OP_NAME.export]: "Exported an image",
-  [OP_NAME.image]: "Read an original image",
-  [OP_NAME.inspect]: "Inspected layers",
-  [OP_NAME.setOf]: "Found a component's set",
-  [OP_NAME.screens]: "Compared the page's screens",
-  [OP_NAME.flows]: "Mapped the prototype",
-  [OP_NAME.components]: "Read the components",
-  [OP_NAME.variables]: "Read the tokens",
-  [OP_NAME.usage]: "Found where a token is used",
-};
-
-export const ACTIVITY_TEXT = {
-  failed: (name: string) => `${name} — failed`,
-  refused: "Edit refused: Allow edits is off",
-  nothingYet: "Nothing yet",
-} as const;
-
-/** How many of the last actions the window lists (P-051): enough to see a run of calls, short enough to stay small. */
-export const ACTIONS_SHOWN = 5;
-
-/** An action's time: hours and minutes, in the user's own format. */
-export const ACTION_TIME = { hour: "2-digit", minute: "2-digit" } as const;
 
 /** The busy state of D-06 as one status sentence (A§15.10). */
 export const BUSY_TEXT = { line: (op: string, seconds: number) => `Busy: ${op} since ${seconds} s` } as const;

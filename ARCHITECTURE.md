@@ -277,7 +277,7 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;
   `Backoff`), `adapters/` (the browser socket, the channel to main), `view/` (`PluginWindow`, the DOM; `StatusLine`,
-  its words; `RecentActions`, the last five answers; `BusyState`, what runs past its answer), `main/` and `UiMain`.
+  its words; `BusyState`, what runs past its answer), `main/` and `UiMain`.
 
 `test/` holds the contract, golden, guard and live tests; `scripts/` the build, install and name checks, `check-pack.ts` (the tarball installed and run in a temp folder) and `build-docs.ts` (the site in `docs/` from README, the manifests, the guide topics and CHANGELOG.md); `old/` the
 0.7.0 source, kept for reference and imported by nothing.
@@ -310,7 +310,8 @@ outermost first: `ErrorTextStep`, `CallLogStep`, `TargetStep` (binds the call to
 reaches `PluginLink`, which is `PluginBridge`. On the owner, the request goes to the file's `BridgeSession` and out
 through `PluginRpc` (birpc) on its socket. The window relays the frame: `SocketLink` to `WindowLink` to `MainChannel`,
 then main's `UiChannel` to `ServerRpc`. `OperationRunner` runs the op through its chain, outermost first:
-`ActivityStep` (each answer to the window's activity list, quiet ops left out), `ContractStep`, `EditsStep` (Allow
+`ActivityStep` (each answer reported to the window, which lists nothing: it keeps only whether a write was refused
+and whether execute ran; quiet ops left out), `ContractStep`, `EditsStep` (Allow
 edits), `FrameSizeStep`, `TurnStep` (the read/write turn), `JournalStep` (a write's touched ids for the change
 journal), `WatchdogStep` (TIMEOUT at the op's timeout; the window shows the op busy until its handler ends).
 `ContainerOperationFactory` builds the op in a child container; `Operation.run` calls the op's `execute` and wraps what

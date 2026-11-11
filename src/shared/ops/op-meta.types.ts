@@ -18,7 +18,7 @@ export interface OpMeta<Input> {
   /** The plugin refuses the op while Allow edits is off (D-07, P-010). */
   readonly needsAllowEdits: PerInput<Input, boolean>;
   readonly turn: OpTurn;
-  /** Not listed in the window's activity (ping). */
+  /** Main never reports it to the window (ping). */
   readonly quiet?: boolean;
 }
 

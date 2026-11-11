@@ -148,37 +148,6 @@
       .toggle input:checked::after {
         transform: translateX(12px);
       }
-      .heading {
-        margin: 0 0 4px;
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--figma-color-text-secondary, #757575);
-      }
-      .actions {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
-      .actions li {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-      }
-      .actions .what {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .actions .when {
-        flex: none;
-        color: var(--figma-color-text-tertiary, #b3b3b3);
-      }
-      .actions .warning .what {
-        color: var(--figma-color-text-warning, #b86200);
-      }
-      .actions .empty {
-        color: var(--figma-color-text-tertiary, #b3b3b3);
-      }
       .support {
         color: var(--figma-color-text-tertiary, #b3b3b3);
       }
@@ -237,10 +206,6 @@
       <section class="edits">
         <label class="toggle">Allow edits <input id="allow-edits" type="checkbox" /></label>
         <p id="edits-note" class="note"></p>
-      </section>
-      <section>
-        <h2 class="heading">Activity</h2>
-        <ul id="actions" class="actions"></ul>
       </section>
       <p id="support" class="support"></p>
       <p id="feedback" class="support"></p>
