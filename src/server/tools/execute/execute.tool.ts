@@ -2,7 +2,10 @@ import { readFile, stat } from "node:fs/promises";
 import { inject, injectable } from "@needle-di/core";
 import { PROJECT_FOLDER } from "@/server/app/project/project-folder.ts";
 import { PLUGIN_SESSION } from "@/server/app/sessions/plugin-session.ts";
-import { Tool } from "@/server/app/tool-runner/tool.ts";
+import { SUPPORT_NOTE } from "@/server/app/stores/support-note.ts";
+import { VERSIONED_WRITE } from "@/server/app/writes/versioned-write.ts";
+import { WriteTool } from "@/server/app/writes/write-tool.ts";
+import type { WriterOutput } from "@/server/app/writes/writes.schema.ts";
 import { EXECUTE_SCRIPT, EXECUTE_SECONDS, EXECUTE_TEXT } from "@/server/tools/execute/execute.constants.ts";
 import { type ExecuteInput, ExecuteInputSchema, type ExecuteOutput } from "@/server/tools/execute/execute.schema.ts";
 import { ReadsOnlyCheck } from "@/server/tools/execute/reads-only-check.ts";
@@ -12,40 +15,63 @@ import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { EXECUTE } from "@/shared/ops/execute/execute.constants.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
 
+/** The code to run, its time, and what is wrong with its syntax, if anything. */
+interface Code {
+  readonly source: string;
+  readonly timeout: number;
+  readonly problem: string | null;
+}
+
 /**
  * The code, or the script's, run in the plugin of the call's file (T-150): checked for syntax first, so code cut on
- * its way here is told so before it runs (T-152, B-006); the note decided from the code once it ran (T-153). The op's
- * meta makes the server wait a little past the code's own time (T-156).
+ * its way here is told so before it runs and before any version (T-152, B-006); the note decided from the code once it
+ * ran (T-153). Its op has no dry run, so a `version` is saved unprobed (A§6.2 step 6); its changes are not counted and
+ * it gives no support sentence (T-006). The op's meta makes the server wait a little past the code's own time (T-156).
  */
 @injectable()
-export class ExecuteTool extends Tool<ExecuteInput, ExecuteOutput> {
+export class ExecuteTool extends WriteTool<ExecuteInput, Code, ExecuteOutput, ExecuteOutput> {
   protected readonly input = ExecuteInputSchema;
-  readonly #session;
+  protected readonly op = executeOp;
   readonly #folder;
   readonly #syntax = new SyntaxCheck();
   readonly #reads = new ReadsOnlyCheck();
 
-  constructor(session = inject(PLUGIN_SESSION), folder = inject(PROJECT_FOLDER)) {
-    super();
-    this.#session = session;
+  constructor(
+    session = inject(PLUGIN_SESSION),
+    folder = inject(PROJECT_FOLDER),
+    versioned = inject(VERSIONED_WRITE),
+    support = inject(SUPPORT_NOTE),
+  ) {
+    super(session, versioned, support);
     this.#folder = folder;
   }
 
-  protected async run({ code, script, timeout }: ExecuteInput): Promise<ExecuteOutput> {
+  protected async prepare({ code, script, timeout }: ExecuteInput): Promise<Code> {
     const source = await this.#source(code, script);
-    const problem = this.#syntax.problem(source);
 
-    if (problem !== null) {
-      return { result: null, logs: [], error: problem };
-    }
+    return { source, timeout, problem: this.#syntax.problem(source) };
+  }
 
-    const ran = await this.#session.run(executeOp, {
+  protected override answerNow({ problem }: Code): ExecuteOutput | undefined {
+    return problem === null ? undefined : { result: null, logs: [], error: problem };
+  }
+
+  protected async write({ source, timeout }: Code): Promise<ExecuteOutput> {
+    const ran = await this.session.run(executeOp, {
       code: source,
       timeoutMs: Math.round(timeout * EXECUTE_SECONDS.perSecond),
     });
 
     // From the code, never from change events: a background tab hears of them a minute late (B-033).
     return ran.error === undefined && this.#reads.readsOnly(source) ? { ...ran, note: EXECUTE_TEXT.readsOnly } : ran;
+  }
+
+  protected changes(): number {
+    return 0;
+  }
+
+  protected output(result: ExecuteOutput, { version }: WriterOutput): ExecuteOutput {
+    return version === undefined ? result : { ...result, version };
   }
 
   /** The code itself, or the script's: exactly one of them. */

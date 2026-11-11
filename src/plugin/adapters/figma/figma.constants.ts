@@ -14,6 +14,8 @@ export const FIGMA_NODE_TYPE = {
   document: "DOCUMENT",
   page: "PAGE",
   instance: "INSTANCE",
+  /** What an instance's slot holds is the instance's own (T-045). */
+  slot: "SLOT",
   componentSet: "COMPONENT_SET",
   text: "TEXT",
 } as const;

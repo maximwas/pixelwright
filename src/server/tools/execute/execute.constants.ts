@@ -14,6 +14,8 @@ export const EXECUTE_FIELD = {
   code: "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give code or script.",
   script:
     "A file of such code on the server's disk, run instead of code. It is read at every call, so the file as it is now runs, after a plugin restart too. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
+  version:
+    "A name for a version saved in the file's history before the code runs, for the designer to go back to. execute has no dry run to check first, so a version is always saved when you pass one, even if the code then changes nothing.",
   timeout: "Seconds to wait for the code: 10 by default, up to 300 for a long task.",
   note: "When the code ran and only reads (nothing in it writes): the tools that read without code.",
 } as const;

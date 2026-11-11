@@ -30,4 +30,6 @@ export const OP_NAME = {
   components: "components",
   variables: "variables",
   usage: "usage",
+  delete: "delete",
+  saveVersion: "save_version",
 } as const;

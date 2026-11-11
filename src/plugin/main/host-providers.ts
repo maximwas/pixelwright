@@ -12,6 +12,7 @@ import { CODE_FIGMA, CodeFigma } from "@/plugin/adapters/figma/code-figma.ts";
 import { CURRENT_SELECTION, CurrentSelection } from "@/plugin/adapters/figma/current-selection.ts";
 import { DEV_RESOURCES, DevResources } from "@/plugin/adapters/figma/dev-resources/dev-resources.ts";
 import { FIGMA_BASE64, FigmaBase64 } from "@/plugin/adapters/figma/figma-base64.ts";
+import { FILE_HISTORY, FileHistory } from "@/plugin/adapters/figma/file-history.ts";
 import { ComponentFieldReader } from "@/plugin/adapters/figma/layer-meta/component-field-reader.ts";
 import { FactFieldReader } from "@/plugin/adapters/figma/layer-meta/fact-field-reader.ts";
 import { ModeFieldReader } from "@/plugin/adapters/figma/layer-meta/mode-field-reader.ts";
@@ -67,6 +68,7 @@ export class HostProviders {
       .bind({ provide: CANVAS_VIEW, useClass: CanvasView })
       .bind({ provide: FIGMA_BASE64, useClass: FigmaBase64 })
       .bind({ provide: NODE_LOOKUP, useClass: NodeLookup })
+      .bind({ provide: FILE_HISTORY, useClass: FileHistory })
       .bind({ provide: NUMBER_FORMAT, useClass: NumberFormat })
       .bind({ provide: FIELD_READERS, multi: true, useClass: BoxFieldReader })
       .bind({ provide: FIELD_READERS, multi: true, useClass: LayoutFieldReader })

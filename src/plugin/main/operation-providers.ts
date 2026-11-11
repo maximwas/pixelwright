@@ -16,6 +16,7 @@ import { ComponentsOperation } from "@/plugin/operations/components/components.o
 import { EXPOSED_INSTANCES, ExposedInstances } from "@/plugin/operations/components/exposed-instances.ts";
 import { CLIP_COVER, ClipCover } from "@/plugin/operations/cover/clip-cover.ts";
 import { CoverOperation } from "@/plugin/operations/cover/cover.operation.ts";
+import { DeleteOperation } from "@/plugin/operations/delete/delete.operation.ts";
 import { CODE_RUNS, CodeRuns } from "@/plugin/operations/execute/code-runs.ts";
 import { CODE_SCOPE, CodeScope } from "@/plugin/operations/execute/code-scope.ts";
 import { ExecuteOperation } from "@/plugin/operations/execute/execute.operation.ts";
@@ -31,6 +32,7 @@ import { OutlineOperation } from "@/plugin/operations/outline/outline.operation.
 import { PingOperation } from "@/plugin/operations/ping/ping.operation.ts";
 import { ReadOperation } from "@/plugin/operations/read/read.operation.ts";
 import { READ_RUN, ReadRun } from "@/plugin/operations/read/read-run.ts";
+import { SaveVersionOperation } from "@/plugin/operations/save-version/save-version.operation.ts";
 import { ScreensOperation } from "@/plugin/operations/screens/screens.operation.ts";
 import { SelectionOperation } from "@/plugin/operations/selection/selection.operation.ts";
 import { SelectionWaitOperation } from "@/plugin/operations/selection-wait/selection-wait.operation.ts";
@@ -73,6 +75,8 @@ export class OperationProviders {
     [OP_NAME.components]: ComponentsOperation,
     [OP_NAME.variables]: VariablesOperation,
     [OP_NAME.usage]: UsageOperation,
+    [OP_NAME.delete]: DeleteOperation,
+    [OP_NAME.saveVersion]: SaveVersionOperation,
   };
 
   register(container: Container): void {
