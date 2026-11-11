@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import * as zod from "zod/mini";
 import type { ApplyChange } from "@/core/apply/apply.types.ts";
 import type { WritePlanner } from "@/core/apply/plan/write-planner.ts";
+import { DesignApplyOutputSchema } from "@/server/tools/design-apply/design-apply.schema.ts";
 import { DesignApplyTool } from "@/server/tools/design-apply/design-apply.tool.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 
@@ -86,6 +88,43 @@ describe("DesignApplyTool", () => {
     const answer = await tool(planner).execute({ xml: '<Frame background="#f00"/>', dryRun: true });
 
     expect(answer.structuredContent).toMatchObject({ elements: [{ ref: "new:1", notWritten: ["background"] }] });
+  });
+
+  // The MCP client rejects an answer whose objects carry a key the declared outputSchema does not list (live failure).
+  it("answers a dry run whose changes and elements carry only the keys of the declared output schema", async () => {
+    const copy: ApplyChange = {
+      line: 1,
+      column: 1,
+      kind: "create",
+      ref: "new:1",
+      id: null,
+      tag: "Frame",
+      parent: null,
+      index: 0,
+      before: "1:1",
+      after: "1:2",
+      props: {},
+      sources: {},
+      copyOf: "1:3",
+      source: "1:4",
+      copy: "new:1",
+    };
+    const planner = {
+      layersToRead: () => [],
+      plan: () => ({ changes: [copy], written: [copy], send: [], errors: [], notWritten: new Map() }),
+    } as never;
+    const answer = await tool(planner).execute({ xml: "<Frame/>", dryRun: true });
+    const schema = zod.toJSONSchema(DesignApplyOutputSchema, { target: "draft-2020-12", io: "output" }) as {
+      properties: Record<string, { items: { properties: Record<string, unknown> } }>;
+    };
+    const content = answer.structuredContent as Record<string, Record<string, unknown>[]>;
+
+    for (const list of ["elements", "changes"]) {
+      const listed = Object.keys(schema.properties[list]?.items.properties ?? {});
+      const extra = (content[list] ?? []).flatMap((entry) => Object.keys(entry).filter((key) => !listed.includes(key)));
+
+      expect(extra, list).toEqual([]);
+    }
   });
 
   it("refuses a real run until the writing half lands", async () => {

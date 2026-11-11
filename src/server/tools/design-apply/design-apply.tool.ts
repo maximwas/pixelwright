@@ -85,7 +85,21 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
       return notWritten === undefined ? element : { ...element, notWritten };
     });
 
-    return { elements, errors, changes: plan.written, dry: true };
+    // The planner's placement keys (index, before, after, copyOf, source, copy) are for the write; the declared schema
+    // lists none of them, so the answer names the listed keys one by one instead of relying on a strip.
+    const changes = plan.written.map(({ line, column, kind, id, ref, tag, parent, props, sources }) => ({
+      line,
+      column,
+      kind,
+      id,
+      ref,
+      tag,
+      parent,
+      props,
+      sources,
+    }));
+
+    return { elements, errors, changes, dry: true };
   }
 
   protected async write(): Promise<DesignApplyOutput> {
