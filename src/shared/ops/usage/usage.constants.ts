@@ -9,6 +9,12 @@ export const USAGE = { maxLayers: 500, minBudgetMs: 1, maxBudgetMs: LIMITS.opBud
 /** Where to look besides a layer or page: every page. */
 export const USAGE_WITHIN = { file: "file" } as const;
 
+/** Where a raw colour is used: a layer's fills, strokes or effects, or a mixed text's run; a gradient stop is its paint's. */
+export const RAW_PROPERTY = { fills: "fills", strokes: "strokes", text: "text", effects: "effects" } as const;
+
 export const USAGE_FIELD = {
-  property: "Where the layer uses it: fill, stroke, effect, text, a text run, or a field.",
+  property:
+    "Where the layer uses it: fill, stroke, effect, text, a text run, or a field; for a raw colour fills, strokes, text (a text run) or effects.",
+  hidden: "The layer or one of its ancestors is hidden.",
+  color: "With raw: the colour as Figma's channels, 0 to 1.",
 } as const;

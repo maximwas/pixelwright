@@ -23,4 +23,8 @@ export const FIND_FIELD = {
   countsCut: "The time ran out before every layer was counted: counts cover the layers reached. Search within less.",
   component: "The component set's name, or a component's without variants.",
   componentVariant: "The variant as Figma names it.",
+  hidden: "The layer or one of its ancestors is hidden: a viewer does not see it.",
+  fontSize: "A text's font size in px, or its distinct sizes in text order when it mixes them.",
+  changed:
+    "An instance's component properties whose value differs from the component's default, by name: what this copy changes.",
 } as const;

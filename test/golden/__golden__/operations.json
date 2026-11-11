@@ -913,6 +913,9 @@
         "counts": {
           "type": "boolean"
         },
+        "visible": {
+          "type": "boolean"
+        },
         "within": {
           "type": "string",
           "minLength": 1,
@@ -987,6 +990,38 @@
                 "type": "array",
                 "items": {
                   "type": "string"
+                }
+              },
+              "hidden": {
+                "description": "The layer or one of its ancestors is hidden: a viewer does not see it.",
+                "type": "boolean",
+                "const": true
+              },
+              "fontSize": {
+                "description": "A text's font size in px, or its distinct sizes in text order when it mixes them.",
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                ]
+              },
+              "changed": {
+                "description": "An instance's component properties whose value differs from the component's default, by name: what this copy changes.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "boolean"
+                  ]
                 }
               }
             },
@@ -5872,6 +5907,18 @@
                     "type": "null"
                   }
                 ]
+              },
+              "defaults": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "boolean"
+                  ]
+                }
               }
             },
             "required": [
@@ -7534,6 +7581,10 @@
         "variable": {
           "type": "boolean"
         },
+        "raw": {
+          "type": "boolean",
+          "const": true
+        },
         "within": {
           "anyOf": [
             {
@@ -7554,8 +7605,6 @@
         }
       },
       "required": [
-        "id",
-        "variable",
         "budgetMs"
       ],
       "additionalProperties": false
@@ -7580,7 +7629,33 @@
               },
               "property": {
                 "type": "string",
-                "description": "Where the layer uses it: fill, stroke, effect, text, a text run, or a field."
+                "description": "Where the layer uses it: fill, stroke, effect, text, a text run, or a field; for a raw colour fills, strokes, text (a text run) or effects."
+              },
+              "hidden": {
+                "description": "The layer or one of its ancestors is hidden.",
+                "type": "boolean",
+                "const": true
+              },
+              "color": {
+                "description": "With raw: the colour as Figma's channels, 0 to 1.",
+                "type": "object",
+                "properties": {
+                  "r": {
+                    "type": "number"
+                  },
+                  "g": {
+                    "type": "number"
+                  },
+                  "b": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "r",
+                  "g",
+                  "b"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [

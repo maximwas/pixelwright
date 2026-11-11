@@ -23,6 +23,16 @@ const RAW = {
 
 const LAYERS = [{ id: "1:2", name: "Title", type: "TEXT", property: "text" }];
 
+const BLACK = { r: 0, g: 0, b: 0 };
+
+/** Raw colour uses as the usage op lists them: a layer may use one colour twice (a fill and a gradient stop). */
+const RAW_USES = [
+  { id: "1:2", name: "Title", type: "TEXT", property: "fills", color: { r: 1, g: 0, b: 0 } },
+  { id: "1:3", name: "Line", type: "RECTANGLE", property: "strokes", color: BLACK, hidden: true },
+  { id: "1:4", name: "Card", type: "FRAME", property: "fills", color: BLACK },
+  { id: "1:4", name: "Card", type: "FRAME", property: "fills", color: BLACK },
+];
+
 /** A plugin whose variables op answers RAW and whose usage op finds one layer, the requests it got kept. */
 class UsagePlugin implements PluginLink {
   readonly requests: { op: string; input: unknown }[] = [];
@@ -46,7 +56,13 @@ class UsagePlugin implements PluginLink {
   async request({ op, input }: OpRequest): Promise<unknown> {
     this.requests.push({ op, input });
 
-    return op === "variables" ? RAW : { layers: LAYERS, more: false, cut: false };
+    if (op === "variables") {
+      return RAW;
+    }
+
+    const raw = typeof input === "object" && input !== null && "raw" in input;
+
+    return { layers: raw ? RAW_USES : LAYERS, more: false, cut: false };
   }
 }
 
@@ -82,4 +98,34 @@ describe("the tokens_usage tool", () => {
       /No style or variable is named --Display /,
     );
   });
+});
+
+describe("tokens_usage raw", () => {
+  it("groups the raw colours by hex, each layer and property once, the colour most layers use first", async () => {
+    const { plugin, usage } = tool();
+    const answer = (await usage.execute({ raw: true })).structuredContent;
+
+    expect(plugin.requests).toEqual([{ op: "usage", input: { raw: true, budgetMs: 20_000 } }]);
+    expect(answer).toEqual({
+      colors: [
+        {
+          color: "#000000",
+          count: 2,
+          layers: [
+            { id: "1:3", name: "Line", type: "RECTANGLE", property: "strokes", hidden: true },
+            { id: "1:4", name: "Card", type: "FRAME", property: "fills" },
+          ],
+        },
+        { color: "#FF0000", count: 1, layers: [{ id: "1:2", name: "Title", type: "TEXT", property: "fills" }] },
+      ],
+      more: false,
+    });
+  });
+
+  it.each([[{}], [{ token: "--Display-font", raw: true }]])(
+    "refuses a call with neither or both of token and raw: %j",
+    async (args) => {
+      await expect(tool().usage.execute(args)).rejects.toThrow(/exactly one of token .* and raw: true/);
+    },
+  );
 });

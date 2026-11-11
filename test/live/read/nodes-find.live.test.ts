@@ -2,7 +2,43 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
-const { startSection } = TEST_MCP.ids;
+const { startSection, orbitPricing } = TEST_MCP.ids;
+
+/** Orbit — Pricing's texts under 14 px a viewer sees (the answer key plugin code computed): all 12 px. */
+const SMALL_SHOWN = [
+  "54:240",
+  "I54:268;54:205;54:188",
+  "54:451",
+  "54:327",
+  "I54:355;54:205;54:188",
+  "80:1407",
+  "I80:1413;54:205;54:188",
+  "81:1619",
+];
+
+/** The "Popular" labels inside the hidden badges of the cards that are not popular. */
+const HIDDEN_POPULAR = [
+  "I54:244;54:205;54:188",
+  "I54:292;54:205;54:188",
+  "I54:331;54:205;54:188",
+  "I54:379;54:205;54:188",
+  "I80:1412;54:205;54:188",
+  "I80:1414;54:205;54:188",
+];
+
+/** Each Plan Card instance's properties that differ from the component's defaults (the answer key). */
+const PLAN_CARD_CHANGED: Record<string, Record<string, string | boolean>> = {
+  "185:461": { Price: "$29", Popular: true, Name: "Team" },
+  "80:1413": { Popular: true },
+  "54:244": { Price: "$0", Description: "For side projects and trying things out.", Name: "Starter" },
+  "80:1414": { Price: "$29", Description: "For growing teams that ship together.", Name: "Team" },
+  "54:331": { Price: "$0", Description: "For side projects and trying things out.", Name: "Starter" },
+  "54:292": { Price: "$29", Description: "For growing teams that ship together.", Name: "Team" },
+  "80:1412": { Price: "$0", Description: "For side projects and trying things out.", Name: "Starter" },
+  "54:379": { Price: "$29", Description: "For growing teams that ship together.", Name: "Team" },
+  "54:355": { Popular: true },
+  "54:268": { Popular: true },
+};
 // Plan Card is a plain component with 10 instances (Pricing – Desktop, Mobile, Tablet, and 185:461 in the coverage
 // frame 185:239 on Start here); Button is a variant set, and
 // "Sign in" 54:236 is its Variant=Secondary, State=Default. Like 0.7.0, `name` matches layer names only and
@@ -17,7 +53,12 @@ interface Found {
   readonly id: string;
   readonly type: string;
   readonly path: string[];
+  readonly hidden?: true;
+  readonly fontSize?: number | number[];
+  readonly changed?: Record<string, string | boolean>;
 }
+
+const smallest = (size: Found["fontSize"]): number => Math.min(...[size ?? Number.POSITIVE_INFINITY].flat());
 
 interface Counted {
   readonly component: string;
@@ -74,5 +115,38 @@ describe("read/nodes_find", () => {
     expect(page).toBe(current?.name);
     expect(onPage).toEqual(await client.call("nodes_find", { file, type: "SECTION", within: current?.id }));
     expect((onPage.nodes as Found[]).map(({ id }) => id)).toContain(startSection);
+  });
+
+  it("finds the texts under 14 px a viewer sees, with their sizes, and the hidden ones apart", async () => {
+    const shown = await client.call("nodes_find", {
+      file,
+      type: "TEXT",
+      within: orbitPricing,
+      visible: true,
+      limit: 500,
+    });
+    const small = (shown.nodes as Found[]).filter(({ fontSize }) => smallest(fontSize) < 14);
+    const hidden = await client.call("nodes_find", {
+      file,
+      type: "TEXT",
+      within: orbitPricing,
+      visible: false,
+      limit: 500,
+    });
+    const popular = (hidden.nodes as Found[]).filter(({ id }) => HIDDEN_POPULAR.includes(id));
+
+    expect(small.map(({ id, fontSize, hidden: flag }) => ({ id, fontSize, flag }))).toEqual(
+      SMALL_SHOWN.map((id) => ({ id, fontSize: 12, flag: undefined })),
+    );
+    expect(popular.map(({ id, hidden: flag, fontSize }) => ({ id, flag, fontSize }))).toEqual(
+      HIDDEN_POPULAR.map((id) => ({ id, flag: true, fontSize: 12 })),
+    );
+    expect((hidden.nodes as Found[]).every(({ hidden: flag }) => flag === true)).toBe(true);
+  });
+
+  it("gives each Plan Card instance the properties it changes from the component's defaults", async () => {
+    const { nodes } = await client.call("nodes_find", { file, component: PLAN_CARD, within: "file" });
+
+    expect(Object.fromEntries((nodes as Found[]).map(({ id, changed }) => [id, changed]))).toEqual(PLAN_CARD_CHANGED);
   });
 });

@@ -1,5 +1,14 @@
+import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 /** Figma's measured sides (Dev Mode), and how a measurement names an end. */
 export const MEASURED_SIDE = { left: "LEFT", right: "RIGHT", top: "TOP", bottom: "BOTTOM" } as const;
+
+/** The padding longhands inspect's layout names, in PADDING_FIELDS' order: top, right, bottom, left. */
+export const INSPECT_PADDING = [
+  CSS_PROPERTY.paddingTop,
+  CSS_PROPERTY.paddingRight,
+  CSS_PROPERTY.paddingBottom,
+  CSS_PROPERTY.paddingLeft,
+] as const;
 
 /** What inspect says in words. */
 export const INSPECT_TEXT = {
@@ -72,6 +81,12 @@ export const INSPECT_FIELD = {
   fillsStyle: "The paint style it comes from, and the token design_read names it by.",
   fillsTokens: "The variables the paints are bound to, by token, with their values.",
   fillsPaints: "Every visible fill, top first: its type (SOLID, GRADIENT_LINEAR, IMAGE, VIDEO) and its blend mode.",
+  layout:
+    "A layer's auto layout or grid as design_read's CSS names it, longhands in px: display, flex-direction, flex-wrap, padding-top/-right/-bottom/-left, gap or row-gap and column-gap, alignment; a bound side's token is in bound.",
+  strokesTokens:
+    "The variables the stroke colours are bound to, by token, with their values; a colour without one is raw.",
+  componentProperties:
+    "Every component property by name (Figma's #id left out): its type, this instance's value and the component's default.",
   bound:
     "The variables bound to the layer's own fields (padding, gap, radius, size), by Figma field: the token design_read writes in var(), and its value.",
 } as const;
