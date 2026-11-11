@@ -15,6 +15,16 @@ export const TokensReadInputSchema = zod.strictObject({
         .check(zod.minLength(TOKENS_READ.minCollections), zod.maxLength(TOKENS_READ.maxCollections)),
     )
     .check(zod.describe(TOKENS_READ_FIELD.collections)),
+  query: zod
+    .exactOptional(
+      zod.union([
+        zod.string().check(zod.minLength(TOKENS_READ.minName), zod.maxLength(TOKENS_READ.maxName)),
+        zod
+          .array(zod.string().check(zod.minLength(TOKENS_READ.minName), zod.maxLength(TOKENS_READ.maxName)))
+          .check(zod.minLength(TOKENS_READ.minCollections), zod.maxLength(TOKENS_READ.maxCollections)),
+      ]),
+    )
+    .check(zod.describe(TOKENS_READ_FIELD.query)),
   libraries: zod._default(zod.boolean(), false).check(zod.describe(TOKENS_READ_FIELD.libraries)),
   used: zod._default(zod.boolean(), true).check(zod.describe(TOKENS_READ_FIELD.used)),
   within: within.check(zod.describe(TOKENS_READ_FIELD.within)),

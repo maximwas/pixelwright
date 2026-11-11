@@ -43,6 +43,7 @@ export class TokensReadTool extends Tool<TokensReadInput, TokensReadOutput> {
 
   protected async run({
     collections,
+    query,
     libraries,
     used,
     within,
@@ -50,7 +51,11 @@ export class TokensReadTool extends Tool<TokensReadInput, TokensReadOutput> {
     maxChars,
   }: TokensReadInput): Promise<TokensReadOutput> {
     const raw = await this.#session.run(variablesOp, { libraries, used, ...(within === undefined ? {} : { within }) });
-    const { notes: unwritten, ...tokens } = this.#model.model(raw, collections);
+    const { notes: unwritten, ...tokens } = this.#model.model(
+      raw,
+      collections,
+      query === undefined ? undefined : [query].flat(),
+    );
     const written = this.#writer.written(format, raw, tokens, tokens);
     const notes = [...(written.notes ?? unwritten), ...this.#readingNotes(raw, collections)];
     const library = raw.library === undefined ? {} : { library: raw.library };

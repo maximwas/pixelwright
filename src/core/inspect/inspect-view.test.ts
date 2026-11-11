@@ -272,6 +272,24 @@ describe("inspect's layout and component properties", () => {
     });
   });
 
+  it("names a run's font style as the face (fontName.style), not Figma's own fontStyle enum", () => {
+    const text = layer({
+      type: "TEXT",
+      text: {
+        characters: "ab",
+        textAutoResize: "HEIGHT",
+        textAlignHorizontal: "LEFT",
+        textAlignVertical: "TOP",
+        segments: [
+          { ...segment("a", 14, { unit: "AUTO" }), fontName: { family: "Inter", style: "Bold" }, fontStyle: "BOLD" },
+          segment("b", 16, { unit: "AUTO" }),
+        ],
+      },
+    });
+
+    expect(view.build(raw([text])).layers[0]?.text?.segments?.[0]?.fontStyle).toBe("Bold");
+  });
+
   it("gives an instance's every property with its value and the component's default, Figma's #id left out", () => {
     const card = layer({
       type: "INSTANCE",

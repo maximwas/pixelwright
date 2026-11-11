@@ -57,8 +57,32 @@ export const TEXT_BREAKS: Readonly<Record<string, (typeof TEXT_BREAK)[keyof type
   "\n": TEXT_BREAK.paragraph,
 };
 
+/** The view fields each group of `fields` keeps (RG-3); id, name and type always stay. */
+export const INSPECT_GROUP_KEYS: Readonly<Record<string, readonly string[]>> = {
+  box: ["box", "center", "distance", "angle", "paintedBox", "rotation", "overflow"],
+  parent: ["parent"],
+  path: ["path"],
+  fills: ["blendMode", "mixBlendMode", "fills"],
+  strokes: ["strokes"],
+  effects: ["effects"],
+  layout: ["layout", "parentLayout"],
+  bound: ["bound"],
+  text: ["text"],
+  component: ["component"],
+  interactions: ["interactions"],
+};
+
+export const INSPECT_ALWAYS = ["id", "name", "type"] as const;
+
 /** The inspect answer's fields, as clients read them (tools.json). */
 export const INSPECT_FIELD = {
+  more: "A subtree read listed more layers than the 100 read: the ids not read are in leftIds; inspect them next.",
+  leftIds: "The ids of the layers a subtree read did not read, up to 500, as far as the scan reached.",
+  path: "The layer's ancestors below its page, outermost first, by id, name and type.",
+  parentLayout:
+    "For a layer inside auto layout or a grid: its parent's layout as the layout field gives it (display, flex-direction, gap, padding…), so sizing in a flow reads in one answer.",
+  segments:
+    "A text that mixes styles: each run with its character range, text, font family and style, size, decoration and fill (a token when it has one, else the colour). A text of one style has none.",
   relativeTo: 'What the boxes are measured from: a layer as `id "name"`, or the page.',
   around:
     "The point distance and angle are measured from, in the boxes' origin: the given one, or the centre of the given layer.",

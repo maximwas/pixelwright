@@ -45,6 +45,32 @@ export class InspectLayout {
     return entries.length === 0 ? {} : { layout: Object.fromEntries(entries) };
   }
 
+  /** The auto layout or grid of the parent that places the layer, as read() gives a layer's own. */
+  parent(layer: InspectedLayer): Pick<InspectLayerView, "parentLayout"> {
+    const { id, name, type, visible, x, y, width, height, parentLayout } = layer;
+
+    if (parentLayout === undefined) {
+      return {};
+    }
+
+    const box = { x, y, width, height };
+    const { layout } = this.read({
+      id,
+      name,
+      type,
+      visible,
+      ...box,
+      parent: null,
+      box,
+      paintedBox: null,
+      parentBox: null,
+      parentPadding: null,
+      ...parentLayout,
+    });
+
+    return layout === undefined ? {} : { parentLayout: layout };
+  }
+
   /** Each padding side under its longhand, 0 included. */
   #sides(layer: InspectedLayer): (readonly [string, Layout[string]])[] {
     return PADDING_FIELDS.map(
