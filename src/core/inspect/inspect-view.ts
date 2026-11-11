@@ -98,6 +98,7 @@ export class InspectView {
       box,
       center,
       ...(layer.path === undefined || layer.path.length === 0 ? {} : { path: layer.path }),
+      ...(layer.page === undefined ? {} : { page: layer.page }),
       ...(around === undefined ? {} : this.#bearing(around, center)),
       ...(paintedBox === null || this.#same(paintedBox, box) ? {} : { paintedBox }),
       ...(rotation === undefined || rotation === 0 ? {} : { rotation }),

@@ -943,16 +943,18 @@
   {
     "name": "nodes_find",
     "title": "Find layers",
-    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance's component or component set name), componentId (an instance's component, or any variant of a component set, by id) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes, a text's characters (its first 200, cut: true past them), and its ancestors' ids, names and types in `path` (within \"file\" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults; properties: true gives every property's value), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {\"gte\": 12, \"lt\": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields [\"fontSize\"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
+    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance's component or component set name), componentId (an instance's component, or any variant of a component set, by id) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes, a text's characters (its first 200, cut: true past them), and its ancestors' ids, names and types in `path` (within \"file\" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults; properties: true gives every property's value, variant values included), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {\"gte\": 12, \"lt\": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields [\"fontSize\"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code. An absent field is at its default (no hidden is visible, no changed is an instance matching its component) and the answer is complete for what was asked: it needs no second check with code.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "name": {
+          "description": "Layers whose name contains this, in any case.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
         },
         "type": {
+          "description": "Layers of this Figma type, e.g. FRAME, TEXT, INSTANCE, COMPONENT, RECTANGLE.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
@@ -1003,6 +1005,7 @@
           "additionalProperties": false
         },
         "component": {
+          "description": "Instances of the component or component set with this name, at any depth, inside other instances too; each comes with `changed`, the properties it sets away from the component's defaults.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
@@ -1014,7 +1017,7 @@
           "maxLength": 200
         },
         "properties": {
-          "description": "Also give every component property's value on each instance found.",
+          "description": "Also give every component property's value on each instance found, by name; a variant property's value is among them (State: \"Hover\"), so the variant of each instance needs no other call.",
           "type": "boolean"
         },
         "variant": {
@@ -1028,7 +1031,7 @@
           "type": "boolean"
         },
         "visible": {
-          "description": "true: only layers a viewer sees (the layer and every ancestor visible); false: only hidden ones. Default: both.",
+          "description": "true: only layers a viewer sees (the layer and every ancestor visible); false: only hidden ones: within a component's id, its hidden layers and those under a hidden one. Default: both.",
           "type": "boolean"
         },
         "within": {
@@ -1047,6 +1050,7 @@
         },
         "limit": {
           "default": 50,
+          "description": "At most this many layers listed; more: true when there were more. counts still counts them all.",
           "type": "integer",
           "minimum": 1,
           "maximum": 500
@@ -1165,7 +1169,7 @@
                 "const": true
               },
               "properties": {
-                "description": "With properties: every component property's value on the instance, by name.",
+                "description": "With properties: every component property's value on the instance, by name; variant properties too.",
                 "type": "object",
                 "propertyNames": {
                   "type": "string"
@@ -1589,7 +1593,7 @@
   {
     "name": "inspect",
     "title": "Inspect layers",
-    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill with CSS's mix-blend-mode name, the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to) and every fill's type (a video's too), its auto layout or grid as layout: design_read's CSS longhands with px numbers (padding-top, gap, row-gap…), the variables bound to its padding, gap, radius and size by the token design_read writes, how strokes paint (align, per-side weights, dashes, whether auto layout counts them, the variables their colours are bound to), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing), its component's variant and every component property with its value and the component's default, a text that mixes styles run by run (segments: range, font, size, decoration, fill), for a layer in auto layout or a grid its parent's layout (parentLayout) and its ancestors by id (path). within reads a whole subtree in one call (depth levels, fields to keep only some groups: the auto layout frames of a frame with fields [\"layout\"]); nested instance ids such as I54:244;54:205;54:188 work as nodes. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them, more and leftIds a subtree's.",
+    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off). Recipes: fills, strokes and bound variables of every layer under a card: within + fields [\"fills\",\"strokes\",\"bound\"]; a layer's and its parent's auto layout (padding, gap, direction): fields [\"layout\"] gives layout and parentLayout; a mixed text's runs: fields [\"text\"] gives segments; how far a layer overflows its parent, and its boxes: fields [\"box\"]; its ancestors by id and its page: fields [\"path\"]. An absent field is at its default (no gap or padding key is 0, no flex-direction is row, no overflow is none, no hidden is visible) and the answer is complete for what was asked: it needs no second check with code. Also: the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill, the fill as a CSS value with the paint style or variables behind it and every fill's type, the variables bound to its padding, gap, radius and size, how strokes paint (align, per-side weights, dashes, the variables their colours are bound to), every effect with Figma's own parameters, a text's lines with what ended each (Enter or Shift+Enter) and its line heights, its prototype interactions, its component's variant and every component property with its value and the component's default. within reads a whole subtree in one call (depth levels); nested instance ids such as I54:244;54:205;54:188 work as nodes. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them, more and leftIds a subtree's.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1617,7 +1621,7 @@
           "maximum": 9007199254740991
         },
         "fields": {
-          "description": "Only these groups of each layer, besides id, name and type (without fields every group comes): box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields [\"layout\"] lists the auto layout and grid frames of a subtree. box (with center) and parent come only when asked: fields [\"layout\", \"box\"].",
+          "description": "Only these groups of each layer, besides id, name and type (without fields every group comes): box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields [\"layout\"] lists the auto layout and grid frames of a subtree. layout also gives parentLayout (the parent layout), text gives segments (the runs of a mixed text), box gives center, paintedBox, rotation and overflow, path gives page. box (with center) and parent come only when asked: fields [\"layout\", \"box\"].",
           "minItems": 1,
           "type": "array",
           "items": {
@@ -1787,7 +1791,7 @@
                 "description": "The box's centre, in the box's origin; for a turned layer its own centre too, as the box bounds the turned layer."
               },
               "path": {
-                "description": "The layer's ancestors below its page, outermost first, by id, name and type.",
+                "description": "The layer's ancestors below its page, outermost first, by id, name and type; the page it is on is in page.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -1809,6 +1813,23 @@
                   ],
                   "additionalProperties": false
                 }
+              },
+              "page": {
+                "description": "The page the layer is on, by id and name.",
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
               },
               "distance": {
                 "description": "With around: how far the layer's centre lies from that point, in px.",
@@ -5393,7 +5414,7 @@
   {
     "name": "tokens_usage",
     "title": "Where a token is used",
-    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. raw: true in place of token lists the colours bound to no style and no variable (fills, strokes, text runs, effects, gradient stops), each as #RRGGBB with its count and layers, most used first. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.",
+    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. raw: true in place of token lists the colours bound to no style and no variable (fills, strokes, text runs, effects, gradient stops), each as #RRGGBB with its count and layers, most used first; under within it is exhaustive: a colour not listed is not used there raw. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5404,7 +5425,7 @@
           "maxLength": 300
         },
         "raw": {
-          "description": "true: list the colours bound to no style and no variable (fills with gradient stops, strokes, a mixed text's runs, effect colours) instead of a token's layers.",
+          "description": "true: list the colours bound to no style and no variable (fills with gradient stops, strokes, a mixed text's runs, effect colours) instead of a token's layers. Exhaustive under within: no colour of those kinds is missed.",
           "type": "boolean",
           "const": true
         },
@@ -8182,7 +8203,7 @@
   {
     "name": "components_read",
     "title": "Read the components",
-    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, and for a VARIANT property its options: the values it can take), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `instances: true` lists its instances in `instanceNodes` {id, name, page} (100 at most, instanceNodesMore past them; for the first 25 components listed only, the rest carry instanceNodesSkipped); `references: true` lists per property the layers bound to it {id, name, field}. `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
+    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, and for a VARIANT property its options: the values it can take), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `instances: true` lists its instances in `instanceNodes` {id, name, page} (100 at most, instanceNodesMore past them; for the first 25 components listed only, the rest carry instanceNodesSkipped); `references: true` lists per property the layers bound to it {id, name, field}, complete, nested components included. It says nothing about visibility: hidden layers are nodes_find with visible: false. `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -8250,7 +8271,7 @@
           "type": "boolean"
         },
         "references": {
-          "description": "Also list, per property, the layers inside the component bound to it and the field each binds (visible, characters, mainComponent).",
+          "description": "Also list, per property, the layers inside the component bound to it and the field each binds (visible, characters, mainComponent). Complete, nested components included.",
           "type": "boolean"
         },
         "file": {

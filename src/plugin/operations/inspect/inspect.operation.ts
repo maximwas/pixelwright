@@ -132,6 +132,13 @@ export class InspectOperation extends Operation<InspectInput, InspectRaw> {
     return path;
   }
 
+  /** The page the layer is on. */
+  #page(node: SceneNode): Pick<InspectedLayer, "page"> {
+    const page = this.#lookup.pageOf(node);
+
+    return page === null ? {} : { page: { id: page.id, name: page.name } };
+  }
+
   async #layer(node: SceneNode, corner: Vector): Promise<InspectedLayer> {
     const entry = await this.#reader.at(node, corner);
     const { parent } = node;
@@ -150,6 +157,7 @@ export class InspectOperation extends Operation<InspectInput, InspectRaw> {
       parentBox: parentLayer === null ? null : this.#box(this.#boxes.layout(parentLayer), corner),
       parentPadding: this.#padding(parentLayer),
       path: this.#path(node),
+      ...this.#page(node),
       ...(await this.#parentLayout(parentLayer, corner)),
       ...(node.type === FIGMA_NODE_TYPE.instance ? await this.#defaults(node) : {}),
     };

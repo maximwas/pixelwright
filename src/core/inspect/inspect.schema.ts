@@ -60,6 +60,9 @@ const LayerViewSchema = zod.object({
   path: zod
     .exactOptional(zod.array(zod.object({ id: zod.string(), name: zod.string(), type: zod.string() })))
     .check(zod.describe(INSPECT_FIELD.path)),
+  page: zod
+    .exactOptional(zod.object({ id: zod.string(), name: zod.string() }))
+    .check(zod.describe(INSPECT_FIELD.page)),
   distance: zod.exactOptional(zod.number()).check(zod.describe(INSPECT_FIELD.distance)),
   angle: zod.exactOptional(zod.number()).check(zod.describe(INSPECT_FIELD.angle)),
   paintedBox: zod.exactOptional(BoxSchema).check(zod.describe(INSPECT_FIELD.paintedBox)),

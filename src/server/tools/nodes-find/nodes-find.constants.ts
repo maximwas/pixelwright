@@ -3,7 +3,7 @@ export const NODES_FIND_TOOL = {
   name: "nodes_find",
   title: "Find layers",
   description:
-    'Finds layers on the current page, or inside `within` (a layer, a page, or "file" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance\'s component or component set name), componentId (an instance\'s component, or any variant of a component set, by id) or variant (an instance\'s variant values, "State=Hover, Size=L"). Returns ids, names, types, boxes, a text\'s characters (its first 200, cut: true past them), and its ancestors\' ids, names and types in `path` (within "file" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text\'s fontSize (its distinct sizes when mixed) and an instance\'s changed properties (those differing from its component\'s defaults; properties: true gives every property\'s value), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {"gte": 12, "lt": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields ["fontSize"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.',
+    'Finds layers on the current page, or inside `within` (a layer, a page, or "file" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance\'s component or component set name), componentId (an instance\'s component, or any variant of a component set, by id) or variant (an instance\'s variant values, "State=Hover, Size=L"). Returns ids, names, types, boxes, a text\'s characters (its first 200, cut: true past them), and its ancestors\' ids, names and types in `path` (within "file" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text\'s fontSize (its distinct sizes when mixed) and an instance\'s changed properties (those differing from its component\'s defaults; properties: true gives every property\'s value, variant values included), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {"gte": 12, "lt": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields ["fontSize"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code. An absent field is at its default (no hidden is visible, no changed is an instance matching its component) and the answer is complete for what was asked: it needs no second check with code.',
 } as const;
 
 export const NODES_FIND_FIELD = {
@@ -16,12 +16,18 @@ export const NODES_FIND_FIELD = {
   fields:
     'Only these fields of each layer found, besides id, name and type, e.g. ["fontSize"] drops box and path. Default: all.',
   componentId: "Instances of this component, or of any variant of this component set, by id.",
-  properties: "Also give every component property's value on each instance found.",
+  properties:
+    "Also give every component property's value on each instance found, by name; a variant property's value is among them (State: \"Hover\"), so the variant of each instance needs no other call.",
   foundPage: 'Within "file": the page the layer is on.',
   counts:
     "Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.",
   visible:
-    "true: only layers a viewer sees (the layer and every ancestor visible); false: only hidden ones. Default: both.",
+    "true: only layers a viewer sees (the layer and every ancestor visible); false: only hidden ones: within a component's id, its hidden layers and those under a hidden one. Default: both.",
+  name: "Layers whose name contains this, in any case.",
+  type: "Layers of this Figma type, e.g. FRAME, TEXT, INSTANCE, COMPONENT, RECTANGLE.",
+  component:
+    "Instances of the component or component set with this name, at any depth, inside other instances too; each comes with `changed`, the properties it sets away from the component's defaults.",
+  limit: "At most this many layers listed; more: true when there were more. counts still counts them all.",
   within: 'Where to search: a layer or page id, or "file" for every page. Default: the current page.',
   page: "Without within: the name of the current page, the one searched.",
   hint: "When nothing was found on the current page: how to search elsewhere.",

@@ -18,19 +18,19 @@ const NodeFoundSchema = zod.extend(zod.partial(FoundSchema), {
 });
 
 export const NodesFindInputSchema = zod.strictObject({
-  name,
-  type,
+  name: name.check(zod.describe(NODES_FIND_FIELD.name)),
+  type: type.check(zod.describe(NODES_FIND_FIELD.type)),
   text: text.check(zod.describe(NODES_FIND_FIELD.text)),
   textRegex: textRegex.check(zod.describe(NODES_FIND_FIELD.textRegex)),
   fontSize: fontSize.check(zod.describe(NODES_FIND_FIELD.fontSize)),
-  component,
+  component: component.check(zod.describe(NODES_FIND_FIELD.component)),
   componentId: componentId.check(zod.describe(NODES_FIND_FIELD.componentId)),
   properties: properties.check(zod.describe(NODES_FIND_FIELD.properties)),
   variant: variant.check(zod.describe(NODES_FIND_FIELD.variant)),
   counts: counts.check(zod.describe(NODES_FIND_FIELD.counts)),
   visible: visible.check(zod.describe(NODES_FIND_FIELD.visible)),
   within: zod.exactOptional(WithinSchema).check(zod.describe(NODES_FIND_FIELD.within)),
-  limit: zod._default(limit, FIND.defaultLimit),
+  limit: zod._default(limit, FIND.defaultLimit).check(zod.describe(NODES_FIND_FIELD.limit)),
   fields: zod
     .exactOptional(zod.array(zod.keyof(NodeFoundSchema)).check(zod.minLength(1)))
     .check(zod.describe(NODES_FIND_FIELD.fields)),
