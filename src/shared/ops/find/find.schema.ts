@@ -17,14 +17,28 @@ export const FindOpInputSchema = zod.strictObject({
   component: zod.exactOptional(QuerySchema),
   variant: zod.exactOptional(QuerySchema),
   counts: zod.exactOptional(zod.boolean()),
+  /** true: only layers shown (the layer and every ancestor visible); false: only hidden ones; both when left out. */
+  visible: zod.exactOptional(zod.boolean()),
   within: zod.exactOptional(NodeIdSchema),
   limit: zod.int().check(zod.minimum(FIND.minLimit), zod.maximum(FIND.maxLimit)),
   /** What is left of the server's one budget when it goes page by page (P-075); the op's own when left out. */
   budgetMs: zod.exactOptional(zod.int().check(zod.minimum(1), zod.maximum(LIMITS.opBudgetMs))),
 });
 
-/** A layer found, its box in page px as Figma gives it (the server rounds it, D-15), and its ancestors' names. */
-const FoundSchema = zod.extend(NodeRefSchema, { path: zod.array(zod.string()) });
+const PropertyValueSchema = zod.union([zod.string(), zod.boolean()]);
+
+/**
+ * A layer found, its box in page px as Figma gives it (the server rounds it, D-15), its ancestors' names; whether it is
+ * hidden, a text's font size, and an instance's properties that differ from its component's defaults.
+ */
+const FoundSchema = zod.extend(NodeRefSchema, {
+  path: zod.array(zod.string()),
+  hidden: zod.exactOptional(zod.literal(true)).check(zod.describe(FIND_FIELD.hidden)),
+  fontSize: zod
+    .exactOptional(zod.union([zod.number(), zod.array(zod.number())]))
+    .check(zod.describe(FIND_FIELD.fontSize)),
+  changed: zod.exactOptional(zod.record(zod.string(), PropertyValueSchema)).check(zod.describe(FIND_FIELD.changed)),
+});
 
 const CountedSchema = zod.object({
   component: zod.string().check(zod.describe(FIND_FIELD.component)),

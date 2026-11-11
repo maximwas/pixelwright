@@ -8,22 +8,26 @@ const { within, budgetMs } = usageOp.input.shape;
 
 export const TokensUsageInputSchema = zod.strictObject({
   token: zod
-    .string()
-    .check(
-      zod.minLength(TOKENS_USAGE.minToken),
-      zod.maxLength(TOKENS_USAGE.maxToken),
-      zod.describe(TOKENS_USAGE_FIELD.token),
-    ),
+    .exactOptional(zod.string().check(zod.minLength(TOKENS_USAGE.minToken), zod.maxLength(TOKENS_USAGE.maxToken)))
+    .check(zod.describe(TOKENS_USAGE_FIELD.token)),
+  raw: zod.exactOptional(zod.literal(true)).check(zod.describe(TOKENS_USAGE_FIELD.raw)),
   within: within.check(zod.describe(TOKENS_USAGE_FIELD.within)),
   budgetMs: zod._default(budgetMs, LIMITS.opBudgetMs).check(zod.describe(TOKENS_USAGE_FIELD.budgetMs)),
   file: FileInputSchema,
 });
 
+const { layers } = usageOp.output.shape;
+
+/** A raw colour: its hex, how many layer uses it has, and those layers, each with where it uses the colour. */
+const RawColorSchema = zod.strictObject({ color: zod.string(), count: zod.int(), layers });
+
+/** With token: the style or variable and the layers using it; with raw: the raw colours, most used first. */
 export const TokensUsageOutputSchema = zod.strictObject({
-  token: zod.string(),
-  kind: zod.enum(TOKEN_KIND),
-  name: zod.string(),
-  layers: usageOp.output.shape.layers,
+  token: zod.exactOptional(zod.string()),
+  kind: zod.exactOptional(zod.enum(TOKEN_KIND)),
+  name: zod.exactOptional(zod.string()),
+  layers: zod.exactOptional(layers),
+  colors: zod.exactOptional(zod.array(RawColorSchema)).check(zod.describe(TOKENS_USAGE_FIELD.colors)),
   more: zod.boolean(),
   notes: zod.exactOptional(zod.array(zod.string())),
 });

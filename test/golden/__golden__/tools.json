@@ -928,7 +928,7 @@
   {
     "name": "nodes_find",
     "title": "Find layers",
-    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring), component (an instance's component or component set name) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes and the names of their ancestors, at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
+    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring), component (an instance's component or component set name) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes and the names of their ancestors, with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -960,6 +960,10 @@
         },
         "counts": {
           "description": "Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.",
+          "type": "boolean"
+        },
+        "visible": {
+          "description": "true: only layers a viewer sees (the layer and every ancestor visible); false: only hidden ones. Default: both.",
           "type": "boolean"
         },
         "within": {
@@ -1044,6 +1048,38 @@
                 "type": "array",
                 "items": {
                   "type": "string"
+                }
+              },
+              "hidden": {
+                "description": "The layer or one of its ancestors is hidden: a viewer does not see it.",
+                "type": "boolean",
+                "const": true
+              },
+              "fontSize": {
+                "description": "A text's font size in px, or its distinct sizes in text order when it mixes them.",
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                ]
+              },
+              "changed": {
+                "description": "An instance's component properties whose value differs from the component's default, by name: what this copy changes.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "boolean"
+                  ]
                 }
               }
             },
@@ -1407,7 +1443,7 @@
   {
     "name": "inspect",
     "title": "Inspect layers",
-    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill with CSS's mix-blend-mode name, the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to) and every fill's type (a video's too), the variables bound to its padding, gap, radius and size by the token design_read writes, how strokes paint (align, per-side weights, dashes, whether auto layout counts them), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing) and its component's variant. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them.",
+    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill with CSS's mix-blend-mode name, the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to) and every fill's type (a video's too), its auto layout or grid as layout: design_read's CSS longhands with px numbers (padding-top, gap, row-gap…), the variables bound to its padding, gap, radius and size by the token design_read writes, how strokes paint (align, per-side weights, dashes, whether auto layout counts them, the variables their colours are bound to), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing), its component's variant and every component property with its value and the component's default. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1680,6 +1716,16 @@
                       "type": "string"
                     }
                   },
+                  "tokens": {
+                    "description": "The variables the stroke colours are bound to, by token, with their values; a colour without one is raw.",
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
                   "includedInLayout": {
                     "type": "boolean"
                   }
@@ -1864,6 +1910,19 @@
                   "autoResize"
                 ],
                 "additionalProperties": false
+              },
+              "layout": {
+                "description": "A layer's auto layout or grid as design_read's CSS names it, longhands in px: display, flex-direction, flex-wrap, padding-top/-right/-bottom/-left, gap or row-gap and column-gap, alignment; a bound side's token is in bound.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "number",
+                    "string"
+                  ]
+                }
               },
               "fills": {
                 "type": "object",
@@ -2143,11 +2202,44 @@
                     "additionalProperties": {
                       "type": "string"
                     }
+                  },
+                  "properties": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": [
+                            "string",
+                            "boolean"
+                          ]
+                        },
+                        "default": {
+                          "type": [
+                            "string",
+                            "boolean"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "Every component property by name (Figma's #id left out): its type, this instance's value and the component's default."
                   }
                 },
                 "required": [
                   "name",
-                  "variant"
+                  "variant",
+                  "properties"
                 ],
                 "additionalProperties": false
               }
@@ -5033,15 +5125,20 @@
   {
     "name": "tokens_usage",
     "title": "Where a token is used",
-    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.",
+    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. raw: true in place of token lists the colours bound to no style and no variable (fills, strokes, text runs, effects, gradient stops), each as #RRGGBB with its count and layers, most used first. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "token": {
+          "description": "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg. Give token or raw, not both.",
           "type": "string",
           "minLength": 3,
-          "maxLength": 300,
-          "description": "A style's or variable's token as design_read or tokens_read writes it: --White-2, --h1-font, --color-bg."
+          "maxLength": 300
+        },
+        "raw": {
+          "description": "true: list the colours bound to no style and no variable instead of a token's layers.",
+          "type": "boolean",
+          "const": true
         },
         "within": {
           "description": "The layer or page to look in, or \"file\" for every page (loading them all is slow on a big file). Default: the current page.",
@@ -5071,9 +5168,6 @@
           "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
-      "required": [
-        "token"
-      ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false
     },
@@ -5111,7 +5205,33 @@
               },
               "property": {
                 "type": "string",
-                "description": "Where the layer uses it: fill, stroke, effect, text, a text run, or a field."
+                "description": "Where the layer uses it: fill, stroke, effect, text, a text run, or a field; for a raw colour fills, strokes, text (a text run) or effects."
+              },
+              "hidden": {
+                "description": "The layer or one of its ancestors is hidden.",
+                "type": "boolean",
+                "const": true
+              },
+              "color": {
+                "description": "With raw: the colour as Figma's channels, 0 to 1.",
+                "type": "object",
+                "properties": {
+                  "r": {
+                    "type": "number"
+                  },
+                  "g": {
+                    "type": "number"
+                  },
+                  "b": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "r",
+                  "g",
+                  "b"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -5119,6 +5239,83 @@
               "name",
               "type",
               "property"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "colors": {
+          "description": "With raw: each raw colour as #RRGGBB, its count of layer uses and those layers (property fills, strokes, text for a text run, or effects; hidden when a viewer does not see it), most used first.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "color": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "layers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "property": {
+                      "type": "string",
+                      "description": "Where the layer uses it: fill, stroke, effect, text, a text run, or a field; for a raw colour fills, strokes, text (a text run) or effects."
+                    },
+                    "hidden": {
+                      "description": "The layer or one of its ancestors is hidden.",
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "color": {
+                      "description": "With raw: the colour as Figma's channels, 0 to 1.",
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number"
+                        },
+                        "g": {
+                          "type": "number"
+                        },
+                        "b": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "property"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "color",
+              "count",
+              "layers"
             ],
             "additionalProperties": false
           }
@@ -5134,10 +5331,6 @@
         }
       },
       "required": [
-        "token",
-        "kind",
-        "name",
-        "layers",
         "more"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5340,7 +5533,7 @@
   {
     "name": "execute",
     "title": "Run plugin code",
-    "description": "Runs JavaScript in the Pixelwright plugin to read the file, for what the read tools do not show: the code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
+    "description": "Runs JavaScript in the Pixelwright plugin to read the file, for what the read tools do not show: the code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. The reads answer what code is most often written for: texts by size and visibility and the properties each instance changes from its component (nodes_find), auto layout paddings and gaps in px and instance properties with their defaults (inspect), colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
     "inputSchema": {
       "type": "object",
       "properties": {

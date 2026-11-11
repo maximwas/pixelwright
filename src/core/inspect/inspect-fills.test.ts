@@ -81,6 +81,21 @@ describe("inspect fills", () => {
     ).toEqual({ css: "var(--color-bg)", tokens: { "--color-bg": "#191A23" }, paints: [{ type: "SOLID" }] });
   });
 
+  it("names the variables a stroke colour is bound to, as a fill's", () => {
+    const strokes = inspectFills.read(
+      layer({
+        strokes: [{ type: "SOLID", color: WHITE, boundVariables: { color: { type: "VARIABLE_ALIAS", id: "V:1" } } }],
+      }),
+      raw([], {
+        variables: {
+          "V:1": { name: "color/line", collection: "Colors", resolvedType: "COLOR", remote: false, value: DARK },
+        },
+      }),
+    ).strokes;
+
+    expect(strokes?.tokens).toEqual({ "--color-line": "#191A23" });
+  });
+
   // B-002: each fill's blend mode, top first.
   it("lists each paint top first, with a blend mode other than normal and its CSS name", () => {
     expect(

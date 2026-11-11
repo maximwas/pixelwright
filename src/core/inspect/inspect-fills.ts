@@ -87,9 +87,20 @@ export class InspectFills {
         ...(typeof strokeWeight === "number" ? { weight: strokeWeight } : weights),
         ...(dashPattern.length === 0 ? {} : { dashes: dashPattern }),
         colors: strokes.map((paint) => this.#colour(paint, model)),
+        ...this.#strokeTokens(strokes, model),
         ...(strokesIncludedInLayout === undefined ? {} : { includedInLayout: strokesIncludedInLayout }),
       },
     };
+  }
+
+  /** The variables the visible strokes' colours are bound to, as a fill's tokens: a colour without one is raw. */
+  #strokeTokens(strokes: readonly Paint[], model: ReadModel): { tokens?: Record<string, string> } {
+    const tokens = this.#tokens(
+      strokes.filter((paint) => paint.visible ?? true),
+      model,
+    );
+
+    return tokens.length === 0 ? {} : { tokens: Object.fromEntries(tokens) };
   }
 
   /** A stroke's colour as its own value (faded by its opacity), any other paint by its type. */

@@ -5,7 +5,7 @@ import { TokensSchema } from "@/core/tokens/model/model.schema.ts";
 import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
 
-const { install } = TEST_MCP.ids;
+const { install, pricingDesktop, planStarter } = TEST_MCP.ids;
 
 /** The prefix of the layers this file makes in the Live tests Section, removed after. */
 const PREFIX = "live:tokens:";
@@ -155,5 +155,16 @@ return { id: text.id, style: style.name };`)) as { id: string; style: string };
     const { layers } = await client.call("tokens_usage", { file, token, within: made.id });
 
     expect(layers).toEqual([expect.objectContaining({ id: made.id, property: "a text run" })]);
+  });
+
+  // The answer key: Pricing – Desktop's colours bound to no style and no variable, by plugin code.
+  it("lists the raw colours inside Pricing – Desktop with the layers using each, the bound stroke of 54:244 left out", async () => {
+    const { colors } = await client.call("tokens_usage", { file, raw: true, within: pricingDesktop });
+    const uses = (colors as { color: string; count: number; layers: { id: string }[] }[]).flatMap(({ color, layers }) =>
+      layers.map(({ id }) => `${color} ${id}`),
+    );
+
+    expect(uses.sort()).toEqual(["#000000 54:455", "#B5B9C4 54:316", "#E1E5EE 54:458", "#FF6B3D 54:457"]);
+    expect(uses.some((use) => use.endsWith(planStarter))).toBe(false);
   });
 });
