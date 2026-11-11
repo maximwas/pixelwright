@@ -210,10 +210,13 @@ return [root, ...root.findAll(() => true)]
       expect(answer.more).toBeUndefined();
       expect(layers.map(({ id }) => id).sort()).toEqual(truth.map(({ id }) => id).sort());
 
+      // The layout group leaves default values out, as design_read does: no padding key means 0.
       for (const { id, paddingTop, paddingLeft } of truth) {
-        expect(layers.find((layer) => layer.id === id)?.layout).toMatchObject({
-          "padding-top": paddingTop,
-          "padding-left": paddingLeft,
+        const layout = layers.find((layer) => layer.id === id)?.layout ?? {};
+
+        expect({ top: layout["padding-top"] ?? 0, left: layout["padding-left"] ?? 0 }).toEqual({
+          top: paddingTop,
+          left: paddingLeft,
         });
       }
     });
