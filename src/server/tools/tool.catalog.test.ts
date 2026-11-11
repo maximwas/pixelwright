@@ -7,12 +7,15 @@ import { ToolCatalog } from "@/server/tools/tool.catalog.ts";
 it("runs every writer through WriteTool's versioned path", async () => {
   const bypassing: string[] = [];
 
-  for (const manifest of new ToolCatalog().manifests().filter(({ annotations }) => !annotations.readOnlyHint)) {
+  for (const manifest of new ToolCatalog().manifests()) {
     const tool = await manifest.load();
-    const versioned =
-      tool.prototype instanceof WriteTool && "version" in manifest.input.shape && !Object.hasOwn(tool.prototype, "run");
+    const isWriteTool = tool.prototype instanceof WriteTool;
+    const versioned = isWriteTool && "version" in manifest.input.shape && !Object.hasOwn(tool.prototype, "run");
+    // A tool that writes, or takes `version`, cannot hide behind a read-only annotation.
+    const writes = !manifest.annotations.readOnlyHint || isWriteTool || "version" in manifest.input.shape;
+    const contradicts = isWriteTool && (manifest.annotations.readOnlyHint ?? false);
 
-    if (!versioned) {
+    if ((writes && !versioned) || contradicts) {
       bypassing.push(manifest.name);
     }
   }

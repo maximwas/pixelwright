@@ -1,9 +1,10 @@
 import * as zod from "zod/mini";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
-import { VersionInputSchema, WRITER_OUTPUT } from "@/server/app/writes/writes.schema.ts";
+import { WRITER_OUTPUT } from "@/server/app/writes/writes.schema.ts";
 import { EXECUTE_FIELD, EXECUTE_SCRIPT, EXECUTE_SECONDS } from "@/server/tools/execute/execute.constants.ts";
 import { EXECUTE } from "@/shared/ops/execute/execute.constants.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
+import { SAVE_VERSION } from "@/shared/ops/save-version/save-version.constants.ts";
 
 export const ExecuteInputSchema = zod.strictObject({
   code: zod
@@ -18,7 +19,9 @@ export const ExecuteInputSchema = zod.strictObject({
       EXECUTE_SECONDS.default,
     )
     .check(zod.describe(EXECUTE_FIELD.timeout)),
-  version: VersionInputSchema,
+  version: zod.exactOptional(
+    zod.string().check(zod.minLength(1), zod.maxLength(SAVE_VERSION.titleChars), zod.describe(EXECUTE_FIELD.version)),
+  ),
   file: FileInputSchema,
 });
 

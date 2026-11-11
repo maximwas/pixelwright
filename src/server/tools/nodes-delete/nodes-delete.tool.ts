@@ -2,6 +2,7 @@ import { injectable } from "@needle-di/core";
 import type * as zod from "zod/mini";
 import { WriteTool } from "@/server/app/writes/write-tool.ts";
 import type { WriterOutput } from "@/server/app/writes/writes.schema.ts";
+import { type DeleteSplit, DeleteTargets } from "@/server/tools/nodes-delete/delete-targets.ts";
 import {
   type NodesDeleteInput,
   NodesDeleteInputSchema,
@@ -16,16 +17,18 @@ type Deleted = zod.output<typeof deleteOp.output>;
  * like every writer (D-35), the probe a dry run of the same op. What it changed is the layers it deleted.
  */
 @injectable()
-export class NodesDeleteTool extends WriteTool<NodesDeleteInput, readonly string[], Deleted, NodesDeleteOutput> {
+export class NodesDeleteTool extends WriteTool<NodesDeleteInput, DeleteSplit, Deleted, NodesDeleteOutput> {
   protected readonly input = NodesDeleteInputSchema;
   protected readonly op = deleteOp;
 
-  protected async prepare({ nodes }: NodesDeleteInput): Promise<readonly string[]> {
-    return nodes;
+  protected async prepare({ nodes }: NodesDeleteInput): Promise<DeleteSplit> {
+    return new DeleteTargets().split(nodes);
   }
 
-  protected async write(nodes: readonly string[], dryRun: boolean): Promise<Deleted> {
-    return await this.session.run(deleteOp, { nodes: [...nodes], dryRun });
+  protected async write({ nodes, dropped }: DeleteSplit, dryRun: boolean): Promise<Deleted> {
+    const result = await this.session.run(deleteOp, { nodes, dryRun });
+
+    return { ...result, errors: [...dropped, ...result.errors] };
   }
 
   protected changes({ deleted }: Deleted): number {

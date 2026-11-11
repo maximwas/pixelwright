@@ -30,6 +30,11 @@ export class VersionTries {
     }
   }
 
+  /** The injected clock's time as ISO text: the stamp of a version tried (the tool has no room for a fifth dependency). */
+  timestamp(): string {
+    return new Date(this.#clock.now()).toISOString();
+  }
+
   note(file: string, title: string): void {
     this.#tried.set(VERSION_REPEAT.key(file, title), this.#clock.now());
   }

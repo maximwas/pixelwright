@@ -56,10 +56,11 @@ export class VersionSaveTool extends Tool<VersionSaveInput, VersionSaveOutput> {
 
     this.#checkFile(baselines, connected, title);
     this.#tries.check(target.session.id, title);
-    await this.#baselines.current(baselines, target.session.id);
+    // Noted before any await: a second call with this title must see it (T-181).
+    this.#tries.note(target.session.id, title);
 
-    const id = await this.#save(target.session, title, this.#description(description, baselines));
-    const stamped = await this.#baselines.stamp(baselines, { id, title, savedAt: new Date().toISOString() });
+    const id = await this.#checkedSave(target.session, title, baselines, this.#description(description, baselines));
+    const stamped = await this.#baselines.stamp(baselines, { id, title, savedAt: this.#tries.timestamp() });
     const support = this.#support.due();
 
     return {
@@ -93,15 +94,16 @@ export class VersionSaveTool extends Tool<VersionSaveInput, VersionSaveOutput> {
     }
   }
 
-  /** Saves the version, the try noted first: a timeout keeps it (the version may be saved), a refusal forgets it. */
-  async #save(
+  /** The baselines still match, then the save; the try is noted: a timeout keeps it (the version may be saved). */
+  async #checkedSave(
     session: PluginSession,
     title: string,
+    baselines: readonly BaselineFile[],
     description: string,
   ): Promise<string | null> {
-    this.#tries.note(session.id, title);
-
     try {
+      await this.#baselines.current(baselines, session.id);
+
       return (await session.run(saveVersionOp, { title, description })).id;
     } catch (error) {
       const code = error instanceof PixelwrightError ? error.code : ERROR_CODE.opFailed;

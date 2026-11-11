@@ -5406,7 +5406,7 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 100,
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens."
+          "description": "A name for a version saved in the file's history before the code runs, for the designer to go back to. execute has no dry run to check first, so a version is always saved when you pass one, even if the code then changes nothing."
         },
         "file": {
           "type": "string",
