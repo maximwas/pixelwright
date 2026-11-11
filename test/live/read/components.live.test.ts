@@ -24,6 +24,9 @@ interface Listed {
   readonly variants?: { id: string; name: string }[];
   readonly properties: Record<string, { type: string; default?: string | boolean; options?: string[] }>;
   readonly instances?: number;
+  readonly instanceNodes?: { id: string; name: string; page: string | null }[];
+  readonly instanceNodesMore?: true;
+  readonly references?: Record<string, { id: string; name: string; field: string }[]>;
   readonly exposed?: { name: string; component: string; key: string; properties: object }[];
   readonly links?: { name: string; url: string }[];
   readonly error?: string;
@@ -65,6 +68,49 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
 
   const read = async (args: Record<string, unknown>): Promise<Components> =>
     (await client.call("components_read", { file, ...args })) as Components;
+
+  // Gap 5: what plugin code read off a component: a variant's options, its instances, the layers its properties drive.
+  it("lists a set's variant options, a component's instances with their pages, and the layers bound to each property", async () => {
+    const truth = (await run(`await figma.loadAllPagesAsync();
+const card = await (await figma.getNodeByIdAsync(${JSON.stringify(TEST_MCP.ids.planStarter)})).getMainComponentAsync();
+const set = (await (await figma.getNodeByIdAsync(${JSON.stringify(TEST_MCP.ids.signIn)})).getMainComponentAsync()).parent;
+const pageOf = (node) => { let current = node; while (current.type !== "PAGE") current = current.parent; return current.name; };
+const instances = [];
+for (const node of figma.root.findAllWithCriteria({ types: ["INSTANCE"] })) {
+  const main = await node.getMainComponentAsync();
+  if (main?.id === card.id) instances.push({ id: node.id, name: node.name, page: pageOf(node) });
+}
+const references = {};
+for (const node of card.findAll((node) => node.componentPropertyReferences !== null && node.componentPropertyReferences !== undefined)) {
+  for (const [field, key] of Object.entries(node.componentPropertyReferences)) {
+    if (key in card.componentPropertyDefinitions) (references[key.split("#")[0]] ??= []).push({ id: node.id, name: node.name, field });
+  }
+}
+const options = Object.fromEntries(Object.entries(set.componentPropertyDefinitions).filter(([, definition]) => definition.type === "VARIANT").map(([name, definition]) => [name, definition.variantOptions]));
+return { card: card.name, set: set.name, instances, references, options };`)) as {
+      card: string;
+      set: string;
+      instances: { id: string }[];
+      references: Record<string, unknown[]>;
+      options: Record<string, string[]>;
+    };
+    const { components } = await read({ scope: "local", within: orbitComponents, instances: true, references: true });
+    const card = components.find(({ name }) => name === truth.card);
+    const button = components.find(({ name }) => name === truth.set);
+    const options = Object.fromEntries(
+      Object.entries(button?.properties ?? {}).flatMap(([name, { type, options: listed }]) =>
+        type === "VARIANT" ? [[name, listed]] : [],
+      ),
+    );
+
+    expect(options).toEqual(truth.options);
+
+    const byId = (left: { id: string }, right: { id: string }) => left.id.localeCompare(right.id);
+
+    expect([...(card?.instanceNodes ?? [])].sort(byId)).toEqual([...truth.instances].sort(byId));
+    expect(card?.instanceNodesMore).toBeUndefined();
+    expect(card?.references).toEqual(truth.references);
+  });
 
   it("lists Orbit's components with their properties read from the set, Button's variants among them (T-190, FX-028)", async () => {
     const { components } = await read({ scope: "local", within: orbitComponents });

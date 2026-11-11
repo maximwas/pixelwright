@@ -6,6 +6,14 @@ import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 const QuerySchema = zod.string().check(zod.minLength(FIND.minChars), zod.maxLength(FIND.maxChars));
 
+/** Texts by font size in px: one with any size within every bound given matches. */
+const SizeRangeSchema = zod.strictObject({
+  lt: zod.exactOptional(zod.number()),
+  lte: zod.exactOptional(zod.number()),
+  gt: zod.exactOptional(zod.number()),
+  gte: zod.exactOptional(zod.number()),
+});
+
 /**
  * What to find (T-040) inside a layer or a page, the current page when left out: by name, type or text, an instance's
  * component or variant ("State=Hover, Size=L"), with the instances counted; at most `limit` listed.
@@ -13,7 +21,17 @@ const QuerySchema = zod.string().check(zod.minLength(FIND.minChars), zod.maxLeng
 export const FindOpInputSchema = zod.strictObject({
   name: zod.exactOptional(QuerySchema),
   type: zod.exactOptional(QuerySchema),
-  text: zod.exactOptional(QuerySchema),
+  /** A substring, or a list of them: a text matches when it holds any. */
+  text: zod.exactOptional(
+    zod.union([QuerySchema, zod.array(QuerySchema).check(zod.minLength(1), zod.maxLength(FIND.maxPhrases))]),
+  ),
+  /** A JavaScript regular expression the text's characters match, in any case. */
+  textRegex: zod.exactOptional(QuerySchema),
+  fontSize: zod.exactOptional(SizeRangeSchema),
+  /** Instances of this component, or of any variant of this component set. */
+  componentId: zod.exactOptional(NodeIdSchema),
+  /** Every component property's value on each instance found. */
+  properties: zod.exactOptional(zod.boolean()),
   component: zod.exactOptional(QuerySchema),
   variant: zod.exactOptional(QuerySchema),
   counts: zod.exactOptional(zod.boolean()),
@@ -27,12 +45,22 @@ export const FindOpInputSchema = zod.strictObject({
 
 const PropertyValueSchema = zod.union([zod.string(), zod.boolean()]);
 
+/** A layer's ancestor, or its page, by id and name. */
+const AncestorSchema = zod.object({ id: zod.string(), name: zod.string(), type: zod.string() });
+
+export const FoundPageSchema = zod.object({ id: zod.string(), name: zod.string() });
+
 /**
  * A layer found, its box in page px as Figma gives it (the server rounds it, D-15), its ancestors' names; whether it is
  * hidden, a text's font size, and an instance's properties that differ from its component's defaults.
  */
-const FoundSchema = zod.extend(NodeRefSchema, {
-  path: zod.array(zod.string()),
+export const FoundSchema = zod.extend(NodeRefSchema, {
+  path: zod.array(AncestorSchema).check(zod.describe(FIND_FIELD.path)),
+  characters: zod.exactOptional(zod.string()).check(zod.describe(FIND_FIELD.characters)),
+  cut: zod.exactOptional(zod.literal(true)).check(zod.describe(FIND_FIELD.cut)),
+  properties: zod
+    .exactOptional(zod.record(zod.string(), PropertyValueSchema))
+    .check(zod.describe(FIND_FIELD.properties)),
   hidden: zod.exactOptional(zod.literal(true)).check(zod.describe(FIND_FIELD.hidden)),
   fontSize: zod
     .exactOptional(zod.union([zod.number(), zod.array(zod.number())]))
@@ -55,5 +83,9 @@ export const FindOpOutputSchema = zod.object({
 });
 
 export type Found = zod.output<typeof FoundSchema>;
+
+export type Ancestor = zod.output<typeof AncestorSchema>;
+
+export type SizeRange = zod.output<typeof SizeRangeSchema>;
 
 export type Counted = zod.output<typeof CountedSchema>;

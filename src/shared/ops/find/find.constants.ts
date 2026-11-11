@@ -9,6 +9,10 @@ export const FIND = {
   maxLimit: 500,
   /** A count lists a component and variant only when an instance uses it. */
   minCount: 1,
+  /** Fifty phrases at most in a text list: past them, one textRegex says it shorter. */
+  maxPhrases: 50,
+  /** A text found carries its first 200 characters: enough to tell one text from another; design_read reads it whole. */
+  textChars: 200,
 } as const;
 
 /** The counts' key of a component and variant, on both sides (T-042): the plugin tallies, the server adds pages up. */
@@ -25,6 +29,11 @@ export const FIND_FIELD = {
   componentVariant: "The variant as Figma names it.",
   hidden: "The layer or one of its ancestors is hidden: a viewer does not see it.",
   fontSize: "A text's font size in px, or its distinct sizes in text order when it mixes them.",
+  path: "The layer's ancestors below its page, outermost first, each by id, name and type.",
+  page: 'Within "file": the page the layer is on.',
+  characters: "A text's characters, its first 200.",
+  cut: "The text has more than the 200 characters given.",
+  properties: "With properties: every component property's value on the instance, by name.",
   changed:
     "An instance's component properties whose value differs from the component's default, by name: what this copy changes.",
 } as const;

@@ -30,8 +30,8 @@ interface Walk {
 /**
  * The layer tree under a layer or a page, the current page when none is given, to `depth` levels (T-044), breadth
  * first, so a big frame keeps every section before any loses its children to the node limit. Boxes are relative to the
- * outlined node and unrounded: the server rounds them (D-15). The document lists its pages, unloaded. Instances name
- * their component until the op's deadline (P-075).
+ * outlined node, or in page coordinates with `absolute`, and unrounded: the server rounds them (D-15). The document
+ * lists its pages, unloaded. Instances name their component until the op's deadline (P-075).
  */
 @injectable()
 export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {
@@ -51,7 +51,7 @@ export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {
     this.#layerWalk = layerWalk;
   }
 
-  protected async execute({ node, depth }: OutlineInput): Promise<OutlineOutput> {
+  protected async execute({ node, depth, absolute }: OutlineInput): Promise<OutlineOutput> {
     // The deadline counts the page's loading too, as find's does.
     const deadline = this.#layerWalk.deadline();
     const root = await this.#loader.root(node);
@@ -65,7 +65,8 @@ export class OutlineOperation extends Operation<OutlineInput, OutlineOutput> {
       await this.#loader.load(root);
     }
 
-    const walk: Walk = { origin: this.#box(root) ?? { x: 0, y: 0 }, instances: [] };
+    const page = { x: 0, y: 0 };
+    const walk: Walk = { origin: (absolute ?? false) ? page : (this.#box(root) ?? page), instances: [] };
     const top = this.#tree(root, depth, walk);
 
     await this.#layerWalk.lookUp(walk.instances, deadline, {

@@ -14,7 +14,7 @@ import { MeasureTool } from "@/server/tools/measure/measure.tool.ts";
 import type { InspectInput, InspectRaw } from "@/shared/ops/inspect/inspect.schema.ts";
 
 /** Two cards in a row as the inspect op reads them, 16 px apart; 9:9 is no layer. */
-function inspected({ nodes }: InspectInput): InspectRaw {
+function inspected({ nodes = [] }: InspectInput): InspectRaw {
   const card = (id: string, x: number) => {
     const box = { x, y: 0, width: 100, height: 50 };
 

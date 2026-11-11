@@ -185,4 +185,132 @@ return dots.length;`);
 
     expect(layers[0]?.strokes?.tokens).toEqual({ "--color-line": "#E1E5EE" });
   });
+
+  // RG-3 coverage: each case computes the truth with the Plugin API code an agent wrote, then asks inspect.
+  describe("RG-3: what agents wrote execute for", () => {
+    const startFrame = "185:239";
+
+    // Gap 1 (T4): every auto layout gap and padding inside a frame, one call.
+    it("lists the auto layout frames inside 185:239 with their paddings, as findAll(layoutMode != NONE) does", async () => {
+      const truth = (await run(`const root = await pw.node(${JSON.stringify(startFrame)});
+return [root, ...root.findAll(() => true)]
+  .filter((node) => node.visible && "layoutMode" in node && node.layoutMode !== "NONE")
+  .map((node) => ({ id: node.id, paddingTop: node.paddingTop, paddingLeft: node.paddingLeft }));`)) as {
+        id: string;
+        paddingTop: number;
+        paddingLeft: number;
+      }[];
+      const answer = (await inspect({ within: startFrame, fields: ["layout"] })) as Inspected & {
+        more?: true;
+        leftIds?: string[];
+      };
+      const layers = answer.layers as unknown as { id: string; layout?: Record<string, number | string> }[];
+
+      expect(truth.length).toBeGreaterThan(0);
+      expect(answer.more).toBeUndefined();
+      expect(layers.map(({ id }) => id).sort()).toEqual(truth.map(({ id }) => id).sort());
+
+      // The layout group leaves default values out, as design_read does: no padding key means 0.
+      for (const { id, paddingTop, paddingLeft } of truth) {
+        const layout = layers.find((layer) => layer.id === id)?.layout ?? {};
+
+        expect({ top: layout["padding-top"] ?? 0, left: layout["padding-left"] ?? 0 }).toEqual({
+          top: paddingTop,
+          left: paddingLeft,
+        });
+      }
+    });
+
+    it("reads the layer alone at depth 0, and lists the ids it left past 100 layers", async () => {
+      const alone = (await inspect({ within: startFrame, depth: 0 })) as Inspected;
+      const total = (await run(`const root = await pw.node(${JSON.stringify(startFrame)});
+return 1 + root.findAll(() => true).length;`)) as number;
+      const all = (await inspect({ within: startFrame })) as Inspected & { more?: true; leftIds?: string[] };
+
+      expect(alone.layers.map(({ id }) => id)).toEqual([startFrame]);
+      expect(all.layers.length + (all.leftIds?.length ?? 0)).toBe(total);
+      expect(all.more === true).toBe(total > 100);
+    });
+
+    // Gap 2: a layer in auto layout carries its parent's layout.
+    it("gives a layer in auto layout its parent's layout: padding, and the gap when it has company", async () => {
+      const truth = (await run(`const card = await pw.node(${JSON.stringify(planStarter)});
+const child = card.findAll((node) => node.parent && "layoutMode" in node.parent && node.parent.layoutMode !== "NONE")[0];
+const parent = child.parent;
+return { id: child.id, mode: parent.layoutMode, wrap: parent.layoutWrap, gap: parent.itemSpacing, count: parent.children.length, paddingTop: parent.paddingTop, paddingLeft: parent.paddingLeft };`)) as {
+        id: string;
+        mode: string;
+        wrap: string;
+        gap: number;
+        count: number;
+        paddingTop: number;
+        paddingLeft: number;
+      };
+      const [layer] = (await inspect({ nodes: [truth.id] })).layers as unknown as {
+        parentLayout?: Record<string, number | string>;
+      }[];
+
+      expect(layer?.parentLayout).toMatchObject({ "padding-top": truth.paddingTop, "padding-left": truth.paddingLeft });
+
+      if (truth.count > 1 && truth.wrap === "NO_WRAP") {
+        expect(layer?.parentLayout?.gap).toBe(truth.gap);
+      }
+    });
+
+    // Gap 3: a layer inside an instance is read by its nested id.
+    it("reads a layer inside an instance by its nested id, I54:244;...", async () => {
+      const truth = (await run(`const card = await pw.node(${JSON.stringify(planStarter)});
+const inner = card.findAll(() => true)[0];
+return { id: inner.id, name: inner.name, type: inner.type };`)) as { id: string; name: string; type: string };
+      const answer = (await inspect({ nodes: [truth.id] })) as Inspected & { missing: string[] };
+
+      expect(truth.id).toMatch(/^I/);
+      expect(answer.missing).toEqual([]);
+      expect(answer.layers[0]).toMatchObject(truth);
+    });
+
+    // Gap 4: the runs of a text that mixes styles; none for one style.
+    it("lists a mixed text's runs as getStyledTextSegments gives them, and none for a text of one style", async () => {
+      const made = (await run(`const section = await pw.node(${JSON.stringify(scratch)});
+await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+await figma.loadFontAsync({ family: "Inter", style: "Bold" });
+const text = figma.createText();
+text.name = ${JSON.stringify(`${PREFIX}runs`)};
+section.appendChild(text);
+text.characters = "Save 20% today";
+text.setRangeFontName(5, 8, { family: "Inter", style: "Bold" });
+text.setRangeFontSize(5, 8, 24);
+text.setRangeTextDecoration(5, 8, "UNDERLINE");
+const card = await pw.node(${JSON.stringify(planStarter)});
+const plain = card.findAll((node) => node.type === "TEXT" && node.getStyledTextSegments(["fontSize"]).length === 1)[0];
+return {
+  id: text.id,
+  plain: plain.id,
+  segments: text.getStyledTextSegments(["fontSize", "fontName", "textDecoration"]).map(({ start, end, characters, fontSize, fontName, textDecoration }) => ({ start, end, characters, fontSize, fontFamily: fontName.family, fontStyle: fontName.style, textDecoration })),
+};`)) as { id: string; plain: string; segments: unknown[] };
+      const layers = (await inspect({ nodes: [made.id, made.plain] })).layers as unknown as {
+        text?: { segments?: unknown[] };
+      }[];
+
+      expect(made.segments.length).toBeGreaterThan(1);
+      expect(layers[0]?.text?.segments).toMatchObject(made.segments);
+      expect(layers[1]?.text?.segments).toBeUndefined();
+    });
+
+    // Gap 5: the way up with ids, the shape nodes_find gives.
+    it("gives a layer's ancestors with ids up to its page, as findAll's parent chain and nodes_find do", async () => {
+      const truth = (await run(`const card = await pw.node(${JSON.stringify(planStarter)});
+const inner = card.findAll((node) => node.type === "TEXT")[0];
+const path = [];
+for (let node = inner.parent; node && node.type !== "PAGE"; node = node.parent) path.unshift({ id: node.id, name: node.name, type: node.type });
+return { id: inner.id, path };`)) as { id: string; path: { id: string; name: string; type: string }[] };
+      const [layer] = (await inspect({ nodes: [truth.id] })).layers as unknown as { path?: unknown[] }[];
+      const found = (await client.call("nodes_find", { file, within: planStarter, type: "TEXT" })) as {
+        nodes: { id: string; path: unknown[] }[];
+      };
+
+      expect(layer?.path).toEqual(truth.path);
+      expect(found.nodes.find(({ id }) => id === truth.id)?.path).toEqual(truth.path);
+    });
+  });
 });

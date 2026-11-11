@@ -108,4 +108,7 @@ export const MODEL_NOTE = {
 export const MODEL_FIELD = {
   also: "A text style's letter spacing and case, an effect style's blurs, as tokens of their own.",
   scopes: "The fields Figma's pickers offer it for, when not every field: [] hides it from all.",
+  id: "Figma's id of the variable, for the Plugin API (figma.variables.getVariableByIdAsync).",
+  aliasOf:
+    "For a mode whose value is an alias: the tokens it passes through, the first it points at and the last the one that holds the value (read its values).",
 } as const;

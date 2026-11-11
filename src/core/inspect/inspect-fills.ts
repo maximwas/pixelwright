@@ -19,6 +19,9 @@ type Blend = Pick<InspectLayerView, "blendMode" | "mixBlendMode">;
 
 type Variable = ReadModel["variables"][string];
 
+/** The fill fields of a text run (one of a text's segments). */
+type RunFill = { readonly fills: readonly Paint[]; readonly fillStyleId: string };
+
 /**
  * What paints a layer, for inspect (T-080, T-083, B-002, O-026): its blend mode and each fill's with CSS's
  * mix-blend-mode name; how its strokes paint; its fills as one CSS value (a style's own value, not its var()) with the
@@ -60,6 +63,25 @@ export class InspectFills {
     const css = BLEND_CSS[mode];
 
     return { blendMode: mode, ...(css === undefined ? {} : { mixBlendMode: css }) };
+  }
+
+  /** A text run's fill: the style's or the variable's token when it has one, else the colour of its top paint. */
+  runFill(
+    segment: RunFill,
+    layer: InspectedLayer,
+    raw: InspectRaw,
+  ): string | undefined {
+    const model = this.#model(layer, raw);
+    const style = model.styles[segment.fillStyleId];
+    const visible = segment.fills.filter((paint) => paint.visible ?? true);
+    const top = visible.at(-1);
+    const [token] = this.#tokens(visible, model);
+
+    if (style !== undefined) {
+      return this.#names.style(style);
+    }
+
+    return token === undefined ? (top === undefined ? undefined : this.#colour(top, model)) : token[0];
   }
 
   #strokes(layer: InspectedLayer, model: ReadModel): Pick<InspectLayerView, "strokes"> {

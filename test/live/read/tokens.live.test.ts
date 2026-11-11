@@ -18,6 +18,20 @@ const declared = (css: string): Set<string> =>
 const referenced = (css: string): Set<string> =>
   new Set([...css.replaceAll(/\/\*[\s\S]*?\*\//g, "").matchAll(/var\((--[^),\s]+)/g)].map(([, name]) => name ?? ""));
 
+/** The collection of the alias test: live/base holds a colour, live/alias aliases it. Variables are not layers. */
+const ALIAS_COLLECTION = `${PREFIX}alias`;
+
+const removeAliasPair = `for (const collection of await figma.variables.getLocalVariableCollectionsAsync()) {
+  if (collection.name === ${JSON.stringify(ALIAS_COLLECTION)}) collection.remove();
+}`;
+
+const makeAliasPair = `${removeAliasPair}
+const collection = figma.variables.createVariableCollection(${JSON.stringify(ALIAS_COLLECTION)});
+const base = figma.variables.createVariable("live/base", collection, "COLOR");
+const alias = figma.variables.createVariable("live/alias", collection, "COLOR");
+base.setValueForMode(collection.defaultModeId, { r: 0.2, g: 0.4, b: 0.6, a: 1 });
+alias.setValueForMode(collection.defaultModeId, figma.variables.createVariableAlias(base));`;
+
 // Reads, but for one text made in the Live tests Section (live:tokens:<case>, removed after), since no text of Test
 // MCP has a style in one run alone.
 describe("read/tokens", () => {
@@ -29,9 +43,11 @@ describe("read/tokens", () => {
   beforeAll(async () => {
     client = await new LiveClient().connect();
     await client.waitForTestMcp();
+    await run(makeAliasPair);
   });
 
   afterAll(async () => {
+    await run(removeAliasPair);
     await run(`const section = await pw.node(${JSON.stringify(scratch)});
 for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}))) {
   if (!node.removed) node.remove();
@@ -166,5 +182,67 @@ return { id: text.id, style: style.name };`)) as { id: string; style: string };
 
     expect(uses.sort()).toEqual(["#000000 54:455", "#B5B9C4 54:316", "#E1E5EE 54:458", "#FF6B3D 54:457"]);
     expect(uses.some((use) => use.endsWith(planStarter))).toBe(false);
+  });
+
+  // RG-3 gap 6, with the truth from the Plugin API: local variables, their ids and their alias chains.
+  describe("RG-3: a token by name, with its id and alias chain", () => {
+    const TRUTH = `const collections = await figma.variables.getLocalVariableCollectionsAsync();
+const variables = await figma.variables.getLocalVariablesAsync();
+const byId = new Map(variables.map((variable) => [variable.id, variable]));
+const defaultMode = new Map(collections.map((collection) => [collection.id, collection.defaultModeId]));
+const chain = (variable, modeId) => {
+  const links = [];
+  for (let value = variable.valuesByMode[modeId]; value && value.type === "VARIABLE_ALIAS"; ) {
+    const target = byId.get(value.id);
+    if (!target) break;
+    links.push(target.id);
+    value = target.valuesByMode[defaultMode.get(target.variableCollectionId)];
+  }
+  return links;
+};`;
+
+    const model = async (args: Record<string, unknown>) =>
+      zod.parse(
+        TokensSchema,
+        (await client.call("tokens_read", { file, format: "json", used: false, ...args })).tokens,
+      );
+
+    it("keeps the variables whose name has the text, in any case, each with its Figma id", async () => {
+      const truth = (await run(`${TRUTH}
+const word = variables[0].name.split("/").pop().slice(0, 4);
+return { word, ids: variables.filter((variable) => variable.name.toLowerCase().includes(word.toLowerCase())).map((variable) => variable.id) };`)) as {
+        word: string;
+        ids: string[];
+      };
+      const read = await model({ query: truth.word.toUpperCase() });
+
+      expect(truth.ids.length).toBeGreaterThan(0);
+      expect(read.collections.flatMap(({ variables }) => variables.map(({ id }) => id)).sort()).toEqual(
+        truth.ids.sort(),
+      );
+    });
+
+    it("gives a variable that aliases another its chain down to the one holding the value", async () => {
+      const truth = (await run(`${TRUTH}
+const alias = variables.find((variable) => variable.name === "live/alias" && collections.find(({ id }) => id === variable.variableCollectionId).name === ${JSON.stringify(ALIAS_COLLECTION)});
+const collection = collections.find(({ id }) => id === alias.variableCollectionId);
+const links = chain(alias, collection.defaultModeId);
+return { id: alias.id, name: alias.name, mode: collection.modes.find(({ modeId }) => modeId === collection.defaultModeId).name, links, final: byId.get(links.at(-1)).name };`)) as {
+        id: string;
+        name: string;
+        mode: string;
+        links: string[];
+        final: string;
+      };
+      const read = await model({ query: [truth.name] });
+      const variable = read.collections.flatMap(({ variables }) => variables).find(({ id }) => id === truth.id);
+
+      expect(variable?.aliasOf?.[truth.mode]).toHaveLength(truth.links.length);
+
+      const everything = (await model({})).collections.flatMap(({ variables }) => variables);
+      const last = variable?.aliasOf?.[truth.mode]?.at(-1);
+
+      expect(everything.find(({ token }) => token === last)?.name).toBe(truth.final);
+    });
   });
 });

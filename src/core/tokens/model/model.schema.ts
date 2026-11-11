@@ -32,10 +32,14 @@ const StyleTokenSchema = zod.object({
 
 /** A variable as tokens_read shows it: its custom property and its CSS value in every mode, by mode name. */
 const TokenVariableSchema = zod.object({
+  id: zod.string().check(zod.describe(MODEL_FIELD.id)),
   name: zod.string(),
   token: zod.string(),
   type: zod.string(),
   values: zod.record(zod.string(), zod.string()),
+  aliasOf: zod
+    .exactOptional(zod.record(zod.string(), zod.array(zod.string())))
+    .check(zod.describe(MODEL_FIELD.aliasOf)),
   description: zod.exactOptional(zod.string()),
   scopes: zod.exactOptional(zod.array(zod.string())).check(zod.describe(MODEL_FIELD.scopes)),
   codeSyntax: zod.exactOptional(

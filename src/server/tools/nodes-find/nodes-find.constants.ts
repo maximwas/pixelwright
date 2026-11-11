@@ -3,12 +3,21 @@ export const NODES_FIND_TOOL = {
   name: "nodes_find",
   title: "Find layers",
   description:
-    "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (substring), component (an instance's component or component set name) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes and the names of their ancestors, with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
+    'Finds layers on the current page, or inside `within` (a layer, a page, or "file" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance\'s component or component set name), componentId (an instance\'s component, or any variant of a component set, by id) or variant (an instance\'s variant values, "State=Hover, Size=L"). Returns ids, names, types, boxes, a text\'s characters (its first 200, cut: true past them), and its ancestors\' ids, names and types in `path` (within "file" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text\'s fontSize (its distinct sizes when mixed) and an instance\'s changed properties (those differing from its component\'s defaults; properties: true gives every property\'s value), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {"gte": 12, "lt": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields ["fontSize"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.',
 } as const;
 
 export const NODES_FIND_FIELD = {
   variant:
     'Instances of one variant, e.g. "State=Hover, Size=L": every value given must be the main component\'s (in any order and case; the rest may be anything).',
+  text: "Texts whose characters contain this, or any of these phrases, in any case.",
+  textRegex: 'Texts whose characters match this JavaScript regular expression, in any case, e.g. "^\\$\\d+".',
+  fontSize:
+    'Texts by font size in px: lt (under), lte (up to), gt (over) and gte (from), e.g. {"gte": 12, "lt": 16} for 12 up to under 16; a text with mixed sizes matches when any size does.',
+  fields:
+    'Only these fields of each layer found, besides id, name and type, e.g. ["fontSize"] drops box and path. Default: all.',
+  componentId: "Instances of this component, or of any variant of this component set, by id.",
+  properties: "Also give every component property's value on each instance found.",
+  foundPage: 'Within "file": the page the layer is on.',
   counts:
     "Also count every instance found, by component and variant, past the limit listed: before deleting a variant, how many layers use it.",
   visible:
@@ -18,8 +27,13 @@ export const NODES_FIND_FIELD = {
   hint: "When nothing was found on the current page: how to search elsewhere.",
 } as const;
 
+/** What every layer nodes_find answers keeps, whatever `fields` names. */
+export const NODES_FIND_KEPT = ["id", "name", "type"] as const;
+
 /** What nodes_find says of the current page it searched without within (T-040). */
 export const NODES_FIND_TEXT = {
+  unsafeRegex:
+    "textRegex may backtrack for so long that it freezes Figma. Use text phrases, or a pattern without a repeated group such as (a+)+ or (\\w+\\s?)*.",
   nothing: (page: string) =>
     `Nothing found on the current page, "${page}": pass within (a page id, or "file" for every page) to search elsewhere.`,
 } as const;

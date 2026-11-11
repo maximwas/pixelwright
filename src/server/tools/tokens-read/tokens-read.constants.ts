@@ -3,7 +3,7 @@ export const TOKENS_READ_TOOL = {
   name: "tokens_read",
   title: "Read the design tokens",
   description:
-    "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable's scopes (when not every field) and code syntax; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
+    "Reads the file's design tokens: every variable collection with all its modes (light, dark…), and the paint, text and effect styles, its own and those the current page uses from a team library, named the way design_read writes them (var(--Name)). query keeps only the variables and styles whose name or token has that text (a substring, or a list of them: any matches; any case; no regex), each variable carries its Figma id and, for an alias, aliasOf with the tokens it passes through down to the one holding the value (format json). format css (default) returns ready CSS: :root holds each collection's default mode and the styles, and every mode of a collection with several is a block [data-<collection>=\"<mode>\"] (the default's too, so an element in it resets inside another mode's) to put on the element a theme applies to, the attribute design_read writes where a layer sets a mode; format json returns the same per collection and mode, with each variable's scopes (when not every field) and code syntax; format dtcg returns Design Tokens Format (DTCG 2025.10) trees, one per collection mode and one of styles, to save as token files for Style Dictionary or Tokens Studio. libraries: true also lists the enabled libraries' variables by name. notes say what could not be written.",
 } as const;
 
 /** The formats tokens_read writes. */
@@ -32,6 +32,8 @@ export const TOKENS_READ = {
 
 export const TOKENS_READ_FIELD = {
   collections: "Only these variable collections, by name (case does not matter). Default: all of them.",
+  query:
+    'Only the variables and styles whose name or token contains this text, or any of these texts (any case, no regex), e.g. "primary" or ["gray", "border"]. Default: all of them.',
   libraries:
     "Also list the enabled libraries' variables, by name and type: their values are read only once the file uses them.",
   used: "Also take the styles and variables the layers on the current page (or within) use, a team library's among them. A file that uses a library has its tokens there.",

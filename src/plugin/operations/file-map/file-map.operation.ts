@@ -82,7 +82,12 @@ export class FileMapOperation extends Operation<FileMapInput, FileMapOutput> {
     const cut = nodes.length < page.children.length;
 
     map.more ||= cut;
-    map.pages.push({ ...this.#page(page), ...(cut ? { total: page.children.length } : {}), nodes });
+    map.pages.push({
+      ...this.#page(page),
+      childCount: page.children.length,
+      ...(cut ? { total: page.children.length } : {}),
+      nodes,
+    });
   }
 
   /** A top layer and, for a section, its own layers while the map has room, with their number when not all fit. */
@@ -112,6 +117,7 @@ export class FileMapOperation extends Operation<FileMapInput, FileMapOutput> {
       width: node.width,
       height: node.height,
       ...(devStatus === undefined ? {} : { devStatus }),
+      ...("children" in node ? { childCount: node.children.length } : {}),
     };
   }
 

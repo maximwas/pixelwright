@@ -15,6 +15,7 @@
       },
       "variables": [
         {
+          "id": "V:surface",
           "name": "Surface/Base",
           "token": "--surface",
           "type": "COLOR",
@@ -22,6 +23,11 @@
             "Light": "color(display-p3 1 1 1)",
             "Dark": "var(--Ink)",
             "dark": "color(display-p3 0.1 0.1 0.12)"
+          },
+          "aliasOf": {
+            "Dark": [
+              "--Ink"
+            ]
           },
           "description": "The page background.",
           "scopes": [
@@ -33,6 +39,7 @@
           }
         },
         {
+          "id": "V:ink",
           "name": "Ink",
           "token": "--Ink",
           "type": "COLOR",
@@ -40,9 +47,15 @@
             "Light": "color(display-p3 0.078 0.086 0.122)",
             "Dark": "var(--Accent)",
             "dark": "color(display-p3 0.9 0.2 0.35 / 0.5)"
+          },
+          "aliasOf": {
+            "Dark": [
+              "--Accent"
+            ]
           }
         },
         {
+          "id": "V:veil",
           "name": "Veil",
           "token": "--Veil",
           "type": "COLOR",
@@ -53,6 +66,7 @@
           }
         },
         {
+          "id": "V:lost",
           "name": "Lost",
           "token": "--Lost",
           "type": "COLOR",
@@ -60,6 +74,11 @@
             "Light": "/* unresolved alias V:missing */",
             "Dark": "color(display-p3 0.5 0.5 0.5)",
             "dark": "/* \"not a colour\" */"
+          },
+          "aliasOf": {
+            "Light": [
+              "V:missing"
+            ]
           }
         }
       ]
@@ -73,6 +92,7 @@
       "selectors": {},
       "variables": [
         {
+          "id": "V:gap",
           "name": "Gap/Small",
           "token": "--Gap-Small",
           "type": "FLOAT",
@@ -84,6 +104,7 @@
           ]
         },
         {
+          "id": "V:zero",
           "name": "Gap/None",
           "token": "--Gap-None",
           "type": "FLOAT",
@@ -95,6 +116,7 @@
           ]
         },
         {
+          "id": "V:radius",
           "name": "Radius",
           "token": "--Radius",
           "type": "FLOAT",
@@ -104,6 +126,7 @@
           "scopes": []
         },
         {
+          "id": "V:half",
           "name": "Opacity/Half",
           "token": "--Opacity-Half",
           "type": "FLOAT",
@@ -115,6 +138,7 @@
           ]
         },
         {
+          "id": "V:faint",
           "name": "Opacity/Faint",
           "token": "--Opacity-Faint",
           "type": "FLOAT",
@@ -126,6 +150,7 @@
           ]
         },
         {
+          "id": "V:bold",
           "name": "Weight/Bold",
           "token": "--Weight-Bold",
           "type": "FLOAT",
@@ -137,6 +162,7 @@
           ]
         },
         {
+          "id": "V:family",
           "name": "Font/Family",
           "token": "--Font-Family",
           "type": "STRING",
@@ -148,6 +174,7 @@
           ]
         },
         {
+          "id": "V:flag",
           "name": "Feature/On",
           "token": "--Feature-On",
           "type": "BOOLEAN",
@@ -166,6 +193,7 @@
       "selectors": {},
       "variables": [
         {
+          "id": "V:ease",
           "name": "Ease/Out",
           "token": "--Ease-Out",
           "type": "EASING",
@@ -175,6 +203,7 @@
           "scopes": []
         },
         {
+          "id": "V:curve",
           "name": "Ease/Curve",
           "token": "--Ease-Curve",
           "type": "EASING",
@@ -184,6 +213,7 @@
           "scopes": []
         },
         {
+          "id": "V:spring",
           "name": "Ease/Spring",
           "token": "--Ease-Spring",
           "type": "EASING",
@@ -193,6 +223,7 @@
           "scopes": []
         },
         {
+          "id": "V:duration",
           "name": "Duration",
           "token": "--Duration",
           "type": "TIMING",

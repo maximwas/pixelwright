@@ -73,6 +73,26 @@ export class VariableCss {
     return MODEL_TEXT.comment(shown);
   }
 
+  /**
+   * The tokens a value of alias passes through, the first it points at to the last, which holds a value (each next
+   * link read in its variable's default mode); null for a value that is no alias.
+   */
+  chain(value: unknown, context: VariableContext): string[] | null {
+    const links: string[] = [];
+    const seen = new Set<string>();
+
+    for (
+      let id = this.#units.alias(value);
+      id !== null && !seen.has(id);
+      id = this.#units.alias(context.tables.variables[id]?.value)
+    ) {
+      seen.add(id);
+      links.push(context.names.get(id) ?? id);
+    }
+
+    return links.length === 0 ? null : links;
+  }
+
   #typed(
     value: unknown,
     variable: RawVariable,

@@ -66,7 +66,8 @@ export class ExposedInstances {
 
   /** An exposed instance with its set's (or component's) name, key and properties, its values as the defaults. */
   async #entry(instance: InstanceNode): Promise<ExposedInstance> {
-    const main = await instance.getMainComponentAsync();
+    // One rejected lookup (a library gone) is an instance without a component, not a failed op.
+    const main = await instance.getMainComponentAsync().catch(() => null);
     const owner = main === null ? null : this.#entries.owner(main);
 
     return {

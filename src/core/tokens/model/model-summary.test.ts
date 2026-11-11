@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import type { Tokens } from "@/core/tokens/model/model.schema.ts";
 import { ModelSummary } from "@/core/tokens/model/model-summary.ts";
 
-const variable = (name: string) => ({ name, token: `--${name}`, type: "FLOAT", values: { Base: "8px" } });
+const variable = (name: string) => ({
+  id: `V:${name}`,
+  name,
+  token: `--${name}`,
+  type: "FLOAT",
+  values: { Base: "8px" },
+});
 
 const style = (name: string) => ({ name, token: `--${name}`, value: "#000" });
 

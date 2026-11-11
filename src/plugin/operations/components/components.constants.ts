@@ -9,6 +9,13 @@ export const COMPONENT_LINKS_TEXT = {
   failed: (message: string) => `Dev Mode links could not be read: ${message}`,
 } as const;
 
+/** What a listed component says when Figma refused part of its details. */
+export const COMPONENT_DETAILS_TEXT = {
+  separator: " ",
+  instancesFailed: "Some of its instances could not be listed: Figma refused them (a remote or unloadable component).",
+  referencesFailed: "The layers bound to its properties could not be read: Figma refused them.",
+} as const;
+
 /** A property's name as Figma shows it: a non-variant property's carries its id after a #, "Label#12:0" (T-190). */
 export const PROPERTY_NAME = { idSuffix: /#[^#]*$/ } as const;
 

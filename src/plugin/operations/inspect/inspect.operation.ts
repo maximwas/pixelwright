@@ -9,6 +9,8 @@ import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { OP_REPORT } from "@/plugin/app/op-report.ts";
 import { Operation } from "@/plugin/app/operation.ts";
 import { INSPECT_LAYOUT } from "@/plugin/operations/inspect/inspect.constants.ts";
+import { InspectSubtree } from "@/plugin/operations/inspect/inspect-subtree.ts";
+import { INSPECT, INSPECT_PARENT_LAYOUT_KEYS } from "@/shared/ops/inspect/inspect.constants.ts";
 import type { InspectedLayer, InspectInput, InspectRaw } from "@/shared/ops/inspect/inspect.schema.ts";
 
 type Box = InspectedLayer["box"];
@@ -24,6 +26,8 @@ type Box = InspectedLayer["box"];
 export class InspectOperation extends Operation<InspectInput, InspectRaw> {
   readonly #boxes = new LayerBoxes();
   readonly #properties = new InstanceProperties();
+  readonly #subtree = new InspectSubtree();
+  readonly #parents = new Map<string, InspectedLayer["parentLayout"]>();
 
   readonly #lookup;
   readonly #reader;
@@ -41,15 +45,19 @@ export class InspectOperation extends Operation<InspectInput, InspectRaw> {
     this.#format = format;
   }
 
-  protected async execute({ nodes, relativeTo }: InspectInput): Promise<InspectRaw> {
+  protected async execute({ nodes = [], within, depth, fields, relativeTo }: InspectInput): Promise<InspectRaw> {
     const origin = relativeTo === undefined ? null : await this.#lookup.existing(relativeTo);
     const corner = this.#corner(origin);
     const read: { entry: InspectedLayer; node: SceneNode }[] = [];
     const missing: string[] = [];
 
     this.#reader.start();
+    this.#parents.clear();
 
-    for (const id of nodes) {
+    const picked =
+      within === undefined ? { ids: nodes, left: [], cut: false } : await this.#picked(within, depth, fields);
+
+    for (const id of picked.ids) {
       // Figma throws for a lookup it cannot answer (offline, an instance's hidden layer gone): that id is missing (FX-015).
       const node = await this.#lookup.node(id).catch(() => null);
 
@@ -64,8 +72,64 @@ export class InspectOperation extends Operation<InspectInput, InspectRaw> {
       origin: origin === null ? null : { id: origin.id, name: origin.name },
       layers: read.map(({ entry }) => entry),
       missing,
+      ...(picked.left.length === 0 && !picked.cut
+        ? {}
+        : { more: true as const, leftIds: picked.left.slice(0, INSPECT.maxLeftIds) }),
       ...(await this.#reader.shared(read)),
     };
+  }
+
+  /** A subtree's layers: the first 100 to read, the ids of the rest; the root alone (missing) when it is no layer. */
+  async #picked(
+    within: string,
+    depth: number | undefined,
+    fields: InspectInput["fields"],
+  ): Promise<{ ids: string[]; left: string[]; cut: boolean }> {
+    const root = await this.#lookup.node(within).catch(() => null);
+
+    if (root === null || !this.#isLayer(root)) {
+      return { ids: [within], left: [], cut: false };
+    }
+
+    const { nodes, cut } = this.#subtree.select(root, depth, fields);
+    const ids = nodes.map(({ id }) => id);
+
+    return { ids: ids.slice(0, INSPECT.maxLayers), left: ids.slice(INSPECT.maxLayers), cut };
+  }
+
+  /** The layout fields of a parent whose auto layout or grid places the layer, read once per parent. */
+  async #parentLayout(parent: SceneNode | null, corner: Vector): Promise<Pick<InspectedLayer, "parentLayout">> {
+    if (parent === null || !("layoutMode" in parent) || parent.layoutMode === INSPECT_LAYOUT.none) {
+      return {};
+    }
+
+    if (!this.#parents.has(parent.id)) {
+      const entry = await this.#reader.at(parent, corner);
+      const layout: NonNullable<InspectedLayer["parentLayout"]> = { childCount: entry.childCount };
+
+      for (const key of INSPECT_PARENT_LAYOUT_KEYS) {
+        if (entry[key] !== undefined) {
+          Object.assign(layout, { [key]: entry[key] });
+        }
+      }
+
+      this.#parents.set(parent.id, layout);
+    }
+
+    const layout = this.#parents.get(parent.id);
+
+    return layout === undefined ? {} : { parentLayout: layout };
+  }
+
+  /** The layer's ancestors below its page, outermost first. */
+  #path(node: SceneNode): NonNullable<InspectedLayer["path"]> {
+    const path: NonNullable<InspectedLayer["path"]> = [];
+
+    for (let current = node.parent; current !== null && this.#isLayer(current); current = current.parent) {
+      path.unshift({ id: current.id, name: current.name, type: current.type });
+    }
+
+    return path;
   }
 
   async #layer(node: SceneNode, corner: Vector): Promise<InspectedLayer> {
@@ -85,6 +149,8 @@ export class InspectOperation extends Operation<InspectInput, InspectRaw> {
       paintedBox: this.#box(this.#boxes.painted(node), corner),
       parentBox: parentLayer === null ? null : this.#box(this.#boxes.layout(parentLayer), corner),
       parentPadding: this.#padding(parentLayer),
+      path: this.#path(node),
+      ...(await this.#parentLayout(parentLayer, corner)),
       ...(node.type === FIGMA_NODE_TYPE.instance ? await this.#defaults(node) : {}),
     };
   }
