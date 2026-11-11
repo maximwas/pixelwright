@@ -232,7 +232,11 @@ export class TokenModel {
     const written = kept.flatMap((collection) =>
       scope.filter((variable) => variable.collectionId === collection.id).map((variable) => ({ variable, collection })),
     );
-    const defined = new Set(written.map(({ variable }) => names.get(variable.id)));
+    // Defined over the collections whole: a query hides variables from the output, it does not undefine them.
+    const keptIds = new Set(kept.map(({ id }) => id));
+    const defined = new Set(
+      raw.variables.filter(({ collectionId }) => keptIds.has(collectionId)).map(({ id }) => names.get(id)),
+    );
     const homes = this.#homes(raw, names);
     const targets = written.flatMap(({ variable, collection }) =>
       collection.modes.flatMap(({ modeId }) => this.#aliases(variable.valuesByMode[modeId])),

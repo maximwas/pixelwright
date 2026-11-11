@@ -194,7 +194,7 @@ export class InspectView {
       end,
       characters,
       fontFamily: fontName.family,
-      fontStyle: segment.fontStyle ?? fontName.style,
+      fontStyle: fontName.style,
       fontSize,
       textDecoration,
       ...(fill === undefined ? {} : { fill }),

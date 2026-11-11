@@ -18,7 +18,6 @@ const BASE_SEGMENT_FIELDS = [
   "fontName",
   "fontSize",
   "fontWeight",
-  "fontStyle",
   "textDecoration",
   "textCase",
   "lineHeight",

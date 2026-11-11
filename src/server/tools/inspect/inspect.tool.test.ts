@@ -10,6 +10,7 @@ import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
 import { InteractionAttributes } from "@/core/design/interactions/interaction-attributes.ts";
+import { InspectViewSchema } from "@/core/inspect/inspect.schema.ts";
 import { InspectFills } from "@/core/inspect/inspect-fills.ts";
 import { InspectLayout } from "@/core/inspect/inspect-layout.ts";
 import { InspectView } from "@/core/inspect/inspect-view.ts";
@@ -321,5 +322,15 @@ describe("inspect: runs, parent layout, path, subtree and fields", () => {
     const [read] = (await answerOf({ layers: [MIXED] }, { fields: ["text"] })).layers;
 
     expect(Object.keys(read).sort()).toEqual(["id", "name", "text", "type"]);
+  });
+
+  it("gives an answer that fits the output schema when box, center and parent are not asked for", async () => {
+    const answer = await answerOf({ layers: [MIXED] }, { fields: ["layout"] });
+
+    expect(InspectViewSchema.safeParse(answer).success).toBe(true);
+  });
+
+  it("refuses within together with nodes", async () => {
+    await expect(answerOf({ layers: [MIXED] }, { within: "4:0", nodes: ["4:1"] })).rejects.toThrow(/exactly one/);
   });
 });

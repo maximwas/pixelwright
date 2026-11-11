@@ -115,6 +115,12 @@ describe("token model: what the output uses but leaves out (K-005)", () => {
   });
 });
 
+describe("token model: a query does not add notes (RG-3)", () => {
+  it("says nothing of an alias's target that the query filtered out but the collections define", () => {
+    expect(tokens.model(RAW, undefined, ["bg"]).notes).toEqual([]);
+  });
+});
+
 describe("token model: id, alias chain and query (RG-3)", () => {
   const CHAINED: RawTokens = {
     ...RAW,

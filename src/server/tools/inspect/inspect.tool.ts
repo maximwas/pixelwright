@@ -40,6 +40,10 @@ export class InspectTool extends Tool<InspectToolInput, InspectAnswer> {
   }
 
   protected async run({ nodes, within, depth, fields, relativeTo, around }: InspectToolInput): Promise<InspectAnswer> {
+    if (nodes !== undefined && within !== undefined) {
+      throw new PixelwrightError(ERROR_CODE.opFailed, INSPECT_TOOL_TEXT.oneOf);
+    }
+
     const ids = within === undefined ? (nodes ?? (await this.#selected.ids(this.#session))) : [within];
 
     if (ids.length === 0) {

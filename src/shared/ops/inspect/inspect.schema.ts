@@ -1,5 +1,5 @@
 import * as zod from "zod/mini";
-import { INSPECT, INSPECT_GROUP, INSPECT_PARENT_LAYOUT_KEYS } from "@/shared/ops/inspect/inspect.constants.ts";
+import { INSPECT, INSPECT_GROUP } from "@/shared/ops/inspect/inspect.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 import { LayerFieldsSchema } from "@/shared/read-model/layer.schema.ts";
 import { ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
@@ -25,13 +25,25 @@ export const InspectOpInputSchema = zod.strictObject({
 });
 
 const ParentLayoutSchema = zod.extend(
-  zod.pick(
-    LayerFieldsSchema,
-    Object.fromEntries(INSPECT_PARENT_LAYOUT_KEYS.map((key) => [key, true as const])) as Record<
-      (typeof INSPECT_PARENT_LAYOUT_KEYS)[number],
-      true
-    >,
-  ),
+  zod.pick(LayerFieldsSchema, {
+    layoutMode: true,
+    layoutWrap: true,
+    primaryAxisAlignItems: true,
+    counterAxisAlignItems: true,
+    counterAxisAlignContent: true,
+    itemSpacing: true,
+    counterAxisSpacing: true,
+    paddingTop: true,
+    paddingRight: true,
+    paddingBottom: true,
+    paddingLeft: true,
+    gridRowCount: true,
+    gridColumnCount: true,
+    gridRowGap: true,
+    gridColumnGap: true,
+    gridRowSizes: true,
+    gridColumnSizes: true,
+  }),
   { childCount: zod.number() },
 );
 

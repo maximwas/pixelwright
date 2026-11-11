@@ -18,6 +18,20 @@ const declared = (css: string): Set<string> =>
 const referenced = (css: string): Set<string> =>
   new Set([...css.replaceAll(/\/\*[\s\S]*?\*\//g, "").matchAll(/var\((--[^),\s]+)/g)].map(([, name]) => name ?? ""));
 
+/** The collection of the alias test: live/base holds a colour, live/alias aliases it. Variables are not layers. */
+const ALIAS_COLLECTION = `${PREFIX}alias`;
+
+const removeAliasPair = `for (const collection of await figma.variables.getLocalVariableCollectionsAsync()) {
+  if (collection.name === ${JSON.stringify(ALIAS_COLLECTION)}) collection.remove();
+}`;
+
+const makeAliasPair = `${removeAliasPair}
+const collection = figma.variables.createVariableCollection(${JSON.stringify(ALIAS_COLLECTION)});
+const base = figma.variables.createVariable("live/base", collection, "COLOR");
+const alias = figma.variables.createVariable("live/alias", collection, "COLOR");
+base.setValueForMode(collection.defaultModeId, { r: 0.2, g: 0.4, b: 0.6, a: 1 });
+alias.setValueForMode(collection.defaultModeId, figma.variables.createVariableAlias(base));`;
+
 // Reads, but for one text made in the Live tests Section (live:tokens:<case>, removed after), since no text of Test
 // MCP has a style in one run alone.
 describe("read/tokens", () => {
@@ -29,9 +43,11 @@ describe("read/tokens", () => {
   beforeAll(async () => {
     client = await new LiveClient().connect();
     await client.waitForTestMcp();
+    await run(makeAliasPair);
   });
 
   afterAll(async () => {
+    await run(removeAliasPair);
     await run(`const section = await pw.node(${JSON.stringify(scratch)});
 for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}))) {
   if (!node.removed) node.remove();
@@ -208,9 +224,10 @@ return { word, ids: variables.filter((variable) => variable.name.toLowerCase().i
 
     it("gives a variable that aliases another its chain down to the one holding the value", async () => {
       const truth = (await run(`${TRUTH}
-const aliased = variables.map((variable) => ({ variable, links: chain(variable, defaultMode.get(variable.variableCollectionId)) })).find(({ links }) => links.length > 0);
-const collection = collections.find(({ id }) => id === aliased.variable.variableCollectionId);
-return { id: aliased.variable.id, name: aliased.variable.name, mode: collection.modes.find(({ modeId }) => modeId === collection.defaultModeId).name, links: aliased.links, final: byId.get(aliased.links.at(-1)).name };`)) as {
+const alias = variables.find((variable) => variable.name === "live/alias" && collections.find(({ id }) => id === variable.variableCollectionId).name === ${JSON.stringify(ALIAS_COLLECTION)});
+const collection = collections.find(({ id }) => id === alias.variableCollectionId);
+const links = chain(alias, collection.defaultModeId);
+return { id: alias.id, name: alias.name, mode: collection.modes.find(({ modeId }) => modeId === collection.defaultModeId).name, links, final: byId.get(links.at(-1)).name };`)) as {
         id: string;
         name: string;
         mode: string;

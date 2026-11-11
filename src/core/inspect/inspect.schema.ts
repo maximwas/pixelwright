@@ -54,9 +54,9 @@ const LayerViewSchema = zod.object({
   id: zod.string(),
   name: zod.string(),
   type: zod.string(),
-  parent: zod.nullable(zod.object({ id: zod.string(), name: zod.string(), type: zod.string() })),
-  box: BoxSchema.check(zod.describe(INSPECT_FIELD.box)),
-  center: PointSchema.check(zod.describe(INSPECT_FIELD.center)),
+  parent: zod.exactOptional(zod.nullable(zod.object({ id: zod.string(), name: zod.string(), type: zod.string() }))),
+  box: zod.exactOptional(BoxSchema.check(zod.describe(INSPECT_FIELD.box))),
+  center: zod.exactOptional(PointSchema.check(zod.describe(INSPECT_FIELD.center))),
   path: zod
     .exactOptional(zod.array(zod.object({ id: zod.string(), name: zod.string(), type: zod.string() })))
     .check(zod.describe(INSPECT_FIELD.path)),

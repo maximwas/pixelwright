@@ -303,11 +303,11 @@ for (let node = inner.parent; node && node.type !== "PAGE"; node = node.parent) 
 return { id: inner.id, path };`)) as { id: string; path: { id: string; name: string; type: string }[] };
       const [layer] = (await inspect({ nodes: [truth.id] })).layers as unknown as { path?: unknown[] }[];
       const found = (await client.call("nodes_find", { file, within: planStarter, type: "TEXT" })) as {
-        layers: { id: string; path: unknown[] }[];
+        nodes: { id: string; path: unknown[] }[];
       };
 
       expect(layer?.path).toEqual(truth.path);
-      expect(found.layers.find(({ id }) => id === truth.id)?.path).toEqual(truth.path);
+      expect(found.nodes.find(({ id }) => id === truth.id)?.path).toEqual(truth.path);
     });
   });
 });

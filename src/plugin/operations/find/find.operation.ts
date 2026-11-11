@@ -20,6 +20,9 @@ type FindOutput = zod.output<typeof findOp.output>;
 
 type Values = Readonly<Record<string, string>>;
 
+/** Whether an instance's main component is one the query asked for. */
+type MainMatch = (main: ComponentNode | null) => boolean;
+
 /** What a find keeps: the layers that matched (up to one past the limit), the counts asked for, whether time ran out. */
 interface Search {
   readonly found: SceneNode[];
@@ -215,7 +218,7 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
    * own name or its set's) and has every variant value asked for, names and values in any case; with none asked, every
    * layer matches.
    */
-  #mainMatcher({ component, componentId }: FindInput,    variant: Values | undefined): (main: ComponentNode | null) => boolean {
+  #mainMatcher({ component, componentId }: FindInput, variant: Values | undefined): MainMatch {
     if (component === undefined && componentId === undefined && variant === undefined) {
       return () => true;
     }
