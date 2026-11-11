@@ -2,12 +2,8 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { LINK_STATE } from "@/plugin-ui/link/link.constants.ts";
 import type { LinkState } from "@/plugin-ui/link/socket-link.ts";
 import { BUSY_STATE } from "@/plugin-ui/view/busy-state.ts";
-import { RECENT_ACTIONS } from "@/plugin-ui/view/recent-actions.ts";
 import { STATUS_LINE } from "@/plugin-ui/view/status-line.ts";
 import {
-  ACTION_CLASS,
-  ACTION_TIME,
-  ACTIVITY_TEXT,
   MS_PER_SECOND,
   NOT_A_DIGIT,
   SUPPORT_TEXT,
@@ -17,35 +13,33 @@ import {
   WINDOW_EVENT,
   WINDOW_TAG,
 } from "@/plugin-ui/view/view.constants.ts";
+import { OP_NAME } from "@/shared/ops/op-meta.constants.ts";
 import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { PAIRING_CODE_DIGITS } from "@/shared/protocol/protocol.constants.ts";
-import { FEEDBACK_LINK, SUPPORT_LINKS } from "@/shared/window/ui-message.constants.ts";
+import { ACTIVITY_OUTCOME, FEEDBACK_LINK, SUPPORT_LINKS } from "@/shared/window/ui-message.constants.ts";
 import type { ActivityEntry, BusyOp } from "@/shared/window/ui-message.schema.ts";
 
 /**
  * The plugin's small window (P-041, P-050..P-054): its mark, the link's status line, the pairing field while the
- * server waits for the code, the hint after a refused write, the Allow edits switch and its note, what the AI did last,
- * and the support and feedback links. The markup and the mark are ui.html's own; the window sets texts and builds
- * plain elements, so nothing from the file or from code is ever read as HTML.
+ * server waits for the code, the hint after a refused write, the Allow edits switch and its note, and the support and
+ * feedback links. The markup and the mark are ui.html's own; the window sets texts and builds plain elements, so
+ * nothing from the file or from code is ever read as HTML. It lists nothing the AI did: main's answers only feed the
+ * two notes around the switch (a write was refused, execute ran: P-012).
  */
 @injectable()
 export class PluginWindow {
   readonly #status;
-  readonly #actions;
   readonly #busy;
   #parts: WindowParts | null = null;
   #link: LinkState = { kind: LINK_STATE.connecting };
   #fileName = "";
   #allowEdits = false;
+  #refused = false;
+  #ranCode = false;
   #ticker: ReturnType<typeof setInterval> | undefined;
 
-  constructor(
-    status = inject(STATUS_LINE),
-    actions = inject(RECENT_ACTIONS),
-    busy = inject(BUSY_STATE),
-  ) {
+  constructor(status = inject(STATUS_LINE), busy = inject(BUSY_STATE)) {
     this.#status = status;
-    this.#actions = actions;
     this.#busy = busy;
   }
 
@@ -67,7 +61,7 @@ export class PluginWindow {
     });
     parts.edits.addEventListener(WINDOW_EVENT.change, () => this.#switched(parts.edits.checked, handlers));
     this.#links(parts, handlers);
-    // The window is as tall as what it shows: the pairing field, the hint and the activity come and go (P-002).
+    // The window is as tall as what it shows: the pairing field and the hint come and go (P-002).
     new ResizeObserver(() => handlers.onResize(parts.root.getBoundingClientRect().height)).observe(parts.root);
     this.#parts = parts;
     this.#draw();
@@ -85,9 +79,12 @@ export class PluginWindow {
     this.#draw();
   }
 
-  /** An op main answered: the activity lists it at the time the window heard it. */
-  activity(entry: ActivityEntry): void {
-    this.#actions.add(entry, Date.now());
+  /** An op main answered: a refusal asks for Allow edits, and execute that was not refused may run on (P-012). */
+  activity({ op, outcome }: ActivityEntry): void {
+    const refused = outcome === ACTIVITY_OUTCOME.refused;
+
+    this.#refused ||= refused;
+    this.#ranCode ||= op === OP_NAME.execute && !refused;
     this.#draw();
   }
 
@@ -108,7 +105,8 @@ export class PluginWindow {
     this.#allowEdits = on;
 
     if (on) {
-      this.#actions.forgetRefusal();
+      // Allow edits went on: the refusal is answered.
+      this.#refused = false;
     }
 
     handlers.onEdits(on);
@@ -129,59 +127,15 @@ export class PluginWindow {
     this.#text(parts.detail, line.detail);
     parts.pairing.hidden = line.note === null;
     this.#text(parts.note, line.note);
-    this.#text(parts.hint, this.#status.editsHint(this.#actions.refused(), this.#allowEdits));
+    this.#text(parts.hint, this.#status.editsHint(this.#refused, this.#allowEdits));
     parts.edits.checked = this.#allowEdits;
-    parts.editsNote.textContent = this.#status.editsNote(this.#allowEdits, this.#actions.ranCode(), this.#undoKey());
-    parts.actions.replaceChildren(...this.#items());
+    parts.editsNote.textContent = this.#status.editsNote(this.#allowEdits, this.#ranCode, this.#undoKey());
   }
 
   /** A text that may be absent: absent, its element is hidden. */
   #text(element: HTMLElement, text: string | null): void {
     element.textContent = text ?? "";
     element.hidden = text === null;
-  }
-
-  /** What the AI did last, newest first, each with its time; a line saying so when it did nothing yet. */
-  #items(): HTMLLIElement[] {
-    const lines = this.#actions.lines();
-
-    if (lines.length === 0) {
-      return [this.#item(ACTION_CLASS.empty, ACTIVITY_TEXT.nothingYet, null)];
-    }
-
-    return lines.map((line) =>
-      this.#item(
-        line.warning ? ACTION_CLASS.warning : "",
-        line.text,
-        new Date(line.at).toLocaleTimeString([], ACTION_TIME),
-      ),
-    );
-  }
-
-  #item(
-    className: string,
-    what: string,
-    when: string | null,
-  ): HTMLLIElement {
-    const item = document.createElement(WINDOW_TAG.item);
-
-    item.className = className;
-    item.append(this.#span(ACTION_CLASS.what, what));
-
-    if (when !== null) {
-      item.append(this.#span(ACTION_CLASS.when, when));
-    }
-
-    return item;
-  }
-
-  #span(className: string, text: string): HTMLSpanElement {
-    const span = document.createElement(WINDOW_TAG.text);
-
-    span.className = className;
-    span.textContent = text;
-
-    return span;
   }
 
   /** Where to support the project, its links joined by "or", and where to tell what works or does not (P-052). */
@@ -226,7 +180,6 @@ export class PluginWindow {
       hint: this.#element(WINDOW_ELEMENT.hint),
       edits: this.#element(WINDOW_ELEMENT.allowEdits) as HTMLInputElement,
       editsNote: this.#element(WINDOW_ELEMENT.editsNote),
-      actions: this.#element(WINDOW_ELEMENT.actions),
       support: this.#element(WINDOW_ELEMENT.support),
       feedback: this.#element(WINDOW_ELEMENT.feedback),
     };
@@ -275,7 +228,6 @@ interface WindowParts {
   readonly hint: HTMLElement;
   readonly edits: HTMLInputElement;
   readonly editsNote: HTMLElement;
-  readonly actions: HTMLElement;
   readonly support: HTMLElement;
   readonly feedback: HTMLElement;
 }

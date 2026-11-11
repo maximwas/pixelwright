@@ -7,7 +7,7 @@ import { ACTIVITY_OUTCOME } from "@/shared/window/ui-message.constants.ts";
 import type { ActivityEntry } from "@/shared/window/ui-message.schema.ts";
 
 /**
- * Step 1, outermost (P-051): every op's answer goes to the window's activity list, a write refused while Allow edits
+ * Step 1, outermost (P-051): every op's answer goes to the window, a write refused while Allow edits
  * is off and a call its contract refused included; a quiet op (ping, the status probe) never does (O-027).
  */
 @injectable()

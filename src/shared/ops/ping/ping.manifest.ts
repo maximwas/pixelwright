@@ -3,7 +3,7 @@ import { OpContract } from "@/shared/ops/op-contract.ts";
 import { OP_NAME, OP_TURN } from "@/shared/ops/op-meta.constants.ts";
 import { PING_TIMEOUT_MS } from "@/shared/ops/ping/ping.constants.ts";
 
-/** status probe's round trip (T-021): free, so a long read never holds it; quiet, so the activity list skips it. */
+/** status probe's round trip (T-021): free, so a long read never holds it; quiet, so main never reports it to the window. */
 export const pingOp = new OpContract({
   name: OP_NAME.ping,
   input: zod.strictObject({}),

@@ -6,7 +6,6 @@ import { SocketLink } from "@/plugin-ui/link/socket-link.ts";
 import { WindowLink } from "@/plugin-ui/link/window-link.ts";
 import { BusyState } from "@/plugin-ui/view/busy-state.ts";
 import { PluginWindow } from "@/plugin-ui/view/plugin-window.ts";
-import { RecentActions } from "@/plugin-ui/view/recent-actions.ts";
 import { StatusLine } from "@/plugin-ui/view/status-line.ts";
 import { UpdateBanner } from "@/plugin-ui/view/update-banner.ts";
 import type { UiMessage } from "@/shared/window/ui-message.schema.ts";
@@ -98,7 +97,7 @@ const windowLink = (bridge: Bridge) =>
   new WindowLink(
     new MainChannel(),
     new SocketLink(bridge, new Backoff()),
-    new PluginWindow(new StatusLine(), new RecentActions(), new BusyState()),
+    new PluginWindow(new StatusLine(), new BusyState()),
     new UpdateBanner(),
   );
 
@@ -179,6 +178,23 @@ describe("WindowLink", () => {
     expect(frame.posted.at(-1)).toEqual({ ch: "window", d: { type: "allow_edits", on: true } });
     expect(frame.element("detail").textContent).toBe("Your AI assistant sees this file.");
   });
+
+  it("tells the Allow edits note that code execute started may run on: a refused execute never ran (P-012)", () => {
+    const frame = new Frame();
+    const bridge = new Bridge();
+
+    windowLink(bridge).start();
+    frame.fromMain({ ch: "window", d: { type: "start", key: bridge.keys.addKey(), context: CONTEXT } });
+    frame.fromMain({ ch: "window", d: { type: "activity", entry: { op: "execute", outcome: "refused" } } });
+
+    expect(frame.element("edits-note").textContent).toBe("AI only reads this file.");
+
+    frame.fromMain({ ch: "window", d: { type: "activity", entry: { op: "execute", outcome: "failed" } } });
+
+    expect(frame.element("edits-note").textContent).toBe(
+      "AI only reads this file now. Code it ran with execute keeps running until you close this window.",
+    );
+  });
 });
 
 describe("ui.html", () => {
@@ -187,5 +203,12 @@ describe("ui.html", () => {
     const html = readFileSync(new URL("../../src/plugin-ui/ui.html", import.meta.url), "utf8");
 
     expect(html).toMatch(/\[hidden\]\s*\{\s*display:\s*none;?\s*\}/);
+  });
+
+  // The window shows no list of what the AI did (2026-11-11); main's activity messages only feed its two notes.
+  it("has no activity list", () => {
+    const html = readFileSync(new URL("../../src/plugin-ui/ui.html", import.meta.url), "utf8");
+
+    expect(html).not.toContain('id="actions"');
   });
 });

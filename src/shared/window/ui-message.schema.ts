@@ -13,7 +13,7 @@ import {
 /** What main knows of the file: the plugin info without the window's own instance id and visibility. */
 const PluginContextSchema = zod.omit(PluginInfoSchema, { instanceId: true, visible: true });
 
-/** One op main answered, as the window's activity lists it (P-051); a quiet op never comes (O-027). */
+/** One op main answered, as the window hears it (P-051); a quiet op never comes (O-027). */
 const ActivityEntrySchema = zod.object({ op: zod.enum(OP_NAME), outcome: zod.enum(ACTIVITY_OUTCOME) });
 
 /** An op whose handler still runs after the watchdog answered for it (D-06), and when it started, in epoch ms. */
