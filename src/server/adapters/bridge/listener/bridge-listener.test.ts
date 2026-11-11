@@ -119,7 +119,7 @@ describe("BridgeListener", () => {
     const probe = await listening();
     const hello = { type: "hello", protocol: 5 };
 
-    expect(await probe.close("/pixelwright/v1", hello)).toEqual({ code: 4426, reason: "protocol 6 required" });
+    expect(await probe.close("/pixelwright/v1", hello)).toEqual({ code: 4426, reason: "protocol 7 required" });
     expect(probe.sessions.rejection()).toBeNull();
   });
 

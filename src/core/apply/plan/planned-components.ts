@@ -9,6 +9,7 @@ type Variants = Readonly<Record<string, string>>;
  * On a dry run, what the creates make for the instances after them, by name (C-178): a set with its variants as they
  * come, a lone component, or a copied one whose variants are unknown.
  */
+// shortcut: no writer makes name/variant props yet, so nothing reads has/missingVariant; items 38-39 wire the check.
 export class PlannedComponents {
   readonly #planned = new Map<string, Variants[] | null>();
 

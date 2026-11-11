@@ -34,6 +34,7 @@ const ElementSchema = zod.object({
   content: zod.exactOptional(zod.array(ContentPieceSchema)),
   source: zod.exactOptional(zod.string()),
   copy: zod.exactOptional(zod.string()),
+  notWritten: zod.exactOptional(zod.array(zod.string())),
 });
 
 const ErrorSchema = zod.object({

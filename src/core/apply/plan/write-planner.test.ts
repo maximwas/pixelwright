@@ -6,7 +6,6 @@ import { CurrentLayers } from "@/core/apply/plan/current-layers.ts";
 import { LayerReads } from "@/core/apply/plan/layer-reads.ts";
 import { PlacedLayers } from "@/core/apply/plan/placed-layers.ts";
 import { PlannedComponents } from "@/core/apply/plan/planned-components.ts";
-import { SendList } from "@/core/apply/plan/send-list.ts";
 import { Unchanged } from "@/core/apply/plan/unchanged.ts";
 import { WritePlanner } from "@/core/apply/plan/write-planner.ts";
 import { CssReader } from "@/core/css/css-reader.ts";
@@ -107,6 +106,16 @@ describe("WritePlanner", () => {
     expect(FigmaPropsSchema.safeParse({ itemSpacing: 12, unknown: 1 }).success).toBe(false);
   });
 
+  // A dry run must not read "already as asked" where no writer handles the attribute yet.
+  it("names the attributes no writer handles yet, per element, and keeps them out of the changes", () => {
+    const frame = element({ id: "81:1", ref: "81:1", attributes: { background: "#f00", gap: "12px" } });
+    const plan = planner.plan([frame], card());
+
+    expect(plan.notWritten.get("81:1")).toEqual(["background"]);
+    expect(plan.errors).toEqual([]);
+    expect(Object.keys(plan.changes[0]?.props ?? {})).not.toContain("fills");
+  });
+
   // C-168, B-027: a named layer the read could not take is refused; one the file lacks goes to the plugin.
   it("refuses a named layer the read could not take and sends one the file lacks", () => {
     const unread = element({ id: "9:9", ref: "9:9", attributes: { gap: "4px" } });
@@ -142,15 +151,17 @@ describe("WritePlanner", () => {
   });
 });
 
-describe("SendList", () => {
+describe("WritePlanner send list", () => {
   // C-176: what writes something, plus the parents and neighbours of a layer made, so the plugin finds its place.
   it("sends what writes with the parents and neighbours of a layer made", () => {
-    const parent = change("p", { parent: "top" });
-    const next = change("n", { parent: "p" });
-    const made = change("new:1", { kind: "create", id: null, parent: "p" });
-    const far = change("f", { parent: "other" });
+    const parent = element({ id: "81:1", ref: "81:1", attributes: { gap: "12px" } });
+    const next = element({ id: "81:2", ref: "81:2", parent: "81:1", index: 0, attributes: {} });
+    const made = element({ ref: "new:1", parent: "81:1", index: 1, attributes: { display: "flex" } });
+    const far = element({ id: "81:3", ref: "81:3", parent: "81:1", index: 2, attributes: {} });
+    const plan = planner.plan([parent, next, made, far], card());
 
-    expect(new SendList().of([parent, next, made, far]).map(({ ref }) => ref)).toEqual(["p", "n", "new:1"]);
+    expect(plan.send.map(({ ref }) => ref)).toEqual(["81:1", "81:2", "new:1", "81:3"]);
+    expect(plan.written.map(({ ref }) => ref)).toEqual(["81:1", "new:1"]);
   });
 });
 

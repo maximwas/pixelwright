@@ -76,12 +76,12 @@ describe("StatusHints, in priority order", () => {
     [
       "an older plugin turned away beats a refused connection, and is named with its version",
       { rejection: REFUSED, refusal: OLDER },
-      "The Pixelwright New plugin 0.7.0 that tried to connect is older than this server (protocol 5; this server speaks 6), so it was turned away: ask the user to install the plugin that comes with this server's version and run it again in Figma.",
+      "The Pixelwright New plugin 0.7.0 that tried to connect is older than this server (protocol 5; this server speaks 7), so it was turned away: ask the user to install the plugin that comes with this server's version and run it again in Figma.",
     ],
     [
       "a newer plugin turned away asks to update the server",
-      { refusal: { protocol: 7, pluginVersion: null } },
-      "The Pixelwright New plugin that tried to connect is newer than this server (protocol 7; this server speaks 6), so it was turned away: update this Pixelwright server and restart it in this MCP client (/mcp in Claude Code).",
+      { refusal: { protocol: 8, pluginVersion: null } },
+      "The Pixelwright New plugin that tried to connect is newer than this server (protocol 8; this server speaks 7), so it was turned away: update this Pixelwright server and restart it in this MCP client (/mcp in Claude Code).",
     ],
     [
       "a refusal beats no file",

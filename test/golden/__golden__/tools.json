@@ -5652,7 +5652,7 @@
   {
     "name": "design_apply",
     "title": "Write a design",
-    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. Strict XML: an unclosed tag, a wrong closing tag, a duplicate attribute, a bare & or a < in a value is refused as INVALID_XML with its line and column. Names may hold $ ($css), HTML entities like &mdash; are read, CDATA is text as written. dryRun reads the XML without writing and answers the elements it read, every refusal (an unknown attribute, a Did you mean hint, a habit such as x or fill with the CSS to write instead) and the changes it would make to the layers named, layout first: display, direction, gap, padding, alignment and grid tracks.",
+    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. Strict XML: an unclosed tag, a wrong closing tag, a duplicate attribute, a bare & or a < in a value is refused as INVALID_XML with its line and column. Names may hold $ ($css), HTML entities like &mdash; are read, CDATA is text as written. dryRun reads the XML without writing and answers the elements it read, every refusal (an unknown attribute, a Did you mean hint, a habit such as x or fill with the CSS to write instead) and the changes it would make to the layers named, layout first: display, direction, gap, padding, alignment and grid tracks; an element lists notWritten, the attributes no writer handles yet, which are not in the changes.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5775,6 +5775,12 @@
               },
               "copy": {
                 "type": "string"
+              },
+              "notWritten": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [
@@ -5789,7 +5795,7 @@
             ],
             "additionalProperties": false
           },
-          "description": "The elements read, in document order: line and column, tag, id (null for a new layer), ref (new:<line> for a new one), parent ref, index among its siblings, the attributes kept, a Text's content pieces, and for an element inside a copy its source and copy."
+          "description": "The elements read, in document order: line and column, tag, id (null for a new layer), ref (new:<line> for a new one), parent ref, index among its siblings, the attributes kept, a Text's content pieces, and for an element inside a copy its source and copy; notWritten lists the attributes no writer handles yet (left out of changes, not refused)."
         },
         "errors": {
           "type": "array",

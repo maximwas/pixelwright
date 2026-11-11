@@ -79,7 +79,13 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
       (first, second) => first.line - second.line || first.column - second.column,
     );
 
-    return { elements: reading.elements, errors, changes: plan.written, dry: true };
+    const elements = reading.elements.map((element) => {
+      const notWritten = plan.notWritten.get(element.ref);
+
+      return notWritten === undefined ? element : { ...element, notWritten };
+    });
+
+    return { elements, errors, changes: plan.written, dry: true };
   }
 
   protected async write(): Promise<DesignApplyOutput> {

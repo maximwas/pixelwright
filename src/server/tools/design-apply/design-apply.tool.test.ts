@@ -9,7 +9,10 @@ function tool(planner = {} as WritePlanner, session = {}): DesignApplyTool {
   return new DesignApplyTool(session as never, {} as never, {} as never, planner);
 }
 
-const IDLE = { layersToRead: () => [], plan: () => ({ changes: [], written: [], send: [], errors: [] }) } as never;
+const IDLE = {
+  layersToRead: () => [],
+  plan: () => ({ changes: [], written: [], send: [], errors: [], notWritten: new Map() }),
+} as never;
 
 describe("DesignApplyTool", () => {
   it("answers INVALID_XML with the line, the column and the words", async () => {
@@ -58,7 +61,7 @@ describe("DesignApplyTool", () => {
     };
     const planner = {
       layersToRead: () => ["81:1"],
-      plan: () => ({ changes: [layout], written: [layout], send: [layout], errors: [] }),
+      plan: () => ({ changes: [layout], written: [layout], send: [layout], errors: [], notWritten: new Map() }),
     } as never;
     const answer = await tool(planner, session).execute({ xml: '<Frame id="81:1" gap="12px"/>', dryRun: true });
 
@@ -67,6 +70,22 @@ describe("DesignApplyTool", () => {
       dry: true,
       changes: [{ id: "81:1", tag: "Frame", kind: "update", props: { itemSpacing: 12 } }],
     });
+  });
+
+  it("lists, per element, the attributes no writer handles yet", async () => {
+    const planner = {
+      layersToRead: () => [],
+      plan: () => ({
+        changes: [],
+        written: [],
+        send: [],
+        errors: [],
+        notWritten: new Map([["new:1", ["background"]]]),
+      }),
+    } as never;
+    const answer = await tool(planner).execute({ xml: '<Frame background="#f00"/>', dryRun: true });
+
+    expect(answer.structuredContent).toMatchObject({ elements: [{ ref: "new:1", notWritten: ["background"] }] });
   });
 
   it("refuses a real run until the writing half lands", async () => {

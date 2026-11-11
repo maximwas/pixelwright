@@ -62,7 +62,7 @@ afterEach(async () => {
 });
 
 describe("the owner bridge through the composition root", () => {
-  it("owns the port: status shows role owner, its port, protocol 6, no file, and bridge.json is made private", async () => {
+  it("owns the port: status shows role owner, its port, protocol 7, no file, and bridge.json is made private", async () => {
     const owner = await connected();
     const status = await owner.status();
 
@@ -70,7 +70,7 @@ describe("the owner bridge through the composition root", () => {
       server: expect.objectContaining({
         channel: "pixelwright-new",
         role: "owner",
-        protocol: 6,
+        protocol: 7,
         port: expect.any(Number),
       }),
       files: [],

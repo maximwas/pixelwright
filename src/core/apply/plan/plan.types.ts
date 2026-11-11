@@ -38,5 +38,7 @@ export interface WritePlan {
   /** The changes that write something plus the parents and neighbours of the layers made (C-176). */
   readonly send: ApplyChange[];
   readonly errors: ApplyError[];
+  /** By element ref: the CSS attributes no writer handles yet, so a dry run does not read as already as asked. */
+  readonly notWritten: ReadonlyMap<string, string[]>;
   readonly components: PlannedComponents;
 }

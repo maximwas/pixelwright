@@ -1,5 +1,5 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { ATTRIBUTE, CHANGE_KIND } from "@/core/apply/apply.constants.ts";
+import { ATTRIBUTE, CHANGE_KIND, CSS_ATTRIBUTES } from "@/core/apply/apply.constants.ts";
 import type { ApplyChange, ApplyElement, ApplyError } from "@/core/apply/apply.types.ts";
 import { PLAN_VALUE } from "@/core/apply/plan/plan.constants.ts";
 import type { LayerNow } from "@/core/apply/plan/plan.types.ts";
@@ -66,6 +66,11 @@ export class ChangeOf {
       },
       errors: [...errors].sort((first, second) => rank(first) - rank(second)),
     };
+  }
+
+  /** The CSS attributes of the element no writer handles yet: they are not in the change, and the dry run says so. */
+  unwritten(element: ApplyElement): string[] {
+    return Object.keys(element.attributes).filter((name) => CSS_ATTRIBUTES.has(name) && !this.#registry.owns(name));
   }
 
   /** What a write rule reads: the element's attributes, and the same over what the layer has now. */

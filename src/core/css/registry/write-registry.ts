@@ -21,6 +21,11 @@ export class WriteRegistry {
     this.#writers = writers;
   }
 
+  /** Whether a writer owns this attribute: what none owns is read but not written yet. */
+  owns(attribute: string): boolean {
+    return this.#writers.some((writer) => writer.attributes.includes(attribute));
+  }
+
   write(input: WriteInput, out: WriteOutput): void {
     for (const writer of this.#writers) {
       if (writer.attributes.some(input.changed)) {

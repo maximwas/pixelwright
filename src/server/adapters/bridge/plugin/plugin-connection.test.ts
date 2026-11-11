@@ -16,7 +16,7 @@ const PLUGIN_NONCE = "00112233445566778899aabbccddeeff";
 /** A 0.8.0 hello, fields in 0.7.0's order. */
 const hello = (keyId: string | null, instanceId = "window-a") => ({
   type: "hello",
-  protocol: 6,
+  protocol: 7,
   plugin: {
     instanceId,
     pluginVersion: "0.8.0",
@@ -109,12 +109,12 @@ describe("PluginConnection, before the session", () => {
     expect(probe.sessions.pairing()).toBeNull();
   });
 
-  it('turns a 0.7.0 plugin away with 4426 "protocol 6 required", and keeps it for the status hint', () => {
+  it('turns a 0.7.0 plugin away with 4426 "protocol 7 required", and keeps it for the status hint', () => {
     const probe = new HandshakeProbe();
     const old = hello(null);
     const socket = probe.connect({ ...old, protocol: 5, plugin: { ...old.plugin, pluginVersion: "0.7.0" } });
 
-    expect(socket.closed).toEqual({ code: 4426, reason: "protocol 6 required" });
+    expect(socket.closed).toEqual({ code: 4426, reason: "protocol 7 required" });
     expect(socket.sent).toEqual([]);
     expect(probe.sessions.refusal()).toEqual({ protocol: 5, pluginVersion: "0.7.0" });
   });
@@ -147,7 +147,7 @@ describe("PluginConnection, a paired plugin", () => {
     socket.receive(auth(socket, key.secret));
     expect(socket.last()).toEqual({
       type: "hello_ack",
-      protocol: 6,
+      protocol: 7,
       sessionId: expect.any(String),
       server: { name: "pixelwright-new", version: expect.any(String) },
     });

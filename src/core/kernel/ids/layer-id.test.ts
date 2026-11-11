@@ -7,7 +7,10 @@ describe("LayerId", () => {
     expect(LayerId.parse(text)?.value).toBe(text);
   });
 
-  it.each(["", "54", "54:", "I", "54:243;", "x1:2", " 1:2", "1:2 ", "II1:2", "1:a", "1:2;I3:4"])("refuses %j", (text) => {
-    expect(LayerId.parse(text)).toBeNull();
-  });
+  it.each(["", "54", "54:", "I", "54:243;", "x1:2", " 1:2", "1:2 ", "II1:2", "1:a", "1:2;I3:4"])(
+    "refuses %j",
+    (text) => {
+      expect(LayerId.parse(text)).toBeNull();
+    },
+  );
 });

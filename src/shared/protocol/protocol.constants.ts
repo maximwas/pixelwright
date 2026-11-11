@@ -1,5 +1,8 @@
-/** The bridge protocol this build speaks; a plugin on another one is turned away at hello (D-02, one exact check). */
-export const PROTOCOL = 6;
+/**
+ * The bridge protocol this build speaks; a plugin on another one is turned away at hello (D-02, one exact check).
+ * 7: the read op's input gained `profile`, which an older plugin's strict schema refuses.
+ */
+export const PROTOCOL = 7;
 
 /** Where the plugin's window connects: ws://127.0.0.1:<the channel's port><BRIDGE_PATH> (S-001). */
 export const BRIDGE_PATH = "/pixelwright/v1";
