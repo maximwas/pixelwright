@@ -73,6 +73,10 @@ export class ApplyRun {
       } catch (error) {
         if (change.kind === APPLY_CHANGE_KIND.create) {
           // A new layer that failed is gone (or never made): its children must not find it in layers.
+          if (!dryRun) {
+            this.#layers.discard(run.layers.get(change.ref));
+          }
+
           run.layers.delete(change.ref);
           run.failed.set(change.ref, change);
         }

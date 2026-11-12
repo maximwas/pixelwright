@@ -228,6 +228,22 @@ describe("WritePlanner send list", () => {
 
     expect(plan.changes.filter(({ moves }) => moves ?? false).map(({ ref }) => ref)).toEqual(["81:3", "81:2"]);
   });
+
+  // B-019: a layer inside a copy, named by its source's id, moves only when it says before or after.
+  it("moves a layer inside a copy by before or after only", () => {
+    const copy = element({ ref: "new:1", attributes: { copyOf: "81:1" } });
+    const plain = element({ ref: "new:2", parent: "new:1", copy: "new:1", source: "81:2", attributes: {} });
+    const beside = element({
+      ref: "new:3",
+      parent: "new:1",
+      copy: "new:1",
+      source: "81:3",
+      attributes: { before: "81:2" },
+    });
+    const plan = planner.plan([copy, plain, beside], card());
+
+    expect(plan.changes.filter(({ moves }) => moves ?? false).map(({ ref }) => ref)).toEqual(["new:3"]);
+  });
 });
 
 describe("PlannedComponents", () => {

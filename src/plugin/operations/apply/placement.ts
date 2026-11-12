@@ -48,17 +48,37 @@ export class Placement {
       throw new WriteError(APPLY_TEXT.inInstance);
     }
 
+    // A dry run stops short of the write only: it refuses what a real run would, with the same text.
+    const neighbour = change.before ?? change.after;
+    let holder: BaseNode = (this.#parentOf(change, call) ?? call.top) as BaseNode;
+    let index = 0;
+
+    if (!call.dry || neighbour !== undefined) {
+      ({ parent: holder, index } = await this.whereTo(change, call));
+    }
+
+    // A layer this dry run would make stands in for its parent: it has no children to check.
+    if ("id" in holder) {
+      this.#checkHolder(holder, node);
+    }
+
     if (call.dry) {
       return;
     }
 
-    const { parent, index } = await this.whereTo(change, call);
+    // FX-061: Figma reads the index in the list as it is, the layer itself still in its place: the index of the layer
+    // it goes before is the one to give, whichever way it moves.
+    (holder as Holder).insertChild(index, node);
+  }
 
-    if (!("insertChild" in parent) || parent.type === FIGMA_NODE_TYPE.text) {
-      throw new WriteError(APPLY_TEXT.holdsNoLayers(parent.type.toLowerCase()));
+  #checkHolder(parent: BaseNode, node: SceneNode): void {
+    const type: string = parent.type;
+
+    if (!("insertChild" in parent) || type === FIGMA_NODE_TYPE.text) {
+      throw new WriteError(APPLY_TEXT.holdsNoLayers(type.toLowerCase()));
     }
 
-    if (parent.type !== FIGMA_NODE_TYPE.slot && this.#instanced(parent)) {
+    if (type !== FIGMA_NODE_TYPE.slot && this.#instanced(parent)) {
       throw new WriteError(APPLY_TEXT.onlySlots);
     }
 
@@ -67,10 +87,6 @@ export class Placement {
         throw new WriteError(APPLY_TEXT.intoItself);
       }
     }
-
-    // FX-061: Figma reads the index in the list as it is, the layer itself still in its place: the index of the layer
-    // it goes before is the one to give, whichever way it moves.
-    parent.insertChild(index, node);
   }
 
   /** Whether the layer sits in an instance and not in a slot of it: there its children come from the component. */
@@ -99,7 +115,8 @@ export class Placement {
       throw new WriteError(APPLY_TEXT.noParent);
     }
 
-    return parent;
+    // shortcut: a stand-in parent (a layer a dry run would make) has no id to compare a neighbour's parent with.
+    return call.dry && !("id" in parent) ? null : parent;
   }
 
   /** After the element before it in the XML, else before the existing layer after it, else last. */

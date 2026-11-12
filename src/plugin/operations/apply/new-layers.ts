@@ -51,7 +51,7 @@ export class NewLayers {
       parent.insertChild(index, node);
       this.#bare(node, change.props);
     } catch (error) {
-      this.#discard(node);
+      this.discard(node);
 
       throw error;
     }
@@ -66,7 +66,7 @@ export class NewLayers {
     try {
       parent.insertChild(index, node);
     } catch (error) {
-      this.#discard(node);
+      this.discard(node);
 
       throw error;
     }
@@ -80,7 +80,7 @@ export class NewLayers {
       this.#hug(node, props);
       this.#placeOnPage(node, props);
     } catch (error) {
-      this.#discard(node);
+      this.discard(node);
 
       throw error;
     }
@@ -109,7 +109,7 @@ export class NewLayers {
   }
 
   /** A layer that failed after it existed goes, so a failed element leaves nothing in the user's file. */
-  #discard(node: SceneNode): void {
+  discard(node: SceneNode): void {
     if (!node.removed) {
       node.remove();
     }

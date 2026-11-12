@@ -92,6 +92,95 @@ return { copy: copy.children.map((child) => child.width), source: source.width, 
     expect(applied.changed).toEqual([widths.changed]);
   });
 
+  const childIds = async (id: string): Promise<string[]> =>
+    (await run(
+      `return (await figma.getNodeByIdAsync(${JSON.stringify(id)})).children.map((child) => child.id);`,
+    )) as string[];
+
+  // T-124: a layer goes into another frame, after a layer of that frame.
+  it("moves a layer to another parent, after a layer there", async () => {
+    const from = await row("from");
+    const to = await row("to");
+    const applied = await apply(`<Frame id="${to.frame}"><Rectangle id="${from.a}" after="${to.b}"/></Frame>`);
+
+    expect(applied.errors).toEqual([]);
+    expect(await childIds(to.frame ?? "")).toEqual([to.a, to.b, from.a, to.c]);
+    expect(await childIds(from.frame ?? "")).toEqual([from.b, from.c]);
+  });
+
+  // T-124 dry run: it refuses what a real run would, with the same text (a missing neighbour, a text as holder).
+  it("refuses in a dry run the moves a real run refuses", async () => {
+    const ids = await row("refused");
+    const textId = (await run(`await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+const text = figma.createText();
+text.name = ${JSON.stringify(`${PREFIX}refused-text`)};
+(await pw.node(${JSON.stringify(scratch)})).appendChild(text);
+return text.id;`)) as string;
+    const missing = `<Rectangle id="${ids.a}" before="1:99999999"/>`;
+    const intoText = `<Text id="${textId}"><Rectangle id="${ids.a}"/></Text>`;
+
+    for (const xml of [missing, intoText]) {
+      const dry = await apply(xml, { dryRun: true });
+      const real = await apply(xml);
+
+      expect(dry.errors.length).toBeGreaterThan(0);
+      expect(dry.errors.map((error) => error.message)).toEqual(real.errors.map((error) => error.message));
+    }
+
+    expect(await order(ids.frame ?? "")).toEqual(["a", "b", "c"]);
+  });
+
+  // T-124: inside an instance only a slot takes layers; the instance's own child refuses.
+  it("refuses a layer moved into an instance's non-slot child", async (context) => {
+    const ids = await row("instance");
+    const made = (await run(`const section = await pw.node(${JSON.stringify(scratch)});
+const component = figma.createComponent();
+component.name = ${JSON.stringify(`${PREFIX}component`)};
+section.appendChild(component);
+const inner = figma.createFrame();
+inner.name = "inner";
+component.appendChild(inner);
+let slot = false;
+try {
+  component.createSlot();
+  slot = true;
+} catch {}
+const instance = component.createInstance();
+instance.name = ${JSON.stringify(`${PREFIX}instance`)};
+section.appendChild(instance);
+return { inner: instance.children[0].id, slot, slotId: instance.children.find((child) => child.type === "SLOT")?.id };`)) as {
+      inner: string;
+      slot: boolean;
+      slotId?: string;
+    };
+    const refused = await apply(`<Frame id="${made.inner}"><Rectangle id="${ids.a}"/></Frame>`);
+
+    expect(refused.errors).toMatchObject([{ message: expect.stringContaining("only through its slots") }]);
+    expect(await childIds(ids.frame ?? "")).toContain(ids.a);
+
+    if (made.slotId === undefined) {
+      context.annotate("this Figma could not make a slot: only the refusal checked");
+
+      return;
+    }
+
+    expect((await apply(`<Frame id="${made.slotId}"><Rectangle id="${ids.a}"/></Frame>`)).errors).toEqual([]);
+    expect(await childIds(made.slotId)).toEqual([ids.a]);
+  });
+
+  // B-019: inside a copy a SOURCE's id as before names the copy's own layer.
+  it("lands before a source's id inside a copy at the copy's counterpart", async () => {
+    const ids = await row("counterpart");
+    const applied = await apply(
+      `<Frame copyOf="${ids.frame}" name="${PREFIX}counterpart-copy"><Rectangle id="${ids.c}" before="${ids.a}"/></Frame>`,
+      { parent: scratch },
+    );
+
+    expect(applied.errors).toEqual([]);
+    expect(await order(applied.created[0]?.id ?? "")).toEqual(["c", "a", "b"]);
+    expect(await order(ids.frame ?? "")).toEqual(["a", "b", "c"]);
+  });
+
   // T-125, FX-054, A§15.13: a new page goes last; without a free page slot the Starter limit is named and nothing made.
   it("makes a page last, or names the plan's page limit when the file has no free slot", async (context) => {
     const pages = (await run("return figma.root.children.length;")) as number;

@@ -108,7 +108,15 @@ export class WritePlanner {
     for (const { element, entry } of assessed) {
       const inside = element.parent === null ? undefined : byRef.get(element.parent);
 
-      if (element.id !== null && entry !== undefined && this.#moves(element, entry, inside, furthest)) {
+      if (element.source !== undefined) {
+        // A layer inside a copy is named by its source's id: it moves only by before or after (B-019).
+        if (
+          entry !== undefined &&
+          (element.attributes.before !== undefined || element.attributes.after !== undefined)
+        ) {
+          moved.add(element.ref);
+        }
+      } else if (element.id !== null && entry !== undefined && this.#moves(element, entry, inside, furthest)) {
         moved.add(element.ref);
       }
     }

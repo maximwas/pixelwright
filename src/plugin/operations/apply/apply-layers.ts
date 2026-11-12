@@ -50,8 +50,15 @@ export class ApplyLayers {
       return await this.#created(change, call);
     }
 
-    const node = await this.#checks.existing(change, !call.dry);
+    return await this.#moved(await this.#checks.existing(change, !call.dry), change, call);
+  }
 
+  /** The layer, placed again when its change says it moves. */
+  async #moved(
+    node: SceneNode,
+    change: ApplyChangeData,
+    call: ApplyCall,
+  ): Promise<SceneNode> {
     if (change.moves ?? false) {
       await this.#placement.move(node, change, call);
     }
@@ -60,9 +67,16 @@ export class ApplyLayers {
   }
 
   /** After its write: a new layer finished as NewLayers does; a copy keeps what its source had. */
-  finish(node: SceneNode, change: ApplyChangeData): void {
-    if (change.copyOf === undefined) {
+  finish(node: SceneNode | PageNode, change: ApplyChangeData): void {
+    if (change.copyOf === undefined && node.type !== FIGMA_NODE_TYPE.page) {
       this.#layers.finish(node, change.props);
+    }
+  }
+
+  /** A made layer whose write failed goes, so a failed element leaves nothing in the user's file (a page stays). */
+  discard(node: TypedLayer | undefined): void {
+    if (node !== undefined && "remove" in node && node.type !== FIGMA_NODE_TYPE.page) {
+      this.#layers.discard(node as SceneNode);
     }
   }
 
@@ -89,10 +103,10 @@ export class ApplyLayers {
         throw new WriteError(APPLY_TEXT.copyNotMade);
       }
 
-      return await this.#checks.existing(change, false, change.source);
+      return await this.#moved(await this.#checks.existing(change, false, change.source), change, call);
     }
 
-    return call.counterparts.find(change, made);
+    return await this.#moved(call.counterparts.find(change, made), change, call);
   }
 
   /** A new layer's place checked, and on a real run the layer made (or the source cloned) there. */
