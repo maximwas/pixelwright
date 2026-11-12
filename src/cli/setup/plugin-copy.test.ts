@@ -36,7 +36,9 @@ describe("PluginCopy", () => {
     mkdirSync(to);
     writeFileSync(join(to, "notes.txt"), "mine");
 
-    await expect(new PluginCopy().install(fakePlugin(), to)).rejects.toThrow(/not a Pixelwright New plugin folder/);
+    await expect(new PluginCopy().install(fakePlugin(), to)).rejects.toThrow(
+      new RegExp(`not a ${CHANNEL.pluginName} plugin folder`),
+    );
     expect(readFileSync(join(to, "notes.txt"), "utf8")).toBe("mine");
   });
 

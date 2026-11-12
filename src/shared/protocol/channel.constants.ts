@@ -1,6 +1,6 @@
 /**
- * The two products one source builds. Until the release item every build is the dev channel, a separate product beside
- * the 0.7.0 that is used every day: its own MCP name, home folder, bridge port and plugin, so neither touches the other.
+ * The two products one source builds: the release (npm's pixelwright) and the dev channel, a separate product beside
+ * the release that is used every day: its own MCP name, home folder, bridge port and plugin, so neither touches the other.
  */
 export const CHANNELS = {
   dev: {
@@ -27,8 +27,8 @@ export const CHANNELS = {
   },
 } as const;
 
-/** The channel this build is: server, plugin manifest and `pnpm try` all read it. */
-export const CHANNEL: Channel = CHANNELS.dev;
+/** The channel this build is: server, plugin manifest and `pnpm try` all read it. The release branch builds release, the next version's branch dev. */
+export const CHANNEL: Channel = CHANNELS.release;
 
 /** One channel's values; the manifest is written for either. */
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS];

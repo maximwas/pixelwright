@@ -3,6 +3,7 @@ import type { ConnectedFile, PluginLink, PluginLinkRole, PluginLinkState } from 
 import { PluginSessions } from "@/server/app/sessions/plugin-sessions.ts";
 import { TargetResolver } from "@/server/app/sessions/target-resolver.ts";
 import { StatusTool } from "@/server/tools/status/status.tool.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { VERSION } from "@/shared/version/version.constants.ts";
 
 /** A bridge state as a value: status only reads it. */
@@ -41,7 +42,7 @@ describe("StatusTool", () => {
   it("shows the server's version, channel and protocol with the bridge's role, port and hint", async () => {
     const link = new LinkState({
       role: "disabled",
-      port: 18_721,
+      port: CHANNEL.port,
       files: [],
       pairing: null,
       hint: "The plugin bridge is off.",
@@ -49,7 +50,7 @@ describe("StatusTool", () => {
     const answer = await status(link).execute({});
 
     expect(answer.structuredContent).toEqual({
-      server: { version: VERSION, channel: "pixelwright-new", role: "disabled", protocol: 6, port: 18_721 },
+      server: { version: VERSION, channel: CHANNEL.name, role: "disabled", protocol: 6, port: CHANNEL.port },
       files: [],
       probe: null,
       pairing: null,
@@ -71,7 +72,13 @@ describe("StatusTool", () => {
       pluginVersion: "0.8.0",
     };
     const answer = await status(
-      new LinkState({ role: "owner", port: 18_721, files: [file], pairing, hint: "A plugin is waiting to be paired." }),
+      new LinkState({
+        role: "owner",
+        port: CHANNEL.port,
+        files: [file],
+        pairing,
+        hint: "A plugin is waiting to be paired.",
+      }),
     ).execute({});
 
     expect(answer.structuredContent).toMatchObject({

@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { ConfigReader } from "@/server/main/config/config-reader.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 
 const HOME = "/home/someone";
 
 describe("ConfigReader", () => {
-  it("defaults to the dev channel's home and port, level info, the bridge on and no extra origins", () => {
+  it("defaults to the build channel's home and port, level info, the bridge on and no extra origins", () => {
     expect(new ConfigReader({}, HOME).read()).toEqual({
-      home: "/home/someone/.pixelwright-new",
+      home: `/home/someone/${CHANNEL.home}`,
       logLevel: "info",
       pluginBridge: true,
-      bridgePort: 18_721,
+      bridgePort: CHANNEL.port,
       pluginOrigins: [],
       projectDir: process.cwd(),
       updateCheck: true,
@@ -30,7 +31,7 @@ describe("ConfigReader", () => {
       home: "/tmp/pw",
       logLevel: "debug",
       pluginBridge: false,
-      bridgePort: 18_721,
+      bridgePort: CHANNEL.port,
       pluginOrigins: ["https://one.example", "https://two.example"],
       projectDir: "/work/app",
       updateCheck: false,
@@ -38,14 +39,16 @@ describe("ConfigReader", () => {
   });
 
   it("keeps the channel's port whatever the environment says: the plugin's manifest allows that one only", () => {
-    expect(new ConfigReader({ PIXELWRIGHT_BRIDGE_PORT: "18720" }, HOME).read().bridgePort).toBe(18_721);
+    expect(new ConfigReader({ PIXELWRIGHT_BRIDGE_PORT: String(CHANNEL.port + 1) }, HOME).read().bridgePort).toBe(
+      CHANNEL.port,
+    );
   });
 
   it("falls back to the default for an unknown level or an empty home", () => {
     const env = { PIXELWRIGHT_HOME: " ", PIXELWRIGHT_LOG_LEVEL: "loud" };
 
     expect(new ConfigReader(env, HOME).read()).toMatchObject({
-      home: "/home/someone/.pixelwright-new",
+      home: `/home/someone/${CHANNEL.home}`,
       logLevel: "info",
     });
   });

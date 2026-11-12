@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
 import { ServerMain } from "@/server/main/server.main.ts";
 import { type StatusOutput, StatusOutputSchema } from "@/server/tools/status/status.schema.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 
 /** The server as the composition root wires it with the bridge on, in a temp home, on a free or a given port. */
 class OwnerClient {
@@ -67,16 +68,11 @@ describe("the owner bridge through the composition root", () => {
     const status = await owner.status();
 
     expect(status).toEqual({
-      server: expect.objectContaining({
-        channel: "pixelwright-new",
-        role: "owner",
-        protocol: 6,
-        port: expect.any(Number),
-      }),
+      server: expect.objectContaining({ channel: CHANNEL.name, role: "owner", protocol: 6, port: expect.any(Number) }),
       files: [],
       probe: null,
       pairing: null,
-      hint: "No Figma file is connected: open the file in Figma Desktop, run Plugins → Development → Pixelwright New, and keep the plugin window open.",
+      hint: `No Figma file is connected: open the file in Figma Desktop, run Plugins → Development → ${CHANNEL.pluginName}, and keep the plugin window open.`,
     });
     expect((statSync(join(owner.home, "bridge.json")).mode & 0o777).toString(8)).toBe("600");
   });
@@ -98,7 +94,7 @@ describe("the owner bridge through the composition root", () => {
     });
 
     expect((await owner.status()).hint).toBe(
-      "A connection from origin https://evil.example was refused (origin): if it was not the Pixelwright New plugin, ignore it.",
+      `A connection from origin https://evil.example was refused (origin): if it was not the ${CHANNEL.pluginName} plugin, ignore it.`,
     );
   });
 
