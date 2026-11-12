@@ -5998,7 +5998,7 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 100,
-          "description": "A name for a version saved in the file's history before the code runs, for the designer to go back to. execute has no dry run to check first, so a version is always saved when you pass one, even if the code then changes nothing."
+          "description": "A name for a version saved in the file's history before the code runs, for the designer to go back to. execute has no dry run to check first, so a version is always saved when you pass one, even if the code then changes nothing. A version goes with `code` or `codePath`, not with `script`: a script never writes."
         },
         "file": {
           "type": "string",

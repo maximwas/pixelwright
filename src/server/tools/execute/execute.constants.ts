@@ -3,7 +3,7 @@ import { EXECUTE } from "@/shared/ops/execute/execute.constants.ts";
 
 const MS_PER_SECOND = 1_000;
 
-/** execute as clients list it (tools.json pins every word): no `version` until save_version, no pw.paint or pw.variable. */
+/** execute as clients list it (tools.json pins every word): `version` goes with code or codePath, and the plugin gives pw only node and fonts. */
 export const EXECUTE_TOOL = {
   name: "execute",
   title: "Run plugin code",
@@ -17,7 +17,7 @@ export const EXECUTE_FIELD = {
     "A file of such code on the server's disk, run instead of code. It is read at every call, so the file as it is now runs, after a plugin restart too. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
   script: `JavaScript run on the server, apart from Figma, as the body of an async function given pw (each read tool by its camelCase name: await pw.nodesFind({ ... })), utils and console: \`return\` gives the result, cut past ${CODE_LIMITS.resultChars} characters. At most ${CODE_LIMITS.calls} pw calls a run, ${CODE_LIMITS.inFlight} at once; nothing in it writes, and it cannot show an image (no pw.screenshot): call screenshot yourself.`,
   version:
-    "A name for a version saved in the file's history before the code runs, for the designer to go back to. execute has no dry run to check first, so a version is always saved when you pass one, even if the code then changes nothing.",
+    "A name for a version saved in the file's history before the code runs, for the designer to go back to. execute has no dry run to check first, so a version is always saved when you pass one, even if the code then changes nothing. A version goes with `code` or `codePath`, not with `script`: a script never writes.",
   timeout: `Seconds to wait: ${EXECUTE.defaultMs / MS_PER_SECOND} by default for code and ${CODE_LIMITS.timeoutMs / MS_PER_SECOND} for a script, up to ${EXECUTE.maxMs / MS_PER_SECOND} for a long task.`,
   note: "When the code ran and only reads (nothing in it writes): the tools that read without code.",
   calls: "A script's pw calls that succeeded, by function.",
