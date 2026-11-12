@@ -1,3 +1,6 @@
+/** Degrees in one of each CSS angle unit. */
+export const ANGLE_UNITS: Readonly<Record<string, number>> = { deg: 1, grad: 0.9, rad: 180 / Math.PI, turn: 360 };
+
 /** Where CSS values split at their top level. */
 export const CSS_SEPARATOR = { comma: ",", space: " ", slash: "/", semicolon: ";" } as const;
 

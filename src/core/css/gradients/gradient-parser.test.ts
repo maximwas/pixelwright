@@ -3,6 +3,7 @@ import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { GradientParser } from "@/core/css/gradients/gradient-parser.ts";
 import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
+import { CssAngle } from "@/core/css/values/css-angle.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
@@ -14,7 +15,7 @@ const format = new NumberFormat();
 const lengths = new CssLength(new CssVar(new CssSplit()), format, new TokenNames());
 const geometry = new GradientGeometry();
 const gradients = new GradientCss(geometry, new SolidPaint(new TokenNames()), lengths, format);
-const parser = new GradientParser(new CssSplit(), new CssVar(new CssSplit()), geometry);
+const parser = new GradientParser(new CssSplit(), new CssVar(new CssSplit()), geometry, new CssAngle());
 
 const MODEL: ReadModel = {
   model: 1,

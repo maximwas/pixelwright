@@ -168,7 +168,7 @@ export const TRANSFORM_WRITE = {
   none: "none",
   mirror: "scaleX(-1)",
   /** rotate(<angle>), the one turn design_read writes. */
-  rotate: /^rotate\((-?\d*\.?\d+)(deg|grad|rad|turn)\)$/i,
+  rotate: /^rotate\((.*)\)$/i,
 } as const;
 
 /** What the placement writer owns: position, and each axis's edges and size. */

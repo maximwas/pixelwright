@@ -5,6 +5,7 @@ import { StyleCheck } from "@/core/checks/build-styles/style-check.ts";
 import { StyleMatch } from "@/core/checks/build-styles/style-match.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { GradientParser } from "@/core/css/gradients/gradient-parser.ts";
+import { CssAngle } from "@/core/css/values/css-angle.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
@@ -17,7 +18,7 @@ const check = new StyleCheck(
   new Shorthands(split, vars),
   new StyleMatch(
     split,
-    new ShapeMatch(split, new GradientParser(split, vars, new GradientGeometry()), new CssUrl(split)),
+    new ShapeMatch(split, new GradientParser(split, vars, new GradientGeometry(), new CssAngle()), new CssUrl(split)),
   ),
 );
 

@@ -20,6 +20,7 @@ import { IMAGE_PAINT, ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PAINT_LIST, PaintList } from "@/core/css/paints/paint-list.ts";
 import { SOLID_PAINT, SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GROUP_REGISTRY, GroupRegistry, PROPERTY_GROUPS } from "@/core/css/registry/group-registry.ts";
+import { CSS_ANGLE, CssAngle } from "@/core/css/values/css-angle.ts";
 import { CSS_LENGTH, CssLength } from "@/core/css/values/css-length.ts";
 import { CSS_SPLIT, CssSplit } from "@/core/css/values/css-split.ts";
 import { CSS_URL, CssUrl } from "@/core/css/values/css-url.ts";
@@ -210,6 +211,7 @@ export class ServerMain {
       .bind({ provide: SOLID_PAINT, useClass: SolidPaint })
       .bind({ provide: CSS_URL, useClass: CssUrl })
       .bind({ provide: GRADIENT_GEOMETRY, useClass: GradientGeometry })
+      .bind({ provide: CSS_ANGLE, useClass: CssAngle })
       .bind({ provide: GRADIENT_CSS, useClass: GradientCss })
       .bind({ provide: IMAGE_PAINT, useClass: ImagePaint })
       .bind({ provide: PAINT_LIST, useClass: PaintList })

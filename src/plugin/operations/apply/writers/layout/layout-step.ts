@@ -7,8 +7,8 @@ import { STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.t
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /**
- * A frame's auto layout: its mode first (Figma reads the gaps and alignments by it), then wrap, gaps, padding and
- * alignment; every value is resolved before the first is set, so the step fails whole.
+ * A frame's auto layout: its mode first (Figma reads the gaps and alignments by it), then wrap, gaps, padding,
+ * alignment and a grid's tracks (their count before their sizes); every value is resolved before the first is set, so the step fails whole.
  */
 @injectable()
 export class LayoutStep implements WriteStep {
@@ -38,6 +38,12 @@ export class LayoutStep implements WriteStep {
       primaryAxisAlignItems: props.primaryAxisAlignItems,
       counterAxisAlignItems: props.counterAxisAlignItems,
       counterAxisAlignContent: props.counterAxisAlignContent,
+      gridColumnCount: props.gridColumns?.length,
+      gridColumnSizes: props.gridColumns?.map((track) => ({ ...track })),
+      gridRowCount: props.gridRows?.length,
+      gridRowSizes: props.gridRows?.map((track) => ({ ...track })),
+      gridColumnGap: values.number(props.gridColumnGap),
+      gridRowGap: values.number(props.gridRowGap),
     });
   }
 }

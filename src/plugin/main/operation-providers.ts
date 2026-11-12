@@ -17,11 +17,17 @@ import { APPLY_CHECKS, ApplyChecks } from "@/plugin/operations/apply/checks.ts";
 import { NEW_LAYERS, NewLayers } from "@/plugin/operations/apply/new-layers.ts";
 import { ClipStep } from "@/plugin/operations/apply/writers/clip-step.ts";
 import { FillsStep } from "@/plugin/operations/apply/writers/fills-step.ts";
+import { LimitsStep } from "@/plugin/operations/apply/writers/geometry/limits-step.ts";
+import { PlaceStep } from "@/plugin/operations/apply/writers/geometry/place-step.ts";
+import { SizeStep } from "@/plugin/operations/apply/writers/geometry/size-step.ts";
+import { STEP_GEOMETRY, StepGeometry } from "@/plugin/operations/apply/writers/geometry/step-geometry.ts";
+import { TurnStep } from "@/plugin/operations/apply/writers/geometry/turn-step.ts";
 import { LAYER_WRITER, LayerWriter, WRITE_STEPS } from "@/plugin/operations/apply/writers/layer-writer.ts";
-import { LayoutStep } from "@/plugin/operations/apply/writers/layout-step.ts";
+import { ChildStep } from "@/plugin/operations/apply/writers/layout/child-step.ts";
+import { GridCellStep } from "@/plugin/operations/apply/writers/layout/grid-cell-step.ts";
+import { LayoutStep } from "@/plugin/operations/apply/writers/layout/layout-step.ts";
 import { NameStep } from "@/plugin/operations/apply/writers/name-step.ts";
 import { OpacityStep } from "@/plugin/operations/apply/writers/opacity-step.ts";
-import { SizeStep } from "@/plugin/operations/apply/writers/size-step.ts";
 import { STEP_VALUES, StepValues } from "@/plugin/operations/apply/writers/step-values.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
@@ -118,9 +124,15 @@ export class OperationProviders {
       .bind({ provide: CAPABILITIES, useClass: Capabilities })
       .bind({ provide: LAYER_FACTORY, useClass: LayerFactory })
       .bind({ provide: STEP_VALUES, useClass: StepValues })
+      .bind({ provide: STEP_GEOMETRY, useClass: StepGeometry })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: NameStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: LayoutStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: SizeStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: LimitsStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: ChildStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: GridCellStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: TurnStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: PlaceStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: OpacityStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: ClipStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: FillsStep })

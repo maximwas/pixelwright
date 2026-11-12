@@ -19,6 +19,7 @@ export const FIGMA_NODE_TYPE = {
   componentSet: "COMPONENT_SET",
   component: "COMPONENT",
   frame: "FRAME",
+  group: "GROUP",
   section: "SECTION",
   line: "LINE",
   text: "TEXT",

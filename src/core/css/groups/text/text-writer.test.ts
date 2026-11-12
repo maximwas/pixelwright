@@ -6,6 +6,7 @@ import { FillsWriter } from "@/core/css/groups/paint/fills-writer.ts";
 import { TextWriter } from "@/core/css/groups/text/text-writer.ts";
 import { PaintValue } from "@/core/css/paints/paint-value.ts";
 import { ChangeOutput } from "@/core/css/registry/change-output.ts";
+import { CssAngle } from "@/core/css/values/css-angle.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
 import { CssUrl } from "@/core/css/values/css-url.ts";
@@ -19,7 +20,7 @@ const format = new NumberFormat();
 const lengths = new CssLength(vars, format, new TokenNames());
 const fills = new FillsWriter(
   new PaintValue(vars),
-  new GradientParser(split, vars, new GradientGeometry()),
+  new GradientParser(split, vars, new GradientGeometry(), new CssAngle()),
   new CssUrl(split),
   split,
 );
