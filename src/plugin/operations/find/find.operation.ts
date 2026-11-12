@@ -122,7 +122,17 @@ export class FindOperation extends Operation<FindInput, FindOutput> {
       (text === null || (node.type === FIGMA_NODE_TYPE.text && text(node.characters))) &&
       (input.fontSize === undefined || (node.type === FIGMA_NODE_TYPE.text && this.#sized(node, input.fontSize))) &&
       (!instances || node.type === FIGMA_NODE_TYPE.instance) &&
-      (input.visible === undefined || this.#walk.hidden(node) !== input.visible);
+      (input.visible === undefined || this.#walk.hidden(node) !== input.visible) &&
+      (input.fill === undefined || this.#filled(node, input.fill));
+  }
+
+  /** Whether one of the layer's visible fills is of the paint type asked for (mixed fills hold none). */
+  #filled(node: SceneNode, fill: string): boolean {
+    return (
+      "fills" in node &&
+      Array.isArray(node.fills) &&
+      node.fills.some((paint: Paint) => paint.type === fill && (paint.visible ?? true))
+    );
   }
 
   /** Whether any of a text's font sizes is within every bound asked for (a mixed text's runs each count). */

@@ -16,6 +16,22 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## 0.8.2 — 2026-11-12
+
+### Added
+
+- `nodes_find` takes `fill`, a Figma paint type (`IMAGE`, `SOLID`, a gradient, `VIDEO`, `PATTERN`): the layers with a
+  visible fill of that type, e.g. every image layer.
+- `nodes_find` takes a list in `within`: up to 50 layers or pages searched in one call, each layer listed once.
+
+### Changed
+
+- With Allow edits off, `execute`'s plugin code is refused with a text that says how to read without it: `execute`'s
+  `script` or the read tools.
+- `assets_export` says what `from` writes: an image behind a layer's content as it was placed, an image layer rendered
+  at its export settings (else 2x); `scale` and `format` apply to `nodes` only.
+- `inspect` says that an image's `url(assets/<hash>.png)` is a name, not a file it writes.
+
 ## 0.8.1 — 2026-11-12
 
 The first published version of 0.8.0's line: the same server and plugin as 0.8.0, whose release never reached npm.

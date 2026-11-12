@@ -15,6 +15,18 @@ export const FIND = {
   textChars: 200,
 } as const;
 
+/** The Figma paint types a find keeps layers by: a layer with a visible fill of the type matches. */
+export const FIND_FILL = {
+  image: "IMAGE",
+  solid: "SOLID",
+  gradientLinear: "GRADIENT_LINEAR",
+  gradientRadial: "GRADIENT_RADIAL",
+  gradientAngular: "GRADIENT_ANGULAR",
+  gradientDiamond: "GRADIENT_DIAMOND",
+  video: "VIDEO",
+  pattern: "PATTERN",
+} as const;
+
 /** The counts' key of a component and variant, on both sides (T-042): the plugin tallies, the server adds pages up. */
 export const FIND_COUNT = {
   key: (component: string, variant: string | undefined) => `${component}\n${variant ?? ""}`,
