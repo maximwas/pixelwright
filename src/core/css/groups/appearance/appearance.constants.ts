@@ -21,6 +21,39 @@ export const BLEND_CSS: Readonly<Record<string, string>> = {
   LUMINOSITY: "luminosity",
 };
 
+/** CSS's mix-blend-mode as Figma's blend mode (normal is NORMAL; the plugin makes a frame's PASS_THROUGH). */
+export const BLEND_FIGMA: Readonly<Record<string, string>> = Object.fromEntries([
+  ["normal", "NORMAL"],
+  ...Object.entries(BLEND_CSS).map(([figma, css]) => [css, figma]),
+]);
+
+/** The words design_apply reads in appearance. */
+export const APPEARANCE_WRITE = {
+  clip: "clip",
+  visible: "visible",
+  /** A corner radius with `/` is elliptical: Figma's corners are round. */
+  elliptical: "/",
+  /** Opacity in percents over 100 is the 0..1 Figma keeps. */
+  percent: 100,
+  maxCorners: 4,
+} as const;
+
+export const APPEARANCE_PATTERN = {
+  /** A percent: "50%". */
+  percent: /^(-?\d*\.?\d+)%$/,
+} as const;
+
+export const APPEARANCE_ERROR = {
+  badOpacity: (value: string) => `opacity="${value}" is not a number from 0 to 1 or a percent.`,
+  badBlend: (value: string) => `mix-blend-mode="${value}" is no blend mode Figma has.`,
+  blendHint: `Figma has normal, ${Object.values(BLEND_CSS).join(", ")}.`,
+  truncatesText: (name: string, tag: string) =>
+    `${name} truncates a Text; a ${tag} clips its content with overflow="hidden".`,
+  badOverflow: (value: string) =>
+    `overflow="${value}": Figma clips a frame's content or not, hidden or visible (scrolling is a prototype setting).`,
+  badRadius: (value: string) => `border-radius="${value}" is not 1 to 4 lengths in px or tokens.`,
+} as const;
+
 /** Layers whose corners are no box's radius: texts, vector shapes and lines. */
 export const UNROUNDED: Readonly<Record<string, true>> = {
   TEXT: true,
