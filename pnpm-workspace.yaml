@@ -1,9 +1,6 @@
-packages:
-  - apps/*
-  - packages/*
-
-catalog:
-  "@types/node": 24.19.0
-  "@typescript/native": npm:typescript@7.0.2
-  vitest: 5.0.2
-  zod: 4.6.5
+# pnpm 12 refuses to install while a dependency's build script is neither allowed nor denied. simple-git-hooks'
+# postinstall is denied: the "prepare" script installs the hook instead. esbuild's (under tsx) is denied too: it only
+# swaps the JS shim for the platform binary, which esbuild finds in its optional dependency without it.
+allowBuilds:
+  esbuild: false
+  simple-git-hooks: false

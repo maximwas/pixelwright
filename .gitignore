@@ -7,10 +7,9 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
-apps/plugin/build/
-apps/plugin/manifest.json
 
-# OS / tools
+# OS / tools; .pixelwright/ is what a project-folder store would write if a session ran with this repo as its project
 .DS_Store
 .playwright-mcp/
 .claude/worktrees/
+.pixelwright/

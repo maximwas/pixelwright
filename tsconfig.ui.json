@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // The window runs in Figma's Chromium: the bundle targets es2022, as the main thread's does.
+    "lib": ["ES2022", "DOM"],
+    "types": []
+  },
+  "include": ["src/plugin-ui"],
+  "exclude": ["**/*.test.ts"]
+}

@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.11.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      # The website's docs page is built from the README, the tools and the guide: it must match them.
+      # The docs and changelog pages are written from the README, the tools, the guide and CHANGELOG.md: they must match.
+      - run: pnpm build:docs && git diff --exit-code -- docs/docs docs/changelog
+      # Builds the plugin and the server, packs the server like npm publish, installs it into an empty folder and runs it.
+      - run: pnpm check:pack

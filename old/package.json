@@ -1,0 +1,30 @@
+{
+  "name": "pixelwright-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=24.11.0"
+  },
+  "scripts": {
+    "build": "pnpm --filter @pixelwright/plugin build && pnpm --filter pixelwright build",
+    "check:pack": "pnpm build && node scripts/check-pack.mjs",
+    "build:docs": "node scripts/build-docs.mjs",
+    "dev:plugin": "pnpm --filter @pixelwright/plugin dev",
+    "plugin:install": "pnpm --filter @pixelwright/plugin build && mkdir -p ~/.pixelwright/plugin && rsync -a --delete apps/plugin/manifest.json apps/plugin/build ~/.pixelwright/plugin/",
+    "test": "vitest run --project core --project server --project plugin",
+    "lint": "biome check . && eslint .",
+    "lint:fix": "biome lint --write --unsafe --only=style/useBlockStatements --only=correctness/noUnusedImports . && biome check --write . && eslint --fix . && biome format --write .",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "@typescript-eslint/parser": "8.71.0",
+    "@typescript/native": "catalog:",
+    "eslint": "10.12.0",
+    "marked": "18.1.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "vitest": "catalog:"
+  }
+}

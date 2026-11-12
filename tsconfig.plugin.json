@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // ES2024 built-ins run in Figma's main sandbox, and no DOM: the plugin typings declare the few globals it has
+    // (figma, __html__, console, setTimeout, clearTimeout, setInterval); AbortController, URL, TextEncoder, crypto,
+    // structuredClone, queueMicrotask, performance and DOMException are missing there (P1).
+    "lib": ["ES2024"],
+    "types": ["@figma/plugin-typings"]
+  },
+  "include": ["src/plugin"],
+  "exclude": ["**/*.test.ts"]
+}

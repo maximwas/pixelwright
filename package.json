@@ -1,30 +1,157 @@
 {
-  "name": "pixelwright-workspace",
-  "private": true,
+  "name": "pixelwright",
+  "version": "0.8.0",
+  "description": "Open-source MCP server that lets AI agents read Figma files through a Figma plugin, to build code from them: no REST API, no token, no seat quota. Unofficial, not affiliated with Figma.",
+  "license": "MIT",
+  "funding": [
+    {
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/maksymvasianin"
+    },
+    {
+      "type": "individual",
+      "url": "https://send.monobank.ua/jar/7o9oMrbXTj"
+    }
+  ],
+  "homepage": "https://maximwas.github.io/pixelwright/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maximwas/pixelwright.git"
+  },
   "type": "module",
-  "packageManager": "pnpm@10.32.1",
+  "bin": {
+    "pixelwright": "./dist/bin.mjs"
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=24.11.0"
   },
+  "keywords": [
+    "mcp",
+    "figma",
+    "claude",
+    "claude-code",
+    "cursor",
+    "ai",
+    "design-to-code",
+    "open-source"
+  ],
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
-    "build": "pnpm --filter @pixelwright/plugin build && pnpm --filter pixelwright build",
-    "check:pack": "pnpm build && node scripts/check-pack.mjs",
-    "build:docs": "node scripts/build-docs.mjs",
-    "dev:plugin": "pnpm --filter @pixelwright/plugin dev",
-    "plugin:install": "pnpm --filter @pixelwright/plugin build && mkdir -p ~/.pixelwright/plugin && rsync -a --delete apps/plugin/manifest.json apps/plugin/build ~/.pixelwright/plugin/",
-    "test": "vitest run --project core --project server --project plugin",
-    "lint": "biome check . && eslint .",
-    "lint:fix": "biome lint --write --unsafe --only=style/useBlockStatements --only=correctness/noUnusedImports . && biome check --write . && eslint --fix . && biome format --write .",
-    "typecheck": "pnpm -r typecheck"
+    "prepare": "simple-git-hooks",
+    "lint": "pnpm check:deps && biome check --formatter-enabled=false . && eslint . && knip && node scripts/check-names.ts",
+    "format": "biome check --write . && eslint --fix . && biome check --write . && eslint --fix .",
+    "typecheck": "tsc -b",
+    "build": "tsdown && tsx scripts/build-plugin.ts",
+    "prepack": "pnpm build",
+    "plugin:install": "tsx scripts/install-plugin.ts",
+    "try": "tsx scripts/try.ts",
+    "try:hello": "tsx scripts/try-hello.ts",
+    "dev:read": "tsx scripts/dev-read.ts",
+    "test": "vitest run --project unit --project contract",
+    "test:live": "pnpm build && vitest run --project live",
+    "check:deps": "depcruise src scripts test",
+    "size": "size-limit",
+    "build:docs": "tsx scripts/build-docs.ts",
+    "build:pw": "tsx scripts/pw/build-pw.ts",
+    "check:pack": "tsx scripts/check-pack.ts",
+    "gates": "mkdir -p node_modules/.cache/gates && for gate in lint typecheck test build size; do pnpm -s $gate > node_modules/.cache/gates/$gate.log 2>&1 && echo \"$gate ok\" || { echo \"$gate FAILED, full log: node_modules/.cache/gates/$gate.log\"; tail -30 node_modules/.cache/gates/$gate.log; exit 1; }; done; grep -h -E '^ +Tests ' node_modules/.cache/gates/test.log"
   },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint && pnpm typecheck",
+    "preserveUnused": true
+  },
+  "size-limit": [
+    {
+      "name": "plugin main thread",
+      "path": "dist/plugin/main.js",
+      "limit": "450 KB",
+      "gzip": false,
+      "brotli": false
+    },
+    {
+      "name": "plugin window",
+      "path": "dist/plugin/ui.html",
+      "limit": "160 KB",
+      "gzip": false,
+      "brotli": false
+    }
+  ],
   "devDependencies": {
-    "@biomejs/biome": "2.5.14",
+    "@biomejs/biome": "2.6.3",
+    "@figma/eslint-plugin-figma-plugins": "1.0.0",
+    "@figma/plugin-typings": "1.142.0",
+    "@modelcontextprotocol/client": "2.4.0",
+    "@size-limit/file": "14.3.0",
     "@stylistic/eslint-plugin": "5.10.0",
-    "@typescript-eslint/parser": "8.71.0",
-    "@typescript/native": "catalog:",
-    "eslint": "10.12.0",
-    "marked": "18.1.0",
+    "@terrazzo/parser": "2.10.0",
+    "@types/culori": "4.0.1",
+    "@types/node": "26.6.5",
+    "@types/semver": "7.8.0",
+    "@types/ws": "8.18.2",
+    "@typescript-eslint/eslint-plugin": "8.72.1",
+    "@typescript-eslint/parser": "8.72.1",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "dependency-cruiser": "18.7.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.13.0",
+    "eslint-no-restricted": "0.1.2",
+    "eslint-plugin-antfu": "3.3.1",
+    "eslint-plugin-no-relative-import-paths": "1.7.3",
+    "eslint-plugin-project-structure": "3.14.5",
+    "fast-check": "4.10.2",
+    "json-schema-to-typescript": "16.0.0",
+    "knip": "6.43.0",
+    "marked": "18.1.2",
+    "simple-git-hooks": "2.14.0",
+    "size-limit": "14.3.0",
+    "style-dictionary": "5.7.1",
+    "tsdown": "0.23.2",
+    "tsx": "4.23.15",
     "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "catalog:"
+    "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "@clack/prompts": "1.8.1",
+    "@csstools/css-parser-algorithms": "4.0.2",
+    "@csstools/css-tokenizer": "4.0.2",
+    "@jitl/quickjs-ng-wasmfile-release-sync": "0.32.0",
+    "@jsquash/webp": "1.5.0",
+    "@modelcontextprotocol/server": "2.4.0",
+    "@needle-di/core": "1.2.1",
+    "@noble/hashes": "2.4.0",
+    "@orpc/client": "1.16.1",
+    "@orpc/contract": "1.16.1",
+    "@orpc/server": "1.16.1",
+    "acorn": "8.19.0",
+    "acorn-walk": "8.3.5",
+    "atomically": "2.1.1",
+    "birpc": "4.2.0",
+    "close-with-grace": "2.5.0",
+    "culori": "4.0.2",
+    "es-toolkit": "1.53.0",
+    "fast-png": "8.0.0",
+    "fuse.js": "7.5.0",
+    "google-fonts-helper": "3.7.4",
+    "image-size": "2.0.4",
+    "p-limit": "7.3.3",
+    "p-timeout": "7.0.1",
+    "pino": "10.4.0",
+    "pino-pretty": "13.2.0",
+    "pixelmatch": "8.0.0",
+    "quickjs-emscripten-core": "0.32.0",
+    "safe-regex2": "5.1.2",
+    "semver": "7.8.5",
+    "slugify": "1.6.9",
+    "svg-path-commander": "2.3.3",
+    "ws": "8.22.0",
+    "zod": "4.6.7"
   }
 }

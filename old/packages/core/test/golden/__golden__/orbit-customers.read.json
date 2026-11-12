@@ -1,0 +1,63 @@
+{
+  "tokens": {
+    "--color-accent": "#FF6B3D",
+    "--color-ink": "#14161F",
+    "--color-ink-muted": "#4A4F5E",
+    "--color-on-brand": "#FFF",
+    "--color-surface": "#FFF"
+  },
+  "textStyles": {
+    "Heading/H3": "500 24px/30px 'Space Grotesk'; letter-spacing: -0.01em",
+    "Label": "600 12px/16px 'Inter'; letter-spacing: 0.06em; text-transform: uppercase"
+  },
+  "fonts": {
+    "Space Grotesk": [
+      "500"
+    ],
+    "Inter": [
+      "400",
+      "500",
+      "600"
+    ]
+  },
+  "assets": [
+    {
+      "node": "54:437",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/logo-nova.svg"
+    },
+    {
+      "node": "54:441",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/logo-lumen.svg"
+    },
+    {
+      "node": "54:445",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/logo-nova-2.svg"
+    },
+    {
+      "node": "54:452",
+      "kind": "icon",
+      "format": "SVG",
+      "src": "assets/arrow.svg"
+    },
+    {
+      "node": "54:454",
+      "kind": "image",
+      "format": "PNG",
+      "src": "assets/product-shot.png",
+      "scale": 2
+    },
+    {
+      "node": "54:456",
+      "kind": "image",
+      "format": "PNG",
+      "src": "assets/avatar.png"
+    }
+  ],
+  "truncated": []
+}
