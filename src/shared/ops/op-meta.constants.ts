@@ -32,4 +32,5 @@ export const OP_NAME = {
   usage: "usage",
   delete: "delete",
   saveVersion: "save_version",
+  apply: "apply",
 } as const;

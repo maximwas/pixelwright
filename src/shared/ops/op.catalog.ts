@@ -1,3 +1,4 @@
+import { applyOp } from "@/shared/ops/apply/apply.manifest.ts";
 import { changesOp } from "@/shared/ops/changes/changes.manifest.ts";
 import { chunkOp } from "@/shared/ops/chunk/chunk.manifest.ts";
 import { componentsOp } from "@/shared/ops/components/components.manifest.ts";
@@ -52,4 +53,5 @@ export const OP_CONTRACTS = new OpCatalog([
   usageOp,
   deleteOp,
   saveVersionOp,
+  applyOp,
 ]);

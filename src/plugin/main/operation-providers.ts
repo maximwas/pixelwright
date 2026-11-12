@@ -1,12 +1,28 @@
 import type { Container } from "@needle-di/core";
 import { NEARBY_NOTES, NearbyNotes } from "@/core/inspect/nearby.ts";
+import { PLACEMENT_SPAN, PlacementSpan } from "@/core/kernel/geometry/placement-span.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { ASSIGN, Assign } from "@/plugin/adapters/figma/assign.ts";
+import { CAPABILITIES, Capabilities } from "@/plugin/adapters/figma/capabilities.ts";
+import { LAYER_FACTORY, LayerFactory } from "@/plugin/adapters/figma/layer-factory.ts";
 import { FILE_TOKENS, FileTokens } from "@/plugin/adapters/figma/variables/file-tokens.ts";
 import { LIBRARY_CATALOGUE, LibraryCatalogue } from "@/plugin/adapters/figma/variables/library-catalogue.ts";
 import { USED_TOKENS, UsedTokens } from "@/plugin/adapters/figma/variables/used-tokens.ts";
 import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
+import { ApplyOperation } from "@/plugin/operations/apply/apply.operation.ts";
+import { APPLY_RUN, ApplyRun } from "@/plugin/operations/apply/apply-run.ts";
+import { APPLY_CHECKS, ApplyChecks } from "@/plugin/operations/apply/checks.ts";
+import { NEW_LAYERS, NewLayers } from "@/plugin/operations/apply/new-layers.ts";
+import { ClipStep } from "@/plugin/operations/apply/writers/clip-step.ts";
+import { FillsStep } from "@/plugin/operations/apply/writers/fills-step.ts";
+import { LAYER_WRITER, LayerWriter, WRITE_STEPS } from "@/plugin/operations/apply/writers/layer-writer.ts";
+import { LayoutStep } from "@/plugin/operations/apply/writers/layout-step.ts";
+import { NameStep } from "@/plugin/operations/apply/writers/name-step.ts";
+import { OpacityStep } from "@/plugin/operations/apply/writers/opacity-step.ts";
+import { SizeStep } from "@/plugin/operations/apply/writers/size-step.ts";
+import { STEP_VALUES, StepValues } from "@/plugin/operations/apply/writers/step-values.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
 import { COMPONENT_DETAILS, ComponentDetails } from "@/plugin/operations/components/component-details.ts";
@@ -78,6 +94,7 @@ export class OperationProviders {
     [OP_NAME.usage]: UsageOperation,
     [OP_NAME.delete]: DeleteOperation,
     [OP_NAME.saveVersion]: SaveVersionOperation,
+    [OP_NAME.apply]: ApplyOperation,
   };
 
   register(container: Container): void {
@@ -97,6 +114,21 @@ export class OperationProviders {
       .bind({ provide: USED_TOKENS, useClass: UsedTokens })
       .bind({ provide: FILE_TOKENS, useClass: FileTokens })
       .bind({ provide: LIBRARY_CATALOGUE, useClass: LibraryCatalogue })
+      .bind({ provide: ASSIGN, useClass: Assign })
+      .bind({ provide: CAPABILITIES, useClass: Capabilities })
+      .bind({ provide: LAYER_FACTORY, useClass: LayerFactory })
+      .bind({ provide: STEP_VALUES, useClass: StepValues })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: NameStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: LayoutStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: SizeStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: OpacityStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: ClipStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: FillsStep })
+      .bind({ provide: LAYER_WRITER, useClass: LayerWriter })
+      .bind({ provide: APPLY_CHECKS, useClass: ApplyChecks })
+      .bind({ provide: PLACEMENT_SPAN, useClass: PlacementSpan })
+      .bind({ provide: NEW_LAYERS, useClass: NewLayers })
+      .bind({ provide: APPLY_RUN, useClass: ApplyRun })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
   }
 }

@@ -108,7 +108,8 @@ return inner.id;`)) as string;
       `<Frame id="${outer}" gap="5px"><Frame id="${inner}" gap="7px"/></Frame><Frame id="999999:1" padding="4px"/>`,
     );
 
-    expect(planned.errors).toEqual([]);
+    // Item 38: the dry run runs the plugin's checks too, so the layer that is not there is refused (target found).
+    expect(planned.errors).toMatchObject([{ id: "999999:1", message: "No layer 999999:1 in this file." }]);
     expect(planned.changes.map(({ id }) => id)).toEqual([outer, inner, "999999:1"]);
   });
 });
