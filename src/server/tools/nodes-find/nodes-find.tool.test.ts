@@ -103,6 +103,44 @@ it("names the page of every layer found within the file", async () => {
   });
 });
 
+/** A plugin that answers one image layer per root and keeps every find's input. */
+class ImagesPlugin extends CountingPlugin {
+  readonly inputs: unknown[] = [];
+
+  override async request(request: OpRequest): Promise<unknown> {
+    const { within } = request.input as { within: string };
+
+    this.inputs.push(request.input);
+
+    return { nodes: [{ id: `${within}7`, name: "Photo", type: "RECTANGLE", box: null, path: [] }], more: false };
+  }
+}
+
+// "Every image layer in these 4 frames" is one call: within takes a list of roots, fill a paint type.
+it("finds layers with an image fill in each root of a within list, in one call", async () => {
+  const clock = new SpentClock();
+  const plugin = new ImagesPlugin(clock);
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", plugin, []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+  const answer = await tool.execute({ within: ["10:1", "20:1"], fill: "IMAGE" });
+
+  expect(plugin.inputs).toEqual([
+    expect.objectContaining({ within: "10:1", fill: "IMAGE" }),
+    expect.objectContaining({ within: "20:1", fill: "IMAGE" }),
+  ]);
+  expect(answer.structuredContent).toEqual({
+    nodes: [
+      { id: "10:17", name: "Photo", type: "RECTANGLE", box: null, path: [] },
+      { id: "20:17", name: "Photo", type: "RECTANGLE", box: null, path: [] },
+    ],
+    more: false,
+  });
+});
+
 // fields keeps a long answer short: only the fields named, id, name and type always.
 it("keeps only the fields asked for, with id, name and type", async () => {
   const clock = new SpentClock();

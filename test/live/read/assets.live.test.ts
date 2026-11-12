@@ -141,6 +141,33 @@ return clip.id;`);
     ]);
   });
 
+  // An agent asked from with scale 2 and got the same bytes as nodes + original: from writes image fills as placed.
+  it("writes the image fills under from as placed, whatever scale says, as nodes with original does", async () => {
+    const ids = await layers(`const holder = figma.createFrame();
+holder.name = "live:assets:from-holder";
+const photo = figma.createRectangle();
+photo.name = "live:assets:from-photo";
+photo.fills = [fill(${JSON.stringify(IMAGES.inner.toString("base64"))})];
+holder.appendChild(photo);
+section.appendChild(holder);
+return { holder: holder.id, photo: photo.id };`);
+    const scaled = await exported({
+      from: ids.holder,
+      scale: 2,
+      dir: await mkdtemp(join(tmpdir(), "pixelwright-live-assets-")),
+    });
+    const placed = await exported({
+      nodes: [ids.photo],
+      original: true,
+      dir: await mkdtemp(join(tmpdir(), "pixelwright-live-assets-")),
+    });
+    const photo = scaled.files.find(({ node }) => node === ids.photo);
+
+    expect(photo?.kind).toBe("image");
+    expect(await readFile(photo?.path ?? "")).toEqual(IMAGES.inner);
+    expect(await readFile(placed.files[0]?.path ?? "")).toEqual(IMAGES.inner);
+  });
+
   it("writes the hero's assets with assetsDir and points src at them; a second read writes nothing new (T-055)", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-live-assets-"));
     const read = async () => {

@@ -979,6 +979,19 @@
         "visible": {
           "type": "boolean"
         },
+        "fill": {
+          "type": "string",
+          "enum": [
+            "IMAGE",
+            "SOLID",
+            "GRADIENT_LINEAR",
+            "GRADIENT_RADIAL",
+            "GRADIENT_ANGULAR",
+            "GRADIENT_DIAMOND",
+            "VIDEO",
+            "PATTERN"
+          ]
+        },
         "within": {
           "type": "string",
           "minLength": 1,

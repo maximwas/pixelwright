@@ -5,6 +5,9 @@ export const CONTRACT_TEXT = {
 export const EDITS_TEXT = {
   disabled:
     "Allow edits is off in the Pixelwright plugin window: turn it on there to let the AI change this file (dryRun checks changes without it).",
+  noDryRun: "Allow edits is off in the Pixelwright plugin window: turn it on there to let the AI change this file.",
+  execute:
+    "Allow edits is off in the Pixelwright plugin window, and plugin code needs it because code can change the file. Reading works with it off: execute's script (pw.<read>) or the read tools (inspect, nodes_find, design_read).",
 } as const;
 
 const MS_PER_SECOND = 1000;
