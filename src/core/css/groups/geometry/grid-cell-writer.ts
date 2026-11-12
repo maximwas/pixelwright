@@ -37,7 +37,7 @@ export class GridCellWriter implements PropertyWriter {
     value: string,
     out: WriteOutput,
   ): void {
-    const mapped = SELF_FIGMA[value];
+    const mapped = Object.hasOwn(SELF_FIGMA, value) ? SELF_FIGMA[value] : undefined;
 
     if (mapped === undefined) {
       out.fail(align, GEOMETRY_ERROR.badSelf(align, value, Object.keys(SELF_FIGMA).join(GEOMETRY_WRITE.listJoint)));

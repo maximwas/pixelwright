@@ -142,7 +142,7 @@ export class PlacementWriter implements PropertyWriter {
     const centre = from === GEOMETRY_VALUE.centre ? [] : GEOMETRY_PATTERN.fromCentre.exec(from);
 
     if (centre !== null) {
-      const offset = centre.length === 0 ? 0 : Number(centre[2]) * (centre[1] === GEOMETRY_VALUE.minus ? -1 : 1);
+      const offset = centre.length === 0 ? 0 : Number(centre[2]) * (centre[1] === GEOMETRY_VALUE.minus ? -1 : 1) || 0;
 
       return { placement: { kind: INTENT_AXIS.CENTER, offset } };
     }

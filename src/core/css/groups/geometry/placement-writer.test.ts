@@ -35,6 +35,12 @@ function written(
 }
 
 describe("PlacementWriter", () => {
+  it("writes calc(50% - 0px) as a centre offset of 0, never -0", () => {
+    const { props } = written({ position: "absolute", left: "calc(50% - 0px)" });
+
+    expect(Object.is((props.horizontal as { offset: number }).offset, 0)).toBe(true);
+  });
+
   // C-051: the element's edges replace the layer's as a pair.
   it("unpins the left edge when a new right edge is given", () => {
     const { props, sources } = written({ right: "0" }, { position: "absolute", left: "10px" });

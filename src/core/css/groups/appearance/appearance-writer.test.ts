@@ -36,6 +36,13 @@ function written(
 }
 
 describe("AppearanceWriter", () => {
+  it("refuses a blend word that is an inherited property name", () => {
+    const { props, problems } = written({ "mix-blend-mode": "constructor" });
+
+    expect(props).toEqual({});
+    expect(problems.map(({ attribute }) => attribute)).toEqual(["mix-blend-mode"]);
+  });
+
   // C-070..C-073: opacity as a number or percent held to 0..1, blend modes by CSS name, corners as one or four.
   it("writes opacity, the blend mode and the corners in Figma's terms", () => {
     expect(written({ opacity: "50%" }).props).toEqual({ opacity: 0.5 });

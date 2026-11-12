@@ -46,12 +46,14 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
   // Try it: a dry run on a real layer lists its width and opacity and writes nothing.
   it("lists the width and opacity that differ on the Install card and writes nothing", async () => {
     const before = await client.texts("design_read", { file, node: TEST_MCP.ids.install });
-    const planned = await plan(`<Frame id="${TEST_MCP.ids.install}" width="400" opacity="0.5"/>`);
+    const held = Number(await run(`return (await pw.node(${JSON.stringify(TEST_MCP.ids.install)})).width;`));
+    const width = held === 400 ? 420 : 400;
+    const planned = await plan(`<Frame id="${TEST_MCP.ids.install}" width="${width}" opacity="0.5"/>`);
     const after = await client.texts("design_read", { file, node: TEST_MCP.ids.install });
 
     expect(planned.dry).toBe(true);
     expect(planned.errors).toEqual([]);
-    expect(planned.changes[0]?.props).toMatchObject({ width: 400, opacity: 0.5 });
+    expect(planned.changes[0]?.props).toMatchObject({ width, opacity: 0.5 });
     expect(after).toEqual(before);
   });
 

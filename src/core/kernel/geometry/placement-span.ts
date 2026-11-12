@@ -5,8 +5,14 @@ import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 export type AxisPlacement = NonNullable<FigmaProps["horizontal"]>;
 
+/** The parent's length on the axis and the layer's own, in px. */
+interface Lengths {
+  readonly parent: number;
+  readonly own: number;
+}
+
 /** Where a layer starts on one axis of its parent and how long it is there, in px. */
-export interface Span {
+interface Span {
   readonly start: number;
   readonly size: number;
 }
@@ -17,7 +23,7 @@ export interface Span {
  */
 @injectable()
 export class PlacementSpan {
-  on(placement: AxisPlacement, parentLength: number, length: number): Span {
+  on(placement: AxisPlacement, { parent: parentLength, own: length }: Lengths): Span {
     const { kind, offset = 0, start = 0, end = 0, size = 0 } = placement;
 
     if (kind === INTENT_AXIS.STRETCH) {

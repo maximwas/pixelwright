@@ -42,4 +42,20 @@ describe("GridCellWriter", () => {
       justifySelf: "MAX",
     });
   });
+
+  // C-058: 0.7.0 blamed the step's first key, so a bad grid-column was reported as grid-row's when both were given.
+  it("names grid-column in its error when grid-row is given too and fine", () => {
+    const { props, problems } = written({ "grid-row": "2", "grid-column": "x" });
+
+    expect(problems.map(({ attribute }) => attribute)).toEqual(["grid-column"]);
+    expect(problems[0]?.message).toContain('grid-column="x"');
+    expect(props).toEqual({ gridRow: { anchor: 1, span: 1 } });
+  });
+
+  it("refuses an alignment word that is an inherited property name", () => {
+    const { props, problems } = written({ "justify-self": "toString" });
+
+    expect(props).toEqual({});
+    expect(problems.map(({ attribute }) => attribute)).toEqual(["justify-self"]);
+  });
 });

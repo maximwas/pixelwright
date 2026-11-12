@@ -39,7 +39,7 @@ export class AppearanceWriter implements PropertyWriter {
 
     if (changed(CSS_PROPERTY.mixBlendMode)) {
       const value = (own(CSS_PROPERTY.mixBlendMode) ?? "").trim().toLowerCase();
-      const mode = BLEND_FIGMA[value];
+      const mode = Object.hasOwn(BLEND_FIGMA, value) ? BLEND_FIGMA[value] : undefined;
 
       if (mode === undefined) {
         out.fail(CSS_PROPERTY.mixBlendMode, APPEARANCE_ERROR.badBlend(value), APPEARANCE_ERROR.blendHint);

@@ -4,6 +4,9 @@ import { describe, expect, it } from "vitest";
 
 const SHARED_COPY = "@/core/kernel/geometry/placement-span.ts";
 const PLUGIN = "src/plugin";
+// What the span arithmetic is made of: the placement kinds (INTENT_AXIS, or the word "STRETCH") and the
+// percent constant, or the span class and function itself.
+const SPAN_LOGIC = /INTENT_AXIS|["']STRETCH["']|GEOMETRY\.(percent|halves)|\bplacementSpan\b|class PlacementSpan/;
 
 function sources(folder: string): string[] {
   return readdirSync(folder, { withFileTypes: true }).flatMap((entry) => {
@@ -22,10 +25,7 @@ describe("placement spans", () => {
     const ownCopies = sources(PLUGIN).filter((path) => {
       const text = readFileSync(path, "utf8");
 
-      return (
-        (text.includes("INTENT_AXIS") || /\bplacementSpan\b|class PlacementSpan/.test(text)) &&
-        !text.includes(SHARED_COPY)
-      );
+      return SPAN_LOGIC.test(text) && !text.includes(SHARED_COPY);
     });
 
     expect(ownCopies).toEqual([]);
