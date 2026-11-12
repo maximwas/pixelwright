@@ -5,6 +5,9 @@ import { FIND_RUN } from "@/plugin/operations/find/find.constants.ts";
 import { FIND } from "@/shared/ops/find/find.constants.ts";
 import type { Ancestor, Found } from "@/shared/ops/find/find.schema.ts";
 
+/** What an instance adds to its found entry. */
+type InstanceFields = Pick<Found, "component" | "changed" | "properties">;
+
 /**
  * A layer as find lists it (T-040): its box as Figma gives it, its ancestors, whether it is hidden; a text's characters
  * and font size; an instance's properties that differ from its component's defaults, and with `properties` every value.
@@ -50,7 +53,7 @@ export class FoundLayer {
    * The instance's component, and its set's name for a variant; its properties that differ from the component's
    * defaults, and with `properties` every value.
    */
-  async #instance(node: InstanceNode,    properties: boolean): Promise<Pick<Found, "component" | "changed" | "properties">> {
+  async #instance(node: InstanceNode, properties: boolean): Promise<InstanceFields> {
     const main = await node.getMainComponentAsync();
     const changed = main === null ? {} : this.#properties.changed(node, main);
     const set = main?.parent?.type === FIGMA_NODE_TYPE.componentSet ? main.parent : null;
