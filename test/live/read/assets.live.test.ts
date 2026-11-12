@@ -141,6 +141,42 @@ return clip.id;`);
     ]);
   });
 
+  // An agent asked from with scale 2 and got the same bytes as nodes + original: an image fill behind a layer's
+  // content is written as placed, an image layer (a leaf) is rendered.
+  it("writes an image fill behind a layer's content under from as placed, whatever scale says, and renders an image layer", async () => {
+    const ids = await layers(`const holder = figma.createFrame();
+holder.name = "live:assets:from-holder";
+holder.fills = [fill(${JSON.stringify(IMAGES.inner.toString("base64"))})];
+const content = figma.createRectangle();
+content.name = "live:assets:from-content";
+content.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 1 } }];
+holder.appendChild(content);
+const photo = figma.createRectangle();
+photo.name = "live:assets:from-photo";
+photo.fills = [fill(${JSON.stringify(IMAGES.top.toString("base64"))})];
+holder.appendChild(photo);
+section.appendChild(holder);
+return { holder: holder.id, photo: photo.id };`);
+    const scaled = await exported({
+      from: ids.holder,
+      scale: 2,
+      dir: await mkdtemp(join(tmpdir(), "pixelwright-live-assets-")),
+    });
+    const placed = await exported({
+      nodes: [ids.holder],
+      original: true,
+      dir: await mkdtemp(join(tmpdir(), "pixelwright-live-assets-")),
+    });
+    const background = scaled.files.find(({ node }) => node === ids.holder);
+    const photo = scaled.files.find(({ node }) => node === ids.photo);
+
+    expect(background?.kind).toBe("image");
+    expect(await readFile(background?.path ?? "")).toEqual(IMAGES.inner);
+    expect(await readFile(placed.files[0]?.path ?? "")).toEqual(IMAGES.inner);
+    // The leaf image layer is a render at 2x, not its source bytes.
+    expect(await readFile(photo?.path ?? "")).not.toEqual(IMAGES.top);
+  });
+
   it("writes the hero's assets with assetsDir and points src at them; a second read writes nothing new (T-055)", async () => {
     const dir = await mkdtemp(join(tmpdir(), "pixelwright-live-assets-"));
     const read = async () => {
