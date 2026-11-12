@@ -58,6 +58,19 @@ export class FileTokens {
     return raw;
   }
 
+  /** What each other page's layers use (P-097), each page loaded: read only when a name is missing, no style CSS. */
+  async otherPages(deadline: number): Promise<RawTokens[]> {
+    const read: RawTokens[] = [];
+
+    for (const page of figma.root.children) {
+      if (page !== figma.currentPage) {
+        read.push(await this.read({ used: true, within: page.id }, deadline));
+      }
+    }
+
+    return read;
+  }
+
   /** The layer or page whose used tokens to take, its page loaded. */
   async #root(within: string | undefined): Promise<BaseNode> {
     const root = within === undefined ? figma.currentPage : await this.#lookup.existing(within);

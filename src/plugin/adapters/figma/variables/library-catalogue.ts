@@ -48,6 +48,11 @@ export class LibraryCatalogue {
     return this.#capped(library);
   }
 
+  /** A library variable imported into the file by its key (a write), so a layer can be bound to it. */
+  async imported(key: string): Promise<Variable> {
+    return await figma.variables.importVariableByKeyAsync(key);
+  }
+
   /** At most LIBRARY_LIST.maxVariables names, in order, and a note counting the rest. */
   #capped(library: Library): Catalogue {
     const total = library.reduce((sum, collection) => sum + collection.variables.length, 0);

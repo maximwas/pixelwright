@@ -9162,6 +9162,9 @@
                               },
                               "token": {
                                 "type": "string"
+                              },
+                              "opacity": {
+                                "type": "number"
                               }
                             },
                             "required": [
@@ -9406,6 +9409,9 @@
                                   },
                                   "token": {
                                     "type": "string"
+                                  },
+                                  "opacity": {
+                                    "type": "number"
                                   }
                                 },
                                 "required": [
@@ -9975,6 +9981,9 @@
                               },
                               "token": {
                                 "type": "string"
+                              },
+                              "opacity": {
+                                "type": "number"
                               }
                             },
                             "required": [
@@ -11111,6 +11120,9 @@
                                         },
                                         "token": {
                                           "type": "string"
+                                        },
+                                        "opacity": {
+                                          "type": "number"
                                         }
                                       },
                                       "required": [
@@ -11355,6 +11367,9 @@
                                             },
                                             "token": {
                                               "type": "string"
+                                            },
+                                            "opacity": {
+                                              "type": "number"
                                             }
                                           },
                                           "required": [
@@ -11924,6 +11939,9 @@
                                         },
                                         "token": {
                                           "type": "string"
+                                        },
+                                        "opacity": {
+                                          "type": "number"
                                         }
                                       },
                                       "required": [

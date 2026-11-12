@@ -52,6 +52,8 @@ const GradientStopSchema = zod.strictObject({
   position: zod.number(),
   color: zod.nullable(ColorValueSchema),
   token: optional(zod.string()),
+  /** A token stop faded by color-mix(): the variable's alpha times this. */
+  opacity: optional(zod.number()),
 });
 
 /** One paint: a colour, a token at an opacity, a gradient as CSS gives it, or an image file. */

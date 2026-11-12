@@ -124,6 +124,31 @@ export const CAPABILITY_TEXT = {
   refusal: (type: string, what: string) => `A ${type} has no ${what}.`,
 } as const;
 
+/** Figma's paint and effect words the writers use; a gradient's type is GRADIENT_ and its kind. */
+export const FIGMA_PAINT = {
+  solid: "SOLID",
+  colorField: "color",
+  displayP3: "DISPLAY_P3",
+  normal: "NORMAL",
+  gradient: (kind: string) => `GRADIENT_${kind}`,
+} as const;
+
+export const PAINT_NUMBER = {
+  /** Paints equal to 4 decimals look the same (P-092, 0.7.0's paintKey); an opacity off by more is set again. */
+  keyScale: 10_000,
+  epsilon: 0.0001,
+  /** A gradient on a layer without a size (a style's) is drawn on a 1 x 1 square. */
+  unitSide: 1,
+} as const;
+
+/** A colour or stop given none: black, opaque. */
+export const PAINT_BLACK = { r: 0, g: 0, b: 0, a: 1 } as const;
+
+export const PAINTS_TEXT = {
+  image: "An image background is not written to Figma in this release: write a colour or a gradient.",
+  unresolved: (token: string) => `${token} was not looked up before its paint was made.`,
+} as const;
+
 /** A write that cannot be done, as design_apply names it. */
 export const WRITE_ERROR_NAME = "WriteError";
 

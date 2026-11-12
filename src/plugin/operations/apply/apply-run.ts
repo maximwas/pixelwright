@@ -102,6 +102,8 @@ export class ApplyRun {
 
     const refusals = this.#checks.refusals(layer, change);
 
+    refusals.push(...(await this.#writer.checks(change, layer, refusals)));
+
     for (const { error, keys } of refusals) {
       run.report.fail(change, error, keys);
     }
