@@ -57,8 +57,8 @@
         <section id="v0-8-0">
           <h2>0.8.0 — 2026-11-04</h2>
 <p>Pixelwright 0.8.0 is a rewrite of the server and the plugin, and this version reads Figma: the tools that wrote to the
-file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). The 29 tools it
-keeps have 0.7.0&#39;s names, and <code>design_read</code> writes 0.7.0&#39;s XML, so what an agent knows of 0.7.0&#39;s reads still holds
+file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). It has 30 tools:
+29 keep 0.7.0&#39;s names, <code>types_read</code> is new, and <code>design_read</code> writes 0.7.0&#39;s XML, so what an agent knows of 0.7.0&#39;s reads still holds
 apart from the changes below. The plugin is new too: put it in place with the server
 (<code>npx -y pixelwright@latest setup</code>), since a 0.7.0 plugin cannot connect to 0.8.0.</p>
 <h4>Added</h4>
@@ -86,6 +86,31 @@ with what it found and a note.</li>
 <li><code>components_read</code> names the project file a component&#39;s code link points at in <code>path</code>, for GitHub, GitLab and
 Bitbucket file links and <code>vscode://file</code> links.</li>
 <li><code>status</code> says which connected file&#39;s tab is in front (<code>visible</code>): a file behind other tabs answers slowly.</li>
+<li><code>execute</code> takes one of three inputs: <code>code</code>, Plugin API code run in the plugin; <code>codePath</code>, the path of a file of such
+code, read at every call; and <code>script</code>, code run on the server where <code>pw.nodesFind(...)</code> and the other reads call the
+read tools (50 calls a run, 4 at once), with <code>utils</code> to filter and join their answers. A script never writes and
+throws on a key an answer lacks. The guide&#39;s <code>script</code> topic has its limits.</li>
+<li><code>types_read</code> gives the whole answer type of each named read as TypeScript, every field with its comment, so a script
+reads only keys that exist.</li>
+<li><code>nodes_find</code> takes a list of phrases in <code>text</code> (any matches) and <code>textRegex</code>, <code>fontSize</code> ranges (<code>lt</code>, <code>lte</code>, <code>gt</code>,
+<code>gte</code>), <code>visible</code> (<code>false</code> finds hidden layers), <code>componentId</code>, <code>properties</code> (every property&#39;s value on each
+instance, variant values included) and <code>fields</code> (keep only the fields you name). It returns a text&#39;s <code>characters</code>,
+its ancestors in <code>path</code> and, across the file, its <code>page</code>; <code>hidden: true</code> marks a layer a viewer does not see.</li>
+<li><code>nodes_find</code> gives each instance its <code>component</code> (and <code>set</code> for a variant) and the properties it <code>changed</code> from the
+component&#39;s defaults.</li>
+<li><code>inspect</code> reads a whole subtree in one call: <code>within</code> with <code>depth</code>, and <code>fields</code> to keep only some groups (<code>box</code>,
+<code>parent</code>, <code>path</code>, <code>fills</code>, <code>strokes</code>, <code>effects</code>, <code>layout</code>, <code>bound</code>, <code>text</code>, <code>component</code>, <code>interactions</code>); <code>more</code> and
+<code>leftIds</code> say what was left. It also gives <code>parentLayout</code> with <code>layout</code>, a mixed text&#39;s runs as <code>segments</code>, <code>path</code>
+with the ancestors&#39; ids and the page, a component&#39;s properties with their defaults, nested instance ids, and names
+each bound variable by its Figma name too.</li>
+<li><code>tokens_read</code> takes <code>query</code> (a text or a list of them) to keep only the variables and styles whose name matches; each
+variable carries its Figma id and, for an alias, <code>aliasOf</code> with the tokens it passes through.</li>
+<li><code>tokens_usage</code> takes <code>raw: true</code>: the colours bound to no style and no variable, each with its count and layers.</li>
+<li><code>outline</code> takes <code>absolute: true</code> for boxes in page coordinates; <code>file_map</code> gives each layer&#39;s <code>childCount</code>.</li>
+<li><code>components_read</code> takes <code>instances: true</code> (each instance&#39;s id, name and page, 100 at most, for the first 25 components listed) and <code>references: true</code>
+(the layers bound to each component property).</li>
+<li>The read tools say what an absent field means (no <code>hidden</code> is visible; no padding is 0) and that an answer is
+complete unless <code>more</code> is true or a note says the scan stopped.</li>
 </ul>
 <h4>Changed</h4>
 <ul>
@@ -128,7 +153,7 @@ differences come first.</li>
 draws a gradient paint style from its paints rather than taking Figma&#39;s CSS, and notes a spring easing instead of
 drawing it as <code>linear()</code>. Past <code>maxChars</code> every format, not only JSON, gives the summary with the most whole tokens
 that fit, and <code>maxChars</code> goes down to 500.</li>
-<li><code>guide</code> has four topics, <code>workflow</code>, <code>xml</code>, <code>tokens</code> and <code>assets</code>, written for this version&#39;s tools.</li>
+<li><code>guide</code> has five topics, <code>workflow</code>, <code>xml</code>, <code>tokens</code>, <code>assets</code> and <code>script</code>, written for this version&#39;s tools.</li>
 </ul>
 <h4>Fixed</h4>
 <ul>
@@ -150,11 +175,12 @@ without a word.</li>
 <li>Stroke weights keep their fractions: a 2.5 border reads as <code>2.5px</code>, not <code>3px</code>.</li>
 <li>Relative paths start in the session&#39;s project folder (the MCP client&#39;s root, else <code>CLAUDE_PROJECT_DIR</code>), not in the
 folder the server was started from: <code>design_read</code>&#39;s <code>assetsDir</code>, <code>assets_export</code>&#39;s <code>dir</code>, <code>screenshot</code>&#39;s <code>save</code>,
-<code>image_compare</code>&#39;s files and <code>execute</code>&#39;s <code>script</code>.</li>
+<code>image_compare</code>&#39;s files and <code>execute</code>&#39;s <code>codePath</code>.</li>
 <li><code>tokens_read</code> with <code>format: &quot;dtcg&quot;</code> writes a colour composed with an opacity variable as valid DTCG: one colour with
 its alpha, or, when its colour cannot be resolved, a reference to that colour with a note, where 0.7.0 passed
 <code>{color, opacity}</code> through.</li>
 <li><code>tokens_usage</code> finds a style or variable that only one run of a mixed text uses.</li>
+<li><code>components_read</code> with <code>instances</code> leaves out instances on no page (inside a removed layer).</li>
 </ul>
 <h4>Removed</h4>
 <ul>
