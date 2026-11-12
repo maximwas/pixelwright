@@ -10,6 +10,7 @@ import type {
 } from "@/core/ports/plugin-link.port.ts";
 import { WithinScope } from "@/server/app/scope/within-scope.ts";
 import { PluginSession } from "@/server/app/sessions/plugin-session.ts";
+import { NodesFindInputSchema } from "@/server/tools/nodes-find/nodes-find.schema.ts";
 import { NodesFindTool } from "@/server/tools/nodes-find/nodes-find.tool.ts";
 
 const PAGES = ["1:1", "2:1", "3:1"];
@@ -139,6 +140,37 @@ it("finds layers with an image fill in each root of a within list, in one call",
     ],
     more: false,
   });
+});
+
+/** A plugin that answers the same layer for every root: roots that overlap. */
+class OverlapPlugin extends CountingPlugin {
+  override async request(): Promise<unknown> {
+    return { nodes: [{ id: "30:5", name: "Card", type: "FRAME", box: null, path: [] }], more: false };
+  }
+}
+
+it("lists a layer once when the roots of a within list overlap", async () => {
+  const clock = new SpentClock();
+  const tool = new NodesFindTool(
+    new PluginSession("6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13", new OverlapPlugin(clock), []),
+    new WithinScope(),
+    new NumberFormat(),
+    clock,
+  );
+  const answer = await tool.execute({ within: ["10:1", "20:1"], name: "Card" });
+
+  expect(answer.structuredContent).toEqual({
+    nodes: [{ id: "30:5", name: "Card", type: "FRAME", box: null, path: [] }],
+    more: false,
+  });
+});
+
+// A list of roots is one find each: 50 like assets_export's nodes, past that the call is refused.
+it("takes at most 50 roots in within", () => {
+  const roots = (count: number) => Array.from({ length: count }, (_slot, index) => `${index + 1}:1`);
+
+  expect(NodesFindInputSchema.safeParse({ within: roots(50) }).success).toBe(true);
+  expect(NodesFindInputSchema.safeParse({ within: roots(51) }).success).toBe(false);
 });
 
 // fields keeps a long answer short: only the fields named, id, name and type always.

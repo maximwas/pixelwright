@@ -29,7 +29,7 @@ export const NODES_FIND_FIELD = {
     'Instances whose component or set name contains this, in any case ("Button" also matches "Icon Button"), at any depth, inside other instances too; each comes with `component`, the component and set it is of, and `changed`, the properties it sets away from the component\'s defaults.',
   limit: "At most this many layers listed; more: true when there were more. counts still counts them all.",
   within:
-    'Where to search: a layer or page id, a list of them (each searched in turn, one answer), or "file" alone for every page. Default: the current page.',
+    'Where to search: a layer or page id, a list of up to 50 (each searched in turn, one answer; a layer under two roots is listed once), or "file" alone for every page. Default: the current page.',
   fill: "Layers with a visible fill of this Figma paint type: IMAGE, SOLID, GRADIENT_LINEAR, GRADIENT_RADIAL, GRADIENT_ANGULAR, GRADIENT_DIAMOND, VIDEO or PATTERN; IMAGE gives every image layer.",
   page: "Without within: the name of the current page, the one searched.",
   hint: "When nothing was found on the current page: how to search elsewhere.",

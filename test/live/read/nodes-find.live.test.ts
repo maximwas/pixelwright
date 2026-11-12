@@ -338,7 +338,6 @@ const RED_PNG = Buffer.from(
 describe("read/nodes_find by fill", () => {
   const { file, scratch } = inject("live");
   let client: LiveClient;
-  const made: string[] = [];
   const run = async (code: string): Promise<unknown> => (await client.call("execute", { file, code })).result;
 
   beforeAll(async () => {
@@ -347,7 +346,9 @@ describe("read/nodes_find by fill", () => {
   });
 
   afterAll(async () => {
-    await run(`for (const id of ${JSON.stringify(made)}) (await figma.getNodeByIdAsync(id))?.remove();`);
+    // By name, so frames made before a failed setup are removed too.
+    await run(`const section = await pw.node(${JSON.stringify(scratch)});
+for (const child of [...section.children]) if (child.name.startsWith("live:nodes-find:fill-")) child.remove();`);
     await client.close();
   });
 
@@ -364,8 +365,6 @@ rectangle(first, "live:nodes-find:solid", [{ type: "SOLID", color: { r: 1, g: 0,
 rectangle(first, "live:nodes-find:hidden-image", [{ ...image, visible: false }]);
 const photoB = rectangle(second, "live:nodes-find:photo-b", [{ type: "SOLID", color: { r: 0, g: 0, b: 1 } }, image]);
 return { first: first.id, second: second.id, photoA: photoA.id, photoB: photoB.id };`)) as Record<string, string>;
-
-    made.push(ids.first ?? "", ids.second ?? "");
 
     const { nodes, more } = await client.call("nodes_find", { file, within: [ids.first, ids.second], fill: "IMAGE" });
 

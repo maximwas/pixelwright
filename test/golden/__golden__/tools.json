@@ -1049,7 +1049,7 @@
           ]
         },
         "within": {
-          "description": "Where to search: a layer or page id, a list of them (each searched in turn, one answer), or \"file\" alone for every page. Default: the current page.",
+          "description": "Where to search: a layer or page id, a list of up to 50 (each searched in turn, one answer; a layer under two roots is listed once), or \"file\" alone for every page. Default: the current page.",
           "anyOf": [
             {
               "type": "string",
@@ -1062,6 +1062,7 @@
             },
             {
               "minItems": 1,
+              "maxItems": 50,
               "type": "array",
               "items": {
                 "type": "string",
@@ -2262,7 +2263,7 @@
                 "properties": {
                   "css": {
                     "type": "string",
-                    "description": "The fill as a CSS value, top paint first: a colour, a gradient, an image as url(assets/<hash>.png) by its image hash, a name inspect writes no file for (design_read and assets_export from write it as <layer>-background); a paint CSS cannot hold (a video) says so."
+                    "description": "The fill as a CSS value, top paint first: a colour, a gradient, an image as url(assets/<hash>.png), a placeholder named by its image hash: inspect writes no file, assets_export from writes a background image as <layer>-background; a paint CSS cannot hold (a video) says so."
                   },
                   "style": {
                     "description": "The paint style it comes from, and the token design_read names it by.",
@@ -9215,7 +9216,7 @@
           }
         },
         "from": {
-          "description": "A layer to write every true asset of (its icons and images, as design_read plans them): images under from are written as placed, the rest rendered as their export settings or design_read say. Give nodes or from.",
+          "description": "A layer to write every true asset of (its icons and images, as design_read plans them): an image fill behind a layer's content is written as placed, an image layer is rendered as design_read plans it (2x); scale and format apply to nodes only. Give nodes or from.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
@@ -9252,7 +9253,7 @@
           ]
         },
         "scale": {
-          "description": "For nodes rendered as PNG, JPG or WEBP: pixels per Figma pixel, or per CSS px with width. Default 2. Images under from are written as placed; scale applies to renders of nodes.",
+          "description": "For nodes rendered as PNG, JPG or WEBP: pixels per Figma pixel, or per CSS px with width. Default 2. Ignored with from: an image fill behind a layer's content is written as placed, an image layer is rendered at 2x.",
           "type": "number",
           "minimum": 0.01,
           "maximum": 4

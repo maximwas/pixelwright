@@ -60,12 +60,14 @@ describe("EditsStep (P-010, D-07)", () => {
     };
 
     expect(await message({ contract: applyLike, input: { dryRun: false } })).toContain("dryRun");
-    expect(await message({ contract: writeLike, input: {} })).not.toContain("dryRun");
 
-    const refused = await message({ contract: executeLike, input: {} });
+    // The text is chosen by the op's dry run meta, not its name: any op without one gets the same text.
+    for (const contract of [writeLike, executeLike]) {
+      const refused = await message({ contract, input: {} });
 
-    expect(refused).not.toContain("dryRun");
-    expect(refused).toMatch(/script/);
-    expect(refused).toMatch(/inspect, nodes_find, design_read/);
+      expect(refused).not.toContain("dryRun");
+      expect(refused).toMatch(/script/);
+      expect(refused).toMatch(/inspect, nodes_find, design_read/);
+    }
   });
 });
