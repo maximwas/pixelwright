@@ -1,5 +1,6 @@
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import { BLEND_CSS } from "@/core/css/groups/appearance/appearance.constants.ts";
+import { INTENT_KEY } from "@/shared/write-intents/write-intent.constants.ts";
 
 /**
  * Layers drawn as SVG, whose fills and strokes are the vector's own, not a box's background and border: shapes, and
@@ -111,3 +112,60 @@ export const STROKES_SOURCES = [
   "dashPattern",
   "rotation",
 ];
+
+/** What the fills writer writes (C-081): a box's background and a text's colour, each as the fills it sets. */
+export const FILLS_WRITTEN = [CSS_PROPERTY.background, CSS_PROPERTY.color];
+export const FILL_WRITES = [
+  [CSS_PROPERTY.background, INTENT_KEY.fills],
+  [CSS_PROPERTY.color, INTENT_KEY.textFills],
+] as const;
+
+/** The CSS sides of a stroke, as Figma's per-side weights name them. */
+export const STROKE_SIDES = [
+  ["top", CSS_PROPERTY.borderTop],
+  ["right", CSS_PROPERTY.borderRight],
+  ["bottom", CSS_PROPERTY.borderBottom],
+  ["left", CSS_PROPERTY.borderLeft],
+] as const;
+
+/** What the strokes writer writes (C-091): border, its sides and outline; a text's stroke is not written yet. */
+export const STROKES_WRITTEN = [CSS_PROPERTY.border, ...STROKE_SIDES.map(([, name]) => name), CSS_PROPERTY.outline];
+
+/** A border's style words; dotted is drawn dashed (Figma has one dash). */
+export const BORDER_STYLES: Readonly<Record<string, true>> = {
+  solid: true,
+  dashed: true,
+  dotted: true,
+  none: true,
+  hidden: true,
+};
+
+export const PAINT_WRITE = {
+  none: "none",
+  transparent: "transparent",
+  zero: "0",
+  hidden: "hidden",
+  contain: "contain",
+  gradient: "gradient(",
+  error: "error",
+  /** The first characters of a value an error shows. */
+  shownChars: 40,
+  /** A flat gradient: one colour twice. */
+  flatStops: 2,
+} as const;
+
+export const PAINT_PATTERN = { flat: /^linear-gradient\((.+)\)$/s, repeat: /(^|\s)repeat(\s|$)/ } as const;
+
+/** The fills' and strokes' refusals, with 0.7.0's words (C-081, C-091). */
+export const PAINT_ERROR = {
+  textImage: "A text is coloured with paint, not an image.",
+  textGradient: "A text is coloured with a colour or a token, not a gradient.",
+  colourHint: "Use a colour or a token.",
+  gradient: (layer: string) => `${layer.slice(0, PAINT_WRITE.shownChars)}…: this gradient is not written.`,
+  gradientHint: "Write linear-, radial- or conic-gradient() with colours or tokens in their stops (no repeating ones).",
+  notPaint: (attribute: string, value: string) =>
+    `${attribute}="${value}" is not a colour, a token or color-mix(in srgb, var(--x) N%, transparent) (in display-p3 in a Display P3 file).`,
+  both: "Figma strokes a layer once: write border (inside) or outline (outside), not both.",
+  sidesDiffer: "Figma draws every side of a stroke in one colour and style: give the sides the same ones.",
+  badSide: (attribute: string, value: string) => `${attribute}="${value}" is not "Npx solid|dashed <colour or token>".`,
+} as const;

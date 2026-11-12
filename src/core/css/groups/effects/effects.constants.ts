@@ -1,4 +1,5 @@
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
+import { INTENT_EFFECT } from "@/shared/write-intents/write-intent.constants.ts";
 
 /** Figma's shadow types and its blur that changes across the box. */
 export const FIGMA_EFFECT = {
@@ -67,3 +68,39 @@ export const EFFECTS_ATTRIBUTES = [
   CSS_PROPERTY.backdropFilter,
 ];
 export const EFFECTS_SOURCES = ["effects", "effectStyleId", "fills"];
+
+/** The blurs CSS writes back, as the filter each is and Figma's effect. */
+export const BLUR_WRITES = [
+  [CSS_PROPERTY.filter, INTENT_EFFECT.LAYER_BLUR],
+  [CSS_PROPERTY.backdropFilter, INTENT_EFFECT.BACKGROUND_BLUR],
+] as const;
+
+/** The effects CSS writes; a merge keeps every other one (noise, texture, glass) where it was (O-015). */
+export const CSS_EFFECTS: Readonly<Record<string, true>> = Object.fromEntries(
+  Object.values(INTENT_EFFECT).map((type) => [type, true]),
+);
+
+export const EFFECTS_WRITE = {
+  none: "none",
+  /** A shadow is x y, then its blur and spread if given. */
+  minLengths: 2,
+  maxLengths: 4,
+  /** Four decimals of a blur radius, as 0.7.0 rounded CSS's blur() over 0.43. */
+  radiusScale: 10_000,
+  /** An effect's look is compared at a thousandth of a px, and its colour in whole bytes. */
+  keyScale: 1_000,
+  byte: 255,
+  boundColor: "color",
+} as const;
+
+export const EFFECTS_PATTERN = { blur: /^blur\(\s*(\d*\.?\d+)px\s*\)$/ } as const;
+
+/** The effects' refusals, with 0.7.0's words (C-104..C-106). */
+export const EFFECTS_ERROR = {
+  holdsEvery: (token: string, shadows: boolean) =>
+    `The effect style ${token} holds every effect: change the style, or write its ${shadows ? "shadows" : "blur"} out.`,
+  notBlur: (attribute: string, value: string) => `${attribute}="${value}" is not blur(Npx), the one filter Figma has.`,
+  notShadow: (shadow: string) => `"${shadow}" is not a shadow: [inset] x y [blur] [spread] and a colour.`,
+  shareOfVariable: (token: string) =>
+    `A shadow's colour variable is its whole colour, its alpha too: write var(${token}) alone, or make a variable with that alpha with tokens_apply first.`,
+} as const;

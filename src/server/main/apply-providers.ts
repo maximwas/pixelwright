@@ -6,6 +6,7 @@ import { PLACED_LAYERS, PlacedLayers } from "@/core/apply/plan/placed-layers.ts"
 import { UNCHANGED, Unchanged } from "@/core/apply/plan/unchanged.ts";
 import { WRITE_PLANNER, WritePlanner } from "@/core/apply/plan/write-planner.ts";
 import { AppearanceWriter } from "@/core/css/groups/appearance/appearance-writer.ts";
+import { EffectsWriter } from "@/core/css/groups/effects/effects-writer.ts";
 import { ElementWriter } from "@/core/css/groups/element/element-writer.ts";
 import { GridCellWriter } from "@/core/css/groups/geometry/grid-cell-writer.ts";
 import { PlacementWriter } from "@/core/css/groups/geometry/placement-writer.ts";
@@ -13,6 +14,9 @@ import { SizeWriter } from "@/core/css/groups/geometry/size-writer.ts";
 import { GAP_READER, GapReader } from "@/core/css/groups/layout/gap-reader.ts";
 import { GRID_WRITER, GridWriter } from "@/core/css/groups/layout/grid-writer.ts";
 import { LayoutWriter } from "@/core/css/groups/layout/layout-writer.ts";
+import { FillsWriter } from "@/core/css/groups/paint/fills-writer.ts";
+import { StrokesWriter } from "@/core/css/groups/paint/strokes-writer.ts";
+import { PAINT_VALUE, PaintValue } from "@/core/css/paints/paint-value.ts";
 import { PROPERTY_WRITERS, WRITE_REGISTRY, WriteRegistry } from "@/core/css/registry/write-registry.ts";
 
 /** What design_apply plans with (A§6.2 step 3): the write halves of the mapping table and the one planner over them. */
@@ -21,11 +25,15 @@ export class ApplyProviders {
     container
       .bind({ provide: GAP_READER, useClass: GapReader })
       .bind({ provide: GRID_WRITER, useClass: GridWriter })
+      .bind({ provide: PAINT_VALUE, useClass: PaintValue })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: LayoutWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: PlacementWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: SizeWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: GridCellWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: AppearanceWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: FillsWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: StrokesWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: EffectsWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: ElementWriter })
       .bind({ provide: WRITE_REGISTRY, useClass: WriteRegistry })
       .bind({ provide: LAYER_READS, useClass: LayerReads })
