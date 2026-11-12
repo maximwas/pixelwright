@@ -11,7 +11,8 @@ import {
 import { isTokenComma } from "@csstools/css-tokenizer";
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_SPLIT } from "@/core/css/values/css-split.ts";
-import { CSS_PATTERN, CSS_VALUE } from "@/core/css/values/values.constants.ts";
+import { CSS_FADE, CSS_PATTERN, CSS_VALUE } from "@/core/css/values/values.constants.ts";
+import { Color } from "@/core/kernel/color/color.ts";
 
 /** A value that names a token: `var(--name)`. */
 export interface TokenRef {
@@ -35,6 +36,20 @@ export class CssVar {
     const name = CSS_PATTERN.token.exec(value.trim())?.[1];
 
     return name === undefined ? null : { token: name };
+  }
+
+  /**
+   * A colour or a token, either faded by `color-mix(in <space>, … N%, transparent)` as design_read writes a paint's or a
+   * stop's opacity; the share is 1 when nothing fades it. Null for anything that is no colour or token.
+   */
+  fade(value: string): { readonly token: string | null; readonly color: Color | null; readonly share: number } | null {
+    const mix = CSS_PATTERN.fade.exec(value.trim());
+    const share = mix === null ? CSS_FADE.whole : Number(mix[2]) / CSS_FADE.percent;
+    const inner = mix?.[1] ?? value;
+    const token = this.token(inner)?.token ?? null;
+    const color = token === null ? Color.parse(inner.trim()) : null;
+
+    return token === null && color === null ? null : { token, color, share };
   }
 
   /** A value without comments and with every var() cut to its name. */

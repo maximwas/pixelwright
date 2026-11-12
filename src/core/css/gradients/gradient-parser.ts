@@ -21,7 +21,6 @@ import type {
 import { CSS_SPLIT } from "@/core/css/values/css-split.ts";
 import { CSS_VAR } from "@/core/css/values/css-var.ts";
 import { CSS_SEPARATOR } from "@/core/css/values/values.constants.ts";
-import { Color } from "@/core/kernel/color/color.ts";
 
 /** A stop as CSS writes it, its place given or not. */
 type ParsedStop = Omit<GradientStopSpec, "position"> & { readonly position: number | null };
@@ -152,18 +151,19 @@ export class GradientParser {
 
   /** A stop's colour: a token or a colour, either faded by `color-mix(… N%, transparent)` as design_read writes it. */
   #colour(value: string): Omit<GradientStopSpec, "position"> | null {
-    const mix = GRADIENT_PATTERN.mix.exec(value.trim());
-    const share = mix === null ? 1 : Number(mix[2]) / GRADIENT_NUMBER.percent;
-    const inner = mix?.[1] ?? value;
-    const token = this.#vars.token(inner);
+    const faded = this.#vars.fade(value);
 
-    if (token !== null) {
-      return share < 1 ? { color: null, token: token.token, opacity: share } : { color: null, token: token.token };
+    if (faded?.color) {
+      return { color: faded.color.faded(faded.share).value() };
     }
 
-    const color = Color.parse(inner);
+    if (faded?.token === undefined || faded.token === null) {
+      return null;
+    }
 
-    return color === null ? null : { color: color.faded(share).value() };
+    return faded.share < 1
+      ? { color: null, token: faded.token, opacity: faded.share }
+      : { color: null, token: faded.token };
   }
 
   /** A stop's place along the gradient, 0 to 1: a percent, or an angle of a conic's turn. */

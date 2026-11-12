@@ -13,13 +13,23 @@ import { GapReader } from "@/core/css/groups/layout/gap-reader.ts";
 import { GridWriter } from "@/core/css/groups/layout/grid-writer.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { LayoutWriter } from "@/core/css/groups/layout/layout-writer.ts";
+import { TextPathData } from "@/core/css/groups/text/text-path-data.ts";
 import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
 import { WriteRegistry } from "@/core/css/registry/write-registry.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
 import { CssSplit } from "@/core/css/values/css-split.ts";
+import { CssUrl } from "@/core/css/values/css-url.ts";
 import { CssVar } from "@/core/css/values/css-var.ts";
+import { AssetClassifier } from "@/core/design/assets/asset-classifier.ts";
+import { AssetCss } from "@/core/design/assets/asset-css.ts";
+import { AssetPlanner } from "@/core/design/assets/asset-planner.ts";
+import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
+import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
+import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
+import { NodeTag } from "@/core/xml/node-tag.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
 import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
 import { FigmaPropsSchema } from "@/shared/write-intents/write-intent.schema.ts";
@@ -30,10 +40,18 @@ const lengths = new CssLength(new CssVar(split), format, new TokenNames());
 const gaps = new GapReader(lengths, split);
 const reads = new LayerReads();
 const placed = new PlacedLayers();
+const registry = new WriteRegistry([new LayoutWriter(lengths, split, gaps, new GridWriter(lengths, split, gaps))]);
+const builder = new DesignBuilder(
+  new NodeTag(),
+  new ComponentAttributes(new NameValueList(), new TokenNames()),
+  new CssReader(new GroupRegistry([new LayoutGroup(lengths, format)])),
+  new TextPathData(),
+);
+const assets = new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(lengths, split));
 const planner = new WritePlanner(
   reads,
-  new Assessor(new Unchanged(new CssReader(new GroupRegistry([new LayoutGroup(lengths, format)]))), reads),
-  new ChangeOf(new WriteRegistry([new LayoutWriter(lengths, split, gaps, new GridWriter(lengths, split, gaps))])),
+  new Assessor(new Unchanged(builder, assets, registry, new CssUrl(split)), reads),
+  new ChangeOf(registry),
   placed,
 );
 

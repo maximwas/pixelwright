@@ -1,3 +1,6 @@
+import { ATTRIBUTE } from "@/core/apply/apply.constants.ts";
+import { DESIGN_ATTRIBUTE } from "@/core/design/design.constants.ts";
+
 /** Words of the planner: why a named layer is refused, and what to do. */
 export const PLAN_TEXT = {
   unread: (id: string) =>
@@ -20,3 +23,18 @@ export const PLAN_VALUE = {
   variantsJoint: "; ",
   variantPair: (name: string, value: string) => `${name}=${value}`,
 } as const;
+
+/** The read-only attribute design_read writes what a component's layer is bound to as, for what design_apply sets. */
+export const UNCHANGED_READ_AS: Readonly<Record<string, string>> = {
+  [ATTRIBUTE.prop]: DESIGN_ATTRIBUTE.prop,
+  [ATTRIBUTE.visibleProp]: DESIGN_ATTRIBUTE.visibleProp,
+  [ATTRIBUTE.swapProp]: DESIGN_ATTRIBUTE.swapProp,
+};
+
+export const UNCHANGED_VALUE = {
+  /** design_read's read-only attributes start so: they complete no write. */
+  readOnly: "$",
+} as const;
+
+/** sRGB colour literals (hex, rgb()) in a value, tried again in a Display P3 file's space. */
+export const UNCHANGED_PATTERN = { srgb: /#[0-9A-Fa-f]{3,8}\b|rgba?\([^)]*\)/g } as const;
