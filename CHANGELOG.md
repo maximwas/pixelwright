@@ -16,6 +16,15 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## 0.8.1 — 2026-11-12
+
+The first published version of 0.8.0's line: the same server and plugin as 0.8.0, whose release never reached npm.
+
+### Fixed
+
+- The release publishes the package to npm: 0.8.0's release stopped before npm, so `npx -y pixelwright@latest` stayed
+  on 0.7.0.
+
 ## 0.8.0 — 2026-11-12
 
 Pixelwright 0.8.0 is a rewrite of the server and the plugin, and this version reads Figma: the tools that wrote to the
