@@ -207,6 +207,43 @@ describe("WritePlanner send list", () => {
     expect(plan.send.map(({ ref }) => ref)).toEqual(["81:1", "81:2", "new:1", "81:3"]);
     expect(plan.written.map(({ ref }) => ref)).toEqual(["81:1", "new:1"]);
   });
+
+  // T-124, C-176: a layer listed out of its parent's order moves, and goes to the plugin with its parent and neighbours.
+  it("moves a layer listed out of its parent's order and sends it with its parent and neighbours", () => {
+    const parent = element({ id: "81:1", ref: "81:1", attributes: {} });
+    const last = element({ id: "81:3", ref: "81:3", parent: "81:1", index: 0, attributes: {} });
+    const first = element({ id: "81:2", ref: "81:2", parent: "81:1", index: 1, attributes: {} });
+    const plan = planner.plan([parent, last, first], card());
+
+    expect(plan.written.map(({ ref, moves }) => ({ ref, moves }))).toEqual([{ ref: "81:2", moves: true }]);
+    expect(plan.send.map(({ ref }) => ref)).toEqual(["81:1", "81:3", "81:2"]);
+  });
+
+  // T-124: before or after moves a layer, and so does a parent element that is not its parent (a new one included).
+  it("moves a layer given before or put under another parent", () => {
+    const beside = element({ id: "81:3", ref: "81:3", attributes: { before: "81:2" } });
+    const holder = element({ ref: "new:1", line: 2, attributes: {} });
+    const inside = element({ id: "81:2", ref: "81:2", parent: "new:1", attributes: {} });
+    const plan = planner.plan([beside, holder, inside], card());
+
+    expect(plan.changes.filter(({ moves }) => moves ?? false).map(({ ref }) => ref)).toEqual(["81:3", "81:2"]);
+  });
+
+  // B-019: a layer inside a copy, named by its source's id, moves only when it says before or after.
+  it("moves a layer inside a copy by before or after only", () => {
+    const copy = element({ ref: "new:1", attributes: { copyOf: "81:1" } });
+    const plain = element({ ref: "new:2", parent: "new:1", copy: "new:1", source: "81:2", attributes: {} });
+    const beside = element({
+      ref: "new:3",
+      parent: "new:1",
+      copy: "new:1",
+      source: "81:3",
+      attributes: { before: "81:2" },
+    });
+    const plan = planner.plan([copy, plain, beside], card());
+
+    expect(plan.changes.filter(({ moves }) => moves ?? false).map(({ ref }) => ref)).toEqual(["new:3"]);
+  });
 });
 
 describe("PlannedComponents", () => {

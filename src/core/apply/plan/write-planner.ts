@@ -6,7 +6,7 @@ import { CHANGE_OF } from "@/core/apply/plan/change-of.ts";
 import type { CurrentLayers } from "@/core/apply/plan/current-layers.ts";
 import { LAYER_READS } from "@/core/apply/plan/layer-reads.ts";
 import { PLACED_LAYERS } from "@/core/apply/plan/placed-layers.ts";
-import type { WritePlan } from "@/core/apply/plan/plan.types.ts";
+import type { LayerEntry, WritePlan } from "@/core/apply/plan/plan.types.ts";
 import { PlannedComponents } from "@/core/apply/plan/planned-components.ts";
 import { TAG } from "@/core/xml/tags.constants.ts";
 
@@ -44,9 +44,14 @@ export class WritePlanner {
     const byRef = new Map(assessed.map((item) => [item.element.ref, item]));
     const changes: ApplyChange[] = [];
     const notWritten = new Map<string, string[]>();
+    const moved = this.#moved(elements, assessed);
 
     for (const item of assessed) {
       const made = this.#changeOf.of(item.element, item.now, this.#placed.isPlaced(item, byRef));
+
+      if (moved.has(item.element.ref)) {
+        made.change = { ...made.change, moves: true };
+      }
 
       const unwritten = this.#changeOf.unwritten(item.element);
 
@@ -81,7 +86,66 @@ export class WritePlanner {
 
   /** Whether a change writes its layer: makes it, gives it a property, or writes its text. */
   #writes(change: ApplyChange): boolean {
-    return change.kind === CHANGE_KIND.create || Object.keys(change.props).length > 0 || change.text !== undefined;
+    return (
+      change.kind === CHANGE_KIND.create ||
+      (change.moves ?? false) ||
+      Object.keys(change.props).length > 0 ||
+      change.text !== undefined
+    );
+  }
+
+  /**
+   * The elements that move their layer, by ref (T-124): placed with before or after, under a parent element that is not
+   * the layer's parent (a new one included), or listed after a layer it stands before in Figma. Every element counts as
+   * a parent, a refused one too; a top-level one moves only by before or after.
+   */
+  #moved(elements: readonly ApplyElement[], assessed: readonly { element: ApplyElement; entry?: LayerEntry }[]) {
+    const byRef = this.#reads.byRef(elements);
+    // The furthest place in its parent of a layer listed so far, by parent.
+    const furthest = new Map<string, number>();
+    const moved = new Set<string>();
+
+    for (const { element, entry } of assessed) {
+      const inside = element.parent === null ? undefined : byRef.get(element.parent);
+
+      if (element.source !== undefined) {
+        // A layer inside a copy is named by its source's id: it moves only by before or after (B-019).
+        if (
+          entry !== undefined &&
+          (element.attributes.before !== undefined || element.attributes.after !== undefined)
+        ) {
+          moved.add(element.ref);
+        }
+      } else if (element.id !== null && entry !== undefined && this.#moves(element, entry, inside, furthest)) {
+        moved.add(element.ref);
+      }
+    }
+
+    return moved;
+  }
+
+  #moves(
+    element: ApplyElement,
+    entry: LayerEntry,
+    inside: ApplyElement | undefined,
+    furthest: Map<string, number>,
+  ): boolean {
+    if (element.attributes.before !== undefined || element.attributes.after !== undefined) {
+      return true;
+    }
+
+    const parent = entry.parent?.id ?? entry.page ?? null;
+
+    if (inside === undefined || parent === null || inside.id !== parent) {
+      return inside !== undefined;
+    }
+
+    const at = (entry.parent?.children ?? []).findIndex((child) => child.id === entry.layer.id);
+    const before = furthest.get(parent) ?? -1;
+
+    furthest.set(parent, Math.max(before, at));
+
+    return at !== -1 && at < before;
   }
 
   #pathless(change: ApplyChange): boolean {
@@ -94,11 +158,11 @@ export class WritePlanner {
   }
 
   /**
-   * The changes the plugin gets (C-176): what writes something, and a layer made with its parent and the layers beside
-   * it, unchanged, so the plugin finds where it goes. The rest stays here, in document order.
+   * The changes the plugin gets (C-176): what writes something, and a layer made or moved with its parent and the
+   * layers beside it, unchanged, so the plugin finds where it goes. The rest stays here, in document order.
    */
   #sendList(changes: readonly ApplyChange[]): ApplyChange[] {
-    const made = changes.filter((change) => change.kind === CHANGE_KIND.create);
+    const made = changes.filter((change) => change.kind === CHANGE_KIND.create || (change.moves ?? false));
     const parents = new Set(made.flatMap((change) => (change.parent === null ? [] : [change.parent])));
     const beside = new Set(made.map((change) => change.parent ?? ""));
 

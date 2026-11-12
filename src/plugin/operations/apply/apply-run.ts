@@ -3,10 +3,11 @@ import type * as zod from "zod/mini";
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { FILE_HISTORY } from "@/plugin/adapters/figma/file-history.ts";
-import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
-import { APPLY_TEXT, NEW_LAYER_TYPE } from "@/plugin/operations/apply/apply.constants.ts";
+import { NEW_LAYER_TYPE } from "@/plugin/operations/apply/apply.constants.ts";
+import type { ApplyCall } from "@/plugin/operations/apply/apply.types.ts";
+import { APPLY_LAYERS } from "@/plugin/operations/apply/apply-layers.ts";
 import { APPLY_CHECKS, type Refusal } from "@/plugin/operations/apply/checks.ts";
-import { NEW_LAYERS } from "@/plugin/operations/apply/new-layers.ts";
+import { Counterparts } from "@/plugin/operations/apply/counterparts.ts";
 import { ApplyReport } from "@/plugin/operations/apply/report.ts";
 import { LAYER_WRITER } from "@/plugin/operations/apply/writers/layer-writer.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
@@ -24,13 +25,8 @@ interface PendingSet {
   readonly refusals: Refusal[];
 }
 
-/** One call's state: dry or real, where top-level layers go, the layers by ref, the report, the sets to combine. */
-interface Run {
-  readonly dry: boolean;
-  readonly top: BaseNode;
-  readonly layers: Map<string, TypedLayer>;
-  /** The new layers whose creation failed, by ref: a child names its parent from here. */
-  readonly failed: Map<string, ApplyChangeData>;
+/** One call's state: the call's, with its report and the sets to combine. */
+interface Run extends ApplyCall {
   readonly report: ApplyReport;
   readonly sets: PendingSet[];
 }
@@ -50,7 +46,7 @@ export class ApplyRun {
   constructor(
     checks = inject(APPLY_CHECKS),
     writer = inject(LAYER_WRITER),
-    layers = inject(NEW_LAYERS),
+    layers = inject(APPLY_LAYERS),
     history = inject(FILE_HISTORY),
   ) {
     this.#checks = checks;
@@ -62,9 +58,11 @@ export class ApplyRun {
   async run({ changes, parent, dryRun }: ApplyInput): Promise<ApplyOutput> {
     const run: Run = {
       dry: dryRun,
+      changes,
       top: await this.#checks.top(parent),
       layers: new Map(),
       failed: new Map(),
+      counterparts: new Counterparts(),
       report: new ApplyReport(),
       sets: [],
     };
@@ -75,6 +73,10 @@ export class ApplyRun {
       } catch (error) {
         if (change.kind === APPLY_CHANGE_KIND.create) {
           // A new layer that failed is gone (or never made): its children must not find it in layers.
+          if (!dryRun) {
+            this.#layers.discard(run.layers.get(change.ref));
+          }
+
           run.layers.delete(change.ref);
           run.failed.set(change.ref, change);
         }
@@ -94,7 +96,7 @@ export class ApplyRun {
 
   async #change(change: ApplyChangeData, run: Run): Promise<void> {
     const create = change.kind === APPLY_CHANGE_KIND.create;
-    const layer = create ? await this.#created(change, run) : await this.#checks.existing(change, !run.dry);
+    const layer: TypedLayer = await this.#layers.of(change, run);
 
     run.layers.set(change.ref, layer);
 
@@ -105,29 +107,12 @@ export class ApplyRun {
     }
 
     if (run.dry) {
-      run.report.planned(change, this.#writes(change, refusals));
+      run.report.planned(change, (change.moves ?? false) || this.#writes(change, refusals));
     } else if (create && NEW_LAYER_TYPE[change.tag] === FIGMA_NODE_TYPE.componentSet) {
       run.sets.push({ change, holder: layer as SceneNode, refusals });
     } else {
       await this.#write(change, layer as SceneNode, refusals, run);
     }
-  }
-
-  /** A new layer's place checked, and on a real run the layer made there; a dry run knows its type alone. */
-  async #created(change: ApplyChangeData, run: Run): Promise<TypedLayer> {
-    const parent = change.parent === null ? run.top : run.layers.get(change.parent);
-
-    if (parent === undefined) {
-      const failed = change.parent === null ? undefined : run.failed.get(change.parent);
-
-      throw new WriteError(
-        failed === undefined ? APPLY_TEXT.noParent : APPLY_TEXT.parentFailed(failed.tag, failed.line),
-      );
-    }
-
-    const type = this.#checks.creatable(change, parent);
-
-    return run.dry ? { type } : this.#layers.create(type, change, parent as BaseNode);
   }
 
   async #write(
@@ -141,9 +126,9 @@ export class ApplyRun {
     );
 
     if (change.kind === APPLY_CHANGE_KIND.create) {
-      this.#layers.finish(node, change.props);
+      this.#layers.finish(node, change);
       run.report.made(change, node);
-    } else if (wrote) {
+    } else if (wrote || (change.moves ?? false)) {
       run.report.wroteTo(node.id);
     }
   }
