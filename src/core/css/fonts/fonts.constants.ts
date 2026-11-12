@@ -8,11 +8,28 @@ export const FONT_UNIT = { pixels: "PIXELS", percent: "PERCENT" } as const;
 
 export const FONT_PATTERN = {
   italic: /italic/i,
+  /** `[italic] weight size/line-height families`, the shorthand design_read writes. */
+  shorthand: /^(?:(italic|oblique|normal)\s+)?(?:(\d{1,4}|normal|bold)\s+)?(\d*\.?\d+)px(?:\s*\/\s*(\S+))?\s+(.+)$/,
+  quotes: /^['"]|['"]$/g,
+  em: /^(-?\d*\.?\d+)em$/,
+  emSuffix: /em$/,
+  pixels: /^(\d*\.?\d+)px$/,
+  percent: /^(-?\d*\.?\d+)%$/,
+  number: /^-?\d*\.?\d+$/,
   /** O-021: what would end or escape the family's quoted CSS string. */
   unsafe: /['\\]/g,
 } as const;
 
-export const FONT_VALUE = { normal: "normal" } as const;
+export const FONT_VALUE = {
+  normal: "normal",
+  bold: "bold",
+  italic: "italic",
+  oblique: "oblique",
+  auto: "auto",
+  /** CSS's numbers for normal and bold. */
+  normalWeight: 400,
+  boldWeight: 700,
+} as const;
 
 /** Figma's text case as text-transform; ORIGINAL is the default and left out (small caps are no transform). */
 export const CASE_CSS: Readonly<Record<string, string>> = {

@@ -1,19 +1,13 @@
-import { inject, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import type { PropertyWriter, WriteInput, WriteOutput } from "@/core/css/css.types.ts";
 import { GRADIENT_PARSER } from "@/core/css/gradients/gradient-parser.ts";
-import {
-  FILL_WRITES,
-  FILLS_WRITTEN,
-  PAINT_ERROR,
-  PAINT_PATTERN,
-  PAINT_WRITE,
-} from "@/core/css/groups/paint/paint.constants.ts";
+import { FILLS_WRITTEN, PAINT_ERROR, PAINT_PATTERN, PAINT_WRITE } from "@/core/css/groups/paint/paint.constants.ts";
 import { PAINT_VALUE, type PaintSpec } from "@/core/css/paints/paint-value.ts";
 import { CSS_SPLIT } from "@/core/css/values/css-split.ts";
 import { CSS_URL } from "@/core/css/values/css-url.ts";
 import { CSS_SEPARATOR } from "@/core/css/values/values.constants.ts";
-import { INTENT_PAINT, INTENT_SCALE_MODE } from "@/shared/write-intents/write-intent.constants.ts";
+import { INTENT_KEY, INTENT_PAINT, INTENT_SCALE_MODE } from "@/shared/write-intents/write-intent.constants.ts";
 
 /**
  * A box's background and a text's colour written back as fills (C-081): none clears them; layers top first in CSS go
@@ -40,22 +34,16 @@ export class FillsWriter implements PropertyWriter {
     this.#split = split;
   }
 
-  write({ own, changed }: WriteInput, out: WriteOutput): void {
-    for (const [attribute, key] of FILL_WRITES) {
-      if (!changed(attribute)) {
-        continue;
-      }
+  write({ own }: WriteInput, out: WriteOutput): void {
+    const layers = this.paints(CSS_PROPERTY.background, (own(CSS_PROPERTY.background) ?? "").trim(), out);
 
-      const layers = this.#layers(attribute, (own(attribute) ?? "").trim(), out);
-
-      if (layers !== null) {
-        out.set(key, layers, attribute);
-      }
+    if (layers !== null) {
+      out.set(INTENT_KEY.fills, layers, CSS_PROPERTY.background);
     }
   }
 
-  /** Paint layers, top first in CSS and bottom first in Figma; null once one of them is an error. */
-  #layers(
+  /** Paint layers, top first in CSS and bottom first in Figma; null once one of them is an error (a text's colour too). */
+  paints(
     attribute: string,
     value: string,
     out: WriteOutput,
@@ -145,3 +133,5 @@ export class FillsWriter implements PropertyWriter {
     return [PAINT_ERROR.notPaint(attribute, value)];
   }
 }
+
+export const FILLS_WRITER = new InjectionToken<FillsWriter>("FillsWriter");

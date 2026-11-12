@@ -1,6 +1,5 @@
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import { BLEND_CSS } from "@/core/css/groups/appearance/appearance.constants.ts";
-import { INTENT_KEY } from "@/shared/write-intents/write-intent.constants.ts";
 
 /**
  * Layers drawn as SVG, whose fills and strokes are the vector's own, not a box's background and border: shapes, and
@@ -114,11 +113,8 @@ export const STROKES_SOURCES = [
 ];
 
 /** What the fills writer writes (C-081): a box's background and a text's colour, each as the fills it sets. */
-export const FILLS_WRITTEN = [CSS_PROPERTY.background, CSS_PROPERTY.color];
-export const FILL_WRITES = [
-  [CSS_PROPERTY.background, INTENT_KEY.fills],
-  [CSS_PROPERTY.color, INTENT_KEY.textFills],
-] as const;
+/** What the fills writer owns: a layer's background (a text's colour is the text writer's, painted with paints()). */
+export const FILLS_WRITTEN = [CSS_PROPERTY.background];
 
 /** The CSS sides of a stroke, as Figma's per-side weights name them. */
 export const STROKE_SIDES = [

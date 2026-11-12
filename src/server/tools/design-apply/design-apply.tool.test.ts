@@ -105,6 +105,7 @@ describe("DesignApplyTool", () => {
       after: "1:2",
       props: {},
       sources: {},
+      text: { characters: "Hi", runs: [] },
       copyOf: "1:3",
       source: "1:4",
       copy: "new:1",
@@ -119,12 +120,34 @@ describe("DesignApplyTool", () => {
     };
     const content = answer.structuredContent as Record<string, Record<string, unknown>[]>;
 
+    expect(content.changes?.[0]?.text).toEqual({ characters: "Hi", runs: [] });
+
     for (const list of ["elements", "changes"]) {
       const listed = Object.keys(schema.properties[list]?.items.properties ?? {});
       const extra = (content[list] ?? []).flatMap((entry) => Object.keys(entry).filter((key) => !listed.includes(key)));
 
       expect(extra, list).toEqual([]);
     }
+  });
+
+  // T-142: one planner for dry and real runs: a real run is planned exactly as a dry one before it is refused.
+  it("plans a real run as a dry one", async () => {
+    const asked: unknown[] = [];
+    const planner = {
+      layersToRead: () => [],
+      plan: (...args: unknown[]) => {
+        asked.push(args);
+
+        return { changes: [], written: [], send: [], errors: [], notWritten: new Map() };
+      },
+    } as never;
+
+    await tool(planner).execute({ xml: '<Text name="A">Hi</Text>', dryRun: true });
+    await expect(tool(planner).execute({ xml: '<Text name="A">Hi</Text>' })).rejects.toMatchObject({
+      code: ERROR_CODE.opFailed,
+    });
+    expect(asked).toHaveLength(2);
+    expect(asked[1]).toEqual(asked[0]);
   });
 
   it("refuses a real run until the writing half lands", async () => {

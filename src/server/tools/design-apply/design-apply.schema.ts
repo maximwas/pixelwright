@@ -58,6 +58,15 @@ const ChangeSchema = zod.object({
   // The write-intent contract (FigmaPropsSchema) is the op's input; listing it here would add ~1,900 lines to tools/list.
   props: zod.record(zod.string(), zod.unknown()),
   sources: zod.record(zod.string(), zod.string()),
+  /** A Text's characters, and a run per Span with the props it sets over the text's own. */
+  text: zod.exactOptional(
+    zod.object({
+      characters: zod.string(),
+      runs: zod.array(
+        zod.object({ start: zod.number(), end: zod.number(), props: zod.record(zod.string(), zod.unknown()) }),
+      ),
+    }),
+  ),
 });
 
 export const DesignApplyOutputSchema = zod.object({

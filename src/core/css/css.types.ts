@@ -35,6 +35,8 @@ export interface WriteInput {
   readonly hidden: boolean;
   /** Whether the element changes a layer there (a copy's included), not one it makes. */
   readonly existing: boolean;
+  /** Whether a Text gets a new text style: what the style covers is written again from the element's own values. */
+  readonly restyled?: boolean;
 }
 
 /** An attribute a write could not turn into Figma's terms: why, and what to do. */

@@ -4,16 +4,24 @@ import { Assessor } from "@/core/apply/plan/assessor.ts";
 import { ChangeOf } from "@/core/apply/plan/change-of.ts";
 import { CurrentLayers } from "@/core/apply/plan/current-layers.ts";
 import { LayerReads } from "@/core/apply/plan/layer-reads.ts";
+import { LayerRenders } from "@/core/apply/plan/layer-renders.ts";
 import { PlacedLayers } from "@/core/apply/plan/placed-layers.ts";
 import { PlannedComponents } from "@/core/apply/plan/planned-components.ts";
 import { Unchanged } from "@/core/apply/plan/unchanged.ts";
 import { WritePlanner } from "@/core/apply/plan/write-planner.ts";
 import { CssReader } from "@/core/css/css-reader.ts";
+import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
+import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
+import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { GapReader } from "@/core/css/groups/layout/gap-reader.ts";
 import { GridWriter } from "@/core/css/groups/layout/grid-writer.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
 import { LayoutWriter } from "@/core/css/groups/layout/layout-writer.ts";
 import { TextPathData } from "@/core/css/groups/text/text-path-data.ts";
+import { TextRun } from "@/core/css/groups/text/text-run.ts";
+import { ImagePaint } from "@/core/css/paints/image-paint.ts";
+import { PaintList } from "@/core/css/paints/paint-list.ts";
+import { SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GroupRegistry } from "@/core/css/registry/group-registry.ts";
 import { WriteRegistry } from "@/core/css/registry/write-registry.ts";
 import { CssLength } from "@/core/css/values/css-length.ts";
@@ -25,7 +33,9 @@ import { AssetCss } from "@/core/design/assets/asset-css.ts";
 import { AssetPlanner } from "@/core/design/assets/asset-planner.ts";
 import { DesignBuilder } from "@/core/design/builder/design-builder.ts";
 import { ComponentAttributes } from "@/core/design/component/component-attributes.ts";
+import { TextContent } from "@/core/design/text/text-content.ts";
 import { NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { Slug } from "@/core/kernel/names/slug.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
 import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
@@ -47,10 +57,19 @@ const builder = new DesignBuilder(
   new CssReader(new GroupRegistry([new LayoutGroup(lengths, format)])),
   new TextPathData(),
 );
+const names = new TokenNames();
+const solid = new SolidPaint(names);
+const paints = new PaintList(
+  solid,
+  new GradientCss(new GradientGeometry(), solid, lengths, format),
+  new ImagePaint(new CssUrl(split)),
+  names,
+);
+const texts = new TextContent(new TextRun(new FontShorthand(format, new FontWeight()), paints, format, names));
 const assets = new AssetPlanner(new AssetClassifier(), new Slug(), new AssetCss(lengths, split));
 const planner = new WritePlanner(
   reads,
-  new Assessor(new Unchanged(builder, assets, registry, new CssUrl(split)), reads),
+  new Assessor(new Unchanged(new LayerRenders(builder, assets, texts), registry, new CssUrl(split)), reads),
   new ChangeOf(registry),
   placed,
 );
@@ -105,6 +124,13 @@ function card(missing: string[] = []): CurrentLayers {
 }
 
 describe("WritePlanner", () => {
+  // C-179: Figma makes a text on a path only along its path, so a new TextPath without one is not sent.
+  it("sends no new TextPath without a path", () => {
+    const plan = planner.plan([element({ tag: "TextPath", attributes: { name: "Along" } })], CurrentLayers.of([], []));
+
+    expect([plan.changes, plan.written, plan.send]).toEqual([[], [], []]);
+  });
+
   // C-034..C-040, C-171: only what the layer does not have, judged in CSS space, with the attribute each came from.
   it("plans the layout attributes a layer does not have yet", () => {
     const frame = element({ id: "81:1", ref: "81:1", attributes: { padding: "32px", gap: "12px" } });

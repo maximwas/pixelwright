@@ -1,7 +1,8 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { isEqual } from "es-toolkit";
 import { ATTRIBUTE } from "@/core/apply/apply.constants.ts";
-import type { ApplyElement } from "@/core/apply/apply.types.ts";
+import type { ApplyElement, ContentPiece } from "@/core/apply/apply.types.ts";
+import { LAYER_RENDERS, type Render } from "@/core/apply/plan/layer-renders.ts";
 import { PLAN_VALUE, UNCHANGED_PATTERN, UNCHANGED_READ_AS, UNCHANGED_VALUE } from "@/core/apply/plan/plan.constants.ts";
 import type { LayerEntry, LayerNow } from "@/core/apply/plan/plan.types.ts";
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
@@ -9,17 +10,11 @@ import { FIGMA_PAINT } from "@/core/css/paints/paints.constants.ts";
 import { ChangeOutput } from "@/core/css/registry/change-output.ts";
 import { WRITE_REGISTRY } from "@/core/css/registry/write-registry.ts";
 import { CSS_URL } from "@/core/css/values/css-url.ts";
-import type { AssetPlan } from "@/core/design/assets/asset-plan.ts";
-import { ASSET_PLANNER } from "@/core/design/assets/asset-planner.ts";
-import { DESIGN_BUILDER } from "@/core/design/builder/design-builder.ts";
 import { COLOR_SPACE } from "@/core/kernel/color/color.constants.ts";
 import { Color, type ColorSpace } from "@/core/kernel/color/color.ts";
-import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
-import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
+import { XML_CONTENT } from "@/core/xml/xml.constants.ts";
+import type { XmlContent } from "@/core/xml/xml.types.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
-
-/** A layer's element as design_read writes it: attribute by name. */
-type Render = ReadonlyMap<string, string>;
 
 /** What an element's attributes are compared with: its tag, the layer's renders, the file's space, its visibility. */
 interface Compared {
@@ -40,22 +35,16 @@ interface Compared {
  */
 @injectable()
 export class Unchanged {
-  readonly #builder;
-  readonly #assets;
+  readonly #renders;
   readonly #registry;
   readonly #urls;
-  /** Each call's entries and reads are its own (CurrentLayers), so these live as long as one call. */
-  readonly #renders = new WeakMap<LayerEntry, Map<ReadLayer | null, Render>>();
-  readonly #plans = new WeakMap<ReadModel, AssetPlan>();
 
   constructor(
-    builder = inject(DESIGN_BUILDER),
-    assets = inject(ASSET_PLANNER),
+    renders = inject(LAYER_RENDERS),
     registry = inject(WRITE_REGISTRY),
     urls = inject(CSS_URL),
   ) {
-    this.#builder = builder;
-    this.#assets = assets;
+    this.#renders = renders;
     this.#registry = registry;
     this.#urls = urls;
   }
@@ -64,7 +53,7 @@ export class Unchanged {
     const { layer, parent, model } = entry;
     const nested = element.parent !== null && parent !== null;
     const parents = nested || parent === null ? [parent] : [null, parent];
-    const renders = parents.map((holder) => this.#render(entry, holder));
+    const renders = parents.map((holder) => this.#renders.attributes(entry, holder));
     const compared: Compared = {
       tag: element.tag,
       renders,
@@ -76,13 +65,15 @@ export class Unchanged {
         .filter(([name, given]) => this.#held(name, given, compared))
         .map(([name]) => name),
     );
-    const wanted = element.content?.map(({ value }) => value).join("");
     // As its parent holds it when it has one: that render places it.
     const shown = [...(renders.at(-1) ?? [])];
 
     return {
       attributes,
-      text: wanted === undefined || layer.text?.characters === wanted,
+      // As design_read writes the content: the characters and every Span with its attributes in their order.
+      text:
+        element.content === undefined ||
+        isEqual(this.#joined(this.#pieces(element.content)), this.#joined(this.#renders.content(entry))),
       visible: layer.visible,
       current: Object.fromEntries(
         shown.filter(([name]) => name !== ATTRIBUTE.id && !name.startsWith(UNCHANGED_VALUE.readOnly)),
@@ -163,6 +154,32 @@ export class Unchanged {
     return out.problems.length > 0 ? null : out.props;
   }
 
+  /** An element's content in design_read's terms: a Span's attributes as written, in their order. */
+  #pieces(content: readonly ContentPiece[]): XmlContent[] {
+    return content.map((piece) =>
+      piece.kind === XML_CONTENT.text
+        ? { kind: XML_CONTENT.text, value: piece.value }
+        : { kind: XML_CONTENT.span, attributes: Object.entries(piece.attributes), value: piece.value },
+    );
+  }
+
+  /** Content with characters side by side joined (a comment splits them in the XML) and empty ones left out. */
+  #joined(content: readonly XmlContent[]): XmlContent[] {
+    const joined: XmlContent[] = [];
+
+    for (const piece of content) {
+      const last = joined.at(-1);
+
+      if (piece.kind === XML_CONTENT.text && last?.kind === XML_CONTENT.text) {
+        joined[joined.length - 1] = { kind: XML_CONTENT.text, value: last.value + piece.value };
+      } else if (piece.kind === XML_CONTENT.span || piece.value !== "") {
+        joined.push(piece);
+      }
+    }
+
+    return joined;
+  }
+
   /** A value with its sRGB colours as a Display P3 file holds them; an sRGB file's values are as given. */
   #inSpace(value: string, space: ColorSpace): string {
     if (space === COLOR_SPACE.srgb) {
@@ -170,28 +187,6 @@ export class Unchanged {
     }
 
     return value.replace(UNCHANGED_PATTERN.srgb, (literal) => Color.parse(literal)?.to(space).css() ?? literal);
-  }
-
-  /** The layer's element as design_read writes it inside `parent` (null: as the read's root), once per call. */
-  #render(entry: LayerEntry, parent: ReadLayer | null): Render {
-    const renders = this.#renders.get(entry) ?? new Map<ReadLayer | null, Render>();
-    const held = renders.get(parent);
-
-    this.#renders.set(entry, renders);
-
-    if (held !== undefined) {
-      return held;
-    }
-
-    const { layer, model } = entry;
-    const shown = layer.visible ? layer : { ...layer, visible: true };
-    const plan = this.#plans.get(model) ?? this.#assets.plan(model);
-    const render = new Map(this.#builder.element(shown, model, parent, plan).attributes);
-
-    this.#plans.set(model, plan);
-    renders.set(parent, render);
-
-    return render;
   }
 }
 
