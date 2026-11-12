@@ -102,7 +102,7 @@ export const INSPECT_FIELD = {
   overflow: "How far the layer reaches past the room its parent gives it, in px.",
   effects: "Every effect with Figma's own parameters.",
   fillsCss:
-    "The fill as a CSS value, top paint first: a colour, a gradient; a paint CSS cannot hold (a video) says so.",
+    "The fill as a CSS value, top paint first: a colour, a gradient, an image as url(assets/<hash>.png), a placeholder named by its image hash: inspect writes no file, assets_export from writes a background image as <layer>-background; a paint CSS cannot hold (a video) says so.",
   fillsStyle: "The paint style it comes from, and the token design_read names it by.",
   fillsTokens: "The variables the paints are bound to, by token: each one's value and its Figma name (variable).",
   fillsPaints: "Every visible fill, top first: its type (SOLID, GRADIENT_LINEAR, IMAGE, VIDEO) and its blend mode.",
