@@ -37,6 +37,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-8-2">0.8.2 — 2026-11-12</a></li>
           <li><a href="#v0-8-1">0.8.1 — 2026-11-12</a></li>
           <li><a href="#v0-8-0">0.8.0 — 2026-11-12</a></li>
           <li><a href="#v0-7-0">0.7.0 — 2026-10-22</a></li>
@@ -55,6 +56,24 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-8-2">
+          <h2>0.8.2 — 2026-11-12</h2>
+<h4>Added</h4>
+<ul>
+<li><code>nodes_find</code> takes <code>fill</code>, a Figma paint type (<code>IMAGE</code>, <code>SOLID</code>, a gradient, <code>VIDEO</code>, <code>PATTERN</code>): the layers with a
+visible fill of that type, e.g. every image layer.</li>
+<li><code>nodes_find</code> takes a list in <code>within</code>: up to 50 layers or pages searched in one call, each layer listed once.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li>With Allow edits off, <code>execute</code>&#39;s plugin code is refused with a text that says how to read without it: <code>execute</code>&#39;s
+<code>script</code> or the read tools.</li>
+<li><code>assets_export</code> says what <code>from</code> writes: an image behind a layer&#39;s content as it was placed, an image layer rendered
+at its export settings (else 2x); <code>scale</code> and <code>format</code> apply to <code>nodes</code> only.</li>
+<li><code>inspect</code> says that an image&#39;s <code>url(assets/&lt;hash&gt;.png)</code> is a name, not a file it writes.</li>
+</ul>
+
+        </section>
         <section id="v0-8-1">
           <h2>0.8.1 — 2026-11-12</h2>
 <p>The first published version of 0.8.0&#39;s line: the same server and plugin as 0.8.0, whose release never reached npm.</p>
