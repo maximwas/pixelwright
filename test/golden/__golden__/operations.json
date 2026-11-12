@@ -8179,5 +8179,4045 @@
       ],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "apply",
+    "meta": {
+      "write": "per input",
+      "dryRun": true,
+      "timeoutMs": 310000,
+      "needsAllowEdits": "per input",
+      "turn": "write"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "changes": {
+          "maxItems": 10000,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "column": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "create",
+                  "update"
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tag": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              },
+              "parent": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "before": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "after": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "props": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "visible": {
+                    "type": "boolean"
+                  },
+                  "layoutMode": {
+                    "type": "string",
+                    "enum": [
+                      "NONE",
+                      "HORIZONTAL",
+                      "VERTICAL",
+                      "GRID"
+                    ]
+                  },
+                  "layoutWrap": {
+                    "type": "string",
+                    "enum": [
+                      "WRAP",
+                      "NO_WRAP"
+                    ]
+                  },
+                  "itemSpacing": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "token": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "token"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "counterAxisSpacing": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "token": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "token"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "padding": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "primaryAxisAlignItems": {
+                    "type": "string",
+                    "enum": [
+                      "MIN",
+                      "CENTER",
+                      "MAX",
+                      "SPACE_BETWEEN",
+                      "SPACE_EVENLY",
+                      "SPACE_AROUND"
+                    ]
+                  },
+                  "counterAxisAlignItems": {
+                    "type": "string",
+                    "enum": [
+                      "MIN",
+                      "CENTER",
+                      "MAX",
+                      "BASELINE"
+                    ]
+                  },
+                  "counterAxisAlignContent": {
+                    "type": "string",
+                    "enum": [
+                      "AUTO",
+                      "SPACE_BETWEEN"
+                    ]
+                  },
+                  "gridColumns": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "FLEX",
+                            "FIXED",
+                            "HUG"
+                          ]
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "gridRows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "FLEX",
+                            "FIXED",
+                            "HUG"
+                          ]
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "gridColumnGap": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "token": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "token"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "gridRowGap": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "token": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "token"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "width": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "const": "HUG"
+                      }
+                    ]
+                  },
+                  "height": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "const": "HUG"
+                      }
+                    ]
+                  },
+                  "minWidth": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxWidth": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "minHeight": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxHeight": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "grow": {
+                    "type": "boolean"
+                  },
+                  "alignSelf": {
+                    "type": "string",
+                    "enum": [
+                      "AUTO",
+                      "MIN",
+                      "CENTER",
+                      "MAX",
+                      "STRETCH"
+                    ]
+                  },
+                  "justifySelf": {
+                    "type": "string",
+                    "enum": [
+                      "AUTO",
+                      "MIN",
+                      "CENTER",
+                      "MAX",
+                      "STRETCH"
+                    ]
+                  },
+                  "gridRow": {
+                    "type": "object",
+                    "properties": {
+                      "anchor": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "span": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "anchor",
+                      "span"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "gridColumn": {
+                    "type": "object",
+                    "properties": {
+                      "anchor": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "span": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "anchor",
+                      "span"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "absolute": {
+                    "type": "boolean"
+                  },
+                  "horizontal": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "MIN",
+                          "MAX",
+                          "CENTER",
+                          "STRETCH",
+                          "SCALE"
+                        ]
+                      },
+                      "offset": {
+                        "type": "number"
+                      },
+                      "start": {
+                        "type": "number"
+                      },
+                      "end": {
+                        "type": "number"
+                      },
+                      "size": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "vertical": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "MIN",
+                          "MAX",
+                          "CENTER",
+                          "STRETCH",
+                          "SCALE"
+                        ]
+                      },
+                      "offset": {
+                        "type": "number"
+                      },
+                      "start": {
+                        "type": "number"
+                      },
+                      "end": {
+                        "type": "number"
+                      },
+                      "size": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "rotation": {
+                    "type": "number"
+                  },
+                  "mirror": {
+                    "type": "boolean"
+                  },
+                  "opacity": {
+                    "type": "number"
+                  },
+                  "blendMode": {
+                    "type": "string"
+                  },
+                  "mask": {
+                    "type": "object",
+                    "properties": {
+                      "isMask": {
+                        "type": "boolean"
+                      },
+                      "maskType": {
+                        "type": "string",
+                        "enum": [
+                          "ALPHA",
+                          "VECTOR",
+                          "LUMINANCE"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "isMask"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "clipsContent": {
+                    "type": "boolean"
+                  },
+                  "cornerRadius": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "token"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "token": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "token"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "token": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "token"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "token": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "token"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "token": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "token"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 4,
+                        "maxItems": 4
+                      }
+                    ]
+                  },
+                  "fills": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "color",
+                            "token",
+                            "gradient",
+                            "image"
+                          ]
+                        },
+                        "color": {
+                          "type": "object",
+                          "properties": {
+                            "r": {
+                              "type": "number"
+                            },
+                            "g": {
+                              "type": "number"
+                            },
+                            "b": {
+                              "type": "number"
+                            },
+                            "a": {
+                              "type": "number"
+                            },
+                            "space": {
+                              "type": "string",
+                              "const": "display-p3"
+                            }
+                          },
+                          "required": [
+                            "r",
+                            "g",
+                            "b",
+                            "a"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "token": {
+                          "type": "string"
+                        },
+                        "opacity": {
+                          "type": "number"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "LINEAR",
+                            "RADIAL",
+                            "ANGULAR"
+                          ]
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "center": {
+                          "type": "object",
+                          "properties": {
+                            "x": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "number"
+                                },
+                                "unit": {
+                                  "type": "string",
+                                  "enum": [
+                                    "px",
+                                    "%"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "unit"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "y": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "number"
+                                },
+                                "unit": {
+                                  "type": "string",
+                                  "enum": [
+                                    "px",
+                                    "%"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "unit"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "x",
+                            "y"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "radii": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "number"
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "px",
+                                        "%"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "y": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "number"
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "px",
+                                        "%"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "x",
+                                "y"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "stops": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "position": {
+                                "type": "number"
+                              },
+                              "color": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "r": {
+                                        "type": "number"
+                                      },
+                                      "g": {
+                                        "type": "number"
+                                      },
+                                      "b": {
+                                        "type": "number"
+                                      },
+                                      "a": {
+                                        "type": "number"
+                                      },
+                                      "space": {
+                                        "type": "string",
+                                        "const": "display-p3"
+                                      }
+                                    },
+                                    "required": [
+                                      "r",
+                                      "g",
+                                      "b",
+                                      "a"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "position",
+                              "color"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "src": {
+                          "type": "string"
+                        },
+                        "scaleMode": {
+                          "type": "string",
+                          "enum": [
+                            "FILL",
+                            "FIT",
+                            "TILE"
+                          ]
+                        },
+                        "stream": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "strokes": {
+                    "type": "object",
+                    "properties": {
+                      "paints": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "color",
+                                "token",
+                                "gradient",
+                                "image"
+                              ]
+                            },
+                            "color": {
+                              "type": "object",
+                              "properties": {
+                                "r": {
+                                  "type": "number"
+                                },
+                                "g": {
+                                  "type": "number"
+                                },
+                                "b": {
+                                  "type": "number"
+                                },
+                                "a": {
+                                  "type": "number"
+                                },
+                                "space": {
+                                  "type": "string",
+                                  "const": "display-p3"
+                                }
+                              },
+                              "required": [
+                                "r",
+                                "g",
+                                "b",
+                                "a"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "token": {
+                              "type": "string"
+                            },
+                            "opacity": {
+                              "type": "number"
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "LINEAR",
+                                "RADIAL",
+                                "ANGULAR"
+                              ]
+                            },
+                            "angle": {
+                              "type": "number"
+                            },
+                            "center": {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "number"
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "px",
+                                        "%"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "y": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "number"
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "px",
+                                        "%"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "x",
+                                "y"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "radii": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "number"
+                                        },
+                                        "unit": {
+                                          "type": "string",
+                                          "enum": [
+                                            "px",
+                                            "%"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "value",
+                                        "unit"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "y": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "number"
+                                        },
+                                        "unit": {
+                                          "type": "string",
+                                          "enum": [
+                                            "px",
+                                            "%"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "value",
+                                        "unit"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "x",
+                                    "y"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "stops": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "position": {
+                                    "type": "number"
+                                  },
+                                  "color": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "r": {
+                                            "type": "number"
+                                          },
+                                          "g": {
+                                            "type": "number"
+                                          },
+                                          "b": {
+                                            "type": "number"
+                                          },
+                                          "a": {
+                                            "type": "number"
+                                          },
+                                          "space": {
+                                            "type": "string",
+                                            "const": "display-p3"
+                                          }
+                                        },
+                                        "required": [
+                                          "r",
+                                          "g",
+                                          "b",
+                                          "a"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "token": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "position",
+                                  "color"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "src": {
+                              "type": "string"
+                            },
+                            "scaleMode": {
+                              "type": "string",
+                              "enum": [
+                                "FILL",
+                                "FIT",
+                                "TILE"
+                              ]
+                            },
+                            "stream": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": {}
+                        }
+                      },
+                      "weight": {
+                        "type": "number"
+                      },
+                      "sides": {
+                        "type": "object",
+                        "properties": {
+                          "top": {
+                            "type": "number"
+                          },
+                          "right": {
+                            "type": "number"
+                          },
+                          "bottom": {
+                            "type": "number"
+                          },
+                          "left": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "top",
+                          "right",
+                          "bottom",
+                          "left"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "align": {
+                        "type": "string",
+                        "enum": [
+                          "INSIDE",
+                          "OUTSIDE"
+                        ]
+                      },
+                      "dash": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "paints",
+                      "align",
+                      "dash"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "effects": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "DROP_SHADOW",
+                                "INNER_SHADOW",
+                                "LAYER_BLUR",
+                                "BACKGROUND_BLUR"
+                              ]
+                            },
+                            "radius": {
+                              "type": "number"
+                            },
+                            "color": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "r": {
+                                      "type": "number"
+                                    },
+                                    "g": {
+                                      "type": "number"
+                                    },
+                                    "b": {
+                                      "type": "number"
+                                    },
+                                    "a": {
+                                      "type": "number"
+                                    },
+                                    "space": {
+                                      "type": "string",
+                                      "const": "display-p3"
+                                    }
+                                  },
+                                  "required": [
+                                    "r",
+                                    "g",
+                                    "b",
+                                    "a"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "token": {
+                              "type": "string"
+                            },
+                            "x": {
+                              "type": "number"
+                            },
+                            "y": {
+                              "type": "number"
+                            },
+                            "spread": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "radius"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "token": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "token"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "hyperlink": {
+                    "type": "string"
+                  },
+                  "textStyle": {
+                    "type": "string"
+                  },
+                  "font": {
+                    "type": "object",
+                    "properties": {
+                      "family": {
+                        "type": "string"
+                      },
+                      "weight": {
+                        "type": "number"
+                      },
+                      "italic": {
+                        "type": "boolean"
+                      },
+                      "size": {
+                        "type": "number"
+                      },
+                      "lineHeight": {
+                        "type": "object",
+                        "properties": {
+                          "unit": {
+                            "type": "string",
+                            "enum": [
+                              "AUTO",
+                              "PIXELS",
+                              "PERCENT"
+                            ]
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "unit"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "family",
+                      "weight",
+                      "italic",
+                      "size",
+                      "lineHeight"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "letterSpacing": {
+                    "type": "object",
+                    "properties": {
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "AUTO",
+                          "PIXELS",
+                          "PERCENT"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "unit",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "textCase": {
+                    "type": "string",
+                    "enum": [
+                      "ORIGINAL",
+                      "UPPER",
+                      "LOWER",
+                      "TITLE"
+                    ]
+                  },
+                  "textDecoration": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "string",
+                        "enum": [
+                          "NONE",
+                          "UNDERLINE",
+                          "STRIKETHROUGH"
+                        ]
+                      },
+                      "style": {
+                        "type": "string",
+                        "enum": [
+                          "SOLID",
+                          "WAVY",
+                          "DOTTED",
+                          "DASHED"
+                        ]
+                      },
+                      "color": {
+                        "type": "object",
+                        "properties": {
+                          "r": {
+                            "type": "number"
+                          },
+                          "g": {
+                            "type": "number"
+                          },
+                          "b": {
+                            "type": "number"
+                          },
+                          "a": {
+                            "type": "number"
+                          },
+                          "space": {
+                            "type": "string",
+                            "const": "display-p3"
+                          }
+                        },
+                        "required": [
+                          "r",
+                          "g",
+                          "b",
+                          "a"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "offset": {
+                        "type": "object",
+                        "properties": {
+                          "unit": {
+                            "type": "string",
+                            "enum": [
+                              "AUTO",
+                              "PIXELS",
+                              "PERCENT"
+                            ]
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "unit"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "thickness": {
+                        "type": "object",
+                        "properties": {
+                          "unit": {
+                            "type": "string",
+                            "enum": [
+                              "AUTO",
+                              "PIXELS",
+                              "PERCENT"
+                            ]
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "unit"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "line"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "textAlignHorizontal": {
+                    "type": "string",
+                    "enum": [
+                      "LEFT",
+                      "CENTER",
+                      "RIGHT",
+                      "JUSTIFIED"
+                    ]
+                  },
+                  "textWrapStyle": {
+                    "type": "string",
+                    "enum": [
+                      "AUTO",
+                      "BALANCE",
+                      "PRETTY"
+                    ]
+                  },
+                  "truncate": {
+                    "type": "boolean"
+                  },
+                  "textFills": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "color",
+                            "token",
+                            "gradient",
+                            "image"
+                          ]
+                        },
+                        "color": {
+                          "type": "object",
+                          "properties": {
+                            "r": {
+                              "type": "number"
+                            },
+                            "g": {
+                              "type": "number"
+                            },
+                            "b": {
+                              "type": "number"
+                            },
+                            "a": {
+                              "type": "number"
+                            },
+                            "space": {
+                              "type": "string",
+                              "const": "display-p3"
+                            }
+                          },
+                          "required": [
+                            "r",
+                            "g",
+                            "b",
+                            "a"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "token": {
+                          "type": "string"
+                        },
+                        "opacity": {
+                          "type": "number"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "LINEAR",
+                            "RADIAL",
+                            "ANGULAR"
+                          ]
+                        },
+                        "angle": {
+                          "type": "number"
+                        },
+                        "center": {
+                          "type": "object",
+                          "properties": {
+                            "x": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "number"
+                                },
+                                "unit": {
+                                  "type": "string",
+                                  "enum": [
+                                    "px",
+                                    "%"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "unit"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "y": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "number"
+                                },
+                                "unit": {
+                                  "type": "string",
+                                  "enum": [
+                                    "px",
+                                    "%"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "unit"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "x",
+                            "y"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "radii": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "number"
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "px",
+                                        "%"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "y": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "number"
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "px",
+                                        "%"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "x",
+                                "y"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "stops": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "position": {
+                                "type": "number"
+                              },
+                              "color": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "r": {
+                                        "type": "number"
+                                      },
+                                      "g": {
+                                        "type": "number"
+                                      },
+                                      "b": {
+                                        "type": "number"
+                                      },
+                                      "a": {
+                                        "type": "number"
+                                      },
+                                      "space": {
+                                        "type": "string",
+                                        "const": "display-p3"
+                                      }
+                                    },
+                                    "required": [
+                                      "r",
+                                      "g",
+                                      "b",
+                                      "a"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "token": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "position",
+                              "color"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "src": {
+                          "type": "string"
+                        },
+                        "scaleMode": {
+                          "type": "string",
+                          "enum": [
+                            "FILL",
+                            "FIT",
+                            "TILE"
+                          ]
+                        },
+                        "stream": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "component": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "props": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "category": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "label": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "category",
+                        "label"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "property": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "visible": {
+                        "type": "string"
+                      },
+                      "swap": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "modes": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "pathStart": {
+                    "type": "object",
+                    "properties": {
+                      "segment": {
+                        "type": "number"
+                      },
+                      "position": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "segment",
+                      "position"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "asset": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "image",
+                          "icon"
+                        ]
+                      },
+                      "src": {
+                        "type": "string"
+                      },
+                      "stream": {
+                        "type": "string"
+                      },
+                      "svg": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "src"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "sources": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "enum": [
+                    "name",
+                    "visible",
+                    "layoutMode",
+                    "layoutWrap",
+                    "itemSpacing",
+                    "counterAxisSpacing",
+                    "padding",
+                    "primaryAxisAlignItems",
+                    "counterAxisAlignItems",
+                    "counterAxisAlignContent",
+                    "gridColumns",
+                    "gridRows",
+                    "gridColumnGap",
+                    "gridRowGap",
+                    "width",
+                    "height",
+                    "minWidth",
+                    "maxWidth",
+                    "minHeight",
+                    "maxHeight",
+                    "grow",
+                    "alignSelf",
+                    "justifySelf",
+                    "gridRow",
+                    "gridColumn",
+                    "absolute",
+                    "horizontal",
+                    "vertical",
+                    "rotation",
+                    "mirror",
+                    "opacity",
+                    "blendMode",
+                    "mask",
+                    "clipsContent",
+                    "cornerRadius",
+                    "fills",
+                    "strokes",
+                    "effects",
+                    "hyperlink",
+                    "textStyle",
+                    "font",
+                    "letterSpacing",
+                    "textCase",
+                    "textDecoration",
+                    "textAlignHorizontal",
+                    "textWrapStyle",
+                    "truncate",
+                    "textFills",
+                    "component",
+                    "variant",
+                    "props",
+                    "description",
+                    "notes",
+                    "property",
+                    "modes",
+                    "path",
+                    "pathStart",
+                    "asset"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "text": {
+                "type": "object",
+                "properties": {
+                  "characters": {
+                    "type": "string",
+                    "maxLength": 1000000
+                  },
+                  "runs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "end": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "props": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "visible": {
+                              "type": "boolean"
+                            },
+                            "layoutMode": {
+                              "type": "string",
+                              "enum": [
+                                "NONE",
+                                "HORIZONTAL",
+                                "VERTICAL",
+                                "GRID"
+                              ]
+                            },
+                            "layoutWrap": {
+                              "type": "string",
+                              "enum": [
+                                "WRAP",
+                                "NO_WRAP"
+                              ]
+                            },
+                            "itemSpacing": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "token": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "token"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "counterAxisSpacing": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "token": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "token"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "padding": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 4,
+                              "maxItems": 4
+                            },
+                            "primaryAxisAlignItems": {
+                              "type": "string",
+                              "enum": [
+                                "MIN",
+                                "CENTER",
+                                "MAX",
+                                "SPACE_BETWEEN",
+                                "SPACE_EVENLY",
+                                "SPACE_AROUND"
+                              ]
+                            },
+                            "counterAxisAlignItems": {
+                              "type": "string",
+                              "enum": [
+                                "MIN",
+                                "CENTER",
+                                "MAX",
+                                "BASELINE"
+                              ]
+                            },
+                            "counterAxisAlignContent": {
+                              "type": "string",
+                              "enum": [
+                                "AUTO",
+                                "SPACE_BETWEEN"
+                              ]
+                            },
+                            "gridColumns": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "FLEX",
+                                      "FIXED",
+                                      "HUG"
+                                    ]
+                                  },
+                                  "value": {
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "gridRows": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "FLEX",
+                                      "FIXED",
+                                      "HUG"
+                                    ]
+                                  },
+                                  "value": {
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "gridColumnGap": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "token": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "token"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "gridRowGap": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "token": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "token"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "width": {
+                              "anyOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "HUG"
+                                }
+                              ]
+                            },
+                            "height": {
+                              "anyOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "HUG"
+                                }
+                              ]
+                            },
+                            "minWidth": {
+                              "anyOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "maxWidth": {
+                              "anyOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "minHeight": {
+                              "anyOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "maxHeight": {
+                              "anyOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "grow": {
+                              "type": "boolean"
+                            },
+                            "alignSelf": {
+                              "type": "string",
+                              "enum": [
+                                "AUTO",
+                                "MIN",
+                                "CENTER",
+                                "MAX",
+                                "STRETCH"
+                              ]
+                            },
+                            "justifySelf": {
+                              "type": "string",
+                              "enum": [
+                                "AUTO",
+                                "MIN",
+                                "CENTER",
+                                "MAX",
+                                "STRETCH"
+                              ]
+                            },
+                            "gridRow": {
+                              "type": "object",
+                              "properties": {
+                                "anchor": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "span": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "anchor",
+                                "span"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "gridColumn": {
+                              "type": "object",
+                              "properties": {
+                                "anchor": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "span": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "anchor",
+                                "span"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "absolute": {
+                              "type": "boolean"
+                            },
+                            "horizontal": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "MIN",
+                                    "MAX",
+                                    "CENTER",
+                                    "STRETCH",
+                                    "SCALE"
+                                  ]
+                                },
+                                "offset": {
+                                  "type": "number"
+                                },
+                                "start": {
+                                  "type": "number"
+                                },
+                                "end": {
+                                  "type": "number"
+                                },
+                                "size": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "vertical": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "MIN",
+                                    "MAX",
+                                    "CENTER",
+                                    "STRETCH",
+                                    "SCALE"
+                                  ]
+                                },
+                                "offset": {
+                                  "type": "number"
+                                },
+                                "start": {
+                                  "type": "number"
+                                },
+                                "end": {
+                                  "type": "number"
+                                },
+                                "size": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "rotation": {
+                              "type": "number"
+                            },
+                            "mirror": {
+                              "type": "boolean"
+                            },
+                            "opacity": {
+                              "type": "number"
+                            },
+                            "blendMode": {
+                              "type": "string"
+                            },
+                            "mask": {
+                              "type": "object",
+                              "properties": {
+                                "isMask": {
+                                  "type": "boolean"
+                                },
+                                "maskType": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ALPHA",
+                                    "VECTOR",
+                                    "LUMINANCE"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "isMask"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "clipsContent": {
+                              "type": "boolean"
+                            },
+                            "cornerRadius": {
+                              "anyOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "token"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "array",
+                                  "prefixItems": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "token": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "token"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "token": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "token"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "token": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "token"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "token": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "token"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "items": false,
+                                  "minItems": 4,
+                                  "maxItems": 4
+                                }
+                              ]
+                            },
+                            "fills": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "color",
+                                      "token",
+                                      "gradient",
+                                      "image"
+                                    ]
+                                  },
+                                  "color": {
+                                    "type": "object",
+                                    "properties": {
+                                      "r": {
+                                        "type": "number"
+                                      },
+                                      "g": {
+                                        "type": "number"
+                                      },
+                                      "b": {
+                                        "type": "number"
+                                      },
+                                      "a": {
+                                        "type": "number"
+                                      },
+                                      "space": {
+                                        "type": "string",
+                                        "const": "display-p3"
+                                      }
+                                    },
+                                    "required": [
+                                      "r",
+                                      "g",
+                                      "b",
+                                      "a"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "token": {
+                                    "type": "string"
+                                  },
+                                  "opacity": {
+                                    "type": "number"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "LINEAR",
+                                      "RADIAL",
+                                      "ANGULAR"
+                                    ]
+                                  },
+                                  "angle": {
+                                    "type": "number"
+                                  },
+                                  "center": {
+                                    "type": "object",
+                                    "properties": {
+                                      "x": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "number"
+                                          },
+                                          "unit": {
+                                            "type": "string",
+                                            "enum": [
+                                              "px",
+                                              "%"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "value",
+                                          "unit"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "y": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "number"
+                                          },
+                                          "unit": {
+                                            "type": "string",
+                                            "enum": [
+                                              "px",
+                                              "%"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "value",
+                                          "unit"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "x",
+                                      "y"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "radii": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "x": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "number"
+                                              },
+                                              "unit": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "px",
+                                                  "%"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "value",
+                                              "unit"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "y": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "number"
+                                              },
+                                              "unit": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "px",
+                                                  "%"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "value",
+                                              "unit"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "x",
+                                          "y"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "stops": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "position": {
+                                          "type": "number"
+                                        },
+                                        "color": {
+                                          "anyOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "r": {
+                                                  "type": "number"
+                                                },
+                                                "g": {
+                                                  "type": "number"
+                                                },
+                                                "b": {
+                                                  "type": "number"
+                                                },
+                                                "a": {
+                                                  "type": "number"
+                                                },
+                                                "space": {
+                                                  "type": "string",
+                                                  "const": "display-p3"
+                                                }
+                                              },
+                                              "required": [
+                                                "r",
+                                                "g",
+                                                "b",
+                                                "a"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        },
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "position",
+                                        "color"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "src": {
+                                    "type": "string"
+                                  },
+                                  "scaleMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "FILL",
+                                      "FIT",
+                                      "TILE"
+                                    ]
+                                  },
+                                  "stream": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind"
+                                ],
+                                "additionalProperties": {}
+                              }
+                            },
+                            "strokes": {
+                              "type": "object",
+                              "properties": {
+                                "paints": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "color",
+                                          "token",
+                                          "gradient",
+                                          "image"
+                                        ]
+                                      },
+                                      "color": {
+                                        "type": "object",
+                                        "properties": {
+                                          "r": {
+                                            "type": "number"
+                                          },
+                                          "g": {
+                                            "type": "number"
+                                          },
+                                          "b": {
+                                            "type": "number"
+                                          },
+                                          "a": {
+                                            "type": "number"
+                                          },
+                                          "space": {
+                                            "type": "string",
+                                            "const": "display-p3"
+                                          }
+                                        },
+                                        "required": [
+                                          "r",
+                                          "g",
+                                          "b",
+                                          "a"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "token": {
+                                        "type": "string"
+                                      },
+                                      "opacity": {
+                                        "type": "number"
+                                      },
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "LINEAR",
+                                          "RADIAL",
+                                          "ANGULAR"
+                                        ]
+                                      },
+                                      "angle": {
+                                        "type": "number"
+                                      },
+                                      "center": {
+                                        "type": "object",
+                                        "properties": {
+                                          "x": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "number"
+                                              },
+                                              "unit": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "px",
+                                                  "%"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "value",
+                                              "unit"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "y": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "number"
+                                              },
+                                              "unit": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "px",
+                                                  "%"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "value",
+                                              "unit"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "x",
+                                          "y"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "radii": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "x": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "value": {
+                                                    "type": "number"
+                                                  },
+                                                  "unit": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "px",
+                                                      "%"
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "value",
+                                                  "unit"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "y": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "value": {
+                                                    "type": "number"
+                                                  },
+                                                  "unit": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "px",
+                                                      "%"
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "value",
+                                                  "unit"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "x",
+                                              "y"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "stops": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "position": {
+                                              "type": "number"
+                                            },
+                                            "color": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "r": {
+                                                      "type": "number"
+                                                    },
+                                                    "g": {
+                                                      "type": "number"
+                                                    },
+                                                    "b": {
+                                                      "type": "number"
+                                                    },
+                                                    "a": {
+                                                      "type": "number"
+                                                    },
+                                                    "space": {
+                                                      "type": "string",
+                                                      "const": "display-p3"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "r",
+                                                    "g",
+                                                    "b",
+                                                    "a"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "null"
+                                                }
+                                              ]
+                                            },
+                                            "token": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "position",
+                                            "color"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "src": {
+                                        "type": "string"
+                                      },
+                                      "scaleMode": {
+                                        "type": "string",
+                                        "enum": [
+                                          "FILL",
+                                          "FIT",
+                                          "TILE"
+                                        ]
+                                      },
+                                      "stream": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind"
+                                    ],
+                                    "additionalProperties": {}
+                                  }
+                                },
+                                "weight": {
+                                  "type": "number"
+                                },
+                                "sides": {
+                                  "type": "object",
+                                  "properties": {
+                                    "top": {
+                                      "type": "number"
+                                    },
+                                    "right": {
+                                      "type": "number"
+                                    },
+                                    "bottom": {
+                                      "type": "number"
+                                    },
+                                    "left": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "top",
+                                    "right",
+                                    "bottom",
+                                    "left"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "align": {
+                                  "type": "string",
+                                  "enum": [
+                                    "INSIDE",
+                                    "OUTSIDE"
+                                  ]
+                                },
+                                "dash": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "paints",
+                                "align",
+                                "dash"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "effects": {
+                              "anyOf": [
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "DROP_SHADOW",
+                                          "INNER_SHADOW",
+                                          "LAYER_BLUR",
+                                          "BACKGROUND_BLUR"
+                                        ]
+                                      },
+                                      "radius": {
+                                        "type": "number"
+                                      },
+                                      "color": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "r": {
+                                                "type": "number"
+                                              },
+                                              "g": {
+                                                "type": "number"
+                                              },
+                                              "b": {
+                                                "type": "number"
+                                              },
+                                              "a": {
+                                                "type": "number"
+                                              },
+                                              "space": {
+                                                "type": "string",
+                                                "const": "display-p3"
+                                              }
+                                            },
+                                            "required": [
+                                              "r",
+                                              "g",
+                                              "b",
+                                              "a"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "token": {
+                                        "type": "string"
+                                      },
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "spread": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "radius"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "token": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "token"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "hyperlink": {
+                              "type": "string"
+                            },
+                            "textStyle": {
+                              "type": "string"
+                            },
+                            "font": {
+                              "type": "object",
+                              "properties": {
+                                "family": {
+                                  "type": "string"
+                                },
+                                "weight": {
+                                  "type": "number"
+                                },
+                                "italic": {
+                                  "type": "boolean"
+                                },
+                                "size": {
+                                  "type": "number"
+                                },
+                                "lineHeight": {
+                                  "type": "object",
+                                  "properties": {
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "AUTO",
+                                        "PIXELS",
+                                        "PERCENT"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "family",
+                                "weight",
+                                "italic",
+                                "size",
+                                "lineHeight"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "letterSpacing": {
+                              "type": "object",
+                              "properties": {
+                                "unit": {
+                                  "type": "string",
+                                  "enum": [
+                                    "AUTO",
+                                    "PIXELS",
+                                    "PERCENT"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "unit",
+                                "value"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "textCase": {
+                              "type": "string",
+                              "enum": [
+                                "ORIGINAL",
+                                "UPPER",
+                                "LOWER",
+                                "TITLE"
+                              ]
+                            },
+                            "textDecoration": {
+                              "type": "object",
+                              "properties": {
+                                "line": {
+                                  "type": "string",
+                                  "enum": [
+                                    "NONE",
+                                    "UNDERLINE",
+                                    "STRIKETHROUGH"
+                                  ]
+                                },
+                                "style": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SOLID",
+                                    "WAVY",
+                                    "DOTTED",
+                                    "DASHED"
+                                  ]
+                                },
+                                "color": {
+                                  "type": "object",
+                                  "properties": {
+                                    "r": {
+                                      "type": "number"
+                                    },
+                                    "g": {
+                                      "type": "number"
+                                    },
+                                    "b": {
+                                      "type": "number"
+                                    },
+                                    "a": {
+                                      "type": "number"
+                                    },
+                                    "space": {
+                                      "type": "string",
+                                      "const": "display-p3"
+                                    }
+                                  },
+                                  "required": [
+                                    "r",
+                                    "g",
+                                    "b",
+                                    "a"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "offset": {
+                                  "type": "object",
+                                  "properties": {
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "AUTO",
+                                        "PIXELS",
+                                        "PERCENT"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "thickness": {
+                                  "type": "object",
+                                  "properties": {
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "AUTO",
+                                        "PIXELS",
+                                        "PERCENT"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "line"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "textAlignHorizontal": {
+                              "type": "string",
+                              "enum": [
+                                "LEFT",
+                                "CENTER",
+                                "RIGHT",
+                                "JUSTIFIED"
+                              ]
+                            },
+                            "textWrapStyle": {
+                              "type": "string",
+                              "enum": [
+                                "AUTO",
+                                "BALANCE",
+                                "PRETTY"
+                              ]
+                            },
+                            "truncate": {
+                              "type": "boolean"
+                            },
+                            "textFills": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "color",
+                                      "token",
+                                      "gradient",
+                                      "image"
+                                    ]
+                                  },
+                                  "color": {
+                                    "type": "object",
+                                    "properties": {
+                                      "r": {
+                                        "type": "number"
+                                      },
+                                      "g": {
+                                        "type": "number"
+                                      },
+                                      "b": {
+                                        "type": "number"
+                                      },
+                                      "a": {
+                                        "type": "number"
+                                      },
+                                      "space": {
+                                        "type": "string",
+                                        "const": "display-p3"
+                                      }
+                                    },
+                                    "required": [
+                                      "r",
+                                      "g",
+                                      "b",
+                                      "a"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "token": {
+                                    "type": "string"
+                                  },
+                                  "opacity": {
+                                    "type": "number"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "LINEAR",
+                                      "RADIAL",
+                                      "ANGULAR"
+                                    ]
+                                  },
+                                  "angle": {
+                                    "type": "number"
+                                  },
+                                  "center": {
+                                    "type": "object",
+                                    "properties": {
+                                      "x": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "number"
+                                          },
+                                          "unit": {
+                                            "type": "string",
+                                            "enum": [
+                                              "px",
+                                              "%"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "value",
+                                          "unit"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "y": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "number"
+                                          },
+                                          "unit": {
+                                            "type": "string",
+                                            "enum": [
+                                              "px",
+                                              "%"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "value",
+                                          "unit"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "x",
+                                      "y"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "radii": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "x": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "number"
+                                              },
+                                              "unit": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "px",
+                                                  "%"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "value",
+                                              "unit"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "y": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "number"
+                                              },
+                                              "unit": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "px",
+                                                  "%"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "value",
+                                              "unit"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "x",
+                                          "y"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "stops": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "position": {
+                                          "type": "number"
+                                        },
+                                        "color": {
+                                          "anyOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "r": {
+                                                  "type": "number"
+                                                },
+                                                "g": {
+                                                  "type": "number"
+                                                },
+                                                "b": {
+                                                  "type": "number"
+                                                },
+                                                "a": {
+                                                  "type": "number"
+                                                },
+                                                "space": {
+                                                  "type": "string",
+                                                  "const": "display-p3"
+                                                }
+                                              },
+                                              "required": [
+                                                "r",
+                                                "g",
+                                                "b",
+                                                "a"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        },
+                                        "token": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "position",
+                                        "color"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "src": {
+                                    "type": "string"
+                                  },
+                                  "scaleMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "FILL",
+                                      "FIT",
+                                      "TILE"
+                                    ]
+                                  },
+                                  "stream": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind"
+                                ],
+                                "additionalProperties": {}
+                              }
+                            },
+                            "component": {
+                              "type": "string"
+                            },
+                            "variant": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {
+                                "type": "string"
+                              }
+                            },
+                            "props": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {
+                                "type": "string"
+                              }
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "notes": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "category": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "category",
+                                  "label"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "property": {
+                              "type": "object",
+                              "properties": {
+                                "text": {
+                                  "type": "string"
+                                },
+                                "visible": {
+                                  "type": "string"
+                                },
+                                "swap": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "modes": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {
+                                "type": "string"
+                              }
+                            },
+                            "path": {
+                              "type": "string"
+                            },
+                            "pathStart": {
+                              "type": "object",
+                              "properties": {
+                                "segment": {
+                                  "type": "number"
+                                },
+                                "position": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "segment",
+                                "position"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "asset": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "image",
+                                    "icon"
+                                  ]
+                                },
+                                "src": {
+                                  "type": "string"
+                                },
+                                "stream": {
+                                  "type": "string"
+                                },
+                                "svg": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "src"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "start",
+                        "end",
+                        "props"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "characters",
+                  "runs"
+                ],
+                "additionalProperties": false
+              },
+              "copyOf": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "copy": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "kind",
+              "ref",
+              "id",
+              "tag",
+              "parent",
+              "index",
+              "props",
+              "sources"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "parent": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "dryRun": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "changes",
+        "dryRun"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "ref": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "tag": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "line",
+              "ref",
+              "tag"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "changed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "column": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "id": {
+                "type": "string"
+              },
+              "attribute": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "created",
+        "changed",
+        "errors"
+      ],
+      "additionalProperties": false
+    }
   }
 ]

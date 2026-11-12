@@ -1,4 +1,4 @@
-import { injectable } from "@needle-di/core";
+import { InjectionToken, injectable } from "@needle-di/core";
 import { GEOMETRY } from "@/core/kernel/geometry/geometry.constants.ts";
 import { INTENT_AXIS } from "@/shared/write-intents/write-intent.constants.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
@@ -42,4 +42,11 @@ export class PlacementSpan {
 
     return { start: from, size: length };
   }
+
+  /** Whether the placement sizes the layer from its parent: pinned to both edges, or scaled with it. */
+  sizes(placement: AxisPlacement | undefined): boolean {
+    return placement?.kind === INTENT_AXIS.STRETCH || placement?.kind === INTENT_AXIS.SCALE;
+  }
 }
+
+export const PLACEMENT_SPAN = new InjectionToken<PlacementSpan>("PlacementSpan");

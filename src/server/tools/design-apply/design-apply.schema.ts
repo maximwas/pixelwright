@@ -4,11 +4,14 @@ import { XML_CONTENT } from "@/core/xml/xml.constants.ts";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import { DryRunInputSchema, VersionInputSchema, WRITER_OUTPUT } from "@/server/app/writes/writes.schema.ts";
 import { DESIGN_APPLY_FIELD, DESIGN_APPLY_LIMIT } from "@/server/tools/design-apply/design-apply.constants.ts";
+import { ApplyCreatedSchema } from "@/shared/ops/apply/apply.schema.ts";
+import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 export const DesignApplyInputSchema = zod.strictObject({
   xml: zod
     .string()
     .check(zod.minLength(1), zod.maxLength(DESIGN_APPLY_LIMIT.xmlChars), zod.describe(DESIGN_APPLY_FIELD.xml)),
+  parent: zod.exactOptional(NodeIdSchema.check(zod.describe(DESIGN_APPLY_FIELD.parent))),
   dryRun: DryRunInputSchema,
   version: VersionInputSchema,
   file: FileInputSchema,
@@ -73,6 +76,8 @@ export const DesignApplyOutputSchema = zod.object({
   elements: zod.array(ElementSchema).check(zod.describe(DESIGN_APPLY_FIELD.elements)),
   errors: zod.array(ErrorSchema).check(zod.describe(DESIGN_APPLY_FIELD.errors)),
   changes: zod.array(ChangeSchema).check(zod.describe(DESIGN_APPLY_FIELD.changes)),
+  created: zod.array(ApplyCreatedSchema).check(zod.describe(DESIGN_APPLY_FIELD.created)),
+  changed: zod.array(zod.string()).check(zod.describe(DESIGN_APPLY_FIELD.changed)),
   ...WRITER_OUTPUT,
 });
 

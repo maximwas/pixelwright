@@ -1,0 +1,173 @@
+import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { PLACEMENT_SPAN } from "@/core/kernel/geometry/placement-span.ts";
+import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
+import { CAPABILITIES } from "@/plugin/adapters/figma/capabilities.ts";
+import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
+import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
+import { APPLY_PLACE, APPLY_TEXT, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
+import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
+import { INTENT_LAYOUT_MODE, INTENT_SELF_ALIGN } from "@/shared/write-intents/write-intent.constants.ts";
+import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
+
+type Axis = typeof INTENT_LAYOUT_MODE.HORIZONTAL | typeof INTENT_LAYOUT_MODE.VERTICAL;
+
+/**
+ * New layers (T-123): made, put in their parent at once (taken away again when Figma refuses them there) and started
+ * bare, with what the XML says and nothing more: no fill without a background, no clipping without overflow; once
+ * written, a new auto layout frame hugs what the XML did not size and a layer on the page goes beside the others.
+ */
+@injectable()
+export class NewLayers {
+  readonly #factory;
+  readonly #assign;
+  readonly #capabilities;
+  readonly #span;
+
+  constructor(
+    factory = inject(LAYER_FACTORY),
+    assign = inject(ASSIGN),
+    capabilities = inject(CAPABILITIES),
+    span = inject(PLACEMENT_SPAN),
+  ) {
+    this.#factory = factory;
+    this.#assign = assign;
+    this.#capabilities = capabilities;
+    this.#span = span;
+  }
+
+  create(
+    type: NodeType,
+    change: ApplyChangeData,
+    parent: BaseNode,
+  ): SceneNode {
+    const holder = parent as BaseNode & ChildrenMixin;
+    const node =
+      type === FIGMA_NODE_TYPE.slot
+        ? (parent as ComponentNode).createSlot()
+        : this.#factory.make(type, APPLY_TEXT.cannotMake(change.tag));
+
+    // shortcut: a new layer goes last in its parent, so the XML's order holds among new layers only; the moves item
+    // places it among existing layers by index, before and after.
+    try {
+      holder.appendChild(node);
+    } catch (error) {
+      node.remove();
+
+      throw error;
+    }
+
+    this.#bare(node, change.props);
+
+    return node;
+  }
+
+  /** After its write: a new auto layout frame hugs the axes the XML did not size; on the page it goes beside the rest. */
+  finish(node: SceneNode, props: FigmaProps): void {
+    this.#hug(node, props);
+    this.#placeOnPage(node, props);
+  }
+
+  /** A new set: the Components its frame holds combined in its place, the frame gone. */
+  combine(holder: SceneNode): ComponentSetNode {
+    const frame = holder as FrameNode;
+    const components = frame.children.filter(
+      (child): child is ComponentNode => child.type === FIGMA_NODE_TYPE.component,
+    );
+    const parent = frame.parent;
+
+    if (components.length === 0 || parent === null) {
+      frame.remove();
+
+      throw new WriteError(APPLY_TEXT.emptySet);
+    }
+
+    const set = this.#factory.combine(components, parent, parent.children.indexOf(frame));
+
+    frame.remove();
+    this.#assign.set(set as ComponentSetNode, { fills: [], strokes: [] });
+
+    return set;
+  }
+
+  #bare(node: SceneNode, props: FigmaProps): void {
+    const shape = node as FrameNode;
+
+    if (
+      props.fills === undefined &&
+      node.type !== FIGMA_NODE_TYPE.text &&
+      this.#capabilities.has(node, CAPABILITY.fills)
+    ) {
+      this.#assign.set(shape, { fills: [] });
+    }
+
+    if (props.strokes === undefined && node.type === FIGMA_NODE_TYPE.line) {
+      this.#assign.set(shape, { strokes: [] });
+    }
+
+    if (props.clipsContent === undefined && node.type === FIGMA_NODE_TYPE.frame) {
+      this.#assign.set(shape, { clipsContent: false });
+    }
+
+    if (node.type === FIGMA_NODE_TYPE.text) {
+      this.#assign.set(node, { textAutoResize: NEW_LAYER_VALUE.fit });
+    }
+  }
+
+  #hug(node: SceneNode, props: FigmaProps): void {
+    const frame = node as FrameNode;
+
+    if (!this.#capabilities.has(node, CAPABILITY.autoLayout) || frame.layoutMode === NEW_LAYER_VALUE.none) {
+      return;
+    }
+
+    // A page or a section has no layoutMode: undefined, so nothing lays the layer out.
+    const direction: unknown = (node.parent as FrameNode | null)?.layoutMode;
+
+    this.#assign.set(frame, {
+      layoutSizingHorizontal:
+        props.width === undefined && !this.#fills(props, direction, INTENT_LAYOUT_MODE.HORIZONTAL)
+          ? NEW_LAYER_VALUE.hug
+          : undefined,
+      layoutSizingVertical:
+        props.height === undefined && !this.#fills(props, direction, INTENT_LAYOUT_MODE.VERTICAL)
+          ? NEW_LAYER_VALUE.hug
+          : undefined,
+    });
+  }
+
+  /** Whether the layer fills the axis: flex along its parent, stretched across it or in a grid cell, or pinned to both edges. */
+  #fills(
+    props: FigmaProps,
+    direction: unknown,
+    axis: Axis,
+  ): boolean {
+    const horizontal = axis === INTENT_LAYOUT_MODE.HORIZONTAL;
+    const across = horizontal ? INTENT_LAYOUT_MODE.VERTICAL : INTENT_LAYOUT_MODE.HORIZONTAL;
+    const stretched =
+      direction === INTENT_LAYOUT_MODE.GRID
+        ? (horizontal ? props.justifySelf : props.alignSelf) === INTENT_SELF_ALIGN.STRETCH
+        : props.alignSelf === INTENT_SELF_ALIGN.STRETCH && direction === across;
+    const placed = horizontal ? props.horizontal : props.vertical;
+
+    return ((props.grow ?? false) && direction === axis) || stretched || this.#span.sizes(placed);
+  }
+
+  #placeOnPage(node: SceneNode, props: FigmaProps): void {
+    const parent = node.parent;
+
+    if (parent?.type !== FIGMA_NODE_TYPE.page || props.horizontal !== undefined) {
+      return;
+    }
+
+    const others = parent.children.filter((child) => child.id !== node.id);
+    const right = Math.max(...others.map((child) => child.x + child.width), -APPLY_PLACE.pageGap);
+
+    this.#assign.set(node, {
+      x: Math.round(right + APPLY_PLACE.pageGap),
+      y: Math.round(Math.min(...others.map((child) => child.y), 0)),
+    });
+  }
+}
+
+export const NEW_LAYERS = new InjectionToken<NewLayers>("NewLayers");

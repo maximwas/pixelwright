@@ -2,14 +2,17 @@ import { describe, expect, it } from "vitest";
 import * as zod from "zod/mini";
 import type { ApplyChange } from "@/core/apply/apply.types.ts";
 import type { WritePlanner } from "@/core/apply/plan/write-planner.ts";
-import { DesignApplyOutputSchema } from "@/server/tools/design-apply/design-apply.schema.ts";
+import { VersionedWrite } from "@/server/app/writes/versioned-write.ts";
+import { type DesignApplyOutput, DesignApplyOutputSchema } from "@/server/tools/design-apply/design-apply.schema.ts";
 import { DesignApplyTool } from "@/server/tools/design-apply/design-apply.tool.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 
-// Without ids to read the plugin is never reached, so the collaborators are never called.
+// Without ids to read and changes to write the plugin is never reached, so the session is never called.
 function tool(planner = {} as WritePlanner, session = {}): DesignApplyTool {
-  return new DesignApplyTool(session as never, {} as never, {} as never, planner);
+  return new DesignApplyTool(session as never, new VersionedWrite(), { due: () => null } as never, planner);
 }
+
+const APPLIED = { created: [], changed: [], errors: [] };
 
 const IDLE = {
   layersToRead: () => [],
@@ -43,10 +46,10 @@ describe("DesignApplyTool", () => {
   it("reads the named layers with the apply profile and lists what the plan changes", async () => {
     const asked: unknown[] = [];
     const session = {
-      run: async (_op: unknown, input: unknown) => {
+      run: async (op: { name: string }, input: unknown) => {
         asked.push(input);
 
-        return { reads: [], missing: [], cuts: [] };
+        return op.name === "read" ? { reads: [], missing: [], cuts: [] } : { ...APPLIED, changed: ["81:1"] };
       },
     };
     const layout: ApplyChange = {
@@ -67,7 +70,10 @@ describe("DesignApplyTool", () => {
     } as never;
     const answer = await tool(planner, session).execute({ xml: '<Frame id="81:1" gap="12px"/>', dryRun: true });
 
-    expect(asked).toEqual([{ nodes: ["81:1"], profile: "apply" }]);
+    expect(asked).toEqual([
+      { nodes: ["81:1"], profile: "apply" },
+      { changes: [layout], dryRun: true },
+    ]);
     expect(answer.structuredContent).toMatchObject({
       dry: true,
       changes: [{ id: "81:1", tag: "Frame", kind: "update", props: { itemSpacing: 12 } }],
@@ -112,9 +118,9 @@ describe("DesignApplyTool", () => {
     };
     const planner = {
       layersToRead: () => [],
-      plan: () => ({ changes: [copy], written: [copy], send: [], errors: [], notWritten: new Map() }),
+      plan: () => ({ changes: [copy], written: [copy], send: [copy], errors: [], notWritten: new Map() }),
     } as never;
-    const answer = await tool(planner).execute({ xml: "<Frame/>", dryRun: true });
+    const answer = await tool(planner, { run: async () => APPLIED }).execute({ xml: "<Frame/>", dryRun: true });
     const schema = zod.toJSONSchema(DesignApplyOutputSchema, { target: "draft-2020-12", io: "output" }) as {
       properties: Record<string, { items: { properties: Record<string, unknown> } }>;
     };
@@ -130,7 +136,7 @@ describe("DesignApplyTool", () => {
     }
   });
 
-  // T-142: one planner for dry and real runs: a real run is planned exactly as a dry one before it is refused.
+  // T-142: one planner for dry and real runs: a real run is planned exactly as a dry one.
   it("plans a real run as a dry one", async () => {
     const asked: unknown[] = [];
     const planner = {
@@ -143,14 +149,55 @@ describe("DesignApplyTool", () => {
     } as never;
 
     await tool(planner).execute({ xml: '<Text name="A">Hi</Text>', dryRun: true });
-    await expect(tool(planner).execute({ xml: '<Text name="A">Hi</Text>' })).rejects.toMatchObject({
-      code: ERROR_CODE.opFailed,
-    });
+    await tool(planner).execute({ xml: '<Text name="A">Hi</Text>' });
     expect(asked).toHaveLength(2);
     expect(asked[1]).toEqual(asked[0]);
   });
 
-  it("refuses a real run until the writing half lands", async () => {
-    await expect(tool(IDLE).execute({ xml: "<Frame/>" })).rejects.toMatchObject({ code: ERROR_CODE.opFailed });
+  // T-120, T-121: the changes go to the apply op with the parent; its errors join the call's in the XML's order.
+  it("writes the planned changes through the apply op and answers what it made", async () => {
+    const frame: ApplyChange = {
+      line: 2,
+      column: 1,
+      kind: "create",
+      ref: "new:2",
+      id: null,
+      tag: "Frame",
+      parent: null,
+      index: 0,
+      props: {},
+      sources: {},
+    };
+    const asked: unknown[] = [];
+    const planner = {
+      layersToRead: () => [],
+      plan: () => ({ changes: [frame], written: [frame], send: [frame], errors: [], notWritten: new Map() }),
+    } as never;
+    const session = {
+      run: async (_op: unknown, input: unknown) => {
+        asked.push(input);
+
+        return {
+          created: [{ line: 2, ref: "new:2", id: "9:2", tag: "Frame", name: "Frame" }],
+          changed: [],
+          errors: [{ line: 3, column: 1, message: "No layer 9:9 in this file." }],
+        };
+      },
+    };
+    const answer = await tool(planner, session).execute({ xml: '<Frame/>\n<Frame x="1"/>', parent: "9:1" });
+    const content = answer.structuredContent as DesignApplyOutput;
+
+    expect(asked).toEqual([{ changes: [frame], parent: "9:1", dryRun: false }]);
+    expect(content.created).toEqual([{ line: 2, ref: "new:2", id: "9:2", tag: "Frame", name: "Frame" }]);
+    expect(content.errors.map(({ line }) => line)).toEqual([2, 3]);
+    expect(content.dry).toBeUndefined();
+  });
+
+  // Nothing to write: no plugin write, no version, nothing created or changed.
+  it("answers at once when nothing writes", async () => {
+    const answer = await tool(IDLE).execute({ xml: "<Frame/>", version: "Before" });
+
+    expect(answer.structuredContent).toMatchObject({ created: [], changed: [], errors: [] });
+    expect(answer.structuredContent).not.toHaveProperty("version");
   });
 });
