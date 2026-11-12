@@ -99,7 +99,8 @@ jobs:
           if [ -n "$(npm view "pixelwright@$VERSION" version 2>/dev/null)" ]; then
             echo "pixelwright@$VERSION is on npm already"
           else
-            npm publish release/*.tgz --access public
+            # ./ makes it a file: npm 11 reads release/<name>.tgz as the GitHub repository release/<name>.tgz.
+            npm publish ./release/*.tgz --access public
           fi
       - name: GitHub release with the plugin zip, unless it exists
         env:

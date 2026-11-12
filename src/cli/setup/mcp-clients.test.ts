@@ -102,7 +102,7 @@ describe("McpClients", () => {
     const file = join(userHome, ".cursor", "mcp.json");
     const replace = async () => true;
 
-    expect(await clients.addToCursor(replace)).toMatch(/^Added pixelwright-new to Cursor/);
+    expect(await clients.addToCursor(replace)).toMatch(new RegExp(`^Added ${CHANNEL.name} to Cursor`));
     expect(JSON.parse(readFileSync(file, "utf8"))).toEqual({ mcpServers: { [CHANNEL.name]: ENTRY } });
     expect(await clients.addToCursor(replace)).toMatch(/already/);
 
@@ -156,7 +156,7 @@ describe("McpClients", () => {
     expect(await clients.addToCodex()).toBeNull();
     expect(none.calls).toEqual(["codex --version"]);
     expect(clients.codexBlock()).toBe(
-      '[mcp_servers.pixelwright-new]\ncommand = "npx"\nargs = ["-y", "pixelwright@latest"]\nstartup_timeout_sec = 60',
+      `[mcp_servers.${CHANNEL.name}]\ncommand = "npx"\nargs = ["-y", "pixelwright@latest"]\nstartup_timeout_sec = 60`,
     );
     expect(JSON.parse(clients.configBlock())).toEqual({ mcpServers: { [CHANNEL.name]: ENTRY } });
   });

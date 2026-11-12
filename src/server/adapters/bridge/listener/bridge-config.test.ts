@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { BridgeConfig } from "@/server/adapters/bridge/listener/bridge-config.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 
 const NOW = Date.parse("2026-10-28T12:00:00.000Z");
 
@@ -39,7 +40,12 @@ describe("BridgeConfig", () => {
 
     probe.config().ensure();
 
-    expect(first).toEqual({ version: 1, port: 18_721, token: expect.stringMatching(/^[\w-]{43}$/), pluginKeys: [] });
+    expect(first).toEqual({
+      version: 1,
+      port: CHANNEL.port,
+      token: expect.stringMatching(/^[\w-]{43}$/),
+      pluginKeys: [],
+    });
     expect(probe.json()).toEqual(first);
     expect(probe.mode()).toBe("600");
   });
@@ -65,7 +71,7 @@ describe("BridgeConfig", () => {
     const probe = new ConfigProbe();
     const newer = {
       version: 1,
-      port: 18_721,
+      port: CHANNEL.port,
       token: "t".repeat(43),
       pluginKeys: [
         { id: "a".repeat(16), secret: "b".repeat(64), createdAt: "2026-10-01T00:00:00.000Z", label: "Studio Mac" },
