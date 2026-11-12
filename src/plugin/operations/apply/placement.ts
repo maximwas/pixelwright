@@ -1,5 +1,6 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import { CAPABILITIES } from "@/plugin/adapters/figma/capabilities.ts";
+import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { PAGE_LOADER } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
@@ -16,10 +17,16 @@ import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 export class Placement {
   readonly #lookup;
   readonly #pages;
+  readonly #capabilities;
 
-  constructor(lookup = inject(NODE_LOOKUP), pages = inject(PAGE_LOADER)) {
+  constructor(
+    lookup = inject(NODE_LOOKUP),
+    pages = inject(PAGE_LOADER),
+    capabilities = inject(CAPABILITIES),
+  ) {
     this.#lookup = lookup;
     this.#pages = pages;
+    this.#capabilities = capabilities;
   }
 
   async whereTo(change: ApplyChangeData, call: ApplyCall): Promise<Place> {
@@ -57,6 +64,8 @@ export class Placement {
       ({ parent: holder, index } = await this.whereTo(change, call));
     }
 
+    this.#checkStandIn(change, call);
+
     // A layer this dry run would make stands in for its parent: it has no children to check.
     if ("id" in holder) {
       this.#checkHolder(holder, node);
@@ -69,6 +78,15 @@ export class Placement {
     // FX-061: Figma reads the index in the list as it is, the layer itself still in its place: the index of the layer
     // it goes before is the one to give, whichever way it moves.
     (holder as Holder).insertChild(index, node);
+  }
+
+  /** A dry run's stand-in parent (a layer it would make) refuses layers its type cannot hold, as the real one would. */
+  #checkStandIn(change: ApplyChangeData, call: ApplyCall): void {
+    const standIn = call.dry && change.parent !== null ? call.layers.get(change.parent) : undefined;
+
+    if (standIn !== undefined && !("id" in standIn) && !this.#capabilities.has(standIn, CAPABILITY.children)) {
+      throw new WriteError(APPLY_TEXT.holdsNoLayers(standIn.type.toLowerCase()));
+    }
   }
 
   #checkHolder(parent: BaseNode, node: SceneNode): void {

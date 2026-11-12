@@ -118,8 +118,10 @@ text.name = ${JSON.stringify(`${PREFIX}refused-text`)};
 return text.id;`)) as string;
     const missing = `<Rectangle id="${ids.a}" before="1:99999999"/>`;
     const intoText = `<Text id="${textId}"><Rectangle id="${ids.a}"/></Text>`;
+    // A holder the same call makes: the dry run's stand-in refuses as the made layer does.
+    const intoNewShape = `<Rectangle name="${PREFIX}refused-shape"><Rectangle id="${ids.a}"/></Rectangle>`;
 
-    for (const xml of [missing, intoText]) {
+    for (const xml of [missing, intoText, intoNewShape]) {
       const dry = await apply(xml, { dryRun: true });
       const real = await apply(xml);
 
