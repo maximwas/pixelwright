@@ -16,12 +16,15 @@ const BLEND_FIELDS = {
   mixBlendMode: zod.exactOptional(zod.string()).check(zod.describe(INSPECT_FIELD.mixBlendMode)),
 };
 
+/** A colour variable a paint is bound to, under its token: its value and its name in Figma. */
+const BoundPaintSchema = zod.object({ value: zod.string(), variable: zod.string() });
+
 const FillsViewSchema = zod.object({
   css: zod.string().check(zod.describe(INSPECT_FIELD.fillsCss)),
   style: zod
     .exactOptional(zod.object({ name: zod.string(), token: zod.string() }))
     .check(zod.describe(INSPECT_FIELD.fillsStyle)),
-  tokens: zod.exactOptional(zod.record(zod.string(), zod.string())).check(zod.describe(INSPECT_FIELD.fillsTokens)),
+  tokens: zod.exactOptional(zod.record(zod.string(), BoundPaintSchema)).check(zod.describe(INSPECT_FIELD.fillsTokens)),
   paints: zod.array(zod.object({ type: zod.string(), ...BLEND_FIELDS })).check(zod.describe(INSPECT_FIELD.fillsPaints)),
 });
 
@@ -60,9 +63,7 @@ const LayerViewSchema = zod.object({
   path: zod
     .exactOptional(zod.array(zod.object({ id: zod.string(), name: zod.string(), type: zod.string() })))
     .check(zod.describe(INSPECT_FIELD.path)),
-  page: zod
-    .exactOptional(zod.object({ id: zod.string(), name: zod.string() }))
-    .check(zod.describe(INSPECT_FIELD.page)),
+  page: zod.exactOptional(zod.object({ id: zod.string(), name: zod.string() })).check(zod.describe(INSPECT_FIELD.page)),
   distance: zod.exactOptional(zod.number()).check(zod.describe(INSPECT_FIELD.distance)),
   angle: zod.exactOptional(zod.number()).check(zod.describe(INSPECT_FIELD.angle)),
   paintedBox: zod.exactOptional(BoxSchema).check(zod.describe(INSPECT_FIELD.paintedBox)),
@@ -86,7 +87,7 @@ const LayerViewSchema = zod.object({
       dashes: zod.exactOptional(zod.array(zod.number())),
       colors: zod.array(zod.string()),
       tokens: zod
-        .exactOptional(zod.record(zod.string(), zod.string()))
+        .exactOptional(zod.record(zod.string(), BoundPaintSchema))
         .check(zod.describe(INSPECT_FIELD.strokesTokens)),
       includedInLayout: zod.exactOptional(zod.boolean()),
     }),
@@ -106,6 +107,7 @@ const LayerViewSchema = zod.object({
         zod.string(),
         zod.object({
           token: zod.string(),
+          variable: zod.string(),
           value: zod.exactOptional(zod.union([zod.number(), zod.string(), zod.boolean()])),
         }),
       ),

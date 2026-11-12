@@ -51,24 +51,24 @@ once; tools work on the one whose plugin window was in front last, or on the fil
 
 ## What it does
 
-| Tool | What it is for |
-| --- | --- |
-| `status` | The connected files, which one tools use, and what to do when none is |
-| `file_map`, `outline`, `nodes_find` | Every page with its frames and sections in one call; a frame's layer tree (instances name their component); layers by name, type, text, component or variant |
-| `selection_get`, `selection_wait`, `viewport_get`, `node_show` | What the user picked, or waiting for them to pick; what they are looking at; showing layers, fitted or at a zoom |
-| `changes_since` | What changed in the file since the plugin started watching, and by whom |
-| `design_read` | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files; the designer's Dev Mode notes and measurements; prototype interactions; what an instance changed; what is ready for dev |
-| `inspect`, `measure` | Layers as Figma has them, without code: layout and painted boxes, fills with their styles or variables, strokes, effects, a text's lines, overflow, interactions; the distances between layers |
-| `nodes_diff`, `variants_read`, `breakpoints_find` | How one layer differs from another (A/B variants); a component's states as differences from its default; a screen at its other widths |
-| `baseline_save`, `baseline_diff` | Keep a section as your code was built from it, in the project; later, what the designer changed since, in the XML's terms: layers, a component's change once, tokens in every mode |
-| `flow_read` | The prototype as screens and the links between them, for an app's routes |
-| `screenshot`, `image_compare`, `styles_compare` | A layer, or a region of it, as PNG; the same render compared with a PNG of your build; your build's computed styles against the design's, property by property |
-| `assets_export` | Icons and images as files, originals included |
-| `tokens_read`, `tokens_usage` | Variables with every mode, and styles, as token files; the layers a token is used on |
-| `components_read`, `library_search` | The components a page uses or the file defines, with variants and properties; components in your team's libraries |
-| `fonts_check` | The fonts a layer uses and where the build gets each |
-| `execute` | Plugin code the agent writes, for what no tool here shows; it reads too (see Safety) |
-| `guide` | What the agent reads before it starts: the workflow, the XML, tokens and assets |
+| Tool                                                           | What it is for                                                                                                                                                                                                                      |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `status`                                                       | The connected files, which one tools use, and what to do when none is                                                                                                                                                               |
+| `file_map`, `outline`, `nodes_find`                            | Every page with its frames and sections in one call; a frame's layer tree (instances name their component); layers by name, type, text, component or variant                                                                        |
+| `selection_get`, `selection_wait`, `viewport_get`, `node_show` | What the user picked, or waiting for them to pick; what they are looking at; showing layers, fitted or at a zoom                                                                                                                    |
+| `changes_since`                                                | What changed in the file since the plugin started watching, and by whom                                                                                                                                                             |
+| `design_read`                                                  | A section as XML: Figma's layer types as tags, CSS as attributes, tokens as `var(--Name)`, assets as files; the designer's Dev Mode notes and measurements; prototype interactions; what an instance changed; what is ready for dev |
+| `inspect`, `measure`                                           | Layers as Figma has them, without code: layout and painted boxes, fills with their styles or variables, strokes, effects, a text's lines, overflow, interactions; the distances between layers                                      |
+| `nodes_diff`, `variants_read`, `breakpoints_find`              | How one layer differs from another (A/B variants); a component's states as differences from its default; a screen at its other widths                                                                                               |
+| `baseline_save`, `baseline_diff`                               | Keep a section as your code was built from it, in the project; later, what the designer changed since, in the XML's terms: layers, a component's change once, tokens in every mode                                                  |
+| `flow_read`                                                    | The prototype as screens and the links between them, for an app's routes                                                                                                                                                            |
+| `screenshot`, `image_compare`, `styles_compare`                | A layer, or a region of it, as PNG; the same render compared with a PNG of your build; your build's computed styles against the design's, property by property                                                                      |
+| `assets_export`                                                | Icons and images as files, originals included                                                                                                                                                                                       |
+| `tokens_read`, `tokens_usage`                                  | Variables with every mode, and styles, as token files; the layers a token is used on                                                                                                                                                |
+| `components_read`, `library_search`                            | The components a page uses or the file defines, with variants and properties; components in your team's libraries                                                                                                                   |
+| `fonts_check`                                                  | The fonts a layer uses and where the build gets each                                                                                                                                                                                |
+| `execute`                                                      | Plugin code the agent writes, for what no tool here shows; it reads too (see Safety)                                                                                                                                                |
+| `guide`                                                        | What the agent reads before it starts: the workflow, the XML, tokens and assets                                                                                                                                                     |
 
 A read of the Pro card from Orbit, abridged:
 

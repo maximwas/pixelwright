@@ -1126,6 +1126,22 @@
                     "boolean"
                   ]
                 }
+              },
+              "component": {
+                "description": "An instance's main component by name, and its component set's name when it is a variant.",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "set": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -7148,7 +7164,7 @@
                 "maximum": 9007199254740991
               },
               "instanceNodes": {
-                "description": "With instances: the component's instances (a set's, of every variant), each with its page; 100 at most.",
+                "description": "With instances: the component's instances on a page (a set's, of every variant), each with its page; 100 at most.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -7160,10 +7176,7 @@
                       "type": "string"
                     },
                     "page": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                      "type": "string"
                     }
                   },
                   "required": [

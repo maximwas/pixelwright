@@ -141,10 +141,7 @@ describe("inspect", () => {
   it("gives a layer's path and the page it is on, and leaves both out for a layer at the page's top", () => {
     const page = { id: "0:1", name: "Pricing" };
     const [nested, top] = view.build(
-      raw([
-        layer({ path: [{ id: "2:9", name: "Card", type: "FRAME" }], page }),
-        layer({ id: "2:2", path: [], page }),
-      ]),
+      raw([layer({ path: [{ id: "2:9", name: "Card", type: "FRAME" }], page }), layer({ id: "2:2", path: [], page })]),
     ).layers;
 
     expect(nested?.path).toEqual([{ id: "2:9", name: "Card", type: "FRAME" }]);

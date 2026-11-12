@@ -28,7 +28,7 @@ export class FoundLayer {
       path: this.#path(node),
       ...(this.#walk.hidden(node) ? { hidden: true as const } : {}),
       ...(node.type === FIGMA_NODE_TYPE.text ? { ...this.#characters(node), fontSize: this.fontSize(node) } : {}),
-      ...(node.type === FIGMA_NODE_TYPE.instance ? await this.#changed(node, properties) : {}),
+      ...(node.type === FIGMA_NODE_TYPE.instance ? await this.#instance(node, properties) : {}),
     };
   }
 
@@ -46,12 +46,17 @@ export class FoundLayer {
       : [...new Set(node.getStyledTextSegments([...FIND_RUN.fontSize]).map(({ fontSize }) => fontSize))];
   }
 
-  /** The instance's properties that differ from its component's defaults, and with `properties` every value. */
-  async #changed(node: InstanceNode, properties: boolean): Promise<Pick<Found, "changed" | "properties">> {
+  /**
+   * The instance's component, and its set's name for a variant; its properties that differ from the component's
+   * defaults, and with `properties` every value.
+   */
+  async #instance(node: InstanceNode,    properties: boolean): Promise<Pick<Found, "component" | "changed" | "properties">> {
     const main = await node.getMainComponentAsync();
     const changed = main === null ? {} : this.#properties.changed(node, main);
+    const set = main?.parent?.type === FIGMA_NODE_TYPE.componentSet ? main.parent : null;
 
     return {
+      ...(main === null ? {} : { component: { name: main.name, ...(set === null ? {} : { set: set.name }) } }),
       ...(Object.keys(changed).length === 0 ? {} : { changed }),
       ...(properties ? { properties: this.#properties.values(node) } : {}),
     };
