@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient, type ToolResult } from "../support/live-client.ts";
 import { until } from "../support/until.ts";
@@ -36,6 +39,18 @@ return rectangle.id;`);
     const read = await run(`return (await pw.node(${JSON.stringify(made.result)})).name;`);
 
     expect(read).toEqual({ result: NAME.rectangle, logs: [], note: expect.stringContaining("This code only reads") });
+  });
+
+  it("runs the code of the file codePath names, read at the call (T-151)", async () => {
+    const path = join(mkdtempSync(join(tmpdir(), "pixelwright-code-path-")), "page-type.js");
+
+    writeFileSync(path, "return figma.currentPage.type;");
+
+    expect(await client.call("execute", { file, codePath: path })).toEqual({
+      result: "PAGE",
+      logs: [],
+      note: expect.stringContaining("This code only reads"),
+    });
   });
 
   it("prints console.log(undefined) as undefined and reports a thrown {message} by its message (D-68)", async () => {

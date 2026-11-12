@@ -64,7 +64,8 @@ export class McpEndpoint {
     };
 
     server.registerTool(name, config, async (args, context) => {
-      const answer = await this.#runner.run({ manifest, args, signal: context.mcpReq.signal });
+      // value is what a script gets in place of structuredContent: never the client's.
+      const { value: _value, ...answer } = await this.#runner.run({ manifest, args, signal: context.mcpReq.signal });
 
       return { ...answer, content: [...answer.content] };
     });

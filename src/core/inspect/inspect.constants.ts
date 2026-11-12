@@ -61,7 +61,7 @@ export const TEXT_BREAKS: Readonly<Record<string, (typeof TEXT_BREAK)[keyof type
 export const INSPECT_GROUP_KEYS: Readonly<Record<string, readonly string[]>> = {
   box: ["box", "center", "distance", "angle", "paintedBox", "rotation", "overflow"],
   parent: ["parent"],
-  path: ["path"],
+  path: ["path", "page"],
   fills: ["blendMode", "mixBlendMode", "fills"],
   strokes: ["strokes"],
   effects: ["effects"],
@@ -78,7 +78,8 @@ export const INSPECT_ALWAYS = ["id", "name", "type"] as const;
 export const INSPECT_FIELD = {
   more: "A subtree read listed more layers than the 100 read: the ids not read are in leftIds; inspect them next.",
   leftIds: "The ids of the layers a subtree read did not read, up to 500, as far as the scan reached.",
-  path: "The layer's ancestors below its page, outermost first, by id, name and type.",
+  path: "The layer's ancestors below its page, outermost first, by id, name and type; the page it is on is in page.",
+  page: "The page the layer is on, by id and name.",
   parentLayout:
     "For a layer inside auto layout or a grid: its parent's layout as the layout field gives it (display, flex-direction, gap, padding…), so sizing in a flow reads in one answer.",
   segments:

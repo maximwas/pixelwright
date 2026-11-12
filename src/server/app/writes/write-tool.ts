@@ -1,6 +1,6 @@
 import { inject } from "@needle-di/core";
 import { PLUGIN_SESSION, type PluginSession } from "@/server/app/sessions/plugin-session.ts";
-import { SUPPORT_NOTE } from "@/server/app/stores/support-note.ts";
+import { SUPPORT_NOTE, type SupportNote } from "@/server/app/stores/support-note.ts";
 import { Tool, type ToolOutput } from "@/server/app/tool-runner/tool.ts";
 import { VERSIONED_WRITE } from "@/server/app/writes/versioned-write.ts";
 import type { WriterOutput } from "@/server/app/writes/writes.schema.ts";
@@ -30,7 +30,8 @@ export abstract class WriteTool<Input extends WriterInput, Prepared, Result, Out
   constructor(
     session = inject(PLUGIN_SESSION),
     versioned = inject(VERSIONED_WRITE),
-    support = inject(SUPPORT_NOTE),
+    // null for a writer that never counts a change (execute): it has no support sentence to give.
+    support: SupportNote | null = inject(SUPPORT_NOTE),
   ) {
     super();
     this.session = session;
@@ -51,7 +52,7 @@ export abstract class WriteTool<Input extends WriterInput, Prepared, Result, Out
       { title: input.version, dryRun: input.dryRun ?? false, probe: this.op.declared.dryRun },
       { write: (dry) => this.write(prepared, dry), changes: (result) => this.changes(result) },
     );
-    const support = !written.dry && this.changes(written.result) > 0 ? this.#support.due() : null;
+    const support = !written.dry && this.changes(written.result) > 0 ? (this.#support?.due() ?? null) : null;
     const fields: WriterOutput = {
       ...(written.dry ? { dry: true } : {}),
       ...(written.version === undefined ? {} : { version: written.version }),

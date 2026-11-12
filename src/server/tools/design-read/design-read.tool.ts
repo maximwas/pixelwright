@@ -1,5 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { DESIGN_READER, type DesignAnswer } from "@/core/design/design-reader.ts";
+import type { XmlElement } from "@/core/xml/xml.types.ts";
 import type { AssetError } from "@/server/app/assets/assets.types.ts";
 import type { Shot } from "@/server/app/renders/shot.ts";
 import { SELECTED_LAYER } from "@/server/app/scope/selected-layer.ts";
@@ -25,6 +26,17 @@ type DesignReadOutput = {
     readonly nearby?: NearbyNotesOutput;
   };
   readonly shot?: Shot;
+  /** The tree the XML was written from, for code (Code Mode). */
+  readonly tree: XmlElement | null;
+};
+
+/** An element of the XML as code reads it: attributes by name, a Text's content as its text. */
+type DesignElement = {
+  readonly id: string;
+  readonly tag: string;
+  readonly attributes: Readonly<Record<string, string>>;
+  readonly text?: string;
+  readonly children: readonly DesignElement[];
 };
 
 /**
@@ -72,7 +84,10 @@ export class DesignReadTool extends Tool<DesignReadInput, DesignReadOutput> {
 
     const model = this.#extras.model(read, autoLineHeight);
     const assets = await this.#extras.assets(this.#session, model, assetsDir);
-    const { xml, ...json } = this.#reader.read(model, { maxChars, repeats, assets: assets.plan });
+    const {
+      answer: { xml, ...json },
+      tree,
+    } = this.#reader.built(model, { maxChars, repeats, assets: assets.plan });
     const notes = nearby === undefined ? null : await this.#extras.nearby(this.#session, id, nearby);
     const shot = screenshot ? await this.#extras.screenshot(this.#session, id) : null;
 
@@ -87,17 +102,38 @@ export class DesignReadTool extends Tool<DesignReadInput, DesignReadOutput> {
         ...(notes === null ? {} : { nearby: notes }),
       },
       ...(shot === null ? {} : { shot }),
+      tree,
     };
   }
 
-  /** Two text blocks and no structuredContent (T-005, FX-067): the XML, then the JSON; then the image and its line. */
-  protected override answer({ xml, json, shot }: DesignReadOutput): ToolAnswer {
+  /**
+   * Two text blocks and no structuredContent (T-005, FX-067): the XML, then the JSON; then the image and its line. Code
+   * gets the XML, the JSON and the tree as its value (Code Mode, decision 2).
+   */
+  protected override answer({ xml, json, shot, tree }: DesignReadOutput): ToolAnswer {
     return {
       content: [
         { type: TOOL_CONTENT_TYPE.text, text: xml },
         { type: TOOL_CONTENT_TYPE.text, text: JSON.stringify(json) },
         ...(shot === undefined ? [] : shot.blocks()),
       ],
+      value: { xml, json, tree: this.#element(tree) },
+    };
+  }
+
+  #element(element: XmlElement | null): DesignElement | null {
+    if (element === null) {
+      return null;
+    }
+
+    const text = element.content?.map(({ value }) => value).join("");
+
+    return {
+      id: element.id,
+      tag: element.tag,
+      attributes: Object.fromEntries(element.attributes),
+      ...(text === undefined ? {} : { text }),
+      children: element.children.flatMap((child) => this.#element(child) ?? []),
     };
   }
 }

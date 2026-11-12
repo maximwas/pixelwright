@@ -943,16 +943,18 @@
   {
     "name": "nodes_find",
     "title": "Find layers",
-    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance's component or component set name), componentId (an instance's component, or any variant of a component set, by id) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes, a text's characters (its first 200, cut: true past them), and its ancestors' ids, names and types in `path` (within \"file\" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults; properties: true gives every property's value), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {\"gte\": 12, \"lt\": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields [\"fontSize\"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code.",
+    "description": "Finds layers on the current page, or inside `within` (a layer, a page, or \"file\" for every page), by name (substring), type (FRAME, TEXT, INSTANCE…), text content (a substring, or a list of them: any matches; textRegex: a JavaScript regular expression, any case), component (an instance's component or component set name), componentId (an instance's component, or any variant of a component set, by id) or variant (an instance's variant values, \"State=Hover, Size=L\"). Returns ids, names, types, boxes, a text's characters (its first 200, cut: true past them), and its ancestors' ids, names and types in `path` (within \"file\" also its `page`), with hidden: true on a layer a viewer does not see (visible: true or false keeps only shown or hidden ones), a text's fontSize (its distinct sizes when mixed) and an instance's changed properties (those differing from its component's defaults; properties: true gives every property's value, variant values included), fontSize (lt, lte, gt and gte keep texts with a size under, up to, over or from that many px: {\"gte\": 12, \"lt\": 16} keeps 12 up to under 16), and `fields` keeps only the named fields of each layer (id, name and type stay: fields [\"fontSize\"] drops box and path), at most `limit` (more: true when there were more). Combine criteria to narrow down. counts: true also counts every instance found, past the limit, by component and variant: before deleting variants, which ones layers still use, without code. An absent field is at its default (no hidden is visible; no changed means no changed properties, or the component's defaults could not be read) and the answer is complete unless `more` is true or a note says the scan stopped.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "name": {
+          "description": "Layers whose name contains this, in any case.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
         },
         "type": {
+          "description": "Layers of this Figma type, e.g. FRAME, TEXT, INSTANCE, COMPONENT, RECTANGLE.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
@@ -1003,6 +1005,7 @@
           "additionalProperties": false
         },
         "component": {
+          "description": "Instances whose component or set name contains this, at any depth, inside other instances too; each comes with `changed`, the properties it sets away from the component's defaults.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
@@ -1014,7 +1017,7 @@
           "maxLength": 200
         },
         "properties": {
-          "description": "Also give every component property's value on each instance found.",
+          "description": "Also give every component property's value on each instance found, by name; a variant property's value is among them (State: \"Hover\"), so the variant of each instance needs no other call.",
           "type": "boolean"
         },
         "variant": {
@@ -1028,7 +1031,7 @@
           "type": "boolean"
         },
         "visible": {
-          "description": "true: only layers a viewer sees (the layer and every ancestor visible); false: only hidden ones. Default: both.",
+          "description": "true: only layers a viewer sees (the layer and every ancestor visible); false: only hidden ones: within a component's id, its hidden layers and those under a hidden one. Default: both.",
           "type": "boolean"
         },
         "within": {
@@ -1047,6 +1050,7 @@
         },
         "limit": {
           "default": 50,
+          "description": "At most this many layers listed; more: true when there were more. counts still counts them all.",
           "type": "integer",
           "minimum": 1,
           "maximum": 500
@@ -1165,7 +1169,7 @@
                 "const": true
               },
               "properties": {
-                "description": "With properties: every component property's value on the instance, by name.",
+                "description": "With properties: every component property's value on the instance, by name; variant properties too.",
                 "type": "object",
                 "propertyNames": {
                   "type": "string"
@@ -1628,7 +1632,7 @@
   {
     "name": "inspect",
     "title": "Inspect layers",
-    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off): the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill with CSS's mix-blend-mode name, the fill as a CSS value with the paint style or variables behind it (what a var() in design_read resolves to) and every fill's type (a video's too), its auto layout or grid as layout: design_read's CSS longhands with px numbers (padding-top, gap, row-gap…), the variables bound to its padding, gap, radius and size by the token design_read writes, how strokes paint (align, per-side weights, dashes, whether auto layout counts them, the variables their colours are bound to), every effect with Figma's own parameters (a progressive blur's start and end, noise, texture), a text's lines with what ended each (Enter or Shift+Enter) and its line heights (px, auto, percent), how far a layer overflows its parent, its prototype interactions (trigger, destination, transition, duration, easing), its component's variant and every component property with its value and the component's default, a text that mixes styles run by run (segments: range, font, size, decoration, fill), for a layer in auto layout or a grid its parent's layout (parentLayout) and its ancestors by id (path). within reads a whole subtree in one call (depth levels, fields to keep only some groups: the auto layout frames of a frame with fields [\"layout\"]); nested instance ids such as I54:244;54:205;54:188 work as nodes. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them, more and leftIds a subtree's.",
+    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off). Recipes: fills, strokes and bound variables of every layer under a card: within + fields [\"fills\",\"strokes\",\"bound\"]; a layer's and its parent's auto layout (padding, gap, direction): fields [\"layout\"] gives layout and parentLayout; a mixed text's runs: fields [\"text\"] gives segments; how far a layer overflows its parent, and its boxes: fields [\"box\"]; its ancestors by id and its page: fields [\"path\"]. An absent field is at its default (no padding key is 0, as padding is always listed; no gap key means no gap shown, which includes a spread layout, one visible child or a negative gap; no flex-direction is row; no overflow is none, absolute-positioned layers excepted) and the answer is complete unless `more` is true or a note says the scan stopped. inspect does not say whether a layer is hidden: use nodes_find with visible: false. Also: the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill, the fill as a CSS value with the paint style or variables behind it and every fill's type, the variables bound to its padding, gap, radius and size, how strokes paint (align, per-side weights, dashes, the variables their colours are bound to), every effect with Figma's own parameters, a text's lines with what ended each (Enter or Shift+Enter) and its line heights, its prototype interactions, its component's variant and every component property with its value and the component's default. within reads a whole subtree in one call (depth levels); nested instance ids such as I54:244;54:205;54:188 work as nodes. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them, more and leftIds a subtree's.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1656,7 +1660,7 @@
           "maximum": 9007199254740991
         },
         "fields": {
-          "description": "Only these groups of each layer, besides id, name and type: box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields [\"layout\"] lists the auto layout and grid frames of a subtree. box (with center) and parent come only when asked: fields [\"layout\", \"box\"].",
+          "description": "Only these groups of each layer, besides id, name and type (without fields every group comes): box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields [\"layout\"] lists the auto layout and grid frames of a subtree. layout also gives parentLayout (the parent layout), text gives segments (the runs of a mixed text), box gives center, paintedBox, rotation and overflow, path gives page. box (with center) and parent come only when asked: fields [\"layout\", \"box\"].",
           "minItems": 1,
           "type": "array",
           "items": {
@@ -1826,7 +1830,7 @@
                 "description": "The box's centre, in the box's origin; for a turned layer its own centre too, as the box bounds the turned layer."
               },
               "path": {
-                "description": "The layer's ancestors below its page, outermost first, by id, name and type.",
+                "description": "The layer's ancestors below its page, outermost first, by id, name and type; the page it is on is in page.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -1848,6 +1852,23 @@
                   ],
                   "additionalProperties": false
                 }
+              },
+              "page": {
+                "description": "The page the layer is on, by id and name.",
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
               },
               "distance": {
                 "description": "With around: how far the layer's centre lies from that point, in px.",
@@ -5432,7 +5453,7 @@
   {
     "name": "tokens_usage",
     "title": "Where a token is used",
-    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. raw: true in place of token lists the colours bound to no style and no variable (fills, strokes, text runs, effects, gradient stops), each as #RRGGBB with its count and layers, most used first. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.",
+    "description": "The layers on the current page (or inside within, or on every page with within: \"file\") that use a style or variable, named by its token as design_read and tokens_read write it (--White-2 is the second style named White, --h1-font a text style), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to tell same-named styles apart or to see what a change to a token would touch. raw: true in place of token lists the colours bound to no style and no variable (fills, strokes, text runs, effects, gradient stops), each as #RRGGBB with its count and layers, most used first; under within it is complete when `more` is not true and there is no cut note (500 layer uses at most); paints with opacity 0 or hidden are not counted. At most 500 layers come back (more says there are others); the scan stops at budgetMs with what it found and a note.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5443,7 +5464,7 @@
           "maxLength": 300
         },
         "raw": {
-          "description": "true: list the colours bound to no style and no variable instead of a token's layers.",
+          "description": "true: list the colours bound to no style and no variable (fills with gradient stops, strokes, a mixed text's runs, effect colours) instead of a token's layers. Under within, complete when `more` is not true and there is no cut note (500 layer uses at most); paints with opacity 0 or hidden are not counted.",
           "type": "boolean",
           "const": true
         },
@@ -5945,25 +5966,30 @@
   {
     "name": "execute",
     "title": "Run plugin code",
-    "description": "Runs JavaScript in the Pixelwright plugin to read the file, for what the read tools do not show: the code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep a long script in a file and pass its path as script: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. The reads answer what code is most often written for: layers by text (a list, or textRegex), size, visibility, component and the properties instances change, with their ancestors and page (nodes_find, outline, file_map, components_read); a whole subtree with its auto layout gaps and paddings, parent layout, text runs and component properties (inspect within and fields); a token by name with its id and alias chain (tokens_read query); colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off; code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
+    "description": "Runs JavaScript to read the file, given one of three: `code`, Plugin API code run in the Pixelwright plugin, for what the read tools do not show; `codePath`, the path of a file of such code; `script`, code run on the server where pw.<read>(args) calls a read tool by its camelCase name with its own arguments (pw.nodesFind, pw.inspect, pw.designRead; not screenshot, node_show or selection_wait: a script cannot show an image or act on the user's view, so call screenshot yourself) and utils helps filter and join their answers, for one answer that needs several reads filtered or joined: a script never writes, and reading a key its answer type lacks throws (types_read gives each read's answer type before you write a script; guide script has the limits and utils). Plugin code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep long plugin code in a file and pass its path as codePath: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. The reads answer what code is most often written for: layers by text (a list, or textRegex), size, visibility, component and the properties instances change, with their ancestors and page (nodes_find, outline, file_map, components_read); a whole subtree with its auto layout gaps and paddings, parent layout, text runs and component properties (inspect within and fields); a token by name with its id and alias chain (tokens_read query); colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off, and their answers come from the same Plugin API, so do not re-check a read's answer with code (an absent field is its default, as each read's description says); code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "code": {
-          "description": "JavaScript run as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give code or script.",
+          "description": "JavaScript run in the plugin as the body of an async function with `figma` (the Plugin API) and `console`: `await` works, `return` gives the result. Give one of code, codePath or script.",
           "type": "string",
           "minLength": 1,
           "maxLength": 100000
         },
-        "script": {
+        "codePath": {
           "description": "A file of such code on the server's disk, run instead of code. It is read at every call, so the file as it is now runs, after a plugin restart too. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
           "type": "string",
           "minLength": 1,
           "maxLength": 1024
         },
+        "script": {
+          "description": "JavaScript run on the server, apart from Figma, as the body of an async function given pw (each read tool by its camelCase name: await pw.nodesFind({ ... })), utils and console: `return` gives the result, cut past 24000 characters. At most 50 pw calls a run, 4 at once; nothing in it writes, and it cannot show an image (no pw.screenshot): call screenshot yourself.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100000
+        },
         "timeout": {
-          "default": 10,
-          "description": "Seconds to wait for the code: 10 by default, up to 300 for a long task.",
+          "description": "Seconds to wait: 10 by default for code and 30 for a script, up to 300 for a long task.",
           "type": "number",
           "minimum": 1,
           "maximum": 300
@@ -6001,6 +6027,55 @@
           "description": "When the code ran and only reads (nothing in it writes): the tools that read without code.",
           "type": "string"
         },
+        "calls": {
+          "description": "A script's pw calls that succeeded, by function.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "clamped": {
+          "description": "A script's numbers past their bound, and the bound each call ran with.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "call": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "given": {
+                "type": "number"
+              },
+              "used": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "call",
+              "path",
+              "given",
+              "used"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "resultChars": {
+          "description": "The script's result's characters before it was cut to fit.",
+          "type": "number"
+        },
+        "notShown": {
+          "description": "Image handles the script returned past the ones shown after the answer.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "version": {
           "description": "The version saved in the file's history before the write; id null when Figma gave none.",
           "type": "object",
@@ -6033,6 +6108,79 @@
       "readOnlyHint": false,
       "destructiveHint": true,
       "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "types_read",
+    "title": "Read answer types",
+    "description": "Gives the whole answer type of each named read as TypeScript, every field at every level with its comment, from the tool's own output schema: read it before an execute script uses an answer, since a script that reads a key the type lacks throws. Name a tool as this list does (nodes_find) or as a script calls it (nodesFind, pw.nodesFind); names that are no read come back in unknown.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tools": {
+          "minItems": 1,
+          "maxItems": 40,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": "The reads to describe, e.g. nodes_find, inspect, design_read."
+        }
+      },
+      "required": [
+        "tools"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "types": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string"
+              },
+              "call": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "tool",
+              "call",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          "description": "One per read named, in the order asked: its tool's name, how a script calls it, and its answer type."
+        },
+        "unknown": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The names asked that are no read a script can call."
+        }
+      },
+      "required": [
+        "types",
+        "unknown"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "idempotentHint": true,
       "openWorldHint": false
     }
   },
@@ -8353,7 +8501,7 @@
   {
     "name": "components_read",
     "title": "Read the components",
-    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, and for a VARIANT property its options: the values it can take), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `instances: true` lists its instances in `instanceNodes` {id, name, page} (100 at most, instanceNodesMore past them; for the first 25 components listed only, the rest carry instanceNodesSkipped); `references: true` lists per property the layers bound to it {id, name, field}. `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
+    "description": "Lists components: scope used (default) gives the ones the instances on the current page, or inside `within`, come from (a library's among them, with how many instances use each); scope local gives every component defined in the file. Each comes with its key, variants, properties (type, default, and for a VARIANT property its options: the values it can take), description and `exposed` (the nested instances whose properties its instances show: in code they are its props too). `instances: true` lists its instances in `instanceNodes` {id, name, page} (100 at most, instanceNodesMore past them; for the first 25 components listed only, the rest carry instanceNodesSkipped); `references: true` lists per property the layers bound to it {id, name, field}: the layers inside the component, nested instances' contents included, bound to this component's own properties; a component Figma cannot read the properties of lists none. It says nothing about visibility: hidden layers are nodes_find with visible: false. `links: true` also reads the links people attached to it in Dev Mode (code, stories, docs), on Figma plans that keep them; a link to a GitHub, GitLab or Bitbucket file, or a vscode://file link, names the project file it points at in `path`. A big section lists long: `fields` keeps only the ones named, so scope local with query \"icon/\" and fields [\"name\"] lists the icon sets by name.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -8421,7 +8569,7 @@
           "type": "boolean"
         },
         "references": {
-          "description": "Also list, per property, the layers inside the component bound to it and the field each binds (visible, characters, mainComponent).",
+          "description": "Also list, per property, the layers inside the component bound to it and the field each binds (visible, characters, mainComponent). The layers inside the component, nested instances' contents included, bound to this component's own properties; a component Figma cannot read the properties of lists none.",
           "type": "boolean"
         },
         "file": {
@@ -9333,7 +9481,7 @@
   {
     "name": "guide",
     "title": "Pixelwright guide",
-    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named and read: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).). Read workflow first in a new task, and xml before building from design_read.",
+    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named and read: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).); script (An execute script over the reads: its limits, its utils, images and the answer types it reads by.). Read workflow first in a new task, and xml before building from design_read.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -9344,7 +9492,8 @@
             "workflow",
             "xml",
             "tokens",
-            "assets"
+            "assets",
+            "script"
           ]
         }
       },

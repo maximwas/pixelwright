@@ -33,7 +33,7 @@ export const FIND_FIELD = {
   page: 'Within "file": the page the layer is on.',
   characters: "A text's characters, its first 200.",
   cut: "The text has more than the 200 characters given.",
-  properties: "With properties: every component property's value on the instance, by name.",
+  properties: "With properties: every component property's value on the instance, by name; variant properties too.",
   changed:
     "An instance's component properties whose value differs from the component's default, by name: what this copy changes.",
 } as const;

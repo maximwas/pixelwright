@@ -1,23 +1,24 @@
 import * as zod from "zod/mini";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import { WRITER_OUTPUT } from "@/server/app/writes/writes.schema.ts";
-import { EXECUTE_FIELD, EXECUTE_SCRIPT, EXECUTE_SECONDS } from "@/server/tools/execute/execute.constants.ts";
+import { EXECUTE_CODE_PATH, EXECUTE_FIELD, EXECUTE_SECONDS } from "@/server/tools/execute/execute.constants.ts";
 import { EXECUTE } from "@/shared/ops/execute/execute.constants.ts";
 import { executeOp } from "@/shared/ops/execute/execute.manifest.ts";
 import { SAVE_VERSION } from "@/shared/ops/save-version/save-version.constants.ts";
 
+/** One of code, codePath and script (the tool refuses none or two), a version only with plugin code; timeout's default depends on which. */
 export const ExecuteInputSchema = zod.strictObject({
   code: zod
     .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(EXECUTE.codeChars)))
     .check(zod.describe(EXECUTE_FIELD.code)),
+  codePath: zod
+    .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(EXECUTE_CODE_PATH.pathChars)))
+    .check(zod.describe(EXECUTE_FIELD.codePath)),
   script: zod
-    .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(EXECUTE_SCRIPT.pathChars)))
+    .exactOptional(zod.string().check(zod.minLength(1), zod.maxLength(EXECUTE.codeChars)))
     .check(zod.describe(EXECUTE_FIELD.script)),
   timeout: zod
-    ._default(
-      zod.number().check(zod.minimum(EXECUTE_SECONDS.min), zod.maximum(EXECUTE_SECONDS.max)),
-      EXECUTE_SECONDS.default,
-    )
+    .exactOptional(zod.number().check(zod.minimum(EXECUTE_SECONDS.min), zod.maximum(EXECUTE_SECONDS.max)))
     .check(zod.describe(EXECUTE_FIELD.timeout)),
   version: zod.exactOptional(
     zod.string().check(zod.minLength(1), zod.maxLength(SAVE_VERSION.titleChars), zod.describe(EXECUTE_FIELD.version)),
@@ -25,9 +26,15 @@ export const ExecuteInputSchema = zod.strictObject({
   file: FileInputSchema,
 });
 
-/** The op's answer and, when the code ran and nothing in it writes, the note (T-153). */
+const ClampSchema = zod.object({ call: zod.string(), path: zod.string(), given: zod.number(), used: zod.number() });
+
+/** The op's answer and, when the code ran and nothing in it writes, the note (T-153); a script's calls and cuts. */
 export const ExecuteOutputSchema = zod.extend(executeOp.output, {
   note: zod.exactOptional(zod.string()).check(zod.describe(EXECUTE_FIELD.note)),
+  calls: zod.exactOptional(zod.record(zod.string(), zod.number())).check(zod.describe(EXECUTE_FIELD.calls)),
+  clamped: zod.exactOptional(zod.array(ClampSchema)).check(zod.describe(EXECUTE_FIELD.clamped)),
+  resultChars: zod.exactOptional(zod.number()).check(zod.describe(EXECUTE_FIELD.resultChars)),
+  notShown: zod.exactOptional(zod.array(zod.string())).check(zod.describe(EXECUTE_FIELD.notShown)),
   version: WRITER_OUTPUT.version,
 });
 

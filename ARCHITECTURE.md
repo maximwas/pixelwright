@@ -186,7 +186,7 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     the page its read names,
     the variables op's tokens its aliases reach), for baseline_save and baseline_diff both.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
-  `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn); `inspect/` and `measure/` read through the inspect op (an
+  `SyntaxCheck` (node:vm), `ReadsOnlyCheck` (acorn) and `ServerCode` (a codePath file, a script's run); `inspect/` and `measure/` read through the inspect op (an
   `around` layer is a second inspect of it in the same origin; a selection past 100 is cut and counted in `left`).
   `nodes-diff/` reads both layers with one read op and cuts each list to 200; `variants-read/` finds the set with the
   set_of op and reads it whole; `breakpoints-find/` scores the screens op's answer; `flow-read/` also holds
@@ -282,6 +282,24 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 `test/` holds the contract, golden, guard and live tests; `scripts/` the build, install and name checks, `check-pack.ts` (the tarball installed and run in a temp folder) and `build-docs.ts` (the site in `docs/` from README, the manifests, the guide topics and CHANGELOG.md); `old/` the
 0.7.0 source, kept for reference and imported by nothing.
 
+### The script sandbox (execute script)
+
+`execute { script }` runs model-written JavaScript on the server, never in Figma: `ExecuteTool` (a `WriteTool` that
+answers a script in `answerNow`, so a script never saves a version and a `version` with it is refused) hands it through `ServerCode` to
+`server/app/code-mode/CodeRunner` (deadline, cancel, the result cut by `ResultCut`, the images named after the answer),
+which runs it through the `CodeSandbox` port (`core/ports/code-sandbox.port.ts`); the adapter is
+`server/adapters/sandbox/QuickJsSandbox` (quickjs-emscripten-core with the quickjs-ng WASM build: a fresh runtime per
+run, 64 MB, 256 KB stack, 1 s CPU slices). In the run, `pw.<read>(args)` crosses back to the host as plain JSON:
+`RunCalls` (50 calls, 4 at once) and `PwBridge` parse the args with the tool's own input schema and run the tool
+through `ToolRunner` like any MCP call; `ToolAnswer.value` is what a script gets in place of structuredContent
+(design_read's xml, json and tree), and `McpEndpoint` strips it from client answers. The prelude
+(`sandbox.constants.ts`) wraps each answer in a Proxy by its `AnswerShape`, which `AnswerShapes` derives from the
+tool's outputSchema: an unknown key throws with the fields there are. `utils` is `sandbox/guest/pw-utils.ts`, bundled
+by `pnpm build:pw` into `sandbox/data/pw-utils.json`; the same script writes `types_read`'s answer types
+(`tools/types-read/data/answer-types.json`) from the outputSchemas with json-schema-to-typescript. `PW_TOOLS`
+(`ToolCatalog.reads()`, camelCase names) is bound in `server/main/code-mode-providers.ts`. The plugin is not involved
+beyond the reads' own ops.
+
 ## Invariants
 
 - Imports go one way: `shared` imports nothing from `src`; `core` imports `shared`; `server/app` imports `core` and
@@ -317,7 +335,7 @@ journal), `WatchdogStep` (TIMEOUT at the op's timeout; the window shows the op b
 `ContainerOperationFactory` builds the op in a child container; `Operation.run` calls the op's `execute` and wraps what
 it returns or throws in the envelope through `OpReport`. The envelope goes back the same way.
 
-**Runs code.** `ExecuteTool` reads `script` through `ProjectFolder` at every call, refuses code that does not parse
+**Runs code.** `ExecuteTool` reads `codePath` through `ServerCode` and `ProjectFolder` at every call, refuses code that does not parse
 (`SyntaxCheck`), and runs the execute op; the op's meta makes every deadline max(30 s, timeout + 5 s). In the plugin,
 `ExecuteOperation` runs the code as an async function of `CodeFigma`'s figma proxy, `CodeConsole` and `CodeScope`'s pw,
 answers at the code's own timeout while the code runs on. `CodeRuns` keeps `ChangeJournal`'s execute window open until

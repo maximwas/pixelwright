@@ -75,6 +75,11 @@ export interface ToolAnswer {
   readonly content: readonly ToolContent[];
   readonly structuredContent?: Readonly<Record<string, unknown>>;
   readonly isError?: boolean;
+  /**
+   * What code gets from the call in place of structuredContent, for a tool that answers in text blocks (design_read
+   * with its tree, decision 2 of Code Mode); never sent to an MCP client.
+   */
+  readonly value?: Readonly<Record<string, unknown>>;
 }
 
 /** One block of an answer: a text, or an image as base64 with its MIME type (screenshot, design_read, T-005). */
