@@ -1,4 +1,5 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { PAINTS_TEXT } from "@/plugin/adapters/figma/figma.constants.ts";
 import { PAINTS } from "@/plugin/adapters/figma/paints.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { TOKEN_KIND } from "@/plugin/operations/apply/apply.constants.ts";
@@ -28,6 +29,10 @@ export class PaintWrite {
   }
 
   async check(specs: readonly PaintSpec[]): Promise<void> {
+    if (specs.some(({ kind }) => kind === INTENT_PAINT.image)) {
+      throw new WriteError(PAINTS_TEXT.image);
+    }
+
     if ((await this.#style(specs)) !== null) {
       return;
     }
