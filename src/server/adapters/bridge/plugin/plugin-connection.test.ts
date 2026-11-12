@@ -8,6 +8,7 @@ import { PluginConnection } from "@/server/adapters/bridge/plugin/plugin-connect
 import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { MemorySocket } from "@/shared/protocol/memory-socket.ts";
 import { Proof } from "@/shared/protocol/proof.ts";
 
@@ -149,7 +150,7 @@ describe("PluginConnection, a paired plugin", () => {
       type: "hello_ack",
       protocol: 6,
       sessionId: expect.any(String),
-      server: { name: "pixelwright-new", version: expect.any(String) },
+      server: { name: CHANNEL.name, version: expect.any(String) },
     });
     expect(probe.sessions.files()).toMatchObject([{ name: "File of window-a", active: true }]);
   });

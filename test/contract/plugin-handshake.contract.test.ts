@@ -7,6 +7,7 @@ import { WebSocket } from "ws";
 import * as zod from "zod/mini";
 import { ServerMain } from "@/server/main/server.main.ts";
 import { type StatusOutput, StatusOutputSchema } from "@/server/tools/status/status.schema.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 import { Proof } from "@/shared/protocol/proof.ts";
 
 /** Frames 0.7.0 sends, recorded from its own code, as the exact bytes on the wire. */
@@ -138,7 +139,7 @@ describe("the plugin handshake through the composition root, with 0.7.0's record
 
     expect(await window.closed).toEqual({ code: 4426, reason: RECORDING.versionMismatchReason });
     expect((await server.status()).hint).toBe(
-      "The Pixelwright New plugin 0.7.0 that tried to connect is older than this server (protocol 5; this server speaks 6), so it was turned away: ask the user to install the plugin that comes with this server's version and run it again in Figma.",
+      `The ${CHANNEL.pluginName} plugin 0.7.0 that tried to connect is older than this server (protocol 5; this server speaks 6), so it was turned away: ask the user to install the plugin that comes with this server's version and run it again in Figma.`,
     );
   });
 

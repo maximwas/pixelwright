@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ServerMain } from "@/server/main/server.main.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 
 /** Every tool as 0.7.0 listed it, plus the reviewed changes; until item 68 each registered tool is checked by name. */
 const GOLDEN: { name: string }[] = JSON.parse(
@@ -71,7 +72,7 @@ describe("the MCP contract", () => {
   afterAll(() => contract.client.close());
 
   it("names the dev channel's server and tells the client to start with status", () => {
-    expect(contract.client.getServerVersion()?.name).toBe("pixelwright-new");
+    expect(contract.client.getServerVersion()?.name).toBe(CHANNEL.name);
     expect(contract.client.getInstructions()).toContain("Start with status:");
   });
 
@@ -134,7 +135,7 @@ describe("the MCP contract", () => {
     const answer = await contract.client.callTool({ name: "status", arguments: {} });
 
     expect(answer.structuredContent).toMatchObject({
-      server: { role: "disabled", channel: "pixelwright-new" },
+      server: { role: "disabled", channel: CHANNEL.name },
       hint: expect.stringContaining("PIXELWRIGHT_PLUGIN_BRIDGE=off"),
     });
     expect(answer.content).toEqual([{ type: "text", text: JSON.stringify(answer.structuredContent) }]);

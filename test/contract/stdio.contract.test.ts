@@ -6,6 +6,7 @@ import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { build } from "tsdown";
 import { beforeAll, describe, expect, it } from "vitest";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
 
 /**
  * The bundle as `pnpm build` makes it, run as an MCP client runs it. It is built under node_modules/.cache, where its
@@ -56,7 +57,7 @@ describe("the built server over stdio", () => {
     const { tools } = await server.client.listTools();
     const answer = await server.client.callTool({ name: "status", arguments: { probe: false } });
 
-    expect(server.client.getServerVersion()?.name).toBe("pixelwright-new");
+    expect(server.client.getServerVersion()?.name).toBe(CHANNEL.name);
     expect(tools.map(({ name }) => name)).toEqual(
       expect.arrayContaining([
         "status",
