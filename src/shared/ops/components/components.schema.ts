@@ -48,7 +48,7 @@ const ExposedSchema = zod.object({
 });
 
 /** An instance of a component, and the page it is on. */
-const InstanceNodeSchema = zod.object({ id: zod.string(), name: zod.string(), page: zod.nullable(zod.string()) });
+const InstanceNodeSchema = zod.object({ id: zod.string(), name: zod.string(), page: zod.string() });
 
 /** A layer bound to a property: which of its fields the property drives (visible, characters, mainComponent). */
 const ReferenceSchema = zod.object({ id: zod.string(), name: zod.string(), field: zod.string() });

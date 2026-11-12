@@ -67,8 +67,8 @@ interface Layer {
   readonly overflow?: Record<string, number>;
   readonly layout?: Record<string, number | string>;
   readonly parentLayout?: Record<string, number | string>;
-  readonly fills?: { css: string; tokens?: Record<string, string> };
-  readonly strokes?: { colors: string[]; weight?: number; tokens?: Record<string, string> };
+  readonly fills?: { css: string; tokens?: Record<string, { value: string; variable: string }> };
+  readonly strokes?: { colors: string[]; weight?: number; tokens?: Record<string, { value: string; variable: string }> };
   readonly bound?: Record<string, unknown>;
   readonly component?: { variant: Record<string, string> };
   readonly text?: { segments?: Record<string, unknown>[] };
@@ -91,8 +91,8 @@ const ids = (entries: readonly { id: string }[]): string[] => byId(entries).map(
 const smallest = (size: Found["fontSize"]): number => Math.min(...[size ?? Number.POSITIVE_INFINITY].flat());
 
 /** A paint group's colours: its CSS, and the values of the tokens it uses (a bound fill reads var(--x) in css). */
-const paintText = (paints?: { css?: string; tokens?: Record<string, string> }): string =>
-  [paints?.css ?? "", ...Object.values(paints?.tokens ?? {})].join(" ");
+const paintText = (paints?: { css?: string; tokens?: Record<string, { value: string }> }): string =>
+  [paints?.css ?? "", ...Object.values(paints?.tokens ?? {}).map(({ value }) => value)].join(" ");
 
 /** The #RRGGBB colours a CSS value or a colour text holds, upper case, from #RGB, #RRGGBB, #RRGGBBAA or rgb()/rgba(). */
 const hexesIn = (css: string): string[] =>
@@ -109,7 +109,6 @@ const hexesIn = (css: string): string[] =>
     .sort();
 
 /** A token or variable name as one comparable word: `--color-brand` and `color/brand` both become color-brand. */
-const slug = (name: string): string => name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "");
 
 interface Run {
   readonly start: number;
@@ -327,7 +326,8 @@ return [card, ...card.findAll(() => true)].map((n) => ({ id: n.id, fills: solid(
       strokeVars: string[];
     }[];
     const layers = await inspect({ within: planPro, fields: ["fills", "strokes", "bound"] });
-    const named = (tokens: Record<string, string> | undefined) => [...new Set(Object.keys(tokens ?? {}).map(slug))].sort();
+    // T10: each token also names its Figma variable, so the answer key's names compare as they are.
+    const named = (tokens: Record<string, { variable: string }> | undefined) => [...new Set(Object.values(tokens ?? {}).map(({ variable }) => variable))].sort();
     const answer = layers.map(({ id, fills, strokes, bound }) => ({
       id,
       fills: hexesIn(paintText(fills)),
@@ -340,7 +340,7 @@ return [card, ...card.findAll(() => true)].map((n) => ({ id: n.id, fills: solid(
 
     expect(truth.length).toBeGreaterThan(3);
     expect(truth.some((entry) => entry.fillVars.length + entry.strokeVars.length > 0)).toBe(true);
-    expect(byId(answer.filter((entry) => entry.fills.length + entry.strokes.length + entry.bound.length > 0))).toEqual(byId(truth.map((entry) => ({ ...entry, fillVars: entry.fillVars.map(slug), strokeVars: entry.strokeVars.map(slug) }))));
+    expect(byId(answer.filter((entry) => entry.fills.length + entry.strokes.length + entry.bound.length > 0))).toEqual(byId(truth));
   });
 
   it("C6: the layers of a frame with a colour that is no style and no variable", async () => {

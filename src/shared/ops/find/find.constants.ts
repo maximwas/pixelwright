@@ -34,6 +34,7 @@ export const FIND_FIELD = {
   characters: "A text's characters, its first 200.",
   cut: "The text has more than the 200 characters given.",
   properties: "With properties: every component property's value on the instance, by name; variant properties too.",
+  instanceOf: "An instance's main component by name, and its component set's name when it is a variant.",
   changed:
     "An instance's component properties whose value differs from the component's default, by name: what this copy changes.",
 } as const;

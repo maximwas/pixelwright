@@ -57,7 +57,10 @@ export class ComponentDetails {
     };
   }
 
-  /** The component's instances, a set's of every variant, at most COMPONENTS.instancesCap, each with its page. */
+  /**
+   * The component's instances on a page, a set's of every variant, at most COMPONENTS.instancesCap, each with its page:
+   * Figma still gives an instance inside a removed layer, not removed itself and on no page (T19), which is left out.
+   */
   async #instances(owner: ComponentOwner): Promise<Pick<ComponentEntry, "instanceNodes" | "instanceNodesMore" | "error">> {
     const mains = owner.type === COMPONENT_TYPE.set ? this.#entries.variants(owner) : [owner];
     let failed = false;
@@ -71,16 +74,14 @@ export class ComponentDetails {
         }),
       ),
     );
-    const found = lists.flat();
+    const found = lists.flat().flatMap((instance) => {
+      const page = instance.removed ? null : this.#lookup.pageOf(instance);
+
+      return page === null ? [] : [{ id: instance.id, name: instance.name, page: page.name }];
+    });
 
     return {
-      instanceNodes: found
-        .slice(0, COMPONENTS.instancesCap)
-        .map((instance) => ({
-          id: instance.id,
-          name: instance.name,
-          page: this.#lookup.pageOf(instance)?.name ?? null,
-        })),
+      instanceNodes: found.slice(0, COMPONENTS.instancesCap),
       ...(found.length > COMPONENTS.instancesCap ? { instanceNodesMore: true as const } : {}),
       ...(failed ? { error: COMPONENT_DETAILS_TEXT.instancesFailed } : {}),
     };

@@ -78,7 +78,11 @@ describe("inspect fills", () => {
           },
         },
       ),
-    ).toEqual({ css: "var(--color-bg)", tokens: { "--color-bg": "#191A23" }, paints: [{ type: "SOLID" }] });
+    ).toEqual({
+      css: "var(--color-bg)",
+      tokens: { "--color-bg": { value: "#191A23", variable: "color/bg" } },
+      paints: [{ type: "SOLID" }],
+    });
   });
 
   it("names the variables a stroke colour is bound to, as a fill's", () => {
@@ -93,7 +97,7 @@ describe("inspect fills", () => {
       }),
     ).strokes;
 
-    expect(strokes?.tokens).toEqual({ "--color-line": "#191A23" });
+    expect(strokes?.tokens).toEqual({ "--color-line": { value: "#191A23", variable: "color/line" } });
   });
 
   // B-002: each fill's blend mode, top first.
@@ -162,8 +166,8 @@ describe("inspect of bound lengths", () => {
     const read = inspectFills.read(card, raw([], { variables }));
 
     expect(read?.bound).toEqual({
-      paddingTop: { token: "--space-24", value: 24 },
-      itemSpacing: { token: "--gap-m", value: 16 },
+      paddingTop: { token: "--space-24", variable: "space/24", value: 24 },
+      itemSpacing: { token: "--gap-m", variable: "gap m", value: 16 },
     });
     expect(
       lengths.bound(card, "paddingTop", 24, { model: 1, profile: "inspect", root: card, styles: {}, variables }),

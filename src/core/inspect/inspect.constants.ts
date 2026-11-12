@@ -104,16 +104,16 @@ export const INSPECT_FIELD = {
   fillsCss:
     "The fill as a CSS value, top paint first: a colour, a gradient; a paint CSS cannot hold (a video) says so.",
   fillsStyle: "The paint style it comes from, and the token design_read names it by.",
-  fillsTokens: "The variables the paints are bound to, by token, with their values.",
+  fillsTokens: "The variables the paints are bound to, by token: each one's value and its Figma name (variable).",
   fillsPaints: "Every visible fill, top first: its type (SOLID, GRADIENT_LINEAR, IMAGE, VIDEO) and its blend mode.",
   layout:
     "A layer's auto layout or grid as design_read's CSS names it, longhands in px: display, flex-direction, flex-wrap, padding-top/-right/-bottom/-left, gap or row-gap and column-gap, alignment; a bound side's token is in bound.",
   strokesTokens:
-    "The variables the stroke colours are bound to, by token, with their values; a colour without one is raw.",
+    "The variables the stroke colours are bound to, by token: each one's value and its Figma name (variable); a colour without one is raw.",
   componentProperties:
     "Every component property by name (Figma's #id left out): its type, this instance's value and the component's default.",
   bound:
-    "The variables bound to the layer's own fields (padding, gap, radius, size), by Figma field: the token design_read writes in var(), and its value.",
+    "The variables bound to the layer's own fields (padding, gap, radius, size), by Figma field: the token design_read writes in var(), the variable's Figma name (variable), and its value.",
 } as const;
 
 /** Which of a measured pair holds the other. */
