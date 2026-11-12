@@ -36,7 +36,7 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
 
   // Try it: the Install card's own read sent back is nothing to change.
   it("plans no write for the Install card's own read", async () => {
-    const xml = String((await client.call("design_read", { file, node: TEST_MCP.ids.install })).xml);
+    const [xml = ""] = await client.texts("design_read", { file, node: TEST_MCP.ids.install });
     const planned = await plan(xml);
 
     expect(planned.errors).toEqual([]);
@@ -45,7 +45,7 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
 
   // Try it: one background changed in that read lists only that background.
   it("lists only the background changed in the read", async () => {
-    const xml = String((await client.call("design_read", { file, node: TEST_MCP.ids.install })).xml);
+    const [xml = ""] = await client.texts("design_read", { file, node: TEST_MCP.ids.install });
     const changed = xml.replace(`id="${TEST_MCP.ids.install}"`, `id="${TEST_MCP.ids.install}" background="#123456"`);
     const planned = await plan(changed.replace(/(id="81:1627"[^>]*?) background="(?!#123456)[^"]*"/, "$1"));
 

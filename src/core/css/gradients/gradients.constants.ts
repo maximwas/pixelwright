@@ -72,8 +72,6 @@ export const GRADIENT_PATTERN = {
   from: /\bfrom\s+(\S+)/,
   place: /\bat\s+(.+)$/,
   spaces: /\s+/,
-  /** `color-mix(in <space>, <colour> N%, transparent)`, as design_read writes a faded token. */
-  mix: /^color-mix\(\s*in\s+[\w-]+\s*,\s*(.+?)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/s,
 } as const;
 
 export const GRADIENT_VALUE = {

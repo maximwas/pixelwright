@@ -1,8 +1,5 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { GRADIENT_PATTERN } from "@/core/css/gradients/gradients.constants.ts";
-import { PAINTS_NUMBER } from "@/core/css/paints/paints.constants.ts";
 import { CSS_VAR } from "@/core/css/values/css-var.ts";
-import { Color } from "@/core/kernel/color/color.ts";
 import { INTENT_PAINT } from "@/shared/write-intents/write-intent.constants.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
@@ -23,18 +20,13 @@ export class PaintValue {
 
   /** The paint; null for anything that is no colour or token. */
   of(value: string): PaintSpec | null {
-    const mix = GRADIENT_PATTERN.mix.exec(value.trim());
-    const share = mix === null ? PAINTS_NUMBER.whole : Number(mix[2]) / PAINTS_NUMBER.percent;
-    const inner = mix?.[1] ?? value;
-    const token = this.#vars.token(inner);
+    const faded = this.#vars.fade(value);
 
-    if (token !== null) {
-      return { kind: INTENT_PAINT.token, token: token.token, opacity: share };
+    if (faded?.color) {
+      return { kind: INTENT_PAINT.color, color: faded.color.faded(faded.share).value() };
     }
 
-    const color = Color.parse(inner.trim());
-
-    return color === null ? null : { kind: INTENT_PAINT.color, color: color.faded(share).value() };
+    return faded?.token ? { kind: INTENT_PAINT.token, token: faded.token, opacity: faded.share } : null;
   }
 }
 

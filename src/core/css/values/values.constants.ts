@@ -1,7 +1,13 @@
 /** Where CSS values split at their top level. */
 export const CSS_SEPARATOR = { comma: ",", space: " ", slash: "/", semicolon: ";" } as const;
 
+/** color-mix() takes an opacity as whole percents; no fading is a share of 1. */
+export const CSS_FADE = { percent: 100, whole: 1 } as const;
+
 export const CSS_PATTERN = {
+  /** `color-mix(in <space>, <colour> N%, transparent)`, as design_read writes a faded token. */
+  fade: /^color-mix\(\s*in\s+[\w-]+\s*,\s*(.+?)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/s,
+
   /** A length in px or a bare number: "12px", "0", "-1.5px", "1.5". */
   length: /^(-?\d*\.?\d+)(px)?$/,
   /** A plain number: "363", "0.5". */
