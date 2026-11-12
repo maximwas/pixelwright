@@ -57,8 +57,8 @@
         <section id="v0-8-0">
           <h2>0.8.0 — 2026-11-04</h2>
 <p>Pixelwright 0.8.0 is a rewrite of the server and the plugin, and this version reads Figma: the tools that wrote to the
-file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). The 30 tools it
-keeps have 0.7.0&#39;s names, and <code>design_read</code> writes 0.7.0&#39;s XML, so what an agent knows of 0.7.0&#39;s reads still holds
+file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). It has 30 tools:
+29 keep 0.7.0&#39;s names, <code>types_read</code> is new, and <code>design_read</code> writes 0.7.0&#39;s XML, so what an agent knows of 0.7.0&#39;s reads still holds
 apart from the changes below. The plugin is new too: put it in place with the server
 (<code>npx -y pixelwright@latest setup</code>), since a 0.7.0 plugin cannot connect to 0.8.0.</p>
 <h4>Added</h4>
@@ -107,7 +107,7 @@ each bound variable by its Figma name too.</li>
 variable carries its Figma id and, for an alias, <code>aliasOf</code> with the tokens it passes through.</li>
 <li><code>tokens_usage</code> takes <code>raw: true</code>: the colours bound to no style and no variable, each with its count and layers.</li>
 <li><code>outline</code> takes <code>absolute: true</code> for boxes in page coordinates; <code>file_map</code> gives each layer&#39;s <code>childCount</code>.</li>
-<li><code>components_read</code> takes <code>instances: true</code> (each instance&#39;s id, name and page, 100 at most) and <code>references: true</code>
+<li><code>components_read</code> takes <code>instances: true</code> (each instance&#39;s id, name and page, 100 at most, for the first 25 components listed) and <code>references: true</code>
 (the layers bound to each component property).</li>
 <li>The read tools say what an absent field means (no <code>hidden</code> is visible; no padding is 0) and that an answer is
 complete unless <code>more</code> is true or a note says the scan stopped.</li>

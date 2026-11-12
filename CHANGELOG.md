@@ -19,8 +19,8 @@ How to write this file (people and agents alike):
 ## 0.8.0 — 2026-11-04
 
 Pixelwright 0.8.0 is a rewrite of the server and the plugin, and this version reads Figma: the tools that wrote to the
-file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). The 30 tools it
-keeps have 0.7.0's names, and `design_read` writes 0.7.0's XML, so what an agent knows of 0.7.0's reads still holds
+file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). It has 30 tools:
+29 keep 0.7.0's names, `types_read` is new, and `design_read` writes 0.7.0's XML, so what an agent knows of 0.7.0's reads still holds
 apart from the changes below. The plugin is new too: put it in place with the server
 (`npx -y pixelwright@latest setup`), since a 0.7.0 plugin cannot connect to 0.8.0.
 
@@ -70,7 +70,7 @@ apart from the changes below. The plugin is new too: put it in place with the se
   variable carries its Figma id and, for an alias, `aliasOf` with the tokens it passes through.
 - `tokens_usage` takes `raw: true`: the colours bound to no style and no variable, each with its count and layers.
 - `outline` takes `absolute: true` for boxes in page coordinates; `file_map` gives each layer's `childCount`.
-- `components_read` takes `instances: true` (each instance's id, name and page, 100 at most) and `references: true`
+- `components_read` takes `instances: true` (each instance's id, name and page, 100 at most, for the first 25 components listed) and `references: true`
   (the layers bound to each component property).
 - The read tools say what an absent field means (no `hidden` is visible; no padding is 0) and that an answer is
   complete unless `more` is true or a note says the scan stopped.

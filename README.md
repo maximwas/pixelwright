@@ -103,7 +103,7 @@ every tool with its arguments, as the server lists them.
 
 - **No REST API, no token.** The plugin reads the file through Figma's Plugin API, on your computer. The server
   listens on localhost only, and a plugin pairs once with a code you type in; unpaired windows get nothing.
-- **This version reads.** Every tool reads, except `execute`, which runs plugin code the agent writes, to read what no
+- **This version reads.** Every tool reads, except `execute`, which runs plugin code the agent writes (or a script over the reads, which never writes), to read what no
   tool shows. **Allow edits** in the plugin window is off until you turn it on for a file; while it is off, the plugin
   refuses every write that code tries. Your choice is remembered per file on your computer. Ask for an edit, and your
   agent warns that editing is not supported in this version and goes on only when you say so.
