@@ -67,8 +67,9 @@ once; tools work on the one whose plugin window was in front last, or on the fil
 | `tokens_read`, `tokens_usage` | Variables with every mode, and styles, as token files; the layers a token is used on |
 | `components_read`, `library_search` | The components a page uses or the file defines, with variants and properties; components in your team's libraries |
 | `fonts_check` | The fonts a layer uses and where the build gets each |
-| `execute` | Plugin code the agent writes, for what no tool here shows; it reads too (see Safety) |
-| `guide` | What the agent reads before it starts: the workflow, the XML, tokens and assets |
+| `execute` | Plugin code the agent writes (`code`, or `codePath`, a file of it), for what no tool here shows; or a `script` on the server that calls the read tools and joins their answers. It reads too (see Safety) |
+| `types_read` | Each read's answer as TypeScript, for the agent's scripts |
+| `guide` | What the agent reads before it starts: the workflow, the XML, tokens, assets and scripts |
 
 A read of the Pro card from Orbit, abridged:
 
@@ -102,7 +103,7 @@ every tool with its arguments, as the server lists them.
 
 - **No REST API, no token.** The plugin reads the file through Figma's Plugin API, on your computer. The server
   listens on localhost only, and a plugin pairs once with a code you type in; unpaired windows get nothing.
-- **This version reads.** Every tool reads, except `execute`, which runs plugin code the agent writes, to read what no
+- **This version reads.** Every tool reads, except `execute`, which runs plugin code the agent writes (or a script over the reads, which never writes), to read what no
   tool shows. **Allow edits** in the plugin window is off until you turn it on for a file; while it is off, the plugin
   refuses every write that code tries. Your choice is remembered per file on your computer. Ask for an edit, and your
   agent warns that editing is not supported in this version and goes on only when you say so.

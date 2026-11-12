@@ -79,6 +79,7 @@ interface Found {
   readonly hidden?: true;
   readonly fontSize?: number | number[];
   readonly changed?: Record<string, string | boolean>;
+  readonly component?: { name: string; set?: string };
 }
 
 const smallest = (size: Found["fontSize"]): number => Math.min(...[size ?? Number.POSITIVE_INFINITY].flat());
@@ -129,6 +130,30 @@ describe("read/nodes_find", () => {
 
     expect((nodes as Found[]).map(({ id }) => id)).toContain(SIGN_IN);
     expect(variant).toEqual({ state: "default", variant: "secondary" });
+  });
+
+  // T8, T9, T19: each instance found names its component and, for a variant, its set, so no code checks it.
+  it('names each instance\'s component and set with fields ["component"]', async () => {
+    const truth = (await run(`const page = await figma.getNodeByIdAsync(${JSON.stringify(orbitPricing)});
+await page.loadAsync();
+const out = {};
+for (const node of page.findAllWithCriteria({ types: ["INSTANCE"] })) {
+  const main = await node.getMainComponentAsync();
+  if (main !== null && (main.name.includes("Button") || main.parent?.name.includes("Button"))) out[node.id] = main.parent?.type === "COMPONENT_SET" ? { name: main.name, set: main.parent.name } : { name: main.name };
+}
+return out;`)) as Record<string, { name: string; set?: string }>;
+    const { nodes } = await client.call("nodes_find", {
+      file,
+      component: BUTTON,
+      within: orbitPricing,
+      fields: ["component"],
+      limit: 500,
+    });
+    const found = nodes as Found[];
+
+    expect(Object.keys(truth).length).toBeGreaterThan(1);
+    expect(Object.fromEntries(found.map(({ id, component }) => [id, component]))).toEqual(truth);
+    expect(found.find(({ id }) => id === SIGN_IN)?.component?.set).toBe(BUTTON);
   });
 
   it("searches the current page when within is left out (S-043)", async () => {

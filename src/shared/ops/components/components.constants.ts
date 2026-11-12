@@ -22,7 +22,7 @@ export const COMPONENT_TYPE = { component: "COMPONENT", set: "COMPONENT_SET" } a
 export const COMPONENTS_FIELD = {
   on: "The variant of a set the link is on.",
   instanceNodes:
-    "With instances: the component's instances (a set's, of every variant), each with its page; 100 at most.",
+    "With instances: the component's instances on a page (a set's, of every variant), each with its page; 100 at most.",
   instanceNodesMore: "There are more than the 100 instances listed.",
   instanceNodesSkipped:
     "With instances: its instances were not listed, only the first 25 components listed get them; ask with query or a smaller limit.",

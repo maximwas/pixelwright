@@ -116,7 +116,7 @@ export class InspectFills {
   }
 
   /** The variables the visible strokes' colours are bound to, as a fill's tokens: a colour without one is raw. */
-  #strokeTokens(strokes: readonly Paint[], model: ReadModel): { tokens?: Record<string, string> } {
+  #strokeTokens(strokes: readonly Paint[], model: ReadModel): Pick<NonNullable<InspectLayerView["strokes"]>, "tokens"> {
     const tokens = this.#tokens(
       strokes.filter((paint) => paint.visible ?? true),
       model,
@@ -160,8 +160,8 @@ export class InspectFills {
       : UNMAPPED_NOTE[CSS_PROPERTY.background];
   }
 
-  /** The colour variables the paints and their gradient stops are bound to: each token with its value. */
-  #tokens(visible: readonly Paint[], model: ReadModel): (readonly [string, string])[] {
+  /** The colour variables the paints and their gradient stops are bound to: each token with its value and Figma name. */
+  #tokens(visible: readonly Paint[], model: ReadModel): (readonly [string, { value: string; variable: string }])[] {
     return visible
       .flatMap((paint) => [paint.boundVariables, ...(paint.gradientStops ?? []).map((stop) => stop.boundVariables)])
       .flatMap((bound) => {
@@ -169,11 +169,16 @@ export class InspectFills {
 
         return variable === undefined
           ? []
-          : [[this.#names.variable(variable), this.#value(variable.value, model)] as const];
+          : [
+            [
+              this.#names.variable(variable),
+              { value: this.#value(variable.value, model), variable: variable.name },
+            ] as const,
+          ];
       });
   }
 
-  /** The variables bound to the layer's own fields (O-026): the token design_read's var() takes, and the value. */
+  /** The variables bound to the layer's own fields (O-026): the token design_read's var() takes, the Figma name, the value. */
   #bound(layer: InspectedLayer, model: ReadModel): Pick<InspectLayerView, "bound"> {
     const bound = layer.boundVariables ?? {};
     const entries = Object.keys(bound).flatMap((field) => {
@@ -181,7 +186,12 @@ export class InspectFills {
 
       return variable === undefined
         ? []
-        : [[field, { token: this.#names.variable(variable), ...this.#plain(variable.value) }] as const];
+        : [
+          [
+            field,
+            { token: this.#names.variable(variable), variable: variable.name, ...this.#plain(variable.value) },
+          ] as const,
+        ];
     });
 
     return entries.length === 0 ? {} : { bound: Object.fromEntries(entries) };

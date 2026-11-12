@@ -12,7 +12,7 @@ export const COMPONENTS_READ_FIELD = {
   query: 'Only components whose name contains this, e.g. "icon/" for the icon sets.',
   fields: 'Only these fields of each component, e.g. ["name", "id", "description"]. Default: all.',
   instances:
-    "Also list each component's instances (a set's, of every variant) with their pages, 100 at most, for the first 25 components listed (the rest say instanceNodesSkipped).",
+    "Also list each component's instances (a set's, of every variant) with their pages, those on no page (inside a removed layer) left out, 100 at most, for the first 25 components listed (the rest say instanceNodesSkipped).",
   references:
     "Also list, per property, the layers inside the component bound to it and the field each binds (visible, characters, mainComponent). The layers inside the component, nested instances' contents included, bound to this component's own properties; a component Figma cannot read the properties of lists none.",
   links: "Also read the links people attached in Dev Mode (Figma's servers, paid plans only).",

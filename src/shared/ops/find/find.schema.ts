@@ -66,6 +66,9 @@ export const FoundSchema = zod.extend(NodeRefSchema, {
     .exactOptional(zod.union([zod.number(), zod.array(zod.number())]))
     .check(zod.describe(FIND_FIELD.fontSize)),
   changed: zod.exactOptional(zod.record(zod.string(), PropertyValueSchema)).check(zod.describe(FIND_FIELD.changed)),
+  component: zod
+    .exactOptional(zod.object({ name: zod.string(), set: zod.exactOptional(zod.string()) }))
+    .check(zod.describe(FIND_FIELD.instanceOf)),
 });
 
 const CountedSchema = zod.object({

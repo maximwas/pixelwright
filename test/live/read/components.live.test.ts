@@ -157,6 +157,25 @@ return component.id;`);
     expect(components[0]?.exposed?.map(({ component }) => component)).toEqual(["Button"]);
   });
 
+  // T19: an instance inside a removed component stays in getInstancesAsync, not removed and on no page; components_read
+  // lists only instances on a page.
+  it("lists no instance whose component holder was removed", async () => {
+    const made = (await run(`const section = await pw.node(${JSON.stringify(scratch)});
+const component = figma.createComponent();
+component.name = ${JSON.stringify(`${PREFIX}removed`)};
+section.appendChild(component);
+const holder = figma.createComponent();
+holder.name = ${JSON.stringify(`${PREFIX}removed-holder`)};
+section.appendChild(holder);
+holder.appendChild(component.createInstance());
+holder.remove();
+return component.id;`)) as string;
+    const { components } = await read({ scope: "local", within: made, instances: true });
+
+    expect(components).toHaveLength(1);
+    expect(components[0]?.instanceNodes).toEqual([]);
+  });
+
   it("counts the instances Pricing – Desktop uses: three Plan Cards (T-190)", async () => {
     const { components } = await read({ scope: "used", within: pricingDesktop });
 

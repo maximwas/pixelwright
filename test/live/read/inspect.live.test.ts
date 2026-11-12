@@ -180,10 +180,10 @@ return dots.length;`);
 
   it("says the Starter card's stroke colour is bound, as its fills say theirs", async () => {
     const { layers } = (await client.call("inspect", { file, nodes: [planStarter] })) as {
-      layers: { strokes?: { colors: string[]; tokens?: Record<string, string> } }[];
+      layers: { strokes?: { colors: string[]; tokens?: Record<string, { value: string; variable: string }> } }[];
     };
 
-    expect(layers[0]?.strokes?.tokens).toEqual({ "--color-line": "#E1E5EE" });
+    expect(layers[0]?.strokes?.tokens).toEqual({ "--color-line": { value: "#E1E5EE", variable: expect.any(String) } });
   });
 
   // RG-3 coverage: each case computes the truth with the Plugin API code an agent wrote, then asks inspect.
