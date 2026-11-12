@@ -54,6 +54,12 @@ export interface ApplyReading {
   readonly invalidXml: boolean;
 }
 
+/** A text's characters to write, and a run per Span with what it sets over the text's own (C-119). */
+export interface ApplyText {
+  readonly characters: string;
+  readonly runs: { readonly start: number; readonly end: number; readonly props: FigmaProps }[];
+}
+
 /** One layer to create or change, in Figma's terms (C-171). */
 export interface ApplyChange extends XmlLocation {
   readonly kind: (typeof CHANGE_KIND)[keyof typeof CHANGE_KIND];
@@ -68,6 +74,8 @@ export interface ApplyChange extends XmlLocation {
   readonly props: FigmaProps;
   /** The attribute each property was read from, so the plugin's errors name it. */
   readonly sources: Readonly<Partial<Record<keyof FigmaProps, string>>>;
+  /** A Text's characters and runs, when its text does not read as the element's yet or a text style resets it. */
+  readonly text?: ApplyText;
   /** A create that starts as a clone of this layer. */
   readonly copyOf?: string;
   /** Inside a copy or a new instance: the layer whose counterpart this change writes. */

@@ -1,0 +1,898 @@
+{
+  "a span recolouring characters the layer holds": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": false,
+        "visible": true,
+        "current": {
+          "name": "Description",
+          "textStyle": "Body Small",
+          "align-self": "stretch",
+          "color": "var(--color-ink-muted)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "I54:244;54:207",
+        "id": "I54:244;54:207",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "For side projects and trying things out.",
+          "runs": [
+            {
+              "start": 9,
+              "end": 17,
+              "props": {
+                "textFills": [
+                  {
+                    "kind": "color",
+                    "color": {
+                      "r": 1,
+                      "g": 0,
+                      "b": 0,
+                      "a": 1
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's span taken away, its characters kept": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": false,
+        "visible": true,
+        "current": {
+          "name": "Quote",
+          "position": "absolute",
+          "left": "112px",
+          "top": "230px",
+          "width": "520px",
+          "height": "48px",
+          "font": "400 16px/24px 'Inter'",
+          "color": "var(--color-ink)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:449",
+        "id": "54:449",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "“Orbit replaced three tools for us.” Maya Chen, Head of Design at Nova",
+          "runs": []
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's span over other characters": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": false,
+        "visible": true,
+        "current": {
+          "name": "Quote",
+          "position": "absolute",
+          "left": "112px",
+          "top": "230px",
+          "width": "520px",
+          "height": "48px",
+          "font": "400 16px/24px 'Inter'",
+          "color": "var(--color-ink)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:449",
+        "id": "54:449",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "“Orbit replaced three tools for us.” Maya Chen, Head of Design at Nova",
+          "runs": [
+            {
+              "start": 37,
+              "end": 47,
+              "props": {
+                "font": {
+                  "family": "Inter",
+                  "weight": 600,
+                  "italic": false,
+                  "size": 16,
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 24
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's span with another look": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": false,
+        "visible": true,
+        "current": {
+          "name": "Quote",
+          "position": "absolute",
+          "left": "112px",
+          "top": "230px",
+          "width": "520px",
+          "height": "48px",
+          "font": "400 16px/24px 'Inter'",
+          "color": "var(--color-ink)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:449",
+        "id": "54:449",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "“Orbit replaced three tools for us.” Maya Chen, Head of Design at Nova",
+          "runs": [
+            {
+              "start": 37,
+              "end": 46,
+              "props": {
+                "font": {
+                  "family": "Inter",
+                  "weight": 700,
+                  "italic": false,
+                  "size": 16,
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 24
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's span split in two of the same look": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": false,
+        "visible": true,
+        "current": {
+          "name": "Quote",
+          "position": "absolute",
+          "left": "112px",
+          "top": "230px",
+          "width": "520px",
+          "height": "48px",
+          "font": "400 16px/24px 'Inter'",
+          "color": "var(--color-ink)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:449",
+        "id": "54:449",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "“Orbit replaced three tools for us.” Maya Chen, Head of Design at Nova",
+          "runs": [
+            {
+              "start": 37,
+              "end": 42,
+              "props": {
+                "font": {
+                  "family": "Inter",
+                  "weight": 600,
+                  "italic": false,
+                  "size": 16,
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 24
+                  }
+                }
+              }
+            },
+            {
+              "start": 42,
+              "end": 46,
+              "props": {
+                "font": {
+                  "family": "Inter",
+                  "weight": 600,
+                  "italic": false,
+                  "size": 16,
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 24
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's span with its attributes in another order": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": false,
+        "visible": true,
+        "current": {
+          "name": "Lede",
+          "textStyle": "Body",
+          "align-self": "stretch",
+          "color": "var(--color-ink-muted)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:242",
+        "id": "54:242",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "Start free, upgrade when your team takes off. Every plan includes unlimited projects and a 14-day trial of Pro. See what's included.",
+          "runs": [
+            {
+              "start": 112,
+              "end": 132,
+              "props": {
+                "hyperlink": "https://orbit.example/plans",
+                "textDecoration": {
+                  "line": "UNDERLINE"
+                },
+                "textFills": [
+                  {
+                    "kind": "token",
+                    "token": "--color-brand",
+                    "opacity": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "other characters": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": false,
+        "visible": true,
+        "current": {
+          "name": "Description",
+          "textStyle": "Body Small",
+          "align-self": "stretch",
+          "color": "var(--color-ink-muted)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "I54:244;54:207",
+        "id": "I54:244;54:207",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {},
+        "text": {
+          "characters": "For side projects and trying things.",
+          "runs": []
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's characters split by a comment, held": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Description",
+          "textStyle": "Body Small",
+          "align-self": "stretch",
+          "color": "var(--color-ink-muted)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "I54:244;54:207",
+        "id": "I54:244;54:207",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    }
+  ],
+  "the layer's span holding a nested span of no attributes, held": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Quote",
+          "position": "absolute",
+          "left": "112px",
+          "top": "230px",
+          "width": "520px",
+          "height": "48px",
+          "font": "400 16px/24px 'Inter'",
+          "color": "var(--color-ink)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:449",
+        "id": "54:449",
+        "tag": "Text",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    }
+  ],
+  "a new gap": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Plans",
+          "display": "flex",
+          "width": "1200px",
+          "height": "394px",
+          "gap": "var(--space-24)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:243",
+        "id": "54:243",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 48
+        },
+        "sources": {
+          "layoutMode": "display",
+          "itemSpacing": "gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "another token": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Plans",
+          "display": "flex",
+          "width": "1200px",
+          "height": "394px",
+          "gap": "var(--space-24)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:243",
+        "id": "54:243",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": {
+            "token": "--space-32"
+          }
+        },
+        "sources": {
+          "layoutMode": "display",
+          "itemSpacing": "gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's token as the number it stands for": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Plans",
+          "display": "flex",
+          "width": "1200px",
+          "height": "394px",
+          "gap": "var(--space-24)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:243",
+        "id": "54:243",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 24
+        },
+        "sources": {
+          "layoutMode": "display",
+          "itemSpacing": "gap"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a new hex colour": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Rectangle 1",
+          "position": "absolute",
+          "left": "40px",
+          "top": "188px",
+          "width": "560px",
+          "height": "1px",
+          "background": "#E1E5EE"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:458",
+        "id": "54:458",
+        "tag": "Rectangle",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.8823529411764706,
+                "g": 0.8980392156862745,
+                "b": 0.9372549019607843,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's hex colour in lower case": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Rectangle 1",
+          "position": "absolute",
+          "left": "40px",
+          "top": "188px",
+          "width": "560px",
+          "height": "1px",
+          "background": "#E1E5EE"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:458",
+        "id": "54:458",
+        "tag": "Rectangle",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.8823529411764706,
+                "g": 0.8980392156862745,
+                "b": 0.9333333333333333,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the layer's numbers as an sRGB hex in a Display P3 file": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Rectangle 1",
+          "position": "absolute",
+          "left": "40px",
+          "top": "188px",
+          "width": "560px",
+          "height": "1px",
+          "background": "color(display-p3 0.8824 0.898 0.9333)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:458",
+        "id": "54:458",
+        "tag": "Rectangle",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "fills": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.8823529411764706,
+                "g": 0.8980392156862745,
+                "b": 0.9333333333333333,
+                "a": 1
+              }
+            }
+          ]
+        },
+        "sources": {
+          "fills": "background"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "an image's file the read did not write, held: the server compares the bytes": [
+    {
+      "held": {
+        "attributes": [
+          "id",
+          "src"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Product shot",
+          "src": "assets/product-shot.png",
+          "position": "absolute",
+          "left": "760px",
+          "top": "56px",
+          "width": "400px",
+          "height": "248px",
+          "border-radius": "12px"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:454",
+        "id": "54:454",
+        "tag": "Image",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    }
+  ],
+  "a shown layer hidden": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Sticker",
+          "display": "flex",
+          "position": "absolute",
+          "left": "521px",
+          "top": "282px",
+          "padding": "6px 12px",
+          "transform": "rotate(-8deg)",
+          "overflow": "hidden",
+          "border-radius": "999px",
+          "background": "var(--color-accent)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:450",
+        "id": "54:450",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "visible": false
+        },
+        "sources": {
+          "visible": "display"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a hidden layer shown, compared as shown": [
+    {
+      "held": {
+        "attributes": [
+          "id",
+          "name"
+        ],
+        "text": true,
+        "visible": false,
+        "current": {
+          "name": "Badge",
+          "width": "86px",
+          "height": "24px"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "I54:244;54:205",
+        "id": "I54:244;54:205",
+        "tag": "Instance",
+        "parent": null,
+        "index": 0,
+        "props": {
+          "visible": true,
+          "layoutMode": "HORIZONTAL"
+        },
+        "sources": {
+          "visible": "display",
+          "layoutMode": "display"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "a nested element compared only as its parent holds it: the width its own read writes is new": [
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Plans",
+          "display": "flex",
+          "width": "1200px",
+          "height": "394px",
+          "gap": "var(--space-24)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:243",
+        "id": "54:243",
+        "tag": "Frame",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    },
+    {
+      "held": {
+        "attributes": [
+          "id"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Plan – Starter",
+          "component": "Plan Card",
+          "props": "Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter",
+          "display": "flex",
+          "flex-direction": "column",
+          "flex": "1",
+          "padding": "var(--space-32)",
+          "gap": "var(--space-24)",
+          "border-radius": "var(--radius-lg)",
+          "border": "1px solid var(--color-line)",
+          "background": "var(--color-surface)",
+          "box-shadow": "var(--Shadow-Card)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 20,
+        "kind": "update",
+        "ref": "54:244",
+        "id": "54:244",
+        "tag": "Instance",
+        "parent": "54:243",
+        "index": 0,
+        "props": {
+          "width": 383
+        },
+        "sources": {
+          "width": "width"
+        }
+      },
+      "errors": []
+    }
+  ],
+  "the same element at the top, compared as the read's root too": [
+    {
+      "held": {
+        "attributes": [
+          "id",
+          "width"
+        ],
+        "text": true,
+        "visible": true,
+        "current": {
+          "name": "Plan – Starter",
+          "component": "Plan Card",
+          "props": "Price=$0, Popular=false, Description=For side projects and trying things out., Name=Starter",
+          "display": "flex",
+          "flex-direction": "column",
+          "flex": "1",
+          "padding": "var(--space-32)",
+          "gap": "var(--space-24)",
+          "border-radius": "var(--radius-lg)",
+          "border": "1px solid var(--color-line)",
+          "background": "var(--color-surface)",
+          "box-shadow": "var(--Shadow-Card)"
+        }
+      },
+      "change": {
+        "line": 1,
+        "column": 1,
+        "kind": "update",
+        "ref": "54:244",
+        "id": "54:244",
+        "tag": "Instance",
+        "parent": null,
+        "index": 0,
+        "props": {},
+        "sources": {}
+      },
+      "errors": []
+    }
+  ]
+}

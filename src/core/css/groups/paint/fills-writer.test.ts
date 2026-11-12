@@ -79,19 +79,10 @@ describe("FillsWriter", () => {
     expect(modes[0]).toMatchObject({ kind: "image", src: "a.png" });
   });
 
-  it("writes a text's colour as its text fills, from color", () => {
-    expect(written({ color: "#000" }, {}, "Text")).toMatchObject({
-      props: { textFills: [{ kind: "color", color: { r: 0, g: 0, b: 0, a: 1 } }] },
-      sources: { textFills: "color" },
-    });
-  });
-
   // C-081: the refusals keep 0.7.0's words and hints.
-  it("refuses an unquoted url, an image or gradient on a text, a repeating gradient and a word", () => {
+  it("refuses an unquoted url, a repeating gradient and a word", () => {
     const messages = [
       written({ background: "url(my photo.png)" }),
-      written({ color: 'url("a.png")' }, {}, "Text"),
-      written({ color: "linear-gradient(#000, #fff)" }, {}, "Text"),
       written({ background: "repeating-linear-gradient(#000, #fff 10%)" }),
       written({ background: "blue-ish" }),
     ].map(({ problems }) => problems[0]);
@@ -101,12 +92,6 @@ describe("FillsWriter", () => {
         attribute: "background",
         message: "url(my photo.png): url() without quotes cannot hold spaces, quotes, brackets or var().",
         hint: 'Write the file in quotes: url("my photo.png").',
-      },
-      { attribute: "color", message: "A text is coloured with paint, not an image.", hint: "Use a colour or a token." },
-      {
-        attribute: "color",
-        message: "A text is coloured with a colour or a token, not a gradient.",
-        hint: "Use a colour or a token.",
       },
       {
         attribute: "background",

@@ -153,7 +153,22 @@ export const GEOMETRY_ERROR = {
     attribute: string,
     value: string,
     words: string,
-  ) => `${attribute}="${value}" is not one of ${words}.`,
+  ) =>
+    `${attribute}="${value}" is not one Figma has: ${words}.`,
+  badTransform: (part: string) => `transform part ${part} is not rotate(Ndeg) or scaleX(-1), which is all Figma keeps.`,
+} as const;
+
+/** 0.7.0's order of a cell's writes: the row axis first (align-self, then justify-self; grid-row, then grid-column). */
+export const CELL_AXES = [GEOMETRY_AXIS.vertical, GEOMETRY_AXIS.horizontal] as const;
+
+/** What the transform writer owns. */
+export const TRANSFORM_ATTRIBUTES = [CSS_PROPERTY.transform] as const;
+
+export const TRANSFORM_WRITE = {
+  none: "none",
+  mirror: "scaleX(-1)",
+  /** rotate(<angle>), the one turn design_read writes. */
+  rotate: /^rotate\((-?\d*\.?\d+)(deg|grad|rad|turn)\)$/i,
 } as const;
 
 /** What the placement writer owns: position, and each axis's edges and size. */

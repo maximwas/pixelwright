@@ -2,7 +2,7 @@ import { injectable } from "@needle-di/core";
 import type { PropertyWriter, WriteInput, WriteOutput } from "@/core/css/css.types.ts";
 import {
   CELL_ATTRIBUTES,
-  GEOMETRY_AXIS,
+  CELL_AXES,
   GEOMETRY_ERROR,
   GEOMETRY_NUMBER,
   GEOMETRY_PATTERN,
@@ -21,14 +21,12 @@ export class GridCellWriter implements PropertyWriter {
   readonly attributes = CELL_ATTRIBUTES;
 
   write({ own, changed }: WriteInput, out: WriteOutput): void {
-    for (const axis of Object.values(GEOMETRY_AXIS)) {
-      if (changed(axis.align)) {
-        this.#self(axis, (own(axis.align) ?? "").trim(), out);
-      }
+    for (const axis of CELL_AXES.filter(({ align }) => changed(align))) {
+      this.#self(axis, (own(axis.align) ?? "").trim(), out);
+    }
 
-      if (changed(axis.line)) {
-        this.#lines(axis, (own(axis.line) ?? "").trim(), out);
-      }
+    for (const axis of CELL_AXES.filter(({ line }) => changed(line))) {
+      this.#lines(axis, (own(axis.line) ?? "").trim(), out);
     }
   }
 

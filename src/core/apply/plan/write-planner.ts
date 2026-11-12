@@ -8,6 +8,7 @@ import { LAYER_READS } from "@/core/apply/plan/layer-reads.ts";
 import { PLACED_LAYERS } from "@/core/apply/plan/placed-layers.ts";
 import type { WritePlan } from "@/core/apply/plan/plan.types.ts";
 import { PlannedComponents } from "@/core/apply/plan/planned-components.ts";
+import { TAG } from "@/core/xml/tags.constants.ts";
 
 /**
  * The one planner (T-142): which layers a call reads, then each element against its layer (assessment), as a change in
@@ -53,7 +54,11 @@ export class WritePlanner {
         notWritten.set(item.element.ref, unwritten);
       }
 
-      changes.push(made.change);
+      // A new TextPath whose path was refused is not made: Figma makes one only along its path, and the error says (C-179).
+      if (!this.#pathless(made.change)) {
+        changes.push(made.change);
+      }
+
       errors.push(...made.errors);
     }
 
@@ -74,9 +79,18 @@ export class WritePlanner {
     };
   }
 
-  /** Whether a change writes its layer: makes it, or gives it a property. */
+  /** Whether a change writes its layer: makes it, gives it a property, or writes its text. */
   #writes(change: ApplyChange): boolean {
-    return change.kind === CHANGE_KIND.create || Object.keys(change.props).length > 0;
+    return change.kind === CHANGE_KIND.create || Object.keys(change.props).length > 0 || change.text !== undefined;
+  }
+
+  #pathless(change: ApplyChange): boolean {
+    return (
+      change.kind === CHANGE_KIND.create &&
+      change.tag === TAG.TEXT_PATH &&
+      change.copyOf === undefined &&
+      change.props.path === undefined
+    );
   }
 
   /**

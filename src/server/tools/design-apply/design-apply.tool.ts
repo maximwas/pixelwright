@@ -57,14 +57,16 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
       throw new PixelwrightError(ERROR_CODE.invalidXml, reading.errors[0]?.message ?? "");
     }
 
+    const ids = this.#planner.layersToRead(reading.elements);
+    const layers = ids.length === 0 ? CurrentLayers.of([], []) : await this.#read(ids);
+    // One planner for dry and real runs (T-142): the real run is planned the same way, then refused for now.
+    const plan = this.#planner.plan(reading.elements, layers);
+
     if (!dryRun) {
       throw new PixelwrightError(ERROR_CODE.opFailed, DESIGN_APPLY_TEXT.notYet);
     }
 
-    const ids = this.#planner.layersToRead(reading.elements);
-    const layers = ids.length === 0 ? CurrentLayers.of([], []) : await this.#read(ids);
-
-    return { reading, plan: this.#planner.plan(reading.elements, layers) };
+    return { reading, plan };
   }
 
   /** The layers the call names, read once with the apply profile (outermost first, one budget, the ids lacking listed). */
@@ -87,7 +89,7 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
 
     // The planner's placement keys (index, before, after, copyOf, source, copy) are for the write; the declared schema
     // lists none of them, so the answer names the listed keys one by one instead of relying on a strip.
-    const changes = plan.written.map(({ line, column, kind, id, ref, tag, parent, props, sources }) => ({
+    const changes = plan.written.map(({ line, column, kind, id, ref, tag, parent, props, sources, text }) => ({
       line,
       column,
       kind,
@@ -97,6 +99,7 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
       parent,
       props,
       sources,
+      ...(text === undefined ? {} : { text }),
     }));
 
     return { elements, errors, changes, dry: true };

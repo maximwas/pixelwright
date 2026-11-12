@@ -1,4 +1,12 @@
+import { ATTRIBUTE } from "@/core/apply/apply.constants.ts";
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
+import {
+  INTENT_DECORATION,
+  INTENT_DECORATION_STYLE,
+  INTENT_TEXT_ALIGN,
+  INTENT_TEXT_CASE,
+  INTENT_TEXT_WRAP,
+} from "@/shared/write-intents/write-intent.constants.ts";
 
 /** The CSS a text's group writes (its colour is the fills group's; a mixed one comes from its main run here). */
 export const TEXT_ATTRIBUTES = [
@@ -13,6 +21,72 @@ export const TEXT_ATTRIBUTES = [
 ] as const;
 
 export const TEXT_SOURCES = ["text", "textPath"] as const;
+
+/** What the text writer owns: the text style, the text group's CSS, and a text's colour, in 0.7.0's table order. */
+export const TEXT_WRITTEN = [ATTRIBUTE.textStyle, ...TEXT_ATTRIBUTES, CSS_PROPERTY.color] as const;
+
+/** CSS's words for case, alignment, wrapping and a decoration, as Figma's values. */
+export const CASE_FIGMA = {
+  none: INTENT_TEXT_CASE.ORIGINAL,
+  uppercase: INTENT_TEXT_CASE.UPPER,
+  lowercase: INTENT_TEXT_CASE.LOWER,
+  capitalize: INTENT_TEXT_CASE.TITLE,
+} as const;
+
+export const ALIGN_FIGMA = {
+  left: INTENT_TEXT_ALIGN.LEFT,
+  start: INTENT_TEXT_ALIGN.LEFT,
+  center: INTENT_TEXT_ALIGN.CENTER,
+  right: INTENT_TEXT_ALIGN.RIGHT,
+  end: INTENT_TEXT_ALIGN.RIGHT,
+  justify: INTENT_TEXT_ALIGN.JUSTIFIED,
+} as const;
+
+export const WRAP_FIGMA = {
+  wrap: INTENT_TEXT_WRAP.AUTO,
+  balance: INTENT_TEXT_WRAP.BALANCE,
+  pretty: INTENT_TEXT_WRAP.PRETTY,
+} as const;
+
+export const LINE_FIGMA = {
+  none: INTENT_DECORATION.NONE,
+  underline: INTENT_DECORATION.UNDERLINE,
+  "line-through": INTENT_DECORATION.STRIKETHROUGH,
+} as const;
+
+export const DECORATION_STYLE_FIGMA = {
+  solid: INTENT_DECORATION_STYLE.SOLID,
+  wavy: INTENT_DECORATION_STYLE.WAVY,
+  dotted: INTENT_DECORATION_STYLE.DOTTED,
+  dashed: INTENT_DECORATION_STYLE.DASHED,
+} as const;
+
+/** The decoration's offset and thickness, beside the shorthand, as the one decoration Figma keeps them in. */
+export const DECORATION_LENGTHS = [
+  [CSS_PROPERTY.textUnderlineOffset, "offset"],
+  [CSS_PROPERTY.textDecorationThickness, "thickness"],
+] as const;
+
+export const TEXT_ERROR = {
+  badFont: (value: string) => `font="${value}" is not "[italic] weight size/line-height 'Family'".`,
+  pathLineHeight: "A text path has no line height.",
+  pathLineHeightHint: (font: string) => `Give its font without one: font="${font}".`,
+  badSpacing: (value: string) => `letter-spacing="${value}" is not in em or px.`,
+  badKeyword: (
+    attribute: string,
+    value: string,
+    words: string,
+  ) =>
+    `${attribute}="${value}" is not one Figma has: ${words}.`,
+  badDecoration: (value: string) => `text-decoration="${value}" is not "underline|line-through|none [style] [colour]".`,
+  badLength: (attribute: string, value: string) => `${attribute}="${value}" is not a length in px or em, or auto.`,
+  dashed: "Figma underlines solid, wavy or dotted: it has no dashed decoration.",
+} as const;
+
+export const TEXT_PATTERN = {
+  /** A font's "/line-height", taken out of a TextPath's font in the hint. */
+  lineHeight: /\s*\/\s*\S+/,
+} as const;
 
 /** Figma's values the text group tells apart. */
 export const FIGMA_TEXT = {
