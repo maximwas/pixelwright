@@ -19,7 +19,7 @@ How to write this file (people and agents alike):
 ## 0.8.0 — 2026-11-04
 
 Pixelwright 0.8.0 is a rewrite of the server and the plugin, and this version reads Figma: the tools that wrote to the
-file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). The 29 tools it
+file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). The 30 tools it
 keeps have 0.7.0's names, and `design_read` writes 0.7.0's XML, so what an agent knows of 0.7.0's reads still holds
 apart from the changes below. The plugin is new too: put it in place with the server
 (`npx -y pixelwright@latest setup`), since a 0.7.0 plugin cannot connect to 0.8.0.
@@ -49,6 +49,31 @@ apart from the changes below. The plugin is new too: put it in place with the se
 - `components_read` names the project file a component's code link points at in `path`, for GitHub, GitLab and
   Bitbucket file links and `vscode://file` links.
 - `status` says which connected file's tab is in front (`visible`): a file behind other tabs answers slowly.
+- `execute` takes one of three inputs: `code`, Plugin API code run in the plugin; `codePath`, the path of a file of such
+  code, read at every call; and `script`, code run on the server where `pw.nodesFind(...)` and the other reads call the
+  read tools (50 calls a run, 4 at once), with `utils` to filter and join their answers. A script never writes and
+  throws on a key an answer lacks. The guide's `script` topic has its limits.
+- `types_read` gives the whole answer type of each named read as TypeScript, every field with its comment, so a script
+  reads only keys that exist.
+- `nodes_find` takes a list of phrases in `text` (any matches) and `textRegex`, `fontSize` ranges (`lt`, `lte`, `gt`,
+  `gte`), `visible` (`false` finds hidden layers), `componentId`, `properties` (every property's value on each
+  instance, variant values included) and `fields` (keep only the fields you name). It returns a text's `characters`,
+  its ancestors in `path` and, across the file, its `page`; `hidden: true` marks a layer a viewer does not see.
+- `nodes_find` gives each instance its `component` (and `set` for a variant) and the properties it `changed` from the
+  component's defaults.
+- `inspect` reads a whole subtree in one call: `within` with `depth`, and `fields` to keep only some groups (`box`,
+  `parent`, `path`, `fills`, `strokes`, `effects`, `layout`, `bound`, `text`, `component`, `interactions`); `more` and
+  `leftIds` say what was left. It also gives `parentLayout` with `layout`, a mixed text's runs as `segments`, `path`
+  with the ancestors' ids and the page, a component's properties with their defaults, nested instance ids, and names
+  each bound variable by its Figma name too.
+- `tokens_read` takes `query` (a text or a list of them) to keep only the variables and styles whose name matches; each
+  variable carries its Figma id and, for an alias, `aliasOf` with the tokens it passes through.
+- `tokens_usage` takes `raw: true`: the colours bound to no style and no variable, each with its count and layers.
+- `outline` takes `absolute: true` for boxes in page coordinates; `file_map` gives each layer's `childCount`.
+- `components_read` takes `instances: true` (each instance's id, name and page, 100 at most) and `references: true`
+  (the layers bound to each component property).
+- The read tools say what an absent field means (no `hidden` is visible; no padding is 0) and that an answer is
+  complete unless `more` is true or a note says the scan stopped.
 
 ### Changed
 
@@ -91,7 +116,7 @@ apart from the changes below. The plugin is new too: put it in place with the se
   draws a gradient paint style from its paints rather than taking Figma's CSS, and notes a spring easing instead of
   drawing it as `linear()`. Past `maxChars` every format, not only JSON, gives the summary with the most whole tokens
   that fit, and `maxChars` goes down to 500.
-- `guide` has four topics, `workflow`, `xml`, `tokens` and `assets`, written for this version's tools.
+- `guide` has five topics, `workflow`, `xml`, `tokens`, `assets` and `script`, written for this version's tools.
 
 ### Fixed
 
@@ -113,11 +138,12 @@ apart from the changes below. The plugin is new too: put it in place with the se
 - Stroke weights keep their fractions: a 2.5 border reads as `2.5px`, not `3px`.
 - Relative paths start in the session's project folder (the MCP client's root, else `CLAUDE_PROJECT_DIR`), not in the
   folder the server was started from: `design_read`'s `assetsDir`, `assets_export`'s `dir`, `screenshot`'s `save`,
-  `image_compare`'s files and `execute`'s `script`.
+  `image_compare`'s files and `execute`'s `codePath`.
 - `tokens_read` with `format: "dtcg"` writes a colour composed with an opacity variable as valid DTCG: one colour with
   its alpha, or, when its colour cannot be resolved, a reference to that colour with a note, where 0.7.0 passed
   `{color, opacity}` through.
 - `tokens_usage` finds a style or variable that only one run of a mixed text uses.
+- `components_read` with `instances` leaves out instances on no page (inside a removed layer).
 
 ### Removed
 

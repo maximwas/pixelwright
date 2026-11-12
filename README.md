@@ -67,8 +67,9 @@ once; tools work on the one whose plugin window was in front last, or on the fil
 | `tokens_read`, `tokens_usage` | Variables with every mode, and styles, as token files; the layers a token is used on |
 | `components_read`, `library_search` | The components a page uses or the file defines, with variants and properties; components in your team's libraries |
 | `fonts_check` | The fonts a layer uses and where the build gets each |
-| `execute` | Plugin code the agent writes, for what no tool here shows; it reads too (see Safety) |
-| `guide` | What the agent reads before it starts: the workflow, the XML, tokens and assets |
+| `execute` | Plugin code the agent writes (`code`, or `codePath`, a file of it), for what no tool here shows; or a `script` on the server that calls the read tools and joins their answers. It reads too (see Safety) |
+| `types_read` | Each read's answer as TypeScript, for the agent's scripts |
+| `guide` | What the agent reads before it starts: the workflow, the XML, tokens, assets and scripts |
 
 A read of the Pro card from Orbit, abridged:
 
