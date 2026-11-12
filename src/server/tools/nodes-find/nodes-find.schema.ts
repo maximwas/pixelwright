@@ -6,8 +6,21 @@ import { FIND } from "@/shared/ops/find/find.constants.ts";
 import { findOp } from "@/shared/ops/find/find.manifest.ts";
 import { FoundPageSchema, FoundSchema } from "@/shared/ops/find/find.schema.ts";
 
-const { name, type, text, textRegex, fontSize, component, componentId, variant, counts, properties, visible, limit } =
-  findOp.input.shape;
+const {
+  name,
+  type,
+  text,
+  textRegex,
+  fontSize,
+  component,
+  componentId,
+  variant,
+  counts,
+  properties,
+  visible,
+  fill,
+  limit,
+} = findOp.input.shape;
 
 /** A layer found as nodes_find answers it: within "file" with its page; with fields, only those besides id, name, type. */
 const NodeFoundSchema = zod.extend(zod.partial(FoundSchema), {
@@ -29,6 +42,7 @@ export const NodesFindInputSchema = zod.strictObject({
   variant: variant.check(zod.describe(NODES_FIND_FIELD.variant)),
   counts: counts.check(zod.describe(NODES_FIND_FIELD.counts)),
   visible: visible.check(zod.describe(NODES_FIND_FIELD.visible)),
+  fill: fill.check(zod.describe(NODES_FIND_FIELD.fill)),
   within: zod.exactOptional(WithinSchema).check(zod.describe(NODES_FIND_FIELD.within)),
   limit: zod._default(limit, FIND.defaultLimit).check(zod.describe(NODES_FIND_FIELD.limit)),
   fields: zod

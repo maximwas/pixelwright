@@ -142,7 +142,9 @@ export class NodesFindTool extends Tool<NodesFindInput, NodesFindOutput> {
 
   /** Every root's answer as one: the first layers up to the limit, and the counts added up in the order first met. */
   #merged(answers: readonly NodesFindOutput[], { limit, counts }: Query): NodesFindOutput {
-    const nodes = answers.flatMap((found) => found.nodes);
+    // Roots may overlap: a layer found under two of them is listed once, where it was first found.
+    const seen = new Set<string>();
+    const nodes = answers.flatMap((found) => found.nodes).filter(({ id }) => !seen.has(id) && seen.add(id));
     const tally = new Map<string, Counted>();
     const [first] = answers;
 

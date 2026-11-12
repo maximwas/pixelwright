@@ -21,6 +21,12 @@ const applyLike = new OpContract({
   meta: { write: true, dryRun: true, timeoutMs: 30_000, needsAllowEdits: (input) => !input.dryRun, turn: "write" },
 });
 const executeLike = new OpContract({
+  name: "execute",
+  input: zod.object({}),
+  output: zod.unknown(),
+  meta: { write: true, dryRun: false, timeoutMs: 30_000, needsAllowEdits: true, turn: "write" },
+});
+const writeLike = new OpContract({
   name: "ping",
   input: zod.object({}),
   output: zod.unknown(),
@@ -42,6 +48,26 @@ describe("EditsStep (P-010, D-07)", () => {
       { contract: executeLike, input: {} },
     ]) {
       expect(await step.handle(call, next)).toMatchObject({ ok: false, error: { code: "EDITS_DISABLED" } });
+    }
+  });
+
+  // An agent refused execute read "dryRun checks changes without it": execute has no dry run, and reads need no code.
+  it("names dryRun only for an op that has one, and tells execute's caller how to read with Allow edits off", async () => {
+    const message = async (call: Parameters<EditsStep["handle"]>[0]) => {
+      const result = await step.handle(call, next);
+
+      return result.ok ? "" : result.error.message;
+    };
+
+    expect(await message({ contract: applyLike, input: { dryRun: false } })).toContain("dryRun");
+
+    // The text is chosen by the op's dry run meta, not its name: any op without one gets the same text.
+    for (const contract of [writeLike, executeLike]) {
+      const refused = await message({ contract, input: {} });
+
+      expect(refused).not.toContain("dryRun");
+      expect(refused).toMatch(/script/);
+      expect(refused).toMatch(/inspect, nodes_find, design_read/);
     }
   });
 });

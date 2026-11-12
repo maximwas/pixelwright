@@ -18,10 +18,17 @@ export class EditsStep implements OperationStep {
   }
 
   async handle(call: OpCall, next: OpNext): Promise<OpResult> {
-    if (call.contract.meta(call.input).needsAllowEdits && !(await this.#edits.isOn())) {
-      return { ok: false, error: { code: ERROR_CODE.editsDisabled, message: EDITS_TEXT.disabled } };
+    const meta = call.contract.meta(call.input);
+
+    if (meta.needsAllowEdits && !(await this.#edits.isOn())) {
+      return { ok: false, error: { code: ERROR_CODE.editsDisabled, message: this.#refusal(meta.dryRun) } };
     }
 
     return next(call);
+  }
+
+  /** dryRun is named only for an op that has one (its meta); any other says how to read without the switch. */
+  #refusal(dryRun: boolean): string {
+    return dryRun ? EDITS_TEXT.disabled : EDITS_TEXT.noDryRun;
   }
 }

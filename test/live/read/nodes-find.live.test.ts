@@ -1,3 +1,4 @@
+import { encode } from "fast-png";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient } from "../support/live-client.ts";
 import { TEST_MCP } from "../support/test-mcp.ids.ts";
@@ -320,5 +321,54 @@ return { card: card.id, set: set.id, cards: await of((main) => main.id === card.
 
     expect(await found(truth.card)).toEqual(byId(truth.cards));
     expect(await found(truth.set)).toEqual(byId(truth.buttons));
+  });
+});
+
+/** A 4 x 4 red PNG, enough for Figma to make an image of. */
+const RED_PNG = Buffer.from(
+  encode({
+    width: 4,
+    height: 4,
+    channels: 4,
+    data: Uint8Array.from({ length: 64 }, (_slot, index) => (index % 4 === 0 ? 200 : 255)),
+  }),
+).toString("base64");
+
+// Writes two frames in the Live tests Section and removes them after.
+describe("read/nodes_find by fill", () => {
+  const { file, scratch } = inject("live");
+  let client: LiveClient;
+  const run = async (code: string): Promise<unknown> => (await client.call("execute", { file, code })).result;
+
+  beforeAll(async () => {
+    client = await new LiveClient().connect();
+    await client.waitForTestMcp();
+  });
+
+  afterAll(async () => {
+    // By name, so frames made before a failed setup are removed too.
+    await run(`const section = await pw.node(${JSON.stringify(scratch)});
+for (const child of [...section.children]) if (child.name.startsWith("live:nodes-find:fill-")) child.remove();`);
+    await client.close();
+  });
+
+  it("finds the layers with a visible image fill in two frames with one call over both roots", async () => {
+    const ids = (await run(`const section = await pw.node(${JSON.stringify(scratch)});
+const hash = figma.createImage(figma.base64Decode(${JSON.stringify(RED_PNG)})).hash;
+const image = { type: "IMAGE", imageHash: hash, scaleMode: "FILL" };
+const frame = (name) => { const made = figma.createFrame(); made.name = name; made.fills = []; section.appendChild(made); return made; };
+const rectangle = (parent, name, fills) => { const made = figma.createRectangle(); made.name = name; made.fills = fills; parent.appendChild(made); return made; };
+const first = frame("live:nodes-find:fill-first");
+const second = frame("live:nodes-find:fill-second");
+const photoA = rectangle(first, "live:nodes-find:photo-a", [image]);
+rectangle(first, "live:nodes-find:solid", [{ type: "SOLID", color: { r: 1, g: 0, b: 0 } }]);
+rectangle(first, "live:nodes-find:hidden-image", [{ ...image, visible: false }]);
+const photoB = rectangle(second, "live:nodes-find:photo-b", [{ type: "SOLID", color: { r: 0, g: 0, b: 1 } }, image]);
+return { first: first.id, second: second.id, photoA: photoA.id, photoB: photoB.id };`)) as Record<string, string>;
+
+    const { nodes, more } = await client.call("nodes_find", { file, within: [ids.first, ids.second], fill: "IMAGE" });
+
+    expect((nodes as Found[]).map(({ id }) => id)).toEqual([ids.photoA, ids.photoB]);
+    expect(more).toBe(false);
   });
 });

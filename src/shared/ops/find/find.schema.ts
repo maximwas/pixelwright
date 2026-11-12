@@ -1,6 +1,6 @@
 import * as zod from "zod/mini";
 import { LIMITS } from "@/shared/limits/limits.constants.ts";
-import { FIND, FIND_FIELD } from "@/shared/ops/find/find.constants.ts";
+import { FIND, FIND_FIELD, FIND_FILL } from "@/shared/ops/find/find.constants.ts";
 import { NodeRefSchema } from "@/shared/ops/selection/selection.schema.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
@@ -37,6 +37,8 @@ export const FindOpInputSchema = zod.strictObject({
   counts: zod.exactOptional(zod.boolean()),
   /** true: only layers shown (the layer and every ancestor visible); false: only hidden ones; both when left out. */
   visible: zod.exactOptional(zod.boolean()),
+  /** Layers with a visible fill of this paint type. */
+  fill: zod.exactOptional(zod.enum(FIND_FILL)),
   within: zod.exactOptional(NodeIdSchema),
   limit: zod.int().check(zod.minimum(FIND.minLimit), zod.maximum(FIND.maxLimit)),
   /** What is left of the server's one budget when it goes page by page (P-075); the op's own when left out. */
