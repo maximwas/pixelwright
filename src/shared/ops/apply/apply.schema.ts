@@ -23,6 +23,7 @@ export const ApplyChangeSchema = zod.strictObject({
   text: zod.exactOptional(
     zod.strictObject({ characters: zod.string().check(zod.maxLength(APPLY.characters)), runs: zod.array(RunSchema) }),
   ),
+  moves: zod.exactOptional(zod.boolean()),
   copyOf: zod.exactOptional(NodeIdSchema),
   source: zod.exactOptional(NodeIdSchema),
   copy: zod.exactOptional(NodeIdSchema),

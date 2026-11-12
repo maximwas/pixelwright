@@ -53,16 +53,19 @@ export class ApplyChecks {
     return node;
   }
 
-  /** The layer an update writes, its tag matching its type; its page loaded on a real run. */
-  async existing(change: ApplyChangeData, load: boolean): Promise<SceneNode> {
-    if (change.source !== undefined) {
-      throw new WriteError(APPLY_TEXT.copies);
-    }
-
-    const node = change.id === null ? null : await this.#lookup.node(change.id);
+  /**
+   * The layer an update writes (or `id`: a copy's source, the source's layer inside it), its tag matching its type; its
+   * page loaded on a real run.
+   */
+  async existing(
+    change: ApplyChangeData,
+    load: boolean,
+    id = change.id,
+  ): Promise<SceneNode> {
+    const node = id === null ? null : await this.#lookup.node(id);
 
     if (node === null || node.type === FIGMA_NODE_TYPE.page || node.type === FIGMA_NODE_TYPE.document) {
-      throw new WriteError(APPLY_TEXT.noLayer(change.id), APPLY_TEXT.noLayerHint);
+      throw new WriteError(APPLY_TEXT.noLayer(id), APPLY_TEXT.noLayerHint);
     }
 
     const held = Reflect.get(TEXT_TAG, node.type) as string | undefined;
@@ -71,7 +74,7 @@ export class ApplyChecks {
     if (held !== asked) {
       const type = held ?? CAPABILITY_TEXT.type(node.type);
 
-      throw new WriteError(APPLY_TEXT.notTag(change.id, type, change.tag), APPLY_TEXT.tagHint);
+      throw new WriteError(APPLY_TEXT.notTag(id, type, change.tag), APPLY_TEXT.tagHint);
     }
 
     const page = load ? this.#lookup.pageOf(node) : null;
@@ -83,14 +86,15 @@ export class ApplyChecks {
     return node;
   }
 
-  /** The type a new layer is made as: its tag made in this release, in a parent that holds layers (a slot, a component). */
-  creatable(change: ApplyChangeData, parent: TypedLayer): NodeType {
-    const type = NEW_LAYER_TYPE[change.tag];
-
-    if (change.copyOf !== undefined || change.source !== undefined) {
-      throw new WriteError(APPLY_TEXT.copies);
-    }
-
+  /**
+   * The type a new layer is made as (a copy's: its source's): its tag made in this release, in a parent that holds
+   * layers (a slot, a component).
+   */
+  creatable(
+    change: ApplyChangeData,
+    parent: TypedLayer,
+    type = NEW_LAYER_TYPE[change.tag],
+  ): NodeType {
     if (type === undefined) {
       throw new WriteError(APPLY_TEXT.cannotMake(change.tag));
     }

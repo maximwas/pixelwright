@@ -11,7 +11,7 @@ const CHANGE = { line: 1, column: 1, kind: "create", ref: "new:1", id: null, tag
 // No Figma here (CLAUDE.md): a stand-in holder and layer that only record where the layer is. The failing step is a
 // field Figma would refuse, simulated by a setter that throws; no input of the tool reaches such a refusal (live:
 // every wrap, hug and place case writes), so the live suite cannot cover it.
-type Holder = { children: SceneNode[]; node: Pick<FrameNode, "children" | "appendChild"> };
+type Holder = { children: SceneNode[]; node: Pick<FrameNode, "children" | "appendChild" | "insertChild"> };
 type Layer = { type: "FRAME"; removed: boolean; remove(): void; layoutMode: "HORIZONTAL" };
 
 function holder(): Holder {
@@ -23,6 +23,9 @@ function holder(): Holder {
       children,
       appendChild: (child) => {
         children.push(child);
+      },
+      insertChild: (index, child) => {
+        children.splice(index, 0, child);
       },
     },
   };
@@ -63,7 +66,9 @@ describe("new layers: a layer whose creation fails after it exists is taken away
     const parent = holder();
     const node = layer(parent, "clipsContent");
 
-    expect(() => newLayers(node).create("FRAME", CHANGE as ApplyChangeData, parent.node as BaseNode)).toThrow();
+    expect(() =>
+      newLayers(node).create("FRAME", CHANGE as ApplyChangeData, { parent: parent.node as FrameNode, index: 0 }),
+    ).toThrow();
     expect(parent.children).toEqual([]);
   });
 

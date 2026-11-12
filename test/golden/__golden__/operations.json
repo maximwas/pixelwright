@@ -12088,6 +12088,9 @@
                 ],
                 "additionalProperties": false
               },
+              "moves": {
+                "type": "boolean"
+              },
               "copyOf": {
                 "type": "string",
                 "minLength": 1,

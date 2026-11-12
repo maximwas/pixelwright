@@ -27,6 +27,11 @@ export class LayerFactory {
     return make();
   }
 
+  /** A new page, last among the file's; Figma refuses one past its plan's page limit. */
+  page(): PageNode {
+    return figma.createPage();
+  }
+
   combine(
     components: ComponentNode[],
     parent: BaseNode & ChildrenMixin,

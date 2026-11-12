@@ -12,9 +12,12 @@ import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
 import { ApplyOperation } from "@/plugin/operations/apply/apply.operation.ts";
+import { APPLY_LAYERS, ApplyLayers } from "@/plugin/operations/apply/apply-layers.ts";
 import { APPLY_RUN, ApplyRun } from "@/plugin/operations/apply/apply-run.ts";
 import { APPLY_CHECKS, ApplyChecks } from "@/plugin/operations/apply/checks.ts";
 import { NEW_LAYERS, NewLayers } from "@/plugin/operations/apply/new-layers.ts";
+import { PAGES, Pages } from "@/plugin/operations/apply/pages.ts";
+import { PLACEMENT, Placement } from "@/plugin/operations/apply/placement.ts";
 import { ClipStep } from "@/plugin/operations/apply/writers/clip-step.ts";
 import { FillsStep } from "@/plugin/operations/apply/writers/fills-step.ts";
 import { LimitsStep } from "@/plugin/operations/apply/writers/geometry/limits-step.ts";
@@ -140,6 +143,9 @@ export class OperationProviders {
       .bind({ provide: APPLY_CHECKS, useClass: ApplyChecks })
       .bind({ provide: PLACEMENT_SPAN, useClass: PlacementSpan })
       .bind({ provide: NEW_LAYERS, useClass: NewLayers })
+      .bind({ provide: PLACEMENT, useClass: Placement })
+      .bind({ provide: PAGES, useClass: Pages })
+      .bind({ provide: APPLY_LAYERS, useClass: ApplyLayers })
       .bind({ provide: APPLY_RUN, useClass: ApplyRun })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
   }

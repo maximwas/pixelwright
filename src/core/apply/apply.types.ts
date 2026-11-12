@@ -76,6 +76,8 @@ export interface ApplyChange extends XmlLocation {
   readonly sources: Readonly<Partial<Record<keyof FigmaProps, string>>>;
   /** A Text's characters and runs, when its text does not read as the element's yet or a text style resets it. */
   readonly text?: ApplyText;
+  /** An existing layer placed again (T-124): under another parent, next to a layer, or in another order. */
+  readonly moves?: boolean;
   /** A create that starts as a clone of this layer. */
   readonly copyOf?: string;
   /** Inside a copy or a new instance: the layer whose counterpart this change writes. */

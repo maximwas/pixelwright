@@ -6,6 +6,7 @@ import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.const
 import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_PLACE, APPLY_TEXT, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
+import type { Place } from "@/plugin/operations/apply/apply.types.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 import { INTENT_LAYOUT_MODE, INTENT_SELF_ALIGN } from "@/shared/write-intents/write-intent.constants.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
@@ -39,19 +40,31 @@ export class NewLayers {
   create(
     type: NodeType,
     change: ApplyChangeData,
-    parent: BaseNode,
+    { parent, index }: Place,
   ): SceneNode {
-    const holder = parent as BaseNode & ChildrenMixin;
     const node =
       type === FIGMA_NODE_TYPE.slot
         ? (parent as ComponentNode).createSlot()
         : this.#factory.make(type, APPLY_TEXT.cannotMake(change.tag));
 
-    // shortcut: a new layer goes last in its parent, so the XML's order holds among new layers only; the moves item
-    // places it among existing layers by index, before and after.
     try {
-      holder.appendChild(node);
+      parent.insertChild(index, node);
       this.#bare(node, change.props);
+    } catch (error) {
+      this.#discard(node);
+
+      throw error;
+    }
+
+    return node;
+  }
+
+  /** A clone of the source with all it has, XML or not (T-126), at its place; taken away when Figma refuses it there. */
+  copy(source: SceneNode, { parent, index }: Place): SceneNode {
+    const node = source.clone();
+
+    try {
+      parent.insertChild(index, node);
     } catch (error) {
       this.#discard(node);
 
