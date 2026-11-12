@@ -60,13 +60,19 @@ export class Placement {
     let holder: BaseNode = (this.#parentOf(change, call) ?? call.top) as BaseNode;
     let index = 0;
 
+    this.#checkStandIn(change, call);
+
+    // Checked before the index is worked out among its children: a layer that holds none has no children to count.
+    if ("id" in holder) {
+      this.#checkHolder(holder, node);
+    }
+
     if (!call.dry || neighbour !== undefined) {
       ({ parent: holder, index } = await this.whereTo(change, call));
     }
 
-    this.#checkStandIn(change, call);
-
-    // A layer this dry run would make stands in for its parent: it has no children to check.
+    // A layer this dry run would make stands in for its parent: it has no children to check. A neighbour may name
+    // another parent than the element's, so the holder whereTo found is checked again.
     if ("id" in holder) {
       this.#checkHolder(holder, node);
     }
