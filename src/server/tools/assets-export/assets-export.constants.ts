@@ -10,13 +10,13 @@ export const ASSETS_EXPORT_TOOL = {
 
 export const ASSETS_EXPORT_FIELD = {
   nodes: "Layers to write, one file each: SVG for an icon, PNG otherwise, unless format says. Give nodes or from.",
-  from: "A layer to write every true asset of (its icons and images, as design_read plans them): an image fill behind a layer's content is written as placed, an image layer is rendered as design_read plans it (2x); scale and format apply to nodes only. Give nodes or from.",
+  from: "A layer to write every true asset of (its icons and images, as design_read plans them): an image fill behind a layer's content is written as placed, an image layer is rendered as design_read plans it (its export settings, else 2x); scale and format apply to nodes only. Give nodes or from.",
   dir: "The folder to write into; created if missing. Files already there are never overwritten with other bytes. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
   names:
     'A file name per layer id, e.g. {"54:12": "hero-mountains"}: slugged, the extension added. The other layers are named after themselves (Rectangle 61: rectangle-61.png).',
   format: "For nodes: the format of every file. WEBP is rendered as PNG by Figma and encoded here.",
   scale:
-    "For nodes rendered as PNG, JPG or WEBP: pixels per Figma pixel, or per CSS px with width. Default 2. Ignored with from: an image fill behind a layer's content is written as placed, an image layer is rendered at 2x.",
+    "For nodes rendered as PNG, JPG or WEBP: pixels per Figma pixel, or per CSS px with width. Default 2. Ignored with from: an image fill behind a layer's content is written as placed, an image layer is rendered at its export settings, else 2x.",
   width:
     "For nodes as PNG, JPG or WEBP: the CSS width the build shows the layer at; the file is width × scale px wide (110 at scale 2: 220 px).",
   quality: "For WEBP: the colours' quality, 1 to 100. Default 85. Transparency is kept exactly at any quality.",

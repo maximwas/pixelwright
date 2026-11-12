@@ -9216,7 +9216,7 @@
           }
         },
         "from": {
-          "description": "A layer to write every true asset of (its icons and images, as design_read plans them): an image fill behind a layer's content is written as placed, an image layer is rendered as design_read plans it (2x); scale and format apply to nodes only. Give nodes or from.",
+          "description": "A layer to write every true asset of (its icons and images, as design_read plans them): an image fill behind a layer's content is written as placed, an image layer is rendered as design_read plans it (its export settings, else 2x); scale and format apply to nodes only. Give nodes or from.",
           "type": "string",
           "minLength": 1,
           "maxLength": 200
@@ -9253,7 +9253,7 @@
           ]
         },
         "scale": {
-          "description": "For nodes rendered as PNG, JPG or WEBP: pixels per Figma pixel, or per CSS px with width. Default 2. Ignored with from: an image fill behind a layer's content is written as placed, an image layer is rendered at 2x.",
+          "description": "For nodes rendered as PNG, JPG or WEBP: pixels per Figma pixel, or per CSS px with width. Default 2. Ignored with from: an image fill behind a layer's content is written as placed, an image layer is rendered at its export settings, else 2x.",
           "type": "number",
           "minimum": 0.01,
           "maximum": 4
