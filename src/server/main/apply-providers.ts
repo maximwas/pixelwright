@@ -5,6 +5,11 @@ import { LAYER_READS, LayerReads } from "@/core/apply/plan/layer-reads.ts";
 import { PLACED_LAYERS, PlacedLayers } from "@/core/apply/plan/placed-layers.ts";
 import { UNCHANGED, Unchanged } from "@/core/apply/plan/unchanged.ts";
 import { WRITE_PLANNER, WritePlanner } from "@/core/apply/plan/write-planner.ts";
+import { AppearanceWriter } from "@/core/css/groups/appearance/appearance-writer.ts";
+import { ElementWriter } from "@/core/css/groups/element/element-writer.ts";
+import { GridCellWriter } from "@/core/css/groups/geometry/grid-cell-writer.ts";
+import { PlacementWriter } from "@/core/css/groups/geometry/placement-writer.ts";
+import { SizeWriter } from "@/core/css/groups/geometry/size-writer.ts";
 import { GAP_READER, GapReader } from "@/core/css/groups/layout/gap-reader.ts";
 import { GRID_WRITER, GridWriter } from "@/core/css/groups/layout/grid-writer.ts";
 import { LayoutWriter } from "@/core/css/groups/layout/layout-writer.ts";
@@ -17,6 +22,11 @@ export class ApplyProviders {
       .bind({ provide: GAP_READER, useClass: GapReader })
       .bind({ provide: GRID_WRITER, useClass: GridWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: LayoutWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: PlacementWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: SizeWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: GridCellWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: AppearanceWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: ElementWriter })
       .bind({ provide: WRITE_REGISTRY, useClass: WriteRegistry })
       .bind({ provide: LAYER_READS, useClass: LayerReads })
       .bind({ provide: UNCHANGED, useClass: Unchanged })

@@ -142,8 +142,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     radial sizes, `color-mix()` and P3 stops included, for the write side). `groups/<group>/` holds one group each, in this order: `layout/` reads auto layout as flex and
     a grid as its tracks; `geometry/` reads where a layer is and how big (`Placement`: position and edges from the
     constraints, a turned layer by its bounds' centre; `GeometryGroup`: transform, size, FILL as flex or stretch,
-    limits; a flat or standing line unturned along its length); `appearance/` reads opacity, blend mode, clipping, a
-    text's truncation, the radius and layout grids; `paint/` reads fills (`FillsGroup`: background top first, a text's
+    limits; a flat or standing line unturned along its length; `PlacementWriter`, `SizeWriter` and `GridCellWriter`
+    write them back, edges as a pair, C-051..C-058, the span on the live parent being `core/kernel/geometry/`'s
+    `PlacementSpan`, the one copy the plugin imports); `appearance/` reads opacity, blend mode, clipping, a
+    text's truncation, the radius and layout grids (`AppearanceWriter` writes them back); `element/` holds
+    `ElementWriter`: name, link, component, variant, props, notes, a component property, mask and src written back; `paint/` reads fills (`FillsGroup`: background top first, a text's
     colour, the fixed D-20 note for what it cannot write) and strokes (`StrokesGroup`: border, outline, per-side
     borders, dashed, a line as one border); `effects/` reads shadows top first (`box-shadow`, a text's
     `text-shadow`, an effect style as its token) and blurs as `filter` / `backdrop-filter` at 0.43 R (C-100); `text/` reads a text: `TextRun` (a run's font,

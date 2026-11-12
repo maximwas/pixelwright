@@ -6,6 +6,8 @@ export const GEOMETRY = {
   /** A line within half a degree of lying flat or standing is drawn as such (0.7.0's snap). */
   lineSnapDegrees: 0.5,
   rightAngleDegrees: 90,
+  /** A scaled layer's start and size are percents of its parent. */
+  percent: 100,
 } as const;
 
 /** How a line lies: along the x axis, or along the y axis. */
