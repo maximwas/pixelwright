@@ -2,7 +2,6 @@ import { isTokenDimension, isTokenEOF, isTokenNumber, isTokenPercentage, tokeniz
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { GRADIENT_GEOMETRY } from "@/core/css/gradients/gradient-geometry.ts";
 import {
-  ANGLE_UNITS,
   GRADIENT_CENTRE,
   GRADIENT_KIND,
   GRADIENT_NUMBER,
@@ -18,6 +17,7 @@ import type {
   GradientSpec,
   GradientStopSpec,
 } from "@/core/css/gradients/gradients.types.ts";
+import { CSS_ANGLE } from "@/core/css/values/css-angle.ts";
 import { CSS_SPLIT } from "@/core/css/values/css-split.ts";
 import { CSS_VAR } from "@/core/css/values/css-var.ts";
 import { CSS_SEPARATOR } from "@/core/css/values/values.constants.ts";
@@ -41,15 +41,18 @@ export class GradientParser {
   readonly #split;
   readonly #vars;
   readonly #geometry;
+  readonly #angles;
 
   constructor(
     split = inject(CSS_SPLIT),
     vars = inject(CSS_VAR),
     geometry = inject(GRADIENT_GEOMETRY),
+    angles = inject(CSS_ANGLE),
   ) {
     this.#split = split;
     this.#vars = vars;
     this.#geometry = geometry;
+    this.#angles = angles;
   }
 
   /** The gradient; null for anything else (a repeating gradient, a size keyword, a stop it cannot read). */
@@ -109,7 +112,7 @@ export class GradientParser {
   /** An angle (deg, grad, rad, turn) or a `to <side>` direction, 0 to 360. */
   #angle(value: string): number | null {
     const side = GRADIENT_SIDES[value.trim().split(GRADIENT_PATTERN.spaces).join(GRADIENT_VALUE.space)];
-    const degrees = side ?? this.#degrees(value);
+    const degrees = side ?? this.#angles.degrees(value);
 
     return degrees === null ? null : this.#geometry.turn(degrees);
   }
@@ -174,7 +177,7 @@ export class GradientParser {
       return place.value / GRADIENT_NUMBER.percent;
     }
 
-    const degrees = this.#degrees(word);
+    const degrees = this.#angles.degrees(word);
 
     return degrees === null ? null : degrees / GRADIENT_NUMBER.fullTurn;
   }
@@ -202,13 +205,6 @@ export class GradientParser {
     }
 
     return stops.map((stop, index) => ({ ...stop, position: places[index] ?? 0 }));
-  }
-
-  #degrees(value: string): number | null {
-    const angle = this.#dimension(value);
-    const degrees = angle === null ? undefined : ANGLE_UNITS[angle.unit];
-
-    return angle === null || degrees === undefined ? null : angle.value * degrees;
   }
 
   /** One number, percentage or dimension (unit in lower case); null for anything else, or more than one. */
