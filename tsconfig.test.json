@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // The window's tests see the DOM beside Node; the main thread's have their own config with the plugin typings,
+    // whose timers (returning number) would shadow Node's here.
+    "lib": ["ES2024", "DOM"],
+    "types": ["node"]
+  },
+  "include": ["test", "src/**/*.test.ts", "scripts/**/*.test.ts", "src/server/tools/guide/markdown.d.ts"],
+  "exclude": ["test/guards/samples", "src/plugin/**/*.test.ts"]
+}

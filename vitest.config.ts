@@ -1,30 +1,53 @@
 import { defineConfig } from "vitest/config";
 
+// old/ is fenced off: no include reaches it, and the exclude keeps it so if an include ever widens.
+const exclude = ["old/**", "node_modules/**", "dist/**"];
+// needle-di's @injectable() as a legacy decorator (tsconfig.base.json says why); oxc does not read it from tsconfig.
+const oxc = { decorator: { legacy: true } };
+// The `@/` alias of tsconfig.base.json; each project is its own config, so each one turns it on.
+const resolve = { tsconfigPaths: true };
+// The guide's topics as tsdown's text loader bundles them (tsdown.config.ts): a .md module is its text.
+const plugins = [
+  {
+    name: "markdown-text",
+    transform(code: string, id: string) {
+      return id.endsWith(".md") ? `export default ${JSON.stringify(code)};` : null;
+    },
+  },
+];
+
 export default defineConfig({
   test: {
     projects: [
       {
+        oxc,
+        resolve,
+        plugins,
         test: {
-          name: "core",
-          root: "packages/core",
-          environment: "node",
-          include: ["test/**/*.test.ts"],
+          name: "unit",
+          include: [
+            "src/**/*.test.ts",
+            "scripts/**/*.test.ts",
+            "test/golden/**/*.golden.test.ts",
+            "test/guards/**/*.test.ts",
+          ],
+          exclude,
         },
       },
+      { oxc, resolve, plugins, test: { name: "contract", include: ["test/contract/**/*.contract.test.ts"], exclude } },
+      // Real Figma (Test MCP), local only: one file at a time, and writing tests never retry.
       {
+        oxc,
+        resolve,
         test: {
-          name: "server",
-          root: "apps/server",
-          environment: "node",
-          include: ["test/**/*.test.ts"],
-        },
-      },
-      // Root stays at the repo root, so vitest never reads the plugin package's build config.
-      {
-        test: {
-          name: "plugin",
-          environment: "node",
-          include: ["apps/plugin/test/**/*.test.ts"],
+          name: "live",
+          include: ["test/live/**/*.live.test.ts"],
+          globalSetup: ["test/live/live.setup.ts"],
+          exclude,
+          fileParallelism: false,
+          retry: 0,
+          testTimeout: 60_000,
+          hookTimeout: 120_000,
         },
       },
     ],

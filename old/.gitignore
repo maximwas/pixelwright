@@ -1,0 +1,16 @@
+# Secrets
+.env
+.env.*
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+apps/plugin/build/
+apps/plugin/manifest.json
+
+# OS / tools
+.DS_Store
+.playwright-mcp/
+.claude/worktrees/

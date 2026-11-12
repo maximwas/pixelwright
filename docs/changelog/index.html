@@ -18,13 +18,12 @@
     <div class="progress" aria-hidden="true"></div>
     <header class="top">
       <div class="top-inner">
-        <a class="wordmark" href="../" aria-label="Pixelwright home">
+        <a class="wordmark" href="../" aria-label="Pixelwright docs">
           <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d99ff" /><rect x="9" y="9" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.2" /><g fill="#0d99ff" stroke="#fff" stroke-width="1.8"><rect x="6.2" y="6.2" width="5.6" height="5.6" /><rect x="20.2" y="6.2" width="5.6" height="5.6" /><rect x="6.2" y="20.2" width="5.6" height="5.6" /><rect x="20.2" y="20.2" width="5.6" height="5.6" /></g></svg>
           <span class="wordmark-text">Pixelwright</span>
         </a>
         <nav class="links" aria-label="Site">
-          <a href="../">Home</a>
-          <a href="../docs/">Docs</a>
+          <a href="../">Docs</a>
           <a href="../changelog/">Changelog</a>
           <a href="https://www.npmjs.com/package/pixelwright">npm</a>
           <a href="https://ko-fi.com/maksymvasianin">Support</a>
@@ -38,6 +37,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-8-0">0.8.0 — 2026-11-12</a></li>
           <li><a href="#v0-7-0">0.7.0 — 2026-10-22</a></li>
           <li><a href="#v0-6-0">0.6.0 — 2026-10-22</a></li>
           <li><a href="#v0-5-0">0.5.0 — 2026-10-20</a></li>
@@ -54,6 +54,153 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-8-0">
+          <h2>0.8.0 — 2026-11-12</h2>
+<p>Pixelwright 0.8.0 is a rewrite of the server and the plugin, and this version reads Figma: the tools that wrote to the
+file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). It has 30 tools:
+29 keep 0.7.0&#39;s names, <code>types_read</code> is new, and <code>design_read</code> writes 0.7.0&#39;s XML, so what an agent knows of 0.7.0&#39;s reads still holds
+apart from the changes below. The plugin is new too: put it in place with the server
+(<code>npx -y pixelwright@latest setup</code>), since a 0.7.0 plugin cannot connect to 0.8.0.</p>
+<h4>Added</h4>
+<ul>
+<li><code>design_read</code> writes a text&#39;s stroke as <code>-webkit-text-stroke</code> (an outside stroke twice as wide with
+<code>paint-order: stroke fill</code>; an inside one with a note, since CSS has none), and a layer&#39;s fill blend modes as
+<code>background-blend-mode</code>, one per background, top first.</li>
+<li><code>design_read</code> says more of what Figma shows: a drop shadow Figma draws behind a see-through layer is
+<code>filter: drop-shadow()</code> (CSS cuts a <code>box-shadow</code> out under the box), a link that opens in a new tab has
+<code>target=&quot;_blank&quot;</code>, a locked layer has <code>$locked</code>, and corner smoothing is a <code>$css</code> note with Figma&#39;s value.</li>
+<li><code>design_read</code> takes <code>autoLineHeight: &quot;px&quot;</code>: Figma&#39;s Auto line heights are written as the px Figma renders them at,
+wherever a text that hugs its lines shows that for its font and size. Elsewhere, and by default, they stay <code>normal</code>,
+and the line-height hint names only the texts still written <code>normal</code>.</li>
+<li><code>assets_export</code> takes <code>names</code>, a file name per layer id (<code>{ &quot;12:34&quot;: &quot;hero-mountains&quot; }</code>). Layers without one keep
+the name made from the layer&#39;s name.</li>
+<li>The guide and <code>assets_export</code> say that WEBP keeps transparency exactly, at any quality.</li>
+<li><code>inspect</code> gives the blend mode of a layer and of each of its fills, with CSS&#39;s <code>mix-blend-mode</code> name, every fill&#39;s
+type (a video&#39;s too), and the variables bound to a layer&#39;s padding, gap, radius and size under the token names
+<code>design_read</code> writes. It takes up to 100 layers a call; <code>left</code> counts the selected layers past them.</li>
+<li><code>nodes_find</code> without <code>within</code> names the page it searched in <code>page</code>, and when it finds nothing there, <code>hint</code> says how
+to search elsewhere.</li>
+<li><code>nodes_diff</code> and <code>variants_read</code> say in <code>cut</code> when a read was cut short.</li>
+<li><code>tokens_usage</code> returns at most 500 layers (<code>more</code> says there are others) and takes <code>budgetMs</code>: the scan stops there
+with what it found and a note.</li>
+<li><code>components_read</code> names the project file a component&#39;s code link points at in <code>path</code>, for GitHub, GitLab and
+Bitbucket file links and <code>vscode://file</code> links.</li>
+<li><code>status</code> says which connected file&#39;s tab is in front (<code>visible</code>): a file behind other tabs answers slowly.</li>
+<li><code>execute</code> takes one of three inputs: <code>code</code>, Plugin API code run in the plugin; <code>codePath</code>, the path of a file of such
+code, read at every call; and <code>script</code>, code run on the server where <code>pw.nodesFind(...)</code> and the other reads call the
+read tools (50 calls a run, 4 at once), with <code>utils</code> to filter and join their answers. A script never writes and
+throws on a key an answer lacks. The guide&#39;s <code>script</code> topic has its limits.</li>
+<li><code>types_read</code> gives the whole answer type of each named read as TypeScript, every field with its comment, so a script
+reads only keys that exist.</li>
+<li><code>nodes_find</code> takes a list of phrases in <code>text</code> (any matches) and <code>textRegex</code>, <code>fontSize</code> ranges (<code>lt</code>, <code>lte</code>, <code>gt</code>,
+<code>gte</code>), <code>visible</code> (<code>false</code> finds hidden layers), <code>componentId</code>, <code>properties</code> (every property&#39;s value on each
+instance, variant values included) and <code>fields</code> (keep only the fields you name). It returns a text&#39;s <code>characters</code>,
+its ancestors in <code>path</code> and, across the file, its <code>page</code>; <code>hidden: true</code> marks a layer a viewer does not see.</li>
+<li><code>nodes_find</code> gives each instance its <code>component</code> (and <code>set</code> for a variant) and the properties it <code>changed</code> from the
+component&#39;s defaults.</li>
+<li><code>inspect</code> reads a whole subtree in one call: <code>within</code> with <code>depth</code>, and <code>fields</code> to keep only some groups (<code>box</code>,
+<code>parent</code>, <code>path</code>, <code>fills</code>, <code>strokes</code>, <code>effects</code>, <code>layout</code>, <code>bound</code>, <code>text</code>, <code>component</code>, <code>interactions</code>); <code>more</code> and
+<code>leftIds</code> say what was left. It also gives <code>parentLayout</code> with <code>layout</code>, a mixed text&#39;s runs as <code>segments</code>, <code>path</code>
+with the ancestors&#39; ids and the page, a component&#39;s properties with their defaults, nested instance ids, and names
+each bound variable by its Figma name too.</li>
+<li><code>tokens_read</code> takes <code>query</code> (a text or a list of them) to keep only the variables and styles whose name matches; each
+variable carries its Figma id and, for an alias, <code>aliasOf</code> with the tokens it passes through.</li>
+<li><code>tokens_usage</code> takes <code>raw: true</code>: the colours bound to no style and no variable, each with its count and layers.</li>
+<li><code>outline</code> takes <code>absolute: true</code> for boxes in page coordinates; <code>file_map</code> gives each layer&#39;s <code>childCount</code>.</li>
+<li><code>components_read</code> takes <code>instances: true</code> (each instance&#39;s id, name and page, 100 at most, for the first 25 components listed) and <code>references: true</code>
+(the layers bound to each component property).</li>
+<li>The read tools say what an absent field means (no <code>hidden</code> is visible; no padding is 0) and that an answer is
+complete unless <code>more</code> is true or a note says the scan stopped.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li><strong>Update the plugin with the server.</strong> The plugin protocol is now 6: a 0.7.0 plugin cannot connect to a 0.8.0
+server, and <code>status</code> names a plugin it turned away, with its version. Run <code>npx -y pixelwright@latest setup</code> again
+and run the plugin.</li>
+<li>Servers of the two versions meet over peer protocol 4: a 0.7.0 server still running hands the bridge to 0.8.0 and
+then asks to be restarted in its MCP client, and a 0.7.0 server started while 0.8.0 holds the bridge is turned away.
+Restart Pixelwright in every MCP client left open (<code>/mcp</code> in Claude Code).</li>
+<li>Every tool refuses an argument it does not take, with an error naming it, instead of dropping it without a word: an
+agent learns the right field from the error.</li>
+<li>A hidden layer inside a read is written as a stub, its tag with <code>id</code>, <code>name</code> and <code>display=&quot;none&quot;</code> (and
+<code>$visibleProp</code> when a component property shows it) and no children, where 0.7.0 left it out. <code>baseline_diff</code> lists
+it as <code>now: hidden</code> or <code>was: hidden</code>, and <code>styles_compare</code> notes a hidden layer instead of comparing it. A hidden
+root is still refused.</li>
+<li><code>design_read</code> no longer asks Figma for its own CSS of a layer, which could hang for minutes: a fill or stroke
+Pixelwright cannot write as CSS (a diamond gradient, a pattern) is named in <code>$css</code> by a fixed note.</li>
+<li>Blurs now match how Figma renders them. <code>design_read</code> and <code>tokens_read</code> write a layer or background blur of radius
+20 as <code>blur(8.6px)</code>, about 0.86 of the value 0.7.0 wrote. Figma&#39;s Dev Mode still writes half the radius
+(<code>blur(10px)</code>), so its CSS differs from Pixelwright&#39;s.</li>
+<li><code>design_read</code>&#39;s <code>maxChars</code> cuts in steps until the read fits: the deepest branches first (<code>$truncated</code>), then the
+longest lists (<code>$children=&quot;N&quot;</code> where not all children were read), then the longest texts (<code>$truncated</code>). 0.7.0 only
+emptied deeper branches.</li>
+<li><strong><code>image_compare</code> counts differing pixels another way, so re-take once any <code>different</code> you kept from 0.7.0.</strong>
+<code>different</code>, the share of differing pixels, now comes from pixelmatch 8: a perceptual colour threshold, with
+antialiased pixels left out, in place of 0.7.0&#39;s &quot;any channel off by more than 16&quot;. The share drops on antialiased
+edges (an icon antialiased another way: 0 of 9,216 pixels, where 0.7.0 counted 20), and the <code>diff</code> image marks
+antialiased pixels yellow.</li>
+<li><code>fonts_check</code> asks Fontsource&#39;s catalogue first whether Google Fonts serves a family, and Google&#39;s own list only
+when Fontsource does not answer.</li>
+<li><code>execute</code> prints what its code logs as JavaScript writes it: <code>undefined</code>, <code>NaN</code> and <code>Infinity</code> print as themselves,
+not as <code>null</code>.</li>
+<li><code>execute</code> is for reading: its description and the server&#39;s instructions tell the agent to try the read tools first,
+and, when the user asks to change the file through <code>execute</code>, to warn that editing is not supported or stable in
+this version and go on only on the user&#39;s say-so. Allow edits still gates every write.</li>
+<li><code>styles_compare</code> compares a layer in its parent only when another pair&#39;s layer holds it, and otherwise as a read of
+its own (its size, not its place); in a flex that does not wrap only the main axis&#39;s gap is compared; layers with
+differences come first.</li>
+<li><code>tokens_read</code> writes an effect style&#39;s blurs as tokens of their own (<code>--Name-filter</code>, <code>--Name-backdrop-filter</code>),
+draws a gradient paint style from its paints rather than taking Figma&#39;s CSS, and notes a spring easing instead of
+drawing it as <code>linear()</code>. Past <code>maxChars</code> every format, not only JSON, gives the summary with the most whole tokens
+that fit, and <code>maxChars</code> goes down to 500.</li>
+<li><code>guide</code> has five topics, <code>workflow</code>, <code>xml</code>, <code>tokens</code>, <code>assets</code> and <code>script</code>, written for this version&#39;s tools.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li>One underlined or struck-through word no longer decorates the whole text in <code>design_read</code>: a decoration stays on
+the text only when every run has it, since CSS cannot take a parent&#39;s decoration off a span; otherwise each span
+carries its own.</li>
+<li>A gradient paint style has one value in <code>design_read</code> and <code>tokens_read</code>. A layer whose box draws the gradient at
+another angle keeps the token, with a hint giving the background as Figma draws it there.</li>
+<li>A video fill reads as a video: <code>design_read</code> notes it in <code>$css</code> and lists its asset with no file, <code>inspect</code> names
+it, and <code>assets_export</code> answers its layer with <code>kind: &quot;video&quot;</code> and asks for the file from the designer, since the
+Plugin API cannot export a video.</li>
+<li><code>assets_export</code> writes one file for a layer named more than once in <code>nodes</code>.</li>
+<li><code>assets_export</code> with <code>original</code> takes each layer&#39;s topmost visible image fill, not a hidden one under it, and notes
+the other image fills.</li>
+<li><code>file_map</code> no longer fails when Figma cannot load a page. Every page is still listed by id and name, the pages
+that loaded have their layers, and <code>pagesNotRead</code> names the others with Figma&#39;s reason.</li>
+<li><code>file_map</code> says when a section&#39;s layers were cut short, with its <code>total</code> and <code>more</code>, where 0.7.0 stopped at 1,499
+without a word.</li>
+<li>Stroke weights keep their fractions: a 2.5 border reads as <code>2.5px</code>, not <code>3px</code>.</li>
+<li>Relative paths start in the session&#39;s project folder (the MCP client&#39;s root, else <code>CLAUDE_PROJECT_DIR</code>), not in the
+folder the server was started from: <code>design_read</code>&#39;s <code>assetsDir</code>, <code>assets_export</code>&#39;s <code>dir</code>, <code>screenshot</code>&#39;s <code>save</code>,
+<code>image_compare</code>&#39;s files and <code>execute</code>&#39;s <code>codePath</code>.</li>
+<li><code>tokens_read</code> with <code>format: &quot;dtcg&quot;</code> writes a colour composed with an opacity variable as valid DTCG: one colour with
+its alpha, or, when its colour cannot be resolved, a reference to that colour with a note, where 0.7.0 passed
+<code>{color, opacity}</code> through.</li>
+<li><code>tokens_usage</code> finds a style or variable that only one run of a mixed text uses.</li>
+<li><code>components_read</code> with <code>instances</code> leaves out instances on no page (inside a removed layer).</li>
+</ul>
+<h4>Removed</h4>
+<ul>
+<li>The plugin window no longer lists the AI&#39;s last actions. Its notes stay: the hint after a refused edit, and
+the reminder that code <code>execute</code> started may run on after Allow edits goes off.</li>
+<li>The tools that write, until the editing versions: <code>design_apply</code>, <code>nodes_delete</code> and <code>version_save</code> come back in
+0.9.0; <code>tokens_apply</code>, <code>tokens_bind</code>, <code>texts_replace</code>, <code>effects_apply</code>, <code>instances_reattach</code> and <code>icons_insert</code> in
+0.10.0.</li>
+<li>The design checks <code>contrast_check</code>, <code>design_lint</code>, <code>design_audit</code>, <code>a11y_read</code> and <code>states_find</code> come back with the
+editing versions.</li>
+<li><code>screenshot</code>&#39;s and <code>image_compare</code>&#39;s <code>modes</code>, which rendered a layer in other variable modes, come back in 0.10.0.</li>
+<li><code>execute</code>&#39;s <code>version</code> (a named version saved before the code runs) and its <code>pw.paint</code> and <code>pw.variable</code> helpers come
+back with editing.</li>
+<li>Code Connect is gone: <code>code_connect_read</code>, <code>design_read</code>&#39;s <code>code</code> input with <code>$code</code> and <code>codeComponents</code>, and
+<code>components_read</code>&#39;s <code>code</code> field and <code>mapped</code> input.</li>
+<li>Figma Motion is no longer read: <code>design_read</code> writes no <code>$motion</code> and no <code>motion</code> keyframes.</li>
+<li>The guide&#39;s <code>write</code> and <code>layout</code> topics come back with editing; its <code>code-connect</code> and <code>email</code> topics are gone.</li>
+</ul>
+
+        </section>
         <section id="v0-7-0">
           <h2>0.7.0 — 2026-10-22</h2>
 <h4>Added</h4>
@@ -544,10 +691,10 @@ instances, components and variants, images), <code>tokens_apply</code> writes va
     <footer class="bottom">
       <div class="bottom-inner">
         <div>
-          <p>Built from CHANGELOG.md (scripts/build-docs.mjs). Pixelwright is open source under the <a href="https://github.com/maximwas/pixelwright/blob/main/LICENSE">MIT license</a>. Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
+          <p>Built from CHANGELOG.md (scripts/build-docs.ts). Pixelwright is open source under the <a href="https://github.com/maximwas/pixelwright/blob/main/LICENSE">MIT license</a>. Unofficial: not affiliated with or endorsed by Figma. “Figma” is a trademark of Figma, Inc.</p>
         </div>
         <p class="footer-links">
-          <a href="../">Home</a>
+          <a href="../">Docs</a>
           <a href="https://github.com/maximwas/pixelwright">GitHub</a>
           <a href="https://www.npmjs.com/package/pixelwright">npm</a>
           <a href="../changelog/">Changelog</a>

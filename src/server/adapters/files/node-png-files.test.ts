@@ -1,0 +1,60 @@
+import { mkdtemp, readFile, rm, truncate, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { encode } from "fast-png";
+import { expect, it } from "vitest";
+import { PNG_READ } from "@/server/adapters/files/files.constants.ts";
+import { NodePngFiles } from "@/server/adapters/files/node-png-files.ts";
+import { ImageSizeSniffer } from "@/server/adapters/images/image-size-sniffer.ts";
+
+const PNG = encode({ width: 2, height: 1, channels: 4, data: new Uint8Array(8) });
+
+/** A JPEG's first bytes: what a photo saved as photo.png holds. */
+const JPEG = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
+
+// T-072, D-14: a read-only tool never destroys a user's file: only .png paths, never over bytes that are not a PNG.
+it("refuses a path that is not .png and a .png path holding JPEG bytes, and replaces an earlier screenshot", async () => {
+  const folder = await mkdtemp(join(tmpdir(), "pixelwright-png-"));
+  const files = new NodePngFiles(new ImageSizeSniffer());
+  const photo = join(folder, "photo.png");
+  const shot = join(folder, "shots", "shot.png");
+
+  await writeFile(photo, JPEG);
+
+  await expect(files.write(join(folder, "shot.txt"), PNG)).rejects.toThrow(/save must be a \.png path, not/);
+  await expect(files.write(photo, PNG)).rejects.toThrow(/photo\.png exists and is not a PNG/);
+  expect(new Uint8Array(await readFile(photo))).toEqual(JPEG);
+
+  await files.write(shot, PNG);
+  await files.write(shot, PNG);
+  expect(new Uint8Array(await readFile(shot))).toEqual(PNG);
+});
+
+// T-089: image_compare's reference, read only when it is a PNG.
+it("reads a PNG to compare with, and refuses a missing file and one that is not a PNG", async () => {
+  const folder = await mkdtemp(join(tmpdir(), "pixelwright-png-"));
+  const files = new NodePngFiles(new ImageSizeSniffer());
+  const build = join(folder, "build.png");
+  const photo = join(folder, "photo.png");
+
+  await writeFile(build, PNG);
+  await writeFile(photo, JPEG);
+
+  expect(await files.read(build)).toEqual(PNG);
+  await expect(files.read(join(folder, "none.png"))).rejects.toThrow(/There is no file at .*none\.png\./);
+  await expect(files.read(photo)).rejects.toThrow(/photo\.png is not a PNG: save the screenshot to compare as PNG\./);
+});
+
+// T-089: a reference past 50 MB is refused by its size before a byte is read; a sparse file stands in for a real one.
+it("refuses a PNG to compare with past 50 MB", async () => {
+  const folder = await mkdtemp(join(tmpdir(), "pixelwright-png-"));
+  const huge = join(folder, "huge.png");
+
+  try {
+    await writeFile(huge, PNG);
+    await truncate(huge, PNG_READ.maxBytes + 1);
+    await expect(new NodePngFiles(new ImageSizeSniffer()).read(huge)).rejects.toThrow(/huge\.png is over 50 MB\./);
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+});

@@ -1,0 +1,24 @@
+{
+  "tokens": {
+    "--color-canvas": "#EEF1F6",
+    "--color-surface": "#FFF",
+    "--space-120": "120px",
+    "--space-24": "24px",
+    "--space-64": "64px"
+  },
+  "textStyles": {
+    "Body Small": "400 14px/20px 'Inter'"
+  },
+  "fonts": {
+    "Inter": [
+      "400"
+    ]
+  },
+  "assets": [],
+  "truncated": [
+    "54:228",
+    "54:238",
+    "54:243",
+    "54:434"
+  ]
+}

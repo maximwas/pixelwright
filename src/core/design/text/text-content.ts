@@ -1,0 +1,81 @@
+import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { type MainRun, type RunCss, TEXT_RUN, type TextSegment } from "@/core/css/groups/text/text-run.ts";
+import { SPAN_RESETS, TEXT_PARTS } from "@/core/design/text/text.constants.ts";
+import { XML_CONTENT } from "@/core/xml/xml.constants.ts";
+import type { XmlAttribute, XmlContent } from "@/core/xml/xml.types.ts";
+import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
+
+/**
+ * A Text's content (C-120): its characters, the runs that differ from its main one as Spans with only what differs
+ * (and the resets of the main one's spacing, case or decoration); with a character limit, its first characters and `…`.
+ * A decoration not every run has is each run's own (TextRun.main).
+ */
+@injectable()
+export class TextContent {
+  readonly #runs;
+
+  constructor(runs = inject(TEXT_RUN)) {
+    this.#runs = runs;
+  }
+
+  content(
+    layer: ReadLayer,
+    model: ReadModel,
+    limit?: number,
+  ): XmlContent[] {
+    const characters = layer.text?.characters ?? "";
+
+    if (limit !== undefined) {
+      return [...this.#pieces(characters.slice(0, limit)), { kind: XML_CONTENT.text, value: TEXT_PARTS.ellipsis }];
+    }
+
+    const segments = layer.text?.segments ?? [];
+    const main = this.#runs.main(segments, model);
+
+    if (main === undefined || segments.length < 2) {
+      return this.#pieces(characters);
+    }
+
+    return segments.flatMap((segment) =>
+      this.#span(segment, main, this.#runs.read(segment, model, !main.sharedDecoration)),
+    );
+  }
+
+  /** A run as a Span with what it sets over the main run; plain characters when it sets nothing else. */
+  #span(
+    segment: TextSegment,
+    main: MainRun,
+    own: RunCss,
+  ): XmlContent[] {
+    const href = this.#url(segment);
+    const resets = [...main.css.properties].flatMap(([property, value]): XmlAttribute[] => {
+      const reset = SPAN_RESETS[property];
+
+      return own.properties.has(property) || reset === undefined || reset === value ? [] : [[property, reset]];
+    });
+    const attributes: XmlAttribute[] = [
+      ...(own.textStyle === main.css.textStyle || own.textStyle === undefined
+        ? []
+        : [[TEXT_PARTS.textStyle, own.textStyle] as const]),
+      ...(href === undefined || href === this.#url(main.base) ? [] : [[TEXT_PARTS.href, href] as const]),
+      ...[...own.properties].filter(([property, value]) => main.css.properties.get(property) !== value),
+      ...resets,
+    ];
+
+    return attributes.length === 0
+      ? this.#pieces(segment.characters)
+      : [{ kind: XML_CONTENT.span, attributes, value: segment.characters }];
+  }
+
+  #url({ hyperlink }: TextSegment): string | undefined {
+    return hyperlink?.type === TEXT_PARTS.urlLink ? hyperlink.value : undefined;
+  }
+
+  /** Characters as content: nothing for none, as XML reads an empty text back as nothing. */
+  #pieces(characters: string): XmlContent[] {
+    return characters === "" ? [] : [{ kind: XML_CONTENT.text, value: characters }];
+  }
+}
+
+export const TEXT_CONTENT = new InjectionToken<TextContent>("TextContent");

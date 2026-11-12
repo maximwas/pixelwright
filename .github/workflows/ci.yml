@@ -9,21 +9,34 @@ permissions:
   contents: read
 
 jobs:
+  # `check` is the branch-protection check (S-132). The live tests stay local: they need Figma Desktop (A§10.6).
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      # The lowest Node package.json's engines allows: the one users are promised.
+      - id: engines
+        run: echo "node=$(jq -r '.engines.node' package.json | tr -d '>= ')" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v7
         with:
-          node-version: 24.11.0
+          node-version: ${{ steps.engines.outputs.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      # The website's docs page is built from the README, the tools and the guide: it must match them.
-      # The docs and changelog pages are written from the README, the tools, the guide and CHANGELOG.md: they must match.
-      - run: pnpm build:docs && git diff --exit-code -- docs/docs docs/changelog
-      # Builds the plugin and the server, packs the server like npm publish, installs it into an empty folder and runs it.
+      - run: pnpm build
+      - run: pnpm size
+      # Packs the package like npm publish, installs it into an empty folder and runs it there.
       - run: pnpm check:pack
+      # docs/ is written from README.md, the tools, the guide and CHANGELOG.md: it must be what build:docs writes.
+      - name: docs/ matches its sources
+        run: |
+          pnpm build:docs
+          if [ -n "$(git status --porcelain -- docs)" ]; then
+            git status --short -- docs
+            git diff -- docs | head -100
+            echo "docs/ differs from what pnpm build:docs writes: run it and commit docs/"
+            exit 1
+          fi

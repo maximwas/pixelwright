@@ -16,6 +16,152 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
+## 0.8.0 — 2026-11-12
+
+Pixelwright 0.8.0 is a rewrite of the server and the plugin, and this version reads Figma: the tools that wrote to the
+file and the design checks are out of it, and editing comes back in 0.9.0 and 0.10.0 (see Removed). It has 30 tools:
+29 keep 0.7.0's names, `types_read` is new, and `design_read` writes 0.7.0's XML, so what an agent knows of 0.7.0's reads still holds
+apart from the changes below. The plugin is new too: put it in place with the server
+(`npx -y pixelwright@latest setup`), since a 0.7.0 plugin cannot connect to 0.8.0.
+
+### Added
+
+- `design_read` writes a text's stroke as `-webkit-text-stroke` (an outside stroke twice as wide with
+  `paint-order: stroke fill`; an inside one with a note, since CSS has none), and a layer's fill blend modes as
+  `background-blend-mode`, one per background, top first.
+- `design_read` says more of what Figma shows: a drop shadow Figma draws behind a see-through layer is
+  `filter: drop-shadow()` (CSS cuts a `box-shadow` out under the box), a link that opens in a new tab has
+  `target="_blank"`, a locked layer has `$locked`, and corner smoothing is a `$css` note with Figma's value.
+- `design_read` takes `autoLineHeight: "px"`: Figma's Auto line heights are written as the px Figma renders them at,
+  wherever a text that hugs its lines shows that for its font and size. Elsewhere, and by default, they stay `normal`,
+  and the line-height hint names only the texts still written `normal`.
+- `assets_export` takes `names`, a file name per layer id (`{ "12:34": "hero-mountains" }`). Layers without one keep
+  the name made from the layer's name.
+- The guide and `assets_export` say that WEBP keeps transparency exactly, at any quality.
+- `inspect` gives the blend mode of a layer and of each of its fills, with CSS's `mix-blend-mode` name, every fill's
+  type (a video's too), and the variables bound to a layer's padding, gap, radius and size under the token names
+  `design_read` writes. It takes up to 100 layers a call; `left` counts the selected layers past them.
+- `nodes_find` without `within` names the page it searched in `page`, and when it finds nothing there, `hint` says how
+  to search elsewhere.
+- `nodes_diff` and `variants_read` say in `cut` when a read was cut short.
+- `tokens_usage` returns at most 500 layers (`more` says there are others) and takes `budgetMs`: the scan stops there
+  with what it found and a note.
+- `components_read` names the project file a component's code link points at in `path`, for GitHub, GitLab and
+  Bitbucket file links and `vscode://file` links.
+- `status` says which connected file's tab is in front (`visible`): a file behind other tabs answers slowly.
+- `execute` takes one of three inputs: `code`, Plugin API code run in the plugin; `codePath`, the path of a file of such
+  code, read at every call; and `script`, code run on the server where `pw.nodesFind(...)` and the other reads call the
+  read tools (50 calls a run, 4 at once), with `utils` to filter and join their answers. A script never writes and
+  throws on a key an answer lacks. The guide's `script` topic has its limits.
+- `types_read` gives the whole answer type of each named read as TypeScript, every field with its comment, so a script
+  reads only keys that exist.
+- `nodes_find` takes a list of phrases in `text` (any matches) and `textRegex`, `fontSize` ranges (`lt`, `lte`, `gt`,
+  `gte`), `visible` (`false` finds hidden layers), `componentId`, `properties` (every property's value on each
+  instance, variant values included) and `fields` (keep only the fields you name). It returns a text's `characters`,
+  its ancestors in `path` and, across the file, its `page`; `hidden: true` marks a layer a viewer does not see.
+- `nodes_find` gives each instance its `component` (and `set` for a variant) and the properties it `changed` from the
+  component's defaults.
+- `inspect` reads a whole subtree in one call: `within` with `depth`, and `fields` to keep only some groups (`box`,
+  `parent`, `path`, `fills`, `strokes`, `effects`, `layout`, `bound`, `text`, `component`, `interactions`); `more` and
+  `leftIds` say what was left. It also gives `parentLayout` with `layout`, a mixed text's runs as `segments`, `path`
+  with the ancestors' ids and the page, a component's properties with their defaults, nested instance ids, and names
+  each bound variable by its Figma name too.
+- `tokens_read` takes `query` (a text or a list of them) to keep only the variables and styles whose name matches; each
+  variable carries its Figma id and, for an alias, `aliasOf` with the tokens it passes through.
+- `tokens_usage` takes `raw: true`: the colours bound to no style and no variable, each with its count and layers.
+- `outline` takes `absolute: true` for boxes in page coordinates; `file_map` gives each layer's `childCount`.
+- `components_read` takes `instances: true` (each instance's id, name and page, 100 at most, for the first 25 components listed) and `references: true`
+  (the layers bound to each component property).
+- The read tools say what an absent field means (no `hidden` is visible; no padding is 0) and that an answer is
+  complete unless `more` is true or a note says the scan stopped.
+
+### Changed
+
+- **Update the plugin with the server.** The plugin protocol is now 6: a 0.7.0 plugin cannot connect to a 0.8.0
+  server, and `status` names a plugin it turned away, with its version. Run `npx -y pixelwright@latest setup` again
+  and run the plugin.
+- Servers of the two versions meet over peer protocol 4: a 0.7.0 server still running hands the bridge to 0.8.0 and
+  then asks to be restarted in its MCP client, and a 0.7.0 server started while 0.8.0 holds the bridge is turned away.
+  Restart Pixelwright in every MCP client left open (`/mcp` in Claude Code).
+- Every tool refuses an argument it does not take, with an error naming it, instead of dropping it without a word: an
+  agent learns the right field from the error.
+- A hidden layer inside a read is written as a stub, its tag with `id`, `name` and `display="none"` (and
+  `$visibleProp` when a component property shows it) and no children, where 0.7.0 left it out. `baseline_diff` lists
+  it as `now: hidden` or `was: hidden`, and `styles_compare` notes a hidden layer instead of comparing it. A hidden
+  root is still refused.
+- `design_read` no longer asks Figma for its own CSS of a layer, which could hang for minutes: a fill or stroke
+  Pixelwright cannot write as CSS (a diamond gradient, a pattern) is named in `$css` by a fixed note.
+- Blurs now match how Figma renders them. `design_read` and `tokens_read` write a layer or background blur of radius
+  20 as `blur(8.6px)`, about 0.86 of the value 0.7.0 wrote. Figma's Dev Mode still writes half the radius
+  (`blur(10px)`), so its CSS differs from Pixelwright's.
+- `design_read`'s `maxChars` cuts in steps until the read fits: the deepest branches first (`$truncated`), then the
+  longest lists (`$children="N"` where not all children were read), then the longest texts (`$truncated`). 0.7.0 only
+  emptied deeper branches.
+- **`image_compare` counts differing pixels another way, so re-take once any `different` you kept from 0.7.0.**
+  `different`, the share of differing pixels, now comes from pixelmatch 8: a perceptual colour threshold, with
+  antialiased pixels left out, in place of 0.7.0's "any channel off by more than 16". The share drops on antialiased
+  edges (an icon antialiased another way: 0 of 9,216 pixels, where 0.7.0 counted 20), and the `diff` image marks
+  antialiased pixels yellow.
+- `fonts_check` asks Fontsource's catalogue first whether Google Fonts serves a family, and Google's own list only
+  when Fontsource does not answer.
+- `execute` prints what its code logs as JavaScript writes it: `undefined`, `NaN` and `Infinity` print as themselves,
+  not as `null`.
+- `execute` is for reading: its description and the server's instructions tell the agent to try the read tools first,
+  and, when the user asks to change the file through `execute`, to warn that editing is not supported or stable in
+  this version and go on only on the user's say-so. Allow edits still gates every write.
+- `styles_compare` compares a layer in its parent only when another pair's layer holds it, and otherwise as a read of
+  its own (its size, not its place); in a flex that does not wrap only the main axis's gap is compared; layers with
+  differences come first.
+- `tokens_read` writes an effect style's blurs as tokens of their own (`--Name-filter`, `--Name-backdrop-filter`),
+  draws a gradient paint style from its paints rather than taking Figma's CSS, and notes a spring easing instead of
+  drawing it as `linear()`. Past `maxChars` every format, not only JSON, gives the summary with the most whole tokens
+  that fit, and `maxChars` goes down to 500.
+- `guide` has five topics, `workflow`, `xml`, `tokens`, `assets` and `script`, written for this version's tools.
+
+### Fixed
+
+- One underlined or struck-through word no longer decorates the whole text in `design_read`: a decoration stays on
+  the text only when every run has it, since CSS cannot take a parent's decoration off a span; otherwise each span
+  carries its own.
+- A gradient paint style has one value in `design_read` and `tokens_read`. A layer whose box draws the gradient at
+  another angle keeps the token, with a hint giving the background as Figma draws it there.
+- A video fill reads as a video: `design_read` notes it in `$css` and lists its asset with no file, `inspect` names
+  it, and `assets_export` answers its layer with `kind: "video"` and asks for the file from the designer, since the
+  Plugin API cannot export a video.
+- `assets_export` writes one file for a layer named more than once in `nodes`.
+- `assets_export` with `original` takes each layer's topmost visible image fill, not a hidden one under it, and notes
+  the other image fills.
+- `file_map` no longer fails when Figma cannot load a page. Every page is still listed by id and name, the pages
+  that loaded have their layers, and `pagesNotRead` names the others with Figma's reason.
+- `file_map` says when a section's layers were cut short, with its `total` and `more`, where 0.7.0 stopped at 1,499
+  without a word.
+- Stroke weights keep their fractions: a 2.5 border reads as `2.5px`, not `3px`.
+- Relative paths start in the session's project folder (the MCP client's root, else `CLAUDE_PROJECT_DIR`), not in the
+  folder the server was started from: `design_read`'s `assetsDir`, `assets_export`'s `dir`, `screenshot`'s `save`,
+  `image_compare`'s files and `execute`'s `codePath`.
+- `tokens_read` with `format: "dtcg"` writes a colour composed with an opacity variable as valid DTCG: one colour with
+  its alpha, or, when its colour cannot be resolved, a reference to that colour with a note, where 0.7.0 passed
+  `{color, opacity}` through.
+- `tokens_usage` finds a style or variable that only one run of a mixed text uses.
+- `components_read` with `instances` leaves out instances on no page (inside a removed layer).
+
+### Removed
+
+- The plugin window no longer lists the AI's last actions. Its notes stay: the hint after a refused edit, and
+  the reminder that code `execute` started may run on after Allow edits goes off.
+- The tools that write, until the editing versions: `design_apply`, `nodes_delete` and `version_save` come back in
+  0.9.0; `tokens_apply`, `tokens_bind`, `texts_replace`, `effects_apply`, `instances_reattach` and `icons_insert` in
+  0.10.0.
+- The design checks `contrast_check`, `design_lint`, `design_audit`, `a11y_read` and `states_find` come back with the
+  editing versions.
+- `screenshot`'s and `image_compare`'s `modes`, which rendered a layer in other variable modes, come back in 0.10.0.
+- `execute`'s `version` (a named version saved before the code runs) and its `pw.paint` and `pw.variable` helpers come
+  back with editing.
+- Code Connect is gone: `code_connect_read`, `design_read`'s `code` input with `$code` and `codeComponents`, and
+  `components_read`'s `code` field and `mapped` input.
+- Figma Motion is no longer read: `design_read` writes no `$motion` and no `motion` keyframes.
+- The guide's `write` and `layout` topics come back with editing; its `code-connect` and `email` topics are gone.
+
 ## 0.7.0 — 2026-10-22
 
 ### Added

@@ -1,0 +1,214 @@
+import { readFileSync } from "node:fs";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { MainChannel } from "@/plugin-ui/adapters/main-channel.ts";
+import { Backoff } from "@/plugin-ui/link/backoff.ts";
+import { SocketLink } from "@/plugin-ui/link/socket-link.ts";
+import { WindowLink } from "@/plugin-ui/link/window-link.ts";
+import { BusyState } from "@/plugin-ui/view/busy-state.ts";
+import { PluginWindow } from "@/plugin-ui/view/plugin-window.ts";
+import { StatusLine } from "@/plugin-ui/view/status-line.ts";
+import { UpdateBanner } from "@/plugin-ui/view/update-banner.ts";
+import type { UiMessage } from "@/shared/window/ui-message.schema.ts";
+import { MemoryBridge as Bridge } from "./support/memory-bridge.ts";
+
+// The window's own classes, real, in a stand-in for its frame (ui.html's elements, figma.ui's postMessage), against
+// item 03's real PluginConnection.
+
+/** One of ui.html's elements, as much of it as the window touches. */
+class Element {
+  textContent = "";
+  hidden = false;
+  value = "";
+  checked = false;
+  className = "";
+  readonly dataset: Record<string, string> = {};
+  children: unknown[] = [];
+  #submit: (event: { preventDefault(): void }) => void = () => {};
+
+  append(...children: unknown[]): void {
+    this.children.push(...children);
+  }
+
+  replaceChildren(...children: unknown[]): void {
+    this.children = children;
+  }
+
+  addEventListener(_type: string, listener: (event: { preventDefault(): void }) => void): void {
+    this.#submit = listener;
+  }
+
+  submit(): void {
+    this.#submit({ preventDefault: () => {} });
+  }
+}
+
+/** The window's frame in Figma: ui.html's elements, what the window posts to main, and main's messages to it. */
+class Frame {
+  readonly posted: UiMessage[] = [];
+  readonly #elements = new Map<string, Element>();
+  #receive: (event: { data: unknown }) => void = () => {};
+
+  constructor() {
+    vi.stubGlobal("document", {
+      visibilityState: "visible",
+      addEventListener: () => undefined,
+      getElementById: (id: string) => this.element(id),
+      createElement: () => new Element(),
+    });
+    // The window follows its content's height (P-002): nothing is laid out here, so nothing resizes.
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe(): void {}
+      },
+    );
+    vi.stubGlobal("window", {
+      addEventListener: (_type: string, listener: (event: { data: unknown }) => void) => {
+        this.#receive = listener;
+      },
+    });
+    vi.stubGlobal("parent", {
+      postMessage: (message: { pluginMessage: UiMessage }) => this.posted.push(message.pluginMessage),
+    });
+  }
+
+  element(id: string): Element {
+    const element = this.#elements.get(id) ?? new Element();
+
+    this.#elements.set(id, element);
+
+    return element;
+  }
+
+  fromMain(message: UiMessage): void {
+    this.#receive({ data: { pluginMessage: message } });
+  }
+}
+
+const CONTEXT = {
+  pluginVersion: "0.8.0",
+  editorType: "figma",
+  file: { name: "Test MCP", key: null },
+  page: { id: "0:1", name: "Start here" },
+  allowEdits: false,
+};
+
+const windowLink = (bridge: Bridge) =>
+  new WindowLink(
+    new MainChannel(),
+    new SocketLink(bridge, new Backoff()),
+    new PluginWindow(new StatusLine(), new BusyState()),
+    new UpdateBanner(),
+  );
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("WindowLink", () => {
+  it("says ready, pairs with the code typed into the field, and gives main the key bridge.json holds", () => {
+    const frame = new Frame();
+    const bridge = new Bridge();
+
+    windowLink(bridge).start();
+
+    expect(frame.posted).toEqual([
+      { ch: "window", d: { type: "ready" } },
+      // Only the window knows whether its tab is in front: main hears it at once (S-012).
+      { ch: "window", d: { type: "visible", on: true } },
+    ]);
+
+    frame.fromMain({ ch: "window", d: { type: "start", key: null, context: CONTEXT } });
+
+    expect(frame.element("title").textContent).toBe("Pair this window");
+    expect(frame.element("pairing").hidden).toBe(false);
+
+    frame.element("code").value = ` ${bridge.code()} `;
+    frame.element("pairing").submit();
+
+    // The session's opened frame for main comes after it.
+    const saved = frame.posted.find((message) => message.ch === "window" && message.d.type === "save_pairing");
+    const key = saved?.ch === "window" && saved.d.type === "save_pairing" ? saved.d.key : null;
+
+    expect(key).not.toBeNull();
+    expect(bridge.keys.findKey(key?.id ?? "")).toEqual(key);
+    expect(frame.element("title").textContent).toBe("Connected (Test MCP)");
+    expect(frame.element("pairing").hidden).toBe(true);
+    expect(bridge.sessions.files()).toMatchObject([{ name: "Test MCP" }]);
+  });
+
+  it("connects with the key main stored, and relays the session's frames both ways with their socket's epoch", () => {
+    const frame = new Frame();
+    const bridge = new Bridge();
+
+    const key = bridge.keys.addKey();
+
+    windowLink(bridge).start();
+    // Main answers ready once; a second answer starts no second link.
+    frame.fromMain({ ch: "window", d: { type: "start", key, context: CONTEXT } });
+    frame.fromMain({ ch: "window", d: { type: "start", key, context: CONTEXT } });
+    bridge.servers[0]?.send('{"call":1}');
+    frame.fromMain({ ch: "server", e: 1, d: '{"answer":1}' });
+
+    expect(frame.element("title").textContent).toBe("Connected (Test MCP)");
+    expect(frame.posted.at(-1)).toEqual({ ch: "server", e: 1, d: '{"call":1}' });
+    expect(bridge.plugins[0]?.sent.at(-1)).toEqual({ answer: 1 });
+    expect(bridge.plugins).toHaveLength(1);
+  });
+
+  it("shows what main reports: a refused write asks for Allow edits, an op past its answer is the status sentence", () => {
+    const frame = new Frame();
+    const bridge = new Bridge();
+
+    windowLink(bridge).start();
+    frame.fromMain({ ch: "window", d: { type: "start", key: bridge.keys.addKey(), context: CONTEXT } });
+    frame.fromMain({ ch: "window", d: { type: "activity", entry: { op: "execute", outcome: "refused" } } });
+    frame.fromMain({ ch: "window", d: { type: "busy", ops: [{ op: "execute", since: Date.now() }] } });
+
+    expect(frame.element("hint").hidden).toBe(false);
+    expect(frame.element("hint").textContent).toBe("Your AI tried to change this file: turn on Allow edits.");
+    expect(frame.element("detail").textContent).toBe("Busy: execute since 0 s");
+
+    // Turning the switch on answers the refusal; the handler's end gives the sentence back.
+    frame.element("allow-edits").checked = true;
+    frame.element("allow-edits").submit();
+    frame.fromMain({ ch: "window", d: { type: "busy", ops: [] } });
+
+    expect(frame.element("hint").hidden).toBe(true);
+    expect(frame.posted.at(-1)).toEqual({ ch: "window", d: { type: "allow_edits", on: true } });
+    expect(frame.element("detail").textContent).toBe("Your AI assistant sees this file.");
+  });
+
+  it("tells the Allow edits note that code execute started may run on: a refused execute never ran (P-012)", () => {
+    const frame = new Frame();
+    const bridge = new Bridge();
+
+    windowLink(bridge).start();
+    frame.fromMain({ ch: "window", d: { type: "start", key: bridge.keys.addKey(), context: CONTEXT } });
+    frame.fromMain({ ch: "window", d: { type: "activity", entry: { op: "execute", outcome: "refused" } } });
+
+    expect(frame.element("edits-note").textContent).toBe("AI only reads this file.");
+
+    frame.fromMain({ ch: "window", d: { type: "activity", entry: { op: "execute", outcome: "failed" } } });
+
+    expect(frame.element("edits-note").textContent).toBe(
+      "AI only reads this file now. Code it ran with execute keeps running until you close this window.",
+    );
+  });
+});
+
+describe("ui.html", () => {
+  // The 06 bug: a display rule showed the pairing field while it was hidden; the stand-in elements above have no CSS.
+  it("hides every element with the hidden attribute, whatever its display rule", () => {
+    const html = readFileSync(new URL("../../src/plugin-ui/ui.html", import.meta.url), "utf8");
+
+    expect(html).toMatch(/\[hidden\]\s*\{\s*display:\s*none;?\s*\}/);
+  });
+
+  // The window shows no list of what the AI did (2026-11-11); main's activity messages only feed its two notes.
+  it("has no activity list", () => {
+    const html = readFileSync(new URL("../../src/plugin-ui/ui.html", import.meta.url), "utf8");
+
+    expect(html).not.toContain('id="actions"');
+  });
+});

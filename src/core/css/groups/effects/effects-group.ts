@@ -1,0 +1,224 @@
+import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
+import type { CssScope, PropertyGroup } from "@/core/css/css.types.ts";
+import {
+  BLURS,
+  EFFECTS_ATTRIBUTES,
+  EFFECTS_NUMBER,
+  EFFECTS_SOURCES,
+  EFFECTS_TEXT,
+  EFFECTS_VALUE,
+  FIGMA_EFFECT,
+  PROGRESSIVE_ENDS,
+  RENDERED_EFFECTS,
+} from "@/core/css/groups/effects/effects.constants.ts";
+import { TEXT_TYPES } from "@/core/css/groups/paint/paint.constants.ts";
+import { FIGMA_PAINT, PAINTS_TEXT } from "@/core/css/paints/paints.constants.ts";
+import { SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
+import type { CssDeclarations } from "@/core/css/registry/css-declarations.ts";
+import { CSS_LENGTH } from "@/core/css/values/css-length.ts";
+import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
+import { NUMBER_FORMAT } from "@/core/kernel/numbers/number-format.ts";
+import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
+import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
+import type { ModelTables } from "@/shared/read-model/read-model.schema.ts";
+
+type Effect = NonNullable<ReadLayer["effects"]>[number];
+
+/**
+ * A layer's visible effects (C-100..C-102): shadows top first as box-shadow or a text's text-shadow, an effect style's
+ * as its token, a drop shadow Figma shows behind the layer as a filter's drop-shadow(); blurs as filter and
+ * backdrop-filter at 0.43 R, a progressive one's end radius with a note; effects CSS has no property for as a note.
+ */
+@injectable()
+export class EffectsGroup implements PropertyGroup {
+  readonly attributes = EFFECTS_ATTRIBUTES;
+  readonly sources = EFFECTS_SOURCES;
+  readonly #solid;
+  readonly #lengths;
+  readonly #format;
+  readonly #names;
+
+  constructor(
+    solid = inject(SOLID_PAINT),
+    lengths = inject(CSS_LENGTH),
+    format = inject(NUMBER_FORMAT),
+    names = inject(TOKEN_NAMES),
+  ) {
+    this.#solid = solid;
+    this.#lengths = lengths;
+    this.#format = format;
+    this.#names = names;
+  }
+
+  read({ layer, model, css }: CssScope): void {
+    const effects = (layer.effects ?? []).filter((effect) => effect.visible ?? true);
+    // A drop-shadow() goes before the layer's blur(), which blurs the shadow with the layer.
+    const filters = this.#shadows(layer, effects, model, css);
+
+    for (const [property, value] of this.blurs(effects)) {
+      if (property === CSS_PROPERTY.filter) {
+        filters.push(value);
+      } else {
+        css.set(property, value);
+      }
+    }
+
+    if (filters.length > 0) {
+      css.set(CSS_PROPERTY.filter, filters.join(EFFECTS_VALUE.space));
+    }
+
+    for (const effect of effects) {
+      const blur = BLURS[effect.type];
+
+      if (blur !== undefined) {
+        this.#progressive(effect, blur.note, css);
+      } else if (RENDERED_EFFECTS[effect.type] ?? false) {
+        css.note(EFFECTS_VALUE.effect, EFFECTS_TEXT.rendered(effect.type));
+      }
+    }
+  }
+
+  /**
+   * The visible shadows top first, as CSS lists them (Figma keeps them bottom first, FX-058): box-shadow's with inner
+   * ones inset, or a text's text-shadow, which has no inner shadow or spread; empty when there are none.
+   */
+  shadows(
+    effects: readonly Effect[],
+    isText: boolean,
+    model: ModelTables,
+  ): string {
+    return effects
+      .filter(
+        (effect) =>
+          (effect.visible ?? true) &&
+          (effect.type === FIGMA_EFFECT.dropShadow || (effect.type === FIGMA_EFFECT.innerShadow && !isText)),
+      )
+      .reverse()
+      .map((effect) => this.#shadow(effect, !isText, model))
+      .join(EFFECTS_VALUE.joint);
+  }
+
+  /** The visible blurs, each as its CSS property (filter, backdrop-filter) and its blur() at 0.43 R (C-100, D-26). */
+  blurs(effects: readonly Effect[]): [string, string][] {
+    return effects
+      .filter((effect) => effect.visible ?? true)
+      .flatMap((effect): [string, string][] => {
+        const blur = BLURS[effect.type];
+
+        return blur === undefined ? [] : [[blur.property, EFFECTS_TEXT.blur(this.#blur(effect.radius ?? 0))]];
+      });
+  }
+
+  /**
+   * The layer's shadows; an effect style's are its token (T-163). A box's drop shadow Figma shows behind it
+   * (showShadowBehindNode) is returned as drop-shadow(), top first: CSS cuts a box-shadow out under the box, while
+   * drop-shadow() draws under its see-through pixels. One with a spread, which drop-shadow() has not, or in an effect
+   * style stays a box-shadow with a note. A text-shadow is drawn under the glyphs already, and an opaque box hides it.
+   */
+  #shadows(
+    layer: ReadLayer,
+    effects: readonly Effect[],
+    model: ModelTables,
+    css: CssDeclarations,
+  ): string[] {
+    const isText = TEXT_TYPES[layer.type] ?? false;
+    const style = layer.effectStyleId === undefined ? undefined : model.styles[layer.effectStyleId];
+    const behind =
+      isText || this.#opaque(layer)
+        ? []
+        : effects.filter((effect) => effect.type === FIGMA_EFFECT.dropShadow && (effect.showShadowBehindNode ?? false));
+    const dropped = style === undefined ? behind.filter((effect) => (effect.spread ?? 0) === 0) : [];
+    const shadows = this.shadows(
+      effects.filter((effect) => !dropped.includes(effect)),
+      isText,
+      model,
+    );
+
+    if (shadows !== "") {
+      css.set(
+        isText ? CSS_PROPERTY.textShadow : CSS_PROPERTY.boxShadow,
+        style === undefined ? shadows : PAINTS_TEXT.token(this.#names.style(style)),
+      );
+    }
+
+    for (const effect of behind.filter((shadow) => !dropped.includes(shadow))) {
+      css.note(EFFECTS_VALUE.behind, this.#shadow(effect, true, model));
+    }
+
+    return dropped.reverse().map((effect) => {
+      const deviation = (effect.radius ?? 0) / EFFECTS_NUMBER.radiusPerDeviation;
+
+      return EFFECTS_TEXT.dropShadow(this.#shadow({ ...effect, radius: deviation }, false, model));
+    });
+  }
+
+  /** A visible solid fill at full opacity and alpha: nothing under the box shows through it. */
+  #opaque(layer: ReadLayer): boolean {
+    return (
+      Array.isArray(layer.fills) &&
+      layer.fills.some(
+        (fill) =>
+          fill.type === FIGMA_PAINT.solid &&
+          (fill.visible ?? true) &&
+          (fill.opacity ?? EFFECTS_NUMBER.opaque) === EFFECTS_NUMBER.opaque &&
+          (fill.color?.a ?? EFFECTS_NUMBER.opaque) === EFFECTS_NUMBER.opaque,
+      )
+    );
+  }
+
+  /** `[inset] x y blur [spread] colour`, the colour its variable's token when bound. */
+  #shadow(
+    effect: Effect,
+    spread: boolean,
+    model: ModelTables,
+  ): string {
+    return [
+      effect.type === FIGMA_EFFECT.innerShadow ? EFFECTS_VALUE.inset : null,
+      this.#lengths.px(effect.offset?.x ?? 0),
+      this.#lengths.px(effect.offset?.y ?? 0),
+      this.#lengths.px(effect.radius ?? 0),
+      spread ? this.#lengths.px(effect.spread ?? 0) : null,
+      effect.color === undefined ? null : this.#solid.color(effect.color, effect.boundVariables, 1, model),
+    ]
+      .filter((part) => part !== null)
+      .join(EFFECTS_VALUE.space);
+  }
+
+  /** CSS's blur length for Figma's radius: 0.43 R to two decimals, a bare 0 (C-100). */
+  #blur(radius: number): string {
+    const length = this.#radius(radius);
+
+    return length === 0 ? EFFECTS_VALUE.zero : EFFECTS_TEXT.px(length);
+  }
+
+  /** A progressive blur's run, in CSS radii, from where it starts to where it ends (percents of the box, C-102). */
+  #progressive(
+    effect: Effect,
+    note: string,
+    css: CssDeclarations,
+  ): void {
+    if (effect.blurType !== FIGMA_EFFECT.progressive) {
+      return;
+    }
+
+    const at = ({ x, y }: { readonly x: number; readonly y: number }) =>
+      EFFECTS_TEXT.at(Math.round(x * EFFECTS_NUMBER.percent), Math.round(y * EFFECTS_NUMBER.percent));
+
+    css.note(
+      note,
+      EFFECTS_TEXT.progressive(
+        EFFECTS_TEXT.px(this.#radius(effect.startRadius ?? 0)),
+        at(effect.startOffset ?? PROGRESSIVE_ENDS.start),
+        EFFECTS_TEXT.px(this.#radius(effect.radius ?? 0)),
+        at(effect.endOffset ?? PROGRESSIVE_ENDS.end),
+      ),
+    );
+  }
+
+  #radius(radius: number): number {
+    return this.#format.round(radius * EFFECTS_NUMBER.blurPerRadius, PRECISION.blur);
+  }
+}
+
+export const EFFECTS_GROUP = new InjectionToken<EffectsGroup>("EffectsGroup");

@@ -1,0 +1,91 @@
+import { describe, expect, it } from "vitest";
+import type { ConnectedFile, PluginLink, PluginLinkRole, PluginLinkState } from "@/core/ports/plugin-link.port.ts";
+import { PluginSessions } from "@/server/app/sessions/plugin-sessions.ts";
+import { TargetResolver } from "@/server/app/sessions/target-resolver.ts";
+import { StatusTool } from "@/server/tools/status/status.tool.ts";
+import { CHANNEL } from "@/shared/protocol/channel.constants.ts";
+import { VERSION } from "@/shared/version/version.constants.ts";
+
+/** A bridge state as a value: status only reads it. */
+class LinkState implements PluginLink {
+  readonly #state: PluginLinkState;
+
+  constructor(state: PluginLinkState) {
+    this.#state = state;
+  }
+
+  async start(): Promise<void> {}
+
+  async close(): Promise<void> {}
+
+  async state(): Promise<PluginLinkState> {
+    return this.#state;
+  }
+
+  role(): PluginLinkRole {
+    return this.#state.role;
+  }
+
+  files(): readonly ConnectedFile[] {
+    return this.#state.files;
+  }
+
+  async request(): Promise<unknown> {
+    return null;
+  }
+}
+
+const status = (link: PluginLink) =>
+  new StatusTool(link, new PluginSessions(link, new TargetResolver(), []), { now: () => 0 });
+
+describe("StatusTool", () => {
+  it("shows the server's version, channel and protocol with the bridge's role, port and hint", async () => {
+    const link = new LinkState({
+      role: "disabled",
+      port: CHANNEL.port,
+      files: [],
+      pairing: null,
+      hint: "The plugin bridge is off.",
+    });
+    const answer = await status(link).execute({});
+
+    expect(answer.structuredContent).toEqual({
+      server: { version: VERSION, channel: CHANNEL.name, role: "disabled", protocol: 6, port: CHANNEL.port },
+      files: [],
+      probe: null,
+      pairing: null,
+      hint: "The plugin bridge is off.",
+    });
+  });
+
+  it("passes on the pairing code the bridge shows while a plugin waits, and the files connected", async () => {
+    const pairing = { code: "123456", expiresInSeconds: 120, lockedForSeconds: null, waiting: 1 };
+    const file = {
+      session: "6f1c2e0a-8b4d-4c3e-9a71-2d5f0b8e9c13",
+      name: "Test MCP",
+      key: null,
+      page: "Start here",
+      editorType: "figma",
+      allowEdits: false,
+      visible: true,
+      active: true,
+      pluginVersion: "0.8.0",
+    };
+    const answer = await status(
+      new LinkState({
+        role: "owner",
+        port: CHANNEL.port,
+        files: [file],
+        pairing,
+        hint: "A plugin is waiting to be paired.",
+      }),
+    ).execute({});
+
+    expect(answer.structuredContent).toMatchObject({
+      server: { role: "owner" },
+      files: [file],
+      pairing,
+      note: expect.stringContaining("Test MCP has key null"),
+    });
+  });
+});
