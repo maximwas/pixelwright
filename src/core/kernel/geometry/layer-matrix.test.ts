@@ -32,4 +32,25 @@ describe("LayerMatrix", () => {
       [0, 1, 20],
     ]);
   });
+
+  // 0.7.0's numbers (kernel/geometry coveredLength, centredAlong): a turned layer covers its turned box.
+  it("measures how long a turned layer is along each axis of its parent", () => {
+    const quarter = new LayerMatrix(layer.turned(90, false), { width: 100, height: 50 });
+    const thirty = new LayerMatrix(layer.turned(30, false), { width: 100, height: 50 });
+
+    expect([quarter.covered("horizontal"), quarter.covered("vertical")]).toEqual([50, 100]);
+    expect([thirty.covered("horizontal"), thirty.covered("vertical")].map((length) => length.toFixed(2))).toEqual([
+      "111.60",
+      "93.30",
+    ]);
+  });
+
+  it("moves a turned layer's centre along one axis", () => {
+    const quarter = new LayerMatrix(layer.turned(90, false), { width: 100, height: 50 });
+
+    expect(quarter.centredAlong("vertical", 60)).toEqual([
+      [0, 1, 35],
+      [-1, 0, 110],
+    ]);
+  });
 });

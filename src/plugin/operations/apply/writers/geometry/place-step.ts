@@ -5,8 +5,8 @@ import { type AxisPlacement, PLACEMENT_SPAN } from "@/core/kernel/geometry/place
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
+import { STEP_GEOMETRY } from "@/plugin/operations/apply/writers/geometry/step-geometry.ts";
 import type { WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
-import { STEP_GEOMETRY } from "@/plugin/operations/apply/writers/step-geometry.ts";
 import {
   type AXIS_FIELDS,
   LAYOUT_POSITIONING,

@@ -2,8 +2,7 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { GEOMETRY } from "@/core/kernel/geometry/geometry.constants.ts";
 import { LayerMatrix, type Matrix, type MatrixAxis } from "@/core/kernel/geometry/layer-matrix.ts";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
-import { CAPABILITIES } from "@/plugin/adapters/figma/capabilities.ts";
-import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { INTENT_LAYOUT_MODE } from "@/shared/write-intents/write-intent.constants.ts";
 
 type LayoutMode = Exclude<FrameNode["layoutMode"], typeof INTENT_LAYOUT_MODE.NONE>;
@@ -12,11 +11,9 @@ type LayoutMode = Exclude<FrameNode["layoutMode"], typeof INTENT_LAYOUT_MODE.NON
 @injectable()
 export class StepGeometry {
   readonly #assign;
-  readonly #capabilities;
 
-  constructor(assign = inject(ASSIGN), capabilities = inject(CAPABILITIES)) {
+  constructor(assign = inject(ASSIGN)) {
     this.#assign = assign;
-    this.#capabilities = capabilities;
   }
 
   /** The layer's auto layout (a row, a column or a grid); null without one. */
@@ -28,8 +25,8 @@ export class StepGeometry {
 
   /**
    * A new size (P-150), keeping how the layer sizes itself: Figma's resize fixes both axes and stops a text sizing
-   * itself, while the XML changed one size only. A section has only resizeWithoutConstraints; so does a frame, since
-   * resize() scales its SCALE-constrained children with it (FX-036).
+   * itself, while the XML changed one size only. A section has only resizeWithoutConstraints; a frame's constrained
+   * children follow its resize as in Figma, and one sized in the same call is written after it (FX-036).
    */
   resize(
     node: SceneNode,
@@ -52,11 +49,7 @@ export class StepGeometry {
     const kept = { layoutSizingHorizontal: box.layoutSizingHorizontal, layoutSizingVertical: box.layoutSizingVertical };
     const autoResize = node.type === FIGMA_NODE_TYPE.text ? node.textAutoResize : undefined;
 
-    if (this.#capabilities.has(node, CAPABILITY.autoLayout)) {
-      box.resizeWithoutConstraints(wide, high);
-    } else {
-      box.resize(wide, high);
-    }
+    box.resize(wide, high);
 
     this.#assign.set(box, kept);
     this.#assign.set(node as TextNode, { textAutoResize: autoResize });

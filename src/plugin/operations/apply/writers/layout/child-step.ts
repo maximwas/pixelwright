@@ -2,8 +2,8 @@ import { inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
+import { STEP_GEOMETRY } from "@/plugin/operations/apply/writers/geometry/step-geometry.ts";
 import type { WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
-import { STEP_GEOMETRY } from "@/plugin/operations/apply/writers/step-geometry.ts";
 import {
   AXIS_FIELDS,
   LAYOUT_SIZING,

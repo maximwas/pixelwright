@@ -134,17 +134,72 @@ return copy.id;`)) as string;
     ]);
   });
 
-  // FX-036: shrinking a frame by its width does not scale the children its constraints would scale.
-  it("shrinks a frame without squashing its SCALE-constrained children", async () => {
+  // P-150: a frame is resized as in Figma, so the children its constraints tie to its edges follow it.
+  it("widens a frame with its STRETCH child and keeps a right-pinned child on the right edge", async () => {
+    const [frame = "", wide = "", pinned = ""] = await make(
+      `<Frame name="${PREFIX}follow" width="200" height="100"><Rectangle name="${PREFIX}follow-wide" position="absolute" left="10" top="10" width="180" height="20"/><Rectangle name="${PREFIX}follow-pinned" position="absolute" left="150" top="50" width="40" height="20"/></Frame>`,
+    );
+
+    await run(`(await figma.getNodeByIdAsync(${JSON.stringify(wide)})).constraints = { horizontal: "STRETCH", vertical: "MIN" };
+(await figma.getNodeByIdAsync(${JSON.stringify(pinned)})).constraints = { horizontal: "MAX", vertical: "MIN" };`);
+
+    const applied = await apply(`<Frame id="${frame}" width="300"/>`);
+
+    expect(applied.errors).toEqual([]);
+    expect(await read(frame, "node.width")).toBe(300);
+    expect(await read(wide, "[node.x, node.width]")).toEqual([10, 280]);
+    expect(await read(pinned, "[node.x, node.width]")).toEqual([250, 40]);
+  });
+
+  // FX-036: the parent's size goes in before its children's, so a constrained child sized in the same call keeps that
+  // size. A SCALE child's pixel size is refused by the read rules (its edges read in percents), so a STRETCH child,
+  // which a resize would also change, stands for it.
+  it("shrinks a frame and gives its STRETCH child the size written in the same call", async () => {
     const [frame = "", box = ""] = await make(
       `<Frame name="${PREFIX}scale" width="200" height="200"><Rectangle name="${PREFIX}scale-box" position="absolute" left="0" top="0" width="100" height="100"/></Frame>`,
     );
 
     await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(box)});
-node.constraints = { horizontal: "SCALE", vertical: "SCALE" };`);
-    await apply(`<Frame id="${frame}" width="120"/>`);
+node.constraints = { horizontal: "STRETCH", vertical: "MIN" };`);
 
+    const applied = await apply(`<Frame id="${frame}" width="120"><Rectangle id="${box}" width="80"/></Frame>`);
+
+    expect(applied.errors).toEqual([]);
     expect(await read(frame, "node.width")).toBe(120);
-    expect(await read(box, "[node.width, node.height]")).toEqual([100, 100]);
+    expect(await read(box, "[node.width, node.height]")).toEqual([80, 100]);
+  });
+
+  // FX-059: a grid child moves to a cell and aligns in it; a cell outside the grid is refused on grid-row.
+  it("moves a grid child to a cell, aligns it to the end and refuses a cell outside the grid", async () => {
+    const [grid = "", first = "", second = ""] = await make(
+      `<Frame name="${PREFIX}grid" width="200" height="100"><Rectangle name="${PREFIX}grid-first" width="40" height="20"/><Rectangle name="${PREFIX}grid-second" width="40" height="20"/></Frame>`,
+    );
+
+    await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(grid)});
+node.layoutMode = "GRID"; node.gridColumnCount = 2; node.gridRowCount = 2;`);
+
+    const moved = await apply(`<Rectangle id="${first}" grid-row="2" grid-column="2" align-self="end"/>`);
+
+    expect(moved.errors).toEqual([]);
+    expect(
+      await read(first, "[node.gridRowAnchorIndex, node.gridColumnAnchorIndex, node.gridChildVerticalAlign]"),
+    ).toEqual([1, 1, "MAX"]);
+
+    const outside = await apply(`<Rectangle id="${second}" grid-row="5" grid-column="1"/>`);
+
+    expect(outside.errors).toEqual([
+      expect.objectContaining({ attribute: "grid-row", message: expect.stringContaining("out of bounds of the grid") }),
+    ]);
+  });
+
+  // P-150: a Line written by its height stands upright, as design_read writes a standing line.
+  it("stands a Line upright when its height is written", async () => {
+    const [line = ""] = await make(`<Line name="${PREFIX}line" width="100"/>`);
+    const applied = await apply(`<Line id="${line}" height="80"/>`);
+
+    expect(applied.errors).toEqual([]);
+    expect(
+      await read(line, "[node.width, Math.abs(Math.round(node.rotation)), node.absoluteBoundingBox.height]"),
+    ).toEqual([80, 90, 80]);
   });
 });
