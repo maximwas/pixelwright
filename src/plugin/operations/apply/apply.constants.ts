@@ -34,6 +34,8 @@ export const APPLY_TEXT = {
   ) => `${id} is ${withArticle(type)}, not ${withArticle(tag)}.`,
   tagHint: "Check the id: the tag is the layer's type as design_read writes it.",
   noParent: "Its parent element was not written: fix the parent's error first.",
+  parentFailed: (tag: string, line: number) =>
+    `Its parent <${tag}> on line ${line} was not created: fix that error first.`,
   holdsNoLayers: (type: string) => `A ${type} holds no layers: put the new one in a frame.`,
   cannotMake: (tag: string) => `Creating a ${tag} is not written to Figma in this release.`,
   copies: "Copies and the layers inside a copy or a new instance are not written to Figma in this release.",

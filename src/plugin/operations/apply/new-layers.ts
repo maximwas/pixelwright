@@ -51,21 +51,26 @@ export class NewLayers {
     // places it among existing layers by index, before and after.
     try {
       holder.appendChild(node);
+      this.#bare(node, change.props);
     } catch (error) {
-      node.remove();
+      this.#discard(node);
 
       throw error;
     }
-
-    this.#bare(node, change.props);
 
     return node;
   }
 
   /** After its write: a new auto layout frame hugs the axes the XML did not size; on the page it goes beside the rest. */
   finish(node: SceneNode, props: FigmaProps): void {
-    this.#hug(node, props);
-    this.#placeOnPage(node, props);
+    try {
+      this.#hug(node, props);
+      this.#placeOnPage(node, props);
+    } catch (error) {
+      this.#discard(node);
+
+      throw error;
+    }
   }
 
   /** A new set: the Components its frame holds combined in its place, the frame gone. */
@@ -88,6 +93,13 @@ export class NewLayers {
     this.#assign.set(set as ComponentSetNode, { fills: [], strokes: [] });
 
     return set;
+  }
+
+  /** A layer that failed after it existed goes, so a failed element leaves nothing in the user's file. */
+  #discard(node: SceneNode): void {
+    if (!node.removed) {
+      node.remove();
+    }
   }
 
   #bare(node: SceneNode, props: FigmaProps): void {

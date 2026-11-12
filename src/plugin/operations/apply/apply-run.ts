@@ -29,6 +29,8 @@ interface Run {
   readonly dry: boolean;
   readonly top: BaseNode;
   readonly layers: Map<string, TypedLayer>;
+  /** The new layers whose creation failed, by ref: a child names its parent from here. */
+  readonly failed: Map<string, ApplyChangeData>;
   readonly report: ApplyReport;
   readonly sets: PendingSet[];
 }
@@ -62,6 +64,7 @@ export class ApplyRun {
       dry: dryRun,
       top: await this.#checks.top(parent),
       layers: new Map(),
+      failed: new Map(),
       report: new ApplyReport(),
       sets: [],
     };
@@ -70,6 +73,12 @@ export class ApplyRun {
       try {
         await this.#change(change, run);
       } catch (error) {
+        if (change.kind === APPLY_CHANGE_KIND.create) {
+          // A new layer that failed is gone (or never made): its children must not find it in layers.
+          run.layers.delete(change.ref);
+          run.failed.set(change.ref, change);
+        }
+
         run.report.fail(change, error);
       }
     }
@@ -109,7 +118,11 @@ export class ApplyRun {
     const parent = change.parent === null ? run.top : run.layers.get(change.parent);
 
     if (parent === undefined) {
-      throw new WriteError(APPLY_TEXT.noParent);
+      const failed = change.parent === null ? undefined : run.failed.get(change.parent);
+
+      throw new WriteError(
+        failed === undefined ? APPLY_TEXT.noParent : APPLY_TEXT.parentFailed(failed.tag, failed.line),
+      );
     }
 
     const type = this.#checks.creatable(change, parent);

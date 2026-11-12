@@ -128,4 +128,19 @@ return copy.id;`)) as string;
     ]);
     expect(applied.created.map(({ tag }) => tag)).toEqual(["Line", "Section"]);
   });
+
+  // Item 38 QA: Figma refuses a Component inside a Component after the layer exists; it is taken away (nothing left in
+  // its parent), and its child names the parent that failed, not a generic one.
+  it("removes a layer Figma refuses in its parent and names it in the child's error", async () => {
+    const applied = await apply(
+      `<Component name="${PREFIX}failed-outer" display="flex">\n  <Component name="${PREFIX}failed-inner">\n    <Text name="${PREFIX}failed-text">x</Text>\n  </Component>\n</Component>`,
+    );
+
+    expect(applied.created.map(({ tag }) => tag)).toEqual(["Component"]);
+    expect(applied.errors).toMatchObject([
+      { line: 2, message: expect.stringContaining("inside a component") },
+      { line: 3, message: "Its parent <Component> on line 2 was not created: fix that error first." },
+    ]);
+    expect(await named("failed")).toEqual([`${PREFIX}failed-outer`]);
+  });
 });

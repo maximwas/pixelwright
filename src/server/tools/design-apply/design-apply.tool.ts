@@ -28,6 +28,9 @@ interface Prepared {
   readonly dryRun: boolean;
 }
 
+/** The part of the answer the plan and the plugin's errors make together. */
+type Answered = Pick<DesignApplyOutput, "elements" | "errors" | "changes">;
+
 /**
  * design_apply (T-120..T-123, C-001..C-181): prepare reads the XML and fails with INVALID_XML at the first fault, reads
  * the layers it names with the apply profile and plans the changes once for dry and real runs (T-142); nothing to
@@ -103,7 +106,7 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
   }
 
   /** The elements read, every error in the XML's order (the plugin's with the reader's and the planner's), the changes. */
-  #answer({ reading, plan }: Prepared,    applied: ApplyError[]): Pick<DesignApplyOutput, "elements" | "errors" | "changes"> {
+  #answer({ reading, plan }: Prepared, applied: ApplyError[]): Answered {
     const errors = [...reading.errors, ...plan.errors, ...applied].toSorted(
       (first, second) => first.line - second.line || first.column - second.column,
     );
