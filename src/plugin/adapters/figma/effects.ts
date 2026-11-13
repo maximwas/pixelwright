@@ -29,11 +29,12 @@ export class Effects {
     this.#merge = merge;
   }
 
+  /** `consumer` is the layer they go on: an effect style has none, its colour variables read in their default mode. */
   async merged(
     current: readonly Effect[],
     specs: readonly EffectSpec[],
     variables: TokenVariables,
-    consumer: SceneNode,
+    consumer?: SceneNode,
   ): Promise<Effect[]> {
     const written: Effect[] = [];
 
@@ -47,7 +48,7 @@ export class Effects {
   async #effect(
     spec: EffectSpec,
     variables: TokenVariables,
-    consumer: SceneNode,
+    consumer: SceneNode | undefined,
   ): Promise<Effect> {
     if (spec.type === INTENT_EFFECT.LAYER_BLUR || spec.type === INTENT_EFFECT.BACKGROUND_BLUR) {
       return { type: spec.type, radius: spec.radius, visible: true, blurType: FIGMA_PAINT.normal };

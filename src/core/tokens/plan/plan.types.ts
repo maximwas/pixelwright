@@ -28,10 +28,13 @@ export interface HeldStyle {
   readonly css?: StyleToken;
 }
 
-/** A variable an alias can reach: the file's own, or a library's the page uses. */
+/** A variable an alias can reach: the file's own, a library's the page uses, or an enabled library's by its key. */
 export interface HeldTarget {
+  /** An enabled library's variable the file does not use yet has its key here too: it has no id in the file. */
   readonly id: string;
   readonly type: string;
+  /** The key the write imports an enabled library's variable by (m:acc257ba). */
+  readonly key?: string;
   /** The token each mode points at when its value is an alias (a library's variable shows none). */
   readonly aliases: Readonly<Record<string, string>>;
 }

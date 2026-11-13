@@ -1,8 +1,25 @@
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { LiveClient, type ToolResult } from "../support/live-client.ts";
 
-/** The name of the variables these dry runs would make: nothing is written, so nothing needs cleaning up. */
+/** The name of the variables the dry runs would make: they write nothing. */
 const PREFIX = "live:tokens-apply:";
+
+/** The scratch collection the real runs make, removed through execute after them: no tool deletes tokens. */
+const LIVE = "live-tokens";
+
+/** The live collection's two variables, the first an alias to the second made in the same call. */
+const TWO_VARIABLES = [
+  { name: "Gap/Wide", values: { Base: "var(--live-gap)" } },
+  { name: "Gap", token: "--live-gap", values: { Base: "12px" }, scopes: ["GAP"] },
+];
+
+/** Starter's refusal of a second mode (FX-054), in tokens_apply's words. */
+const DARK_REFUSED = {
+  kind: "mode",
+  name: "Dark",
+  collection: LIVE,
+  message: "The file's Figma plan allows 1 mode in a collection: Dark is not added, and its values are left out.",
+};
 
 interface JsonVariable {
   readonly name: string;
@@ -16,7 +33,10 @@ interface JsonCollection {
   readonly variables: JsonVariable[];
 }
 
-/** Dry runs only (item 48): they read Test MCP's own variables and write none, with Allow edits on or off. */
+/**
+ * Dry runs read Test MCP's own variables and write none (item 48); the real runs (item 49) make only the live-tokens
+ * collection, in order, and remove it through execute, so Test MCP's own collections never change.
+ */
 describe("write/tokens_apply", () => {
   const { file } = inject("live");
   let client: LiveClient;
@@ -46,7 +66,20 @@ describe("write/tokens_apply", () => {
     await client.waitForTestMcp();
   });
 
+  /** The live collection removed by name through execute (A§10.5 item 9); how many there were. */
+  const removeLive = async (): Promise<unknown> =>
+    (
+      await client.call("execute", {
+        file,
+        code: `const live = (await figma.variables.getLocalVariableCollectionsAsync()).filter((collection) => collection.name === ${JSON.stringify(LIVE)});
+for (const collection of live) collection.remove();
+return live.length;`,
+      })
+    ).result;
+
   afterAll(async () => {
+    // A run stopped halfway leaves the collection behind: removing it again is harmless.
+    await removeLive();
     await client.close();
   });
 
@@ -125,20 +158,66 @@ describe("write/tokens_apply", () => {
     });
   });
 
-  it("refuses a real run until tokens are written, saying to pass dryRun, and makes nothing", async () => {
-    const { collection } = await spaceHome();
-    const mode = collection.modes[0] ?? "";
-    const name = `${PREFIX}real`;
-    const answer = await client.blocks("tokens_apply", {
-      file,
-      tokens: { collections: [{ name: collection.name, variables: [{ name, values: { [mode]: "4px" } }] }] },
+  it("writes a live-tokens collection with two variables and an alias, and tokens_read shows them (T-165, FX-052)", async () => {
+    const answer = await apply({
+      tokens: { collections: [{ name: LIVE, modes: ["Base"], variables: TWO_VARIABLES }] },
     });
 
-    expect(answer.isError).toBe(true);
-    expect(JSON.stringify(answer.content)).toContain("dryRun: true");
+    expect(answer).toEqual({
+      created: [
+        { kind: "collection", name: LIVE },
+        { kind: "mode", name: "Base", collection: LIVE },
+        { kind: "variable", name: "Gap/Wide", collection: LIVE },
+        { kind: "variable", name: "Gap", collection: LIVE },
+      ],
+      updated: [],
+      errors: [],
+    });
 
-    const after = await readTokens();
+    const shown = (await readTokens()).collections.find(({ name }) => name === LIVE);
 
-    expect(after.collections.flatMap(({ variables }) => variables.map((one) => one.name))).not.toContain(name);
+    expect(shown?.modes).toEqual(["Base"]);
+    expect(
+      shown?.variables
+        .map(({ name, token, values }) => ({ name, token, values }))
+        .sort((first, second) => first.name.localeCompare(second.name)),
+    ).toEqual([
+      { name: "Gap", token: "--live-gap", values: { Base: "12px" } },
+      { name: "Gap/Wide", token: "--Gap-Wide", values: { Base: "var(--live-gap)" } },
+    ]);
+  });
+
+  it("refuses a second mode with the Starter plan's limit as that mode's error and writes the rest; a dry run then knows it (FX-054, B-055)", async () => {
+    const gap = { name: "Gap", token: "--live-gap", values: { Base: "16px", Dark: "20px" }, scopes: ["GAP"] };
+    const tokens = { collections: [{ name: LIVE, modes: ["Base", "Dark"], variables: [gap] }] };
+
+    expect(await apply({ tokens })).toEqual({
+      created: [],
+      updated: [{ kind: "variable", name: "Gap", collection: LIVE }],
+      errors: [DARK_REFUSED],
+    });
+    // The limit is learned from the refusal: the dry run refuses the mode before anything is written.
+    expect(await apply({ tokens, dryRun: true })).toEqual({
+      created: [],
+      updated: [],
+      errors: [DARK_REFUSED],
+      dry: true,
+    });
+
+    const shown = (await readTokens()).collections.find(({ name }) => name === LIVE);
+
+    expect(shown?.modes).toEqual(["Base"]);
+    expect(shown?.variables.find(({ name }) => name === "Gap")?.values).toEqual({ Base: "16px" });
+  });
+
+  it("writes nothing for its tokens_read JSON sent back: no version, no change (D-25)", async () => {
+    const { tokens } = await client.call("tokens_read", { file, format: "json" });
+
+    expect(await apply({ tokens })).toEqual({ created: [], updated: [], errors: [] });
+  });
+
+  it("removes the live collection through execute: no tool deletes tokens (A§10.5 item 9)", async () => {
+    expect(await removeLive()).toBe(1);
+    expect((await readTokens()).collections.map(({ name }) => name)).not.toContain(LIVE);
   });
 });

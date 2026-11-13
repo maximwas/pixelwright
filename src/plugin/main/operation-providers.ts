@@ -16,8 +16,10 @@ import { LAYER_FACTORY, LayerFactory } from "@/plugin/adapters/figma/layer-facto
 import { PAINTS, Paints } from "@/plugin/adapters/figma/paints.ts";
 import { FILE_TOKENS, FileTokens } from "@/plugin/adapters/figma/variables/file-tokens.ts";
 import { LIBRARY_CATALOGUE, LibraryCatalogue } from "@/plugin/adapters/figma/variables/library-catalogue.ts";
+import { TOKEN_FACTORY, TokenFactory } from "@/plugin/adapters/figma/variables/token-factory.ts";
 import { USED_TOKENS, UsedTokens } from "@/plugin/adapters/figma/variables/used-tokens.ts";
 import { VARIABLE_COLOR, VariableColor } from "@/plugin/adapters/figma/variables/variable-color.ts";
+import { MODE_LIMIT, ModeLimit } from "@/plugin/app/mode-limit.ts";
 import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
@@ -96,6 +98,12 @@ import { SelectionOperation } from "@/plugin/operations/selection/selection.oper
 import { SelectionWaitOperation } from "@/plugin/operations/selection-wait/selection-wait.operation.ts";
 import { SetOfOperation } from "@/plugin/operations/set-of/set-of.operation.ts";
 import { ShowOperation } from "@/plugin/operations/show/show.operation.ts";
+import { COLLECTION_WRITER, CollectionWriter } from "@/plugin/operations/tokens-apply/collection-writer.ts";
+import { STYLE_LOOKS, StyleLooks } from "@/plugin/operations/tokens-apply/style-looks.ts";
+import { STYLE_WRITER, StyleWriter } from "@/plugin/operations/tokens-apply/style-writer.ts";
+import { TokensApplyOperation } from "@/plugin/operations/tokens-apply/tokens-apply.operation.ts";
+import { VARIABLE_VALUES, VariableValues } from "@/plugin/operations/tokens-apply/variable-values.ts";
+import { VARIABLE_WRITER, VariableWriter } from "@/plugin/operations/tokens-apply/variable-writer.ts";
 import { UploadOperation } from "@/plugin/operations/upload/upload.operation.ts";
 import { UsageOperation } from "@/plugin/operations/usage/usage.operation.ts";
 import { VariablesOperation } from "@/plugin/operations/variables/variables.operation.ts";
@@ -107,7 +115,8 @@ import type { OpName } from "@/shared/ops/op-meta.types.ts";
  * Every op's class by name (A§4b.3): a contract without one here fails to type, so no op is left unserved. execute's
  * pw scope lives as long as the window (T-154), its code's runs outlive their answers (T-156); find reads variants with
  * core's Name=Value lists (K-069); components finds, lists, exposes and links components (T-190, T-192); variables reads the file's raw tokens (P-125);
- * usage lists the layers that use a style or variable (P-126); upload holds design_apply's files for its apply (P-030).
+ * usage lists the layers that use a style or variable (P-126); upload holds design_apply's files for its apply (P-030);
+ * tokens_apply writes core's tokens plan, the file's mode limit learned once for the window (P-163, P-167).
  */
 export class OperationProviders {
   readonly #classes: Readonly<Record<OpName, OperationClass>> = {
@@ -138,6 +147,7 @@ export class OperationProviders {
     [OP_NAME.saveVersion]: SaveVersionOperation,
     [OP_NAME.apply]: ApplyOperation,
     [OP_NAME.upload]: UploadOperation,
+    [OP_NAME.tokensApply]: TokensApplyOperation,
   };
 
   register(container: Container): void {
@@ -184,6 +194,19 @@ export class OperationProviders {
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
     this.#writeSteps(container);
     this.#paints(container);
+    this.#tokens(container);
+  }
+
+  /** What tokens_apply writes with, on top of design_apply's paints and effects (P-163). */
+  #tokens(container: Container): void {
+    container
+      .bind({ provide: MODE_LIMIT, useClass: ModeLimit })
+      .bind({ provide: TOKEN_FACTORY, useClass: TokenFactory })
+      .bind({ provide: COLLECTION_WRITER, useClass: CollectionWriter })
+      .bind({ provide: VARIABLE_VALUES, useClass: VariableValues })
+      .bind({ provide: VARIABLE_WRITER, useClass: VariableWriter })
+      .bind({ provide: STYLE_LOOKS, useClass: StyleLooks })
+      .bind({ provide: STYLE_WRITER, useClass: StyleWriter });
   }
 
   /** design_apply's write steps in Figma's order (P-149). */

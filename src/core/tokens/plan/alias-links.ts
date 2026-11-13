@@ -33,7 +33,8 @@ interface Problem {
  * The call's aliases followed to their targets (K-019, K-024): the target must be in the file or in the call, no alias
  * leads back to its own variable (through the call's variables and the file's own aliases), and an alias takes a target
  * of its variable's type. A new variable of only aliases takes its target's type, so its scopes are checked by it; one
- * nothing types is refused. An alias whose target the file holds carries its id, so the writer need not look again.
+ * nothing types is refused. An alias whose target the file holds carries its id, so the writer need not look again;
+ * one to an enabled library's variable carries its key to import.
  * A variable that cannot be linked is its own error and out, and those that pointed at it with it.
  */
 @injectable()
@@ -256,7 +257,13 @@ export class AliasLinks {
     }
 
     const made = links.calls.get(value.token);
-    const id = made === undefined ? links.file.tokens.get(value.token)?.id : made.plan.id;
+    const held = made === undefined ? links.file.tokens.get(value.token) : undefined;
+
+    if (held?.key !== undefined) {
+      return { ...value, key: held.key };
+    }
+
+    const id = made === undefined ? held?.id : made.plan.id;
 
     return id === undefined ? value : { ...value, id };
   }

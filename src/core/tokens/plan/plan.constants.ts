@@ -94,6 +94,9 @@ export const PLAN_TEXT = {
     `It is a ${type} variable in the file, and a variable's type cannot change: give the new one another name.`,
   library: (name: string) => `${name} comes from a library: change it there.`,
   noTarget: (token: string) => `${token} names no variable in this file or in this call.`,
+  notColour: (token: string, type: string) => `${token} is a ${type} variable: a style takes colour variables.`,
+  imported: (token: string) =>
+    `${token} is a variable of an enabled library that the file does not use yet: the write imports it into the file.`,
   twice: (name: string, collection: string) =>
     `${name} is listed twice in ${collection}: only the first is planned. Merge the two, or give one another name.`,
   cycle: (path: readonly string[]) =>

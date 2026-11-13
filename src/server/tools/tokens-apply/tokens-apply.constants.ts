@@ -10,9 +10,3 @@ export const TOKENS_APPLY_FIELD = {
   tokens:
     "tokens_read's tokens (format json) as they are, or the same by hand: collections and styles, only what you change.",
 } as const;
-
-export const TOKENS_APPLY_TEXT = {
-  /** Until the plugin writes tokens, a real run says how to check them instead. */
-  dryOnly:
-    "tokens_apply checks tokens in this build and writes none yet: pass dryRun: true to see what it would make and change.",
-} as const;
