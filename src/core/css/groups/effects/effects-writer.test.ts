@@ -81,7 +81,7 @@ describe("EffectsWriter", () => {
     expect(
       written({ "box-shadow": "0 1px 2px color-mix(in srgb, var(--ink) 50%, transparent)" }).problems[0]?.message,
     ).toBe(
-      "A shadow's colour variable is its whole colour, its alpha too: write var(--ink) alone, or make a variable with that alpha with tokens_apply first.",
+      "A shadow's colour variable is its whole colour, its alpha too: write var(--ink) alone, or the colour with that alpha as a value.",
     );
     expect(written({ filter: "grayscale(1)" }).problems[0]?.message).toBe(
       'filter="grayscale(1)" is not blur(Npx), the one filter Figma has.',
