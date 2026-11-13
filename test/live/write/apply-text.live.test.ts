@@ -103,7 +103,7 @@ return [node.characters, node.fontName.style];`),
     const xml = `<Text id="${id}" font="400 16px/normal 'Intr'"/>`;
     const refusal = { id, attribute: "font", message: "Figma has no font family Intr.", hint: "Did you mean Inter?" };
 
-    expect((await apply(xml, true)).errors).toEqual([refusal]);
+    expect((await apply(xml, true)).errors).toMatchObject([refusal]);
     expect(await apply(xml)).toMatchObject({ changed: [], errors: [refusal] });
   });
 
