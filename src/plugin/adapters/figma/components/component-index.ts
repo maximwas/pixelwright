@@ -51,6 +51,11 @@ export class ComponentIndex {
     return this.#planned.has(name);
   }
 
+  /** Whether a dry run can look the name up without writing: no import by key (it writes to the file), no planned one. */
+  findable(name: string): boolean {
+    return !name.startsWith(COMPONENT_VALUE.keyPrefix) && !this.planned(name);
+  }
+
   /** A component or set made in this call, so a later instance finds it first. */
   add(owner: ComponentOwner): void {
     this.#made.set(owner.name, owner);
@@ -92,7 +97,8 @@ export class ComponentIndex {
 
   /**
    * A library's set or lone component by key, both asked at once: Figma never answers a set import of a key that is no
-   * published set (a lone component's among them), so the one that answers wins, within 10 s (FX-017).
+   * published set (a lone component's among them), so the one that answers wins, within 10 s (FX-017). When one import
+   * is refused and the other never answers, the refusal is what the timeout says.
    */
   async #import(key: string): Promise<ComponentOwner> {
     const known = this.#imported.get(key);
@@ -102,15 +108,25 @@ export class ComponentIndex {
     }
 
     const seconds = COMPONENT_LIMIT.keyImportMs / COMPONENT_LIMIT.msPerSecond;
+    const refused: string[] = [];
 
     try {
       const owner = await pTimeout(
-        Promise.any<ComponentOwner>([figma.importComponentSetByKeyAsync(key), figma.importComponentByKeyAsync(key)]),
-        {
-          milliseconds: COMPONENT_LIMIT.keyImportMs,
-          message: this.#notImported(key, COMPONENT_TEXT.noAnswer(seconds)),
-        },
+        Promise.any<ComponentOwner>([
+          this.#watched(figma.importComponentSetByKeyAsync(key), refused),
+          this.#watched(figma.importComponentByKeyAsync(key), refused),
+        ]),
+        { milliseconds: COMPONENT_LIMIT.keyImportMs, message: false },
       );
+
+      if (owner === undefined) {
+        const [first] = refused;
+
+        throw this.#notImported(
+          key,
+          first === undefined ? COMPONENT_TEXT.noAnswer(seconds) : COMPONENT_TEXT.noAnswerRefused(seconds, first),
+        );
+      }
 
       this.#imported.set(key, owner);
 
@@ -120,10 +136,23 @@ export class ComponentIndex {
         throw error;
       }
 
-      const last: unknown = error.errors[error.errors.length - 1];
-
-      throw this.#notImported(key, last instanceof Error ? last.message : String(last));
+      throw this.#notImported(key, this.#reason(error.errors[error.errors.length - 1]));
     }
+  }
+
+  /** An import, its refusal noted before it goes on. */
+  async #watched(request: Promise<ComponentOwner>, refused: string[]): Promise<ComponentOwner> {
+    try {
+      return await request;
+    } catch (error) {
+      refused.push(this.#reason(error));
+
+      throw error;
+    }
+  }
+
+  #reason(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   #notImported(key: string, why: string): WriteError {

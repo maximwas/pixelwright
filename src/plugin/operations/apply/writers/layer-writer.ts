@@ -18,6 +18,8 @@ export interface WriteStep {
   write(node: SceneNode, props: FigmaProps): void | Promise<void>;
   /** What the layer's type and the file's tokens refuse, found without writing (a dry run's check too). */
   check?(props: FigmaProps, layer: TypedLayer): void | Promise<void>;
+  /** What the place of a layer about to be made refuses, asked of its type and parent before it is made, on either run. */
+  place?(props: FigmaProps, layer: TypedLayer): void;
 }
 
 /** The write steps in Figma's order (P-149): the layer's own layout before anything sized in it, then how it looks. */

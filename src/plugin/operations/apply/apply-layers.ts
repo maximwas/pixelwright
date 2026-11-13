@@ -16,7 +16,7 @@ import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
  * The layer each change writes, found or made and placed (T-123..T-126): an existing one (moved when its change says
  * so), a page, a copy's or a new instance's layer for the source's, a copy, an instance, or a new layer at its XML
  * place, with what its type refuses (ApplyChecks). A dry run checks the same and knows a layer it would make by its
- * type alone.
+ * type and the layer it would sit in (m:f66aed65).
  */
 @injectable()
 export class ApplyLayers {
@@ -133,8 +133,12 @@ export class ApplyLayers {
     if (change.copyOf === undefined) {
       const type = this.#checks.creatable(change, parent);
 
+      if (type === FIGMA_NODE_TYPE.componentSet) {
+        this.#checks.filled(change, call.changes);
+      }
+
       if (call.dry) {
-        return { type };
+        return { type, parent };
       }
 
       const place = await this.#placement.whereTo(change, call);
@@ -155,7 +159,7 @@ export class ApplyLayers {
     this.#checks.creatable(change, parent, source.type);
 
     if (call.dry) {
-      return { type: source.type };
+      return { type: source.type, parent };
     }
 
     const copy = this.#layers.copy(source, await this.#placement.whereTo(change, call));

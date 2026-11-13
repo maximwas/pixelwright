@@ -190,4 +190,53 @@ const node = await figma.getNodeByIdAsync(${JSON.stringify(label)});
 return [node.opacity, node.visible];`),
     ).toEqual([0.5, false]);
   });
+
+  // T-129, m:f66aed65: a mark that cannot bind is refused before its layer is made, on the dry and the real run alike:
+  // a component's property of another kind by the name, a layer no component holds. The real run leaves no layer.
+  it("refuses a property mark that cannot bind before it makes its layer, on both runs", async () => {
+    const component = made(
+      await apply(
+        `<Component name="${PREFIX}marks"><Frame visibleProp="Name" width="10px" height="10px"/></Component>`,
+      ),
+      "Component",
+    );
+    const left = async (name: string): Promise<number> =>
+      (await run(`const section = await pw.node(${JSON.stringify(scratch)});
+return section.findAll((node) => node.name === ${JSON.stringify(name)}).length;`)) as number;
+    const cases = [
+      {
+        xml: `<Component id="${component}"><Text name="${PREFIX}clash" prop="Name">x</Text></Component>`,
+        message: `${PREFIX}marks has a boolean property Name: another kind cannot take its name.`,
+        name: `${PREFIX}clash`,
+      },
+      {
+        xml: `<Frame name="${PREFIX}held"><Text name="${PREFIX}unheld" prop="Name">x</Text></Frame>`,
+        message:
+          "No component holds this layer: prop, visibleProp and swapProp bind a component's layers to its properties.",
+        name: `${PREFIX}unheld`,
+      },
+    ];
+
+    for (const { xml, message, name } of cases) {
+      const dry = await apply(xml, true);
+      const real = await apply(xml);
+
+      expect(dry.errors).toMatchObject([{ message }]);
+      expect(real.errors).toMatchObject([{ message }]);
+      expect(await left(name)).toBe(0);
+    }
+  });
+
+  // T-127, m:f66aed65: a new instance's props are checked in a dry run against its component found by name: a name it
+  // lacks, a boolean that is neither true nor false. The real run says the same.
+  it("refuses a new instance's wrong props in a dry run as the real run does", async () => {
+    for (const [index, props] of ["Nmae=Live", "Popular=maybe"].entries()) {
+      const xml = `<Instance name="${PREFIX}props-${index}" component="Plan Card" props="${props}"/>`;
+      const dry = await apply(xml, true);
+      const real = await apply(xml);
+
+      expect(dry.errors).toMatchObject([{ attribute: "props" }]);
+      expect(real.errors).toEqual(dry.errors);
+    }
+  });
 });

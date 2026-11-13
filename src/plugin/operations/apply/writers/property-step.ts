@@ -25,6 +25,11 @@ export class PropertyStep implements WriteStep {
     }
   }
 
+  /** A mark that cannot bind makes no layer: its place is asked before the layer is made. */
+  place(props: FigmaProps, layer: TypedLayer): void {
+    this.check(props, layer);
+  }
+
   write(node: SceneNode, { property }: FigmaProps): void {
     if (property !== undefined) {
       this.#marks.add(node, property);

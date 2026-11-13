@@ -7,6 +7,9 @@ export const COMPONENT_VALUE = {
   variantPair: (name: string, value: string) => `${name}=${value}`,
   variantJoint: ", ",
   variantsJoint: "; ",
+  /** A variant's name read back: its pairs split at the comma, each pair at the sign. */
+  variantSplit: ",",
+  variantAssign: "=",
 } as const;
 
 export const COMPONENT_TEXT = {
@@ -14,6 +17,8 @@ export const COMPONENT_TEXT = {
   notImportedHint:
     "Only components of a published library this account can use import by key (library_search finds them); in the library file itself, name the component instead.",
   noAnswer: (seconds: number) => `no answer in ${seconds} s.`,
+  noAnswerRefused: (seconds: number, why: string) =>
+    `one import was refused (${why}) and the other gave no answer in ${seconds} s.`,
   notFound: (name: string) =>
     `No component or component set is named ${name} in this file or the libraries its page uses.`,
   notFoundHint: 'components_read lists them; a library one the file does not use yet takes component="key:<key>".',

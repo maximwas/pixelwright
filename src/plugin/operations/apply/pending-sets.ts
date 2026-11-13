@@ -85,7 +85,8 @@ export class PendingSets {
     await this.#write(run, waits ? { ...change, props: this.#part(change.props, false) } : change, node, refusals);
   }
 
-  /** The sets whose XML has ended (none holds `next`) made, then the marks outside the sets still open bound. */
+  /** The sets whose XML has ended (none holds `next`) made, then the marks outside the sets still open bound; a layer
+   * the call made whose mark cannot bind goes. */
   async settle(run: Run, next?: ApplyChangeData): Promise<void> {
     const open = this.#holding(next, run.changes);
     const ready = run.sets.filter(({ change }) => !open.has(change.ref));
@@ -107,7 +108,19 @@ export class PendingSets {
 
       if (change !== undefined) {
         run.report.fail(change, error, STEP_KEYS.property);
+        this.#discard(run, node);
       }
+    }
+  }
+
+  /** A layer this call made, its mark unbound, goes with what it holds, so nothing half-made stays in the file. */
+  #discard(run: Run, node: SceneNode): void {
+    if (run.report.unmade(node.id)) {
+      for (const inner of "findAll" in node ? node.findAll() : []) {
+        run.report.unmade(inner.id);
+      }
+
+      this.#layers.discard(node);
     }
   }
 

@@ -2,7 +2,6 @@ import { inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { COMPONENT_INDEX } from "@/plugin/adapters/figma/components/component-index.ts";
-import { COMPONENT_VALUE } from "@/plugin/adapters/figma/components/components.constants.ts";
 import { VARIANTS } from "@/plugin/adapters/figma/components/variants.ts";
 import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
@@ -49,7 +48,7 @@ export class VariantStep implements WriteStep {
       }
     } else if ("getMainComponentAsync" in layer) {
       await this.#target(layer as InstanceNode, props, false);
-    } else if (component !== undefined && this.#findable(component)) {
+    } else if (component !== undefined && this.#components.findable(component)) {
       await this.#components.component(component, variant ?? {});
     }
   }
@@ -94,7 +93,7 @@ export class VariantStep implements WriteStep {
       return { main, target: variant === undefined ? null : this.#variants.of(this.#variants.owner(main), values) };
     }
 
-    if (!writing && !this.#findable(component)) {
+    if (!writing && !this.#components.findable(component)) {
       return { main, target: null };
     }
 
@@ -104,9 +103,5 @@ export class VariantStep implements WriteStep {
       owner.type === FIGMA_NODE_TYPE.componentSet && main.parent?.id === owner.id ? this.#variants.values(main) : {};
 
     return { main, target: this.#variants.of(owner, { ...kept, ...variant }) };
-  }
-
-  #findable(name: string): boolean {
-    return !name.startsWith(COMPONENT_VALUE.keyPrefix) && !this.#components.planned(name);
   }
 }

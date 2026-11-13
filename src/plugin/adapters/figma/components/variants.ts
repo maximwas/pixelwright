@@ -17,9 +17,9 @@ export class Variants {
     return main.parent?.type === FIGMA_NODE_TYPE.componentSet ? main.parent : main;
   }
 
-  /** A variant's values as Figma gives them; a component outside a set has none. */
+  /** A variant's values as Figma gives them, else read from its name; a component outside a set has none. */
   values(component: ComponentNode): Record<string, string> {
-    return { ...(component.variantProperties ?? {}) };
+    return { ...(component.variantProperties ?? this.#parsed(component.name)) };
   }
 
   /** A variant's name as Figma writes it: "Size=Large, State=Default". */
@@ -52,6 +52,16 @@ export class Variants {
     }
 
     return found;
+  }
+
+  /** The values a variant's name holds ("Size=Large, State=Default"); a part that is no pair is left out. */
+  #parsed(name: string): Record<string, string> {
+    return Object.fromEntries(
+      name
+        .split(COMPONENT_VALUE.variantSplit)
+        .map((part) => part.split(COMPONENT_VALUE.variantAssign).map((item) => item.trim()))
+        .filter((pair): pair is [string, string] => pair.length === 2),
+    );
   }
 }
 

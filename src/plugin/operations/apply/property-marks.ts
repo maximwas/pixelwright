@@ -54,14 +54,16 @@ export class PropertyMarks {
   }
 
   /**
-   * What binding refuses, found without writing: the kind of layer each name goes on and, for a layer already in its
-   * place (a new one on a dry run is not), what holds it and the properties it has by those names.
+   * What binding refuses, found without writing: the kind of layer each name goes on, what holds the layer (a new one's
+   * parent chain runs through the stand-ins a dry run keeps) and the properties it has by those names.
    */
   check(layer: TypedLayer, property: Property): void {
     const wanted = this.#wanted(layer.type, property);
+    const holder = this.#holder(layer.parent);
 
-    if ("parent" in layer) {
-      const owner = this.#owner((layer as SceneNode).parent);
+    // A component this call makes (a stand-in, with no id) has no properties yet: nothing to clash with.
+    if ("id" in holder) {
+      const owner = this.#variants.owner(holder as ComponentNode);
 
       for (const one of wanted) {
         this.#keyFor(owner, one);
@@ -93,7 +95,7 @@ export class PropertyMarks {
   }
 
   async #bind({ node, property }: Mark): Promise<void> {
-    const owner = this.#owner(node.parent);
+    const owner = this.#variants.owner(this.#holder(node.parent) as ComponentNode);
     const wanted = this.#wanted(node.type, property);
     // Every name checked before one is added: a mark refused adds nothing.
     const keys = wanted.map((one) => this.#keyFor(owner, one));
@@ -124,11 +126,11 @@ export class PropertyMarks {
     });
   }
 
-  /** What holds the properties of the component holding a layer, from this one up; an instance's layers bind none. */
-  #owner(from: BaseNode | null): ComponentOwner {
-    for (let up = from; up !== null; up = up.parent) {
+  /** The component holding a layer, from its parent up; an instance's layers bind none. */
+  #holder(from: TypedLayer | null | undefined): TypedLayer {
+    for (let up = from; up !== undefined && up !== null; up = up.parent) {
       if (up.type === FIGMA_NODE_TYPE.component) {
-        return this.#variants.owner(up);
+        return up;
       }
 
       if (up.type === FIGMA_NODE_TYPE.instance) {
