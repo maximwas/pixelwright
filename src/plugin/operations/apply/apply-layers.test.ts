@@ -228,9 +228,11 @@ describe("ApplyLayers: a ComponentSet holds Components only, refused before any 
   it.each(BOTH)("refuses an existing Frame moved into a new ComponentSet (dry %s)", async (dry) => {
     const { moved, layers } = build(found(frame));
     const inner = moving("Frame", "f", frame.id, "s");
+    const run = call(dry, held(dry), [set, variant, inner]);
+    const layer = await layers.of(inner, run);
 
-    await expect(layers.of(inner, call(dry, held(dry), [set, variant, inner]))).rejects.toThrow(SET);
-    await expect(layers.of(inner, call(dry, held(dry), [set, variant, inner]))).rejects.toMatchObject({
+    await expect(layers.move(layer, inner, run)).rejects.toThrow(SET);
+    await expect(layers.move(layer, inner, run)).rejects.toMatchObject({
       hint: "Move it out of the set, or make it a Component.",
     });
     expect(moved).toEqual([]);
@@ -247,8 +249,9 @@ describe("ApplyLayers: a ComponentSet holds Components only, refused before any 
   it.each(BOTH)("moves an existing Component into a new ComponentSet (dry %s)", async (dry) => {
     const { moved, layers } = build(found(component));
     const inner = moving("Component", "c", component.id, "s");
+    const run = call(dry, held(dry), [set, inner]);
 
-    await layers.of(inner, call(dry, held(dry), [set, inner]));
+    await layers.move(await layers.of(inner, run), inner, run);
 
     expect(moved).toEqual(["move"]);
   });

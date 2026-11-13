@@ -14,8 +14,8 @@ import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 
 /**
- * The layer each change writes, found or made and placed (T-123..T-126): an existing one (moved when its change says
- * so), a page, a copy's or a new instance's layer for the source's, a copy, an instance, or a new layer at its XML
+ * The layer each change writes, found or made and placed (T-123..T-126): an existing one (moved on its own when its
+ * change says so, so a refused move keeps it where it is), a page, a copy's or a new instance's layer for the source's, a copy, an instance, or a new layer at its XML
  * place, with what its type refuses (ApplyChecks). A dry run checks the same and knows a layer it would make by its
  * type and the layer it would sit in (m:f66aed65).
  */
@@ -63,21 +63,22 @@ export class ApplyLayers {
       return await this.#created(change, call);
     }
 
-    return await this.#moved(await this.#checks.existing(change, !call.dry), change, call);
+    return await this.#checks.existing(change, !call.dry);
   }
 
-  /** The layer, placed again when its change says it moves. */
-  async #moved(
-    node: SceneNode,
+  /**
+   * The layer placed again when its change says it moves (an existing one, or a copy's or new instance's layer); what
+   * refuses the move throws before it, the layer where it stood (P-143). A page is not moved.
+   */
+  async move(
+    layer: TypedLayer,
     change: ApplyChangeData,
     call: ApplyCall,
-  ): Promise<SceneNode> {
-    if (change.moves ?? false) {
-      this.#checks.member(change, node.type, call.changes);
-      await this.#placement.move(node, change, call);
+  ): Promise<void> {
+    if ((change.moves ?? false) && layer.type !== FIGMA_NODE_TYPE.page) {
+      this.#checks.member(change, layer.type, call.changes);
+      await this.#placement.move(layer as SceneNode, change, call);
     }
-
-    return node;
   }
 
   /** After its write: a new layer finished as NewLayers does; a copy keeps what its source had. */
@@ -113,11 +114,7 @@ export class ApplyLayers {
       throw new WriteError(copy?.copyOf === undefined ? APPLY_TEXT.instanceNotMade : APPLY_TEXT.copyNotMade);
     }
 
-    if (call.dry) {
-      return await this.#moved(await this.#checks.existing(change, false, change.source), change, call);
-    }
-
-    return await this.#moved(call.counterparts.find(change), change, call);
+    return call.dry ? await this.#checks.existing(change, false, change.source) : call.counterparts.find(change);
   }
 
   /** A new layer's place checked, and on a real run the layer made (or the source cloned) there. */

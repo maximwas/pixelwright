@@ -201,4 +201,23 @@ return { inner: instance.children[0].id, slot, slotId: instance.children.find((c
     ]);
     context.annotate("no free page slot in Test MCP: the page was not made, only the limit text checked (A§15.13)");
   });
+
+  // T-124, P-143: a refused move keeps the layer where it is and still writes its other attributes, the error on the
+  // attribute that placed it; a dry run answers the same.
+  it("keeps a layer whose move is refused in its place and writes its other attributes", async () => {
+    const ids = await row("kept");
+    const xml = `<Rectangle id="${ids.a}" before="1:99999999" opacity="0.5"/>`;
+    const dry = await apply(xml, { dryRun: true });
+    const real = await apply(xml);
+
+    for (const applied of [dry, real]) {
+      expect(applied.errors).toEqual([
+        expect.objectContaining({ id: ids.a, attribute: "before", message: expect.stringContaining("1:99999999") }),
+      ]);
+      expect(applied.changed).toEqual([ids.a]);
+    }
+
+    expect(await order(ids.frame ?? "")).toEqual(["a", "b", "c"]);
+    expect(await run(`return (await figma.getNodeByIdAsync(${JSON.stringify(ids.a)})).opacity;`)).toBe(0.5);
+  });
 });

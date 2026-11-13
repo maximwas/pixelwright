@@ -39,6 +39,9 @@ export const PROPERTY_KINDS = [
   { key: "swap", field: "mainComponent", type: APPLY_PROPERTY_TYPE.swap },
 ] as const;
 
+/** The attributes that place a layer beside another: a refused move names the one that placed it (P-143). */
+export const MOVE_ATTRIBUTE = { before: "before", after: "after" } as const;
+
 /** The layer fields a property mark drives, by name. */
 export const PROPERTY_FIELD = { characters: "characters", visible: "visible" } as const;
 

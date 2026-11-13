@@ -101,20 +101,41 @@ export class ApplyRun {
 
     run.layers.set(change.ref, layer);
 
-    const refusals = this.#layers.refusals(layer, change);
+    const placed = await this.#placed(layer, change, run);
+    const refusals = this.#layers.refusals(layer, placed);
 
-    refusals.push(...(await this.#writer.checks(change, layer, refusals)));
+    refusals.push(...(await this.#writer.checks(placed, layer, refusals)));
 
     for (const { error, keys } of refusals) {
-      run.report.fail(change, error, keys);
+      run.report.fail(placed, error, keys);
     }
 
     if (run.dry) {
-      run.report.planned(change, (change.moves ?? false) || this.#writes(change, refusals));
+      run.report.planned(placed, (placed.moves ?? false) || this.#writes(placed, refusals));
     } else if (type === FIGMA_NODE_TYPE.componentSet) {
-      this.#sets.hold(run, change, layer as SceneNode, refusals);
+      this.#sets.hold(run, placed, layer as SceneNode, refusals);
     } else {
-      await this.#sets.write(run, change, layer as SceneNode, refusals);
+      await this.#sets.write(run, placed, layer as SceneNode, refusals);
+    }
+  }
+
+  /**
+   * The layer moved when its change says so; a move refused keeps it where it is, its error on before or after when
+   * those placed it, and the change goes on without the move: its other attributes are still written (T-124, P-143).
+   */
+  async #placed(
+    layer: TypedLayer,
+    change: ApplyChangeData,
+    run: Run,
+  ): Promise<ApplyChangeData> {
+    try {
+      await this.#layers.move(layer, change, run);
+
+      return change;
+    } catch (error) {
+      run.report.refusedMove(change, error);
+
+      return { ...change, moves: false };
     }
   }
 
