@@ -39,9 +39,7 @@ export class VariableWriter {
       return;
     }
 
-    for (const variable of await this.#factory.variables()) {
-      run.local.set(variable.id, variable);
-    }
+    await this.#values.list(run);
 
     const written: WrittenVariable[] = [];
 

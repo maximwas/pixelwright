@@ -53,9 +53,20 @@ export class VariableValues {
     }
   }
 
+  /** The file's variables by id, listed once a call: an id found there needs no by-id lookup, which can wait offline (P-070). */
+  async list(run: TokenRun): Promise<void> {
+    if (run.local.size > 0) {
+      return;
+    }
+
+    for (const variable of await this.#factory.variables()) {
+      run.local.set(variable.id, variable);
+    }
+  }
+
   /**
    * The variable a token names, for an alias or a style's colour: an enabled library's imported by its key (a write,
-   * m:acc257ba), the file's by id, else the one this call made.
+   * m:acc257ba), the file's by id (listed, so a styles-only call finds it too), else the one this call made.
    */
   async variable(
     token: string,
@@ -64,6 +75,10 @@ export class VariableValues {
   ): Promise<Variable> {
     if (key !== undefined) {
       return await this.#catalogue.imported(key);
+    }
+
+    if (id !== undefined) {
+      await this.list(run);
     }
 
     const found = id === undefined ? run.made.get(token) : (run.local.get(id) ?? (await this.#lookup.variable(id)));

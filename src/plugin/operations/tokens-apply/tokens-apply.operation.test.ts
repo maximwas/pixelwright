@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type * as zod from "zod/mini";
+import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
+import { FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { TokenNames } from "@/core/kernel/names/token-names.ts";
+import { NumberFormat } from "@/core/kernel/numbers/number-format.ts";
 import { FontCatalog } from "@/plugin/adapters/figma/fonts/font-catalog.ts";
 import { ModeLimit } from "@/plugin/app/mode-limit.ts";
 import { CollectionWriter } from "@/plugin/operations/tokens-apply/collection-writer.ts";
 import { StyleLooks } from "@/plugin/operations/tokens-apply/style-looks.ts";
 import { StyleWriter } from "@/plugin/operations/tokens-apply/style-writer.ts";
+import { TextStyleLooks } from "@/plugin/operations/tokens-apply/text-style-looks.ts";
 import { TokensApplyOperation } from "@/plugin/operations/tokens-apply/tokens-apply.operation.ts";
 import { VariableValues } from "@/plugin/operations/tokens-apply/variable-values.ts";
 import { VariableWriter } from "@/plugin/operations/tokens-apply/variable-writer.ts";
@@ -131,8 +135,10 @@ function build(stub = figmaStub()) {
     values,
     new TokenNames(),
   );
-  const looks = new StyleLooks(paints as never, effects as never, new FontCatalog(layers as never), values);
-  const styles = new StyleWriter(stub.factory as never, looks, layers as never);
+  const looks = new StyleLooks(paints as never, effects as never, values);
+  const shorthand = new FontShorthand(new NumberFormat(), new FontWeight());
+  const texts = new TextStyleLooks(new FontCatalog(layers as never), shorthand);
+  const styles = new StyleWriter(stub.factory as never, looks, texts, layers as never);
   const report = {
     succeeded: (output: unknown) => output,
     failed: (error: unknown) => {
@@ -207,7 +213,7 @@ describe("TokensApplyOperation (T-165, P-163)", () => {
     expect(undo).toEqual(["undo"]);
   });
 
-  it("refuses a mode past the Figma plan's limit as that mode's error, writes the rest, and a dry run learns the limit (FX-054, B-055)", async () => {
+  it("refuses a mode past the Figma plan's limit as that mode's error, writes the rest, and only that real refusal teaches a dry run the limit it cannot know before (FX-054, B-055)", async () => {
     const { apply, stub, undo } = build(figmaStub(1));
     const twoModes = {
       collections: [{ name: "Brand", modes: ["Light", "Dark"], variables: [ink(["Light", "Dark"])] }],

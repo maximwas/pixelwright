@@ -37,7 +37,7 @@ export class FontShorthand {
     return FONT_TEXT.shorthand(
       FONT_PATTERN.italic.test(parts.fontName.style),
       parts.fontWeight ?? this.#weight.guess(parts.fontName.style),
-      FONT_TEXT.size(this.#px(parts.fontSize), this.#lineHeight(parts.lineHeight, parts.fontSize)),
+      FONT_TEXT.size(this.px(parts.fontSize), this.lineHeight(parts.lineHeight, parts.fontSize)),
       parts.fontName.family.replace(FONT_PATTERN.unsafe, FONT_TEXT.escaped),
     );
   }
@@ -55,18 +55,20 @@ export class FontShorthand {
 
     return unit === FONT_UNIT.percent
       ? FONT_TEXT.em(this.#format.round(value / FONT_NUMBER.percent, PRECISION.decimal))
-      : this.#px(value);
+      : this.px(value);
   }
 
-  #lineHeight({ unit, value }: TextLength, size: number): string {
+  /** A line height as the shorthand writes it at that size: px (a percent of the size too), normal for Auto. */
+  lineHeight({ unit, value }: TextLength, size: number): string {
     if (value === undefined || (unit !== FONT_UNIT.pixels && unit !== FONT_UNIT.percent)) {
       return FONT_VALUE.normal;
     }
 
-    return this.#px(unit === FONT_UNIT.pixels ? value : (size * value) / FONT_NUMBER.percent);
+    return this.px(unit === FONT_UNIT.pixels ? value : (size * value) / FONT_NUMBER.percent);
   }
 
-  #px(value: number): string {
+  /** A length in px as the shorthand writes it, rounded to the table's decimals. */
+  px(value: number): string {
     return FONT_TEXT.px(this.#format.round(value, PRECISION.textSpacing));
   }
 }

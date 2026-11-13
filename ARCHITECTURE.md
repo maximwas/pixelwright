@@ -293,9 +293,10 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   plugin carries no `core/tokens`. `tokens-apply/` writes core's plan: `CollectionWriter` (a new collection's first mode
   renames Figma's default; a refused mode is its error, the limit learned in `plugin/app/ModeLimit`, FX-054),
   `VariableWriter` (every new variable made before any value), `VariableValues` (values, an alias from its target or a
-  library's imported by key, description, scopes, code syntax), `StyleWriter` and `StyleLooks` (paint, text and effect
-  styles through design_apply's `Paints`, `Effects` and `FontCatalog`), over `adapters/figma/variables/TokenFactory`;
-  the call is one undo step.
+  library's imported by key, description, scopes, code syntax), `StyleWriter`, `StyleLooks` and `TextStyleLooks`
+  (paint, text and effect styles through design_apply's `Paints`, `Effects` and `FontCatalog`; a text style keeps its
+  face, size, line height and letter spacing where they render as the CSS, and its font is loaded before it is made),
+  over `adapters/figma/variables/TokenFactory`; the call is one undo step.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;

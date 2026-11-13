@@ -3,6 +3,7 @@ import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
 import { type StyleGroup, TOKEN_FACTORY } from "@/plugin/adapters/figma/variables/token-factory.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { STYLE_LOOKS } from "@/plugin/operations/tokens-apply/style-looks.ts";
+import { TEXT_STYLE_LOOKS } from "@/plugin/operations/tokens-apply/text-style-looks.ts";
 import { TOKENS_APPLY_TEXT } from "@/plugin/operations/tokens-apply/tokens-apply.constants.ts";
 import type { Targets, TokenRun } from "@/plugin/operations/tokens-apply/tokens-apply.types.ts";
 import { TOKEN_KIND } from "@/shared/ops/tokens-apply/tokens-apply.constants.ts";
@@ -23,15 +24,18 @@ type Look<Plan> = (plan: Plan, held: BaseStyle | null) => Promise<StyleWrite>;
 export class StyleWriter {
   readonly #factory;
   readonly #looks;
+  readonly #texts;
   readonly #layers;
 
   constructor(
     factory = inject(TOKEN_FACTORY),
     looks = inject(STYLE_LOOKS),
+    texts = inject(TEXT_STYLE_LOOKS),
     layers = inject(LAYER_FACTORY),
   ) {
     this.#factory = factory;
     this.#looks = looks;
+    this.#texts = texts;
     this.#layers = layers;
   }
 
@@ -40,7 +44,7 @@ export class StyleWriter {
     targets: Targets,
     run: TokenRun,
   ): Promise<void> {
-    this.#looks.start();
+    this.#texts.start();
     await this.#group(TOKEN_KIND.paint, styles.paint, run, async (plan) => {
       const paints = await this.#looks.paints(plan, targets, run);
 
@@ -50,15 +54,19 @@ export class StyleWriter {
           Object.assign(style, { paints });
         };
     });
-    await this.#group(TOKEN_KIND.text, styles.text, run, async (plan) => {
-      const look = await this.#looks.text(plan);
+    await this.#group(TOKEN_KIND.text, styles.text, run, async (plan, held) => {
+      const look = await this.#texts.text(plan, held as TextStyle | null);
 
-      return run.dryRun
-        ? null
-        : async (style) => {
-          await this.#layers.loadFont(look.fontName);
-          Object.assign(style, look);
-        };
+      if (run.dryRun) {
+        return null;
+      }
+
+      // Loaded before the style is made: a font Figma refuses leaves no empty style behind.
+      await this.#layers.loadFont(look.fontName);
+
+      return (style) => {
+        Object.assign(style, look);
+      };
     });
     await this.#group(TOKEN_KIND.effect, styles.effect, run, async (plan, held) => {
       const effects = await this.#looks.effects(plan, (held as EffectStyle | null)?.effects ?? [], targets, run);
@@ -96,8 +104,11 @@ export class StyleWriter {
         const write = await look(plan, held);
 
         if (write !== null) {
-          await write(held ?? this.#factory.style(group, plan.name));
+          const style = held ?? this.#factory.style(group, plan.name);
+
+          // A style made is a write, whether or not it then takes its value: the undo step covers it.
           run.wrote = true;
+          await write(style);
         }
 
         (held === null ? run.answer.created : run.answer.updated).push(item);

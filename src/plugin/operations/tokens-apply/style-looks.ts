@@ -1,52 +1,33 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { EFFECTS } from "@/plugin/adapters/figma/effects.ts";
-import { FONT_CATALOG } from "@/plugin/adapters/figma/fonts/font-catalog.ts";
 import { PAINTS } from "@/plugin/adapters/figma/paints.ts";
 import type {
   EffectStylePlan,
   PaintStylePlan,
   Targets,
-  TextStylePlan,
   TokenRun,
 } from "@/plugin/operations/tokens-apply/tokens-apply.types.ts";
 import { VARIABLE_VALUES } from "@/plugin/operations/tokens-apply/variable-values.ts";
 
-/** A text style's fields as Figma takes them, its face first: Figma sets the rest once that is loaded. */
-export interface TextLook {
-  readonly fontName: FontName;
-  readonly fontSize: number;
-  readonly lineHeight: LineHeight;
-  readonly letterSpacing?: LetterSpacing;
-  readonly textCase?: TextCase;
-}
-
 /**
- * What a planned style becomes in Figma (C-173), by design_apply's own writers: a paint style's paints and an effect
- * style's shadows with their colour variables bound (P-092, FX-048), a text style's face found in this Figma (P-077).
- * A dry run finds the fonts and binds nothing: binding a library's variable imports it, which writes to the file.
+ * What a planned paint or effect style becomes in Figma (C-173), by design_apply's own writers: its paints and its
+ * shadows with their colour variables bound (P-092, FX-048). A dry run binds nothing: binding a library's variable
+ * imports it, which writes to the file.
  */
 @injectable()
 export class StyleLooks {
   readonly #paints;
   readonly #effects;
-  readonly #fonts;
   readonly #values;
 
   constructor(
     paints = inject(PAINTS),
     effects = inject(EFFECTS),
-    fonts = inject(FONT_CATALOG),
     values = inject(VARIABLE_VALUES),
   ) {
     this.#paints = paints;
     this.#effects = effects;
-    this.#fonts = fonts;
     this.#values = values;
-  }
-
-  /** A new call: fonts may have been installed since the last. */
-  start(): void {
-    this.#fonts.start();
   }
 
   /** The paints; null on a dry run. */
@@ -62,18 +43,6 @@ export class StyleLooks {
     const tokens = paints.flatMap(({ token, stops }) => [token, ...(stops ?? []).map((stop) => stop.token)]);
 
     return await this.#paints.of(paints, await this.#variables(tokens, targets, run));
-  }
-
-  /** The face nearest the plan's family, weight and slant (a dry run's too, so both refuse a family alike). */
-  async text({ font, letterSpacing, textCase }: TextStylePlan): Promise<TextLook> {
-    return {
-      fontName: await this.#fonts.fontName(font),
-      fontSize: font.size,
-      lineHeight: { ...font.lineHeight } as LineHeight,
-      // A text style's spacing is in px or percent: core reads no AUTO spacing from CSS.
-      ...(letterSpacing === undefined ? {} : { letterSpacing: letterSpacing as LetterSpacing }),
-      ...(textCase === undefined ? {} : { textCase }),
-    };
   }
 
   /**

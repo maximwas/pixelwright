@@ -13,12 +13,14 @@ const TWO_VARIABLES = [
   { name: "Gap", token: "--live-gap", values: { Base: "12px" }, scopes: ["GAP"] },
 ];
 
-/** Starter's refusal of a second mode (FX-054), in tokens_apply's words. */
-const DARK_REFUSED = {
-  kind: "mode",
-  name: "Dark",
-  collection: LIVE,
-  message: "The file's Figma plan allows 1 mode in a collection: Dark is not added, and its values are left out.",
+/** The words of a refused second mode (FX-054), whatever limit the file's Figma plan has: Starter's is 1. */
+const DARK_REFUSED =
+  /^The file's Figma plan allows \d+ modes? in a collection: Dark is not added, and its values are left out\.$/;
+
+/** The styles the real runs make, named inside the live-tokens scope so removing them touches none of Test MCP's own. */
+const LIVE_STYLES = {
+  paint: [{ name: `${LIVE}/Fill`, token: "--live-tokens-Fill", value: "#336699" }],
+  text: [{ name: `${LIVE}/Caption`, token: "--live-tokens-Caption-font", value: "400 14px/20px 'Inter'" }],
 };
 
 interface JsonVariable {
@@ -33,9 +35,21 @@ interface JsonCollection {
   readonly variables: JsonVariable[];
 }
 
+interface JsonStyle {
+  readonly name: string;
+  readonly token: string;
+  readonly value: string;
+}
+
+interface JsonTokens {
+  readonly collections: JsonCollection[];
+  readonly styles: { readonly paint: JsonStyle[]; readonly text: JsonStyle[]; readonly effect: JsonStyle[] };
+}
+
 /**
  * Dry runs read Test MCP's own variables and write none (item 48); the real runs (item 49) make only the live-tokens
- * collection, in order, and remove it through execute, so Test MCP's own collections never change.
+ * collection and styles named inside its scope, in order, and remove them through execute, so Test MCP's own
+ * collections and styles never change.
  */
 describe("write/tokens_apply", () => {
   const { file } = inject("live");
@@ -44,8 +58,8 @@ describe("write/tokens_apply", () => {
   const apply = (args: ToolResult): Promise<ToolResult> => client.call("tokens_apply", { file, ...args });
 
   /** tokens_read's JSON of Test MCP, as tokens_apply takes it back in `tokens`. */
-  const readTokens = async (): Promise<{ collections: JsonCollection[] }> =>
-    (await client.call("tokens_read", { file, format: "json" })).tokens as { collections: JsonCollection[] };
+  const readTokens = async (): Promise<JsonTokens> =>
+    (await client.call("tokens_read", { file, format: "json" })).tokens as JsonTokens;
 
   /** The collection that holds --space-24, with the variable. */
   const spaceHome = async (): Promise<{ collection: JsonCollection; variable: JsonVariable }> => {
@@ -66,13 +80,15 @@ describe("write/tokens_apply", () => {
     await client.waitForTestMcp();
   });
 
-  /** The live collection removed by name through execute (A§10.5 item 9); how many there were. */
+  /** The live collection and the styles named inside its scope removed through execute (A§10.5 item 9); how many collections. */
   const removeLive = async (): Promise<unknown> =>
     (
       await client.call("execute", {
         file,
         code: `const live = (await figma.variables.getLocalVariableCollectionsAsync()).filter((collection) => collection.name === ${JSON.stringify(LIVE)});
 for (const collection of live) collection.remove();
+const styles = [...(await figma.getLocalPaintStylesAsync()), ...(await figma.getLocalTextStylesAsync()), ...(await figma.getLocalEffectStylesAsync())];
+for (const style of styles) if (style.name.startsWith(${JSON.stringify(`${LIVE}/`)})) style.remove();
 return live.length;`,
       })
     ).result;
@@ -187,27 +203,65 @@ return live.length;`,
     ]);
   });
 
-  it("refuses a second mode with the Starter plan's limit as that mode's error and writes the rest; a dry run then knows it (FX-054, B-055)", async () => {
+  it("refuses a second mode past the Figma plan's limit as that mode's error and writes the rest; a dry run then knows it (FX-054, B-055)", async ({
+    skip,
+  }) => {
     const gap = { name: "Gap", token: "--live-gap", values: { Base: "16px", Dark: "20px" }, scopes: ["GAP"] };
     const tokens = { collections: [{ name: LIVE, modes: ["Base", "Dark"], variables: [gap] }] };
+    const answer = await apply({ tokens });
+    const [refusal] = answer.errors as ToolResult[];
 
-    expect(await apply({ tokens })).toEqual({
+    if (refusal === undefined) {
+      skip("Test MCP's Figma plan allows a second mode in a collection: no refusal to learn the limit from.");
+    }
+
+    expect(answer).toEqual({
       created: [],
       updated: [{ kind: "variable", name: "Gap", collection: LIVE }],
-      errors: [DARK_REFUSED],
+      errors: [refusal],
+    });
+    expect(refusal).toMatchObject({
+      kind: "mode",
+      name: "Dark",
+      collection: LIVE,
+      message: expect.stringMatching(DARK_REFUSED),
     });
     // The limit is learned from the refusal: the dry run refuses the mode before anything is written.
-    expect(await apply({ tokens, dryRun: true })).toEqual({
-      created: [],
-      updated: [],
-      errors: [DARK_REFUSED],
-      dry: true,
-    });
+    expect(await apply({ tokens, dryRun: true })).toEqual({ created: [], updated: [], errors: [refusal], dry: true });
 
     const shown = (await readTokens()).collections.find(({ name }) => name === LIVE);
 
     expect(shown?.modes).toEqual(["Base"]);
     expect(shown?.variables.find(({ name }) => name === "Gap")?.values).toEqual({ Base: "16px" });
+  });
+
+  it("makes a paint style and a text style inside the live-tokens scope, and tokens_read shows them (C-173, T-166)", async () => {
+    expect(await apply({ tokens: { styles: LIVE_STYLES } })).toEqual({
+      created: [
+        { kind: "paint", name: `${LIVE}/Fill` },
+        { kind: "text", name: `${LIVE}/Caption` },
+      ],
+      updated: [],
+      errors: [],
+    });
+
+    const { paint, text } = (await readTokens()).styles;
+
+    expect(paint.find(({ name }) => name === `${LIVE}/Fill`)).toMatchObject({
+      token: "--live-tokens-Fill",
+      value: expect.stringMatching(/^#336699$/i),
+    });
+    expect(text.find(({ name }) => name === `${LIVE}/Caption`)).toMatchObject({
+      token: "--live-tokens-Caption-font",
+      value: "400 14px/20px 'Inter'",
+    });
+    // What tokens_read shows is what the file holds: sent again, the call plans nothing.
+    expect(await apply({ tokens: { styles: LIVE_STYLES }, dryRun: true })).toEqual({
+      created: [],
+      updated: [],
+      errors: [],
+      dry: true,
+    });
   });
 
   it("writes nothing for its tokens_read JSON sent back: no version, no change (D-25)", async () => {
@@ -216,8 +270,14 @@ return live.length;`,
     expect(await apply({ tokens })).toEqual({ created: [], updated: [], errors: [] });
   });
 
-  it("removes the live collection through execute: no tool deletes tokens (A§10.5 item 9)", async () => {
+  it("removes the live collection and its styles through execute: no tool deletes tokens (A§10.5 item 9)", async () => {
     expect(await removeLive()).toBe(1);
-    expect((await readTokens()).collections.map(({ name }) => name)).not.toContain(LIVE);
+
+    const { collections, styles } = await readTokens();
+
+    expect(collections.map(({ name }) => name)).not.toContain(LIVE);
+    expect(
+      [...styles.paint, ...styles.text, ...styles.effect].filter(({ name }) => name.startsWith(`${LIVE}/`)),
+    ).toEqual([]);
   });
 });

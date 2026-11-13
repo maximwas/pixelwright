@@ -1,9 +1,11 @@
 import type { Container } from "@needle-di/core";
+import { FONT_SHORTHAND, FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GRADIENT_GEOMETRY, GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { EFFECT_MERGE, EffectMerge } from "@/core/css/groups/effects/effect-merge.ts";
 import { NEARBY_NOTES, NearbyNotes } from "@/core/inspect/nearby.ts";
 import { PLACEMENT_SPAN, PlacementSpan } from "@/core/kernel/geometry/placement-span.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { FONT_WEIGHT, FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
 import { ASSIGN, Assign } from "@/plugin/adapters/figma/assign.ts";
 import { CAPABILITIES, Capabilities } from "@/plugin/adapters/figma/capabilities.ts";
@@ -101,6 +103,7 @@ import { ShowOperation } from "@/plugin/operations/show/show.operation.ts";
 import { COLLECTION_WRITER, CollectionWriter } from "@/plugin/operations/tokens-apply/collection-writer.ts";
 import { STYLE_LOOKS, StyleLooks } from "@/plugin/operations/tokens-apply/style-looks.ts";
 import { STYLE_WRITER, StyleWriter } from "@/plugin/operations/tokens-apply/style-writer.ts";
+import { TEXT_STYLE_LOOKS, TextStyleLooks } from "@/plugin/operations/tokens-apply/text-style-looks.ts";
 import { TokensApplyOperation } from "@/plugin/operations/tokens-apply/tokens-apply.operation.ts";
 import { VARIABLE_VALUES, VariableValues } from "@/plugin/operations/tokens-apply/variable-values.ts";
 import { VARIABLE_WRITER, VariableWriter } from "@/plugin/operations/tokens-apply/variable-writer.ts";
@@ -205,7 +208,10 @@ export class OperationProviders {
       .bind({ provide: COLLECTION_WRITER, useClass: CollectionWriter })
       .bind({ provide: VARIABLE_VALUES, useClass: VariableValues })
       .bind({ provide: VARIABLE_WRITER, useClass: VariableWriter })
+      .bind({ provide: FONT_WEIGHT, useClass: FontWeight })
+      .bind({ provide: FONT_SHORTHAND, useClass: FontShorthand })
       .bind({ provide: STYLE_LOOKS, useClass: StyleLooks })
+      .bind({ provide: TEXT_STYLE_LOOKS, useClass: TextStyleLooks })
       .bind({ provide: STYLE_WRITER, useClass: StyleWriter });
   }
 
