@@ -69,11 +69,10 @@ baseline_diff, which compares a baseline in the file it was saved from.
    code they name: export again what is marked `drawing`; build added layers from their `xml` (or `design_read` when
    it is left out). Then `baseline_save {name, accept}` with the `accept` the diff gave. `changes_since` stays the
    live view while the plugin is open.
-8. **Write.** `design_apply` writes the same XML back into Figma: change layers by id, create, copy and move them
-   (`guide write`, and `guide layout` for flex, grid and absolute placement); `dryRun: true` checks a call without
-   writing. `nodes_delete` deletes layers by id. `version_save` leaves the designer a named version, when the user
-   asks. Every write needs the plugin's Allow edits switch on, which the user turns on in the plugin window;
-   design_apply's and nodes_delete's dry runs work with it off.
+8. **Write.** `design_apply` writes the same XML back into Figma: change layers by id, create, copy and move them.
+   `nodes_delete` deletes layers by id. `version_save` leaves the designer a named version, when the user asks. Read
+   `guide write` first (Allow edits, dry runs, versions and every rule), and `guide layout` for flex, grid and
+   absolute placement.
 9. **Code, the exception.** The reads answer what code is most often written for, a line per question:
    - texts by content, size or visibility, instances by component or changed property, with ancestors and page:
      `nodes_find` (`text` list, `textRegex`, `fontSize`, `visible`, `componentId`, `properties`, `fields`);

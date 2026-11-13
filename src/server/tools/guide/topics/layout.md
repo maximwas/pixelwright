@@ -1,8 +1,8 @@
 # Laying out: flex, grid and absolute placement
 
 `design_apply` lays out a frame's children as Figma does: auto layout as flex, grid auto layout as grid, or each
-child placed on its own (absolute). Pick the one that says what should happen when the content or the frame's size
-changes.
+child placed on its own (absolute), with the attributes design_read writes (`guide xml`). Pick the one that says
+what should happen when the content or the frame's size changes.
 
 ## Which one
 
@@ -28,6 +28,8 @@ changes.
   along the direction (Figma has no other weights); `align-self="stretch"` fills across it; `min-width`, `max-width`,
   `min-height` and `max-height` set limits (`none` removes one). A new frame with `display` hugs what it holds unless
   sized or filling.
+- `flex` and `align-self` need an auto layout parent, and `justify-self`, `grid-row` and `grid-column` work only in a
+  grid: on any other parent each is refused.
 
 ## Grid
 
@@ -52,15 +54,12 @@ changes.
   of a size of its own. `stretch` fills a cell; `flex="1"` on a grid's child is refused.
 - Move or delete the children of a row or column before taking it out of the tracks: Figma keeps a track that holds a
   child.
-- design_read writes a grid the same way: three or more equal tracks as `repeat()`, the grid's padding, each child's
-  `grid-row` and `grid-column` from 1, `span` when it spans, and `stretch` for a child that fills its cell.
 
 ## Absolute
 
 - `position="absolute"` takes a layer out of its flex or grid parent's flow: the other children, the padding and the
   gap act as if it were not there. It is placed against its parent and moves with it, so nest it in the frame it
-  belongs to (the card, not the grid around the cards). Later in the XML is drawn on top (the XML's order is the
-  stacking order). `position="relative"` puts it back in the flow.
+  belongs to (the card, not the grid around the cards). `position="relative"` puts it back in the flow.
 - Every child of a frame without auto layout (no `display`, or `display="block"`), of a section and of the page is
   placed so, by its edges (design_read writes `position="absolute"` there; nothing flows, so it may be left out).
   Without edges it lands in the top left corner. A layer that flows in auto layout takes `left` or `top` only with
@@ -76,14 +75,13 @@ changes.
 - On the page itself a layer is placed by `left` and `top` alone (`<Section id="…" top="800px"/>` moves a section
   down); without them a new one goes beside the page's layers.
 
-## Not supported
+## What is taken
 
-- Grid: `minmax()`, `fit-content()`, `auto-fill` and `auto-fit`, `repeat()` of several tracks, named lines and areas
-  (`grid-template-areas`, `grid-area`), `span` without a start line, negative lines, `grid-auto-flow`,
-  `grid-auto-rows`, `justify-items` and aligning the whole grid, subgrids.
-- Flex: reverse directions, grow weights other than 1, `flex-basis`, `order` (the XML's order is the order).
-- Absolute: `z-index`, `inset`, `position: fixed` and `sticky`, `calc()` other than around 50%, percents or `calc()`
-  on `right` and `bottom`.
+- Grid tracks: px, `fr`, `auto`, and `repeat()` of one track.
+- Flex: a row or a column, `flex-wrap`, `flex="1"` and the alignments above.
+- Absolute: edges in px, and `left` and `top` in percents or `calc(50% ± Npx)` too.
+
+Anything else is refused with its reason.
 
 ## Examples
 

@@ -36,7 +36,7 @@ export const GUIDE_TOOL = {
     .map(([topic, about]) => `${topic} (${about})`)
     .join(
       "; ",
-    )}. Read workflow first in a new task, xml before building from design_read, and write before design_apply.`,
+    )}. Read workflow first in a new task, xml before building from design_read, write before design_apply, and layout before setting a frame's flex, grid or absolute placement.`,
 } as const;
 
 export const GUIDE_FIELD = { topic: "The topic to read. Default: the list of topics." } as const;

@@ -2,18 +2,17 @@
 
 `design_apply` writes the XML `design_read` returns back into Figma, in the same dialect (`guide xml`); `guide layout`
 says how it lays out a frame's children. `nodes_delete` deletes layers and `version_save` saves a named version.
-Every write needs the plugin's **Allow edits** switch, which the user turns on in the plugin window; until then a
-write is refused. `dryRun: true` runs the same checks in the plugin without writing, with the switch on or off: it
-lists what the call would create and change, and every refusal. Before a write that changes many layers, pass
-`version: "Before the hero rewrite"`: a named version is saved in the file's history first (not in a dry run, nor
-when nothing would change), and the designer can go back to it; when it cannot be saved, nothing is written.
-`version_save` saves one on its own, when the user asks.
+The plugin's **Allow edits** switch, which the user turns on in the plugin window, gates every write: while it is
+off, a write is refused. `dryRun: true` runs the same checks in the plugin without writing, with the switch on or
+off, and lists what the call would create and change, and every refusal. `version: "<name>"` saves a named version in
+the file's history first, when the user wants to be able to go back (not in a dry run, nor when nothing would
+change); when it cannot be saved, nothing is written.
 
 ## Changing a layer
 
 - An element with `id` changes that layer, and only the attributes it gives: `<Frame id="54:243" gap="48px"/>`
-  changes the gap and nothing else. Read the layer first, edit the XML, send back what you changed; sending the whole
-  read back is fine, since what the layer already has is not written again.
+  changes the gap and nothing else. Read the layer first, edit the XML, send back what you changed. What a layer
+  already has is not written again, so a read sent back unchanged changes nothing.
 - An attribute left out stays as it is. To remove one, write the value that means none: `background="none"`,
   `border="none"`, `box-shadow="none"`, `width="auto"` (hug), `max-width="none"`, `flex="none"`, `left="auto"`,
   `transform="none"`, `display="block"` (no auto layout), `display="none"` (hide). A hidden layer shows again with
@@ -30,10 +29,10 @@ when nothing would change), and the designer can go back to it; when it cannot b
   puts it next to that layer, and listing layers in another order reorders them. A top-level element moves only by
   `before` or `after`. A layer inside an instance comes from its component and stays where it is (an instance takes
   new layers only through its slots). An element alone (`<Frame id="…"/>`) moves its layer with everything inside it.
-- design_apply reads each layer the call names, with everything inside it, before it writes, and one call reads only
-  so many. Send the layers you change, nested as design_read writes them, and leave out the siblings that stay as
-  they are; a deep layer also changes on its own at the top level (`<Text id="54:250">New words</Text>`). When the
-  call names more than it can read, the error says so: split the call.
+- design_apply first reads every layer the call names, with everything inside it. Send only the layers you change,
+  nested as design_read writes them (a deep one may also stand alone at the top level:
+  `<Text id="54:250">New words</Text>`); a call that names more than one call can read fails with an error, so split
+  it.
 - A text design_read shortened (`$truncated`) keeps its characters: read that layer on its own to change them.
 - Each tag takes its own attributes: no `background` or `gap` on a Text (its colour is `color`), no text styles on a
   Frame, no auto layout on a shape; an element's id is given once (a copy has none).
@@ -89,9 +88,9 @@ when nothing would change), and the designer can go back to it; when it cannot b
   `<Component id="…">`, bind each layer to the property of that name the component has (a variant's: its set's), or
   add the property once when it has none, its default the layer's value now (the text, whether it shows, the
   instance's component). A name a property of another kind holds is an error; a layer no component holds, or one
-  inside an instance, is refused. `properties` in the answer lists what was added to existing components (a dry
-  run's: what would be).
-- `<Slot name="Content">` makes a slot in a new component; in an instance, give its `<Slot id="…">` new layers.
+  inside an instance, is refused.
+- `<Slot name="Content">` makes a slot directly inside a component; in an instance, give its `<Slot id="…">` new
+  layers.
 
 ## Images, icons and notes
 
@@ -169,15 +168,19 @@ when nothing would change), and the designer can go back to it; when it cannot b
 - `mix-blend-mode` sets how a layer blends (multiply, screen, overlay…; `normal` is Figma's pass through on a frame);
   `mask="alpha"` (or vector, luminance) makes a layer the mask of the layers above it in its parent, `mask="none"`
   makes it a layer again. `href` links a Text or a Span.
-- Refused with an error: grow weights other than 1, `overflow: scroll` (scrolling is a prototype setting), links on
-  frames, dashed underlines. Read but not written yet, listed in an element's `notWritten`: `background-blend-mode`,
-  `-webkit-text-stroke`, `paint-order`.
+- Refused with an error: `overflow: scroll` (scrolling is a prototype setting), links on frames, dashed underlines
+  (grow weights: `guide layout`). Read but not written yet, listed in an element's `notWritten`:
+  `background-blend-mode`, `-webkit-text-stroke`, `paint-order`.
 
 ## Errors and undo
 
 `nodes_delete` deletes up to 500 layers by id, each on its own: a layer inside an instance comes from its component
 and stays, with why (hide it with `display="none"`); what an instance's slot holds is its own and is deleted. It takes
 `dryRun` and `version` as design_apply does.
+
+The XML is strict: an unclosed or wrongly closed tag, a duplicate attribute, a bare `&` or a `<` in a value refuses
+the whole call as `INVALID_XML`, with its line and column. HTML entities like `&mdash;` are read, CDATA is text as
+written, and names may hold `$` (`$css`).
 
 Each element is written on its own: an error names its line, column and attribute, and the rest of the XML still
 goes in; the layers inside a refused element are not made. The XML may hold several top-level elements; a bare
