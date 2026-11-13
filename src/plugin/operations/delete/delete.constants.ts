@@ -2,5 +2,5 @@
 export const DELETE_TEXT = {
   noLayer: (id: string) => `No layer ${id} in this file.`,
   insideInstance:
-    'A layer inside an instance comes from its component and cannot be deleted: hide it with display="none" instead.',
+    'A layer inside an instance comes from its component and cannot be deleted: hide it with display="none" in design_apply.',
 } as const;

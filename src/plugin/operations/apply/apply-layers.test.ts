@@ -199,7 +199,7 @@ describe("ApplyLayers: a new layer's place is refused before the layer is made, 
     const inner = change("Frame", "f", "s");
 
     await expect(layers.of(set, call(dry, {}, [set, inner]))).rejects.toThrow(
-      "A ComponentSet is made of the Components inside it",
+      "A <ComponentSet> is made of its <Component> variants: this one has none.",
     );
     expect(made).toEqual([]);
   });
@@ -254,5 +254,32 @@ describe("ApplyLayers: a ComponentSet holds Components only, refused before any 
     await layers.move(await layers.of(inner, run), inner, run);
 
     expect(moved).toEqual(["move"]);
+  });
+});
+
+// 0.7.0's refusal texts, each where 0.9.0 refuses: what the agent reads says what to do instead.
+describe("ApplyLayers: refusal texts", () => {
+  it("refuses a link on a layer that is no text as a prototype reaction", () => {
+    const { layers } = build();
+    const [link] = layers.refusals(
+      frame as TypedLayer,
+      change("Frame", "f", null, { hyperlink: "https://example.com" }),
+    );
+
+    expect(link?.keys).toEqual(["hyperlink"]);
+    expect(link?.error).toMatchObject({
+      message: "A link on a frame is a prototype reaction, which design_apply does not write.",
+      hint: "A Text takes href.",
+    });
+  });
+
+  it.each([true, false])("names copyOf when the layer to copy is not there (dry %s)", async (dry) => {
+    const { layers } = build({ node: async () => null, pageOf: () => null });
+    const copy = { ...change("Frame", "c", null), copyOf: "9:9" } as ApplyChangeData;
+
+    await expect(layers.of(copy, call(dry, {}, [copy]))).rejects.toMatchObject({
+      message: "No layer 9:9 to copy.",
+      hint: "copyOf names a layer by its id, as design_read writes it.",
+    });
   });
 });

@@ -79,6 +79,10 @@ function withArticle(word: string): string {
 export const APPLY_TEXT = {
   noLayer: (id: string | null) => `No layer ${id} in this file.`,
   noLayerHint: "Read the ids again with design_read or nodes_find.",
+  noCopySource: (id: string) => `No layer ${id} to copy.`,
+  copyHint: "copyOf names a layer by its id, as design_read writes it.",
+  linkOnLayer: (type: string) => `A link on a ${type} is a prototype reaction, which design_apply does not write.`,
+  linkHint: "A Text takes href.",
   notTag: (
     id: string | null,
     type: string,
@@ -127,7 +131,7 @@ export const APPLY_TEXT = {
   notYet: (attribute: string) => `${attribute} is not written to Figma in this release.`,
   slot: "A slot is made in a component.",
   slotHint: 'In an instance, fill the slot it has: give its <Slot id="…"> new layers.',
-  emptySet: "A ComponentSet is made of the Components inside it: give it one at least.",
+  emptySet: "A <ComponentSet> is made of its <Component> variants: this one has none.",
   notReached: (src: string) => `${src} did not reach the plugin.`,
   notReachedHint: "Send it again, or fewer files in one call.",
   keptHeld: (error: unknown) =>

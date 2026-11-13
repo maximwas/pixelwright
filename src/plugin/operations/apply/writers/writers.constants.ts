@@ -187,6 +187,9 @@ export const SIZE_NUMBER = {
 /** design_read's note: `Category: text`, the category ending at the first `: ` (T-139). */
 export const NOTE_VALUE = { category: ": " } as const;
 
+/** A link: on a layer that holds no text it would be a prototype reaction, refused on its own. */
+export const LINK_KEY = "hyperlink" satisfies keyof FigmaProps;
+
 /** Hiding runs last, outside the steps (P-149). */
 export const HIDDEN_KEY = "visible" satisfies keyof FigmaProps;
 
@@ -209,6 +212,7 @@ export const WRITERS_TEXT = {
   sectionHug: "A section is sized in pixels: it cannot hug what it holds.",
   sectionToken: "A section's size takes a number of pixels, not a token.",
   description: "A description belongs to a component or a component set.",
+  imageFills: (type: string) => `A ${type} has no fills to hold an image.`,
   growInGrid: "flex fills a flex parent's direction: this layer's parent is a grid.",
   growInGridHint: 'Fill its cell with justify-self="stretch" and align-self="stretch".',
   growOutside: "flex fills the direction of an auto layout parent: this layer's parent has no auto layout.",
