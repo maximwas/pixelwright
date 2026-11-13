@@ -109,8 +109,8 @@ const main = await node.findOne((layer) => layer.type === "INSTANCE").getMainCom
 const definitions = Object.entries(node.componentPropertyDefinitions);
 return {
   definitions: definitions.map(([key, { type, defaultValue }]) => [key.replace(/#[^#]*$/, ""), type, defaultValue === main.id ? "its component" : defaultValue]).sort(),
-  keyed: definitions.every(([key]) => /#d+:d+$/.test(key)),
-  bound: node.findAll(() => true).flatMap((layer) => Object.keys(layer.componentPropertyReferences ?? {})).sort(),
+  keyed: definitions.every(([key]) => /#\\d+:\\d+$/.test(key)),
+  bound: node.findAll((layer) => !layer.id.startsWith("I")).flatMap((layer) => Object.keys(layer.componentPropertyReferences ?? {})).sort(),
 };`),
     ).toEqual({
       definitions: [
