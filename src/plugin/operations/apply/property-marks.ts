@@ -41,6 +41,8 @@ export interface MarksBound {
 @injectable()
 export class PropertyMarks {
   readonly #marks: Mark[] = [];
+  /** The kinds this call's layers asked for each name, per owner (a stand-in itself, a node by its id). */
+  readonly #claims = new Map<unknown, Map<string, Set<string>>>();
   readonly #variants;
   readonly #assign;
 
@@ -51,24 +53,45 @@ export class PropertyMarks {
 
   start(): void {
     this.#marks.splice(0);
+    this.#claims.clear();
   }
 
   /**
    * What binding refuses, found without writing: the kind of layer each name goes on, what holds the layer (a new one's
-   * parent chain runs through the stand-ins a dry run keeps) and the properties it has by those names.
+   * parent chain runs through the stand-ins a dry run keeps), the properties it has by those names and the kinds the
+   * layers this call claimed before it asked them (a component the call makes has no properties yet).
    */
   check(layer: TypedLayer, property: Property): void {
     const wanted = this.#wanted(layer.type, property);
-    const holder = this.#holder(layer.parent);
+    const owner = this.#variants.owner(this.#holder(layer.parent) as ComponentNode);
+    const claimed = this.#claims.get(this.#key(owner));
 
-    // A component this call makes (a stand-in, with no id) has no properties yet: nothing to clash with.
-    if ("id" in holder) {
-      const owner = this.#variants.owner(holder as ComponentNode);
-
-      for (const one of wanted) {
+    for (const one of wanted) {
+      if ("id" in owner) {
         this.#keyFor(owner, one);
       }
+
+      const other = [...(claimed?.get(one.name) ?? [])].find((type) => type !== one.type);
+
+      if (other !== undefined) {
+        throw this.#otherKind(owner, other, one.name);
+      }
     }
+  }
+
+  /**
+   * The names a layer asks, kept once it passed `check`: a dry run adds no property, so what a second layer of the
+   * call asks is held against these. One layer's own names never clash, they are claimed after both of its checks.
+   */
+  claim(layer: TypedLayer, property: Property): void {
+    const owner = this.#variants.owner(this.#holder(layer.parent) as ComponentNode);
+    const claimed = this.#claims.get(this.#key(owner)) ?? new Map<string, Set<string>>();
+
+    for (const { name, type } of this.#wanted(layer.type, property)) {
+      claimed.set(name, (claimed.get(name) ?? new Set<string>()).add(type));
+    }
+
+    this.#claims.set(this.#key(owner), claimed);
   }
 
   add(node: SceneNode, property: Property): void {
@@ -148,12 +171,27 @@ export class PropertyMarks {
     const other = named.find((key) => definitions[key]?.type !== type);
 
     if (other !== undefined) {
-      const kind = CAPABILITY_TEXT.type(definitions[other]?.type ?? "");
-
-      throw new WriteError(APPLY_TEXT.otherKind(owner.name, kind, name), APPLY_TEXT.otherKindHint);
+      throw this.#otherKind(owner, definitions[other]?.type ?? "", name);
     }
 
     return named[0];
+  }
+
+  /** The refusal of a name the owner has, or a layer of the call asked, as another kind. */
+  #otherKind(
+    owner: TypedLayer,
+    type: string,
+    name: string,
+  ): WriteError {
+    return new WriteError(
+      APPLY_TEXT.otherKind(owner.name ?? CAPABILITY_TEXT.type(owner.type), CAPABILITY_TEXT.type(type), name),
+      APPLY_TEXT.otherKindHint,
+    );
+  }
+
+  /** What names an owner among the call's claims: a node by its id, a stand-in (no id, no copy of it) itself. */
+  #key(owner: TypedLayer): unknown {
+    return "id" in owner ? owner.id : owner;
   }
 
   /** A new property's default, the layer's value now: its characters, whether it shows, the component it is of. */

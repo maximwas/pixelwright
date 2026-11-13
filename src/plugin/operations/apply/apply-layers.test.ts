@@ -40,6 +40,16 @@ function change(
   } as ApplyChangeData;
 }
 
+/** An existing layer the XML puts in another parent. */
+function moving(
+  tag: string,
+  ref: string,
+  id: string,
+  parent: string,
+): ApplyChangeData {
+  return { ...change(tag, ref, parent), kind: "update", id, moves: true } as ApplyChangeData;
+}
+
 function call(
   dry: boolean,
   held: Record<string, unknown>,
@@ -52,14 +62,15 @@ function call(
     layers: new Map(Object.entries(held) as [string, TypedLayer][]),
     failed: new Map(),
     counterparts: {} as never,
+    origins: {} as never,
   };
 }
 
-function build() {
+function build(lookup: unknown = {}) {
   const made: string[] = [];
-  const checks = new ApplyChecks({} as never, {} as never, new Capabilities(), [
-    new PropertyStep(new PropertyMarks(new Variants(), new Assign())),
-  ]);
+  const moved: string[] = [];
+  const step = new PropertyStep(new PropertyMarks(new Variants(), new Assign()));
+  const checks = new ApplyChecks(lookup as never, {} as never, new Capabilities(), [step]);
   const creator = {
     create: () => {
       made.push("layer");
@@ -67,9 +78,14 @@ function build() {
       return {};
     },
   };
-  const placement = { whereTo: async () => ({}) };
+  const placement = {
+    whereTo: async () => ({}),
+    move: async () => {
+      moved.push("move");
+    },
+  };
 
-  return { made, layers: new ApplyLayers(checks, creator as never, placement as never, {} as never) };
+  return { made, moved, step, layers: new ApplyLayers(checks, creator as never, placement as never, {} as never) };
 }
 
 describe("ApplyLayers: a new layer's place is refused before the layer is made, alike on dry and real runs", () => {
@@ -113,6 +129,40 @@ describe("ApplyLayers: a new layer's place is refused before the layer is made, 
     run.layers.set("c", await layers.of(made, run));
 
     await expect(layers.of(text, run)).resolves.toMatchObject({ type: "TEXT" });
+  });
+
+  // The first layer's checks run once it is made, as the writer's do; the second is asked its place before it is made.
+  it("refuses a second mark of one name as another kind in a component a dry run makes, before the layer", async () => {
+    const { made, layers, step } = build();
+    const owner = change("Component", "c", null, { name: "x" });
+    const first = change("Text", "t", "c", { property: { text: "Name" } });
+    const second = change("Frame", "f", "c", { property: { visible: "Name" } });
+    const run = call(true, {}, [owner, first, second]);
+
+    run.layers.set("c", await layers.of(owner, run));
+    run.layers.set("t", await layers.of(first, run));
+    step.check(first.props, run.layers.get("t") as TypedLayer);
+
+    await expect(layers.of(second, run)).rejects.toThrow(
+      "x has a text property Name: another kind cannot take its name.",
+    );
+    expect(made).toEqual([]);
+  });
+
+  it("refuses it on a real run too, and makes only the first", async () => {
+    const { made, layers, step } = build();
+    const owner = { ...component(), name: "x" };
+    const first = change("Text", "t", "c", { property: { text: "Name" } });
+    const second = change("Frame", "f", "c", { property: { visible: "Name" } });
+    const run = call(false, { c: owner }, [first, second]);
+
+    await layers.of(first, run);
+    step.check(first.props, { type: "TEXT", parent: owner as TypedLayer });
+
+    await expect(layers.of(second, run)).rejects.toThrow(
+      "x has a text property Name: another kind cannot take its name.",
+    );
+    expect(made).toEqual(["layer"]);
   });
 
   it.each(BOTH)("refuses a new layer in an instance outside its slots (dry %s)", async (dry) => {
@@ -160,5 +210,46 @@ describe("ApplyLayers: a new layer's place is refused before the layer is made, 
     const variant = change("Component", "v", "s");
 
     await expect(layers.of(set, call(true, {}, [set, variant]))).resolves.toMatchObject({ type: "COMPONENT_SET" });
+  });
+});
+
+// m:f66aed65: a real run holds a new set's variants in a plain frame until they combine, which then goes: a layer that
+// is no Component would go with it, so the set's own element refuses it, a moved layer by its real type.
+describe("ApplyLayers: a ComponentSet holds Components only, refused before any write alike on dry and real runs", () => {
+  const BOTH = [true, false];
+  const SET = "A ComponentSet holds only Components: <Frame> is not one.";
+  const holder = { id: "2:1", type: "FRAME", name: "Set", parent: page };
+  const component = { id: "1:9", type: "COMPONENT", name: "Card", parent: page };
+  const held = (dry: boolean) => ({ s: dry ? { type: "COMPONENT_SET", parent: page } : holder });
+  const set = change("ComponentSet", "s", null);
+  const variant = change("Component", "v", "s");
+  const found = (layer: unknown) => ({ node: async () => layer, pageOf: () => null });
+
+  it.each(BOTH)("refuses an existing Frame moved into a new ComponentSet (dry %s)", async (dry) => {
+    const { moved, layers } = build(found(frame));
+    const inner = moving("Frame", "f", frame.id, "s");
+
+    await expect(layers.of(inner, call(dry, held(dry), [set, variant, inner]))).rejects.toThrow(SET);
+    await expect(layers.of(inner, call(dry, held(dry), [set, variant, inner]))).rejects.toMatchObject({
+      hint: "Move it out of the set, or make it a Component.",
+    });
+    expect(moved).toEqual([]);
+  });
+
+  it.each(BOTH)("refuses a new Frame in a ComponentSet (dry %s)", async (dry) => {
+    const { made, layers } = build();
+    const inner = change("Frame", "f", "s");
+
+    await expect(layers.of(inner, call(dry, held(dry), [set, variant, inner]))).rejects.toThrow(SET);
+    expect(made).toEqual([]);
+  });
+
+  it.each(BOTH)("moves an existing Component into a new ComponentSet (dry %s)", async (dry) => {
+    const { moved, layers } = build(found(component));
+    const inner = moving("Component", "c", component.id, "s");
+
+    await layers.of(inner, call(dry, held(dry), [set, inner]));
+
+    expect(moved).toEqual(["move"]);
   });
 });

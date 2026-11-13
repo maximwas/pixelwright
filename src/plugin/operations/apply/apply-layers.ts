@@ -7,6 +7,7 @@ import type { ApplyCall } from "@/plugin/operations/apply/apply.types.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import { APPLY_CHECKS } from "@/plugin/operations/apply/checks.ts";
 import { NEW_LAYERS } from "@/plugin/operations/apply/new-layers.ts";
+import type { Origins } from "@/plugin/operations/apply/origins.ts";
 import { PAGES } from "@/plugin/operations/apply/pages.ts";
 import { PLACEMENT } from "@/plugin/operations/apply/placement.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
@@ -72,6 +73,7 @@ export class ApplyLayers {
     call: ApplyCall,
   ): Promise<SceneNode> {
     if (change.moves ?? false) {
+      this.#checks.member(change, node.type, call.changes);
       await this.#placement.move(node, change, call);
     }
 
@@ -92,8 +94,8 @@ export class ApplyLayers {
     }
   }
 
-  combine(holder: SceneNode): ComponentSetNode {
-    return this.#layers.combine(holder);
+  combine(holder: SceneNode, origins: Origins): ComponentSetNode {
+    return this.#layers.combine(holder, origins);
   }
 
   #page(change: ApplyChangeData, call: ApplyCall): TypedLayer {
@@ -133,12 +135,14 @@ export class ApplyLayers {
     if (change.copyOf === undefined) {
       const type = this.#checks.creatable(change, parent);
 
+      this.#checks.member(change, type, call.changes);
+
       if (type === FIGMA_NODE_TYPE.componentSet) {
         this.#checks.filled(change, call.changes);
       }
 
       if (call.dry) {
-        return { type, parent };
+        return { type, parent, name: change.props.name };
       }
 
       const place = await this.#placement.whereTo(change, call);
@@ -157,6 +161,7 @@ export class ApplyLayers {
     const source = await this.#checks.existing(change, !call.dry, change.copyOf);
 
     this.#checks.creatable(change, parent, source.type);
+    this.#checks.member(change, source.type, call.changes);
 
     if (call.dry) {
       return { type: source.type, parent };

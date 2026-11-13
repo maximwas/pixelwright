@@ -20,7 +20,11 @@ function change(ref: string, kind: "create" | "update"): ApplyChangeData {
   } as ApplyChangeData;
 }
 
-function settled(refused: { id: string; inner: string[] }, kind: "create" | "update") {
+function settled(
+  refused: { id: string; inner: string[] },
+  kind: "create" | "update",
+  restore: (node: { id: string }) => void = () => undefined,
+) {
   const discarded: string[] = [];
   const node = { id: refused.id, findAll: () => refused.inner.map((id) => ({ id })) };
   const marks = {
@@ -29,13 +33,14 @@ function settled(refused: { id: string; inner: string[] }, kind: "create" | "upd
   };
   const sets = new PendingSets(
     {} as never,
-    { discard: (one: { id: string }) => discarded.push(one.id) } as never,
+    { discard: (one: { id: string }) => discarded.push(`discard ${one.id}`) } as never,
     {} as never,
     marks as never,
   );
   const report = new ApplyReport();
   const made = change("t", kind);
-  const run = { changes: [made], layers: new Map([["t", node]]), sets: [], report } as never;
+  const origins = { restore };
+  const run = { changes: [made], layers: new Map([["t", node]]), sets: [], report, origins } as never;
 
   if (kind === "create") {
     report.made(made, { id: refused.id, name: "Text" });
@@ -54,7 +59,7 @@ describe("PendingSets.settle: a mark that cannot bind", () => {
 
     await sets.settle(run);
 
-    expect(discarded).toEqual(["1:1"]);
+    expect(discarded).toEqual(["discard 1:1"]);
     expect(report.result().created).toEqual([]);
     expect(report.result().errors).toMatchObject([{ message: "taken" }]);
   });
@@ -66,5 +71,130 @@ describe("PendingSets.settle: a mark that cannot bind", () => {
 
     expect(discarded).toEqual([]);
     expect(report.result().errors).toMatchObject([{ message: "taken" }]);
+  });
+});
+
+// A layer the call did not make is never the call's to destroy: what was moved into the layer that goes is put back
+// first, and when it cannot be, nothing goes.
+describe("PendingSets.settle: a layer the call moved into the one that cannot bind", () => {
+  it("is put back before the layer goes", async () => {
+    const order: string[] = [];
+    const { sets, run, discarded } = settled({ id: "1:1", inner: [] }, "create", (node) =>
+      order.push(`restore ${node.id}`),
+    );
+
+    await sets.settle(run);
+    order.push(...discarded);
+
+    expect(order).toEqual(["restore 1:1", "discard 1:1"]);
+  });
+
+  it("keeps the layer and says so when it cannot be put back", async () => {
+    const { sets, run, report, discarded } = settled({ id: "1:1", inner: ["1:2"] }, "create", () => {
+      throw new Error("The node has been removed");
+    });
+
+    await sets.settle(run);
+
+    expect(discarded).toEqual([]);
+    expect(report.result().created).toHaveLength(2);
+    expect(report.result().errors).toMatchObject([
+      { message: "taken" },
+      { message: expect.stringContaining("stays in the file") },
+    ]);
+    expect(report.result().errors[1]?.message).toContain("The node has been removed");
+  });
+
+  it("is asked of nothing for a layer that was there before the call", async () => {
+    const asked: string[] = [];
+    const { sets, run } = settled({ id: "9:9", inner: [] }, "update", (node) => asked.push(node.id));
+
+    await sets.settle(run);
+
+    expect(asked).toEqual([]);
+  });
+});
+
+describe("PendingSets.write: a new layer whose finish throws", () => {
+  it("is taken away, its error going on", async () => {
+    const discarded: string[] = [];
+    const node = { id: "1:1", findAll: () => [] };
+    const sets = new PendingSets(
+      { write: async () => true } as never,
+      {
+        finish: () => {
+          throw new Error("Figma refuses it");
+        },
+        discard: (one: { id: string }) => discarded.push(one.id),
+      } as never,
+      {} as never,
+      {} as never,
+    );
+    const made = change("t", "create");
+    const run = { changes: [made], layers: new Map(), sets: [], report: new ApplyReport(), origins: { restore() {} } };
+
+    await expect(sets.write(run as never, made, node as never, [])).rejects.toThrow("Figma refuses it");
+    expect(discarded).toEqual(["1:1"]);
+    expect(run.report.result().created).toEqual([]);
+  });
+});
+
+describe("PendingSets.settle: a set whose combine throws", () => {
+  function combining(restore: (node: { id: string }) => void) {
+    const order: string[] = [];
+    const holder = { id: "2:1" };
+    const sets = new PendingSets(
+      {} as never,
+      {
+        combine: () => {
+          throw new Error("Figma refuses to combine");
+        },
+        discard: (one: { id: string }) => order.push(`discard ${one.id}`),
+      } as never,
+      {} as never,
+      { bind: async () => ({ bound: [], failed: [] }) } as never,
+    );
+    const made = change("s", "create");
+    const report = new ApplyReport();
+    const origins = {
+      restore: (node: { id: string }) => {
+        order.push(`restore ${node.id}`);
+        restore(node);
+      },
+    };
+    const run = {
+      changes: [made],
+      layers: new Map(),
+      sets: [{ change: made, holder, refusals: [], placing: [] }],
+      report,
+      origins,
+    } as never;
+
+    return { sets, run, report, order };
+  }
+
+  it("puts the Components the call moved into its frame back, then the frame goes", async () => {
+    const { sets, run, report, order } = combining(() => undefined);
+
+    await sets.settle(run);
+
+    expect(order).toEqual(["restore 2:1", "discard 2:1"]);
+    expect(report.result().errors).toMatchObject([{ message: "Figma refuses to combine" }]);
+  });
+
+  it("keeps the frame and says so when they cannot be put back", async () => {
+    const { sets, run, report, order } = combining(() => {
+      throw new Error("The node has been removed");
+    });
+
+    await sets.settle(run);
+
+    expect(order).toEqual(["restore 2:1"]);
+    expect(
+      report
+        .result()
+        .errors.map((error) => error.message)
+        .join("\n"),
+    ).toContain("stays in the file");
   });
 });

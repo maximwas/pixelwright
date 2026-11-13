@@ -2,7 +2,8 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { COMPONENT_INDEX } from "@/plugin/adapters/figma/components/component-index.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { COMPONENT_PROPERTY_TYPE } from "@/plugin/adapters/figma/layer-meta/layer-meta.constants.ts";
-import { APPLY_PLACE, NEW_LAYER_TYPE, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
+import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
+import { APPLY_PLACE, APPLY_TEXT, NEW_LAYER_TYPE, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
 import type { PendingSet, Run } from "@/plugin/operations/apply/apply.types.ts";
 import { APPLY_LAYERS } from "@/plugin/operations/apply/apply-layers.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
@@ -108,20 +109,46 @@ export class PendingSets {
 
       if (change !== undefined) {
         run.report.fail(change, error, STEP_KEYS.property);
-        this.#discard(run, node);
+        this.#discard(run, change, node);
       }
     }
   }
 
-  /** A layer this call made, its mark unbound, goes with what it holds, so nothing half-made stays in the file. */
-  #discard(run: Run, node: SceneNode): void {
-    if (run.report.unmade(node.id)) {
-      for (const inner of "findAll" in node ? node.findAll() : []) {
-        run.report.unmade(inner.id);
-      }
-
-      this.#layers.discard(node);
+  /**
+   * A layer this call made, its mark unbound, goes with what it holds, so nothing half-made stays in the file; a layer
+   * that was there before the call goes back where it stood first, and when one cannot nothing goes.
+   */
+  #discard(
+    run: Run,
+    change: ApplyChangeData,
+    node: SceneNode,
+  ): void {
+    if (run.report.isMade(node.id)) {
+      this.#remove(run, change, node);
     }
+  }
+
+  /** The way every layer of the call goes: what was there before the call goes back first, and when one cannot it stays. */
+  #remove(
+    run: Run,
+    change: ApplyChangeData,
+    node: SceneNode,
+  ): void {
+    try {
+      run.origins.restore(node);
+    } catch (error) {
+      run.report.fail(change, new WriteError(APPLY_TEXT.keptHeld(error), APPLY_TEXT.keptHeldHint));
+
+      return;
+    }
+
+    run.report.unmade(node.id);
+
+    for (const inner of "findAll" in node ? node.findAll() : []) {
+      run.report.unmade(inner.id);
+    }
+
+    this.#layers.discard(node);
   }
 
   async #write(
@@ -140,7 +167,14 @@ export class PendingSets {
       return;
     }
 
-    this.#layers.finish(node, change);
+    try {
+      this.#layers.finish(node, change);
+    } catch (error) {
+      this.#remove(run, change, node);
+
+      throw error;
+    }
+
     run.report.made(change, node);
 
     // A component or set made here is found by the instances after it; a held set's variant through its set.
@@ -184,12 +218,30 @@ export class PendingSets {
     holder: SceneNode,
   ): ComponentSetNode | null {
     try {
-      return this.#layers.combine(holder);
+      return this.#layers.combine(holder, run.origins);
     } catch (error) {
       run.report.fail(change, error);
+      this.#clearHolder(run, change, holder);
 
       return null;
     }
+  }
+
+  /** A set that could not be made: what the call moved into its frame goes back, then the frame goes; when it cannot, it stays. */
+  #clearHolder(
+    run: Run,
+    change: ApplyChangeData,
+    holder: SceneNode,
+  ): void {
+    try {
+      run.origins.restore(holder);
+    } catch (error) {
+      run.report.fail(change, new WriteError(APPLY_TEXT.keptHeld(error), APPLY_TEXT.keptHeldHint));
+
+      return;
+    }
+
+    this.#layers.discard(holder);
   }
 
   /** A set's variants in a grid: a column per value of its first variant property, a row per the rest, 40 px apart. */

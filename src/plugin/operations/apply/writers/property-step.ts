@@ -19,15 +19,19 @@ export class PropertyStep implements WriteStep {
     this.#marks = marks;
   }
 
+  /** What the mark refuses, on either run; once it passes, the names it asks are held against the call's next layers. */
   check({ property }: FigmaProps, layer: TypedLayer): void {
     if (property !== undefined) {
       this.#marks.check(layer, property);
+      this.#marks.claim(layer, property);
     }
   }
 
   /** A mark that cannot bind makes no layer: its place is asked before the layer is made. */
-  place(props: FigmaProps, layer: TypedLayer): void {
-    this.check(props, layer);
+  place({ property }: FigmaProps, layer: TypedLayer): void {
+    if (property !== undefined) {
+      this.#marks.check(layer, property);
+    }
   }
 
   write(node: SceneNode, { property }: FigmaProps): void {

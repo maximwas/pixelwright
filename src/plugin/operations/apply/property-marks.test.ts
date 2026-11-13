@@ -3,6 +3,7 @@ import { Assign } from "@/plugin/adapters/figma/assign.ts";
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { Variants } from "@/plugin/adapters/figma/components/variants.ts";
 import { PropertyMarks } from "@/plugin/operations/apply/property-marks.ts";
+import { PropertyStep } from "@/plugin/operations/apply/writers/property-step.ts";
 
 // No Figma here (CLAUDE.md): a layer is plain data with its type and parent; a stand-in (a layer a dry run would make)
 // has no id, and a component has the definitions the check reads.
@@ -50,5 +51,66 @@ describe("PropertyMarks.check", () => {
 
   it("refuses a text property on a layer that is no text", () => {
     expect(() => check({ type: "FRAME", parent: component({}) }, { text: "Name" })).toThrow("goes on a <Text>");
+  });
+});
+
+// A dry run adds no property, so a call's second layer is checked against what its first asked (m:f66aed65): the step
+// is the seam both runs go through, `place` before a layer is made and `check` after it.
+describe("PropertyStep: one name asked as two kinds by the layers of a component the call makes", () => {
+  const owner = { type: "COMPONENT", name: "x", parent: page };
+  const text = { type: "TEXT", parent: owner } as TypedLayer;
+  const frame = { type: "FRAME", parent: owner } as TypedLayer;
+  const clash = "x has a text property Name: another kind cannot take its name.";
+
+  function step(): PropertyStep {
+    return new PropertyStep(new PropertyMarks(new Variants(), new Assign()));
+  }
+
+  it("refuses the second layer, before it is made and after, as a name the component has as another kind", () => {
+    const marks = step();
+
+    marks.check({ property: { text: "Name" } }, text);
+
+    expect(() => marks.place({ property: { visible: "Name" } }, frame)).toThrow(clash);
+    expect(() => marks.check({ property: { visible: "Name" } }, frame)).toThrow(clash);
+  });
+
+  it("takes a name asked again as the same kind, and another name", () => {
+    const marks = step();
+
+    marks.check({ property: { text: "Name" } }, text);
+
+    expect(() => marks.check({ property: { text: "Name" } }, text)).not.toThrow();
+    expect(() => marks.check({ property: { visible: "Other" } }, frame)).not.toThrow();
+  });
+
+  it("leaves a prop and a visibleProp of one name on one layer as they were", () => {
+    const marks = step();
+    const both = { property: { text: "Name", visible: "Name" } };
+
+    expect(() => marks.place(both, text)).not.toThrow();
+    expect(() => marks.check(both, text)).not.toThrow();
+  });
+
+  it("asks nothing of a name another component of the call took", () => {
+    const marks = step();
+    const other = { type: "FRAME", parent: { type: "COMPONENT", name: "y", parent: page } } as TypedLayer;
+
+    marks.check({ property: { text: "Name" } }, text);
+
+    expect(() => marks.check({ property: { visible: "Name" } }, other)).not.toThrow();
+  });
+
+  it("holds the variants of a set the call makes to one owner, the set", () => {
+    const marks = step();
+    const set = { type: "COMPONENT_SET", name: "s", parent: page };
+    const first = { type: "TEXT", parent: { type: "COMPONENT", name: "a", parent: set } } as TypedLayer;
+    const second = { type: "FRAME", parent: { type: "COMPONENT", name: "b", parent: set } } as TypedLayer;
+
+    marks.check({ property: { text: "Name" } }, first);
+
+    expect(() => marks.check({ property: { visible: "Name" } }, second)).toThrow(
+      "s has a text property Name: another kind cannot take its name.",
+    );
   });
 });

@@ -1,6 +1,7 @@
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import type { Counterparts } from "@/plugin/operations/apply/counterparts.ts";
+import type { Origins } from "@/plugin/operations/apply/origins.ts";
 import type { ApplyReport } from "@/plugin/operations/apply/report.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 
@@ -22,6 +23,8 @@ export interface ApplyCall {
   /** The new layers whose creation failed, by ref: a child names its parent from here. */
   readonly failed: Map<string, ApplyChangeData>;
   readonly counterparts: Counterparts;
+  /** Where the existing layers the call moved stood: they go back when a layer the call made is taken away. */
+  readonly origins: Origins;
 }
 
 /** A held set's variant's change that waits for the set: what places the variant in it (a grid cell, its alignment). */
