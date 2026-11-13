@@ -6,14 +6,15 @@ import { CHANGE_OF } from "@/core/apply/plan/change-of.ts";
 import type { CurrentLayers } from "@/core/apply/plan/current-layers.ts";
 import { LAYER_READS } from "@/core/apply/plan/layer-reads.ts";
 import { PLACED_LAYERS } from "@/core/apply/plan/placed-layers.ts";
-import type { LayerEntry, WritePlan } from "@/core/apply/plan/plan.types.ts";
+import type { Assessment, FileChange, LayerEntry, WritePlan } from "@/core/apply/plan/plan.types.ts";
 import { PlannedComponents } from "@/core/apply/plan/planned-components.ts";
 import { TAG } from "@/core/xml/tags.constants.ts";
 
 /**
  * The one planner (T-142): which layers a call reads, then each element against its layer (assessment), as a change in
  * Figma's terms, placed by its edges where nothing lays it out, with the list the plugin gets and the components a dry
- * run remembers. The same plan feeds the dry and the real run.
+ * run remembers. The same plan feeds the dry and the real run. The files elements name are compared by the server
+ * (T-132): what it found they change is written, and a file it cannot use is an error on its attribute.
  */
 @injectable()
 export class WritePlanner {
@@ -39,8 +40,14 @@ export class WritePlanner {
     return this.#reads.ids(elements);
   }
 
-  plan(elements: readonly ApplyElement[], layers: CurrentLayers): WritePlan {
-    const { assessed, errors } = this.#assessor.assess(elements, layers);
+  plan(
+    elements: readonly ApplyElement[],
+    layers: CurrentLayers,
+    files: ReadonlyMap<string, FileChange> = new Map(),
+  ): WritePlan {
+    const assessment = this.#assessor.assess(elements, layers);
+    const errors = assessment.errors;
+    const assessed = assessment.assessed.map((item) => this.#filed(item, files.get(item.element.ref), errors));
     const byRef = new Map(assessed.map((item) => [item.element.ref, item]));
     const changes: ApplyChange[] = [];
     const notWritten = new Map<string, string[]>();
@@ -75,6 +82,7 @@ export class WritePlanner {
     }
 
     return {
+      assessed,
       changes,
       written: changes.filter((change) => this.#writes(change)),
       send: this.#sendList(changes),
@@ -82,6 +90,33 @@ export class WritePlanner {
       notWritten,
       components,
     };
+  }
+
+  /** What the layer holds once its files are compared: a file of another image is written, one that cannot be used not. */
+  #filed(
+    item: Assessment,
+    file: FileChange | undefined,
+    errors: ApplyError[],
+  ): Assessment {
+    if (file === undefined || item.now === undefined) {
+      return item;
+    }
+
+    const { element, now } = item;
+    const attributes = new Set([...now.attributes].filter((name) => !file.changed.includes(name)));
+
+    for (const { attribute, message } of file.problems) {
+      attributes.add(attribute);
+      errors.push({
+        line: element.line,
+        column: element.column,
+        ...(element.id === null ? {} : { id: element.id }),
+        attribute,
+        message,
+      });
+    }
+
+    return { ...item, now: { ...now, attributes } };
   }
 
   /** Whether a change writes its layer: makes it, gives it a property, or writes its text. */

@@ -18,6 +18,7 @@ import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
 import { ApplyOperation } from "@/plugin/operations/apply/apply.operation.ts";
+import { APPLY_IMAGES, ApplyImages } from "@/plugin/operations/apply/apply-images.ts";
 import { APPLY_LAYERS, ApplyLayers } from "@/plugin/operations/apply/apply-layers.ts";
 import { APPLY_RUN, ApplyRun } from "@/plugin/operations/apply/apply-run.ts";
 import { APPLY_CHECKS, ApplyChecks } from "@/plugin/operations/apply/checks.ts";
@@ -25,6 +26,7 @@ import { NEW_LAYERS, NewLayers } from "@/plugin/operations/apply/new-layers.ts";
 import { PAGES, Pages } from "@/plugin/operations/apply/pages.ts";
 import { PLACEMENT, Placement } from "@/plugin/operations/apply/placement.ts";
 import { TOKEN_INDEX, TokenIndex } from "@/plugin/operations/apply/token-index.ts";
+import { AssetStep } from "@/plugin/operations/apply/writers/asset-step.ts";
 import { BlendStep } from "@/plugin/operations/apply/writers/blend-step.ts";
 import { ClipStep } from "@/plugin/operations/apply/writers/clip-step.ts";
 import { CornersStep } from "@/plugin/operations/apply/writers/corners-step.ts";
@@ -40,7 +42,9 @@ import { ChildStep } from "@/plugin/operations/apply/writers/layout/child-step.t
 import { GridCellStep } from "@/plugin/operations/apply/writers/layout/grid-cell-step.ts";
 import { LayoutStep } from "@/plugin/operations/apply/writers/layout/layout-step.ts";
 import { MaskStep } from "@/plugin/operations/apply/writers/mask-step.ts";
+import { ModeStep } from "@/plugin/operations/apply/writers/mode-step.ts";
 import { NameStep } from "@/plugin/operations/apply/writers/name-step.ts";
+import { NoteStep } from "@/plugin/operations/apply/writers/note-step.ts";
 import { OpacityStep } from "@/plugin/operations/apply/writers/opacity-step.ts";
 import { PAINT_WRITE, PaintWrite } from "@/plugin/operations/apply/writers/paint-write.ts";
 import { STEP_VALUES, StepValues } from "@/plugin/operations/apply/writers/step-values.ts";
@@ -77,6 +81,7 @@ import { SelectionOperation } from "@/plugin/operations/selection/selection.oper
 import { SelectionWaitOperation } from "@/plugin/operations/selection-wait/selection-wait.operation.ts";
 import { SetOfOperation } from "@/plugin/operations/set-of/set-of.operation.ts";
 import { ShowOperation } from "@/plugin/operations/show/show.operation.ts";
+import { UploadOperation } from "@/plugin/operations/upload/upload.operation.ts";
 import { UsageOperation } from "@/plugin/operations/usage/usage.operation.ts";
 import { VariablesOperation } from "@/plugin/operations/variables/variables.operation.ts";
 import { ViewportOperation } from "@/plugin/operations/viewport/viewport.operation.ts";
@@ -87,7 +92,7 @@ import type { OpName } from "@/shared/ops/op-meta.types.ts";
  * Every op's class by name (A§4b.3): a contract without one here fails to type, so no op is left unserved. execute's
  * pw scope lives as long as the window (T-154), its code's runs outlive their answers (T-156); find reads variants with
  * core's Name=Value lists (K-069); components finds, lists, exposes and links components (T-190, T-192); variables reads the file's raw tokens (P-125);
- * usage lists the layers that use a style or variable (P-126).
+ * usage lists the layers that use a style or variable (P-126); upload holds design_apply's files for its apply (P-030).
  */
 export class OperationProviders {
   readonly #classes: Readonly<Record<OpName, OperationClass>> = {
@@ -117,6 +122,7 @@ export class OperationProviders {
     [OP_NAME.delete]: DeleteOperation,
     [OP_NAME.saveVersion]: SaveVersionOperation,
     [OP_NAME.apply]: ApplyOperation,
+    [OP_NAME.upload]: UploadOperation,
   };
 
   register(container: Container): void {
@@ -141,6 +147,22 @@ export class OperationProviders {
       .bind({ provide: LAYER_FACTORY, useClass: LayerFactory })
       .bind({ provide: STEP_VALUES, useClass: StepValues })
       .bind({ provide: STEP_GEOMETRY, useClass: StepGeometry })
+      .bind({ provide: LAYER_WRITER, useClass: LayerWriter })
+      .bind({ provide: APPLY_CHECKS, useClass: ApplyChecks })
+      .bind({ provide: PLACEMENT_SPAN, useClass: PlacementSpan })
+      .bind({ provide: NEW_LAYERS, useClass: NewLayers })
+      .bind({ provide: PLACEMENT, useClass: Placement })
+      .bind({ provide: PAGES, useClass: Pages })
+      .bind({ provide: APPLY_LAYERS, useClass: ApplyLayers })
+      .bind({ provide: APPLY_RUN, useClass: ApplyRun })
+      .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
+    this.#writeSteps(container);
+    this.#paints(container);
+  }
+
+  /** design_apply's write steps in Figma's order (P-149). */
+  #writeSteps(container: Container): void {
+    container
       .bind({ provide: WRITE_STEPS, multi: true, useClass: NameStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: LayoutStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: SizeStep })
@@ -154,19 +176,12 @@ export class OperationProviders {
       .bind({ provide: WRITE_STEPS, multi: true, useClass: MaskStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: ClipStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: CornersStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: AssetStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: FillsStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: StrokesStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: EffectsStep })
-      .bind({ provide: LAYER_WRITER, useClass: LayerWriter })
-      .bind({ provide: APPLY_CHECKS, useClass: ApplyChecks })
-      .bind({ provide: PLACEMENT_SPAN, useClass: PlacementSpan })
-      .bind({ provide: NEW_LAYERS, useClass: NewLayers })
-      .bind({ provide: PLACEMENT, useClass: Placement })
-      .bind({ provide: PAGES, useClass: Pages })
-      .bind({ provide: APPLY_LAYERS, useClass: ApplyLayers })
-      .bind({ provide: APPLY_RUN, useClass: ApplyRun })
-      .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
-    this.#paints(container);
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: ModeStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: NoteStep });
   }
 
   /** What design_apply's paint, effect and token steps write with (P-092, P-093, P-097). */
@@ -177,6 +192,7 @@ export class OperationProviders {
       .bind({ provide: EFFECT_MERGE, useClass: EffectMerge })
       .bind({ provide: VARIABLE_COLOR, useClass: VariableColor })
       .bind({ provide: PAINTS, useClass: Paints })
+      .bind({ provide: APPLY_IMAGES, useClass: ApplyImages })
       .bind({ provide: EFFECTS, useClass: Effects })
       .bind({ provide: TOKEN_INDEX, useClass: TokenIndex })
       .bind({ provide: PAINT_WRITE, useClass: PaintWrite });

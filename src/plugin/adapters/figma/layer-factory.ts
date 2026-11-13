@@ -1,7 +1,10 @@
 import { InjectionToken, injectable } from "@needle-di/core";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 
-/** What only Figma's global makes for a write: new layers, a component set from its variants, a text's fonts loaded. */
+/**
+ * What only Figma's global makes for a write: new layers, an icon from its SVG, an image of a file's bytes, a component
+ * set from its variants, a text's fonts loaded, and the file's annotation categories and variable collections.
+ */
 @injectable()
 export class LayerFactory {
   readonly #makers: Readonly<Partial<Record<NodeType, () => SceneNode>>> = {
@@ -25,6 +28,26 @@ export class LayerFactory {
     }
 
     return make();
+  }
+
+  /** An icon drawn from its SVG: a frame of vector layers (FX-035: a <rect rx> becomes a vector). */
+  icon(svg: string): FrameNode {
+    return figma.createNodeFromSvg(svg);
+  }
+
+  /** An image of a file's bytes; Figma takes PNG, JPEG and GIF up to 4096 px a side (FX-055). */
+  image(bytes: Uint8Array): Image {
+    return figma.createImage(bytes);
+  }
+
+  /** The file's annotation categories: a new note is filed under one of them (T-139). */
+  categories(): Promise<AnnotationCategory[]> {
+    return figma.annotations.getAnnotationCategoriesAsync();
+  }
+
+  /** The file's own variable collections: a layer's mode is set in one of them (C-135). */
+  collections(): Promise<VariableCollection[]> {
+    return figma.variables.getLocalVariableCollectionsAsync();
   }
 
   /** A new page, last among the file's; Figma refuses one past its plan's page limit. */

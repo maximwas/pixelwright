@@ -15,6 +15,7 @@ import { EXPORT_PULL, ExportPull } from "@/server/app/renders/export-pull.ts";
 import { PNG_RENDER, PngRender } from "@/server/app/renders/png-render.ts";
 import { RENDER_TO_FIT, RenderToFit } from "@/server/app/renders/render-to-fit.ts";
 import { SCREENSHOTS, Screenshots } from "@/server/app/renders/screenshots.ts";
+import { UPLOAD_PUSH, UploadPush } from "@/server/app/renders/upload-push.ts";
 import { WRITTEN_FILES, WrittenFiles } from "@/server/app/stores/written-files.ts";
 import { EXPORT_PLANNER, ExportPlanner } from "@/server/tools/assets-export/export-planner.ts";
 import { DESIGN_READ_EXTRAS, DesignReadExtras } from "@/server/tools/design-read/design-read-extras.ts";
@@ -32,6 +33,7 @@ export class RenderProviders {
       .bind({ provide: RGBA, useClass: Rgba })
       .bind({ provide: PNG_FILES, useClass: NodePngFiles })
       .bind({ provide: EXPORT_PULL, useClass: ExportPull })
+      .bind({ provide: UPLOAD_PUSH, useClass: UploadPush })
       .bind({ provide: PNG_RENDER, useClass: PngRender })
       .bind({ provide: RENDER_TO_FIT, useClass: RenderToFit })
       .bind({ provide: SCREENSHOTS, useClass: Screenshots })

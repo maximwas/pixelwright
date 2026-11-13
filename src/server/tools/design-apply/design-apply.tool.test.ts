@@ -3,13 +3,21 @@ import * as zod from "zod/mini";
 import type { ApplyChange } from "@/core/apply/apply.types.ts";
 import type { WritePlanner } from "@/core/apply/plan/write-planner.ts";
 import { VersionedWrite } from "@/server/app/writes/versioned-write.ts";
+import { ApplyFiles } from "@/server/tools/design-apply/apply-files.ts";
 import { type DesignApplyOutput, DesignApplyOutputSchema } from "@/server/tools/design-apply/design-apply.schema.ts";
 import { DesignApplyTool } from "@/server/tools/design-apply/design-apply.tool.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 
-// Without ids to read and changes to write the plugin is never reached, so the session is never called.
+// Without ids to read and changes to write the plugin is never reached, so the session is never called. No element
+// names a file: the files change nothing and go on no change.
 function tool(planner = {} as WritePlanner, session = {}): DesignApplyTool {
-  return new DesignApplyTool(session as never, new VersionedWrite(), { due: () => null } as never, planner);
+  const files = new ApplyFiles(
+    planner,
+    { of: async () => new Map() } as never,
+    { attach: async (changes: unknown[]) => ({ changes, errors: [] }) } as never,
+  );
+
+  return new DesignApplyTool(session as never, new VersionedWrite(), { due: () => null } as never, files);
 }
 
 const APPLIED = { created: [], changed: [], errors: [] };

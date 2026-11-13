@@ -131,6 +131,9 @@ export const FIGMA_PAINT = {
   displayP3: "DISPLAY_P3",
   normal: "NORMAL",
   gradient: (kind: string) => `GRADIENT_${kind}`,
+  image: "IMAGE",
+  /** A new image fills its layer, as CSS's cover does. */
+  fill: "FILL",
 } as const;
 
 export const PAINT_NUMBER = {
@@ -145,7 +148,7 @@ export const PAINT_NUMBER = {
 export const PAINT_BLACK = { r: 0, g: 0, b: 0, a: 1 } as const;
 
 export const PAINTS_TEXT = {
-  image: "An image background is not written to Figma in this release: write a colour or a gradient.",
+  image: "An image paint's file was not made into an image before its paint was made.",
   unresolved: (token: string) => `${token} was not looked up before its paint was made.`,
 } as const;
 

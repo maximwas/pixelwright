@@ -31,6 +31,9 @@ export const STEP_KEYS = {
   fills: ["fills"],
   strokes: ["strokes"],
   effects: ["effects"],
+  asset: ["asset"],
+  modes: ["modes"],
+  notes: ["notes"],
 } as const satisfies Record<string, readonly (keyof FigmaProps)[]>;
 
 /** The paint lists a layer has, and the style field beside each. */
@@ -77,6 +80,9 @@ export const SIZE_NUMBER = {
   standingTurn: -90,
 } as const;
 
+/** design_read's note: `Category: text`, the category ending at the first `: ` (T-139). */
+export const NOTE_VALUE = { category: ": " } as const;
+
 /** Hiding runs last, outside the steps (P-149). */
 export const HIDDEN_KEY = "visible" satisfies keyof FigmaProps;
 
@@ -98,4 +104,16 @@ export const WRITERS_TEXT = {
   flows: (axis: string) =>
     `${axis === "horizontal" ? "left and right" : "top and bottom"} place a layer with position="absolute": this one flows in its auto layout parent.`,
   onPage: "A layer on the page is placed by left and top alone.",
+  note: (category: string, label: string) => `${category}: ${label}`,
+  /** A bar between new words is the agent's text: one note (B-017). */
+  barred: (text: string, part: string) => `${text} | ${part}`,
+  noModes: (type: string) => `A ${type} takes no variable modes.`,
+  noCollection: (slug: string) => `data-${slug} names no variable collection this file reaches.`,
+  modesHint: "tokens_read lists the file's collections and their modes.",
+  noMode: (
+    collection: string,
+    mode: string,
+    modes: readonly string[],
+  ) =>
+    `${collection} has no mode ${mode}: it has ${modes.join(", ")}.`,
 } as const;

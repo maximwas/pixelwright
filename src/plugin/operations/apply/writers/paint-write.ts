@@ -1,8 +1,8 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { PAINTS_TEXT } from "@/plugin/adapters/figma/figma.constants.ts";
 import { PAINTS } from "@/plugin/adapters/figma/paints.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { TOKEN_KIND } from "@/plugin/operations/apply/apply.constants.ts";
+import { APPLY_IMAGES } from "@/plugin/operations/apply/apply-images.ts";
 import { TOKEN_INDEX } from "@/plugin/operations/apply/token-index.ts";
 import type { PAINT_FIELD } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { WRITERS_TEXT } from "@/plugin/operations/apply/writers/writers.constants.ts";
@@ -15,24 +15,27 @@ type PaintField = (typeof PAINT_FIELD)[keyof typeof PAINT_FIELD];
 
 /**
  * A layer's fills or strokes as one list (P-092): a paint style is the whole list, alone and at full opacity; every
- * other token is a colour variable, a gradient stop's too. The check finds them without importing; the write imports
- * a library's, sets the list unless the layer holds it, then the bound paints' opacities again (FX-046).
+ * other token is a colour variable, a gradient stop's too; an image is made of its uploaded file (T-131). The check
+ * finds the tokens without importing; the write imports a library's, sets the list unless the layer holds it, then the
+ * bound paints' opacities again (FX-046).
  */
 @injectable()
 export class PaintWrite {
   readonly #tokens;
   readonly #paints;
+  readonly #images;
 
-  constructor(tokens = inject(TOKEN_INDEX), paints = inject(PAINTS)) {
+  constructor(
+    tokens = inject(TOKEN_INDEX),
+    paints = inject(PAINTS),
+    images = inject(APPLY_IMAGES),
+  ) {
     this.#tokens = tokens;
     this.#paints = paints;
+    this.#images = images;
   }
 
   async check(specs: readonly PaintSpec[]): Promise<void> {
-    if (specs.some(({ kind }) => kind === INTENT_PAINT.image)) {
-      throw new WriteError(PAINTS_TEXT.image);
-    }
-
     if ((await this.#style(specs)) !== null) {
       return;
     }
@@ -40,6 +43,10 @@ export class PaintWrite {
     for (const spec of specs) {
       if (spec.kind === INTENT_PAINT.token && spec.token !== undefined) {
         await this.#notStyle(spec.token);
+      }
+
+      if (spec.kind === INTENT_PAINT.image) {
+        this.#images.require(spec);
       }
     }
 
@@ -62,7 +69,15 @@ export class PaintWrite {
       variables.set(token, await this.#tokens.variable(token, TOKEN_KIND.colour));
     }
 
-    return await this.#paints.of(specs, variables, consumer);
+    const images = new Map<string, string>();
+
+    for (const spec of specs) {
+      if (spec.kind === INTENT_PAINT.image) {
+        images.set(spec.stream ?? "", this.#images.hash(spec));
+      }
+    }
+
+    return await this.#paints.of(specs, variables, consumer, images);
   }
 
   /** The list on the field unless it holds it already with no style; then the bound paints' opacities again. */

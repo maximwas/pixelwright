@@ -31,16 +31,20 @@ export class Paints {
     this.#geometry = geometry;
   }
 
-  /** The layers of a list in Figma's order; `consumer` is the layer they go on (its mode, its size). */
+  /**
+   * The layers of a list in Figma's order; `consumer` is the layer they go on (its mode, its size), `images` the hashes
+   * of the images the list's files made, by their upload's stream.
+   */
   async of(
     specs: readonly PaintSpec[],
     variables: TokenVariables,
     consumer: SceneNode,
+    images: ReadonlyMap<string, string> = new Map(),
   ): Promise<Paint[]> {
     const paints: Paint[] = [];
 
     for (const spec of specs) {
-      paints.push(await this.#paint(spec, variables, consumer));
+      paints.push(await this.#paint(spec, variables, consumer, images));
     }
 
     return paints;
@@ -117,6 +121,7 @@ export class Paints {
     spec: PaintSpec,
     variables: TokenVariables,
     consumer: SceneNode,
+    images: ReadonlyMap<string, string>,
   ): Promise<Paint> {
     if (spec.kind === INTENT_PAINT.color) {
       const { r, g, b, a } = this.colour(spec.color ?? PAINT_BLACK);
@@ -132,7 +137,12 @@ export class Paints {
       return await this.#gradient(spec, variables, consumer);
     }
 
-    // shortcut: an image needs its file's bytes in the plugin; the asset upload item writes it.
+    const imageHash = images.get(spec.stream ?? "");
+
+    if (spec.kind === INTENT_PAINT.image && imageHash !== undefined) {
+      return { type: FIGMA_PAINT.image, imageHash, scaleMode: spec.scaleMode ?? FIGMA_PAINT.fill };
+    }
+
     throw new WriteError(PAINTS_TEXT.image);
   }
 

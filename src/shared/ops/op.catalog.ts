@@ -22,6 +22,7 @@ import { selectionOp } from "@/shared/ops/selection/selection.manifest.ts";
 import { selectionWaitOp } from "@/shared/ops/selection-wait/selection-wait.manifest.ts";
 import { setOfOp } from "@/shared/ops/set-of/set-of.manifest.ts";
 import { showOp } from "@/shared/ops/show/show.manifest.ts";
+import { uploadOp } from "@/shared/ops/upload/upload.manifest.ts";
 import { usageOp } from "@/shared/ops/usage/usage.manifest.ts";
 import { variablesOp } from "@/shared/ops/variables/variables.manifest.ts";
 import { viewportOp } from "@/shared/ops/viewport/viewport.manifest.ts";
@@ -54,4 +55,5 @@ export const OP_CONTRACTS = new OpCatalog([
   deleteOp,
   saveVersionOp,
   applyOp,
+  uploadOp,
 ]);

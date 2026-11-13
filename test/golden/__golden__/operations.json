@@ -12240,5 +12240,62 @@
       ],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "upload",
+    "meta": {
+      "write": false,
+      "dryRun": false,
+      "timeoutMs": 30000,
+      "needsAllowEdits": false,
+      "turn": "free",
+      "quiet": true
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "stream": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "chunk": {
+          "type": "string"
+        },
+        "total": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 33554432
+        }
+      },
+      "required": [
+        "stream",
+        "offset",
+        "chunk",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "received": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "received"
+      ],
+      "additionalProperties": false
+    }
   }
 ]
