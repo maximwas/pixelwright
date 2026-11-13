@@ -1,0 +1,106 @@
+{
+  "plan": {
+    "collections": [],
+    "styles": {
+      "paint": [],
+      "text": [],
+      "effect": []
+    }
+  },
+  "created": [],
+  "updated": [],
+  "errors": [
+    {
+      "kind": "variable",
+      "name": "Radius",
+      "collection": "Spacing",
+      "message": "It is a FLOAT variable in the file, and a variable's type cannot change: give the new one another name."
+    },
+    {
+      "kind": "variable",
+      "name": "Twice",
+      "collection": "Spacing",
+      "message": "token --twice-a and codeSyntax.WEB \"--twice-b\" (--twice-b) name two CSS properties: give one of them."
+    },
+    {
+      "kind": "variable",
+      "name": "Odd",
+      "collection": "Spacing",
+      "mode": "Base",
+      "message": "12em is not a colour, a length, a number, a quoted string, true/false or var(--token)."
+    },
+    {
+      "kind": "variable",
+      "name": "Typed",
+      "collection": "Spacing",
+      "mode": "Base",
+      "message": "#FFF is not a FLOAT value."
+    },
+    {
+      "kind": "variable",
+      "name": "Ease/In",
+      "collection": "Spacing",
+      "message": "EASING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "name": "Bad/Scope",
+      "collection": "Brand Colors",
+      "message": "A COLOR variable cannot take GAP: its scopes are ALL_SCOPES, ALL_FILLS, FRAME_FILL, SHAPE_FILL, TEXT_FILL, STROKE_COLOR, EFFECT_COLOR."
+    },
+    {
+      "kind": "variable",
+      "name": "Fills",
+      "collection": "Brand Colors",
+      "message": "ALL_FILLS already covers FRAME_FILL, SHAPE_FILL and TEXT_FILL: give it or them."
+    },
+    {
+      "kind": "variable",
+      "name": "Shade",
+      "collection": "Library Colors",
+      "message": "Library Colors comes from a library: change it there."
+    },
+    {
+      "kind": "collection",
+      "name": "Kit Colors",
+      "message": "Kit Colors comes from a library: change it there."
+    },
+    {
+      "kind": "variable",
+      "name": "Pointer",
+      "collection": "Spacing",
+      "mode": "Base",
+      "message": "--Nowhere names no variable in this file or in this call."
+    },
+    {
+      "kind": "variable",
+      "name": "Pointer/Kit",
+      "collection": "Spacing",
+      "mode": "Base",
+      "message": "--Primary names no variable in this file or in this call."
+    },
+    {
+      "kind": "variable",
+      "name": "Pointer/Chain",
+      "collection": "Spacing",
+      "mode": "Base",
+      "message": "--Pointer names no variable in this file or in this call."
+    },
+    {
+      "kind": "paint",
+      "name": "Mixed",
+      "message": "font: 400 16px 'Inter' is not part of a paint style: it takes only its background."
+    },
+    {
+      "kind": "paint",
+      "name": "Library Blue",
+      "message": "Library Blue comes from a library: change it there."
+    },
+    {
+      "kind": "text",
+      "name": "Broken",
+      "message": "font=\"#FFF\" is not \"[italic] weight size/line-height 'Family'\"."
+    }
+  ],
+  "notes": []
+}

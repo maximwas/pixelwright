@@ -50,6 +50,17 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     resolved, `DtcgStyles` colour, gradient, typography and shadow tokens); format json is
     the model itself (`TokensSchema`). `model/` also holds `ModelSummary` (T-161: past maxChars, each collection's
     modes and size, and the most whole tokens that fit, in order, for any format).
+    `scopes/` holds `ScopeRules` (K-024, FX-050: the scopes Figma lets each type take, ALL_SCOPES alone, ALL_FILLS
+    without the fills it covers, never none on a BOOLEAN). `plan/` holds `TokensPlan`, tokens_apply's plan (T-165,
+    K-018..K-025): the call set against the file's tokens by name through `HeldTokens`, which reads them through the
+    model itself, so a value is compared in tokens_read's CSS and tokens_read's own JSON plans nothing; `CollectionPlans`
+    finds or makes each collection and refuses a variable listed twice; `VariablePlans` reads each variable back with
+    `VariableValues` and keeps only what differs; `AliasLinks` then follows every alias to its target (in the file or the
+    call), refuses a loop and a target of another type, types a variable of only aliases by its target (and checks its
+    scopes by it) and gives an alias its target's id when the file holds it; `StylePlans` reads a style's CSS through
+    `ChangeOf.attributesProps` (C-173), and `PlainNumbers` gives each number the unit `NumberUnits` will read it in (an
+    opacity written in percent, FX-049; plain numbers that read back in px noted). The plan's schema, what the plugin
+    writes, is `shared/ops/tokens-apply/`.
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -201,6 +212,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   CSS or JSON (dtcg comes with its item), past maxChars the summary with the first whole tokens that fit;
   `tokens-usage/` names the token with `TokenNames` over the variables op's raw tokens, then lists the usage op's
   layers (500 at most, within the caller's budgetMs, D-48).
+  `tokens-apply/` reads the variables op with the libraries and the page's used tokens (so a library's are never
+  copied) and answers core's plan as a dry run; until the plugin writes tokens, a real run is refused.
   `guide/` answers its topics from `topics/*.md`, Markdown that tsdown's text loader inlines into the bundle (vitest.config.ts
   makes a .md module its text alike), so the package ships `dist/` alone; `markdown.d.ts` types the import.
 - `server/adapters/`: the port implementations on Node.

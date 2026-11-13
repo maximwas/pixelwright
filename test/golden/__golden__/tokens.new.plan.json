@@ -1,0 +1,427 @@
+{
+  "plan": {
+    "collections": [
+      {
+        "name": "Brand Colors",
+        "modes": [
+          "Light",
+          "Dark",
+          "dark"
+        ],
+        "variables": [
+          {
+            "name": "Lost",
+            "type": "COLOR",
+            "values": {
+              "Dark": {
+                "kind": "color",
+                "color": {
+                  "r": 0.5019607843137255,
+                  "g": 0.5019607843137255,
+                  "b": 0.5019607843137255,
+                  "a": 1
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Spacing",
+        "modes": [
+          "Base"
+        ],
+        "variables": [
+          {
+            "name": "Gap/Small",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 8
+              }
+            },
+            "scopes": [
+              "GAP"
+            ]
+          },
+          {
+            "name": "Gap/None",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 0
+              }
+            },
+            "scopes": [
+              "GAP"
+            ]
+          },
+          {
+            "name": "Radius",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 13.5
+              }
+            },
+            "scopes": []
+          },
+          {
+            "name": "Opacity/Half",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 50
+              }
+            },
+            "scopes": [
+              "OPACITY"
+            ]
+          },
+          {
+            "name": "Opacity/Faint",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 25
+              }
+            },
+            "scopes": [
+              "COLOR_OPACITY"
+            ]
+          },
+          {
+            "name": "Weight/Bold",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 700
+              }
+            },
+            "scopes": [
+              "FONT_WEIGHT"
+            ]
+          },
+          {
+            "name": "Font/Family",
+            "type": "STRING",
+            "values": {
+              "Base": {
+                "kind": "string",
+                "value": "Inter 'Display' \\ Pro"
+              }
+            },
+            "scopes": [
+              "FONT_FAMILY"
+            ]
+          },
+          {
+            "name": "Feature/On",
+            "type": "BOOLEAN",
+            "values": {
+              "Base": {
+                "kind": "boolean",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Motion",
+        "modes": [
+          "Default"
+        ],
+        "variables": []
+      }
+    ],
+    "styles": {
+      "paint": [
+        {
+          "name": "White",
+          "paints": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            }
+          ]
+        },
+        {
+          "name": "White",
+          "paints": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.9803921568627451,
+                "g": 0.9803921568627451,
+                "b": 0.9803921568627451,
+                "a": 0.8
+              }
+            }
+          ]
+        }
+      ],
+      "text": [
+        {
+          "name": "Heading/H1",
+          "font": {
+            "family": "Inter",
+            "weight": 700,
+            "italic": true,
+            "size": 48,
+            "lineHeight": {
+              "unit": "PIXELS",
+              "value": 57.6
+            }
+          },
+          "letterSpacing": {
+            "unit": "PERCENT",
+            "value": -2
+          },
+          "textCase": "UPPER"
+        },
+        {
+          "name": "Body",
+          "font": {
+            "family": "Open Sans",
+            "weight": 400,
+            "italic": false,
+            "size": 16,
+            "lineHeight": {
+              "unit": "AUTO"
+            }
+          }
+        }
+      ],
+      "effect": [
+        {
+          "name": "Shadow/Card",
+          "effects": [
+            {
+              "type": "LAYER_BLUR",
+              "radius": 4
+            },
+            {
+              "type": "DROP_SHADOW",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.12
+              },
+              "x": 0,
+              "y": 8,
+              "radius": 24,
+              "spread": 0
+            },
+            {
+              "type": "INNER_SHADOW",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0.5
+              },
+              "x": 0,
+              "y": 1,
+              "radius": 2,
+              "spread": 1
+            }
+          ],
+          "covers": [
+            "DROP_SHADOW",
+            "INNER_SHADOW",
+            "LAYER_BLUR"
+          ]
+        },
+        {
+          "name": "Frost",
+          "effects": [
+            {
+              "type": "BACKGROUND_BLUR",
+              "radius": 12
+            }
+          ],
+          "covers": [
+            "BACKGROUND_BLUR"
+          ]
+        }
+      ]
+    }
+  },
+  "created": [
+    {
+      "kind": "collection",
+      "name": "Brand Colors"
+    },
+    {
+      "kind": "mode",
+      "name": "Light",
+      "collection": "Brand Colors"
+    },
+    {
+      "kind": "mode",
+      "name": "Dark",
+      "collection": "Brand Colors"
+    },
+    {
+      "kind": "mode",
+      "name": "dark",
+      "collection": "Brand Colors"
+    },
+    {
+      "kind": "variable",
+      "name": "Lost",
+      "collection": "Brand Colors"
+    },
+    {
+      "kind": "collection",
+      "name": "Spacing"
+    },
+    {
+      "kind": "mode",
+      "name": "Base",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Gap/Small",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Gap/None",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Radius",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Opacity/Half",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Opacity/Faint",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Weight/Bold",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Font/Family",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Feature/On",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "collection",
+      "name": "Motion"
+    },
+    {
+      "kind": "mode",
+      "name": "Default",
+      "collection": "Motion"
+    },
+    {
+      "kind": "paint",
+      "name": "White"
+    },
+    {
+      "kind": "paint",
+      "name": "White"
+    },
+    {
+      "kind": "text",
+      "name": "Heading/H1"
+    },
+    {
+      "kind": "text",
+      "name": "Body"
+    },
+    {
+      "kind": "effect",
+      "name": "Shadow/Card"
+    },
+    {
+      "kind": "effect",
+      "name": "Frost"
+    }
+  ],
+  "updated": [],
+  "errors": [
+    {
+      "kind": "variable",
+      "name": "Veil",
+      "collection": "Brand Colors",
+      "mode": "Dark",
+      "message": "color-mix(in srgb, var(--Ink) 64%, transparent) is not a COLOR value."
+    },
+    {
+      "kind": "variable",
+      "name": "Veil",
+      "collection": "Brand Colors",
+      "mode": "dark",
+      "message": "color-mix(in srgb, #FFF calc(var(--Opacity-Half) * 100%), transparent) is not a COLOR value."
+    },
+    {
+      "kind": "variable",
+      "name": "Ease/Out",
+      "collection": "Motion",
+      "message": "EASING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "name": "Ease/Curve",
+      "collection": "Motion",
+      "message": "EASING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "name": "Ease/Spring",
+      "collection": "Motion",
+      "message": "EASING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "name": "Duration",
+      "collection": "Motion",
+      "message": "TIMING variables cannot be written yet: COLOR, FLOAT, STRING and BOOLEAN can."
+    },
+    {
+      "kind": "variable",
+      "name": "Ink",
+      "collection": "Brand Colors",
+      "mode": "Dark",
+      "message": "--Accent names no variable in this file or in this call."
+    },
+    {
+      "kind": "variable",
+      "name": "Surface/Base",
+      "collection": "Brand Colors",
+      "mode": "Dark",
+      "message": "--Ink names no variable in this file or in this call."
+    }
+  ],
+  "notes": []
+}

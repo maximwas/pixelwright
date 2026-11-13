@@ -33,7 +33,7 @@ export class NumberUnits {
     const known = new Map<string, Set<NumberUnit>>();
 
     for (const variable of numbers) {
-      const unit = this.#scoped(variable.scopes);
+      const unit = this.scoped(variable.scopes);
       const group = groups.get(variable.id) ?? variable.id;
 
       if (unit !== null) {
@@ -46,7 +46,7 @@ export class NumberUnits {
         const linked = [...(known.get(groups.get(variable.id) ?? variable.id) ?? [])];
         const agreed = linked.length === 1 ? linked[0] : undefined;
 
-        return [variable.id, this.#scoped(variable.scopes) ?? agreed ?? NUMBER_UNIT.px];
+        return [variable.id, this.scoped(variable.scopes) ?? agreed ?? NUMBER_UNIT.px];
       }),
     );
   }
@@ -89,7 +89,7 @@ export class NumberUnits {
   }
 
   /** The unit a number's scopes give it; null when they say nothing of it (no field, or every field). */
-  #scoped(scopes: readonly string[]): NumberUnit | null {
+  scoped(scopes: readonly string[]): NumberUnit | null {
     if (scopes.length === 0 || scopes.includes(VARIABLE_VALUE.allScopes)) {
       return null;
     }
