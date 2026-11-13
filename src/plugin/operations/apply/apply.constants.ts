@@ -45,7 +45,7 @@ export const PROPERTY_FIELD = { characters: "characters", visible: "visible" } a
 export const NEW_LAYER_VALUE = { hug: "HUG", none: "NONE", fit: "WIDTH_AND_HEIGHT", slot: "SLOT" } as const;
 
 /** The kinds of style and variable a token index tells apart, as Figma names them. */
-export const TOKEN_KIND = { paint: "PAINT", effect: "EFFECT", text: "TEXT", colour: "COLOR" } as const;
+export const TOKEN_KIND = { paint: "PAINT", effect: "EFFECT", text: "TEXT", colour: "COLOR", number: "FLOAT" } as const;
 
 export const TOKEN_TEXT = {
   keyJoint: " ",

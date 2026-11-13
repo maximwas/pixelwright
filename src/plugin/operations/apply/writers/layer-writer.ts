@@ -3,6 +3,7 @@ import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import type { Capability, TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { LAYER_BOXES } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { LAYER_READ } from "@/plugin/adapters/figma/layer-read/layer-read.constants.ts";
+import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { ICON_TAG } from "@/plugin/operations/apply/apply.constants.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import { TEXT_WRITER } from "@/plugin/operations/apply/writers/text-writer.ts";
@@ -99,7 +100,8 @@ export class LayerWriter {
 
   /**
    * What the steps' own checks refuse (a token the file lacks, a weight per side on a layer without sides), the same
-   * on dry and real runs; a step already refused is not checked again.
+   * on dry and real runs, on the props a WriteError names, else on the step's; a step already refused is not checked
+   * again.
    */
   async checks(
     change: ApplyChangeData,
@@ -114,7 +116,7 @@ export class LayerWriter {
         try {
           await step.check(change.props, layer);
         } catch (error) {
-          found.push({ error, keys: step.keys });
+          found.push({ error, keys: (error instanceof WriteError ? error.keys : undefined) ?? step.keys });
         }
       }
     }

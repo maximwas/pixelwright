@@ -1,10 +1,11 @@
 import { inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
+import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { STEP_GEOMETRY } from "@/plugin/operations/apply/writers/geometry/step-geometry.ts";
 import type { WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
-import { STEP_VALUES } from "@/plugin/operations/apply/writers/step-values.ts";
+import { type ResolvedLength, STEP_VALUES } from "@/plugin/operations/apply/writers/step-values.ts";
 import {
   AXIS_FIELDS,
   LAYOUT_POSITIONING,
@@ -22,8 +23,9 @@ type Axis = (typeof SIZE_AXIS)[keyof typeof SIZE_AXIS];
 
 /**
  * Where the layer flows in its parent's auto layout, then its width and height (P-150): pixels, or hugging (auto). A
- * size of its own fixes that axis alone, the other keeps hugging or filling; a section is sized in pixels only, a line
- * by its length, upright when written by its height.
+ * size of its own fixes that axis alone, the other keeps hugging or filling, and a token binds its number variable
+ * (T-135); a section is sized in pixels only, refused otherwise on either run, a line by its length, upright when
+ * written by its height.
  */
 @injectable()
 export class SizeStep implements WriteStep {
@@ -43,8 +45,32 @@ export class SizeStep implements WriteStep {
     this.#geometry = geometry;
   }
 
-  write(node: SceneNode, props: FigmaProps): void {
+  /** What a section refuses and the tokens a size names, found without writing. */
+  async check({ width, height }: FigmaProps, layer: TypedLayer): Promise<void> {
+    const sizes = [width, height];
+
+    if (layer.type === FIGMA_NODE_TYPE.section) {
+      if (sizes.includes(INTENT_HUG)) {
+        throw new WriteError(WRITERS_TEXT.sectionHug);
+      }
+
+      if (sizes.some((size) => typeof size === "object")) {
+        throw new WriteError(WRITERS_TEXT.sectionToken);
+      }
+    }
+
+    await this.#values.check({
+      width: width === INTENT_HUG ? undefined : width,
+      height: height === INTENT_HUG ? undefined : height,
+    });
+  }
+
+  async write(node: SceneNode, props: FigmaProps): Promise<void> {
     const { absolute } = props;
+    const lengths = await this.#values.resolve({
+      width: props.width === INTENT_HUG ? undefined : props.width,
+      height: props.height === INTENT_HUG ? undefined : props.height,
+    });
 
     // A frame without auto layout places every child itself: nothing to change there.
     if (absolute !== undefined && this.#geometry.layout(node.parent) !== null) {
@@ -54,22 +80,18 @@ export class SizeStep implements WriteStep {
     }
 
     for (const axis of Object.keys(AXIS_FIELDS) as Axis[]) {
-      const value = props[axis];
+      const length = lengths[axis];
 
-      if (value === INTENT_HUG) {
+      if (props[axis] === INTENT_HUG) {
         this.#hug(node, axis);
-      } else if (value !== undefined) {
-        this.#fix(node, axis, this.#values.number(value) ?? 0);
+      } else if (length !== undefined) {
+        this.#fix(node, axis, length);
       }
     }
   }
 
-  /** Hugging its content: a text sizes itself to it, another layer hugs in auto layout; a section cannot. */
+  /** Hugging its content: a text sizes itself to it, another layer hugs in auto layout. */
   #hug(node: SceneNode, axis: Axis): void {
-    if (node.type === FIGMA_NODE_TYPE.section) {
-      throw new WriteError(WRITERS_TEXT.sectionHug);
-    }
-
     if (node.type === FIGMA_NODE_TYPE.text) {
       const both = axis === SIZE_AXIS.width || node.textAutoResize === TEXT_AUTO_RESIZE.both;
 
@@ -79,11 +101,11 @@ export class SizeStep implements WriteStep {
     }
   }
 
-  /** A size of its own: a fixed width lets a text's height follow it, a fixed height fixes both. */
+  /** A size of its own: a fixed width lets a text's height follow it, a fixed height fixes both; a variable binds it. */
   #fix(
     node: SceneNode,
     axis: Axis,
-    value: number,
+    length: ResolvedLength,
   ): void {
     if (node.type === FIGMA_NODE_TYPE.text) {
       const resize = node.textAutoResize;
@@ -93,6 +115,12 @@ export class SizeStep implements WriteStep {
     } else if (this.#geometry.layout(node) !== null || this.#geometry.layout(node.parent) !== null) {
       this.#assign.set(node as FrameNode, { [AXIS_FIELDS[axis].sizing]: LAYOUT_SIZING.fixed });
     }
+
+    if (this.#values.bind(node, axis, length)) {
+      return;
+    }
+
+    const value = typeof length === "number" ? length : 0;
 
     if (node.type === FIGMA_NODE_TYPE.line) {
       this.#line(node, axis, value);

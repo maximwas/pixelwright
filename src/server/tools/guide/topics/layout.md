@@ -24,7 +24,7 @@ what should happen when the content or the frame's size changes.
   `space-between`, `space-around`, `space-evenly`; a spread leaves no room for `gap`), `align-items` across it
   (`flex-start`, `center`, `flex-end`, `baseline`). Figma aligns all children alike: a child's `align-self` takes
   only `stretch` or `auto`.
-- A child's size: `width`/`height` in px is fixed; none (or `auto`) hugs its content; `flex="1"` takes the room left
+- A child's size: `width`/`height` in px (or a number variable, `var(--size-card)`) is fixed; none (or `auto`) hugs its content; `flex="1"` takes the room left
   along the direction (Figma has no other weights); `align-self="stretch"` fills across it; `min-width`, `max-width`,
   `min-height` and `max-height` set limits (`none` removes one). A new frame with `display` hugs what it holds unless
   sized or filling.

@@ -142,9 +142,9 @@ export const GEOMETRY_ERROR = {
   badStart: (start: string, value: string) =>
     `${start}="${value}" is not a length in px, a percent, calc(50% ± Npx) or auto.`,
   badEnd: (end: string, value: string) => `${end}="${value}" is not a length in px or auto.`,
-  badSize: (size: string, value: string) => `${size}="${value}" is not a length in px or auto.`,
+  badSize: (size: string, value: string) => `${size}="${value}" is not a length in px, a token or auto.`,
   percentSize: (start: string) => `A percent scales with the parent: it needs ${start} in percents too.`,
-  badLimit: (limit: string, value: string) => `${limit}="${value}" is not a length in px or none.`,
+  badLimit: (limit: string, value: string) => `${limit}="${value}" is not a length in px, a token or none.`,
   growWeight: (value: string) =>
     `flex="${value}": a layer fills its parent's direction or not, flex="1" or flex="none" (Figma has no grow weights).`,
   badLines: (attribute: string, value: string) =>

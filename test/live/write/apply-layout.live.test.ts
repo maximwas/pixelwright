@@ -203,3 +203,99 @@ node.layoutMode = "GRID"; node.gridColumnCount = 2; node.gridRowCount = 2;`);
     ).toEqual([80, 90, 80]);
   });
 });
+
+/** The scratch collection the token cases bind: live-gaps-space = 14, live-gaps-size = 120. Variables are not layers. */
+const GAPS = "live:gaps";
+
+const removeGaps = `for (const collection of await figma.variables.getLocalVariableCollectionsAsync()) {
+  if (collection.name === ${JSON.stringify(GAPS)}) collection.remove();
+}`;
+
+// T-135, C-181: var() of a number variable on a gap, a padding side, a size, a limit and a radius binds the variable;
+// a number takes it off; what cannot bind is refused on its attribute by a dry run as by the real one.
+describe("write/design_apply binds number variables to lengths", () => {
+  const { file, scratch } = inject("live");
+  let client: LiveClient;
+  let space = "";
+  let size = "";
+
+  const run = async (code: string): Promise<unknown> => (await client.call("execute", { file, code })).result;
+  const apply = async (xml: string, more: Record<string, unknown> = {}): Promise<Applied> =>
+    (await client.call("design_apply", { file, xml, ...more })) as Applied;
+  const read = async (id: string, fields: string): Promise<unknown> =>
+    await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(id)});
+return JSON.parse(JSON.stringify(${fields}));`);
+
+  beforeAll(async () => {
+    client = await new LiveClient().connect();
+    await client.waitForTestMcp();
+    ({ space, size } = (await run(`${removeGaps}
+const collection = figma.variables.createVariableCollection(${JSON.stringify(GAPS)});
+const space = figma.variables.createVariable("live-gaps-space", collection, "FLOAT");
+const size = figma.variables.createVariable("live-gaps-size", collection, "FLOAT");
+space.setValueForMode(collection.defaultModeId, 14);
+size.setValueForMode(collection.defaultModeId, 120);
+return { space: space.id, size: size.id };`)) as { space: string; size: string });
+  });
+
+  afterAll(async () => {
+    if (client === undefined) {
+      return;
+    }
+
+    try {
+      await run(`const section = await pw.node(${JSON.stringify(scratch)});
+for (const node of section.children.filter((node) => node.name.startsWith(${JSON.stringify(PREFIX)}))) node.remove();
+for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}))) {
+  if (!node.removed) node.remove();
+}`);
+    } finally {
+      try {
+        await run(removeGaps);
+      } finally {
+        await client.close();
+      }
+    }
+  });
+
+  it("binds a gap, a padding side, a width, a min width and a radius, and a number takes the gap's off", async () => {
+    const xml = `<Frame name="${PREFIX}tokens" display="flex" gap="var(--live-gaps-space)" padding="var(--live-gaps-space) 4px" width="var(--live-gaps-size)" min-width="var(--live-gaps-size)" border-radius="var(--live-gaps-space)"/>`;
+    const dry = await apply(xml, { parent: scratch, dryRun: true });
+
+    expect(dry.errors).toEqual([]);
+
+    const made = await apply(xml, { parent: scratch });
+    const frame = made.created[0]?.id ?? "";
+
+    expect(made.errors).toEqual([]);
+    expect(
+      await read(
+        frame,
+        "[node.itemSpacing, node.paddingTop, node.paddingRight, node.width, node.minWidth, node.topLeftRadius, node.boundVariables.itemSpacing?.id, node.boundVariables.paddingTop?.id, node.boundVariables.paddingRight?.id, node.boundVariables.width?.id, node.boundVariables.minWidth?.id, node.boundVariables.topLeftRadius?.id]",
+      ),
+    ).toEqual([14, 14, 4, 120, 120, 14, space, space, null, size, size, space]);
+
+    const unbound = await apply(`<Frame id="${frame}" gap="8px"/>`);
+
+    expect(unbound.errors).toEqual([]);
+    expect(await read(frame, "[node.itemSpacing, node.boundVariables.itemSpacing?.id ?? null]")).toEqual([8, null]);
+  });
+
+  it("refuses a var() that names no number variable on its attribute, on a dry run as on the real one", async () => {
+    const xml = `<Frame name="${PREFIX}unknown" display="flex" gap="var(--live-gaps-nope)" width="40px"/>`;
+
+    for (const dryRun of [true, false]) {
+      const applied = await apply(xml, { parent: scratch, dryRun });
+
+      expect(applied.errors, `dryRun ${dryRun}`).toEqual([
+        expect.objectContaining({ attribute: "gap", message: expect.stringContaining("live-gaps-nope") }),
+      ]);
+    }
+
+    const section = await apply(`<Section id="${scratch}" width="var(--live-gaps-size)"/>`, { dryRun: true });
+
+    expect(section.errors).toEqual([
+      expect.objectContaining({ message: "A section's size takes a number of pixels, not a token." }),
+    ]);
+  });
+});

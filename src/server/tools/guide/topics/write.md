@@ -154,7 +154,8 @@ change); when it cannot be saved, nothing is written.
   (`box-shadow="0 4px 12px 0 var(--shadow)"`); an effect style on `box-shadow`, `filter` or `backdrop-filter`
   (`backdrop-filter="var(--Blur-Backdrop)"`), which is then the layer's whole list of effects. `textStyle="h3"`
   applies a text style. A shadow's colour variable is its whole colour, its alpha too: write it alone, or a colour.
-  Lengths take values: a number variable on a size, a gap, a padding or a radius is refused in this release.
+  A number variable binds a size, a min or max size, a gap, a padding side or a radius (`gap="var(--space-md)"`); a
+  number over a bound one takes the variable off. A section is sized in px only.
 - design_apply binds the tokens the file and the libraries it uses have: tokens_read lists them. A `var()` that names
   none is refused with the near names; a token the design lacks is the designer's to make in Figma.
 - `data-<collection>="<mode>"` sets the layer's mode of that variable collection (by name or slug, as design_read

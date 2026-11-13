@@ -8,7 +8,8 @@ import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /**
  * A frame's auto layout: its mode first (Figma reads the gaps and alignments by it), then wrap, gaps, padding,
- * alignment and a grid's tracks (their count before their sizes); every value is resolved before the first is set, so the step fails whole.
+ * alignment and a grid's tracks (their count before their sizes) and gaps; a gap or padding may bind a number variable
+ * (T-135). Every token is found before the first value is set, so the step fails whole.
  */
 @injectable()
 export class LayoutStep implements WriteStep {
@@ -22,19 +23,34 @@ export class LayoutStep implements WriteStep {
     this.#values = values;
   }
 
-  write(node: SceneNode, props: FigmaProps): void {
+  async check(props: FigmaProps): Promise<void> {
+    await this.#values.check({
+      itemSpacing: props.itemSpacing,
+      counterAxisSpacing: props.counterAxisSpacing,
+      padding: props.padding,
+      gridColumnGap: props.gridColumnGap,
+      gridRowGap: props.gridRowGap,
+    });
+  }
+
+  async write(node: SceneNode, props: FigmaProps): Promise<void> {
     const [top, right, bottom, left] = props.padding ?? [];
     const values = this.#values;
+    const { gridColumnGap, gridRowGap, ...gaps } = await values.resolve({
+      itemSpacing: props.itemSpacing,
+      counterAxisSpacing: props.counterAxisSpacing,
+      paddingTop: top,
+      paddingRight: right,
+      paddingBottom: bottom,
+      paddingLeft: left,
+      gridColumnGap: props.gridColumnGap,
+      gridRowGap: props.gridRowGap,
+    });
+    const frame = node as FrameNode;
 
-    this.#assign.set(node as FrameNode, {
-      layoutMode: props.layoutMode,
-      layoutWrap: props.layoutWrap,
-      itemSpacing: values.number(props.itemSpacing),
-      counterAxisSpacing: values.number(props.counterAxisSpacing),
-      paddingTop: values.number(top),
-      paddingRight: values.number(right),
-      paddingBottom: values.number(bottom),
-      paddingLeft: values.number(left),
+    this.#assign.set(frame, { layoutMode: props.layoutMode, layoutWrap: props.layoutWrap });
+    values.set(node, gaps);
+    this.#assign.set(frame, {
       primaryAxisAlignItems: props.primaryAxisAlignItems,
       counterAxisAlignItems: props.counterAxisAlignItems,
       counterAxisAlignContent: props.counterAxisAlignContent,
@@ -42,8 +58,7 @@ export class LayoutStep implements WriteStep {
       gridColumnSizes: props.gridColumns?.map((track) => ({ ...track })),
       gridRowCount: props.gridRows?.length,
       gridRowSizes: props.gridRows?.map((track) => ({ ...track })),
-      gridColumnGap: values.number(props.gridColumnGap),
-      gridRowGap: values.number(props.gridRowGap),
     });
+    values.set(node, { gridColumnGap, gridRowGap });
   }
 }

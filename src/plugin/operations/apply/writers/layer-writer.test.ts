@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
+import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { LayerWriter, type WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
 
 const layer = {} as TypedLayer;
@@ -58,6 +59,31 @@ describe("LayerWriter.checks", () => {
     const found = await writer.checks(change, layer, []);
 
     expect(found.map(({ keys }) => keys)).toEqual([["fills"], ["opacity"]]);
+  });
+
+  it("narrows a refusal to the props its WriteError names", async () => {
+    const writer = new LayerWriter(
+      [
+        {
+          keys: ["layoutMode", "itemSpacing", "gridRowGap"],
+          capability: null,
+          write: () => undefined,
+          check: () => {
+            throw new WriteError("No variable is named nope.", undefined, ["gridRowGap"]);
+          },
+        },
+      ],
+      { checks: async () => [] } as never,
+      {} as never,
+      {} as never,
+    );
+    const found = await writer.checks(
+      { props: { layoutMode: "VERTICAL", gridRowGap: { token: "nope" } } } as never,
+      layer,
+      [],
+    );
+
+    expect(found.map(({ keys }) => keys)).toEqual([["gridRowGap"]]);
   });
 
   it("does not check a step an earlier refusal already covers", async () => {
