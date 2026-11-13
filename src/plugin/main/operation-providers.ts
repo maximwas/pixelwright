@@ -38,6 +38,7 @@ import { AssetStep } from "@/plugin/operations/apply/writers/asset-step.ts";
 import { BlendStep } from "@/plugin/operations/apply/writers/blend-step.ts";
 import { ClipStep } from "@/plugin/operations/apply/writers/clip-step.ts";
 import { CornersStep } from "@/plugin/operations/apply/writers/corners-step.ts";
+import { DescriptionStep } from "@/plugin/operations/apply/writers/description-step.ts";
 import { EffectsStep } from "@/plugin/operations/apply/writers/effects-step.ts";
 import { FillsStep } from "@/plugin/operations/apply/writers/fills-step.ts";
 import { LimitsStep } from "@/plugin/operations/apply/writers/geometry/limits-step.ts";
@@ -189,6 +190,7 @@ export class OperationProviders {
   #writeSteps(container: Container): void {
     container
       .bind({ provide: WRITE_STEPS, multi: true, useClass: NameStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: DescriptionStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: VariantStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: PropsStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: PropertyStep })

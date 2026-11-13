@@ -357,4 +357,42 @@ return Object.keys(node.componentPropertyDefinitions).map((key) => key.replace(/
       { component, name: "Shown", type: "BOOLEAN" },
     ]);
   });
+
+  // 0.7.0 annotation steps: description is written on a new and an existing component and on a new set; another
+  // layer has none, refused on its attribute by a dry run as by the real one.
+  it("writes a component's and a set's description, and refuses one on a frame on both runs", async () => {
+    const description = async (id: string): Promise<unknown> =>
+      await run(`return (await figma.getNodeByIdAsync(${JSON.stringify(id)})).description;`);
+    const component = made(
+      await apply(`<Component name="${PREFIX}described" description="A card." width="10px" height="10px"/>`),
+      "Component",
+    );
+
+    expect(await description(component)).toBe("A card.");
+    expect((await apply(`<Component id="${component}" description="A plan card."/>`)).errors).toEqual([]);
+    expect(await description(component)).toBe("A plan card.");
+
+    const set = made(
+      await apply(
+        `<ComponentSet name="${PREFIX}described-set" description="Tones."><Component variant="Tone=Light" width="10px" height="10px"/></ComponentSet>`,
+      ),
+      "ComponentSet",
+    );
+
+    expect(await description(set)).toBe("Tones.");
+
+    for (const dryRun of [true, false]) {
+      const applied = await apply(
+        `<Frame name="${PREFIX}undescribed" description="x" width="10px" height="10px"/>`,
+        dryRun,
+      );
+
+      expect(applied.errors, `dryRun ${dryRun}`).toEqual([
+        expect.objectContaining({
+          attribute: "description",
+          message: "A description belongs to a component or a component set.",
+        }),
+      ]);
+    }
+  });
 });

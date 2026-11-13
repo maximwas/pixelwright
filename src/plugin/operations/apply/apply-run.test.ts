@@ -74,3 +74,33 @@ describe("ApplyRun: a move refused (T-124, P-143)", () => {
     expect(result.changed).toEqual(["1:5"]);
   });
 });
+
+// m:f66aed65: a real run holds a new set's variants in a plain frame until they combine; its checks are the set's, as a
+// dry run's are, so a component set's own attributes (a description) pass on both runs.
+describe("ApplyRun: a new ComponentSet on a real run", () => {
+  it("is checked as a set, not as the frame that holds its variants", async () => {
+    const holder = { id: "3:1", type: "FRAME", name: "Set", parent: node.parent };
+    const checked: string[] = [];
+    const layers = {
+      top: async () => node.parent,
+      of: async () => holder,
+      move: async () => undefined,
+      refusals: () => [],
+    };
+    const writer = {
+      prepare: async () => undefined,
+      checks: async (_change: unknown, layer: { type: string }) => {
+        checked.push(layer.type);
+
+        return [];
+      },
+    };
+    const sets = { start: () => undefined, hold: () => undefined, settle: async () => undefined, properties: () => [] };
+    const run = new ApplyRun(layers as never, writer as never, sets as never, { commitUndo: () => undefined } as never);
+    const set = { ...moving({}), kind: "create", id: null, ref: "new:1", tag: "ComponentSet", moves: false };
+
+    await run.run({ changes: [set as ApplyChangeData], dryRun: false });
+
+    expect(checked).toEqual(["COMPONENT_SET"]);
+  });
+});

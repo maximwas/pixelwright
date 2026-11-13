@@ -37,6 +37,7 @@ export const STEP_KEYS = {
   asset: ["asset"],
   modes: ["modes"],
   notes: ["notes"],
+  description: ["description"],
   /** What the text writer takes, after the steps: a text's runs, its box's text settings, a new TextPath's path. */
   text: [
     "textStyle",
@@ -207,6 +208,7 @@ export const WRITERS_TEXT = {
   noEffectStyle: (token: string) => `No effect style is named ${token} in this file or the libraries its page uses.`,
   sectionHug: "A section is sized in pixels: it cannot hug what it holds.",
   sectionToken: "A section's size takes a number of pixels, not a token.",
+  description: "A description belongs to a component or a component set.",
   growInGrid: "flex fills a flex parent's direction: this layer's parent is a grid.",
   growInGridHint: 'Fill its cell with justify-self="stretch" and align-self="stretch".',
   growOutside: "flex fills the direction of an auto layout parent: this layer's parent has no auto layout.",
