@@ -53,7 +53,8 @@ return node.findOne((layer) => layer.type === ${JSON.stringify(type)}).id;`)) as
 
     try {
       await run(`const section = await pw.node(${JSON.stringify(scratch)});
-for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}))) {
+// A layer inside an instance (id I…) cannot be removed on its own and would stop the loop: its instance takes it.
+for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}) && !node.id.startsWith("I"))) {
   if (!node.removed) node.remove();
 }`);
     } finally {
