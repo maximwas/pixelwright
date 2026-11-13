@@ -138,3 +138,63 @@ describe("PendingSets.write: a new layer whose finish throws", () => {
     expect(run.report.result().created).toEqual([]);
   });
 });
+
+describe("PendingSets.settle: a set whose combine throws", () => {
+  function combining(restore: (node: { id: string }) => void) {
+    const order: string[] = [];
+    const holder = { id: "2:1" };
+    const sets = new PendingSets(
+      {} as never,
+      {
+        combine: () => {
+          throw new Error("Figma refuses to combine");
+        },
+        discard: (one: { id: string }) => order.push(`discard ${one.id}`),
+      } as never,
+      {} as never,
+      { bind: async () => ({ bound: [], failed: [] }) } as never,
+    );
+    const made = change("s", "create");
+    const report = new ApplyReport();
+    const origins = {
+      restore: (node: { id: string }) => {
+        order.push(`restore ${node.id}`);
+        restore(node);
+      },
+    };
+    const run = {
+      changes: [made],
+      layers: new Map(),
+      sets: [{ change: made, holder, refusals: [], placing: [] }],
+      report,
+      origins,
+    } as never;
+
+    return { sets, run, report, order };
+  }
+
+  it("puts the Components the call moved into its frame back, then the frame goes", async () => {
+    const { sets, run, report, order } = combining(() => undefined);
+
+    await sets.settle(run);
+
+    expect(order).toEqual(["restore 2:1", "discard 2:1"]);
+    expect(report.result().errors).toMatchObject([{ message: "Figma refuses to combine" }]);
+  });
+
+  it("keeps the frame and says so when they cannot be put back", async () => {
+    const { sets, run, report, order } = combining(() => {
+      throw new Error("The node has been removed");
+    });
+
+    await sets.settle(run);
+
+    expect(order).toEqual(["restore 2:1"]);
+    expect(
+      report
+        .result()
+        .errors.map((error) => error.message)
+        .join("\n"),
+    ).toContain("stays in the file");
+  });
+});

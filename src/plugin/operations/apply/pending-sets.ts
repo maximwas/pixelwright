@@ -221,9 +221,27 @@ export class PendingSets {
       return this.#layers.combine(holder, run.origins);
     } catch (error) {
       run.report.fail(change, error);
+      this.#clearHolder(run, change, holder);
 
       return null;
     }
+  }
+
+  /** A set that could not be made: what the call moved into its frame goes back, then the frame goes; when it cannot, it stays. */
+  #clearHolder(
+    run: Run,
+    change: ApplyChangeData,
+    holder: SceneNode,
+  ): void {
+    try {
+      run.origins.restore(holder);
+    } catch (error) {
+      run.report.fail(change, new WriteError(APPLY_TEXT.keptHeld(error), APPLY_TEXT.keptHeldHint));
+
+      return;
+    }
+
+    this.#layers.discard(holder);
   }
 
   /** A set's variants in a grid: a column per value of its first variant property, a row per the rest, 40 px apart. */
