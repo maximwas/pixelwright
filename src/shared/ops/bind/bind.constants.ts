@@ -4,6 +4,12 @@ export const BIND_KIND = { color: "color", number: "number", text: "text", effec
 /** Where a raw solid paint sits: a layer's fills or strokes, or a run of a text whose fills differ by run. */
 export const BIND_PAINT_AT = { fills: "fills", strokes: "strokes", run: "run" } as const;
 
+/** The field a planned bind's kind sits in. */
+export const BIND_KIND_FIELD = "kind";
+
+/** What a token to bind is: a variable, or a style. */
+export const BIND_SOURCE = { variable: "variable", style: "style" } as const;
+
 /** Where the scan looks besides a layer or page: every page. */
 export const BIND_WITHIN = { file: "file" } as const;
 

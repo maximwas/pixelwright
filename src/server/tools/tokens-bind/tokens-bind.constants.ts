@@ -1,3 +1,5 @@
+import type { BindScan } from "@/shared/ops/bind/bind.schema.ts";
+
 /**
  * tokens_bind as clients list it (tools.json pins every word): 0.7.0's words, but the lint tool 0.9.0 does not register
  * is no longer named.
@@ -26,6 +28,9 @@ export const TOKENS_BIND_FIELD = {
 
 /** 0.7.0's caps on what a call names: a token, a value as listed, a field's CSS name, and picks in one call. */
 export const TOKENS_BIND = { tokenChars: 300, valueChars: 500, fieldChars: 40, maxChoices: 200 } as const;
+
+/** What a call scans when none of its remaps' from tokens names a style or variable: nothing. */
+export const NO_SCAN: BindScan = { layers: [], variables: {}, instances: 0, defaults: 0, cut: false };
 
 /** With remap: instances left to their main components, or their uses rebound as overrides. */
 export const BIND_INSTANCES = { leave: "leave", override: "override" } as const;

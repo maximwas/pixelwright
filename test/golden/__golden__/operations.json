@@ -7403,9 +7403,17 @@
           "type": "boolean"
         },
         "within": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "file"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
         }
       },
       "required": [
@@ -13275,6 +13283,18 @@
                   "type": "string"
                 }
               },
+              "inferred": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
               "stroked": {
                 "type": "boolean"
               },
@@ -13290,6 +13310,31 @@
                         "strokes",
                         "run"
                       ]
+                    },
+                    "index": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "range": {
+                      "type": "object",
+                      "properties": {
+                        "start": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "end": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "start",
+                        "end"
+                      ],
+                      "additionalProperties": false
                     },
                     "color": {
                       "type": "object",
@@ -13316,10 +13361,17 @@
                     },
                     "stylable": {
                       "type": "boolean"
+                    },
+                    "inferred": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
                     "at",
+                    "index",
                     "color",
                     "opacity",
                     "stylable"
@@ -13332,6 +13384,26 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "range": {
+                      "type": "object",
+                      "properties": {
+                        "start": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "end": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "start",
+                        "end"
+                      ],
+                      "additionalProperties": false
+                    },
                     "fontName": {
                       "type": "object",
                       "properties": {
@@ -13390,6 +13462,7 @@
                     }
                   },
                   "required": [
+                    "range",
                     "fontName",
                     "fontSize",
                     "lineHeight",
@@ -13541,6 +13614,48 @@
             "additionalProperties": false
           }
         },
+        "variables": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "resolvedType": {
+                "type": "string"
+              },
+              "scopes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "key": {
+                "type": "string"
+              },
+              "codeSyntax": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "name",
+              "resolvedType",
+              "scopes",
+              "key"
+            ],
+            "additionalProperties": false
+          }
+        },
         "instances": {
           "type": "integer",
           "minimum": -9007199254740991,
@@ -13557,6 +13672,7 @@
       },
       "required": [
         "layers",
+        "variables",
         "instances",
         "defaults",
         "cut"

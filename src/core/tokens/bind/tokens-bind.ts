@@ -1,29 +1,32 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 import { BIND_FIELD, BIND_SCOPE, BIND_TEXT, BIND_VALUE, TYPE_WORDS } from "@/core/tokens/bind/bind.constants.ts";
-import type { BindResult } from "@/core/tokens/bind/bind.schema.ts";
-import type { BindCandidate, BindChoice, BindRemap, BindRequest, BindUse } from "@/core/tokens/bind/bind.types.ts";
+import type {
+  BindCandidate,
+  BindChoice,
+  BindPlanned,
+  BindRemap,
+  BindRequest,
+  BindScope,
+  BindUse,
+  RemapPair,
+} from "@/core/tokens/bind/bind.types.ts";
 import { BindChoices } from "@/core/tokens/bind/bind-choices.ts";
 import { BIND_FIELDS } from "@/core/tokens/bind/bind-fields.ts";
 import { BindIndex } from "@/core/tokens/bind/bind-index.ts";
 import { BindReport } from "@/core/tokens/bind/bind-report.ts";
 import { BIND_VALUES } from "@/core/tokens/bind/bind-values.ts";
-import { BIND_KIND, BIND_PAINT_AT } from "@/shared/ops/bind/bind.constants.ts";
+import { BIND_KIND, BIND_PAINT_AT, BIND_SOURCE } from "@/shared/ops/bind/bind.constants.ts";
 import type { BindScan, ScannedLayer } from "@/shared/ops/bind/bind.schema.ts";
 import type { RawTokens } from "@/shared/ops/variables/variables.schema.ts";
 
-/** One token's uses to rebind to another, both found: as the call named them, and the style or variable each is. */
-interface RemapPair {
-  readonly from: string;
-  readonly to: string;
-  readonly source: BindCandidate;
-}
-
 /**
- * tokens_bind's plan (T-167, K-026..K-029): the scan's raw values set against the file's tokens. A value one token
- * holds exactly, as design_read prints it, in the layer's modes and within the token's scopes, is bound; several are
- * listed for a pick (choose), none unmatched (for tokens_apply); a pick of a token that does not hold the value snaps
- * it. With remaps the raw values are left alone and each layer's uses of a `from` token are counted for its `to`.
+ * tokens_bind's plan (T-167, K-026..K-029): the scan's raw values set against the file's tokens and the library
+ * variables Figma infers for them (P-164). A value one token holds exactly, as design_read prints it, in the layer's
+ * modes and within the token's scopes, is bound; several are listed for a pick (choose), none unmatched (for
+ * tokens_apply); a pick of a token that does not hold the value snaps it. With remaps the raw values are left alone
+ * and each layer's uses of a `from` token are counted for its `to`. Besides the answer, every bound use and rebind is
+ * planned where it is, for the writer.
  */
 @injectable()
 export class TokensBind {
@@ -50,7 +53,7 @@ export class TokensBind {
     index: BindIndex,
     scan: BindScan,
     { choose, remap }: BindRequest,
-  ): BindResult {
+  ): BindPlanned {
     const report = new BindReport();
     const remaps = remap.length > 0;
 
@@ -68,7 +71,11 @@ export class TokensBind {
       report.note(BIND_TEXT.defaults(scan.defaults));
     }
 
-    return report.result(scan.cut);
+    if (index.usedCut) {
+      report.note(BIND_TEXT.usedCut);
+    }
+
+    return report.planned(scan.cut);
   }
 
   #bind(
@@ -81,8 +88,8 @@ export class TokensBind {
 
     for (const layer of scan.layers) {
       for (const use of [
-        ...this.#colors(index, layer),
-        ...this.#numbers(index, layer),
+        ...this.#colors(index, layer, scan.variables),
+        ...this.#numbers(index, layer, scan.variables),
         ...this.#styled(index, layer),
       ]) {
         report.add(use, choices.decide(use));
@@ -94,8 +101,12 @@ export class TokensBind {
    * A layer's raw solid colours with the tokens holding them: with the paint's opacity, else (see-through, none exact)
    * the opaque colour variables of its colour, which the paint keeps its opacity over (a design's `black 10%`).
    */
-  #colors(index: BindIndex, layer: ScannedLayer): BindUse[] {
-    return layer.paints.map(({ at, color, opacity, stylable }) => {
+  #colors(
+    index: BindIndex,
+    layer: ScannedLayer,
+    variables: BindScan["variables"],
+  ): BindUse[] {
+    return layer.paints.map(({ at, index: position, range, color, opacity, stylable, inferred = [] }) => {
       const stroke = at === BIND_PAINT_AT.strokes;
       const scope = stroke ? BIND_SCOPE.strokeColor : this.#fields.fillScope(layer.type);
       const value = this.#values.color(color, opacity, index.space);
@@ -110,39 +121,92 @@ export class TokensBind {
           ? BIND_FIELD.color
           : BIND_FIELD.background;
 
-      return { layer: layer.id, kind: BIND_KIND.color, field, value, candidates: [...exact, ...opaque], stylable };
+      return {
+        layer: layer.id,
+        kind: BIND_KIND.color,
+        field,
+        value,
+        candidates: [...exact, ...opaque, ...this.#inferred(index, inferred, scope, variables)],
+        stylable,
+        place: { kind: BIND_KIND.color, at, index: position, ...(range === undefined ? {} : { range }), opacity },
+      };
     });
   }
 
-  #numbers(index: BindIndex, layer: ScannedLayer): BindUse[] {
-    return this.#fields
-      .numbers(layer)
-      .map(({ css, scope, value }) => ({
+  /** A layer's raw numbers, each in the Figma fields it binds (four corners or sides as one when they agree). */
+  #numbers(
+    index: BindIndex,
+    layer: ScannedLayer,
+    variables: BindScan["variables"],
+  ): BindUse[] {
+    return this.#fields.numbers(layer).map(({ fields, css, scope, value }) => {
+      const [first = ""] = fields;
+      const inferred = this.#inferred(index, layer.inferred?.[first] ?? [], scope, variables);
+
+      return {
         layer: layer.id,
         kind: BIND_KIND.number,
         field: css,
         value: this.#values.number(css, value),
-        candidates: index.numbers(value, { scope, modes: layer.modes }),
+        candidates: [...index.numbers(value, { scope, modes: layer.modes }), ...inferred],
         stylable: false,
-      }));
+        place: { kind: BIND_KIND.number, fields: [...fields] },
+      };
+    });
+  }
+
+  /**
+   * The variables Figma infers for a field (P-164) that the file does not hold, a library's, as candidates within the
+   * field's scopes; those the file holds the index has matched by its own rules (modes, scopes, an alias first).
+   */
+  #inferred(
+    index: BindIndex,
+    ids: readonly string[],
+    scope: BindScope,
+    variables: BindScan["variables"],
+  ): BindCandidate[] {
+    return [...new Set(ids)].flatMap((id) => {
+      const variable = variables[id];
+
+      if (variable === undefined || index.holds(id) || !this.#fields.allows(variable.scopes, scope)) {
+        return [];
+      }
+
+      const { resolvedType: type, key } = variable;
+
+      return [{ token: this.#names.variable(variable), id, source: BIND_SOURCE.variable, type, key }];
+    });
   }
 
   /** A layer's effects no style holds, then its runs no text style sets, with the styles holding the same. */
   #styled(index: BindIndex, layer: ScannedLayer): BindUse[] {
     const effects = layer.effects === undefined ? null : this.#values.effects(layer.effects, index.tables);
-    const texts = layer.texts.map((parts) => this.#values.text(parts));
-
-    return [
+    const uses: Omit<BindUse, "layer" | "stylable">[] = [
       ...(effects === null
         ? []
-        : [{ kind: BIND_KIND.effect, field: BIND_FIELD.effects, value: effects, candidates: index.effects(effects) }]),
-      ...texts.map((value) => ({
-        kind: BIND_KIND.text,
-        field: BIND_FIELD.font,
-        value,
-        candidates: index.texts(value),
-      })),
-    ].map((use) => ({ ...use, layer: layer.id, stylable: false }));
+        : [
+          {
+            kind: BIND_KIND.effect,
+            field: BIND_FIELD.effects,
+            value: effects,
+            candidates: index.effects(effects),
+            place: { kind: BIND_KIND.effect },
+          },
+        ]),
+      ...layer.texts.map(({ range, ...parts }) => {
+        const value = this.#values.text(parts);
+
+        return {
+          kind: BIND_KIND.text,
+          field: BIND_FIELD.font,
+          value,
+          candidates: index.texts(value),
+          place: { kind: BIND_KIND.text, range },
+        };
+      }),
+    ];
+
+    return uses.map((use) => ({ ...use, layer: layer.id, stylable: false }));
   }
 
   #remap(
@@ -164,11 +228,11 @@ export class TokensBind {
     });
 
     for (const layer of scan.layers) {
-      for (const { from, to, source } of pairs) {
-        const count = layer.uses[source.id] ?? 0;
+      for (const pair of pairs) {
+        const count = layer.uses[pair.source.id] ?? 0;
 
         if (count > 0) {
-          report.remapped(from, to, layer.id, count);
+          report.remapped(pair, layer.id, count);
         }
       }
     }
@@ -195,7 +259,7 @@ export class TokensBind {
       return BIND_TEXT.kinds(from, TYPE_WORDS[source.type] ?? source.type, to, TYPE_WORDS[target.type] ?? target.type);
     }
 
-    return { from, to, source };
+    return { from, to, source, target };
   }
 }
 

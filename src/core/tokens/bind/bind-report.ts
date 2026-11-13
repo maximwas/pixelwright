@@ -1,6 +1,14 @@
 import { BIND_DECISION, BIND_NUMBER, BIND_VALUE } from "@/core/tokens/bind/bind.constants.ts";
 import type { BindResult } from "@/core/tokens/bind/bind.schema.ts";
-import type { BindDecision, BindKind, BindUse } from "@/core/tokens/bind/bind.types.ts";
+import type {
+  BindCandidate,
+  BindDecision,
+  BindKind,
+  BindPlanned,
+  BindUse,
+  RemapPair,
+} from "@/core/tokens/bind/bind.types.ts";
+import type { BindTarget, PlannedBind, PlannedRemap } from "@/shared/ops/bind/bind.schema.ts";
 
 /** Uses of one value in one field with one outcome. */
 interface Group {
@@ -15,7 +23,10 @@ type BoundGroup = Group & { readonly token: string; readonly snapped?: true };
 
 type AmbiguousGroup = Group & { readonly candidates: string[] };
 
-/** What a bind call found, by value (T-167): bound, left for a pick, or with no token; and the layers it changes. */
+/**
+ * What a bind call found, by value (T-167): bound, left for a pick, or with no token; and the layers it changes. Each
+ * bound use and each rebind is kept whole as well, where it is and to what, for the writer.
+ */
 export class BindReport {
   readonly #bound = new Map<string, BoundGroup>();
   readonly #ambiguous = new Map<string, AmbiguousGroup>();
@@ -24,6 +35,8 @@ export class BindReport {
   readonly #changed = new Set<string>();
   readonly #errors = new Map<string, BindResult["errors"][number]>();
   readonly #notes: string[] = [];
+  readonly #binds: PlannedBind[] = [];
+  readonly #remaps: PlannedRemap[] = [];
 
   /** One raw value as its decision has it: bound, listed with its candidates, unmatched, or its pick an error. */
   add(use: BindUse, decision: BindDecision): void {
@@ -44,12 +57,17 @@ export class BindReport {
         ...(decision.snapped ? { snapped: true as const } : {}),
       }));
       this.#changed.add(use.layer);
+      this.#binds.push({
+        ...use.place,
+        layer: use.layer,
+        target: this.#target(decision.candidate),
+        snapped: decision.snapped,
+      });
     }
   }
 
   remapped(
-    from: string,
-    to: string,
+    { from, to, source, target }: RemapPair,
     layer: string,
     count: number,
   ): void {
@@ -57,6 +75,7 @@ export class BindReport {
 
     this.#remapped.set(key, { from, to, count: (this.#remapped.get(key)?.count ?? 0) + count });
     this.#changed.add(layer);
+    this.#remaps.push({ layer, from: source.id, to: this.#target(target) });
   }
 
   error(id: string, message: string): void {
@@ -69,8 +88,8 @@ export class BindReport {
     this.#notes.push(text);
   }
 
-  result(more: boolean): BindResult {
-    return {
+  planned(more: boolean): BindPlanned {
+    const result: BindResult = {
       bound: this.#listed(this.#bound),
       ambiguous: this.#listed(this.#ambiguous),
       unmatched: this.#listed(this.#unmatched),
@@ -80,6 +99,13 @@ export class BindReport {
       notes: this.#notes,
       more,
     };
+
+    return { result, plan: { binds: this.#binds, remaps: this.#remaps } };
+  }
+
+  /** A candidate as the writer binds it: its id, its token for what it says, and a library variable's key. */
+  #target({ token, id, source, key }: BindCandidate): BindTarget {
+    return { token, id, source, ...(key === undefined ? {} : { key }) };
   }
 
   /** Counts a use under its value and outcome, naming its layer while the group has room for examples. */

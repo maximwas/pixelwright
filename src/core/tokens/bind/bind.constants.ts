@@ -88,8 +88,6 @@ export const BIND_VALUE = {
   keyJoint: "|",
 } as const;
 
-export const BIND_SOURCE = { variable: "variable", style: "style" } as const;
-
 /** Figma's style types. */
 export const STYLE_TYPE = { paint: "PAINT", text: "TEXT", effect: "EFFECT" } as const;
 
@@ -160,6 +158,8 @@ export const BIND_TEXT = {
         ? "1 instance was left alone: bind its main component, and its instances follow"
         : `${count} instances were left alone: bind their main components, and the instances follow`
     }${remaps ? '; instances: "override" rebinds the uses inside them as their overrides.' : "."}`,
+  usedCut:
+    "The scan for the library tokens the layers use ran out of time: a library style or variable used only on layers it did not reach was not considered, so a value only it holds is listed with no token. Bind a page or a layer at a time.",
   defaults: (count: number) =>
     count === 1
       ? "1 layer of a slot's default content was left alone: binding it would make the slot the instance's own, so later changes to the component would no longer reach it; bind the component, and the slot follows."

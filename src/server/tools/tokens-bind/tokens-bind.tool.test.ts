@@ -23,8 +23,14 @@ const PLANNED = {
   more: false,
 };
 
-/** The tool over a session that keeps every op it runs and its input, and a core whose plan is PLANNED. */
-function setup() {
+/** The per-use plan core hands item 51's writer: the answer never carries it. */
+const BINDS = { binds: [{ layer: "1:3", kind: "effect" }], remaps: [] };
+
+/**
+ * The tool over a session that keeps every op it runs and its input, and a core whose plan is PLANNED; the remaps'
+ * from tokens name the sources given.
+ */
+function setup(sources = ["VariableID:Brand"]) {
   const ops: [AnyOpContract, unknown][] = [];
   const session = {
     run: async (op: AnyOpContract, input: unknown) => {
@@ -33,12 +39,12 @@ function setup() {
       return op === bindOp ? SCAN : RAW;
     },
   };
-  const index = { sources: () => ["VariableID:Brand"] };
+  const index = { sources: () => sources };
   const tool = new TokensBindTool(
     session as never,
     new VersionedWrite(),
     { due: () => null } as never,
-    { index: () => index, plan: () => PLANNED } as never,
+    { index: () => index, plan: () => ({ result: PLANNED, plan: BINDS }) } as never,
   );
 
   return { tool, ops };
@@ -68,5 +74,21 @@ describe("TokensBindTool", () => {
       summary: "Would bind 3 raw values to tokens on 3 layers; 1 value has no token.",
       dry: true,
     });
+  });
+
+  it('reads the tokens every page uses for within "file"', async () => {
+    const { tool, ops } = setup();
+
+    await tool.execute({ within: "file", kinds: ["color"], dryRun: true });
+
+    expect(ops[0]).toEqual([variablesOp, { libraries: false, used: true, within: "file" }]);
+  });
+
+  it("scans no layer when no remap's from token names a style or variable: core refuses each pair", async () => {
+    const { tool, ops } = setup([]);
+
+    await tool.execute({ within: "1:2", remap: [{ from: "--Gone", to: "--Ink" }], dryRun: true });
+
+    expect(ops.map(([op]) => op)).toEqual([variablesOp]);
   });
 });

@@ -67,7 +67,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     per mode signature with aliases followed and preferred, scopes checked, paint styles of one solid paint, text and
     effect styles), `BindFields` (K-027: which number fields count and which scope each takes, the table design_lint
     shares; an opacity variable holds a percent, FX-049), `BindValues` (K-028: the strings, noise, texture and glass
-    none), `BindChoices` (choose: a pick, or a snap) and `BindReport` (groups by value, most used first).
+    none), `BindChoices` (choose: a pick, or a snap) and `BindReport` (groups by value, most used first, and keeps
+    every bound use and rebind whole: the plan item 51's writer takes, its schema `BindPlanSchema` in
+    `shared/ops/bind/`). The library variables Figma infers for a value (inferredVariables, P-164) are candidates too.
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -222,8 +224,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   `tokens-apply/` reads the variables op with the libraries and the page's used tokens (so a library's are never
   copied) and sets core's plan against them; a plan with nothing to write answers at once (D-25), else the plugin's
   tokens_apply op writes it through the versioned write, a dry run too (B-055). `tokens-bind/` reads the variables op
-  (the file's tokens and those the layers use), scans with the bind op and answers core's plan with its summary; a
-  real run is refused until the plugin binds (item 51).
+  (the file's tokens and those the layers use, every page's with "file"), scans with the bind op and answers core's
+  plan with its summary, the per-use plan kept from the answer; a real run is refused until the plugin binds (item 51).
   `guide/` answers its topics from `topics/*.md`, Markdown that tsdown's text loader inlines into the bundle (vitest.config.ts
   makes a .md module its text alike), so the package ships `dist/` alone; `markdown.d.ts` types the import.
 - `server/adapters/`: the port implementations on Node.
@@ -306,8 +308,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   face, size, line height and letter spacing where they render as the CSS, and its font is loaded before it is made),
   over `adapters/figma/variables/TokenFactory`; the call is one undo step. `bind/` scans for tokens_bind: `BindLayers`
   (within or the selection; instances left to their components but their own slots, a slot's default content always,
-  B-023) and `LayerValues` (a layer's raw solids, numbers, runs and effects as plain data, or its uses of a remap's
-  tokens); the server matches them, so the plugin carries no `core/tokens`.
+  B-023) and `LayerValues` (a layer's raw solids, numbers, runs and effects as plain data, each where it sits, with
+  the variables Figma infers for them, or its uses of a remap's tokens); the server matches them, so the plugin
+  carries no `core/tokens`.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;

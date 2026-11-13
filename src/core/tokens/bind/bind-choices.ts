@@ -1,15 +1,8 @@
-import {
-  BIND_DECISION,
-  BIND_PATTERN,
-  BIND_SOURCE,
-  BIND_TEXT,
-  KIND_WORDS,
-  STYLE_TYPE,
-} from "@/core/tokens/bind/bind.constants.ts";
+import { BIND_DECISION, BIND_PATTERN, BIND_TEXT, KIND_WORDS, STYLE_TYPE } from "@/core/tokens/bind/bind.constants.ts";
 import type { BindCandidate, BindChoice, BindDecision, BindKind, BindUse } from "@/core/tokens/bind/bind.types.ts";
 import type { BindIndex } from "@/core/tokens/bind/bind-index.ts";
 import { VARIABLE_TYPE } from "@/core/tokens/model/model.constants.ts";
-import { BIND_KIND } from "@/shared/ops/bind/bind.constants.ts";
+import { BIND_KIND, BIND_SOURCE } from "@/shared/ops/bind/bind.constants.ts";
 
 /** The call's picks (K-029): which token a value takes where several hold it, or a value to snap to a token. */
 export class BindChoices {
@@ -45,7 +38,7 @@ export class BindChoices {
 
   /** The picked token of the value's kind, a candidate first; snapped when it does not hold the value. */
   #chosen(token: string, use: BindUse): BindDecision {
-    const fitting = this.#index.byToken(token).filter((candidate) => this.#fits(use.kind, candidate));
+    const fitting = this.#named(token, use).filter((candidate) => this.#fits(use.kind, candidate));
     const candidate = fitting.find(({ id }) => use.candidates.some((each) => each.id === id)) ?? fitting[0];
 
     if (candidate === undefined || (fitting.length > 1 && !use.candidates.includes(candidate))) {
@@ -63,6 +56,16 @@ export class BindChoices {
     }
 
     return { kind: BIND_DECISION.bound, candidate, snapped: !use.candidates.some(({ id }) => id === candidate.id) };
+  }
+
+  /** The styles and variables a token names: the file's, then a candidate Figma offered for the value (a library's). */
+  #named(token: string, use: BindUse): BindCandidate[] {
+    const named = this.#index.byToken(token);
+    const offered = use.candidates.filter(
+      (candidate) => candidate.token === token.trim() && !named.some(({ id }) => id === candidate.id),
+    );
+
+    return [...named, ...offered];
   }
 
   /** Whether a token is of the kind a value takes: a colour a colour variable or a paint style, and so on. */

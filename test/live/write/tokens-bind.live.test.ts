@@ -73,9 +73,12 @@ describe("write/tokens_bind", () => {
   });
 
   afterAll(async () => {
-    await run(`const section = await pw.node(${JSON.stringify(scratch)});
-for (const child of [...section.children]) if (child.name.startsWith(${JSON.stringify(PREFIX)})) child.remove();`);
+    const left = await run(`const section = await pw.node(${JSON.stringify(scratch)});
+for (const child of [...section.children]) if (child.name.startsWith(${JSON.stringify(PREFIX)})) child.remove();
+return section.children.filter((child) => child.name.startsWith(${JSON.stringify(PREFIX)})).map((child) => child.name);`);
+
     await client.close();
+    expect(left).toEqual([]);
   });
 
   it("finds three rectangles of a variable's raw colour bound to it and one a step off unmatched (T-167, K-028)", async () => {

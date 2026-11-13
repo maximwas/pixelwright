@@ -4,7 +4,7 @@ import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { USED_TOKENS } from "@/plugin/adapters/figma/variables/used-tokens.ts";
 import type { RawCollection, RawTokens, RawVariable } from "@/shared/ops/variables/variables.schema.ts";
 
-/** What a read of the tokens takes: the layers' too (used), under a layer or page (within) or on the current page. */
+/** What a read of the tokens takes: the layers' too (used), under a layer or page, every page ("file"), or the current page. */
 interface Asked {
   readonly used: boolean;
   readonly within?: string;
@@ -34,13 +34,14 @@ export class FileTokens {
   }
 
   async read({ used, within }: Asked, deadline: number): Promise<RawTokens> {
-    const root = used ? await this.#root(within) : null;
-    const found = root === null ? { styles: [], variables: [], cut: false } : this.#used.under(root, deadline);
+    const layers = used ? await this.#used.roots(within) : [];
+    const found = this.#used.under(layers, deadline);
     const raw: RawTokens = {
       collections: (await figma.variables.getLocalVariableCollectionsAsync()).map((each) => this.#collection(each)),
       variables: (await figma.variables.getLocalVariablesAsync()).map((each) => this.#variable(each)),
       external: {},
-      styles: await this.#styles(found.styles, root ?? figma.currentPage),
+      // Same-named library styles are numbered on the first layer's page: with "file", the current page's.
+      styles: await this.#styles(found.styles, layers[0] ?? figma.currentPage),
       colorProfile: figma.root.documentColorProfile,
     };
 
@@ -69,15 +70,6 @@ export class FileTokens {
     }
 
     return read;
-  }
-
-  /** The layer or page whose used tokens to take, its page loaded. */
-  async #root(within: string | undefined): Promise<BaseNode> {
-    const root = within === undefined ? figma.currentPage : await this.#lookup.existing(within);
-
-    await this.#lookup.pageOf(root)?.loadAsync();
-
-    return root;
   }
 
   /** The file's own styles, then the used ones it lacks, numbered among the file's and the page's (D-29). */

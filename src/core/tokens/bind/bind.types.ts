@@ -1,6 +1,8 @@
 import type { TextLength } from "@/core/css/fonts/font-shorthand.ts";
-import type { BIND_DECISION, BIND_SCOPE, BIND_SOURCE, FIELD_RULE } from "@/core/tokens/bind/bind.constants.ts";
-import type { BIND_KIND } from "@/shared/ops/bind/bind.constants.ts";
+import type { BIND_DECISION, BIND_SCOPE, FIELD_RULE } from "@/core/tokens/bind/bind.constants.ts";
+import type { BindResult } from "@/core/tokens/bind/bind.schema.ts";
+import type { BIND_KIND, BIND_SOURCE } from "@/shared/ops/bind/bind.constants.ts";
+import type { BindPlace, BindPlan } from "@/shared/ops/bind/bind.schema.ts";
 
 export type BindKind = (typeof BIND_KIND)[keyof typeof BIND_KIND];
 
@@ -20,6 +22,8 @@ export interface BindCandidate {
   readonly type: string;
   /** The variable a paint style's one paint is bound to: the style is that variable under another name. */
   readonly wraps?: string;
+  /** A library's variable the file does not hold yet, which Figma inferred: the key the writer imports it by. */
+  readonly key?: string;
 }
 
 /** A single number field: the CSS word results name it by, the scope its variables need, and when it counts. */
@@ -66,6 +70,8 @@ export interface BindUse {
   readonly candidates: readonly BindCandidate[];
   /** Whether a paint style may take its place: a paint style is the whole list of a layer's paints. */
   readonly stylable: boolean;
+  /** Where the writer binds it: a paint's list, index and opacity, a number's Figma fields, a run's range. */
+  readonly place: BindPlace;
 }
 
 /** The call's pick for a value several tokens hold, or a value to snap to a token. */
@@ -79,6 +85,20 @@ export interface BindChoice {
 export interface BindRemap {
   readonly from: string;
   readonly to: string;
+}
+
+/** One token's uses to rebind to another, both found: as the call named them, and the style or variable each is. */
+export interface RemapPair {
+  readonly from: string;
+  readonly to: string;
+  readonly source: BindCandidate;
+  readonly target: BindCandidate;
+}
+
+/** tokens_bind's plan: the answer, grouped by value, and every use a real run binds, for the writer (item 51). */
+export interface BindPlanned {
+  readonly result: BindResult;
+  readonly plan: BindPlan;
 }
 
 /** What core plans with besides the file's tokens and the scan: the call's picks and rebinds. */

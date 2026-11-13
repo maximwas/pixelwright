@@ -15,8 +15,8 @@ type BindOutput = zod.output<typeof bindOp.output>;
 
 /**
  * The bind op (P-164, T-167): under `within` (a layer, a page, every page with "file", else the selection) the layers
- * tokens_bind may bind, each with its raw values of the kinds asked, or with remap ids its uses of them; the server
- * matches them to the file's tokens. A read: Allow edits may be off. The walk keeps to the op's budget (P-075) and to
+ * tokens_bind may bind, each with its raw values of the kinds asked, or with remap ids its uses of them, and the
+ * library variables Figma infers for them; the server matches them to the file's tokens. A read: Allow edits may be off. The walk keeps to the op's budget (P-075) and to
  * BIND_LIMIT.maxLayers layers; either cut says so.
  */
 @injectable()
@@ -55,6 +55,13 @@ export class BindOperation extends Operation<BindInput, BindOutput> {
       enough: BIND_LIMIT.maxLayers + 1,
     });
 
-    return { layers: layers.slice(0, BIND_LIMIT.maxLayers), ...left, cut: cut || layers.length > BIND_LIMIT.maxLayers };
+    const kept = layers.slice(0, BIND_LIMIT.maxLayers);
+
+    return {
+      layers: kept,
+      variables: await this.#values.variables(kept),
+      ...left,
+      cut: cut || layers.length > BIND_LIMIT.maxLayers,
+    };
   }
 }

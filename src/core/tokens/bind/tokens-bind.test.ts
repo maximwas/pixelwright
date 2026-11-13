@@ -12,7 +12,7 @@ import type { BindRequest } from "@/core/tokens/bind/bind.types.ts";
 import { BindFields } from "@/core/tokens/bind/bind-fields.ts";
 import { BindValues } from "@/core/tokens/bind/bind-values.ts";
 import { TokensBind } from "@/core/tokens/bind/tokens-bind.ts";
-import type { ScannedLayer } from "@/shared/ops/bind/bind.schema.ts";
+import type { BindScan, ScannedLayer } from "@/shared/ops/bind/bind.schema.ts";
 import type { RawTokens, RawVariable } from "@/shared/ops/variables/variables.schema.ts";
 
 const format = new NumberFormat();
@@ -68,7 +68,20 @@ function layer(id: string, fields: Partial<ScannedLayer>): ScannedLayer {
 }
 
 function fill(color: { r: number; g: number; b: number }, opacity = 1) {
-  return { at: "fills" as const, color, opacity, stylable: true };
+  return { at: "fills" as const, index: 0, color, opacity, stylable: true };
+}
+
+function scan(layers: ScannedLayer[], variables: BindScan["variables"] = {}): BindScan {
+  return { layers, variables, instances: 0, defaults: 0, cut: false };
+}
+
+/** A library's variable Figma inferred, which the file does not hold: named, typed, scoped and keyed. */
+function library(
+  name: string,
+  type = "COLOR",
+  scopes = ["ALL_SCOPES"],
+) {
+  return { name, resolvedType: type, scopes, key: `key-${name}` };
 }
 
 function plan(
@@ -76,7 +89,7 @@ function plan(
   layers: ScannedLayer[],
   request: BindRequest = NO_PICKS,
 ) {
-  return bind.plan(bind.index(raw), { layers, instances: 0, defaults: 0, cut: false }, request);
+  return bind.plan(bind.index(raw), scan(layers), request).result;
 }
 
 describe("TokensBind", () => {
@@ -183,8 +196,10 @@ describe("TokensBind", () => {
       { from: "--Brand", to: "--Ink" },
       { from: "--Brand", to: "--Gap" },
     ];
-    const scan = { layers: [layer("1:2", { uses: { "VariableID:Brand": 2 } })], instances: 0, defaults: 0, cut: false };
-    const result = bind.plan(index, scan, { choose: [], remap });
+    const { result, plan: planned } = bind.plan(index, scan([layer("1:2", { uses: { "VariableID:Brand": 2 } })]), {
+      choose: [],
+      remap,
+    });
 
     expect(index.sources(remap)).toEqual(["VariableID:Brand"]);
     expect(result.remapped).toEqual([{ from: "--Brand", to: "--Ink", count: 2 }]);
@@ -195,5 +210,118 @@ describe("TokensBind", () => {
       },
     ]);
     expect(result.layers).toBe(1);
+    expect(planned.remaps).toEqual([
+      { layer: "1:2", from: "VariableID:Brand", to: { id: "VariableID:Ink", source: "variable", token: "--Ink" } },
+    ]);
+  });
+
+  it("plans every bound use for the writer: its layer, the token's id, Figma's fields, a paint's place, opacity and range (T-167)", () => {
+    const raw = tokens(
+      variable("Brand", BLUE),
+      variable("Space", 8, ["GAP"], "FLOAT"),
+      variable("Round", 4, ["CORNER_RADIUS"], "FLOAT"),
+    );
+    const corners = { topLeftRadius: 4, topRightRadius: 4, bottomRightRadius: 4, bottomLeftRadius: 4 };
+    const card = layer("1:2", {
+      type: "FRAME",
+      layout: { layoutMode: "VERTICAL" },
+      numbers: { paddingTop: 8, ...corners },
+      paints: [{ ...fill(BLUE, 0.5), index: 1, stylable: false }],
+    });
+    const label = layer("1:3", {
+      type: "TEXT",
+      paints: [{ ...fill(OFF_BLUE), at: "run", range: { start: 2, end: 5 } }],
+    });
+    const brand = { id: "VariableID:Brand", source: "variable", token: "--Brand" };
+    const request = { choose: [{ value: "#346699", token: "--Brand" }], remap: [] };
+
+    expect(bind.plan(bind.index(raw), scan([card, label]), request).plan).toEqual({
+      binds: [
+        { layer: "1:2", kind: "color", at: "fills", index: 1, opacity: 0.5, target: brand, snapped: false },
+        {
+          layer: "1:2",
+          kind: "number",
+          fields: ["paddingTop"],
+          target: { id: "VariableID:Space", source: "variable", token: "--Space" },
+          snapped: false,
+        },
+        {
+          layer: "1:2",
+          kind: "number",
+          fields: Object.keys(corners),
+          target: { id: "VariableID:Round", source: "variable", token: "--Round" },
+          snapped: false,
+        },
+        {
+          layer: "1:3",
+          kind: "color",
+          at: "run",
+          index: 0,
+          range: { start: 2, end: 5 },
+          opacity: 1,
+          target: brand,
+          snapped: true,
+        },
+      ],
+      remaps: [],
+    });
+  });
+
+  it("plans a text run's text style on its range (T-167)", () => {
+    const parts = { fontName: { family: "Inter", style: "Regular" }, fontSize: 16, lineHeight: { unit: "AUTO" } };
+    const raw = { ...tokens(), styles: [{ id: "S:body", type: "TEXT", name: "Body", remote: false, ...parts }] };
+    const run = { ...parts, letterSpacing: { unit: "PIXELS", value: 0 }, textCase: "ORIGINAL", textDecoration: "NONE" };
+    const text = layer("1:2", {
+      type: "TEXT",
+      texts: [{ ...run, range: { start: 0, end: 4 } }] as ScannedLayer["texts"],
+    });
+
+    expect(bind.plan(bind.index(raw), scan([text]), NO_PICKS).plan.binds).toEqual([
+      {
+        layer: "1:2",
+        kind: "text",
+        range: { start: 0, end: 4 },
+        target: { id: "S:body", source: "style", token: "--Body-font" },
+        snapped: false,
+      },
+    ]);
+  });
+
+  it("offers a library's variable Figma infers within the field's scopes, and leaves the file's to the index (P-164)", () => {
+    const raw = tokens(variable("Stroke", OFF_BLUE, ["STROKE_COLOR"]), variable("Brand", BLUE));
+    const inferred = ["VariableID:lib/1", "VariableID:lib/2", "VariableID:Stroke"];
+    const layers = [
+      layer("1:2", { paints: [{ ...fill(OFF_BLUE), inferred }] }),
+      layer("1:3", { numbers: { opacity: 0.4 }, inferred: { opacity: ["VariableID:lib/3"] } }),
+      layer("1:4", { paints: [{ ...fill(BLUE), inferred: ["VariableID:lib/4"] }] }),
+    ];
+    const variables = {
+      "VariableID:lib/1": library("Lib/Blue"),
+      "VariableID:lib/2": library("Lib/Text", "COLOR", ["TEXT_FILL"]),
+      "VariableID:lib/3": library("Faded", "FLOAT"),
+      "VariableID:lib/4": library("Lib/Brand"),
+    };
+    const index = bind.index(raw);
+    const { result } = bind.plan(index, scan(layers, variables), NO_PICKS);
+    const choose = [{ value: "#369", token: "--Lib-Brand" }];
+    const picked = bind.plan(index, scan(layers.slice(2), variables), { choose, remap: [] });
+
+    expect(result.bound.map(({ token, examples }) => [token, examples])).toEqual([
+      ["--Lib-Blue", ["1:2"]],
+      ["--Faded", ["1:3"]],
+    ]);
+    expect(result.ambiguous.map(({ candidates }) => candidates)).toEqual([["--Brand", "--Lib-Brand"]]);
+    expect(result.unmatched).toEqual([]);
+    expect(picked.plan.binds.map(({ target }) => target)).toEqual([
+      { token: "--Lib-Brand", id: "VariableID:lib/4", source: "variable", key: "key-Lib/Brand" },
+    ]);
+  });
+
+  it("says when the read of the tokens the layers use ran out of time: a library token past it was not considered", () => {
+    const { result } = bind.plan(bind.index({ ...tokens(), usedCut: true }), scan([]), NO_PICKS);
+
+    expect(result.notes).toEqual([
+      "The scan for the library tokens the layers use ran out of time: a library style or variable used only on layers it did not reach was not considered, so a value only it holds is listed with no token. Bind a page or a layer at a time.",
+    ]);
   });
 });

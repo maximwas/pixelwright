@@ -3,18 +3,12 @@ import { FIGMA_PAINT, PAINTS_VALUE } from "@/core/css/paints/paints.constants.ts
 import { COLOR_SPACE } from "@/core/kernel/color/color.constants.ts";
 import type { Channels, ColorSpace } from "@/core/kernel/color/color.ts";
 import type { TokenNames } from "@/core/kernel/names/token-names.ts";
-import {
-  BIND_NUMBER,
-  BIND_SOURCE,
-  BIND_TEXT,
-  BIND_VALUE,
-  SHADOW_TYPES,
-  STYLE_TYPE,
-} from "@/core/tokens/bind/bind.constants.ts";
+import { BIND_NUMBER, BIND_TEXT, BIND_VALUE, SHADOW_TYPES, STYLE_TYPE } from "@/core/tokens/bind/bind.constants.ts";
 import type { BindCandidate, BindRemap, BindScope, ModeMap } from "@/core/tokens/bind/bind.types.ts";
 import type { BindFields } from "@/core/tokens/bind/bind-fields.ts";
 import type { BindValues } from "@/core/tokens/bind/bind-values.ts";
 import { MODEL_TEXT, MODEL_VALUE, VARIABLE_TYPE } from "@/core/tokens/model/model.constants.ts";
+import { BIND_SOURCE } from "@/shared/ops/bind/bind.constants.ts";
 import type { RawStyle, RawTokens, RawVariable } from "@/shared/ops/variables/variables.schema.ts";
 import type { ModelTables } from "@/shared/read-model/read-model.schema.ts";
 
@@ -35,6 +29,8 @@ export class BindIndex {
   readonly space: ColorSpace;
   /** What design_read's effect CSS reads besides the effects: the file's profile. */
   readonly tables: ModelTables;
+  /** The read of the tokens the layers use stopped short: a library token used only past that point is missing. */
+  readonly usedCut: boolean;
   readonly #raw: RawTokens;
   readonly #values: BindValues;
   readonly #fields: BindFields;
@@ -62,6 +58,7 @@ export class BindIndex {
       styles: {},
       variables: {},
     };
+    this.usedCut = raw.usedCut ?? false;
     this.#variables = new Map(raw.variables.map((variable) => [variable.id, variable]));
     this.#defaults = new Map(raw.collections.map(({ id, defaultModeId }) => [id, defaultModeId]));
     this.#indexVariables();
@@ -104,6 +101,11 @@ export class BindIndex {
   /** The styles and variables a token names (a text style also by its own name, as the XML writes it). */
   byToken(token: string): BindCandidate[] {
     return this.#byToken.get(token.trim()) ?? [];
+  }
+
+  /** Whether the file's tokens hold the variable with its values: the index then matches it by its own rules. */
+  holds(id: string): boolean {
+    return this.#own.has(id);
   }
 
   /** The styles and variables the remaps' from tokens name: the scan counts each layer's uses of them. */

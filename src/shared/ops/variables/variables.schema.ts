@@ -1,16 +1,17 @@
 import * as zod from "zod/mini";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
+import { USAGE_WITHIN } from "@/shared/ops/usage/usage.constants.ts";
 import { StyleSchema } from "@/shared/read-model/read-model.schema.ts";
 
 /**
  * What the variables op reads (T-160, P-125): the file's own tokens; with `used`, also the styles and variables the
- * layers on the current page (or under `within`) use, a team library's among them; with `libraries`, the enabled
- * libraries' variables by name.
+ * layers on the current page (or under `within`, every page's with "file") use, a team library's among them; with
+ * `libraries`, the enabled libraries' variables by name.
  */
 export const VariablesOpInputSchema = zod.strictObject({
   libraries: zod.boolean(),
   used: zod.boolean(),
-  within: zod.exactOptional(NodeIdSchema),
+  within: zod.exactOptional(zod.union([zod.literal(USAGE_WITHIN.file), NodeIdSchema])),
 });
 
 const CodeSyntaxSchema = zod.exactOptional(zod.record(zod.string(), zod.string()));
