@@ -149,7 +149,7 @@ for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringi
   it("keeps noise and glass when a blur is added", async () => {
     const id = await frame(
       "noise",
-      `[{ type: "NOISE", noiseType: "MONOTONE", color: { r: 0, g: 0, b: 0, a: 0.25 }, noiseSize: 0.5, density: 0.5, blendMode: "NORMAL", visible: true },
+      `[{ type: "NOISE", noiseType: "MONOTONE", color: { r: 0, g: 0, b: 0, a: 0.25 }, noiseSize: 0.5, density: 0.5, visible: true },
   { type: "GLASS", lightIntensity: 0.5, lightAngle: 45, refraction: 0.5, depth: 10, dispersion: 0, radius: 4, visible: true }]`,
     );
     const applied = await apply(`<Frame id="${id}" filter="blur(4px)"/>`);
