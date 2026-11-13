@@ -55,6 +55,7 @@ export const CSS_PROPERTY = {
   filter: "filter",
   backdropFilter: "backdrop-filter",
   font: "font",
+  fontVariationSettings: "font-variation-settings",
   letterSpacing: "letter-spacing",
   textTransform: "text-transform",
   textDecoration: "text-decoration",

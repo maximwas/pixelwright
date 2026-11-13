@@ -11,10 +11,12 @@ import {
   ELEMENT_VALUE,
   MASK_FIGMA,
 } from "@/core/css/groups/element/element.constants.ts";
+import { PinWords } from "@/core/css/groups/element/pin-words.ts";
 import { NAME_VALUE_LIST } from "@/core/kernel/lists/name-value-list.ts";
+import { TAG } from "@/core/xml/tags.constants.ts";
 import { INTENT_KEY } from "@/shared/write-intents/write-intent.constants.ts";
 
-type Note = { category: string | null; label: string };
+type Note = { category: string | null; label: string; pins?: string[] };
 
 /**
  * What an element says about its layer beyond CSS written back: its name, link, component, variant and properties,
@@ -24,6 +26,7 @@ type Note = { category: string | null; label: string };
 export class ElementWriter implements PropertyWriter {
   readonly attributes = ELEMENT_ATTRIBUTES;
   readonly #lists;
+  readonly #pins = new PinWords();
 
   constructor(lists = inject(NAME_VALUE_LIST)) {
     this.#lists = lists;
@@ -46,7 +49,11 @@ export class ElementWriter implements PropertyWriter {
     }
 
     if (changed(ATTRIBUTE.note)) {
-      out.set(INTENT_KEY.notes, this.#notes(own(ATTRIBUTE.note) ?? ""), ATTRIBUTE.note);
+      out.set(
+        INTENT_KEY.notes,
+        this.#notes(own(ATTRIBUTE.note) ?? "", tag === TAG.TEXT || tag === TAG.TEXT_PATH),
+        ATTRIBUTE.note,
+      );
     }
 
     if ([ATTRIBUTE.prop, ATTRIBUTE.visibleProp, ATTRIBUTE.swapProp].some(changed)) {
@@ -108,16 +115,37 @@ export class ElementWriter implements PropertyWriter {
   }
 
   /** design_read's notes: `Category: note | Another`, a bar or backslash in a note escaped with a backslash. */
-  #notes(value: string): Note[] {
-    return (value.match(ELEMENT_PATTERN.note) ?? [])
-      .map((item) => item.replace(ELEMENT_PATTERN.escape, (_match, character: string) => character).trim())
-      .filter((item) => item !== "")
-      .map((item) => {
-        const at = item.indexOf(ELEMENT_VALUE.category);
+  /** design_read's notes: the parts between unescaped bars, each `Category: text [pins]` with its escapes undone. */
+  #notes(value: string, text: boolean): Note[] {
+    return (value.match(ELEMENT_PATTERN.note) ?? []).flatMap((part) => this.#note(part, text));
+  }
 
-        return at === -1
-          ? { category: null, label: item }
-          : { category: item.slice(0, at), label: item.slice(at + ELEMENT_VALUE.category.length) };
-      });
+  /** A note's closing bracket is its pins only when every word in it is one a note can pin; else it is text. */
+  #note(part: string, text: boolean): Note[] {
+    const match = ELEMENT_PATTERN.pinned.exec(part);
+    const words = (match?.[2] ?? "")
+      .split(ELEMENT_VALUE.pinSeparator)
+      .map((word) => word.trim())
+      .filter((word) => word !== "");
+    const pinned = match !== null && this.#pins.known(words, text);
+    const item = this.#unescaped(pinned ? (match[1] ?? "") : part);
+    const at = item.indexOf(ELEMENT_VALUE.category);
+    const pins = pinned ? { pins: words } : {};
+
+    if (item === "" && !pinned) {
+      return [];
+    }
+
+    if (at === -1 && pinned && item.endsWith(ELEMENT_VALUE.categoryEnd)) {
+      return [{ category: item.slice(0, -ELEMENT_VALUE.categoryEnd.length), label: "", ...pins }];
+    }
+
+    return at === -1
+      ? [{ category: null, label: item, ...pins }]
+      : [{ category: item.slice(0, at), label: item.slice(at + ELEMENT_VALUE.category.length), ...pins }];
+  }
+
+  #unescaped(text: string): string {
+    return text.replace(ELEMENT_PATTERN.escape, (_match, character: string) => character).trim();
   }
 }

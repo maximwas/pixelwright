@@ -4,17 +4,22 @@ import { FontSources } from "@/server/tools/fonts-check/font-sources.ts";
 
 const directory = (served: ServedFonts): FontDirectory => ({ families: async () => served });
 
+/** A catalogue whose only variable family is Inter. */
+const AXES = {
+  axes: async (family: string) => (family === "Inter" ? { wght: { min: 100, max: 900, default: 400 } } : null),
+};
+
 /** The fonts a read uses, as design_read lists them. */
 const USED = { Manrope: ["400", "600"], "Proxima Nova": ["700"], Inter: ["400", "300 italic"] };
 
-// T-101: 0.7.0's words and link.
+// T-101: 0.7.0's words and link; a variable family's axes with their ranges (NEW-090).
 it("says which fonts Google serves, with a css2 link for the weights used and the weights it lacks", async () => {
   const served = new Map([
     ["Manrope", ["200", "400", "600", "800"]],
     ["Inter", ["400", "400 italic"]],
   ]);
 
-  expect(await new FontSources(directory({ families: served, error: null })).check(USED)).toEqual({
+  expect(await new FontSources(directory({ families: served, error: null }), AXES).check(USED)).toEqual({
     summary: "3 font families: 2 on Google Fonts.",
     fonts: [
       {
@@ -35,13 +40,14 @@ it("says which fonts Google serves, with a css2 link for the weights used and th
         google: true,
         css: "https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;1,300&display=swap",
         note: "Google Fonts has no 300 italic: the nearest weight will stand in.",
+        axes: { wght: { min: 100, max: 900, default: 400 } },
       },
     ],
   });
 });
 
 it("still lists the fonts when Google Fonts cannot be reached, google null, and says why", async () => {
-  const result = await new FontSources(directory({ families: null, error: "offline" })).check({
+  const result = await new FontSources(directory({ families: null, error: "offline" }), AXES).check({
     Manrope: ["400"],
     "Proxima Nova": ["700"],
   });

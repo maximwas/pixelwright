@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import * as zod from "zod/mini";
 import type { ApplyElement } from "@/core/apply/apply.types.ts";
 import { CurrentLayers } from "@/core/apply/plan/current-layers.ts";
 import type { LayerEntry } from "@/core/apply/plan/plan.types.ts";
@@ -13,7 +14,7 @@ import { DESIGN_XML } from "@/core/design/design-xml.ts";
 import { Color } from "@/core/kernel/color/color.ts";
 import { ServerMain } from "@/server/main/server.main.ts";
 import type { ReadLayer } from "@/shared/read-model/layer.schema.ts";
-import type { ReadModel } from "@/shared/read-model/read-model.schema.ts";
+import { type ReadModel, ReadModelSchema } from "@/shared/read-model/read-model.schema.ts";
 import { fixture } from "./support/design-classes.ts";
 
 /** The server's own planner and design_read, as the root binds them. */
@@ -54,6 +55,91 @@ describe.each(["orbit-customers", "orbit-desktop-top", "orbit-plans", "orbit-pri
     });
   },
 );
+
+/** A run of Roboto Flex Regular 16 over `characters`, from `start`, at these axes. */
+function flexRun(
+  characters: string,
+  start: number,
+  axes: Record<string, number>,
+): Record<string, unknown> {
+  return {
+    characters,
+    start,
+    end: start + characters.length,
+    fontName: { family: "Roboto Flex", style: "Regular", variationSettings: { wght: 400, opsz: 16, ...axes } },
+    fontSize: 16,
+    fontWeight: 400,
+    textDecoration: "NONE",
+    textCase: "ORIGINAL",
+    lineHeight: { unit: "AUTO" },
+    letterSpacing: { unit: "PIXELS", value: 0 },
+    fills: [],
+    fillStyleId: "",
+    textStyleId: "",
+  };
+}
+
+/** A frame with a categorised note that pins two properties and a note of pins alone, over a text whose runs set axes. */
+function axesAndPins(): ReadModel {
+  const runs = [flexRun("Narrow ", 0, { wdth: 90, GRAD: 50 }), flexRun("wide", 7, { wdth: 120, GRAD: 50 })];
+
+  return zod.parse(ReadModelSchema, {
+    root: {
+      id: "1:1",
+      name: "Card",
+      type: "FRAME",
+      visible: true,
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 300,
+      childCount: 1,
+      layoutMode: "VERTICAL",
+      itemSpacing: 8,
+      annotations: [
+        { label: "Gap is [8]", category: "Spacing", pins: ["itemSpacing", "padding"] },
+        { pins: ["fills"] },
+      ],
+      children: [
+        {
+          id: "1:2",
+          name: "Title",
+          type: "TEXT",
+          visible: true,
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 20,
+          childCount: 0,
+          annotations: [{ label: "Brand colour", pins: ["fills"] }],
+          text: {
+            characters: "Narrow wide",
+            textAutoResize: "WIDTH_AND_HEIGHT",
+            textAlignHorizontal: "LEFT",
+            textAlignVertical: "TOP",
+            segments: runs,
+          },
+        },
+      ],
+    },
+    styles: {},
+    variables: {},
+  });
+}
+
+// Variable fonts and pinned notes (NEW-090): design_read writes them as attributes design_apply reads back.
+describe("golden unchanged (axes and pins)", () => {
+  it("writes each run's axes and each note's pins, and plans zero writes for its own read", () => {
+    const { xml } = design.read(axesAndPins());
+
+    expect(xml).toContain(`note="Spacing: Gap is \\[8] [gap, padding] | [background]"`);
+    expect(xml).toContain(`note="Brand colour [color]"`);
+    expect(xml).toContain(`font-variation-settings="'wdth' 90, 'GRAD' 50">Narrow `);
+    expect(xml).toContain(`<Span font-variation-settings="'wdth' 120, 'GRAD' 50">wide</Span>`);
+    expect(xml).not.toContain("$pins");
+    expect(roundTrip(axesAndPins())).toEqual({ written: [], errors: [] });
+  });
+});
 
 const unchanged = container.get(UNCHANGED);
 

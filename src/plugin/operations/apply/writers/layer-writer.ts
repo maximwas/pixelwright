@@ -9,7 +9,7 @@ import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import { TEXT_WRITER } from "@/plugin/operations/apply/writers/text-writer.ts";
 import { STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
-import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
+import type { ApplyChangeData, FontAxes } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /** One step of writing a layer: the props it writes, the capability its layer must have (null: every layer), how. */
@@ -18,7 +18,7 @@ export interface WriteStep {
   readonly capability: Capability | null;
   write(node: SceneNode, props: FigmaProps): void | Promise<void>;
   /** What the layer's type and the file's tokens refuse, found without writing (a dry run's check too). */
-  check?(props: FigmaProps, layer: TypedLayer): void | Promise<void>;
+  check?(props: FigmaProps, layer: TypedLayer, change: ApplyChangeData): void | Promise<void>;
   /** What the place of a layer about to be made refuses, asked of its type and parent before it is made, on either run. */
   place?(props: FigmaProps, layer: TypedLayer): void;
 }
@@ -60,8 +60,12 @@ export class LayerWriter {
   }
 
   /** A call's start: its fonts found, and loaded on a real one (P-148). */
-  async prepare(changes: readonly ApplyChangeData[], dry: boolean): Promise<void> {
-    await this.#text.prepare(changes, dry);
+  async prepare(
+    changes: readonly ApplyChangeData[],
+    dry: boolean,
+    ranges?: FontAxes,
+  ): Promise<void> {
+    await this.#text.prepare(changes, dry, ranges);
   }
 
   /** Whether a step, the text or hiding went in. */
@@ -118,7 +122,7 @@ export class LayerWriter {
     for (const step of this.#steps) {
       if (step.check !== undefined && step.keys.some((key) => change.props[key] !== undefined && !refused.has(key))) {
         try {
-          await step.check(change.props, layer);
+          await step.check(change.props, layer, change);
         } catch (error) {
           found.push({ error, keys: this.#named(error, step) });
         }

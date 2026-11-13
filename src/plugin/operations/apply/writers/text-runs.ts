@@ -1,4 +1,5 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { DEFAULT_FONT_AXES, FIGMA_TEXT } from "@/core/css/groups/text/text.constants.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import type { TextLayer } from "@/plugin/adapters/figma/layer-factory.ts";
 import { PAINTS } from "@/plugin/adapters/figma/paints.ts";
@@ -70,13 +71,24 @@ export class TextRuns {
     this.#paints = paints;
   }
 
-  /** What the props' font, text style and colour refuse: an unknown family, style or token. */
-  async check({ font, textStyle, textFills }: FigmaProps): Promise<RunRefusal[]> {
+  /**
+   * What the props' font, axes, text style and colour refuse: an unknown family, axis, style or token. `families`: the
+   * ones the axes go over.
+   */
+  async check({ font, fontVariations, textStyle, textFills }: FigmaProps,    families: readonly string[] = []): Promise<RunRefusal[]> {
     const refusals: RunRefusal[] = [];
     const found = font === undefined ? undefined : this.#fonts.font(font);
+    const axes =
+      fontVariations === undefined
+        ? undefined
+        : families.map((family) => this.#fonts.variations(family, fontVariations)).find(Boolean);
 
     if (found instanceof WriteError) {
       refusals.push({ key: INTENT_KEY.font, error: found });
+    }
+
+    if (axes !== undefined) {
+      refusals.push({ key: INTENT_KEY.fontVariations, error: axes });
     }
 
     if (
@@ -107,6 +119,7 @@ export class TextRuns {
     const writers: Readonly<Record<RunKey, () => Promise<void>>> = {
       textStyle: async () => await this.#textStyle(range, props.textStyle),
       font: async () => await this.#font(range, props.font),
+      fontVariations: async () => await this.#variations(range, props.fontVariations ?? {}),
       letterSpacing: async () => await this.set(range, TEXT_RANGE_FIELD.letterSpacing, { ...props.letterSpacing }),
       textCase: async () => await this.set(range, TEXT_RANGE_FIELD.textCase, props.textCase),
       textDecoration: async () => await this.#decoration(range, props.textDecoration),
@@ -164,6 +177,37 @@ export class TextRuns {
 
     if (range.node.type === FIGMA_NODE_TYPE.text) {
       await this.set(range, TEXT_RANGE_FIELD.lineHeight, { ...spec.lineHeight });
+    }
+  }
+
+  /**
+   * The axes over each run's font, as CSS's font-variation-settings: the ones named, the weight and optical size its
+   * font has, a browser's default for wdth, slnt and ital, and the named style's own for every other.
+   */
+  async #variations(range: TextRange, axes: Readonly<Record<string, number>>): Promise<void> {
+    const { node, start, end } = range;
+    const runs =
+      start === end
+        ? [{ start, end, fontName: node.fontName }]
+        : node.getStyledTextSegments([TEXT_RANGE_FIELD.fontName.property], start, end);
+
+    for (const run of runs) {
+      if (typeof run.fontName === "object") {
+        const { family, style, variationSettings = {} } = run.fontName;
+        const kept = Object.entries(variationSettings).flatMap(([axis, value]) =>
+          axis === FIGMA_TEXT.weightAxis || axis === FIGMA_TEXT.opticalSizeAxis
+            ? [[axis, value]]
+            : Object.hasOwn(DEFAULT_FONT_AXES, axis)
+              ? [[axis, DEFAULT_FONT_AXES[axis]]]
+              : [],
+        );
+
+        await this.set({ node, start: run.start, end: run.end }, TEXT_RANGE_FIELD.fontName, {
+          family,
+          style,
+          variationSettings: { ...Object.fromEntries(kept), ...axes },
+        });
+      }
     }
   }
 

@@ -16,6 +16,8 @@ export const FONT_PATTERN = {
   pixels: /^(\d*\.?\d+)px$/,
   percent: /^(-?\d*\.?\d+)%$/,
   number: /^-?\d*\.?\d+$/,
+  /** One font-variation-settings item: a quoted four-letter axis and its value, `'wght' 560`. */
+  axis: /^(["'])([\x20-\x7E]{4})\1\s+(-?\d*\.?\d+)$/,
   /** O-021: what would end or escape the family's quoted CSS string. */
   unsafe: /['\\]/g,
 } as const;

@@ -88,6 +88,35 @@ describe("LayerWriter.checks", () => {
     expect(found.map(({ keys }) => keys)).toEqual([["gridRowGap"]]);
   });
 
+  // NEW-090: a note's pins are read against the layer's state after the change, so the check is given the change itself.
+  it("gives a step's check the change it is for, with the layer", async () => {
+    const seen: unknown[] = [];
+    const writer = new LayerWriter(
+      [
+        {
+          keys: ["notes"],
+          capability: null,
+          write: () => undefined,
+          check: (
+            _props,
+            given,
+            whole,
+          ) => {
+            seen.push(given, whole);
+          },
+        },
+      ],
+      { checks: async () => [] } as never,
+      {} as never,
+      {} as never,
+    );
+    const whole = { kind: "update", props: { notes: [] } } as never;
+
+    await writer.checks(whole, layer, []);
+
+    expect(seen).toEqual([layer, whole]);
+  });
+
   it("does not check a step an earlier refusal already covers", async () => {
     const { writer, log } = build(["fills"]);
 

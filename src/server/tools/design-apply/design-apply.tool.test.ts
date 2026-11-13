@@ -15,6 +15,7 @@ function tool(planner = {} as WritePlanner, session = {}): DesignApplyTool {
     planner,
     { of: async () => new Map() } as never,
     { attach: async (changes: unknown[]) => ({ changes, errors: [] }) } as never,
+    { of: async () => ({}) } as never,
   );
 
   return new DesignApplyTool(session as never, new VersionedWrite(), { due: () => null } as never, files);

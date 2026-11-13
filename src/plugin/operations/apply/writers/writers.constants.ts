@@ -42,6 +42,7 @@ export const STEP_KEYS = {
   text: [
     "textStyle",
     "font",
+    "fontVariations",
     "letterSpacing",
     "textCase",
     "textDecoration",
@@ -62,6 +63,7 @@ export const STEP_KEYS = {
 export const TEXT_RUN_FIELDS = [
   ["textStyle", ["textStyleId"]],
   ["font", ["fontName", "fontSize", "lineHeight"]],
+  ["fontVariations", ["fontName"]],
   ["letterSpacing", ["letterSpacing"]],
   ["textCase", ["textCase"]],
   ["textDecoration", ["textDecoration"]],
@@ -184,8 +186,63 @@ export const SIZE_NUMBER = {
   standingTurn: -90,
 } as const;
 
-/** design_read's note: `Category: text`, the category ending at the first `: ` (T-139). */
-export const NOTE_VALUE = { category: ": " } as const;
+/**
+ * What a layer must hold for a note to pin a property: Figma throws `Invalid property "fills" for a FRAME node` for a
+ * pin the layer lacks (live probe, 2026-11-13: fills on a frame without fills, itemSpacing without auto layout; width
+ * always goes; same probe: a radius needs a layer rounded, an opacity one below 1, a limit one that is set). A size is
+ * not here, and a child's grid cell is its parent's to tell, which a dry run cannot see.
+ */
+export const PIN_NEED = {
+  fills: "fill",
+  strokes: "stroke",
+  strokeWeight: "stroke",
+  effects: "effect",
+  itemSpacing: "autoLayout",
+  padding: "autoLayout",
+  layoutMode: "autoLayout",
+  alignItems: "autoLayout",
+  gridRowGap: "grid",
+  gridColumnGap: "grid",
+  gridRowCount: "grid",
+  gridColumnCount: "grid",
+  textStyleId: "text",
+  textAlignHorizontal: "text",
+  fontFamily: "text",
+  fontStyle: "text",
+  fontSize: "text",
+  fontWeight: "text",
+  lineHeight: "text",
+  letterSpacing: "text",
+  mainComponent: "instance",
+  cornerRadius: "radius",
+  opacity: "translucent",
+  minWidth: "minWidth",
+  maxWidth: "maxWidth",
+  minHeight: "minHeight",
+  maxHeight: "maxHeight",
+} as const;
+
+/** The size limits a note can pin: each is a need of its own, met once the layer's limit is set. */
+export const PIN_LIMITS = ["minWidth", "maxWidth", "minHeight", "maxHeight"] as const;
+
+export type PinNeed = (typeof PIN_NEED)[keyof typeof PIN_NEED];
+
+/** What a layer lacks when it cannot hold a pin, in an error's words. */
+export const PIN_LACKS = {
+  fill: "has no fill",
+  stroke: "has no stroke",
+  effect: "has no effect",
+  autoLayout: "has no auto layout",
+  grid: "has no grid layout",
+  text: "holds no text",
+  instance: "is no instance",
+  radius: "has no corner radius",
+  translucent: "is fully opaque",
+  minWidth: "has no minimum width",
+  maxWidth: "has no maximum width",
+  minHeight: "has no minimum height",
+  maxHeight: "has no maximum height",
+} as const satisfies Record<PinNeed, string>;
 
 /** A link: on a layer that holds no text it would be a prototype reaction, refused on its own. */
 export const LINK_KEY = "hyperlink" satisfies keyof FigmaProps;
@@ -226,6 +283,13 @@ export const WRITERS_TEXT = {
     `${axis === "horizontal" ? "left and right" : "top and bottom"} place a layer with position="absolute": this one flows in its auto layout parent.`,
   onPage: "A layer on the page is placed by left and top alone.",
   note: (category: string, label: string) => `${category}: ${label}`,
+  pinLacks: (
+    word: string,
+    type: string,
+    lacks: string,
+  ) => `A note pins ${word}, but this ${type} ${lacks}.`,
+  pinLacksHint:
+    "Figma pins only what a layer holds: give the layer that in this call (the note is written after its fills, strokes, effects and layout), or leave the word out of the note's brackets.",
   /** A bar between new words is the agent's text: one note (B-017). */
   barred: (text: string, part: string) => `${text} | ${part}`,
   noModes: (type: string) => `A ${type} takes no variable modes.`,

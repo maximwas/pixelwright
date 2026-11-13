@@ -150,6 +150,7 @@ export const SPAN_ATTRIBUTES: ReadonlySet<string> = new Set([
   ATTRIBUTE.textStyle,
   ATTRIBUTE.href,
   CSS_PROPERTY.font,
+  CSS_PROPERTY.fontVariationSettings,
   CSS_PROPERTY.letterSpacing,
   CSS_PROPERTY.textTransform,
   CSS_PROPERTY.textDecoration,

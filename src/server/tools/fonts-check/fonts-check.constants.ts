@@ -3,7 +3,7 @@ export const FONTS_CHECK_TOOL = {
   name: "fonts_check",
   title: "Check the fonts",
   description:
-    "The fonts a layer's texts use (the selected layer's by default), by family with the weights used, and where the build gets each: whether Google Fonts serves it, with a ready css2 link for those weights, and the weights it lacks; a family Google Fonts does not have needs its own files. Google Fonts' public catalogue is read once (no key); offline, the fonts are still listed.",
+    "The fonts a layer's texts use (the selected layer's by default), by family with the weights used, and where the build gets each: whether Google Fonts serves it, with a ready css2 link for those weights, and the weights it lacks; a family Google Fonts does not have needs its own files. A variable family also lists its axes (such as wght, wdth or opsz) with their ranges and defaults, the values font-variation-settings takes. Google Fonts' public catalogue is read once (no key); offline, the fonts are still listed.",
 } as const;
 
 export const FONTS_CHECK_FIELD = {
@@ -11,6 +11,7 @@ export const FONTS_CHECK_FIELD = {
   weights: 'The weights used, "400 italic" for an italic.',
   google: "Whether Google Fonts serves the family; null when it could not be reached.",
   css: "The Google Fonts css2 link for the weights used.",
+  axes: "A variable family's axes by tag, each with its range and default: the values font-variation-settings takes.",
 } as const;
 
 /** 0.7.0's words for the summary and each family (T-101). */

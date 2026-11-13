@@ -116,6 +116,17 @@ const LayerViewSchema = zod.object({
   interactions: zod.exactOptional(
     zod.array(zod.object({ trigger: zod.string(), summary: zod.string(), reaction: ReactionSchema })),
   ),
+  notes: zod
+    .exactOptional(
+      zod.array(
+        zod.object({
+          label: zod.exactOptional(zod.string()),
+          category: zod.exactOptional(zod.string()),
+          pins: zod.exactOptional(zod.array(zod.string())),
+        }),
+      ),
+    )
+    .check(zod.describe(INSPECT_FIELD.notes)),
   component: zod.exactOptional(
     zod.object({
       name: zod.string(),

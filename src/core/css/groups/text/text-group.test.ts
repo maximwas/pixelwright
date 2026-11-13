@@ -130,8 +130,9 @@ describe("TextGroup", () => {
     expect(css.properties).toEqual([["text-transform", "uppercase"]]);
   });
 
-  // C-117, FX-066: wght said by the weight, opsz at the size, slnt 0 and wdth 100 are what a browser draws anyway.
-  it("notes OpenType features and only the axes a browser would not draw by itself", () => {
+  // C-117, FX-066: wght said by the weight, opsz at the size, slnt 0 and wdth 100 are what a browser draws anyway; the
+  // other axes are an attribute design_apply writes back, the features a note.
+  it("writes only the axes a browser would not draw by itself, and notes OpenType features", () => {
     const css = read(
       textLayer([
         segment({
@@ -145,10 +146,11 @@ describe("TextGroup", () => {
       ]),
     );
 
-    expect(css.notes).toEqual([
-      ["font-feature-settings", '"ss01" 1, "liga" 0'],
-      ["font-variation-settings", '"GRAD" 50'],
+    expect(css.properties).toEqual([
+      ["font", "400 16px/24px 'Inter'"],
+      ["font-variation-settings", "'GRAD' 50"],
     ]);
+    expect(css.notes).toEqual([["font-feature-settings", '"ss01" 1, "liga" 0']]);
   });
 
   // C-116: align and wrap are CSS; vertical align on a fixed height, lists and paragraph spacing are notes.

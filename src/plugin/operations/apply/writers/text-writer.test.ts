@@ -24,7 +24,13 @@ function build() {
       await write(0, 3),
   };
   const assign = { set: vi.fn((node: object, values: object) => Object.assign(node, values)) };
-  const fonts = { start: vi.fn(), unloadedIn: () => undefined };
+  const fonts = {
+    start: vi.fn(),
+    unloadedIn: () => undefined,
+    font: () => undefined,
+    textFonts: (node: { getStyledTextSegments: () => { fontName: FontName }[] }) =>
+      node.getStyledTextSegments().map(({ fontName }) => fontName),
+  };
   const writer = new TextWriter(fonts as never, look as never, runs as never, assign as never);
 
   return { writer, runs, assign };
@@ -143,5 +149,29 @@ describe("TextWriter characters", () => {
 
     expect(assign.set).toHaveBeenCalledWith(node, { characters: "New" });
     expect(above.setProperties).not.toHaveBeenCalled();
+  });
+});
+
+describe("TextWriter axes", () => {
+  // The axes are checked against the family the characters are in: a Span's own font, else the text's, else its runs'.
+  it("checks font-variation-settings against the family each part's characters are in", async () => {
+    const { writer, runs } = build();
+    const families: string[][] = [];
+    const segments = [{ start: 0, end: 3, fontName: { family: "Roboto Flex", style: "Regular" } }];
+    const node = text("Old", { getStyledTextSegments: () => segments });
+
+    runs.check = async (_props: object, found: string[] = []) => {
+      families.push(found);
+
+      return [];
+    };
+    await writer.checks(
+      change({ fontVariations: { wdth: 90 } }, [{ start: 0, end: 1, props: { fontVariations: { wdth: 80 } } }]),
+      node as never,
+      new Set(),
+    );
+    await writer.checks(change({ fontVariations: { wdth: 90 } }), layer("TEXT"), new Set());
+
+    expect(families).toEqual([["Roboto Flex"], ["Roboto Flex"], ["Inter"]]);
   });
 });

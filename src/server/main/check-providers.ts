@@ -8,8 +8,9 @@ import { GRADIENT_PARSER, GradientParser } from "@/core/css/gradients/gradient-p
 import { EDGE_DIFF, EdgeDiff } from "@/core/images/edge-diff.ts";
 import { IMAGE_COMPARISON, ImageComparison } from "@/core/images/image-comparison.ts";
 import { RMSE, Rmse } from "@/core/images/rmse.ts";
-import { FONT_DIRECTORY, FONT_DIRECTORY_FALLBACK } from "@/core/ports/font-directory.port.ts";
+import { FONT_AXES, FONT_DIRECTORY, FONT_DIRECTORY_FALLBACK } from "@/core/ports/font-directory.port.ts";
 import { PIXEL_DIFF } from "@/core/ports/pixel-diff.port.ts";
+import { FontsourceAxes } from "@/server/adapters/http/fontsource-axes.ts";
 import { FontsourceDirectory } from "@/server/adapters/http/fontsource-directory.ts";
 import { GoogleMetadataDirectory } from "@/server/adapters/http/google-metadata-directory.ts";
 import { PixelmatchDiff } from "@/server/adapters/images/pixelmatch-diff.ts";
@@ -35,6 +36,7 @@ export class CheckProviders {
       .bind({ provide: COMPARED_IMAGES, useClass: ComparedImages })
       .bind({ provide: FONT_DIRECTORY, useClass: FontsourceDirectory })
       .bind({ provide: FONT_DIRECTORY_FALLBACK, useClass: GoogleMetadataDirectory })
+      .bind({ provide: FONT_AXES, useClass: FontsourceAxes })
       .bind({ provide: FONT_SOURCES, useClass: FontSources })
       .bind({ provide: BUILD_STYLES, useClass: BuildStyles });
   }

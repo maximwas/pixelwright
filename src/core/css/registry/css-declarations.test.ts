@@ -58,6 +58,7 @@ describe("CssDeclarations", () => {
       "filter",
       "backdrop-filter",
       "font",
+      "font-variation-settings",
       "letter-spacing",
       "text-transform",
       "text-decoration",

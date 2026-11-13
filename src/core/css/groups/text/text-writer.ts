@@ -74,6 +74,10 @@ export class TextWriter implements PropertyWriter {
       this.#font(input, out);
     }
 
+    if (styled([CSS_PROPERTY.fontVariationSettings])) {
+      this.#variations(own(CSS_PROPERTY.fontVariationSettings) ?? "", out);
+    }
+
     if (styled([CSS_PROPERTY.letterSpacing])) {
       this.#letterSpacing(own(CSS_PROPERTY.letterSpacing) ?? "", out);
     }
@@ -146,6 +150,17 @@ export class TextWriter implements PropertyWriter {
       );
     } else {
       out.set(INTENT_KEY.font, font, CSS_PROPERTY.font);
+    }
+  }
+
+  /** A variable font's axes (Plugin API 138); whether the family has them is the plugin's check, dry or real. */
+  #variations(value: string, out: WriteOutput): void {
+    const axes = this.#fonts.variations(value);
+
+    if (axes === null) {
+      out.fail(CSS_PROPERTY.fontVariationSettings, TEXT_ERROR.badVariations(value));
+    } else {
+      out.set(INTENT_KEY.fontVariations, axes, CSS_PROPERTY.fontVariationSettings);
     }
   }
 

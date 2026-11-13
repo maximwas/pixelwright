@@ -65,6 +65,14 @@ export const SOURCE_TEXT = {
 /** Why 2,000,000: 0.7.0 took that much XML in one call, about 20,000 lines. */
 export const DESIGN_APPLY_LIMIT = { xmlChars: 2_000_000 } as const;
 
+/** What FontRanges logs: a call over the cap of families checks their axes' tags alone. */
+export const FONT_RANGES_LOG = {
+  skipped: "font-variation-settings go over more families than the cap: their axes are checked by tag alone",
+} as const;
+
+/** The family Figma starts a new text in (FX-040), whose axis ranges a new text's font-variation-settings need. */
+export const NEW_TEXT_FAMILY = "Inter";
+
 export const DESIGN_APPLY_FIELD = {
   xml: "Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer.",
   elements:

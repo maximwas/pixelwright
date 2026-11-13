@@ -11,4 +11,8 @@ export const APPLY = {
   tagChars: 50,
   /** Why 1,000,000: a text's characters, half of what one call's XML may hold. */
   characters: 1_000_000,
+  /** Why 20: one catalogue request each, all at once; a page sets axes over a few families, far fewer than this. */
+  fontFamilies: 20,
+  /** Why 64: a variable font has a dozen axes (Roboto Flex 13), and a family's tags are four letters each. */
+  fontAxes: 64,
 } as const;

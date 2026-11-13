@@ -85,6 +85,24 @@ baseline_diff, which compares a baseline in the file it was saved from.
      the tools first (`design_read`, `inspect`, `measure`, `nodes_find` to read, `design_apply` to write), which need
      no code and answer in the XML's terms.
 
+## Checking a build without a browser
+
+When the agent has no browser of its own, the design and the build still meet as two PNGs of one size:
+
+1. `screenshot` the frame with `save` (scale 1, or the build's device pixel ratio) and note its width and height.
+2. Render the build at that size with what the project already has: a headless Playwright script
+   (`page.setViewportSize`, then `page.screenshot` of the section's element), the framework's own preview or
+   screenshot test, or Storybook's test runner. Wait for fonts and images before the shot. A project with no
+   renderer has nothing to compare: use the read checks of step 4 alone and tell the user the render check was
+   skipped.
+3. `image_compare` the frame's id with the build's PNG as `reference` and the same `scale`, with `diff` set: `rmse`
+   and `different` say how far apart they are, `box` where, and `rows` and `columns` which edges moved and by how
+   many px. Fix what the diff shows, render again, compare again.
+4. What reading alone checks, with no render: `inspect` gives each layer's size, auto layout gaps and paddings, and
+   text runs; `measure` gives the distances between layers; compare those numbers with the build's CSS. When the
+   headless render can also hand back an element's computed styles (`getComputedStyle`), `styles_compare` lists every
+   property that differs.
+
 ## Reading a design like a web developer
 
 A design shows the look, not the build. `design_read`'s hints say where the two part; read them before you write

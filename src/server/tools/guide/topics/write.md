@@ -108,13 +108,18 @@ change); when it cannot be saved, nothing is written.
   grow with it (a 24px icon with a 2px line at 48px has a 4px line). The drawing keeps its ratio: the width decides
   when both are given, else the height. The size is the one design_read writes (what the icon draws past its box
   included); a `Frame` with the same id only resizes, its lines staying as they are.
-- `note="Behavior: opens the modal | Spacing: 8px"` writes the layer's Dev Mode notes, the whole list, as design_read
-  writes it (`note=""` removes them). `Behavior: ` files a note under the file's annotation category of that name; a
-  name the file has no category for stays part of the text (no category is made). A `|` with a space on each side
-  separates the layer's own notes sent back and comes before a note a category starts; elsewhere it is text, so
-  `note="Tabs: Days | Weeks"` is one note (two new notes without a category take two calls). A note sent back as it
-  was keeps its category, formatting and pinned properties; notes without text, which design_read does not show,
-  stay.
+- `note="Behavior: opens the modal | Spacing: 8px [gap]"` writes the layer's Dev Mode notes, the whole list, as
+  design_read writes it (`guide xml`, Notes; `note=""` removes them, and a note left out of the list is removed).
+  `Behavior: ` files a note under the file's annotation category of that name; a name the file has no category for
+  stays part of the text (no category is made). A closing bracket pins those properties in the note, in design_read's
+  CSS words (`[gap, padding]`, a text's `[color]`, `[]` pins none); a bracket with any other word is text, and `\[`
+  keeps one as text. `[background]` alone is a note of pins without text. A pin needs the layer to have that property: a radius pin a layer
+  with radius 0, an opacity pin one at 1, a limit pin (`min-width`, ...) one that is not set, `background`, `border`,
+  `gap` and the like one without fills, strokes or auto layout are refused. A `|` with a space on each side separates
+  the layer's own notes sent back and comes before a note a category starts or after one with pins; elsewhere it is
+  text, so `note="Tabs: Days | Weeks"` is one note (two new notes without a category take two calls). A note sent back
+  as it was keeps its category, Markdown formatting and pins; the same words under another category or with other pins
+  keep their formatting. A new note's text is plain.
 
 ## Text on a path
 
@@ -148,6 +153,10 @@ change); when it cannot be saved, nothing is written.
   the nearest one within 50, the plain style before the others; a family this Figma lacks is refused with the near
   ones ("Did you mean Inter?"), on a dry run too. A text whose font this Figma cannot load keeps its characters until
   it gets a font this Figma has.
+- `font-variation-settings="'wdth' 90, 'GRAD' 50"` sets a variable font's axes on a Text or a Span, over the font it
+  has or the one `font` gives: the axes named, the weight and optical size the font has, and every other axis back to
+  the font's own (`normal` or leaving it out returns them all). An axis the family lacks, a static family, and a value
+  outside the range `fonts_check` lists are refused, on a dry run too.
 - Colours: hex, `rgb()`, `hsl()` or `color(display-p3 …)`. In a Display P3 file, `color(display-p3 …)` (as
   design_read writes it) is written as it is, and hex, `rgb()` or `hsl()` are taken as sRGB and converted to P3.
 - `var(--Name)` binds the token of that name, as design_read and tokens_read write it: a colour variable or a paint

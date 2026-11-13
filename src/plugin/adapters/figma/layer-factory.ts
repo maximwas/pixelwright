@@ -100,6 +100,11 @@ export class LayerFactory {
     return figma.listAvailableFontsAsync();
   }
 
+  /** A variable family's axis tags (Plugin API 138), null for a static one; Figma throws for a family it lacks. */
+  variationAxes(family: string): string[] | null {
+    return figma.getFontFamilyVariationAxes(family);
+  }
+
   loadFont(font: FontName): Promise<void> {
     return figma.loadFontAsync(font);
   }

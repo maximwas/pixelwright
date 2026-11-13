@@ -120,6 +120,7 @@ export const INTENT_KEY = {
   modes: "modes",
   textStyle: "textStyle",
   font: "font",
+  fontVariations: "fontVariations",
   letterSpacing: "letterSpacing",
   textCase: "textCase",
   textDecoration: "textDecoration",
