@@ -249,7 +249,7 @@ return live.length;`,
 
     expect(paint.find(({ name }) => name === `${LIVE}/Fill`)).toMatchObject({
       token: "--live-tokens-Fill",
-      value: expect.stringMatching(/^#336699$/i),
+      value: "#369",
     });
     expect(text.find(({ name }) => name === `${LIVE}/Caption`)).toMatchObject({
       token: "--live-tokens-Caption-font",
