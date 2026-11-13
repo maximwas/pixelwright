@@ -1,7 +1,7 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import type { ComponentOwner } from "@/plugin/adapters/figma/components/components.types.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { PROPERTY_NAME } from "@/plugin/operations/components/components.constants.ts";
-import type { ComponentOwner } from "@/plugin/operations/components/components.types.ts";
 import { COMPONENT_TYPE } from "@/shared/ops/components/components.constants.ts";
 import type { ComponentEntry, PropertyDefinitions } from "@/shared/ops/components/components.schema.ts";
 

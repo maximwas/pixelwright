@@ -4,6 +4,7 @@ import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_TEXT, NEW_LAYER_TYPE } from "@/plugin/operations/apply/apply.constants.ts";
 import type { ApplyCall } from "@/plugin/operations/apply/apply.types.ts";
+import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import { APPLY_CHECKS } from "@/plugin/operations/apply/checks.ts";
 import { NEW_LAYERS } from "@/plugin/operations/apply/new-layers.ts";
 import { PAGES } from "@/plugin/operations/apply/pages.ts";
@@ -13,8 +14,9 @@ import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 
 /**
  * The layer each change writes, found or made and placed (T-123..T-126): an existing one (moved when its change says
- * so), a page, a copy's layer for the source's, a copy, or a new layer at its XML place. A dry run checks the same and
- * knows a layer it would make by its type alone.
+ * so), a page, a copy's or a new instance's layer for the source's, a copy, an instance, or a new layer at its XML
+ * place, with what its type refuses (ApplyChecks). A dry run checks the same and knows a layer it would make by its
+ * type and the layer it would sit in (m:f66aed65).
  */
 @injectable()
 export class ApplyLayers {
@@ -33,6 +35,16 @@ export class ApplyLayers {
     this.#layers = layers;
     this.#placement = placement;
     this.#pages = pages;
+  }
+
+  /** Where top-level new layers go: the layer or page by id, else the current page. */
+  async top(id: string | undefined): Promise<BaseNode> {
+    return await this.#checks.top(id);
+  }
+
+  /** What the write refuses the change for its layer's type alone, the same on dry and real runs. */
+  refusals(layer: TypedLayer, change: ApplyChangeData): Refusal[] {
+    return this.#checks.refusals(layer, change);
   }
 
   async of(change: ApplyChangeData, call: ApplyCall): Promise<TypedLayer> {
@@ -88,25 +100,22 @@ export class ApplyLayers {
     return call.dry ? { type: FIGMA_NODE_TYPE.page } : this.#pages.made(change.props.name);
   }
 
-  /** Inside a copy: the copy's layer for the source's; a dry run checks the source's, which the copy's stands for. */
+  /**
+   * Inside a copy or a new instance: its layer for the source's; a dry run checks the source's, which that layer stands
+   * for (a new instance's layers are named by another instance's of its component, or by the component's own).
+   */
   async #counterpart(change: ApplyChangeData, call: ApplyCall): Promise<TypedLayer> {
     const copy = call.changes.find(({ ref }) => ref === change.copy);
 
-    if (copy?.copyOf === undefined) {
-      throw new WriteError(APPLY_TEXT.instanceLayers);
+    if (copy === undefined || !call.layers.has(copy.ref)) {
+      throw new WriteError(copy?.copyOf === undefined ? APPLY_TEXT.instanceNotMade : APPLY_TEXT.copyNotMade);
     }
 
-    const made = call.layers.has(copy.ref);
-
     if (call.dry) {
-      if (!made) {
-        throw new WriteError(APPLY_TEXT.copyNotMade);
-      }
-
       return await this.#moved(await this.#checks.existing(change, false, change.source), change, call);
     }
 
-    return await this.#moved(call.counterparts.find(change, made), change, call);
+    return await this.#moved(call.counterparts.find(change), change, call);
   }
 
   /** A new layer's place checked, and on a real run the layer made (or the source cloned) there. */
@@ -124,7 +133,25 @@ export class ApplyLayers {
     if (change.copyOf === undefined) {
       const type = this.#checks.creatable(change, parent);
 
-      return call.dry ? { type } : this.#layers.create(type, change, await this.#placement.whereTo(change, call));
+      if (type === FIGMA_NODE_TYPE.componentSet) {
+        this.#checks.filled(change, call.changes);
+      }
+
+      if (call.dry) {
+        return { type, parent };
+      }
+
+      const place = await this.#placement.whereTo(change, call);
+
+      if (type !== FIGMA_NODE_TYPE.instance) {
+        return this.#layers.create(type, change, place);
+      }
+
+      const instance = await this.#layers.instance(change, place);
+
+      call.counterparts.pairInstance(change.ref, instance);
+
+      return instance;
     }
 
     const source = await this.#checks.existing(change, !call.dry, change.copyOf);
@@ -132,7 +159,7 @@ export class ApplyLayers {
     this.#checks.creatable(change, parent, source.type);
 
     if (call.dry) {
-      return { type: source.type };
+      return { type: source.type, parent };
     }
 
     const copy = this.#layers.copy(source, await this.#placement.whereTo(change, call));

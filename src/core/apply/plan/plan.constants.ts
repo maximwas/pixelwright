@@ -12,6 +12,12 @@ export const PLAN_TEXT = {
     wanted: string,
     has: string,
   ) => `${name} has no variant ${wanted}: it has ${has}.`,
+  switched: (where: string, to: string) =>
+    `This layer is inside ${where}, which this call switches to another ${to}: Figma gives the instance's layers new ids then, so this layer is not written.`,
+  switchedHint: (to: string) =>
+    `Switch the ${to} first, read the instance again, then edit its layers by their new ids.`,
+  standingFor: (source: string) => `the instance standing for ${source}`,
+  copyOf: (source: string) => `the copy of ${source}`,
 } as const;
 
 export const PLAN_VALUE = {
@@ -22,6 +28,10 @@ export const PLAN_VALUE = {
   variantJoint: ", ",
   variantsJoint: "; ",
   variantPair: (name: string, value: string) => `${name}=${value}`,
+  variant: "variant",
+  component: "component",
+  /** How a layer's id inside an instance starts: I<instance id>; (a nested instance's id has its I already). */
+  insideInstance: (id: string) => `${id.startsWith("I") ? id : `I${id}`};`,
 } as const;
 
 /** The read-only attribute design_read writes what a component's layer is bound to as, for what design_apply sets. */

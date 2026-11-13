@@ -13,6 +13,7 @@ import { CssReader } from "@/core/css/css-reader.ts";
 import { FontShorthand } from "@/core/css/fonts/font-shorthand.ts";
 import { GradientCss } from "@/core/css/gradients/gradient-css.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
+import { ElementWriter } from "@/core/css/groups/element/element-writer.ts";
 import { GapReader } from "@/core/css/groups/layout/gap-reader.ts";
 import { GridWriter } from "@/core/css/groups/layout/grid-writer.ts";
 import { LayoutGroup } from "@/core/css/groups/layout/layout-group.ts";
@@ -260,5 +261,70 @@ describe("PlannedComponents", () => {
     expect(planned.has("Button")).toBe(true);
     expect(planned.missingVariant("Button", { Size: "S" })).toBeNull();
     expect(planned.missingVariant("Button", { Size: "L" })).toBe("Button has no variant Size=L: it has Size=S.");
+  });
+});
+
+/** The planner with the writer of component, variant and props too, as the server binds it. */
+const elements = new WriteRegistry([
+  new LayoutWriter(lengths, split, gaps, new GridWriter(lengths, split, gaps)),
+  new ElementWriter(new NameValueList()),
+]);
+const components = new WritePlanner(
+  reads,
+  new Assessor(new Unchanged(new LayerRenders(builder, assets, texts), elements, new CssUrl(split)), reads),
+  new ChangeOf(elements),
+  placed,
+);
+
+describe("WritePlanner components", () => {
+  // T-128, B-029: Figma gives a switched instance's layers new ids, so an edit inside it by the old id is refused up
+  // front, on dry and real runs alike; the switch itself is written.
+  it("refuses an edit inside an instance the call switches to another variant", () => {
+    const inner = layer("I1:1;2:3", { name: "Label" });
+    const instance = layer("1:1", { type: "INSTANCE", children: [inner], childCount: 1 });
+    const model: ReadModel = {
+      model: 1,
+      profile: "apply",
+      root: instance,
+      styles: {},
+      variables: {},
+      page: { id: "0:1", name: "Page" },
+    };
+    const plan = components.plan(
+      [
+        element({ tag: "Instance", id: "1:1", ref: "1:1", attributes: { variant: "Size=Large" } }),
+        element({ line: 2, id: "I1:1;2:3", ref: "I1:1;2:3", parent: "1:1", attributes: { name: "Title" } }),
+      ],
+      CurrentLayers.of([model], []),
+    );
+
+    expect(plan.changes.map(({ ref }) => ref)).toEqual(["1:1"]);
+    expect(plan.errors).toEqual([
+      {
+        line: 2,
+        column: 1,
+        id: "I1:1;2:3",
+        message:
+          "This layer is inside 1:1, which this call switches to another variant: Figma gives the instance's layers new ids then, so this layer is not written.",
+        hint: "Switch the variant first, read the instance again, then edit its layers by their new ids.",
+      },
+    ]);
+  });
+
+  // C-178: an instance of a set the call makes, with values none of its variants has, is refused on both runs alike.
+  it("refuses an instance of a set the call makes without the variant it names", () => {
+    const plan = components.plan(
+      [
+        element({ tag: "ComponentSet", ref: "new:1", attributes: { name: "Tone" } }),
+        element({ tag: "Component", ref: "new:2", parent: "new:1", attributes: { variant: "Tone=Dark" } }),
+        element({ line: 3, tag: "Instance", ref: "new:3", attributes: { component: "Tone", variant: "Tone=Light" } }),
+      ],
+      CurrentLayers.of([], []),
+    );
+
+    expect(plan.changes.map(({ ref }) => ref)).toEqual(["new:1", "new:2"]);
+    expect(plan.errors).toEqual([
+      { line: 3, column: 1, attribute: "variant", message: "Tone has no variant Tone=Light: it has Tone=Dark." },
+    ]);
   });
 });

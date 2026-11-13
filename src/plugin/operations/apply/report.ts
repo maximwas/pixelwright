@@ -35,6 +35,20 @@ export class ApplyReport {
     this.#made.add(node.id);
   }
 
+  /** A layer the call made and took away again is no longer created; whether it was one. */
+  unmade(id: string): boolean {
+    const at = this.#created.findIndex((one) => one.id === id);
+
+    if (at < 0) {
+      return false;
+    }
+
+    this.#created.splice(at, 1);
+    this.#made.delete(id);
+
+    return true;
+  }
+
   /** A layer written to, once. */
   wroteTo(id: string): void {
     if (!this.#made.has(id)) {
