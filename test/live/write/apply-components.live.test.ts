@@ -52,11 +52,18 @@ return node.findOne((layer) => layer.type === ${JSON.stringify(type)}).id;`)) as
     }
 
     try {
-      await run(`const section = await pw.node(${JSON.stringify(scratch)});
-// A layer inside an instance (id I…) cannot be removed on its own and would stop the loop: its instance takes it.
-for (const node of section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)}) && !node.id.startsWith("I"))) {
-  if (!node.removed) node.remove();
-}`);
+      // The cases' own layers sit at the top of the section: removing those takes everything inside. A sweep of what is
+      // left skips a layer Figma will not remove alone (inside an instance or its slot), and the hook fails when
+      // anything named for this file stays, so a leftover never reaches the next file's counts.
+      const left = await run(`const section = await pw.node(${JSON.stringify(scratch)});
+const mine = (node) => node.name.startsWith(${JSON.stringify(PREFIX)});
+for (const node of section.children.filter(mine)) node.remove();
+for (const node of section.findAll(mine)) {
+  if (!node.removed) { try { node.remove(); } catch {} }
+}
+return section.findAll(mine).map((node) => node.id);`);
+
+      expect(left).toEqual([]);
     } finally {
       await client.close();
     }
