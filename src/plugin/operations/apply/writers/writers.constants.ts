@@ -25,11 +25,34 @@ export const STEP_KEYS = {
   place: ["horizontal", "vertical"],
   opacity: ["opacity"],
   clip: ["clipsContent"],
+  blend: ["blendMode"],
+  mask: ["mask"],
+  corners: ["cornerRadius"],
   fills: ["fills"],
+  strokes: ["strokes"],
+  effects: ["effects"],
 } as const satisfies Record<string, readonly (keyof FigmaProps)[]>;
 
-/** Figma's paint type of a colour. */
-export const FIGMA_PAINT = { solid: "SOLID" } as const;
+/** The paint lists a layer has, and the style field beside each. */
+export const PAINT_FIELD = { fills: "fills", strokes: "strokes" } as const;
+
+/** How a layer shows: a CSS normal on a layer whose children blend as one is Figma's pass through. */
+export const BLEND = {
+  normal: "NORMAL",
+  passThrough: "PASS_THROUGH",
+  passing: ["FRAME", "GROUP", "COMPONENT", "COMPONENT_SET", "INSTANCE", "SECTION"],
+} as const;
+
+export const STROKE = {
+  line: "LINE",
+  center: "CENTER",
+  inside: "INSIDE",
+  /** A CSS dashed border has no pattern of its own: 4 on, 4 off, 0.7.0's. */
+  dash: [4, 4],
+} as const;
+
+/** The corner fields in CSS's order: top left, top right, bottom right, bottom left. */
+export const CORNERS = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"] as const;
 
 /** Figma's values for how a layer sizes and places itself. */
 export const LAYOUT_SIZING = { fixed: "FIXED", fill: "FILL", hug: "HUG" } as const;
@@ -59,8 +82,9 @@ export const HIDDEN_KEY = "visible" satisfies keyof FigmaProps;
 
 export const WRITERS_TEXT = {
   token: (token: string) => `The token ${token} is not bound to Figma in this release: write its value.`,
-  paint: (kind: string) => `A ${kind} background is not written to Figma in this release: write a colour.`,
-  colourSpace: "A display-p3 colour is not written to Figma in this release: write it in sRGB.",
+  paintStyle: (token: string) => `${token} is a paint style, which is the whole list of a layer's paints.`,
+  paintStyleHint: "Use it as the only layer, without color-mix().",
+  noEffectStyle: (token: string) => `No effect style is named ${token} in this file or the libraries its page uses.`,
   sectionHug: "A section is sized in pixels: it cannot hug what it holds.",
   growInGrid: "flex fills a flex parent's direction: this layer's parent is a grid.",
   growInGridHint: 'Fill its cell with justify-self="stretch" and align-self="stretch".',

@@ -1,4 +1,4 @@
-import { inject, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_EFFECTS, EFFECTS_WRITE } from "@/core/css/groups/effects/effects.constants.ts";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
 
@@ -74,3 +74,5 @@ export class EffectMerge {
     return this.#names.alias(effect.boundVariables, EFFECTS_WRITE.boundColor);
   }
 }
+
+export const EFFECT_MERGE = new InjectionToken<EffectMerge>("EffectMerge");

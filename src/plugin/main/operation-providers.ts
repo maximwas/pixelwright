@@ -1,13 +1,19 @@
 import type { Container } from "@needle-di/core";
+import { GRADIENT_GEOMETRY, GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
+import { EFFECT_MERGE, EffectMerge } from "@/core/css/groups/effects/effect-merge.ts";
 import { NEARBY_NOTES, NearbyNotes } from "@/core/inspect/nearby.ts";
 import { PLACEMENT_SPAN, PlacementSpan } from "@/core/kernel/geometry/placement-span.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
+import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
 import { ASSIGN, Assign } from "@/plugin/adapters/figma/assign.ts";
 import { CAPABILITIES, Capabilities } from "@/plugin/adapters/figma/capabilities.ts";
+import { EFFECTS, Effects } from "@/plugin/adapters/figma/effects.ts";
 import { LAYER_FACTORY, LayerFactory } from "@/plugin/adapters/figma/layer-factory.ts";
+import { PAINTS, Paints } from "@/plugin/adapters/figma/paints.ts";
 import { FILE_TOKENS, FileTokens } from "@/plugin/adapters/figma/variables/file-tokens.ts";
 import { LIBRARY_CATALOGUE, LibraryCatalogue } from "@/plugin/adapters/figma/variables/library-catalogue.ts";
 import { USED_TOKENS, UsedTokens } from "@/plugin/adapters/figma/variables/used-tokens.ts";
+import { VARIABLE_COLOR, VariableColor } from "@/plugin/adapters/figma/variables/variable-color.ts";
 import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
@@ -18,7 +24,11 @@ import { APPLY_CHECKS, ApplyChecks } from "@/plugin/operations/apply/checks.ts";
 import { NEW_LAYERS, NewLayers } from "@/plugin/operations/apply/new-layers.ts";
 import { PAGES, Pages } from "@/plugin/operations/apply/pages.ts";
 import { PLACEMENT, Placement } from "@/plugin/operations/apply/placement.ts";
+import { TOKEN_INDEX, TokenIndex } from "@/plugin/operations/apply/token-index.ts";
+import { BlendStep } from "@/plugin/operations/apply/writers/blend-step.ts";
 import { ClipStep } from "@/plugin/operations/apply/writers/clip-step.ts";
+import { CornersStep } from "@/plugin/operations/apply/writers/corners-step.ts";
+import { EffectsStep } from "@/plugin/operations/apply/writers/effects-step.ts";
 import { FillsStep } from "@/plugin/operations/apply/writers/fills-step.ts";
 import { LimitsStep } from "@/plugin/operations/apply/writers/geometry/limits-step.ts";
 import { PlaceStep } from "@/plugin/operations/apply/writers/geometry/place-step.ts";
@@ -29,9 +39,12 @@ import { LAYER_WRITER, LayerWriter, WRITE_STEPS } from "@/plugin/operations/appl
 import { ChildStep } from "@/plugin/operations/apply/writers/layout/child-step.ts";
 import { GridCellStep } from "@/plugin/operations/apply/writers/layout/grid-cell-step.ts";
 import { LayoutStep } from "@/plugin/operations/apply/writers/layout/layout-step.ts";
+import { MaskStep } from "@/plugin/operations/apply/writers/mask-step.ts";
 import { NameStep } from "@/plugin/operations/apply/writers/name-step.ts";
 import { OpacityStep } from "@/plugin/operations/apply/writers/opacity-step.ts";
+import { PAINT_WRITE, PaintWrite } from "@/plugin/operations/apply/writers/paint-write.ts";
 import { STEP_VALUES, StepValues } from "@/plugin/operations/apply/writers/step-values.ts";
+import { StrokesStep } from "@/plugin/operations/apply/writers/strokes-step.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
 import { COMPONENT_DETAILS, ComponentDetails } from "@/plugin/operations/components/component-details.ts";
@@ -137,8 +150,13 @@ export class OperationProviders {
       .bind({ provide: WRITE_STEPS, multi: true, useClass: TurnStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: PlaceStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: OpacityStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: BlendStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: MaskStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: ClipStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: CornersStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: FillsStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: StrokesStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: EffectsStep })
       .bind({ provide: LAYER_WRITER, useClass: LayerWriter })
       .bind({ provide: APPLY_CHECKS, useClass: ApplyChecks })
       .bind({ provide: PLACEMENT_SPAN, useClass: PlacementSpan })
@@ -148,5 +166,19 @@ export class OperationProviders {
       .bind({ provide: APPLY_LAYERS, useClass: ApplyLayers })
       .bind({ provide: APPLY_RUN, useClass: ApplyRun })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
+    this.#paints(container);
+  }
+
+  /** What design_apply's paint, effect and token steps write with (P-092, P-093, P-097). */
+  #paints(container: Container): void {
+    container
+      .bind({ provide: TOKEN_NAMES, useClass: TokenNames })
+      .bind({ provide: GRADIENT_GEOMETRY, useClass: GradientGeometry })
+      .bind({ provide: EFFECT_MERGE, useClass: EffectMerge })
+      .bind({ provide: VARIABLE_COLOR, useClass: VariableColor })
+      .bind({ provide: PAINTS, useClass: Paints })
+      .bind({ provide: EFFECTS, useClass: Effects })
+      .bind({ provide: TOKEN_INDEX, useClass: TokenIndex })
+      .bind({ provide: PAINT_WRITE, useClass: PaintWrite });
   }
 }

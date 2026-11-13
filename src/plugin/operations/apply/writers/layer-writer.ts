@@ -1,6 +1,6 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
-import type { Capability } from "@/plugin/adapters/figma/capabilities.ts";
+import type { Capability, TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
@@ -11,6 +11,8 @@ export interface WriteStep {
   readonly keys: readonly (keyof FigmaProps)[];
   readonly capability: Capability | null;
   write(node: SceneNode, props: FigmaProps): void | Promise<void>;
+  /** What the layer's type and the file's tokens refuse, found without writing (a dry run's check too). */
+  check?(props: FigmaProps, layer: TypedLayer): void | Promise<void>;
 }
 
 /** The write steps in Figma's order (P-149): the layer's own layout before anything sized in it, then how it looks. */
@@ -72,6 +74,31 @@ export class LayerWriter {
     }
 
     return wrote;
+  }
+
+  /**
+   * What the steps' own checks refuse (a token the file lacks, a weight per side on a layer without sides), the same
+   * on dry and real runs; a step already refused is not checked again.
+   */
+  async checks(
+    change: ApplyChangeData,
+    layer: TypedLayer,
+    refusals: readonly Refusal[],
+  ): Promise<Refusal[]> {
+    const refused = new Set(refusals.flatMap(({ keys }) => keys));
+    const found: Refusal[] = [];
+
+    for (const step of this.#steps) {
+      if (step.check !== undefined && step.keys.some((key) => change.props[key] !== undefined && !refused.has(key))) {
+        try {
+          await step.check(change.props, layer);
+        } catch (error) {
+          found.push({ error, keys: step.keys });
+        }
+      }
+    }
+
+    return found;
   }
 
   /** New characters, the text's fonts loaded first; the same characters are not set again (P-080). */

@@ -24,6 +24,27 @@ export const APPLY_PATTERN = { pageLimit: /comes with (\d+) pages?/i } as const;
 /** Figma's values a new layer starts with. */
 export const NEW_LAYER_VALUE = { hug: "HUG", none: "NONE", fit: "WIDTH_AND_HEIGHT", slot: "SLOT" } as const;
 
+/** The kinds of style and variable a token index tells apart, as Figma names them. */
+export const TOKEN_KIND = { paint: "PAINT", effect: "EFFECT", colour: "COLOR" } as const;
+
+export const TOKEN_TEXT = {
+  keyJoint: " ",
+  key: (kind: string, token: string) => `${kind} ${token}`,
+  unknown: (what: string, token: string) => `No ${what} is named ${token} in this file or the libraries it uses.`,
+  colourWhat: "paint style or colour variable",
+  variableWhat: "variable",
+  near: (near: string) => `Did you mean ${near}? A new one: create it with tokens_apply first.`,
+  list: "tokens_read lists the file's tokens; create a new one with tokens_apply first.",
+  unreachable: (token: string) => `${token} names a variable Figma cannot reach now.`,
+  unreachableHint: "Enable its library, or use a value.",
+  wrongType: (
+    token: string,
+    held: string,
+    wanted: string,
+  ) =>
+    `${token} is a ${held.toLowerCase()} variable: this needs a ${wanted.toLowerCase()} one.`,
+} as const;
+
 function withArticle(word: string): string {
   return `${/^[aeiou]/i.test(word) ? "an" : "a"} ${word}`;
 }
