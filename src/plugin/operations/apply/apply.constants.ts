@@ -53,8 +53,8 @@ export const TOKEN_TEXT = {
   unknown: (what: string, token: string) => `No ${what} is named ${token} in this file or the libraries it uses.`,
   colourWhat: "paint style or colour variable",
   variableWhat: "variable",
-  near: (near: string) => `Did you mean ${near}? A new one: create it with tokens_apply first.`,
-  list: "tokens_read lists the file's tokens; create a new one with tokens_apply first.",
+  near: (near: string) => `Did you mean ${near}? Else write the value.`,
+  list: "tokens_read lists the tokens the file has: bind one of them, or write the value.",
   unreachable: (token: string) => `${token} names a variable Figma cannot reach now.`,
   unreachableHint: "Enable its library, or use a value.",
   wrongType: (

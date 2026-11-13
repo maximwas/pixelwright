@@ -198,10 +198,10 @@ export const LAYOUT_ERROR = {
   badWrap: (wrap: string) => `flex-wrap="${wrap}" is not one Figma has: wrap or nowrap.`,
   needsGrid: (name: string) => `${name} needs display="grid".`,
   needsFlex: (name: string) => `${name} needs display="flex": a grid places its children in tracks.`,
-  badBox: (value: string) => `padding="${value}" is not 1 to 4 lengths in px or tokens.`,
-  badSide: (name: string, value: string) => `${name}="${value}" is not a length in px or a token.`,
+  badBox: (value: string) => `padding="${value}" is not 1 to 4 lengths in px.`,
+  badSide: (name: string, value: string) => `${name}="${value}" is not a length in px.`,
   badTracks: (name: string, value: string) => `${name}="${value}" is not tracks in fr, px or auto (repeat() allowed).`,
-  badGapShorthand: (gap: string) => `gap="${gap}" is not one or two lengths in px or tokens (rows, then columns).`,
+  badGapShorthand: (gap: string) => `gap="${gap}" is not one or two lengths in px (rows, then columns).`,
   badKeyword: (
     name: string,
     value: string,

@@ -102,5 +102,5 @@ export const EFFECTS_ERROR = {
   notBlur: (attribute: string, value: string) => `${attribute}="${value}" is not blur(Npx), the one filter Figma has.`,
   notShadow: (shadow: string) => `"${shadow}" is not a shadow: [inset] x y [blur] [spread] and a colour.`,
   shareOfVariable: (token: string) =>
-    `A shadow's colour variable is its whole colour, its alpha too: write var(${token}) alone, or make a variable with that alpha with tokens_apply first.`,
+    `A shadow's colour variable is its whole colour, its alpha too: write var(${token}) alone, or the colour with that alpha as a value.`,
 } as const;

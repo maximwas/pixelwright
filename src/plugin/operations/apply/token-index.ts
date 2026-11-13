@@ -183,7 +183,7 @@ export class TokenIndex {
     }
   }
 
-  /** A token no one has: the near one, and where a new one comes from (tokens_apply makes tokens). */
+  /** A token no one has: the near one, else where the file's tokens are listed. */
   #unknown(token: string, type: string): WriteError {
     const names = [
       ...this.#variables.keys(),

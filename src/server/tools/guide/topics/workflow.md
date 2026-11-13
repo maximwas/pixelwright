@@ -1,9 +1,9 @@
 # Pixelwright: how to work with a Figma file
 
-Pixelwright reads the files open in Figma Desktop through its plugin; nothing goes through Figma's REST API. This
-version reads only: no tool changes the file. Every tool that reads a file takes `file` (a session id from `status`,
-or a file name); without it, the active file, except baseline_diff, which compares a baseline in the file it was
-saved from.
+Pixelwright reads and writes the files open in Figma Desktop through its plugin; nothing goes through Figma's REST
+API. design_apply, nodes_delete and version_save change the file (step 8); every other tool reads. Every tool that
+works on a file takes `file` (a session id from `status`, or a file name); without it, the active file, except
+baseline_diff, which compares a baseline in the file it was saved from.
 
 1. **Connection.** `status` lists the connected files and which one is active. None connected: the user runs the
    Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code `status`
@@ -25,7 +25,8 @@ saved from.
    - `changes_since`: what the designer changed since you last looked (a cursor), to read again only that.
 3. **Read one section.** `design_read` returns the section as XML (`guide xml` explains every tag and attribute),
    then JSON with tokens, text styles, fonts, assets, hints and truncated, plus `measurements` (the designer's Dev
-   Mode measurements, in px) when the section has them. Read sections, not whole pages: past `maxChars` (80 000) the
+   Mode measurements, in px) when the section has them. That answer is complete for a build: write the code from it.
+   Read sections, not whole pages: past `maxChars` (80 000) the
    deepest branches are left empty with `$truncated="true"` and their ids listed in `truncated`; read each on its own.
    Pass `assetsDir` (e.g. src/assets) to get its icons and images written as files (`guide assets`).
    `repeats: true` reads a list of alike items once (`$repeat`), with their data as rows: shorter, and the list's
@@ -60,14 +61,19 @@ saved from.
 6. **Files.** `assets_export`: several layers, or every asset inside one, as PNG, JPG, WebP, SVG or PDF, or the
    images as they were placed (`original: true`); `width` sizes a render by the CSS width the build shows it at (110
    at scale 2: 220 px). When a file gets another name than design_read planned (`planned`), use the path it gives.
-7. **Keep the code in step with the design.** Right after the `design_read` you build a screen or section from,
-   `baseline_save {node, name, code}` keeps it in the project (`.pixelwright/baselines/`: commit it to share, or leave
-   it out of git, since it holds the design's texts). When a session starts, or the user says the design changed,
+7. **Keep the code in step with the design.** Only when the user wants to track what the designer changes later:
+   right after the `design_read` you build a screen or section from, `baseline_save {node, name, code}` keeps it in
+   the project (`.pixelwright/baselines/`: commit it to share, or leave it out of git, since it holds the design's
+   texts). When a session starts, or the user says the design changed,
    `baseline_diff` says which baselines changed; with `name` it lists the changes in the XML's terms. Change only the
    code they name: export again what is marked `drawing`; build added layers from their `xml` (or `design_read` when
    it is left out). Then `baseline_save {name, accept}` with the `accept` the diff gave. `changes_since` stays the
    live view while the plugin is open.
-8. **Code, the exception.** The reads answer what code is most often written for, a line per question:
+8. **Write.** `design_apply` writes the same XML back into Figma: change layers by id, create, copy and move them.
+   `nodes_delete` deletes layers by id. `version_save` leaves the designer a named version, when the user asks. Read
+   `guide write` first (Allow edits, dry runs, versions and every rule), and `guide layout` for flex, grid and
+   absolute placement.
+9. **Code, the exception.** The reads answer what code is most often written for, a line per question:
    - texts by content, size or visibility, instances by component or changed property, with ancestors and page:
      `nodes_find` (`text` list, `textRegex`, `fontSize`, `visible`, `componentId`, `properties`, `fields`);
    - every auto layout gap and padding, a text's style runs, a component's properties in a frame: `inspect` with
@@ -75,10 +81,9 @@ saved from.
    - a layer's parent layout and ancestors by id: `inspect` (`parentLayout`, `path`);
    - a token by name, its Figma id and what an alias leads to: `tokens_read` with `query`;
    - colours bound to no token: `tokens_usage` with `raw: true`.
-     `execute` runs JavaScript in the plugin, for what no read tool shows: try the read tools
-     first (`design_read`, `inspect`, `measure`, `nodes_find`), which need no code. It reads too: this version does not
-     support editing. If the user explicitly asks for an edit through it, warn that editing is not supported or stable
-     in this version and go on only when the user says so; the plugin's Allow edits switch still gates every write.
+     `execute` runs JavaScript in the plugin, for what no tool reads and for a change design_apply cannot say: try
+     the tools first (`design_read`, `inspect`, `measure`, `nodes_find` to read, `design_apply` to write), which need
+     no code and answer in the XML's terms.
 
 ## Reading a design like a web developer
 

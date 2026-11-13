@@ -21,6 +21,12 @@ function topicText(name: string): string {
   return readFileSync(new URL(`${name}.md`, TOPICS), "utf8");
 }
 
+/** Every `*.constants.ts` in src/: the error texts, hints and descriptions the server and the plugin send. */
+const SOURCE = new URL("../../src/", import.meta.url);
+const CONSTANT_FILES = readdirSync(SOURCE, { recursive: true, encoding: "utf8" }).filter((file) =>
+  file.endsWith(".constants.ts"),
+);
+
 /** Where a JSON schema has an object that takes keys it does not name, nested ones too: `path` names each. */
 function openObjects(schema: unknown, path: string): string[] {
   if (typeof schema !== "object" || schema === null) {
@@ -199,13 +205,13 @@ describe("the MCP contract", () => {
     expect(lines.filter((line) => !golden.includes(line))).toEqual([]);
   });
 
-  // 0.8.0 reads only (plan 5.0): a description, a schema, the instructions or a topic that names a tool this build
-  // does not register sends the model after a tool it cannot call; a topic naming a renamed tool fails too (R-038).
-  it("names only the tools it registers, in its tools, its instructions and the guide", async () => {
+  // A description, a schema, the instructions or a topic that names a tool this build does not register sends the
+  // model after a tool it cannot call; a topic naming a renamed tool fails too (R-038).
+  it("names only the tools it registers, in its tools, its instructions, the guide and its error texts", async () => {
     const { tools } = await contract.client.listTools();
     const listed = new Set(tools.map(({ name }) => name));
-    // tools.json keeps 0.7.0's entries of the tools this build leaves out on purpose: they are the names looked for
-    // here, and 0.9.0 registers them again.
+    // tools.json keeps 0.7.0's entries of the tools this build leaves out on purpose (tokens_apply and the other
+    // writes of 0.10.0): they are the names looked for here, until a build registers them again.
     const unregistered = GOLDEN.map(({ name }) => name).filter((name) => !listed.has(name));
     const topics = TOPIC_NAMES.map(topicText);
     const texts = [JSON.stringify(tools), contract.client.getInstructions() ?? "", ...topics];
@@ -215,5 +221,14 @@ describe("the MCP contract", () => {
     expect([...new Set(named.filter((word) => !listed.has(word)))]).toEqual([]);
     expect(unregistered.length).toBeGreaterThan(0);
     expect(unregistered.filter((name) => texts.some((text) => new RegExp(`\\b${name}\\b`).test(text)))).toEqual([]);
+    // An error that sends the model to a tool this build lacks (tokens_apply) leaves it nowhere to go.
+    expect(CONSTANT_FILES.length).toBeGreaterThan(50);
+    expect(
+      CONSTANT_FILES.filter((file) => {
+        const text = readFileSync(new URL(file, SOURCE), "utf8");
+
+        return unregistered.some((name) => new RegExp(`\\b${name}\\b`).test(text));
+      }),
+    ).toEqual([]);
   });
 });

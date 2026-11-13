@@ -753,7 +753,7 @@
           "column": 1,
           "id": "1:1",
           "attribute": "gap",
-          "message": "gap=\"big\" is not one or two lengths in px or tokens (rows, then columns)."
+          "message": "gap=\"big\" is not one or two lengths in px (rows, then columns)."
         }
       ]
     },
@@ -780,7 +780,7 @@
           "column": 1,
           "id": "1:2",
           "attribute": "gap",
-          "message": "gap=\"1px 2px 3px\" is not one or two lengths in px or tokens (rows, then columns)."
+          "message": "gap=\"1px 2px 3px\" is not one or two lengths in px (rows, then columns)."
         }
       ]
     },
@@ -807,7 +807,7 @@
           "column": 1,
           "id": "1:3",
           "attribute": "column-gap",
-          "message": "column-gap=\"wide\" is not a length in px or a token."
+          "message": "column-gap=\"wide\" is not a length in px."
         }
       ]
     }
@@ -1047,7 +1047,7 @@
           "column": 1,
           "id": "1:4",
           "attribute": "padding",
-          "message": "padding=\"1em\" is not 1 to 4 lengths in px or tokens."
+          "message": "padding=\"1em\" is not 1 to 4 lengths in px."
         }
       ]
     },
@@ -1070,7 +1070,7 @@
           "column": 1,
           "id": "1:5",
           "attribute": "padding",
-          "message": "padding=\"1px 2px 3px 4px 5px\" is not 1 to 4 lengths in px or tokens."
+          "message": "padding=\"1px 2px 3px 4px 5px\" is not 1 to 4 lengths in px."
         }
       ]
     }
@@ -1573,7 +1573,7 @@
           "column": 1,
           "id": "1:1",
           "attribute": "width",
-          "message": "width=\"50%\" is not a length in px, a token or auto.",
+          "message": "width=\"50%\" is not a length in px or auto.",
           "hint": "A percent scales with the parent: it needs left in percents too."
         },
         {
@@ -1581,7 +1581,7 @@
           "column": 1,
           "id": "1:1",
           "attribute": "height",
-          "message": "height=\"tall\" is not a length in px, a token or auto."
+          "message": "height=\"tall\" is not a length in px or auto."
         }
       ]
     }
@@ -1637,7 +1637,7 @@
           "column": 1,
           "id": "1:2",
           "attribute": "max-width",
-          "message": "max-width=\"10em\" is not a length in px, a token or none."
+          "message": "max-width=\"10em\" is not a length in px or none."
         }
       ]
     }
@@ -2340,7 +2340,7 @@
           "column": 1,
           "id": "1:5",
           "attribute": "border-radius",
-          "message": "border-radius=\"50%\" is not 1 to 4 lengths in px or tokens."
+          "message": "border-radius=\"50%\" is not 1 to 4 lengths in px."
         }
       ]
     },
@@ -2363,7 +2363,7 @@
           "column": 1,
           "id": "1:6",
           "attribute": "border-radius",
-          "message": "border-radius=\"1em\" is not 1 to 4 lengths in px or tokens."
+          "message": "border-radius=\"1em\" is not 1 to 4 lengths in px."
         }
       ]
     },
@@ -2386,7 +2386,7 @@
           "column": 1,
           "id": "1:7",
           "attribute": "border-radius",
-          "message": "border-radius=\"10px / 20px\" is not 1 to 4 lengths in px or tokens."
+          "message": "border-radius=\"10px / 20px\" is not 1 to 4 lengths in px."
         }
       ]
     }
@@ -5620,14 +5620,14 @@
           "column": 1,
           "id": "1:1",
           "attribute": "border-radius",
-          "message": "border-radius=\"1em\" is not 1 to 4 lengths in px or tokens."
+          "message": "border-radius=\"1em\" is not 1 to 4 lengths in px."
         },
         {
           "line": 1,
           "column": 1,
           "id": "1:1",
           "attribute": "gap",
-          "message": "gap=\"big\" is not one or two lengths in px or tokens (rows, then columns)."
+          "message": "gap=\"big\" is not one or two lengths in px (rows, then columns)."
         }
       ]
     }

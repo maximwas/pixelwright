@@ -1,7 +1,7 @@
 /** The texts of the versioned write (T-011, D-41) and of the fields every writer shares (D-35). */
 export const WRITES_TEXT = {
   versionField:
-    "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
+    "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one when the user wants to be able to go back.",
   dryRunField: "Check without writing: the answer says what would change. Works with Allow edits off.",
   dryOutput:
     "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
