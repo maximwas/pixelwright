@@ -1,13 +1,38 @@
 {
   "plan": {
-    "collections": [],
+    "collections": [
+      {
+        "name": "Spacing",
+        "id": "C:space",
+        "modes": [],
+        "variables": [
+          {
+            "name": "Pointer/Kit",
+            "type": "COLOR",
+            "values": {
+              "Base": {
+                "kind": "alias",
+                "token": "--Primary",
+                "key": "K:primary"
+              }
+            }
+          }
+        ]
+      }
+    ],
     "styles": {
       "paint": [],
       "text": [],
       "effect": []
     }
   },
-  "created": [],
+  "created": [
+    {
+      "kind": "variable",
+      "name": "Pointer/Kit",
+      "collection": "Spacing"
+    }
+  ],
   "updated": [],
   "errors": [
     {
@@ -74,13 +99,6 @@
     },
     {
       "kind": "variable",
-      "name": "Pointer/Kit",
-      "collection": "Spacing",
-      "mode": "Base",
-      "message": "--Primary names no variable in this file or in this call."
-    },
-    {
-      "kind": "variable",
       "name": "Pointer/Chain",
       "collection": "Spacing",
       "mode": "Base",
@@ -102,5 +120,7 @@
       "message": "font=\"#FFF\" is not \"[italic] weight size/line-height 'Family'\"."
     }
   ],
-  "notes": []
+  "notes": [
+    "--Primary is a variable of an enabled library that the file does not use yet: the write imports it into the file."
+  ]
 }

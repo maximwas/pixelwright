@@ -136,7 +136,7 @@ const REFUSED = {
         { name: "Ease/In", type: "EASING", values: { Base: "ease-in" } },
         { name: "Pointer", values: { Base: "var(--Nowhere)" } },
         { name: "Pointer/Chain", values: { Base: "var(--Pointer)" } },
-        // A library variable the page does not use is no target: Figma gives the alias only what the file holds.
+        // An enabled library's variable the page does not use is a target too: the write imports it (m:acc257ba).
         { name: "Pointer/Kit", values: { Base: "var(--Primary)" } },
       ],
     },
@@ -241,5 +241,66 @@ describe("golden tokens plan", () => {
       },
     ]);
     expect(planned.created).toEqual([]);
+  });
+
+  // m:acc257ba: 0.7.0 imported an enabled library's variable an alias points at; the dry run says it will.
+  it("plans an alias to an enabled library's variable the file does not use with its key to import, and notes it", () => {
+    const planned = plan(
+      { collections: [{ name: "Spacing", variables: [{ name: "Pointer/Kit", values: { Base: "var(--Primary)" } }] }] },
+      withLibrary(),
+    );
+
+    expect(planned.errors).toEqual([]);
+    expect(planned.plan.collections).toEqual([
+      {
+        name: "Spacing",
+        id: "C:space",
+        modes: [],
+        variables: [
+          {
+            name: "Pointer/Kit",
+            type: "COLOR",
+            values: { Base: { kind: "alias", token: "--Primary", key: "K:primary" } },
+          },
+        ],
+      },
+    ]);
+    expect(planned.notes).toEqual([
+      "--Primary is a variable of an enabled library that the file does not use yet: the write imports it into the file.",
+    ]);
+  });
+
+  it("carries the colour variables the styles name (the file's by id, a library's by key, the call's by neither) and refuses a style naming none", () => {
+    const planned = plan(
+      {
+        collections: [{ name: "Brand Colors", variables: [{ name: "Accent/New", values: { Light: "#F00" } }] }],
+        styles: {
+          paint: [
+            { name: "Uses/Ink", value: "var(--Ink)" },
+            { name: "Uses/New", value: "var(--Accent-New)" },
+            { name: "Uses/Kit", value: "var(--Primary)" },
+            { name: "Uses/Nothing", value: "var(--Nowhere)" },
+          ],
+          effect: [{ name: "Uses/Gap", value: "0 2px 4px var(--Gap-Small)" }],
+        },
+      },
+      withLibrary(),
+    );
+
+    expect(planned.plan.targets).toEqual({
+      "--Ink": { id: "V:ink" },
+      "--Accent-New": {},
+      "--Primary": { key: "K:primary" },
+    });
+    expect(planned.plan.styles.paint.map(({ name }) => name)).toEqual(["Uses/Ink", "Uses/New", "Uses/Kit"]);
+    expect(planned.created.filter(({ kind }) => kind !== "variable").map(({ name }) => name)).toEqual([
+      "Uses/Ink",
+      "Uses/New",
+      "Uses/Kit",
+    ]);
+    expect(planned.errors).toEqual([
+      { kind: "paint", name: "Uses/Nothing", message: "--Nowhere names no variable in this file or in this call." },
+      { kind: "effect", name: "Uses/Gap", message: "--Gap-Small is a FLOAT variable: a style takes colour variables." },
+    ]);
   });
 });

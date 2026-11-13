@@ -32,13 +32,13 @@ export class Paints {
   }
 
   /**
-   * The layers of a list in Figma's order; `consumer` is the layer they go on (its mode, its size), `images` the hashes
-   * of the images the list's files made, by their upload's stream.
+   * The layers of a list in Figma's order; `consumer` is the layer they go on (its mode, its size; none for a paint
+   * style, drawn in a unit square), `images` the hashes of the images the list's files made, by their upload's stream.
    */
   async of(
     specs: readonly PaintSpec[],
     variables: TokenVariables,
-    consumer: SceneNode,
+    consumer?: SceneNode,
     images: ReadonlyMap<string, string> = new Map(),
   ): Promise<Paint[]> {
     const paints: Paint[] = [];
@@ -120,7 +120,7 @@ export class Paints {
   async #paint(
     spec: PaintSpec,
     variables: TokenVariables,
-    consumer: SceneNode,
+    consumer: SceneNode | undefined,
     images: ReadonlyMap<string, string>,
   ): Promise<Paint> {
     if (spec.kind === INTENT_PAINT.color) {
@@ -150,9 +150,9 @@ export class Paints {
   async #gradient(
     spec: PaintSpec,
     variables: TokenVariables,
-    consumer: SceneNode,
+    consumer: SceneNode | undefined,
   ): Promise<GradientPaint> {
-    const box = consumer as Partial<LayoutMixin>;
+    const box = (consumer ?? {}) as Partial<LayoutMixin>;
     const stops: ColorStop[] = [];
 
     for (const stop of spec.stops ?? []) {
@@ -173,7 +173,7 @@ export class Paints {
   async #stop(
     { position, color, token, opacity }: StopSpec,
     variables: TokenVariables,
-    consumer: SceneNode,
+    consumer: SceneNode | undefined,
   ): Promise<ColorStop> {
     if (token === undefined) {
       return { position, color: this.colour(color ?? PAINT_BLACK) };

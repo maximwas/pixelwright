@@ -7,7 +7,12 @@ import { MODEL_TEXT, STYLE_GROUP, type StyleGroup } from "@/core/tokens/model/mo
 import { EFFECT_COVERS, PLAN_PATTERN, PLAN_TEXT, STYLE_ORDER, STYLE_READ } from "@/core/tokens/plan/plan.constants.ts";
 import type { StyleInput, TokensInput } from "@/core/tokens/plan/plan.schema.ts";
 import type { HeldStyle } from "@/core/tokens/plan/plan.types.ts";
-import type { StylePlans as Styles, TokenError, TokenItem } from "@/shared/ops/tokens-apply/tokens-apply.schema.ts";
+import type {
+  StylePlans as Styles,
+  TokenError,
+  TokenItem,
+  VariableTarget,
+} from "@/shared/ops/tokens-apply/tokens-apply.schema.ts";
 import { INTENT_PAINT } from "@/shared/write-intents/write-intent.constants.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
@@ -20,19 +25,31 @@ type Effect = Omit<Styles["effect"][number], "name" | "id">;
 /** A style's value in Figma's terms, or why its CSS cannot be one. */
 type StyleValue = Paint | Text | Effect | { readonly error: string };
 
-/** The styles' plan, what it makes and changes, and what cannot be written. */
+/** The styles' plan, what it makes and changes, the colour variables it names, and what cannot be written. */
 export interface StylesPlanned {
   readonly styles: Styles;
   readonly created: TokenItem[];
   readonly updated: TokenItem[];
   readonly errors: TokenError[];
+  readonly targets: Record<string, VariableTarget>;
+}
+
+/** Where a token's colour variable is, or why a style cannot take it. */
+export type FindTarget = (token: string) => VariableTarget | string;
+
+/** One call's planning: the file's styles, what is planned so far, where each token's variable is. */
+interface Planning {
+  readonly held: readonly HeldStyle[];
+  readonly planned: StylesPlanned;
+  readonly target: FindTarget;
 }
 
 /**
  * The call's styles set against the file's (K-020, B-024): each style's CSS read by design_apply's own rules (C-173: a
  * paint style's as a background, a text style's as the font shorthand with its letter spacing and case, an effect
  * style's as shadows with its blurs, or a blur alone), found by name (its token says which of same-named ones), and
- * planned only where the file's reads otherwise, comparing what the call gives. A library's style is never copied.
+ * planned only where the file's reads otherwise, comparing what the call gives. A library's style is never copied, and
+ * a style is written only when every colour variable it names is in the file, an enabled library or the call.
  */
 @injectable()
 export class StylePlans {
@@ -50,17 +67,22 @@ export class StylePlans {
     this.#names = names;
   }
 
-  plan(styles: TokensInput["styles"], held: readonly HeldStyle[]): StylesPlanned {
+  plan(
+    styles: TokensInput["styles"],
+    held: readonly HeldStyle[],
+    target: FindTarget,
+  ): StylesPlanned {
     const planned: StylesPlanned = {
       styles: { paint: [], text: [], effect: [] },
       created: [],
       updated: [],
       errors: [],
+      targets: {},
     };
 
     for (const group of STYLE_ORDER) {
       for (const style of styles[group]) {
-        this.#style(group, style, held, planned);
+        this.#style(group, style, { held, planned, target });
       }
     }
 
@@ -70,8 +92,7 @@ export class StylePlans {
   #style(
     group: StyleGroup,
     style: StyleInput,
-    held: readonly HeldStyle[],
-    planned: StylesPlanned,
+    { held, planned, target }: Planning,
   ): void {
     const read = this.#read(group, style);
     const found = this.#found(group, style, held);
@@ -80,16 +101,47 @@ export class StylePlans {
       return;
     }
 
-    if ("error" in read || (found?.remote ?? false)) {
-      const message = "error" in read ? read.error : PLAN_TEXT.library(style.name);
+    if ("error" in read) {
+      planned.errors.push({ kind: group, name: style.name, message: read.error });
 
+      return;
+    }
+
+    const targets = this.#tokens(read).map((token) => [token, target(token)] as const);
+    const message =
+      (found?.remote ?? false)
+        ? PLAN_TEXT.library(style.name)
+        : targets.map(([, each]) => each).find((each): each is string => typeof each === "string");
+
+    if (message !== undefined) {
       planned.errors.push({ kind: group, name: style.name, message });
 
       return;
     }
 
+    for (const [token, each] of targets) {
+      if (typeof each !== "string") {
+        planned.targets[token] = each;
+      }
+    }
+
     (found === undefined ? planned.created : planned.updated).push({ kind: group, name: style.name });
     this.#add(planned.styles, { name: style.name, ...(found === undefined ? {} : { id: found.id }) }, read);
+  }
+
+  /** The colour variables a style's value names: its paints' and their gradient stops', its shadows'. */
+  #tokens(value: Paint | Text | Effect): string[] {
+    const named: (string | undefined)[] = [];
+
+    if ("paints" in value) {
+      named.push(...value.paints.flatMap(({ token, stops }) => [token, ...(stops ?? []).map((stop) => stop.token)]));
+    }
+
+    if ("effects" in value) {
+      named.push(...value.effects.map(({ token }) => token));
+    }
+
+    return [...new Set(named.filter((token) => token !== undefined))];
   }
 
   /** The file's style of the name: the one with the call's token, else its own over a library's. */

@@ -18,16 +18,25 @@ const optional = zod.exactOptional;
 /**
  * A variable's value in one mode in Figma's terms: a number as Figma keeps it (an opacity in percent, FX-049, so 0.5
  * is written 50), a colour on the wire, an alias by its target's token. An alias carries its target's id when the file
- * holds the target (a library's the page uses too); one made in the same call has none, and is found by token among
- * the variables the writer made.
+ * holds the target (a library's the page uses too), or the key of an enabled library's variable the file does not use
+ * yet, which the writer imports (m:acc257ba); one made in the same call has neither, and is found by token among the
+ * variables the writer made.
  */
 const PlanValueSchema = zod.discriminatedUnion(PLAN_VALUE_FIELD, [
   zod.strictObject({ kind: zod.literal(PLAN_VALUE.color), color: ColorValueSchema }),
   zod.strictObject({ kind: zod.literal(PLAN_VALUE.number), value: zod.number() }),
   zod.strictObject({ kind: zod.literal(PLAN_VALUE.string), value: zod.string() }),
   zod.strictObject({ kind: zod.literal(PLAN_VALUE.boolean), value: zod.boolean() }),
-  zod.strictObject({ kind: zod.literal(PLAN_VALUE.alias), token: zod.string(), id: optional(zod.string()) }),
+  zod.strictObject({
+    kind: zod.literal(PLAN_VALUE.alias),
+    token: zod.string(),
+    id: optional(zod.string()),
+    key: optional(zod.string()),
+  }),
 ]);
+
+/** Where a token's variable is: the file's by id, an enabled library's by key to import, else made by the call. */
+const VariableTargetSchema = zod.strictObject({ id: optional(zod.string()), key: optional(zod.string()) });
 
 /** A variable to make (no id) or to change (its id), with only what differs from what the file holds. */
 const VariablePlanSchema = zod.strictObject({
@@ -62,7 +71,7 @@ const StyleFields = { name: zod.string(), id: optional(zod.string()) };
  * No order is needed among variables: every new variable has its type, so the writer makes them all first and writes
  * the values after, and core has refused an alias cycle and an alias of another type than its variable's.
  */
-const TokensPlanSchema = zod.strictObject({
+export const TokensPlanSchema = zod.strictObject({
   collections: zod.array(CollectionPlanSchema),
   styles: zod.strictObject({
     paint: zod.array(zod.strictObject({ ...StyleFields, paints: zod.array(PaintSpecSchema) })),
@@ -82,11 +91,13 @@ const TokensPlanSchema = zod.strictObject({
       }),
     ),
   }),
+  /** The colour variables the styles name, by token; left out when they name none. */
+  targets: optional(zod.record(zod.string(), VariableTargetSchema)),
 });
 
 export type TokensPlan = zod.output<typeof TokensPlanSchema>;
 
-type CollectionPlan = TokensPlan["collections"][number];
+export type CollectionPlan = TokensPlan["collections"][number];
 
 export type VariablePlan = CollectionPlan["variables"][number];
 
@@ -95,6 +106,8 @@ export type PlanValue = VariablePlan["values"][string];
 export type WritableType = (typeof WRITABLE_TYPE)[keyof typeof WRITABLE_TYPE];
 
 export type StylePlans = TokensPlan["styles"];
+
+export type VariableTarget = zod.output<typeof VariableTargetSchema>;
 
 /** Something tokens_apply made or changed. */
 export const TokenItemSchema = zod.object({

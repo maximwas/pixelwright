@@ -49,8 +49,17 @@ export class HeldTokens {
     };
   }
 
-  /** Each variable an alias can reach by its token; the file's own wins over a library's of the same token. */
+  /**
+   * Each variable an alias can reach by its token; the file's own wins over a library's the page uses, and that over an
+   * enabled library's not used yet (the first library's of a token, as design_apply finds it), which has only its key.
+   */
   #targets(raw: RawTokens, collections: readonly HeldCollection[]): Map<string, HeldTarget> {
+    const catalogue = (raw.library ?? []).flatMap(({ variables }) =>
+      variables.map(
+        ({ name, key, resolvedType }) =>
+          [this.#names.token(name), { id: key, type: resolvedType, aliases: {}, key }] as const,
+      ),
+    );
     const library = Object.entries(raw.external).map(
       ([id, variable]) => [this.#names.variable(variable), { id, type: variable.resolvedType, aliases: {} }] as const,
     );
@@ -72,7 +81,7 @@ export class HeldTokens {
       ),
     );
 
-    return new Map([...library, ...own]);
+    return new Map([...catalogue.reverse(), ...library, ...own]);
   }
 
   /**
