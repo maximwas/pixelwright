@@ -55,6 +55,31 @@ export class FontValues {
     };
   }
 
+  /**
+   * font-variation-settings as the axes it names, each once: `'wght' 560, 'wdth' 90`; normal names none (the font's own
+   * values). Null when an item is not a quoted four-letter tag with a number.
+   */
+  variations(value: string): Record<string, number> | null {
+    const trimmed = value.trim();
+    const axes: Record<string, number> = {};
+
+    if (trimmed === FONT_VALUE.normal || trimmed === "") {
+      return axes;
+    }
+
+    for (const item of this.#split.split(trimmed, CSS_SEPARATOR.comma)) {
+      const [, , tag, number] = FONT_PATTERN.axis.exec(item.trim()) ?? [];
+
+      if (tag === undefined || Object.hasOwn(axes, tag)) {
+        return null;
+      }
+
+      axes[tag] = Number(number);
+    }
+
+    return axes;
+  }
+
   /** Letter spacing in em (Figma's percent of the font size) or px; normal is none. */
   letterSpacing(value: string): Spacing | null {
     return value === FONT_VALUE.normal ? { unit: INTENT_TEXT_UNIT.PIXELS, value: 0 } : this.#spacing(value);

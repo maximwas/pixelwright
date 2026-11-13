@@ -4087,7 +4087,8 @@
               "bound",
               "text",
               "component",
-              "interactions"
+              "interactions",
+              "notes"
             ]
           }
         },
@@ -9626,6 +9627,15 @@
                     ],
                     "additionalProperties": false
                   },
+                  "fontVariations": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "number"
+                    }
+                  },
                   "letterSpacing": {
                     "type": "object",
                     "properties": {
@@ -10051,6 +10061,12 @@
                         },
                         "label": {
                           "type": "string"
+                        },
+                        "pins": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         }
                       },
                       "required": [
@@ -10178,6 +10194,7 @@
                     "hyperlink",
                     "textStyle",
                     "font",
+                    "fontVariations",
                     "letterSpacing",
                     "textCase",
                     "textDecoration",
@@ -11584,6 +11601,15 @@
                               ],
                               "additionalProperties": false
                             },
+                            "fontVariations": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
                             "letterSpacing": {
                               "type": "object",
                               "properties": {
@@ -12009,6 +12035,12 @@
                                   },
                                   "label": {
                                     "type": "string"
+                                  },
+                                  "pins": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
                                   }
                                 },
                                 "required": [
@@ -12147,6 +12179,34 @@
         },
         "dryRun": {
           "type": "boolean"
+        },
+        "fontAxes": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            }
+          }
         }
       },
       "required": [

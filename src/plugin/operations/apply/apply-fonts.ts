@@ -8,7 +8,7 @@ import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { TEXT_TAG, TOKEN_KIND } from "@/plugin/operations/apply/apply.constants.ts";
 import { TOKEN_INDEX } from "@/plugin/operations/apply/token-index.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
-import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
+import type { ApplyChangeData, FontAxes } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /**
@@ -24,6 +24,7 @@ export class ApplyFonts {
   readonly #tokens;
   readonly #found = new Map<string, FontName | WriteError>();
   readonly #unloaded = new Set<string>();
+  #ranges: FontAxes = {};
 
   constructor(
     catalog = inject(FONT_CATALOG),
@@ -37,9 +38,15 @@ export class ApplyFonts {
     this.#tokens = tokens;
   }
 
-  async start(changes: readonly ApplyChangeData[], dry: boolean): Promise<void> {
+  /** `ranges`: the axes' ranges the server's catalogue knows for the call's families (Figma gives only their tags). */
+  async start(
+    changes: readonly ApplyChangeData[],
+    dry: boolean,
+    ranges: FontAxes = {},
+  ): Promise<void> {
     this.#found.clear();
     this.#unloaded.clear();
+    this.#ranges = ranges;
     this.#catalog.start();
 
     const wanted: FontName[] = [];
@@ -60,6 +67,43 @@ export class ApplyFonts {
   /** The font a spec found, or why none was. */
   font(spec: FontSpec): FontName | WriteError | undefined {
     return this.#found.get(FONT_TEXT.specKey(spec.family, spec.weight, spec.italic));
+  }
+
+  /**
+   * Why a family cannot take these axes, on dry and real runs alike: Figma knows no such family, it is static, it has no
+   * such axis, or a value is outside the range the catalogue gives; none when it can.
+   */
+  variations(family: string, axes: Readonly<Record<string, number>>): WriteError | undefined {
+    let tags: string[] | null;
+
+    try {
+      tags = this.#factory.variationAxes(family);
+    } catch {
+      return new WriteError(FONT_TEXT.noFamily(family), FONT_TEXT.install);
+    }
+
+    if (tags === null) {
+      return new WriteError(FONT_TEXT.staticFamily(family));
+    }
+
+    for (const [axis, value] of Object.entries(axes)) {
+      const range = this.#ranges[family]?.[axis];
+
+      if (!tags.includes(axis)) {
+        return new WriteError(FONT_TEXT.noAxis(family, axis, tags));
+      }
+
+      if (range !== undefined && (value < range.min || value > range.max)) {
+        return new WriteError(FONT_TEXT.outOfRange(family, axis, value, range));
+      }
+    }
+
+    return undefined;
+  }
+
+  /** The fonts a text uses now. */
+  textFonts(node: TextLayer): FontName[] {
+    return this.#factory.textFonts(node);
   }
 
   /** A font of the text this Figma could not load. */

@@ -1,18 +1,11 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { CSS_READER } from "@/core/css/css-reader.ts";
+import { PinWords } from "@/core/css/groups/element/pin-words.ts";
 import { TEXT_PATH_DATA } from "@/core/css/groups/text/text-path-data.ts";
 import type { CssDeclaration } from "@/core/css/registry/css-declarations.ts";
 import type { AssetPlan } from "@/core/design/assets/asset-plan.ts";
 import { ASSET_TAG } from "@/core/design/assets/assets.constants.ts";
-import {
-  BUILDER_VALUE,
-  CSS_NOTES,
-  DEV_STATUS_WORDS,
-  NOTE,
-  PIN_WORDS,
-  PINS,
-  TEXT_PIN_WORDS,
-} from "@/core/design/builder/builder.constants.ts";
+import { BUILDER_VALUE, CSS_NOTES, DEV_STATUS_WORDS, NOTE } from "@/core/design/builder/builder.constants.ts";
 import { PROPERTY_FIELD } from "@/core/design/component/component.constants.ts";
 import { COMPONENT_ATTRIBUTES } from "@/core/design/component/component-attributes.ts";
 import { DESIGN_ATTRIBUTE, DESIGN_FLAG, TEXT_TYPES } from "@/core/design/design.constants.ts";
@@ -39,6 +32,7 @@ export class DesignBuilder {
   readonly #component;
   readonly #css;
   readonly #paths;
+  readonly #pins = new PinWords();
 
   constructor(
     tags = inject(NODE_TAG),
@@ -105,7 +99,6 @@ export class DesignBuilder {
       ...this.#component.instance(layer),
       [DESIGN_ATTRIBUTE.description, layer.description === "" ? undefined : layer.description],
       [DESIGN_ATTRIBUTE.note, this.#note(layer)],
-      [DESIGN_ATTRIBUTE.pins, this.#pins(layer)],
       [DESIGN_ATTRIBUTE.override, this.#component.override(layer)],
       [DESIGN_ATTRIBUTE.dev, dev],
       [DESIGN_ATTRIBUTE.locked, (layer.locked ?? false) ? DESIGN_FLAG.on : undefined],
@@ -155,27 +148,17 @@ export class DesignBuilder {
     return [DESIGN_ATTRIBUTE.name, repeatsText ? undefined : layer.name];
   }
 
-  /** The designer's Dev Mode notes, each with its category. */
+  /** The designer's Dev Mode notes, each with its category and closed by the properties it pins, in CSS words. */
   #note(layer: ReadLayer): string | undefined {
-    const notes = (layer.annotations ?? []).flatMap(({ label, category }) =>
-      label === undefined
-        ? []
-        : [(category === undefined ? label : NOTE.categorised(category, label)).replace(NOTE.marks, NOTE.escaped)],
-    );
+    const isText = Object.hasOwn(TEXT_TYPES, layer.type);
+    const notes = (layer.annotations ?? []).map(({ label, category, pins }) => {
+      const text = label === undefined ? "" : label.replace(NOTE.marks, NOTE.escaped);
+      const said = category === undefined ? text : NOTE.categorised(category, text);
+
+      return pins === undefined || pins.length === 0 ? said : NOTE.pinned(said, this.#pins.said(pins, isText));
+    });
 
     return notes.length === 0 ? undefined : notes.join(NOTE.separator);
-  }
-
-  /** The properties pinned in the layer's annotations, in CSS words, in the order pinned, each once. */
-  #pins(layer: ReadLayer): string | undefined {
-    const isText = Object.hasOwn(TEXT_TYPES, layer.type);
-    const words = new Set(
-      (layer.annotations ?? []).flatMap(({ pins }) =>
-        (pins ?? []).map((pin) => (isText ? TEXT_PIN_WORDS[pin] : undefined) ?? PIN_WORDS[pin] ?? pin),
-      ),
-    );
-
-    return words.size === 0 ? undefined : [...words].join(PINS.separator);
   }
 
   /** `_blank` when the URL the layer's prototype opens (the plugin's href: the first one) opens in a new tab. */

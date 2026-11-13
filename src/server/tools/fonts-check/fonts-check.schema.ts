@@ -14,6 +14,11 @@ const CheckedFontSchema = zod.object({
   google: zod.nullable(zod.boolean()).check(zod.describe(FONTS_CHECK_FIELD.google)),
   css: zod.exactOptional(zod.string()).check(zod.describe(FONTS_CHECK_FIELD.css)),
   note: zod.exactOptional(zod.string()),
+  axes: zod
+    .exactOptional(
+      zod.record(zod.string(), zod.object({ min: zod.number(), max: zod.number(), default: zod.number() })),
+    )
+    .check(zod.describe(FONTS_CHECK_FIELD.axes)),
 });
 
 /** 0.7.0's answer (T-101): a summary, then each family with its weights, whether Google serves it, its link, a note. */

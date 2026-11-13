@@ -70,12 +70,15 @@ export const INSPECT_GROUP_KEYS: Readonly<Record<string, readonly string[]>> = {
   text: ["text"],
   component: ["component"],
   interactions: ["interactions"],
+  notes: ["notes"],
 };
 
 export const INSPECT_ALWAYS = ["id", "name", "type"] as const;
 
 /** The inspect answer's fields, as clients read them (tools.json). */
 export const INSPECT_FIELD = {
+  notes:
+    "The layer's Dev Mode notes as Figma has them: each one's text (label), its category's name and the properties it pins (Figma's types: itemSpacing, fills...).",
   more: "A subtree read listed more layers than the 100 read: the ids not read are in leftIds; inspect them next.",
   leftIds: "The ids of the layers a subtree read did not read, up to 500, as far as the scan reached.",
   path: "The layer's ancestors below its page, outermost first, by id, name and type; the page it is on is in page.",

@@ -24,6 +24,20 @@ export const FONT_TEXT = {
   ) =>
     `${family.toLowerCase()} ${weight}${italic ? " italic" : ""}`,
   noFamily: (family: string) => `Figma has no font family ${family}.`,
+  staticFamily: (family: string) => `${family} is not a variable font: it has no axes to set.`,
+  noAxis: (
+    family: string,
+    axis: string,
+    axes: readonly string[],
+  ) =>
+    `${family} has no '${axis}' axis: it has ${axes.join(", ")}.`,
+  outOfRange: (
+    family: string,
+    axis: string,
+    value: number,
+    { min, max }: { min: number; max: number },
+  ) =>
+    `'${axis}' ${value} is outside ${family}'s range, ${min} to ${max}.`,
   near: (near: string) => `Did you mean ${near}?`,
   install: "Install it, or use a family the file has.",
   noWeight: (

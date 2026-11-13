@@ -43,13 +43,17 @@ export const ASSET_TAGS: Readonly<Record<string, (typeof INTENT_ASSET)[keyof typ
 
 export const ELEMENT_VALUE = {
   noMask: "none",
-  /** A note's category ends at the first `: `. */
+  /** A note's category ends at the first `: `; a note of pins alone under a category is `Category: [pins]`. */
   category: ": ",
+  categoryEnd: ":",
+  pinSeparator: ",",
 } as const;
 
 export const ELEMENT_PATTERN = {
   /** design_read's notes, `Category: note | Another`: the items between unescaped bars. */
   note: /(?:\\.|[^\\|])+/g,
+  /** A note closed by its pins, `Gap is \\[8] [gap, padding]`: its text has no unescaped bracket. */
+  pinned: /^((?:\\.|[^\\[])*?)\s*\[([^\\[\]]*)\]\s*$/s,
   /** A backslash escape: the character after it as it is. */
   escape: /\\(.)/g,
 } as const;
@@ -61,3 +65,45 @@ export const ELEMENT_ERROR = {
   srcTag: (tag: string) => `src makes an <Image> or an <Icon>, not a <${tag}>.`,
   srcHint: (src: string) => `Fill it with the picture by its background: background="url(${src})".`,
 } as const;
+
+/** Figma's annotation property types as a note's pins word them (C-1.5): CSS words; a type Figma adds later stays as named. */
+export const PIN_WORDS: Readonly<Record<string, string>> = {
+  width: "width",
+  height: "height",
+  minWidth: "min-width",
+  maxWidth: "max-width",
+  minHeight: "min-height",
+  maxHeight: "max-height",
+  fills: "background",
+  strokes: "border",
+  effects: "box-shadow",
+  strokeWeight: "border-width",
+  cornerRadius: "border-radius",
+  textStyleId: "text style",
+  textAlignHorizontal: "text-align",
+  fontFamily: "font-family",
+  fontStyle: "font-style",
+  fontSize: "font-size",
+  fontWeight: "font-weight",
+  lineHeight: "line-height",
+  letterSpacing: "letter-spacing",
+  itemSpacing: "gap",
+  padding: "padding",
+  layoutMode: "flex-direction",
+  alignItems: "align-items",
+  opacity: "opacity",
+  mainComponent: "component",
+  gridRowGap: "row-gap",
+  gridColumnGap: "column-gap",
+  gridRowCount: "grid rows",
+  gridColumnCount: "grid columns",
+  gridRowAnchorIndex: "grid-row",
+  gridRowSpan: "grid-row",
+  gridColumnAnchorIndex: "grid-column",
+  gridColumnSpan: "grid-column",
+};
+
+/** A text layer's fills are its text colour. */
+export const TEXT_PIN_WORDS: Readonly<Record<string, string>> = { fills: "color" };
+
+export const PINS = { separator: ", " } as const;

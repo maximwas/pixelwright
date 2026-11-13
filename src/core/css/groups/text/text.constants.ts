@@ -11,6 +11,7 @@ import {
 /** The CSS a text's group writes (its colour is the fills group's; a mixed one comes from its main run here). */
 export const TEXT_ATTRIBUTES = [
   CSS_PROPERTY.font,
+  CSS_PROPERTY.fontVariationSettings,
   CSS_PROPERTY.letterSpacing,
   CSS_PROPERTY.textTransform,
   CSS_PROPERTY.textDecoration,
@@ -81,6 +82,8 @@ export const TEXT_ERROR = {
   badDecoration: (value: string) => `text-decoration="${value}" is not "underline|line-through|none [style] [colour]".`,
   badLength: (attribute: string, value: string) => `${attribute}="${value}" is not a length in px or em, or auto.`,
   dashed: "Figma underlines solid, wavy or dotted: it has no dashed decoration.",
+  badVariations: (value: string) =>
+    `font-variation-settings="${value}" is not "'wght' 560, 'wdth' 90": quoted four-letter axes, each with a number.`,
 } as const;
 
 export const TEXT_PATTERN = {
@@ -133,7 +136,6 @@ export const SMALL_CAPS: Readonly<Record<string, string>> = {
 /** CSS design_apply cannot write back, shown in `$css`. */
 export const TEXT_NOTE = {
   fontFeatureSettings: "font-feature-settings",
-  fontVariationSettings: "font-variation-settings",
   fontVariantCaps: "font-variant-caps",
   listStyle: "list-style",
   paragraphSpacing: "paragraph-spacing",
@@ -219,6 +221,7 @@ export const PATH_ERROR = {
 
 export const TEXT_TEXT = {
   feature: (tag: string, on: boolean) => `"${tag.toLowerCase()}" ${on ? 1 : 0}`,
-  axis: (axis: string, value: number) => `"${axis}" ${value}`,
+  /** Quoted as the font shorthand quotes its family, so the attribute needs no escape. */
+  axis: (axis: string, value: number) => `'${axis}' ${value}`,
   start: (segment: number, position: number) => `${segment} ${position}`,
 } as const;

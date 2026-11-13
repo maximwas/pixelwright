@@ -2,6 +2,7 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { CAPABILITY_TEXT, CAPABILITY_TYPES, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import { NEW_TEXT_FONT } from "@/plugin/adapters/figma/fonts/fonts.constants.ts";
 import type { TextLayer } from "@/plugin/adapters/figma/layer-factory.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_FONTS } from "@/plugin/operations/apply/apply-fonts.ts";
@@ -13,10 +14,11 @@ import {
   TEXT_BOX_KEYS,
   TEXT_FIGMA,
   TEXT_OWN,
+  TEXT_RANGE_FIELD,
   TEXT_RUN_FIELDS,
   WRITERS_TEXT,
 } from "@/plugin/operations/apply/writers/writers.constants.ts";
-import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
+import type { ApplyChangeData, FontAxes } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 type Fail = (error: unknown, keys?: readonly (keyof FigmaProps)[]) => void;
@@ -49,8 +51,12 @@ export class TextWriter {
   }
 
   /** The call's fonts: found on both runs, loaded up front on a real one (P-148). */
-  async prepare(changes: readonly ApplyChangeData[], dry: boolean): Promise<void> {
-    await this.#fonts.start(changes, dry);
+  async prepare(
+    changes: readonly ApplyChangeData[],
+    dry: boolean,
+    ranges?: FontAxes,
+  ): Promise<void> {
+    await this.#fonts.start(changes, dry, ranges);
   }
 
   /**
@@ -68,7 +74,10 @@ export class TextWriter {
 
     const found = this.#own(layer, change.props);
 
-    for (const { key, error } of await this.#runs.check(change.props)) {
+    for (const { key, error } of await this.#runs.check(
+      change.props,
+      this.#families(layer, change.props, undefined, change.props.font),
+    )) {
       if (!refused.has(key)) {
         found.push({ error, keys: [key] });
       }
@@ -77,12 +86,49 @@ export class TextWriter {
     for (const [span, run] of (change.text?.runs ?? []).entries()) {
       found.push(...this.#own(layer, run.props).map((refusal) => ({ ...refusal, span })));
 
-      for (const { key, error } of await this.#runs.check(run.props)) {
+      const families = this.#families(layer, run.props, run, run.props.font ?? change.props.font);
+
+      for (const { key, error } of await this.#runs.check(run.props, families)) {
         found.push({ error, keys: [key], span });
       }
     }
 
     return found;
+  }
+
+  /**
+   * The families a part's axes go over: its font's, else the ones its characters are in now, else a new text's Inter
+   * (FX-040); none when its font is refused already.
+   */
+  #families(
+    layer: TypedLayer,
+    { fontVariations }: FigmaProps,
+    range?: Run,
+    font?: FigmaProps["font"],
+  ): string[] {
+    if (fontVariations === undefined) {
+      return [];
+    }
+
+    const found = font === undefined ? undefined : this.#fonts.font(font);
+
+    if (found !== undefined) {
+      return found instanceof WriteError ? [] : [found.family];
+    }
+
+    if (!("getStyledTextSegments" in layer)) {
+      return [NEW_TEXT_FONT.family];
+    }
+
+    const text = layer as TextLayer;
+    const fonts =
+      range === undefined || range.end <= range.start
+        ? this.#fonts.textFonts(text)
+        : text
+          .getStyledTextSegments([TEXT_RANGE_FIELD.fontName.property], range.start, range.end)
+          .map(({ fontName }) => fontName);
+
+    return [...new Set(fonts.map(({ family }) => family))];
   }
 
   /** What these props set that only the other kind of text layer has. */

@@ -52,4 +52,37 @@ describe("ApplyFonts", () => {
     expect(fonts.font(font as never)).toEqual(BOLD);
     expect(factory.loadFont).not.toHaveBeenCalled();
   });
+
+  // Plugin API 138: Figma names a family's axes, the server's catalogue their ranges; both runs refuse alike.
+  it("refuses axes a family lacks, a static family's and a value outside the range the call was given", async () => {
+    const { fonts, factory, changes } = build();
+    const axes: Record<string, string[] | null> = { Inter: ["wght", "slnt"], Lato: null };
+
+    Object.assign(factory, {
+      variationAxes: (family: string) => {
+        if (!(family in axes)) {
+          throw new Error("unknown family");
+        }
+
+        return axes[family] ?? null;
+      },
+    });
+    await fonts.start(changes as never, true, { Inter: { wght: { min: 100, max: 900 } } });
+
+    expect(
+      [
+        fonts.variations("Inter", { wght: 560, slnt: -5 }),
+        fonts.variations("Inter", { wdth: 90 }),
+        fonts.variations("Inter", { wght: 1000 }),
+        fonts.variations("Lato", { wght: 500 }),
+        fonts.variations("Nope", { wght: 500 }),
+      ].map((error) => error?.message),
+    ).toEqual([
+      undefined,
+      "Inter has no 'wdth' axis: it has wght, slnt.",
+      "'wght' 1000 is outside Inter's range, 100 to 900.",
+      "Lato is not a variable font: it has no axes to set.",
+      "Figma has no font family Nope.",
+    ]);
+  });
 });

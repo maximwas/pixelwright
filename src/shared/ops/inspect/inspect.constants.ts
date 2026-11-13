@@ -18,6 +18,7 @@ export const INSPECT_GROUP = {
   text: "text",
   component: "component",
   interactions: "interactions",
+  notes: "notes",
 } as const;
 
 /** The layout fields of a parent that places a layer, read beside the layer (RG-3). */

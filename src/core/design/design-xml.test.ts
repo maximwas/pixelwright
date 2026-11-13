@@ -228,8 +228,9 @@ describe("DesignXml", () => {
     );
   });
 
-  // C-1.5 (m:48b67951): the properties a designer pinned in Dev Mode, in CSS words, once each, right after the notes.
-  it("writes the properties pinned in annotations in CSS words, once each, after the notes", () => {
+  // NEW-090 (was C-1.5's $pins): each note closes with the properties it pins, in CSS words, once each; a note of pins
+  // alone is its bracket.
+  it("writes each note's pinned properties in CSS words, once each, in a bracket that closes the note", () => {
     const root = layer({
       id: "1:1",
       type: "FRAME",
@@ -250,9 +251,9 @@ describe("DesignXml", () => {
     const lines = design.xml(model(root)).split("\n");
     const line = (id: string) => lines.find((each) => each.includes(`id="${id}"`)) ?? "";
 
-    expect(line("1:2")).toContain('note="API" $pins="width, gap, background, grid-column, somethingNew"');
-    expect(line("1:3")).toContain('$pins="color, text style"');
-    expect(line("1:3")).not.toContain("note=");
+    expect(line("1:2")).toContain('note="API [width, gap] | [background, width, grid-column, somethingNew]"');
+    expect(line("1:3")).toContain('note="[color, text style]"');
+    expect(lines.join("\n")).not.toContain("$pins");
   });
 
   // A slice is no element: a limit counts the elements shown, and $children says only that a child that shows is left out.

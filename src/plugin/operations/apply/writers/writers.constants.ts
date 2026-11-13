@@ -62,6 +62,7 @@ export const STEP_KEYS = {
 export const TEXT_RUN_FIELDS = [
   ["textStyle", ["textStyleId"]],
   ["font", ["fontName", "fontSize", "lineHeight"]],
+  ["fontVariations", ["fontName"]],
   ["letterSpacing", ["letterSpacing"]],
   ["textCase", ["textCase"]],
   ["textDecoration", ["textDecoration"]],
@@ -183,9 +184,6 @@ export const SIZE_NUMBER = {
   /** A line written by its height stands upright: a quarter turn clockwise. */
   standingTurn: -90,
 } as const;
-
-/** design_read's note: `Category: text`, the category ending at the first `: ` (T-139). */
-export const NOTE_VALUE = { category: ": " } as const;
 
 /** A link: on a layer that holds no text it would be a prototype reaction, refused on its own. */
 export const LINK_KEY = "hyperlink" satisfies keyof FigmaProps;

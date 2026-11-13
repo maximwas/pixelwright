@@ -27,6 +27,7 @@ import { PROPERTY_WRITERS, WRITE_REGISTRY, WriteRegistry } from "@/core/css/regi
 import { APPLY_FILES, ApplyFiles } from "@/server/tools/design-apply/apply-files.ts";
 import { FILE_ATTACH, FileAttach } from "@/server/tools/design-apply/file-attach.ts";
 import { FILE_CHANGES, FileChanges } from "@/server/tools/design-apply/file-changes.ts";
+import { FONT_RANGES, FontRanges } from "@/server/tools/design-apply/font-ranges.ts";
 import { SOURCE_FILES, SourceFiles } from "@/server/tools/design-apply/source-files.ts";
 
 /**
@@ -66,6 +67,7 @@ export class ApplyProviders {
       .bind({ provide: SOURCE_FILES, useClass: SourceFiles })
       .bind({ provide: FILE_CHANGES, useClass: FileChanges })
       .bind({ provide: FILE_ATTACH, useClass: FileAttach })
+      .bind({ provide: FONT_RANGES, useClass: FontRanges })
       .bind({ provide: APPLY_FILES, useClass: ApplyFiles });
   }
 }

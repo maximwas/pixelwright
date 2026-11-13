@@ -83,4 +83,26 @@ describe("TextWriter", () => {
       ],
     });
   });
+
+  // A variable font's axes (Plugin API 138): each quoted tag with its value; normal returns them to the font's own.
+  it("writes font-variation-settings as the axes it names, and normal as none", () => {
+    expect(written({ "font-variation-settings": "'wght' 560, \"wdth\" 90.5" })).toMatchObject({
+      props: { fontVariations: { wght: 560, wdth: 90.5 } },
+      sources: { fontVariations: "font-variation-settings" },
+    });
+    expect(written({ "font-variation-settings": "normal" }).props).toEqual({ fontVariations: {} });
+  });
+
+  it("refuses font-variation-settings that are not quoted four-letter tags with numbers", () => {
+    expect(
+      ["wght 560", "'weight' 560", "'wght'", "'wght' 5, 'wght' 6"].map(
+        (value) => written({ "font-variation-settings": value }).problems[0]?.message,
+      ),
+    ).toEqual([
+      `font-variation-settings="wght 560" is not "'wght' 560, 'wdth' 90": quoted four-letter axes, each with a number.`,
+      `font-variation-settings="'weight' 560" is not "'wght' 560, 'wdth' 90": quoted four-letter axes, each with a number.`,
+      `font-variation-settings="'wght'" is not "'wght' 560, 'wdth' 90": quoted four-letter axes, each with a number.`,
+      `font-variation-settings="'wght' 5, 'wght' 6" is not "'wght' 560, 'wdth' 90": quoted four-letter axes, each with a number.`,
+    ]);
+  });
 });

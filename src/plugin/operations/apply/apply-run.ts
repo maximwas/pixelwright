@@ -45,7 +45,7 @@ export class ApplyRun {
     this.#history = history;
   }
 
-  async run({ changes, parent, dryRun }: ApplyInput): Promise<ApplyOutput> {
+  async run({ changes, parent, dryRun, fontAxes }: ApplyInput): Promise<ApplyOutput> {
     const run: Run = {
       dry: dryRun,
       changes,
@@ -58,7 +58,7 @@ export class ApplyRun {
       sets: [],
     };
 
-    await this.#writer.prepare(changes, dryRun);
+    await this.#writer.prepare(changes, dryRun, fontAxes);
     this.#sets.start(changes, dryRun);
 
     for (const change of changes) {

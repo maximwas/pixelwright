@@ -18,6 +18,7 @@ import type { SourceReads } from "@/server/tools/design-apply/source-files.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { applyOp } from "@/shared/ops/apply/apply.manifest.ts";
+import type { FontAxes } from "@/shared/ops/apply/apply.schema.ts";
 import { readOp } from "@/shared/ops/read/read.manifest.ts";
 import { READ_PROFILE } from "@/shared/read-model/read-model.constants.ts";
 
@@ -29,6 +30,7 @@ interface Prepared {
   readonly dryRun: boolean;
   /** The files the plan read: the write sends them without reading them again. */
   readonly reads: SourceReads;
+  readonly fontAxes: FontAxes;
 }
 
 /** The part of the answer the plan and the plugin's errors make together. */
@@ -65,9 +67,9 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
 
     const ids = this.#files.layersToRead(reading.elements);
     const layers = ids.length === 0 ? CurrentLayers.of([], []) : await this.#read(ids);
-    const { plan, reads } = await this.#files.plan(reading.elements, layers);
+    const { plan, reads, fontAxes } = await this.#files.plan(reading.elements, layers);
 
-    return { reading, plan, parent, dryRun, reads };
+    return { reading, plan, parent, dryRun, reads, fontAxes };
   }
 
   /** The layers the call names, read once with the apply profile (outermost first, one budget, the ids lacking listed). */
@@ -92,12 +94,13 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
   }
 
   protected async write(prepared: Prepared, dry: boolean): Promise<DesignApplyOutput> {
-    const { plan, parent, reads } = prepared;
+    const { plan, parent, reads, fontAxes } = prepared;
     const attached = await this.#files.attach(plan.send, { session: this.session, dry, reads });
     const applied = await this.session.run(applyOp, {
       changes: attached.changes,
       ...(parent === undefined ? {} : { parent }),
       dryRun: dry,
+      ...(Object.keys(fontAxes).length === 0 ? {} : { fontAxes }),
     });
     const errors = [...attached.errors, ...applied.errors];
 

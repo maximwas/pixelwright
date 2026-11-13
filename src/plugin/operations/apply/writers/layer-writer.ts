@@ -9,7 +9,7 @@ import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import { TEXT_WRITER } from "@/plugin/operations/apply/writers/text-writer.ts";
 import { STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
-import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
+import type { ApplyChangeData, FontAxes } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /** One step of writing a layer: the props it writes, the capability its layer must have (null: every layer), how. */
@@ -60,8 +60,12 @@ export class LayerWriter {
   }
 
   /** A call's start: its fonts found, and loaded on a real one (P-148). */
-  async prepare(changes: readonly ApplyChangeData[], dry: boolean): Promise<void> {
-    await this.#text.prepare(changes, dry);
+  async prepare(
+    changes: readonly ApplyChangeData[],
+    dry: boolean,
+    ranges?: FontAxes,
+  ): Promise<void> {
+    await this.#text.prepare(changes, dry, ranges);
   }
 
   /** Whether a step, the text or hiding went in. */

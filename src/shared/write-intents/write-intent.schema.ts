@@ -124,7 +124,12 @@ const DecorationSpecSchema = zod.strictObject({
   thickness: optional(TextLengthSchema),
 });
 
-const NoteSchema = zod.strictObject({ category: zod.nullable(zod.string()), label: zod.string() });
+/** A note: its category's name as written, its text, and the properties it pins in design_read's words (none: none). */
+const NoteSchema = zod.strictObject({
+  category: zod.nullable(zod.string()),
+  label: zod.string(),
+  pins: zod.exactOptional(zod.array(zod.string())),
+});
 
 const StringsSchema = zod.record(zod.string(), zod.string());
 
@@ -180,6 +185,8 @@ export const FigmaPropsSchema = zod.strictObject({
   /** A text style by name; "" detaches the style. */
   textStyle: optional(zod.string()),
   font: optional(FontSpecSchema),
+  /** A variable font's axis values by tag (`{wght: 560}`); none returns every axis to the named style's own. */
+  fontVariations: optional(zod.record(zod.string(), zod.number())),
   letterSpacing: optional(zod.strictObject({ unit: zod.enum(INTENT_TEXT_UNIT), value: zod.number() })),
   textCase: optional(zod.enum(INTENT_TEXT_CASE)),
   textDecoration: optional(DecorationSpecSchema),

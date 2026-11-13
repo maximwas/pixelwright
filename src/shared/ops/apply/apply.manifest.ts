@@ -6,6 +6,7 @@ import {
   ApplyCreatedSchema,
   ApplyErrorSchema,
   ApplyPropertySchema,
+  FontAxesSchema,
 } from "@/shared/ops/apply/apply.schema.ts";
 import { OpContract } from "@/shared/ops/op-contract.ts";
 import { OP_NAME, OP_TURN } from "@/shared/ops/op-meta.constants.ts";
@@ -24,6 +25,8 @@ export const applyOp = new OpContract({
     /** Where top-level new layers go; the current page when left out. */
     parent: zod.exactOptional(NodeIdSchema),
     dryRun: zod.boolean(),
+    /** The axis ranges of the families the changes' font-variation-settings go over, where the catalogue knows them. */
+    fontAxes: zod.exactOptional(FontAxesSchema),
   }),
   output: zod.object({
     created: zod.array(ApplyCreatedSchema),

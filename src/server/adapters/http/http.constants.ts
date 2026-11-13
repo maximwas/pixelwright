@@ -10,6 +10,10 @@ export const NPM_LATEST = { url: "https://registry.npmjs.org/pixelwright/latest"
  */
 export const FONTSOURCE = {
   url: "https://api.fontsource.org/v1/fonts?type=google",
+  /** A variable family's axes with their ranges; a static family answers 404. Its id is the family in kebab case. */
+  variableUrl: (id: string) => `https://api.fontsource.org/v1/variable/${id}`,
+  idSpaces: /\s+/g,
+  idSeparator: "-",
   timeoutMs: 8_000,
   italic: "italic",
 } as const;
