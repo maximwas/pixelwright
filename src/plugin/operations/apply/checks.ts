@@ -136,6 +136,27 @@ export class ApplyChecks {
     }
   }
 
+  /**
+   * A ComponentSet holds Components only, new or moved (the real run holds a new set's variants in a plain frame, which
+   * goes when they combine, and a layer of another type would go with it): the layer's own type decides, a moved one's
+   * by what the file has, and the set is known by its element, whichever stands for it.
+   */
+  member(
+    change: ApplyChangeData,
+    type: string,
+    changes: readonly ApplyChangeData[],
+  ): void {
+    const holder = changes.find(({ ref }) => ref === change.parent);
+
+    if (
+      holder !== undefined &&
+      NEW_LAYER_TYPE[holder.tag] === FIGMA_NODE_TYPE.componentSet &&
+      type !== FIGMA_NODE_TYPE.component
+    ) {
+      throw new WriteError(APPLY_TEXT.setHoldsComponents(change.tag));
+    }
+  }
+
   /** What the write refuses the change for its layer's type alone, the same on dry and real runs. */
   refusals(layer: TypedLayer, change: ApplyChangeData): Refusal[] {
     const refusals: Refusal[] = [];

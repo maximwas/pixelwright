@@ -7,6 +7,7 @@ import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_PLACE, APPLY_TEXT, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
 import type { Place } from "@/plugin/operations/apply/apply.types.ts";
+import type { Origins } from "@/plugin/operations/apply/origins.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 import { INTENT_LAYOUT_MODE, INTENT_SELF_ALIGN } from "@/shared/write-intents/write-intent.constants.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
@@ -79,8 +80,11 @@ export class NewLayers {
     }
   }
 
-  /** A new set: the Components its frame holds combined in its place, the frame gone. */
-  combine(holder: SceneNode): ComponentSetNode {
+  /**
+   * A new set: the Components its frame holds combined in its place, the frame gone once no layer that was there
+   * before the call is in it (those go back where they stood first; when one cannot, the frame stays and says so).
+   */
+  combine(holder: SceneNode, origins: Origins): ComponentSetNode {
     const frame = holder as FrameNode;
     const components = frame.children.filter(
       (child): child is ComponentNode => child.type === FIGMA_NODE_TYPE.component,
@@ -88,14 +92,14 @@ export class NewLayers {
     const parent = frame.parent;
 
     if (components.length === 0 || parent === null) {
-      frame.remove();
+      this.#clear(frame, origins);
 
       throw new WriteError(APPLY_TEXT.emptySet);
     }
 
     const set = this.#factory.combine(components, parent, parent.children.indexOf(frame));
 
-    frame.remove();
+    this.#clear(frame, origins);
     this.#assign.set(set as ComponentSetNode, { fills: [], strokes: [] });
 
     return set;
@@ -106,6 +110,17 @@ export class NewLayers {
     if (!node.removed) {
       node.remove();
     }
+  }
+
+  /** The frame goes with what is left in it, after the layers of the user's that the call moved into it went back. */
+  #clear(frame: FrameNode, origins: Origins): void {
+    try {
+      origins.restore(frame);
+    } catch (error) {
+      throw new WriteError(APPLY_TEXT.keptHeld(error), APPLY_TEXT.keptHeldHint);
+    }
+
+    frame.remove();
   }
 
   /** A new layer put in its parent at once; taken away again when Figma refuses it there. */

@@ -130,13 +130,7 @@ export class PendingSets {
     try {
       run.origins.restore(node);
     } catch (error) {
-      run.report.fail(
-        change,
-        new WriteError(
-          APPLY_TEXT.keptHeld(error instanceof Error ? error.message : String(error)),
-          APPLY_TEXT.keptHeldHint,
-        ),
-      );
+      run.report.fail(change, new WriteError(APPLY_TEXT.keptHeld(error), APPLY_TEXT.keptHeldHint));
 
       return;
     }
@@ -210,7 +204,7 @@ export class PendingSets {
     holder: SceneNode,
   ): ComponentSetNode | null {
     try {
-      return this.#layers.combine(holder);
+      return this.#layers.combine(holder, run.origins);
     } catch (error) {
       run.report.fail(change, error);
 

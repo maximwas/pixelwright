@@ -32,6 +32,10 @@ return { component: owner.name, variant: main.variantProperties, props: Object.f
   const left = async (name: string): Promise<number> =>
     (await run(`const section = await pw.node(${JSON.stringify(scratch)});
 return section.findAll((node) => node.name === ${JSON.stringify(name)}).length;`)) as number;
+  /** A layer's parent and its index there, or null once it is gone. */
+  const where = async (id: string): Promise<unknown> =>
+    await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(id)});
+return node === null || node.removed ? null : [node.parent.id, node.parent.children.indexOf(node)];`);
   /** The first layer of this type inside a layer: its id. */
   const inside = async (id: string, type: string): Promise<string> =>
     (await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(id)});
@@ -256,10 +260,7 @@ return Object.values(node.componentPropertyDefinitions).map(({ type }) => type);
   // there before the call, moved into that layer, goes back where it stood and is never taken with it.
   it("puts an existing layer back where it stood when the layer it was moved into is taken away", async () => {
     const keep = made(await apply(`<Frame name="${PREFIX}keep" width="40px" height="40px"/>`), "Frame");
-    const where = async (): Promise<unknown> =>
-      await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(keep)});
-return node === null || node.removed ? null : [node.parent.id, node.parent.children.indexOf(node)];`);
-    const stood = await where();
+    const stood = await where(keep);
     const name = `${PREFIX}moved-set`;
     const xml = `<ComponentSet name="${name}"><Component variant="Size=S" width="40px" height="20px"><Text prop="Name">a</Text></Component><Component variant="Size=L" width="40px" height="20px"><Frame name="${PREFIX}moved-bound" visibleProp="Name" width="30px" height="30px"><Frame id="${keep}"/></Frame></Component></ComponentSet>`;
     const message = `${name} has a text property Name: another kind cannot take its name.`;
@@ -268,13 +269,37 @@ return node === null || node.removed ? null : [node.parent.id, node.parent.child
     const told = expect.arrayContaining([expect.objectContaining({ message })]);
 
     expect((await apply(xml, true)).errors).toEqual(told);
-    expect(await where()).toEqual(stood);
+    expect(await where(keep)).toEqual(stood);
 
     const real = await apply(xml);
 
     expect(real.errors).toEqual(told);
-    expect(await where()).toEqual(stood);
+    expect(await where(keep)).toEqual(stood);
     expect(await left(`${PREFIX}moved-bound`)).toBe(0);
+  });
+
+  // m:f66aed65: a real run holds a new set's variants in a plain frame until they combine, and the frame goes: a layer
+  // that is no Component would go with it, so a ComponentSet's element refuses any other layer, a new one or an
+  // existing one moved into it, alike on the dry and the real run, before it moves; the frame stays where it stood.
+  it("refuses a layer that is no Component in a new ComponentSet on both runs and leaves an existing one where it stood", async () => {
+    const keep = made(await apply(`<Frame name="${PREFIX}set-keep" width="40px" height="40px"/>`), "Frame");
+    const stood = await where(keep);
+    const variant = `<Component variant="Size=S" width="40px" height="20px"/>`;
+    const message = "A ComponentSet holds only Components: <Frame> is not one.";
+    const cases = [
+      { name: `${PREFIX}set-moved`, inside: `<Frame id="${keep}"/>` },
+      { name: `${PREFIX}set-new`, inside: `<Frame name="${PREFIX}set-new-frame" width="10px" height="10px"/>` },
+    ];
+
+    for (const { name, inside } of cases) {
+      const xml = `<ComponentSet name="${name}">${variant}${inside}</ComponentSet>`;
+
+      expect((await apply(xml, true)).errors).toMatchObject([{ message }]);
+      expect(await where(keep)).toEqual(stood);
+      expect((await apply(xml)).errors).toMatchObject([{ message }]);
+      expect(await where(keep)).toEqual(stood);
+      expect(await left(`${PREFIX}set-new-frame`)).toBe(0);
+    }
   });
 
   // T-127, m:f66aed65: a new instance's props are checked in a dry run against its component found by name: a name it
