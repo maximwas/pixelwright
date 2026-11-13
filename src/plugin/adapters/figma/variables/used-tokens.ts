@@ -37,7 +37,7 @@ export class UsedTokens {
       accepts: (layer) => this.#styleIds(layer).length > 0 || this.#bound(layer) !== undefined || this.#mixed(layer),
       enough: Number.POSITIVE_INFINITY,
     });
-    const used = kept.map((layer) => this.#uses(layer));
+    const used = kept.map((layer) => this.uses(layer));
 
     return {
       styles: [...new Set(used.flatMap(({ styles }) => styles))],
@@ -111,7 +111,7 @@ export class UsedTokens {
   }
 
   /** What one layer uses: its own style fields and bound variables, and its text runs'. */
-  #uses(layer: SceneNode): UsedIds {
+  uses(layer: SceneNode): UsedIds {
     const runs = this.#runs(layer);
 
     return {

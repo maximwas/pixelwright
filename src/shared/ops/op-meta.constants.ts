@@ -35,4 +35,5 @@ export const OP_NAME = {
   apply: "apply",
   upload: "upload",
   tokensApply: "tokens_apply",
+  bind: "bind",
 } as const;
