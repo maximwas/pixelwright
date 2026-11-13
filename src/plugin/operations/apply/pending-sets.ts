@@ -11,7 +11,7 @@ import { PROPERTY_MARKS } from "@/plugin/operations/apply/property-marks.ts";
 import { LAYER_WRITER } from "@/plugin/operations/apply/writers/layer-writer.ts";
 import { STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
-import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
+import type { ApplyChangeData, ApplyProperty } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 type Fail = (error: unknown, keys?: readonly (keyof FigmaProps)[]) => void;
@@ -45,7 +45,7 @@ export class PendingSets {
   }
 
   /** A call's start: the names of the components and sets its XML makes, no mark of another call. */
-  start(changes: readonly ApplyChangeData[]): void {
+  start(changes: readonly ApplyChangeData[], dry: boolean): void {
     const sets = new Set(
       changes.filter((change) => this.#makes(change, FIGMA_NODE_TYPE.componentSet)).map(({ ref }) => ref),
     );
@@ -56,7 +56,12 @@ export class PendingSets {
     );
 
     this.#components.start(owners.flatMap(({ props }) => (props.name === undefined ? [] : [props.name])));
-    this.#marks.start();
+    this.#marks.start(dry);
+  }
+
+  /** The properties the call's marks added to components there before it (a dry run's: would add). */
+  properties(): ApplyProperty[] {
+    return this.#marks.added();
   }
 
   hold(

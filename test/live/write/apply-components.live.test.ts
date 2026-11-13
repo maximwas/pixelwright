@@ -7,6 +7,7 @@ type Applied = {
   created: { id?: string; tag: string }[];
   changed: string[];
   errors: { id?: string; attribute?: string; message: string; hint?: string }[];
+  properties?: { component: string; name: string; type: string }[];
 };
 
 // design_apply's components (item 44): instances of Orbit's components (instanced only, never edited), new
@@ -328,5 +329,32 @@ return Object.values(node.componentPropertyDefinitions).map(({ type }) => type);
       // values, so the real run leaves it where the dry run left nothing.
       expect(await left(name)).toBe(1);
     }
+  });
+
+  // T-129: the answer lists the properties added to a component there before the call (a dry run's: would add); a
+  // property it has already is bound and not listed.
+  it("lists the properties added to an existing component, on a dry run as on the real one", async () => {
+    const component = made(
+      await apply(`<Component name="${PREFIX}listed"><Text name="${PREFIX}listed-title">Hi</Text></Component>`),
+      "Component",
+    );
+    const title = await inside(component, "TEXT");
+    const xml = `<Text id="${title}" prop="Title"/>`;
+    const dry = await apply(xml, true);
+
+    expect(dry.errors).toEqual([]);
+    expect(dry.properties).toEqual([{ component, name: "Title", type: "TEXT" }]);
+
+    const real = await apply(xml);
+
+    expect(real.errors).toEqual([]);
+    expect(real.properties).toEqual([{ component, name: "Title", type: "TEXT" }]);
+    expect(
+      await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(component)});
+return Object.keys(node.componentPropertyDefinitions).map((key) => key.replace(/#[^#]*$/, ""));`),
+    ).toEqual(["Title"]);
+    expect((await apply(`<Text id="${title}" prop="Title" visibleProp="Shown"/>`)).properties).toEqual([
+      { component, name: "Shown", type: "BOOLEAN" },
+    ]);
   });
 });

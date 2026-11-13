@@ -88,7 +88,8 @@ change); when it cannot be saved, nothing is written.
   `<Component id="…">`, bind each layer to the property of that name the component has (a variant's: its set's), or
   add the property once when it has none, its default the layer's value now (the text, whether it shows, the
   instance's component). A name a property of another kind holds is an error; a layer no component holds, or one
-  inside an instance, is refused.
+  inside an instance, is refused. `properties` in the answer lists what was added to components there before the
+  call (a dry run's: what would be).
 - `<Slot name="Content">` makes a slot directly inside a component; in an instance, give its `<Slot id="…">` new
   layers.
 

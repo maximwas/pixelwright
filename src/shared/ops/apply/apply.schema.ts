@@ -1,5 +1,5 @@
 import * as zod from "zod/mini";
-import { APPLY, APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
+import { APPLY, APPLY_CHANGE_KIND, APPLY_PROPERTY_TYPE } from "@/shared/ops/apply/apply.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 import { FigmaPropsSchema } from "@/shared/write-intents/write-intent.schema.ts";
 
@@ -48,8 +48,20 @@ export const ApplyCreatedSchema = zod.object({
   name: zod.exactOptional(zod.string()),
 });
 
+/**
+ * A property prop, visibleProp or swapProp added to a component that was there before the call (a dry run's: would
+ * add), on its component or set by id, by name without Figma's #id (T-129).
+ */
+export const ApplyPropertySchema = zod.object({
+  component: zod.string(),
+  name: zod.string(),
+  type: zod.enum(APPLY_PROPERTY_TYPE),
+});
+
 export type ApplyChangeData = zod.output<typeof ApplyChangeSchema>;
 
 export type ApplyCreated = zod.output<typeof ApplyCreatedSchema>;
 
 export type ApplyErrorEntry = zod.output<typeof ApplyErrorSchema>;
+
+export type ApplyProperty = zod.output<typeof ApplyPropertySchema>;

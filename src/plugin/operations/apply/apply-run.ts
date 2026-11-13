@@ -59,7 +59,7 @@ export class ApplyRun {
     };
 
     await this.#writer.prepare(changes, dryRun);
-    this.#sets.start(changes);
+    this.#sets.start(changes, dryRun);
 
     for (const change of changes) {
       try {
@@ -85,7 +85,7 @@ export class ApplyRun {
       this.#history.commitUndo();
     }
 
-    return run.report.result();
+    return run.report.result(this.#sets.properties());
   }
 
   async #change(change: ApplyChangeData, run: Run): Promise<void> {

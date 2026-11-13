@@ -1,3 +1,4 @@
+import { APPLY_PROPERTY_TYPE } from "@/shared/ops/apply/apply.constants.ts";
 /** The tags this release makes a layer for, and the type each is made as (T-123); groups and vectors are not drawn. */
 export const NEW_LAYER_TYPE: Readonly<Record<string, NodeType>> = {
   Frame: "FRAME",
@@ -33,9 +34,9 @@ export const APPLY_PATTERN = { pageLimit: /comes with (\d+) pages?/i, instanceLa
 
 /** What each name of a layer's property mark binds (T-129): prop its characters, visibleProp its visibility, swapProp its component. */
 export const PROPERTY_KINDS = [
-  { key: "text", field: "characters", type: "TEXT" },
-  { key: "visible", field: "visible", type: "BOOLEAN" },
-  { key: "swap", field: "mainComponent", type: "INSTANCE_SWAP" },
+  { key: "text", field: "characters", type: APPLY_PROPERTY_TYPE.text },
+  { key: "visible", field: "visible", type: APPLY_PROPERTY_TYPE.boolean },
+  { key: "swap", field: "mainComponent", type: APPLY_PROPERTY_TYPE.swap },
 ] as const;
 
 /** The layer fields a property mark drives, by name. */

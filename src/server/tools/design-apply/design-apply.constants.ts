@@ -76,6 +76,8 @@ export const DESIGN_APPLY_FIELD = {
   created:
     "The layers made, by their element's line and ref, with their ids and names; a dry run's, which it would make, have neither.",
   changed: "The ids of the existing layers written to (a dry run's: would be).",
+  properties:
+    "The properties prop, visibleProp and swapProp added to components that were there before the call (a dry run's: would add), each on its component or set by id, by name without Figma's #id; left out when none.",
   changes:
     "What the call would make or change, in document order, in Figma's terms: kind (create or update), id, tag, props (only what the layer does not have yet) and sources (the attribute each prop came from). A layer that already looks as written is not listed.",
 } as const;

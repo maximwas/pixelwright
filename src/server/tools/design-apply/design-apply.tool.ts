@@ -101,7 +101,12 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
     });
     const errors = [...attached.errors, ...applied.errors];
 
-    return { ...this.#answer(prepared, errors), created: applied.created, changed: applied.changed };
+    return {
+      ...this.#answer(prepared, errors),
+      created: applied.created,
+      changed: applied.changed,
+      ...(applied.properties === undefined ? {} : { properties: applied.properties }),
+    };
   }
 
   protected changes({ created, changed }: DesignApplyOutput): number {
