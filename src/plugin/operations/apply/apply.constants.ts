@@ -3,6 +3,7 @@ export const NEW_LAYER_TYPE: Readonly<Record<string, NodeType>> = {
   Frame: "FRAME",
   Section: "SECTION",
   Text: "TEXT",
+  TextPath: "TEXT_PATH",
   Rectangle: "RECTANGLE",
   Ellipse: "ELLIPSE",
   Line: "LINE",
@@ -30,7 +31,7 @@ export const APPLY_PATTERN = { pageLimit: /comes with (\d+) pages?/i } as const;
 export const NEW_LAYER_VALUE = { hug: "HUG", none: "NONE", fit: "WIDTH_AND_HEIGHT", slot: "SLOT" } as const;
 
 /** The kinds of style and variable a token index tells apart, as Figma names them. */
-export const TOKEN_KIND = { paint: "PAINT", effect: "EFFECT", colour: "COLOR" } as const;
+export const TOKEN_KIND = { paint: "PAINT", effect: "EFFECT", text: "TEXT", colour: "COLOR" } as const;
 
 export const TOKEN_TEXT = {
   keyJoint: " ",
@@ -85,7 +86,6 @@ export const APPLY_TEXT = {
   notPage: (id: string | null, type: string) => `${id} is ${withArticle(type)}, not a page.`,
   pageHint: "file_map lists the file's pages with their ids.",
   notYet: (attribute: string) => `${attribute} is not written to Figma in this release.`,
-  span: "Span",
   slot: "A slot is made in a component.",
   slotHint: 'In an instance, fill the slot it has: give its <Slot id="…"> new layers.',
   emptySet: "A ComponentSet is made of the Components inside it: give it one at least.",

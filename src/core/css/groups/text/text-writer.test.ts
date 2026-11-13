@@ -3,6 +3,7 @@ import { FontValues } from "@/core/css/fonts/font-values.ts";
 import { GradientGeometry } from "@/core/css/gradients/gradient-geometry.ts";
 import { GradientParser } from "@/core/css/gradients/gradient-parser.ts";
 import { FillsWriter } from "@/core/css/groups/paint/fills-writer.ts";
+import { PathGeometry } from "@/core/css/groups/text/path-geometry.ts";
 import { TextWriter } from "@/core/css/groups/text/text-writer.ts";
 import { PaintValue } from "@/core/css/paints/paint-value.ts";
 import { ChangeOutput } from "@/core/css/registry/change-output.ts";
@@ -24,7 +25,7 @@ const fills = new FillsWriter(
   new CssUrl(split),
   split,
 );
-const writer = new TextWriter(fills, new FontValues(lengths, format, split), split);
+const writer = new TextWriter(fills, new FontValues(lengths, format, split), split, new PathGeometry(new CssAngle()));
 
 /** What the writer sets for a Text's attributes. */
 function written(attributes: Readonly<Record<string, string>>) {

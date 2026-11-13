@@ -19,6 +19,8 @@ import { GRID_WRITER, GridWriter } from "@/core/css/groups/layout/grid-writer.ts
 import { LayoutWriter } from "@/core/css/groups/layout/layout-writer.ts";
 import { FILLS_WRITER, FillsWriter } from "@/core/css/groups/paint/fills-writer.ts";
 import { StrokesWriter } from "@/core/css/groups/paint/strokes-writer.ts";
+import { PATH_GEOMETRY, PathGeometry } from "@/core/css/groups/text/path-geometry.ts";
+import { TextPathWriter } from "@/core/css/groups/text/text-path-writer.ts";
 import { TextWriter } from "@/core/css/groups/text/text-writer.ts";
 import { PAINT_VALUE, PaintValue } from "@/core/css/paints/paint-value.ts";
 import { PROPERTY_WRITERS, WRITE_REGISTRY, WriteRegistry } from "@/core/css/registry/write-registry.ts";
@@ -40,6 +42,7 @@ export class ApplyProviders {
       .bind({ provide: PAINT_VALUE, useClass: PaintValue })
       .bind({ provide: FONT_VALUES, useClass: FontValues })
       .bind({ provide: FILLS_WRITER, useClass: FillsWriter })
+      .bind({ provide: PATH_GEOMETRY, useClass: PathGeometry })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: ElementWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: LayoutWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: PlacementWriter })
@@ -51,6 +54,7 @@ export class ApplyProviders {
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: StrokesWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: EffectsWriter })
       .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: TextWriter })
+      .bind({ provide: PROPERTY_WRITERS, multi: true, useClass: TextPathWriter })
       .bind({ provide: WRITE_REGISTRY, useClass: WriteRegistry })
       .bind({ provide: LAYER_READS, useClass: LayerReads })
       .bind({ provide: LAYER_RENDERS, useClass: LayerRenders })

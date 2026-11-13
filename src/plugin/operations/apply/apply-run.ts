@@ -67,6 +67,8 @@ export class ApplyRun {
       sets: [],
     };
 
+    await this.#writer.prepare(changes, dryRun);
+
     for (const change of changes) {
       try {
         await this.#change(change, run);

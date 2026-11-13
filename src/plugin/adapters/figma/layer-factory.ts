@@ -1,5 +1,9 @@
 import { InjectionToken, injectable } from "@needle-di/core";
+import { FIGMA_VECTOR } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
+
+/** The layers that hold text: a text, and a text on a path. */
+export type TextLayer = TextNode | TextPathNode;
 
 /**
  * What only Figma's global makes for a write: new layers, an icon from its SVG, an image of a file's bytes, a component
@@ -63,12 +67,35 @@ export class LayerFactory {
     return figma.combineAsVariants(components, parent, index);
   }
 
-  /** Every font the text uses, loaded: Figma refuses new characters on a text whose fonts are not. */
-  async loadFonts(node: TextNode): Promise<void> {
-    const fonts =
-      node.fontName === figma.mixed ? node.getRangeAllFontNames(0, node.characters.length) : [node.fontName];
+  /** A text on a path along an SVG path's data: Figma makes one of a vector, which it takes (FX-043). */
+  textPath(path: string, start: { readonly segment: number; readonly position: number } | undefined): TextPathNode {
+    const vector = figma.createVector();
 
-    await Promise.all(fonts.map((font) => figma.loadFontAsync(font)));
+    try {
+      vector.vectorPaths = [{ windingRule: FIGMA_VECTOR.open, data: path }];
+
+      return figma.createTextPath(vector, start?.segment ?? 0, start?.position ?? 0);
+    } catch (error) {
+      vector.remove();
+
+      throw error;
+    }
+  }
+
+  /** The fonts this Figma has, local and Figma's own alike (they cannot be told apart). */
+  fonts(): Promise<Font[]> {
+    return figma.listAvailableFontsAsync();
+  }
+
+  loadFont(font: FontName): Promise<void> {
+    return figma.loadFontAsync(font);
+  }
+
+  /** The fonts a text uses, in one call: an empty one through its own font, since Figma refuses a range of none (P-078). */
+  textFonts(node: TextLayer): FontName[] {
+    const fonts = node.characters.length > 0 ? node.getRangeAllFontNames(0, node.characters.length) : [node.fontName];
+
+    return fonts.filter((font): font is FontName => typeof font === "object" && font !== null);
   }
 }
 

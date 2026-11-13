@@ -1,11 +1,11 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import type { Capability, TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
-import { LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
-import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
+import { LAYER_BOXES } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { LAYER_READ } from "@/plugin/adapters/figma/layer-read/layer-read.constants.ts";
 import { ICON_TAG } from "@/plugin/operations/apply/apply.constants.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
+import { TEXT_WRITER } from "@/plugin/operations/apply/writers/text-writer.ts";
 import { STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
@@ -32,7 +32,7 @@ interface Fitted {
 }
 
 /**
- * Writes a change onto its layer in Figma's order (P-149): its steps, then its text, and hiding it last, since a layer
+ * Writes a change onto its layer in Figma's order (P-149): its steps, then its text (TextWriter), and hiding it last, since a layer
  * hidden inside an instance can drop out of the plugin API at once (FX-021). Each step on its own: one that fails
  * leaves the others, its error naming its attribute; what the checks refused is not written. An Icon's width or height
  * scales it whole first, its lines and corners too (T-134).
@@ -40,18 +40,25 @@ interface Fitted {
 @injectable()
 export class LayerWriter {
   readonly #steps;
-  readonly #factory;
+  readonly #text;
   readonly #assign;
-  readonly #boxes = new LayerBoxes();
+  readonly #boxes;
 
   constructor(
     steps = inject(WRITE_STEPS, { multi: true }),
-    factory = inject(LAYER_FACTORY),
+    text = inject(TEXT_WRITER),
     assign = inject(ASSIGN),
+    boxes = inject(LAYER_BOXES),
   ) {
     this.#steps = steps;
-    this.#factory = factory;
+    this.#text = text;
     this.#assign = assign;
+    this.#boxes = boxes;
+  }
+
+  /** A call's start: its fonts found, and loaded on a real one (P-148). */
+  async prepare(changes: readonly ApplyChangeData[], dry: boolean): Promise<void> {
+    await this.#text.prepare(changes, dry);
   }
 
   /** Whether a step, the text or hiding went in. */
@@ -75,10 +82,8 @@ export class LayerWriter {
       }
     }
 
-    if (change.text !== undefined && !refusals.some(({ text }) => text ?? false)) {
-      const { characters } = change.text;
-
-      wrote = (await this.#attempt(() => this.#characters(node as TextNode, characters), fail)) || wrote;
+    if (!refusals.some(({ text }) => text ?? false)) {
+      wrote = (await this.#text.write(node, change, refusals, fail)) || wrote;
     }
 
     const { visible } = change.props;
@@ -112,15 +117,7 @@ export class LayerWriter {
       }
     }
 
-    return found;
-  }
-
-  /** New characters, the text's fonts loaded first; the same characters are not set again (P-080). */
-  async #characters(node: TextNode, characters: string): Promise<void> {
-    if (node.characters !== characters) {
-      await this.#factory.loadFonts(node);
-      this.#assign.set(node, { characters });
-    }
+    return [...found, ...(await this.#text.checks(change, layer, refused))];
   }
 
   /**

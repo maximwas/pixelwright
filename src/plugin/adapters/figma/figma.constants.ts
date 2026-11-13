@@ -23,7 +23,11 @@ export const FIGMA_NODE_TYPE = {
   section: "SECTION",
   line: "LINE",
   text: "TEXT",
+  textPath: "TEXT_PATH",
 } as const;
+
+/** A path drawn open: a text on a path runs along it, it fills nothing. */
+export const FIGMA_VECTOR = { open: "NONE" } as const;
 
 const FRAME_TYPES = ["FRAME", "COMPONENT", "COMPONENT_SET", "INSTANCE", "SLOT"] as const;
 const SHAPE_TYPES = ["RECTANGLE", "ELLIPSE", "LINE", "POLYGON", "STAR", "VECTOR"] as const;
