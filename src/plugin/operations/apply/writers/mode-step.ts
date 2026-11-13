@@ -1,5 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
+import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { CAPABILITY_TEXT } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
@@ -11,7 +12,8 @@ import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 /**
  * The variable modes a layer is set to (C-135), by collection and mode, each as its name or the slug design_read
  * writes: a mode is set where the layer is not in it already; an empty one clears the collection's, so the layer takes
- * its parent's. Every name is found before the first mode is set, so a wrong one changes nothing.
+ * its parent's. Every name is found in the check, on dry and real runs, and again before the first mode is set, so a wrong one
+ * changes nothing.
  */
 @injectable()
 export class ModeStep implements WriteStep {
@@ -31,6 +33,11 @@ export class ModeStep implements WriteStep {
     this.#names = names;
   }
 
+  /** The collections and modes named exist, found without writing (a layer a dry run has not made is typed only). */
+  async check({ modes }: FigmaProps, layer: TypedLayer): Promise<void> {
+    await this.#writes(layer as FrameNode, modes);
+  }
+
   async write(node: SceneNode, { modes }: FigmaProps): Promise<void> {
     const layer = node as FrameNode;
 
@@ -38,12 +45,7 @@ export class ModeStep implements WriteStep {
       throw new WriteError(WRITERS_TEXT.noModes(CAPABILITY_TEXT.type(node.type)));
     }
 
-    const collections = await this.#around(layer);
-    const writes = Object.entries(modes ?? {}).map(([key, mode]) => {
-      const collection = this.#collection(collections, key);
-
-      return { collection, mode: mode === "" ? null : this.#mode(collection, mode) };
-    });
+    const writes = await this.#writes(layer, modes);
     const explicit = layer.explicitVariableModes;
 
     for (const { collection, mode } of writes) {
@@ -55,6 +57,17 @@ export class ModeStep implements WriteStep {
         layer.setExplicitVariableModeForCollection(collection, mode);
       }
     }
+  }
+
+  /** Each name found as the collection and the mode id it sets (null: clear); a wrong one throws. */
+  async #writes(layer: FrameNode,    modes: FigmaProps["modes"]): Promise<{ collection: VariableCollection; mode: string | null }[]> {
+    const collections = await this.#around(layer);
+
+    return Object.entries(modes ?? {}).map(([key, mode]) => {
+      const collection = this.#collection(collections, key);
+
+      return { collection, mode: mode === "" ? null : this.#mode(collection, mode) };
+    });
   }
 
   /** The file's collections and the libraries' the layer is in a mode of. */

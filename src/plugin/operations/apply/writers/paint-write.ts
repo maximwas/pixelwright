@@ -44,6 +44,10 @@ export class PaintWrite {
       if (spec.kind === INTENT_PAINT.token && spec.token !== undefined) {
         await this.#notStyle(spec.token);
       }
+
+      if (spec.kind === INTENT_PAINT.image) {
+        this.#images.require(spec);
+      }
     }
 
     for (const token of this.#tokenNames(specs)) {

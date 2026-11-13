@@ -18,11 +18,19 @@ interface ImageFile {
 export class ApplyImages {
   readonly #uploads;
   readonly #factory;
+  // Kept for the call: the upload goes once its image is made, and every element naming the file needs the hash.
   readonly #made = new Map<string, string>();
 
   constructor(uploads = inject(UPLOAD_STORE), factory = inject(LAYER_FACTORY)) {
     this.#uploads = uploads;
     this.#factory = factory;
+  }
+
+  /** Refuses a file whose upload did not arrive (no stream is a dry run's: sent nowhere), before any write. */
+  require({ src, stream }: ImageFile): void {
+    if (stream !== undefined && !this.#made.has(stream) && this.#uploads.bytes(stream) === undefined) {
+      throw new WriteError(APPLY_TEXT.notReached(src ?? ""), APPLY_TEXT.notReachedHint);
+    }
   }
 
   /** The hash of the image the file makes. */

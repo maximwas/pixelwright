@@ -23,6 +23,12 @@ export class AssetStep implements WriteStep {
     this.#assign = assign;
   }
 
+  check({ asset }: FigmaProps): void {
+    if (asset !== undefined && asset.kind !== INTENT_ASSET.icon) {
+      this.#images.require(asset);
+    }
+  }
+
   write(node: SceneNode, { asset }: FigmaProps): void {
     if (asset === undefined || asset.kind === INTENT_ASSET.icon) {
       return;
