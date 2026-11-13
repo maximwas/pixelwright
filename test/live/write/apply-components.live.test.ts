@@ -200,6 +200,7 @@ return [node.opacity, node.visible];`),
       ),
       "Component",
     );
+    const frame = made(await apply(`<Frame name="${PREFIX}plain" width="40px" height="40px"/>`), "Frame");
     const left = async (name: string): Promise<number> =>
       (await run(`const section = await pw.node(${JSON.stringify(scratch)});
 return section.findAll((node) => node.name === ${JSON.stringify(name)}).length;`)) as number;
@@ -210,7 +211,8 @@ return section.findAll((node) => node.name === ${JSON.stringify(name)}).length;`
         name: `${PREFIX}clash`,
       },
       {
-        xml: `<Frame name="${PREFIX}held"><Text name="${PREFIX}unheld" prop="Name">x</Text></Frame>`,
+        // Under an existing plain frame, so core lets the mark through and the plugin finds no component holding it.
+        xml: `<Frame id="${frame}"><Text name="${PREFIX}unheld" prop="Name">x</Text></Frame>`,
         message:
           "No component holds this layer: prop, visibleProp and swapProp bind a component's layers to its properties.",
         name: `${PREFIX}unheld`,
