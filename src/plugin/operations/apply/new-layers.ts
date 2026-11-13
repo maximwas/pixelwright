@@ -4,6 +4,7 @@ import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import { CAPABILITIES } from "@/plugin/adapters/figma/capabilities.ts";
 import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
+import { COMPONENT_PROPERTY_TYPE } from "@/plugin/adapters/figma/layer-meta/layer-meta.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_PLACE, APPLY_TEXT, FILE_NAME, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
 import type { Place } from "@/plugin/operations/apply/apply.types.ts";
@@ -102,6 +103,28 @@ export class NewLayers {
     this.#assign.set(set as ComponentSetNode, { fills: [], strokes: [] });
 
     return set;
+  }
+
+  /** A set's variants in a grid: a column per value of its first variant property, a row per the rest, 40 px apart. */
+  layOut(set: ComponentSetNode): void {
+    const variants = set.children.filter((child): child is ComponentNode => child.type === FIGMA_NODE_TYPE.component);
+    const definitions = set.componentPropertyDefinitions;
+    const first = Object.keys(definitions).find((name) => definitions[name]?.type === COMPONENT_PROPERTY_TYPE.variant);
+    const column = (variant: ComponentNode) => variant.variantProperties?.[first ?? ""] ?? "";
+    const row = (variant: ComponentNode) =>
+      JSON.stringify(Object.entries(variant.variantProperties ?? {}).filter(([name]) => name !== first));
+    const columns = [...new Set(variants.map(column))];
+    const rows = [...new Set(variants.map(row))];
+    const width = Math.max(...variants.map((variant) => variant.width));
+    const height = Math.max(...variants.map((variant) => variant.height));
+    const gap = APPLY_PLACE.setGap;
+
+    for (const variant of variants) {
+      variant.x = gap + columns.indexOf(column(variant)) * (width + gap);
+      variant.y = gap + rows.indexOf(row(variant)) * (height + gap);
+    }
+
+    set.resizeWithoutConstraints(gap + columns.length * (width + gap), gap + rows.length * (height + gap));
   }
 
   /** A layer that failed after it existed goes, so a failed element leaves nothing in the user's file. */

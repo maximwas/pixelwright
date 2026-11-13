@@ -37,7 +37,7 @@ interface Fitted {
 /**
  * Writes a change onto its layer in Figma's order (P-149): its steps, then its text (TextWriter), and hiding it last, since a layer
  * hidden inside an instance can drop out of the plugin API at once (FX-021). Each step on its own: one that fails
- * leaves the others, its error naming its attribute; what the checks refused is not written. An Icon's width or height
+ * leaves the others, its error naming its attribute; what the checks refused is neither written nor told again. An Icon's width or height
  * scales it whole first, its lines and corners too (T-134).
  */
 @injectable()
@@ -73,14 +73,18 @@ export class LayerWriter {
   ): Promise<boolean> {
     const refused = new Set(refusals.flatMap(({ keys }) => keys));
     const { props, scaled } = this.#fitted(node, change, fail);
+    // What the checks refused is not given to a step, so a step sharing it with other props writes those alone.
+    const given = Object.fromEntries(
+      Object.entries(props).filter(([key]) => !refused.has(key as keyof FigmaProps)),
+    ) as FigmaProps;
     let wrote = scaled;
 
     for (const step of this.#steps) {
-      if (step.keys.some((key) => props[key] !== undefined && !refused.has(key))) {
+      if (step.keys.some((key) => given[key] !== undefined)) {
         wrote =
           (await this.#attempt(
-            () => step.write(node, props),
-            (error) => fail(error, step.keys),
+            () => step.write(node, given),
+            (error) => this.#failed(error, step, refused, fail),
           )) || wrote;
       }
     }
@@ -116,12 +120,31 @@ export class LayerWriter {
         try {
           await step.check(change.props, layer);
         } catch (error) {
-          found.push({ error, keys: (error instanceof WriteError ? error.keys : undefined) ?? step.keys });
+          found.push({ error, keys: this.#named(error, step) });
         }
       }
     }
 
     return [...found, ...(await this.#text.checks(change, layer, refused))];
+  }
+
+  /** The props a step's error is about: those its WriteError names, else all of the step's. */
+  #named(error: unknown, step: WriteStep): readonly (keyof FigmaProps)[] {
+    return (error instanceof WriteError ? error.keys : undefined) ?? step.keys;
+  }
+
+  /** A step's failure on the props it is about, but for those the checks refused, which they reported already. */
+  #failed(
+    error: unknown,
+    step: WriteStep,
+    refused: ReadonlySet<keyof FigmaProps>,
+    fail: Fail,
+  ): void {
+    const keys = this.#named(error, step).filter((key) => !refused.has(key));
+
+    if (keys.length > 0) {
+      fail(error, keys);
+    }
   }
 
   /**

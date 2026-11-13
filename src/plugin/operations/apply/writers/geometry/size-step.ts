@@ -90,8 +90,10 @@ export class SizeStep implements WriteStep {
     }
   }
 
-  /** Hugging its content: a text sizes itself to it, another layer hugs in auto layout. */
+  /** Hugging its content (a variable bound to the size taken off): a text sizes itself to it, another layer hugs in auto layout. */
   #hug(node: SceneNode, axis: Axis): void {
+    this.#values.unbind(node, axis);
+
     if (node.type === FIGMA_NODE_TYPE.text) {
       const both = axis === SIZE_AXIS.width || node.textAutoResize === TEXT_AUTO_RESIZE.both;
 

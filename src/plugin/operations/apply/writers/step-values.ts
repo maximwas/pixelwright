@@ -86,9 +86,7 @@ export class StepValues {
     const bound = layer.boundVariables?.[field]?.id;
 
     if (typeof value === "number" || value === null) {
-      if (bound !== undefined) {
-        layer.setBoundVariable(field, null);
-      }
+      this.unbind(node, field);
 
       return false;
     }
@@ -98,6 +96,15 @@ export class StepValues {
     }
 
     return true;
+  }
+
+  /** The variable bound to the field taken off, when there is one: a size that hugs or fills is no longer a variable's. */
+  unbind(node: SceneNode, field: VariableBindableNodeField): void {
+    const layer = node as FrameNode;
+
+    if (layer.boundVariables?.[field]?.id !== undefined) {
+      layer.setBoundVariable(field, null);
+    }
   }
 
   async #found(key: keyof FigmaProps, token: string): Promise<void> {

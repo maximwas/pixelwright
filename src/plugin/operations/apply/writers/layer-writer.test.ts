@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
+import { ApplyReport } from "@/plugin/operations/apply/report.ts";
 import { LayerWriter, type WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
+import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 const layer = {} as TypedLayer;
 const change = { props: { fills: [], opacity: 0.5, name: "x" } } as never;
@@ -92,5 +94,95 @@ describe("LayerWriter.checks", () => {
     await writer.checks(change, layer, [{ error: new Error("capability"), keys: ["fills"] }]);
 
     expect(log).toEqual(["check opacity"]);
+  });
+});
+
+describe("LayerWriter.write", () => {
+  const gap = {
+    line: 3,
+    column: 1,
+    id: null,
+    props: { layoutMode: "VERTICAL", itemSpacing: { token: "nope" } },
+    sources: { layoutMode: "display", itemSpacing: "gap" },
+  } as never;
+  const node = {} as SceneNode;
+
+  /** A layout step as StepValues makes it: its check names the gap, its write throws the same error unkeyed. */
+  function layoutStep(
+    seen: FigmaProps[],
+    keys: WriteStep["keys"] = ["layoutMode", "itemSpacing"],
+    failure: (props: FigmaProps) => unknown = () => new WriteError("No variable is named nope."),
+  ): WriteStep {
+    return {
+      keys,
+      capability: null,
+      check: (props) => {
+        if (props.itemSpacing !== undefined) {
+          throw new WriteError("No variable is named nope.", undefined, ["itemSpacing"]);
+        }
+      },
+      write: (_layer, props) => {
+        seen.push(props);
+
+        if (props.itemSpacing !== undefined) {
+          throw failure(props);
+        }
+      },
+    };
+  }
+
+  function build(step: WriteStep) {
+    return new LayerWriter(
+      [step],
+      { checks: async () => [], write: async () => false } as never,
+      { set: () => undefined } as never,
+      {} as never,
+    );
+  }
+
+  it("reports a step's token error once, on its prop, as the dry run does", async () => {
+    const seen: FigmaProps[] = [];
+    const writer = build(layoutStep(seen));
+    const refusals = await writer.checks(gap, layer, []);
+    const dry = new ApplyReport();
+    const real = new ApplyReport();
+
+    for (const { error, keys } of refusals) {
+      dry.fail(gap, error, keys);
+      real.fail(gap, error, keys);
+    }
+
+    await writer.write(node, gap, refusals, (error, keys) => real.fail(gap, error, keys));
+
+    expect(real.result().errors).toEqual(dry.result().errors);
+    expect(real.result().errors.map(({ attribute }) => attribute)).toEqual(["gap"]);
+    expect(seen).toEqual([{ layoutMode: "VERTICAL" }]);
+  });
+
+  it("fails only the props a WriteError thrown in write names", async () => {
+    const writer = build(
+      layoutStep([], ["layoutMode", "itemSpacing", "gridRowGap"], () => {
+        return new WriteError("No variable is named nope.", undefined, ["gridRowGap"]);
+      }),
+    );
+    const fail = vi.fn();
+
+    await writer.write(node, gap, [], fail);
+
+    expect(fail).toHaveBeenCalledOnce();
+    expect(fail.mock.calls[0]?.[1]).toEqual(["gridRowGap"]);
+  });
+
+  it("never reports a key the checks refused again, a step's own failure going to its other keys", async () => {
+    const writer = build(layoutStep([], ["itemSpacing", "layoutMode"], () => new Error("Figma said no.")));
+    const fail = vi.fn();
+    const frame = { props: { layoutMode: "VERTICAL", itemSpacing: 4 } } as never;
+
+    await writer.write(node, frame, [], fail);
+    expect(fail.mock.calls[0]?.[1]).toEqual(["itemSpacing", "layoutMode"]);
+
+    fail.mockClear();
+    await writer.write(node, frame, [{ error: new Error("capability"), keys: ["layoutMode"] }], fail);
+    expect(fail.mock.calls[0]?.[1]).toEqual(["itemSpacing"]);
   });
 });

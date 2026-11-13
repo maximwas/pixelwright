@@ -45,6 +45,15 @@ describe("SizeStep", () => {
     expect(node.width).toBe(40);
   });
 
+  it("takes the variable off a bound width or height given HUG", async () => {
+    const node = rectangle({ width: width, height: width });
+
+    await build().write(node as never, { width: "HUG", height: "HUG" });
+
+    expect(node.setBoundVariable).toHaveBeenCalledWith("width", null);
+    expect(node.setBoundVariable).toHaveBeenCalledWith("height", null);
+  });
+
   it("refuses a section sized by a token or hugging, on a dry run's check as on a real one", async () => {
     const step = build();
 

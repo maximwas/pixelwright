@@ -99,6 +99,11 @@ export class ApplyLayers {
     return this.#layers.combine(holder, origins);
   }
 
+  /** A new set's variants in a grid, a column per value of its first variant property and a row per the rest. */
+  layOut(set: ComponentSetNode): void {
+    this.#layers.layOut(set);
+  }
+
   #page(change: ApplyChangeData, call: ApplyCall): TypedLayer {
     return call.dry ? { type: FIGMA_NODE_TYPE.page } : this.#pages.made(change.props.name);
   }

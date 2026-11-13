@@ -4,6 +4,7 @@ import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.const
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { STEP_GEOMETRY } from "@/plugin/operations/apply/writers/geometry/step-geometry.ts";
 import type { WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
+import { STEP_VALUES } from "@/plugin/operations/apply/writers/step-values.ts";
 import {
   AXIS_FIELDS,
   LAYOUT_SIZING,
@@ -28,10 +29,16 @@ export class ChildStep implements WriteStep {
   readonly capability = CAPABILITY.size;
   readonly #assign;
   readonly #geometry;
+  readonly #values;
 
-  constructor(assign = inject(ASSIGN), geometry = inject(STEP_GEOMETRY)) {
+  constructor(
+    assign = inject(ASSIGN),
+    geometry = inject(STEP_GEOMETRY),
+    values = inject(STEP_VALUES),
+  ) {
     this.#assign = assign;
     this.#geometry = geometry;
+    this.#values = values;
   }
 
   write(node: SceneNode, { grow, alignSelf, justifySelf }: FigmaProps): void {
@@ -93,7 +100,7 @@ export class ChildStep implements WriteStep {
   }
 
   /**
-   * Filling the axis, or fixed where it filled. Figma makes a new text 0 wide and leaves it so when it is set to fill
+   * Filling the axis (a variable bound to its size taken off), or fixed where it filled. Figma makes a new text 0 wide and leaves it so when it is set to fill
    * (B-047: one letter a line), so such a text is resized once it fills, keeping the fill.
    */
   #fill(
@@ -110,6 +117,7 @@ export class ChildStep implements WriteStep {
       return;
     }
 
+    this.#values.unbind(node, axis);
     this.#assign.set(box, { [sizing]: LAYOUT_SIZING.fill });
 
     if (node.type === FIGMA_NODE_TYPE.text && axis === SIZE_AXIS.width && node.width < SIZE_NUMBER.zeroWidth) {
