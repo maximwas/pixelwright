@@ -123,4 +123,7 @@ export const APPLY_TEXT = {
   emptySet: "A ComponentSet is made of the Components inside it: give it one at least.",
   notReached: (src: string) => `${src} did not reach the plugin.`,
   notReachedHint: "Send it again, or fewer files in one call.",
+  keptHeld: (reason: string) =>
+    `It stays in the file: a layer that was there before the call is inside it and could not be put back where it was (${reason}).`,
+  keptHeldHint: "Put that layer back by hand, then delete this one.",
 } as const;

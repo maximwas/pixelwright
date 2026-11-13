@@ -8,6 +8,7 @@ import type { Run } from "@/plugin/operations/apply/apply.types.ts";
 import { APPLY_LAYERS } from "@/plugin/operations/apply/apply-layers.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import { Counterparts } from "@/plugin/operations/apply/counterparts.ts";
+import { Origins } from "@/plugin/operations/apply/origins.ts";
 import { PENDING_SETS } from "@/plugin/operations/apply/pending-sets.ts";
 import { ApplyReport } from "@/plugin/operations/apply/report.ts";
 import { LAYER_WRITER } from "@/plugin/operations/apply/writers/layer-writer.ts";
@@ -52,6 +53,7 @@ export class ApplyRun {
       layers: new Map(),
       failed: new Map(),
       counterparts: new Counterparts(),
+      origins: new Origins(),
       report: new ApplyReport(),
       sets: [],
     };

@@ -35,6 +35,11 @@ export class ApplyReport {
     this.#made.add(node.id);
   }
 
+  /** Whether the call made the layer. */
+  isMade(id: string): boolean {
+    return this.#made.has(id);
+  }
+
   /** A layer the call made and took away again is no longer created; whether it was one. */
   unmade(id: string): boolean {
     const at = this.#created.findIndex((one) => one.id === id);

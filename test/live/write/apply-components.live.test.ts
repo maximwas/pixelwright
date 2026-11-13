@@ -28,6 +28,10 @@ const main = await node.getMainComponentAsync();
 const owner = main.parent.type === "COMPONENT_SET" ? main.parent : main;
 const props = Object.entries(node.componentProperties).filter(([, { type }]) => type !== "VARIANT");
 return { component: owner.name, variant: main.variantProperties, props: Object.fromEntries(props.map(([key, { value }]) => [key.replace(/#[^#]*$/, ""), value])) };`);
+  /** How many layers of the scratch section have this name. */
+  const left = async (name: string): Promise<number> =>
+    (await run(`const section = await pw.node(${JSON.stringify(scratch)});
+return section.findAll((node) => node.name === ${JSON.stringify(name)}).length;`)) as number;
   /** The first layer of this type inside a layer: its id. */
   const inside = async (id: string, type: string): Promise<string> =>
     (await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(id)});
@@ -201,9 +205,6 @@ return [node.opacity, node.visible];`),
       "Component",
     );
     const frame = made(await apply(`<Frame name="${PREFIX}plain" width="40px" height="40px"/>`), "Frame");
-    const left = async (name: string): Promise<number> =>
-      (await run(`const section = await pw.node(${JSON.stringify(scratch)});
-return section.findAll((node) => node.name === ${JSON.stringify(name)}).length;`)) as number;
     const cases = [
       {
         xml: `<Component id="${component}"><Text name="${PREFIX}clash" prop="Name">x</Text></Component>`,
@@ -229,16 +230,70 @@ return section.findAll((node) => node.name === ${JSON.stringify(name)}).length;`
     }
   });
 
+  // T-129, m:f66aed65: two marks of one name as two kinds in one new component are refused alike by the dry and the real
+  // run, the second before its layer is made: the real run's component keeps the one property the first made.
+  it("refuses a second mark of one name as another kind in a new component before it makes the layer, on both runs", async () => {
+    const name = `${PREFIX}twice`;
+    const xml = `<Component name="${name}"><Text name="${PREFIX}twice-text" prop="Name">a</Text><Frame name="${PREFIX}twice-frame" visibleProp="Name" width="10px" height="10px"/></Component>`;
+    const message = `${name} has a text property Name: another kind cannot take its name.`;
+    const dry = await apply(xml, true);
+
+    expect(dry.errors).toMatchObject([{ message }]);
+    expect(await left(name)).toBe(0);
+
+    const real = await apply(xml);
+
+    expect(real.errors).toMatchObject([{ message }]);
+    expect(await left(`${PREFIX}twice-frame`)).toBe(0);
+    expect(
+      await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(made(real, "Component"))});
+return Object.values(node.componentPropertyDefinitions).map(({ type }) => type);`),
+    ).toEqual(["TEXT"]);
+  });
+
+  // m:f66aed65: a mark that fails only once its set is whole (two variants asking one name as two kinds: a real run
+  // cannot tell a variant's frame from any other before the set is combined) takes its layer away; a layer that was
+  // there before the call, moved into that layer, goes back where it stood and is never taken with it.
+  it("puts an existing layer back where it stood when the layer it was moved into is taken away", async () => {
+    const keep = made(await apply(`<Frame name="${PREFIX}keep" width="40px" height="40px"/>`), "Frame");
+    const where = async (): Promise<unknown> =>
+      await run(`const node = await figma.getNodeByIdAsync(${JSON.stringify(keep)});
+return node === null || node.removed ? null : [node.parent.id, node.parent.children.indexOf(node)];`);
+    const stood = await where();
+    const name = `${PREFIX}moved-set`;
+    const xml = `<ComponentSet name="${name}"><Component variant="Size=S" width="40px" height="20px"><Text prop="Name">a</Text></Component><Component variant="Size=L" width="40px" height="20px"><Frame name="${PREFIX}moved-bound" visibleProp="Name" width="30px" height="30px"><Frame id="${keep}"/></Frame></Component></ComponentSet>`;
+    const message = `${name} has a text property Name: another kind cannot take its name.`;
+
+    // A dry run refuses the layers inside the refused frame too (their parent was not made): the clash is among them.
+    const told = expect.arrayContaining([expect.objectContaining({ message })]);
+
+    expect((await apply(xml, true)).errors).toEqual(told);
+    expect(await where()).toEqual(stood);
+
+    const real = await apply(xml);
+
+    expect(real.errors).toEqual(told);
+    expect(await where()).toEqual(stood);
+    expect(await left(`${PREFIX}moved-bound`)).toBe(0);
+  });
+
   // T-127, m:f66aed65: a new instance's props are checked in a dry run against its component found by name: a name it
   // lacks, a boolean that is neither true nor false. The real run says the same.
   it("refuses a new instance's wrong props in a dry run as the real run does", async () => {
     for (const [index, props] of ["Nmae=Live", "Popular=maybe"].entries()) {
-      const xml = `<Instance name="${PREFIX}props-${index}" component="Plan Card" props="${props}"/>`;
+      const name = `${PREFIX}props-${index}`;
+      const xml = `<Instance name="${name}" component="Plan Card" props="${props}"/>`;
       const dry = await apply(xml, true);
-      const real = await apply(xml);
 
       expect(dry.errors).toMatchObject([{ attribute: "props" }]);
+      expect(await left(name)).toBe(0);
+
+      const real = await apply(xml);
+
       expect(real.errors).toEqual(dry.errors);
+      // Only its props are refused (the error names the attribute): the instance is made with its component's own
+      // values, so the real run leaves it where the dry run left nothing.
+      expect(await left(name)).toBe(1);
     }
   });
 });

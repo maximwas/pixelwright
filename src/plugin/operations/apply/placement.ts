@@ -81,6 +81,9 @@ export class Placement {
       return;
     }
 
+    // Where it stood is kept: it goes back there when the layer it moves into is taken away (a mark that cannot bind).
+    call.origins.record(node);
+
     // FX-061: Figma reads the index in the list as it is, the layer itself still in its place: the index of the layer
     // it goes before is the one to give, whichever way it moves.
     (holder as Holder).insertChild(index, node);

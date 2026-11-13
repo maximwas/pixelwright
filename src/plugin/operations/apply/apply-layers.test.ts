@@ -52,14 +52,14 @@ function call(
     layers: new Map(Object.entries(held) as [string, TypedLayer][]),
     failed: new Map(),
     counterparts: {} as never,
+    origins: {} as never,
   };
 }
 
 function build() {
   const made: string[] = [];
-  const checks = new ApplyChecks({} as never, {} as never, new Capabilities(), [
-    new PropertyStep(new PropertyMarks(new Variants(), new Assign())),
-  ]);
+  const step = new PropertyStep(new PropertyMarks(new Variants(), new Assign()));
+  const checks = new ApplyChecks({} as never, {} as never, new Capabilities(), [step]);
   const creator = {
     create: () => {
       made.push("layer");
@@ -69,7 +69,7 @@ function build() {
   };
   const placement = { whereTo: async () => ({}) };
 
-  return { made, layers: new ApplyLayers(checks, creator as never, placement as never, {} as never) };
+  return { made, step, layers: new ApplyLayers(checks, creator as never, placement as never, {} as never) };
 }
 
 describe("ApplyLayers: a new layer's place is refused before the layer is made, alike on dry and real runs", () => {
@@ -113,6 +113,40 @@ describe("ApplyLayers: a new layer's place is refused before the layer is made, 
     run.layers.set("c", await layers.of(made, run));
 
     await expect(layers.of(text, run)).resolves.toMatchObject({ type: "TEXT" });
+  });
+
+  // The first layer's checks run once it is made, as the writer's do; the second is asked its place before it is made.
+  it("refuses a second mark of one name as another kind in a component a dry run makes, before the layer", async () => {
+    const { made, layers, step } = build();
+    const owner = change("Component", "c", null, { name: "x" });
+    const first = change("Text", "t", "c", { property: { text: "Name" } });
+    const second = change("Frame", "f", "c", { property: { visible: "Name" } });
+    const run = call(true, {}, [owner, first, second]);
+
+    run.layers.set("c", await layers.of(owner, run));
+    run.layers.set("t", await layers.of(first, run));
+    step.check(first.props, run.layers.get("t") as TypedLayer);
+
+    await expect(layers.of(second, run)).rejects.toThrow(
+      "x has a text property Name: another kind cannot take its name.",
+    );
+    expect(made).toEqual([]);
+  });
+
+  it("refuses it on a real run too, and makes only the first", async () => {
+    const { made, layers, step } = build();
+    const owner = { ...component(), name: "x" };
+    const first = change("Text", "t", "c", { property: { text: "Name" } });
+    const second = change("Frame", "f", "c", { property: { visible: "Name" } });
+    const run = call(false, { c: owner }, [first, second]);
+
+    await layers.of(first, run);
+    step.check(first.props, { type: "TEXT", parent: owner as TypedLayer });
+
+    await expect(layers.of(second, run)).rejects.toThrow(
+      "x has a text property Name: another kind cannot take its name.",
+    );
+    expect(made).toEqual(["layer"]);
   });
 
   it.each(BOTH)("refuses a new layer in an instance outside its slots (dry %s)", async (dry) => {

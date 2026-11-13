@@ -2,7 +2,8 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { COMPONENT_INDEX } from "@/plugin/adapters/figma/components/component-index.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { COMPONENT_PROPERTY_TYPE } from "@/plugin/adapters/figma/layer-meta/layer-meta.constants.ts";
-import { APPLY_PLACE, NEW_LAYER_TYPE, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
+import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
+import { APPLY_PLACE, APPLY_TEXT, NEW_LAYER_TYPE, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
 import type { PendingSet, Run } from "@/plugin/operations/apply/apply.types.ts";
 import { APPLY_LAYERS } from "@/plugin/operations/apply/apply-layers.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
@@ -108,20 +109,45 @@ export class PendingSets {
 
       if (change !== undefined) {
         run.report.fail(change, error, STEP_KEYS.property);
-        this.#discard(run, node);
+        this.#discard(run, change, node);
       }
     }
   }
 
-  /** A layer this call made, its mark unbound, goes with what it holds, so nothing half-made stays in the file. */
-  #discard(run: Run, node: SceneNode): void {
-    if (run.report.unmade(node.id)) {
-      for (const inner of "findAll" in node ? node.findAll() : []) {
-        run.report.unmade(inner.id);
-      }
-
-      this.#layers.discard(node);
+  /**
+   * A layer this call made, its mark unbound, goes with what it holds, so nothing half-made stays in the file; a layer
+   * that was there before the call goes back where it stood first, and when one cannot nothing goes.
+   */
+  #discard(
+    run: Run,
+    change: ApplyChangeData,
+    node: SceneNode,
+  ): void {
+    if (!run.report.isMade(node.id)) {
+      return;
     }
+
+    try {
+      run.origins.restore(node);
+    } catch (error) {
+      run.report.fail(
+        change,
+        new WriteError(
+          APPLY_TEXT.keptHeld(error instanceof Error ? error.message : String(error)),
+          APPLY_TEXT.keptHeldHint,
+        ),
+      );
+
+      return;
+    }
+
+    run.report.unmade(node.id);
+
+    for (const inner of "findAll" in node ? node.findAll() : []) {
+      run.report.unmade(inner.id);
+    }
+
+    this.#layers.discard(node);
   }
 
   async #write(

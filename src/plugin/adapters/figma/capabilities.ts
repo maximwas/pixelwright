@@ -3,10 +3,14 @@ import { CAPABILITY_TEXT, CAPABILITY_TYPES, FIGMA_NODE_TYPE } from "@/plugin/ada
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 
 /**
- * A layer as a capability reads it: its type, so a dry run asks it of a layer it has not made, and the layer it sits in
- * (a stand-in's `parent`, as a real layer's), so what holds it can be walked up to on either.
+ * A layer as a capability reads it: its type, so a dry run asks it of a layer it has not made, the layer it sits in
+ * (a stand-in's `parent`, as a real layer's), so what holds it can be walked up to on either, and its name when it has
+ * one (a stand-in's is the one its XML gives).
  */
-export type TypedLayer = Pick<BaseNode, "type"> & { readonly parent?: TypedLayer | null };
+export type TypedLayer = Pick<BaseNode, "type"> & {
+  readonly parent?: TypedLayer | null;
+  readonly name?: string | undefined;
+};
 
 export type Capability = keyof typeof CAPABILITY_TYPES;
 

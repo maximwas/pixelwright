@@ -138,7 +138,7 @@ export class ApplyLayers {
       }
 
       if (call.dry) {
-        return { type, parent };
+        return { type, parent, name: change.props.name };
       }
 
       const place = await this.#placement.whereTo(change, call);
