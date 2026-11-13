@@ -78,6 +78,28 @@ describe("new layers: a layer whose bare start fails after it exists is taken aw
   });
 });
 
+// 0.7.0 new-layers: a new Image or Icon the XML gives no name is named after its file, without folder or extension.
+describe("new layers: an Image or Icon without a name", () => {
+  function made(props: object): { name: string } {
+    const parent = holder();
+    const node = { type: "RECTANGLE", name: "Rectangle", removed: false, remove: () => undefined };
+    const change = { ...CHANGE, tag: "Image", props } as ApplyChangeData;
+
+    newLayers(node as never).create("RECTANGLE", change, { parent: parent.node as FrameNode, index: 0 });
+
+    return node;
+  }
+
+  it("takes its file's name without the folder and the extension", () => {
+    expect(made({ asset: { kind: "image", src: "assets/photos/hero-shot.v2.png" } }).name).toBe("hero-shot.v2");
+    expect(made({ asset: { kind: "icon", src: "icons\\arrow.svg" } }).name).toBe("arrow");
+  });
+
+  it("keeps the name the XML gives", () => {
+    expect(made({ name: "Hero", asset: { kind: "image", src: "hero.png" } }).name).toBe("Rectangle");
+  });
+});
+
 // No Figma here (CLAUDE.md): a layer is plain data that holds children, with the one Figma call a move is, insertChild.
 // No input of the tool leads a layer that is no Component into a set's frame (design_apply refuses it first), so the
 // live suite cannot cover this last guard.

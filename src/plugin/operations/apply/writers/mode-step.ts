@@ -10,8 +10,8 @@ import { STEP_KEYS, WRITERS_TEXT } from "@/plugin/operations/apply/writers/write
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /**
- * The variable modes a layer is set to (C-135), by collection and mode, each as its name or the slug design_read
- * writes: a mode is set where the layer is not in it already; an empty one clears the collection's, so the layer takes
+ * The variable modes a layer is set to (C-135), by collection and mode, each as its name in any case or the slug
+ * design_read writes, trimmed: a mode is set where the layer is not in it already; an empty one clears the collection's, so the layer takes
  * its parent's. Every name is found in the check, on dry and real runs, and again before the first mode is set, so a wrong one
  * changes nothing.
  */
@@ -86,17 +86,29 @@ export class ModeStep implements WriteStep {
   }
 
   #collection(collections: readonly VariableCollection[], key: string): VariableCollection {
-    const collection = collections.find(({ name }) => name === key || this.#names.attribute(name) === key);
+    const collection = collections.find(({ name }) => this.#means(name, key));
 
     if (collection === undefined) {
-      throw new WriteError(WRITERS_TEXT.noCollection(key), WRITERS_TEXT.modesHint);
+      const listed = collections.map(({ name }) => WRITERS_TEXT.listedCollection(name, this.#names.attribute(name)));
+
+      throw new WriteError(
+        WRITERS_TEXT.noCollection(key),
+        listed.length === 0 ? WRITERS_TEXT.noCollections : WRITERS_TEXT.collections(listed),
+      );
     }
 
     return collection;
   }
 
+  /** Whether a name means this collection or mode: its own name in any case, or its slug (design_read's), trimmed (0.7.0). */
+  #means(name: string, key: string): boolean {
+    const trimmed = key.trim();
+
+    return name.toLowerCase() === trimmed.toLowerCase() || this.#names.attribute(name) === trimmed;
+  }
+
   #mode(collection: VariableCollection, mode: string): string {
-    const found = collection.modes.find(({ name }) => name === mode || this.#names.attribute(name) === mode);
+    const found = collection.modes.find(({ name }) => this.#means(name, mode));
 
     if (found === undefined) {
       const modes = collection.modes.map(({ name }) => this.#names.attribute(name));

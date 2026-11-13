@@ -227,6 +227,9 @@ export const WRITERS_TEXT = {
   noModes: (type: string) => `A ${type} takes no variable modes.`,
   noCollection: (slug: string) => `data-${slug} names no variable collection this file reaches.`,
   modesHint: "tokens_read lists the file's collections and their modes.",
+  listedCollection: (name: string, slug: string) => `${name} (data-${slug})`,
+  collections: (listed: readonly string[]) => `It has ${listed.join(", ")}.`,
+  noCollections: "The file has no variable collections.",
   noTextStyle: (token: string) => `No text style is named ${token} in this file or the libraries its page uses.`,
   textStyleHint: "tokens_read lists the file's text styles.",
   unloaded: (family: string, style: string) =>

@@ -43,7 +43,7 @@ const square = file(
 );
 
 type Applied = {
-  created: { id?: string }[];
+  created: { id?: string; tag: string; name?: string }[];
   changed: string[];
   errors: { attribute?: string; message: string; hint?: string }[];
 };
@@ -180,5 +180,43 @@ return collection.id;`)) as string;
 
     expect(cleared.errors).toEqual([]);
     expect(await explicit()).toEqual({});
+  });
+
+  // 0.7.0 new-layers: a new Image or Icon the XML gives no name is named after its file, without folder or extension.
+  it("names a new Image and Icon without a name after their files", async () => {
+    const applied = await apply(
+      `<Frame name="${PREFIX}named" width="100" height="40"><Image src="${photoPath}" width="24" height="16"/><Icon src="${circle}" width="24" height="24"/><Image name="Hero" src="${photoPath}" width="24" height="16"/></Frame>`,
+    );
+
+    expect(applied.errors).toEqual([]);
+    expect(applied.created.slice(1).map(({ tag, name }) => [tag, name])).toEqual([
+      ["Image", "photo"],
+      ["Icon", "circle"],
+      ["Image", "Hero"],
+    ]);
+  });
+
+  // 0.7.0 variable-modes: a collection and a mode are named in any case, trimmed; a wrong collection's hint lists the
+  // collections the file has as Name (data-slug).
+  it("finds a mode by its name in any case and lists the collections when one is not there", async () => {
+    await run(`${removeCollection}
+figma.variables.createVariableCollection(${JSON.stringify(COLLECTION)});`);
+
+    const id = await frame("mode-case");
+    const mode =
+      (await run(`const collection = (await figma.variables.getLocalVariableCollectionsAsync()).find(({ name }) => name === ${JSON.stringify(COLLECTION)});
+return collection.modes[0];`)) as { modeId: string; name: string };
+    const set = await apply(`<Frame id="${id}" data-${COLLECTION}=" ${mode.name.toUpperCase()} "/>`);
+
+    expect(set.errors).toEqual([]);
+    expect(Object.values((await node(id, "node.explicitVariableModes")) as object)).toEqual([mode.modeId]);
+
+    for (const dryRun of [true, false]) {
+      const wrong = await apply(`<Frame id="${id}" data-nocollection="x"/>`, { dryRun });
+
+      expect(wrong.errors, `dryRun ${dryRun}`).toEqual([
+        expect.objectContaining({ hint: expect.stringContaining(`${COLLECTION} (data-${COLLECTION})`) }),
+      ]);
+    }
   });
 });

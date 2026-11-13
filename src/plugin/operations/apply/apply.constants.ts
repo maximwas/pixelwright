@@ -39,6 +39,9 @@ export const PROPERTY_KINDS = [
   { key: "swap", field: "mainComponent", type: APPLY_PROPERTY_TYPE.swap },
 ] as const;
 
+/** A file's path up to its name, and its extension: what a new Image's or Icon's name leaves out. */
+export const FILE_NAME = { folder: /^.*[\\/]/, extension: /\.[^.]+$/ } as const;
+
 /** The attributes that place a layer beside another: a refused move names the one that placed it (P-143). */
 export const MOVE_ATTRIBUTE = { before: "before", after: "after" } as const;
 

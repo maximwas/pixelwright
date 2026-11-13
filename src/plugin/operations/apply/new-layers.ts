@@ -5,7 +5,7 @@ import { CAPABILITIES } from "@/plugin/adapters/figma/capabilities.ts";
 import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
-import { APPLY_PLACE, APPLY_TEXT, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
+import { APPLY_PLACE, APPLY_TEXT, FILE_NAME, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
 import type { Place } from "@/plugin/operations/apply/apply.types.ts";
 import type { Origins } from "@/plugin/operations/apply/origins.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
@@ -47,6 +47,7 @@ export class NewLayers {
 
     try {
       this.#bare(node, change.props);
+      this.#named(node, change.props);
     } catch (error) {
       this.discard(node);
 
@@ -152,6 +153,13 @@ export class NewLayers {
     }
 
     return svg === undefined ? this.#factory.make(type, APPLY_TEXT.cannotMake(change.tag)) : this.#factory.icon(svg);
+  }
+
+  /** A new Image or Icon the XML gives no name is named after its file, without folder or extension (0.7.0). */
+  #named(node: SceneNode, { name, asset }: FigmaProps): void {
+    if (name === undefined && asset !== undefined) {
+      this.#assign.set(node, { name: asset.src.replace(FILE_NAME.folder, "").replace(FILE_NAME.extension, "") });
+    }
   }
 
   #bare(node: SceneNode, props: FigmaProps): void {
