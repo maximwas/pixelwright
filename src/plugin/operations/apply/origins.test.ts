@@ -106,6 +106,35 @@ describe("Origins.restore", () => {
     expect(ids(made)).toEqual(["e"]);
   });
 
+  it("undoes only the move into the layer that goes, not an earlier move of the same layer", () => {
+    const [one, two, three] = [layer("a"), layer("b"), layer("c")];
+    const parent = layer("p", [one, two, three]);
+    const made = layer("m");
+    const origins = new Origins();
+
+    moved(origins, one, parent);
+    moved(origins, one, made);
+    origins.restore(made as never);
+
+    expect(ids(parent)).toEqual(["b", "c", "a"]);
+  });
+
+  it("keeps an earlier move for the layer it went into when that one goes too", () => {
+    const parent = layer("p", [layer("e")]);
+    const [first, second] = [layer("first"), layer("second")];
+    const origins = new Origins();
+
+    moved(origins, parent.children[0] as Stub, first);
+    moved(origins, first.children[0] as Stub, second);
+    origins.restore(second as never);
+
+    expect(ids(first)).toEqual(["e"]);
+
+    origins.restore(first as never);
+
+    expect(ids(parent)).toEqual(["e"]);
+  });
+
   it("throws, the layer where it is, when its parent cannot take it back", () => {
     const parent = layer("p", [layer("e")]);
     const made = layer("m");

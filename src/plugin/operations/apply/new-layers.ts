@@ -68,16 +68,14 @@ export class NewLayers {
     return this.#placed(await this.#factory.instance(component, variant), place);
   }
 
-  /** After its write: a new auto layout frame hugs the axes the XML did not size; on the page it goes beside the rest. */
+  /**
+   * After its write: a new auto layout frame hugs the axes the XML did not size; on the page it goes beside the rest.
+   * A refusal is thrown as it is and the caller takes the layer away: a new set holds the Components the call moved
+   * into it by now, which go back first (PendingSets).
+   */
   finish(node: SceneNode, props: FigmaProps): void {
-    try {
-      this.#hug(node, props);
-      this.#placeOnPage(node, props);
-    } catch (error) {
-      this.discard(node);
-
-      throw error;
-    }
+    this.#hug(node, props);
+    this.#placeOnPage(node, props);
   }
 
   /**

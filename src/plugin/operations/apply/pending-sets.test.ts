@@ -114,3 +114,27 @@ describe("PendingSets.settle: a layer the call moved into the one that cannot bi
     expect(asked).toEqual([]);
   });
 });
+
+describe("PendingSets.write: a new layer whose finish throws", () => {
+  it("is taken away, its error going on", async () => {
+    const discarded: string[] = [];
+    const node = { id: "1:1", findAll: () => [] };
+    const sets = new PendingSets(
+      { write: async () => true } as never,
+      {
+        finish: () => {
+          throw new Error("Figma refuses it");
+        },
+        discard: (one: { id: string }) => discarded.push(one.id),
+      } as never,
+      {} as never,
+      {} as never,
+    );
+    const made = change("t", "create");
+    const run = { changes: [made], layers: new Map(), sets: [], report: new ApplyReport(), origins: { restore() {} } };
+
+    await expect(sets.write(run as never, made, node as never, [])).rejects.toThrow("Figma refuses it");
+    expect(discarded).toEqual(["1:1"]);
+    expect(run.report.result().created).toEqual([]);
+  });
+});

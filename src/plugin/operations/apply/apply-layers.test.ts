@@ -230,6 +230,9 @@ describe("ApplyLayers: a ComponentSet holds Components only, refused before any 
     const inner = moving("Frame", "f", frame.id, "s");
 
     await expect(layers.of(inner, call(dry, held(dry), [set, variant, inner]))).rejects.toThrow(SET);
+    await expect(layers.of(inner, call(dry, held(dry), [set, variant, inner]))).rejects.toMatchObject({
+      hint: "Move it out of the set, or make it a Component.",
+    });
     expect(moved).toEqual([]);
   });
 

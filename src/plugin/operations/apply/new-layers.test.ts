@@ -7,6 +7,8 @@ import { Variants } from "@/plugin/adapters/figma/components/variants.ts";
 import { LayerFactory } from "@/plugin/adapters/figma/layer-factory.ts";
 import { NewLayers } from "@/plugin/operations/apply/new-layers.ts";
 import { Origins } from "@/plugin/operations/apply/origins.ts";
+import { PendingSets } from "@/plugin/operations/apply/pending-sets.ts";
+import { ApplyReport } from "@/plugin/operations/apply/report.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 
 const CHANGE = { line: 1, column: 1, kind: "create", ref: "new:1", id: null, tag: "Frame", parent: null, index: 0 };
@@ -64,7 +66,7 @@ function newLayers(node: Layer): NewLayers {
   );
 }
 
-describe("new layers: a layer whose creation fails after it exists is taken away", () => {
+describe("new layers: a layer whose bare start fails after it exists is taken away", () => {
   it("leaves nothing in the parent when its bare start throws", () => {
     const parent = holder();
     const node = layer(parent, "clipsContent");
@@ -72,17 +74,6 @@ describe("new layers: a layer whose creation fails after it exists is taken away
     expect(() =>
       newLayers(node).create("FRAME", CHANGE as ApplyChangeData, { parent: parent.node as FrameNode, index: 0 }),
     ).toThrow();
-    expect(parent.children).toEqual([]);
-  });
-
-  it("leaves nothing in the parent when finishing it throws", () => {
-    const parent = holder();
-    const node = layer(parent, "layoutSizingHorizontal");
-    const layers = newLayers(node);
-
-    parent.node.appendChild(node as SceneNode);
-
-    expect(() => layers.finish(node as SceneNode, {})).toThrow();
     expect(parent.children).toEqual([]);
   });
 });
@@ -186,5 +177,72 @@ describe("NewLayers.combine: the frame holding a new set's variants goes only wh
     expect(() => layers.combine(frame as never, origins)).toThrow("stays in the file");
     expect(frame.removed).toBe(false);
     expect(kept.parent).toBe(frame);
+  });
+});
+
+// A new set that cannot be finished (its auto layout hug refused) goes with the variants it holds, but a Component of
+// the user's that the call moved into it goes back where it stood first, and when it cannot nothing goes. Finishing
+// the set is what refuses here, the step after combine: the set holds the Components by then.
+describe("PendingSets.settle: a new set whose finish throws", () => {
+  const SET = { line: 1, column: 1, kind: "create", ref: "s", id: null, tag: "ComponentSet", parent: null, index: 0 };
+
+  async function settled(origin: Piece) {
+    const held = holding(origin);
+
+    Object.defineProperty(held.set, "layoutSizingHorizontal", {
+      set() {
+        throw new Error("Figma refuses layoutSizingHorizontal");
+      },
+      get: () => undefined,
+    });
+
+    const { layers, origins, frame } = held;
+    const report = new ApplyReport();
+    const change = SET as ApplyChangeData;
+    const sets = new PendingSets(
+      { write: async () => true } as never,
+      {
+        combine: (node: SceneNode, kept: Origins) => layers.combine(node, kept),
+        finish: (node: SceneNode, one: ApplyChangeData) => layers.finish(node, one.props ?? {}),
+        discard: (node: SceneNode) => layers.discard(node),
+      } as never,
+      { start: () => undefined, add: () => undefined } as never,
+      { start: () => undefined, bind: async () => ({ bound: [], failed: [] }) } as never,
+    );
+    const run = {
+      changes: [change],
+      layers: new Map(),
+      sets: [{ change, holder: frame, refusals: [], placing: [] }],
+      report,
+      origins,
+    } as never;
+
+    await sets.settle(run);
+
+    return { ...held, report };
+  }
+
+  it("puts a Component the call moved into it back before the set goes", async () => {
+    const origin = piece("origin", "FRAME", [piece("a", "FRAME"), piece("keep", "COMPONENT")]);
+    const { kept, set, report } = await settled(origin);
+
+    expect(set.removed).toBe(true);
+    expect(origin.children).toContain(kept);
+    expect(kept.parent).toBe(origin);
+    expect(report.result().errors).toMatchObject([{ message: "Figma refuses layoutSizingHorizontal" }]);
+  });
+
+  it("keeps the set, and says so, when such a Component cannot go back", async () => {
+    const origin = piece("origin", "FRAME", [piece("a", "FRAME"), piece("keep", "COMPONENT")], () => {
+      throw new Error("The node has been removed");
+    });
+    const { kept, set, report } = await settled(origin);
+
+    expect(set.removed).toBe(false);
+    expect(kept.parent).toBe(set);
+    expect(report.result().errors).toMatchObject([
+      { message: expect.stringContaining("stays in the file") },
+      { message: "Figma refuses layoutSizingHorizontal" },
+    ]);
   });
 });

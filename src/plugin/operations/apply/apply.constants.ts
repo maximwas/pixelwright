@@ -128,4 +128,5 @@ export const APPLY_TEXT = {
   keptHeldHint: "Put that layer back by hand, then delete this one.",
 
   setHoldsComponents: (tag: string) => `A ComponentSet holds only Components: <${tag}> is not one.`,
+  setHoldsComponentsHint: "Move it out of the set, or make it a Component.",
 } as const;

@@ -153,7 +153,7 @@ export class ApplyChecks {
       NEW_LAYER_TYPE[holder.tag] === FIGMA_NODE_TYPE.componentSet &&
       type !== FIGMA_NODE_TYPE.component
     ) {
-      throw new WriteError(APPLY_TEXT.setHoldsComponents(change.tag));
+      throw new WriteError(APPLY_TEXT.setHoldsComponents(change.tag), APPLY_TEXT.setHoldsComponentsHint);
     }
   }
 

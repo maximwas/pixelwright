@@ -123,10 +123,17 @@ export class PendingSets {
     change: ApplyChangeData,
     node: SceneNode,
   ): void {
-    if (!run.report.isMade(node.id)) {
-      return;
+    if (run.report.isMade(node.id)) {
+      this.#remove(run, change, node);
     }
+  }
 
+  /** The way every layer of the call goes: what was there before the call goes back first, and when one cannot it stays. */
+  #remove(
+    run: Run,
+    change: ApplyChangeData,
+    node: SceneNode,
+  ): void {
     try {
       run.origins.restore(node);
     } catch (error) {
@@ -160,7 +167,14 @@ export class PendingSets {
       return;
     }
 
-    this.#layers.finish(node, change);
+    try {
+      this.#layers.finish(node, change);
+    } catch (error) {
+      this.#remove(run, change, node);
+
+      throw error;
+    }
+
     run.report.made(change, node);
 
     // A component or set made here is found by the instances after it; a held set's variant through its set.

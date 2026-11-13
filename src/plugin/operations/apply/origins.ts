@@ -26,10 +26,14 @@ export class Origins {
 
   /**
    * The layers moved into `inside`, at any depth, back where they stood, the last moved first so each finds the list
-   * as it was when it moved. A layer that cannot go back throws and the rest stay where they are.
+   * as it was when it moved. A layer moved more than once goes back from its latest move only: the earlier ones were
+   * the call's own and stay for a later restore (the layer it went into goes too). A layer that cannot go back throws
+   * and the rest stay where they are.
    */
   restore(inside: SceneNode): void {
-    const held = this.#moved.filter(({ node }) => this.#within(node, inside));
+    const held = this.#moved.filter(
+      (origin, position) => this.#within(origin.node, inside) && this.#latest(origin, position),
+    );
 
     // The plugin's sandbox may lack ES2023's toReversed: a copy reversed in place.
     for (const origin of held.reverse()) {
@@ -38,6 +42,11 @@ export class Origins {
       parent.insertChild(Math.min(index, parent.children.length), node);
       this.#moved.splice(this.#moved.indexOf(origin), 1);
     }
+  }
+
+  /** Whether no later record is of the same layer: its latest move is the one that put it where it now is. */
+  #latest(origin: Origin, position: number): boolean {
+    return !this.#moved.slice(position + 1).some(({ node }) => node.id === origin.node.id);
   }
 
   #within(node: BaseNode, inside: BaseNode): boolean {
