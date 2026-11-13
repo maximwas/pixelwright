@@ -26,6 +26,7 @@ import { APPLY_FONTS, ApplyFonts } from "@/plugin/operations/apply/apply-fonts.t
 import { APPLY_IMAGES, ApplyImages } from "@/plugin/operations/apply/apply-images.ts";
 import { APPLY_LAYERS, ApplyLayers } from "@/plugin/operations/apply/apply-layers.ts";
 import { APPLY_RUN, ApplyRun } from "@/plugin/operations/apply/apply-run.ts";
+import { CALL_SCOPE, CallScope } from "@/plugin/operations/apply/call-scope.ts";
 import { APPLY_CHECKS, ApplyChecks } from "@/plugin/operations/apply/checks.ts";
 import { NEW_LAYERS, NewLayers } from "@/plugin/operations/apply/new-layers.ts";
 import { PAGES, Pages } from "@/plugin/operations/apply/pages.ts";
@@ -178,6 +179,7 @@ export class OperationProviders {
       .bind({ provide: PROPERTY_MARKS, useClass: PropertyMarks })
       .bind({ provide: PENDING_SETS, useClass: PendingSets })
       .bind({ provide: APPLY_RUN, useClass: ApplyRun })
+      .bind({ provide: CALL_SCOPE, useClass: CallScope })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
     this.#writeSteps(container);
     this.#paints(container);

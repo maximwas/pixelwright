@@ -18,7 +18,7 @@ interface ImageFile {
 export class ApplyImages {
   readonly #uploads;
   readonly #factory;
-  // Kept for the call: the upload goes once its image is made, and every element naming the file needs the hash.
+  // Kept for the call: every element naming the file needs the hash; the call's uploads go at its end (CallScope).
   readonly #made = new Map<string, string>();
 
   constructor(uploads = inject(UPLOAD_STORE), factory = inject(LAYER_FACTORY)) {
