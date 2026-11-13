@@ -43,3 +43,50 @@ it("answers none offline and asks again on the next call", async () => {
   expect(await axes.axes("Inter")).toBeNull();
   expect(fetch).toHaveBeenCalledTimes(2);
 });
+
+// QA NEW-090: only a 404 says "static family"; a 429 or a 5xx says nothing, and must not be remembered as a static one.
+it("remembers a 404 as a static family but asks again after any other status", async () => {
+  const statuses = new Map([
+    ["/static", 404],
+    ["/limited", 429],
+    ["/broken", 503],
+  ]);
+  const fetch = vi.fn(async (url: string) => {
+    const status = [...statuses].find(([suffix]) => url.endsWith(suffix))?.[1] ?? 200;
+
+    return new Response("", { status });
+  });
+
+  vi.stubGlobal("fetch", fetch);
+
+  const axes = new FontsourceAxes();
+
+  for (const family of ["Static", "Limited", "Broken"]) {
+    expect(await axes.axes(family)).toBeNull();
+    expect(await axes.axes(family)).toBeNull();
+  }
+
+  expect(fetch.mock.calls.map(([url]) => url.split("/").pop())).toEqual([
+    "static",
+    "limited",
+    "limited",
+    "broken",
+    "broken",
+  ]);
+});
+
+it("encodes the family in the URL it asks", async () => {
+  const asked: string[] = [];
+
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string) => {
+      asked.push(url);
+
+      return new Response("", { status: 404 });
+    }),
+  );
+  await new FontsourceAxes().axes("Odd/../Name?x#y");
+
+  expect(asked).toEqual(["https://api.fontsource.org/v1/variable/odd%2F..%2Fname%3Fx%23y"]);
+});

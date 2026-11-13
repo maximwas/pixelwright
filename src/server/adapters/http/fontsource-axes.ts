@@ -8,7 +8,8 @@ type Axes = Readonly<Record<string, FontAxis>> | null;
 
 /**
  * A family's axis ranges from Fontsource's variable endpoint (A§15.5): read once per family for the server; a read that
- * failed is forgotten, so the next call asks again. A static family, one Fontsource lacks, or no answer is none.
+ * failed (no answer, a 429, a 5xx) is forgotten, so the next call asks again. A static family, one Fontsource lacks, or
+ * no answer is none.
  */
 @injectable()
 export class FontsourceAxes implements FontAxesDirectory {
@@ -35,8 +36,9 @@ export class FontsourceAxes implements FontAxesDirectory {
     try {
       const response = await fetch(FONTSOURCE.variableUrl(id), { signal: AbortSignal.timeout(FONTSOURCE.timeoutMs) });
 
+      // Only a 404 says the family is static; a 429 or a 5xx says nothing, so it is not remembered as one.
       if (!response.ok) {
-        return null;
+        return response.status === FONTSOURCE.notFound ? null : undefined;
       }
 
       const { axes } = zod.parse(FontsourceVariableSchema, await response.json());

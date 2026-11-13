@@ -71,7 +71,10 @@ return section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)})
 
     const xml = await read(id);
 
-    expect(xml).toContain(`font-variation-settings="'wdth' 90, 'GRAD' 50"`);
+    // Figma's own order of the axes is no contract: they are compared sorted.
+    const written = (/font-variation-settings="([^"]*)"/.exec(xml)?.[1] ?? "").split(", ").sort();
+
+    expect(written).toEqual(["'GRAD' 50", "'wdth' 90"]);
     expect(await apply(xml)).toMatchObject({ changed: [], errors: [] });
   });
 
@@ -94,7 +97,8 @@ return section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)})
   // NEW-090: a note's closing bracket pins properties; one of pins alone is a bracket; both read back as written.
   it("pins properties in notes, reads them back and removes a pin and a note of pins alone", async () => {
     const applied = await apply(
-      `<Frame name="${PREFIX}notes" display="flex" gap="8px" padding="16px" width="200px" height="100px" note="Gap is 8 [gap, padding] | [background]"/>`,
+      // A pin needs what it pins: Figma throws for a background on a frame with no fill, so this frame has one.
+      `<Frame name="${PREFIX}notes" display="flex" gap="8px" padding="16px" width="200px" height="100px" background="#eeeeee" note="Gap is 8 [gap, padding] | [background]"/>`,
     );
     const id = applied.created[0]?.id ?? "";
 
@@ -107,5 +111,22 @@ return section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)})
     expect(await apply(xml)).toMatchObject({ changed: [], errors: [] });
     expect(await apply(`<Frame id="${id}" note="Gap is 8"/>`)).toMatchObject({ changed: [id], errors: [] });
     expect(await notes(id)).toEqual([{ label: "Gap is 8" }]);
+  });
+
+  // NEW-090 live probe: Figma throws "Invalid property fills for a FRAME node" for a pin the layer cannot hold, so
+  // design_apply refuses it first, alike on dry and real runs, and writes the note once the same call gives the layer it.
+  it("refuses a pin the layer cannot hold on dry and real runs alike, and holds one the same call gives it", async () => {
+    const bare = `<Frame name="${PREFIX}pin-refused" width="100px" height="50px" note="Fill [background] | Gap [gap]"/>`;
+    const [dry, real] = [await apply(bare, true), await apply(bare)];
+
+    expect(dry.errors).toMatchObject([
+      { attribute: "note", message: "A note pins background, but this frame has no fill." },
+    ]);
+    expect(real.errors).toEqual(dry.errors);
+
+    const given = `<Frame name="${PREFIX}pin-given" display="flex" gap="8px" width="100px" height="50px" background="#eeeeee" note="Fill [background] | Gap [gap]"/>`;
+
+    expect((await apply(given, true)).errors).toEqual([]);
+    expect((await apply(given)).errors).toEqual([]);
   });
 });

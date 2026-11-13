@@ -37,8 +37,8 @@ Ready CSS values, in this order: display, flex-direction, flex-wrap, position, l
 height, min/max sizes, flex, align-self, grid-row, grid-column, justify-self, padding, justify-content,
 align-items, align-content, gap, column-gap, row-gap, grid-template-columns/rows, transform, opacity,
 mix-blend-mode, overflow, text-overflow, white-space, border-radius, border (or border-top…, outline), background,
-box-shadow, text-shadow, filter, backdrop-filter, font, font-variation-settings, letter-spacing, text-transform, text-decoration (with
-text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
+box-shadow, text-shadow, filter, backdrop-filter, font, font-variation-settings, letter-spacing, text-transform,
+text-decoration (with text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
 
 - Sizes: fixed sizes in px; hug writes nothing; fill is `flex: 1` along the parent's direction and
   `align-self: stretch` across it. The layer you read always has its width and height.

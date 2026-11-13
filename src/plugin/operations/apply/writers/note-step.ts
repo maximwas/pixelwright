@@ -1,9 +1,13 @@
 import { inject, injectable } from "@needle-di/core";
 import { PinWords } from "@/core/css/groups/element/pin-words.ts";
-import { CAPABILITY, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
+import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
+import { CAPABILITY, CAPABILITY_TEXT, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LAYER_FACTORY } from "@/plugin/adapters/figma/layer-factory.ts";
+import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import type { WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
-import { STEP_KEYS, WRITERS_TEXT } from "@/plugin/operations/apply/writers/writers.constants.ts";
+import { PinNeeds } from "@/plugin/operations/apply/writers/pin-needs.ts";
+import { PIN_LACKS, STEP_KEYS, WRITERS_TEXT } from "@/plugin/operations/apply/writers/writers.constants.ts";
+import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 type Annotated = SceneNode & { annotations: readonly Annotation[] };
@@ -28,14 +32,35 @@ export class NoteStep implements WriteStep {
   readonly capability = CAPABILITY.annotations;
   readonly #factory;
   readonly #pins = new PinWords();
+  readonly #needs = new PinNeeds();
 
   constructor(factory = inject(LAYER_FACTORY)) {
     this.#factory = factory;
   }
 
+  /** A pin the layer cannot hold is refused before any write (Figma throws for it), the same on dry and real runs. */
+  check(
+    { notes }: FigmaProps,
+    layer: TypedLayer,
+    change: ApplyChangeData,
+  ): void {
+    const text = this.#holdsText(layer);
+    const words = (notes ?? []).flatMap(({ pins }) => pins ?? []);
+    const lacking = this.#needs.lacking(this.#pins.types(words, text), layer, change);
+
+    if (lacking !== undefined) {
+      const word = this.#pins.said([lacking.type], text);
+
+      throw new WriteError(
+        WRITERS_TEXT.pinLacks(word, CAPABILITY_TEXT.type(layer.type), PIN_LACKS[lacking.need]),
+        WRITERS_TEXT.pinLacksHint,
+      );
+    }
+  }
+
   async write(node: SceneNode, { notes }: FigmaProps): Promise<void> {
     const layer = node as Annotated;
-    const text = layer.type === FIGMA_NODE_TYPE.text || layer.type === FIGMA_NODE_TYPE.textPath;
+    const text = this.#holdsText(layer);
     const scope: Scope = { text, categories: await this.#factory.categories() };
     const before = [...layer.annotations];
     const unused = before.filter((annotation) => this.#told(annotation));
@@ -103,6 +128,10 @@ export class NoteStep implements WriteStep {
       ...(categoryId === undefined ? {} : { categoryId }),
       ...(types.length === 0 ? {} : { properties: types.map((type) => ({ type: type as AnnotationPropertyType })) }),
     };
+  }
+
+  #holdsText(layer: TypedLayer): boolean {
+    return layer.type === FIGMA_NODE_TYPE.text || layer.type === FIGMA_NODE_TYPE.textPath;
   }
 
   #bare({ categoryId: _category, properties: _pins, ...rest }: Annotation): Annotation {

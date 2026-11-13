@@ -18,7 +18,7 @@ export interface WriteStep {
   readonly capability: Capability | null;
   write(node: SceneNode, props: FigmaProps): void | Promise<void>;
   /** What the layer's type and the file's tokens refuse, found without writing (a dry run's check too). */
-  check?(props: FigmaProps, layer: TypedLayer): void | Promise<void>;
+  check?(props: FigmaProps, layer: TypedLayer, change: ApplyChangeData): void | Promise<void>;
   /** What the place of a layer about to be made refuses, asked of its type and parent before it is made, on either run. */
   place?(props: FigmaProps, layer: TypedLayer): void;
 }
@@ -122,7 +122,7 @@ export class LayerWriter {
     for (const step of this.#steps) {
       if (step.check !== undefined && step.keys.some((key) => change.props[key] !== undefined && !refused.has(key))) {
         try {
-          await step.check(change.props, layer);
+          await step.check(change.props, layer, change);
         } catch (error) {
           found.push({ error, keys: this.#named(error, step) });
         }

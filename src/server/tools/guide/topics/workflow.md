@@ -92,7 +92,9 @@ When the agent has no browser of its own, the design and the build still meet as
 1. `screenshot` the frame with `save` (scale 1, or the build's device pixel ratio) and note its width and height.
 2. Render the build at that size with what the project already has: a headless Playwright script
    (`page.setViewportSize`, then `page.screenshot` of the section's element), the framework's own preview or
-   screenshot test, or Storybook's test runner. Wait for fonts and images before the shot.
+   screenshot test, or Storybook's test runner. Wait for fonts and images before the shot. A project with no
+   renderer has nothing to compare: use the read checks of step 4 alone and tell the user the render check was
+   skipped.
 3. `image_compare` the frame's id with the build's PNG as `reference` and the same `scale`, with `diff` set: `rmse`
    and `different` say how far apart they are, `box` where, and `rows` and `columns` which edges moved and by how
    many px. Fix what the diff shows, render again, compare again.

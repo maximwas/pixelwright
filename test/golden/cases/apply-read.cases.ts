@@ -11,7 +11,7 @@ export const READ_CASES: Readonly<Record<string, string>> = {
     '<Frame name="Card" width="300px"/>',
   ),
   "$ attributes left out without a word": lines(
-    '<Frame id="2:1" $css="display: flex" $children="3" $pins="gap" $motion="opacity 0→1; 0–0.6s linear"',
+    '<Frame id="2:1" $css="display: flex" $children="3" $motion="opacity 0→1; 0–0.6s linear"',
     '  $override="text" $dev="ready for dev" $code="Card" $grid-style="Desktop 12" $on-click="navigate" name="Card"/>',
   ),
   "before, after and copyOf kept as attributes": lines(

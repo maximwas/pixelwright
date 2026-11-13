@@ -62,10 +62,14 @@ export const ApplyPropertySchema = zod.object({
  * The axis ranges the server's font catalogue knows for a call's families, by family and tag (`{Inter: {wght: {min:
  * 100, max: 900}}}`): the Plugin API names a family's axes but not their ranges.
  */
-export const FontAxesSchema = zod.record(
-  zod.string(),
-  zod.record(zod.string(), zod.object({ min: zod.number(), max: zod.number() })),
-);
+export const FontAxesSchema = zod
+  .record(
+    zod.string(),
+    zod
+      .record(zod.string(), zod.object({ min: zod.number(), max: zod.number() }))
+      .check(zod.refine((axes) => Object.keys(axes).length <= APPLY.fontAxes)),
+  )
+  .check(zod.refine((families) => Object.keys(families).length <= APPLY.fontFamilies));
 
 export type ApplyChangeData = zod.output<typeof ApplyChangeSchema>;
 
