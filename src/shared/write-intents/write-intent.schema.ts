@@ -36,7 +36,7 @@ const LengthValueSchema = zod.union([zod.number(), TokenRefSchema]);
 
 const Sides = zod.tuple([LengthValueSchema, LengthValueSchema, LengthValueSchema, LengthValueSchema]);
 
-const ColorValueSchema = zod.strictObject({
+export const ColorValueSchema = zod.strictObject({
   r: zod.number(),
   g: zod.number(),
   b: zod.number(),
@@ -57,7 +57,7 @@ const GradientStopSchema = zod.strictObject({
 });
 
 /** One paint: a colour, a token at an opacity, a gradient as CSS gives it, or an image file. */
-const PaintSpecSchema = zod.looseObject({
+export const PaintSpecSchema = zod.looseObject({
   kind: zod.enum(INTENT_PAINT),
   color: optional(ColorValueSchema),
   token: optional(zod.string()),
@@ -72,7 +72,7 @@ const PaintSpecSchema = zod.looseObject({
   stream: optional(zod.string()),
 });
 
-const EffectSpecSchema = zod.strictObject({
+export const EffectSpecSchema = zod.strictObject({
   type: zod.enum(INTENT_EFFECT),
   radius: zod.number(),
   color: optional(zod.nullable(ColorValueSchema)),
@@ -98,7 +98,7 @@ const GridSpanSchema = zod.strictObject({ anchor: zod.int(), span: zod.int() });
 
 const TextLengthSchema = zod.strictObject({ unit: zod.enum(INTENT_TEXT_UNIT), value: optional(zod.number()) });
 
-const FontSpecSchema = zod.strictObject({
+export const FontSpecSchema = zod.strictObject({
   family: zod.string(),
   weight: zod.number(),
   italic: zod.boolean(),

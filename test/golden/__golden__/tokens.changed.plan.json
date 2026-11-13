@@ -1,0 +1,278 @@
+{
+  "plan": {
+    "collections": [
+      {
+        "name": "Brand Colors",
+        "id": "C:brand",
+        "modes": [
+          "High contrast"
+        ],
+        "variables": [
+          {
+            "name": "Surface/Base",
+            "id": "V:surface",
+            "type": "COLOR",
+            "values": {
+              "High contrast": {
+                "kind": "color",
+                "color": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 1
+                }
+              }
+            },
+            "description": "The page, behind everything."
+          }
+        ]
+      },
+      {
+        "name": "Spacing",
+        "id": "C:space",
+        "modes": [],
+        "variables": [
+          {
+            "name": "Gap/Medium",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 12
+              }
+            },
+            "scopes": [
+              "GAP"
+            ]
+          },
+          {
+            "name": "Radius",
+            "id": "V:radius",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 16
+              }
+            }
+          },
+          {
+            "name": "Opacity/Half",
+            "id": "V:half",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 60
+              }
+            }
+          },
+          {
+            "name": "Line/Height",
+            "type": "FLOAT",
+            "values": {
+              "Base": {
+                "kind": "number",
+                "value": 1.5
+              }
+            }
+          },
+          {
+            "name": "Weight/Bold",
+            "id": "V:bold",
+            "type": "FLOAT",
+            "values": {},
+            "scopes": [
+              "FONT_WEIGHT",
+              "TEXT_CONTENT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Brand 2",
+        "modes": [
+          "Night",
+          "Day",
+          "Dusk"
+        ],
+        "variables": [
+          {
+            "name": "Surface/Alias",
+            "type": null,
+            "values": {
+              "Night": {
+                "kind": "alias",
+                "token": "--Ink"
+              },
+              "Day": {
+                "kind": "alias",
+                "token": "--surface"
+              }
+            }
+          },
+          {
+            "name": "Alpha",
+            "type": "FLOAT",
+            "values": {
+              "Day": {
+                "kind": "number",
+                "value": 40
+              },
+              "Dusk": {
+                "kind": "number",
+                "value": 40
+              }
+            },
+            "scopes": [
+              "OPACITY"
+            ]
+          }
+        ]
+      }
+    ],
+    "styles": {
+      "paint": [
+        {
+          "name": "White",
+          "id": "S:white",
+          "paints": [
+            {
+              "kind": "color",
+              "color": {
+                "r": 0.9607843137254902,
+                "g": 0.9607843137254902,
+                "b": 0.9607843137254902,
+                "a": 1
+              }
+            }
+          ]
+        }
+      ],
+      "text": [
+        {
+          "name": "Heading/H1",
+          "id": "S:h1",
+          "font": {
+            "family": "Inter",
+            "weight": 700,
+            "italic": true,
+            "size": 48,
+            "lineHeight": {
+              "unit": "PIXELS",
+              "value": 57.6
+            }
+          },
+          "letterSpacing": {
+            "unit": "PERCENT",
+            "value": -1
+          },
+          "textCase": "UPPER"
+        },
+        {
+          "name": "Caption",
+          "font": {
+            "family": "Inter",
+            "weight": 500,
+            "italic": false,
+            "size": 12,
+            "lineHeight": {
+              "unit": "PIXELS",
+              "value": 16
+            }
+          },
+          "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 4
+          },
+          "textCase": "UPPER"
+        }
+      ],
+      "effect": []
+    }
+  },
+  "created": [
+    {
+      "kind": "mode",
+      "name": "High contrast",
+      "collection": "Brand Colors"
+    },
+    {
+      "kind": "variable",
+      "name": "Gap/Medium",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Line/Height",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "collection",
+      "name": "Brand 2"
+    },
+    {
+      "kind": "mode",
+      "name": "Night",
+      "collection": "Brand 2"
+    },
+    {
+      "kind": "mode",
+      "name": "Day",
+      "collection": "Brand 2"
+    },
+    {
+      "kind": "mode",
+      "name": "Dusk",
+      "collection": "Brand 2"
+    },
+    {
+      "kind": "variable",
+      "name": "Surface/Alias",
+      "collection": "Brand 2"
+    },
+    {
+      "kind": "variable",
+      "name": "Alpha",
+      "collection": "Brand 2"
+    },
+    {
+      "kind": "text",
+      "name": "Caption"
+    }
+  ],
+  "updated": [
+    {
+      "kind": "variable",
+      "name": "Surface/Base",
+      "collection": "Brand Colors"
+    },
+    {
+      "kind": "variable",
+      "name": "Radius",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Opacity/Half",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "variable",
+      "name": "Weight/Bold",
+      "collection": "Spacing"
+    },
+    {
+      "kind": "paint",
+      "name": "White"
+    },
+    {
+      "kind": "text",
+      "name": "Heading/H1"
+    }
+  ],
+  "errors": [],
+  "notes": [
+    "Line/Height (Spacing) holds plain numbers and no scope keeps them plain: Figma offers it for every field and tokens_read reads them back in px. Give it scopes (FONT_WEIGHT, OPACITY…) to keep them plain."
+  ]
+}
