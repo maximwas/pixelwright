@@ -10,7 +10,12 @@ export const NEW_LAYER_TYPE: Readonly<Record<string, NodeType>> = {
   ComponentSet: "COMPONENT_SET",
   Slot: "SLOT",
   Page: "PAGE",
+  Image: "RECTANGLE",
+  Icon: "FRAME",
 };
+
+/** The tag whose width and height scale its drawing whole (T-134). */
+export const ICON_TAG = "Icon";
 
 /** The tags of the text layers' types, as design_read writes them: the types a tag mismatch is about. */
 export const TEXT_TAG = { TEXT: "Text", TEXT_PATH: "TextPath" } as const;
@@ -84,4 +89,6 @@ export const APPLY_TEXT = {
   slot: "A slot is made in a component.",
   slotHint: 'In an instance, fill the slot it has: give its <Slot id="…"> new layers.',
   emptySet: "A ComponentSet is made of the Components inside it: give it one at least.",
+  notReached: (src: string) => `${src} did not reach the plugin.`,
+  notReachedHint: "Send it again, or fewer files in one call.",
 } as const;

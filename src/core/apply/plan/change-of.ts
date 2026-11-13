@@ -1,5 +1,6 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import {
+  APPLY_PATTERN,
   APPLY_TAG,
   ATTRIBUTE,
   CHANGE_KIND,
@@ -14,8 +15,10 @@ import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import type { WriteInput, WriteProblem } from "@/core/css/css.types.ts";
 import { ChangeOutput } from "@/core/css/registry/change-output.ts";
 import { WRITE_REGISTRY } from "@/core/css/registry/write-registry.ts";
+import { MODE_ATTRIBUTE } from "@/core/kernel/names/names.constants.ts";
 import type { XmlLocation } from "@/core/xml/parse/parse.types.ts";
 import { XML_CONTENT } from "@/core/xml/xml.constants.ts";
+import { INTENT_KEY } from "@/shared/write-intents/write-intent.constants.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /**
@@ -41,6 +44,7 @@ export class ChangeOf {
     const out = new ChangeOutput();
 
     this.#registry.write(input, out);
+    this.#modes(element, input, out);
 
     const errors = out.problems.map((problem) => this.#error(element, element, problem));
     // A new text style resets the runs too: the characters and Spans are written again.
@@ -148,6 +152,24 @@ export class ChangeOf {
     }
 
     return { characters, runs };
+  }
+
+  /** The variable modes the element sets (C-135): each data-<collection> the layer is not in yet, an empty one clearing. */
+  #modes(
+    element: ApplyElement,
+    input: WriteInput,
+    out: ChangeOutput,
+  ): void {
+    const modes = Object.entries(element.attributes).filter(
+      ([name]) => APPLY_PATTERN.mode.test(name) && input.changed(name),
+    );
+    const [first] = modes;
+
+    if (first !== undefined) {
+      const slugs = modes.map(([name, mode]) => [name.slice(MODE_ATTRIBUTE.prefix.length), mode]);
+
+      out.set(INTENT_KEY.modes, Object.fromEntries(slugs), first[0]);
+    }
   }
 
   #error(

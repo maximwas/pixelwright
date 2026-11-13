@@ -33,4 +33,5 @@ export const OP_NAME = {
   delete: "delete",
   saveVersion: "save_version",
   apply: "apply",
+  upload: "upload",
 } as const;

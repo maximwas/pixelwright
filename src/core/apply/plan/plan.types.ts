@@ -30,8 +30,19 @@ export interface Assessment {
   readonly now?: LayerNow;
 }
 
+/**
+ * What the files an element names change on its layer (T-132, C-149), as the server reads them: the attributes whose
+ * file holds another image than the layer's, and the files that cannot be used, each an error on its attribute.
+ */
+export interface FileChange {
+  readonly changed: readonly string[];
+  readonly problems: readonly { readonly attribute: string; readonly message: string }[];
+}
+
 /** What the one planner makes of a call: every change, those the plugin gets, the errors, the components made. */
 export interface WritePlan {
+  /** Each element against its layer: the server compares the files they name with it. */
+  readonly assessed: readonly Assessment[];
   readonly changes: ApplyChange[];
   /** The changes that write something: a layer made, or a property given. */
   readonly written: ApplyChange[];

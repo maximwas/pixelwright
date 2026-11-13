@@ -117,6 +117,7 @@ export const INTENT_KEY = {
   property: "property",
   mask: "mask",
   asset: "asset",
+  modes: "modes",
   textStyle: "textStyle",
   font: "font",
   letterSpacing: "letterSpacing",

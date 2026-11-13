@@ -22,10 +22,15 @@ import { StrokesWriter } from "@/core/css/groups/paint/strokes-writer.ts";
 import { TextWriter } from "@/core/css/groups/text/text-writer.ts";
 import { PAINT_VALUE, PaintValue } from "@/core/css/paints/paint-value.ts";
 import { PROPERTY_WRITERS, WRITE_REGISTRY, WriteRegistry } from "@/core/css/registry/write-registry.ts";
+import { APPLY_FILES, ApplyFiles } from "@/server/tools/design-apply/apply-files.ts";
+import { FILE_ATTACH, FileAttach } from "@/server/tools/design-apply/file-attach.ts";
+import { FILE_CHANGES, FileChanges } from "@/server/tools/design-apply/file-changes.ts";
+import { SOURCE_FILES, SourceFiles } from "@/server/tools/design-apply/source-files.ts";
 
 /**
  * What design_apply plans with (A§6.2 step 3): the write halves in 0.7.0's table order (element, layout, geometry,
- * appearance, paint, effects, text: the order a change's properties come in) and the one planner over them.
+ * appearance, paint, effects, text: the order a change's properties come in), the one planner over them, and the
+ * files a call writes from (T-131, T-132).
  */
 export class ApplyProviders {
   register(container: Container): void {
@@ -53,6 +58,10 @@ export class ApplyProviders {
       .bind({ provide: ASSESSOR, useClass: Assessor })
       .bind({ provide: CHANGE_OF, useClass: ChangeOf })
       .bind({ provide: PLACED_LAYERS, useClass: PlacedLayers })
-      .bind({ provide: WRITE_PLANNER, useClass: WritePlanner });
+      .bind({ provide: WRITE_PLANNER, useClass: WritePlanner })
+      .bind({ provide: SOURCE_FILES, useClass: SourceFiles })
+      .bind({ provide: FILE_CHANGES, useClass: FileChanges })
+      .bind({ provide: FILE_ATTACH, useClass: FileAttach })
+      .bind({ provide: APPLY_FILES, useClass: ApplyFiles });
   }
 }

@@ -42,10 +42,7 @@ export class NewLayers {
     change: ApplyChangeData,
     { parent, index }: Place,
   ): SceneNode {
-    const node =
-      type === FIGMA_NODE_TYPE.slot
-        ? (parent as ComponentNode).createSlot()
-        : this.#factory.make(type, APPLY_TEXT.cannotMake(change.tag));
+    const node = this.#made(type, change, parent);
 
     try {
       parent.insertChild(index, node);
@@ -113,6 +110,21 @@ export class NewLayers {
     if (!node.removed) {
       node.remove();
     }
+  }
+
+  /** The layer of the type: a slot in its component, an Icon drawn from its SVG (T-131), else a bare one. */
+  #made(
+    type: NodeType,
+    change: ApplyChangeData,
+    parent: Place["parent"],
+  ): SceneNode {
+    const svg = change.props.asset?.svg;
+
+    if (type === FIGMA_NODE_TYPE.slot) {
+      return (parent as ComponentNode).createSlot();
+    }
+
+    return svg === undefined ? this.#factory.make(type, APPLY_TEXT.cannotMake(change.tag)) : this.#factory.icon(svg);
   }
 
   #bare(node: SceneNode, props: FigmaProps): void {
