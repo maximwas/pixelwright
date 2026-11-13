@@ -34,4 +34,5 @@ export const OP_NAME = {
   saveVersion: "save_version",
   apply: "apply",
   upload: "upload",
+  tokensApply: "tokens_apply",
 } as const;

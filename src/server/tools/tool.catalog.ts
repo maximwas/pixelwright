@@ -27,6 +27,7 @@ import { SELECTION_GET_MANIFEST } from "@/server/tools/selection-get/selection-g
 import { SELECTION_WAIT_MANIFEST } from "@/server/tools/selection-wait/selection-wait.manifest.ts";
 import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
 import { STYLES_COMPARE_MANIFEST } from "@/server/tools/styles-compare/styles-compare.manifest.ts";
+import { TOKENS_APPLY_MANIFEST } from "@/server/tools/tokens-apply/tokens-apply.manifest.ts";
 import { TOKENS_READ_MANIFEST } from "@/server/tools/tokens-read/tokens-read.manifest.ts";
 import { TOKENS_USAGE_MANIFEST } from "@/server/tools/tokens-usage/tokens-usage.manifest.ts";
 import { TYPES_READ_MANIFEST } from "@/server/tools/types-read/types-read.manifest.ts";
@@ -69,6 +70,7 @@ export class ToolCatalog {
     TYPES_READ_MANIFEST,
     TOKENS_READ_MANIFEST,
     TOKENS_USAGE_MANIFEST,
+    TOKENS_APPLY_MANIFEST,
     VERSION_SAVE_MANIFEST,
     COMPONENTS_READ_MANIFEST,
     LIBRARY_SEARCH_MANIFEST,

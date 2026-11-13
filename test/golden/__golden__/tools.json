@@ -6918,251 +6918,320 @@
   {
     "name": "tokens_apply",
     "title": "Write design tokens",
-    "description": "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma's pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand, its letter spacing and case in also as tokens_read lists them, or after it: \"500 12px/16px 'Inter'; letter-spacing: 0.04em; text-transform: uppercase\"; left out, the style keeps its own) and effect (a box-shadow list, a shadow's colour a colour or var(--colour variable), its blurs after it or alone: \"backdrop-filter: blur(20px)\"; the effects a value leaves out, the style keeps). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+    "description": "Writes design tokens in the shape tokens_read returns with format json: tokens takes tokens_read's tokens as they are (their ids, aliasOf, defaultMode and selectors are read past), or the same shape by hand: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma's pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand, its letter spacing and case in also as tokens_read lists them, or after it: \"500 12px/16px 'Inter'; letter-spacing: 0.04em; text-transform: uppercase\"; left out, the style keeps its own) and effect (a box-shadow list, a shadow's colour a colour or var(--colour variable), its blurs after it or in also, or alone: \"backdrop-filter: blur(20px)\"; the effects a value leaves out, the style keeps). Collections, modes, variables and styles are found by name among the file's own or made (a style's token says which of styles sharing a name it is); what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
     "inputSchema": {
       "type": "object",
       "properties": {
-        "collections": {
-          "default": [],
-          "maxItems": 200,
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 512
-              },
-              "modes": {
-                "maxItems": 40,
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 512
-                }
-              },
-              "variables": {
-                "maxItems": 5000,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
+        "tokens": {
+          "type": "object",
+          "properties": {
+            "collections": {
+              "default": [],
+              "maxItems": 200,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "modes": {
+                    "maxItems": 40,
+                    "type": "array",
+                    "items": {
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 512
-                    },
-                    "type": {
-                      "type": "string",
-                      "maxLength": 32
-                    },
-                    "values": {
-                      "type": "object",
-                      "propertyNames": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 512
-                      },
-                      "additionalProperties": {
-                        "type": "string",
-                        "maxLength": 10000
-                      }
-                    },
-                    "description": {
-                      "type": "string",
-                      "maxLength": 10000
-                    },
-                    "token": {
-                      "type": "string",
-                      "maxLength": 512
-                    },
-                    "scopes": {
-                      "description": "The fields Figma's pickers offer it for, by Figma's names: [\"FONT_WEIGHT\"], [\"GAP\", \"WIDTH_HEIGHT\"]; [] hides it from all of them. A new variable is offered for every field (ALL_SCOPES), which makes a number a length in px: a font weight or an opacity needs its scope.",
-                      "maxItems": 23,
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "ALL_SCOPES",
-                          "TEXT_CONTENT",
-                          "CORNER_RADIUS",
-                          "WIDTH_HEIGHT",
-                          "GAP",
-                          "ALL_FILLS",
-                          "FRAME_FILL",
-                          "SHAPE_FILL",
-                          "TEXT_FILL",
-                          "STROKE_COLOR",
-                          "STROKE_FLOAT",
-                          "EFFECT_FLOAT",
-                          "EFFECT_COLOR",
-                          "OPACITY",
-                          "COLOR_OPACITY",
-                          "FONT_FAMILY",
-                          "FONT_STYLE",
-                          "FONT_WEIGHT",
-                          "FONT_SIZE",
-                          "LINE_HEIGHT",
-                          "LETTER_SPACING",
-                          "PARAGRAPH_SPACING",
-                          "PARAGRAPH_INDENT"
-                        ]
-                      }
-                    },
-                    "codeSyntax": {
-                      "description": "Its name in code per platform: WEB (also its CSS name, as var(--name)), ANDROID, iOS; \"\" removes one.",
-                      "type": "object",
-                      "properties": {
-                        "WEB": {
-                          "type": "string",
-                          "maxLength": 512
-                        },
-                        "ANDROID": {
-                          "type": "string",
-                          "maxLength": 512
-                        },
-                        "iOS": {
-                          "type": "string",
-                          "maxLength": 512
-                        }
-                      }
                     }
                   },
-                  "required": [
-                    "name",
-                    "values"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "name",
-              "variables"
-            ]
-          }
-        },
-        "styles": {
-          "default": {
-            "paint": [],
-            "text": [],
-            "effect": []
-          },
-          "type": "object",
-          "properties": {
-            "paint": {
-              "default": [],
-              "maxItems": 2000,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 512
-                  },
-                  "value": {
-                    "type": "string",
-                    "maxLength": 10000
-                  }
-                },
-                "required": [
-                  "name",
-                  "value"
-                ]
-              }
-            },
-            "text": {
-              "default": [],
-              "maxItems": 2000,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 512
-                  },
-                  "value": {
-                    "type": "string",
-                    "maxLength": 10000
-                  },
-                  "also": {
-                    "description": "Its letter spacing and case as tokens_read lists them: [{token: '--Caption-letter-spacing', value: '0.04em'}, {token: '--Caption-text-transform', value: 'uppercase'}].",
-                    "maxItems": 20,
+                  "variables": {
+                    "maxItems": 5000,
                     "type": "array",
                     "items": {
                       "type": "object",
                       "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        },
+                        "type": {
+                          "type": "string",
+                          "maxLength": 32
+                        },
+                        "values": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 512
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "maxLength": 10000
+                          }
+                        },
+                        "description": {
+                          "type": "string",
+                          "maxLength": 10000
+                        },
                         "token": {
                           "type": "string",
                           "maxLength": 512
                         },
-                        "value": {
-                          "type": "string",
-                          "maxLength": 10000
+                        "scopes": {
+                          "description": "The fields Figma's pickers offer it for, by Figma's names: [\"FONT_WEIGHT\"], [\"GAP\", \"WIDTH_HEIGHT\"]; [] hides it from all of them. A new variable is offered for every field (ALL_SCOPES), which makes a number a length in px: a font weight or an opacity needs its scope.",
+                          "maxItems": 23,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "ALL_SCOPES",
+                              "TEXT_CONTENT",
+                              "CORNER_RADIUS",
+                              "WIDTH_HEIGHT",
+                              "GAP",
+                              "ALL_FILLS",
+                              "FRAME_FILL",
+                              "SHAPE_FILL",
+                              "TEXT_FILL",
+                              "STROKE_COLOR",
+                              "STROKE_FLOAT",
+                              "EFFECT_FLOAT",
+                              "EFFECT_COLOR",
+                              "OPACITY",
+                              "COLOR_OPACITY",
+                              "FONT_FAMILY",
+                              "FONT_STYLE",
+                              "FONT_WEIGHT",
+                              "FONT_SIZE",
+                              "LINE_HEIGHT",
+                              "LETTER_SPACING",
+                              "PARAGRAPH_SPACING",
+                              "PARAGRAPH_INDENT"
+                            ]
+                          }
+                        },
+                        "codeSyntax": {
+                          "description": "Its name in code per platform: WEB (also its CSS name, as var(--name)), ANDROID, iOS; \"\" removes one.",
+                          "type": "object",
+                          "properties": {
+                            "WEB": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "ANDROID": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "iOS": {
+                              "type": "string",
+                              "maxLength": 512
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "id": {
+                          "description": "tokens_read's own: read past."
+                        },
+                        "aliasOf": {
+                          "description": "tokens_read's own: read past."
                         }
                       },
                       "required": [
-                        "token",
-                        "value"
-                      ]
+                        "name",
+                        "values"
+                      ],
+                      "additionalProperties": false
                     }
+                  },
+                  "defaultMode": {
+                    "description": "tokens_read's own: read past."
+                  },
+                  "selectors": {
+                    "description": "tokens_read's own: read past."
                   }
                 },
                 "required": [
                   "name",
-                  "value"
-                ]
+                  "variables"
+                ],
+                "additionalProperties": false
               }
             },
-            "effect": {
-              "default": [],
-              "maxItems": 2000,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 512
-                  },
-                  "value": {
-                    "type": "string",
-                    "maxLength": 10000
+            "styles": {
+              "default": {
+                "paint": [],
+                "text": [],
+                "effect": []
+              },
+              "type": "object",
+              "properties": {
+                "paint": {
+                  "default": [],
+                  "maxItems": 2000,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "value": {
+                        "type": "string",
+                        "maxLength": 10000
+                      },
+                      "token": {
+                        "description": "Its token as tokens_read lists it: which of the styles sharing its name it is, and which filter a blur alone is (--Frost-backdrop-filter).",
+                        "type": "string",
+                        "maxLength": 512
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ],
+                    "additionalProperties": false
                   }
                 },
-                "required": [
-                  "name",
-                  "value"
-                ]
-              }
+                "text": {
+                  "default": [],
+                  "maxItems": 2000,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "value": {
+                        "type": "string",
+                        "maxLength": 10000
+                      },
+                      "token": {
+                        "description": "Its token as tokens_read lists it: which of the styles sharing its name it is, and which filter a blur alone is (--Frost-backdrop-filter).",
+                        "type": "string",
+                        "maxLength": 512
+                      },
+                      "also": {
+                        "description": "Its letter spacing and case, or its blurs, as tokens_read lists them: [{token: '--Caption-letter-spacing', value: '0.04em'}, {token: '--Caption-text-transform', value: 'uppercase'}].",
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "value": {
+                              "type": "string",
+                              "maxLength": 10000
+                            }
+                          },
+                          "required": [
+                            "token",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "effect": {
+                  "default": [],
+                  "maxItems": 2000,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "value": {
+                        "type": "string",
+                        "maxLength": 10000
+                      },
+                      "token": {
+                        "description": "Its token as tokens_read lists it: which of the styles sharing its name it is, and which filter a blur alone is (--Frost-backdrop-filter).",
+                        "type": "string",
+                        "maxLength": 512
+                      },
+                      "also": {
+                        "description": "Its letter spacing and case, or its blurs, as tokens_read lists them: [{token: '--Caption-letter-spacing', value: '0.04em'}, {token: '--Caption-text-transform', value: 'uppercase'}].",
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "value": {
+                              "type": "string",
+                              "maxLength": 10000
+                            }
+                          },
+                          "required": [
+                            "token",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
             }
-          }
+          },
+          "additionalProperties": false,
+          "description": "tokens_read's tokens (format json) as they are, or the same by hand: collections and styles, only what you change."
         },
         "dryRun": {
           "default": false,
-          "description": "Check names, types, modes and aliases without writing; works with Allow edits off.",
+          "description": "Check without writing: the answer says what would change. Works with Allow edits off.",
           "type": "boolean"
         },
         "version": {
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one when the user wants to be able to go back."
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "required": [
+        "tokens"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -7270,10 +7339,13 @@
             "type": "string"
           }
         },
-        "dryRun": {
-          "type": "boolean"
+        "dry": {
+          "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
+          "type": "boolean",
+          "const": true
         },
         "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
           "type": "object",
           "properties": {
             "id": {
@@ -7299,8 +7371,7 @@
       "required": [
         "created",
         "updated",
-        "errors",
-        "dryRun"
+        "errors"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false

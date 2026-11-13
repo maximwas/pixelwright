@@ -1,3 +1,6 @@
+/** Figma's refusal of a mode past the file's plan (FX-054: "in addMode: Limited to 1 modes only"), the limit in it. */
+export const MODE_LIMIT_REFUSAL = /Limited to (\d+) modes?/i;
+
 export const RUNNER_TEXT = {
   unknownOp: (op: string) => `${op}: this plugin has no such op; update the plugin and the server together`,
 } as const;

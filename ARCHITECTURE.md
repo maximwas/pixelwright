@@ -50,6 +50,18 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     resolved, `DtcgStyles` colour, gradient, typography and shadow tokens); format json is
     the model itself (`TokensSchema`). `model/` also holds `ModelSummary` (T-161: past maxChars, each collection's
     modes and size, and the most whole tokens that fit, in order, for any format).
+    `scopes/` holds `ScopeRules` (K-024, FX-050: the scopes Figma lets each type take, ALL_SCOPES alone, ALL_FILLS
+    without the fills it covers, never none on a BOOLEAN). `plan/` holds `TokensPlan`, tokens_apply's plan (T-165,
+    K-018..K-025): the call set against the file's tokens by name through `HeldTokens`, which reads them through the
+    model itself, so a value is compared in tokens_read's CSS and tokens_read's own JSON plans nothing; `CollectionPlans`
+    finds or makes each collection and refuses a variable listed twice; `VariablePlans` reads each variable back with
+    `VariableValues` and keeps only what differs; `AliasLinks` then follows every alias to its target (in the file or the
+    call), refuses a loop and a target of another type, types a variable of only aliases by its target (and checks its
+    scopes by it) and gives an alias its target's id when the file holds it, or an enabled library's key to import
+    (m:acc257ba, noted); `StylePlans` reads a style's CSS through `ChangeOf.attributesProps` (C-173) and finds the
+    colour variables it names (the plan's `targets`: id, key, or made by the call), and `PlainNumbers` gives each number the unit `NumberUnits` will read it in (an
+    opacity written in percent, FX-049; plain numbers that read back in px noted). The plan's schema, what the plugin
+    writes, is `shared/ops/tokens-apply/`.
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -201,6 +213,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   CSS or JSON (dtcg comes with its item), past maxChars the summary with the first whole tokens that fit;
   `tokens-usage/` names the token with `TokenNames` over the variables op's raw tokens, then lists the usage op's
   layers (500 at most, within the caller's budgetMs, D-48).
+  `tokens-apply/` reads the variables op with the libraries and the page's used tokens (so a library's are never
+  copied) and sets core's plan against them; a plan with nothing to write answers at once (D-25), else the plugin's
+  tokens_apply op writes it through the versioned write, a dry run too (B-055).
   `guide/` answers its topics from `topics/*.md`, Markdown that tsdown's text loader inlines into the bundle (vitest.config.ts
   makes a .md module its text alike), so the package ships `dist/` alone; `markdown.d.ts` types the import.
 - `server/adapters/`: the port implementations on Node.
@@ -277,7 +292,13 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   the mains of the instances, a batch at a time, counted), `ComponentEntries` (properties from the set or a lone
   component only, FX-028), `ExposedInstances` and `ComponentLinks` (the file asked first, then each component's).
   `variables/` returns the raw tokens through `FileTokens` and `LibraryCatalogue`: the server builds the model, the
-  plugin carries no `core/tokens`.
+  plugin carries no `core/tokens`. `tokens-apply/` writes core's plan: `CollectionWriter` (a new collection's first mode
+  renames Figma's default; a refused mode is its error, the limit learned in `plugin/app/ModeLimit`, FX-054),
+  `VariableWriter` (every new variable made before any value), `VariableValues` (values, an alias from its target or a
+  library's imported by key, description, scopes, code syntax), `StyleWriter`, `StyleLooks` and `TextStyleLooks`
+  (paint, text and effect styles through design_apply's `Paints`, `Effects` and `FontCatalog`; a text style keeps its
+  face, size, line height and letter spacing where they render as the CSS, and its font is loaded before it is made),
+  over `adapters/figma/variables/TokenFactory`; the call is one undo step.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;

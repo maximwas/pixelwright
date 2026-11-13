@@ -15,12 +15,22 @@ import { NUMBER_UNITS, NumberUnits } from "@/core/tokens/model/number-units.ts";
 import { STYLE_TOKENS, StyleTokens } from "@/core/tokens/model/style-tokens.ts";
 import { TOKEN_MODEL, TokenModel } from "@/core/tokens/model/token-model.ts";
 import { VARIABLE_CSS, VariableCss } from "@/core/tokens/model/variable-css.ts";
+import { ALIAS_LINKS, AliasLinks } from "@/core/tokens/plan/alias-links.ts";
+import { COLLECTION_PLANS, CollectionPlans } from "@/core/tokens/plan/collection-plans.ts";
+import { HELD_TOKENS, HeldTokens } from "@/core/tokens/plan/held-tokens.ts";
+import { PLAIN_NUMBERS, PlainNumbers } from "@/core/tokens/plan/plain-numbers.ts";
+import { STYLE_PLANS, StylePlans } from "@/core/tokens/plan/style-plans.ts";
+import { TOKENS_PLAN, TokensPlan } from "@/core/tokens/plan/tokens-plan.ts";
+import { VARIABLE_PLANS, VariablePlans } from "@/core/tokens/plan/variable-plans.ts";
+import { VARIABLE_VALUES, VariableValues } from "@/core/tokens/plan/variable-values.ts";
+import { SCOPE_RULES, ScopeRules } from "@/core/tokens/scopes/scope-rules.ts";
 import { TOKEN_WRITER, TokenWriter } from "@/server/tools/tokens-read/token-writer.ts";
 
 /**
  * The tokens' bindings: the one naming of tokens and easings (T-163, D-64), design_read's JSON tokens, and
  * tokens_read's model (T-160, T-164, K-003, K-006) with its CSS and DTCG formats (K-013..K-017) and its summary past
- * maxChars (T-161); the weight guessed from a font style's name (K-074).
+ * maxChars (T-161); the weight guessed from a font style's name (K-074); tokens_apply's plan against the file's
+ * tokens (T-165, K-018..K-025) with its scope rules.
  */
 export class TokenProviders {
   register(container: Container): void {
@@ -41,6 +51,15 @@ export class TokenProviders {
       .bind({ provide: DTCG_VALUES, useClass: DtcgValues })
       .bind({ provide: DTCG_STYLES, useClass: DtcgStyles })
       .bind({ provide: TOKENS_DTCG, useClass: TokensDtcg })
-      .bind({ provide: TOKEN_WRITER, useClass: TokenWriter });
+      .bind({ provide: TOKEN_WRITER, useClass: TokenWriter })
+      .bind({ provide: SCOPE_RULES, useClass: ScopeRules })
+      .bind({ provide: VARIABLE_VALUES, useClass: VariableValues })
+      .bind({ provide: VARIABLE_PLANS, useClass: VariablePlans })
+      .bind({ provide: ALIAS_LINKS, useClass: AliasLinks })
+      .bind({ provide: COLLECTION_PLANS, useClass: CollectionPlans })
+      .bind({ provide: STYLE_PLANS, useClass: StylePlans })
+      .bind({ provide: HELD_TOKENS, useClass: HeldTokens })
+      .bind({ provide: PLAIN_NUMBERS, useClass: PlainNumbers })
+      .bind({ provide: TOKENS_PLAN, useClass: TokensPlan });
   }
 }
