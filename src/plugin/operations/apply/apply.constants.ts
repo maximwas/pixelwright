@@ -9,6 +9,7 @@ export const NEW_LAYER_TYPE: Readonly<Record<string, NodeType>> = {
   Line: "LINE",
   Component: "COMPONENT",
   ComponentSet: "COMPONENT_SET",
+  Instance: "INSTANCE",
   Slot: "SLOT",
   Page: "PAGE",
   Image: "RECTANGLE",
@@ -21,11 +22,24 @@ export const ICON_TAG = "Icon";
 /** The tags of the text layers' types, as design_read writes them: the types a tag mismatch is about. */
 export const TEXT_TAG = { TEXT: "Text", TEXT_PATH: "TextPath" } as const;
 
-/** Why 100: the room 0.7.0 left between the page's layers and a new one placed beside them. */
-export const APPLY_PLACE = { pageGap: 100 } as const;
+/** Why 100 and 40: the room 0.7.0 left between the page's layers and a new one beside them, and around a set's variants. */
+export const APPLY_PLACE = { pageGap: 100, setGap: 40 } as const;
 
-/** Figma's words when a file's plan has no page left (FX-054): "The Starter plan only comes with 3 pages". */
-export const APPLY_PATTERN = { pageLimit: /comes with (\d+) pages?/i } as const;
+/**
+ * Figma's words when a file's plan has no page left (FX-054): "The Starter plan only comes with 3 pages"; and how a
+ * layer's id inside an instance starts, I<instance>;, the rest of it the same in every instance of the component.
+ */
+export const APPLY_PATTERN = { pageLimit: /comes with (\d+) pages?/i, instanceLayer: /^I[^;]+;/ } as const;
+
+/** What each name of a layer's property mark binds (T-129): prop its characters, visibleProp its visibility, swapProp its component. */
+export const PROPERTY_KINDS = [
+  { key: "text", field: "characters", type: "TEXT" },
+  { key: "visible", field: "visible", type: "BOOLEAN" },
+  { key: "swap", field: "mainComponent", type: "INSTANCE_SWAP" },
+] as const;
+
+/** The layer fields a property mark drives, by name. */
+export const PROPERTY_FIELD = { characters: "characters", visible: "visible" } as const;
 
 /** Figma's values a new layer starts with. */
 export const NEW_LAYER_VALUE = { hug: "HUG", none: "NONE", fit: "WIDTH_AND_HEIGHT", slot: "SLOT" } as const;
@@ -69,8 +83,26 @@ export const APPLY_TEXT = {
     `Its parent <${tag}> on line ${line} was not created: fix that error first.`,
   holdsNoLayers: (type: string) => `A ${type} holds no layers: put the new one in a frame.`,
   cannotMake: (tag: string) => `Creating a ${tag} is not written to Figma in this release.`,
-  instanceLayers: "The layers inside a new instance are not written to Figma in this release.",
   copyNotMade: "The copy it is in was not made: fix that element's error first.",
+  instanceNotMade: "The instance it is in was not made: fix that element's error first.",
+  noInstanceLayer: (id: string | undefined) => `The new instance has no layer for ${id}.`,
+  instanceLayerHint:
+    "Inside a new instance, name its layers by another instance's ids of the same component and variant, or by the component's own.",
+  propOnText: "prop makes a text property: it goes on a <Text>.",
+  propHint: "Use visibleProp on other layers.",
+  swapOnInstance: "swapProp makes an instance swap property: it goes on an <Instance>.",
+  markInInstance: "This layer is inside an instance: prop, visibleProp and swapProp bind a component's own layers.",
+  markInInstanceHint: "Give them on the main component's layer, by its id.",
+  noComponent:
+    "No component holds this layer: prop, visibleProp and swapProp bind a component's layers to its properties.",
+  otherKind: (
+    owner: string,
+    kind: string,
+    name: string,
+  ) =>
+    `${owner} has a ${kind} property ${name}: another kind cannot take its name.`,
+  otherKindHint: "Name the property otherwise.",
+  swapGone: (name: string) => `${name}'s component is gone: it cannot be the swap property's default.`,
   noCounterpart: (id: string | undefined) => `The copy has no layer for ${id}.`,
   counterpartHint: "Inside a copy, name only layers of the copied one, where they are in it.",
   inInstance: "A layer inside an instance comes from its component and stays where it is.",

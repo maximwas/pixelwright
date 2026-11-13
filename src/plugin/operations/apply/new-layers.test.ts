@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { PlacementSpan } from "@/core/kernel/geometry/placement-span.ts";
 import { Assign } from "@/plugin/adapters/figma/assign.ts";
 import { Capabilities } from "@/plugin/adapters/figma/capabilities.ts";
+import { ComponentIndex } from "@/plugin/adapters/figma/components/component-index.ts";
+import { Variants } from "@/plugin/adapters/figma/components/variants.ts";
 import { LayerFactory } from "@/plugin/adapters/figma/layer-factory.ts";
 import { NewLayers } from "@/plugin/operations/apply/new-layers.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
@@ -54,7 +56,7 @@ function layer(parent: Holder, refuses: string): Layer {
 
 function newLayers(node: Layer): NewLayers {
   return new NewLayers(
-    Object.assign(new LayerFactory(), { make: () => node as SceneNode }),
+    Object.assign(new LayerFactory(new ComponentIndex(new Variants())), { make: () => node as SceneNode }),
     new Assign(),
     new Capabilities(),
     new PlacementSpan(),

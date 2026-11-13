@@ -4,10 +4,11 @@ import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { FILE_HISTORY } from "@/plugin/adapters/figma/file-history.ts";
 import { NEW_LAYER_TYPE } from "@/plugin/operations/apply/apply.constants.ts";
-import type { ApplyCall } from "@/plugin/operations/apply/apply.types.ts";
+import type { Run } from "@/plugin/operations/apply/apply.types.ts";
 import { APPLY_LAYERS } from "@/plugin/operations/apply/apply-layers.ts";
-import { APPLY_CHECKS, type Refusal } from "@/plugin/operations/apply/checks.ts";
+import type { Refusal } from "@/plugin/operations/apply/checks.ts";
 import { Counterparts } from "@/plugin/operations/apply/counterparts.ts";
+import { PENDING_SETS } from "@/plugin/operations/apply/pending-sets.ts";
 import { ApplyReport } from "@/plugin/operations/apply/report.ts";
 import { LAYER_WRITER } from "@/plugin/operations/apply/writers/layer-writer.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
@@ -18,40 +19,28 @@ export type ApplyInput = zod.output<typeof applyOp.input>;
 
 export type ApplyOutput = zod.output<typeof applyOp.output>;
 
-/** A new set waiting for its variants: written once they are combined. */
-interface PendingSet {
-  readonly change: ApplyChangeData;
-  readonly holder: SceneNode;
-  readonly refusals: Refusal[];
-}
-
-/** One call's state: the call's, with its report and the sets to combine. */
-interface Run extends ApplyCall {
-  readonly report: ApplyReport;
-  readonly sets: PendingSet[];
-}
-
 /**
  * design_apply's changes in Figma (T-121, A§6.2 step 7), element by element in document order, so one that fails
  * leaves the others: each layer found or made, checked, then written on a real run; a dry run runs the same checks and
- * writes nothing. New component sets wait for their variants. One undo step closes a real call.
+ * writes nothing. New component sets and the properties components' layers make wait (PendingSets), and a new instance
+ * is made once what the call made before it is whole (P-083). One undo step closes a real call.
  */
 @injectable()
 export class ApplyRun {
-  readonly #checks;
-  readonly #writer;
   readonly #layers;
+  readonly #writer;
+  readonly #sets;
   readonly #history;
 
   constructor(
-    checks = inject(APPLY_CHECKS),
-    writer = inject(LAYER_WRITER),
     layers = inject(APPLY_LAYERS),
+    writer = inject(LAYER_WRITER),
+    sets = inject(PENDING_SETS),
     history = inject(FILE_HISTORY),
   ) {
-    this.#checks = checks;
-    this.#writer = writer;
     this.#layers = layers;
+    this.#writer = writer;
+    this.#sets = sets;
     this.#history = history;
   }
 
@@ -59,7 +48,7 @@ export class ApplyRun {
     const run: Run = {
       dry: dryRun,
       changes,
-      top: await this.#checks.top(parent),
+      top: await this.#layers.top(parent),
       layers: new Map(),
       failed: new Map(),
       counterparts: new Counterparts(),
@@ -68,6 +57,7 @@ export class ApplyRun {
     };
 
     await this.#writer.prepare(changes, dryRun);
+    this.#sets.start(changes);
 
     for (const change of changes) {
       try {
@@ -88,7 +78,7 @@ export class ApplyRun {
     }
 
     if (!dryRun) {
-      await this.#settle(run);
+      await this.#sets.settle(run);
       // Every layer made or written to, even when a step failed: the call is one undo step (T-121).
       this.#history.commitUndo();
     }
@@ -97,12 +87,19 @@ export class ApplyRun {
   }
 
   async #change(change: ApplyChangeData, run: Run): Promise<void> {
-    const create = change.kind === APPLY_CHANGE_KIND.create;
+    const made = change.kind === APPLY_CHANGE_KIND.create && change.copyOf === undefined;
+    const type = made ? NEW_LAYER_TYPE[change.tag] : undefined;
+
+    // A new instance's component made earlier in the call is whole first: its set combined, its properties bound.
+    if (type === FIGMA_NODE_TYPE.instance && !run.dry) {
+      await this.#sets.settle(run, change);
+    }
+
     const layer: TypedLayer = await this.#layers.of(change, run);
 
     run.layers.set(change.ref, layer);
 
-    const refusals = this.#checks.refusals(layer, change);
+    const refusals = this.#layers.refusals(layer, change);
 
     refusals.push(...(await this.#writer.checks(change, layer, refusals)));
 
@@ -112,39 +109,10 @@ export class ApplyRun {
 
     if (run.dry) {
       run.report.planned(change, (change.moves ?? false) || this.#writes(change, refusals));
-    } else if (create && NEW_LAYER_TYPE[change.tag] === FIGMA_NODE_TYPE.componentSet) {
-      run.sets.push({ change, holder: layer as SceneNode, refusals });
+    } else if (type === FIGMA_NODE_TYPE.componentSet) {
+      this.#sets.hold(run, change, layer as SceneNode, refusals);
     } else {
-      await this.#write(change, layer as SceneNode, refusals, run);
-    }
-  }
-
-  async #write(
-    change: ApplyChangeData,
-    node: SceneNode,
-    refusals: Refusal[],
-    run: Run,
-  ): Promise<void> {
-    const wrote = await this.#writer.write(node, change, refusals, (error, keys) =>
-      run.report.fail(change, error, keys),
-    );
-
-    if (change.kind === APPLY_CHANGE_KIND.create) {
-      this.#layers.finish(node, change);
-      run.report.made(change, node);
-    } else if (wrote || (change.moves ?? false)) {
-      run.report.wroteTo(node.id);
-    }
-  }
-
-  /** Each new set made of the Components written into its frame, then written itself. */
-  async #settle(run: Run): Promise<void> {
-    for (const { change, holder, refusals } of run.sets) {
-      try {
-        await this.#write(change, this.#layers.combine(holder), refusals, run);
-      } catch (error) {
-        run.report.fail(change, error);
-      }
+      await this.#sets.write(run, change, layer as SceneNode, refusals);
     }
   }
 

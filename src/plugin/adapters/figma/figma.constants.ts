@@ -86,6 +86,9 @@ export const CAPABILITY_TYPES = {
   annotations: [...FRAME_TYPES, ...SHAPE_TYPES, "TEXT", "TEXT_PATH"],
   text: ["TEXT", "TEXT_PATH"],
   children: [...FRAME_TYPES, "GROUP", "SECTION", "BOOLEAN_OPERATION", "TRANSFORM_GROUP", "PAGE"],
+  /** An instance's component and variant; a component in a set takes its variant as its name. */
+  variants: ["INSTANCE", "COMPONENT"],
+  instance: ["INSTANCE"],
 } as const satisfies Record<string, readonly NodeType[]>;
 
 /** The capabilities by name, as write steps name them. */
@@ -104,6 +107,8 @@ export const CAPABILITY = {
   annotations: "annotations",
   text: "text",
   children: "children",
+  variants: "variants",
+  instance: "instance",
 } as const satisfies Record<keyof typeof CAPABILITY_TYPES, keyof typeof CAPABILITY_TYPES>;
 
 export const CAPABILITY_TEXT = {
@@ -122,6 +127,8 @@ export const CAPABILITY_TEXT = {
     annotations: "annotations",
     text: "text",
     children: "layers inside",
+    variants: "component or variant",
+    instance: "component properties",
   } satisfies Record<keyof typeof CAPABILITY_TYPES, string>,
   /** A node type as words: COMPONENT_SET is "component set". */
   type: (type: string) => type.toLowerCase().replaceAll("_", " "),

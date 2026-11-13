@@ -1,8 +1,6 @@
+import type { ComponentOwner } from "@/plugin/adapters/figma/components/components.types.ts";
 import type { ComponentEntry } from "@/shared/ops/components/components.schema.ts";
 import type { PageNotRead } from "@/shared/ops/file-map/file-map.schema.ts";
-
-/** What lists a component: a set, its variants under it, or a component of its own. */
-export type ComponentOwner = ComponentNode | ComponentSetNode;
 
 /**
  * What one components walk found, by the listed id: the entries, their nodes, one instance of each used one (a library
