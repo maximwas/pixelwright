@@ -74,7 +74,9 @@ return section.findAll((node) => node.name.startsWith(${JSON.stringify(PREFIX)})
     // Figma's own order of the axes is no contract: they are compared sorted.
     const written = (/font-variation-settings="([^"]*)"/.exec(xml)?.[1] ?? "").split(", ").sort();
 
-    expect(written).toEqual(["'GRAD' 50", "'wdth' 90"]);
+    // Figma stores every axis of the family once one is set (the rest at their defaults), and design_read writes what
+    // Figma holds: the axes written are there with their values, and the whole read sent back changes nothing.
+    expect(written).toEqual(expect.arrayContaining(["'GRAD' 50", "'wdth' 90"]));
     expect(await apply(xml)).toMatchObject({ changed: [], errors: [] });
   });
 
