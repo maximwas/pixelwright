@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Assign } from "@/plugin/adapters/figma/assign.ts";
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { Variants } from "@/plugin/adapters/figma/components/variants.ts";
 import { PropertyMarks } from "@/plugin/operations/apply/property-marks.ts";
+import { ApplyReport } from "@/plugin/operations/apply/report.ts";
 import { PropertyStep } from "@/plugin/operations/apply/writers/property-step.ts";
 
 // No Figma here (CLAUDE.md): a layer is plain data with its type and parent; a stand-in (a layer a dry run would make)
@@ -112,5 +113,65 @@ describe("PropertyStep: one name asked as two kinds by the layers of a component
     expect(() => marks.check({ property: { visible: "Name" } }, second)).toThrow(
       "s has a text property Name: another kind cannot take its name.",
     );
+  });
+});
+
+// T-129: the answer's properties are those added to components there before the call; a dry run's, those it would add.
+describe("PropertyMarks.added", () => {
+  function existing(definitions: Record<string, { type: string }>) {
+    return { ...component(definitions), addComponentProperty: vi.fn((name: string) => `${name}#9:9`) };
+  }
+
+  it("lists on a dry run the names an existing component lacks, once, and not those it has", () => {
+    const marks = new PropertyMarks(new Variants(), new Assign());
+    const parent = existing({ "Title#1:2": { type: "TEXT" } });
+
+    marks.start(true);
+
+    for (const property of [{ text: "Title" }, { text: "Price" }, { text: "Price" }]) {
+      marks.check({ type: "TEXT", parent } as TypedLayer, property);
+      marks.claim({ type: "TEXT", parent } as TypedLayer, property);
+    }
+
+    marks.claim({ type: "TEXT", parent: { type: "COMPONENT", name: "New", parent: page } } as TypedLayer, {
+      text: "Label",
+    });
+
+    expect(marks.added()).toEqual([{ component: "1:2", name: "Price", type: "TEXT" }]);
+  });
+
+  it("lists on a real run what binding added, and nothing for a name the component had", async () => {
+    const marks = new PropertyMarks(new Variants(), new Assign());
+    const parent = existing({ "Shown#1:2": { type: "BOOLEAN" } });
+    const layer = (id: string) => ({
+      id,
+      type: "TEXT",
+      parent,
+      visible: true,
+      characters: "",
+      componentPropertyReferences: {},
+    });
+
+    marks.start(false);
+    marks.claim(layer("1:5") as TypedLayer, { text: "Price" });
+    marks.add(layer("1:5") as never, { text: "Price" });
+    marks.add(layer("1:6") as never, { visible: "Shown" });
+    await marks.bind(new Set());
+
+    expect(marks.added()).toEqual([{ component: "1:2", name: "Price", type: "TEXT" }]);
+  });
+
+  it("leaves out of the answer the properties of a component the call made", () => {
+    const report = new ApplyReport();
+
+    report.made({ line: 1, ref: "new:1", tag: "Component" } as never, { id: "5:5", name: "Card" });
+
+    expect(
+      report.result([
+        { component: "5:5", name: "Title", type: "TEXT" },
+        { component: "1:2", name: "Price", type: "TEXT" },
+      ]).properties,
+    ).toEqual([{ component: "1:2", name: "Price", type: "TEXT" }]);
+    expect(report.result([]).properties).toBeUndefined();
   });
 });

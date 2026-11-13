@@ -1,7 +1,12 @@
 import * as zod from "zod/mini";
 import { LIMITS } from "@/shared/limits/limits.constants.ts";
 import { APPLY } from "@/shared/ops/apply/apply.constants.ts";
-import { ApplyChangeSchema, ApplyCreatedSchema, ApplyErrorSchema } from "@/shared/ops/apply/apply.schema.ts";
+import {
+  ApplyChangeSchema,
+  ApplyCreatedSchema,
+  ApplyErrorSchema,
+  ApplyPropertySchema,
+} from "@/shared/ops/apply/apply.schema.ts";
 import { OpContract } from "@/shared/ops/op-contract.ts";
 import { OP_NAME, OP_TURN } from "@/shared/ops/op-meta.constants.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
@@ -24,6 +29,8 @@ export const applyOp = new OpContract({
     created: zod.array(ApplyCreatedSchema),
     changed: zod.array(zod.string()),
     errors: zod.array(ApplyErrorSchema),
+    /** The properties added to components that were there before the call; left out when none. */
+    properties: zod.exactOptional(zod.array(ApplyPropertySchema)),
   }),
   meta: {
     write: ({ dryRun }) => !dryRun,

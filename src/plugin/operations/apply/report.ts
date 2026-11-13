@@ -1,6 +1,7 @@
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
+import { MOVE_ATTRIBUTE } from "@/plugin/operations/apply/apply.constants.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
-import type { ApplyChangeData, ApplyCreated, ApplyErrorEntry } from "@/shared/ops/apply/apply.schema.ts";
+import type { ApplyChangeData, ApplyCreated, ApplyErrorEntry, ApplyProperty } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 /** What a call made, changed and could not write, element by element (T-120): one per call, dry or real. */
@@ -17,7 +18,26 @@ export class ApplyReport {
     error: unknown,
     keys: readonly (keyof FigmaProps)[] = [],
   ): void {
-    const attribute = keys.map((key) => change.sources[key]).find((source) => source !== undefined) ?? keys[0];
+    this.#push(change, error, keys.map((key) => change.sources[key]).find((source) => source !== undefined) ?? keys[0]);
+  }
+
+  /** A move refused: on before or after when one of them placed the layer, else on the element (P-143). */
+  refusedMove(change: ApplyChangeData, error: unknown): void {
+    const neighbour =
+      change.before === undefined
+        ? change.after === undefined
+          ? undefined
+          : MOVE_ATTRIBUTE.after
+        : MOVE_ATTRIBUTE.before;
+
+    this.#push(change, error, neighbour);
+  }
+
+  #push(
+    change: ApplyChangeData,
+    error: unknown,
+    attribute: string | undefined,
+  ): void {
     const hint = error instanceof WriteError ? error.hint : undefined;
 
     this.#errors.push({
@@ -70,7 +90,20 @@ export class ApplyReport {
     }
   }
 
-  result(): { created: ApplyCreated[]; changed: string[]; errors: ApplyErrorEntry[] } {
-    return { created: this.#created, changed: [...this.#changed], errors: this.#errors };
+  /** What the call did; the properties of the components it made are theirs from the start, so left out. */
+  result(added: readonly ApplyProperty[] = []): {
+    created: ApplyCreated[];
+    changed: string[];
+    errors: ApplyErrorEntry[];
+    properties?: ApplyProperty[];
+  } {
+    const properties = added.filter(({ component }) => !this.#made.has(component));
+
+    return {
+      created: this.#created,
+      changed: [...this.#changed],
+      errors: this.#errors,
+      ...(properties.length === 0 ? {} : { properties }),
+    };
   }
 }

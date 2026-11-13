@@ -59,7 +59,7 @@ export class ApplyRun {
     };
 
     await this.#writer.prepare(changes, dryRun);
-    this.#sets.start(changes);
+    this.#sets.start(changes, dryRun);
 
     for (const change of changes) {
       try {
@@ -85,7 +85,7 @@ export class ApplyRun {
       this.#history.commitUndo();
     }
 
-    return run.report.result();
+    return run.report.result(this.#sets.properties());
   }
 
   async #change(change: ApplyChangeData, run: Run): Promise<void> {
@@ -101,20 +101,46 @@ export class ApplyRun {
 
     run.layers.set(change.ref, layer);
 
-    const refusals = this.#layers.refusals(layer, change);
+    const placed = await this.#placed(layer, change, run);
+    // A new set's variants wait in a plain frame until they combine: its checks are the set's, as a dry run's are.
+    const checked: TypedLayer =
+      type === FIGMA_NODE_TYPE.componentSet && !run.dry
+        ? { type, parent: layer.parent ?? null, name: change.props.name }
+        : layer;
+    const refusals = this.#layers.refusals(checked, placed);
 
-    refusals.push(...(await this.#writer.checks(change, layer, refusals)));
+    refusals.push(...(await this.#writer.checks(placed, checked, refusals)));
 
     for (const { error, keys } of refusals) {
-      run.report.fail(change, error, keys);
+      run.report.fail(placed, error, keys);
     }
 
     if (run.dry) {
-      run.report.planned(change, (change.moves ?? false) || this.#writes(change, refusals));
+      run.report.planned(placed, (placed.moves ?? false) || this.#writes(placed, refusals));
     } else if (type === FIGMA_NODE_TYPE.componentSet) {
-      this.#sets.hold(run, change, layer as SceneNode, refusals);
+      this.#sets.hold(run, placed, layer as SceneNode, refusals);
     } else {
-      await this.#sets.write(run, change, layer as SceneNode, refusals);
+      await this.#sets.write(run, placed, layer as SceneNode, refusals);
+    }
+  }
+
+  /**
+   * The layer moved when its change says so; a move refused keeps it where it is, its error on before or after when
+   * those placed it, and the change goes on without the move: its other attributes are still written (T-124, P-143).
+   */
+  async #placed(
+    layer: TypedLayer,
+    change: ApplyChangeData,
+    run: Run,
+  ): Promise<ApplyChangeData> {
+    try {
+      await this.#layers.move(layer, change, run);
+
+      return change;
+    } catch (error) {
+      run.report.refusedMove(change, error);
+
+      return { ...change, moves: false };
     }
   }
 

@@ -6,6 +6,7 @@ import { VARIANTS } from "@/plugin/adapters/figma/components/variants.ts";
 import { CAPABILITY_TEXT, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_TEXT, PROPERTY_FIELD, PROPERTY_KINDS } from "@/plugin/operations/apply/apply.constants.ts";
+import type { ApplyProperty } from "@/shared/ops/apply/apply.schema.ts";
 import { PROPERTY_KEY } from "@/shared/read-model/read-model.constants.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
@@ -43,6 +44,9 @@ export class PropertyMarks {
   readonly #marks: Mark[] = [];
   /** The kinds this call's layers asked for each name, per owner (a stand-in itself, a node by its id). */
   readonly #claims = new Map<unknown, Map<string, Set<string>>>();
+  /** The properties added to components there before the call (a dry run's: would be), once each (T-129). */
+  readonly #added: ApplyProperty[] = [];
+  #dry = false;
   readonly #variants;
   readonly #assign;
 
@@ -51,9 +55,16 @@ export class PropertyMarks {
     this.#assign = assign;
   }
 
-  start(): void {
+  start(dry: boolean): void {
     this.#marks.splice(0);
     this.#claims.clear();
+    this.#added.splice(0);
+    this.#dry = dry;
+  }
+
+  /** The properties the call added to components there before it, or a dry run would add. */
+  added(): ApplyProperty[] {
+    return [...this.#added];
   }
 
   /**
@@ -87,8 +98,13 @@ export class PropertyMarks {
     const owner = this.#variants.owner(this.#holder(layer.parent) as ComponentNode);
     const claimed = this.#claims.get(this.#key(owner)) ?? new Map<string, Set<string>>();
 
-    for (const { name, type } of this.#wanted(layer.type, property)) {
-      claimed.set(name, (claimed.get(name) ?? new Set<string>()).add(type));
+    for (const one of this.#wanted(layer.type, property)) {
+      claimed.set(one.name, (claimed.get(one.name) ?? new Set<string>()).add(one.type));
+
+      // A dry run adds nothing: what it would add to a component the file has is told here.
+      if (this.#dry && "id" in owner && this.#keyFor(owner, one) === undefined) {
+        this.#note(owner, one);
+      }
     }
 
     this.#claims.set(this.#key(owner), claimed);
@@ -125,11 +141,29 @@ export class PropertyMarks {
     const references: Record<string, string> = { ...(node as FrameNode).componentPropertyReferences };
 
     for (const [index, one] of wanted.entries()) {
-      references[one.field] =
-        keys[index] ?? owner.addComponentProperty(one.name, one.type, await this.#default(node, one));
+      references[one.field] = keys[index] ?? (await this.#add(owner, one, node));
     }
 
     this.#assign.set(node as FrameNode, { componentPropertyReferences: references });
+  }
+
+  /** A property added to the owner, its default the layer's value now, and told. */
+  async #add(
+    owner: ComponentOwner,
+    one: Wanted,
+    node: SceneNode,
+  ): Promise<string> {
+    const key = owner.addComponentProperty(one.name, one.type, await this.#default(node, one));
+
+    this.#note(owner, one);
+
+    return key;
+  }
+
+  #note(owner: { readonly id: string }, { name, type }: Wanted): void {
+    if (!this.#added.some((one) => one.component === owner.id && one.name === name && one.type === type)) {
+      this.#added.push({ component: owner.id, name, type });
+    }
   }
 
   /** The properties a mark asks for, each on the kind of layer it drives. */

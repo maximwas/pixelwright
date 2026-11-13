@@ -1,3 +1,4 @@
+import { APPLY_PROPERTY_TYPE } from "@/shared/ops/apply/apply.constants.ts";
 /** The tags this release makes a layer for, and the type each is made as (T-123); groups and vectors are not drawn. */
 export const NEW_LAYER_TYPE: Readonly<Record<string, NodeType>> = {
   Frame: "FRAME",
@@ -33,10 +34,16 @@ export const APPLY_PATTERN = { pageLimit: /comes with (\d+) pages?/i, instanceLa
 
 /** What each name of a layer's property mark binds (T-129): prop its characters, visibleProp its visibility, swapProp its component. */
 export const PROPERTY_KINDS = [
-  { key: "text", field: "characters", type: "TEXT" },
-  { key: "visible", field: "visible", type: "BOOLEAN" },
-  { key: "swap", field: "mainComponent", type: "INSTANCE_SWAP" },
+  { key: "text", field: "characters", type: APPLY_PROPERTY_TYPE.text },
+  { key: "visible", field: "visible", type: APPLY_PROPERTY_TYPE.boolean },
+  { key: "swap", field: "mainComponent", type: APPLY_PROPERTY_TYPE.swap },
 ] as const;
+
+/** A file's path up to its name, and its extension: what a new Image's or Icon's name leaves out. */
+export const FILE_NAME = { folder: /^.*[\\/]/, extension: /\.[^.]+$/ } as const;
+
+/** The attributes that place a layer beside another: a refused move names the one that placed it (P-143). */
+export const MOVE_ATTRIBUTE = { before: "before", after: "after" } as const;
 
 /** The layer fields a property mark drives, by name. */
 export const PROPERTY_FIELD = { characters: "characters", visible: "visible" } as const;
@@ -45,7 +52,7 @@ export const PROPERTY_FIELD = { characters: "characters", visible: "visible" } a
 export const NEW_LAYER_VALUE = { hug: "HUG", none: "NONE", fit: "WIDTH_AND_HEIGHT", slot: "SLOT" } as const;
 
 /** The kinds of style and variable a token index tells apart, as Figma names them. */
-export const TOKEN_KIND = { paint: "PAINT", effect: "EFFECT", text: "TEXT", colour: "COLOR" } as const;
+export const TOKEN_KIND = { paint: "PAINT", effect: "EFFECT", text: "TEXT", colour: "COLOR", number: "FLOAT" } as const;
 
 export const TOKEN_TEXT = {
   keyJoint: " ",
@@ -72,6 +79,10 @@ function withArticle(word: string): string {
 export const APPLY_TEXT = {
   noLayer: (id: string | null) => `No layer ${id} in this file.`,
   noLayerHint: "Read the ids again with design_read or nodes_find.",
+  noCopySource: (id: string) => `No layer ${id} to copy.`,
+  copyHint: "copyOf names a layer by its id, as design_read writes it.",
+  linkOnLayer: (type: string) => `A link on a ${type} is a prototype reaction, which design_apply does not write.`,
+  linkHint: "A Text takes href.",
   notTag: (
     id: string | null,
     type: string,
@@ -120,7 +131,7 @@ export const APPLY_TEXT = {
   notYet: (attribute: string) => `${attribute} is not written to Figma in this release.`,
   slot: "A slot is made in a component.",
   slotHint: 'In an instance, fill the slot it has: give its <Slot id="…"> new layers.',
-  emptySet: "A ComponentSet is made of the Components inside it: give it one at least.",
+  emptySet: "A <ComponentSet> is made of its <Component> variants: this one has none.",
   notReached: (src: string) => `${src} did not reach the plugin.`,
   notReachedHint: "Send it again, or fewer files in one call.",
   keptHeld: (error: unknown) =>

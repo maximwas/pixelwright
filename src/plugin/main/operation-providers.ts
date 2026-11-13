@@ -26,6 +26,7 @@ import { APPLY_FONTS, ApplyFonts } from "@/plugin/operations/apply/apply-fonts.t
 import { APPLY_IMAGES, ApplyImages } from "@/plugin/operations/apply/apply-images.ts";
 import { APPLY_LAYERS, ApplyLayers } from "@/plugin/operations/apply/apply-layers.ts";
 import { APPLY_RUN, ApplyRun } from "@/plugin/operations/apply/apply-run.ts";
+import { CALL_SCOPE, CallScope } from "@/plugin/operations/apply/call-scope.ts";
 import { APPLY_CHECKS, ApplyChecks } from "@/plugin/operations/apply/checks.ts";
 import { NEW_LAYERS, NewLayers } from "@/plugin/operations/apply/new-layers.ts";
 import { PAGES, Pages } from "@/plugin/operations/apply/pages.ts";
@@ -37,6 +38,7 @@ import { AssetStep } from "@/plugin/operations/apply/writers/asset-step.ts";
 import { BlendStep } from "@/plugin/operations/apply/writers/blend-step.ts";
 import { ClipStep } from "@/plugin/operations/apply/writers/clip-step.ts";
 import { CornersStep } from "@/plugin/operations/apply/writers/corners-step.ts";
+import { DescriptionStep } from "@/plugin/operations/apply/writers/description-step.ts";
 import { EffectsStep } from "@/plugin/operations/apply/writers/effects-step.ts";
 import { FillsStep } from "@/plugin/operations/apply/writers/fills-step.ts";
 import { LimitsStep } from "@/plugin/operations/apply/writers/geometry/limits-step.ts";
@@ -178,6 +180,7 @@ export class OperationProviders {
       .bind({ provide: PROPERTY_MARKS, useClass: PropertyMarks })
       .bind({ provide: PENDING_SETS, useClass: PendingSets })
       .bind({ provide: APPLY_RUN, useClass: ApplyRun })
+      .bind({ provide: CALL_SCOPE, useClass: CallScope })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
     this.#writeSteps(container);
     this.#paints(container);
@@ -187,6 +190,7 @@ export class OperationProviders {
   #writeSteps(container: Container): void {
     container
       .bind({ provide: WRITE_STEPS, multi: true, useClass: NameStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: DescriptionStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: VariantStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: PropsStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: PropertyStep })

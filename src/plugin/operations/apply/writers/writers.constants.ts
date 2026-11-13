@@ -37,6 +37,7 @@ export const STEP_KEYS = {
   asset: ["asset"],
   modes: ["modes"],
   notes: ["notes"],
+  description: ["description"],
   /** What the text writer takes, after the steps: a text's runs, its box's text settings, a new TextPath's path. */
   text: [
     "textStyle",
@@ -186,6 +187,9 @@ export const SIZE_NUMBER = {
 /** design_read's note: `Category: text`, the category ending at the first `: ` (T-139). */
 export const NOTE_VALUE = { category: ": " } as const;
 
+/** A link: on a layer that holds no text it would be a prototype reaction, refused on its own. */
+export const LINK_KEY = "hyperlink" satisfies keyof FigmaProps;
+
 /** Hiding runs last, outside the steps (P-149). */
 export const HIDDEN_KEY = "visible" satisfies keyof FigmaProps;
 
@@ -202,11 +206,13 @@ export const WRITERS_TEXT = {
   ) => `${instance} has no property ${name}: it has ${has}.`,
   nearProperty: (near: string) => `Did you mean ${near}?`,
   notBoolean: (name: string, value: string) => `${name} is a true or false property: ${value} is neither.`,
-  token: (token: string) => `The token ${token} is not bound to Figma in this release: write its value.`,
   paintStyle: (token: string) => `${token} is a paint style, which is the whole list of a layer's paints.`,
   paintStyleHint: "Use it as the only layer, without color-mix().",
   noEffectStyle: (token: string) => `No effect style is named ${token} in this file or the libraries its page uses.`,
   sectionHug: "A section is sized in pixels: it cannot hug what it holds.",
+  sectionToken: "A section's size takes a number of pixels, not a token.",
+  description: "A description belongs to a component or a component set.",
+  imageFills: (type: string) => `A ${type} has no fills to hold an image.`,
   growInGrid: "flex fills a flex parent's direction: this layer's parent is a grid.",
   growInGridHint: 'Fill its cell with justify-self="stretch" and align-self="stretch".',
   growOutside: "flex fills the direction of an auto layout parent: this layer's parent has no auto layout.",
@@ -225,6 +231,9 @@ export const WRITERS_TEXT = {
   noModes: (type: string) => `A ${type} takes no variable modes.`,
   noCollection: (slug: string) => `data-${slug} names no variable collection this file reaches.`,
   modesHint: "tokens_read lists the file's collections and their modes.",
+  listedCollection: (name: string, slug: string) => `${name} (data-${slug})`,
+  collections: (listed: readonly string[]) => `It has ${listed.join(", ")}.`,
+  noCollections: "The file has no variable collections.",
   noTextStyle: (token: string) => `No text style is named ${token} in this file or the libraries its page uses.`,
   textStyleHint: "tokens_read lists the file's text styles.",
   unloaded: (family: string, style: string) =>

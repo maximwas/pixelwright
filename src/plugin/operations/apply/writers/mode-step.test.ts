@@ -46,6 +46,26 @@ describe("ModeStep.check", () => {
   });
 });
 
+// 0.7.0 variable-modes: a name means a collection or mode in any case and trimmed, and a wrong collection's error lists
+// the collections there are with the attribute each takes.
+describe("ModeStep names", () => {
+  it("finds a collection and a mode by name in any case, trimmed", async () => {
+    const frame = layer();
+
+    await build().write(frame as never, { modes: { THEME: " DARK " } });
+
+    expect(frame.setExplicitVariableModeForCollection).toHaveBeenCalledWith(theme, "m2");
+  });
+
+  it("lists the collections as Name (data-slug) when none is named so", async () => {
+    const error = await build()
+      .check({ modes: { colours: "dark" } }, { type: "FRAME" })
+      .catch((thrown) => thrown);
+
+    expect(error.hint).toBe("It has Theme (data-theme).");
+  });
+});
+
 describe("ModeStep.write", () => {
   it("sets a mode where the layer is not in it, and clears the collection's on an empty one", async () => {
     const frame = layer({ c1: "m1" });

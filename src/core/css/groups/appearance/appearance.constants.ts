@@ -51,7 +51,7 @@ export const APPEARANCE_ERROR = {
     `${name} truncates a Text; a ${tag} clips its content with overflow="hidden".`,
   badOverflow: (value: string) =>
     `overflow="${value}": Figma clips a frame's content or not, hidden or visible (scrolling is a prototype setting).`,
-  badRadius: (value: string) => `border-radius="${value}" is not 1 to 4 lengths in px.`,
+  badRadius: (value: string) => `border-radius="${value}" is not 1 to 4 lengths in px or tokens.`,
 } as const;
 
 /** Layers whose corners are no box's radius: texts, vector shapes and lines. */

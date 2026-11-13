@@ -1,9 +1,8 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { COMPONENT_INDEX } from "@/plugin/adapters/figma/components/component-index.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
-import { COMPONENT_PROPERTY_TYPE } from "@/plugin/adapters/figma/layer-meta/layer-meta.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
-import { APPLY_PLACE, APPLY_TEXT, NEW_LAYER_TYPE, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
+import { APPLY_TEXT, NEW_LAYER_TYPE, NEW_LAYER_VALUE } from "@/plugin/operations/apply/apply.constants.ts";
 import type { PendingSet, Run } from "@/plugin/operations/apply/apply.types.ts";
 import { APPLY_LAYERS } from "@/plugin/operations/apply/apply-layers.ts";
 import type { Refusal } from "@/plugin/operations/apply/checks.ts";
@@ -11,7 +10,7 @@ import { PROPERTY_MARKS } from "@/plugin/operations/apply/property-marks.ts";
 import { LAYER_WRITER } from "@/plugin/operations/apply/writers/layer-writer.ts";
 import { STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
-import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
+import type { ApplyChangeData, ApplyProperty } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 type Fail = (error: unknown, keys?: readonly (keyof FigmaProps)[]) => void;
@@ -45,7 +44,7 @@ export class PendingSets {
   }
 
   /** A call's start: the names of the components and sets its XML makes, no mark of another call. */
-  start(changes: readonly ApplyChangeData[]): void {
+  start(changes: readonly ApplyChangeData[], dry: boolean): void {
     const sets = new Set(
       changes.filter((change) => this.#makes(change, FIGMA_NODE_TYPE.componentSet)).map(({ ref }) => ref),
     );
@@ -56,7 +55,12 @@ export class PendingSets {
     );
 
     this.#components.start(owners.flatMap(({ props }) => (props.name === undefined ? [] : [props.name])));
-    this.#marks.start();
+    this.#marks.start(dry);
+  }
+
+  /** The properties the call's marks added to components there before it (a dry run's: would add). */
+  properties(): ApplyProperty[] {
+    return this.#marks.added();
   }
 
   hold(
@@ -200,7 +204,7 @@ export class PendingSets {
 
       // A set with auto layout or a grid lays its variants out itself, placed by what waited for it.
       if (set.layoutMode === NEW_LAYER_VALUE.none) {
-        this.#layOut(set);
+        this.#layers.layOut(set);
       }
 
       for (const one of placing) {
@@ -242,28 +246,6 @@ export class PendingSets {
     }
 
     this.#layers.discard(holder);
-  }
-
-  /** A set's variants in a grid: a column per value of its first variant property, a row per the rest, 40 px apart. */
-  #layOut(set: ComponentSetNode): void {
-    const variants = set.children.filter((child): child is ComponentNode => child.type === FIGMA_NODE_TYPE.component);
-    const definitions = set.componentPropertyDefinitions;
-    const first = Object.keys(definitions).find((name) => definitions[name]?.type === COMPONENT_PROPERTY_TYPE.variant);
-    const column = (variant: ComponentNode) => variant.variantProperties?.[first ?? ""] ?? "";
-    const row = (variant: ComponentNode) =>
-      JSON.stringify(Object.entries(variant.variantProperties ?? {}).filter(([name]) => name !== first));
-    const columns = [...new Set(variants.map(column))];
-    const rows = [...new Set(variants.map(row))];
-    const width = Math.max(...variants.map((variant) => variant.width));
-    const height = Math.max(...variants.map((variant) => variant.height));
-    const gap = APPLY_PLACE.setGap;
-
-    for (const variant of variants) {
-      variant.x = gap + columns.indexOf(column(variant)) * (width + gap);
-      variant.y = gap + rows.indexOf(row(variant)) * (height + gap);
-    }
-
-    set.resizeWithoutConstraints(gap + columns.length * (width + gap), gap + rows.length * (height + gap));
   }
 
   #fail(run: Run, change: ApplyChangeData): Fail {

@@ -6,7 +6,7 @@ import { PAGE_LOADER } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_TEXT, NEW_LAYER_TYPE, TEXT_TAG } from "@/plugin/operations/apply/apply.constants.ts";
 import { WRITE_STEPS } from "@/plugin/operations/apply/writers/layer-writer.ts";
-import { HIDDEN_KEY, STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
+import { HIDDEN_KEY, LINK_KEY, STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
@@ -69,7 +69,9 @@ export class ApplyChecks {
     const node = id === null ? null : await this.#lookup.node(id);
 
     if (node === null || node.type === FIGMA_NODE_TYPE.page || node.type === FIGMA_NODE_TYPE.document) {
-      throw new WriteError(APPLY_TEXT.noLayer(id), APPLY_TEXT.noLayerHint);
+      throw id !== null && id === change.copyOf
+        ? new WriteError(APPLY_TEXT.noCopySource(id), APPLY_TEXT.copyHint)
+        : new WriteError(APPLY_TEXT.noLayer(id), APPLY_TEXT.noLayerHint);
     }
 
     const held = Reflect.get(TEXT_TAG, node.type) as string | undefined;
@@ -183,15 +185,27 @@ export class ApplyChecks {
     return [...refusals, ...this.#textRefusals(layer, change)];
   }
 
-  /** A text, or what a text and its runs set, given to a layer that holds none. */
+  /**
+   * A text, or what a text and its runs set, given to a layer that holds none; a link there would be a prototype
+   * reaction, refused on its own (0.7.0).
+   */
   #textRefusals(layer: TypedLayer, { text, props }: ApplyChangeData): Refusal[] {
-    const keys = STEP_KEYS.text.filter((key) => props[key] !== undefined);
+    const holds = this.#capabilities.has(layer, CAPABILITY.text);
+    const link = props.hyperlink !== undefined && !holds;
+    const keys = STEP_KEYS.text.filter((key) => props[key] !== undefined && !(link && key === LINK_KEY));
+    const refusals: Refusal[] = link
+      ? [
+        {
+          error: new WriteError(APPLY_TEXT.linkOnLayer(CAPABILITY_TEXT.type(layer.type)), APPLY_TEXT.linkHint),
+          keys: [LINK_KEY],
+          text: true,
+        },
+      ]
+      : [];
 
     if (text === undefined && keys.length === 0) {
-      return [];
+      return refusals;
     }
-
-    const refusals: Refusal[] = [];
 
     this.#attempt(refusals, keys, () => this.#capabilities.require(layer, CAPABILITY.text), true);
 
