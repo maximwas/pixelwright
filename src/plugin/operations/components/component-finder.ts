@@ -1,10 +1,11 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import type { ComponentOwner } from "@/plugin/adapters/figma/components/components.types.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { LAYER_WALK } from "@/plugin/adapters/figma/lookup/layer-walk.ts";
 import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { PAGE_LOADER } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { COMPONENT_ENTRIES } from "@/plugin/operations/components/component-entries.ts";
-import type { ComponentOwner, FoundComponents } from "@/plugin/operations/components/components.types.ts";
+import type { FoundComponents } from "@/plugin/operations/components/components.types.ts";
 import { COMPONENT_TYPE } from "@/shared/ops/components/components.constants.ts";
 import type { ComponentEntry } from "@/shared/ops/components/components.schema.ts";
 import type { PageNotRead } from "@/shared/ops/file-map/file-map.schema.ts";

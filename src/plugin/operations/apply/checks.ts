@@ -111,7 +111,29 @@ export class ApplyChecks {
       throw new WriteError(APPLY_TEXT.slot, APPLY_TEXT.slotHint);
     }
 
+    // The parent may be a stand-in a dry run keeps, which carries the layers above it as a real one does.
+    if (this.#capabilities.inInstance(parent)) {
+      throw new WriteError(APPLY_TEXT.onlySlots);
+    }
+
+    for (const step of this.#steps) {
+      if (step.place !== undefined && step.keys.some((key) => change.props[key] !== undefined)) {
+        step.place(change.props, { type, parent });
+      }
+    }
+
     return type;
+  }
+
+  /** A set the call makes holds a Component at least: combining none leaves nothing, on a dry run as on a real one. */
+  filled(change: ApplyChangeData, changes: readonly ApplyChangeData[]): void {
+    const holds = changes.some(
+      (other) => other.parent === change.ref && NEW_LAYER_TYPE[other.tag] === FIGMA_NODE_TYPE.component,
+    );
+
+    if (!holds) {
+      throw new WriteError(APPLY_TEXT.emptySet);
+    }
   }
 
   /** What the write refuses the change for its layer's type alone, the same on dry and real runs. */

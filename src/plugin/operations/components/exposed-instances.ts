@@ -1,8 +1,8 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import type { ComponentOwner } from "@/plugin/adapters/figma/components/components.types.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import { COMPONENT_ENTRIES } from "@/plugin/operations/components/component-entries.ts";
 import { EXPOSED_KEY } from "@/plugin/operations/components/components.constants.ts";
-import type { ComponentOwner } from "@/plugin/operations/components/components.types.ts";
 import { COMPONENT_TYPE } from "@/shared/ops/components/components.constants.ts";
 import type { ExposedInstance, PropertyDefinitions } from "@/shared/ops/components/components.schema.ts";
 

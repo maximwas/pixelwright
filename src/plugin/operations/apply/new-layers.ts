@@ -40,12 +40,11 @@ export class NewLayers {
   create(
     type: NodeType,
     change: ApplyChangeData,
-    { parent, index }: Place,
+    place: Place,
   ): SceneNode {
-    const node = this.#made(type, change, parent);
+    const node = this.#placed(this.#made(type, change, place.parent), place);
 
     try {
-      parent.insertChild(index, node);
       this.#bare(node, change.props);
     } catch (error) {
       this.discard(node);
@@ -57,18 +56,15 @@ export class NewLayers {
   }
 
   /** A clone of the source with all it has, XML or not (T-126), at its place; taken away when Figma refuses it there. */
-  copy(source: SceneNode, { parent, index }: Place): SceneNode {
-    const node = source.clone();
+  copy(source: SceneNode, place: Place): SceneNode {
+    return this.#placed(source.clone(), place);
+  }
 
-    try {
-      parent.insertChild(index, node);
-    } catch (error) {
-      this.discard(node);
+  /** An instance of its component and variant (T-127), at its place, as its component made it: nothing started bare. */
+  async instance(change: ApplyChangeData, place: Place): Promise<SceneNode> {
+    const { component = "", variant = {} } = change.props;
 
-      throw error;
-    }
-
-    return node;
+    return this.#placed(await this.#factory.instance(component, variant), place);
   }
 
   /** After its write: a new auto layout frame hugs the axes the XML did not size; on the page it goes beside the rest. */
@@ -110,6 +106,19 @@ export class NewLayers {
     if (!node.removed) {
       node.remove();
     }
+  }
+
+  /** A new layer put in its parent at once; taken away again when Figma refuses it there. */
+  #placed(node: SceneNode, { parent, index }: Place): SceneNode {
+    try {
+      parent.insertChild(index, node);
+    } catch (error) {
+      this.discard(node);
+
+      throw error;
+    }
+
+    return node;
   }
 
   /** The layer of the type: a slot in its component, an Icon drawn from its SVG (T-131), a TextPath along its path, else a bare one. */
@@ -159,7 +168,12 @@ export class NewLayers {
   #hug(node: SceneNode, props: FigmaProps): void {
     const frame = node as FrameNode;
 
-    if (!this.#capabilities.has(node, CAPABILITY.autoLayout) || frame.layoutMode === NEW_LAYER_VALUE.none) {
+    // An instance keeps its component's sizing.
+    if (
+      node.type === FIGMA_NODE_TYPE.instance ||
+      !this.#capabilities.has(node, CAPABILITY.autoLayout) ||
+      frame.layoutMode === NEW_LAYER_VALUE.none
+    ) {
       return;
     }
 

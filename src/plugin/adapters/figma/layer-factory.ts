@@ -1,4 +1,5 @@
-import { InjectionToken, injectable } from "@needle-di/core";
+import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { COMPONENT_INDEX } from "@/plugin/adapters/figma/components/component-index.ts";
 import { FIGMA_VECTOR } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 
@@ -6,8 +7,9 @@ import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 export type TextLayer = TextNode | TextPathNode;
 
 /**
- * What only Figma's global makes for a write: new layers, an icon from its SVG, an image of a file's bytes, a component
- * set from its variants, a text's fonts loaded, and the file's annotation categories and variable collections.
+ * What only Figma's global makes for a write: new layers, an instance of a component by name or key, an icon from its
+ * SVG, an image of a file's bytes, a component set from its variants, a text's fonts loaded, and the file's annotation
+ * categories and variable collections.
  */
 @injectable()
 export class LayerFactory {
@@ -23,6 +25,12 @@ export class LayerFactory {
     COMPONENT_SET: () => figma.createFrame(),
   };
 
+  readonly #components;
+
+  constructor(components = inject(COMPONENT_INDEX)) {
+    this.#components = components;
+  }
+
   /** A new layer of the type, on the current page until it is put in its parent; the refusal for a type not made. */
   make(type: NodeType, refusal: string): SceneNode {
     const make = this.#makers[type];
@@ -32,6 +40,11 @@ export class LayerFactory {
     }
 
     return make();
+  }
+
+  /** A new instance of the component and variant by name or key (P-083), on the current page until it is put in place. */
+  async instance(component: string, variant: Readonly<Record<string, string>>): Promise<InstanceNode> {
+    return (await this.#components.component(component, variant)).createInstance();
   }
 
   /** An icon drawn from its SVG: a frame of vector layers (FX-035: a <rect rx> becomes a vector). */

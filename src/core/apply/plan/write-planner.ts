@@ -1,19 +1,24 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
-import { CHANGE_KIND } from "@/core/apply/apply.constants.ts";
+import { ATTRIBUTE, CHANGE_KIND } from "@/core/apply/apply.constants.ts";
 import type { ApplyChange, ApplyElement, ApplyError } from "@/core/apply/apply.types.ts";
 import { ASSESSOR } from "@/core/apply/plan/assessor.ts";
 import { CHANGE_OF } from "@/core/apply/plan/change-of.ts";
 import type { CurrentLayers } from "@/core/apply/plan/current-layers.ts";
 import { LAYER_READS } from "@/core/apply/plan/layer-reads.ts";
 import { PLACED_LAYERS } from "@/core/apply/plan/placed-layers.ts";
+import { PLAN_TEXT, PLAN_VALUE } from "@/core/apply/plan/plan.constants.ts";
 import type { Assessment, FileChange, LayerEntry, WritePlan } from "@/core/apply/plan/plan.types.ts";
 import { PlannedComponents } from "@/core/apply/plan/planned-components.ts";
 import { TAG } from "@/core/xml/tags.constants.ts";
 
+/** The changes left once the planner refused what a dry run cannot make, and what the creates make. */
+type Planned = Pick<WritePlan, "components"> & { readonly planned: ApplyChange[] };
+
 /**
  * The one planner (T-142): which layers a call reads, then each element against its layer (assessment), as a change in
  * Figma's terms, placed by its edges where nothing lays it out, with the list the plugin gets and the components a dry
- * run remembers. The same plan feeds the dry and the real run. The files elements name are compared by the server
+ * run remembers. The same plan feeds the dry and the real run, so what only a real run would find wrong is refused
+ * here: an edit inside an instance the call switches (T-128), an instance of a set made here without its variant. The files elements name are compared by the server
  * (T-132): what it found they change is written, and a file it cannot use is an error on its attribute.
  */
 @injectable()
@@ -74,18 +79,13 @@ export class WritePlanner {
       errors.push(...made.errors);
     }
 
-    const components = new PlannedComponents();
-    const changed = new Map(changes.map((change) => [change.ref, change]));
-
-    for (const change of changes) {
-      components.record(change, changed);
-    }
+    const { planned, components } = this.#planned(this.#withoutSwitched(changes, errors), errors);
 
     return {
       assessed,
-      changes,
-      written: changes.filter((change) => this.#writes(change)),
-      send: this.#sendList(changes),
+      changes: planned,
+      written: planned.filter((change) => this.#writes(change)),
+      send: this.#sendList(planned),
       errors: this.#inOrder(errors),
       notWritten,
       components,
@@ -204,6 +204,95 @@ export class WritePlanner {
     return changes.filter(
       (change) => this.#writes(change) || parents.has(change.ref) || beside.has(change.parent ?? ""),
     );
+  }
+
+  /**
+   * The changes less those that write a layer inside an instance the call switches to another variant or component,
+   * each refused: Figma gives that instance's layers new ids (B-029), so the real run would no longer find the layer once
+   * the switch is written, while a dry run, which switches nothing, would.
+   */
+  #withoutSwitched(changes: readonly ApplyChange[], errors: ApplyError[]): ApplyChange[] {
+    const switched = changes.filter((change) => this.#switches(change));
+
+    return changes.filter((change) => {
+      const instance = this.#writes(change) ? switched.find((other) => this.#isLayerOf(change, other)) : undefined;
+
+      if (instance !== undefined) {
+        errors.push(this.#switchedError(change, instance));
+      }
+
+      return instance === undefined;
+    });
+  }
+
+  /** An instance there (in the file, a copy or a new instance) given a component or a variant, or a copy given one. */
+  #switches({ tag, kind, copyOf, props }: ApplyChange): boolean {
+    return (
+      tag === TAG.INSTANCE &&
+      (kind === CHANGE_KIND.update || copyOf !== undefined) &&
+      (props.component !== undefined || props.variant !== undefined)
+    );
+  }
+
+  /** Whether a change names a layer inside the instance: by the ids its layers have there, I<instance>;… */
+  #isLayerOf(change: ApplyChange, instance: ApplyChange): boolean {
+    // A copy's own layers are named inside it by the copied layer's ids; any other's where the instance itself is.
+    const scope = instance.copyOf === undefined ? instance.copy : instance.ref;
+    const id = instance.copyOf ?? instance.source ?? instance.id;
+    const named = change.source ?? change.id;
+
+    return change.copy === scope && id !== null && (named?.startsWith(PLAN_VALUE.insideInstance(id)) ?? false);
+  }
+
+  #switchedError(change: ApplyChange, instance: ApplyChange): ApplyError {
+    const to = instance.props.component === undefined ? PLAN_VALUE.variant : PLAN_VALUE.component;
+    const where =
+      instance.id ??
+      (instance.copyOf === undefined
+        ? PLAN_TEXT.standingFor(instance.source ?? "")
+        : PLAN_TEXT.copyOf(instance.copyOf));
+
+    return {
+      line: change.line,
+      column: change.column,
+      ...(change.id === null ? {} : { id: change.id }),
+      message: PLAN_TEXT.switched(where, to),
+      hint: PLAN_TEXT.switchedHint(to),
+    };
+  }
+
+  /**
+   * What the creates make for the instances after them (C-178), and the changes less a new instance of a set made here
+   * with values none of its variants has: refused on dry and real runs alike, as a dry run makes no set to look in.
+   */
+  #planned(changes: readonly ApplyChange[], errors: ApplyError[]): Planned {
+    const components = new PlannedComponents();
+    const byRef = new Map(changes.map((change) => [change.ref, change]));
+
+    for (const change of changes) {
+      components.record(change, byRef);
+    }
+
+    const planned = changes.filter((change) => {
+      const { component, variant } = change.props;
+      const missing =
+        change.kind === CHANGE_KIND.create && change.tag === TAG.INSTANCE && component !== undefined
+          ? components.missingVariant(component, variant ?? {})
+          : null;
+
+      if (missing !== null) {
+        errors.push({
+          line: change.line,
+          column: change.column,
+          attribute: change.sources.variant ?? ATTRIBUTE.variant,
+          message: missing,
+        });
+      }
+
+      return missing === null;
+    });
+
+    return { planned, components };
   }
 
   /** Errors in document order, the assessment's and the changes' together. */

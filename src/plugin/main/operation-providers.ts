@@ -7,6 +7,8 @@ import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-l
 import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
 import { ASSIGN, Assign } from "@/plugin/adapters/figma/assign.ts";
 import { CAPABILITIES, Capabilities } from "@/plugin/adapters/figma/capabilities.ts";
+import { COMPONENT_INDEX, ComponentIndex } from "@/plugin/adapters/figma/components/component-index.ts";
+import { VARIANTS, Variants } from "@/plugin/adapters/figma/components/variants.ts";
 import { EFFECTS, Effects } from "@/plugin/adapters/figma/effects.ts";
 import { FONT_CATALOG, FontCatalog } from "@/plugin/adapters/figma/fonts/font-catalog.ts";
 import { LAYER_BOXES, LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
@@ -27,7 +29,9 @@ import { APPLY_RUN, ApplyRun } from "@/plugin/operations/apply/apply-run.ts";
 import { APPLY_CHECKS, ApplyChecks } from "@/plugin/operations/apply/checks.ts";
 import { NEW_LAYERS, NewLayers } from "@/plugin/operations/apply/new-layers.ts";
 import { PAGES, Pages } from "@/plugin/operations/apply/pages.ts";
+import { PENDING_SETS, PendingSets } from "@/plugin/operations/apply/pending-sets.ts";
 import { PLACEMENT, Placement } from "@/plugin/operations/apply/placement.ts";
+import { PROPERTY_MARKS, PropertyMarks } from "@/plugin/operations/apply/property-marks.ts";
 import { TOKEN_INDEX, TokenIndex } from "@/plugin/operations/apply/token-index.ts";
 import { AssetStep } from "@/plugin/operations/apply/writers/asset-step.ts";
 import { BlendStep } from "@/plugin/operations/apply/writers/blend-step.ts";
@@ -50,11 +54,14 @@ import { NameStep } from "@/plugin/operations/apply/writers/name-step.ts";
 import { NoteStep } from "@/plugin/operations/apply/writers/note-step.ts";
 import { OpacityStep } from "@/plugin/operations/apply/writers/opacity-step.ts";
 import { PAINT_WRITE, PaintWrite } from "@/plugin/operations/apply/writers/paint-write.ts";
+import { PropertyStep } from "@/plugin/operations/apply/writers/property-step.ts";
+import { PropsStep } from "@/plugin/operations/apply/writers/props-step.ts";
 import { STEP_VALUES, StepValues } from "@/plugin/operations/apply/writers/step-values.ts";
 import { StrokesStep } from "@/plugin/operations/apply/writers/strokes-step.ts";
 import { TEXT_LOOK, TextLook } from "@/plugin/operations/apply/writers/text-look.ts";
 import { TEXT_RUNS, TextRuns } from "@/plugin/operations/apply/writers/text-runs.ts";
 import { TEXT_WRITER, TextWriter } from "@/plugin/operations/apply/writers/text-writer.ts";
+import { VariantStep } from "@/plugin/operations/apply/writers/variant-step.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
 import { COMPONENT_DETAILS, ComponentDetails } from "@/plugin/operations/components/component-details.ts";
@@ -150,6 +157,8 @@ export class OperationProviders {
       .bind({ provide: LIBRARY_CATALOGUE, useClass: LibraryCatalogue })
       .bind({ provide: ASSIGN, useClass: Assign })
       .bind({ provide: CAPABILITIES, useClass: Capabilities })
+      .bind({ provide: VARIANTS, useClass: Variants })
+      .bind({ provide: COMPONENT_INDEX, useClass: ComponentIndex })
       .bind({ provide: LAYER_FACTORY, useClass: LayerFactory })
       .bind({ provide: STEP_VALUES, useClass: StepValues })
       .bind({ provide: STEP_GEOMETRY, useClass: StepGeometry })
@@ -166,6 +175,8 @@ export class OperationProviders {
       .bind({ provide: PLACEMENT, useClass: Placement })
       .bind({ provide: PAGES, useClass: Pages })
       .bind({ provide: APPLY_LAYERS, useClass: ApplyLayers })
+      .bind({ provide: PROPERTY_MARKS, useClass: PropertyMarks })
+      .bind({ provide: PENDING_SETS, useClass: PendingSets })
       .bind({ provide: APPLY_RUN, useClass: ApplyRun })
       .bind({ provide: OPERATION_FACTORY, useFactory: () => new ContainerOperationFactory(container, this.#classes) });
     this.#writeSteps(container);
@@ -176,6 +187,9 @@ export class OperationProviders {
   #writeSteps(container: Container): void {
     container
       .bind({ provide: WRITE_STEPS, multi: true, useClass: NameStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: VariantStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: PropsStep })
+      .bind({ provide: WRITE_STEPS, multi: true, useClass: PropertyStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: LayoutStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: SizeStep })
       .bind({ provide: WRITE_STEPS, multi: true, useClass: LimitsStep })

@@ -51,7 +51,7 @@ export class Placement {
     change: ApplyChangeData,
     call: ApplyCall,
   ): Promise<void> {
-    if (this.#instanced(node.parent)) {
+    if (this.#capabilities.inInstance(node.parent)) {
       throw new WriteError(APPLY_TEXT.inInstance);
     }
 
@@ -102,7 +102,7 @@ export class Placement {
       throw new WriteError(APPLY_TEXT.holdsNoLayers(type.toLowerCase()));
     }
 
-    if (type !== FIGMA_NODE_TYPE.slot && this.#instanced(parent)) {
+    if (type !== FIGMA_NODE_TYPE.slot && this.#capabilities.inInstance(parent)) {
       throw new WriteError(APPLY_TEXT.onlySlots);
     }
 
@@ -111,21 +111,6 @@ export class Placement {
         throw new WriteError(APPLY_TEXT.intoItself);
       }
     }
-  }
-
-  /** Whether the layer sits in an instance and not in a slot of it: there its children come from the component. */
-  #instanced(node: BaseNode | null): boolean {
-    for (let up = node; up !== null; up = up.parent) {
-      if (up.type === FIGMA_NODE_TYPE.slot) {
-        return false;
-      }
-
-      if (up.type === FIGMA_NODE_TYPE.instance) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   #parentOf(change: ApplyChangeData, call: ApplyCall): BaseNode | null {

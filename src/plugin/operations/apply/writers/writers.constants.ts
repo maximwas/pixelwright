@@ -3,6 +3,9 @@ import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 /** The props each write step takes, in the order it sets them. */
 export const STEP_KEYS = {
   name: ["name"],
+  variant: ["component", "variant"],
+  props: ["props"],
+  property: ["property"],
   layout: [
     "layoutMode",
     "layoutWrap",
@@ -186,7 +189,19 @@ export const NOTE_VALUE = { category: ": " } as const;
 /** Hiding runs last, outside the steps (P-149). */
 export const HIDDEN_KEY = "visible" satisfies keyof FigmaProps;
 
+/** How an instance's props are written: a boolean property's "true", and the names an error lists. */
+export const PROPS_VALUE = { trueValue: "true", falseValue: "false", listJoint: ", " } as const;
+
 export const WRITERS_TEXT = {
+  componentOnComponent: "A component has no component: component and variant make an <Instance>.",
+  componentGone: (id: string) => `${id}'s component is gone: Figma cannot change its variant or props.`,
+  noProperty: (
+    instance: string,
+    name: string,
+    has: string,
+  ) => `${instance} has no property ${name}: it has ${has}.`,
+  nearProperty: (near: string) => `Did you mean ${near}?`,
+  notBoolean: (name: string, value: string) => `${name} is a true or false property: ${value} is neither.`,
   token: (token: string) => `The token ${token} is not bound to Figma in this release: write its value.`,
   paintStyle: (token: string) => `${token} is a paint style, which is the whole list of a layer's paints.`,
   paintStyleHint: "Use it as the only layer, without color-mix().",
