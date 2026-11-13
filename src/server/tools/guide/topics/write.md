@@ -113,7 +113,9 @@ change); when it cannot be saved, nothing is written.
   `Behavior: ` files a note under the file's annotation category of that name; a name the file has no category for
   stays part of the text (no category is made). A closing bracket pins those properties in the note, in design_read's
   CSS words (`[gap, padding]`, a text's `[color]`, `[]` pins none); a bracket with any other word is text, and `\[`
-  keeps one as text. `[background]` alone is a note of pins without text. A `|` with a space on each side separates
+  keeps one as text. `[background]` alone is a note of pins without text. A pin needs the layer to have that property: a radius pin a layer
+  with radius 0, an opacity pin one at 1, a limit pin (`min-width`, ...) one that is not set, `background`, `border`,
+  `gap` and the like one without fills, strokes or auto layout are refused. A `|` with a space on each side separates
   the layer's own notes sent back and comes before a note a category starts or after one with pins; elsewhere it is
   text, so `note="Tabs: Days | Weeks"` is one note (two new notes without a category take two calls). A note sent back
   as it was keeps its category, Markdown formatting and pins; the same words under another category or with other pins

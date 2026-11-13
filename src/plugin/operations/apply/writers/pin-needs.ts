@@ -1,6 +1,6 @@
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
-import { PIN_NEED, type PinNeed } from "@/plugin/operations/apply/writers/writers.constants.ts";
+import { PIN_LIMITS, PIN_NEED, type PinNeed } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { APPLY_CHANGE_KIND } from "@/shared/ops/apply/apply.constants.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 import { INTENT_ASSET, INTENT_LAYOUT_MODE } from "@/shared/write-intents/write-intent.constants.ts";
@@ -11,6 +11,12 @@ interface Own {
   readonly strokes?: unknown;
   readonly effects?: unknown;
   readonly layoutMode?: string;
+  readonly cornerRadius?: unknown;
+  readonly opacity?: number;
+  readonly minWidth?: number | null;
+  readonly maxWidth?: number | null;
+  readonly minHeight?: number | null;
+  readonly maxHeight?: number | null;
 }
 
 /** What a layer holds once the call has written it; a need not told is one a dry run cannot see. */
@@ -70,7 +76,26 @@ export class PinNeeds {
         props.effects === undefined ? before(own.effects) : !Array.isArray(props.effects) || props.effects.length > 0,
       autoLayout: mode !== INTENT_LAYOUT_MODE.NONE,
       grid: mode === INTENT_LAYOUT_MODE.GRID,
+      ...this.#measured(change, own),
     };
+  }
+
+  /** The radius, opacity and limits the layer holds once the call has written it. */
+  #measured({ props, kind }: ApplyChangeData, own: Own): Held {
+    const made = kind === APPLY_CHANGE_KIND.create;
+    const limit = (key: (typeof PIN_LIMITS)[number]) =>
+      (props[key] === undefined ? (made ? null : own[key]) : props[key]) != null;
+
+    return {
+      radius: this.#rounded(props.cornerRadius === undefined ? (made ? 0 : own.cornerRadius) : props.cornerRadius),
+      translucent: (props.opacity ?? (made ? 1 : (own.opacity ?? 1))) !== 1,
+      ...Object.fromEntries(PIN_LIMITS.map((key) => [key, limit(key)])),
+    };
+  }
+
+  /** Whether a radius is not 0: a mixed one (a symbol), a token, or any side that is not 0. */
+  #rounded(value: unknown): boolean {
+    return Array.isArray(value) ? value.some((side) => this.#rounded(side)) : value !== 0 && value !== undefined;
   }
 
   /** Whether a list the layer has holds one; a mixed value (a symbol) is a value. */

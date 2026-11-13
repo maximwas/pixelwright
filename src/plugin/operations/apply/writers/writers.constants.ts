@@ -189,8 +189,8 @@ export const SIZE_NUMBER = {
 /**
  * What a layer must hold for a note to pin a property: Figma throws `Invalid property "fills" for a FRAME node` for a
  * pin the layer lacks (live probe, 2026-11-13: fills on a frame without fills, itemSpacing without auto layout; width
- * always goes). A size, a limit, an opacity and a radius are not here: they are no state a layer can be without, and a
- * child's grid cell is its parent's to tell, which a dry run cannot see.
+ * always goes; same probe: a radius needs a layer rounded, an opacity one below 1, a limit one that is set). A size is
+ * not here, and a child's grid cell is its parent's to tell, which a dry run cannot see.
  */
 export const PIN_NEED = {
   fills: "fill",
@@ -214,7 +214,16 @@ export const PIN_NEED = {
   lineHeight: "text",
   letterSpacing: "text",
   mainComponent: "instance",
+  cornerRadius: "radius",
+  opacity: "translucent",
+  minWidth: "minWidth",
+  maxWidth: "maxWidth",
+  minHeight: "minHeight",
+  maxHeight: "maxHeight",
 } as const;
+
+/** The size limits a note can pin: each is a need of its own, met once the layer's limit is set. */
+export const PIN_LIMITS = ["minWidth", "maxWidth", "minHeight", "maxHeight"] as const;
 
 export type PinNeed = (typeof PIN_NEED)[keyof typeof PIN_NEED];
 
@@ -227,6 +236,12 @@ export const PIN_LACKS = {
   grid: "has no grid layout",
   text: "holds no text",
   instance: "is no instance",
+  radius: "has no corner radius",
+  translucent: "is fully opaque",
+  minWidth: "has no minimum width",
+  maxWidth: "has no maximum width",
+  minHeight: "has no minimum height",
+  maxHeight: "has no maximum height",
 } as const satisfies Record<PinNeed, string>;
 
 /** A link: on a layer that holds no text it would be a prototype reaction, refused on its own. */

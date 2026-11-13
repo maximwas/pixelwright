@@ -155,15 +155,45 @@ describe("NoteStep.check", () => {
     expect(run).toThrow(expect.objectContaining({ hint: expect.stringContaining("leave the word out") }));
   });
 
-  it("holds a pin the layer has, and one a size, an opacity or a radius makes always", () => {
+  it("holds a pin the layer has, and a size always", () => {
     const held = { type: "FRAME", fills: [{}], strokes: [{}], effects: [{}], layoutMode: "HORIZONTAL" };
 
     expect(
       checkOf(["background", "border", "border-width", "box-shadow", "gap", "padding", "flex-direction"], held),
     ).not.toThrow();
-    expect(checkOf(["width", "height", "opacity", "border-radius", "min-width"], { type: "FRAME" })).not.toThrow();
+    expect(checkOf(["width", "height"], { type: "FRAME" })).not.toThrow();
     expect(checkOf(["font-size", "color"], { type: "TEXT", fills: [{}] })).not.toThrow();
     expect(checkOf(["component"], { type: "INSTANCE" })).not.toThrow();
+  });
+
+  // NEW-090 live probe: Figma accepts a radius pin only on a rounded layer, an opacity pin below 1, a limit pin once set.
+  it.each([
+    ["border-radius", "has no corner radius", { cornerRadius: 0 }, { cornerRadius: 8 }],
+    ["opacity", "is fully opaque", { opacity: 1 }, { opacity: 0.5 }],
+    ["min-width", "has no minimum width", { minWidth: null }, { minWidth: 10 }],
+    ["max-width", "has no maximum width", { maxWidth: null }, { maxWidth: 10 }],
+    ["min-height", "has no minimum height", { minHeight: null }, { minHeight: 10 }],
+    ["max-height", "has no maximum height", { maxHeight: null }, { maxHeight: 10 }],
+  ])("refuses a %s pin the layer cannot hold, and counts the call's own value", (word, lacks, empty, given) => {
+    const set = Object.fromEntries(Object.entries(empty).map(([key]) => [key, Reflect.get(given, key)]));
+
+    expect(checkOf([word], { type: "FRAME", ...empty })).toThrow(`A note pins ${word}, but this frame ${lacks}.`);
+    expect(checkOf([word], { type: "FRAME", ...empty }, given)).not.toThrow();
+    expect(checkOf([word], { type: "FRAME", ...set })).not.toThrow();
+    expect(checkOf([word], { type: "FRAME", ...set }, empty)).toThrow(lacks);
+    expect(checkOf([word], standIn, {}, { kind: "create" })).toThrow(lacks);
+    expect(checkOf([word], standIn, given, { kind: "create" })).not.toThrow();
+  });
+
+  it("counts a mixed radius, a radius of sides and a token as a radius", () => {
+    expect(checkOf(["border-radius"], { type: "FRAME", cornerRadius: Symbol("mixed") })).not.toThrow();
+    expect(
+      checkOf(["border-radius"], { type: "FRAME", cornerRadius: 0 }, { cornerRadius: [0, 0, 4, 0] }),
+    ).not.toThrow();
+    expect(checkOf(["border-radius"], { type: "FRAME", cornerRadius: 0 }, { cornerRadius: [0, 0, 0, 0] })).toThrow();
+    expect(
+      checkOf(["border-radius"], { type: "FRAME", cornerRadius: 0 }, { cornerRadius: { token: "r" } }),
+    ).not.toThrow();
   });
 
   it("counts what the same call gives (the note is written after fills, strokes, effects and layout)", () => {
