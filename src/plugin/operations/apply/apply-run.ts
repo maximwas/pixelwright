@@ -150,7 +150,7 @@ export class ApplyRun {
 
   /** Whether the change writes anything its checks left: a prop not refused, or its text. */
   #writes(change: ApplyChangeData, refusals: readonly Refusal[]): boolean {
-    const refused = new Set(refusals.flatMap(({ keys }) => keys));
+    const refused = new Set(refusals.flatMap(({ keys, span }) => (span === undefined ? keys : [])));
     const props = Object.keys(change.props).some((key) => !refused.has(key as keyof typeof change.props));
 
     return props || (change.text !== undefined && !refusals.some(({ text }) => text ?? false));

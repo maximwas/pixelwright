@@ -41,7 +41,7 @@ describe("ApplyFonts", () => {
 
     expect(loaded.sort()).toEqual(["Inter Bold", "Inter Regular"]);
     expect(fonts.font(font as never)).toEqual(BOLD);
-    expect(fonts.isUnloaded(BROKEN)).toBe(true);
+    expect(fonts.unloadedIn({} as never)).toEqual(BROKEN);
   });
 
   it("finds the fonts on a dry run and loads none", async () => {

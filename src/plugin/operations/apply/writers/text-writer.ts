@@ -1,7 +1,7 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
-import { CAPABILITY_TEXT, CAPABILITY_TYPES } from "@/plugin/adapters/figma/figma.constants.ts";
+import { CAPABILITY_TEXT, CAPABILITY_TYPES, FIGMA_NODE_TYPE } from "@/plugin/adapters/figma/figma.constants.ts";
 import type { TextLayer } from "@/plugin/adapters/figma/layer-factory.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_FONTS } from "@/plugin/operations/apply/apply-fonts.ts";
@@ -66,15 +66,7 @@ export class TextWriter {
       return [];
     }
 
-    const found: Refusal[] = [];
-
-    for (const [key, [type, what]] of Object.entries(TEXT_OWN)) {
-      if (change.props[key as keyof typeof TEXT_OWN] !== undefined && layer.type !== type) {
-        const error = new WriteError(CAPABILITY_TEXT.refusal(CAPABILITY_TEXT.type(layer.type), what));
-
-        found.push({ error, keys: [key as keyof typeof TEXT_OWN] });
-      }
-    }
+    const found = this.#own(layer, change.props);
 
     for (const { key, error } of await this.#runs.check(change.props)) {
       if (!refused.has(key)) {
@@ -83,8 +75,25 @@ export class TextWriter {
     }
 
     for (const [span, run] of (change.text?.runs ?? []).entries()) {
-      for (const { error } of await this.#runs.check(run.props)) {
-        found.push({ error, keys: [], span });
+      found.push(...this.#own(layer, run.props).map((refusal) => ({ ...refusal, span })));
+
+      for (const { key, error } of await this.#runs.check(run.props)) {
+        found.push({ error, keys: [key], span });
+      }
+    }
+
+    return found;
+  }
+
+  /** What these props set that only the other kind of text layer has. */
+  #own(layer: TypedLayer, props: FigmaProps): Refusal[] {
+    const found: Refusal[] = [];
+
+    for (const [key, [type, what]] of Object.entries(TEXT_OWN)) {
+      if (props[key as keyof typeof TEXT_OWN] !== undefined && layer.type !== type) {
+        const error = new WriteError(CAPABILITY_TEXT.refusal(CAPABILITY_TEXT.type(layer.type), what));
+
+        found.push({ error, keys: [key as keyof typeof TEXT_OWN] });
       }
     }
 
@@ -99,7 +108,7 @@ export class TextWriter {
     fail: Fail,
   ): Promise<boolean> {
     const text = node as TextLayer;
-    const refused = new Set(refusals.flatMap(({ keys }) => keys));
+    const refused = new Set(refusals.flatMap(({ keys, span }) => (span === undefined ? keys : [])));
     let wrote = false;
 
     if (change.text !== undefined) {
@@ -112,13 +121,8 @@ export class TextWriter {
       }
     }
 
-    const spans = new Set(refusals.flatMap(({ span }) => (span === undefined ? [] : [span])));
     const own = await this.#ownLook(text, change.props, refused, fail);
-    const runs = await this.#spans(
-      text,
-      (change.text?.runs ?? []).filter((_run, index) => !spans.has(index)),
-      fail,
-    );
+    const runs = await this.#spans(text, change.text?.runs ?? [], refusals, fail);
 
     return this.#box(text, change.props, refused, fail) || runs || own || wrote;
   }
@@ -139,7 +143,7 @@ export class TextWriter {
         throw new WriteError(WRITERS_TEXT.unloaded(unloaded.family, unloaded.style), WRITERS_TEXT.unloadedHint);
       }
 
-      this.#assign.set(node, { characters });
+      this.#setCharacters(node, characters);
     }
 
     if (segments.length > 1 && base !== undefined && node.characters.length > 0) {
@@ -147,6 +151,29 @@ export class TextWriter {
     }
 
     return retyped || segments.length > 1;
+  }
+
+  /**
+   * Through the component property the text is bound to, when an instance above it holds that property (written on the
+   * text they would not stick); else on the text itself, an override inside an instance (P-152).
+   */
+  #setCharacters(node: TextLayer, characters: string): void {
+    const key = node.componentPropertyReferences?.characters;
+
+    for (let at = node.parent; key !== undefined && at !== null; at = at.parent) {
+      if (at.type === FIGMA_NODE_TYPE.instance && Object.hasOwn(at.componentProperties, key)) {
+        at.setProperties({ [key]: characters });
+
+        return;
+      }
+
+      // A main component's own layer is its own: no instance above it is its owner.
+      if (at.type === FIGMA_NODE_TYPE.component || at.type === FIGMA_NODE_TYPE.componentSet) {
+        break;
+      }
+    }
+
+    this.#assign.set(node, { characters });
   }
 
   /** The text's own properties, over the runs that had its own value. */
@@ -176,23 +203,26 @@ export class TextWriter {
     return wrote;
   }
 
-  /** What each Span sets over its characters. */
+  /** What each Span sets over its characters, but for the keys its refusals name. */
   async #spans(
     node: TextLayer,
     runs: readonly Run[],
+    refusals: readonly Refusal[],
     fail: Fail,
   ): Promise<boolean> {
     let wrote = false;
 
-    for (const run of runs.filter(({ start, end }) => end > start)) {
+    for (const [index, run] of runs.entries()) {
+      const skipped = new Set(refusals.flatMap(({ keys, span }) => (span === index ? keys : [])));
+
       for (const [key] of TEXT_RUN_FIELDS) {
         try {
-          if (run.props[key] !== undefined) {
+          if (run.end > run.start && run.props[key] !== undefined && !skipped.has(key)) {
             await this.#runs.write(key, { node, start: run.start, end: run.end }, run.props);
             wrote = true;
           }
         } catch (error) {
-          fail(error);
+          fail(error, [key]);
         }
       }
     }

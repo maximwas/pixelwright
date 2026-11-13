@@ -10,7 +10,10 @@ import { HIDDEN_KEY, STEP_KEYS } from "@/plugin/operations/apply/writers/writers
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
-/** One refusal: its error, the props it leaves unwritten, whether it is the text's, and the Span it leaves unwritten. */
+/**
+ * One refusal: its error, the props it leaves unwritten, whether it is the text's, and the Span those props belong to
+ * (a Span's key leaves only that Span's own value unwritten, not the element's).
+ */
 export interface Refusal {
   readonly error: unknown;
   readonly keys: readonly (keyof FigmaProps)[];

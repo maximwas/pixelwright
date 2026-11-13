@@ -67,10 +67,6 @@ export class ApplyFonts {
     return this.#factory.textFonts(node).find((font) => this.#unloaded.has(FONT_TEXT.key(font.family, font.style)));
   }
 
-  isUnloaded(font: FontName): boolean {
-    return this.#unloaded.has(FONT_TEXT.key(font.family, font.style));
-  }
-
   /**
    * A changed text's fonts load whatever changes (sizing it needs them too) and are the first choice for the weights
    * design_read wrote: a copy's are its source's. A new text starts in Inter Regular.

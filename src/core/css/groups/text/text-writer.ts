@@ -116,7 +116,8 @@ export class TextWriter implements PropertyWriter {
    * right from "0 0" shows one (B-032): with no start given, the start goes to the path's middle or end by length.
    */
   #alignedStart(input: WriteInput, out: WriteOutput): void {
-    const share = ALIGN_SHARE[input.own(CSS_PROPERTY.textAlign) ?? ""];
+    const align = input.own(CSS_PROPERTY.textAlign) ?? "";
+    const share = Object.hasOwn(ALIGN_SHARE, align) ? ALIGN_SHARE[align] : undefined;
 
     if (share === undefined || input.tag !== TAG.TEXT_PATH || input.own(ATTRIBUTE.start) !== undefined) {
       return;

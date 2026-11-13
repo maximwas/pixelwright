@@ -108,4 +108,8 @@ describe("TextPathWriter", () => {
       position: 0.25,
     });
   });
+
+  it("takes a text-align that names an object's own key as no alignment", () => {
+    expect(written({ "text-align": "constructor" }, ARC).props.pathStart).toBeUndefined();
+  });
 });
