@@ -28,8 +28,8 @@ what should happen when the content or the frame's size changes.
   along the direction (Figma has no other weights); `align-self="stretch"` fills across it; `min-width`, `max-width`,
   `min-height` and `max-height` set limits (`none` removes one). A new frame with `display` hugs what it holds unless
   sized or filling.
-- `flex` and `align-self` need an auto layout parent, and `justify-self`, `grid-row` and `grid-column` work only in a
-  grid: on any other parent each is refused.
+- `flex` needs a flex parent (a grid refuses it), `align-self` a flex or grid parent; `justify-self`, `grid-row` and
+  `grid-column` work only in a grid: on any other parent each is refused.
 
 ## Grid
 

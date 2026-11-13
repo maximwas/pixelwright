@@ -1018,8 +1018,8 @@ puts it next to that layer, and listing layers in another order reorders them. A
 new layers only through its slots). An element alone (<code>&lt;Frame id=&quot;…&quot;/&gt;</code>) moves its layer with everything inside it.</li>
 <li>design_apply first reads every layer the call names, with everything inside it. Send only the layers you change,
 nested as design_read writes them (a deep one may also stand alone at the top level:
-<code>&lt;Text id=&quot;54:250&quot;&gt;New words&lt;/Text&gt;</code>); a call that names more than one call can read fails with an error, so split
-it.</li>
+<code>&lt;Text id=&quot;54:250&quot;&gt;New words&lt;/Text&gt;</code>); a call that names more layers than one read can take fails with an error:
+split it.</li>
 <li>A text design_read shortened (<code>$truncated</code>) keeps its characters: read that layer on its own to change them.</li>
 <li>Each tag takes its own attributes: no <code>background</code> or <code>gap</code> on a Text (its colour is <code>color</code>), no text styles on a
 Frame, no auto layout on a shape; an element&#39;s id is given once (a copy has none).</li>
@@ -1204,8 +1204,8 @@ only <code>stretch</code> or <code>auto</code>.</li>
 along the direction (Figma has no other weights); <code>align-self=&quot;stretch&quot;</code> fills across it; <code>min-width</code>, <code>max-width</code>,
 <code>min-height</code> and <code>max-height</code> set limits (<code>none</code> removes one). A new frame with <code>display</code> hugs what it holds unless
 sized or filling.</li>
-<li><code>flex</code> and <code>align-self</code> need an auto layout parent, and <code>justify-self</code>, <code>grid-row</code> and <code>grid-column</code> work only in a
-grid: on any other parent each is refused.</li>
+<li><code>flex</code> needs a flex parent (a grid refuses it), <code>align-self</code> a flex or grid parent; <code>justify-self</code>, <code>grid-row</code> and
+<code>grid-column</code> work only in a grid: on any other parent each is refused.</li>
 </ul>
 <h3>Grid</h3>
 <ul>

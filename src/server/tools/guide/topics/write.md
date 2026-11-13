@@ -31,8 +31,8 @@ change); when it cannot be saved, nothing is written.
   new layers only through its slots). An element alone (`<Frame id="…"/>`) moves its layer with everything inside it.
 - design_apply first reads every layer the call names, with everything inside it. Send only the layers you change,
   nested as design_read writes them (a deep one may also stand alone at the top level:
-  `<Text id="54:250">New words</Text>`); a call that names more than one call can read fails with an error, so split
-  it.
+  `<Text id="54:250">New words</Text>`); a call that names more layers than one read can take fails with an error:
+  split it.
 - A text design_read shortened (`$truncated`) keeps its characters: read that layer on its own to change them.
 - Each tag takes its own attributes: no `background` or `gap` on a Text (its colour is `color`), no text styles on a
   Frame, no auto layout on a shape; an element's id is given once (a copy has none).
