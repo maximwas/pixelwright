@@ -8,9 +8,11 @@ import {
   type GuideTopic,
 } from "@/server/tools/guide/guide.schema.ts";
 import assets from "@/server/tools/guide/topics/assets.md";
+import layout from "@/server/tools/guide/topics/layout.md";
 import script from "@/server/tools/guide/topics/script.md";
 import tokens from "@/server/tools/guide/topics/tokens.md";
 import workflow from "@/server/tools/guide/topics/workflow.md";
+import write from "@/server/tools/guide/topics/write.md";
 import xml from "@/server/tools/guide/topics/xml.md";
 
 /**
@@ -21,7 +23,7 @@ import xml from "@/server/tools/guide/topics/xml.md";
 @injectable()
 export class GuideTool extends Tool<GuideInput, GuideOutput> {
   protected readonly input = GuideInputSchema;
-  readonly #markdown: Readonly<Record<GuideTopic, string>> = { workflow, xml, tokens, assets, script };
+  readonly #markdown: Readonly<Record<GuideTopic, string>> = { workflow, xml, tokens, assets, script, write, layout };
 
   protected async run({ topic }: GuideInput): Promise<GuideOutput> {
     if (topic !== undefined) {

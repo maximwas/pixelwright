@@ -199,13 +199,13 @@ describe("the MCP contract", () => {
     expect(lines.filter((line) => !golden.includes(line))).toEqual([]);
   });
 
-  // 0.8.0 reads only (plan 5.0): a description, a schema, the instructions or a topic that names a tool this build
-  // does not register sends the model after a tool it cannot call; a topic naming a renamed tool fails too (R-038).
+  // A description, a schema, the instructions or a topic that names a tool this build does not register sends the
+  // model after a tool it cannot call; a topic naming a renamed tool fails too (R-038).
   it("names only the tools it registers, in its tools, its instructions and the guide", async () => {
     const { tools } = await contract.client.listTools();
     const listed = new Set(tools.map(({ name }) => name));
-    // tools.json keeps 0.7.0's entries of the tools this build leaves out on purpose: they are the names looked for
-    // here, and 0.9.0 registers them again.
+    // tools.json keeps 0.7.0's entries of the tools this build leaves out on purpose (tokens_apply and the other
+    // writes of 0.10.0): they are the names looked for here, until a build registers them again.
     const unregistered = GOLDEN.map(({ name }) => name).filter((name) => !listed.has(name));
     const topics = TOPIC_NAMES.map(topicText);
     const texts = [JSON.stringify(tools), contract.client.getInstructions() ?? "", ...topics];
