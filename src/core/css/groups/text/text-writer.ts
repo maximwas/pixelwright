@@ -4,8 +4,10 @@ import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
 import type { PropertyWriter, WriteInput, WriteOutput } from "@/core/css/css.types.ts";
 import { FONT_VALUES, type FontSpec } from "@/core/css/fonts/font-values.ts";
 import { FILLS_WRITER } from "@/core/css/groups/paint/fills-writer.ts";
+import { PATH_GEOMETRY } from "@/core/css/groups/text/path-geometry.ts";
 import {
   ALIGN_FIGMA,
+  ALIGN_SHARE,
   CASE_FIGMA,
   DECORATION_LENGTHS,
   DECORATION_PROPERTIES,
@@ -44,15 +46,18 @@ export class TextWriter implements PropertyWriter {
   readonly #fills;
   readonly #fonts;
   readonly #split;
+  readonly #paths;
 
   constructor(
     fills = inject(FILLS_WRITER),
     fonts = inject(FONT_VALUES),
     split = inject(CSS_SPLIT),
+    paths = inject(PATH_GEOMETRY),
   ) {
     this.#fills = fills;
     this.#fonts = fonts;
     this.#split = split;
+    this.#paths = paths;
   }
 
   write(input: WriteInput, out: WriteOutput): void {
@@ -85,9 +90,12 @@ export class TextWriter implements PropertyWriter {
   }
 
   /** What a text's box sets as a whole, never a text style's: alignment, wrapping, and its colour. */
-  #box({ own, changed }: WriteInput, out: WriteOutput): void {
+  #box(input: WriteInput, out: WriteOutput): void {
+    const { own, changed } = input;
+
     if (changed(CSS_PROPERTY.textAlign)) {
       this.#keyword(CSS_PROPERTY.textAlign, own, { table: ALIGN_FIGMA, key: INTENT_KEY.textAlignHorizontal }, out);
+      this.#alignedStart(input, out);
     }
 
     if (changed(CSS_PROPERTY.textWrap)) {
@@ -100,6 +108,26 @@ export class TextWriter implements PropertyWriter {
       if (paints !== null) {
         out.set(INTENT_KEY.textFills, paints, CSS_PROPERTY.color);
       }
+    }
+  }
+
+  /**
+   * Figma anchors a text on a path's alignment at its start and draws no glyph before the path begins, so centre or
+   * right from "0 0" shows one (B-032): with no start given, the start goes to the path's middle or end by length.
+   */
+  #alignedStart(input: WriteInput, out: WriteOutput): void {
+    const align = input.own(CSS_PROPERTY.textAlign) ?? "";
+    const share = Object.hasOwn(ALIGN_SHARE, align) ? ALIGN_SHARE[align] : undefined;
+
+    if (share === undefined || input.tag !== TAG.TEXT_PATH || input.own(ATTRIBUTE.start) !== undefined) {
+      return;
+    }
+
+    const path = this.#paths.pathOf(input);
+    const start = path === null ? null : this.#paths.startAlong(path, share);
+
+    if (start !== null) {
+      out.set(INTENT_KEY.pathStart, start, CSS_PROPERTY.textAlign);
     }
   }
 

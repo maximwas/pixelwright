@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { ICON_TAG } from "@/plugin/operations/apply/apply.constants.ts";
 import { LayerWriter } from "@/plugin/operations/apply/writers/layer-writer.ts";
 import { STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
@@ -12,7 +13,8 @@ function write(
 ) {
   const seen: object[] = [];
   const step = { keys: ["name"], capability: null, write: (_node: unknown, given: object) => void seen.push(given) };
-  const writer = new LayerWriter([step] as never, {} as never, {} as never);
+  const text = { write: async () => false };
+  const writer = new LayerWriter([step] as never, text as never, {} as never, new LayerBoxes());
   const fail = vi.fn();
 
   return {

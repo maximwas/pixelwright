@@ -166,6 +166,57 @@ export const TEXT_NUMBER = {
   pathPlaces: 2,
 } as const;
 
+/** What the TextPath writer owns: its path, the arc that draws a new one, and where its text starts. */
+export const PATH_WRITTEN = [ATTRIBUTE.d, ATTRIBUTE.arc, ATTRIBUTE.start] as const;
+
+/** Where along its path, as a share of the length, text-align anchors a text on a path that gives no start (B-032). */
+export const ALIGN_SHARE: Readonly<Record<string, number>> = { center: 0.5, right: 1, end: 1 };
+
+export const PATH_NUMBER = {
+  /** A path that draws needs a move and one more command. */
+  fewestCommands: 2,
+  /** A written path keeps three decimals, 0.7.0's: Figma's vector data takes them. */
+  writtenPlaces: 3,
+  /** An arc's centre, radius, from and to. */
+  arcParts: 5,
+  arcLengths: 3,
+  circle: 360,
+  halfCircle: 180,
+  /** One cubic curve per quarter at most stays close to the circle. */
+  quarter: 90,
+  /** An arc's points to 6 decimals: past float noise (sin 180° is 1.2e-16). */
+  pointScale: 1_000_000,
+  /** Halvings that find a place on a curve well past the 4 decimals a start keeps. */
+  bisections: 30,
+  /** A start keeps 4 decimals, as 0.7.0 wrote it. */
+  startScale: 10_000,
+  /** Float noise at a joint of two pieces. */
+  noise: 1e-9,
+} as const;
+
+export const PATH_PATTERN = {
+  spaces: /\s+/,
+  px: /px$/i,
+  number: /^-?(?:\d+\.?\d*|\.\d+)$/,
+  arcCommand: "A",
+  moveCommand: "M",
+} as const;
+
+export const PATH_ERROR = {
+  madeAlong: "d is the path this <TextPath> was made along: it stays as it is.",
+  madeHint: "Figma cannot change a text path's path: delete it and make it again.",
+  badPath: (value: string) => `d="${value}" is no SVG path that draws a line.`,
+  badPathHint: 'Start it with M: d="M 0 100 C 50 0 150 0 200 100".',
+  arcThere: "arc draws the path of a new <TextPath>: this one has its path.",
+  arcPlaces: "arc places the path in its parent itself: give no d, left, top, right or bottom with it.",
+  badArc: (value: string) =>
+    `arc="${value}" is no arc: it is the centre's x and y and the radius in px, then from and to in degrees.`,
+  badArcHint:
+    'arc="200 200 150 -60 60" runs over the top of a circle: 0 is the top and degrees go clockwise, as CSS turns.',
+  badStart: (value: string) => `start="${value}" is not a segment of the path and a place along it, like "0 0.5".`,
+  badStartHint: "Segments count from 0 along the path; the place goes from 0 at the segment's start to 1 at its end.",
+} as const;
+
 export const TEXT_TEXT = {
   feature: (tag: string, on: boolean) => `"${tag.toLowerCase()}" ${on ? 1 : 0}`,
   axis: (axis: string, value: number) => `"${axis}" ${value}`,

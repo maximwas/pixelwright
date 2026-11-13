@@ -128,4 +128,7 @@ export const INTENT_KEY = {
   rotation: "rotation",
   mirror: "mirror",
   path: "path",
+  pathStart: "pathStart",
+  horizontal: "horizontal",
+  vertical: "vertical",
 } as const;

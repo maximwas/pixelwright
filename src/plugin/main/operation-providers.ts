@@ -8,6 +8,8 @@ import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
 import { ASSIGN, Assign } from "@/plugin/adapters/figma/assign.ts";
 import { CAPABILITIES, Capabilities } from "@/plugin/adapters/figma/capabilities.ts";
 import { EFFECTS, Effects } from "@/plugin/adapters/figma/effects.ts";
+import { FONT_CATALOG, FontCatalog } from "@/plugin/adapters/figma/fonts/font-catalog.ts";
+import { LAYER_BOXES, LayerBoxes } from "@/plugin/adapters/figma/layer-boxes.ts";
 import { LAYER_FACTORY, LayerFactory } from "@/plugin/adapters/figma/layer-factory.ts";
 import { PAINTS, Paints } from "@/plugin/adapters/figma/paints.ts";
 import { FILE_TOKENS, FileTokens } from "@/plugin/adapters/figma/variables/file-tokens.ts";
@@ -18,6 +20,7 @@ import type { OperationClass } from "@/plugin/app/operation.ts";
 import { OPERATION_FACTORY } from "@/plugin/app/operation-runner.ts";
 import { ContainerOperationFactory } from "@/plugin/main/container-operation-factory.ts";
 import { ApplyOperation } from "@/plugin/operations/apply/apply.operation.ts";
+import { APPLY_FONTS, ApplyFonts } from "@/plugin/operations/apply/apply-fonts.ts";
 import { APPLY_IMAGES, ApplyImages } from "@/plugin/operations/apply/apply-images.ts";
 import { APPLY_LAYERS, ApplyLayers } from "@/plugin/operations/apply/apply-layers.ts";
 import { APPLY_RUN, ApplyRun } from "@/plugin/operations/apply/apply-run.ts";
@@ -49,6 +52,9 @@ import { OpacityStep } from "@/plugin/operations/apply/writers/opacity-step.ts";
 import { PAINT_WRITE, PaintWrite } from "@/plugin/operations/apply/writers/paint-write.ts";
 import { STEP_VALUES, StepValues } from "@/plugin/operations/apply/writers/step-values.ts";
 import { StrokesStep } from "@/plugin/operations/apply/writers/strokes-step.ts";
+import { TEXT_LOOK, TextLook } from "@/plugin/operations/apply/writers/text-look.ts";
+import { TEXT_RUNS, TextRuns } from "@/plugin/operations/apply/writers/text-runs.ts";
+import { TEXT_WRITER, TextWriter } from "@/plugin/operations/apply/writers/text-writer.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
 import { COMPONENT_DETAILS, ComponentDetails } from "@/plugin/operations/components/component-details.ts";
@@ -147,6 +153,12 @@ export class OperationProviders {
       .bind({ provide: LAYER_FACTORY, useClass: LayerFactory })
       .bind({ provide: STEP_VALUES, useClass: StepValues })
       .bind({ provide: STEP_GEOMETRY, useClass: StepGeometry })
+      .bind({ provide: LAYER_BOXES, useClass: LayerBoxes })
+      .bind({ provide: FONT_CATALOG, useClass: FontCatalog })
+      .bind({ provide: APPLY_FONTS, useClass: ApplyFonts })
+      .bind({ provide: TEXT_RUNS, useClass: TextRuns })
+      .bind({ provide: TEXT_LOOK, useClass: TextLook })
+      .bind({ provide: TEXT_WRITER, useClass: TextWriter })
       .bind({ provide: LAYER_WRITER, useClass: LayerWriter })
       .bind({ provide: APPLY_CHECKS, useClass: ApplyChecks })
       .bind({ provide: PLACEMENT_SPAN, useClass: PlacementSpan })

@@ -6,15 +6,19 @@ import { PAGE_LOADER } from "@/plugin/adapters/figma/lookup/page-loader.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { APPLY_TEXT, NEW_LAYER_TYPE, TEXT_TAG } from "@/plugin/operations/apply/apply.constants.ts";
 import { WRITE_STEPS } from "@/plugin/operations/apply/writers/layer-writer.ts";
-import { HIDDEN_KEY } from "@/plugin/operations/apply/writers/writers.constants.ts";
+import { HIDDEN_KEY, STEP_KEYS } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import type { ApplyChangeData } from "@/shared/ops/apply/apply.schema.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
-/** One refusal: its error, the props it leaves unwritten, and whether it is the text's. */
+/**
+ * One refusal: its error, the props it leaves unwritten, whether it is the text's, and the Span those props belong to
+ * (a Span's key leaves only that Span's own value unwritten, not the element's).
+ */
 export interface Refusal {
   readonly error: unknown;
   readonly keys: readonly (keyof FigmaProps)[];
   readonly text?: boolean;
+  readonly span?: number;
 }
 
 /**
@@ -113,7 +117,7 @@ export class ApplyChecks {
   /** What the write refuses the change for its layer's type alone, the same on dry and real runs. */
   refusals(layer: TypedLayer, change: ApplyChangeData): Refusal[] {
     const refusals: Refusal[] = [];
-    const written = new Set<keyof FigmaProps>([HIDDEN_KEY]);
+    const written = new Set<keyof FigmaProps>([HIDDEN_KEY, ...STEP_KEYS.text]);
 
     for (const step of this.#steps) {
       for (const key of step.keys) {
@@ -136,19 +140,17 @@ export class ApplyChecks {
     return [...refusals, ...this.#textRefusals(layer, change)];
   }
 
-  /** A text given to a layer that holds none; Span runs, written from a later release (the characters still are). */
-  #textRefusals(layer: TypedLayer, { text }: ApplyChangeData): Refusal[] {
-    if (text === undefined) {
+  /** A text, or what a text and its runs set, given to a layer that holds none. */
+  #textRefusals(layer: TypedLayer, { text, props }: ApplyChangeData): Refusal[] {
+    const keys = STEP_KEYS.text.filter((key) => props[key] !== undefined);
+
+    if (text === undefined && keys.length === 0) {
       return [];
     }
 
     const refusals: Refusal[] = [];
 
-    this.#attempt(refusals, [], () => this.#capabilities.require(layer, CAPABILITY.text), true);
-
-    if (refusals.length === 0 && text.runs.length > 0) {
-      refusals.push({ error: new WriteError(APPLY_TEXT.notYet(APPLY_TEXT.span)), keys: [] });
-    }
+    this.#attempt(refusals, keys, () => this.#capabilities.require(layer, CAPABILITY.text), true);
 
     return refusals;
   }

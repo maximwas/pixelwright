@@ -112,7 +112,7 @@ export class NewLayers {
     }
   }
 
-  /** The layer of the type: a slot in its component, an Icon drawn from its SVG (T-131), else a bare one. */
+  /** The layer of the type: a slot in its component, an Icon drawn from its SVG (T-131), a TextPath along its path, else a bare one. */
   #made(
     type: NodeType,
     change: ApplyChangeData,
@@ -124,6 +124,11 @@ export class NewLayers {
       return (parent as ComponentNode).createSlot();
     }
 
+    if (type === FIGMA_NODE_TYPE.textPath) {
+      // The planner sends a new TextPath only with its path (C-179).
+      return this.#factory.textPath(change.props.path ?? "", change.props.pathStart);
+    }
+
     return svg === undefined ? this.#factory.make(type, APPLY_TEXT.cannotMake(change.tag)) : this.#factory.icon(svg);
   }
 
@@ -132,7 +137,7 @@ export class NewLayers {
 
     if (
       props.fills === undefined &&
-      node.type !== FIGMA_NODE_TYPE.text &&
+      !this.#capabilities.has(node, CAPABILITY.text) &&
       this.#capabilities.has(node, CAPABILITY.fills)
     ) {
       this.#assign.set(shape, { fills: [] });

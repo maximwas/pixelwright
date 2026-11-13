@@ -15,7 +15,7 @@ interface Entry {
   readonly key?: string;
 }
 
-export type StyleKind = typeof TOKEN_KIND.paint | typeof TOKEN_KIND.effect;
+export type StyleKind = typeof TOKEN_KIND.paint | typeof TOKEN_KIND.effect | typeof TOKEN_KIND.text;
 
 /**
  * Tokens by the CSS names design_read gives them (T-135, P-097): the file's styles and variables and the library ones

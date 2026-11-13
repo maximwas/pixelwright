@@ -38,6 +38,7 @@ describe("LayerWriter.checks", () => {
         step("name", ["name"], false),
         step("blend", ["blendMode"]),
       ],
+      { checks: async () => [] } as never,
       {} as never,
       {} as never,
     );

@@ -34,7 +34,107 @@ export const STEP_KEYS = {
   asset: ["asset"],
   modes: ["modes"],
   notes: ["notes"],
+  /** What the text writer takes, after the steps: a text's runs, its box's text settings, a new TextPath's path. */
+  text: [
+    "textStyle",
+    "font",
+    "letterSpacing",
+    "textCase",
+    "textDecoration",
+    "textFills",
+    "hyperlink",
+    "textAlignHorizontal",
+    "textWrapStyle",
+    "truncate",
+    "pathStart",
+    "path",
+  ],
 } as const satisfies Record<string, readonly (keyof FigmaProps)[]>;
+
+/**
+ * What a run of text sets, in the order Figma needs it (a style first: it resets what it covers), with the segment
+ * fields that tell the runs having the text's own value (P-152).
+ */
+export const TEXT_RUN_FIELDS = [
+  ["textStyle", ["textStyleId"]],
+  ["font", ["fontName", "fontSize", "lineHeight"]],
+  ["letterSpacing", ["letterSpacing"]],
+  ["textCase", ["textCase"]],
+  ["textDecoration", ["textDecoration"]],
+  ["textFills", ["fills", "fillStyleId"]],
+  ["hyperlink", ["hyperlink"]],
+] as const satisfies readonly (readonly [keyof FigmaProps, readonly (keyof StyledTextSegment)[]])[];
+
+/** The box's text settings, written over the whole layer. */
+export const TEXT_BOX_KEYS = ["textAlignHorizontal", "textWrapStyle", "truncate", "pathStart"] as const;
+
+/** A run's look kept across new characters: Figma gives new characters the first one's (P-152). */
+export const TEXT_BASE_FIELDS = [
+  "fontName",
+  "fontSize",
+  "lineHeight",
+  "letterSpacing",
+  "textCase",
+  "textDecoration",
+  "fills",
+  "fillStyleId",
+  "textStyleId",
+  "hyperlink",
+  "boundVariables",
+] as const satisfies readonly (keyof StyledTextSegment)[];
+
+/** The look a text style sets: a restored run takes these from its style, not as values over it. */
+export const TEXT_STYLED_FIELDS = [
+  "fontName",
+  "fontSize",
+  "lineHeight",
+  "letterSpacing",
+  "textCase",
+  "textDecoration",
+] as const;
+
+/** What a text on a path lacks of a text's look: no lines, no decoration. */
+export const TEXT_LINED_FIELDS = ["lineHeight", "textDecoration"] as const;
+
+/**
+ * Each text field over a range: the layer's own property (or its async setter) for an empty range, since Figma refuses
+ * a range of no characters (P-078), else its setRange method.
+ */
+export const TEXT_RANGE_FIELD = {
+  fontName: { property: "fontName", range: "setRangeFontName" },
+  fontSize: { property: "fontSize", range: "setRangeFontSize" },
+  lineHeight: { property: "lineHeight", range: "setRangeLineHeight" },
+  letterSpacing: { property: "letterSpacing", range: "setRangeLetterSpacing" },
+  textCase: { property: "textCase", range: "setRangeTextCase" },
+  textDecoration: { property: "textDecoration", range: "setRangeTextDecoration" },
+  textDecorationStyle: { property: "textDecorationStyle", range: "setRangeTextDecorationStyle" },
+  textDecorationColor: { property: "textDecorationColor", range: "setRangeTextDecorationColor" },
+  textDecorationOffset: { property: "textDecorationOffset", range: "setRangeTextDecorationOffset" },
+  textDecorationThickness: { property: "textDecorationThickness", range: "setRangeTextDecorationThickness" },
+  fills: { property: "fills", range: "setRangeFills" },
+  hyperlink: { property: "hyperlink", range: "setRangeHyperlink" },
+  textStyleId: { whole: "setTextStyleIdAsync", range: "setRangeTextStyleIdAsync" },
+  fillStyleId: { whole: "setFillStyleIdAsync", range: "setRangeFillStyleIdAsync" },
+} as const;
+
+/** What only one kind of text layer has, and what its refusal calls it: a text on a path has fewer of a text's. */
+export const TEXT_OWN = {
+  textDecoration: ["TEXT", "underline or strike-through"],
+  textWrapStyle: ["TEXT", "text wrapping"],
+  truncate: ["TEXT", "truncation"],
+  pathStart: ["TEXT_PATH", "path for its text to start on"],
+} as const satisfies Partial<Record<keyof FigmaProps, readonly [NodeType, string]>>;
+
+/** Figma's text values the text writer sets. */
+export const TEXT_FIGMA = {
+  auto: "AUTO",
+  solid: "SOLID",
+  url: "URL",
+  ending: "ENDING",
+  disabled: "DISABLED",
+  /** Truncation shows one line, then an ellipsis. */
+  truncatedLines: 1,
+} as const;
 
 /** The paint lists a layer has, and the style field beside each. */
 export const PAINT_FIELD = { fills: "fills", strokes: "strokes" } as const;
@@ -110,6 +210,11 @@ export const WRITERS_TEXT = {
   noModes: (type: string) => `A ${type} takes no variable modes.`,
   noCollection: (slug: string) => `data-${slug} names no variable collection this file reaches.`,
   modesHint: "tokens_read lists the file's collections and their modes.",
+  noTextStyle: (token: string) => `No text style is named ${token} in this file or the libraries its page uses.`,
+  textStyleHint: "tokens_read lists the file's text styles.",
+  unloaded: (family: string, style: string) =>
+    `The text uses ${family} ${style}, which this Figma cannot load: its characters cannot change.`,
+  unloadedHint: "Install the font, or give the text a font this Figma has first.",
   noMode: (
     collection: string,
     mode: string,
