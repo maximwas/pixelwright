@@ -5,7 +5,7 @@ import { PRECISION } from "@/core/kernel/numbers/precision.constants.ts";
 import { MODEL_NUMBER, NUMBER_UNIT } from "@/core/tokens/model/model.constants.ts";
 import { NUMBER_UNITS, type NumberUnit } from "@/core/tokens/model/number-units.ts";
 import { PLAN_TEXT } from "@/core/tokens/plan/plan.constants.ts";
-import type { CollectionDraft, VariableEntry } from "@/core/tokens/plan/plan.types.ts";
+import type { CollectionDraft, NumberedDrafts, VariableEntry } from "@/core/tokens/plan/plan.types.ts";
 import { PLAN_VALUE, WRITABLE_TYPE } from "@/shared/ops/tokens-apply/tokens-apply.constants.ts";
 
 /**
@@ -24,7 +24,7 @@ export class PlainNumbers {
     this.#format = format;
   }
 
-  numbers(drafts: readonly CollectionDraft[],    held: ReadonlyMap<string, NumberUnit>): { drafts: CollectionDraft[]; notes: string[] } {
+  numbers(drafts: readonly CollectionDraft[], held: ReadonlyMap<string, NumberUnit>): NumberedDrafts {
     const aliased = this.#aliased(drafts.flatMap(({ entries }) => entries));
     const notes: string[] = [];
     const numbered = drafts.map((draft) => ({

@@ -74,6 +74,13 @@
     },
     {
       "kind": "variable",
+      "name": "Pointer/Kit",
+      "collection": "Spacing",
+      "mode": "Base",
+      "message": "--Primary names no variable in this file or in this call."
+    },
+    {
+      "kind": "variable",
       "name": "Pointer/Chain",
       "collection": "Spacing",
       "mode": "Base",

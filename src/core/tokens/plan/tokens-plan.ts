@@ -1,18 +1,10 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
+import { COLLECTION_PLANS } from "@/core/tokens/plan/collection-plans.ts";
 import { HELD_TOKENS } from "@/core/tokens/plan/held-tokens.ts";
-import { PLAIN_NUMBERS } from "@/core/tokens/plan/plain-numbers.ts";
-import { PLAN_TEXT } from "@/core/tokens/plan/plan.constants.ts";
-import type { CollectionInput, TokensInput } from "@/core/tokens/plan/plan.schema.ts";
-import type {
-  CollectionDraft,
-  FileTokens,
-  HeldCollection,
-  PlannedTokens,
-  VariableEntry,
-} from "@/core/tokens/plan/plan.types.ts";
+import type { TokensInput } from "@/core/tokens/plan/plan.schema.ts";
+import type { CollectionDraft, PlannedTokens } from "@/core/tokens/plan/plan.types.ts";
 import { STYLE_PLANS } from "@/core/tokens/plan/style-plans.ts";
-import { VARIABLE_PLANS } from "@/core/tokens/plan/variable-plans.ts";
-import { PLAN_VALUE, TOKEN_KIND } from "@/shared/ops/tokens-apply/tokens-apply.constants.ts";
+import { TOKEN_KIND } from "@/shared/ops/tokens-apply/tokens-apply.constants.ts";
 import type { TokenError, TokenItem } from "@/shared/ops/tokens-apply/tokens-apply.schema.ts";
 import type { RawTokens } from "@/shared/ops/variables/variables.schema.ts";
 
@@ -26,30 +18,24 @@ import type { RawTokens } from "@/shared/ops/variables/variables.schema.ts";
 @injectable()
 export class TokensPlan {
   readonly #held;
-  readonly #variables;
+  readonly #collections;
   readonly #styles;
-  readonly #numbers;
 
   constructor(
     held = inject(HELD_TOKENS),
-    variables = inject(VARIABLE_PLANS),
+    collections = inject(COLLECTION_PLANS),
     styles = inject(STYLE_PLANS),
-    numbers = inject(PLAIN_NUMBERS),
   ) {
     this.#held = held;
-    this.#variables = variables;
+    this.#collections = collections;
     this.#styles = styles;
-    this.#numbers = numbers;
   }
 
   plan(input: TokensInput, raw: RawTokens): PlannedTokens {
     const file = this.#held.of(raw);
     const errors: TokenError[] = [];
-    const drafts = input.collections.flatMap((collection) => this.#draft(collection, file, errors) ?? []);
-    const { drafts: numbered, notes } = this.#numbers.numbers(this.#linked(drafts, file, errors), file.units);
-    const kept = numbered.filter(
-      ({ id, modes, entries }) => id === undefined || modes.length > 0 || entries.length > 0,
-    );
+    const { drafts, notes } = this.#collections.plan(input.collections, file, errors);
+    const kept = drafts.filter(({ id, modes, entries }) => id === undefined || modes.length > 0 || entries.length > 0);
     const styles = this.#styles.plan(input.styles, file.styles);
 
     return {
@@ -72,95 +58,6 @@ export class TokensPlan {
       errors: [...errors, ...styles.errors],
       notes,
     };
-  }
-
-  /** A collection of the call set against the file's of its name; null for a library's, whose changes are errors. */
-  #draft(
-    collection: CollectionInput,
-    file: FileTokens,
-    errors: TokenError[],
-  ): CollectionDraft | null {
-    const found =
-      file.collections.find(({ name, remote }) => name === collection.name && !remote) ??
-      file.collections.find(({ name }) => name === collection.name);
-
-    if (found === undefined && file.library.has(collection.name)) {
-      errors.push({ kind: TOKEN_KIND.collection, name: collection.name, message: PLAN_TEXT.library(collection.name) });
-
-      return null;
-    }
-
-    const modes = this.#modes(collection, found);
-    const entries = collection.variables.flatMap((input) => {
-      const fail = (message: string, mode?: string) =>
-        errors.push({ ...this.#named(input.name, collection.name), ...(mode === undefined ? {} : { mode }), message });
-
-      return (
-        this.#variables.plan(
-          input,
-          found?.variables.find(({ name }) => name === input.name),
-          fail,
-        ) ?? []
-      );
-    });
-
-    if (found?.remote ?? false) {
-      const message = PLAN_TEXT.library(collection.name);
-
-      errors.push(
-        ...modes.map((mode) => ({ kind: TOKEN_KIND.mode, name: mode, collection: collection.name, message })),
-        ...entries.map(({ plan }) => ({ ...this.#named(plan.name, collection.name), message })),
-      );
-
-      return null;
-    }
-
-    return { name: collection.name, ...(found === undefined ? {} : { id: found.id }), modes, entries };
-  }
-
-  /** The modes to add: those the call names that the collection lacks, in the order they first appear (K-025). */
-  #modes(collection: CollectionInput, found: HeldCollection | undefined): string[] {
-    const named = new Set([
-      ...(collection.modes ?? []),
-      ...collection.variables.flatMap(({ values }) => Object.keys(values)),
-    ]);
-
-    return [...named].filter((mode) => !(found?.modes.includes(mode) ?? false));
-  }
-
-  /** The drafts without the variables whose aliases point at no token of the file or of the call, each an error. */
-  #linked(
-    drafts: readonly CollectionDraft[],
-    file: FileTokens,
-    errors: TokenError[],
-  ): CollectionDraft[] {
-    let kept = [...drafts];
-
-    // A variable left out leaves out those pointing at it in turn.
-    for (let broken = this.#broken(kept, file); broken.size > 0; broken = this.#broken(kept, file)) {
-      errors.push(...[...broken.values()].flat());
-      kept = kept.map((draft) => ({ ...draft, entries: draft.entries.filter((entry) => !broken.has(entry)) }));
-    }
-
-    return kept;
-  }
-
-  #broken(drafts: readonly CollectionDraft[], file: FileTokens): Map<VariableEntry, TokenError[]> {
-    const known = new Set([...file.tokens, ...drafts.flatMap(({ entries }) => entries.map(({ token }) => token))]);
-
-    return new Map(
-      drafts.flatMap(({ name, entries }) =>
-        entries.flatMap((entry) => {
-          const missing = Object.entries(entry.plan.values).flatMap(([mode, value]) =>
-            value.kind === PLAN_VALUE.alias && !known.has(value.token)
-              ? [{ ...this.#named(entry.plan.name, name), mode, message: PLAN_TEXT.noTarget(value.token) }]
-              : [],
-          );
-
-          return missing.length === 0 ? [] : [[entry, missing] as const];
-        }),
-      ),
-    );
   }
 
   /** What a collection's plan makes: the collection when it is new, its modes, its new variables. */

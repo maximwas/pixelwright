@@ -5,7 +5,7 @@ import { VARIABLE_VALUE } from "@/core/tokens/model/model.constants.ts";
 import type { TokenVariable } from "@/core/tokens/model/model.schema.ts";
 import { PLAN_PATTERN, PLAN_TEXT } from "@/core/tokens/plan/plan.constants.ts";
 import type { VariableInput } from "@/core/tokens/plan/plan.schema.ts";
-import type { Fail, VariableEntry } from "@/core/tokens/plan/plan.types.ts";
+import type { Fail, UnlinkedEntry } from "@/core/tokens/plan/plan.types.ts";
 import { VARIABLE_VALUES } from "@/core/tokens/plan/variable-values.ts";
 import { SCOPE_RULES } from "@/core/tokens/scopes/scope-rules.ts";
 import { PLAN_VALUE } from "@/shared/ops/tokens-apply/tokens-apply.constants.ts";
@@ -48,7 +48,7 @@ export class VariablePlans {
     variable: VariableInput,
     held: TokenVariable | undefined,
     fail: Fail,
-  ): VariableEntry | null {
+  ): UnlinkedEntry | null {
     if (PLAN_PATTERN.refusedName.test(variable.name)) {
       fail(PLAN_TEXT.refusedName(variable.name));
 
@@ -190,7 +190,10 @@ export class VariablePlans {
     };
   }
 
-  /** The scopes to write, deduplicated, when given and other than the file's; null when Figma would refuse them. */
+  /**
+   * The scopes to write, deduplicated, when given and other than the file's; null when Figma would refuse them. A new
+   * variable of only aliases has no type yet: AliasLinks checks its scopes once its target's type is the variable's.
+   */
   #scopesChange(
     variable: VariableInput,
     held: TokenVariable | undefined,

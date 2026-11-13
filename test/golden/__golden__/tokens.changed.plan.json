@@ -99,15 +99,17 @@
         "variables": [
           {
             "name": "Surface/Alias",
-            "type": null,
+            "type": "COLOR",
             "values": {
               "Night": {
                 "kind": "alias",
-                "token": "--Ink"
+                "token": "--Ink",
+                "id": "V:ink"
               },
               "Day": {
                 "kind": "alias",
-                "token": "--surface"
+                "token": "--surface",
+                "id": "V:surface"
               }
             }
           },

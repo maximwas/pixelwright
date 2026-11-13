@@ -15,6 +15,8 @@ import { NUMBER_UNITS, NumberUnits } from "@/core/tokens/model/number-units.ts";
 import { STYLE_TOKENS, StyleTokens } from "@/core/tokens/model/style-tokens.ts";
 import { TOKEN_MODEL, TokenModel } from "@/core/tokens/model/token-model.ts";
 import { VARIABLE_CSS, VariableCss } from "@/core/tokens/model/variable-css.ts";
+import { ALIAS_LINKS, AliasLinks } from "@/core/tokens/plan/alias-links.ts";
+import { COLLECTION_PLANS, CollectionPlans } from "@/core/tokens/plan/collection-plans.ts";
 import { HELD_TOKENS, HeldTokens } from "@/core/tokens/plan/held-tokens.ts";
 import { PLAIN_NUMBERS, PlainNumbers } from "@/core/tokens/plan/plain-numbers.ts";
 import { STYLE_PLANS, StylePlans } from "@/core/tokens/plan/style-plans.ts";
@@ -53,6 +55,8 @@ export class TokenProviders {
       .bind({ provide: SCOPE_RULES, useClass: ScopeRules })
       .bind({ provide: VARIABLE_VALUES, useClass: VariableValues })
       .bind({ provide: VARIABLE_PLANS, useClass: VariablePlans })
+      .bind({ provide: ALIAS_LINKS, useClass: AliasLinks })
+      .bind({ provide: COLLECTION_PLANS, useClass: CollectionPlans })
       .bind({ provide: STYLE_PLANS, useClass: StylePlans })
       .bind({ provide: HELD_TOKENS, useClass: HeldTokens })
       .bind({ provide: PLAIN_NUMBERS, useClass: PlainNumbers })

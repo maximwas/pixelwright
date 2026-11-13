@@ -5,7 +5,7 @@ import type { StyleTokenGroups } from "@/core/tokens/model/model.schema.ts";
 import { NUMBER_UNITS } from "@/core/tokens/model/number-units.ts";
 import { TOKEN_MODEL } from "@/core/tokens/model/token-model.ts";
 import { STYLE_SUFFIXES } from "@/core/tokens/plan/plan.constants.ts";
-import type { FileTokens, HeldCollection, HeldStyle } from "@/core/tokens/plan/plan.types.ts";
+import type { FileTokens, HeldCollection, HeldStyle, HeldTarget } from "@/core/tokens/plan/plan.types.ts";
 import type { RawTokens } from "@/shared/ops/variables/variables.schema.ts";
 
 /**
@@ -43,13 +43,36 @@ export class HeldTokens {
     return {
       collections,
       styles: this.#styles(raw, model.styles),
-      tokens: new Set([
-        ...collections.flatMap(({ variables }) => variables.map(({ token }) => token)),
-        ...Object.values(raw.external).map((variable) => this.#names.variable(variable)),
-      ]),
+      tokens: this.#targets(raw, collections),
       units: this.#units.units(raw.variables),
       library: new Set((raw.library ?? []).map(({ collection }) => collection)),
     };
+  }
+
+  /** Each variable an alias can reach by its token; the file's own wins over a library's of the same token. */
+  #targets(raw: RawTokens, collections: readonly HeldCollection[]): Map<string, HeldTarget> {
+    const library = Object.entries(raw.external).map(
+      ([id, variable]) => [this.#names.variable(variable), { id, type: variable.resolvedType, aliases: {} }] as const,
+    );
+    const own = collections.flatMap(({ variables }) =>
+      variables.map(
+        ({ token, id, type, aliasOf }) =>
+          [
+            token,
+            {
+              id,
+              type,
+              aliases: Object.fromEntries(
+                Object.entries(aliasOf ?? {}).flatMap(([mode, [direct]]) =>
+                  direct === undefined ? [] : [[mode, direct]],
+                ),
+              ),
+            },
+          ] as const,
+      ),
+    );
+
+    return new Map([...library, ...own]);
   }
 
   /**

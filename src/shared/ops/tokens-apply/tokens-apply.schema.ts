@@ -17,22 +17,24 @@ const optional = zod.exactOptional;
 
 /**
  * A variable's value in one mode in Figma's terms: a number as Figma keeps it (an opacity in percent, FX-049, so 0.5
- * is written 50), a colour on the wire, an alias by its target's token.
+ * is written 50), a colour on the wire, an alias by its target's token. An alias carries its target's id when the file
+ * holds the target (a library's the page uses too); one made in the same call has none, and is found by token among
+ * the variables the writer made.
  */
 const PlanValueSchema = zod.discriminatedUnion(PLAN_VALUE_FIELD, [
   zod.strictObject({ kind: zod.literal(PLAN_VALUE.color), color: ColorValueSchema }),
   zod.strictObject({ kind: zod.literal(PLAN_VALUE.number), value: zod.number() }),
   zod.strictObject({ kind: zod.literal(PLAN_VALUE.string), value: zod.string() }),
   zod.strictObject({ kind: zod.literal(PLAN_VALUE.boolean), value: zod.boolean() }),
-  zod.strictObject({ kind: zod.literal(PLAN_VALUE.alias), token: zod.string() }),
+  zod.strictObject({ kind: zod.literal(PLAN_VALUE.alias), token: zod.string(), id: optional(zod.string()) }),
 ]);
 
 /** A variable to make (no id) or to change (its id), with only what differs from what the file holds. */
 const VariablePlanSchema = zod.strictObject({
   name: zod.string(),
   id: optional(zod.string()),
-  /** Null for a new variable whose every value is an alias: it takes its target's type. */
-  type: zod.nullable(zod.enum(WRITABLE_TYPE)),
+  /** Always known: a new variable of only aliases has its target's, and one nothing types is refused in core. */
+  type: zod.enum(WRITABLE_TYPE),
   /** By mode name: only the modes whose value differs. */
   values: zod.record(zod.string(), PlanValueSchema),
   description: optional(zod.string()),
@@ -57,6 +59,8 @@ const StyleFields = { name: zod.string(), id: optional(zod.string()) };
 /**
  * What the plugin writes (T-165): only what the file lacks or holds otherwise, nothing to delete; each style as
  * design_apply's own readers made its CSS (C-173), an effect style replacing only the effect types its CSS names.
+ * No order is needed among variables: every new variable has its type, so the writer makes them all first and writes
+ * the values after, and core has refused an alias cycle and an alias of another type than its variable's.
  */
 const TokensPlanSchema = zod.strictObject({
   collections: zod.array(CollectionPlanSchema),

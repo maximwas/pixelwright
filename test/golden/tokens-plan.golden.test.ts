@@ -1,42 +1,9 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import * as zod from "zod/mini";
-import { TOKEN_MODEL } from "@/core/tokens/model/token-model.ts";
-import { TokensInputSchema } from "@/core/tokens/plan/plan.schema.ts";
-import { TOKENS_PLAN } from "@/core/tokens/plan/tokens-plan.ts";
-import { ServerMain } from "@/server/main/server.main.ts";
 import { type RawTokens, RawTokensSchema } from "@/shared/ops/variables/variables.schema.ts";
 import { goldenTokens } from "./fixtures/tokens-input.ts";
-
-/** The planner and the token model as the server's root binds them. */
-const container = new ServerMain({
-  home: mkdtempSync(join(tmpdir(), "pixelwright-tokens-plan-")),
-  logLevel: "silent",
-  pluginBridge: false,
-  bridgePort: 0,
-  pluginOrigins: [],
-  projectDir: tmpdir(),
-}).container();
-const planner = container.get(TOKENS_PLAN);
-const model = container.get(TOKEN_MODEL);
+import { EMPTY, plan, readJson } from "./support/tokens-planner.ts";
 
 const pretty = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
-
-/** tokens_read's JSON of a file: the model without its notes, as tokens_read answers it in `tokens`. */
-function readJson(raw: RawTokens): unknown {
-  const { notes: _notes, ...tokens } = model.model(raw);
-
-  return tokens;
-}
-
-/** The plan of tokens as tokens_apply takes them, its schema's defaults filled in, against the file's raw tokens. */
-function plan(tokens: unknown, raw: RawTokens = goldenTokens()) {
-  return planner.plan(zod.parse(TokensInputSchema, tokens), raw);
-}
-
-const EMPTY = RawTokensSchema.parse({ collections: [], variables: [], external: {}, styles: [] });
 
 const NOTHING = {
   plan: { collections: [], styles: { paint: [], text: [], effect: [] } },
@@ -169,6 +136,8 @@ const REFUSED = {
         { name: "Ease/In", type: "EASING", values: { Base: "ease-in" } },
         { name: "Pointer", values: { Base: "var(--Nowhere)" } },
         { name: "Pointer/Chain", values: { Base: "var(--Pointer)" } },
+        // A library variable the page does not use is no target: Figma gives the alias only what the file holds.
+        { name: "Pointer/Kit", values: { Base: "var(--Primary)" } },
       ],
     },
     {

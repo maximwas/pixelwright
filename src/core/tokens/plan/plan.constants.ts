@@ -94,6 +94,18 @@ export const PLAN_TEXT = {
     `It is a ${type} variable in the file, and a variable's type cannot change: give the new one another name.`,
   library: (name: string) => `${name} comes from a library: change it there.`,
   noTarget: (token: string) => `${token} names no variable in this file or in this call.`,
+  twice: (name: string, collection: string) =>
+    `${name} is listed twice in ${collection}: only the first is planned. Merge the two, or give one another name.`,
+  cycle: (path: readonly string[]) =>
+    `${path.join(" → ")}: an alias cannot lead back to the variable it belongs to. Give one of them a value.`,
+  typeClash: (
+    token: string,
+    target: string,
+    own: string,
+  ) =>
+    `${token} is a ${target} variable and this one is ${own}: an alias takes a target of its own type. Point it at a ${own} variable, or change its type.`,
+  noType: (name: string) =>
+    `${name} has no value that gives its type: its values are comments, or aliases to variables whose type is not known. Give it a type or a value.`,
   unitless: (name: string, collection: string) =>
     `${name} (${collection}) holds plain numbers and no scope keeps them plain: Figma offers it for every field and tokens_read reads them back in px. Give it scopes (FONT_WEIGHT, OPACITY…) to keep them plain.`,
   suffix: (property: string) => `-${property}`,
