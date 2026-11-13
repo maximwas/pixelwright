@@ -217,7 +217,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     (pixelmatch 8.0.0: the differing pixels, their box and the difference image, A§15.7).
   - `process/`: `ExecFileRunner`, the `ProcessRunner` port on execFile; `http/`: `NpmRegistry`, npm's newest release;
     `FontsourceDirectory` (Fontsource's API, A§15.5) with `GoogleMetadataDirectory` (Google's catalogue) as its
-    fallback, what Google Fonts serves for fonts_check, read once for the server.
+    fallback, what Google Fonts serves for fonts_check, read once for the server; `FontsourceAxes` (the `FONT_AXES`
+    port: a variable family's axis ranges, which the Plugin API does not give, for fonts_check and design_apply's
+    `fontAxes`).
 - `server/main/`: `ServerMain`, the server's composition root, its providers, `ContainerToolFactory`, the config
   reader, `McpEndpoint`, the shutdown hooks.
 - `cli/`: the `pixelwright` binary: `bin.ts` (the Node gate, then a dynamic import) and `CliMain`, the CLI's
