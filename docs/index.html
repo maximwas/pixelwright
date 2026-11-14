@@ -96,12 +96,14 @@ once; tools work on the one whose plugin window was in front last, or on the fil
 <ul>
 <li><strong>No REST API, no token.</strong> The plugin reads the file through Figma&#39;s Plugin API, on your computer. The server
 listens on localhost only, and a plugin pairs once with a code you type in; unpaired windows get nothing.</li>
-<li><strong>Writes wait for your switch.</strong> <code>design_apply</code>, <code>nodes_delete</code> and <code>version_save</code> change the file, and so can
-<code>execute</code>, which runs plugin code the agent writes (its scripts over the reads never write). <strong>Allow edits</strong> in the
-plugin window is off until you turn it on for a file; while it is off, the plugin refuses every write, and the
-agent can still check a change with a dry run. Your choice is remembered per file on your computer.</li>
-<li><strong>Undo.</strong> One <code>design_apply</code> or <code>nodes_delete</code> call is one undo step in Figma. With <code>version</code>, a call first saves a
-named version you can go back to; the plugin cannot delete a version, so it stays in the file&#39;s history.</li>
+<li><strong>Writes wait for your switch.</strong> <code>design_apply</code>, <code>nodes_delete</code>, <code>version_save</code>, <code>tokens_apply</code> and <code>tokens_bind</code>
+change the file, and so can <code>execute</code>, which runs plugin code the agent writes (its scripts over the reads never
+write). <strong>Allow edits</strong> in the plugin window is off until you turn it on for a file; while it is off, the plugin
+refuses every write, and the agent can still check a change with a dry run. Your choice is remembered per file on your
+computer.</li>
+<li><strong>Undo.</strong> One <code>design_apply</code>, <code>nodes_delete</code>, <code>tokens_apply</code> or <code>tokens_bind</code> call is one undo step in Figma. With
+<code>version</code>, a call first saves a named version you can go back to; the plugin cannot delete a version, so it stays in
+the file&#39;s history.</li>
 <li><code>execute</code> runs code the agent writes: use Pixelwright with agents you trust, as you would with their build scripts.</li>
 <li><strong>What is stored where.</strong> <code>~/.pixelwright/</code> holds the plugin, the bridge&#39;s state (<code>bridge.json</code>), the shared log in
 <code>logs/</code>, npm&#39;s newest version (<code>latest.json</code>), the asset files written (<code>written-files.json</code>) and the library
@@ -118,8 +120,8 @@ Google Fonts which fonts they serve. The plugin&#39;s only network access is the
 <li>The file must be open in Figma Desktop with the plugin&#39;s window open. Figma slows plugins in background tabs: keep
 the file&#39;s tab in front during a long read.</li>
 <li><code>design_apply</code> writes what <code>guide write</code> lists: anything else is refused with its reason, or listed in the
-answer as not written yet. Creating tokens, replacing texts across a file and the design checks come back in a later
-version.</li>
+answer as not written yet. Replacing texts across a file, effects like noise and glass, reattaching detached
+components, inserting icons and the design checks come back in a later version.</li>
 <li>Tested on macOS. On Windows the setup gives Claude Code <code>cmd /c npx …</code>, as its documentation asks; Windows itself is
 not tested yet.</li>
 </ul>
@@ -152,14 +154,16 @@ version. The server asks npm for the newest version once a day (the answer kept 
 <p>Every MCP client session runs its own server. The first one holds the bridge port and the others work through it, so
 every client sees every connected file. A newer server takes the bridge over; the older one then asks you to restart
 Pixelwright in its client (<code>/mcp</code> in Claude Code).</p>
-<h4>From 0.7.0 to 0.8.0</h4>
+<h4>From 0.7.0 to 0.9.0</h4>
 <ul>
 <li><strong>Put the new plugin in place.</strong> Run <code>npx -y pixelwright@latest setup</code> and run the plugin again: a 0.7.0 plugin
 cannot connect to 0.8.0, whose protocol changed. The plugin&#39;s path is the same, so you import nothing again.</li>
 <li><strong>Restart Pixelwright in every MCP client still open</strong> (<code>/mcp</code> in Claude Code): a 0.7.0 server that keeps running
 keeps 0.7.0&#39;s answers.</li>
-<li><strong>0.8.0 reads.</strong> The tools that wrote to the file, and the design checks, are gone until 0.9.0 and 0.10.0; <code>execute</code>
-stays, to read. Code Connect is gone too: the XML no longer carries your project&#39;s code for an instance.</li>
+<li><strong>Writing comes back in part.</strong> 0.8.0 only read; 0.9.0 writes again with <code>design_apply</code>, <code>nodes_delete</code>,
+<code>version_save</code>, <code>tokens_apply</code> and <code>tokens_bind</code>, behind Allow edits. Replacing texts across a file, putting on
+effects, reattaching components, inserting icons and the design checks come in a later version. Code Connect is gone
+too: the XML no longer carries your project&#39;s code for an instance.</li>
 <li><strong>An argument a tool does not name is an error now</strong>, which names it; 0.7.0 ignored it.</li>
 <li>Baselines 0.7.0 saved still read: <code>baseline_diff</code> compares against them as they are.</li>
 </ul>
@@ -299,7 +303,7 @@ stays, to read. Code Connect is gone too: the XML no longer carries your project
 </section>
 <section class="tool" id="tool-guide">
 <h3><code>guide</code> Pixelwright guide</h3>
-<p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files and writing it back, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named and read: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).); script (An execute script over the reads: its limits, its utils, images and the answer types it reads by.); write (design_apply, nodes_delete and version_save: changing, creating, copying and moving layers, pages, components, images, icons, notes and text with design_read&#39;s XML.); layout (design_apply layouts: when to use flex, grid or absolute placement; grid tracks, spans and cells; pinned and centred layers.). Read workflow first in a new task, xml before building from design_read, write before design_apply, and layout before setting a frame&#39;s flex, grid or absolute placement.</p>
+<p>How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files and writing it back, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named, read, written and bound: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).); script (An execute script over the reads: its limits, its utils, images and the answer types it reads by.); write (design_apply, nodes_delete and version_save: changing, creating, copying and moving layers, pages, components, images, icons, notes and text with design_read&#39;s XML.); layout (design_apply layouts: when to use flex, grid or absolute placement; grid tracks, spans and cells; pinned and centred layers.). Read workflow first in a new task, xml before building from design_read, write before design_apply, and layout before setting a frame&#39;s flex, grid or absolute placement.</p>
 <table><thead><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr></thead><tbody>
 <tr><td><code>topic</code><span class="optional">optional</span></td><td><code>&quot;workflow&quot; | &quot;xml&quot; | &quot;tokens&quot; | &quot;assets&quot; | &quot;script&quot; | &quot;write&quot; | &quot;layout&quot;</code></td><td>The topic to read. Default: the list of topics.</td></tr>
 </tbody></table>
@@ -542,9 +546,9 @@ stays, to read. Code Connect is gone too: the XML no longer carries your project
           <h2>Guide: workflow</h2>
 <p class="topic-about">Which tool to use when, from finding a section to its files and writing it back, and how to read a design like a web developer. The agent reads this with <code>guide</code> topic <code>workflow</code>.</p>
 <p>Pixelwright reads and writes the files open in Figma Desktop through its plugin; nothing goes through Figma&#39;s REST
-API. design_apply, nodes_delete and version_save change the file (step 8); every other tool reads. Every tool that
-works on a file takes <code>file</code> (a session id from <code>status</code>, or a file name); without it, the active file, except
-baseline_diff, which compares a baseline in the file it was saved from.</p>
+API. design_apply, nodes_delete, version_save, tokens_apply and tokens_bind change the file (step 8); every other
+tool reads. Every tool that works on a file takes <code>file</code> (a session id from <code>status</code>, or a file name); without it, the
+active file, except baseline_diff, which compares a baseline in the file it was saved from.</p>
 <ol>
 <li><strong>Connection.</strong> <code>status</code> lists the connected files and which one is active. None connected: the user runs the
 Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code <code>status</code>
@@ -615,7 +619,8 @@ live view while the plugin is open.</li>
 <li><strong>Write.</strong> <code>design_apply</code> writes the same XML back into Figma: change layers by id, create, copy and move them.
 <code>nodes_delete</code> deletes layers by id. <code>version_save</code> leaves the designer a named version, when the user asks. Read
 <code>guide write</code> first (Allow edits, dry runs, versions and every rule), and <code>guide layout</code> for flex, grid and
-absolute placement.</li>
+absolute placement. <code>tokens_apply</code> makes the variables and styles a design lacks, and <code>tokens_bind</code> binds the raw
+values under a layer to the tokens that hold them (<code>guide tokens</code>).</li>
 <li><strong>Code, the exception.</strong> The reads answer what code is most often written for, a line per question:<ul>
 <li>texts by content, size or visibility, instances by component or changed property, with ancestors and page:
 <code>nodes_find</code> (<code>text</code> list, <code>textRegex</code>, <code>fontSize</code>, <code>visible</code>, <code>componentId</code>, <code>properties</code>, <code>fields</code>);</li>
@@ -860,9 +865,10 @@ In code an SVG <code>&lt;textPath&gt;</code> over a <code>&lt;path d=&quot;…&q
         </section>
         <section id="guide-tokens">
           <h2>Guide: tokens</h2>
-<p class="topic-about">How tokens are named and read: styles, variables, modes, aliases, units, libraries. The agent reads this with <code>guide</code> topic <code>tokens</code>.</p>
+<p class="topic-about">How tokens are named, read, written and bound: styles, variables, modes, aliases, units, libraries. The agent reads this with <code>guide</code> topic <code>tokens</code>.</p>
 <p><code>design_read</code> writes a bound colour or length as <code>var(--Name)</code> and lists the values it used in <code>tokens</code>;
-<code>tokens_read</code> returns the whole set, and <code>tokens_usage</code> the layers that use one.</p>
+<code>tokens_read</code> returns the whole set, and <code>tokens_usage</code> the layers that use one. <code>tokens_apply</code> writes tokens, and
+<code>tokens_bind</code> binds the raw values on layers to them (Writing tokens, below).</p>
 <h3>Names</h3>
 <ul>
 <li>A style: its name with every run of other characters than letters, digits, _ and - turned into &quot;-&quot;: &quot;Dark&quot; →
@@ -907,6 +913,36 @@ one at a time.</li>
 <code>within: &quot;file&quot;</code>) that use a style or variable, named by its token as above (<code>--White-2</code>, <code>--h1-font</code>,
 <code>--h1-letter-spacing</code>), with where each uses it (fill, stroke, effect, text, a text run, or a bound field). Use it to
 tell same-named styles apart, or to see what a change to a token would touch.</p>
+<h3>Writing tokens</h3>
+<p>Both tools write, so Allow edits, <code>dryRun</code> and <code>version</code> are as <code>guide write</code> has them: run <code>dryRun</code> first (it works with
+Allow edits off). Each tool&#39;s own text holds every input.</p>
+<ul>
+<li><code>tokens_apply</code> takes <code>tokens_read</code>&#39;s json (format json) or its shape by hand: collections with their modes and
+variables, and styles (paint, text, effect). Send only the change. What the file holds, as tokens_read writes it, is
+left as it is, so tokens_read&#39;s own output sent back writes nothing; nothing is deleted; a library&#39;s collection or
+style is never copied into the file (change it in the library).</li>
+<li>A variable&#39;s <code>values</code> are CSS per mode: a colour, px, a number, a quoted string, true or false, and <code>var(--other)</code> for
+an alias to a variable of the call or of the file. Its type comes from its first value (COLOR, FLOAT, STRING and
+BOOLEAN are written) and never changes: a new type is a new name, which has no <code>.</code>, <code>{</code>, <code>}</code> or <code>$</code>.</li>
+<li>A number that is no length (a font weight, an opacity) needs its <code>scopes</code> (FONT_WEIGHT, OPACITY): a new variable is
+offered for every field, and Figma then reads its number as px, which a note says.</li>
+<li>A new variable&#39;s token is its name as Names above writes it (<code>space/4</code> → <code>--space-4</code>), or its <code>codeSyntax.WEB</code>.</li>
+<li>A style&#39;s value is the CSS tokens_read lists for it: a paint style&#39;s colours, a text style&#39;s font shorthand, an
+effect style&#39;s shadows, with a text style&#39;s letter spacing and case, or an effect style&#39;s blurs, after it or in <code>also</code>.
+What a value leaves out, the style keeps.</li>
+<li>A new collection&#39;s first mode renames Figma&#39;s default. More modes than the file&#39;s Figma plan allows (Starter: one a
+collection) are refused mode by mode, the others written; a dry run cannot always know the plan, and a note says so.</li>
+<li><code>errors</code> name each variable, mode or style that could not be written while the rest goes in; <code>notes</code>, what was
+written but will not read back as given.</li>
+<li><code>tokens_bind</code> works on <code>within</code> (a layer, a page or &quot;file&quot;; default: the selection), in each layer&#39;s mode and within
+the variables&#39; scopes. Its dry run lists values in groups: <code>bound</code> (one token holds it exactly), <code>ambiguous</code> (several
+do: <code>choose: [{value, token}]</code> picks, <code>field</code> narrows a pick to background, border, gap…), <code>unmatched</code> (none does:
+make one with <code>tokens_apply</code>, then bind again). A <code>choose</code> for a near value snaps its layers to the token&#39;s value
+(<code>snapped</code>).</li>
+<li><code>remap: [{from: &quot;--blue-500&quot;, to: &quot;--brand&quot;}]</code> merges duplicates: every use of one token moves to another of its
+kind, and raw values are left alone. Instances follow their main components; <code>instances: &quot;override&quot;</code> rebinds the uses
+inside instances as their overrides, for a copy that must differ from its components.</li>
+</ul>
 <h3>Values</h3>
 <ul>
 <li>Colours as hex (rgba when see-through); a colour with an opacity variable as
@@ -1202,7 +1238,8 @@ applies a text style. A shadow&#39;s colour variable is its whole colour, its al
 A number variable binds a size, a min or max size, a gap, a padding side or a radius (<code>gap=&quot;var(--space-md)&quot;</code>); a
 number over a bound one takes the variable off. A section is sized in px only.</li>
 <li>design_apply binds the tokens the file and the libraries it uses have: tokens_read lists them. A <code>var()</code> that names
-none is refused with the near names; a token the design lacks is the designer&#39;s to make in Figma.</li>
+none is refused with the near names; a token the design lacks is made with <code>tokens_apply</code> (dry run first) and
+written here as <code>var(--name)</code>, or its raw value is bound afterwards with <code>tokens_bind</code> (<code>guide tokens</code>).</li>
 <li><code>data-&lt;collection&gt;=&quot;&lt;mode&gt;&quot;</code> sets the layer&#39;s mode of that variable collection (by name or slug, as design_read
 writes it), and <code>&quot;&quot;</code> clears it.</li>
 <li>Gradients: <code>background</code> takes <code>linear-gradient(&lt;angle&gt;, &lt;stops&gt;)</code> (or <code>to right</code>…), <code>radial-gradient(&lt;rx&gt; &lt;ry&gt; at &lt;x&gt; &lt;y&gt;, &lt;stops&gt;)</code> and <code>conic-gradient(from &lt;angle&gt; at &lt;x&gt; &lt;y&gt;, &lt;stops&gt;)</code>, a stop a colour or a token

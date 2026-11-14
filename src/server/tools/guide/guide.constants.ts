@@ -17,7 +17,8 @@ export const GUIDE_TOPIC_ABOUT = {
   workflow:
     "Which tool to use when, from finding a section to its files and writing it back, and how to read a design like a web developer.",
   xml: "The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.",
-  tokens: "How tokens are named and read: styles, variables, modes, aliases, units, libraries.",
+  tokens:
+    "How tokens are named, read, written and bound: styles, variables, modes, aliases, units, libraries.",
   assets: "What becomes a file, in which format, how files are named, and what no file holds (a video).",
   script: "An execute script over the reads: its limits, its utils, images and the answer types it reads by.",
   write:

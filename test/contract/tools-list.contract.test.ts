@@ -212,8 +212,9 @@ describe("the MCP contract", () => {
   it("names only the tools it registers, in its tools, its instructions, the guide and its error texts", async () => {
     const { tools } = await contract.client.listTools();
     const listed = new Set(tools.map(({ name }) => name));
-    // tools.json keeps 0.7.0's entries of the tools this build leaves out on purpose (tokens_apply and the other
-    // writes of 0.10.0): they are the names looked for here, until a build registers them again.
+    // tools.json keeps 0.7.0's entries of the tools this build leaves out on purpose (the design checks, texts_replace,
+    // effects_apply, instances_reattach and icons_insert): they are the names looked for here, until a build registers
+    // them again.
     const unregistered = GOLDEN.map(({ name }) => name).filter((name) => !listed.has(name));
     const topics = TOPIC_NAMES.map(topicText);
     const texts = [JSON.stringify(tools), contract.client.getInstructions() ?? "", ...topics];

@@ -1,9 +1,9 @@
 # Pixelwright: how to work with a Figma file
 
 Pixelwright reads and writes the files open in Figma Desktop through its plugin; nothing goes through Figma's REST
-API. design_apply, nodes_delete and version_save change the file (step 8); every other tool reads. Every tool that
-works on a file takes `file` (a session id from `status`, or a file name); without it, the active file, except
-baseline_diff, which compares a baseline in the file it was saved from.
+API. design_apply, nodes_delete, version_save, tokens_apply and tokens_bind change the file (step 8); every other
+tool reads. Every tool that works on a file takes `file` (a session id from `status`, or a file name); without it, the
+active file, except baseline_diff, which compares a baseline in the file it was saved from.
 
 1. **Connection.** `status` lists the connected files and which one is active. None connected: the user runs the
    Pixelwright plugin in Figma Desktop and keeps its window open (the first time, they type the pairing code `status`
@@ -72,7 +72,8 @@ baseline_diff, which compares a baseline in the file it was saved from.
 8. **Write.** `design_apply` writes the same XML back into Figma: change layers by id, create, copy and move them.
    `nodes_delete` deletes layers by id. `version_save` leaves the designer a named version, when the user asks. Read
    `guide write` first (Allow edits, dry runs, versions and every rule), and `guide layout` for flex, grid and
-   absolute placement.
+   absolute placement. `tokens_apply` makes the variables and styles a design lacks, and `tokens_bind` binds the raw
+   values under a layer to the tokens that hold them (`guide tokens`).
 9. **Code, the exception.** The reads answer what code is most often written for, a line per question:
    - texts by content, size or visibility, instances by component or changed property, with ancestors and page:
      `nodes_find` (`text` list, `textRegex`, `fontSize`, `visible`, `componentId`, `properties`, `fields`);
