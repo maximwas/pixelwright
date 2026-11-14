@@ -42,12 +42,12 @@ export class TextStyleLooks {
     const lineHeight = this.#keep(held?.lineHeight, { ...font.lineHeight } as LineHeight, (height) =>
       this.#shorthand.lineHeight({ ...height }, fontSize),
     );
-    // A text style's spacing is in px or percent: core reads no AUTO spacing from CSS.
+    // A text style's spacing is in px or percent: core reads no AUTO spacing from CSS. Zero is none in either (C-114).
     const spacing =
       letterSpacing === undefined
         ? undefined
         : this.#keep(held?.letterSpacing, letterSpacing as LetterSpacing, (each) =>
-          this.#shorthand.length({ ...each }),
+          this.#shorthand.letterSpacing({ ...each }),
         );
 
     return {

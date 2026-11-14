@@ -32,12 +32,13 @@ export class UsedTokens {
     this.#lookup = lookup;
   }
 
-  under(root: BaseNode, deadline: number): Scanned {
-    const { kept, cut } = this.#walk.until(this.#walk.layers(this.#layersOf(root)), deadline, {
+  /** What the layers and all under them use, as far as the op's deadline lets the walk go. */
+  under(layers: readonly SceneNode[], deadline: number): Scanned {
+    const { kept, cut } = this.#walk.until(this.#walk.layers(layers), deadline, {
       accepts: (layer) => this.#styleIds(layer).length > 0 || this.#bound(layer) !== undefined || this.#mixed(layer),
       enough: Number.POSITIVE_INFINITY,
     });
-    const used = kept.map((layer) => this.#uses(layer));
+    const used = kept.map((layer) => this.uses(layer));
 
     return {
       styles: [...new Set(used.flatMap(({ styles }) => styles))],
@@ -111,7 +112,7 @@ export class UsedTokens {
   }
 
   /** What one layer uses: its own style fields and bound variables, and its text runs'. */
-  #uses(layer: SceneNode): UsedIds {
+  uses(layer: SceneNode): UsedIds {
     const runs = this.#runs(layer);
 
     return {

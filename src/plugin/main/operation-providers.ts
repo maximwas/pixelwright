@@ -4,6 +4,7 @@ import { GRADIENT_GEOMETRY, GradientGeometry } from "@/core/css/gradients/gradie
 import { EFFECT_MERGE, EffectMerge } from "@/core/css/groups/effects/effect-merge.ts";
 import { NEARBY_NOTES, NearbyNotes } from "@/core/inspect/nearby.ts";
 import { PLACEMENT_SPAN, PlacementSpan } from "@/core/kernel/geometry/placement-span.ts";
+import { SLOT_CONTENT, SlotContent } from "@/core/kernel/ids/slot-content.ts";
 import { NAME_VALUE_LIST, NameValueList } from "@/core/kernel/lists/name-value-list.ts";
 import { FONT_WEIGHT, FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
@@ -68,6 +69,9 @@ import { TEXT_LOOK, TextLook } from "@/plugin/operations/apply/writers/text-look
 import { TEXT_RUNS, TextRuns } from "@/plugin/operations/apply/writers/text-runs.ts";
 import { TEXT_WRITER, TextWriter } from "@/plugin/operations/apply/writers/text-writer.ts";
 import { VariantStep } from "@/plugin/operations/apply/writers/variant-step.ts";
+import { BindOperation } from "@/plugin/operations/bind/bind.operation.ts";
+import { BIND_LAYERS, BindLayers } from "@/plugin/operations/bind/bind-layers.ts";
+import { LAYER_VALUES, LayerValues } from "@/plugin/operations/bind/layer-values.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
 import { COMPONENT_DETAILS, ComponentDetails } from "@/plugin/operations/components/component-details.ts";
@@ -119,7 +123,8 @@ import type { OpName } from "@/shared/ops/op-meta.types.ts";
  * pw scope lives as long as the window (T-154), its code's runs outlive their answers (T-156); find reads variants with
  * core's Name=Value lists (K-069); components finds, lists, exposes and links components (T-190, T-192); variables reads the file's raw tokens (P-125);
  * usage lists the layers that use a style or variable (P-126); upload holds design_apply's files for its apply (P-030);
- * tokens_apply writes core's tokens plan, the file's mode limit learned once for the window (P-163, P-167).
+ * tokens_apply writes core's tokens plan, the file's mode limit learned once for the window (P-163, P-167); bind scans
+ * the raw values tokens_bind matches, instances and slots' default content left alone (P-164, T-170).
  */
 export class OperationProviders {
   readonly #classes: Readonly<Record<OpName, OperationClass>> = {
@@ -151,6 +156,7 @@ export class OperationProviders {
     [OP_NAME.apply]: ApplyOperation,
     [OP_NAME.upload]: UploadOperation,
     [OP_NAME.tokensApply]: TokensApplyOperation,
+    [OP_NAME.bind]: BindOperation,
   };
 
   register(container: Container): void {
@@ -168,6 +174,9 @@ export class OperationProviders {
       .bind({ provide: COMPONENT_DETAILS, useClass: ComponentDetails })
       .bind({ provide: COMPONENT_LINKS, useClass: ComponentLinks })
       .bind({ provide: USED_TOKENS, useClass: UsedTokens })
+      .bind({ provide: SLOT_CONTENT, useClass: SlotContent })
+      .bind({ provide: BIND_LAYERS, useClass: BindLayers })
+      .bind({ provide: LAYER_VALUES, useClass: LayerValues })
       .bind({ provide: FILE_TOKENS, useClass: FileTokens })
       .bind({ provide: LIBRARY_CATALOGUE, useClass: LibraryCatalogue })
       .bind({ provide: ASSIGN, useClass: Assign })

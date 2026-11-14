@@ -7386,7 +7386,7 @@
   {
     "name": "tokens_bind",
     "title": "Bind raw values to tokens",
-    "description": "Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer's variable mode and within the variables' scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates, and with instances: override inside instances too, as their overrides (a dark copy on a plan with one mode). Instances are left to their main components, all but what was put into their slots. Results are grouped by value. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing). design_lint says what is raw.",
+    "description": "Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer's variable mode and within the variables' scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates, and with instances: override inside instances too, as their overrides (a dark copy on a plan with one mode). Instances are left to their main components, all but what was put into their slots. Results are grouped by value. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -7453,7 +7453,8 @@
             "required": [
               "value",
               "token"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
         "remap": {
@@ -7478,7 +7479,8 @@
             "required": [
               "from",
               "to"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
         "instances": {
@@ -7492,23 +7494,24 @@
         },
         "dryRun": {
           "default": false,
-          "description": "List what would be bound without writing; works with Allow edits off.",
+          "description": "Check without writing: the answer says what would change. Works with Allow edits off.",
           "type": "boolean"
         },
         "version": {
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one when the user wants to be able to go back."
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -7723,10 +7726,13 @@
         "summary": {
           "type": "string"
         },
-        "dryRun": {
-          "type": "boolean"
+        "dry": {
+          "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
+          "type": "boolean",
+          "const": true
         },
         "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
           "type": "object",
           "properties": {
             "id": {
@@ -7758,8 +7764,7 @@
         "errors",
         "notes",
         "more",
-        "summary",
-        "dryRun"
+        "summary"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false

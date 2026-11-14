@@ -3,6 +3,9 @@ import { READ_TOKENS, ReadTokens } from "@/core/design/read-tokens.ts";
 import { EASING_CSS, EasingCss } from "@/core/kernel/easing/easing-css.ts";
 import { FONT_WEIGHT, FontWeight } from "@/core/kernel/names/font-weight.ts";
 import { TOKEN_NAMES, TokenNames } from "@/core/kernel/names/token-names.ts";
+import { BIND_FIELDS, BindFields } from "@/core/tokens/bind/bind-fields.ts";
+import { BIND_VALUES, BindValues } from "@/core/tokens/bind/bind-values.ts";
+import { TOKENS_BIND, TokensBind } from "@/core/tokens/bind/tokens-bind.ts";
 import { TOKENS_CSS, TokensCss } from "@/core/tokens/formats/css/tokens-css.ts";
 import { DTCG_PATHS, DtcgPaths } from "@/core/tokens/formats/dtcg/dtcg-paths.ts";
 import { DTCG_REFERENCES, DtcgReferences } from "@/core/tokens/formats/dtcg/dtcg-references.ts";
@@ -30,7 +33,7 @@ import { TOKEN_WRITER, TokenWriter } from "@/server/tools/tokens-read/token-writ
  * The tokens' bindings: the one naming of tokens and easings (T-163, D-64), design_read's JSON tokens, and
  * tokens_read's model (T-160, T-164, K-003, K-006) with its CSS and DTCG formats (K-013..K-017) and its summary past
  * maxChars (T-161); the weight guessed from a font style's name (K-074); tokens_apply's plan against the file's
- * tokens (T-165, K-018..K-025) with its scope rules.
+ * tokens (T-165, K-018..K-025) with its scope rules; tokens_bind's plan over the plugin's scan (T-167, K-026..K-029).
  */
 export class TokenProviders {
   register(container: Container): void {
@@ -60,6 +63,9 @@ export class TokenProviders {
       .bind({ provide: STYLE_PLANS, useClass: StylePlans })
       .bind({ provide: HELD_TOKENS, useClass: HeldTokens })
       .bind({ provide: PLAIN_NUMBERS, useClass: PlainNumbers })
-      .bind({ provide: TOKENS_PLAN, useClass: TokensPlan });
+      .bind({ provide: TOKENS_PLAN, useClass: TokensPlan })
+      .bind({ provide: BIND_VALUES, useClass: BindValues })
+      .bind({ provide: BIND_FIELDS, useClass: BindFields })
+      .bind({ provide: TOKENS_BIND, useClass: TokensBind });
   }
 }

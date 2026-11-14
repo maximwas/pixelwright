@@ -210,6 +210,20 @@ describe("StyleWriter (C-173, T-166, P-163)", () => {
     expect(styles.text[0]).toMatchObject({ letterSpacing: spacing, textCase: "UPPER" });
   });
 
+  it("keeps a held zero letter spacing in px for the CSS's zero in em: both render as none (C-114)", async () => {
+    const spacing = { unit: "PIXELS", value: 0 };
+    const { writer, run, styles } = build([heldText({ letterSpacing: spacing })]);
+    const zero = { unit: "PERCENT", value: 0 } as const;
+
+    await writer.write(
+      { ...NO_STYLES, text: [{ name: "Body", id: "S:held", font: font(16, PIXELS_24), letterSpacing: zero }] },
+      {},
+      run,
+    );
+
+    expect(styles.text[0]).toMatchObject({ letterSpacing: spacing });
+  });
+
   it("finds a style's variable among the file's, listed once, never by an id lookup that can wait offline (P-070)", async () => {
     const { writer, run, styles, looked } = build([], { variables: [{ id: "V:ink", name: "Ink" }] });
 

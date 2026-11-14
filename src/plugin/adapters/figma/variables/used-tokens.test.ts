@@ -46,7 +46,7 @@ const used = new UsedTokens(walk, new NodeLookup());
 
 describe("UsedTokens", () => {
   it("takes the styles and variables a text's runs use where the text says mixed (P-096, O-024)", () => {
-    const found = used.under(card, walk.deadline());
+    const found = used.under([card], walk.deadline());
 
     expect(found.styles).toEqual(expect.arrayContaining(["S:body", "S:accent"]));
     expect(found.variables).toEqual(expect.arrayContaining(["V:space", "V:ink", "V:size"]));
@@ -61,7 +61,7 @@ describe("UsedTokens", () => {
   });
 
   it("says when the op's deadline cut the scan, so tokens_read can say the used tokens are only some (P-075)", () => {
-    expect(used.under(card, -1)).toEqual({ styles: [], variables: [], cut: true });
-    expect(used.under(card, walk.deadline()).cut).toBe(false);
+    expect(used.under([card], -1)).toEqual({ styles: [], variables: [], cut: true });
+    expect(used.under([card], walk.deadline()).cut).toBe(false);
   });
 });

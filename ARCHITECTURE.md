@@ -20,7 +20,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `envelope/`, `errors/`, `limits/`, `version/`, `window/`: the op result envelope, `PixelwrightError` and the error
     codes, numbers with their reason, the build's version, the messages between the plugin's window and its main thread.
 - `core/`: the pure domain and its ports.
-  - `kernel/`: the floor of core, importing no other domain: `numbers/` holds the D-15 precision table (`PRECISION`,
+  - `kernel/`: the floor of core, importing no other domain: `ids/` holds `LayerId` (C-167) and `SlotContent` (T-170: a
+    slot's default content by its id shape, which bind leaves to the component); `numbers/` holds the D-15 precision table (`PRECISION`,
     the places each class of value keeps) and `NumberFormat`, which every reader rounds with; `lists/` holds
     `NameValueList`, the `Name=Value, Other=Value` lists with `,` `=` `\` escaped (a variant, a component's properties); `geometry/` holds the value objects `Area` (a box's centre) and
     `Turn` (a rotation, or a mirror matrix's angle with the flip taken out, K-068; a line's flat or standing snap);
@@ -61,7 +62,14 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     (m:acc257ba, noted); `StylePlans` reads a style's CSS through `ChangeOf.attributesProps` (C-173) and finds the
     colour variables it names (the plan's `targets`: id, key, or made by the call), and `PlainNumbers` gives each number the unit `NumberUnits` will read it in (an
     opacity written in percent, FX-049; plain numbers that read back in px noted). The plan's schema, what the plugin
-    writes, is `shared/ops/tokens-apply/`.
+    writes, is `shared/ops/tokens-apply/`. `bind/` holds `TokensBind`, tokens_bind's plan (T-167, K-026..K-029) over
+    the bind op's scan: `BindIndex` (the file's tokens by the value design_read prints, colour and number variables
+    per mode signature with aliases followed and preferred, scopes checked, paint styles of one solid paint, text and
+    effect styles), `BindFields` (K-027: which number fields count and which scope each takes, the table design_lint
+    shares; an opacity variable holds a percent, FX-049), `BindValues` (K-028: the strings, noise, texture and glass
+    none), `BindChoices` (choose: a pick, or a snap) and `BindReport` (groups by value, most used first, and keeps
+    every bound use and rebind whole: the plan item 51's writer takes, its schema `BindPlanSchema` in
+    `shared/ops/bind/`). The library variables Figma infers for a value (inferredVariables, P-164) are candidates too.
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -215,7 +223,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   layers (500 at most, within the caller's budgetMs, D-48).
   `tokens-apply/` reads the variables op with the libraries and the page's used tokens (so a library's are never
   copied) and sets core's plan against them; a plan with nothing to write answers at once (D-25), else the plugin's
-  tokens_apply op writes it through the versioned write, a dry run too (B-055).
+  tokens_apply op writes it through the versioned write, a dry run too (B-055). `tokens-bind/` reads the variables op
+  (the file's tokens and those the layers use, every page's with "file"), scans with the bind op and answers core's
+  plan with its summary, the per-use plan kept from the answer; a real run is refused until the plugin binds (item 51).
   `guide/` answers its topics from `topics/*.md`, Markdown that tsdown's text loader inlines into the bundle (vitest.config.ts
   makes a .md module its text alike), so the package ships `dist/` alone; `markdown.d.ts` types the import.
 - `server/adapters/`: the port implementations on Node.
@@ -298,7 +308,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   library's imported by key, description, scopes, code syntax), `StyleWriter`, `StyleLooks` and `TextStyleLooks`
   (paint, text and effect styles through design_apply's `Paints`, `Effects` and `FontCatalog`; a text style keeps its
   face, size, line height and letter spacing where they render as the CSS, and its font is loaded before it is made),
-  over `adapters/figma/variables/TokenFactory`; the call is one undo step.
+  over `adapters/figma/variables/TokenFactory`; the call is one undo step. `bind/` scans for tokens_bind: `BindLayers`
+  (within or the selection; instances left to their components but their own slots, a slot's default content always,
+  B-023) and `LayerValues` (a layer's raw solids, numbers, runs and effects as plain data, each where it sits, with
+  the variables Figma infers for them, or its uses of a remap's tokens); the server matches them, so the plugin
+  carries no `core/tokens`.
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;
