@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RawTokens } from "@/shared/ops/variables/variables.schema.ts";
-import { notesOf, plan } from "./support/tokens-planner.ts";
+import { EMPTY, notesOf, plan } from "./support/tokens-planner.ts";
 
 /** Two collections that each have a colour variable named primary (FIX-090A). */
 function brands(): RawTokens {
@@ -56,10 +56,42 @@ describe("golden tokens: a token two collections' variables share", () => {
     ]);
   });
 
+  // FIX-090A2: the call's own variables were not checked: the alias was planned without an id, and the plugin bound
+  // the variable made last.
+  it("refuses an alias to a name two collections the call makes share, naming both, on the dry run", () => {
+    const result = plan(
+      {
+        collections: [
+          {
+            name: "Brand A",
+            modes: ["Violet"],
+            variables: [
+              { name: "primary", values: { Violet: "#8033E6" } },
+              { name: "link", values: { Violet: "var(--primary)" } },
+            ],
+          },
+          { name: "Brand B", modes: ["Indigo"], variables: [{ name: "primary", values: { Indigo: "#6633E6" } }] },
+        ],
+      },
+      EMPTY,
+    );
+
+    expect(result.errors).toEqual([
+      {
+        kind: "variable",
+        name: "link",
+        collection: "Brand A",
+        mode: "Violet",
+        message:
+          "--primary names variables in Brand A and Brand B: an alias cannot tell which. Give the one you mean its own WEB code syntax (codeSyntax WEB) with tokens_apply, and alias that.",
+      },
+    ]);
+  });
+
   // :root declares it once per collection, and CSS keeps the last declaration.
   it("is noted by tokens_read, since its CSS :root keeps one of the values", () => {
     expect(notesOf(brands())).toContain(
-      "--primary names variables in Brand A and Brand B: :root declares it for each, so CSS keeps the last one's value. Give one of them its own WEB code syntax with tokens_apply to keep both.",
+      "--primary names 2 variables, in Brand A and Brand B: :root declares each, so CSS keeps the last one's value. Give one of them its own WEB code syntax with tokens_apply to keep each.",
     );
   });
 });

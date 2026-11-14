@@ -12,11 +12,15 @@ import type { RawTokens } from "@/shared/ops/variables/variables.schema.ts";
 
 type Modes = Readonly<Record<string, string>>;
 
-/** A variable as the index holds it, with its collection's name and id; a library one not imported yet has its key. */
+/**
+ * A variable as the index holds it, with its collection's name and id. A library one has its key however it was found,
+ * so it is one entry (FIX-090A2); one the file lacks yet, from the catalogue, is imported by it.
+ */
 interface Entry {
   readonly id: string;
   readonly resolvedType: string;
-  readonly key?: string;
+  readonly key?: string | undefined;
+  readonly inFile: boolean;
   readonly collection: string;
   readonly collectionId?: string | undefined;
 }
@@ -115,7 +119,7 @@ export class TokenIndex {
   ): Promise<Variable> {
     const entry = await this.#entry(token, type, place);
 
-    if (entry.key === undefined) {
+    if (entry.inFile || entry.key === undefined) {
       const variable = await this.#lookup.variable(entry.id);
 
       if (variable === null) {
@@ -184,7 +188,16 @@ export class TokenIndex {
     for (const level of this.#levels(place)) {
       const set = held.filter((entry) => this.#sets(level, entry));
       const [one] = set;
+      const named = this.#collections(set);
 
+      if (named.length > 1) {
+        throw new WriteError(
+          TOKEN_TEXT.bothSet(token, held.length, this.#collections(held), named),
+          TOKEN_TEXT.bothSetHint(named.map((name) => this.#names.attribute(name))),
+        );
+      }
+
+      // Two variables of one collection: no mode tells them apart.
       if (set.length > 1) {
         break;
       }
@@ -194,7 +207,7 @@ export class TokenIndex {
       }
     }
 
-    const collections = [...new Set(held.map(({ collection }) => collection))];
+    const collections = this.#collections(held);
 
     throw new WriteError(
       TOKEN_TEXT.shared(token, held.length, collections),
@@ -202,9 +215,14 @@ export class TokenIndex {
     );
   }
 
+  /** Each collection the variables are in, once. */
+  #collections(entries: readonly Entry[]): string[] {
+    return [...new Set(entries.map(({ collection }) => collection))];
+  }
+
   /** A library variable the page uses comes with its collection's name only: the id is the variable's. */
   async #withCollection(entry: Entry): Promise<Entry> {
-    if (entry.collectionId !== undefined || entry.key !== undefined) {
+    if (entry.collectionId !== undefined || !entry.inFile) {
       return entry;
     }
 
@@ -263,7 +281,7 @@ export class TokenIndex {
 
     for (const { collection, variables } of library) {
       for (const { name, key, resolvedType } of variables) {
-        this.#keep(this.#names.token(name), { id: key, resolvedType, key, collection });
+        this.#keep(this.#names.token(name), { id: key, resolvedType, key, inFile: false, collection });
       }
     }
   }
@@ -281,10 +299,12 @@ export class TokenIndex {
         }
       }
 
-      for (const { id, resolvedType, collectionId, ...named } of raw.variables) {
+      for (const { id, resolvedType, collectionId, key, ...named } of raw.variables) {
         this.#keep(this.#names.variable(named), {
           id,
           resolvedType,
+          key,
+          inFile: true,
           collection: collections.get(collectionId) ?? "",
           collectionId,
         });
@@ -294,17 +314,20 @@ export class TokenIndex {
         this.#keep(this.#names.variable(variable), {
           id,
           resolvedType: variable.resolvedType,
+          key: variable.key,
+          inFile: true,
           collection: variable.collection,
         });
       }
     }
   }
 
-  /** Every variable a name names, each once: pages read the file's own again. */
+  /** Every variable a name names, each once: pages read the file's own again, the catalogue a library one they use. */
   #keep(token: string, entry: Entry): void {
     const kept = this.#variables.get(token) ?? [];
+    const identity = entry.key ?? entry.id;
 
-    if (!kept.some(({ id }) => id === entry.id)) {
+    if (!kept.some((held) => (held.key ?? held.id) === identity)) {
       this.#variables.set(token, [...kept, entry]);
     }
   }

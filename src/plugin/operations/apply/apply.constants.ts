@@ -73,6 +73,16 @@ export const TOKEN_TEXT = {
     `${token} names ${count} variables, in ${collections.join(" and ")}, and no mode set on this layer or a parent picks one.`,
   sharedHint: (slugs: readonly string[]) =>
     `Set the mode of the collection you mean on this layer or a parent: ${slugs.map((slug) => `data-${slug}="<mode>"`).join(" or ")}. Or give one of them its own WEB code syntax with tokens_apply.`,
+  /** The nearest level that sets a mode of theirs sets the modes of several of their collections (FIX-090A2). */
+  bothSet: (
+    token: string,
+    count: number,
+    collections: readonly string[],
+    set: readonly string[],
+  ) =>
+    `${token} names ${count} variables, in ${collections.join(" and ")}, and the nearest layer that sets a mode of theirs sets modes of ${set.join(" and ")} at once.`,
+  bothSetHint: (slugs: readonly string[]) =>
+    `Set on this element only the mode of the collection you mean: ${slugs.map((slug) => `data-${slug}="<mode>"`).join(" or ")}. Or give one of them its own WEB code syntax with tokens_apply.`,
   wrongType: (
     token: string,
     held: string,

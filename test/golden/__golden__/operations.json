@@ -7491,6 +7491,9 @@
               "resolvedType": {
                 "type": "string"
               },
+              "key": {
+                "type": "string"
+              },
               "description": {
                 "type": "string"
               },
@@ -7543,6 +7546,9 @@
                 "type": "string"
               },
               "resolvedType": {
+                "type": "string"
+              },
+              "key": {
                 "type": "string"
               },
               "codeSyntax": {

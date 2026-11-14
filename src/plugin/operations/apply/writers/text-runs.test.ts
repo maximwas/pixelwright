@@ -32,3 +32,20 @@ describe("TextRuns axes", () => {
     ]);
   });
 });
+
+describe("TextRuns colour", () => {
+  // FIX-090A2: the check bound a run's colour token in the text's XML modes and the write in none, so a name two
+  // collections share could be bound to the other one.
+  it("binds a run's colour token in the modes the text's XML sets, the text's own and a Span's alike", async () => {
+    const paints = vi.fn(async (_specs: unknown, _node: unknown, _modes?: object) => []);
+    const runs = new TextRuns({} as never, {} as never, { paints } as never, {} as never);
+    const node = { type: "TEXT", setRangeFills: vi.fn() };
+    const textFills = [{ kind: "token", token: "--primary" }];
+    const modes = { "brand-b": "indigo" };
+
+    await runs.write("textFills", { node: node as never, start: 0, end: 3 }, { textFills, modes } as never);
+    await runs.write("textFills", { node: node as never, start: 0, end: 1 }, { textFills } as never, modes);
+
+    expect(paints.mock.calls.map(([, , given]) => given)).toEqual([modes, modes]);
+  });
+});

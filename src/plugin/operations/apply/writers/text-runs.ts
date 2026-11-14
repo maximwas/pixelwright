@@ -115,10 +115,12 @@ export class TextRuns {
     return refusals;
   }
 
+  /** One property over the range; a colour token is bound in `modes`, the text's XML ones, as the check binds it. */
   async write(
     key: RunKey,
     range: TextRange,
     props: FigmaProps,
+    modes = props.modes,
   ): Promise<void> {
     const writers: Readonly<Record<RunKey, () => Promise<void>>> = {
       textStyle: async () => await this.#textStyle(range, props.textStyle),
@@ -127,7 +129,7 @@ export class TextRuns {
       letterSpacing: async () => await this.set(range, TEXT_RANGE_FIELD.letterSpacing, { ...props.letterSpacing }),
       textCase: async () => await this.set(range, TEXT_RANGE_FIELD.textCase, props.textCase),
       textDecoration: async () => await this.#decoration(range, props.textDecoration),
-      textFills: async () => await this.#fills(range, props.textFills ?? []),
+      textFills: async () => await this.#fills(range, props.textFills ?? [], modes),
       hyperlink: async () =>
         await this.set(
           range,
@@ -242,8 +244,12 @@ export class TextRuns {
     await this.set(range, TEXT_RANGE_FIELD.textDecorationThickness, { ...(decoration.thickness ?? auto) });
   }
 
-  async #fills(range: TextRange, specs: NonNullable<FigmaProps["textFills"]>): Promise<void> {
-    const paints = await this.#paintWrite.paints(specs, range.node);
+  async #fills(
+    range: TextRange,
+    specs: NonNullable<FigmaProps["textFills"]>,
+    modes: FigmaProps["modes"],
+  ): Promise<void> {
+    const paints = await this.#paintWrite.paints(specs, range.node, modes);
 
     await (typeof paints === "string"
       ? this.set(range, TEXT_RANGE_FIELD.fillStyleId, paints)

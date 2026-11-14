@@ -19,6 +19,8 @@ interface Links {
   /** The file's variables by id: the aliases a variable the call changes holds now. */
   readonly held: ReadonlyMap<string, HeldTarget>;
   readonly file: FileTokens;
+  /** Each token variables of several of the call's collections have, with them: an alias to it cannot tell which. */
+  readonly shared: ReadonlyMap<string, readonly string[]>;
   /** Each variable of the call's type: its own, or the type of the first alias target that has one. */
   readonly types: ReadonlyMap<string, string>;
 }
@@ -71,6 +73,7 @@ export class AliasLinks {
       calls,
       held: new Map([...file.tokens.values()].map((target) => [target.id, target] as const)),
       file,
+      shared: this.#shared(drafts),
       types,
     };
 
@@ -95,6 +98,19 @@ export class AliasLinks {
     }
 
     return links;
+  }
+
+  /** The tokens variables of several of the call's collections have (FIX-090A2), with those collections. */
+  #shared(drafts: readonly UnlinkedCollection[]): Map<string, string[]> {
+    const owners = new Map<string, string[]>();
+
+    for (const { name, entries } of drafts) {
+      for (const { token } of entries) {
+        owners.set(token, [...new Set([...(owners.get(token) ?? []), name])]);
+      }
+    }
+
+    return new Map([...owners].filter(([, names]) => names.length > 1));
   }
 
   #derived(values: Readonly<Record<string, PlanValue>>, links: Links): string | undefined {
@@ -175,7 +191,7 @@ export class AliasLinks {
       return [{ mode, message: PLAN_TEXT.noTarget(token) }];
     }
 
-    const shared = links.calls.has(token) ? undefined : links.file.shared.get(token);
+    const shared = links.calls.has(token) ? links.shared.get(token) : links.file.shared.get(token);
 
     if (shared !== undefined) {
       return [{ mode, message: PLAN_TEXT.sharedTarget(token, shared) }];

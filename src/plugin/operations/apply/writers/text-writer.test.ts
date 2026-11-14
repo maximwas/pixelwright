@@ -11,7 +11,14 @@ function build() {
   const runs = {
     check: async ({ font }: { font?: { family: string } }) =>
       font?.family === "Nope" ? [{ key: "font", error: new WriteError("Figma has no font family Nope") }] : [],
-    write: vi.fn(async (_key: string, _range: object, _props: { font?: { family: string } }) => undefined),
+    write: vi.fn(
+      async (
+        _key: string,
+        _range: object,
+        _props: { font?: { family: string } },
+        _modes?: object,
+      ) => undefined,
+    ),
   };
   const look = {
     longest: () => undefined,
@@ -108,6 +115,17 @@ describe("TextWriter write", () => {
     await writer.write(text("Old") as never, change({ font: FONT }, spans), refusals as never, vi.fn());
 
     expect(runs.write.mock.calls.map(([key, , props]) => [key, props.font?.family])).toEqual([["font", "Inter"]]);
+  });
+
+  // FIX-090A2: a Span's colour token is checked in the text's XML modes, so it is written in them too.
+  it("writes a Span's runs in the modes the text's XML sets", async () => {
+    const { writer, runs } = build();
+    const modes = { "brand-b": "indigo" };
+    const spans = [{ start: 0, end: 3, props: { textFills: [{ kind: "token", token: "--primary" }] } }];
+
+    await writer.write(text("Old") as never, change({ modes }, spans), [], vi.fn());
+
+    expect(runs.write.mock.calls.map(([key, , , given]) => [key, given])).toEqual([["textFills", modes]]);
   });
 });
 

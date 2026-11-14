@@ -77,7 +77,7 @@ export class TokenModel {
     return { collections: written, styles, notes: [...context.notes] };
   }
 
-  /** A token variables of several collections have: :root declares it for each, and CSS keeps the last (FIX-090A). */
+  /** A token several variables have, of one collection or more: :root declares each, CSS keeps the last (FIX-090A). */
   #noteShared(collections: ReadyTokens["collections"], notes: Set<string>): void {
     const owners = new Map<string, string[]>();
 
@@ -89,7 +89,7 @@ export class TokenModel {
 
     for (const [token, names] of owners) {
       if (names.length > 1) {
-        notes.add(MODEL_NOTE.sharedToken(token, [...new Set(names)]));
+        notes.add(MODEL_NOTE.sharedToken(token, names.length, [...new Set(names)]));
       }
     }
   }

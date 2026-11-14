@@ -41,6 +41,7 @@ export class SpreadNotes {
       return false;
     }
 
+    // A new Frame is written unclipped and createComponent() starts unclipped (probed in Figma, 2026-11-14).
     return !this.#spread.draws({
       type: layer?.type ?? SPREAD_TAG_TYPE[change.tag] ?? change.tag,
       clipsContent: clipsContent ?? layer?.clipsContent,

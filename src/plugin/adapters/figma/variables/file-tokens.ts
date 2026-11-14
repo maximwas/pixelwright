@@ -118,6 +118,7 @@ export class FileTokens {
           name: variable.name,
           collection: "",
           resolvedType: variable.resolvedType,
+          ...this.#key(variable),
           ...this.#codeSyntax(variable),
         };
 
@@ -151,12 +152,18 @@ export class FileTokens {
       name: variable.name,
       collectionId: variable.variableCollectionId,
       resolvedType: variable.resolvedType,
+      ...this.#key(variable),
       ...(variable.description === "" ? {} : { description: variable.description }),
       scopes: [...variable.scopes],
       ...this.#codeSyntax(variable),
       // Plugin API values are frozen objects: a JSON copy is what goes on the wire anyway.
       valuesByMode: JSON.parse(JSON.stringify(variable.valuesByMode)),
     };
+  }
+
+  /** A library variable's key, the one its catalogue lists it by (FIX-090A2); a local one's is left out. */
+  #key(variable: Variable): Pick<RawVariable, "key"> {
+    return variable.remote ? { key: variable.key } : {};
   }
 
   #codeSyntax(variable: Variable): Pick<RawVariable, "codeSyntax"> {
