@@ -34,3 +34,8 @@ export function plan(tokens: unknown, raw: RawTokens = goldenTokens()) {
 }
 
 export const EMPTY = RawTokensSchema.parse({ collections: [], variables: [], external: {}, styles: [] });
+
+/** tokens_read's notes of a file, as its answer lists them. */
+export function notesOf(raw: RawTokens): readonly string[] {
+  return model.model(raw).notes;
+}

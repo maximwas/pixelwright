@@ -77,6 +77,7 @@ export class TextWriter {
     for (const { key, error } of await this.#runs.check(
       change.props,
       this.#families(layer, change.props, undefined, change.props.font),
+      { layer, modes: change.props.modes },
     )) {
       if (!refused.has(key)) {
         found.push({ error, keys: [key] });
@@ -88,7 +89,7 @@ export class TextWriter {
 
       const families = this.#families(layer, run.props, run, run.props.font ?? change.props.font);
 
-      for (const { key, error } of await this.#runs.check(run.props, families)) {
+      for (const { key, error } of await this.#runs.check(run.props, families, { layer, modes: change.props.modes })) {
         found.push({ error, keys: [key], span });
       }
     }

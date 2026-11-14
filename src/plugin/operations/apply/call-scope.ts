@@ -27,7 +27,7 @@ export class CallScope {
   }
 
   async around<Output>(changes: readonly ApplyChangeData[], call: () => Promise<Output>): Promise<Output> {
-    this.#tokens.start(this.#walk.deadline());
+    this.#tokens.start(this.#walk.deadline(), changes);
 
     try {
       return await call();

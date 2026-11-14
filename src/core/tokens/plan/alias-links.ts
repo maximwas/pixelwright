@@ -175,6 +175,12 @@ export class AliasLinks {
       return [{ mode, message: PLAN_TEXT.noTarget(token) }];
     }
 
+    const shared = links.calls.has(token) ? undefined : links.file.shared.get(token);
+
+    if (shared !== undefined) {
+      return [{ mode, message: PLAN_TEXT.sharedTarget(token, shared) }];
+    }
+
     const route = this.#route(token, entry.token, links);
 
     if (route !== null) {

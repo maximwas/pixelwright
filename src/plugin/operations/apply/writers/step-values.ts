@@ -2,7 +2,7 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { TOKEN_KIND } from "@/plugin/operations/apply/apply.constants.ts";
-import { TOKEN_INDEX } from "@/plugin/operations/apply/token-index.ts";
+import { TOKEN_INDEX, type TokenPlace } from "@/plugin/operations/apply/token-index.ts";
 import type { FigmaProps } from "@/shared/write-intents/write-intent.schema.ts";
 
 type LengthValue = number | { readonly token: string };
@@ -37,23 +37,25 @@ export class StepValues {
    * Each token among the props' lengths found as a number variable, without importing (a dry run's check, a real
    * run's); one that cannot bind is refused on its prop.
    */
-  async check(props: Partial<Record<keyof FigmaProps, Length | readonly Length[]>>): Promise<void> {
+  async check(props: Partial<Record<keyof FigmaProps, Length | readonly Length[]>>, place?: TokenPlace): Promise<void> {
     for (const [key, given] of Object.entries(props) as [keyof FigmaProps, Length | readonly Length[]][]) {
       for (const length of Array.isArray(given) ? given : [given]) {
         if (this.#isToken(length)) {
-          await this.#found(key, length.token);
+          await this.#found(key, length.token, place);
         }
       }
     }
   }
 
   /** The lengths by field, every token's variable found first: one that cannot bind writes none of them. */
-  async resolve(lengths: Lengths): Promise<Resolved> {
+  async resolve(lengths: Lengths, place?: TokenPlace): Promise<Resolved> {
     const resolved: Resolved = {};
 
     for (const [field, length] of Object.entries(lengths) as [VariableBindableNodeField, Length][]) {
       if (length !== undefined) {
-        resolved[field] = this.#isToken(length) ? await this.#tokens.variable(length.token, TOKEN_KIND.number) : length;
+        resolved[field] = this.#isToken(length)
+          ? await this.#tokens.variable(length.token, TOKEN_KIND.number, place)
+          : length;
       }
     }
 
@@ -72,8 +74,12 @@ export class StepValues {
     }
   }
 
-  async write(node: SceneNode, lengths: Lengths): Promise<void> {
-    this.set(node, await this.resolve(lengths));
+  async write(
+    node: SceneNode,
+    lengths: Lengths,
+    modes?: FigmaProps["modes"],
+  ): Promise<void> {
+    this.set(node, await this.resolve(lengths, { layer: node, modes }));
   }
 
   /** A variable bound to the field unless it is already (true); a number or null takes off one bound (false: the caller writes it). */
@@ -107,9 +113,13 @@ export class StepValues {
     }
   }
 
-  async #found(key: keyof FigmaProps, token: string): Promise<void> {
+  async #found(
+    key: keyof FigmaProps,
+    token: string,
+    place: TokenPlace | undefined,
+  ): Promise<void> {
     try {
-      await this.#tokens.check(token, TOKEN_KIND.number);
+      await this.#tokens.check(token, TOKEN_KIND.number, place);
     } catch (error) {
       throw error instanceof WriteError ? new WriteError(error.message, error.hint, [key]) : error;
     }

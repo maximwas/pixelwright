@@ -81,6 +81,8 @@ export const MODEL_NOTE = {
     value: string,
   ) => `${name} has a ${type} value CSS cannot hold: ${value}.`,
   boolean: (name: string) => `${name} is a boolean: CSS has no booleans, it is written as true or false.`,
+  sharedToken: (token: string, collections: readonly string[]) =>
+    `${token} names variables in ${collections.join(" and ")}: :root declares it for each, so CSS keeps the last one's value. Give one of them its own WEB code syntax with tokens_apply to keep both.`,
   sharedSelector: (
     mode: string,
     collection: string,

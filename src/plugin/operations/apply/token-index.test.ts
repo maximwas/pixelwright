@@ -92,3 +92,76 @@ describe("TokenIndex", () => {
     expect((await refusal(index.check("--ink", TOKEN_KIND.colour))).message).toContain("--ink");
   });
 });
+
+/** Two collections that each have a colour variable named primary, as the blind test's file had. */
+function brands(): RawTokens {
+  const variable = (id: string, collectionId: string) => ({
+    id,
+    name: "primary",
+    collectionId,
+    resolvedType: "COLOR",
+    scopes: [],
+    valuesByMode: {},
+  });
+
+  return {
+    collections: [
+      { id: "C:a", name: "Brand A", remote: false, defaultModeId: "a:1", modes: [{ modeId: "a:1", name: "Violet" }] },
+      { id: "C:b", name: "Brand B", remote: false, defaultModeId: "b:1", modes: [{ modeId: "b:1", name: "Indigo" }] },
+    ],
+    variables: [variable("V:a", "C:a"), variable("V:b", "C:b")],
+    external: {},
+    styles: [],
+  };
+}
+
+// FIX-090A: a CSS name names a variable by its name alone, so two collections can share one; the blind test's card
+// was bound to the other collection's colours, silently.
+describe("TokenIndex, a CSS name two collections' variables share", () => {
+  it("binds the variable of the collection whose mode the element's XML sets", async () => {
+    const { index } = build([brands()]);
+
+    index.start(0);
+
+    const place = { layer: { type: "RECTANGLE" as const }, modes: { "brand-b": "indigo" } };
+
+    expect((await index.variable("--primary", TOKEN_KIND.colour, place)).id).toBe("V:b");
+  });
+
+  it("binds by the nearest mode up the layers: a parent the call makes or changes, then Figma's layers above", async () => {
+    const { index } = build([brands()]);
+    const page = { type: "PAGE" as const, explicitVariableModes: { "C:a": "a:1" } };
+    const existing = { type: "FRAME" as const, id: "1:5", parent: page };
+    const made = { type: "FRAME" as const, parent: page, modes: { "Brand B": "Indigo" } };
+
+    index.start(0, [{ id: "1:5", props: { modes: { "brand-b": "indigo" } } } as never]);
+
+    expect(
+      (await index.variable("--primary", TOKEN_KIND.colour, { layer: { type: "RECTANGLE", parent: page } })).id,
+    ).toBe("V:a");
+    expect(
+      (await index.variable("--primary", TOKEN_KIND.colour, { layer: { type: "RECTANGLE", parent: made } })).id,
+    ).toBe("V:b");
+    expect(
+      (await index.variable("--primary", TOKEN_KIND.colour, { layer: { type: "RECTANGLE", parent: existing } })).id,
+    ).toBe("V:b");
+  });
+
+  it("refuses it on a dry run's check and a real run's write alike, naming both collections and both ways", async () => {
+    const { index } = build([brands()]);
+
+    index.start(0);
+
+    const place = { layer: { type: "FRAME" as const } };
+    const dry = await refusal(index.check("--primary", TOKEN_KIND.colour, place));
+    const real = await refusal(index.variable("--primary", TOKEN_KIND.colour, place));
+
+    expect(dry.message).toBe(
+      "--primary names 2 variables, in Brand A and Brand B, and no mode set on this layer or a parent picks one.",
+    );
+    expect(dry.hint).toBe(
+      'Set the mode of the collection you mean on this layer or a parent: data-brand-a="<mode>" or data-brand-b="<mode>". Or give one of them its own WEB code syntax with tokens_apply.',
+    );
+    expect([real.message, real.hint]).toEqual([dry.message, dry.hint]);
+  });
+});

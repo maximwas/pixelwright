@@ -23,7 +23,7 @@ describe("CallScope", () => {
     const { scope, uploads, tokens } = build();
 
     await expect(scope.around(changes, async () => "done")).resolves.toBe("done");
-    expect(tokens.start).toHaveBeenCalledWith(42);
+    expect(tokens.start).toHaveBeenCalledWith(42, expect.any(Array));
     expect(uploads.drop.mock.calls.map(([stream]) => stream)).toEqual(["s1", "s2", "s3"]);
   });
 

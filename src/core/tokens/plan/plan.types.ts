@@ -45,6 +45,8 @@ export interface FileTokens {
   readonly styles: readonly HeldStyle[];
   /** Every variable by its token: the file's own and the libraries' its aliases point at. */
   readonly tokens: ReadonlyMap<string, HeldTarget>;
+  /** Each token more than one of those variables has, with their collections: an alias to it cannot tell which. */
+  readonly shared: ReadonlyMap<string, readonly string[]>;
   /** Each number variable's unit, by id (K-003). */
   readonly units: ReadonlyMap<string, NumberUnit>;
   /** The collections the enabled libraries offer, by name: never copied into the file. */

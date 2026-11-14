@@ -79,6 +79,7 @@ export const DesignApplyOutputSchema = zod.object({
   created: zod.array(ApplyCreatedSchema).check(zod.describe(DESIGN_APPLY_FIELD.created)),
   changed: zod.array(zod.string()).check(zod.describe(DESIGN_APPLY_FIELD.changed)),
   properties: zod.exactOptional(zod.array(ApplyPropertySchema).check(zod.describe(DESIGN_APPLY_FIELD.properties))),
+  notes: zod.exactOptional(zod.array(ErrorSchema).check(zod.describe(DESIGN_APPLY_FIELD.notes))),
   ...WRITER_OUTPUT,
 });
 

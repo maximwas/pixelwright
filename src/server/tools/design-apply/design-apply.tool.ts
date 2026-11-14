@@ -15,6 +15,7 @@ import {
   type DesignApplyOutput,
 } from "@/server/tools/design-apply/design-apply.schema.ts";
 import type { SourceReads } from "@/server/tools/design-apply/source-files.ts";
+import { SpreadNotes } from "@/server/tools/design-apply/spread-notes.ts";
 import { ERROR_CODE } from "@/shared/errors/error-code.constants.ts";
 import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 import { applyOp } from "@/shared/ops/apply/apply.manifest.ts";
@@ -34,7 +35,7 @@ interface Prepared {
 }
 
 /** The part of the answer the plan and the plugin's errors make together. */
-type Answered = Pick<DesignApplyOutput, "elements" | "errors" | "changes">;
+type Answered = Pick<DesignApplyOutput, "elements" | "errors" | "changes" | "notes">;
 
 /**
  * design_apply (T-120..T-123, C-001..C-181): prepare reads the XML and fails with INVALID_XML at the first fault, reads
@@ -47,6 +48,7 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
   protected readonly input = DesignApplyInputSchema;
   protected readonly op = applyOp;
   readonly #files;
+  readonly #spreads = new SpreadNotes();
 
   constructor(
     session = inject(PLUGIN_SESSION),
@@ -145,6 +147,8 @@ export class DesignApplyTool extends WriteTool<DesignApplyInput, Prepared, Desig
       ...(text === undefined ? {} : { text }),
     }));
 
-    return { elements, errors, changes };
+    const notes = this.#spreads.notes(plan);
+
+    return { elements, errors, changes, ...(notes.length === 0 ? {} : { notes }) };
   }
 }

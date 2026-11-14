@@ -6154,6 +6154,39 @@
           },
           "description": "The properties prop, visibleProp and swapProp added to components that were there before the call (a dry run's: would add), each on its component or set by id, by name without Figma's #id; left out when none."
         },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "number"
+              },
+              "column": {
+                "type": "number"
+              },
+              "id": {
+                "type": "string"
+              },
+              "attribute": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "description": "What is written but Figma will not draw as written, in document order: line and column, the id and attribute, the message and a hint (a shadow's spread on a layer that draws none). Left out when there is none."
+        },
         "dry": {
           "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
           "type": "boolean",

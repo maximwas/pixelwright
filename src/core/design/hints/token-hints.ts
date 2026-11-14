@@ -49,6 +49,7 @@ export class TokenHints {
       ...this.#numbered(model, values, tokens),
       ...this.#raw(model, elements),
       ...this.#boxed(model, elements, tokens),
+      ...this.#shared(model, values),
     ];
   }
 
@@ -153,6 +154,37 @@ export class TokenHints {
     }
 
     return [...places].map(([name, found]) => HINT_TEXT.boxed(name, tokens[name] ?? "", found));
+  }
+
+  /** A token name two variables the read uses share (FIX-090A): the JSON block keeps one value for it, the XML one var(). */
+  #shared(model: ReadModel, values: readonly string[]): string[] {
+    const named = new Map<string, ReadModel["variables"][string][]>();
+
+    for (const variable of Object.values(model.variables)) {
+      const name = this.#names.variable(variable);
+
+      named.set(name, [...(named.get(name) ?? []), variable]);
+    }
+
+    return [...named]
+      .filter(
+        ([name, variables]) =>
+          variables.length > 1 &&
+          values.some((value) => value.includes(HINT_LABEL.var(name)) || value.includes(HINT_LABEL.varFallback(name))),
+      )
+      .map(([name, variables]) =>
+        HINT_TEXT.shared(
+          name,
+          variables.map((variable) => HINT_TEXT.sharedHeld(variable.collection, this.#colour(variable, model))),
+        ),
+      );
+  }
+
+  /** A colour variable's colour as design_read writes it; another type's value is tokens_read's to give. */
+  #colour({ resolvedType, value }: ReadModel["variables"][string], model: ReadModel): string | undefined {
+    return resolvedType === HINT_FIGMA.color && typeof value === "object" && value !== null && "r" in value
+      ? this.#solid.color(value as Channels, undefined, 1, model)
+      : undefined;
   }
 
   /** The CSS of each colour a one-colour paint style or a colour variable holds, as design_read writes it, by token. */

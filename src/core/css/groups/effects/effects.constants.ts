@@ -104,3 +104,13 @@ export const EFFECTS_ERROR = {
   shareOfVariable: (token: string) =>
     `A shadow's colour variable is its whole colour, its alpha too: write var(${token}) alone, or the colour with that alpha as a value.`,
 } as const;
+
+/**
+ * Where Figma draws a shadow's spread (FIX-090A; Plugin API DropShadowEffect.spread, probed in Test MCP 2026-11-14): on
+ * these types always, and on these only when they clip their content and have a visible fill. Elsewhere it keeps the
+ * spread and draws none, an inner shadow's too.
+ */
+export const SPREAD_DRAWN: { readonly always: readonly string[]; readonly clipped: readonly string[] } = {
+  always: ["RECTANGLE", "ELLIPSE"],
+  clipped: ["FRAME", "COMPONENT", "INSTANCE"],
+};

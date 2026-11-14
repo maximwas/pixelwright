@@ -79,6 +79,8 @@ export const DESIGN_APPLY_FIELD = {
     "The elements read, in document order: line and column, tag, id (null for a new layer), ref (new:<line> for a new one), parent ref, index among its siblings, the attributes kept, a Text's content pieces, and for an element inside a copy its source and copy; notWritten lists the attributes no writer handles yet (left out of changes, not refused).",
   errors:
     "Every refusal, in document order: line and column, the id and attribute it concerns, the message and a hint. An element that is refused is not in elements; an attribute that is refused is left out of it.",
+  notes:
+    "What is written but Figma will not draw as written, in document order: line and column, the id and attribute, the message and a hint (a shadow's spread on a layer that draws none). Left out when there is none.",
   parent:
     "Where top-level new layers go: a frame's, section's or page's id. Default: the current page, beside its layers.",
   created:
@@ -89,3 +91,23 @@ export const DESIGN_APPLY_FIELD = {
   changes:
     "What the call would make or change, in document order, in Figma's terms: kind (create or update), id, tag, props (only what the layer does not have yet) and sources (the attribute each prop came from). A layer that already looks as written is not listed.",
 } as const;
+
+/** A written spread Figma keeps but does not draw (FIX-090A): design_apply's note, not an error. */
+export const SPREAD_NOTE = {
+  message: (tag: string) => `Figma keeps this shadow's spread but draws none on this ${tag}.`,
+  hint: "Figma draws a spread only on a Rectangle or an Ellipse, or on a Frame, Component or Instance that clips its content (overflow: hidden) and has a visible fill (a background): set those, or leave the spread out.",
+} as const;
+
+/** The Figma type a new element is made as, for the spread rule; a tag left out makes a layer that draws no spread. */
+export const SPREAD_TAG_TYPE: Readonly<Record<string, string>> = {
+  Frame: "FRAME",
+  Rectangle: "RECTANGLE",
+  Ellipse: "ELLIPSE",
+  Component: "COMPONENT",
+  Instance: "INSTANCE",
+  Image: "RECTANGLE",
+  Icon: "FRAME",
+};
+
+/** New elements whose clipping and fills come from a component the plan does not read. */
+export const SPREAD_INHERITED_TAGS: readonly string[] = ["Instance"];
