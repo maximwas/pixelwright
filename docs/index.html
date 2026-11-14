@@ -923,7 +923,7 @@ left as it is, so tokens_read&#39;s own output sent back writes nothing; nothing
 style is never copied into the file (change it in the library).</li>
 <li>A variable&#39;s <code>values</code> are CSS per mode: a colour, px, a number, a quoted string, true or false, and <code>var(--other)</code> for
 an alias to a variable of the call or of the file. Its type comes from its first value (COLOR, FLOAT, STRING and
-BOOLEAN are written) and never changes: a new type is a new name.</li>
+BOOLEAN are written) and never changes: a new type is a new name, which has no <code>.</code>, <code>{</code>, <code>}</code> or <code>$</code>.</li>
 <li>A number that is no length (a font weight, an opacity) needs its <code>scopes</code> (FONT_WEIGHT, OPACITY): a new variable is
 offered for every field, and Figma then reads its number as px, which a note says.</li>
 <li>A new variable&#39;s token is its name as Names above writes it (<code>space/4</code> → <code>--space-4</code>), or its <code>codeSyntax.WEB</code>.</li>

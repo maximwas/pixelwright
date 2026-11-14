@@ -61,7 +61,7 @@ Allow edits off). Each tool's own text holds every input.
   style is never copied into the file (change it in the library).
 - A variable's `values` are CSS per mode: a colour, px, a number, a quoted string, true or false, and `var(--other)` for
   an alias to a variable of the call or of the file. Its type comes from its first value (COLOR, FLOAT, STRING and
-  BOOLEAN are written) and never changes: a new type is a new name.
+  BOOLEAN are written) and never changes: a new type is a new name, which has no `.`, `{`, `}` or `$`.
 - A number that is no length (a font weight, an opacity) needs its `scopes` (FONT_WEIGHT, OPACITY): a new variable is
   offered for every field, and Figma then reads its number as px, which a note says.
 - A new variable's token is its name as Names above writes it (`space/4` → `--space-4`), or its `codeSyntax.WEB`.
