@@ -144,7 +144,7 @@ export class ApplyLayers {
       }
 
       if (call.dry) {
-        return { type, parent, name: change.props.name };
+        return { type, parent, name: change.props.name, modes: change.props.modes };
       }
 
       const place = await this.#placement.whereTo(change, call);
@@ -166,7 +166,7 @@ export class ApplyLayers {
     this.#checks.member(change, source.type, call.changes);
 
     if (call.dry) {
-      return { type: source.type, parent };
+      return { type: source.type, parent, modes: change.props.modes };
     }
 
     const copy = this.#layers.copy(source, await this.#placement.whereTo(change, call));

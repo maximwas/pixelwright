@@ -6,7 +6,7 @@ import { PAINTS } from "@/plugin/adapters/figma/paints.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { TOKEN_KIND } from "@/plugin/operations/apply/apply.constants.ts";
 import { APPLY_FONTS } from "@/plugin/operations/apply/apply-fonts.ts";
-import { TOKEN_INDEX } from "@/plugin/operations/apply/token-index.ts";
+import { TOKEN_INDEX, type TokenPlace } from "@/plugin/operations/apply/token-index.ts";
 import { PAINT_WRITE } from "@/plugin/operations/apply/writers/paint-write.ts";
 import {
   TEXT_FIGMA,
@@ -75,7 +75,11 @@ export class TextRuns {
    * What the props' font, axes, text style and colour refuse: an unknown family, axis, style or token. `families`: the
    * ones the axes go over.
    */
-  async check({ font, fontVariations, textStyle, textFills }: FigmaProps,    families: readonly string[] = []): Promise<RunRefusal[]> {
+  async check(
+    { font, fontVariations, textStyle, textFills }: FigmaProps,
+    families: readonly string[] = [],
+    place?: TokenPlace,
+  ): Promise<RunRefusal[]> {
     const refusals: RunRefusal[] = [];
     const found = font === undefined ? undefined : this.#fonts.font(font);
     const axes =
@@ -104,17 +108,19 @@ export class TextRuns {
 
     if (textFills !== undefined) {
       await this.#paintWrite
-        .check(textFills)
+        .check(textFills, place)
         .catch((error: unknown) => refusals.push({ key: INTENT_KEY.textFills, error }));
     }
 
     return refusals;
   }
 
+  /** One property over the range; a colour token is bound in `modes`, the text's XML ones, as the check binds it. */
   async write(
     key: RunKey,
     range: TextRange,
     props: FigmaProps,
+    modes = props.modes,
   ): Promise<void> {
     const writers: Readonly<Record<RunKey, () => Promise<void>>> = {
       textStyle: async () => await this.#textStyle(range, props.textStyle),
@@ -123,7 +129,7 @@ export class TextRuns {
       letterSpacing: async () => await this.set(range, TEXT_RANGE_FIELD.letterSpacing, { ...props.letterSpacing }),
       textCase: async () => await this.set(range, TEXT_RANGE_FIELD.textCase, props.textCase),
       textDecoration: async () => await this.#decoration(range, props.textDecoration),
-      textFills: async () => await this.#fills(range, props.textFills ?? []),
+      textFills: async () => await this.#fills(range, props.textFills ?? [], modes),
       hyperlink: async () =>
         await this.set(
           range,
@@ -238,8 +244,12 @@ export class TextRuns {
     await this.set(range, TEXT_RANGE_FIELD.textDecorationThickness, { ...(decoration.thickness ?? auto) });
   }
 
-  async #fills(range: TextRange, specs: NonNullable<FigmaProps["textFills"]>): Promise<void> {
-    const paints = await this.#paintWrite.paints(specs, range.node);
+  async #fills(
+    range: TextRange,
+    specs: NonNullable<FigmaProps["textFills"]>,
+    modes: FigmaProps["modes"],
+  ): Promise<void> {
+    const paints = await this.#paintWrite.paints(specs, range.node, modes);
 
     await (typeof paints === "string"
       ? this.set(range, TEXT_RANGE_FIELD.fillStyleId, paints)

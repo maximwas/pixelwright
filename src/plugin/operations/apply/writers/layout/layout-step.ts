@@ -1,5 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
+import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { CAPABILITY } from "@/plugin/adapters/figma/figma.constants.ts";
 import type { WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
 import { STEP_VALUES } from "@/plugin/operations/apply/writers/step-values.ts";
@@ -23,29 +24,35 @@ export class LayoutStep implements WriteStep {
     this.#values = values;
   }
 
-  async check(props: FigmaProps): Promise<void> {
-    await this.#values.check({
-      itemSpacing: props.itemSpacing,
-      counterAxisSpacing: props.counterAxisSpacing,
-      padding: props.padding,
-      gridColumnGap: props.gridColumnGap,
-      gridRowGap: props.gridRowGap,
-    });
+  async check(props: FigmaProps, layer: TypedLayer): Promise<void> {
+    await this.#values.check(
+      {
+        itemSpacing: props.itemSpacing,
+        counterAxisSpacing: props.counterAxisSpacing,
+        padding: props.padding,
+        gridColumnGap: props.gridColumnGap,
+        gridRowGap: props.gridRowGap,
+      },
+      { layer, modes: props.modes },
+    );
   }
 
   async write(node: SceneNode, props: FigmaProps): Promise<void> {
     const [top, right, bottom, left] = props.padding ?? [];
     const values = this.#values;
-    const { gridColumnGap, gridRowGap, ...gaps } = await values.resolve({
-      itemSpacing: props.itemSpacing,
-      counterAxisSpacing: props.counterAxisSpacing,
-      paddingTop: top,
-      paddingRight: right,
-      paddingBottom: bottom,
-      paddingLeft: left,
-      gridColumnGap: props.gridColumnGap,
-      gridRowGap: props.gridRowGap,
-    });
+    const { gridColumnGap, gridRowGap, ...gaps } = await values.resolve(
+      {
+        itemSpacing: props.itemSpacing,
+        counterAxisSpacing: props.counterAxisSpacing,
+        paddingTop: top,
+        paddingRight: right,
+        paddingBottom: bottom,
+        paddingLeft: left,
+        gridColumnGap: props.gridColumnGap,
+        gridRowGap: props.gridRowGap,
+      },
+      { layer: node, modes: props.modes },
+    );
     const frame = node as FrameNode;
 
     this.#assign.set(frame, { layoutMode: props.layoutMode, layoutWrap: props.layoutWrap });

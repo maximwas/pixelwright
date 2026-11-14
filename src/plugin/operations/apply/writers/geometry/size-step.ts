@@ -46,7 +46,7 @@ export class SizeStep implements WriteStep {
   }
 
   /** What a section refuses and the tokens a size names, found without writing. */
-  async check({ width, height }: FigmaProps, layer: TypedLayer): Promise<void> {
+  async check({ width, height, modes }: FigmaProps, layer: TypedLayer): Promise<void> {
     const sizes = [width, height];
 
     if (layer.type === FIGMA_NODE_TYPE.section) {
@@ -59,18 +59,21 @@ export class SizeStep implements WriteStep {
       }
     }
 
-    await this.#values.check({
-      width: width === INTENT_HUG ? undefined : width,
-      height: height === INTENT_HUG ? undefined : height,
-    });
+    await this.#values.check(
+      { width: width === INTENT_HUG ? undefined : width, height: height === INTENT_HUG ? undefined : height },
+      { layer, modes },
+    );
   }
 
   async write(node: SceneNode, props: FigmaProps): Promise<void> {
     const { absolute } = props;
-    const lengths = await this.#values.resolve({
-      width: props.width === INTENT_HUG ? undefined : props.width,
-      height: props.height === INTENT_HUG ? undefined : props.height,
-    });
+    const lengths = await this.#values.resolve(
+      {
+        width: props.width === INTENT_HUG ? undefined : props.width,
+        height: props.height === INTENT_HUG ? undefined : props.height,
+      },
+      { layer: node, modes: props.modes },
+    );
 
     // A frame without auto layout places every child itself: nothing to change there.
     if (absolute !== undefined && this.#geometry.layout(node.parent) !== null) {

@@ -1,5 +1,6 @@
 import { inject, injectable } from "@needle-di/core";
 import { ASSIGN } from "@/plugin/adapters/figma/assign.ts";
+import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { EFFECTS, type EffectSpec } from "@/plugin/adapters/figma/effects.ts";
 import { CAPABILITY } from "@/plugin/adapters/figma/figma.constants.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
@@ -31,7 +32,7 @@ export class EffectsStep implements WriteStep {
     this.#assign = assign;
   }
 
-  async check({ effects }: FigmaProps): Promise<void> {
+  async check({ effects, modes }: FigmaProps, layer: TypedLayer): Promise<void> {
     if (effects === undefined) {
       return;
     }
@@ -43,11 +44,11 @@ export class EffectsStep implements WriteStep {
     }
 
     for (const token of this.#tokenNames(effects)) {
-      await this.#tokens.check(token, TOKEN_KIND.colour);
+      await this.#tokens.check(token, TOKEN_KIND.colour, { layer, modes });
     }
   }
 
-  async write(node: SceneNode, { effects }: FigmaProps): Promise<void> {
+  async write(node: SceneNode, { effects, modes }: FigmaProps): Promise<void> {
     const layer = node as FrameNode;
 
     if (effects === undefined) {
@@ -67,7 +68,7 @@ export class EffectsStep implements WriteStep {
     const variables = new Map<string, Variable>();
 
     for (const token of this.#tokenNames(effects)) {
-      variables.set(token, await this.#tokens.variable(token, TOKEN_KIND.colour));
+      variables.set(token, await this.#tokens.variable(token, TOKEN_KIND.colour, { layer: node, modes }));
     }
 
     this.#assign.set(layer, { effects: await this.#effects.merged(layer.effects, effects, variables, node) });

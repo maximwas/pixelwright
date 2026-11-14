@@ -19,20 +19,21 @@ export class CornersStep implements WriteStep {
     this.#capabilities = capabilities;
   }
 
-  async check({ cornerRadius }: FigmaProps, layer: TypedLayer): Promise<void> {
+  async check({ cornerRadius, modes }: FigmaProps, layer: TypedLayer): Promise<void> {
     if (Array.isArray(cornerRadius)) {
       this.#capabilities.require(layer, CAPABILITY.cornerSides);
     }
 
-    await this.#values.check({ cornerRadius });
+    await this.#values.check({ cornerRadius }, { layer, modes });
   }
 
-  async write(node: SceneNode, { cornerRadius }: FigmaProps): Promise<void> {
+  async write(node: SceneNode, { cornerRadius, modes }: FigmaProps): Promise<void> {
     await this.#values.write(
       node,
       Array.isArray(cornerRadius)
         ? Object.fromEntries(CORNERS.map((field, index) => [field, cornerRadius[index]]))
         : { cornerRadius },
+      modes,
     );
   }
 }

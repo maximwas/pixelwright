@@ -3,7 +3,7 @@ import { PAINTS } from "@/plugin/adapters/figma/paints.ts";
 import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 import { TOKEN_KIND } from "@/plugin/operations/apply/apply.constants.ts";
 import { APPLY_IMAGES } from "@/plugin/operations/apply/apply-images.ts";
-import { TOKEN_INDEX } from "@/plugin/operations/apply/token-index.ts";
+import { TOKEN_INDEX, type TokenPlace } from "@/plugin/operations/apply/token-index.ts";
 import type { PAINT_FIELD } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { WRITERS_TEXT } from "@/plugin/operations/apply/writers/writers.constants.ts";
 import { INTENT_PAINT } from "@/shared/write-intents/write-intent.constants.ts";
@@ -35,7 +35,7 @@ export class PaintWrite {
     this.#images = images;
   }
 
-  async check(specs: readonly PaintSpec[]): Promise<void> {
+  async check(specs: readonly PaintSpec[], place?: TokenPlace): Promise<void> {
     if ((await this.#style(specs)) !== null) {
       return;
     }
@@ -51,12 +51,16 @@ export class PaintWrite {
     }
 
     for (const token of this.#tokenNames(specs)) {
-      await this.#tokens.check(token, TOKEN_KIND.colour);
+      await this.#tokens.check(token, TOKEN_KIND.colour, place);
     }
   }
 
-  /** The paint style's id alone, or the layers as Figma takes them. */
-  async paints(specs: readonly PaintSpec[], consumer: SceneNode): Promise<string | Paint[]> {
+  /** The paint style's id alone, or the layers as Figma takes them; a token bound in the consumer's modes. */
+  async paints(
+    specs: readonly PaintSpec[],
+    consumer: SceneNode,
+    modes?: FigmaProps["modes"],
+  ): Promise<string | Paint[]> {
     const style = await this.#style(specs);
 
     if (style !== null) {
@@ -66,7 +70,7 @@ export class PaintWrite {
     const variables = new Map<string, Variable>();
 
     for (const token of this.#tokenNames(specs)) {
-      variables.set(token, await this.#tokens.variable(token, TOKEN_KIND.colour));
+      variables.set(token, await this.#tokens.variable(token, TOKEN_KIND.colour, { layer: consumer, modes }));
     }
 
     const images = new Map<string, string>();

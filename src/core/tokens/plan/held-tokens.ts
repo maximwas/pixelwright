@@ -44,6 +44,7 @@ export class HeldTokens {
       collections,
       styles: this.#styles(raw, model.styles),
       tokens: this.#targets(raw, collections),
+      shared: this.#shared(raw, collections),
       units: this.#units.units(raw.variables),
       library: new Set((raw.library ?? []).map(({ collection }) => collection)),
     };
@@ -82,6 +83,25 @@ export class HeldTokens {
     );
 
     return new Map([...catalogue.reverse(), ...library, ...own]);
+  }
+
+  /** The tokens more than one of the file's variables has (its own, and the libraries' the page uses), with their collections. */
+  #shared(raw: RawTokens, collections: readonly HeldCollection[]): Map<string, string[]> {
+    const owners = new Map<string, Map<string, string>>();
+    const held = [
+      ...collections.flatMap(({ name, variables }) => variables.map(({ token, id }) => [token, id, name] as const)),
+      ...Object.entries(raw.external).map(
+        ([id, variable]) => [this.#names.variable(variable), id, variable.collection] as const,
+      ),
+    ];
+
+    for (const [token, id, collection] of held) {
+      owners.set(token, (owners.get(token) ?? new Map<string, string>()).set(id, collection));
+    }
+
+    return new Map(
+      [...owners].flatMap(([token, ids]) => (ids.size > 1 ? [[token, [...new Set(ids.values())]] as const] : [])),
+    );
   }
 
   /**

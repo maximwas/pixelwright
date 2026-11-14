@@ -105,7 +105,7 @@ export class ApplyRun {
     // A new set's variants wait in a plain frame until they combine: its checks are the set's, as a dry run's are.
     const checked: TypedLayer =
       type === FIGMA_NODE_TYPE.componentSet && !run.dry
-        ? { type, parent: layer.parent ?? null, name: change.props.name }
+        ? { type, parent: layer.parent ?? null, name: change.props.name, modes: change.props.modes }
         : layer;
     const refusals = this.#layers.refusals(checked, placed);
 

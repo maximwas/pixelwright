@@ -31,6 +31,8 @@ const RawVariableSchema = zod.object({
   name: zod.string(),
   collectionId: zod.string(),
   resolvedType: zod.string(),
+  /** A library variable's key (a remote one's): what its library's catalogue lists it by. */
+  key: zod.exactOptional(zod.string()),
   description: zod.exactOptional(zod.string()),
   scopes: zod.array(zod.string()),
   codeSyntax: CodeSyntaxSchema,
@@ -42,6 +44,8 @@ const ExternalVariableSchema = zod.object({
   name: zod.string(),
   collection: zod.string(),
   resolvedType: zod.string(),
+  /** Its key: what its library's catalogue lists it by. */
+  key: zod.exactOptional(zod.string()),
   codeSyntax: CodeSyntaxSchema,
 });
 

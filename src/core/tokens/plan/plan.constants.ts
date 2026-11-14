@@ -97,6 +97,9 @@ export const PLAN_TEXT = {
   notColour: (token: string, type: string) => `${token} is a ${type} variable: a style takes colour variables.`,
   imported: (token: string) =>
     `${token} is a variable of an enabled library that the file does not use yet: the write imports it into the file.`,
+  /** A token several of the file's variables have (FIX-090A): tokens_read lists each, by collection. */
+  sharedTarget: (token: string, collections: readonly string[]) =>
+    `${token} names variables in ${collections.join(" and ")}: an alias cannot tell which. Give the one you mean its own WEB code syntax (codeSyntax WEB) with tokens_apply, and alias that.`,
   twice: (name: string, collection: string) =>
     `${name} is listed twice in ${collection}: only the first is planned. Merge the two, or give one another name.`,
   cycle: (path: readonly string[]) =>

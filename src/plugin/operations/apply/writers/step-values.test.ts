@@ -50,7 +50,7 @@ describe("StepValues", () => {
     await expect(
       values.check({ itemSpacing: 4, padding: [{ token: "space-md" }, 0, 0, 0], minWidth: null, width: undefined }),
     ).resolves.toBeUndefined();
-    expect(index.check).toHaveBeenCalledWith("space-md", "FLOAT");
+    expect(index.check).toHaveBeenCalledWith("space-md", "FLOAT", undefined);
     await expect(values.check({ itemSpacing: 4, padding: [0, { token: "space-xl" }, 0, 0] })).rejects.toThrow(
       /space-xl/,
     );

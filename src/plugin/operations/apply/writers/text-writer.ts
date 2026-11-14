@@ -77,6 +77,7 @@ export class TextWriter {
     for (const { key, error } of await this.#runs.check(
       change.props,
       this.#families(layer, change.props, undefined, change.props.font),
+      { layer, modes: change.props.modes },
     )) {
       if (!refused.has(key)) {
         found.push({ error, keys: [key] });
@@ -88,7 +89,7 @@ export class TextWriter {
 
       const families = this.#families(layer, run.props, run, run.props.font ?? change.props.font);
 
-      for (const { key, error } of await this.#runs.check(run.props, families)) {
+      for (const { key, error } of await this.#runs.check(run.props, families, { layer, modes: change.props.modes })) {
         found.push({ error, keys: [key], span });
       }
     }
@@ -168,7 +169,7 @@ export class TextWriter {
     }
 
     const own = await this.#ownLook(text, change.props, refused, fail);
-    const runs = await this.#spans(text, change.text?.runs ?? [], refusals, fail);
+    const runs = await this.#spans(text, change, refusals, fail);
 
     return this.#box(text, change.props, refused, fail) || runs || own || wrote;
   }
@@ -249,22 +250,22 @@ export class TextWriter {
     return wrote;
   }
 
-  /** What each Span sets over its characters, but for the keys its refusals name. */
+  /** What each Span sets over its characters, in the text's XML modes, but for the keys its refusals name. */
   async #spans(
     node: TextLayer,
-    runs: readonly Run[],
+    { text, props }: ApplyChangeData,
     refusals: readonly Refusal[],
     fail: Fail,
   ): Promise<boolean> {
     let wrote = false;
 
-    for (const [index, run] of runs.entries()) {
+    for (const [index, run] of (text?.runs ?? []).entries()) {
       const skipped = new Set(refusals.flatMap(({ keys, span }) => (span === index ? keys : [])));
 
       for (const [key] of TEXT_RUN_FIELDS) {
         try {
           if (run.end > run.start && run.props[key] !== undefined && !skipped.has(key)) {
-            await this.#runs.write(key, { node, start: run.start, end: run.end }, run.props);
+            await this.#runs.write(key, { node, start: run.start, end: run.end }, run.props, props.modes);
             wrote = true;
           }
         } catch (error) {

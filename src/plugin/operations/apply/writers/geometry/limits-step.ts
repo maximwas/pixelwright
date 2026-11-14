@@ -1,4 +1,5 @@
 import { inject, injectable } from "@needle-di/core";
+import type { TypedLayer } from "@/plugin/adapters/figma/capabilities.ts";
 import { CAPABILITY } from "@/plugin/adapters/figma/figma.constants.ts";
 import type { WriteStep } from "@/plugin/operations/apply/writers/layer-writer.ts";
 import { STEP_VALUES } from "@/plugin/operations/apply/writers/step-values.ts";
@@ -16,21 +17,18 @@ export class LimitsStep implements WriteStep {
     this.#values = values;
   }
 
-  async check(props: FigmaProps): Promise<void> {
-    await this.#values.check({
-      minWidth: props.minWidth,
-      maxWidth: props.maxWidth,
-      minHeight: props.minHeight,
-      maxHeight: props.maxHeight,
-    });
+  async check(props: FigmaProps, layer: TypedLayer): Promise<void> {
+    await this.#values.check(
+      { minWidth: props.minWidth, maxWidth: props.maxWidth, minHeight: props.minHeight, maxHeight: props.maxHeight },
+      { layer, modes: props.modes },
+    );
   }
 
   async write(node: SceneNode, props: FigmaProps): Promise<void> {
-    await this.#values.write(node, {
-      minWidth: props.minWidth,
-      maxWidth: props.maxWidth,
-      minHeight: props.minHeight,
-      maxHeight: props.maxHeight,
-    });
+    await this.#values.write(
+      node,
+      { minWidth: props.minWidth, maxWidth: props.maxWidth, minHeight: props.minHeight, maxHeight: props.maxHeight },
+      props.modes,
+    );
   }
 }

@@ -32,7 +32,7 @@ export class StrokesStep implements WriteStep {
   }
 
   /** A weight per side is refused before the paint is written, so a stroke is not half written. */
-  async check({ strokes }: FigmaProps, layer: TypedLayer): Promise<void> {
+  async check({ strokes, modes }: FigmaProps, layer: TypedLayer): Promise<void> {
     if (strokes === undefined) {
       return;
     }
@@ -46,16 +46,16 @@ export class StrokesStep implements WriteStep {
       this.#capabilities.require(layer, CAPABILITY.strokeSides);
     }
 
-    await this.#paints.check(strokes.paints);
+    await this.#paints.check(strokes.paints, { layer, modes });
   }
 
-  async write(node: SceneNode, { strokes }: FigmaProps): Promise<void> {
+  async write(node: SceneNode, { strokes, modes }: FigmaProps): Promise<void> {
     if (strokes === undefined) {
       return;
     }
 
     const layer = node as FrameNode;
-    const paints = await this.#paints.paints(strokes.paints, node);
+    const paints = await this.#paints.paints(strokes.paints, node, modes);
 
     if (typeof paints !== "string") {
       this.#paints.set(node, PAINT_FIELD.strokes, paints, layer.strokeStyleId);

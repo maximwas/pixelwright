@@ -25,7 +25,7 @@ const APPLIED = { created: [], changed: [], errors: [] };
 
 const IDLE = {
   layersToRead: () => [],
-  plan: () => ({ changes: [], written: [], send: [], errors: [], notWritten: new Map() }),
+  plan: () => ({ changes: [], assessed: [], written: [], send: [], errors: [], notWritten: new Map() }),
 } as never;
 
 describe("DesignApplyTool", () => {
@@ -75,7 +75,14 @@ describe("DesignApplyTool", () => {
     };
     const planner = {
       layersToRead: () => ["81:1"],
-      plan: () => ({ changes: [layout], written: [layout], send: [layout], errors: [], notWritten: new Map() }),
+      plan: () => ({
+        changes: [layout],
+        assessed: [],
+        written: [layout],
+        send: [layout],
+        errors: [],
+        notWritten: new Map(),
+      }),
     } as never;
     const answer = await tool(planner, session).execute({ xml: '<Frame id="81:1" gap="12px"/>', dryRun: true });
 
@@ -94,6 +101,7 @@ describe("DesignApplyTool", () => {
       layersToRead: () => [],
       plan: () => ({
         changes: [],
+        assessed: [],
         written: [],
         send: [],
         errors: [],
@@ -127,7 +135,7 @@ describe("DesignApplyTool", () => {
     };
     const planner = {
       layersToRead: () => [],
-      plan: () => ({ changes: [copy], written: [copy], send: [copy], errors: [], notWritten: new Map() }),
+      plan: () => ({ changes: [copy], assessed: [], written: [copy], send: [copy], errors: [], notWritten: new Map() }),
     } as never;
     const answer = await tool(planner, { run: async () => APPLIED }).execute({ xml: "<Frame/>", dryRun: true });
     const schema = zod.toJSONSchema(DesignApplyOutputSchema, { target: "draft-2020-12", io: "output" }) as {
@@ -153,7 +161,7 @@ describe("DesignApplyTool", () => {
       plan: (...args: unknown[]) => {
         asked.push(args);
 
-        return { changes: [], written: [], send: [], errors: [], notWritten: new Map() };
+        return { changes: [], assessed: [], written: [], send: [], errors: [], notWritten: new Map() };
       },
     } as never;
 
@@ -180,7 +188,7 @@ describe("DesignApplyTool", () => {
     const asked: unknown[] = [];
     const planner = {
       layersToRead: () => [],
-      plan: () => ({ changes: [frame], written: [frame], send: [frame], errors: [], notWritten: new Map() }),
+      plan: () => ({ changes: [frame], assessed: [], written: [frame], send: [frame], errors: [], notWritten: new Map() }),
     } as never;
     const session = {
       run: async (_op: unknown, input: unknown) => {

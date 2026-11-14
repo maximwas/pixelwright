@@ -75,23 +75,34 @@ export class TokensPlan {
 
     return (token: string): VariableTarget | string => {
       const call = calls.get(token);
-      const held = call === undefined ? file.tokens.get(token) : undefined;
-      const type = call?.type ?? held?.type;
+      const shared = call === undefined ? file.shared.get(token) : undefined;
 
-      if (type === undefined) {
-        return PLAN_TEXT.noTarget(token);
-      }
-
-      if (type !== WRITABLE_TYPE.COLOR) {
-        return PLAN_TEXT.notColour(token, type);
-      }
-
-      if (held === undefined) {
-        return call?.id === undefined ? {} : { id: call.id };
-      }
-
-      return held.key === undefined ? { id: held.id } : { key: held.key };
+      return shared === undefined ? this.#target(token, call, file) : PLAN_TEXT.sharedTarget(token, shared);
     };
+  }
+
+  /** A style's colour token as the call's variable, else the file's one of that token. */
+  #target(
+    token: string,
+    call: CollectionDraft["entries"][number]["plan"] | undefined,
+    file: FileTokens,
+  ): VariableTarget | string {
+    const held = call === undefined ? file.tokens.get(token) : undefined;
+    const type = call?.type ?? held?.type;
+
+    if (type === undefined) {
+      return PLAN_TEXT.noTarget(token);
+    }
+
+    if (type !== WRITABLE_TYPE.COLOR) {
+      return PLAN_TEXT.notColour(token, type);
+    }
+
+    if (held === undefined) {
+      return call?.id === undefined ? {} : { id: call.id };
+    }
+
+    return held.key === undefined ? { id: held.id } : { key: held.key };
   }
 
   /** The enabled libraries' variables the write imports, each said once (m:acc257ba). */

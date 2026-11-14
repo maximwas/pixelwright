@@ -5,11 +5,13 @@ import { WriteError } from "@/plugin/adapters/figma/write-error.ts";
 /**
  * A layer as a capability reads it: its type, so a dry run asks it of a layer it has not made, the layer it sits in
  * (a stand-in's `parent`, as a real layer's), so what holds it can be walked up to on either, and its name when it has
- * one (a stand-in's is the one its XML gives).
+ * one (a stand-in's is the one its XML gives); a stand-in's variable modes as its XML sets them, which a dry run does
+ * not write, so the tokens under it are bound by them as a real run's are.
  */
 export type TypedLayer = Pick<BaseNode, "type"> & {
   readonly parent?: TypedLayer | null;
   readonly name?: string | undefined;
+  readonly modes?: Readonly<Record<string, string>> | undefined;
 };
 
 export type Capability = keyof typeof CAPABILITY_TYPES;
