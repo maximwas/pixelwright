@@ -167,7 +167,8 @@ change); when it cannot be saved, nothing is written.
   A number variable binds a size, a min or max size, a gap, a padding side or a radius (`gap="var(--space-md)"`); a
   number over a bound one takes the variable off. A section is sized in px only.
 - design_apply binds the tokens the file and the libraries it uses have: tokens_read lists them. A `var()` that names
-  none is refused with the near names; a token the design lacks is the designer's to make in Figma.
+  none is refused with the near names; a token the design lacks is made with `tokens_apply` (dry run first) and
+  written here as `var(--name)`, or its raw value is bound afterwards with `tokens_bind` (`guide tokens`).
 - `data-<collection>="<mode>"` sets the layer's mode of that variable collection (by name or slug, as design_read
   writes it), and `""` clears it.
 - Gradients: `background` takes `linear-gradient(<angle>, <stops>)` (or `to right`…), `radial-gradient(<rx> <ry> at

@@ -69,6 +69,7 @@ once; tools work on the one whose plugin window was in front last, or on the fil
 | `components_read`, `library_search` | The components a page uses or the file defines, with variants and properties; components in your team's libraries |
 | `fonts_check` | The fonts a layer uses and where the build gets each |
 | `design_apply`, `nodes_delete`, `version_save` | Writing the XML back: changing, creating, copying and moving layers, components and instances; deleting layers; a named version in the file's history |
+| `tokens_apply`, `tokens_bind` | Writing tokens: collections, modes, variables and paint, text and effect styles, in the shape `tokens_read` returns; binding the raw values under a layer, a page or the file to the tokens that hold them, or one token's uses to another's |
 | `execute` | Plugin code the agent writes (`code`, or `codePath`, a file of it), for what no tool here shows or a change `design_apply` cannot say; or a `script` on the server that calls the read tools and joins their answers (see Safety) |
 | `types_read` | Each read's answer as TypeScript, for the agent's scripts |
 | `guide` | What the agent reads before it starts: the workflow, the XML, tokens, assets, scripts, writing and layout |
@@ -105,12 +106,14 @@ every tool with its arguments, as the server lists them.
 
 - **No REST API, no token.** The plugin reads the file through Figma's Plugin API, on your computer. The server
   listens on localhost only, and a plugin pairs once with a code you type in; unpaired windows get nothing.
-- **Writes wait for your switch.** `design_apply`, `nodes_delete` and `version_save` change the file, and so can
-  `execute`, which runs plugin code the agent writes (its scripts over the reads never write). **Allow edits** in the
-  plugin window is off until you turn it on for a file; while it is off, the plugin refuses every write, and the
-  agent can still check a change with a dry run. Your choice is remembered per file on your computer.
-- **Undo.** One `design_apply` or `nodes_delete` call is one undo step in Figma. With `version`, a call first saves a
-  named version you can go back to; the plugin cannot delete a version, so it stays in the file's history.
+- **Writes wait for your switch.** `design_apply`, `nodes_delete`, `version_save`, `tokens_apply` and `tokens_bind`
+  change the file, and so can `execute`, which runs plugin code the agent writes (its scripts over the reads never
+  write). **Allow edits** in the plugin window is off until you turn it on for a file; while it is off, the plugin
+  refuses every write, and the agent can still check a change with a dry run. Your choice is remembered per file on your
+  computer.
+- **Undo.** One `design_apply`, `nodes_delete`, `tokens_apply` or `tokens_bind` call is one undo step in Figma. With
+  `version`, a call first saves a named version you can go back to; the plugin cannot delete a version, so it stays in
+  the file's history.
 - `execute` runs code the agent writes: use Pixelwright with agents you trust, as you would with their build scripts.
 - **What is stored where.** `~/.pixelwright/` holds the plugin, the bridge's state (`bridge.json`), the shared log in
   `logs/`, npm's newest version (`latest.json`), the asset files written (`written-files.json`) and the library
@@ -124,8 +127,8 @@ every tool with its arguments, as the server lists them.
 - The file must be open in Figma Desktop with the plugin's window open. Figma slows plugins in background tabs: keep
   the file's tab in front during a long read.
 - `design_apply` writes what `guide write` lists: anything else is refused with its reason, or listed in the
-  answer as not written yet. Creating tokens, replacing texts across a file and the design checks come back in a later
-  version.
+  answer as not written yet. Replacing texts across a file, effects like noise and glass, reattaching detached
+  components, inserting icons and the design checks come back in a later version.
 - Tested on macOS. On Windows the setup gives Claude Code `cmd /c npx …`, as its documentation asks; Windows itself is
   not tested yet.
 
@@ -160,14 +163,16 @@ Every MCP client session runs its own server. The first one holds the bridge por
 every client sees every connected file. A newer server takes the bridge over; the older one then asks you to restart
 Pixelwright in its client (`/mcp` in Claude Code).
 
-### From 0.7.0 to 0.8.0
+### From 0.7.0 to 0.9.0
 
 - **Put the new plugin in place.** Run `npx -y pixelwright@latest setup` and run the plugin again: a 0.7.0 plugin
   cannot connect to 0.8.0, whose protocol changed. The plugin's path is the same, so you import nothing again.
 - **Restart Pixelwright in every MCP client still open** (`/mcp` in Claude Code): a 0.7.0 server that keeps running
   keeps 0.7.0's answers.
-- **0.8.0 reads.** The tools that wrote to the file, and the design checks, are gone until 0.9.0 and 0.10.0; `execute`
-  stays, to read. Code Connect is gone too: the XML no longer carries your project's code for an instance.
+- **Writing comes back in part.** 0.8.0 only read; 0.9.0 writes again with `design_apply`, `nodes_delete`,
+  `version_save`, `tokens_apply` and `tokens_bind`, behind Allow edits. Replacing texts across a file, putting on
+  effects, reattaching components, inserting icons and the design checks come in a later version. Code Connect is gone
+  too: the XML no longer carries your project's code for an instance.
 - **An argument a tool does not name is an error now**, which names it; 0.7.0 ignored it.
 - Baselines 0.7.0 saved still read: `baseline_diff` compares against them as they are.
 
