@@ -35,12 +35,6 @@ export const NO_SCAN: BindScan = { layers: [], variables: {}, instances: 0, defa
 /** With remap: instances left to their main components, or their uses rebound as overrides. */
 export const BIND_INSTANCES = { leave: "leave", override: "override" } as const;
 
-export const TOKENS_BIND_TEXT = {
-  /** Until the plugin binds, a real run says how to see what it would bind instead. */
-  dryOnly:
-    "tokens_bind finds raw values in this build and binds none yet: pass dryRun: true to see what it would bind.",
-} as const;
-
 /** tokens_bind's one-sentence answer (T-167): what it binds (or would), then what waits for a pick or has no token. */
 export const TOKENS_BIND_SUMMARY = {
   bound: (dry: boolean, count: number) =>

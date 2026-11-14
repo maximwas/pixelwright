@@ -267,7 +267,7 @@ describe("TokensBind", () => {
     });
   });
 
-  it("plans a text run's text style on its range (T-167)", () => {
+  it("plans a text run's text style on its range, and refuses one where Figma lacks the text's font (T-167)", () => {
     const parts = { fontName: { family: "Inter", style: "Regular" }, fontSize: 16, lineHeight: { unit: "AUTO" } };
     const raw = { ...tokens(), styles: [{ id: "S:body", type: "TEXT", name: "Body", remote: false, ...parts }] };
     const run = { ...parts, letterSpacing: { unit: "PIXELS", value: 0 }, textCase: "ORIGINAL", textDecoration: "NONE" };
@@ -275,8 +275,10 @@ describe("TokensBind", () => {
       type: "TEXT",
       texts: [{ ...run, range: { start: 0, end: 4 } }] as ScannedLayer["texts"],
     });
+    const planned = bind.plan(bind.index(raw), scan([text, { ...text, id: "1:3", missingFont: true }]), NO_PICKS);
 
-    expect(bind.plan(bind.index(raw), scan([text]), NO_PICKS).plan.binds).toEqual([
+    expect(planned.result.errors).toEqual([{ id: "1:3", message: expect.stringContaining("font") }]);
+    expect(planned.plan.binds).toEqual([
       {
         layer: "1:2",
         kind: "text",

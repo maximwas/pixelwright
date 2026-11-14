@@ -13657,6 +13657,10 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 }
+              },
+              "missingFont": {
+                "type": "boolean",
+                "const": true
               }
             },
             "required": [
@@ -13736,6 +13740,373 @@
         "instances",
         "defaults",
         "cut"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "bind_write",
+    "meta": {
+      "write": true,
+      "dryRun": false,
+      "timeoutMs": 310000,
+      "needsAllowEdits": true,
+      "turn": "write"
+    },
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "binds": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "color"
+                  },
+                  "at": {
+                    "type": "string",
+                    "enum": [
+                      "fills",
+                      "strokes",
+                      "run"
+                    ]
+                  },
+                  "index": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "range": {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "end": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "opacity": {
+                    "type": "number"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "variable",
+                          "style"
+                        ]
+                      },
+                      "key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "token",
+                      "id",
+                      "source"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "snapped": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "at",
+                  "index",
+                  "opacity",
+                  "layer",
+                  "target",
+                  "snapped"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "number"
+                  },
+                  "fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "variable",
+                          "style"
+                        ]
+                      },
+                      "key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "token",
+                      "id",
+                      "source"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "snapped": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "fields",
+                  "layer",
+                  "target",
+                  "snapped"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "text"
+                  },
+                  "range": {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "end": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "variable",
+                          "style"
+                        ]
+                      },
+                      "key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "token",
+                      "id",
+                      "source"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "snapped": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "range",
+                  "layer",
+                  "target",
+                  "snapped"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "effect"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "variable",
+                          "style"
+                        ]
+                      },
+                      "key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "token",
+                      "id",
+                      "source"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "snapped": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "layer",
+                  "target",
+                  "snapped"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "remaps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "layer": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "variable",
+                      "style"
+                    ]
+                  },
+                  "key": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token",
+                  "id",
+                  "source"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "layer",
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "binds",
+        "remaps"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "failed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "failed"
       ],
       "additionalProperties": false
     }

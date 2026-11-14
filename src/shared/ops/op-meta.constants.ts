@@ -36,4 +36,5 @@ export const OP_NAME = {
   upload: "upload",
   tokensApply: "tokens_apply",
   bind: "bind",
+  bindWrite: "bind_write",
 } as const;

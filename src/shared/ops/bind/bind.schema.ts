@@ -57,7 +57,7 @@ const ScannedTextSchema = zod.strictObject({
  * One layer's raw values as Figma keeps them, for the server to match: its variable modes (resolvedVariableModes),
  * layout, number fields (bound or not, and which are bound) and the variables Figma infers for its raw ones, whether
  * it draws a stroke, its raw paints, its runs no text style sets, its effects when no style or variable gives them;
- * with remap ids, how often it uses each.
+ * with remap ids, how often it uses each; and a text whose fonts Figma lacks, since what loads them cannot be written.
  */
 const ScannedLayerSchema = zod.strictObject({
   id: zod.string(),
@@ -72,6 +72,7 @@ const ScannedLayerSchema = zod.strictObject({
   texts: zod.array(ScannedTextSchema),
   effects: zod.exactOptional(zod.array(EffectSchema)),
   uses: zod.record(zod.string(), zod.int()),
+  missingFont: zod.exactOptional(zod.literal(true)),
 });
 
 /** A variable Figma inferred that the file does not hold (a library's): its token's name, type, scopes and key. */
@@ -122,10 +123,10 @@ const BindTargetSchema = zod.strictObject({
 const PLANNED_BIND = { layer: zod.string(), target: BindTargetSchema, snapped: zod.boolean() };
 
 /**
- * What a real tokens_bind run writes (item 51's op input, exported with it): every bound use where it is, and with
- * remaps every layer's uses of a from token (by id) to rebind to its to token.
+ * What a real tokens_bind run writes, the bind_write op's input: every bound use where it is, and with remaps every
+ * layer's uses of a from token (by id) to rebind to its to token.
  */
-const BindPlanSchema = zod.strictObject({
+export const BindPlanSchema = zod.strictObject({
   binds: zod.array(
     zod.discriminatedUnion(BIND_KIND_FIELD, [
       zod.extend(BindPlaceSchema.color, PLANNED_BIND),
