@@ -210,6 +210,17 @@ describe("two servers on one bridge (S-030..S-034)", () => {
     expect((await peer.status()).pairing).toMatchObject({ code: null, lockedForSeconds: 30, waiting: 1 });
   });
 
+  it("holds a call for the plugin that is still on its way, and goes on once a file connects (T-001)", async () => {
+    const owner = await started();
+    const registry = owner.server.container().get(SESSION_REGISTRY);
+    const answer = owner.client.callTool({ name: "selection_get", arguments: { file: "Orbit" } });
+
+    // The plugin reaches the server a moment after the call; without the wait the call failed PLUGIN_NOT_CONNECTED.
+    setTimeout(() => registry.add(silentSession(registry)), 100);
+
+    expect(JSON.stringify((await answer).content)).toContain("No connected file is named Orbit. Connected: Test MCP.");
+  });
+
   it("still starts an owner when bridge.json is broken (S-014)", async () => {
     const home = mkdtempSync(join(tmpdir(), "pixelwright-peer-"));
 

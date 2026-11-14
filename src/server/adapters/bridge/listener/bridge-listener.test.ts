@@ -9,6 +9,7 @@ import { BridgeListener } from "@/server/adapters/bridge/listener/bridge-listene
 import { UpgradeGuard } from "@/server/adapters/bridge/listener/upgrade-guard.ts";
 import { PairingCodes } from "@/server/adapters/bridge/plugin/pairing-codes.ts";
 import { PluginConnections } from "@/server/adapters/bridge/plugin/plugin-connections.ts";
+import { PluginWatch } from "@/server/adapters/bridge/sessions/plugin-watch.ts";
 import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger.ts";
@@ -34,7 +35,11 @@ class ListenerProbe {
   ]);
 
   readonly clock = { now: () => Date.now() };
-  readonly sessions = new SessionRegistry(new PairingCodes(this.clock, this.logger), this.logger);
+  readonly sessions = new SessionRegistry(
+    new PairingCodes(this.clock, this.logger),
+    this.logger,
+    new PluginWatch(this.clock),
+  );
   readonly listener = new BridgeListener(
     this.settings,
     new UpgradeGuard(this.settings),
