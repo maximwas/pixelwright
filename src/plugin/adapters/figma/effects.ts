@@ -45,6 +45,15 @@ export class Effects {
     return this.#merge.merged(current, written);
   }
 
+  /** An effect with one field bound to a variable instead: tokens_bind's remap. */
+  rebound(
+    effect: Effect,
+    field: VariableBindableEffectField,
+    variable: Variable,
+  ): Effect {
+    return figma.variables.setBoundVariableForEffect(effect, field, variable);
+  }
+
   async #effect(
     spec: EffectSpec,
     variables: TokenVariables,

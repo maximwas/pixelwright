@@ -1,9 +1,17 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { TOKEN_NAMES } from "@/core/kernel/names/token-names.ts";
-import { BIND_FIELD, BIND_SCOPE, BIND_TEXT, BIND_VALUE, TYPE_WORDS } from "@/core/tokens/bind/bind.constants.ts";
+import {
+  BIND_DECISION,
+  BIND_FIELD,
+  BIND_SCOPE,
+  BIND_TEXT,
+  BIND_VALUE,
+  TYPE_WORDS,
+} from "@/core/tokens/bind/bind.constants.ts";
 import type {
   BindCandidate,
   BindChoice,
+  BindDecision,
   BindPlanned,
   BindRemap,
   BindRequest,
@@ -92,9 +100,26 @@ export class TokensBind {
         ...this.#numbers(index, layer, scan.variables),
         ...this.#styled(index, layer),
       ]) {
-        report.add(use, choices.decide(use));
+        report.add(use, this.#fonted(layer, use, choices.decide(use)));
       }
     }
+  }
+
+  /**
+   * A bound use that loads the text's fonts (its text style, a run's colour) is refused where Figma lacks one of them:
+   * the writer could not load it, so the dry run says so too.
+   */
+  #fonted(
+    layer: ScannedLayer,
+    use: BindUse,
+    decision: BindDecision,
+  ): BindDecision {
+    const { place } = use;
+    const fonts = place.kind === BIND_KIND.text || (place.kind === BIND_KIND.color && place.at === BIND_PAINT_AT.run);
+
+    return layer.missingFont !== undefined && fonts && decision.kind === BIND_DECISION.bound
+      ? { kind: BIND_DECISION.refused, message: BIND_TEXT.missingFont }
+      : decision;
   }
 
   /**
@@ -231,7 +256,12 @@ export class TokensBind {
       for (const pair of pairs) {
         const count = layer.uses[pair.source.id] ?? 0;
 
-        if (count > 0) {
+        // The writer loads the text's fonts for its text style and for runs a style or variable sets; the scan does
+        // not say which a use is, so where Figma lacks a font every use is refused (shortcut: a layer-level paint
+        // style or fill variable the writer would set without fonts is refused too; upgrade when the scan splits runs).
+        if (count > 0 && layer.missingFont !== undefined) {
+          report.error(layer.id, BIND_TEXT.missingFont);
+        } else if (count > 0) {
           report.remapped(pair, layer.id, count);
         }
       }

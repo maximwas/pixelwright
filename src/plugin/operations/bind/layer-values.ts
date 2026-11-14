@@ -61,6 +61,7 @@ export class LayerValues {
       texts: raw && kinds.includes(BIND_KIND.text) ? this.#texts(layer) : [],
       ...(effects === undefined ? {} : { effects }),
       uses: raw ? {} : this.#uses(layer, remap),
+      ...this.#missingFont(layer),
     };
 
     return this.#worth(scanned)
@@ -120,6 +121,11 @@ export class LayerValues {
     });
 
     return { paints: offered, ...(Object.keys(fields).length === 0 ? {} : { inferred: fields }) };
+  }
+
+  /** A text whose fonts Figma lacks: binding its text style or a run's colour would load them. */
+  #missingFont(layer: SceneNode): Pick<ScannedLayer, "missingFont"> {
+    return layer.type === FIGMA_NODE_TYPE.text && layer.hasMissingFont ? { missingFont: true } : {};
   }
 
   #paints(layer: SceneNode): ScannedPaint[] {

@@ -158,6 +158,8 @@ export const BIND_TEXT = {
         ? "1 instance was left alone: bind its main component, and its instances follow"
         : `${count} instances were left alone: bind their main components, and the instances follow`
     }${remaps ? '; instances: "override" rebinds the uses inside them as their overrides.' : "."}`,
+  missingFont:
+    "Figma lacks a font this text uses, and binding its text style, or binding or rebinding what a run holds (its colour, its font), loads its fonts: install the font, or replace it (fonts_check lists what is missing).",
   usedCut:
     "The scan for the library tokens the layers use ran out of time: a library style or variable used only on layers it did not reach was not considered, so a value only it holds is listed with no token. Bind a page or a layer at a time.",
   defaults: (count: number) =>

@@ -49,7 +49,7 @@ export abstract class WriteTool<Input extends WriterInput, Prepared, Result, Out
 
     const written = await this.#versioned.run(
       this.session,
-      { title: input.version, dryRun: input.dryRun ?? false, probe: this.op.declared.dryRun },
+      { title: input.version, dryRun: input.dryRun ?? false, probe: this.probes() },
       { write: (dry) => this.write(prepared, dry), changes: (result) => this.changes(result) },
     );
     const support = !written.dry && this.changes(written.result) > 0 ? (this.#support?.due() ?? null) : null;
@@ -70,6 +70,11 @@ export abstract class WriteTool<Input extends WriterInput, Prepared, Result, Out
   }
 
   protected abstract write(prepared: Prepared, dry: boolean): Promise<Result>;
+
+  /** Whether write(true) writes nothing, so a version waits for a probe that finds a change: the op's dry run. */
+  protected probes(): boolean {
+    return this.op.declared.dryRun;
+  }
 
   /** How many things the result changes: 0 makes a probe the answer, and gives no support sentence. */
   protected abstract changes(result: Result): number;

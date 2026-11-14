@@ -71,7 +71,11 @@ import { TEXT_WRITER, TextWriter } from "@/plugin/operations/apply/writers/text-
 import { VariantStep } from "@/plugin/operations/apply/writers/variant-step.ts";
 import { BindOperation } from "@/plugin/operations/bind/bind.operation.ts";
 import { BIND_LAYERS, BindLayers } from "@/plugin/operations/bind/bind-layers.ts";
+import { BIND_TARGETS, BindTargets } from "@/plugin/operations/bind/bind-targets.ts";
+import { BindWriteOperation } from "@/plugin/operations/bind/bind-write.operation.ts";
 import { LAYER_VALUES, LayerValues } from "@/plugin/operations/bind/layer-values.ts";
+import { REMAP_WRITER, RemapWriter } from "@/plugin/operations/bind/remap-writer.ts";
+import { USE_BINDER, UseBinder } from "@/plugin/operations/bind/use-binder.ts";
 import { ChangesOperation } from "@/plugin/operations/changes/changes.operation.ts";
 import { ChunkOperation } from "@/plugin/operations/chunk/chunk.operation.ts";
 import { COMPONENT_DETAILS, ComponentDetails } from "@/plugin/operations/components/component-details.ts";
@@ -124,7 +128,8 @@ import type { OpName } from "@/shared/ops/op-meta.types.ts";
  * core's Name=Value lists (K-069); components finds, lists, exposes and links components (T-190, T-192); variables reads the file's raw tokens (P-125);
  * usage lists the layers that use a style or variable (P-126); upload holds design_apply's files for its apply (P-030);
  * tokens_apply writes core's tokens plan, the file's mode limit learned once for the window (P-163, P-167); bind scans
- * the raw values tokens_bind matches, instances and slots' default content left alone (P-164, T-170).
+ * the raw values tokens_bind matches, instances and slots' default content left alone (P-164, T-170); bind_write
+ * binds its plan.
  */
 export class OperationProviders {
   readonly #classes: Readonly<Record<OpName, OperationClass>> = {
@@ -157,6 +162,7 @@ export class OperationProviders {
     [OP_NAME.upload]: UploadOperation,
     [OP_NAME.tokensApply]: TokensApplyOperation,
     [OP_NAME.bind]: BindOperation,
+    [OP_NAME.bindWrite]: BindWriteOperation,
   };
 
   register(container: Container): void {
@@ -209,7 +215,7 @@ export class OperationProviders {
     this.#tokens(container);
   }
 
-  /** What tokens_apply writes with, on top of design_apply's paints and effects (P-163). */
+  /** What tokens_apply and tokens_bind write with, on top of design_apply's paints and effects (P-163, P-164). */
   #tokens(container: Container): void {
     container
       .bind({ provide: MODE_LIMIT, useClass: ModeLimit })
@@ -221,7 +227,10 @@ export class OperationProviders {
       .bind({ provide: FONT_SHORTHAND, useClass: FontShorthand })
       .bind({ provide: STYLE_LOOKS, useClass: StyleLooks })
       .bind({ provide: TEXT_STYLE_LOOKS, useClass: TextStyleLooks })
-      .bind({ provide: STYLE_WRITER, useClass: StyleWriter });
+      .bind({ provide: STYLE_WRITER, useClass: StyleWriter })
+      .bind({ provide: BIND_TARGETS, useClass: BindTargets })
+      .bind({ provide: USE_BINDER, useClass: UseBinder })
+      .bind({ provide: REMAP_WRITER, useClass: RemapWriter });
   }
 
   /** design_apply's write steps in Figma's order (P-149). */
