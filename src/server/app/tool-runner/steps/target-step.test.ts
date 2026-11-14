@@ -51,6 +51,7 @@ class FakeLink implements PluginLink {
 /** The arrivals' answer is scripted; `onWait` is what happens while the call waits. */
 class ScriptedArrivals implements PluginArrivals {
   waits = 0;
+  signal: AbortSignal | undefined;
   readonly #arrival: PluginArrival;
   readonly #onWait: () => void;
 
@@ -65,8 +66,9 @@ class ScriptedArrivals implements PluginArrivals {
 
   arrived(): void {}
 
-  async wait(): Promise<PluginArrival> {
+  async wait(signal: AbortSignal): Promise<PluginArrival> {
     this.waits += 1;
+    this.signal = signal;
     this.#onWait();
 
     return this.#arrival;
@@ -86,19 +88,19 @@ const manifest = (input: zod.ZodMiniObject, ownTarget = false): ToolManifest => 
 
 const TAKES_FILE = zod.object({ file: zod.optional(zod.string()) });
 
-const call = (tool: ToolManifest): ToolCall => ({
+const call = (tool: ToolManifest, signal = new AbortController().signal): ToolCall => ({
   manifest: tool,
   args: {},
   callId: CallId.next(),
-  signal: new AbortController().signal,
+  signal,
 });
 
 /** The step over a link and arrivals; `seen` is the session id each call's next step got. */
 const setup = (link: FakeLink, arrivals: PluginArrivals) => {
   const seen: (string | undefined)[] = [];
   const step = new TargetStep(new PluginSessions(link, new TargetResolver(), []), link, arrivals);
-  const handle = (tool: ToolManifest) =>
-    step.handle(call(tool), async (next) => {
+  const handle = (tool: ToolManifest, signal?: AbortSignal) =>
+    step.handle(call(tool, signal), async (next) => {
       seen.push(next.session?.id);
 
       return { content: [] };
@@ -115,10 +117,25 @@ describe("TargetStep waiting for the plugin", () => {
     });
     const { handle, seen } = setup(link, arrivals);
 
-    await handle(manifest(TAKES_FILE));
+    const calling = new AbortController();
+
+    await handle(manifest(TAKES_FILE), calling.signal);
 
     expect(seen).toEqual(["a"]);
     expect(arrivals.waits).toBe(1);
+    expect(arrivals.signal).toBe(calling.signal);
+  });
+
+  it("does not wait for a call the client has cancelled, and ends it with the abort", async () => {
+    const arrivals = new ScriptedArrivals(PLUGIN_ARRIVAL.arrived);
+    const { handle, seen } = setup(new FakeLink(), arrivals);
+    const cancelled = new AbortController();
+
+    cancelled.abort();
+
+    await expect(handle(manifest(TAKES_FILE), cancelled.signal)).rejects.toMatchObject({ name: "AbortError" });
+    expect(arrivals.waits).toBe(0);
+    expect(seen).toEqual([]);
   });
 
   it("says the plugin left and has not come back when the wait ends after a file was connected a moment ago", async () => {

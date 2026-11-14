@@ -38,7 +38,7 @@ export class PluginWatch implements PluginArrivals {
     this.#waiting.clear();
   }
 
-  async wait(): Promise<PluginArrival> {
+  async wait(signal: AbortSignal): Promise<PluginArrival> {
     const now = this.#clock.now();
     const remaining = Math.max(this.#upAt, this.#leftAt) + PLUGIN_WINDOW_MS - now;
     const wasHere = now - this.#leftAt < PLUGIN_WINDOW_MS;
@@ -47,12 +47,18 @@ export class PluginWatch implements PluginArrivals {
       return PLUGIN_ARRIVAL.absent;
     }
 
-    const arrival = new Promise<boolean>((resolve) => {
-      this.#waiting.add(() => resolve(true));
-    });
+    const { promise: arrival, resolve } = Promise.withResolvers<boolean>();
+    const wake = () => resolve(true);
 
-    if (await pTimeout(arrival, { milliseconds: remaining, fallback: () => false })) {
-      return PLUGIN_ARRIVAL.arrived;
+    this.#waiting.add(wake);
+
+    // A wait that arrives is cleared by arrived(); one that times out or is cancelled must leave by itself.
+    try {
+      if (await pTimeout(arrival, { milliseconds: remaining, signal, fallback: () => false })) {
+        return PLUGIN_ARRIVAL.arrived;
+      }
+    } finally {
+      this.#waiting.delete(wake);
     }
 
     return wasHere ? PLUGIN_ARRIVAL.left : PLUGIN_ARRIVAL.absent;

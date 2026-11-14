@@ -38,18 +38,23 @@ export class TargetStep implements ToolCallStep {
 
     const args = zod.safeParse(TargetArgsSchema, call.args);
 
-    await this.#waitForPlugin();
+    await this.#waitForPlugin(call.signal);
 
     return next({ ...call, session: this.#sessions.session(args.success ? args.data.file : undefined) });
   }
 
-  /** No file connected: wait while the plugin is expected; a wait that ends after a file was there says it left. */
-  async #waitForPlugin(): Promise<void> {
+  /**
+   * No file connected: wait while the plugin is expected; a wait that ends after a file was there says it left. A call
+   * the client has cancelled does not wait, and one cancelled during the wait leaves it, with the signal's abort.
+   */
+  async #waitForPlugin(signal: AbortSignal): Promise<void> {
     if (this.#link.files().length > 0) {
       return;
     }
 
-    if ((await this.#arrivals.wait()) === PLUGIN_ARRIVAL.left) {
+    signal.throwIfAborted();
+
+    if ((await this.#arrivals.wait(signal)) === PLUGIN_ARRIVAL.left) {
       throw new PixelwrightError(ERROR_CODE.pluginNotConnected, LINK_TEXT.pluginLeft);
     }
   }
