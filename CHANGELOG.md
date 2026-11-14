@@ -31,12 +31,15 @@ plugin's Allow edits switch is off; `dryRun` checks a write without it and refus
   instances, slots and pages. It writes auto layout and grids, sizes and placement, moves and copies, fills,
   gradients, borders, radii, shadows, blurs, blend modes and masks, colour and number tokens, styles, text with its
   fonts and runs, links, variable modes, Dev Mode notes and component properties. One call is one undo step, an error
-  names its line and column, and the call never deletes a layer it did not make.
+  names its line and column, and the call never deletes a layer it did not make. A `var(--name)` that variables of
+  several collections share takes the collection whose mode the layer or a parent sets, and is refused when none
+  does; a shadow spread Figma keeps but does not draw gets a note.
 - `nodes_delete` deletes up to 500 layers by id, each on its own: a layer Figma will not delete stays, with the reason.
 - `version_save` saves a named version in the file's history, when the user asks for one.
 - `tokens_apply` writes collections, modes, variables, aliases and paint, text and effect styles in one undo step, in
   the shape `tokens_read` returns: `tokens_read`'s own output applied back changes nothing. A library variable is
-  aliased by its key, a library's collection or style is never copied into the file, and nothing is deleted.
+  aliased by its key, a library's collection or style is never copied into the file, and nothing is deleted. An
+  alias or a style colour naming a token several collections hold is refused.
 - `tokens_bind` binds the raw values under a layer, a page or the file to the variables and styles that hold them
   exactly: colours, gaps, padding, radii, border widths, opacity, text styles and effect styles. A value several
   tokens hold is listed with its candidates (`choose` picks one and snaps a near value to a token), a value no token
@@ -55,6 +58,14 @@ plugin's Allow edits switch is off; `dryRun` checks a write without it and refus
 - `tokens_apply` takes one `tokens` input, the shape `tokens_read` returns with `format: "json"`, in place of 0.7.0's
   `collections` and `styles`.
 - `baseline_save` asks for a baseline only when the user tracks design changes, not after every `design_read`.
+
+### Fixed
+
+- `design_read` writes a shadow's spread only where Figma draws it (rectangles, ellipses, and frames, components and
+  instances that clip their content and have a fill), and gives each collection's value of a token name several
+  collections share; `tokens_read` notes that `:root` keeps only the last of them.
+- A call made while the plugin is reconnecting (right after the server starts, or when another MCP client's server
+  closes) waits for it, up to 20 seconds, instead of failing at once.
 
 ## 0.8.2 — 2026-11-12
 
