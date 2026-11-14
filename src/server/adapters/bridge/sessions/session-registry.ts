@@ -2,6 +2,7 @@ import { InjectionToken, inject, injectable } from "@needle-di/core";
 import * as zod from "zod/mini";
 import { LOG_COMPONENT } from "@/core/ports/logger.constants.ts";
 import { LOGGER, type LogFields } from "@/core/ports/logger.port.ts";
+import { PLUGIN_ARRIVALS } from "@/core/ports/plugin-arrivals.port.ts";
 import type { ConnectedFile, PairingStatus } from "@/core/ports/plugin-link.port.ts";
 import type { UpgradeRejection } from "@/server/adapters/bridge/listener/upgrade-guard.ts";
 import { PAIRING_CODES } from "@/server/adapters/bridge/plugin/pairing-codes.ts";
@@ -26,6 +27,7 @@ import { DismissFrameSchema } from "@/shared/protocol/update.schema.ts";
 export class SessionRegistry {
   readonly #pairing;
   readonly #logger;
+  readonly #arrivals;
   readonly #sessions = new Map<string, BridgeSession>();
   readonly #waiting = new Set<object>();
   #onChange: (() => void) | null = null;
@@ -35,9 +37,14 @@ export class SessionRegistry {
   #rejection: UpgradeRejection | null = null;
   #refusal: ProtocolRefusal | null = null;
 
-  constructor(pairing = inject(PAIRING_CODES), logger = inject(LOGGER)) {
+  constructor(
+    pairing = inject(PAIRING_CODES),
+    logger = inject(LOGGER),
+    arrivals = inject(PLUGIN_ARRIVALS),
+  ) {
     this.#pairing = pairing;
     this.#logger = logger;
+    this.#arrivals = arrivals;
   }
 
   /** The next position on the bridge's sequence: connections and windows coming to the front never tie. */
@@ -103,6 +110,7 @@ export class SessionRegistry {
 
     this.#rejection = null;
     this.#refusal = null;
+    this.#arrivals.arrived();
     this.#logChange(SESSION_LOG.connected, session, { pluginVersion: session.info.pluginVersion });
   }
 
@@ -113,6 +121,7 @@ export class SessionRegistry {
     }
 
     this.#sessions.delete(session.id);
+    this.#arrivals.left();
     this.#logChange(SESSION_LOG.disconnected, session, { code });
   }
 

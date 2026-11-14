@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { PluginArrivals } from "@/core/ports/plugin-arrivals.port.ts";
+import { PLUGIN_ARRIVAL } from "@/core/ports/plugin-link.constants.ts";
 import { PairingCodes } from "@/server/adapters/bridge/plugin/pairing-codes.ts";
 import { BridgeSession } from "@/server/adapters/bridge/sessions/bridge-session.ts";
 import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry.ts";
@@ -19,7 +21,19 @@ const info = (instanceId: string, visible = true): PluginInfo => ({
 class RegistryProbe {
   readonly logger = new PinoLogger({ level: "silent", file: "unused" }, []);
 
-  readonly registry = new SessionRegistry(new PairingCodes({ now: () => Date.now() }, this.logger), this.logger);
+  readonly told: string[] = [];
+  readonly arrivals: PluginArrivals = {
+    up: () => this.told.push("up"),
+    left: () => this.told.push("left"),
+    arrived: () => this.told.push("arrived"),
+    wait: () => Promise.resolve(PLUGIN_ARRIVAL.absent),
+  };
+
+  readonly registry = new SessionRegistry(
+    new PairingCodes({ now: () => Date.now() }, this.logger),
+    this.logger,
+    this.arrivals,
+  );
   readonly closes: { window: string; code: number; reason: string }[] = [];
 
   add(instanceId: string, visible = true): BridgeSession {
@@ -52,6 +66,20 @@ describe("SessionRegistry", () => {
     // The first socket's late close must not take the second session with it.
     probe.registry.remove(first, 4409);
     expect(probe.registry.files().map((file) => file.session)).toEqual([second.id]);
+  });
+
+  it("tells the arrivals when a file connects and when it leaves, and not when a window replaces its own session", () => {
+    const probe = new RegistryProbe();
+    const first = probe.add("window-a");
+    const second = probe.add("window-a");
+
+    expect(probe.told).toEqual(["arrived", "arrived"]);
+
+    probe.registry.remove(first, 1001);
+    expect(probe.told).toEqual(["arrived", "arrived"]);
+
+    probe.registry.remove(second, 1001);
+    expect(probe.told).toEqual(["arrived", "arrived", "left"]);
   });
 
   it("admits 16 open files, and past them only a window that reconnects", () => {

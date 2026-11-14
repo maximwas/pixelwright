@@ -5,6 +5,7 @@ import type { SocketOpener } from "@/plugin-ui/link/socket-link.ts";
 import { BridgeConfig } from "@/server/adapters/bridge/listener/bridge-config.ts";
 import { PairingCodes } from "@/server/adapters/bridge/plugin/pairing-codes.ts";
 import { PluginConnection } from "@/server/adapters/bridge/plugin/plugin-connection.ts";
+import { PluginWatch } from "@/server/adapters/bridge/sessions/plugin-watch.ts";
 import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger.ts";
@@ -21,7 +22,7 @@ export class MemoryBridge implements SocketOpener {
 
   readonly clock = { now: () => Date.now() };
   readonly pairing = new PairingCodes(this.clock, this.logger);
-  readonly sessions = new SessionRegistry(this.pairing, this.logger);
+  readonly sessions = new SessionRegistry(this.pairing, this.logger, new PluginWatch(this.clock));
   readonly keys = new BridgeConfig(
     new AtomicJsonFile(this.logger),
     { port: 0, pluginOrigins: [], configFile: join(mkdtempSync(join(tmpdir(), "pixelwright-link-")), "bridge.json") },

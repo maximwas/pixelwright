@@ -367,7 +367,7 @@ beyond the reads' own ops.
 
 **Runs a tool call.** The MCP SDK hands the call to `McpEndpoint`, which gives it to `ToolRunner`. The runner's chain,
 outermost first: `ErrorTextStep`, `CallLogStep`, `TargetStep` (binds the call to a `PluginSession` when the tool takes
-`file`), `OutputCheckStep`. `ContainerToolFactory` builds the tool in a child container per call, and the tool's
+`file`; with no file connected it first waits while a plugin is expected, see `PluginWatch`), `OutputCheckStep`. `ContainerToolFactory` builds the tool in a child container per call, and the tool's
 `execute` asks its session for ops. Each op passes the session's chain, `OpLogStep`, `OpTimerStep`, `OpResultStep`, and
 reaches `PluginLink`, which is `PluginBridge`. On the owner, the request goes to the file's `BridgeSession` and out
 through `PluginRpc` (birpc) on its socket. The window relays the frame: `SocketLink` to `WindowLink` to `MainChannel`,
@@ -432,6 +432,8 @@ with `OwnerPeers`, `PeerConnection` and `OwnerRouter` serving the owner's contra
 port taken joins the owner as a peer (`PeerBridge`, `PeerJoin`, `OwnerClient`), shows the owner's files, asks it for
 the pairing code on each status, and runs its ops through it. A newer server takes the bridge over and the older one is handed over for good. With neither,
 `PluginBridge` stays unavailable and retries. `PIXELWRIGHT_PLUGIN_BRIDGE=off` binds `NoBridge`.
+
+**Waits for a plugin that is on its way back.** The plugin reconnects by itself after its server restarts or changes owner, up to 15 s later. `PluginWatch` (port `PluginArrivals`) remembers when this server came up on the bridge (`PluginBridge`) and when a file last left (`SessionRegistry`, or `PeerBridge` from the owner's status), and wakes the calls it holds when a file connects. A plugin is expected for `PLUGIN_WINDOW_MS` after either; `TargetStep` asks only when no file is connected, so `status` and an `ownTarget` tool never wait. A wait that ends after a file was there says the plugin left (`LINK_TEXT.pluginLeft`), else the call fails as before.
 
 **Holds the tokens.** A class's token sits at the bottom of the class's own file; a port's token in its `x.port.ts`;
 tokens of config values and multi-provider lists that belong to no class in a topic's or a root's `x.tokens.ts`
