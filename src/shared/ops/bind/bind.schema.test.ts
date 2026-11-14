@@ -34,7 +34,8 @@ function usesOf(layer: string) {
 }
 
 describe("BindPlanSchema", () => {
-  // The scan stops at 2,000 layers, but the plan is what crosses the bridge: a plan over a frame cannot be written.
+  // A sanity bound: the plan goes server -> plugin, where no 4 MiB cap applies (maxPayload limits what the server
+  // receives); a full scan's plan staying under one frame keeps it cheap to relay through the UI.
   it("holds the plan of a full scan, six uses to a layer with the longest names, under one bridge frame (T-167)", () => {
     const layers = [...Array(BIND_LIMIT.maxLayers).keys()].map((position) => layerId(position));
     const binds = layers.flatMap((layer) => usesOf(layer).slice(0, BINDS_PER_LAYER));
