@@ -6,7 +6,6 @@ import {
   BIND_SCOPE,
   BIND_TEXT,
   BIND_VALUE,
-  STYLE_TYPE,
   TYPE_WORDS,
 } from "@/core/tokens/bind/bind.constants.ts";
 import type {
@@ -257,8 +256,10 @@ export class TokensBind {
       for (const pair of pairs) {
         const count = layer.uses[pair.source.id] ?? 0;
 
-        // A text style is set with the text's fonts loaded: where Figma lacks one, the writer could not.
-        if (count > 0 && layer.missingFont !== undefined && pair.source.type === STYLE_TYPE.text) {
+        // The writer loads the text's fonts for its text style and for runs a style or variable sets; the scan does
+        // not say which a use is, so where Figma lacks a font every use is refused (shortcut: a layer-level paint
+        // style or fill variable the writer would set without fonts is refused too; upgrade when the scan splits runs).
+        if (count > 0 && layer.missingFont !== undefined) {
           report.error(layer.id, BIND_TEXT.missingFont);
         } else if (count > 0) {
           report.remapped(pair, layer.id, count);
