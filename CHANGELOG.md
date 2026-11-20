@@ -16,7 +16,7 @@ How to write this file (people and agents alike):
 - After editing, run `pnpm build:docs` to rewrite the website's page (docs/changelog/index.html).
 -->
 
-## Unreleased
+## 0.9.0 — 2026-11-20
 
 Pixelwright 0.9.0 edits Figma again: `design_apply`, `nodes_delete` and `version_save` are back, and `tokens_apply`
 and `tokens_bind` come in this version rather than 0.10.0, so it has 35 tools. Every write is refused while the

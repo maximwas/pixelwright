@@ -28,7 +28,7 @@ export const CHANNELS = {
 } as const;
 
 /** The channel this build is: server, plugin manifest and `pnpm try` all read it. The release branch builds release, the next version's branch dev. */
-export const CHANNEL: Channel = CHANNELS.dev;
+export const CHANNEL: Channel = CHANNELS.release;
 
 /** One channel's values; the manifest is written for either. */
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS];
