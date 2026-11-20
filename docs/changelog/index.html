@@ -37,6 +37,7 @@
     <div class="doc">
       <nav class="toc" aria-label="On this page" data-follow="first">
         <ol>
+          <li><a href="#v0-9-0">0.9.0 — 2026-11-20</a></li>
           <li><a href="#v0-8-2">0.8.2 — 2026-11-12</a></li>
           <li><a href="#v0-8-1">0.8.1 — 2026-11-12</a></li>
           <li><a href="#v0-8-0">0.8.0 — 2026-11-12</a></li>
@@ -56,6 +57,58 @@
       <main id="main" class="doc-body">
         <h1>Pixelwright changelog</h1>
         <p>Every release, newest first. The npm package <code>pixelwright</code> and the Figma plugin share one version.</p>
+        <section id="v0-9-0">
+          <h2>0.9.0 — 2026-11-20</h2>
+<p>Pixelwright 0.9.0 edits Figma again: <code>design_apply</code>, <code>nodes_delete</code> and <code>version_save</code> are back, and <code>tokens_apply</code>
+and <code>tokens_bind</code> come in this version rather than 0.10.0, so it has 35 tools. Every write is refused while the
+plugin&#39;s Allow edits switch is off; <code>dryRun</code> checks a write without it and refuses what a real run would refuse, and
+<code>version</code> saves a named version in the file&#39;s history before writing. Update the plugin with the server
+(<code>npx -y pixelwright@latest setup</code>): a 0.8 plugin cannot connect to 0.9.0.</p>
+<h4>Added</h4>
+<ul>
+<li><code>design_apply</code> writes Pixelwright XML, the format <code>design_read</code> returns, into Figma: it changes layers by id and
+creates frames, sections, texts, text on a path, shapes, images and SVG icons from files, components, variant sets,
+instances, slots and pages. It writes auto layout and grids, sizes and placement, moves and copies, fills,
+gradients, borders, radii, shadows, blurs, blend modes and masks, colour and number tokens, styles, text with its
+fonts and runs, links, variable modes, Dev Mode notes and component properties. One call is one undo step, an error
+names its line and column, and the call never deletes a layer it did not make. A <code>var(--name)</code> that variables of
+several collections share takes the collection whose mode the layer or a parent sets, and is refused when none
+does; a shadow spread Figma keeps but does not draw gets a note.</li>
+<li><code>nodes_delete</code> deletes up to 500 layers by id, each on its own: a layer Figma will not delete stays, with the reason.</li>
+<li><code>version_save</code> saves a named version in the file&#39;s history, when the user asks for one.</li>
+<li><code>tokens_apply</code> writes collections, modes, variables, aliases and paint, text and effect styles in one undo step, in
+the shape <code>tokens_read</code> returns: <code>tokens_read</code>&#39;s own output applied back changes nothing. A library variable is
+aliased by its key, a library&#39;s collection or style is never copied into the file, and nothing is deleted. An
+alias or a style colour naming a token several collections hold is refused.</li>
+<li><code>tokens_bind</code> binds the raw values under a layer, a page or the file to the variables and styles that hold them
+exactly: colours, gaps, padding, radii, border widths, opacity, text styles and effect styles. A value several
+tokens hold is listed with its candidates (<code>choose</code> picks one and snaps a near value to a token), a value no token
+holds is listed for <code>tokens_apply</code>, and <code>remap</code> moves every use of one token to another, inside instances too with
+<code>instances: &quot;override&quot;</code>.</li>
+<li><code>design_read</code> writes each Dev Mode note with the properties pinned to it, and <code>inspect</code> lists them; <code>design_apply</code>
+writes, changes and removes the pins.</li>
+<li>Variable fonts: <code>design_read</code> writes a text&#39;s axes as <code>font-variation-settings</code>, and <code>design_apply</code> writes them; an
+axis the font lacks or a value out of its range is refused.</li>
+<li><code>execute</code> takes <code>version</code> again: a named version saved before the code runs.</li>
+<li>The guide&#39;s <code>write</code> and <code>layout</code> topics are back, and a recipe checks a web build against the design without a
+browser.</li>
+</ul>
+<h4>Changed</h4>
+<ul>
+<li><code>tokens_apply</code> takes one <code>tokens</code> input, the shape <code>tokens_read</code> returns with <code>format: &quot;json&quot;</code>, in place of 0.7.0&#39;s
+<code>collections</code> and <code>styles</code>.</li>
+<li><code>baseline_save</code> asks for a baseline only when the user tracks design changes, not after every <code>design_read</code>.</li>
+</ul>
+<h4>Fixed</h4>
+<ul>
+<li><code>design_read</code> writes a shadow&#39;s spread only where Figma draws it (rectangles, ellipses, and frames, components and
+instances that clip their content and have a fill), and gives each collection&#39;s value of a token name several
+collections share; <code>tokens_read</code> notes that <code>:root</code> keeps only the last of them.</li>
+<li>A call made while the plugin is reconnecting (right after the server starts, or when another MCP client&#39;s server
+closes) waits for it, up to 20 seconds, instead of failing at once.</li>
+</ul>
+
+        </section>
         <section id="v0-8-2">
           <h2>0.8.2 — 2026-11-12</h2>
 <h4>Added</h4>

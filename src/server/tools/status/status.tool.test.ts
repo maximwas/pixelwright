@@ -50,7 +50,7 @@ describe("StatusTool", () => {
     const answer = await status(link).execute({});
 
     expect(answer.structuredContent).toEqual({
-      server: { version: VERSION, channel: CHANNEL.name, role: "disabled", protocol: 6, port: CHANNEL.port },
+      server: { version: VERSION, channel: CHANNEL.name, role: "disabled", protocol: 7, port: CHANNEL.port },
       files: [],
       probe: null,
       pairing: null,

@@ -183,6 +183,16 @@ describe("inspect", () => {
   });
 
   // B-002: the layer's blend mode, as Figma names it and as CSS's mix-blend-mode, beside its blur.
+  // NEW-090: every Dev Mode note on the layer as Figma has it: its text, its category's name, the types it pins.
+  it("gives a layer's notes with their category and pinned properties, and only with fields notes", () => {
+    const notes = [{ label: "Gap is 8", category: "Spacing", pins: ["itemSpacing"] }, { pins: ["fills"] }];
+    const noted = layer({ id: "1:9", name: "Card", type: "FRAME", annotations: notes });
+
+    expect(view.build(raw([noted])).layers[0]?.notes).toEqual(notes);
+    expect(view.build(raw([noted]), undefined, ["notes"]).layers[0]).toMatchObject({ notes });
+    expect(view.build(raw([noted]), undefined, ["box"]).layers[0]?.notes).toBeUndefined();
+  });
+
   it("gives a soft-light layer's blend mode with its CSS name", () => {
     const [ellipse] = view.build(
       raw([

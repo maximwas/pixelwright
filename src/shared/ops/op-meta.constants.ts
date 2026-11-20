@@ -30,4 +30,11 @@ export const OP_NAME = {
   components: "components",
   variables: "variables",
   usage: "usage",
+  delete: "delete",
+  saveVersion: "save_version",
+  apply: "apply",
+  upload: "upload",
+  tokensApply: "tokens_apply",
+  bind: "bind",
+  bindWrite: "bind_write",
 } as const;

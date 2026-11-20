@@ -15,6 +15,7 @@ export const TOKEN_VALUE = { dash: "-", none: "", prefix: "--" } as const;
  */
 export const MODE_ATTRIBUTE = {
   name: (slug: string) => `data-${slug}`,
+  prefix: "data-",
   other: /[^\p{L}\p{N}]+/gu,
   empty: "mode",
 } as const;

@@ -1,4 +1,5 @@
 import { inject, injectable } from "@needle-di/core";
+import { PLUGIN_ARRIVALS } from "@/core/ports/plugin-arrivals.port.ts";
 import { PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link.constants.ts";
 import type {
   ConnectedFile,
@@ -32,6 +33,7 @@ export class PluginBridge implements PluginLink {
   readonly #owner;
   readonly #peer;
   readonly #peers;
+  readonly #arrivals;
   #role: Role = PLUGIN_LINK_ROLE.unavailable;
   #retry: ReturnType<typeof setTimeout> | undefined;
   #closed = false;
@@ -42,10 +44,12 @@ export class PluginBridge implements PluginLink {
     owner = inject(OWNER_BRIDGE),
     peer = inject(PEER_BRIDGE),
     peers = inject(OWNER_PEERS),
+    arrivals = inject(PLUGIN_ARRIVALS),
   ) {
     this.#owner = owner;
     this.#peer = peer;
     this.#peers = peers;
+    this.#arrivals = arrivals;
   }
 
   async start(): Promise<void> {
@@ -120,6 +124,7 @@ export class PluginBridge implements PluginLink {
     if (await this.#owner.take()) {
       this.#peers.start();
       this.#role = PLUGIN_LINK_ROLE.owner;
+      this.#arrivals.up();
 
       return;
     }
@@ -128,6 +133,7 @@ export class PluginBridge implements PluginLink {
 
     if (this.#peer.joined()) {
       this.#role = PLUGIN_LINK_ROLE.peer;
+      this.#arrivals.up();
     } else {
       this.#role = PLUGIN_LINK_ROLE.unavailable;
       this.#schedule(this.#peer.closeCode());

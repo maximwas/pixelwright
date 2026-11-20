@@ -64,6 +64,8 @@ export class InspectSubtree {
         return node.type === FIGMA_NODE_TYPE.instance;
       case INSPECT_GROUP.interactions:
         return "reactions" in node && node.reactions.length > 0;
+      case INSPECT_GROUP.notes:
+        return "annotations" in node && node.annotations.length > 0;
       default:
         return true;
     }

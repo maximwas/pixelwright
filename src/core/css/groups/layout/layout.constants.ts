@@ -30,6 +30,13 @@ export const SPREAD: Readonly<Record<string, true>> = { SPACE_BETWEEN: true, SPA
 export const LAYOUT_VALUE = {
   flex: "flex",
   grid: "grid",
+  block: "block",
+  none: "none",
+  row: "row",
+  nowrap: "nowrap",
+  normal: "normal",
+  zero: "0",
+  listJoint: ", ",
   column: "column",
   wrap: "wrap",
   spaceBetween: "space-between",
@@ -102,3 +109,104 @@ export const LAYOUT_FIELD = {
 } as const;
 
 export const PADDING_FIELDS = ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"] as const;
+
+/** The display words Figma has a layout for; the inline ones lay children out as the block ones do (C-040). */
+export const DISPLAY_MODE: Readonly<Record<string, string>> = {
+  flex: LAYOUT_VALUE.flex,
+  "inline-flex": LAYOUT_VALUE.flex,
+  grid: LAYOUT_VALUE.grid,
+  "inline-grid": LAYOUT_VALUE.grid,
+  block: LAYOUT_VALUE.block,
+  "inline-block": LAYOUT_VALUE.block,
+  none: LAYOUT_VALUE.none,
+};
+
+/** What a frame's attributes are named when a rule reads them together. */
+export const LAYOUT_RULE_ATTRIBUTES = [
+  CSS_PROPERTY.display,
+  CSS_PROPERTY.flexDirection,
+  CSS_PROPERTY.flexWrap,
+  CSS_PROPERTY.gap,
+  CSS_PROPERTY.rowGap,
+  CSS_PROPERTY.columnGap,
+  CSS_PROPERTY.gridTemplateColumns,
+  CSS_PROPERTY.gridTemplateRows,
+] as const;
+
+/** A padding's sides on their own, in the shorthand's order. */
+export const PADDING_SIDES = [
+  CSS_PROPERTY.paddingTop,
+  CSS_PROPERTY.paddingRight,
+  CSS_PROPERTY.paddingBottom,
+  CSS_PROPERTY.paddingLeft,
+] as const;
+
+export const FIGMA_FLEX = {
+  vertical: "VERTICAL",
+  horizontal: "HORIZONTAL",
+  grid: "GRID",
+  none: "NONE",
+  wrap: "WRAP",
+  noWrap: "NO_WRAP",
+  start: "MIN",
+  auto: "AUTO",
+  hug: "HUG",
+  flexTrack: "FLEX",
+  fixedTrack: "FIXED",
+} as const;
+
+export const JUSTIFY_FIGMA = {
+  normal: "MIN",
+  "flex-start": "MIN",
+  start: "MIN",
+  center: "CENTER",
+  "flex-end": "MAX",
+  end: "MAX",
+  "space-between": "SPACE_BETWEEN",
+  "space-evenly": "SPACE_EVENLY",
+  "space-around": "SPACE_AROUND",
+} as const;
+
+export const ALIGN_FIGMA = {
+  normal: "MIN",
+  "flex-start": "MIN",
+  start: "MIN",
+  center: "CENTER",
+  "flex-end": "MAX",
+  end: "MAX",
+  baseline: "BASELINE",
+} as const;
+
+export const ALIGN_CONTENT_FIGMA = {
+  normal: "AUTO",
+  "flex-start": "AUTO",
+  start: "AUTO",
+  "space-between": "SPACE_BETWEEN",
+} as const;
+
+/** The track list's pieces: repeat(N, track) written out, a flexible track in fr. */
+export const TRACK_PATTERN = { repeat: /^repeat\(\s*(\d+)\s*,\s*(.+)\)$/, fraction: /^(\d*\.?\d+)fr$/ } as const;
+
+/** The refusals and hints of the layout write half, in plain words. */
+export const LAYOUT_ERROR = {
+  badDisplay: (display: string) =>
+    `display="${display}" is not one Figma has: flex, grid, block (no auto layout) or none (hidden).`,
+  needsLayout: (name: string) =>
+    `${name} needs display="flex" or display="grid": without auto layout it spaces nothing.`,
+  badDirection: (direction: string) =>
+    `flex-direction="${direction}" is not one Figma has: row or column (auto layout has no reverse order).`,
+  badWrap: (wrap: string) => `flex-wrap="${wrap}" is not one Figma has: wrap or nowrap.`,
+  needsGrid: (name: string) => `${name} needs display="grid".`,
+  needsFlex: (name: string) => `${name} needs display="flex": a grid places its children in tracks.`,
+  badBox: (value: string) => `padding="${value}" is not 1 to 4 lengths in px or tokens.`,
+  badSide: (name: string, value: string) => `${name}="${value}" is not a length in px or a token.`,
+  badTracks: (name: string, value: string) => `${name}="${value}" is not tracks in fr, px or auto (repeat() allowed).`,
+  badGapShorthand: (gap: string) => `gap="${gap}" is not one or two lengths in px or tokens (rows, then columns).`,
+  badKeyword: (
+    name: string,
+    value: string,
+    allowed: string,
+  ) => `${name}="${value}" is not one Figma has: ${allowed}.`,
+  flexOnly: (name: string) => `${name} aligns the children of a flex layout: a grid aligns each child in its cell.`,
+  flexOnlyHint: 'Give its children justify-self and align-self ("stretch" fills the cell).',
+} as const;

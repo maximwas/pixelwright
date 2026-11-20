@@ -14,16 +14,18 @@ describe("ConfigReader", () => {
       pluginOrigins: [],
       projectDir: process.cwd(),
       updateCheck: true,
+      supportNotes: true,
     });
   });
 
-  it("takes PIXELWRIGHT_HOME, _LOG_LEVEL, _PLUGIN_BRIDGE=off, _PLUGIN_ORIGINS, _NO_UPDATE_CHECK and CLAUDE_PROJECT_DIR (T-008, S-070)", () => {
+  it("takes PIXELWRIGHT_HOME, _LOG_LEVEL, _PLUGIN_BRIDGE=off, _PLUGIN_ORIGINS, _NO_UPDATE_CHECK, _SUPPORT_REMINDERS=off and CLAUDE_PROJECT_DIR (T-008, S-070, T-006)", () => {
     const env = {
       PIXELWRIGHT_HOME: "/tmp/pw",
       PIXELWRIGHT_LOG_LEVEL: "debug",
       PIXELWRIGHT_PLUGIN_BRIDGE: "off",
       PIXELWRIGHT_PLUGIN_ORIGINS: " https://one.example, ,https://two.example ",
       PIXELWRIGHT_NO_UPDATE_CHECK: "1",
+      PIXELWRIGHT_SUPPORT_REMINDERS: " OFF ",
       CLAUDE_PROJECT_DIR: "/work/app",
     };
 
@@ -35,6 +37,7 @@ describe("ConfigReader", () => {
       pluginOrigins: ["https://one.example", "https://two.example"],
       projectDir: "/work/app",
       updateCheck: false,
+      supportNotes: false,
     });
   });
 

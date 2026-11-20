@@ -69,7 +69,7 @@ describe("EffectsGroup", () => {
 
   // C-101, FX-058: Figma keeps effects bottom to top, CSS lists shadows top first; hidden ones left out.
   it("reads shadows top first with inset for the inner one, hidden ones left out", () => {
-    expect(cssOf({ effects: [CARD, { ...CARD, visible: false }, RIM] }).properties).toEqual([
+    expect(cssOf({ type: "RECTANGLE", effects: [CARD, { ...CARD, visible: false }, RIM] }).properties).toEqual([
       ["box-shadow", "inset 0 2px 4px 1px #000, 0 4px 12px 0 rgba(20, 23, 31, 0.16)"],
     ]);
   });
@@ -102,9 +102,9 @@ describe("EffectsGroup", () => {
   // with a standard deviation for blur (half box-shadow's radius) and no spread.
   it("writes a drop shadow shown behind the layer as drop-shadow() before the blur, one with a spread as a note", () => {
     const behind = { ...CARD, showShadowBehindNode: true };
-    const spread = cssOf({ effects: [{ ...behind, spread: 2 }] });
+    const spread = cssOf({ type: "RECTANGLE", effects: [{ ...behind, spread: 2 }] });
 
-    expect(cssOf({ effects: [RIM, behind, blur("LAYER_BLUR", 20)] }).properties).toEqual([
+    expect(cssOf({ type: "RECTANGLE", effects: [RIM, behind, blur("LAYER_BLUR", 20)] }).properties).toEqual([
       ["box-shadow", "inset 0 2px 4px 1px #000"],
       ["filter", "drop-shadow(0 4px 6px rgba(20, 23, 31, 0.16)) blur(8.6px)"],
     ]);
@@ -130,6 +130,31 @@ describe("EffectsGroup", () => {
     expect(read.notes).toEqual([
       ["blur", "progressive from 0px at 50% 0% to 8.6px at 50% 100%"],
       ["effect", "noise: CSS has none, the layer reads as an image"],
+    ]);
+  });
+});
+
+// FIX-090A, probed in Test MCP 2026-11-14 (Plugin API: DropShadowEffect.spread): Figma keeps a spread everywhere but
+// draws it only on a rectangle or an ellipse, and on a frame, component or instance that clips with a visible fill.
+describe("EffectsGroup, a shadow's spread", () => {
+  const WHITE = [{ type: "SOLID", visible: true, color: { r: 1, g: 1, b: 1, a: 1 } }];
+  const SPREAD = { ...CARD, spread: 24 };
+
+  it("is written as 0 where Figma draws none: a frame that does not clip, or one without a fill", () => {
+    expect(cssOf({ fills: WHITE, effects: [SPREAD, RIM] }).properties).toEqual([
+      ["box-shadow", "inset 0 2px 4px 0 #000, 0 4px 12px 0 rgba(20, 23, 31, 0.16)"],
+    ]);
+    expect(cssOf({ clipsContent: true, effects: [SPREAD] }).properties).toEqual([
+      ["box-shadow", "0 4px 12px 0 rgba(20, 23, 31, 0.16)"],
+    ]);
+  });
+
+  it("is kept on a frame that clips with a visible fill, and on a rectangle", () => {
+    expect(cssOf({ clipsContent: true, fills: WHITE, effects: [SPREAD] }).properties).toEqual([
+      ["box-shadow", "0 4px 12px 24px rgba(20, 23, 31, 0.16)"],
+    ]);
+    expect(cssOf({ type: "RECTANGLE", effects: [SPREAD] }).properties).toEqual([
+      ["box-shadow", "0 4px 12px 24px rgba(20, 23, 31, 0.16)"],
     ]);
   });
 });

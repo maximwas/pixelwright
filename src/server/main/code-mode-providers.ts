@@ -8,11 +8,13 @@ import { CODE_RUNNER, CodeRunner } from "@/server/app/code-mode/code-runner.ts";
 import { PW_BRIDGE, PwBridge } from "@/server/app/code-mode/pw-bridge.ts";
 import { RESULT_CUT, ResultCut } from "@/server/app/code-mode/result-cut.ts";
 import type { ToolManifest } from "@/server/app/tool-runner/tool-manifest.types.ts";
+import { SERVER_CODE, ServerCode } from "@/server/tools/execute/server-code.ts";
 import { ToolCatalog } from "@/server/tools/tool.catalog.ts";
 
 /**
  * execute's script: the QuickJS sandbox, pw's table (every read tool by its camelCase name, here, since a tool must
- * not import the catalog), the answers' shapes, the bridge to the tool runner, the result's cut and the run.
+ * not import the catalog), the answers' shapes, the bridge to the tool runner, the result's cut, the run, and execute's
+ * server side (codePath files and scripts).
  */
 export class CodeModeProviders {
   register(container: Container): void {
@@ -22,7 +24,8 @@ export class CodeModeProviders {
       .bind({ provide: ANSWER_SHAPES, useClass: AnswerShapes })
       .bind({ provide: PW_BRIDGE, useClass: PwBridge })
       .bind({ provide: RESULT_CUT, useClass: ResultCut })
-      .bind({ provide: CODE_RUNNER, useClass: CodeRunner });
+      .bind({ provide: CODE_RUNNER, useClass: CodeRunner })
+      .bind({ provide: SERVER_CODE, useClass: ServerCode });
   }
 
   /** pw.nodesFind is nodes_find: the names scripts/pw/answer-types.ts gives types_read too. */

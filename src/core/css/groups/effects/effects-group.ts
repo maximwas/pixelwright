@@ -12,6 +12,7 @@ import {
   PROGRESSIVE_ENDS,
   RENDERED_EFFECTS,
 } from "@/core/css/groups/effects/effects.constants.ts";
+import { ShadowSpread } from "@/core/css/groups/effects/shadow-spread.ts";
 import { TEXT_TYPES } from "@/core/css/groups/paint/paint.constants.ts";
 import { FIGMA_PAINT, PAINTS_TEXT } from "@/core/css/paints/paints.constants.ts";
 import { SOLID_PAINT } from "@/core/css/paints/solid-paint.ts";
@@ -38,6 +39,8 @@ export class EffectsGroup implements PropertyGroup {
   readonly #lengths;
   readonly #format;
   readonly #names;
+
+  readonly #spread = new ShadowSpread();
 
   constructor(
     solid = inject(SOLID_PAINT),
@@ -118,10 +121,14 @@ export class EffectsGroup implements PropertyGroup {
    */
   #shadows(
     layer: ReadLayer,
-    effects: readonly Effect[],
+    given: readonly Effect[],
     model: ModelTables,
     css: CssDeclarations,
   ): string[] {
+    // A spread Figma does not draw on this layer is written as none (FIX-090A): the CSS draws what Figma draws.
+    const effects: readonly Effect[] = this.#spread.draws(layer)
+      ? given
+      : given.map((effect) => ({ ...effect, spread: 0 }));
     const isText = TEXT_TYPES[layer.type] ?? false;
     const style = layer.effectStyleId === undefined ? undefined : model.styles[layer.effectStyleId];
     const behind =

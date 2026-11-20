@@ -20,6 +20,7 @@ import { IMAGE_PAINT, ImagePaint } from "@/core/css/paints/image-paint.ts";
 import { PAINT_LIST, PaintList } from "@/core/css/paints/paint-list.ts";
 import { SOLID_PAINT, SolidPaint } from "@/core/css/paints/solid-paint.ts";
 import { GROUP_REGISTRY, GroupRegistry, PROPERTY_GROUPS } from "@/core/css/registry/group-registry.ts";
+import { CSS_ANGLE, CssAngle } from "@/core/css/values/css-angle.ts";
 import { CSS_LENGTH, CssLength } from "@/core/css/values/css-length.ts";
 import { CSS_SPLIT, CssSplit } from "@/core/css/values/css-split.ts";
 import { CSS_URL, CssUrl } from "@/core/css/values/css-url.ts";
@@ -66,13 +67,17 @@ import { OpLogStep } from "@/server/app/sessions/steps/op-log-step.ts";
 import { OpResultStep } from "@/server/app/sessions/steps/op-result-step.ts";
 import { OpTimerStep } from "@/server/app/sessions/steps/op-timer-step.ts";
 import { TARGET_RESOLVER, TargetResolver } from "@/server/app/sessions/target-resolver.ts";
-import { WRITTEN_STORE } from "@/server/app/stores/stores.constants.ts";
+import { SUPPORT_STORE, WRITTEN_STORE } from "@/server/app/stores/stores.constants.ts";
+import { SUPPORT_NOTE, SUPPORT_SETTINGS, SupportNote } from "@/server/app/stores/support-note.ts";
+import { VERSION_TRIES, VersionTries } from "@/server/app/stores/version-tries.ts";
 import { WRITTEN_FILES_PATH } from "@/server/app/stores/written-files.ts";
 import { CallLogStep } from "@/server/app/tool-runner/steps/call-log-step.ts";
 import { ErrorTextStep } from "@/server/app/tool-runner/steps/error-text-step.ts";
 import { OutputCheckStep } from "@/server/app/tool-runner/steps/output-check-step.ts";
 import { TargetStep } from "@/server/app/tool-runner/steps/target-step.ts";
 import { TOOL_CALL_STEPS, TOOL_FACTORY, TOOL_RUNNER, ToolRunner } from "@/server/app/tool-runner/tool-runner.ts";
+import { VERSIONED_WRITE, VersionedWrite } from "@/server/app/writes/versioned-write.ts";
+import { ApplyProviders } from "@/server/main/apply-providers.ts";
 import { BaselineProviders } from "@/server/main/baseline-providers.ts";
 import { BridgeProviders } from "@/server/main/bridge-providers.ts";
 import { CheckProviders } from "@/server/main/check-providers.ts";
@@ -156,6 +161,7 @@ export class ServerMain {
     this.#bindInfra(container, config);
     this.#bindDomain(container);
     new ReadProviders().register(container);
+    new ApplyProviders().register(container);
     new RenderProviders().register(container);
     new CheckProviders().register(container);
     new DiffProviders().register(container);
@@ -170,7 +176,7 @@ export class ServerMain {
   }
 
   /** The log, the clock, the home's JSON files and the project folder: what every other service may need. */
-  #bindInfra(container: Container, { logLevel, home, projectDir }: ServerConfig): void {
+  #bindInfra(container: Container, { logLevel, home, projectDir, supportNotes }: ServerConfig): void {
     container
       .bind({ provide: LOG_SETTINGS, useValue: { level: logLevel, file: join(home, LOG_FILE.folder, LOG_FILE.name) } })
       .bind({ provide: LOG_DESTINATIONS, multi: true, useValue: pino.destination({ dest: 2, sync: true }) })
@@ -182,7 +188,11 @@ export class ServerMain {
       .bind({ provide: CLIENT_ROOTS, useExisting: MCP_ROOTS })
       .bind({ provide: PROJECT_FALLBACK, useValue: projectDir })
       .bind({ provide: PROJECT_FOLDER, useClass: ProjectFolder })
-      .bind({ provide: WRITTEN_FILES_PATH, useValue: join(home, WRITTEN_STORE.file) });
+      .bind({ provide: WRITTEN_FILES_PATH, useValue: join(home, WRITTEN_STORE.file) })
+      .bind({
+        provide: SUPPORT_SETTINGS,
+        useValue: { file: join(home, SUPPORT_STORE.file), enabled: supportNotes ?? false },
+      });
   }
 
   /** The core domain's classes the tools read and write with: the D-15 numbers, the CSS mapping, the XML writers. */
@@ -201,6 +211,7 @@ export class ServerMain {
       .bind({ provide: SOLID_PAINT, useClass: SolidPaint })
       .bind({ provide: CSS_URL, useClass: CssUrl })
       .bind({ provide: GRADIENT_GEOMETRY, useClass: GradientGeometry })
+      .bind({ provide: CSS_ANGLE, useClass: CssAngle })
       .bind({ provide: GRADIENT_CSS, useClass: GradientCss })
       .bind({ provide: IMAGE_PAINT, useClass: ImagePaint })
       .bind({ provide: PAINT_LIST, useClass: PaintList })
@@ -258,6 +269,9 @@ export class ServerMain {
     }
 
     container
+      .bind({ provide: VERSIONED_WRITE, useClass: VersionedWrite })
+      .bind({ provide: VERSION_TRIES, useClass: VersionTries })
+      .bind({ provide: SUPPORT_NOTE, useClass: SupportNote })
       .bind({ provide: TOOL_CATALOG, useClass: ToolCatalog })
       .bind({ provide: TOOL_FACTORY, useValue: new ContainerToolFactory(container) })
       .bind({ provide: TOOL_RUNNER, useClass: ToolRunner });

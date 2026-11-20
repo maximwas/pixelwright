@@ -6,6 +6,7 @@ import { BASELINE_SAVE_MANIFEST } from "@/server/tools/baseline-save/baseline-sa
 import { BREAKPOINTS_FIND_MANIFEST } from "@/server/tools/breakpoints-find/breakpoints-find.manifest.ts";
 import { CHANGES_SINCE_MANIFEST } from "@/server/tools/changes-since/changes-since.manifest.ts";
 import { COMPONENTS_READ_MANIFEST } from "@/server/tools/components-read/components-read.manifest.ts";
+import { DESIGN_APPLY_MANIFEST } from "@/server/tools/design-apply/design-apply.manifest.ts";
 import { DESIGN_READ_MANIFEST } from "@/server/tools/design-read/design-read.manifest.ts";
 import { EXECUTE_MANIFEST } from "@/server/tools/execute/execute.manifest.ts";
 import { FILE_MAP_MANIFEST } from "@/server/tools/file-map/file-map.manifest.ts";
@@ -17,6 +18,7 @@ import { INSPECT_MANIFEST } from "@/server/tools/inspect/inspect.manifest.ts";
 import { LIBRARY_SEARCH_MANIFEST } from "@/server/tools/library-search/library-search.manifest.ts";
 import { MEASURE_MANIFEST } from "@/server/tools/measure/measure.manifest.ts";
 import { NODE_SHOW_MANIFEST } from "@/server/tools/node-show/node-show.manifest.ts";
+import { NODES_DELETE_MANIFEST } from "@/server/tools/nodes-delete/nodes-delete.manifest.ts";
 import { NODES_DIFF_MANIFEST } from "@/server/tools/nodes-diff/nodes-diff.manifest.ts";
 import { NODES_FIND_MANIFEST } from "@/server/tools/nodes-find/nodes-find.manifest.ts";
 import { OUTLINE_MANIFEST } from "@/server/tools/outline/outline.manifest.ts";
@@ -25,10 +27,13 @@ import { SELECTION_GET_MANIFEST } from "@/server/tools/selection-get/selection-g
 import { SELECTION_WAIT_MANIFEST } from "@/server/tools/selection-wait/selection-wait.manifest.ts";
 import { STATUS_MANIFEST } from "@/server/tools/status/status.manifest.ts";
 import { STYLES_COMPARE_MANIFEST } from "@/server/tools/styles-compare/styles-compare.manifest.ts";
+import { TOKENS_APPLY_MANIFEST } from "@/server/tools/tokens-apply/tokens-apply.manifest.ts";
+import { TOKENS_BIND_MANIFEST } from "@/server/tools/tokens-bind/tokens-bind.manifest.ts";
 import { TOKENS_READ_MANIFEST } from "@/server/tools/tokens-read/tokens-read.manifest.ts";
 import { TOKENS_USAGE_MANIFEST } from "@/server/tools/tokens-usage/tokens-usage.manifest.ts";
 import { TYPES_READ_MANIFEST } from "@/server/tools/types-read/types-read.manifest.ts";
 import { VARIANTS_READ_MANIFEST } from "@/server/tools/variants-read/variants-read.manifest.ts";
+import { VERSION_SAVE_MANIFEST } from "@/server/tools/version-save/version-save.manifest.ts";
 import { VIEWPORT_GET_MANIFEST } from "@/server/tools/viewport-get/viewport-get.manifest.ts";
 
 /**
@@ -47,6 +52,7 @@ export class ToolCatalog {
     VIEWPORT_GET_MANIFEST,
     NODES_FIND_MANIFEST,
     OUTLINE_MANIFEST,
+    NODES_DELETE_MANIFEST,
     SCREENSHOT_MANIFEST,
     DESIGN_READ_MANIFEST,
     IMAGE_COMPARE_MANIFEST,
@@ -60,10 +66,14 @@ export class ToolCatalog {
     FLOW_READ_MANIFEST,
     VARIANTS_READ_MANIFEST,
     FONTS_CHECK_MANIFEST,
+    DESIGN_APPLY_MANIFEST,
     EXECUTE_MANIFEST,
     TYPES_READ_MANIFEST,
     TOKENS_READ_MANIFEST,
     TOKENS_USAGE_MANIFEST,
+    TOKENS_APPLY_MANIFEST,
+    TOKENS_BIND_MANIFEST,
+    VERSION_SAVE_MANIFEST,
     COMPONENTS_READ_MANIFEST,
     LIBRARY_SEARCH_MANIFEST,
     ASSETS_EXPORT_MANIFEST,

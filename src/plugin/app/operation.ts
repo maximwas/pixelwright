@@ -15,13 +15,20 @@ export abstract class Operation<Input = unknown, Output = unknown> {
 
   async run(input: Input): Promise<OpResult> {
     try {
-      return this.#report.succeeded(await this.execute(input));
+      const output = await this.execute(input);
+
+      return this.#report.succeeded(output, this.touched(output, input));
     } catch (error) {
       return this.#report.failed(error);
     }
   }
 
   protected abstract execute(input: Input): Promise<Output>;
+
+  /** The layers a write's output says it touched; none for every op that does not name them. */
+  protected touched(_output: Output, _input: Input): readonly string[] {
+    return [];
+  }
 }
 
 /** An op's class as the providers list it: the container builds it, every dependency a default parameter. */

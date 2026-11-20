@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { BridgeConfig } from "@/server/adapters/bridge/listener/bridge-config.ts";
 import { PairingCodes } from "@/server/adapters/bridge/plugin/pairing-codes.ts";
 import { PluginConnection } from "@/server/adapters/bridge/plugin/plugin-connection.ts";
+import { PluginWatch } from "@/server/adapters/bridge/sessions/plugin-watch.ts";
 import { SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry.ts";
 import { AtomicJsonFile } from "@/server/adapters/files/atomic-json-file.ts";
 import { PinoLogger } from "@/server/adapters/logging/pino-logger.ts";
@@ -17,7 +18,7 @@ const PLUGIN_NONCE = "00112233445566778899aabbccddeeff";
 /** A 0.8.0 hello, fields in 0.7.0's order. */
 const hello = (keyId: string | null, instanceId = "window-a") => ({
   type: "hello",
-  protocol: 6,
+  protocol: 7,
   plugin: {
     instanceId,
     pluginVersion: "0.8.0",
@@ -40,7 +41,7 @@ class HandshakeProbe {
 
   readonly clock = { now: () => Date.now() };
   readonly pairing = new PairingCodes(this.clock, this.logger);
-  readonly sessions = new SessionRegistry(this.pairing, this.logger);
+  readonly sessions = new SessionRegistry(this.pairing, this.logger, new PluginWatch(this.clock));
   readonly keys: BridgeConfig;
 
   constructor(configFile = join(mkdtempSync(join(tmpdir(), "pixelwright-handshake-")), "bridge.json")) {
@@ -110,12 +111,12 @@ describe("PluginConnection, before the session", () => {
     expect(probe.sessions.pairing()).toBeNull();
   });
 
-  it('turns a 0.7.0 plugin away with 4426 "protocol 6 required", and keeps it for the status hint', () => {
+  it('turns a 0.7.0 plugin away with 4426 "protocol 7 required", and keeps it for the status hint', () => {
     const probe = new HandshakeProbe();
     const old = hello(null);
     const socket = probe.connect({ ...old, protocol: 5, plugin: { ...old.plugin, pluginVersion: "0.7.0" } });
 
-    expect(socket.closed).toEqual({ code: 4426, reason: "protocol 6 required" });
+    expect(socket.closed).toEqual({ code: 4426, reason: "protocol 7 required" });
     expect(socket.sent).toEqual([]);
     expect(probe.sessions.refusal()).toEqual({ protocol: 5, pluginVersion: "0.7.0" });
   });
@@ -148,7 +149,7 @@ describe("PluginConnection, a paired plugin", () => {
     socket.receive(auth(socket, key.secret));
     expect(socket.last()).toEqual({
       type: "hello_ack",
-      protocol: 6,
+      protocol: 7,
       sessionId: expect.any(String),
       server: { name: CHANNEL.name, version: expect.any(String) },
     });
