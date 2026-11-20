@@ -43,3 +43,6 @@ export type LibraryFile = zod.output<typeof LibraryFileSchema>;
 
 /** A catalogue as read: null when it cannot be read, or is not one. */
 export const KeptLibrarySchema = zod.nullable(LibraryFileSchema);
+
+/** support.json: when the support sentence was last given, in ms since the epoch; null before the first. */
+export const SupportStateSchema = zod.object({ lastShownAt: zod.nullable(zod.number()) });

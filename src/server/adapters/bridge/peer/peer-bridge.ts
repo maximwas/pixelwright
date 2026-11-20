@@ -1,6 +1,7 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import pTimeout from "p-timeout";
 import type { WebSocket } from "ws";
+import { PLUGIN_ARRIVALS } from "@/core/ports/plugin-arrivals.port.ts";
 import { LINK_TEXT, PLUGIN_LINK_ROLE } from "@/core/ports/plugin-link.constants.ts";
 import type {
   ConnectedFile,
@@ -41,6 +42,7 @@ export class PeerBridge implements PluginLink {
   readonly #settings;
   readonly #config;
   readonly #hints;
+  readonly #arrivals;
   #owner: JoinedOwner | null = null;
   #status: PeerStatus = NO_STATUS;
   #closeCode: number | null = null;
@@ -50,10 +52,12 @@ export class PeerBridge implements PluginLink {
     settings = inject(BRIDGE_SETTINGS),
     config = inject(BRIDGE_CONFIG),
     hints = inject(STATUS_HINTS),
+    arrivals = inject(PLUGIN_ARRIVALS),
   ) {
     this.#settings = settings;
     this.#config = config;
     this.#hints = hints;
+    this.#arrivals = arrivals;
   }
 
   /** Joins the owner: true once its first status came, within 3 s (S-031). */
@@ -77,7 +81,7 @@ export class PeerBridge implements PluginLink {
       const first = await pTimeout(statuses.next(), { milliseconds: PEER_JOIN_TIMEOUT_MS });
 
       if (first.done !== true) {
-        this.#status = first.value;
+        this.#take(first.value);
         this.#owner = owner;
         this.#closeCode = null;
         void this.#follow(owner, statuses);
@@ -170,13 +174,24 @@ export class PeerBridge implements PluginLink {
   async #follow(owner: JoinedOwner, statuses: AsyncIterator<PeerStatus>): Promise<void> {
     try {
       for (let next = await statuses.next(); next.done !== true; next = await statuses.next()) {
-        this.#status = next.value;
+        this.#take(next.value);
       }
     } catch {
       // The socket's close says why; #lost handles it.
     }
 
     owner.socket.terminate();
+  }
+
+  /** The owner's files now: a file arriving wakes the calls that wait, the last one going starts the wait for it. */
+  #take(status: PeerStatus): void {
+    if (status.files.length > 0) {
+      this.#arrivals.arrived();
+    } else if (this.#status.files.length > 0) {
+      this.#arrivals.left();
+    }
+
+    this.#status = status;
   }
 
   #lost(owner: JoinedOwner, code: number): void {
@@ -187,7 +202,7 @@ export class PeerBridge implements PluginLink {
     }
 
     this.#owner = null;
-    this.#status = NO_STATUS;
+    this.#take(NO_STATUS);
     this.#onLost(code);
   }
 }

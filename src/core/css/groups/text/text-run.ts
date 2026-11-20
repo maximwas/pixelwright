@@ -140,7 +140,7 @@ export class TextRun {
       this.#decoration(segment, line, model, run.properties);
     }
 
-    this.#features(segment, run.notes);
+    this.#features(segment, run);
     this.#color(segment, model, run);
 
     return run;
@@ -210,10 +210,10 @@ export class TextRun {
   }
 
   /**
-   * C-117, FX-066: OpenType features, and the variable axes the shorthand does not already say (wght at the weight,
-   * opsz at the size: font-optical-sizing is auto) and not at a browser's default.
+   * C-117, FX-066: OpenType features as a note, and the variable axes the shorthand does not already say (wght at the
+   * weight, opsz at the size: font-optical-sizing is auto) and not at a browser's default, which design_apply writes.
    */
-  #features(segment: TextSegment, notes: CssDeclaration[]): void {
+  #features(segment: TextSegment, { properties, notes }: RunCss): void {
     const features = Object.entries(segment.openTypeFeatures ?? {});
     const axes = Object.entries(segment.fontName.variationSettings ?? {}).filter(
       ([axis, value]) =>
@@ -230,12 +230,12 @@ export class TextRun {
     }
 
     if (axes.length > 0) {
-      notes.push([
-        TEXT_NOTE.fontVariationSettings,
+      properties.set(
+        CSS_PROPERTY.fontVariationSettings,
         axes
           .map(([axis, value]) => TEXT_TEXT.axis(axis, this.#format.round(value, PRECISION.decimal)))
           .join(TEXT_VALUE.joint),
-      ]);
+      );
     }
   }
 

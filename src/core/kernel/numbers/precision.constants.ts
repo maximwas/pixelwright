@@ -29,6 +29,8 @@ export const PRECISION = {
   angle: 2,
   /** Read model boxes, as 0.7.0's snapshot kept them: baselines v1 and the Orbit fixtures hold 2 decimals (K-084). */
   layer: 2,
+  /** What design_apply writes from CSS (em as Figma's percent, a turn): 0.7.0's 4 decimals, as its goldens hold. */
+  written: 4,
   /** A mirrored layer's 2x2 matrix in the read model, 0.7.0's 4 decimals: a flip's sign and its scale both show. */
   matrix: 4,
 } as const;

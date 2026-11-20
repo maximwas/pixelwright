@@ -15,6 +15,9 @@ export const TEXT_RUN = {
   use: "a text run",
 } as const;
 
+/** A variable's value (P-093): aliases are followed at most 4 deep for a default colour, 0.7.0's depth. */
+export const VARIABLE_VALUE = { aliasDepth: 4, alias: "VARIABLE_ALIAS" } as const;
+
 export const VARIABLES_TEXT = {
   slow: (read: number, total: number) => `The libraries took too long: read ${read} of ${total} collections.`,
   failed: (error: string) => `The libraries could not be read: ${error}`,

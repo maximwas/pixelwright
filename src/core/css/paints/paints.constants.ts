@@ -7,6 +7,8 @@ export const UNMAPPED_PAINT: unique symbol = Symbol("unmapped paint");
 export const PAINTS_NUMBER = {
   /** color-mix() takes the paint's opacity past the variable's alpha as whole percents. */
   percent: 100,
+  /** A paint with nothing faded. */
+  whole: 1,
 } as const;
 
 /** `boundColor`: the field of a paint's bound variables that holds its colour's alias. */

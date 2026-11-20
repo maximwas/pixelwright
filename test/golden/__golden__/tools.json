@@ -1408,7 +1408,7 @@
   {
     "name": "nodes_delete",
     "title": "Delete layers",
-    "description": "Deletes layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component: hide it with display=\"none\" in design_apply instead) stays, with why. What an instance's slot holds is the instance's own and is deleted. One call is one undo step in Figma. Refused while the plugin's Allow edits switch is off.",
+    "description": "Deletes up to 500 layers by id, each on its own: one Figma will not delete (a layer inside an instance, which comes from its component) stays, with why. What an instance's slot holds is the instance's own and is deleted. One call is one undo step in Figma. dryRun lists what would be deleted and works with Allow edits off; version saves a named version first. Refused while the plugin's Allow edits switch is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1423,17 +1423,29 @@
           },
           "description": "The layers' ids, e.g. [\"54:243\"]."
         },
-        "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
+        "dryRun": {
+          "default": false,
+          "description": "Check without writing: the answer says what would change. Works with Allow edits off.",
+          "type": "boolean"
+        },
+        "version": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one when the user wants to be able to go back."
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "required": [
         "nodes"
       ],
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -1442,7 +1454,8 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The layers deleted; in a dry run, the layers that would be."
         },
         "errors": {
           "type": "array",
@@ -1461,7 +1474,33 @@
               "message"
             ],
             "additionalProperties": false
-          }
+          },
+          "description": "The layers left, each with why."
+        },
+        "dry": {
+          "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
+          "type": "boolean",
+          "const": true
+        },
+        "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
         },
         "support": {
           "type": "string"
@@ -1561,7 +1600,7 @@
   {
     "name": "design_read",
     "title": "Read a design",
-    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, ids to name a layer in the other tools; a hidden layer is a stub with display=\"none\". The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets, measurements (the designer's Dev Mode measurements, when there are any), hints (what the code should know or fix, one per kind with a count and examples) and truncated (ids of layers the read cut: $children=\"N\" where not all children were read, $truncated=\"true\" where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat=\"N\", and JSON repeats holds each one's own values as rows; with nearby, JSON nearby lists the designer's notes around the screen. For a big frame, find its sections with outline first; guide xml explains every tag and attribute.",
+    "description": "Reads a layer (a section, a card, a screen) as Pixelwright's XML: Figma's layer types as tags, ids to name a layer in the other tools; a hidden layer is a stub with display=\"none\". The first text block is the XML; the second is JSON with node (the layer read), tokens, textStyles, fonts, assets, measurements (the designer's Dev Mode measurements, when there are any), hints (what the code should know or fix, one per kind with a count and examples) and truncated (ids of layers the read cut: $children=\"N\" where not all children were read, $truncated=\"true\" where a branch or a text was cut to fit maxChars: read each on its own); with repeats, runs of three or more alike neighbours read as their first with $repeat=\"N\", and JSON repeats holds each one's own values as rows; with nearby, JSON nearby lists the designer's notes around the screen. For a big frame, find its sections with outline first. The answer is complete for a build; guide xml explains every tag and attribute, guide workflow what comes next, and guide write how design_apply takes this XML back for an edit.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1634,7 +1673,7 @@
   {
     "name": "inspect",
     "title": "Inspect layers",
-    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off). Recipes: fills, strokes and bound variables of every layer under a card: within + fields [\"fills\",\"strokes\",\"bound\"]; a layer's and its parent's auto layout (padding, gap, direction): fields [\"layout\"] gives layout and parentLayout; a mixed text's runs: fields [\"text\"] gives segments; how far a layer overflows its parent, and its boxes: fields [\"box\"]; its ancestors by id and its page: fields [\"path\"]. An absent field is at its default (no padding-* keys is padding 0: with any side set, all four are listed, 0 included; no gap key means no gap shown, which includes a spread layout, one visible child or a negative gap; no flex-direction is row; no overflow is none, absolute-positioned layers excepted) and the answer is complete unless `more` is true or a note says the scan stopped. inspect does not say whether a layer is hidden: use nodes_find with visible: false. Also: the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill, the fill as a CSS value with the paint style or variables behind it and every fill's type, the variables bound to its padding, gap, radius and size, how strokes paint (align, per-side weights, dashes, the variables their colours are bound to), every effect with Figma's own parameters, a text's lines with what ended each (Enter or Shift+Enter) and its line heights, its prototype interactions, its component's variant and every component property with its value and the component's default. within reads a whole subtree in one call (depth levels); nested instance ids such as I54:244;54:205;54:188 work as nodes. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them, more and leftIds a subtree's.",
+    "description": "Reads layers as Figma has them, for what design_read's CSS cannot say, without running code (works while Allow edits is off). Recipes: fills, strokes and bound variables of every layer under a card: within + fields [\"fills\",\"strokes\",\"bound\"]; a layer's and its parent's auto layout (padding, gap, direction): fields [\"layout\"] gives layout and parentLayout; a mixed text's runs: fields [\"text\"] gives segments; how far a layer overflows its parent, and its boxes: fields [\"box\"]; its ancestors by id and its page: fields [\"path\"]. An absent field is at its default (no padding-* keys is padding 0: with any side set, all four are listed, 0 included; no gap key means no gap shown, which includes a spread layout, one visible child or a negative gap; no flex-direction is row; no overflow is none, absolute-positioned layers excepted) and the answer is complete unless `more` is true or a note says the scan stopped. inspect does not say whether a layer is hidden: use nodes_find with visible: false. Also: the layout box and the painted box (centred or outside strokes, shadows and blur reach past it), the blend mode of the layer and of each fill, the fill as a CSS value with the paint style or variables behind it and every fill's type, the variables bound to its padding, gap, radius and size, how strokes paint (align, per-side weights, dashes, the variables their colours are bound to), every effect with Figma's own parameters, a text's lines with what ended each (Enter or Shift+Enter) and its line heights, its prototype interactions, its Dev Mode notes (fields [\"notes\"]: each one's text, category and the properties it pins), its component's variant and every component property with its value and the component's default. within reads a whole subtree in one call (depth levels); nested instance ids such as I54:244;54:205;54:188 work as nodes. Boxes and each layer's centre are measured from relativeTo's top left, so it also measures: give a list of layers and their section. For layers set around a circle, around (the circle's id, or a point) adds each centre's distance from it and its angle as CSS rotate() turns (0 up, clockwise). Up to 100 layers a call: left counts the selected layers past them, more and leftIds a subtree's.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1662,7 +1701,7 @@
           "maximum": 9007199254740991
         },
         "fields": {
-          "description": "Only these groups of each layer, besides id, name and type (without fields every group comes): box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions. With within, only the layers that carry one are listed: fields [\"layout\"] lists the auto layout and grid frames of a subtree. layout also gives parentLayout (the parent layout), text gives segments (the runs of a mixed text), box gives center, paintedBox, rotation and overflow, path gives page. box (with center) and parent come only when asked: fields [\"layout\", \"box\"]. fills, strokes and bound name each bound variable by token and by its Figma name (variable).",
+          "description": "Only these groups of each layer, besides id, name and type (without fields every group comes): box, parent, path, fills, strokes, effects, layout, bound, text, component, interactions, notes. With within, only the layers that carry one are listed: fields [\"layout\"] lists the auto layout and grid frames of a subtree. layout also gives parentLayout (the parent layout), text gives segments (the runs of a mixed text), box gives center, paintedBox, rotation and overflow, path gives page. box (with center) and parent come only when asked: fields [\"layout\", \"box\"]. fills, strokes and bound name each bound variable by token and by its Figma name (variable).",
           "minItems": 1,
           "type": "array",
           "items": {
@@ -1678,7 +1717,8 @@
               "bound",
               "text",
               "component",
-              "interactions"
+              "interactions",
+              "notes"
             ]
           }
         },
@@ -2536,6 +2576,28 @@
                   "additionalProperties": false
                 }
               },
+              "notes": {
+                "description": "The layer's Dev Mode notes as Figma has them: each one's text (label), its category's name and the properties it pins (Figma's types: itemSpacing, fills...).",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "pins": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
               "component": {
                 "type": "object",
                 "properties": {
@@ -2814,7 +2876,7 @@
   {
     "name": "baseline_save",
     "title": "Keep a baseline",
-    "description": "Keeps a layer as you build code from it, so baseline_diff can tell later what the designer changed: its read and the values of the tokens it uses, in every mode, go into .pixelwright/baselines/<name>.json in the project (it holds the design's texts: commit the folder to share it, or leave it out of git). Save right after the design_read you build a screen or section from; name it after your code (pricing, plan-card) and list in code the files you build from it. Once your code has the changes a baseline_diff listed, pass the accept it gave: exactly the design it compared is kept, so what the designer changed after it still shows next time. An existing name is replaced only with accept or replace: true; code alone changes its file list. Writes nothing to Figma, so it works while Allow edits is off.",
+    "description": "Keeps a layer as you build code from it, so baseline_diff can tell later what the designer changed: its read and the values of the tokens it uses, in every mode, go into .pixelwright/baselines/<name>.json in the project (it holds the design's texts: commit the folder to share it, or leave it out of git). Save one only when the user wants to track what the designer changes later, right after the design_read you build that screen or section from; name it after your code (pricing, plan-card) and list in code the files you build from it. Once your code has the changes a baseline_diff listed, pass the accept it gave: exactly the design it compared is kept, so what the designer changed after it still shows next time. An existing name is replaced only with accept or replace: true; code alone changes its file list. Writes nothing to Figma, so it works while Allow edits is off.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4694,7 +4756,7 @@
   {
     "name": "fonts_check",
     "title": "Check the fonts",
-    "description": "The fonts a layer's texts use (the selected layer's by default), by family with the weights used, and where the build gets each: whether Google Fonts serves it, with a ready css2 link for those weights, and the weights it lacks; a family Google Fonts does not have needs its own files. Google Fonts' public catalogue is read once (no key); offline, the fonts are still listed.",
+    "description": "The fonts a layer's texts use (the selected layer's by default), by family with the weights used, and where the build gets each: whether Google Fonts serves it, with a ready css2 link for those weights, and the weights it lacks; a family Google Fonts does not have needs its own files. A variable family also lists its axes (such as wght, wdth or opsz) with their ranges and defaults, the values font-variation-settings takes. Google Fonts' public catalogue is read once (no key); offline, the fonts are still listed.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4748,6 +4810,33 @@
               },
               "note": {
                 "type": "string"
+              },
+              "axes": {
+                "description": "A variable family's axes by tag, each with its range and default: the values font-variation-settings takes.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number"
+                    },
+                    "max": {
+                      "type": "number"
+                    },
+                    "default": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max",
+                    "default"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
             "required": [
@@ -5705,7 +5794,7 @@
   {
     "name": "design_apply",
     "title": "Write a design",
-    "description": "Writes Pixelwright XML, the format design_read returns, into Figma. An element with id changes that layer: only the attributes it gives, the rest stays as it is (write background=\"none\", width=\"auto\" to hug, display=\"block\" to drop auto layout); under another parent, with before/after or in another order it moves the layer. An element without id creates a layer: Frame, Section, Text, Rectangle, Ellipse, Line; a TextPath (text on a path) along d, an SVG path, or arc=\"cx cy r from to\" in its parent, whose text and start change later but whose path does not; an Instance by component=\"Name\" variant=\"Prop=Value\" props=\"Label=Text\"; a Component (prop, visibleProp and swapProp on its layers make its properties; on the layers of an existing component they bind or add them) or a ComponentSet of Component variants; an Image or Icon from a file (src); copyOf=\"id\" copies a layer and writes the element onto the copy. var(--Name) binds the style or variable of that name; note writes Dev Mode notes; fonts are loaded for you. XML read with design_read and sent back unchanged changes nothing. Each element is written on its own: errors come back with their line and attribute while the rest goes in, and the whole call is one undo step in Figma. The plugin refuses writes while its Allow edits switch is off (dryRun checks without writing). See guide write. Files (src, url()) are read from the server's disk. A relative path starts in the project folder: the MCP client's root, else CLAUDE_PROJECT_DIR, else the server's working directory.",
+    "description": "Writes Pixelwright XML, the format design_read returns, into Figma: changes layers by id and creates them (Frame, Section, Text, TextPath, Rectangle, Ellipse, Line, Image, Icon, Component, ComponentSet, Instance, Slot, and a Page). It writes names, visibility, auto layout and grids, sizes, places and rotation, moves and copies, opacity, clipping, fills and gradients, borders, radii, shadows and blurs, blend modes and masks, colour tokens and styles, images and icons from files, text with its fonts, Spans and links, text on a path, variable modes, Dev Mode notes, instances (component, variant, props), component properties, variant sets and slots. Read guide write before the first call (Allow edits, dryRun, version, errors and every rule), and guide layout for flex, grid and absolute placement.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5716,37 +5805,287 @@
           "description": "Pixelwright XML, as design_read writes it: an element with id changes that layer (only the attributes it gives), one without id creates a layer."
         },
         "parent": {
-          "description": "Where top-level new layers go: a frame's or page's id. Default: the current page, beside its layers.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 200
+          "maxLength": 200,
+          "description": "Where top-level new layers go: a frame's, section's or page's id. Default: the current page, beside its layers."
         },
         "dryRun": {
           "default": false,
-          "description": "Check ids, tokens and fonts without writing, listing the layers it would create (without ids) and change; works with Allow edits off.",
+          "description": "Check without writing: the answer says what would change. Works with Allow edits off.",
           "type": "boolean"
         },
         "version": {
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one when the user wants to be able to go back."
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
       "required": [
         "xml"
       ],
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
       "properties": {
+        "elements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "number"
+              },
+              "column": {
+                "type": "number"
+              },
+              "tag": {
+                "type": "string"
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "ref": {
+                "type": "string"
+              },
+              "parent": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "index": {
+                "type": "number"
+              },
+              "attributes": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "content": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "line": {
+                      "type": "number"
+                    },
+                    "column": {
+                      "type": "number"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "span"
+                      ]
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "attributes": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "line",
+                    "column",
+                    "kind",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "source": {
+                "type": "string"
+              },
+              "copy": {
+                "type": "string"
+              },
+              "notWritten": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "tag",
+              "id",
+              "ref",
+              "parent",
+              "index",
+              "attributes"
+            ],
+            "additionalProperties": false
+          },
+          "description": "The elements read, in document order: line and column, tag, id (null for a new layer), ref (new:<line> for a new one), parent ref, index among its siblings, the attributes kept, a Text's content pieces, and for an element inside a copy its source and copy; notWritten lists the attributes no writer handles yet (left out of changes, not refused)."
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "number"
+              },
+              "column": {
+                "type": "number"
+              },
+              "id": {
+                "type": "string"
+              },
+              "attribute": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Every refusal, in document order: line and column, the id and attribute it concerns, the message and a hint. An element that is refused is not in elements; an attribute that is refused is left out of it."
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "number"
+              },
+              "column": {
+                "type": "number"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "create",
+                  "update"
+                ]
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "ref": {
+                "type": "string"
+              },
+              "tag": {
+                "type": "string"
+              },
+              "parent": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "props": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "sources": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "text": {
+                "type": "object",
+                "properties": {
+                  "characters": {
+                    "type": "string"
+                  },
+                  "runs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start": {
+                          "type": "number"
+                        },
+                        "end": {
+                          "type": "number"
+                        },
+                        "props": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "start",
+                        "end",
+                        "props"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "characters",
+                  "runs"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "kind",
+              "id",
+              "ref",
+              "tag",
+              "parent",
+              "props",
+              "sources"
+            ],
+            "additionalProperties": false
+          },
+          "description": "What the call would make or change, in document order, in Figma's terms: kind (create or update), id, tag, props (only what the layer does not have yet) and sources (the attribute each prop came from). A layer that already looks as written is not listed."
+        },
         "created": {
           "type": "array",
           "items": {
@@ -5776,49 +6115,15 @@
               "tag"
             ],
             "additionalProperties": false
-          }
+          },
+          "description": "The layers made, by their element's line and ref, with their ids and names; a dry run's, which it would make, have neither."
         },
         "changed": {
           "type": "array",
           "items": {
             "type": "string"
-          }
-        },
-        "errors": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "line": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "column": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "id": {
-                "type": "string"
-              },
-              "attribute": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "hint": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "line",
-              "column",
-              "message"
-            ],
-            "additionalProperties": false
-          }
+          },
+          "description": "The ids of the existing layers written to (a dry run's: would be)."
         },
         "properties": {
           "type": "array",
@@ -5846,12 +6151,49 @@
               "type"
             ],
             "additionalProperties": false
-          }
+          },
+          "description": "The properties prop, visibleProp and swapProp added to components that were there before the call (a dry run's: would add), each on its component or set by id, by name without Figma's #id; left out when none."
         },
-        "dryRun": {
-          "type": "boolean"
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "number"
+              },
+              "column": {
+                "type": "number"
+              },
+              "id": {
+                "type": "string"
+              },
+              "attribute": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "line",
+              "column",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "description": "What is written but Figma will not draw as written, in document order: line and column, the id and attribute, the message and a hint (a shadow's spread on a layer that draws none). Left out when there is none."
+        },
+        "dry": {
+          "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
+          "type": "boolean",
+          "const": true
         },
         "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
           "type": "object",
           "properties": {
             "id": {
@@ -5875,10 +6217,11 @@
         }
       },
       "required": [
-        "created",
-        "changed",
+        "elements",
         "errors",
-        "dryRun"
+        "changes",
+        "created",
+        "changed"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false
@@ -5887,13 +6230,13 @@
       "readOnlyHint": false,
       "destructiveHint": true,
       "idempotentHint": false,
-      "openWorldHint": false
+      "openWorldHint": true
     }
   },
   {
     "name": "execute",
     "title": "Run plugin code",
-    "description": "Runs JavaScript to read the file, given one of three: `code`, Plugin API code run in the Pixelwright plugin, for what the read tools do not show; `codePath`, the path of a file of such code; `script`, code run on the server where pw.<read>(args) calls a read tool by its camelCase name with its own arguments (pw.nodesFind, pw.inspect, pw.designRead; not screenshot, node_show or selection_wait: a script cannot show an image or act on the user's view, so call screenshot yourself) and utils helps filter and join their answers, for one answer that needs several reads filtered or joined: a script never writes, and reading a key its answer type lacks throws (types_read gives each read's answer type before you write a script; guide script has the limits and utils). Plugin code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep long plugin code in a file and pass its path as codePath: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. This version reads only: if the user explicitly asks to change the file, warn that editing is not supported or stable in this version, and write only once the user says to go on; the Allow edits switch still gates every write. The reads answer what code is most often written for: layers by text (a list, or textRegex), size, visibility, component and the properties instances change, with their ancestors and page (nodes_find, outline, file_map, components_read); a whole subtree with its auto layout gaps and paddings, parent layout, text runs and component properties (inspect within and fields); a token by name with its id and alias chain (tokens_read query); colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off, and their answers come from the same Plugin API, so do not re-check a read's answer with code (an absent field is its default, as each read's description says); code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
+    "description": "Runs JavaScript for what no other tool reads, or a change design_apply cannot say, given one of three: `code`, Plugin API code run in the Pixelwright plugin, for what the read tools do not show; `codePath`, the path of a file of such code; `script`, code run on the server where pw.<read>(args) calls a read tool by its camelCase name with its own arguments (pw.nodesFind, pw.inspect, pw.designRead; not screenshot, node_show or selection_wait: a script cannot show an image or act on the user's view, so call screenshot yourself) and utils helps filter and join their answers, for one answer that needs several reads filtered or joined: a script never writes, and reading a key its answer type lacks throws (types_read gives each read's answer type before you write a script; guide script has the limits and utils). Plugin code is the body of an async function given `figma` (the Plugin API, without clientStorage, ui, closePlugin and showUI), `console` and `pw`; `return` gives `result` (layers come back as {id, type, name}, figma.mixed as \"mixed\"), and what it logs comes back as `logs`. What it throws comes back as `error`, with the logs before it. `pw` stays between calls while the plugin window is open: pw.state for your data, your own functions added to pw, and Pixelwright's helpers: await pw.node(id) (the layer, or an error), await pw.fonts(layer) (loads every font its texts use, before you change them). The plugin runs with documentAccess \"dynamic-page\": use the Async calls (getNodeByIdAsync, getMainComponentAsync, getLocalPaintStylesAsync, setFillStyleIdAsync…), and await page.loadAsync() before reading another page. figma.skipInvisibleInstanceChildren is Figma's own, false in the editor and true in Dev Mode: set to true, findAll, findOne and children skip hidden layers inside instances and getNodeByIdAsync gives null for them (it is set back after the call). Keep long plugin code in a file and pass its path as codePath: it is read at every call, so after a plugin restart or a change to the file run it again rather than calling the functions it once added to pw. What it changes during the call is one undo step in Figma. Refused while the plugin's Allow edits switch is off, but code it starts that outlives the call (timers, listeners, work past the timeout) keeps running until the plugin window is closed, the switch notwithstanding. timeout waits up to 300 s for a long task; an endless loop, synchronous or of awaits, freezes Figma until the plugin is closed. Change the file with design_apply (design_read's XML, with a dryRun to check it first), tokens_apply, tokens_bind, nodes_delete and version_save; plugin code that writes is for what they cannot say. The reads answer what code is most often written for: layers by text (a list, or textRegex), size, visibility, component and the properties instances change, with their ancestors and page (nodes_find, outline, file_map, components_read); a whole subtree with its auto layout gaps and paddings, parent layout, text runs and component properties (inspect within and fields); a token by name with its id and alias chain (tokens_read query); colours bound to no token (tokens_usage raw: true). Before code, try the read tools (design_read, inspect, measure, nodes_find): they need no code and work with Allow edits off, and their answers come from the same Plugin API, so do not re-check a read's answer with code (an absent field is its default, as each read's description says); code in which nothing writes (no property set, no create*, remove, set*… call, no helper of your own) is told so in `note`.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -5920,6 +6263,12 @@
           "type": "number",
           "minimum": 1,
           "maximum": 300
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before the code runs, for the designer to go back to. execute has no dry run to check first, so a version is always saved when you pass one, even if the code then changes nothing. A version goes with `code` or `codePath`, not with `script`: a script never writes."
         },
         "file": {
           "type": "string",
@@ -5996,6 +6345,26 @@
           "items": {
             "type": "string"
           }
+        },
+        "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -6582,251 +6951,320 @@
   {
     "name": "tokens_apply",
     "title": "Write design tokens",
-    "description": "Writes design tokens in the shape tokens_read returns with format json: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma's pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand, its letter spacing and case in also as tokens_read lists them, or after it: \"500 12px/16px 'Inter'; letter-spacing: 0.04em; text-transform: uppercase\"; left out, the style keeps its own) and effect (a box-shadow list, a shadow's colour a colour or var(--colour variable), its blurs after it or alone: \"backdrop-filter: blur(20px)\"; the effects a value leaves out, the style keeps). Collections, modes, variables and styles are found by name among the file's own or made; what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
+    "description": "Writes design tokens in the shape tokens_read returns with format json: tokens takes tokens_read's tokens as they are (their ids, aliasOf, defaultMode and selectors are read past), or the same shape by hand: collections with their modes and variables, each mode's value in CSS (a colour, px or a number, a quoted string, true/false, var(--token) for an alias), optionally scopes (where Figma's pickers offer it: a font weight or an opacity needs FONT_WEIGHT or OPACITY to stay a plain number) and codeSyntax per platform, and styles: paint (a colour or colour variable), text (the font shorthand, its letter spacing and case in also as tokens_read lists them, or after it: \"500 12px/16px 'Inter'; letter-spacing: 0.04em; text-transform: uppercase\"; left out, the style keeps its own) and effect (a box-shadow list, a shadow's colour a colour or var(--colour variable), its blurs after it or in also, or alone: \"backdrop-filter: blur(20px)\"; the effects a value leaves out, the style keeps). Collections, modes, variables and styles are found by name among the file's own or made (a style's token says which of styles sharing a name it is); what the file already holds, as tokens_read writes it, is left as it is, and nothing is deleted. A library's collection or style is never copied into the file: change it in the library. Send only what you change. errors name each variable, mode or style that could not be written while the rest goes in; notes, what was written but will not read back as given. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun checks without writing).",
     "inputSchema": {
       "type": "object",
       "properties": {
-        "collections": {
-          "default": [],
-          "maxItems": 200,
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 512
-              },
-              "modes": {
-                "maxItems": 40,
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 512
-                }
-              },
-              "variables": {
-                "maxItems": 5000,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
+        "tokens": {
+          "type": "object",
+          "properties": {
+            "collections": {
+              "default": [],
+              "maxItems": 200,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "modes": {
+                    "maxItems": 40,
+                    "type": "array",
+                    "items": {
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 512
-                    },
-                    "type": {
-                      "type": "string",
-                      "maxLength": 32
-                    },
-                    "values": {
-                      "type": "object",
-                      "propertyNames": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 512
-                      },
-                      "additionalProperties": {
-                        "type": "string",
-                        "maxLength": 10000
-                      }
-                    },
-                    "description": {
-                      "type": "string",
-                      "maxLength": 10000
-                    },
-                    "token": {
-                      "type": "string",
-                      "maxLength": 512
-                    },
-                    "scopes": {
-                      "description": "The fields Figma's pickers offer it for, by Figma's names: [\"FONT_WEIGHT\"], [\"GAP\", \"WIDTH_HEIGHT\"]; [] hides it from all of them. A new variable is offered for every field (ALL_SCOPES), which makes a number a length in px: a font weight or an opacity needs its scope.",
-                      "maxItems": 23,
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "ALL_SCOPES",
-                          "TEXT_CONTENT",
-                          "CORNER_RADIUS",
-                          "WIDTH_HEIGHT",
-                          "GAP",
-                          "ALL_FILLS",
-                          "FRAME_FILL",
-                          "SHAPE_FILL",
-                          "TEXT_FILL",
-                          "STROKE_COLOR",
-                          "STROKE_FLOAT",
-                          "EFFECT_FLOAT",
-                          "EFFECT_COLOR",
-                          "OPACITY",
-                          "COLOR_OPACITY",
-                          "FONT_FAMILY",
-                          "FONT_STYLE",
-                          "FONT_WEIGHT",
-                          "FONT_SIZE",
-                          "LINE_HEIGHT",
-                          "LETTER_SPACING",
-                          "PARAGRAPH_SPACING",
-                          "PARAGRAPH_INDENT"
-                        ]
-                      }
-                    },
-                    "codeSyntax": {
-                      "description": "Its name in code per platform: WEB (also its CSS name, as var(--name)), ANDROID, iOS; \"\" removes one.",
-                      "type": "object",
-                      "properties": {
-                        "WEB": {
-                          "type": "string",
-                          "maxLength": 512
-                        },
-                        "ANDROID": {
-                          "type": "string",
-                          "maxLength": 512
-                        },
-                        "iOS": {
-                          "type": "string",
-                          "maxLength": 512
-                        }
-                      }
                     }
                   },
-                  "required": [
-                    "name",
-                    "values"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "name",
-              "variables"
-            ]
-          }
-        },
-        "styles": {
-          "default": {
-            "paint": [],
-            "text": [],
-            "effect": []
-          },
-          "type": "object",
-          "properties": {
-            "paint": {
-              "default": [],
-              "maxItems": 2000,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 512
-                  },
-                  "value": {
-                    "type": "string",
-                    "maxLength": 10000
-                  }
-                },
-                "required": [
-                  "name",
-                  "value"
-                ]
-              }
-            },
-            "text": {
-              "default": [],
-              "maxItems": 2000,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 512
-                  },
-                  "value": {
-                    "type": "string",
-                    "maxLength": 10000
-                  },
-                  "also": {
-                    "description": "Its letter spacing and case as tokens_read lists them: [{token: '--Caption-letter-spacing', value: '0.04em'}, {token: '--Caption-text-transform', value: 'uppercase'}].",
-                    "maxItems": 20,
+                  "variables": {
+                    "maxItems": 5000,
                     "type": "array",
                     "items": {
                       "type": "object",
                       "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        },
+                        "type": {
+                          "type": "string",
+                          "maxLength": 32
+                        },
+                        "values": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 512
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "maxLength": 10000
+                          }
+                        },
+                        "description": {
+                          "type": "string",
+                          "maxLength": 10000
+                        },
                         "token": {
                           "type": "string",
                           "maxLength": 512
                         },
-                        "value": {
-                          "type": "string",
-                          "maxLength": 10000
+                        "scopes": {
+                          "description": "The fields Figma's pickers offer it for, by Figma's names: [\"FONT_WEIGHT\"], [\"GAP\", \"WIDTH_HEIGHT\"]; [] hides it from all of them. A new variable is offered for every field (ALL_SCOPES), which makes a number a length in px: a font weight or an opacity needs its scope.",
+                          "maxItems": 23,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "ALL_SCOPES",
+                              "TEXT_CONTENT",
+                              "CORNER_RADIUS",
+                              "WIDTH_HEIGHT",
+                              "GAP",
+                              "ALL_FILLS",
+                              "FRAME_FILL",
+                              "SHAPE_FILL",
+                              "TEXT_FILL",
+                              "STROKE_COLOR",
+                              "STROKE_FLOAT",
+                              "EFFECT_FLOAT",
+                              "EFFECT_COLOR",
+                              "OPACITY",
+                              "COLOR_OPACITY",
+                              "FONT_FAMILY",
+                              "FONT_STYLE",
+                              "FONT_WEIGHT",
+                              "FONT_SIZE",
+                              "LINE_HEIGHT",
+                              "LETTER_SPACING",
+                              "PARAGRAPH_SPACING",
+                              "PARAGRAPH_INDENT"
+                            ]
+                          }
+                        },
+                        "codeSyntax": {
+                          "description": "Its name in code per platform: WEB (also its CSS name, as var(--name)), ANDROID, iOS; \"\" removes one.",
+                          "type": "object",
+                          "properties": {
+                            "WEB": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "ANDROID": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "iOS": {
+                              "type": "string",
+                              "maxLength": 512
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "id": {
+                          "description": "tokens_read's own: read past."
+                        },
+                        "aliasOf": {
+                          "description": "tokens_read's own: read past."
                         }
                       },
                       "required": [
-                        "token",
-                        "value"
-                      ]
+                        "name",
+                        "values"
+                      ],
+                      "additionalProperties": false
                     }
+                  },
+                  "defaultMode": {
+                    "description": "tokens_read's own: read past."
+                  },
+                  "selectors": {
+                    "description": "tokens_read's own: read past."
                   }
                 },
                 "required": [
                   "name",
-                  "value"
-                ]
+                  "variables"
+                ],
+                "additionalProperties": false
               }
             },
-            "effect": {
-              "default": [],
-              "maxItems": 2000,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 512
-                  },
-                  "value": {
-                    "type": "string",
-                    "maxLength": 10000
+            "styles": {
+              "default": {
+                "paint": [],
+                "text": [],
+                "effect": []
+              },
+              "type": "object",
+              "properties": {
+                "paint": {
+                  "default": [],
+                  "maxItems": 2000,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "value": {
+                        "type": "string",
+                        "maxLength": 10000
+                      },
+                      "token": {
+                        "description": "Its token as tokens_read lists it: which of the styles sharing its name it is, and which filter a blur alone is (--Frost-backdrop-filter).",
+                        "type": "string",
+                        "maxLength": 512
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ],
+                    "additionalProperties": false
                   }
                 },
-                "required": [
-                  "name",
-                  "value"
-                ]
-              }
+                "text": {
+                  "default": [],
+                  "maxItems": 2000,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "value": {
+                        "type": "string",
+                        "maxLength": 10000
+                      },
+                      "token": {
+                        "description": "Its token as tokens_read lists it: which of the styles sharing its name it is, and which filter a blur alone is (--Frost-backdrop-filter).",
+                        "type": "string",
+                        "maxLength": 512
+                      },
+                      "also": {
+                        "description": "Its letter spacing and case, or its blurs, as tokens_read lists them: [{token: '--Caption-letter-spacing', value: '0.04em'}, {token: '--Caption-text-transform', value: 'uppercase'}].",
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "value": {
+                              "type": "string",
+                              "maxLength": 10000
+                            }
+                          },
+                          "required": [
+                            "token",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "effect": {
+                  "default": [],
+                  "maxItems": 2000,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "value": {
+                        "type": "string",
+                        "maxLength": 10000
+                      },
+                      "token": {
+                        "description": "Its token as tokens_read lists it: which of the styles sharing its name it is, and which filter a blur alone is (--Frost-backdrop-filter).",
+                        "type": "string",
+                        "maxLength": 512
+                      },
+                      "also": {
+                        "description": "Its letter spacing and case, or its blurs, as tokens_read lists them: [{token: '--Caption-letter-spacing', value: '0.04em'}, {token: '--Caption-text-transform', value: 'uppercase'}].",
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token": {
+                              "type": "string",
+                              "maxLength": 512
+                            },
+                            "value": {
+                              "type": "string",
+                              "maxLength": 10000
+                            }
+                          },
+                          "required": [
+                            "token",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
             }
-          }
+          },
+          "additionalProperties": false,
+          "description": "tokens_read's tokens (format json) as they are, or the same by hand: collections and styles, only what you change."
         },
         "dryRun": {
           "default": false,
-          "description": "Check names, types, modes and aliases without writing; works with Allow edits off.",
+          "description": "Check without writing: the answer says what would change. Works with Allow edits off.",
           "type": "boolean"
         },
         "version": {
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one when the user wants to be able to go back."
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "required": [
+        "tokens"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -6934,10 +7372,13 @@
             "type": "string"
           }
         },
-        "dryRun": {
-          "type": "boolean"
+        "dry": {
+          "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
+          "type": "boolean",
+          "const": true
         },
         "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
           "type": "object",
           "properties": {
             "id": {
@@ -6963,8 +7404,7 @@
       "required": [
         "created",
         "updated",
-        "errors",
-        "dryRun"
+        "errors"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false
@@ -6979,7 +7419,7 @@
   {
     "name": "tokens_bind",
     "title": "Bind raw values to tokens",
-    "description": "Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer's variable mode and within the variables' scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates, and with instances: override inside instances too, as their overrides (a dark copy on a plan with one mode). Instances are left to their main components, all but what was put into their slots. Results are grouped by value. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing). design_lint says what is raw.",
+    "description": "Binds the raw values under a layer, a page or the file to the styles and variables that hold them exactly, in each layer's variable mode and within the variables' scopes: colours to colour variables or paint styles, gaps, padding, radii, border widths and opacity to number variables, texts to text styles, shadows and blurs to effect styles. A value one token holds is bound; one several hold is listed with its candidates (pick with choose); one none holds is listed too, for tokens_apply. choose also snaps a near value to a token. remap rebinds every use of one token to another of its kind, for merging duplicates, and with instances: override inside instances too, as their overrides (a dark copy on a plan with one mode). Instances are left to their main components, all but what was put into their slots. Results are grouped by value. One undo step in Figma; refused while the plugin's Allow edits switch is off (dryRun lists without writing).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -7046,7 +7486,8 @@
             "required": [
               "value",
               "token"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
         "remap": {
@@ -7071,7 +7512,8 @@
             "required": [
               "from",
               "to"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
         "instances": {
@@ -7085,23 +7527,24 @@
         },
         "dryRun": {
           "default": false,
-          "description": "List what would be bound without writing; works with Allow edits off.",
+          "description": "Check without writing: the answer says what would change. Works with Allow edits off.",
           "type": "boolean"
         },
         "version": {
-          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one before a write that changes many layers or tokens.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 100
+          "maxLength": 100,
+          "description": "A name for a version saved in the file's history before writing, for the designer to go back to (not in a dry run, nor when nothing would change). Pass one when the user wants to be able to go back."
         },
         "file": {
-          "description": "The file to work on: its session from status or its name. Default: the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "The file to work on: its session from status or its name. Default: the active file."
         }
       },
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -7316,10 +7759,13 @@
         "summary": {
           "type": "string"
         },
-        "dryRun": {
-          "type": "boolean"
+        "dry": {
+          "description": "The answer is a dry run's: one asked for, or the check before a version that found nothing to change, so no version was saved.",
+          "type": "boolean",
+          "const": true
         },
         "version": {
+          "description": "The version saved in the file's history before the write; id null when Figma gave none.",
           "type": "object",
           "properties": {
             "id": {
@@ -7351,8 +7797,7 @@
         "errors",
         "notes",
         "more",
-        "summary",
-        "dryRun"
+        "summary"
       ],
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false
@@ -8303,13 +8748,12 @@
           "description": "The version's name in Version history, e.g. \"Built: pricing\"."
         },
         "description": {
-          "description": "Shown under the title. Everyone with the file sees it: no local paths or private repository names.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1000
+          "maxLength": 1000,
+          "description": "Shown under the title. Everyone with the file sees it: no local paths or private repository names."
         },
         "baselines": {
-          "description": "The baselines this version goes with: it is saved only while the design still matches each one, and they record it.",
           "minItems": 1,
           "maxItems": 10,
           "type": "array",
@@ -8318,19 +8762,21 @@
             "minLength": 1,
             "maxLength": 64,
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-          }
+          },
+          "description": "The baselines this version goes with: it is saved only while the design still matches each one, and they record it."
         },
         "file": {
-          "description": "A session from status, or a file name. Default: the file of the first baseline, else the active file.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "A session from status, or a file name. Default: the file of the first baseline, else the active file."
         }
       },
       "required": [
         "title"
       ],
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false
     },
     "outputSchema": {
       "type": "object",
@@ -9378,7 +9824,7 @@
   {
     "name": "guide",
     "title": "Pixelwright guide",
-    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named and read: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).); script (An execute script over the reads: its limits, its utils, images and the answer types it reads by.). Read workflow first in a new task, and xml before building from design_read.",
+    "description": "How to work with Pixelwright and read what it returns. Without a topic: the topics. Topics: workflow (Which tool to use when, from finding a section to its files and writing it back, and how to read a design like a web developer.); xml (The XML design_read returns: tags, metadata, CSS attributes and values, layout, read-only attributes.); tokens (How tokens are named, read, written and bound: styles, variables, modes, aliases, units, libraries.); assets (What becomes a file, in which format, how files are named, and what no file holds (a video).); script (An execute script over the reads: its limits, its utils, images and the answer types it reads by.); write (design_apply, nodes_delete and version_save: changing, creating, copying and moving layers, pages, components, images, icons, notes and text with design_read's XML.); layout (design_apply layouts: when to use flex, grid or absolute placement; grid tracks, spans and cells; pinned and centred layers.). Read workflow first in a new task, xml before building from design_read, write before design_apply, and layout before setting a frame's flex, grid or absolute placement.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -9390,7 +9836,9 @@
             "xml",
             "tokens",
             "assets",
-            "script"
+            "script",
+            "write",
+            "layout"
           ]
         }
       },

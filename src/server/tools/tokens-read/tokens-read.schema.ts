@@ -2,10 +2,11 @@ import * as zod from "zod/mini";
 import { SummarySchema, TokensSchema } from "@/core/tokens/model/model.schema.ts";
 import { FileInputSchema } from "@/server/app/sessions/target-resolver.schema.ts";
 import { TOKEN_FORMAT, TOKENS_READ, TOKENS_READ_FIELD } from "@/server/tools/tokens-read/tokens-read.constants.ts";
-import { variablesOp } from "@/shared/ops/variables/variables.manifest.ts";
+import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 import { LibraryCollectionSchema } from "@/shared/ops/variables/variables.schema.ts";
 
-const { within } = variablesOp.input.shape;
+// A layer or page only: the variables op also takes "file" (every page), which tokens_bind alone asks for.
+const within = zod.exactOptional(NodeIdSchema);
 
 export const TokensReadInputSchema = zod.strictObject({
   collections: zod

@@ -171,7 +171,7 @@ describe("SocketLink and a program that did not earn a step", () => {
       server.send(
         JSON.stringify({
           type: "hello_ack",
-          protocol: 6,
+          protocol: 7,
           sessionId: "1",
           server: { name: "pixelwright-new", version: "0.8.0" },
         }),

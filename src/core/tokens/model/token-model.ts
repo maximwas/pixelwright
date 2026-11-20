@@ -70,10 +70,28 @@ export class TokenModel {
     }));
 
     this.#noteMissing(kept, scope, raw, context);
+    this.#noteShared(written, context.notes);
 
     const styles = this.#queried(this.#styles.tokens(raw.styles, context.tables, context.notes), matches);
 
     return { collections: written, styles, notes: [...context.notes] };
+  }
+
+  /** A token several variables have, of one collection or more: :root declares each, CSS keeps the last (FIX-090A). */
+  #noteShared(collections: ReadyTokens["collections"], notes: Set<string>): void {
+    const owners = new Map<string, string[]>();
+
+    for (const { name, variables } of collections) {
+      for (const { token } of variables) {
+        owners.set(token, [...(owners.get(token) ?? []), name]);
+      }
+    }
+
+    for (const [token, names] of owners) {
+      if (names.length > 1) {
+        notes.add(MODEL_NOTE.sharedToken(token, names.length, [...new Set(names)]));
+      }
+    }
   }
 
   /** Whether any of the words is in the texts given, in any case; every text without a query. */

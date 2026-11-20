@@ -4,6 +4,7 @@ import { LAYER_CHANGES, LayerChanges } from "@/core/diff/baseline/layer-changes.
 import { STRUCTURE_CHANGES, StructureChanges } from "@/core/diff/baseline/structure-changes.ts";
 import { TOKEN_CHANGES, TokenChanges } from "@/core/diff/baseline/token-changes.ts";
 import { BASELINE_CAPTURE, BaselineCapture } from "@/server/app/baselines/baseline-capture.ts";
+import { BASELINE_COMPARISON, BASELINE_FILE_TARGET } from "@/server/app/baselines/baseline-check.port.ts";
 import { BASELINE_STORE, BaselineStore } from "@/server/app/baselines/baseline-store.ts";
 import { SEEN_DESIGNS, SeenDesigns } from "@/server/app/baselines/seen-designs.ts";
 import { BASELINE_COMPARE, BaselineCompare } from "@/server/tools/baseline-diff/baseline-compare.ts";
@@ -12,10 +13,11 @@ import { BASELINE_ROOT, BaselineRoot } from "@/server/tools/baseline-diff/baseli
 import { BASELINE_TARGET, BaselineTarget } from "@/server/tools/baseline-diff/baseline-target.ts";
 import { BASELINE_KEEPER, BaselineKeeper } from "@/server/tools/baseline-save/baseline-keeper.ts";
 
+import { VERSION_BASELINES, VersionBaselines } from "@/server/tools/version-save/version-baselines.ts";
 /**
  * The baselines' bindings (T-200..T-203): the project's baseline files, the designs diffs compared (one set per server,
  * lost on restart, D-39), the capture both tools read through, baseline_save's keeper, and baseline_diff's core diff,
- * file rule, root finder, comparison and the overview of every baseline.
+ * file rule, root finder, comparison and the overview of every baseline; version_save's checks, through those two (T-180).
  */
 export class BaselineProviders {
   register(container: Container): void {
@@ -31,6 +33,9 @@ export class BaselineProviders {
       .bind({ provide: BASELINE_TARGET, useClass: BaselineTarget })
       .bind({ provide: BASELINE_ROOT, useClass: BaselineRoot })
       .bind({ provide: BASELINE_COMPARE, useClass: BaselineCompare })
-      .bind({ provide: BASELINE_OVERVIEW, useClass: BaselineOverview });
+      .bind({ provide: BASELINE_OVERVIEW, useClass: BaselineOverview })
+      .bind({ provide: BASELINE_COMPARISON, useExisting: BASELINE_COMPARE })
+      .bind({ provide: BASELINE_FILE_TARGET, useExisting: BASELINE_TARGET })
+      .bind({ provide: VERSION_BASELINES, useClass: VersionBaselines });
   }
 }

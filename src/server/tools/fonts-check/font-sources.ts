@@ -1,26 +1,33 @@
 import { InjectionToken, inject, injectable } from "@needle-di/core";
 import { constructURL } from "google-fonts-helper";
-import { FONT_DIRECTORY, type ServedFonts } from "@/core/ports/font-directory.port.ts";
+import { FONT_AXES, FONT_DIRECTORY, type ServedFonts } from "@/core/ports/font-directory.port.ts";
 import { FONTS_CHECK_TEXT, GOOGLE_CSS2 } from "@/server/tools/fonts-check/fonts-check.constants.ts";
 import type { CheckedFont, FontsChecked } from "@/server/tools/fonts-check/fonts-check.schema.ts";
 
 /**
  * Where a build gets each font a read uses (T-101): whether Google Fonts serves the family, its css2 link for the
  * weights used (google-fonts-helper 3.7.4 builds it: upright weights first, then italics) and the weights Google
- * lacks; a family Google does not serve needs its own files. Offline, every family is listed with google null.
+ * lacks; a family Google does not serve needs its own files; a variable one also its axes with their ranges and
+ * defaults (Fontsource). Offline, every family is listed with google null.
  */
 @injectable()
 export class FontSources {
   readonly #directory;
+  readonly #axes;
 
-  constructor(directory = inject(FONT_DIRECTORY)) {
+  constructor(directory = inject(FONT_DIRECTORY), axes = inject(FONT_AXES)) {
     this.#directory = directory;
+    this.#axes = axes;
   }
 
   /** `fonts`: each family with its weights, as design_read's JSON lists them. */
   async check(fonts: Readonly<Record<string, readonly string[]>>): Promise<FontsChecked> {
     const served = await this.#directory.families();
-    const checked = Object.entries(fonts).map(([family, weights]) => this.#font(family, [...weights], served));
+    const checked = await Promise.all(
+      Object.entries(fonts).map(
+        async ([family, weights]) => await this.#axed(this.#font(family, [...weights], served)),
+      ),
+    );
 
     return {
       summary:
@@ -29,6 +36,13 @@ export class FontSources {
           : FONTS_CHECK_TEXT.offline(checked.length, served.error),
       fonts: checked,
     };
+  }
+
+  /** A family Google serves, with its axes when it is variable. */
+  async #axed(font: CheckedFont): Promise<CheckedFont> {
+    const axes = (font.google ?? false) ? await this.#axes.axes(font.family) : null;
+
+    return axes === null ? font : { ...font, axes: { ...axes } };
   }
 
   #font(

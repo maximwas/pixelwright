@@ -1,4 +1,5 @@
 import { CSS_PROPERTY } from "@/core/css/css.constants.ts";
+import { INTENT_SELF_ALIGN } from "@/shared/write-intents/write-intent.constants.ts";
 
 /** Figma's constraints on one axis: the start (its default), the end, the centre, both edges, scaled with the parent. */
 export const FIGMA_CONSTRAINT = {
@@ -35,6 +36,8 @@ export const GEOMETRY_AXIS = {
     span: "gridColumnSpan",
     self: "gridChildHorizontalAlign",
     align: CSS_PROPERTY.justifySelf,
+    cell: "gridColumn",
+    selfKey: "justifySelf",
   },
   vertical: {
     start: CSS_PROPERTY.top,
@@ -48,6 +51,8 @@ export const GEOMETRY_AXIS = {
     span: "gridRowSpan",
     self: "gridChildVerticalAlign",
     align: CSS_PROPERTY.alignSelf,
+    cell: "gridRow",
+    selfKey: "alignSelf",
   },
 } as const;
 
@@ -89,6 +94,110 @@ export const GEOMETRY_TEXT = {
   line: (line: number) => `${line}`,
   span: (line: number, span: number) => `${line} / span ${span}`,
 } as const;
+
+/** align-self and justify-self as Figma takes them, in a grid cell or across a flex parent (C-058). */
+export const SELF_FIGMA: Readonly<Record<string, (typeof INTENT_SELF_ALIGN)[keyof typeof INTENT_SELF_ALIGN]>> = {
+  auto: INTENT_SELF_ALIGN.AUTO,
+  normal: INTENT_SELF_ALIGN.AUTO,
+  start: INTENT_SELF_ALIGN.MIN,
+  "flex-start": INTENT_SELF_ALIGN.MIN,
+  "self-start": INTENT_SELF_ALIGN.MIN,
+  center: INTENT_SELF_ALIGN.CENTER,
+  end: INTENT_SELF_ALIGN.MAX,
+  "flex-end": INTENT_SELF_ALIGN.MAX,
+  "self-end": INTENT_SELF_ALIGN.MAX,
+  stretch: INTENT_SELF_ALIGN.STRETCH,
+};
+
+/** The words design_apply reads in geometry. */
+export const GEOMETRY_WRITE = {
+  relative: "relative",
+  static: "static",
+  auto: "auto",
+  none: "none",
+  initial: "initial",
+  /** Sizes that fit the content: Figma's HUG. */
+  hugs: ["auto", "fit-content", "max-content"],
+  listJoint: ", ",
+  /** The key of a placement found, as opposed to one refused. */
+  placement: "placement",
+} as const;
+
+export const GEOMETRY_PATTERN = {
+  /** A percent: "50%", "12.5%". */
+  percent: /^(-?\d*\.?\d+)%$/,
+  /** An offset from the parent's centre, the one calc() form design_read writes. */
+  fromCentre: /^calc\(\s*50%\s*([+-])\s*(\d*\.?\d+)px\s*\)$/,
+  /** Grid lines: "N", "N / span M" or "N / M". */
+  lines: /^(\d+)(?:\s*\/\s*(?:span\s+(\d+)|(\d+)))?$/,
+} as const;
+
+export const GEOMETRY_ERROR = {
+  badPosition: (value: string) =>
+    `position="${value}" is not one Figma has: absolute, or relative to flow in the parent.`,
+  flows: (name: string) => `${name} places a layer with position="absolute"; this one flows in its parent.`,
+  flowsHint: (name: string) => `Add position="absolute", or leave ${name} out.`,
+  percentStart: (start: string) =>
+    `${start} in percents scales the layer with its parent: give its size in percents too.`,
+  badStart: (start: string, value: string) =>
+    `${start}="${value}" is not a length in px, a percent, calc(50% ± Npx) or auto.`,
+  badEnd: (end: string, value: string) => `${end}="${value}" is not a length in px or auto.`,
+  badSize: (size: string, value: string) => `${size}="${value}" is not a length in px, a token or auto.`,
+  percentSize: (start: string) => `A percent scales with the parent: it needs ${start} in percents too.`,
+  badLimit: (limit: string, value: string) => `${limit}="${value}" is not a length in px, a token or none.`,
+  growWeight: (value: string) =>
+    `flex="${value}": a layer fills its parent's direction or not, flex="1" or flex="none" (Figma has no grow weights).`,
+  badLines: (attribute: string, value: string) =>
+    `${attribute}="${value}" is not "N", "N / span M" or "N / M", lines counted from 1.`,
+  badSelf: (
+    attribute: string,
+    value: string,
+    words: string,
+  ) =>
+    `${attribute}="${value}" is not one Figma has: ${words}.`,
+  badTransform: (part: string) => `transform part ${part} is not rotate(Ndeg) or scaleX(-1), which is all Figma keeps.`,
+} as const;
+
+/** 0.7.0's order of a cell's writes: the row axis first (align-self, then justify-self; grid-row, then grid-column). */
+export const CELL_AXES = [GEOMETRY_AXIS.vertical, GEOMETRY_AXIS.horizontal] as const;
+
+/** What the transform writer owns. */
+export const TRANSFORM_ATTRIBUTES = [CSS_PROPERTY.transform] as const;
+
+export const TRANSFORM_WRITE = {
+  none: "none",
+  mirror: "scaleX(-1)",
+  /** rotate(<angle>), the one turn design_read writes. */
+  rotate: /^rotate\((.*)\)$/i,
+} as const;
+
+/** What the placement writer owns: position, and each axis's edges and size. */
+export const PLACEMENT_ATTRIBUTES = [
+  CSS_PROPERTY.position,
+  CSS_PROPERTY.left,
+  CSS_PROPERTY.right,
+  CSS_PROPERTY.top,
+  CSS_PROPERTY.bottom,
+  CSS_PROPERTY.width,
+  CSS_PROPERTY.height,
+] as const;
+
+/** What the size writer owns: the limits and filling the flex parent's direction. */
+export const SIZE_ATTRIBUTES = [
+  CSS_PROPERTY.minWidth,
+  CSS_PROPERTY.maxWidth,
+  CSS_PROPERTY.minHeight,
+  CSS_PROPERTY.maxHeight,
+  CSS_PROPERTY.flex,
+] as const;
+
+/** What the cell writer owns: the child's own alignment and its grid lines. */
+export const CELL_ATTRIBUTES = [
+  CSS_PROPERTY.alignSelf,
+  CSS_PROPERTY.justifySelf,
+  CSS_PROPERTY.gridRow,
+  CSS_PROPERTY.gridColumn,
+] as const;
 
 /** The CSS the geometry group owns: where a layer is, how big, and how it is turned. */
 export const GEOMETRY_ATTRIBUTES = [

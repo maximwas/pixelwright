@@ -64,16 +64,12 @@ export const GRADIENT_PLACES: Readonly<Record<string, number>> = {
 };
 
 /** Degrees per unit of a CSS angle. */
-export const ANGLE_UNITS: Readonly<Record<string, number>> = { deg: 1, grad: 0.9, rad: 180 / Math.PI, turn: 360 };
-
 export const GRADIENT_PATTERN = {
   gradient: /^(linear|radial|conic)-gradient\(([\s\S]*)\)$/,
   at: /\bat\b/,
   from: /\bfrom\s+(\S+)/,
   place: /\bat\s+(.+)$/,
   spaces: /\s+/,
-  /** `color-mix(in <space>, <colour> N%, transparent)`, as design_read writes a faded token. */
-  mix: /^color-mix\(\s*in\s+[\w-]+\s*,\s*(.+?)\s+(\d*\.?\d+)%\s*,\s*transparent\s*\)$/s,
 } as const;
 
 export const GRADIENT_VALUE = {

@@ -29,6 +29,7 @@ export class OpContract<Input extends zod.ZodMiniType, Output extends zod.ZodMin
       needsAllowEdits: this.#resolve(declared.needsAllowEdits, input),
       turn: declared.turn,
       quiet: declared.quiet ?? false,
+      toolDryRun: declared.toolDryRun ?? false,
     };
   }
 
