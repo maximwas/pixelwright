@@ -8,11 +8,10 @@ import {
 } from "@/core/checks/build-styles/build-styles.constants.ts";
 import { Dimension } from "@/core/checks/build-styles/dimension.ts";
 import { GRADIENT_PARSER } from "@/core/css/gradients/gradient-parser.ts";
-import { ANGLE_UNITS } from "@/core/css/gradients/gradients.constants.ts";
 import type { GradientSpec, GradientStopSpec } from "@/core/css/gradients/gradients.types.ts";
 import { CSS_SPLIT } from "@/core/css/values/css-split.ts";
 import { CSS_URL } from "@/core/css/values/css-url.ts";
-import { CSS_SEPARATOR } from "@/core/css/values/values.constants.ts";
+import { ANGLE_UNITS, CSS_SEPARATOR } from "@/core/css/values/values.constants.ts";
 import { Color } from "@/core/kernel/color/color.ts";
 
 /** A shadow by its parts: inset or not, x, y, blur and spread in px, and its colour. */

@@ -20,6 +20,8 @@ export interface OpMeta<Input> {
   readonly turn: OpTurn;
   /** Main never reports it to the window (ping). */
   readonly quiet?: boolean;
+  /** The op has no dryRun input, but its tool has a dry run that needs no Allow edits: the refusal names it. */
+  readonly toolDryRun?: boolean;
 }
 
 /** The meta of one call, its functions resolved against the parsed input. */
@@ -30,4 +32,5 @@ export interface ResolvedOpMeta {
   readonly needsAllowEdits: boolean;
   readonly turn: OpTurn;
   readonly quiet: boolean;
+  readonly toolDryRun: boolean;
 }

@@ -20,7 +20,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   - `envelope/`, `errors/`, `limits/`, `version/`, `window/`: the op result envelope, `PixelwrightError` and the error
     codes, numbers with their reason, the build's version, the messages between the plugin's window and its main thread.
 - `core/`: the pure domain and its ports.
-  - `kernel/`: the floor of core, importing no other domain: `numbers/` holds the D-15 precision table (`PRECISION`,
+  - `kernel/`: the floor of core, importing no other domain: `ids/` holds `LayerId` (C-167) and `SlotContent` (T-170: a
+    slot's default content by its id shape, which bind leaves to the component); `numbers/` holds the D-15 precision table (`PRECISION`,
     the places each class of value keeps) and `NumberFormat`, which every reader rounds with; `lists/` holds
     `NameValueList`, the `Name=Value, Other=Value` lists with `,` `=` `\` escaped (a variant, a component's properties); `geometry/` holds the value objects `Area` (a box's centre) and
     `Turn` (a rotation, or a mirror matrix's angle with the flip taken out, K-068; a line's flat or standing snap);
@@ -50,6 +51,25 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     resolved, `DtcgStyles` colour, gradient, typography and shadow tokens); format json is
     the model itself (`TokensSchema`). `model/` also holds `ModelSummary` (T-161: past maxChars, each collection's
     modes and size, and the most whole tokens that fit, in order, for any format).
+    `scopes/` holds `ScopeRules` (K-024, FX-050: the scopes Figma lets each type take, ALL_SCOPES alone, ALL_FILLS
+    without the fills it covers, never none on a BOOLEAN). `plan/` holds `TokensPlan`, tokens_apply's plan (T-165,
+    K-018..K-025): the call set against the file's tokens by name through `HeldTokens`, which reads them through the
+    model itself, so a value is compared in tokens_read's CSS and tokens_read's own JSON plans nothing; `CollectionPlans`
+    finds or makes each collection and refuses a variable listed twice; `VariablePlans` reads each variable back with
+    `VariableValues` and keeps only what differs; `AliasLinks` then follows every alias to its target (in the file or the
+    call), refuses a loop and a target of another type, types a variable of only aliases by its target (and checks its
+    scopes by it) and gives an alias its target's id when the file holds it, or an enabled library's key to import
+    (m:acc257ba, noted); `StylePlans` reads a style's CSS through `ChangeOf.attributesProps` (C-173) and finds the
+    colour variables it names (the plan's `targets`: id, key, or made by the call), and `PlainNumbers` gives each number the unit `NumberUnits` will read it in (an
+    opacity written in percent, FX-049; plain numbers that read back in px noted). The plan's schema, what the plugin
+    writes, is `shared/ops/tokens-apply/`. `bind/` holds `TokensBind`, tokens_bind's plan (T-167, K-026..K-029) over
+    the bind op's scan: `BindIndex` (the file's tokens by the value design_read prints, colour and number variables
+    per mode signature with aliases followed and preferred, scopes checked, paint styles of one solid paint, text and
+    effect styles), `BindFields` (K-027: which number fields count and which scope each takes, the table design_lint
+    shares; an opacity variable holds a percent, FX-049), `BindValues` (K-028: the strings, noise, texture and glass
+    none), `BindChoices` (choose: a pick, or a snap) and `BindReport` (groups by value, most used first, and keeps
+    every bound use and rebind whole: the plan the bind_write op writes, its schema `BindPlanSchema` in
+    `shared/ops/bind/`; a use whose write loads a font Figma lacks is refused here, on the dry run too). The library variables Figma infers for a value (inferredVariables, P-164) are candidates too.
   - `xml/`: light XML: `XmlEscape`, the tag vocabulary (`TAG`; `NodeTag`, a Figma type's tag), the layout constants,
     and `XmlWriter`, the one writer of an `XmlElement` tree (an element per line, two spaces a level, a Text with its
     Spans on one line, C-1.1); `outline/` holds `OutlineXml`, which writes the outline op's tree through it on the
@@ -142,8 +162,11 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     radial sizes, `color-mix()` and P3 stops included, for the write side). `groups/<group>/` holds one group each, in this order: `layout/` reads auto layout as flex and
     a grid as its tracks; `geometry/` reads where a layer is and how big (`Placement`: position and edges from the
     constraints, a turned layer by its bounds' centre; `GeometryGroup`: transform, size, FILL as flex or stretch,
-    limits; a flat or standing line unturned along its length); `appearance/` reads opacity, blend mode, clipping, a
-    text's truncation, the radius and layout grids; `paint/` reads fills (`FillsGroup`: background top first, a text's
+    limits; a flat or standing line unturned along its length; `PlacementWriter`, `SizeWriter` and `GridCellWriter`
+    write them back, edges as a pair, C-051..C-058, the span on the live parent being `core/kernel/geometry/`'s
+    `PlacementSpan`, the one copy the plugin imports); `appearance/` reads opacity, blend mode, clipping, a
+    text's truncation, the radius and layout grids (`AppearanceWriter` writes them back); `element/` holds
+    `ElementWriter`: name, link, component, variant, props, notes, a component property, mask and src written back; `paint/` reads fills (`FillsGroup`: background top first, a text's
     colour, the fixed D-20 note for what it cannot write) and strokes (`StrokesGroup`: border, outline, per-side
     borders, dashed, a line as one border); `effects/` reads shadows top first (`box-shadow`, a text's
     `text-shadow`, an effect style as its token) and blurs as `filter` / `backdrop-filter` at 0.43 R (C-100); `text/` reads a text: `TextRun` (a run's font,
@@ -186,7 +209,7 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     the page its read names,
     the variables op's tokens its aliases reach), for baseline_save and baseline_diff both.
 - `server/tools/`: one folder per tool (manifest, schema, tool class) and `ToolCatalog`; `execute/` also holds
-  `SyntaxCheck` (node:vm) and `ReadsOnlyCheck` (acorn); `inspect/` and `measure/` read through the inspect op (an
+  `SyntaxCheck` (node:vm), `ReadsOnlyCheck` (acorn) and `ServerCode` (a codePath file, a script's run); `inspect/` and `measure/` read through the inspect op (an
   `around` layer is a second inspect of it in the same origin; a selection past 100 is cut and counted in `left`).
   `nodes-diff/` reads both layers with one read op and cuts each list to 200; `variants-read/` finds the set with the
   set_of op and reads it whole; `breakpoints-find/` scores the screens op's answer; `flow-read/` also holds
@@ -198,6 +221,12 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   CSS or JSON (dtcg comes with its item), past maxChars the summary with the first whole tokens that fit;
   `tokens-usage/` names the token with `TokenNames` over the variables op's raw tokens, then lists the usage op's
   layers (500 at most, within the caller's budgetMs, D-48).
+  `tokens-apply/` reads the variables op with the libraries and the page's used tokens (so a library's are never
+  copied) and sets core's plan against them; a plan with nothing to write answers at once (D-25), else the plugin's
+  tokens_apply op writes it through the versioned write, a dry run too (B-055). `tokens-bind/` reads the variables op
+  (the file's tokens and those the layers use, every page's with "file"), scans with the bind op and answers core's
+  plan with its summary, the per-use plan kept from the answer; a real run writes that plan with the bind_write op
+  through the versioned write (`probes()`: the plan is its own probe), Figma's refusals among the errors.
   `guide/` answers its topics from `topics/*.md`, Markdown that tsdown's text loader inlines into the bundle (vitest.config.ts
   makes a .md module its text alike), so the package ships `dist/` alone; `markdown.d.ts` types the import.
 - `server/adapters/`: the port implementations on Node.
@@ -214,7 +243,9 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
     (pixelmatch 8.0.0: the differing pixels, their box and the difference image, A§15.7).
   - `process/`: `ExecFileRunner`, the `ProcessRunner` port on execFile; `http/`: `NpmRegistry`, npm's newest release;
     `FontsourceDirectory` (Fontsource's API, A§15.5) with `GoogleMetadataDirectory` (Google's catalogue) as its
-    fallback, what Google Fonts serves for fonts_check, read once for the server.
+    fallback, what Google Fonts serves for fonts_check, read once for the server; `FontsourceAxes` (the `FONT_AXES`
+    port: a variable family's axis ranges, which the Plugin API does not give, for fonts_check and design_apply's
+    `fontAxes`).
 - `server/main/`: `ServerMain`, the server's composition root, its providers, `ContainerToolFactory`, the config
   reader, `McpEndpoint`, the shutdown hooks.
 - `cli/`: the `pixelwright` binary: `bin.ts` (the Node gate, then a dynamic import) and `CliMain`, the CLI's
@@ -272,7 +303,20 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
   the mains of the instances, a batch at a time, counted), `ComponentEntries` (properties from the set or a lone
   component only, FX-028), `ExposedInstances` and `ComponentLinks` (the file asked first, then each component's).
   `variables/` returns the raw tokens through `FileTokens` and `LibraryCatalogue`: the server builds the model, the
-  plugin carries no `core/tokens`.
+  plugin carries no `core/tokens`. `tokens-apply/` writes core's plan: `CollectionWriter` (a new collection's first mode
+  renames Figma's default; a refused mode is its error, the limit learned in `plugin/app/ModeLimit`, FX-054),
+  `VariableWriter` (every new variable made before any value), `VariableValues` (values, an alias from its target or a
+  library's imported by key, description, scopes, code syntax), `StyleWriter`, `StyleLooks` and `TextStyleLooks`
+  (paint, text and effect styles through design_apply's `Paints`, `Effects` and `FontCatalog`; a text style keeps its
+  face, size, line height and letter spacing where they render as the CSS, and its font is loaded before it is made),
+  over `adapters/figma/variables/TokenFactory`; the call is one undo step. `bind/` scans for tokens_bind: `BindLayers`
+  (within or the selection; instances left to their components but their own slots, a slot's default content always,
+  B-023) and `LayerValues` (a layer's raw solids, numbers, runs and effects as plain data, each where it sits, with
+  the variables Figma infers for them, or its uses of a remap's tokens); the server matches them, so the plugin
+  carries no `core/tokens`. bind_write's `BindWriteOperation` writes the plan, one undo step, a failure per layer:
+  `UseBinder` (a colour's paint style or variable at the kept opacity, a number's fields, a run's text style, an
+  effect style), `RemapWriter` (style fields and runs; bound fields, paints, effects and runs' variables) and
+  `BindTargets` (layers, variables, a library's imported by key, styles and fonts, once a call).
 - `plugin/main/`: `PluginMain`, the plugin's composition root, its providers, `ContainerOperationFactory`, the Figma
   manifest.
 - `plugin-ui/`: the plugin's window: `link/` (`SocketLink`, the handshake and reconnects; `WindowLink`, its window side;
@@ -284,7 +328,8 @@ The source lives in `src/`, one folder per layer, one folder per topic inside it
 
 ### The script sandbox (execute script)
 
-`execute { script }` runs model-written JavaScript on the server, never in Figma: `ExecuteTool` hands it to
+`execute { script }` runs model-written JavaScript on the server, never in Figma: `ExecuteTool` (a `WriteTool` that
+answers a script in `answerNow`, so a script never saves a version and a `version` with it is refused) hands it through `ServerCode` to
 `server/app/code-mode/CodeRunner` (deadline, cancel, the result cut by `ResultCut`, the images named after the answer),
 which runs it through the `CodeSandbox` port (`core/ports/code-sandbox.port.ts`); the adapter is
 `server/adapters/sandbox/QuickJsSandbox` (quickjs-emscripten-core with the quickjs-ng WASM build: a fresh runtime per
@@ -322,7 +367,7 @@ beyond the reads' own ops.
 
 **Runs a tool call.** The MCP SDK hands the call to `McpEndpoint`, which gives it to `ToolRunner`. The runner's chain,
 outermost first: `ErrorTextStep`, `CallLogStep`, `TargetStep` (binds the call to a `PluginSession` when the tool takes
-`file`), `OutputCheckStep`. `ContainerToolFactory` builds the tool in a child container per call, and the tool's
+`file`; with no file connected it first waits while a plugin is expected, see `PluginWatch`), `OutputCheckStep`. `ContainerToolFactory` builds the tool in a child container per call, and the tool's
 `execute` asks its session for ops. Each op passes the session's chain, `OpLogStep`, `OpTimerStep`, `OpResultStep`, and
 reaches `PluginLink`, which is `PluginBridge`. On the owner, the request goes to the file's `BridgeSession` and out
 through `PluginRpc` (birpc) on its socket. The window relays the frame: `SocketLink` to `WindowLink` to `MainChannel`,
@@ -334,7 +379,7 @@ journal), `WatchdogStep` (TIMEOUT at the op's timeout; the window shows the op b
 `ContainerOperationFactory` builds the op in a child container; `Operation.run` calls the op's `execute` and wraps what
 it returns or throws in the envelope through `OpReport`. The envelope goes back the same way.
 
-**Runs code.** `ExecuteTool` reads `script` through `ProjectFolder` at every call, refuses code that does not parse
+**Runs code.** `ExecuteTool` reads `codePath` through `ServerCode` and `ProjectFolder` at every call, refuses code that does not parse
 (`SyntaxCheck`), and runs the execute op; the op's meta makes every deadline max(30 s, timeout + 5 s). In the plugin,
 `ExecuteOperation` runs the code as an async function of `CodeFigma`'s figma proxy, `CodeConsole` and `CodeScope`'s pw,
 answers at the code's own timeout while the code runs on. `CodeRuns` keeps `ChangeJournal`'s execute window open until
@@ -387,6 +432,8 @@ with `OwnerPeers`, `PeerConnection` and `OwnerRouter` serving the owner's contra
 port taken joins the owner as a peer (`PeerBridge`, `PeerJoin`, `OwnerClient`), shows the owner's files, asks it for
 the pairing code on each status, and runs its ops through it. A newer server takes the bridge over and the older one is handed over for good. With neither,
 `PluginBridge` stays unavailable and retries. `PIXELWRIGHT_PLUGIN_BRIDGE=off` binds `NoBridge`.
+
+**Waits for a plugin that is on its way back.** The plugin reconnects by itself after its server restarts or changes owner, up to 15 s later. `PluginWatch` (port `PluginArrivals`) remembers when this server came up on the bridge (`PluginBridge`) and when a file last left (`SessionRegistry`, or `PeerBridge` from the owner's status), and wakes the calls it holds when a file connects. A plugin is expected for `PLUGIN_WINDOW_MS` after either; `TargetStep` asks only when no file is connected, so `status` and an `ownTarget` tool never wait. A wait that ends after a file was there says the plugin left (`LINK_TEXT.pluginLeft`), else the call fails as before. A call the client cancels leaves the wait at once with the abort (`signal.throwIfAborted()`, as in Code Mode), and a wait that ends by time or by cancel takes its waker out of the set.
 
 **Holds the tokens.** A class's token sits at the bottom of the class's own file; a port's token in its `x.port.ts`;
 tokens of config values and multi-provider lists that belong to no class in a topic's or a root's `x.tokens.ts`

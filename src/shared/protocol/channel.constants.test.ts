@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CHANNEL, CHANNELS } from "@/shared/protocol/channel.constants.ts";
 
 describe("the build channel", () => {
-  it("is the release channel: 0.8.0 is released from this branch, and the next version's branch builds dev", () => {
+  it("is the release channel: the released version is built from this branch, and the next version's branch builds dev", () => {
     expect(CHANNEL).toBe(CHANNELS.release);
   });
 

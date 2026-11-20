@@ -8,6 +8,11 @@ export const FontsourceFontsSchema = zod.array(
   zod.object({ family: zod.string(), weights: zod.array(zod.number()), styles: zod.array(zod.string()) }),
 );
 
+/** Fontsource's variable family: each axis by tag, its numbers as strings. */
+export const FontsourceVariableSchema = zod.object({
+  axes: zod.record(zod.string(), zod.object({ default: zod.string(), min: zod.string(), max: zod.string() })),
+});
+
 /** Google's catalogue, as far as fonts_check reads it: each family's font keys ("400", "400i"). */
 export const GoogleMetadataSchema = zod.object({
   familyMetadataList: zod.array(zod.object({ family: zod.string(), fonts: zod.record(zod.string(), zod.unknown()) })),

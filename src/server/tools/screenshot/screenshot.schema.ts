@@ -6,7 +6,7 @@ import { ExportScaleSchema } from "@/shared/ops/export/export.schema.ts";
 import { NodeIdSchema } from "@/shared/ops/show/show.schema.ts";
 
 /**
- * 0.8.0 reads only (plan 5.0): no `modes`, which switches a layer's variable modes for the render. Strict, so a client
+ * No `modes` (plan 5.0), which switches a layer's variable modes for the render: a write. Strict, so a client
  * that still sends it hears so rather than taking a plain render for one in its modes.
  */
 export const ScreenshotInputSchema = zod.strictObject({

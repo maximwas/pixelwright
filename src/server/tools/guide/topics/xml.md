@@ -21,8 +21,8 @@ paste it.
 `id` (instance children keep `I…;…` ids), `name` (left out on a text named by its content), `component` and
 `variant` ("Size=Large, State=Default") on instances, `props` (an instance's text and boolean properties,
 "Label=Sign up, Icon=true"; a comma, = or backslash inside a name or value comes escaped with a backslash),
-`$exposed`, `description` (components), `note` (Dev Mode annotations, "Category: text", several joined with
-" | "), `$pins`, `$override`, `$dev`, `$locked` (see Read-only attributes), `href` (a prototype link, or a text's
+`$exposed`, `description` (components), `note` (Dev Mode annotations, see Notes), `$override`, `$dev`, `$locked`
+(see Read-only attributes), `href` (a prototype link, or a text's
 hyperlink), `target` (`_blank` when the prototype link opens in a new tab), `data-<collection>` (a variable mode set on the layer, `data-color-modes="dark"`; the read's root also has the
 modes it takes from above), `textStyle`, `mask` (alpha, vector or luminance: the layer masks the layers above it in
 its parent), `src` (assets), `d` and `start` (a text on a path). The CSS attributes come next, then `$prop`,
@@ -37,8 +37,8 @@ Ready CSS values, in this order: display, flex-direction, flex-wrap, position, l
 height, min/max sizes, flex, align-self, grid-row, grid-column, justify-self, padding, justify-content,
 align-items, align-content, gap, column-gap, row-gap, grid-template-columns/rows, transform, opacity,
 mix-blend-mode, overflow, text-overflow, white-space, border-radius, border (or border-top…, outline), background,
-box-shadow, text-shadow, filter, backdrop-filter, font, letter-spacing, text-transform, text-decoration (with
-text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
+box-shadow, text-shadow, filter, backdrop-filter, font, font-variation-settings, letter-spacing, text-transform,
+text-decoration (with text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
 
 - Sizes: fixed sizes in px; hug writes nothing; fill is `flex: 1` along the parent's direction and
   `align-self: stretch` across it. The layer you read always has its width and height.
@@ -57,6 +57,10 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
 - Lengths are px (`0` stays bare); a token where the designer bound one (`gap="var(--space-16)"`).
 - `font` is the shorthand `[italic] weight size/line-height 'Family'`: `font="italic 500 14px/20px 'Inter'"`, the
   line height in px, or `normal` for Figma's Auto (see Text).
+- `font-variation-settings="'wdth' 90, 'GRAD' 50"`: a variable font's axes the font does not say already, on a Text
+  and on a Span. `wght` is the font's weight (a variable weight such as 560 is written there), `opsz` follows the
+  size (CSS's `font-optical-sizing: auto`), and `wdth` 100, `slnt` 0 and `ital` 0 are what a browser draws anyway, so
+  none of them is written at those values. `fonts_check` lists each axis's range and default.
 - `background` holds colours and gradients, the top paint first as CSS stacks them: `linear-gradient(<angle>, <stops>)`,
   `radial-gradient(<rx> <ry> at <x> <y>, <stops>)` and `conic-gradient(from <angle> at <x> <y>, <stops>)`, a stop a
   colour or a token and its place in percent. A diamond gradient, a turned radial one and repeating gradients are in
@@ -99,6 +103,15 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
   (`left="calc(50% - 24px)"` centres a layer 48 px wide, half its size), and percents when scaled with the parent.
   Later in the XML is drawn on top (there is no `z-index`).
 
+## Notes
+
+`note="Spacing: Gap is \[8] [gap, padding] | Check the hover state | [background]"` is the layer's Dev Mode
+annotations in order, joined by ` | `: each one's category (`Spacing: `), its text, and in a closing bracket the
+properties the designer pinned in it, in CSS words (`gap`, `padding`, `background`, `border-radius`, `font-size`,
+`text style`, `component`; a text's fills are `color`): take those values exactly. A note of pins alone is its bracket.
+A `|`, `\` or `[` inside a note's text comes escaped with a backslash. `inspect` with `fields: ["notes"]` gives each
+note as Figma has it (text, category, Figma's property types).
+
 ## Read-only attributes (start with $)
 
 - `$css`: what the CSS attributes cannot say, as Figma's own CSS: a diamond gradient, a turned radial one, blend
@@ -127,8 +140,6 @@ text-underline-offset, text-decoration-thickness), text-align, text-wrap, color.
 - `$dev="ready for dev"` on the read's root: the designer marked it (or a frame or section around it) ready for
   development (or `completed`).
 - `$grid-style="Desktop 12"`: the grid style the frame's layout grid comes from.
-- `$pins="width, padding"`: the properties the designer pinned in the layer's Dev Mode annotations, in CSS words:
-  take those values exactly.
 - `$on-click`, `$on-hover`, `$on-press`, `$on-drag`, `$on-mouse-enter`, `$on-mouse-leave`, `$on-mouse-down`,
   `$on-mouse-up`, `$on-key`, `$after-timeout`, `$on-media-hit`, `$on-media-end` (any other trigger as
   `$on-<trigger>`): the layer's prototype interactions, e.g. `$on-hover="change to Type=Hover; smart animate 300ms

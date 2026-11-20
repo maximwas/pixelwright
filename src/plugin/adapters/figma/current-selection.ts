@@ -16,6 +16,11 @@ export class CurrentSelection {
     return figma.currentPage.selection.map((node) => this.#refs.ref(node));
   }
 
+  /** The selected layers themselves, for an op that starts from them (tokens_bind's scan). */
+  layers(): readonly SceneNode[] {
+    return figma.currentPage.selection;
+  }
+
   /** Selects these layers of the current page in place of what was selected (T-032). */
   select(layers: readonly SceneNode[]): void {
     figma.currentPage.selection = layers;

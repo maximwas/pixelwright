@@ -13,6 +13,8 @@ export const ServerEnvSchema = zod.object({
   PIXELWRIGHT_PLUGIN_ORIGINS: zod.optional(zod.string()),
   /** Any value turns off the daily npm check behind the plugin window's update banner (S-070). */
   PIXELWRIGHT_NO_UPDATE_CHECK: zod.optional(zod.string()),
+  /** `off` turns off the weekly support sentence after a write (T-006, D-34). */
+  PIXELWRIGHT_SUPPORT_REMINDERS: zod.optional(zod.string()),
   /** The project folder when the MCP client lists no file root (T-008); else the server's working directory. */
   CLAUDE_PROJECT_DIR: zod.optional(zod.string()),
 });

@@ -4,7 +4,7 @@ import { NODE_LOOKUP } from "@/plugin/adapters/figma/lookup/node-lookup.ts";
 import { USED_TOKENS } from "@/plugin/adapters/figma/variables/used-tokens.ts";
 import type { RawCollection, RawTokens, RawVariable } from "@/shared/ops/variables/variables.schema.ts";
 
-/** What a read of the tokens takes: the layers' too (used), under a layer or page (within) or on the current page. */
+/** What a read of the tokens takes: the layers' too (used), under a layer or page, every page ("file"), or the current page. */
 interface Asked {
   readonly used: boolean;
   readonly within?: string;
@@ -34,13 +34,14 @@ export class FileTokens {
   }
 
   async read({ used, within }: Asked, deadline: number): Promise<RawTokens> {
-    const root = used ? await this.#root(within) : null;
-    const found = root === null ? { styles: [], variables: [], cut: false } : this.#used.under(root, deadline);
+    const layers = used ? await this.#used.roots(within) : [];
+    const found = this.#used.under(layers, deadline);
     const raw: RawTokens = {
       collections: (await figma.variables.getLocalVariableCollectionsAsync()).map((each) => this.#collection(each)),
       variables: (await figma.variables.getLocalVariablesAsync()).map((each) => this.#variable(each)),
       external: {},
-      styles: await this.#styles(found.styles, root ?? figma.currentPage),
+      // Same-named library styles are numbered on the first layer's page: with "file", the current page's.
+      styles: await this.#styles(found.styles, layers[0] ?? figma.currentPage),
       colorProfile: figma.root.documentColorProfile,
     };
 
@@ -58,13 +59,17 @@ export class FileTokens {
     return raw;
   }
 
-  /** The layer or page whose used tokens to take, its page loaded. */
-  async #root(within: string | undefined): Promise<BaseNode> {
-    const root = within === undefined ? figma.currentPage : await this.#lookup.existing(within);
+  /** What each other page's layers use (P-097), each page loaded: read only when a name is missing, no style CSS. */
+  async otherPages(deadline: number): Promise<RawTokens[]> {
+    const read: RawTokens[] = [];
 
-    await this.#lookup.pageOf(root)?.loadAsync();
+    for (const page of figma.root.children) {
+      if (page !== figma.currentPage) {
+        read.push(await this.read({ used: true, within: page.id }, deadline));
+      }
+    }
 
-    return root;
+    return read;
   }
 
   /** The file's own styles, then the used ones it lacks, numbered among the file's and the page's (D-29). */
@@ -113,6 +118,7 @@ export class FileTokens {
           name: variable.name,
           collection: "",
           resolvedType: variable.resolvedType,
+          ...this.#key(variable),
           ...this.#codeSyntax(variable),
         };
 
@@ -146,12 +152,18 @@ export class FileTokens {
       name: variable.name,
       collectionId: variable.variableCollectionId,
       resolvedType: variable.resolvedType,
+      ...this.#key(variable),
       ...(variable.description === "" ? {} : { description: variable.description }),
       scopes: [...variable.scopes],
       ...this.#codeSyntax(variable),
       // Plugin API values are frozen objects: a JSON copy is what goes on the wire anyway.
       valuesByMode: JSON.parse(JSON.stringify(variable.valuesByMode)),
     };
+  }
+
+  /** A library variable's key, the one its catalogue lists it by (FIX-090A2); a local one's is left out. */
+  #key(variable: Variable): Pick<RawVariable, "key"> {
+    return variable.remote ? { key: variable.key } : {};
   }
 
   #codeSyntax(variable: Variable): Pick<RawVariable, "codeSyntax"> {

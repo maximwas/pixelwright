@@ -7,8 +7,9 @@ import { PixelwrightError } from "@/shared/errors/pixelwright-error.ts";
 /** One op call's envelope (D-05), built in the call's own child container: the data, or the error it threw. */
 @injectable()
 export class OpReport {
-  succeeded(data: unknown): OpResult {
-    return { ok: true, data, cuts: [], missing: [], touched: [] };
+  /** The data, and the layers a write touched: the journal makes their changes Pixelwright's (D-53). */
+  succeeded(data: unknown, touched: readonly string[] = []): OpResult {
+    return { ok: true, data, cuts: [], missing: [], touched: [...touched] };
   }
 
   failed(error: unknown): OpResult {

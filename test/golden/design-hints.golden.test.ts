@@ -233,3 +233,43 @@ describe("design_read autoLineHeight (T-060, B-038, FX-042)", () => {
     expect(autoHint(lines.px(hugging))).toBeUndefined();
   });
 });
+
+// FIX-090A: the JSON block holds tokens by name, so of two variables one name names, it kept the last one's value.
+describe("a token name two variables the read uses share", () => {
+  it("is a hint with each collection's value, since the JSON block keeps one", () => {
+    const bound = (
+      id: string,
+      variable: string,
+      red: number,
+    ) =>
+      layer({
+        id,
+        name: "Swatch",
+        type: "RECTANGLE",
+        fills: [
+          {
+            type: "SOLID",
+            visible: true,
+            color: { r: red, g: 0, b: 1 },
+            boundVariables: { color: { type: "VARIABLE_ALIAS", id: variable } },
+          },
+        ],
+      });
+    const variable = (collection: string, red: number) => ({
+      name: "primary",
+      collection,
+      resolvedType: "COLOR",
+      remote: false,
+      value: { r: red, g: 0, b: 1, a: 1 },
+    });
+    const read = reader.read(
+      model(layer({ id: "1:1", name: "Card", children: [bound("1:2", "V:a", 1), bound("1:3", "V:b", 0)] }), {
+        variables: { "V:a": variable("Brand A", 1), "V:b": variable("Brand B", 0) },
+      }),
+    );
+
+    expect(read.hints.find((hint) => hint.startsWith("--primary"))).toBe(
+      "--primary names 2 variables this read uses: Brand A's #F0F, Brand B's #00F. The JSON block keeps one value for it and every layer bound to any of them writes var(--primary): design_apply binds var(--primary) to the one whose collection's mode the layer or a parent sets (data-<collection>=\"<mode>\"), and refuses it where none does.",
+    );
+  });
+});

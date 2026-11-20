@@ -3,6 +3,7 @@ import * as zod from "zod/mini";
 import type { EditsSwitch } from "@/core/ports/edits-switch.port.ts";
 import { EditsStep } from "@/plugin/app/steps/edits-step.ts";
 import type { OpResult } from "@/shared/envelope/op-result.schema.ts";
+import { bindWriteOp } from "@/shared/ops/bind/bind-write.manifest.ts";
 import { OpContract } from "@/shared/ops/op-contract.ts";
 
 class SwitchOff implements EditsSwitch {
@@ -69,5 +70,15 @@ describe("EditsStep (P-010, D-07)", () => {
       expect(refused).toMatch(/script/);
       expect(refused).toMatch(/inspect, nodes_find, design_read/);
     }
+  });
+
+  // bind_write has no dryRun input, yet tokens_bind (its tool) does, and that dry run works with the switch off.
+  it("names dryRun for bind_write too, whose tool has a dry run the op itself has not", async () => {
+    const result = await step.handle({ contract: bindWriteOp, input: { binds: [], remaps: [] } }, next);
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "EDITS_DISABLED", message: expect.stringContaining("dryRun") },
+    });
   });
 });

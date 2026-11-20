@@ -109,6 +109,7 @@ export class InspectView {
       ...(effects.length === 0 ? {} : { effects }),
       ...this.#text(layer, raw),
       ...this.#interactions(layer),
+      ...(layer.annotations === undefined ? {} : { notes: layer.annotations }),
       ...(instance === undefined ? {} : { component: this.#component(instance, layer.defaults ?? {}) }),
     };
   }

@@ -1,7 +1,10 @@
+import { InjectionToken, injectable } from "@needle-di/core";
+
 /**
  * A layer's boxes on the canvas as Figma gives them, for every op that measures (the read's box fields, cover, export,
  * inspect): its layout box, and the box it paints in (centred or outside strokes, shadows); null where Figma has none.
  */
+@injectable()
 export class LayerBoxes {
   /** The layout box; none for a node that is no layer (the document, a page). */
   layout(node: BaseNode): Rect | null {
@@ -13,3 +16,5 @@ export class LayerBoxes {
     return "absoluteRenderBounds" in node ? node.absoluteRenderBounds : null;
   }
 }
+
+export const LAYER_BOXES = new InjectionToken<LayerBoxes>("LayerBoxes");

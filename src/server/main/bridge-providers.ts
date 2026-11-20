@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import type { Container } from "@needle-di/core";
 import { PACKAGE_REGISTRY } from "@/core/ports/package-registry.port.ts";
+import { PLUGIN_ARRIVALS } from "@/core/ports/plugin-arrivals.port.ts";
 import { PLUGIN_LINK } from "@/core/ports/plugin-link.port.ts";
 import { BRIDGE_SETTINGS } from "@/server/adapters/bridge/bridge.tokens.ts";
 import { STATUS_HINTS, StatusHints } from "@/server/adapters/bridge/hints/status-hints.ts";
@@ -16,6 +17,7 @@ import { PEER_BRIDGE, PeerBridge } from "@/server/adapters/bridge/peer/peer-brid
 import { PAIRING_CODES, PairingCodes } from "@/server/adapters/bridge/plugin/pairing-codes.ts";
 import { PLUGIN_CONNECTIONS, PluginConnections } from "@/server/adapters/bridge/plugin/plugin-connections.ts";
 import { PluginBridge } from "@/server/adapters/bridge/plugin-bridge.ts";
+import { PluginWatch } from "@/server/adapters/bridge/sessions/plugin-watch.ts";
 import { SESSION_REGISTRY, SessionRegistry } from "@/server/adapters/bridge/sessions/session-registry.ts";
 import { NpmRegistry } from "@/server/adapters/http/npm-registry.ts";
 import { LATEST_FILE } from "@/server/app/stores/stores.constants.ts";
@@ -41,6 +43,7 @@ export class BridgeProviders {
       })
       .bind({ provide: BRIDGE_CONFIG, useClass: BridgeConfig })
       .bind({ provide: PAIRING_CODES, useClass: PairingCodes })
+      .bind({ provide: PLUGIN_ARRIVALS, useClass: PluginWatch })
       .bind({ provide: SESSION_REGISTRY, useClass: SessionRegistry })
       .bind({ provide: PLUGIN_CONNECTIONS, useClass: PluginConnections })
       .bind({ provide: UPGRADE_GUARD, useClass: UpgradeGuard })

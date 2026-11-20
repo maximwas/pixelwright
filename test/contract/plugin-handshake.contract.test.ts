@@ -137,16 +137,16 @@ describe("the plugin handshake through the composition root, with 0.7.0's record
 
     await window.send(PLUGIN.helloNoKey ?? "");
 
-    expect(await window.closed).toEqual({ code: 4426, reason: RECORDING.versionMismatchReason });
+    expect(await window.closed).toEqual({ code: 4426, reason: "protocol 7 required" });
     expect((await server.status()).hint).toBe(
-      `The ${CHANNEL.pluginName} plugin 0.7.0 that tried to connect is older than this server (protocol 5; this server speaks 6), so it was turned away: ask the user to install the plugin that comes with this server's version and run it again in Figma.`,
+      `The ${CHANNEL.pluginName} plugin 0.7.0 that tried to connect is older than this server (protocol 5; this server speaks 7), so it was turned away: ask the user to install the plugin that comes with this server's version and run it again in Figma.`,
     );
   });
 
   it("asks a plugin with a key it lacks to pair, shows the code in status, and pairs it with that code", async () => {
     const server = await owner();
     const window = server.window();
-    const unknownKey = { protocol: 6, keyId: "feedfacefeedface" };
+    const unknownKey = { protocol: 7, keyId: "feedfacefeedface" };
 
     await window.send(recorded("helloNoKey", unknownKey));
 
@@ -181,7 +181,7 @@ describe("the plugin handshake through the composition root, with 0.7.0's record
     const first = server.window();
 
     // Pair once to put a key in bridge.json, then come back with it as another window.
-    await first.send(recorded("helloNoKey", { protocol: 6 }));
+    await first.send(recorded("helloNoKey", { protocol: 7 }));
     await first.received(1);
     await first.send(recorded("pair", { code: (await server.status()).pairing?.code }));
 
@@ -189,7 +189,7 @@ describe("the plugin handshake through the composition root, with 0.7.0's record
     const key = paired?.key as { id: string; secret: string };
     const window = server.window();
     const withKey = {
-      protocol: 6,
+      protocol: 7,
       keyId: key.id,
       plugin: { ...JSON.parse(PLUGIN.helloWithKey ?? "{}").plugin, instanceId: "another-window" },
     };

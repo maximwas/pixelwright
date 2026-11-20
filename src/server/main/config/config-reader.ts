@@ -39,6 +39,7 @@ export class ConfigReader {
         .filter((origin) => origin !== ""),
       projectDir: env.CLAUDE_PROJECT_DIR?.trim() || (this.#cwd ?? process.cwd()),
       updateCheck: !env.PIXELWRIGHT_NO_UPDATE_CHECK?.trim(),
+      supportNotes: env.PIXELWRIGHT_SUPPORT_REMINDERS?.trim().toLowerCase() !== SERVER_ENV.supportOff,
     };
   }
 }
@@ -55,4 +56,6 @@ export interface ServerConfig {
   readonly projectDir: string;
   /** Whether npm is asked for the update banner (S-070); the configs tests build leave it out, so it stays off. */
   readonly updateCheck?: boolean;
+  /** Whether a write gives the weekly support sentence (T-006); configs the tests build leave it out, so it stays off. */
+  readonly supportNotes?: boolean;
 }

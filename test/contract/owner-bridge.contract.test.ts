@@ -63,12 +63,12 @@ afterEach(async () => {
 });
 
 describe("the owner bridge through the composition root", () => {
-  it("owns the port: status shows role owner, its port, protocol 6, no file, and bridge.json is made private", async () => {
+  it("owns the port: status shows role owner, its port, protocol 7, no file, and bridge.json is made private", async () => {
     const owner = await connected();
     const status = await owner.status();
 
     expect(status).toEqual({
-      server: expect.objectContaining({ channel: CHANNEL.name, role: "owner", protocol: 6, port: expect.any(Number) }),
+      server: expect.objectContaining({ channel: CHANNEL.name, role: "owner", protocol: 7, port: expect.any(Number) }),
       files: [],
       probe: null,
       pairing: null,

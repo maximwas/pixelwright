@@ -135,6 +135,11 @@ export const HINT_TEXT = {
     `${count} layers keep Figma's default names (${examples}${count > EXAMPLES ? ", …" : ""}): name the elements by their role in the code.`,
   missingFonts: (families: readonly string[], examples: string) =>
     `Fonts missing on this machine${families.length > 0 ? ` (${families.join(", ")})` : ""} in ${examples}: Figma could not lay these texts out, so their sizes may be off.`,
+  /** A token name several variables of the read share, each as sharedHeld gives it. */
+  shared: (token: string, held: readonly string[]) =>
+    `${token} names ${held.length} variables this read uses: ${held.join(", ")}. The JSON block keeps one value for it and every layer bound to any of them writes var(${token}): design_apply binds var(${token}) to the one whose collection's mode the layer or a parent sets (data-<collection>="<mode>"), and refuses it where none does.`,
+  sharedHeld: (collection: string, value: string | undefined) =>
+    value === undefined ? collection : `${collection}'s ${value}`,
   valueless: (token: string, paints: string) =>
     `${token} has no value: its paint style is ${paints}, which neither core nor Figma wrote as CSS here; take its look from a screenshot of a layer that uses it.`,
   /** A numbered style token with its value, and the first style of that name with its own. */
